@@ -296,5 +296,4 @@ NetworkStatistics get_network_statistics(RingBuffer* ring_buffer);
  * @param ring_buffer Ring buffer to destroy
  */
 void destroy_ring_buffer(RingBuffer* ring_buffer);
-
 #endif

@@ -29,6 +29,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
         # Files needed for Client unit tests
         ../client/audio.c
+        ../client/audio_path.cpp
         ../client/client_utils.c
         ../client/whist_client.c
         ../client/network.c
@@ -80,6 +81,7 @@ else()
 
         # Files needed for Client unit tests
         ../client/audio.c
+        ../client/audio_path.cpp
         ../client/client_utils.c
         ../client/whist_client.c
         ../client/network.c

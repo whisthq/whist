@@ -32,6 +32,13 @@ Defines
 
 typedef struct AudioContext AudioContext;
 
+// TODO: Automatically deduce this from (ms_per_frame / MS_IN_SECOND) * audio_frequency
+// TODO: Add ms_per_frame to AudioFrame*
+#define SAMPLES_PER_FRAME 480
+#define BYTES_PER_SAMPLE 4
+#define NUM_CHANNELS 2
+#define DECODED_BYTES_PER_FRAME (SAMPLES_PER_FRAME * BYTES_PER_SAMPLE * NUM_CHANNELS)
+
 /*
 ============================
 Public Functions
@@ -98,7 +105,7 @@ void update_audio(AudioContext* audio_context);
  * @note                           This function is thread-safe, and may be called
  *                                 independently of the rest of the functions
  */
-void render_audio(AudioContext* audio_context);
+int render_audio(AudioContext* audio_context);
 
 /**
  * @brief                          Destroy the audio context
@@ -115,4 +122,7 @@ void destroy_audio(AudioContext* audio_context);
  */
 bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered);
 
+// get the lenght of the device audio queue inside audio_context
+// unit: bytes
+int get_device_audio_queue_bytes(AudioContext* audio_context);
 #endif  // CLIENT_AUDIO_H

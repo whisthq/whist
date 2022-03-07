@@ -24,8 +24,9 @@ Includes
 #include <whist/network/network.h>
 #include <whist/network/ringbuffer.h>
 #include <whist/core/whist_frame.h>
-#include <whist/debug/protocol_analyzer.h>
-#include <whist/debug/debug_console.h>
+#include <whist/tools/protocol_analyzer.h>
+#include <whist/tools/debug_console.h>
+#include "audio_path.h"
 
 /*
 ============================
@@ -35,13 +36,6 @@ Defines
 
 // Verbose audio logs
 #define LOG_AUDIO false
-
-// TODO: Automatically deduce this from (ms_per_frame / MS_IN_SECOND) * audio_frequency
-// TODO: Add ms_per_frame to AudioFrame*
-#define SAMPLES_PER_FRAME 480
-#define BYTES_PER_SAMPLE 4
-#define NUM_CHANNELS 2
-#define DECODED_BYTES_PER_FRAME (SAMPLES_PER_FRAME * BYTES_PER_SAMPLE * NUM_CHANNELS)
 
 // Number of audio frames that must pass before we skip ahead
 // NOTE: Catching up logic is in udp.c, but has to be moved out in a future PR
@@ -195,11 +189,32 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     // ===========================
 }
 
-void render_audio(AudioContext* audio_context) {
-    if (audio_context->pending_render_context) {
-        // Only do work, if the audio frequency is valid
-        FATAL_ASSERT(audio_context->render_context != NULL);
-        AudioFrame* audio_frame = (AudioFrame*)audio_context->render_context;
+int render_audio(AudioContext* audio_context) {
+    // a buffer that's large enough to hold an undecoded audio frame
+    unsigned char audio_buffer[(MAX_AUDIO_PACKETS + 1) * MAX_PACKET_SEGMENT_SIZE];
+    int audio_buffer_size = -1;
+
+    // incidates if there is something to render
+    bool has_data_to_render;
+
+    if (USE_AUDIO_PATH) {
+        // the new data path
+        has_data_to_render =
+            pop_from_audio_path(audio_buffer, &audio_buffer_size) == 0 ? true : false;
+    } else {
+        // the original data path
+        has_data_to_render = audio_context->pending_render_context;
+    }
+
+    if (has_data_to_render) {
+        AudioFrame* audio_frame;
+        if (USE_AUDIO_PATH) {
+            audio_frame = (AudioFrame*)audio_buffer;
+        } else {
+            // Only do work, if the audio frequency is valid
+            FATAL_ASSERT(audio_context->render_context != NULL);
+            audio_frame = (AudioFrame*)audio_context->render_context;
+        }
 
         // Mark as pending refresh when the audio frequency is being updated
         if (audio_context->audio_frequency != audio_frame->audio_frequency) {
@@ -250,7 +265,9 @@ void render_audio(AudioContext* audio_context) {
 
         // No longer rendering audio
         audio_context->pending_render_context = false;
+        return 0;
     }
+    return -1;
 }
 
 /*
@@ -338,4 +355,12 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     }
     return !audio_context->pending_render_context &&
            !is_underflowing_audio(audio_context, num_frames_buffered);
+}
+
+int get_device_audio_queue_bytes(AudioContext* audio_context) {
+    if (!audio_context->dev) {
+        return -1;
+    }
+
+    return safe_get_audio_queue(audio_context);
 }

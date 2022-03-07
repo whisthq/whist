@@ -59,6 +59,12 @@ static const char* const tag_strings[] = {
     [METRIC_LEVEL] = "METRIC",           [INFO_LEVEL] = "INFO",   [DEBUG_LEVEL] = "DEBUG",
 };
 
+// disable logs after some limited are hit, helpful for debug
+// if SUPRESS_LOG_AFTER <=0, this feature is disabled
+#define SUPRESS_LOG_AFTER 200
+// num of logs printed so far, should be okay without mutex for a rough control
+static int g_log_cnt = 0;
+
 /**
  * Type for a single log item in the logger queue.
  */
@@ -411,6 +417,23 @@ static void logger_queue_multiple_lines(unsigned int level, char* message) {
 // external use for it then it could be made public as well.
 static void whist_log_vprintf(unsigned int level, const char* file_name, const char* function,
                               int line_number, const char* fmt_str, va_list args) {
+
+    // if enabled, supress log after some num of logs are printed
+    if (SUPRESS_LOG_AFTER > 0) {
+        // increase counter of current log printed
+        g_log_cnt++;
+
+        // empahse on the log has been supressed
+        if (g_log_cnt > SUPRESS_LOG_AFTER && g_log_cnt <= SUPRESS_LOG_AFTER + 5) {
+            fprintf(stderr, "non-audio logs are supressed from now on!!!\n");
+        }
+
+        // skip log when we have printed enough
+        if (g_log_cnt > SUPRESS_LOG_AFTER) {
+            return;
+        }
+    }
+
     char stack_buffer[512];
     char* heap_buffer = NULL;
     char* buffer = stack_buffer;

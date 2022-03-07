@@ -27,6 +27,7 @@ Includes
 #include "video.h"
 #include "sync_packets.h"
 #include "client_utils.h"
+#include "audio_path.h"
 
 // Updater variables
 extern SocketContext packet_udp_context;
@@ -68,6 +69,9 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     //   These buffers should be set to something extremely large (Several seconds)
     udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 256);
     udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 256);
+
+    // udp_register_ring_buffer_ready_cb(udp_context, PACKET_AUDIO, push_to_audio_path);
+    udp_register_packet_receive_cb(udp_context->context, PACKET_AUDIO, push_to_audio_path);
 
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 
@@ -111,8 +115,16 @@ static int multithreaded_sync_udp_packets(void* opaque) {
 
         // Loop over both VIDEO and AUDIO
         static const WhistPacketType video_audio_types[2] = {PACKET_VIDEO, PACKET_AUDIO};
-        for (int i = 0; i < 2; i++) {
+
+        int num_of_types_to_check = 2;
+
+        if (USE_AUDIO_PATH) {
+            num_of_types_to_check = 1;
+        }
+
+        for (int i = 0; i < num_of_types_to_check; i++) {
             WhistPacketType packet_type = video_audio_types[i];
+
             // If the renderer wants the frame of that type,
             // Knowing how many frames are pending a render...
             if (renderer_wants_frame(whist_renderer, packet_type,

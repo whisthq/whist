@@ -221,6 +221,8 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
 size_t udp_packet_max_size(void);
 
+void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type, void* cb);
+
 /*
 ============================
 Private Functions. Exposed for the sake of unit testing only.
@@ -235,4 +237,5 @@ typedef struct {
 void update_max_unordered_packets(UnOrderedPacketInfo* unordered_info, int frame_id,
                                   int packet_index);
 
+=======
 #endif  // WHIST_UDP_H

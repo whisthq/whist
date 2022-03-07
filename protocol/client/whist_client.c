@@ -51,6 +51,7 @@ Includes
 #include "renderer.h"
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
+#include "audio_path.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -300,6 +301,17 @@ int whist_client_main(int argc, const char* argv[]) {
     init_debug_console();
 
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
+
+    {
+        int res;
+        if (res = SDL_Init(SDL_INIT_AUDIO) != 0) {
+            LOG_FATAL("SDL aduio subsystem init failed %d\n", res);
+        }
+    }
+
+    if (USE_AUDIO_PATH) {
+        audio_path_init();
+    }
 
     handle_single_icon_launch_client_app(argc, argv);
 
