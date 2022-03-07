@@ -26,6 +26,7 @@ function createCustomer(user, context, callback) {
             customer: customer.id,
             trial_period_days: 14,
             items: [{ price: configuration.STRIPE_PRICE_ID }],
+            collection_method: "charge_automatically"
           })
           .then((_subscription) => {
             // Save the new Stripe customer's customer ID.
