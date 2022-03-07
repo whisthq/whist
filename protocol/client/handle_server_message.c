@@ -54,6 +54,7 @@ static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
 static int handle_file_group_end_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_capture_created_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 
 /*
 ============================
@@ -314,6 +315,7 @@ static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
 }
 
 static int handle_capture_created_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
-    sdl_show_window();
+    LOG_INFO("Server has created capture device");
+    // sdl_show_window();
     return 0;
 }

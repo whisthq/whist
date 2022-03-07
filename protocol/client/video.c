@@ -186,6 +186,8 @@ int render_video(VideoContext* video_context) {
     static timestamp_us client_input_timestamp = 0;
     static timestamp_us last_rendered_time = 0;
 
+    static bool first_frame = true;
+
     // Receive and process a render context that's being pushed
     if (video_context->pending_render_context) {
         // Grab and consume the actual frame
@@ -356,7 +358,6 @@ int render_video(VideoContext* video_context) {
         start_timer(&last_frame_timer);
         last_frame_timer_started = true;
     }
-
     return 0;
 }
 

@@ -325,7 +325,9 @@ void sdl_set_window_title(const char* requested_window_title) {
 }
 
 void sdl_show_window() {
+    // SDL_HideWindow((SDL_Window*)window);
     SDL_ShowWindow((SDL_Window*)window);
+    SDL_RaiseWindow((SDL_Window*)window);
 }
 
 void sdl_set_fullscreen(bool is_fullscreen) {
