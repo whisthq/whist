@@ -550,7 +550,7 @@ if __name__ == "__main__":
         experiment_metadata["client_failure"] = True
         # Exit with error
         exit_with_error = True
-    if server_hang_detected:
+    if not exit_with_error and server_hang_detected:
         print("Server hang detected! Exiting with error. Check the logs for more details.")
         # Update experiment metadata
         experiment_metadata["server_hang_detected"] = server_hang_detected
