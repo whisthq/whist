@@ -95,7 +95,7 @@ void update_audio(AudioContext* audio_context);
  * @note                           This function is thread-safe, and may be called
  *                                 independently of the rest of the functions
  */
-void render_audio(AudioContext* audio_context);
+int render_audio(AudioContext* audio_context);
 
 /**
  * @brief                          Destroy the audio context
@@ -111,5 +111,7 @@ void destroy_audio(AudioContext* audio_context);
  * @param num_frames_buffered      The number of frames buffered and waiting to be given
  */
 bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered);
+
+int my_get_audio_queue_len(void);
 
 #endif  // CLIENT_AUDIO_H

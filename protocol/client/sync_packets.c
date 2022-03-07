@@ -125,9 +125,14 @@ static int multithreaded_sync_udp_packets(void* opaque) {
                 if (last_whist_packet[packet_type] != NULL) {
                     free_packet(udp_context, last_whist_packet[packet_type]);
                 }
+
                 // Now, we try to get the packet from UDP,
                 // And pass it to the renderer if one exists
                 WhistPacket* whist_packet = (WhistPacket*)get_packet(udp_context, packet_type);
+                /*we call get_packet for audio only bc: if we dont' ringbuffer will complain*/
+
+                if(packet_type ==PACKET_AUDIO) continue;
+
                 if (whist_packet) {
                     renderer_receive_frame(whist_renderer, packet_type, whist_packet->data);
                     // Store the pointer so we can free it later,

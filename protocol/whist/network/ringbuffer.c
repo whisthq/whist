@@ -9,6 +9,7 @@ Includes
 #include <whist/utils/fec.h>
 #include <whist/tools/protocol_analyzer.h>
 #include <whist/tools/debug_console.h>
+#include <whist/utils/audio_queue.h>
 
 /*
 ============================
@@ -373,7 +374,15 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
     }
 
     if (is_ready_to_render(ring_buffer, segment_id) && !was_already_ready) {
+
         ring_buffer->frames_received++;
+        if(ring_buffer->type==PACKET_AUDIO)
+        {
+            FrameData *frame=get_frame_at_id(ring_buffer,segment_id);
+            WhistPacket* whist_packet = (WhistPacket*) frame->frame_buffer;
+
+            push_to_audio_queue(segment_id, whist_packet->data, whist_packet->payload_size);
+        }
     }
 
     return 0;

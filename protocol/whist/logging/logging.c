@@ -60,6 +60,9 @@ const char* const warning_tag = "WARNING";
 const char* const error_tag = "ERROR";
 const char* const fatal_error_tag = "FATAL_ERROR";
 
+//a hacky way to disable logs after some limited are hit, so that we can look at audio logs more clearly
+int g_log_cnt=0;
+
 /**
  * Type for a single log item in the logger queue.
  */

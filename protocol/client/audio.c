@@ -27,7 +27,7 @@ Includes
 #include <whist/core/whist_frame.h>
 #include <whist/tools/protocol_analyzer.h>
 #include <whist/tools/debug_console.h>
-
+#include <whist/utils/audio_queue.h>
 /*
 ============================
 Defines
@@ -138,11 +138,14 @@ Public Function Implementations
 ============================
 */
 
+AudioContext * g_audio_context_ptr=0;
+
 AudioContext* init_audio(void) {
     LOG_INFO("Initializing audio system");
 
     // Allocate the audio context
     AudioContext* audio_context = safe_malloc(sizeof(*audio_context));
+    
     memset(audio_context, 0, sizeof(*audio_context));
 
     // Initialize everything
@@ -154,6 +157,8 @@ AudioContext* init_audio(void) {
     audio_context->is_flushing_audio = false;
     audio_context->is_buffering_audio = false;
     init_audio_device(audio_context);
+
+    g_audio_context_ptr=audio_context;
 
     // Return the audio context
     return audio_context;
@@ -205,11 +210,28 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     // ===========================
 }
 
-void render_audio(AudioContext* audio_context) {
-    if (audio_context->pending_render_context) {
+int my_render_audio()
+{
+    if(g_audio_context_ptr==0) return -2;
+    if(g_audio_context_ptr->dev==0) return -3;
+
+    return render_audio(g_audio_context_ptr);
+}
+
+int render_audio(AudioContext* audio_context) {
+
+    unsigned char audio_buffer[MAX_AUDIO_PACKETS * MAX_PACKET_SEGMENT_SIZE +100];
+    int audio_buffer_size=-1;
+
+    if(pop_from_audio_queue(audio_buffer, &audio_buffer_size)==0)
+    {
+    //if (audio_context->pending_render_context) {
         // Only do work, if the audio frequency is valid
-        FATAL_ASSERT(audio_context->render_context != NULL);
-        AudioFrame* audio_frame = (AudioFrame*)audio_context->render_context;
+        //FATAL_ASSERT(audio_context->render_context != NULL);
+        
+        AudioFrame* audio_frame = (AudioFrame*)audio_buffer;
+
+        //AudioFrame* audio_frame = (AudioFrame*)audio_context->render_context;
 
         // Mark as pending refresh when the audio frequency is being updated
         if (audio_context->audio_frequency != audio_frame->audio_frequency) {
@@ -238,13 +260,15 @@ void render_audio(AudioContext* audio_context) {
                 LOG_FATAL("Failed to send packets to decoder!");
             }
 
+            int cnt=0;
+            static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
             // While there are frames to decode...
             while (true) {
                 // Decode the frame
                 int res = audio_decoder_get_frame(audio_context->audio_decoder);
                 if (res == 0) {
                     // Buffer to hold the decoded data
-                    static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+                    
                     // Get the decoded data
                     audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
 
@@ -253,6 +277,8 @@ void render_audio(AudioContext* audio_context) {
                         audio_context->dev, decoded_data,
                         audio_decoder_get_frame_data_size(audio_context->audio_decoder));
 
+                    cnt++;
+
                     if (res < 0) {
                         LOG_WARNING("Could not play audio!");
                     }
@@ -260,11 +286,31 @@ void render_audio(AudioContext* audio_context) {
                     break;
                 }
             }
+
+            //this doesn't work, try later
+            /*
+            int len=my_get_audio_queue_len()/DECODED_BYTES_PER_FRAME;
+            if(len<5) //if audio queue is running low, we feed last audio data twice
+            {
+                static timestamp_us last_fill_time=0;
+                timestamp_us now= current_time_us ();
+
+                if(now-last_fill_time>200*1000)
+                {
+                    fprintf(stderr,"aduio queue running low, dup last packet!!\n");
+                    SDL_QueueAudio(
+                            audio_context->dev, decoded_data,
+                            audio_decoder_get_frame_data_size(audio_context->audio_decoder));
+                    last_fill_time=now;
+                }
+            }*/
         }
 
         // No longer rendering audio
         audio_context->pending_render_context = false;
+        return 0;
     }
+    return -1;
 }
 
 /*
@@ -321,6 +367,7 @@ static void destroy_audio_device(AudioContext* audio_context) {
     }
 }
 
+
 static int safe_get_audio_queue(AudioContext* audio_context) {
     int audio_device_queue = 0;
     if (audio_context->dev) {
@@ -332,6 +379,14 @@ static int safe_get_audio_queue(AudioContext* audio_context) {
 #endif
     return audio_device_queue;
 }
+
+int  my_get_audio_queue_len(void)
+{
+    if(g_audio_context_ptr==0) return -1;
+    if(g_audio_context_ptr->dev==0) return -2;
+    return safe_get_audio_queue(g_audio_context_ptr);
+}
+
 
 bool is_overflowing_audio(AudioContext* audio_context) {
     int audio_device_queue = safe_get_audio_queue(audio_context);

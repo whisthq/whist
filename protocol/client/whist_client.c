@@ -274,6 +274,8 @@ static void initiate_file_upload(void) {
     upload_initiated = false;
 }
 
+#include <whist/utils/audio_queue.h>
+
 int whist_client_main(int argc, char* argv[]) {
     WhistSubsystemParams subsystem_params = {true};
     if (alloc_parsed_args() != 0) {
@@ -292,9 +294,10 @@ int whist_client_main(int argc, char* argv[]) {
     }
 
     whist_init_subsystems(&subsystem_params);
-
     // the logic inside guarantees debug console is only enabled for debug build
     init_debug_console();
+
+    audio_queue_init();
 
     init_client_statistics();
     whist_init_statistic_logger(CLIENT_NUM_METRICS, client_statistic_info,

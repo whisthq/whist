@@ -71,13 +71,20 @@ Defines
 //                         |    |       |       |    |
 #define LOG_CONTEXT_FORMAT " | %-7s | %-35s | %-30s:%-5d | "
 
+//a hacky way to disable logs after some limited are hit, so that we can look at audio logs more clearly
+#define SUPRESS_LOG_AFTER 200
+
 // We use do/while(0) to force the user to ";" the end of the LOG,
 // While still keeping the statement inside a contiguous single block,
 // so that `if(cond) LOG;` works as expected
 #define LOG_MESSAGE(tag, message, ...)                                                          \
-    do {                                                                                        \
+    do {          \
+        extern int g_log_cnt;\
+        g_log_cnt++; \
+        if(g_log_cnt<SUPRESS_LOG_AFTER)                                                                        \
         internal_logging_printf(tag##_TAG, LOG_FILE_NAME, __FUNCTION__, __LINE__, message "\n", \
                                 ##__VA_ARGS__);                                                 \
+        if(g_log_cnt>=SUPRESS_LOG_AFTER && g_log_cnt<=SUPRESS_LOG_AFTER+10) fprintf(stderr, "non-audio logs are supressed from now on!!!\n");\
     } while (0)
 
 #define NEWLINE "\n"

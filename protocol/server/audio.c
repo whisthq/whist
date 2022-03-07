@@ -164,3 +164,15 @@ int32_t multithreaded_send_audio(void* opaque) {
     destroy_audio_device(audio_device);
     return 0;
 }
+
+// this has no use, just a hacky  way to suppress some complier error 
+int  my_get_audio_queue_len(void)
+{
+    return 0;
+}
+
+//same as above
+extern int my_render_audio()
+{
+    return 0;
+}
