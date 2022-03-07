@@ -15,6 +15,7 @@ import {
   TurnOffVPN,
   NetworkTest,
   Pricing,
+  HowDidYouHearAboutWhist,
 } from "@app/renderer/pages/onboarding/pages"
 import { WhistButton, WhistButtonState } from "@app/components/button"
 
@@ -68,18 +69,19 @@ const Onboarding = (props: { onSubmit: () => void }) => {
   return (
     <Shuffle
       pages={[
-        <WhatMakesWhistDifferent key={0} />,
-        <WhatIsWhist key={1} />,
-        <WhoIsWhistFor key={2} />,
-        <FasterLikeMagic key={3} />,
-        <LetsShowYouAround key={4} />,
-        <Privacy key={5} />,
-        <FeaturesUnderDevelopment key={6} />,
-        <TurnOffVPN key={7} />,
-        <LiveChatSupport key={8} />,
-        <Pricing key={9} />,
-        <FollowUsOnTwitter key={10} />,
-        <NetworkTest key={11} />,
+        <HowDidYouHearAboutWhist key={0} />,
+        <WhatMakesWhistDifferent key={1} />,
+        <WhatIsWhist key={2} />,
+        <WhoIsWhistFor key={3} />,
+        <FasterLikeMagic key={4} />,
+        <LetsShowYouAround key={5} />,
+        <Privacy key={6} />,
+        <FeaturesUnderDevelopment key={7} />,
+        <TurnOffVPN key={8} />,
+        <LiveChatSupport key={9} />,
+        <Pricing key={10} />,
+        <FollowUsOnTwitter key={11} />,
+        <NetworkTest key={12} />,
       ]}
       onSubmit={props.onSubmit}
     />

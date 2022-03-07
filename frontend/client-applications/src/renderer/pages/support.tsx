@@ -13,7 +13,7 @@ const Support = (props: { userEmail: string | undefined }) => {
   }, [props.userEmail])
 
   return (
-    <div className="h-screen w-screen bg-white" id="hubspot">
+    <div className="h-screen w-screen bg-white">
       <div className="w-full h-8 draggable"></div>
     </div>
   )
@@ -27,7 +27,7 @@ const WithInterCom = (props: {
     appId={"v62favsy"}
     autoBoot={true}
     onHide={props.onClose}
-    autoBootProps={{ hideDefaultLauncher: true, backgroundColor: "#4f35de" }}
+    autoBootProps={{ hideDefaultLauncher: true }}
   >
     <Support userEmail={props.userEmail} />
   </IntercomProvider>
