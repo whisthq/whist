@@ -795,8 +795,6 @@ static void sdl_present_pending_framebuffer(void) {
     }
 
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
-
-    log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
     whist_unlock_mutex(renderer_mutex);
 
     // RenderPresent outside of the mutex, since RenderCopy made a copy anyway
@@ -1077,6 +1075,8 @@ static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPAR
 }
 #endif
 
+// 20th of the window - usually close to file icon sizes + doesn't become disruptive if window is
+// small
 #define DRAG_ICON_SCALE 0.05
 static void sdl_render_file_drag_icon(int x, int y) {
     SDL_Surface* drop_icon_surface = sdl_surface_from_png_file("images/file_drag_icon.png");

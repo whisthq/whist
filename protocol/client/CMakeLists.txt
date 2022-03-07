@@ -92,11 +92,6 @@ add_custom_command(TARGET WhistClient PRE_BUILD
         ${CMAKE_SOURCE_DIR}/client/images
         $<TARGET_FILE_DIR:WhistClient>/images)
 
-add_custom_command(TARGET WhistClient PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/client/images
-        $<TARGET_FILE_DIR:WhistClient>/images)
-
 # Print out compile flags in verbose mode of CMake
 message(VERBOSE "client C base flags: ${CMAKE_C_FLAGS}")
 message(VERBOSE "client C release flags: ${CMAKE_C_FLAGS_RELEASE}")
