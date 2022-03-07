@@ -588,7 +588,7 @@ jobs:
           data["git_hash"] = "${{ github.sha }}"
           data["access_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}"
           data["secret_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}"
-          data["ami_name"] = f"whist-ami-${{ github.sha }}-{date_str}"
+          data["ami_name"] = f"whist-ami-${{ needs.whist-publish-build-config.outputs.branch }}-${{ github.sha }}-{date_str}"
 
           # Set Logz.io shipping token and regions to which to deploy the new AMI based on the environment.
           # For internal environments (dev, staging), we only clone our new AMI  to us-east-1 and us-west-1, to save on
