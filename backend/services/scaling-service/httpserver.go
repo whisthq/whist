@@ -1,92 +1,19 @@
 package main
 
 import (
-	"encoding/json"
-	"io"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/host-service/auth"
+	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/scaling-service/payments"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 	"golang.org/x/time/rate"
 )
-
-// A ServerRequest represents a request from the server --- it is exported so
-// that we can implement the top-level event handlers in parent packages. They
-// simply return the result and any error message via ReturnResult.
-type ServerRequest interface {
-	ReturnResult(result interface{}, err error)
-	createResultChan()
-}
-
-// A requestResult represents the result of a request that was successfully
-// authenticated, parsed, and processed by the consumer.
-type requestResult struct {
-	Result interface{} `json:"-"`
-	Err    error       `json:"error"`
-}
-
-type MandelboxAssignRequest struct {
-	Regions    []string           `json:"regions"`
-	CommitHash string             `json:"client_commit_hash"`
-	SessionID  int64              `json:"session_id"`
-	UserEmail  string             `json:"user_email"`
-	resultChan chan requestResult // Channel to pass the request result between goroutines
-}
-
-type MandelboxAssignRequestResult struct {
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *MandelboxAssignRequest) ReturnResult(result interface{}, err error) {
-	s.resultChan <- requestResult{result, err}
-}
-
-// createResultChan is called to create the Go channel to pass the request
-// result back to the HTTP request handler via ReturnResult.
-func (s *MandelboxAssignRequest) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan requestResult)
-	}
-}
-
-// send is called to send an HTTP response
-func (r requestResult) send(w http.ResponseWriter) {
-	var buf []byte
-	var err error
-	var status int
-
-	if r.Err != nil {
-		// Send a 406
-		status = http.StatusNotAcceptable
-		buf, err = json.Marshal(
-			struct {
-				Result interface{} `json:"result"`
-				Error  string      `json:"error"`
-			}{r.Result, r.Err.Error()},
-		)
-	} else {
-		// Send a 200 code
-		status = http.StatusOK
-		buf, err = json.Marshal(
-			struct {
-				Result interface{} `json:"result"`
-			}{r.Result},
-		)
-	}
-
-	w.WriteHeader(status)
-	if err != nil {
-		logger.Errorf("Error marshalling a %v HTTP Response body: %s", status, err)
-	}
-	_, _ = w.Write(buf)
-}
 
 func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
@@ -95,8 +22,8 @@ func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 		logger.Errorf("Error verifying request type. Err: %v", err)
 	}
 
-	var reqdata MandelboxAssignRequest
-	err = authenticateAndParseRequest(w, req, &reqdata)
+	var reqdata httputils.MandelboxAssignRequest
+	err = authenticateRequest(w, req, &reqdata)
 	if err != nil {
 		logger.Errorf("Failed while authenticating request. Err: %v", err)
 	}
@@ -108,12 +35,12 @@ func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 		Type: "SERVER_MANDELBOX_ASSIGN_EVENT",
 		Data: reqdata,
 	}
-	res := <-reqdata.resultChan
+	res := <-reqdata.ResultChan
 
-	res.send(w)
+	res.Send(w)
 }
 
-func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) error {
+func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) error {
 	accessToken := r.Header.Get("Authorization")
 	accessToken = strings.Split(accessToken, "Bearer ")[1]
 
@@ -124,20 +51,10 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	}
 	logger.Infof("claims are %v", claims)
 
-	// Get request body
-	body, err := io.ReadAll(r.Body)
+	_, err = httputils.ParseRequest(w, r, s)
 	if err != nil {
-		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return utils.MakeError("Error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
+		return utils.MakeError("Error while parsing request. Err: %v", err)
 	}
-
-	// Unmarshal request body into interface result
-	err = json.Unmarshal(body, s)
-	if err != nil {
-		return utils.MakeError("Failed to unmarshal request body. Err: %v", err)
-	}
-
-	s.createResultChan()
 
 	return nil
 }

@@ -30,6 +30,10 @@ func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient 
 	return testInstances, nil
 }
 
+func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) (subscriptions.WhistInstances, error) {
+	return testInstances, nil
+}
+
 func (db *mockDBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region string) (subscriptions.WhistInstances, error) {
 	testLock.Lock()
 	defer testLock.Unlock()

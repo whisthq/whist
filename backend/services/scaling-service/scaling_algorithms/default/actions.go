@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/hasura/go-graphql-client"
+	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
-	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -535,7 +535,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	logger.Infof("Starting mandelbox assign action for event: %v", event)
 	defer logger.Infof("Finished mandelbox assign action for event: %v", event)
 
-	mandelboxRequest := event.Data.(types.MandelboxAssignRequest)
+	mandelboxRequest := event.Data.(httputils.MandelboxAssignRequest)
 	// TODO: sanitize email
 	unsafeEmail := mandelboxRequest.UserEmail
 

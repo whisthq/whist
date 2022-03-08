@@ -59,6 +59,37 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 	_, _ = w.Write(buf)
 }
 
+// Request types
+
+// Mandelbox assign request
+type MandelboxAssignRequest struct {
+	Regions    []string           `json:"regions"`
+	CommitHash string             `json:"client_commit_hash"`
+	SessionID  int64              `json:"session_id"`
+	UserEmail  string             `json:"user_email"`
+	ResultChan chan RequestResult // Channel to pass the request result between goroutines
+}
+
+type MandelboxAssignRequestResult struct {
+}
+
+// ReturnResult is called to pass the result of a request back to the HTTP
+// request handler.
+func (s *MandelboxAssignRequest) ReturnResult(result interface{}, err error) {
+	s.ResultChan <- RequestResult{
+		Result: result,
+		Err:    err,
+	}
+}
+
+// createResultChan is called to create the Go channel to pass the request
+// result back to the HTTP request handler via ReturnResult.
+func (s *MandelboxAssignRequest) CreateResultChan() {
+	if s.ResultChan == nil {
+		s.ResultChan = make(chan RequestResult)
+	}
+}
+
 // Helper functions
 
 // ParseRequest will split the request body, unmarshal into a raw JSON map, and then unmarshal
