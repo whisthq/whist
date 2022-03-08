@@ -436,53 +436,54 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         udp_send_udp_packet(context, &network_settings_packet);
     }
     bool send_network_settings = false;
-#if !USE_WHIST_CONGESTION_CONTROL
-    // *************
-    // Potentially ask for new network settings based on the current network statistics
-    // *************
+    if (!FEATURE_ENABLED(WHIST_CONGESTION_CONTROL)) {
+        // *************
+        // Potentially ask for new network settings based on the current network statistics
+        // *************
 
-    // TODO: Probably move statistics calculations into udp.c as well,
-    //       but it depends on how much statistics are per-frame-specific
-    if (get_timer(&context->last_network_settings_time) > STATISTICS_SECONDS) {
-        // Get network statistics and desired network settings
-        NetworkStatistics network_statistics =
-            get_network_statistics(context->ring_buffers[PACKET_VIDEO]);
-        NetworkSettings desired_network_settings = get_desired_network_settings(network_statistics);
-        // If we have new desired network settings for the other socket,
-        if (memcmp(&context->desired_network_settings, &desired_network_settings,
-                   sizeof(NetworkSettings)) != 0) {
-            context->desired_network_settings = desired_network_settings;
-            send_network_settings = true;
+        // TODO: Probably move statistics calculations into udp.c as well,
+        //       but it depends on how much statistics are per-frame-specific
+        if (get_timer(&context->last_network_settings_time) > STATISTICS_SECONDS) {
+            // Get network statistics and desired network settings
+            NetworkStatistics network_statistics =
+                get_network_statistics(context->ring_buffers[PACKET_VIDEO]);
+            NetworkSettings desired_network_settings =
+                get_desired_network_settings(network_statistics);
+            // If we have new desired network settings for the other socket,
+            if (memcmp(&context->desired_network_settings, &desired_network_settings,
+                       sizeof(NetworkSettings)) != 0) {
+                context->desired_network_settings = desired_network_settings;
+                send_network_settings = true;
+            }
+            start_timer(&context->last_network_settings_time);
         }
-        start_timer(&context->last_network_settings_time);
-    }
-    UNUSED(get_incoming_bitrate);
-#else
-    GroupStats* group_stats = &context->group_stats[group_id % MAX_GROUP_STATS];
-    // As per WCC.md,
-    // An inter-departure time is computed between consecutive groups as T(i) - T(i-1),
-    // where T(i) is the departure timestamp of the last packet in the current packet
-    // group being processed.  Any packets received out of order are ignored by the
-    // arrival-time model.
-    if (departure_time > group_stats->departure_time) {
-        group_stats->departure_time = departure_time;
-        group_stats->arrival_time = arrival_time;
-    }
-    if (group_id > context->curr_group_id) {
-        if (context->prev_group_id != 0) {
-            GroupStats* curr_group_stats =
-                &context->group_stats[context->curr_group_id % MAX_GROUP_STATS];
-            GroupStats* prev_group_stats =
-                &context->group_stats[context->prev_group_id % MAX_GROUP_STATS];
-            send_network_settings = whist_congestion_controller(
-                curr_group_stats, prev_group_stats, get_incoming_bitrate(context),
-                get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO]),
-                &context->desired_network_settings);
+        UNUSED(get_incoming_bitrate);
+    } else {
+        GroupStats* group_stats = &context->group_stats[group_id % MAX_GROUP_STATS];
+        // As per WCC.md,
+        // An inter-departure time is computed between consecutive groups as T(i) - T(i-1),
+        // where T(i) is the departure timestamp of the last packet in the current packet
+        // group being processed.  Any packets received out of order are ignored by the
+        // arrival-time model.
+        if (departure_time > group_stats->departure_time) {
+            group_stats->departure_time = departure_time;
+            group_stats->arrival_time = arrival_time;
         }
-        context->prev_group_id = context->curr_group_id;
-        context->curr_group_id = group_id;
+        if (group_id > context->curr_group_id) {
+            if (context->prev_group_id != 0) {
+                GroupStats* curr_group_stats =
+                    &context->group_stats[context->curr_group_id % MAX_GROUP_STATS];
+                GroupStats* prev_group_stats =
+                    &context->group_stats[context->prev_group_id % MAX_GROUP_STATS];
+                send_network_settings = whist_congestion_controller(
+                    curr_group_stats, prev_group_stats, get_incoming_bitrate(context),
+                    get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO]),
+                    &context->desired_network_settings);
+            }
+            context->prev_group_id = context->curr_group_id;
+            context->curr_group_id = group_id;
+        }
     }
-#endif
     if (send_network_settings) {
         UDPPacket network_settings_packet;
         network_settings_packet.type = UDP_NETWORK_SETTINGS;

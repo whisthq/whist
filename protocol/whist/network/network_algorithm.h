@@ -32,8 +32,6 @@ Defines
 // This refers to the percentage of packets that will be FEC packets
 #define AUDIO_FEC_RATIO 0.0
 #define VIDEO_FEC_RATIO 0.0
-// Enable the use of Whist Congestion Control algorithm defined in WCC.md
-#define USE_WHIST_CONGESTION_CONTROL true
 
 typedef struct {
     int num_nacks_per_second;
