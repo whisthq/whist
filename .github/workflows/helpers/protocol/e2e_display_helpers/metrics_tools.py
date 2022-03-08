@@ -37,8 +37,8 @@ def parse_line(line):
         else:
             normal_sum = float(metric_values[0])
     else:
-        count = int(float(metric_values[2]))
-        normal_sum = float(metric_values[1])
+        count = int(float(metric_values[1]))
+        normal_sum = float(metric_values[2])
 
     assert count >= 0
     assert normal_sum >= 0
