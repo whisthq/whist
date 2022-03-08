@@ -30,6 +30,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         # Files needed for Client unit tests
         ../client/audio.c
         ../client/client_utils.c
+        ../client/whist_client.c
+        ../client/client_statistic.c
         ../client/network.c
         ../client/sdl_event_handler.c
         ../client/sdl_utils.c
@@ -76,6 +78,8 @@ else()
         # Files needed for Client unit tests
         ../client/audio.c
         ../client/client_utils.c
+        ../client/whist_client.c
+        ../client/client_statistic.c
         ../client/network.c
         ../client/sdl_event_handler.c
         ../client/sdl_utils.c

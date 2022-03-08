@@ -57,6 +57,7 @@ extern "C" {
 extern WhistMutex window_resize_mutex;
 extern volatile SDL_Window* window;
 extern volatile char* server_ip;
+extern volatile char client_hex_aes_private_key[33];
 }
 
 class ProtocolTest : public CaptureStdoutFixture {};
@@ -1791,28 +1792,26 @@ TEST_F(ProtocolTest, CommandLineTest) {
 
 TEST_F(ProtocolTest, ClientParseEmpty) {
     EXPECT_EQ(alloc_parsed_args(), 0);
-    int argc = 1;
     char argv0[] = "./wclient";
-    char* argv[] = {argv0, NULL};
+    char* argv[] = {argv0};
+    int argc = ARRAY_LENGTH(argv);
     int ret_val = client_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 0);
     EXPECT_EQ(free_parsed_args(), 0);
 }
 
 TEST_F(ProtocolTest, ClientParseHelp) {
-    int argc = 2;
+    EXPECT_EQ(alloc_parsed_args(), 0);
     char argv0[] = "./wclient";
     char argv1[] = "--help";
-    char* argv[] = {argv0, argv1, NULL};
-    int ret_val = client_parse_args(argc, argv);
-    EXPECT_EQ(ret_val, 0);
+    char* argv[] = {argv0, argv1};
+    int argc = ARRAY_LENGTH(argv);
+    EXPECT_EXIT(client_parse_args(argc, argv), testing::ExitedWithCode(0), "");
     check_stdout_line(::testing::StartsWith("Usage:"));
-    check_stdout_line(::testing::HasSubstr("--help"));
 }
 
 TEST_F(ProtocolTest, ClientParseArgsWithURL) {
     EXPECT_EQ(alloc_parsed_args(), 0);
-    int argc = 5;
     // argv: ./wclient 16.72.29.190 -p32262:7415.32263:66182.32273:12774 -k
     // 9d3ff73c663e13bce0780d1b95c89582
     char argv0[] = "./wclient";
@@ -1822,7 +1821,9 @@ TEST_F(ProtocolTest, ClientParseArgsWithURL) {
     char argv4[] = "9d3ff73c663e13bce0780d1b95c89582";
     char argv5[] = "-x";
     char argv6[] = "https://www.nytimes.com/";
-    char* argv[] = {argv0, argv1, argv2, argv3, argv4, argv5, argv6, NULL};
+    
+    char* argv[] = {argv0, argv1, argv2, argv3, argv4, argv5, argv6};
+    int argc = ARRAY_LENGTH(argv);
     int ret_val = client_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 0);
     check_stdout_line(::testing::HasSubstr("Mapping port: origin=32262, destination=7415"));
@@ -1831,12 +1832,29 @@ TEST_F(ProtocolTest, ClientParseArgsWithURL) {
 
     // Check that the server ip was saved properly. Use a loop because server_ip is volatile.
     size_t server_ip_len = 0, argv1_len = strlen(argv1);
+    
     while (server_ip[server_ip_len] != '\0') {
         EXPECT_TRUE(server_ip_len <= argv1_len);
         EXPECT_EQ(server_ip[server_ip_len], argv1[server_ip_len]);
         server_ip_len++;
     }
+    
     EXPECT_EQ(server_ip_len, argv1_len);
+    
+    // Check that the AES key was saved properly. Use a loop because client_hex_aes_private_key is volatile.
+    size_t aes_key_len = 0, argv4_len = strlen(argv4);
+    printf("%s %s\n", client_hex_aes_private_key, argv4);
+    while (client_hex_aes_private_key[aes_key_len] != '\0') {
+        EXPECT_TRUE(aes_key_len <= argv4_len);
+        if (isdigit(client_hex_aes_private_key[aes_key_len])) {
+            EXPECT_EQ(client_hex_aes_private_key[aes_key_len], argv4[aes_key_len]);
+        } else {
+            EXPECT_EQ(client_hex_aes_private_key[aes_key_len]-'A'+'a', argv4[aes_key_len]);
+        }
+        
+        aes_key_len++;
+    }
+    EXPECT_EQ(aes_key_len, argv4_len);
     EXPECT_EQ(free_parsed_args(), 0);
 }
 
