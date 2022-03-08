@@ -6,8 +6,12 @@ import "github.com/google/uuid"
 // service. They're used in a lot of packages, so we put them in the least
 // common denominator --- this package.
 const (
-	WhistDir        string = "/whist/"
-	TempDir         string = WhistDir + "temp/"
+	WhistDir string = "/whist/"
+	TempDir  string = WhistDir + "temp/"
+
+	// WhistPrivateDir gets its own root path so that we avoid leaking our TLS
+	// certificates to users even if they escape container access and can read
+	// the entire `/whist/` directory.
 	WhistPrivateDir string = "/whistprivate/"
 )
 
