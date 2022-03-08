@@ -25,14 +25,7 @@ const AllowDownloads = () => {
         </div>
         <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-xl m-auto">
           Whist is early, but we&lsquo;re excited to see what you&lsquo;ll do
-          with a lighter, faster Google Chrome. For optimal experience, please
-          review the{" "}
-          <Link to="requirements" spy={true} smooth={true}>
-            <span className="text-blue-light cursor-pointer">
-              requirements below
-            </span>
-          </Link>
-          .
+          with a lighter, faster Google Chrome.
         </div>
         {width > ScreenSize.SMALL ? (
           <>
