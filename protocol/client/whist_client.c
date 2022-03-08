@@ -703,13 +703,14 @@ int whist_client_main(int argc, char* argv[]) {
         if (exit_code == WHIST_EXIT_FAILURE) {
             LOG_ERROR("Failure in main loop! Exiting with code WHIST_EXIT_FAILURE");
         } else if (exit_code == WHIST_EXIT_CLI) {
-            // If we're in prod or staging, CLI errors are serious errors since we should alwayas be passing the correct
-            // arguments, so we log them as errors to report to Sentry.
-            char *environment = whist_error_monitor_get_environment();
+            // If we're in prod or staging, CLI errors are serious errors since we should always
+            // be passing the correct arguments, so we log them as errors to report to Sentry.
+            char* environment = whist_error_monitor_get_environment();
             if (strcmp(environment, "prod") == 0 || strcmp(environment, "staging") == 0) {
                 LOG_ERROR("Failure in main loop! Exiting with code WHIST_EXIT_CLI");
             } else {
-                // In dev or localdev, CLI errors will happen a lot as engineers develop, so we only log them as warnings
+                // In dev or localdev, CLI errors will happen a lot as engineers develop, so we only
+                // log them as warnings
                 LOG_WARNING("Failure in main loop! Exiting with code WHIST_EXIT_CLI");
             }
         } else {
