@@ -43,6 +43,7 @@ extern "C" {
 #include "server/parse_args.h"
 #endif
 
+#include <whist/file/file_synchronizer.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/aes.h>
 #include <whist/utils/png.h>
@@ -840,6 +841,200 @@ TEST_F(ProtocolTest, BadDecrypt) {
     EXPECT_EQ(decrypted_len, -1);
 
     check_stdout_line(LOG_WARNING_MATCHER);
+}
+
+/**
+ * file/file_synchronizer.c
+ **/
+
+// Information regarding the test files we use
+#define LARGE_IMAGE_SIZE 3512956
+
+// Based on chunk size, the number of steps it takes to transfer the large image file
+constexpr int transfer_steps_large_image() { return LARGE_IMAGE_SIZE / CHUNK_SIZE + 1; }
+
+// Returns true if passed in file paths hold the same contents, false otherwise
+bool files_are_equal(const char* file_name, const char* file_name_other) {
+    FILE* f1 = fopen(file_name, "r");
+    FILE* f2 = fopen(file_name_other, "r");
+
+    char c1, c2;
+
+    // Loop through byte by byte and check equality
+    do {
+        c1 = fgetc(f1);
+        c2 = fgetc(f2);
+        if (c1 != c2) {
+            return false;
+        }
+    } while (c1 != EOF && c2 != EOF);
+
+    return c1 == EOF && c2 == EOF;
+}
+
+// Does a single file transfer to test the following - whether file synchronizer can initialize
+// properly, whether file metadata is set correctly, if linked list is maintained properly, and if
+// file read and write happens successfully.
+TEST_F(ProtocolTest, FileSynchronizerTestSingleTransfer) {
+    // Init file synchronizer with noop so we write the file locally to the working directory
+    init_file_synchronizer(FILE_TRANSFER_DEFAULT);
+
+    // Transferring files linked list should be initialized and empty
+    LinkedList* transferring_files_list = file_synchronizer_get_transferring_files();
+    EXPECT_EQ(linked_list_size(transferring_files_list), 0);
+
+    // Read in a file to begin transfer - this is called when a transfer is initiated.
+    const char* read_file_name = "assets/large_image.png";
+    file_synchronizer_set_file_reading_basic_metadata(read_file_name, FILE_TRANSFER_DEFAULT, NULL);
+    EXPECT_EQ(linked_list_size(transferring_files_list), 1);
+
+    TransferringFile* active_file = (TransferringFile*)linked_list_head(transferring_files_list);
+    // Rather than sending them over tcp, we save our file chunks in this array for this test
+    FileData* file_chunks[transfer_steps_large_image()];
+    FileMetadata* file_metadata;
+    FileData* file_close_chunk;
+
+    // Before opening make sure that the chunk cannot be read
+    file_synchronizer_read_next_file_chunk(active_file, &file_chunks[0]);
+    EXPECT_TRUE(file_chunks[0] == NULL);
+
+    // Begin read and verify that file metadata is correct
+    file_synchronizer_open_file_for_reading(active_file, &file_metadata);
+    EXPECT_STREQ(file_metadata->filename, "large_image.png");
+    EXPECT_EQ(file_metadata->global_file_id, 0);
+    EXPECT_EQ(file_metadata->transfer_type, FILE_TRANSFER_DEFAULT);
+    EXPECT_EQ(file_metadata->filename_len, strlen("large_image.png"));
+    EXPECT_EQ(file_metadata->file_size, LARGE_IMAGE_SIZE);
+
+    // Read chunks from file and verify transferring files list is empty after
+    for (int i = 0; i < transfer_steps_large_image(); i++) {
+        file_synchronizer_read_next_file_chunk(active_file, &file_chunks[i]);
+    }
+    // Final read necessary to evict transferring file since we keep it until an empty read
+    file_synchronizer_read_next_file_chunk(active_file, &file_close_chunk);
+    EXPECT_EQ(linked_list_size(transferring_files_list), 0);
+
+    // Begin write process on this file synchronizer - mirrors that of server/client relation
+    file_synchronizer_open_file_for_writing(file_metadata);
+    EXPECT_EQ(linked_list_size(transferring_files_list), 1);
+
+    // Write the file chunks - these are usually sent over a tcp channel
+    for (int i = 0; i < transfer_steps_large_image(); i++) {
+        file_synchronizer_write_file_chunk(file_chunks[i]);
+        deallocate_region(file_chunks[i]);
+    }
+    // Final write necessary to register file close chunk
+    file_synchronizer_write_file_chunk(file_close_chunk);
+    EXPECT_EQ(linked_list_size(transferring_files_list), 0);
+
+    // Since the FILE_TRANSFER_DEFAULT flag is set - the file is written to the current directory
+    const char* write_file_name = "./large_image.png";
+
+    // Verify that both files are equal
+    EXPECT_TRUE(files_are_equal(read_file_name, write_file_name));
+    remove(write_file_name);
+
+    destroy_file_synchronizer();
+}
+
+// More than enough file chunks for testing many files - 1GB if filled
+#define FILE_CHUNK_LIMIT 1000
+
+// Allow the file synchronizer to run multiple files through. Replicate the action seen on
+// both client and server ends and ensure that the transferring files list is correct at all
+// times and that the files are transferred correctly by checking their equality.
+TEST_F(ProtocolTest, FileSynchronizerMultipleFileTransfer) {
+    // Since FILE_TRANSFER_DEFAULT is on, writes are saved to '.'
+    const int num_files = 3;
+    const char* read_files[] = {"assets/large_image.png", "assets/image.png",
+                                "assets/100-frames-h264.mp4"};
+    const char* write_files[] = {"./large_image.png", "./image.png", "./100-frames-h264.mp4"};
+
+    init_file_synchronizer(FILE_TRANSFER_DEFAULT);
+
+    // Activate target files for reading
+    for (int i = 0; i < num_files; i++) {
+        file_synchronizer_set_file_reading_basic_metadata(read_files[i], FILE_TRANSFER_DEFAULT,
+                                                          NULL);
+    }
+    LinkedList* transferring_files_list = file_synchronizer_get_transferring_files();
+    EXPECT_EQ(linked_list_size(transferring_files_list), num_files);
+
+    FileData* current_file_chunk;
+    // Do not need an exact count of file chunk pointers, just more than enough. Rather than a tcp
+    // channel we buffer them here in this test and feed them back to the synchronizer afterwards.
+    FileData* file_chunks[FILE_CHUNK_LIMIT];
+    FileMetadata* current_file_metadata;
+    FileMetadata* file_metadatas[num_files];
+
+    int file_chunk_counter = 0;
+    int file_metadata_counter = 0;
+    // Read and "send" the files the same way client/server do in their respective tcp threads
+    while (linked_list_size(transferring_files_list)) {
+        linked_list_for_each(transferring_files_list, TransferringFile, transferring_file) {
+            file_synchronizer_read_next_file_chunk(transferring_file, &current_file_chunk);
+            if (current_file_chunk == NULL) {
+                // If chunk cannot be read, then try opening the file
+                file_synchronizer_open_file_for_reading(transferring_file, &current_file_metadata);
+                // Ensure that our files are read properly
+                EXPECT_TRUE(current_file_metadata != NULL);
+                file_metadatas[file_metadata_counter] = current_file_metadata;
+                file_metadata_counter++;
+            } else {
+                file_chunks[file_chunk_counter] = current_file_chunk;
+                file_chunk_counter++;
+            }
+        }
+    }
+
+    // Begin writing files - these usually arrive as triggers as a tcp message
+    for (int i = 0; i < num_files; i++) {
+        file_synchronizer_open_file_for_writing(file_metadatas[i]);
+        deallocate_region(file_metadatas[i]);
+    }
+
+    // Read in chunks - file synchronizer should handle matching correct chunks to files
+    for (int i = 0; i < file_chunk_counter; i++) {
+        file_synchronizer_write_file_chunk(file_chunks[i]);
+        deallocate_region(file_chunks[i]);
+    }
+
+    // Verify our files our equal
+    for (int i = 0; i < num_files; i++) {
+        EXPECT_TRUE(files_are_equal(read_files[i], write_files[i]));
+        remove(write_files[i]);
+    }
+
+    destroy_file_synchronizer();
+}
+
+// Tests the reset all method - should completely clear transferring files even in the middle of
+// transfers
+TEST_F(ProtocolTest, FileSynchronizerResetAll) {
+    // Init file synchronizer with noop so we write the file locally to the working directory
+    init_file_synchronizer(FILE_TRANSFER_DEFAULT);
+
+    LinkedList* transferring_files_list = file_synchronizer_get_transferring_files();
+    FileMetadata* file_metadata;
+
+    // Begin reading file
+    file_synchronizer_set_file_reading_basic_metadata("assets/large_image.png",
+                                                      FILE_TRANSFER_DEFAULT, NULL);
+    TransferringFile* active_file = (TransferringFile*)linked_list_head(transferring_files_list);
+    file_synchronizer_open_file_for_reading(active_file, &file_metadata);
+
+    // Only read half of the available chunks
+    FileData* file_chunks[transfer_steps_large_image()];
+    for (int i = 0; i < max(transfer_steps_large_image() / 2, 1); i++) {
+        file_synchronizer_read_next_file_chunk(active_file, &file_chunks[i]);
+    }
+
+    // Reset all files and check that list is cleared
+    EXPECT_EQ(linked_list_size(transferring_files_list), 1);
+    reset_all_transferring_files();
+    EXPECT_EQ(linked_list_size(transferring_files_list), 0);
+
+    destroy_file_synchronizer();
 }
 
 /**

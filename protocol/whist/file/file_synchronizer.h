@@ -36,6 +36,14 @@ Custom types
 
 #define NUM_TRANSFERRING_FILES 5
 
+/*
+============================
+Includes
+============================
+*/
+
+#include <whist/utils/linked_list.h>
+
 /**
  * @brief                          The type of the file chunk being sent
  */
@@ -50,7 +58,7 @@ typedef enum FileChunkType {
  *                                 the information of a file chunk
  */
 typedef struct FileData {
-    int index;                 // The index of the file in the synchrony array
+    int global_file_id;        // The global id of the file for synchrony
     size_t size;               // Number of bytes for the file chunk data
     FileChunkType chunk_type;  // Whether this is a first, middle or last chunk
     char data[0];              // The file chunk byte contents
@@ -60,6 +68,7 @@ typedef struct FileData {
  * @brief                          The type of the file transfer, as a boolean enum
  */
 typedef enum FileTransferType {
+    FILE_TRANSFER_DEFAULT = 0,              // Default setting - used for testing purposes
     FILE_TRANSFER_SERVER_DROP = 0b0001,     // Drop a file onto the server
     FILE_TRANSFER_CLIENT_DROP = 0b0010,     // Drop a file onto the client
     FILE_TRANSFER_SERVER_UPLOAD = 0b0100,   // Upload a file to the server
@@ -80,7 +89,7 @@ typedef union FileEventInfo {
  * @brief                          A packet of data containing a file's metadata
  */
 typedef struct FileMetadata {
-    int index;                       // The index of the file in the synchrony array
+    int global_file_id;              // The global id of the file for synchrony
     FileTransferType transfer_type;  // Type of file transfer
     FileEventInfo event_info;        // Extra information for the file transfer
     int file_size;                   // Total file size
@@ -102,11 +111,13 @@ typedef enum FileTransferDirection {
  *                                 a transferring file.
  */
 typedef struct TransferringFile {
-    int id;             // Unique identifier (unique across ALL written files,
-                        //     not just active ones, but can be -1 for read files)
-    char* filename;     // The filename without the path (can be NULL for read-end files)
-    char* file_path;    // The local file path
-    FILE* file_handle;  // The local file handle
+    LINKED_LIST_HEADER;
+    int global_file_id;  // Unique identifier for client-server synchrony
+    int id;              // Unique identifier (unique across ALL written files,
+                         //     not just active ones, but can be -1 for read files)
+    char* filename;      // The filename without the path (can be NULL for read-end files)
+    char* file_path;     // The local file path
+    FILE* file_handle;   // The local file handle
     FileTransferType transfer_type;   // Type of file transfer
     FileEventInfo event_info;         // Extra information for the file transfer
     FileTransferDirection direction;  // FILE_READ_END if read end, FILE_WRITE_END if write end
@@ -124,6 +135,13 @@ Public Functions
  * @param requested_actions        The file transfer types to attempt to initialize
  */
 void init_file_synchronizer(FileTransferType requested_actions);
+
+/**
+ * @brief                          Get a list of the currently transferring files
+ *
+ * @returns                        A linked list of TransferringFile(s)
+ */
+LinkedList* file_synchronizer_get_transferring_files(void);
 
 /**
  * @brief                          Open a file for writing based on `file_metadata`
@@ -169,23 +187,25 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
  * @brief                          Open a file and generate the Open a file
  *                                 for reading and generate the FileMetadata
  *
- * @param file_index               Index of file in file synchrony array
+ * @param active_file              The pointer to the transferring file
  *
  * @param file_metadata_ptr        Pointer to pointer for filled file metadata
  *
  */
-void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file_metadata_ptr);
+void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
+                                             FileMetadata** file_metadata_ptr);
 
 /**
  * @brief                          Read the next file chunk from a
  *                                 transferring file.
  *
- * @param file_index               Index of transferring file
+ * @param active_file              The pointer to the transferring file
  *
  * @param file_chunk_ptr           Pointer to pointer for filled file chunk
  *
  */
-void file_synchronizer_read_next_file_chunk(int file_index, FileData** file_chunk_ptr);
+void file_synchronizer_read_next_file_chunk(TransferringFile* active_file,
+                                            FileData** file_chunk_ptr);
 
 /**
  * @brief                          Reset all transferring files
@@ -197,7 +217,7 @@ void reset_all_transferring_files(void);
  *                                 has canceled file selection by writing a trigger file
  *
  */
-void file_syncrhonizer_cancel_user_file_upload(void);
+void file_synchronizer_cancel_user_file_upload(void);
 
 /**
  * @brief                          Cleanup the file synchronizer

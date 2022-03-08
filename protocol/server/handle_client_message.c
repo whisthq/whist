@@ -372,6 +372,6 @@ static int handle_frame_ack_message(whist_server_state *state, WhistClientMessag
 }
 
 static int handle_file_upload_cancel_message(whist_server_state *state, WhistClientMessage *wcmsg) {
-    file_syncrhonizer_cancel_user_file_upload();
+    file_synchronizer_cancel_user_file_upload();
     return 0;
 }
