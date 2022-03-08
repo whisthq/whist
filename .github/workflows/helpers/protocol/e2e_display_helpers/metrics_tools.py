@@ -48,8 +48,9 @@ def parse_line(line):
         max_val: max_val,
         min_val: min_val,
         count: count,
-        normal_sum: normal_sum
+        normal_sum: normal_sum,
     }
+
 
 def extract_metrics(client_log_file, server_log_file):
     """
