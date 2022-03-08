@@ -39,7 +39,7 @@ The End-to-End streaming test is an integration test which verifies that all com
 
 Running the E2E script in this folder will allow to run the Whist server and client in a controlled and stable environment, thus it will produce (hopefully) reproducible results. The client and server will each live inside a mandelbox, and the two mandelbox will run on either the same or two separate AWS instances, depending on the user's settings.
 
-The code in this folder will allow you to run the test on one/two AWS instances and download all the monitoring and benchmarking logs. The scripts can run either on a local machine, or within a CI workflow. The code for the `Protocol: End-to-End Streaming Testing` workflow is not in this folder, and can be found [here](../../.github/workflows/protocol-e2e-streaming-testing.yml). For more details on the workflow, check out the corresponding section below.
+The code in this folder will allow you to run the test on one/two AWS instances and download all the monitoring and benchmarking logs. The scripts can run either on a local machine, or within a CI workflow. The code for the `Protocol: End-to-End Streaming Testing` workflow is not in this folder, and can be found [here](../../.github/workflows/protocol-e2e-streaming-testing.yml). For more details on the workflow, check out the corresponding [section below](#the-protocol-end-to-end-streaming-testing-ci-workflow).
 
 ### Usage
 
@@ -131,7 +131,7 @@ python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </p
 
 ---
 
-### The `Protocol: End-to-End Streaming Testing` workflow
+### The `Protocol: End-to-End Streaming Testing` CI workflow
 
 TODO:
 
