@@ -15,6 +15,7 @@ import (
 	"testing/iotest"
 	"time"
 
+	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -35,11 +36,11 @@ func TestSpinUpHandler(t *testing.T) {
 		CookiesJSON:           "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
 		BookmarksJSON:         "{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}",
 		Extensions:            "not_real_extension_id,not_real_second_extension_id",
-		resultChan:            make(chan requestResult),
+		resultChan:            make(chan httputils.RequestResult),
 	}
 
-	testServerQueue := make(chan ServerRequest)
-	receivedRequest := make(chan ServerRequest)
+	testServerQueue := make(chan httputils.ServerRequest)
+	receivedRequest := make(chan httputils.ServerRequest)
 
 	res := httptest.NewRecorder()
 	httpRequest, err := generateTestJSONTransportRequest(testJSONTransportRequest)
@@ -132,7 +133,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		CookiesJSON:           "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
 		BookmarksJSON:         "{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}",
 		Extensions:            "",
-		resultChan:            make(chan requestResult),
+		resultChan:            make(chan httputils.RequestResult),
 	}
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
 	if err != nil {
@@ -158,7 +159,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		HostPortForTCP32273: 32273,
 		AesKey:              "aesKey",
 	}
-	gotRequestChan := make(chan ServerRequest)
+	gotRequestChan := make(chan httputils.ServerRequest)
 
 	// Receive requests from the HTTP server and "process" them in a
 	// separate goroutine by returning a predetermined result
@@ -225,13 +226,13 @@ func TestHttpServerIntegration(t *testing.T) {
 
 // TestSendRequestResultErr checks if an error result is handled properly
 func TestSendRequestResultErr(t *testing.T) {
-	reqResult := requestResult{
+	reqResult := httputils.RequestResult{
 		Err: utils.MakeError("test error"),
 	}
 	res := httptest.NewRecorder()
 
 	// A 406 error should arise
-	reqResult.send(res)
+	reqResult.Send(res)
 
 	if res.Result().StatusCode != http.StatusNotAcceptable {
 		t.Fatalf("error sending request results with error. Expected status code %v, got %v", http.StatusNotAcceptable, res.Result().StatusCode)
@@ -240,14 +241,14 @@ func TestSendRequestResultErr(t *testing.T) {
 
 // TestSendRequestResult tests if a valid request resolves successfully
 func TestSendRequestResult(t *testing.T) {
-	reqResult := requestResult{
+	reqResult := httputils.RequestResult{
 		Result: "test result",
 	}
 	res := httptest.NewRecorder()
 	io.WriteString(res, "test content")
 
 	// A 200 status code should be set
-	reqResult.send(res)
+	reqResult.Send(res)
 
 	if res.Result().StatusCode != http.StatusOK {
 		t.Fatalf("error sending a valid request results. Expected status code %v, got %v", http.StatusOK, res.Result().StatusCode)
@@ -258,7 +259,7 @@ func TestSendRequestResult(t *testing.T) {
 func TestProcessJSONDataRequestWrongType(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "https://localhost", nil)
-	testChan := make(chan ServerRequest)
+	testChan := make(chan httputils.ServerRequest)
 
 	// processJSONDataRequest will return being trying to authenticate and parse request given the wrong request type
 	processJSONDataRequest(res, req, testChan)
@@ -274,7 +275,7 @@ func TestProcessJSONDataRequestWrongType(t *testing.T) {
 func TestProcessJSONDataRequestEmptyBody(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "https://localhost", nil)
-	testChan := make(chan ServerRequest)
+	testChan := make(chan httputils.ServerRequest)
 
 	// processJSONDataRequest will fail to parse request with an empty request body (will not be able to unmarshal)
 	processJSONDataRequest(res, req, testChan)
@@ -293,7 +294,7 @@ func TestHandleJSONTransportRequest(t *testing.T) {
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
-		resultChan:            make(chan requestResult),
+		resultChan:            make(chan httputils.RequestResult),
 	}
 
 	testmux := &sync.Mutex{}
@@ -416,7 +417,7 @@ func TestVerifyRequestWrongType(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "https://localhost", nil)
 
 	// verifyRequestType will catch request with wrong method and return an error
-	if err := verifyRequestType(res, req, http.MethodPut); err == nil {
+	if err := httputils.VerifyRequestType(res, req, http.MethodPut); err == nil {
 		t.Fatal("error verifying request type when the request method does not match. Expected an error, got nil")
 	}
 
@@ -430,7 +431,7 @@ func TestVerifyRequestTypeNilRequest(t *testing.T) {
 	res := httptest.NewRecorder()
 
 	// verifyRequestType will catch nil request and return an error
-	if err := verifyRequestType(res, nil, http.MethodPut); err == nil {
+	if err := httputils.VerifyRequestType(res, nil, http.MethodPut); err == nil {
 		t.Fatal("error verifying request type when request is nil. Expected an error, got nil")
 	}
 
@@ -444,11 +445,11 @@ func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "https://localhost", iotest.ErrReader(errors.New("test error")))
 	testJSONTransportRequest := JSONTransportRequest{
-		resultChan: make(chan requestResult),
+		resultChan: make(chan httputils.RequestResult),
 	}
 
 	// authenticateAndParseRequest will get an error trying to read request body and will cause an error
-	err := authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
+	err := authenticateRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request when real all fails. Expected err, got nil")
@@ -464,11 +465,11 @@ func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "https://localhost", bytes.NewReader([]byte{}))
 	testJSONTransportRequest := JSONTransportRequest{
-		resultChan: make(chan requestResult),
+		resultChan: make(chan httputils.RequestResult),
 	}
 
 	// authenticateAndParseRequest will be unable to unmarshal an empty body and will cause an error
-	err := authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
+	err := authenticateRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request with empty body. Expected err, got nil")
@@ -486,7 +487,7 @@ func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
 	// generateTestJSONTransportRequest will give a well formatted request
 	testJSONTransportRequest := JSONTransportRequest{
 		JSONData:   "test_json_data",
-		resultChan: make(chan requestResult),
+		resultChan: make(chan httputils.RequestResult),
 	}
 
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
@@ -495,7 +496,7 @@ func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
 	}
 
 	// authenticateAndParseRequest will return an error because jwt_access_token is not set in serverRequest
-	err = authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
+	err = authenticateRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
@@ -514,7 +515,7 @@ func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
 	testJSONTransportRequest := JSONTransportRequest{
 		JwtAccessToken: "test_invalid_jwt_token",
 		JSONData:       "test_json_data",
-		resultChan:     make(chan requestResult),
+		resultChan:     make(chan httputils.RequestResult),
 	}
 
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
@@ -523,7 +524,7 @@ func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
 	}
 
 	// authenticateAndParseRequest will return an error because the jwt_access_token is not valid
-	err = authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
+	err = authenticateRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")

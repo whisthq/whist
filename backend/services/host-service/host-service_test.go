@@ -18,6 +18,7 @@ import (
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
+	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -265,7 +266,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 				JwtAccessToken:        "test_jwt_token",
 				MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 				JSONData:              "test_json_data",
-				resultChan:            make(chan requestResult),
+				resultChan:            make(chan httputils.RequestResult),
 			}
 
 			testmux := &sync.Mutex{}
