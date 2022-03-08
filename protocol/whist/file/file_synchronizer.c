@@ -564,5 +564,6 @@ void destroy_file_synchronizer(void) {
     is_initialized = false;
 
     whist_unlock_mutex(file_synchrony_update_mutex);
+    whist_destroy_mutex(file_synchrony_update_mutex);
     LOG_INFO("Finished destroying file synchronizer");
 }
