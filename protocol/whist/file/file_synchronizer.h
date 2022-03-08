@@ -68,6 +68,7 @@ typedef struct FileData {
  * @brief                          The type of the file transfer, as a boolean enum
  */
 typedef enum FileTransferType {
+    FILE_TRANSFER_DEFAULT = 0,              // Default setting - used for testing purposes
     FILE_TRANSFER_SERVER_DROP = 0b0001,     // Drop a file onto the server
     FILE_TRANSFER_CLIENT_DROP = 0b0010,     // Drop a file onto the client
     FILE_TRANSFER_SERVER_UPLOAD = 0b0100,   // Upload a file to the server

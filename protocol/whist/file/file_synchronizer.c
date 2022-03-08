@@ -57,7 +57,7 @@ unsigned long global_file_id = 0;
 static LinkedList transferring_files;
 static WhistMutex file_synchrony_update_mutex;  // used to protect the global file synchrony
 static bool is_initialized = false;
-static FileTransferType enabled_actions = 0;
+static FileTransferType enabled_actions = FILE_TRANSFER_DEFAULT;
 
 /*
 ============================
@@ -172,13 +172,13 @@ void init_file_synchronizer(FileTransferType requested_actions) {
 
     file_synchrony_update_mutex = whist_create_mutex();
     if ((requested_actions & FILE_TRANSFER_SERVER_DROP) && init_file_drop_handler()) {
-        enabled_actions |= FILE_TRANSFER_SERVER_DROP;
+        enabled_actions = (FileTransferType)(enabled_actions | FILE_TRANSFER_SERVER_DROP);
     }
     if ((requested_actions & FILE_TRANSFER_CLIENT_DOWNLOAD)) {
-        enabled_actions |= FILE_TRANSFER_CLIENT_DOWNLOAD;
+        enabled_actions = (FileTransferType)(enabled_actions | FILE_TRANSFER_CLIENT_DOWNLOAD);
     }
     if ((requested_actions & FILE_TRANSFER_SERVER_UPLOAD)) {
-        enabled_actions |= FILE_TRANSFER_SERVER_UPLOAD;
+        enabled_actions = (FileTransferType)(enabled_actions | FILE_TRANSFER_SERVER_UPLOAD);
     }
 
     is_initialized = true;
@@ -232,7 +232,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
         case FILE_TRANSFER_CLIENT_DOWNLOAD: {
             const char* home_dir = getenv(HOME_ENV_VAR);
             const char* downloads = "Downloads";
-            char* download_file_dir = malloc(strlen(home_dir) + 1 + strlen(downloads) + 1);
+            char* download_file_dir = (char*)malloc(strlen(home_dir) + 1 + strlen(downloads) + 1);
             snprintf(download_file_dir, strlen(home_dir) + 1 + strlen(downloads) + 1, "%s%c%s",
                      home_dir, sep, downloads);
             file_dir = download_file_dir;
@@ -250,7 +250,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
 
     // Set transferring file filepath
     const size_t file_path_len = strlen(file_dir) + 1 + strlen(active_file->filename) + 1;
-    active_file->file_path = safe_malloc(file_path_len + 1);
+    active_file->file_path = (char*)safe_malloc(file_path_len + 1);
     snprintf(active_file->file_path, file_path_len + 1, "%s%c%s", file_dir, sep,
              active_file->filename);
 
@@ -377,7 +377,7 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
 
     // Set transferring file filepath
     size_t file_path_len = strlen(file_path);
-    active_file->file_path = safe_malloc(file_path_len + 1);
+    active_file->file_path = (char*)safe_malloc(file_path_len + 1);
     memset(active_file->file_path, 0, file_path_len + 1);
     memcpy(active_file->file_path, file_path, file_path_len);
 
@@ -445,7 +445,8 @@ void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
     size_t filename_len = strlen(temp_file_name);
 
     // Set all file metadata
-    FileMetadata* file_metadata = allocate_region(sizeof(FileData) + filename_len + 1);
+    FileMetadata* file_metadata =
+        (FileMetadata*)allocate_region(sizeof(FileData) + filename_len + 1);
     memset(file_metadata->filename, 0, filename_len + 1);
     memcpy(file_metadata->filename, temp_file_name, filename_len);
 
@@ -495,11 +496,11 @@ void file_synchronizer_read_next_file_chunk(TransferringFile* active_file,
     }
 
     LOG_INFO("Reading a chunk from global file id %d", active_file->global_file_id);
-    FileData* file_chunk = allocate_region(sizeof(FileData) + CHUNK_SIZE);
+    FileData* file_chunk = (FileData*)allocate_region(sizeof(FileData) + CHUNK_SIZE);
     file_chunk->size = fread(file_chunk->data, 1, CHUNK_SIZE, active_file->file_handle);
 
     // reallocate file chunk to only use size of read chunk
-    file_chunk = realloc_region(file_chunk, sizeof(FileData) + file_chunk->size);
+    file_chunk = (FileData*)realloc_region(file_chunk, sizeof(FileData) + file_chunk->size);
 
     file_chunk->global_file_id = active_file->global_file_id;
 
@@ -524,7 +525,7 @@ void reset_all_transferring_files(void) {
     */
 
     while (linked_list_size(&transferring_files)) {
-        reset_transferring_file(linked_list_head(&transferring_files));
+        reset_transferring_file((TransferringFile*)linked_list_head(&transferring_files));
     }
 }
 
@@ -559,7 +560,7 @@ void destroy_file_synchronizer(void) {
         destroy_file_drop_handler();
     }
 
-    enabled_actions = 0;
+    enabled_actions = FILE_TRANSFER_DEFAULT;
     is_initialized = false;
 
     whist_unlock_mutex(file_synchrony_update_mutex);

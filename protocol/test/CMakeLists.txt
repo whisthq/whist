@@ -67,6 +67,7 @@ else()
         ../whist/network/network_algorithm.c
         ../whist/video/capture/filecapture.c
         ../whist/video/ltr.c
+        ../whist/file/file_synchronizer.c
 
         # Files needed for Cursor unit tests
         whist_cursor_test.cpp
@@ -229,7 +230,7 @@ endif()
 # next version number and upload it to the S3 bucket, then change the
 # version number here.  (This ensures that tests on previous branches
 # always continue to be usable.)
-set(PROTOCOL_TEST_ASSETS_VERSION 1)
+set(PROTOCOL_TEST_ASSETS_VERSION 2)
 message(STATUS "Downloading test assets from AWS S3")
 execute_process(
     COMMAND aws s3 cp s3://fractal-test-assets/protocol-test-assets-v${PROTOCOL_TEST_ASSETS_VERSION}.tar.gz -
