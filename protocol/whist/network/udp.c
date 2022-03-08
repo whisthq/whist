@@ -241,8 +241,7 @@ Private Functions
 ============================
 */
 
-static void add_incoming_bits(UDPContext* context, timestamp_us arrival_time, int num_bytes) {
-    int num_bits = num_bytes * BITS_IN_BYTE;
+static void add_incoming_bits(UDPContext* context, timestamp_us arrival_time, int num_bits) {
     uint64_t bucket_id = get_bucket_id(arrival_time);
     IncomingBitrate* bucket =
         &context->incoming_bitrate_buckets[bucket_id % INCOMING_BITRATE_NUM_BUCKETS];
@@ -263,7 +262,9 @@ static int get_incoming_bitrate(UDPContext* context) {
         IncomingBitrate* bucket =
             &context->incoming_bitrate_buckets[i % INCOMING_BITRATE_NUM_BUCKETS];
         if (i == bucket->bucket_id) {
-            // If the bucket didn't have any encoded video packets, then ignore that bucket
+            // If the bucket's bitrate is less than IDLE_VIDEO_MAX_BITRATE, then it must have
+            // contained idle frames, where video frames would be still. We ignore such idle-video
+            // buckets to avoid skewing the average bitrate calculation
             if (bucket->num_bits < (IDLE_VIDEO_MAX_BITRATE * DURATION_PER_BUCKET) / MS_IN_SECOND) {
                 continue;
             }
@@ -537,7 +538,7 @@ static bool udp_update(void* raw_context) {
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
             if (packet_type == PACKET_VIDEO)
-                add_incoming_bits(context, arrival_time, network_payload_size);
+                add_incoming_bits(context, arrival_time, network_payload_size * BITS_IN_BYTE);
             if (packet_type == PACKET_VIDEO && udp_packet.group_id >= context->curr_group_id &&
                 !udp_packet.udp_whist_segment_data.is_a_nack &&
                 !udp_packet.udp_whist_segment_data.is_a_duplicate) {
