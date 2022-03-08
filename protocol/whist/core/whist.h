@@ -120,6 +120,7 @@ Defines
 #define safe_open(path, flags) _open(path, flags, 0666)
 #define safe_close(fd) _close(fd)
 #define strerror_r(errno, buf, len) strerror_s(buf, len, errno)
+#define strdup(str) _strdup(str)
 #else
 #define safe_mkdir(dir) mkdir(dir, 0777)
 #define safe_dup(fd) dup(fd)

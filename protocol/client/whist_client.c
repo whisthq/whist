@@ -59,9 +59,6 @@ Includes
 #include <whist/utils/mac_utils.h>
 #endif  // __APPLE__
 
-#ifdef _WIN32
-#define strdup _strdup
-#endif
 
 // N.B.: Please don't put globals here, since main.c won't be included when the testing suite is
 // used instead

@@ -1826,7 +1826,7 @@ TEST_F(ProtocolTest, ClientParseHelp) {
     check_stdout_line(::testing::StartsWith("Usage:"));
 }
 
-TEST(ProtocolTest1, ClientParseArgs) {
+TEST_F(ProtocolTest, ClientParseArgs) {
     EXPECT_EQ(alloc_parsed_args(), 0);
     // argv: ./wclient 16.72.29.190 -p32262:7415.32263:66182.32273:12774 -k
     // 9d3ff73c663e13bce0780d1b95c89582
@@ -1894,9 +1894,9 @@ TEST(ProtocolTest1, ClientParseArgs) {
     EXPECT_EQ(port_mappings[32262], 7415);
     EXPECT_EQ(port_mappings[32263], 646);
     EXPECT_EQ(port_mappings[32273], 12774);
-    // check_stdout_line(::testing::HasSubstr("Mapping port: origin=32262, destination=7415"));
-    // check_stdout_line(::testing::HasSubstr("Mapping port: origin=32263, destination=646"));
-    // check_stdout_line(::testing::HasSubstr("Mapping port: origin=32273, destination=12774"));
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=32262, destination=7415"));
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=32263, destination=646"));
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=32273, destination=12774"));
 
     // Check that the AES key was saved properly. Use a loop (instead of strcmp) because
     // client_hex_aes_private_key is volatile.
@@ -1920,12 +1920,6 @@ TEST(ProtocolTest1, ClientParseArgs) {
     // Check that we are not catching seg faults, given that developer mode is on.
     EXPECT_TRUE(get_do_not_catch_segfaults_flag());
     whist_init_features();
-    // Check that features are enables
-    EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_PACKET_ENCRYPTION));
-    EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_LONG_TERM_REFERENCE_FRAMES));
-    // check_stdout_line(::testing::HasSubstr("Feature packet encryption is enabled from the
-    // comamnd-line.")); check_stdout_line(::testing::HasSubstr("Feature long-term reference frames
-    // is enabled from the comamnd-line."));
 
     // Check the environment
     EXPECT_TRUE(whist_error_monitor_environment_set());
@@ -1965,8 +1959,14 @@ TEST(ProtocolTest1, ClientParseArgs) {
     // Check the additional port mappings
     EXPECT_EQ(port_mappings[8787], 6969);
     EXPECT_EQ(port_mappings[1234], 7248);
-    // check_stdout_line(::testing::HasSubstr("Mapping port: origin=8787, destination=6969"));
-    // check_stdout_line(::testing::HasSubstr("Mapping port: origin=1234, destination=7248"));
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=8787, destination=6969"));
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=1234, destination=7248"));
+
+    // Check that features are enabled
+    EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_PACKET_ENCRYPTION));
+    EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_LONG_TERM_REFERENCE_FRAMES));
+    check_stdout_line(::testing::HasSubstr("Feature packet encryption is enabled from the comamnd-line.")); 
+    check_stdout_line(::testing::HasSubstr("Feature long-term reference frames is enabled from the comamnd-line."));
 
     // Check session id
     char* session_id_copy = get_error_monitor_session_id();
