@@ -1965,8 +1965,8 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     // Check that features are enabled
     EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_PACKET_ENCRYPTION));
     EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_LONG_TERM_REFERENCE_FRAMES));
-    check_stdout_line(::testing::HasSubstr("Feature packet encryption is enabled from the comamnd-line.")); 
-    check_stdout_line(::testing::HasSubstr("Feature long-term reference frames is enabled from the comamnd-line."));
+    check_stdout_line(::testing::HasSubstr("Feature packet encryption is enabled from the command-line.")); 
+    check_stdout_line(::testing::HasSubstr("Feature long-term reference frames is enabled from the command-line."));
 
     // Check session id
     char* session_id_copy = get_error_monitor_session_id();
