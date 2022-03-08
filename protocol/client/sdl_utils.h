@@ -30,6 +30,13 @@ Public Functions
 */
 
 /**
+ * @brief                          Check whether we are going to initialize the protocol window without the taskbar.
+ *
+ * @returns                        A copy of the skip_taskbar static variable, which is set by a command line option.
+ */
+bool get_skip_taskbar(void);
+
+/**
  * @brief                          Creates the SDL window,
  *                                 with the currently running thread at the owner
  *

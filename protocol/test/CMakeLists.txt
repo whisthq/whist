@@ -43,6 +43,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp
+
+        # Debug console
+        ../whist/tools/debug_console.cpp
     )
 # Server & Client files, for Windows/Linux (supported on both client and server)
 else()
@@ -91,6 +94,9 @@ else()
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp
+
+        # Debug console
+        ../whist/tools/debug_console.cpp
 )
 endif()
 

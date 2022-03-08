@@ -164,6 +164,10 @@ Public Function Implementations
 ============================
 */
 
+bool get_skip_taskbar(void){
+    return skip_taskbar;
+}
+
 SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
                      char* icon_filename) {
     /*
