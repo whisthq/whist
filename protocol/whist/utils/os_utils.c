@@ -40,10 +40,13 @@ struct AppleKeyboardMapping {
     WhistKeyboardLayout mapped_layout;
 };
 
-// To add a new keyboard layout, run ibus list-engine in a mandelbox and find the appropriate one
-// for foreign characters, use https://wiki.archlinux.org/title/Input_method or something similar
-// to locate a packageand sudo apt install METHOD in the Dockerfile, then add the ibus engine to
-// this mapping
+// To add a new keyboard input method:
+// 1) Launch a mandelbox and run `ibus-daemon &` (to restart ibus), followed by `ibus list-engine`
+// 2) From the list of foreign characters, find the layout you want to use 
+// 3) Use https://wiki.archlinux.org/title/Input_method or something similar to locate a package
+// 4) Use sudo apt-get install METHOD in the Dockerfile to install the package
+// 5) Add the ibus engine to this mapping.
+//
 // If additional configuration is needed, e.g. switching input methods within the same keyboard, use
 // the third command
 static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
@@ -54,6 +57,7 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.keylayout.Arabic", {"xkb:ara::ara", ""}},
     {"com.apple.keylayout.ABC-QWERTZ", {"xkb:de:nodeadkeys:ger", ""}},
     {"com.apple.keylayout.German", {"xkb:de::ger", ""}},
+    {"com.apple.keylayout.Austrian", {"xkb:de::ger", ""}}, // Austrian keyboard layout is same as German on Linux
     {"com.apple.keylayout.Canadian-CSA", {"xkb:ca:eng:eng", ""}},
     {"com.apple.keylayout.ABC-AZERTY", {"xkb:fr::fra", ""}},
     {"com.apple.keylayout.French", {"xkb:fr::fra", ""}},
@@ -66,6 +70,7 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.keylayout.ABC-India", {"xkb:us:intl:eng", ""}},
     {"com.apple.keylayout.Dvorak", {"xkb:us:dvorak:eng", ""}},
     {"com.apple.keylayout.British", {"xkb:gb:extd:eng", ""}},
+    {"com.apple.keylayout.Russian", {"xkb:ru::rus", ""}},
     {"com.apple.keylayout.ABC", {"xkb:us:intl:eng", ""}},
     {"com.apple.inputmethod.SCIM.ITABC", {"pinyin", ""}},
     {"com.sogou.inputmethod.sogou.pinyin", {"pinyin", ""}},
@@ -75,7 +80,6 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
      {"anthy", "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 1"}},
     {"com.apple.inputmethod.Kotoeri.RomajiTyping.Roman",
      {"anthy", "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 3"}},
-    // {"com.apple.keylayout.Vietnamese", {"unikey", ""}},
     {"com.apple.inputmethod.Korean.2SetKorean", {"hangul", ""}},
 };
 
