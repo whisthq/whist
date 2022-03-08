@@ -316,11 +316,11 @@ func (mandelbox *mandelboxData) downloadUserConfig(s3Client *s3.Client, key stri
 		validateIntegrity = false
 	}
 
-	// Allow up to 3 retries on download if failure is because of checksum mismatch
 	var downloadedFile []byte
 	var downloadSuccessful bool
 	var numBytesSuccessfullyDownloaded int64
 
+	// Allow up to 3 retries on download if failure is because of checksum mismatch
 	for i := 0; i < 3; i++ {
 		// Download file into a pre-allocated in-memory buffer
 		// This should be okay as we don't expect configs to be very large

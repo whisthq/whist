@@ -1,10 +1,12 @@
 package mandelbox
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"sync"
 	"testing"
 
@@ -152,6 +154,58 @@ func TestUserConfigIntegration(t *testing.T) {
 	// With a new token, anything is valid. But we want to make sure
 	t.Run("new repeated token", downloadTestNotNewToken(true, true))
 	t.Run("new non-repeated token", downloadTestNotNewToken(false, true))
+}
+
+// TestUserConfigChecksum tests the checksum verification functonality of
+// the upload and download user config code.
+func TestUserConfigChecksum(t *testing.T) {
+	testFile1 := []byte("this is a test file")
+	testFile1Hash := configutils.GetMD5Hash(testFile1)
+
+	// Test upload
+	s3Client, err := configutils.NewS3Client("us-east-1")
+	if err != nil {
+		t.Fatalf("failed to create s3 client: %v", err)
+	}
+
+	_, err = configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, "user_config_test_user/checksum_test", testFile1)
+	if err != nil {
+		t.Fatalf("failed to upload test file: %v", err)
+	}
+
+	// Check that checksum is present and correct
+	head, err := configutils.GetHeadObject(s3Client, UserConfigS3Bucket, "user_config_test_user/checksum_test")
+	if err != nil {
+		t.Fatalf("failed to get head object: %v", err)
+	}
+
+	metadata := head.Metadata
+	downloadHash, ok := metadata["md5"]
+	if !ok {
+		t.Fatalf("md5 metadata not present on head object")
+	}
+
+	if downloadHash != testFile1Hash {
+		t.Fatalf("md5 metadata on head object does not match file hash")
+	}
+
+	// Test download happy path
+	mandelbox := mandelboxData{ID: types.MandelboxID(utils.PlaceholderTestUUID())}
+	data, err := mandelbox.downloadUserConfig(s3Client, "user_config_test_user/checksum_test", head)
+	if err != nil {
+		t.Errorf("failed to download file: %v", err)
+	}
+
+	if !bytes.Equal(data, testFile1) {
+		t.Errorf("downloaded file does not match original file")
+	}
+
+	// Test download with bad checksum
+	head.Metadata["md5"] = "bad_hash"
+	_, err = mandelbox.downloadUserConfig(s3Client, "user_config_test_user/checksum_test", head)
+	if err == nil || !strings.HasPrefix(err.Error(), "Could not download object (due to MD5 mismatch)") {
+		t.Errorf("download with bad checksum did not fail")
+	}
 }
 
 // cleanupTestDirs removes the created directories created by the integration
