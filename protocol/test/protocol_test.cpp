@@ -56,6 +56,7 @@ extern "C" {
 
 extern WhistMutex window_resize_mutex;
 extern volatile SDL_Window* window;
+extern volatile char* server_ip;
 }
 
 class ProtocolTest : public CaptureStdoutFixture {};
@@ -1786,6 +1787,57 @@ TEST_F(ProtocolTest, CommandLineTest) {
     EXPECT_STREQ(test_option_string, "foo");
     EXPECT_EQ(test_operand_position, 8);
     EXPECT_STREQ(test_operand_value, "bar");
+}
+
+TEST_F(ProtocolTest, ClientParseEmpty) {
+    EXPECT_EQ(alloc_parsed_args(), 0);
+    int argc = 1;
+    char argv0[] = "./wclient";
+    char* argv[] = {argv0, NULL};
+    int ret_val = client_parse_args(argc, argv);
+    EXPECT_EQ(ret_val, 0);
+    EXPECT_EQ(free_parsed_args(), 0);
+}
+
+TEST_F(ProtocolTest, ClientParseHelp) {
+    int argc = 2;
+    char argv0[] = "./wclient";
+    char argv1[] = "--help";
+    char* argv[] = {argv0, argv1, NULL};
+    int ret_val = client_parse_args(argc, argv);
+    EXPECT_EQ(ret_val, 0);
+    check_stdout_line(::testing::StartsWith("Usage:"));
+    check_stdout_line(::testing::HasSubstr("--help"));
+}
+
+TEST_F(ProtocolTest, ClientParseArgsWithURL) {
+    EXPECT_EQ(alloc_parsed_args(), 0);
+    int argc = 5;
+    // argv: ./wclient 16.72.29.190 -p32262:7415.32263:66182.32273:12774 -k
+    // 9d3ff73c663e13bce0780d1b95c89582
+    char argv0[] = "./wclient";
+    char argv1[] = "16.72.29.190";
+    char argv2[] = "-p32262:7415.32263:66182.32273:12774";
+    char argv3[] = "-k";
+    char argv4[] = "9d3ff73c663e13bce0780d1b95c89582";
+    char argv5[] = "-x";
+    char argv6[] = "https://www.nytimes.com/";
+    char* argv[] = {argv0, argv1, argv2, argv3, argv4, argv5, argv6, NULL};
+    int ret_val = client_parse_args(argc, argv);
+    EXPECT_EQ(ret_val, 0);
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=32262, destination=7415"));
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=32263, destination=646"));
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=32273, destination=12774"));
+
+    // Check that the server ip was saved properly. Use a loop because server_ip is volatile.
+    size_t server_ip_len = 0, argv1_len = strlen(argv1);
+    while (server_ip[server_ip_len] != '\0') {
+        EXPECT_TRUE(server_ip_len <= argv1_len);
+        EXPECT_EQ(server_ip[server_ip_len], argv1[server_ip_len]);
+        server_ip_len++;
+    }
+    EXPECT_EQ(server_ip_len, argv1_len);
+    EXPECT_EQ(free_parsed_args(), 0);
 }
 
 /*
