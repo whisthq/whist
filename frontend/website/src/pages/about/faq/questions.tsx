@@ -87,7 +87,7 @@ const faqs = [
     id: 7,
     question: "How does Whist make money?",
     answer:
-      "Currently, we are in alpha release mode and are asking for users to become supporters via a supporter fee. In 2022, Whist will charge a monthly subscription fee, amount TBD. We are not an advertising business and will never sell your data.",
+      "A Whist subscription is $9/mo. We are not an advertising business and will never sell your data.",
   },
 ]
 

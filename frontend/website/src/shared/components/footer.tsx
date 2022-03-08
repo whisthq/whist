@@ -158,7 +158,7 @@ const Footer = () => {
         </div>
         <div className="w-full text-center mt-4">
           <a href="/download#top">
-            <button className="rounded bg-blue text-gray-900 px-12 py-3">
+            <button className="rounded bg-blue-light text-gray-900 px-12 py-3">
               Get Started
             </button>
           </a>

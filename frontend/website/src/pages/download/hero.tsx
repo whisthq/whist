@@ -107,10 +107,10 @@ const DontAllowDownloads = () => {
     <div className="mb-24 text-center pt-36">
       <div className="px-0 md:px-12">
         <Widget open={open} setOpen={setOpen} />
-        <div className="text-6xl md:text-7xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4">
-          Try the <span className="text-blue-light">alpha release</span>
+        <div className="text-6xl md:text-7xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4 max-w-4xl mx-auto">
+          A <span className="text-blue-light">faster, lighter</span> browser
         </div>
-        <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-xl m-auto">
+        <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-3xl m-auto">
           Please fill out the survey below to see if you meet the requirements
           to download Whist. You will receive a download link at the end of the
           survey.
