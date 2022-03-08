@@ -1828,8 +1828,6 @@ TEST_F(ProtocolTest, ClientParseHelp) {
 
 TEST_F(ProtocolTest, ClientParseArgs) {
     EXPECT_EQ(alloc_parsed_args(), 0);
-    // argv: ./wclient 16.72.29.190 -p32262:7415.32263:66182.32273:12774 -k
-    // 9d3ff73c663e13bce0780d1b95c89582
     char argv0[] = "./wclient";
     // Required urls: IP, port mappings, AES key
     char argv1[] = "16.72.29.190";
@@ -1965,8 +1963,8 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     // Check that features are enabled
     EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_PACKET_ENCRYPTION));
     EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_LONG_TERM_REFERENCE_FRAMES));
-    check_stdout_line(::testing::HasSubstr("Feature packet encryption is enabled from the command-line.")); 
-    check_stdout_line(::testing::HasSubstr("Feature long-term reference frames is enabled from the command-line."));
+    check_stdout_line(::testing::HasSubstr("Feature packet encryption is enabled from the command line.")); 
+    check_stdout_line(::testing::HasSubstr("Feature long-term reference frames is enabled from the command line."));
 
     // Check session id
     char* session_id_copy = get_error_monitor_session_id();
