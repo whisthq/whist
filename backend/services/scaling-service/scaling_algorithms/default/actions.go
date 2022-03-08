@@ -8,6 +8,7 @@ import (
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -528,6 +529,43 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	return nil
 }
 
-func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, serverEvent ScalingEvent) error {
+// MandelboxAssign is the action responsible for assigning an instance to a user,
+// and scaling as necessary to satisfy demand.
+func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, event ScalingEvent) error {
+	logger.Infof("Starting mandelbox assign action for event: %v", event)
+	defer logger.Infof("Finished mandelbox assign action for event: %v", event)
+
+	mandelboxRequest := event.Data.(types.MandelboxAssignRequest)
+	// TODO: sanitize email
+	unsafeEmail := mandelboxRequest.UserEmail
+
+	var (
+		requestedRegions = mandelboxRequest.Regions
+		allowedRegions   []string
+	)
+
+	// Populate enabledRegions
+	for _, enabledRegion := range BundledRegions {
+		for _, requestedRegion := range requestedRegions {
+			if enabledRegion == requestedRegion {
+				allowedRegions = append(allowedRegions, requestedRegion)
+			}
+		}
+	}
+
+	for _, region := range allowedRegions {
+		logger.Infof("Trying to find instance for user %v in region %v, with commit hash %v. (client reported email %v, this value might not be accurate and is untrusted)",
+			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail)
+
+		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, mandelboxRequest.CommitHash)
+		if err != nil {
+			return utils.MakeError("Err: %v", err)
+		}
+
+		if len(instanceResult) == 0 {
+			logger.Warningf("Failed to find an instance in %v for commit hash %v. Trying on next region.", region, mandelboxRequest.CommitHash)
+		}
+	}
+
 	return nil
 }

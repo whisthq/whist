@@ -92,6 +92,11 @@ var QueryInstancesByStatus struct {
 	WhistInstances `graphql:"whist_instances(where: {status: {_eq: $status}})"`
 }
 
+// QueryInstanceByClientSHA returns an instance that matches the given commit hash..
+var QueryInstanceByClientSHA struct {
+	WhistInstances `graphql:"whist_instances(where: {client_sha: {_eq: $client_sha}})"`
+}
+
 // QueryInstancesByImageID returns any instance with the given image id.
 var QueryInstancesByImageID struct {
 	WhistInstances `graphql:"whist_instances(where: {image_id: {_eq: $image_id}})"`

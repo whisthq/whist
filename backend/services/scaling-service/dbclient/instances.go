@@ -8,6 +8,16 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
+func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, commitHash string) (subscriptions.WhistInstances, error) {
+	instancesQuery := subscriptions.QueryInstanceByClientSHA
+	queryParams := map[string]interface{}{
+		"client_sha": graphql.String(commitHash),
+	}
+	err := graphQLClient.Query(scalingCtx, &instancesQuery, queryParams)
+
+	return instancesQuery.WhistInstances, err
+}
+
 // QueryInstance queries the database for an instance with the received id.
 func (client *DBClient) QueryInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) (subscriptions.WhistInstances, error) {
 	instancesQuery := subscriptions.QueryInstanceById
