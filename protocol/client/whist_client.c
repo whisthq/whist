@@ -100,7 +100,7 @@ extern volatile bool connected;
 extern volatile bool client_exiting;
 static int try_amount;
 
-static char* new_tab_url;
+static const char* new_tab_url;
 
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
@@ -133,7 +133,7 @@ static bool set_new_tab_url(const WhistCommandLineOption* opt, const char* value
     if (strlen(value) > MAX_URL_LENGTH) {
         return false;
     }
-    free(new_tab_url);
+    free((void*)new_tab_url);
     new_tab_url = strdup(value);
     return true;
 }
@@ -370,7 +370,7 @@ static void send_new_tab_url_if_needed(void) {
         send_wcmsg(wcmsg);
         free(wcmsg);
 
-        free(new_tab_url);
+        free((void*)new_tab_url);
         new_tab_url = NULL;
 
         // Unmimimize the window if needed
