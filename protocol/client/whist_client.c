@@ -701,7 +701,7 @@ int whist_client_main(int argc, char* argv[]) {
 
     if (exit_code != WHIST_EXIT_SUCCESS) {
         if (exit_code == WHIST_EXIT_FAILURE) {
-            LOG_ERROR("Failure in main loop! Exiting with code WHIST_EXIT_FAILUER");
+            LOG_ERROR("Failure in main loop! Exiting with code WHIST_EXIT_FAILURE");
         } else if (exit_code == WHIST_EXIT_CLI) {
             LOG_WARNING("Failure in main loop! Exiting with code WHIST_EXIT_CLI");
         } else {
