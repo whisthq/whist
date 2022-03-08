@@ -27,6 +27,7 @@ Includes
 
 #include "network_algorithm.h"
 #include "whist/tools/debug_console.h"
+#include "whist/core/features.h"
 
 /*
 ============================
@@ -51,11 +52,6 @@ static NetworkSettings default_network_settings = {
     .audio_fec_ratio = AUDIO_FEC_RATIO,
     .video_fec_ratio = VIDEO_FEC_RATIO,
     .fps = 60,
-#if !USE_WHIST_CONGESTION_CONTROL
-    .saturate_bandwidth = false,
-#else
-    .saturate_bandwidth = true,
-#endif
 };
 
 #define DPI_BITRATE_PER_PIXEL 192
@@ -123,12 +119,16 @@ NetworkSettings get_default_network_settings(int width, int height, int screen_d
     FATAL_ASSERT(width > 0 && height > 0 && screen_dpi > 0);
     default_network_settings.video_bitrate =
         get_video_bitrate(width, height, screen_dpi, STARTING_BITRATE_PER_PIXEL);
-#if !USE_WHIST_CONGESTION_CONTROL
-    default_network_settings.burst_bitrate = default_network_settings.bitrate * BURST_BITRATE_RATIO;
-#else
-    // Whist congestion control increases burst bitrate only after exceeding max bitrate
-    default_network_settings.burst_bitrate = default_network_settings.video_bitrate;
-#endif
+    if (!FEATURE_ENABLED(WHIST_CONGESTION_CONTROL)) {
+        default_network_settings.saturate_bandwidth = false;
+        default_network_settings.burst_bitrate =
+            default_network_settings.video_bitrate * BURST_BITRATE_RATIO;
+    } else {
+        // Saturate bitrate initially, so that we can find the max bandwidth quickly
+        default_network_settings.saturate_bandwidth = true;
+        // Whist congestion control increases burst bitrate only after exceeding max bitrate
+        default_network_settings.burst_bitrate = default_network_settings.video_bitrate;
+    }
     return default_network_settings;
 }
 

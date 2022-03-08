@@ -35,6 +35,10 @@ typedef enum {
      */
     WHIST_FEATURE_LONG_TERM_REFERENCE_FRAMES,
     /**
+     * Use the whist congestion control algo
+     */
+    WHIST_FEATURE_WHIST_CONGESTION_CONTROL,
+    /**
      * Number of supported feature flags.
      *
      * Add new features before this entry.
