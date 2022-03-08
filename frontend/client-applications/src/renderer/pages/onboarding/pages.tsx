@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react"
+import { IntercomProvider, useIntercom } from "react-use-intercom"
 
 import { TypeWriter } from "@app/components/typewriter"
 import { Network } from "@app/components/network"
@@ -73,7 +74,7 @@ const WhatMakesWhistDifferent = () => {
   return (
     <Template
       contents={contents}
-      word="Hey there! You may be wondering . . ."
+      word="Thanks for letting us know! Now you may be wondering . . ."
     />
   )
 }
@@ -127,7 +128,7 @@ const WhoIsWhistFor = () => {
 
   const contents = (
     <div className="m-auto text-center mt-16">
-      <div className="mt-28 text-gray-300 text-2xl font-bold leading-10 max-w-lg m-auto text-center">
+      <div className="mt-36 text-gray-300 text-3xl font-bold leading-10 max-w-lg m-auto text-center">
         Whist is built for those who struggle with
       </div>
       <div className="max-w-lg m-auto px-10 py-6">{icons}</div>
@@ -277,7 +278,7 @@ const FeaturesUnderDevelopment = () => {
 const TurnOffVPN = () => {
   const contents = (
     <div className="m-auto text-center max-w-md mt-44">
-      <div className="text-gray-300 text-2xl font-bold leading-10 m-auto">
+      <div className="text-gray-300 text-3xl font-bold leading-10 m-auto">
         If you use a VPN, please whitelist{" "}
         <span className="text-blue-light">Whist</span>
       </div>
@@ -476,12 +477,96 @@ const Pricing = () => {
   return <Template contents={contents} word="Whist is made with <3" />
 }
 
+const _HowDidYouHearAboutWhist = () => {
+  const options = [
+    { id: "A", title: "A Whist employee/team member" },
+    { id: "B", title: "A friend" },
+    { id: "C", title: "An online ad" },
+    { id: "D", title: "Google search" },
+    { id: "E", title: "Other" },
+  ]
+
+  const [selected, setSelected] = useState(options[0].title)
+  const { update } = useIntercom()
+  const [mainState, setMainState] = useMainState()
+
+  const contents = (
+    <div className="m-auto text-center mt-20 max-w-lg m-auto">
+      <div className="text-gray-300 text-3xl font-bold leading-10">
+        How did you hear about Whist?
+      </div>
+      <div className="max-w-lg pl-5 mx-auto mt-8 space-y-3">
+        {options.map((option) => (
+          <button
+            key={option.id}
+            className={classNames(
+              "flex space-x-4 space-y-4 rounded pl-4 pr-6 py-2 text-left cursor-pointer block tracking-wide",
+              option.title === selected
+                ? "bg-blue-light text-gray-900"
+                : "bg-gray-800 text-gray-400"
+            )}
+            onClick={() => setSelected(option.title)}
+          >
+            <div className="px-2 py-1 rounded bg-black bg-opacity-10 font-bold cursor-pointer text-xs relative top-1.5">
+              {option.id}
+            </div>
+            <label
+              htmlFor={option.id}
+              className="text-sm font-bold font-body relative bottom-2 cursor-pointer"
+            >
+              {option.title}
+            </label>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+
+  useEffect(() => {
+    setMainState({
+      trigger: { name: WhistTrigger.emitIPC, payload: undefined },
+    })
+  }, [])
+
+  useEffect(() => {
+    if (mainState.userEmail !== undefined) {
+      update({
+        email: mainState.userEmail,
+        customAttributes: {
+          source: selected,
+        },
+      })
+    }
+  }, [mainState.userEmail, selected])
+
+  return (
+    <Template
+      contents={contents}
+      word="Hey there! One quick question before we get started . . ."
+    />
+  )
+}
+
+const HowDidYouHearAboutWhist = () => (
+  <IntercomProvider
+    appId={"v62favsy"}
+    autoBoot={true}
+    autoBootProps={{
+      hideDefaultLauncher: true,
+    }}
+    shouldInitialize={true}
+  >
+    <_HowDidYouHearAboutWhist />
+  </IntercomProvider>
+)
+
 export {
   WhatMakesWhistDifferent,
   WhatIsWhist,
   WhoIsWhistFor,
   FasterLikeMagic,
   LetsShowYouAround,
+  HowDidYouHearAboutWhist,
   Privacy,
   FeaturesUnderDevelopment,
   LiveChatSupport,
