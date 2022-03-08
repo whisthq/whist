@@ -128,9 +128,9 @@ void whist_init_features(void) {
         if ((1 << f) & command_line_override_mask) {
             if ((1 << f) & command_line_override_values) {
                 current_feature_mask |= 1 << f;
-                LOG_INFO("Feature %s is enabled from the comamnd-line.", desc->name);
+                LOG_INFO("Feature %s is enabled from the command line.", desc->name);
             } else {
-                LOG_INFO("Feature %s is disabled from the comamnd-line.", desc->name);
+                LOG_INFO("Feature %s is disabled from the command line.", desc->name);
             }
         } else {
             if (desc->enabled) {

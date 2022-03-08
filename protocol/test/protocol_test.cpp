@@ -1649,7 +1649,7 @@ COMMAND_LINE_CALLBACK_OPTION(test_option_callback_function, '9', "test-callback"
                              WHIST_OPTION_REQUIRED_ARGUMENT, "Callback option for testing.")
 
 TEST_F(ProtocolTest, CommandLineTest) {
-    const char* argv[10] = {"comamnd-line-test"};
+    const char* argv[10] = {"command-line-test"};
 
     // Empty command-line.
     EXPECT_TRUE(whist_parse_command_line(1, argv, NULL));
