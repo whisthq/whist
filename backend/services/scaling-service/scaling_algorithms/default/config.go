@@ -40,7 +40,7 @@ var instanceTypeToVCPUNum = map[string]int{
 }
 
 // instanceCapacity is a mapping of the mandelbox capacity each type of instance has.
-var instanceCapacity = generateInstanceCapacityMap()
+var instanceCapacity = generateInstanceCapacityMap(instanceTypeToGPUNum, instanceTypeToVCPUNum)
 
 // bundledRegions is a list of the enabled regions on the cloud providers.
 // TODO: when adding multi-cloud support, figure out how to bundle regions
@@ -57,12 +57,12 @@ var (
 // generateInstanceCapacityMap uses the global instanceTypeToGPUNum and instanceTypeToVCPUNum maps
 // to generate the maximum mandelbox capacity for each instance type in the intersection
 // of their keys.
-func generateInstanceCapacityMap() map[string]int {
+func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]int) map[string]int {
 	// Initialize the instance capacity map
 	capacityMap := map[string]int{}
-	for instanceType, gpuNum := range instanceTypeToGPUNum {
+	for instanceType, gpuNum := range instanceToGPUMap {
 		// Only populate for instances that are in both maps
-		vcpuNum, ok := instanceTypeToVCPUNum[instanceType]
+		vcpuNum, ok := instanceToVCPUMap[instanceType]
 		if !ok {
 			continue
 		}
