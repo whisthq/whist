@@ -253,26 +253,6 @@ tenant:
     colors:
       page_background: "#ffffff"
       primary: "#4f35de"
-emailProvider:
-  name: sendgrid
-  credentials:
-    api_key: "##SENDGRID_API_KEY##"
-  default_from_address: Whist <support@whist.com>
-  enabled: true
-emailTemplates:
-  - template: verify_email
-    body: ./emailTemplates/verify_email.html
-    enabled: false
-    from: ""
-    subject: ""
-    syntax: liquid
-    urlLifetimeInSeconds: 432000
-  - template: welcome_email
-    body: ./emailTemplates/welcome_email.html
-    enabled: true
-    from: Whist <noreply@whist.com>
-    subject: Welcome to Whist!
-    syntax: liquid
 clientGrants:
   - client_id: Webserver
     audience: "##WHIST_AUTHENTICATION_API##"

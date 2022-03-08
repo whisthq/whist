@@ -7,7 +7,6 @@ const clientIDs = {
 const getConfig = (env) => {
   // List of environment variables that must be defined in order for deploy to succeed.
   const REQUIRED_ENV_VARS = [
-    "SENDGRID_API_KEY",
     "GOOGLE_OAUTH_SECRET",
     "APPLE_OAUTH_SECRET",
   ]
@@ -28,7 +27,6 @@ const getConfig = (env) => {
     AUTH0_KEYWORD_REPLACE_MAPPINGS: {
       WHIST_ELECTRON_APP_CALLBACK: ["http://localhost/callback"],
       WHIST_AUTHENTICATION_API: "https://api.fractal.co",
-      SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
       GOOGLE_OAUTH_SECRET: process.env.GOOGLE_OAUTH_SECRET,
       APPLE_OAUTH_SECRET: process.env.APPLE_OAUTH_SECRET,
     },
