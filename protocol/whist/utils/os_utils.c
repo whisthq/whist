@@ -42,7 +42,7 @@ struct AppleKeyboardMapping {
 
 // To add a new keyboard input method:
 // 1) Launch a mandelbox and run `ibus-daemon &` (to restart ibus), followed by `ibus list-engine`
-// 2) From the list of foreign characters, find the layout you want to use 
+// 2) From the list of foreign characters, find the layout you want to use
 // 3) Use https://wiki.archlinux.org/title/Input_method or something similar to locate a package
 // 4) Use sudo apt-get install METHOD in the Dockerfile to install the package
 // 5) Add the ibus engine to this mapping.
