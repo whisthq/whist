@@ -327,7 +327,8 @@ static void logger_queue_line(const char* tag, const char* prefix, const char* l
 }
 
 static bool do_not_catch_segfaults;
-// Passing the developer mode flag without any parameter will set do_not_catch_segfaults to true by default.
+// Passing the developer mode flag without any parameter will set do_not_catch_segfaults to true by
+// default.
 COMMAND_LINE_BOOL_OPTION(do_not_catch_segfaults, 'D', "developer-mode",
                          "Run the server in developer mode (don't catch segfaults).")
 

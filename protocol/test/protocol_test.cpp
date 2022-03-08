@@ -59,19 +59,19 @@ extern "C" {
 extern int output_width;
 extern int output_height;
 extern WhistMutex window_resize_mutex;
-extern volatile SDL_Window *window;
-extern volatile char *server_ip;
+extern volatile SDL_Window* window;
+extern volatile char* server_ip;
 extern volatile char client_hex_aes_private_key[33];
 extern unsigned short port_mappings[USHRT_MAX + 1];
-char *get_user_email(void);
-char *get_png_icon_filename(void);
-char *get_new_tab_url(void);
-char *get_program_name(void);
+char* get_user_email(void);
+char* get_png_icon_filename(void);
+char* get_new_tab_url(void);
+char* get_program_name(void);
 
 bool get_catch_segfaults_flag();
 bool whist_error_monitor_environment_set(void);
-char *get_error_monitor_environment(void);
-char *get_error_monitor_session_id(void);
+char* get_error_monitor_environment(void);
+char* get_error_monitor_session_id(void);
 }
 
 int get_debug_console_listen_port();
@@ -1809,7 +1809,7 @@ TEST_F(ProtocolTest, CommandLineTest) {
 TEST_F(ProtocolTest, ClientParseEmpty) {
     EXPECT_EQ(alloc_parsed_args(), 0);
     char argv0[] = "./wclient";
-    char *argv[] = {argv0};
+    char* argv[] = {argv0};
     int argc = ARRAY_LENGTH(argv);
     int ret_val = client_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 0);
@@ -1820,7 +1820,7 @@ TEST_F(ProtocolTest, ClientParseHelp) {
     EXPECT_EQ(alloc_parsed_args(), 0);
     char argv0[] = "./wclient";
     char argv1[] = "--help";
-    char *argv[] = {argv0, argv1};
+    char* argv[] = {argv0, argv1};
     int argc = ARRAY_LENGTH(argv);
     EXPECT_EXIT(client_parse_args(argc, argv), testing::ExitedWithCode(0), "");
     check_stdout_line(::testing::StartsWith("Usage:"));
@@ -1873,7 +1873,9 @@ TEST(ProtocolTest1, ClientParseArgs) {
     char argv27[] = "-u";
     char argv28[] = "user@whist.com";
 
-    char *argv[] = {argv0, argv1, argv2, argv3, argv4, argv5, argv6, argv7, argv8, argv9, argv10, argv11, argv12, argv13, argv14, argv15, argv16, argv17, argv18, argv19, argv20, argv21, argv22, argv23, argv24, argv25, argv26, argv27, argv28};
+    char* argv[] = {argv0,  argv1,  argv2,  argv3,  argv4,  argv5,  argv6,  argv7,  argv8,  argv9,
+                    argv10, argv11, argv12, argv13, argv14, argv15, argv16, argv17, argv18, argv19,
+                    argv20, argv21, argv22, argv23, argv24, argv25, argv26, argv27, argv28};
     int argc = ARRAY_LENGTH(argv);
     int ret_val = client_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 0);
@@ -1921,12 +1923,13 @@ TEST(ProtocolTest1, ClientParseArgs) {
     // Check that features are enables
     EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_PACKET_ENCRYPTION));
     EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_LONG_TERM_REFERENCE_FRAMES));
-    // check_stdout_line(::testing::HasSubstr("Feature packet encryption is enabled from the comamnd-line."));
-    // check_stdout_line(::testing::HasSubstr("Feature long-term reference frames is enabled from the comamnd-line."));
+    // check_stdout_line(::testing::HasSubstr("Feature packet encryption is enabled from the
+    // comamnd-line.")); check_stdout_line(::testing::HasSubstr("Feature long-term reference frames
+    // is enabled from the comamnd-line."));
 
     // Check the environment
     EXPECT_TRUE(whist_error_monitor_environment_set());
-    char *enviroment_copy = get_error_monitor_environment();
+    char* enviroment_copy = get_error_monitor_environment();
     EXPECT_TRUE(enviroment_copy != NULL);
     EXPECT_EQ(strlen(enviroment_copy), strlen("staging"));
     EXPECT_EQ(strcmp(enviroment_copy, argv11), 0);
@@ -1939,21 +1942,21 @@ TEST(ProtocolTest1, ClientParseArgs) {
     EXPECT_EQ(height, output_height);
 
     // Check that the icon filename was set correctly
-    char *png_icon_filename_copy = get_png_icon_filename();
+    char* png_icon_filename_copy = get_png_icon_filename();
     EXPECT_TRUE(png_icon_filename_copy != NULL);
     EXPECT_EQ(strlen(png_icon_filename_copy), strlen(argv17));
     EXPECT_EQ(strcmp(png_icon_filename_copy, argv17), 0);
     free(png_icon_filename_copy);
 
     // Check the window title
-    char *program_name_copy = get_program_name();
+    char* program_name_copy = get_program_name();
     EXPECT_TRUE(program_name_copy != NULL);
     EXPECT_EQ(strlen(program_name_copy), strlen(argv19));
     EXPECT_EQ(strcmp(program_name_copy, argv19), 0);
     free(program_name_copy);
 
     // Check that the url was saved properly
-    char *new_tab_url = get_new_tab_url();
+    char* new_tab_url = get_new_tab_url();
     EXPECT_TRUE(new_tab_url != NULL);
     EXPECT_EQ(strlen(new_tab_url), strlen(argv21));
     EXPECT_EQ(strcmp(new_tab_url, argv21), 0);
@@ -1966,7 +1969,7 @@ TEST(ProtocolTest1, ClientParseArgs) {
     // check_stdout_line(::testing::HasSubstr("Mapping port: origin=1234, destination=7248"));
 
     // Check session id
-    char *session_id_copy = get_error_monitor_session_id();
+    char* session_id_copy = get_error_monitor_session_id();
     EXPECT_TRUE(session_id_copy != NULL);
     EXPECT_EQ(strlen(session_id_copy), strlen(argv25));
     EXPECT_EQ(strcmp(session_id_copy, argv25), 0);
@@ -1976,7 +1979,7 @@ TEST(ProtocolTest1, ClientParseArgs) {
     EXPECT_TRUE(get_skip_taskbar());
 
     // Check user email
-    char *user_email_copy = get_user_email();
+    char* user_email_copy = get_user_email();
     EXPECT_TRUE(user_email_copy != NULL);
     EXPECT_EQ(strlen(user_email_copy), strlen(argv28));
     EXPECT_EQ(strcmp(user_email_copy, argv28), 0);
@@ -1991,7 +1994,7 @@ Run Tests
 ============================
 */
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

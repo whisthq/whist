@@ -30,9 +30,11 @@ Public Functions
 */
 
 /**
- * @brief                          Check whether we are going to initialize the protocol window without the taskbar.
+ * @brief                          Check whether we are going to initialize the protocol window
+ * without the taskbar.
  *
- * @returns                        A copy of the skip_taskbar static variable, which is set by a command line option.
+ * @returns                        A copy of the skip_taskbar static variable, which is set by a
+ * command line option.
  */
 bool get_skip_taskbar(void);
 
