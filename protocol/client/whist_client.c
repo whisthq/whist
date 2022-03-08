@@ -700,7 +700,13 @@ int whist_client_main(int argc, char* argv[]) {
     }
 
     if (exit_code != WHIST_EXIT_SUCCESS) {
-        LOG_ERROR("Failure in main loop! Exiting with code %d", exit_code);
+        if (exit_code == WHIST_EXIT_FAILURE) {
+            LOG_ERROR("Failure in main loop! Exiting with code WHIST_EXIT_FAILUER");
+        } else if (exit_code == WHIST_EXIT_CLI) {
+            LOG_WARNING("Failure in main loop! Exiting with code WHIST_EXIT_CLI");
+        } else {
+            LOG_ERROR("Failure in main loop! Unhandled exit with unknown exit code: %d", exit_code);
+        }
     }
 
     if (try_amount >= 3) {
