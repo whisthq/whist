@@ -227,7 +227,7 @@ if __name__ == "__main__":
             )
             if experiment["outcome"] != "success":
                 results_file.write(
-                    ":bangbang::warning: WARNING: the outcome of the experiment below was: `{experiment['outcome']}` and the results below (if any) might be inaccurate!\n\n"
+                    f":bangbang::warning: WARNING: the outcome of the experiment below was: `{experiment['outcome']}` and the results below (if any) might be inaccurate!\n\n"
                 )
             if experiment["client_metrics"] is None or experiment["server_metrics"] is None:
                 continue
