@@ -92,7 +92,7 @@ if __name__ == "__main__":
     # Check if the E2E run was skipped or cancelled, in which case we skip this
     e2e_script_outcomes = args.e2e_script_outcomes
     if "success" not in e2e_script_outcomes and "failure" not in e2e_script_outcomes:
-        print("E2E run was {}! No results to parse/display.".format(e2e_script_outcomes[0]))
+        print(f"E2E run was {e2e_script_outcomes[0]}! No results to parse/display.")
         sys.exit(-1)
 
     # Grab environmental variables of interest
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     logs_root_dir = args.perf_logs_path
     test_start_time = ""
     if not os.path.isdir(logs_root_dir):
-        print("Error, logs folder {} does not exist!".format(logs_root_dir))
+        print(f"Error, logs folder {logs_root_dir} does not exist!")
         sys.exit(-1)
     # Look for the most recent logs folder created on the same day (or the day before in case the test ran right before midnight).
     current_time = datetime.now()
@@ -183,9 +183,7 @@ if __name__ == "__main__":
 
         if logs_contain_errors(log_dir, verbose=True):
             print(
-                "Logs from latest run in folder {} are incomplete or contain fatal errors. Discarding.".format(
-                    log_dir
-                )
+                f"Logs from latest run in folder {log_dir} are incomplete or contain fatal errors. Discarding."
             )
         else:
             client_metrics, server_metrics = extract_metrics(client_log_file, server_log_file)
@@ -201,10 +199,9 @@ if __name__ == "__main__":
         }
 
         experiments.append(experiment_entry)
+        found_error = client_metrics is None or server_metrics is None
         print(
-            "\t+ Folder: {} with network_conditions: {}. Error: {}".format(
-                log_dir, network_conditions, client_metrics is None or server_metrics is None
-            )
+            f"\t+ Folder: {log_dir} with network_conditions: {network_conditions}. Error: {found_error}"
         )
 
     # Add entries for experiments that failed or were skipped
@@ -220,22 +217,17 @@ if __name__ == "__main__":
         print("\t+ Adding empty entry for failed/skipped experiment")
 
     for i, compared_branch_name in enumerate(compared_branch_names):
-        print("Comparing to branch {}".format(compared_branch_name))
+        print(f"Comparing to branch {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
-        results_file = open("streaming_e2e_test_results_{}.md".format(i), "w")
-        results_file.write("## Results compared to branch {}\n".format(compared_branch_name))
+        results_file = open(f"streaming_e2e_test_results_{i}.md", "w")
+        results_file.write(f"## Results compared to branch {compared_branch_name}\n")
         for j, experiment in enumerate(experiments):
             results_file.write(
-                "### Experiment {} - Network conditions: {}\n".format(
-                    j,
-                    experiment["network_conditions"],
-                )
+                f"### Experiment {j} - Network conditions: {experiment['network_conditions']}\n"
             )
             if experiment["outcome"] != "success":
                 results_file.write(
-                    ":bangbang::warning: WARNING: the outcome of the experiment below was: `{}` and the results below (if any) might be inaccurate!\n\n".format(
-                        experiment["outcome"]
-                    )
+                    ":bangbang::warning: WARNING: the outcome of the experiment below was: `{experiment['outcome']}` and the results below (if any) might be inaccurate!\n\n"
                 )
             if experiment["client_metrics"] is None or experiment["server_metrics"] is None:
                 continue
@@ -260,9 +252,7 @@ if __name__ == "__main__":
                     compared_server_log_path
                 ):
                     print(
-                        "Could not parse {} client/server logs. Unable to compare performance results to latest {} measurements.".format(
-                            compared_branch_name, compared_branch_name
-                        )
+                        f"Could not parse {compared_branch_name} client/server logs. Unable to compare performance results to latest {compared_branch_name} measurements."
                     )
                 else:
                     # Extract the metric values and save them in a dictionary
@@ -307,7 +297,7 @@ if __name__ == "__main__":
     ):
         test_start_time = experiments[0]["experiment_metadata"]["start_time"]
 
-    title = "Protocol End-to-End Streaming Test Results - {}".format(test_start_time)
+    title = f"Protocol End-to-End Streaming Test Results - {test_start_time}"
     github_repo = "whisthq/whist"
     # Adding timestamp to prevent overwrite of message
     identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
@@ -327,9 +317,7 @@ if __name__ == "__main__":
 
     # Post updates to Slack channel if we are on dev
     if current_branch_name == "dev":
-        slack_catchy_title = ":rocket::face_with_cowboy_hat::bar_chart: {} :rocket::face_with_cowboy_hat::bar_chart:".format(
-            title
-        )
+        slack_catchy_title = f":rocket::face_with_cowboy_hat::bar_chart: {title} :rocket::face_with_cowboy_hat::bar_chart:"
         create_slack_post(slack_webhook, slack_catchy_title, gist_url)
     # Otherwise post on Github if the branch is tied to a open PR
     else:

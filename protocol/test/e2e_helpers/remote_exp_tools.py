@@ -60,14 +60,12 @@ def extract_server_logs_from_instance(
         "/var/log/whist/protocol-out.log",
     ]
     for server_file_path in server_logfiles:
-        command = "docker cp {}:{} ~/perf_logs/server/".format(server_docker_id, server_file_path)
+        command = f"docker cp {server_docker_id}:{server_file_path} ~/perf_logs/server/"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     # Download all the logs from the AWS machine
-    command = "scp -r -i {} {}@{}:~/perf_logs/server {}".format(
-        ssh_key_path, username, server_hostname, perf_logs_folder_name
-    )
+    command = f"scp -r -i {ssh_key_path} {username}@{server_hostname}:~/perf_logs/server {perf_logs_folder_name}"
 
     local_process = pexpect.spawn(command, timeout=timeout_value, logfile=log_grabber_log.buffer)
     local_process.expect(["\$", pexpect.EOF])
@@ -125,14 +123,12 @@ def extract_client_logs_from_instance(
         "/var/log/whist/protocol-out.log",
     ]
     for client_file_path in client_logfiles:
-        command = "docker cp {}:{} ~/perf_logs/client/".format(client_docker_id, client_file_path)
+        command = f"docker cp {client_docker_id}:{client_file_path} ~/perf_logs/client/"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     # Download all the logs from the AWS machine
-    command = "scp -r -i {} {}@{}:~/perf_logs/client {}".format(
-        ssh_key_path, username, client_hostname, perf_logs_folder_name
-    )
+    command = f"scp -r -i {ssh_key_path} {username}@{client_hostname}:~/perf_logs/client {perf_logs_folder_name}"
 
     local_process = pexpect.spawn(command, timeout=timeout_value, logfile=log_grabber_log.buffer)
     local_process.expect(["\$", pexpect.EOF])

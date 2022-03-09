@@ -39,7 +39,7 @@ def create_github_gist_post(github_gist_token, title, body):
         files=files_dict,
         description=title,
     )
-    print("Posted performance results to secret gist: {}".format(gist.html_url))
+    print(f"Posted performance results to secret gist: {gist.html_url}")
     return gist.html_url
 
 
@@ -57,9 +57,7 @@ def create_slack_post(slack_webhook, title, gist_url):
     if slack_webhook:
         slack_post(
             slack_webhook,
-            body="New E2E dev benchmark results available! Check them out here: {}\n".format(
-                gist_url
-            ),
+            body=f"New E2E dev benchmark results available! Check them out here: {gist_url}\n",
             slack_username="Whist Bot",
             title=title,
         )
@@ -80,7 +78,7 @@ def search_open_PR(branch_name):
     # Search for an open PR connected to the current branch. If found, post results as a comment on that PR's page.
     result = ""
     if len(branch_name) > 0:
-        gh_cmd = "gh pr list -H {}".format(branch_name)
+        gh_cmd = f"gh pr list -H {branch_name}"
         result = subprocess.check_output(gh_cmd, shell=True).decode("utf-8").strip().split()
     pr_number = -1
     if len(result) >= 3 and branch_name in result and result[0].isnumeric():

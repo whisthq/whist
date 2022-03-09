@@ -26,7 +26,7 @@ def parse_metadata(folder_name):
     metadata_filename = os.path.join(folder_name, "experiment_metadata.json")
     experiment_metadata = None
     if not os.path.isfile(metadata_filename):
-        print("Metadata file {} does not exist".format(metadata_filename))
+        print(f"Metadata file {metadata_filename} does not exist")
     else:
         with open(metadata_filename, "r") as metadata_file:
             experiment_metadata = json.load(metadata_file)
@@ -47,11 +47,7 @@ def logs_contain_errors(logs_root_dir, verbose=False):
 
     if not os.path.isfile(client_log_file) or not os.path.isfile(server_log_file):
         if verbose:
-            print(
-                "Error, either file {} or file {} do not exist!".format(
-                    client_log_file, server_log_file
-                )
-            )
+            print(f"Error, either file {client_log_file} or file {server_log_file} do not exist!")
         return True
     client_log_num_lines = sum(1 for x in open(client_log_file))
     server_log_num_lines = sum(1 for x in open(server_log_file))
@@ -59,9 +55,7 @@ def logs_contain_errors(logs_root_dir, verbose=False):
     if client_log_num_lines < 500 or server_log_num_lines < 500:
         if verbose:
             print(
-                "Error: client log file {} contains {} lines and server log file {} contains {} lines, one of which is less than 500.".format(
-                    client_log_file, client_log_num_lines, server_log_file, server_log_num_lines
-                )
+                f"Error: client log file {client_log_file} contains {client_log_num_lines} lines and server log file {server_log_file} contains {server_log_num_lines} lines, one of which is less than 500."
             )
         return True
 
@@ -96,7 +90,7 @@ def download_latest_logs(
     bucket = s3_resource.Bucket("whist-e2e-protocol-test-logs")
 
     if os.path.exists(branch_name):
-        os.system("rm -rf {}".format(branch_name))
+        os.system(f"rm -rf {branch_name}")
 
     os.makedirs(os.path.join(".", branch_name, "client"))
     os.makedirs(os.path.join(".", branch_name, "server"))
@@ -108,12 +102,12 @@ def download_latest_logs(
     before_timestamp = before_timestamp + timedelta(hours=local_timezone)
 
     result = client.list_objects(
-        Bucket="whist-e2e-protocol-test-logs", Prefix="{}/".format(branch_name), Delimiter="/"
+        Bucket="whist-e2e-protocol-test-logs", Prefix=f"{branch_name}/", Delimiter="/"
     )
 
     folders = result.get("CommonPrefixes")
     if folders is None:
-        print("Warning, S3 does not contain logs for branch {}".format(branch_name))
+        print(f"Warning, S3 does not contain logs for branch {branch_name}")
         return
     counter = 1
     reason_for_discarding = []
@@ -128,7 +122,7 @@ def download_latest_logs(
             reason_for_discarding.append((subfolder_date, "logs with timestamp in future"))
             continue
 
-        for obj in bucket.objects.filter(Prefix="{}/{}".format(branch_name, subfolder_name)):
+        for obj in bucket.objects.filter(Prefix=f"{branch_name}/{subfolder_name}"):
             if "client.log" in obj.key:
                 bucket.download_file(obj.key, compared_client_log_path)
             elif "server.log" in obj.key:
@@ -139,9 +133,7 @@ def download_latest_logs(
         # Check if logs are sane, if so stop
         if logs_contain_errors(os.path.join(".", branch_name)):
             os.system(
-                "rm -f {} {} {}".format(
-                    compared_client_log_path, compared_server_log_path, exp_meta_path
-                )
+                f"rm -f {compared_client_log_path} {compared_server_log_path} {exp_meta_path}"
             )
             counter += 1
             reason_for_discarding.append((subfolder_date, "errors in logs"))
@@ -169,31 +161,21 @@ def download_latest_logs(
         ):
             break
 
-        os.system(
-            "rm -f {} {} {}".format(
-                compared_client_log_path, compared_server_log_path, exp_meta_path
-            )
-        )
+        os.system(f"rm -f {compared_client_log_path} {compared_server_log_path} {exp_meta_path}")
         counter += 1
         reason_for_discarding.append((subfolder_date, "network conditions mismatch"))
 
     if counter > 1:
         if counter > len(folders):
             print(
-                "Error: could not find any logs from branch {} with the required properties for comparison.".format(
-                    branch_name
-                )
+                f"Error: could not find any logs from branch {branch_name} with the required properties for comparison."
             )
         else:
             print(
-                "Warning, we are attempting to use {}° most recent logs (time: {}) from branch {}".format(
-                    counter, subfolder_date, branch_name
-                )
+                f"Warning, we are attempting to use {counter}° most recent logs (time: {subfolder_date}) from branch {branch_name}"
             )
         assert counter == len(reason_for_discarding) + 1
         for i in range(len(reason_for_discarding)):
             print(
-                "\t {}° most recent logs (time: {}) discarded due to {}".format(
-                    i + 1, reason_for_discarding[i][0], reason_for_discarding[i][1]
-                )
+                f"\t {i + 1}° most recent logs (time: {reason_for_discarding[i][0]}) discarded due to {reason_for_discarding[i][1]}"
             )
