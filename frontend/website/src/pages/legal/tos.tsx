@@ -628,6 +628,15 @@ const TermsOfService = () => {
             officially support a certain geography, you can contact us by email
             at <a href="mailto:support@whist.com">support@whist.com</a>.
           </p>
+          <p>
+            If you are accessing Whist from a country or region which is
+            regulated by CCPA, GDPR or other data privacy laws, you are entitled
+            to requesting your personal information stored by Whist and to have
+            it deleted from our systems, if you so choose. Whist will fully
+            comply with CCPA, GDPR and other data privacy laws and regulations.
+            If you would like to make a request to Whist, please contact us via
+            email at <a href="mailto:support@whist.com">support@whist.com</a>.
+          </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Copyright</p>
           <p>
             We respect the intellectual property of others and ask our Users to
