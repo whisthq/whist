@@ -557,7 +557,7 @@ if __name__ == "__main__":
         "client_failure": "Failed to run WhistClient",
         "client_server_connection_failure": "Whist Client failed to connect to the server",
         "server_hang_detected": "WhistServer hang detected",
-    }:
+    }.items():
         if experiment_metadata[cause]:
             print(f"{message}! Exiting with error. Check the logs for more details.")
             sys.exit(-1)
