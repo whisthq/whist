@@ -65,9 +65,9 @@ void whist_error_monitor_set_environment(const char *environment);
 
 /**
  * @brief                          Get the error_monitor_environment name, if initialided
-
+ *
  * @returns                        A newly-allocated string with a copy of the
- error_monitor_environment string, if it is set.
+ *                                 error_monitor_environment string, if it is set.
  *                                 Otherwise, returns NULL.
  */
 char *get_error_monitor_environment(void);
@@ -123,7 +123,7 @@ void whist_error_monitor_set_username(const char *username);
 void whist_error_monitor_set_connection_id(int id);
 
 /**
- * @brief                          Check if the error monitor is initialized.
+ * @brief                         Check if the error monitor is initialized.
  *
  * @returns                       True if the error monitor is initialized,
  *                                false otherwise.
