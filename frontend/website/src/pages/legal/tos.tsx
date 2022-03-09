@@ -29,7 +29,7 @@ const TermsOfService = () => {
       >
         <div style={{ fontSize: 40 }}>TERMS OF SERVICE</div>
         <div style={{ color: "#555555", marginBottom: 40 }}>
-          Last updated October 13th, 2020
+          Last updated March 8th, 2022
         </div>
         <div>
           <p>
@@ -126,70 +126,42 @@ const TermsOfService = () => {
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Product</p>
           <p>
-            Whist is a provider of cloud-based applications ("Cloud
-            Applications"). Cloud Applications are similar to a regular
-            applications in that once your Whist subscription is active, they
-            can be interacted with as you normally would with a local version of
-            the application, except that they are installed on remote machines
-            and delivered to your local device via the Whist streaming service.
-            Unless indicated otherwise, your Whist Cloud Applications run on
-            Linux Ubuntu 20.04. These applications are developed by
-            third-parties and are serviced via Whist in agreements with the
-            applications Terms of Services. By using any application through
-            Whist, you consent to the Terms of Service and Privacy Policy of the
-            application you use, in addition to Whist's Terms of Service and
-            Privacy Policy. We encourage you to review an application's Terms of
-            Service and Privacy Policy before using it through Whist. For
-            applications which require a user license to use, this license will
-            either be provided by us to you for the duration of your usage of
-            the application, or you will be required to supply it yourself
-            before being able to use the application via Whist, either of which
-            will be made clear to you before your usage of the application.
-            Whist does not support using license-requiring applications without
-            a valid license and will immediately, without prenotice or refund,
-            terminate any account which is found attempting to do so in any way
-            whatsoever. Whist also reserves the rights to terminate any account,
-            without prenotice or refund, if it is found breaking the Terms of
-            Service of a specific application serviced via Whist as a Cloud
-            Application.
+            Whist is a provider of cloud-based web browsing ("Cloud
+            Browser"). A Cloud Browser is similar to a regular web browser in that once your Whist subscription is active,
+            it can be interacted with as you normally would with a standard web browser, except that some or all of the 
+            components of the web browser might be hosted on a remote machine and delivered to your local device via the 
+            Whist's low-latency video streaming. Unless indicated otherwise, the remote components of your Whist Cloud Browser are hosted on a machine running 
+            Linux Ubuntu 20.04.            
           </p>
           <p>
             Whist is committed to our users' privacy and security, which why we
-            do not store the data within your applications after you terminate a
+            do not store the data within your cloud browser environment after you terminate a
             Whist Session. A Whist session (“Session”) occurs each time you use
-            Whist’s software to access a cloud-based application via Whist. Each
+            the Whist Cloud Browser. Each
             Session is standalone, meaning that the remote machine running the
-            application(s) you are using during a Session will be permanently
-            erased shortly after you terminate your Session. As such, Whist
-            offers multiple ways to effortlessly store your data with
-            third-party cloud storage providers, provided that you have a valid
-            account and subscription to one or many of those services. Whist
+            cloud-offloaded components of your Whist web browser will be permanently
+            erased shortly after you terminate your Session. Whist will, however, store an 
+            encrypted version of your web browser settings, so that we can persist your experience
+            across diffeerent Sessions, using a locally-stored key on your User Device to ensure that 
+            none of our team members can access your data. Whist may store this data on your behalf to improve
+            your experience. Whist
             does not assume responsibility for any lost user data due to
-            incorrect or forgotten saves, or data storage issues with
-            third-party integrations.
+            incorrect or forgotten saves before terminating a Session. 
           </p>
           <p>
-            Exceptions to this rule might include application settings, plugins
-            and third-party account integrations which you specify and install
-            so to customize your Whist experience for a specific Cloud
-            Application. Whist may store this data on your behalf to improve
-            your experience.
-          </p>
-          <p>
-            The Cloud Applications Whist services can be accessed via Whist from
-            any Internet-connected device (a “User Device”), provided that a
-            Whist local or web application has been developed for the device’s
-            operating system.
+            The Whist Cloud Browser can be accessed from
+            any Internet-connected device (a “User Device”), provided that we release a version of 
+            Whist for  the device’s operating system.
           </p>
           <p>
             Given the nature of cloud-based personal computing, your inputs
             (keystrokes, mouse/touchpad movements, etc.) are sent from the User
             Device to Whist’s data center infrastructure, where Cloud
             Applications are hosted. The servers in Whist’s data center
-            infrastructure interpret these signals on your Cloud Applications,
-            which allows for the Whist applications to display the Cloud
-            Applications. All communications between your User Device and your
-            Whist Cloud Applications, including input, audio and video
+            infrastructure interpret these signals on your Cloud Browser,
+            which allows for the Whist Cloud Browser to display and function properly.
+            All communications between your User Device and the cloud components of your Whist
+            Cloud Browser, including input, audio and video
             components of the streaming, are fully AES encrypted, and Whist does
             not observe directly any of your stream components.
           </p>
@@ -197,7 +169,7 @@ const TermsOfService = () => {
             Whist Plans And Subscriptions
           </p>
           <p>
-            A Whist plan is your subscription to access your Cloud Applications.
+            A Whist plan is your subscription to access your Whist Cloud Browser.
             Your subscription period will be calculated from the date on which
             your Whist account is set up and available for use (the “Start
             Date”). You will receive an email informing you of that date when
@@ -230,15 +202,7 @@ const TermsOfService = () => {
           <p>
             If you selected a monthly plan, or a longer plan that involves
             monthly payments, you will generally be charged a full month at the
-            time of purchase of your subscription. If you selected a plan with a
-            per-usage pricing component, you will be charged the usage unit
-            times the usage you have made of the Services at the end of the time
-            period, typically a month, based on your usage. If you use part of
-            an usage unit, but not the full usage unit, say if you are billed
-            hourly but only use part of an hour, you will be charged a full unit
-            of usage. Subsequent monthly payments will be charged on or about
-            the same date in every subsequent month of the Subscription Period
-            (or renewed Subscription Period). If you selected a prepaid plan,
+            time of purchase of your subscription. If you selected a prepaid plan,
             you will generally be charged the full amount of the plan at the
             time of purchase of your subscription.
           </p>
@@ -338,14 +302,14 @@ const TermsOfService = () => {
             in hardware and service providers.
           </p>
           <p>
-            The Cloud Applications serviced by Whist are collectively hosted on
+            The Whist Cloud Browsers are collectively hosted on
             Microsoft Azure, Amazon Web Services and Google Cloud Platform,
-            depending on the Cloud Applications and the world region you are
-            accessing them from. Whist abides by the Terms of Service of the
+            depending on the world region you are
+            accessing them from, the time of day, the demand for Whist, etc. Whist abides by the Terms of Service of the
             respective cloud providers for which it uses the cloud
-            infrastructure to service Cloud Applications, and your agreement in
+            infrastructure to service Whist Cloud Browsers, and your agreement in
             the Whist Terms of Service extends to the Terms of Service of the
-            cloud providers from which the Cloud Applications you are using are
+            cloud providers from which your Whist Cloud Browser is
             being serviced. We encourage you to review the Terms of Service of
             the three cloud providers from which Whist services cloud-based
             applications. Other cloud providers may be added from time-to-time
@@ -359,7 +323,7 @@ const TermsOfService = () => {
             Use of Whist’s Services requires a working Internet connection,
             which is not included in our Services. The quality of Whist’s
             Services will depend on the quality of the User’s Internet
-            connection, in terms of bandwidth, stability, ping, and a variety of
+            connection, in terms of bandwidth, stability, ping, jitter, and a variety of
             other factors dependent on the properties of the Internet
             connection. The User is responsible for their own Internet
             connection. Whist cannot be held responsible for interruptions or
@@ -376,13 +340,13 @@ const TermsOfService = () => {
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Code Of Conduct</p>
           <p>
             The proper functioning of our Services requires that Users use the
-            Services in an appropriate and reasonable way. Most notably, Whist
-            Cloud Applications may only be used as a personal applications, for
+            Services in an appropriate and reasonable way. Most notably, the Whist Cloud Browser
+            may only be used as a personal application, for
             the private use of the Whist User, whether in the context of
             personal usage or that of personal business usage. This excludes any
             business or professional purpose which exceeds a personal business
-            computing, like running a server, selling access to your Whist Cloud
-            Applications, etc.
+            computing, like running a server, mining cryptocurrencies, selling access to your Whist Cloud
+            Browser, etc.
           </p>
           <p>
             Without limiting the above, you will not use Whist’s Services for
@@ -510,23 +474,18 @@ const TermsOfService = () => {
             User’s Data And Content
           </p>
           <p>
-            While using Cloud Applications through Whist, you will send us
+            While using the Whist Cloud Browser, you will send us
             various files, content, emails, contacts, etc. (the “User Content”).
             The User Content belongs to the User and in no way to Whist. Whist
             is only granted the right to use the User Content to the extent
             required for the proper functioning of the Services. These limited
             rights include in particular, the right to temporarily host, save,
             and share the User Content, for the intended functioning of the
-            User’s Cloud Applications. User Content is not stored by Whist, with
+            User’s Cloud Browser. User Content is not stored by Whist, with
             the exception of third-party authentication integrations, plugins
             and preferences you specifiy to us to improve your experience, and
             gets permanently deleted shortly after the end of a Whist Session.
-            It is the User's responsibility to save the User Content through one
-            of the provided third-party storage solutions available for the User
-            Content, either directly provided through the Cloud Application they
-            are using or integrated within the Whist Services by us. Third-Party
-            storage solutions availability may vary depending on the Cloud
-            Application you are using.
+            It is the User's responsibility to save the User Content.
           </p>
           <p>
             You acknowledge and agree that Whist may remove User Content from
@@ -541,7 +500,7 @@ const TermsOfService = () => {
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Personal Data</p>
           <p>
             In addition to the User Content saved on the User's Cloud
-            Applications, Whist collects certain personal data concerning the
+            Browser, Whist collects certain personal data concerning the
             User. For example, Whist will collect information such as your name,
             email address, phone number, payment information, physical address,
             date of birth, and data concerning your purchase of Services. In
@@ -628,7 +587,7 @@ const TermsOfService = () => {
             longer prepaid plan, your plan will be automatically suspended
             immediately without refund for the entire period of your prepaid
             plan and your Whist Account data will be kept for internal
-            reference. Your Cloud Applications data is not stored by Whist
+            reference. Your Cloud Browser data is not stored by Whist
             between Whist Sessions and therefore will not be kept following a
             termination, as outlined in the User’s Data And Content section
             above.
@@ -636,8 +595,8 @@ const TermsOfService = () => {
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Termination By You</p>
           <p>
             You may decide to end your subscription at any time, by reaching out
-            to your support team via the Whist website, or by any other means
-            that may be indicated on the Websites. If you decide to terminate
+            to your support team via email, or by any other means
+            that may be indicated on the Website. If you decide to terminate
             your subscription, the Services and the corresponding payments will
             continue until the end of the then-current Subscription Period, and
             will stop at the end of the period; we will not offer any refund.
@@ -646,7 +605,7 @@ const TermsOfService = () => {
           <p>
             The Whist Services are only supported in the regions and countries
             listed on our website at the time of signup. Because of the nature
-            of the Internet, Whist Cloud Applications might be accessible in the
+            of the Internet, Whist might be accessible in the
             country or region in which you are physically present at a specific
             moment, even if this country or region is not part of the officially
             supported regions on our website. Furthermore, access from those
