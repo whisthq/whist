@@ -1393,19 +1393,22 @@ void dummy_nack(SocketContext* socket_context, WhistPacketType frame_type, int i
     return;
 }
 
-void dummy_stream_reset(SocketContext* socket_context, WhistPacketType frame_type, int last_failed_id) {
+void dummy_stream_reset(SocketContext* socket_context, WhistPacketType frame_type,
+                        int last_failed_id) {
     return;
 }
 
 TEST_F(ProtocolTest, RingBufferTest) {
     int size = 275;
     // Initialize a ring buffer
-    RingBuffer* video_buffer = init_ring_buffer(PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, size, NULL, dummy_nack, dummy_stream_reset);
+    RingBuffer* video_buffer = init_ring_buffer(PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, size, NULL,
+                                                dummy_nack, dummy_stream_reset);
 
     EXPECT_FALSE(video_buffer == NULL);
     EXPECT_EQ(video_buffer->ring_buffer_size, size);
     EXPECT_EQ(video_buffer->type, PACKET_VIDEO);
-    EXPECT_EQ(video_buffer->largest_frame_size, sizeof(WhistPacket) - MAX_PAYLOAD_SIZE + LARGEST_VIDEOFRAME_SIZE);
+    EXPECT_EQ(video_buffer->largest_frame_size,
+              sizeof(WhistPacket) - MAX_PAYLOAD_SIZE + LARGEST_VIDEOFRAME_SIZE);
     EXPECT_FALSE(video_buffer->receiving_frames == NULL);
     EXPECT_EQ(video_buffer->frames_received, 0);
 
@@ -1443,7 +1446,7 @@ TEST_F(ProtocolTest, RingBufferTest) {
         // check that frames have been concatenated properly
         EXPECT_EQ(frame_data->frame_buffer_size, expected_indices * expected_indices);
     }
-    
+
     // send an old frame, check ring buffer doesn't change
     WhistSegment old_segment = {};
     old_segment.id = min_id - size;
@@ -1468,12 +1471,10 @@ TEST_F(ProtocolTest, RingBufferTest) {
     // reset a stream
     reset_stream(video_buffer, max_id + 1);
     EXPECT_EQ(video_buffer->last_rendered_id, max_id);
-    
+
     // stale reset - should be a noop
     reset_stream(video_buffer, min_id);
     EXPECT_EQ(video_buffer->last_rendered_id, max_id);
-
-    // TODO: nacking
 
     destroy_ring_buffer(video_buffer);
 }
