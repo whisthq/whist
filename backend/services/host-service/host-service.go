@@ -43,6 +43,7 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 
+	"github.com/whisthq/whist/backend/services/httputils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
@@ -840,7 +841,7 @@ var eventLoopKeepalive = make(chan interface{}, 1)
 
 func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc,
 	goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
-	httpServerEvents <-chan ServerRequest, subscriptionEvents <-chan subscriptions.SubscriptionEvent) {
+	httpServerEvents <-chan httputils.ServerRequest, subscriptionEvents <-chan subscriptions.SubscriptionEvent) {
 	// Note that we don't use globalCtx for the docker Context, since we still
 	// wish to process Docker events after the global context is cancelled.
 	dockerContext, dockerContextCancel := context.WithCancel(context.Background())
