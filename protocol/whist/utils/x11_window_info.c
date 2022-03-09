@@ -85,9 +85,9 @@ bool get_focused_window_name(char** name_return) {
             LOG_ERROR("XmbTextPropertyToTextList failed to convert window name to string");
         }
     } else {
-        LOG_ERROR(
-            "XGetWMName returned status %d and failed to get the name of the focused window %lu", s,
-            w);
+        // If XGetWName returns 0, it's because the window has no name. In Chrome, this is the case
+        // with pop-up windows, which is why we mark this as LOG_INFO rather than a LOG_ERROR.
+        LOG_INFO("Focused window %lu has no name", w);
     }
     return false;
 }
