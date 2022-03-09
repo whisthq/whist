@@ -1817,7 +1817,6 @@ TEST_F(ProtocolTest, ClientParseEmpty) {
 }
 
 TEST_F(ProtocolTest, ClientParseHelp) {
-    EXPECT_EQ(alloc_parsed_args(), 0);
     char argv0[] = "./wclient";
     char argv1[] = "--help";
     char* argv[] = {argv0, argv1};
