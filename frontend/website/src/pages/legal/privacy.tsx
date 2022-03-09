@@ -28,12 +28,11 @@ const Privacy = () => {
       >
         <div style={{ fontSize: 40 }}>PRIVACY POLICY</div>
         <div style={{ color: "#555555", marginBottom: 40 }}>
-          Last updated October 8th, 2020
+          Last updated March 8th, 2022
         </div>
-
         <p>
           Thank you for choosing to be part of our community at Whist
-          Technologies, Inc., doing business as Whist (“Whist”, “we”, “us”, or
+          Technologies, Inc. (“Whist”, “we”, “us”, or
           “our”). When you visit our website,{" "}
           <a href="https://www.whist.com">www.whist.com</a>, and use our
           services, you trust us with your personal information. We want you to
@@ -46,8 +45,8 @@ const Privacy = () => {
           policy will also identify your rights regarding your personal
           information. If you have any questions or concerns about our policy,
           or our practices with regards to your personal information, please
-          contact us at <a href="mailto:support@whist.com">support@whist.com</a>
-          . We encourage you to read through this important information. If
+          contact us at <a href="mailto:support@whist.com">support@whist.com</a>. 
+          We encourage you to read through this important information. If
           there are any terms in this privacy policy that you disagree with,
           please discontinue the use of our Sites and our Services.
         </p>
@@ -72,7 +71,6 @@ const Privacy = () => {
             How Can You Review, Update, Or Delete The Data We Collect From You?
           </li>
         </ol>
-
         <p style={{ fontWeight: "bold", fontSize: 20 }}>
           1. What Information Do We Collect?
         </p>
@@ -95,8 +93,8 @@ const Privacy = () => {
           We also collect personal information that you provide when you
           register your interest in our services and products, when you register
           your interest in information and promotional offers regarding our
-          services, when you register to participate in activities related to
-          the service, or when you contact us.
+          Services, when you register to participate in activities related to
+          our Services, or when you contact us.
         </p>
         <p>
           The personal information that we collect depends on the type of
@@ -134,8 +132,8 @@ const Privacy = () => {
             purchases, such as your payment instrument reference numbers. For
             example, if you are using a credit card we would collect the credit
             card’s number, its card verification code and its expiration date.
-            All payment data is stored by Stripe. You may find their privacy
-            policy linked here:{" "}
+            All payment data is handled and stored by Stripe. You may find their
+            privacy policy linked here:{" "}
             <a href="https://www.stripe.com/privacy">stripe.com/privacy</a>.
           </p>
           <p style={{ fontWeight: "bold" }}>Social Media Login Data</p>
@@ -159,12 +157,12 @@ const Privacy = () => {
         <p>
           <u>Summary:</u> Some information — such as IP address and/or browser
           and device characteristics — is collected automatically when you visit
-          our Services but it is not tied to your name.
+          our Services, but it is not tied to your name.
         </p>
         <p>
           Each time you interact with the Services, we automatically collect
           some information to maintain the security and operation of our
-          Services, generate internal analytics and comply with reporting
+          Services, generate internal analytics, and comply with reporting
           requirements. The information collected for these purposes may include
           your device and usage information, IP address, browser and device
           characteristics, operating system, hardware specifications, language
@@ -367,11 +365,7 @@ const Privacy = () => {
           We may use cookies and similar tracking technologies (like web beacons
           and pixels) to access or store information. Specific information about
           how we use such technologies and how you can refuse certain cookies is
-          set out in our <a href="/cookies#top">Cookie Policy</a>. Our Services
-          are not officially offered in the European Union, but they may be
-          accessible from that area; we take no responsibility for access from
-          the European Union region with regards to cookies and other tracking
-          technologies, as defined in the GDPR.
+          set out in our <a href="/cookies#top">Cookie Policy</a>.
         </p>
         <p style={{ fontWeight: "bold", fontSize: 20 }}>
           5. How Do We Handle Your Social Logins?
@@ -384,7 +378,7 @@ const Privacy = () => {
         <p>
           Our Services offer you the ability to register and login using your
           third party social media account details (like your Facebook or
-          Twitter logins). Where you choose to do this, we will receive your
+          Google logins). Where you choose to do this, we will receive your
           profile information from your social media provider. The profile
           information we receive may vary depending on the social media provider
           concerned, but will often include your name, email address, friends
@@ -562,13 +556,8 @@ const Privacy = () => {
             contacting us using the details provided below. Subsequently, we
             will only send service-related emails that are necessary for the
             administration and use of your account. To otherwise opt-out of
-            marketing emails, you may:
-          </p>
-          <p>
-            Note your preferences when you register an account with the site,
-            access your account settings and update preferences, or contact us
-            by email at <a href="mailto:support@whist.com">support@whist.com</a>
-            .
+            marketing emails, you may contact us by email at 
+            <a href="mailto:support@whist.com">support@whist.com</a>.
           </p>
         </div>
         <p style={{ fontWeight: "bold", fontSize: 20 }}>
