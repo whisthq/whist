@@ -32,21 +32,20 @@ const Privacy = () => {
         </div>
         <p>
           Thank you for choosing to be part of our community at Whist
-          Technologies, Inc. (“Whist”, “we”, “us”, or
-          “our”). When you visit our website,{" "}
-          <a href="https://www.whist.com">www.whist.com</a>, and use our
-          services, you trust us with your personal information. We want you to
-          know that we are committed to protecting your personal information and
-          your right to privacy. This privacy policy explains what happens to
-          the personal information we collect through our website (such as{" "}
+          Technologies, Inc. (“Whist”, “we”, “us”, or “our”). When you visit our
+          website, <a href="https://www.whist.com">www.whist.com</a>, and use
+          our services, you trust us with your personal information. We want you
+          to know that we are committed to protecting your personal information
+          and your right to privacy. This privacy policy explains what happens
+          to the personal information we collect through our website (such as{" "}
           <a href="https://www.whist.com">www.whist.com</a>
           ), and/or any related services, sales, marketing or events (we refer
           to them collectively in this privacy policy as the "Services"). This
           policy will also identify your rights regarding your personal
           information. If you have any questions or concerns about our policy,
           or our practices with regards to your personal information, please
-          contact us at <a href="mailto:support@whist.com">support@whist.com</a>. 
-          We encourage you to read through this important information. If
+          contact us at <a href="mailto:support@whist.com">support@whist.com</a>
+          . We encourage you to read through this important information. If
           there are any terms in this privacy policy that you disagree with,
           please discontinue the use of our Sites and our Services.
         </p>
@@ -377,12 +376,12 @@ const Privacy = () => {
         </p>
         <p>
           Our Services offer you the ability to register and login using your
-          third party social media account details (like your Facebook or
-          Google logins). Where you choose to do this, we will receive your
-          profile information from your social media provider. The profile
-          information we receive may vary depending on the social media provider
-          concerned, but will often include your name, email address, friends
-          list, profile picture and other information you chose to make public.
+          third party social media account details (like your Facebook or Google
+          logins). Where you choose to do this, we will receive your profile
+          information from your social media provider. The profile information
+          we receive may vary depending on the social media provider concerned,
+          but will often include your name, email address, friends list, profile
+          picture and other information you chose to make public.
         </p>
         <p>
           We will use the information we receive only for the purposes that are
@@ -556,7 +555,7 @@ const Privacy = () => {
             contacting us using the details provided below. Subsequently, we
             will only send service-related emails that are necessary for the
             administration and use of your account. To otherwise opt-out of
-            marketing emails, you may contact us by email at 
+            marketing emails, you may contact us by email at
             <a href="mailto:support@whist.com">support@whist.com</a>.
           </p>
         </div>
