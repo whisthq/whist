@@ -146,6 +146,25 @@ void whist_error_monitor_set_environment(const char *environment) {
     }
 }
 
+bool whist_error_monitor_environment_set(void) { return error_monitor_environment_set; }
+
+char *get_error_monitor_environment(void) {
+    if (!error_monitor_environment_set) {
+        return NULL;
+    }
+    char *error_monitor_environment_copy =
+        (char *)calloc(strlen(error_monitor_environment) + 1, sizeof(char));
+    safe_strncpy(error_monitor_environment_copy, error_monitor_environment,
+                 strlen(error_monitor_environment) + 1);
+    return error_monitor_environment_copy;
+}
+
+char *get_error_monitor_session_id(void) {
+    char *error_monitor_session_id_copy = (char *)calloc(WHIST_ARGS_MAXLEN + 1, sizeof(char));
+    safe_strncpy(error_monitor_session_id_copy, error_monitor_session_id, WHIST_ARGS_MAXLEN + 1);
+    return error_monitor_session_id_copy;
+}
+
 void whist_error_monitor_set_session_id(const char *session_id) {
     if (error_monitor_initialized) {
         LOG_WARNING("Attempting to set the session id to %s after starting the error monitor!",

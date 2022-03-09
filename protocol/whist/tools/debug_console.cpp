@@ -102,6 +102,8 @@ int init_debug_console() {
     return 0;
 }
 
+int get_debug_console_listen_port() { return debug_console_listen_port; }
+
 /*
 ============================
 Private Function Implementations

@@ -64,6 +64,23 @@ Public Functions
 void whist_error_monitor_set_environment(const char *environment);
 
 /**
+ * @brief                          Get the error_monitor_environment name, if initialided
+
+ * @returns                        A newly-allocated string with a copy of the
+ error_monitor_environment string, if it is set.
+ *                                 Otherwise, returns NULL.
+ */
+char *get_error_monitor_environment(void);
+
+/**
+ * @brief                          Check if the error monitor enviroment name was set.
+ *
+ * @returns                       The error monitor environment's name if it is set,
+ *                                NULL otherwise.
+ */
+bool whist_error_monitor_environment_set(void);
+
+/**
  * @brief                          Configures the error monitor to report
  *                                 the provided session-id on logs.
  *
@@ -73,6 +90,13 @@ void whist_error_monitor_set_environment(const char *environment);
  *                                 `error_monitor_initialize()`.
  */
 void whist_error_monitor_set_session_id(const char *session_id);
+
+/**
+ * @brief                          Get the session ID.
+
+ * @returns                        A newly-allocated string with a copy of the session ID.
+ */
+char *get_error_monitor_session_id(void);
 
 /**
  * @brief                          Configures the username tag for error

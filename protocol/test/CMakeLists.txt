@@ -30,6 +30,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         # Files needed for Client unit tests
         ../client/audio.c
         ../client/client_utils.c
+        ../client/whist_client.c
+        ../client/client_statistic.c
         ../client/network.c
         ../client/sdl_event_handler.c
         ../client/sdl_utils.c
@@ -41,6 +43,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp
+
+        # Debug console
+        ../whist/tools/debug_console.cpp
     )
 # Server & Client files, for Windows/Linux (supported on both client and server)
 else()
@@ -76,6 +81,8 @@ else()
         # Files needed for Client unit tests
         ../client/audio.c
         ../client/client_utils.c
+        ../client/whist_client.c
+        ../client/client_statistic.c
         ../client/network.c
         ../client/sdl_event_handler.c
         ../client/sdl_utils.c
@@ -87,6 +94,9 @@ else()
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp
+
+        # Debug console
+        ../whist/tools/debug_console.cpp
 )
 endif()
 

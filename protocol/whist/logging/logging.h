@@ -164,6 +164,14 @@ Public Functions
 */
 
 /**
+ * @brief                          Check whether we are running the server in developer mode (which
+ * means that we won't catch segfaults)
+ * @returns                         Returns a bool with a copy of the do_not_catch_segfaults static
+ * variable.
+ */
+bool get_do_not_catch_segfaults_flag(void);
+
+/**
  * @brief                          Print the stacktrace of the calling function to stdout
  *                                 This will be registered as if it was logged as well
  */

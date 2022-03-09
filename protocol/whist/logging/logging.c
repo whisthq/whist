@@ -326,12 +326,16 @@ static void logger_queue_line(const char* tag, const char* prefix, const char* l
     whist_unlock_mutex(logger_queue_mutex);
 }
 
-static bool catch_segfaults;
-COMMAND_LINE_BOOL_OPTION(catch_segfaults, 'D', "developer-mode",
+static bool do_not_catch_segfaults;
+// Passing the developer mode flag without any parameter will set do_not_catch_segfaults to true by
+// default.
+COMMAND_LINE_BOOL_OPTION(do_not_catch_segfaults, 'D', "developer-mode",
                          "Run the server in developer mode (don't catch segfaults).")
 
+bool get_do_not_catch_segfaults_flag(void) { return do_not_catch_segfaults; }
+
 void whist_init_logger(void) {
-    if (catch_segfaults) init_backtrace_handler();
+    if (!do_not_catch_segfaults) init_backtrace_handler();
 
     linked_list_init(&logger_queue);
     linked_list_init(&logger_freelist);

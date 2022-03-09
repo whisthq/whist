@@ -54,9 +54,27 @@ extern "C" {
 #include <whist/utils/queue.h>
 #include <whist/utils/command_line.h>
 
+#include <whist/core/features.h>
+
+extern int output_width;
+extern int output_height;
 extern WhistMutex window_resize_mutex;
 extern volatile SDL_Window* window;
+extern volatile char* server_ip;
+extern volatile char client_hex_aes_private_key[33];
+extern unsigned short port_mappings[USHRT_MAX + 1];
+char* get_user_email(void);
+char* get_png_icon_filename(void);
+char* get_new_tab_url(void);
+char* get_program_name(void);
+
+bool get_catch_segfaults_flag();
+bool whist_error_monitor_environment_set(void);
+char* get_error_monitor_environment(void);
+char* get_error_monitor_session_id(void);
 }
+
+int get_debug_console_listen_port();
 
 class ProtocolTest : public CaptureStdoutFixture {};
 
@@ -1786,6 +1804,187 @@ TEST_F(ProtocolTest, CommandLineTest) {
     EXPECT_STREQ(test_option_string, "foo");
     EXPECT_EQ(test_operand_position, 8);
     EXPECT_STREQ(test_operand_value, "bar");
+}
+
+TEST_F(ProtocolTest, ClientParseEmpty) {
+    EXPECT_EQ(alloc_parsed_args(), 0);
+    char argv0[] = "./wclient";
+    char* argv[] = {argv0};
+    int argc = ARRAY_LENGTH(argv);
+    int ret_val = client_parse_args(argc, argv);
+    EXPECT_EQ(ret_val, 0);
+    EXPECT_EQ(free_parsed_args(), 0);
+}
+
+TEST_F(ProtocolTest, ClientParseHelp) {
+    char argv0[] = "./wclient";
+    char argv1[] = "--help";
+    char* argv[] = {argv0, argv1};
+    int argc = ARRAY_LENGTH(argv);
+    EXPECT_EXIT(client_parse_args(argc, argv), testing::ExitedWithCode(0), "");
+    check_stdout_line(::testing::StartsWith("Usage:"));
+}
+
+TEST_F(ProtocolTest, ClientParseArgs) {
+    EXPECT_EQ(alloc_parsed_args(), 0);
+    char argv0[] = "./wclient";
+    // Required urls: IP, port mappings, AES key
+    char argv1[] = "16.72.29.190";
+    char argv2[] = "-p32262:7415.32263:66182.32273:12774";
+    char argv3[] = "-k";
+    char argv4[] = "9d3ff73c663e13bce0780d1b95c89582";
+    // Enable the debug console on a port
+    char argv5[] = "--debug-console";
+    char argv6[] = "9090";
+    // Disable catching segfaults on server (developer mode)
+    char argv7[] = "-D";
+    // Enable features
+    char argv8[] = "--enable-features";
+    char argv9[] = "packet encryption,long-term reference frames";
+    // Set environment to
+    char argv10[] = "-e";
+    char argv11[] = "staging";
+    // Set width and height
+    char argv12[] = "-w";
+    char argv13[] = "500";
+    char argv14[] = "-h";
+    char argv15[] = "750";
+    // Set the icon (using a 64x64 png file)
+    char argv16[] = "-i";
+    char argv17[] = "assets/icon_dev.png";
+    // Set the protocol window title
+    char argv18[] = "-n";
+    char argv19[] = "Test Title 1234567890 ?!";
+    // Pass URL to open up in new tab
+    char argv20[] = "-x";
+    char argv21[] = "https://www.nytimes.com/";
+    // Add additional port mappings
+    char argv22[] = "-p";
+    char argv23[] = "8787:6969.1234:7248";
+    // Set the session id
+    char argv24[] = "-d";
+    char argv25[] = "2rhfnq384";
+    // Request to launch protocol without an icon in the taskbar
+    char argv26[] = "-s";
+    // Pass the user's email
+    char argv27[] = "-u";
+    char argv28[] = "user@whist.com";
+
+    char* argv[] = {argv0,  argv1,  argv2,  argv3,  argv4,  argv5,  argv6,  argv7,  argv8,  argv9,
+                    argv10, argv11, argv12, argv13, argv14, argv15, argv16, argv17, argv18, argv19,
+                    argv20, argv21, argv22, argv23, argv24, argv25, argv26, argv27, argv28};
+    int argc = ARRAY_LENGTH(argv);
+    int ret_val = client_parse_args(argc, argv);
+    EXPECT_EQ(ret_val, 0);
+
+    // Check that the server ip was saved properly. Use a loop (instead of strcmp) because server_ip
+    // is volatile.
+    size_t server_ip_len = 0, argv1_len = strlen(argv1);
+    while (server_ip[server_ip_len] != '\0') {
+        EXPECT_TRUE(server_ip_len <= argv1_len);
+        EXPECT_EQ(server_ip[server_ip_len], argv1[server_ip_len]);
+        server_ip_len++;
+    }
+    EXPECT_EQ(server_ip_len, argv1_len);
+
+    // Check the port mappings
+    EXPECT_EQ(port_mappings[32262], 7415);
+    EXPECT_EQ(port_mappings[32263], 646);
+    EXPECT_EQ(port_mappings[32273], 12774);
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=32262, destination=7415"));
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=32263, destination=646"));
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=32273, destination=12774"));
+
+    // Check that the AES key was saved properly. Use a loop (instead of strcmp) because
+    // client_hex_aes_private_key is volatile.
+    size_t aes_key_len = 0, argv4_len = strlen(argv4);
+    while (client_hex_aes_private_key[aes_key_len] != '\0') {
+        EXPECT_TRUE(aes_key_len <= argv4_len);
+        if (isdigit(client_hex_aes_private_key[aes_key_len])) {
+            EXPECT_EQ(client_hex_aes_private_key[aes_key_len], argv4[aes_key_len]);
+        } else {
+            EXPECT_EQ(client_hex_aes_private_key[aes_key_len] - 'A' + 'a', argv4[aes_key_len]);
+        }
+
+        aes_key_len++;
+    }
+    EXPECT_EQ(aes_key_len, argv4_len);
+
+    // Check that the debugging console was turned on at the desired port
+    int debug_console_port = atoi(argv6);
+    EXPECT_EQ(get_debug_console_listen_port(), debug_console_port);
+
+    // Check that we are not catching seg faults, given that developer mode is on.
+    EXPECT_TRUE(get_do_not_catch_segfaults_flag());
+    whist_init_features();
+
+    // Check the environment
+    EXPECT_TRUE(whist_error_monitor_environment_set());
+    char* enviroment_copy = get_error_monitor_environment();
+    EXPECT_TRUE(enviroment_copy != NULL);
+    EXPECT_EQ(strlen(enviroment_copy), strlen("staging"));
+    EXPECT_EQ(strcmp(enviroment_copy, argv11), 0);
+    free(enviroment_copy);
+
+    // Check the width and the height
+    int width = atoi(argv13);
+    int height = atoi(argv15);
+    EXPECT_EQ(width, output_width);
+    EXPECT_EQ(height, output_height);
+
+    // Check that the icon filename was set correctly
+    char* png_icon_filename_copy = get_png_icon_filename();
+    EXPECT_TRUE(png_icon_filename_copy != NULL);
+    EXPECT_EQ(strlen(png_icon_filename_copy), strlen(argv17));
+    EXPECT_EQ(strcmp(png_icon_filename_copy, argv17), 0);
+    free(png_icon_filename_copy);
+
+    // Check the window title
+    char* program_name_copy = get_program_name();
+    EXPECT_TRUE(program_name_copy != NULL);
+    EXPECT_EQ(strlen(program_name_copy), strlen(argv19));
+    EXPECT_EQ(strcmp(program_name_copy, argv19), 0);
+    free(program_name_copy);
+
+    // Check that the url was saved properly
+    char* new_tab_url = get_new_tab_url();
+    EXPECT_TRUE(new_tab_url != NULL);
+    EXPECT_EQ(strlen(new_tab_url), strlen(argv21));
+    EXPECT_EQ(strcmp(new_tab_url, argv21), 0);
+    free(new_tab_url);
+
+    // Check the additional port mappings
+    EXPECT_EQ(port_mappings[8787], 6969);
+    EXPECT_EQ(port_mappings[1234], 7248);
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=8787, destination=6969"));
+    check_stdout_line(::testing::HasSubstr("Mapping port: origin=1234, destination=7248"));
+
+    // Check that features are enabled
+    EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_PACKET_ENCRYPTION));
+    EXPECT_TRUE(whist_check_feature(WHIST_FEATURE_LONG_TERM_REFERENCE_FRAMES));
+    check_stdout_line(
+        ::testing::HasSubstr("Feature packet encryption is enabled from the command line."));
+    check_stdout_line(::testing::HasSubstr(
+        "Feature long-term reference frames is enabled from the command line."));
+
+    // Check session id
+    char* session_id_copy = get_error_monitor_session_id();
+    EXPECT_TRUE(session_id_copy != NULL);
+    EXPECT_EQ(strlen(session_id_copy), strlen(argv25));
+    EXPECT_EQ(strcmp(session_id_copy, argv25), 0);
+    free(session_id_copy);
+
+    // Check skip taskbar
+    EXPECT_TRUE(get_skip_taskbar());
+
+    // Check user email
+    char* user_email_copy = get_user_email();
+    EXPECT_TRUE(user_email_copy != NULL);
+    EXPECT_EQ(strlen(user_email_copy), strlen(argv28));
+    EXPECT_EQ(strcmp(user_email_copy, argv28), 0);
+    free(user_email_copy);
+
+    EXPECT_EQ(free_parsed_args(), 0);
 }
 
 /*

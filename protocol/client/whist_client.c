@@ -128,14 +128,71 @@ static bool set_png_icon(const WhistCommandLineOption* opt, const char* value) {
     return true;
 }
 
+static bool set_new_tab_url(const WhistCommandLineOption* opt, const char* value) {
+    if (strlen(value) > MAX_URL_LENGTH) {
+        return false;
+    }
+    free((void*)new_tab_url);
+    new_tab_url = strdup(value);
+    return true;
+}
+
+// Required declaration to avoid 'no previous prototype for function' error
+char* get_user_email(void);
+char* get_png_icon_filename(void);
+char* get_new_tab_url(void);
+char* get_program_name(void);
+
+char* get_user_email(void) {
+    char* user_email_copy = (char*)calloc(WHIST_ARGS_MAXLEN + 1, sizeof(char));
+    if (!safe_strncpy(user_email_copy, user_email, WHIST_ARGS_MAXLEN + 1)) {
+        free(user_email_copy);
+        return NULL;
+    }
+    return user_email_copy;
+}
+
+char* get_png_icon_filename(void) {
+    char* icon_png_filename_copy = (char*)calloc(WHIST_ARGS_MAXLEN + 1, sizeof(char));
+    if (!safe_strncpy(icon_png_filename_copy, icon_png_filename, WHIST_ARGS_MAXLEN + 1)) {
+        free(icon_png_filename_copy);
+        return NULL;
+    }
+    return icon_png_filename_copy;
+}
+
+char* get_new_tab_url(void) {
+    if (!new_tab_url) {
+        return NULL;
+    }
+    char* new_tab_url_copy = (char*)calloc(strlen(new_tab_url) + 1, sizeof(char));
+    if (!safe_strncpy(new_tab_url_copy, new_tab_url, strlen(new_tab_url) + 1)) {
+        free(new_tab_url_copy);
+        return NULL;
+    }
+    return new_tab_url_copy;
+}
+
+char* get_program_name(void) {
+    if (!program_name) {
+        return NULL;
+    }
+    char* program_name_copy = (char*)calloc(strlen(program_name) + 1, sizeof(char));
+    if (!safe_strncpy(program_name_copy, program_name, strlen(program_name) + 1)) {
+        free(program_name_copy);
+        return NULL;
+    }
+    return program_name_copy;
+}
+
 COMMAND_LINE_CALLBACK_OPTION(set_user_email, 'u', "user", WHIST_OPTION_REQUIRED_ARGUMENT,
                              "Tell Whist the user's email.  Default: None.")
 COMMAND_LINE_CALLBACK_OPTION(set_png_icon, 'i', "icon", WHIST_OPTION_REQUIRED_ARGUMENT,
                              "Set the protocol window icon from a 64x64 pixel png file.")
+COMMAND_LINE_CALLBACK_OPTION(set_new_tab_url, 'x', "new-tab-url", WHIST_OPTION_REQUIRED_ARGUMENT,
+                             "URL to open in new tab.")
 COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
                            "Set the window title.  Default: Whist.")
-COMMAND_LINE_STRING_OPTION(new_tab_url, 'x', "new-tab-url", MAX_URL_LENGTH,
-                           "URL to open in new tab.")
 
 static int sync_keyboard_state(void) {
     /*
@@ -312,7 +369,7 @@ static void send_new_tab_url_if_needed(void) {
         send_wcmsg(wcmsg);
         free(wcmsg);
 
-        free((char*)new_tab_url);
+        free((void*)new_tab_url);
         new_tab_url = NULL;
 
         // Unmimimize the window if needed
