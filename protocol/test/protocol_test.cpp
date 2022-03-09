@@ -54,6 +54,7 @@ extern "C" {
 #include <whist/utils/queue.h>
 #include <whist/utils/command_line.h>
 
+#include "whist/core/error_codes.h"
 #include <whist/core/features.h>
 
 extern int output_width;
@@ -2135,6 +2136,30 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     free(user_email_copy);
 
     EXPECT_EQ(free_parsed_args(), 0);
+}
+
+TEST_F(ProtocolTest, ErrorCodes) {
+    // Success / no-error is zero.
+    EXPECT_EQ(WHIST_SUCCESS, 0);
+
+    // Unknown errors are minus-one, for compatibility with functions
+    // before error codes were added.
+    EXPECT_EQ(WHIST_ERROR_UNKNOWN, -1);
+
+    // Other errors are negative.
+    EXPECT_LT(WHIST_ERROR_INVALID_ARGUMENT, -1);
+
+    // Error string function should return a string.
+    EXPECT_STREQ(whist_error_string(WHIST_ERROR_NOT_FOUND), "not found");
+
+    // Invalid error codes should also return a string.
+    EXPECT_STREQ(whist_error_string((WhistStatus)9001), "invalid error code");
+
+    // Error string function should return something for all values.
+    for (int e = 10; e > -100; e--) {
+        const char* str = whist_error_string((WhistStatus)e);
+        EXPECT_TRUE(str != NULL);
+    }
 }
 
 /*

@@ -18,6 +18,7 @@ add_library(whistCore STATIC
         whist_frame.h
         whist_frame.c
         features.c
+        error_codes.c
         )
 
 # Ensure that whist.v is updated prior to compiling whistCore
