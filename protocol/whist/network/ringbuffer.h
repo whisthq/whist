@@ -53,6 +53,7 @@ typedef struct FrameData {
     int fec_packets_received;
     int duplicate_packets_received;
     bool* received_indices;
+    WhistTimer* last_nacked_timer;
     char* packet_buffer;
 
     // When the FrameData is being rendered,
@@ -71,7 +72,6 @@ typedef struct FrameData {
     int* num_times_index_nacked;
     int num_times_nacked;
     int last_nacked_index;
-    WhistTimer last_nacked_timer;
     WhistTimer last_nonnack_packet_timer;
     WhistTimer frame_creation_timer;
     FECDecoder* fec_decoder;
@@ -267,6 +267,7 @@ void reset_stream(RingBuffer* ring_buffer, int id);
  *
  * @param ring_buffer              Ring buffer to use
  * @param latency                  The latency, used in figuring out when to nack / stream reset
+ * @param max_unordered_packets    The max number of packets that can arrive out-of-order
  * @param network_settings         NetworkSettings structure containing the current bitrate and
  *                                 burst bitrate
  *
@@ -275,6 +276,7 @@ void reset_stream(RingBuffer* ring_buffer, int id);
  *                                       or a stream reset request with last failed ID
  */
 void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency,
+                                              int max_unordered_packets,
                                               NetworkSettings* network_settings);
 
 /**

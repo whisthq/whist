@@ -124,6 +124,9 @@ typedef struct {
 // Atleast 75% of the buckets should contain actual video data.
 #define MIN_VALID_BUCKETS ((INCOMING_BITRATE_NUM_BUCKETS * 3) / 4)
 
+// Newer out-of-order values will get this weightage in EWMA filter
+#define OUT_OF_ORDER_EWMA_FACTOR 0.01
+
 typedef struct {
     bool pending_stream_reset;
     int greatest_failed_id;
@@ -166,6 +169,8 @@ typedef struct {
     WhistMutex timestamp_mutex;
     timestamp_us last_ping_client_time;
     timestamp_us last_ping_server_time;
+
+    UnOrderedPacketInfo unordered_packet_info;
 
     int last_start_of_stream_id[NUM_PACKET_TYPES];
 
@@ -277,6 +282,32 @@ static int get_incoming_bitrate(UDPContext* context) {
         return (int)(((uint64_t)total_bits * MS_IN_SECOND) / (num_buckets * DURATION_PER_BUCKET));
     else
         return -1;
+}
+
+// Currently considers only out of order packets within a frame, to keep this logic simpler
+// TODO : Consider out-of-order packets across frames as well.
+void update_max_unordered_packets(UnOrderedPacketInfo* unordered_info, int frame_id,
+                                  int packet_index) {
+    // If the current frame is older than previously received, then ignore it.
+    if (unordered_info->prev_frame_id > frame_id) {
+        return;
+    }
+    int num_out_of_order_packets = 0;
+    if (unordered_info->prev_frame_id == frame_id) {
+        num_out_of_order_packets = max(unordered_info->prev_packet_index - packet_index, 0);
+    }
+    if ((double)num_out_of_order_packets > unordered_info->max_unordered_packets) {
+        // Reset the max_unordered_packets if the current value is higher
+        unordered_info->max_unordered_packets = (double)num_out_of_order_packets;
+    } else {
+        // Slowly delay the max_unordered_packets value for improving network conditions
+        unordered_info->max_unordered_packets =
+            num_out_of_order_packets * OUT_OF_ORDER_EWMA_FACTOR +
+            unordered_info->max_unordered_packets * (1.0 - OUT_OF_ORDER_EWMA_FACTOR);
+        unordered_info->prev_frame_id = frame_id;
+        unordered_info->prev_packet_index = packet_index;
+    }
+    return;
 }
 
 /**
@@ -537,13 +568,19 @@ static bool udp_update(void* raw_context) {
         // Otherwise, pass it to udp_handle_message
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
-            if (packet_type == PACKET_VIDEO)
+            if (packet_type == PACKET_VIDEO) {
                 add_incoming_bits(context, arrival_time, network_payload_size * BITS_IN_BYTE);
-            if (packet_type == PACKET_VIDEO && udp_packet.group_id >= context->curr_group_id &&
-                !udp_packet.udp_whist_segment_data.is_a_nack &&
-                !udp_packet.udp_whist_segment_data.is_a_duplicate) {
-                udp_congestion_control(context, udp_packet.udp_whist_segment_data.departure_time,
-                                       arrival_time, udp_packet.group_id);
+                if (!udp_packet.udp_whist_segment_data.is_a_nack &&
+                    !udp_packet.udp_whist_segment_data.is_a_duplicate) {
+                    update_max_unordered_packets(&context->unordered_packet_info,
+                                                 udp_packet.udp_whist_segment_data.id,
+                                                 udp_packet.udp_whist_segment_data.index);
+                    if (udp_packet.group_id >= context->curr_group_id) {
+                        udp_congestion_control(context,
+                                               udp_packet.udp_whist_segment_data.departure_time,
+                                               arrival_time, udp_packet.group_id);
+                    }
+                }
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
             if (context->ring_buffers[packet_type] != NULL) {
@@ -580,8 +617,10 @@ static bool udp_update(void* raw_context) {
             // At the moment we only nack for video
             // TODO: Make this not packet-type-dependent
             if (i == (int)PACKET_VIDEO) {
-                try_recovering_missing_packets_or_frames(context->ring_buffers[i], latency,
-                                                         &context->desired_network_settings);
+                try_recovering_missing_packets_or_frames(
+                    context->ring_buffers[i], latency,
+                    (int)round(context->unordered_packet_info.max_unordered_packets),
+                    &context->desired_network_settings);
             }
         }
     }
@@ -947,6 +986,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     context->connected = false;
     // Whether or not we've connected, but then lost the connection
     context->connection_lost = false;
+    context->unordered_packet_info.max_unordered_packets = 0.0;
     start_timer(&context->last_network_settings_time);
 
     network_context->context = context;

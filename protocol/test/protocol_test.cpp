@@ -1578,6 +1578,44 @@ TEST_F(ProtocolTest, QueueTest) {
     EXPECT_EQ(fifo_queue_enqueue_item(NULL, &item), -1);
 }
 
+TEST_F(ProtocolTest, UnOrderedPacketTest) {
+    UnOrderedPacketInfo unordered_info;
+    unordered_info.max_unordered_packets = 0.0;
+    unordered_info.prev_frame_id = 0;
+    unordered_info.prev_packet_index = 0;
+    update_max_unordered_packets(&unordered_info, 1, 0);
+    EXPECT_EQ(unordered_info.max_unordered_packets, 0.0);
+    update_max_unordered_packets(&unordered_info, 1, 1);
+    update_max_unordered_packets(&unordered_info, 1, 2);
+    EXPECT_EQ(unordered_info.max_unordered_packets, 0.0);
+    update_max_unordered_packets(&unordered_info, 2, 0);
+    update_max_unordered_packets(&unordered_info, 2, 1);
+    EXPECT_EQ(unordered_info.max_unordered_packets, 0.0);
+    update_max_unordered_packets(&unordered_info, 2, 3);
+    EXPECT_EQ(unordered_info.max_unordered_packets, 0.0);
+    update_max_unordered_packets(&unordered_info, 2, 2);
+    EXPECT_EQ(unordered_info.max_unordered_packets, 1.0);
+    update_max_unordered_packets(&unordered_info, 2, 4);
+    EXPECT_TRUE(unordered_info.max_unordered_packets > 0.98 &&
+                unordered_info.max_unordered_packets < 1.0);
+    update_max_unordered_packets(&unordered_info, 2, 10);
+    update_max_unordered_packets(&unordered_info, 2, 5);
+    EXPECT_EQ(unordered_info.max_unordered_packets, 5.0);
+    update_max_unordered_packets(&unordered_info, 3, 0);
+    EXPECT_TRUE(unordered_info.max_unordered_packets > 4.94 &&
+                unordered_info.max_unordered_packets < 4.96);
+    for (int i = 1; i < 100; i++) {
+        update_max_unordered_packets(&unordered_info, 3, i);
+    }
+    EXPECT_TRUE(unordered_info.max_unordered_packets > 1.8 &&
+                unordered_info.max_unordered_packets < 1.9);
+    for (int i = 0; i < 100; i++) {
+        update_max_unordered_packets(&unordered_info, 4, i);
+    }
+    EXPECT_TRUE(unordered_info.max_unordered_packets > 0.6 &&
+                unordered_info.max_unordered_packets < 0.7);
+}
+
 // Test notification packager (from string to WhistNotification).
 // Ensures no malformed strings, future OOB memory access, etc.
 TEST_F(ProtocolTest, PackageNotificationTest) {
