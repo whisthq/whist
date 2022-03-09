@@ -569,3 +569,45 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	return nil
 }
+
+// RemainingCapacity is the action responsible for computing remaining capacity. This value will be sent
+// to the website and will be used to limit downloads.
+func (s *DefaultScalingAlgorithm) RemainingCapacity(scalingCtx context.Context, event ScalingEvent) error {
+	logger.Infof("Starting remaining capacity action for event: %v", event)
+	defer logger.Infof("Finished remaining capacity action for event: %v", event)
+
+	// Get request before computing capacity
+	if event.Data == nil {
+		return utils.MakeError("got an empty event data. Not performing capacity action.")
+	}
+	req := event.Data.(httputils.RemainingCapacityRequest)
+
+	// Query for the latest image id
+	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
+	if err != nil {
+		return utils.MakeError("failed to query database for current image. Err: %v", err)
+	}
+
+	if len(imageResult) == 0 {
+		logger.Warningf("Image not found on %v. Not performing any scaling actions.", event.Region)
+		return nil
+	}
+	latestImageID := string(imageResult[0].ImageID)
+
+	// This query will return all instances with the ACTIVE status
+	allActive, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
+	if err != nil {
+		return utils.MakeError("failed to query database for active instances. Err: %v", err)
+	}
+
+	// This query will return all instances with the PRE_CONNECTION status
+	allStarting, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "PRE_CONNECTION", event.Region)
+	if err != nil {
+		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
+	}
+
+	mandelboxCapacity := helpers.ComputeExpectedMandelboxCapacity(latestImageID, allActive, allStarting)
+
+	req.ReturnResult(mandelboxCapacity, nil)
+	return nil
+}

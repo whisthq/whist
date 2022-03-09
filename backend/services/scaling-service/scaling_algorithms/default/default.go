@@ -278,6 +278,23 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						// Cancel context once the operation is done
 						scalingCancel()
 					}()
+				case "SERVER_REMAINING_CAPACITY_EVENT":
+					logger.Infof("Scaling algorithm received a remaining capacity request with value: %v", serverEvent)
+
+					goroutineTracker.Add(1)
+					go func() {
+						defer goroutineTracker.Done()
+
+						// Create context for scaling operation
+						scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+						err := s.RemainingCapacity(scalingCtx, serverEvent)
+						if err != nil {
+							logger.Errorf("Error running remaining capacity action. Err: %v", err)
+						}
+						// Cancel context once the operation is done
+						scalingCancel()
+					}()
 				}
 			case <-globalCtx.Done():
 				logger.Info("Global context has been cancelled. Exiting from default scaling algorithm event loop...")

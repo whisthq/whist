@@ -90,6 +90,31 @@ func (s *MandelboxAssignRequest) CreateResultChan() {
 	}
 }
 
+// Mandelbox assign request
+type RemainingCapacityRequest struct {
+	ResultChan chan RequestResult // Channel to pass the request result between goroutines
+}
+
+type RemainingCapacityRequestResult struct {
+}
+
+// ReturnResult is called to pass the result of a request back to the HTTP
+// request handler.
+func (s *RemainingCapacityRequest) ReturnResult(result interface{}, err error) {
+	s.ResultChan <- RequestResult{
+		Result: result,
+		Err:    err,
+	}
+}
+
+// createResultChan is called to create the Go channel to pass the request
+// result back to the HTTP request handler via ReturnResult.
+func (s *RemainingCapacityRequest) CreateResultChan() {
+	if s.ResultChan == nil {
+		s.ResultChan = make(chan RequestResult)
+	}
+}
+
 // Helper functions
 
 // ParseRequest will split the request body, unmarshal into a raw JSON map, and then unmarshal

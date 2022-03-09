@@ -15,6 +15,29 @@ import (
 	"golang.org/x/time/rate"
 )
 
+func RemainingCapacityHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
+	// Verify that we got a GET request
+	err := verifyRequestType(w, req, http.MethodGet)
+	if err != nil {
+		logger.Errorf("Error verifying request type. Err: %v", err)
+	}
+
+	var reqdata httputils.RemainingCapacityRequest
+	// Once we have validated the request send it to
+	// the scaling algorithm for processing. Since this
+	// event does not deal with AWS directly, send to the
+	// default us-east-1 scaling algorithm.
+	events <- algos.ScalingEvent{
+		ID:     uuid.NewString(),
+		Type:   "SERVER_REMAINING_CAPACITY_EVENT",
+		Region: "us-east-1",
+		Data:   reqdata,
+	}
+	res := <-reqdata.ResultChan
+
+	res.Send(w)
+}
+
 func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
 	err := verifyRequestType(w, req, http.MethodPost)
@@ -28,12 +51,15 @@ func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 		logger.Errorf("Failed while authenticating request. Err: %v", err)
 	}
 
-	// Once we have authenticated and validated the request
-	// send it to the scaling algorithm for processing
+	// Once we have authenticated and validated the
+	// request send it to the scaling algorithm for
+	// processing. Since this event does not deal with
+	// AWS directly, send to the default us-east-1 scaling algorithm.
 	events <- algos.ScalingEvent{
-		ID:   uuid.NewString(),
-		Type: "SERVER_MANDELBOX_ASSIGN_EVENT",
-		Data: reqdata,
+		ID:     uuid.NewString(),
+		Type:   "SERVER_MANDELBOX_ASSIGN_EVENT",
+		Region: "us-east-1",
+		Data:   reqdata,
 	}
 	res := <-reqdata.ResultChan
 
@@ -141,11 +167,13 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 
 	// Create the final assign handler, with the necessary middleware
 	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, createHandler(MandelboxAssignHandler)))
+	capacityHandler := throttleMiddleware(limiter, createHandler(RemainingCapacityHandler))
 
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.Handle("/mandelbox/assign", assignHandler)
+	mux.Handle("/capacity", http.HandlerFunc(capacityHandler))
 
 	// Add timeouts to help mitigate potential rogue clients
 	// or DDOS attacks.

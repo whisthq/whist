@@ -92,9 +92,10 @@ var QueryInstancesByStatus struct {
 	WhistInstances `graphql:"whist_instances(where: {status: {_eq: $status}})"`
 }
 
-// QueryInstanceByClientSHA returns an instance that matches the given commit hash..
+// QueryInstanceByClientSHA returns an instance that matches the given commit hash and has free space
+// to run a mandelbox.
 var QueryInstanceByClientSHA struct {
-	WhistInstances `graphql:"whist_instances(where: {client_sha: {_eq: $client_sha}})"`
+	WhistInstances `graphql:"whist_instances(where: {client_sha: {_eq: $client_sha}}, _and: {remaining_capacity: {_gt: 0}})"`
 }
 
 // QueryInstancesByImageID returns any instance with the given image id.

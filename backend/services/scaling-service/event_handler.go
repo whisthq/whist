@@ -321,6 +321,12 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 		case serverEvent := <-serverEvents:
 			logger.Infof("Received server event. %v", serverEvent)
 
+			algorithm := getScalingAlgorithm(algorithmByRegion, serverEvent)
+			switch algorithm := algorithm.(type) {
+			case *algos.DefaultScalingAlgorithm:
+				algorithm.ServerEventChan <- serverEvent
+			}
+
 		case <-globalCtx.Done():
 			logger.Infof("Gloal context has been cancelled, exiting event loop...")
 			return
