@@ -24,11 +24,9 @@ def extract_metrics(client_log_file, server_log_file):
         server_log_file (str): The path to the file (usually server.log) containing
                                 the server-side logs with the metrics
     Returns:
-        client_metrics2 (dict): the dictionary containing all the client metrics.
-        server_metrics2 (dict): the dictionary containing all the server metrics.
+        experiment_metrics (list): A list containing two dictionaries with the client
+                                 and server metrics, respectively.
     """
-    client_metrics = {}
-    server_metrics = {}
 
     experiment_metrics = []
 
@@ -117,12 +115,10 @@ def compute_deltas(
         compared_server_dictionary (dict): The dictionary containing the metrics key-value pairs
                                             for the server from the compared run
     Returns:
-        client_table_entries (list): the list containing the entries for the client markdown
-                                    comparison table. Each element in the list of lists corresponds
-                                    to one row.
-        server_table_entries (list): the list containing the entries for the server markdown
-                                    comparison table. Each element in the list of lists corresponds
-                                    to one row.
+        table_entries (list): A list with two sublists. The two sublists contain the entries for
+                                the markdown comparison tables for the client and server,
+                                respectively. Each item in the sublists corresponds to one row
+                                in the table.
     """
     metrics_dictionaries = [client_dictionary, server_dictionary]
     compared_dictionaries = [compared_client_dictionary, compared_server_dictionary]

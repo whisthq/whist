@@ -26,7 +26,7 @@ def generate_no_comparison_table(
     Returns:
         None
     """
-
+    experiment_metrics = [{"CLIENT": client_metrics}, {"SERVER": server_metrics}]
     with redirect_stdout(results_file):
         # Generate metadata table
         print("<details>")
@@ -56,85 +56,39 @@ def generate_no_comparison_table(
         print("<summary>Experiment results - Expand here</summary>")
         print("\n")
 
-        # Generate most interesting metric table
+        # Generate most interesting metric dictionary
         interesting_metrics = {}
-        for k in client_metrics:
-            if k in most_interesting_metrics:
-                interesting_metrics[k] = client_metrics[k]
-        for k in server_metrics:
-            if k in most_interesting_metrics:
-                interesting_metrics[k] = server_metrics[k]
-        if len(interesting_metrics) == 0:
-            print("NO INTERESTING METRICS\n")
-        else:
-            print("###### SUMMARY OF MOST INTERESTING METRICS: ######\n")
+        for _, metrics in experiment_metrics:
+            for k in metrics:
+                if k in most_interesting_metrics:
+                    interesting_metrics[k] = metrics[k]
+        experiment_metrics.insert(0, {"MOST INTERESTING": interesting_metrics})
 
-            writer = MarkdownTableWriter(
-                # table_name="Interesting metrics",
-                headers=["Metric", "Entries", "Average", "Min", "Max"],
-                value_matrix=[
-                    [
-                        k,
-                        interesting_metrics[k]["entries"],
-                        f"{interesting_metrics[k]['avg']:.3f}",
-                        interesting_metrics[k]["min"],
-                        interesting_metrics[k]["max"],
-                    ]
-                    for k in interesting_metrics
-                ],
-                margin=1,  # add a whitespace for both sides of each cell
-                max_precision=3,
-            )
-            writer.write_table()
-            print("\n")
+        # Generate tables for most interesting metrics, client metrics, and server metrics
+        for name, dictionary in experiment_metrics:
+            if len(dictionary) == 0:
+                print(f"NO {name} METRICS\n")
+            else:
+                print(f"###### {name} METRICS: ######\n")
 
-        # Generate client metric
-        if len(client_metrics) == 0:
-            print("NO CLIENT METRICS\n")
-        else:
-            print("###### CLIENT METRICS: ######\n")
-
-        writer = MarkdownTableWriter(
-            # table_name="Client metrics",
-            headers=["Metric", "Entries", "Average", "Min", "Max"],
-            value_matrix=[
-                [
-                    k,
-                    client_metrics[k]["entries"],
-                    f"{client_metrics[k]['avg']:.3f}",
-                    client_metrics[k]["min"],
-                    client_metrics[k]["max"],
-                ]
-                for k in client_metrics
-            ],
-            margin=1,  # add a whitespace for both sides of each cell
-            max_precision=3,
-        )
-        writer.write_table()
-        print("\n")
-
-        if len(server_metrics) == 0:
-            print("NO SERVER METRICS\n")
-        else:
-            print("###### SERVER METRICS: ######\n")
-
-        writer = MarkdownTableWriter(
-            # table_name="Client metrics",
-            headers=["Metric", "Entries", "Average", "Min", "Max"],
-            value_matrix=[
-                [
-                    k,
-                    server_metrics[k]["entries"],
-                    server_metrics[k]["avg"],
-                    server_metrics[k]["min"],
-                    server_metrics[k]["max"],
-                ]
-                for k in server_metrics
-            ],
-            margin=1,  # add a whitespace for both sides of each cell
-            max_precision=3,
-        )
-        writer.write_table()
+                writer = MarkdownTableWriter(
+                    # table_name="Interesting metrics",
+                    headers=["Metric", "Entries", "Average", "Min", "Max"],
+                    value_matrix=[
+                        [
+                            k,
+                            dictionary[k]["entries"],
+                            f"{dictionary[k]['avg']:.3f}",
+                            dictionary[k]["min"],
+                            dictionary[k]["max"],
+                        ]
+                        for k in dictionary
+                    ],
+                    margin=1,  # add a whitespace for both sides of each cell
+                    max_precision=3,
+                )
+                writer.write_table()
+                print("\n")
 
         print("\n")
         print("</details>")
