@@ -1,5 +1,5 @@
-import { merge } from "rxjs"
-import { map, filter, share } from "rxjs/operators"
+import { merge, Observable } from "rxjs"
+import { map, filter } from "rxjs/operators"
 import {
   accessToken,
   refreshToken,
@@ -7,45 +7,38 @@ import {
   hasValidSubscription,
 } from "@whist/core-ts"
 
-import { flow, fork } from "@app/main/utils/flows"
+import { flow } from "@app/main/utils/flows"
 import { authRefreshFlow } from "@app/main/flows/auth"
+
+const emitIfPaymentIsValid = (obs: Observable<accessToken & refreshToken>) =>
+  obs.pipe(
+    map((x: accessToken & refreshToken) => ({
+      ...x,
+      ...subscriptionStatusParse(x),
+    })),
+    filter((res) => hasValidSubscription(res))
+  )
+
+const emitIfPaymentIsInvalid = (obs: Observable<accessToken & refreshToken>) =>
+  obs.pipe(
+    map((x: accessToken & refreshToken) => ({
+      ...x,
+      ...subscriptionStatusParse(x),
+    })),
+    filter((res) => !hasValidSubscription(res))
+  )
 
 export default flow<accessToken & refreshToken>(
   "checkPaymentFlow",
   (trigger) => {
-    const success = trigger.pipe(
-      map((x: accessToken & refreshToken) => ({
-        ...x,
-        ...subscriptionStatusParse(x),
-      })),
-      filter((res) => hasValidSubscription(res))
-    )
-
-    const failure = trigger.pipe(
-      map((x: accessToken & refreshToken) => ({
-        ...x,
-        ...subscriptionStatusParse(x),
-      })),
-      filter((res) => !hasValidSubscription(res))
-    )
+    const success = emitIfPaymentIsValid(trigger)
+    const failure = emitIfPaymentIsInvalid(trigger)
 
     const refreshed = authRefreshFlow(failure)
 
-    const successAfterRefresh = refreshed.success.pipe(
-      map((x: accessToken & refreshToken) => ({
-        ...x,
-        ...subscriptionStatusParse(x),
-      })),
-      filter((res) => hasValidSubscription(res))
-    )
+    const successAfterRefresh = emitIfPaymentIsValid(refreshed.success)
+    const failureAfterRefresh = emitIfPaymentIsInvalid(refreshed.success)
 
-    const failureAfterRefresh = refreshed.success.pipe(
-      map((x: accessToken & refreshToken) => ({
-        ...x,
-        ...subscriptionStatusParse(x),
-      })),
-      filter((res) => !hasValidSubscription(res))
-    )
     return {
       success: merge(success, successAfterRefresh),
       failure: merge(refreshed.failure, failureAfterRefresh),
