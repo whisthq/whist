@@ -19,10 +19,21 @@ then
   sudo mkdir -p "$EPHEMERAL_FS_PATH"
   sudo mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
   echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
+
+  # Stop docker and copy the data directory that contains mandelbox images to the ephemeral storage
+  sudo systemctl stop docker
+  sudo mkdir -p "$EPHEMERAL_FS_PATH"/docker
+  sudo mv /var/lib/docker "$EPHEMERAL_FS_PATH"/docker
+
+  # Modify configuration to use the new data directory and persist in daemon config file
+  # and start docker again
+  jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json &&
+  sudo mv tmp.json /etc/docker/daemon.json
+  sudo systemctl start docker
+
 else
   echo "No ephemeral device path found."
 fi
-
 
 
 
