@@ -87,8 +87,9 @@ def extract_metrics(client_log_file, server_log_file):
             else:
                 new_experiment_metrics[metric_name]["avg"] = (
                     new_experiment_metrics[metric_name]["sum"]
-                    / new_experiment_metrics[metric_name]["entries"],
+                    / new_experiment_metrics[metric_name]["entries"]
                 )
+
         experiment_metrics.append(new_experiment_metrics)
 
     return experiment_metrics
