@@ -29,6 +29,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -606,6 +607,16 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 // Create the directory used to store the mandelbox resource allocations
 // (e.g. TTYs) on disk
 func initializeFilesystem(globalCancel context.CancelFunc) {
+	// Check if the instance has ephemeral storage. If it does
+	// create the "/whist" directory in it so that reading/writing
+	// operations are fast.
+	ephemeralDevicePath := os.Getenv("EPHEMERAL_DEVICE_PATH")
+	ephemeralFSPath := os.Getenv("EPHEMERAL_FS_PATH")
+
+	if ephemeralDevicePath != "null" {
+		utils.WhistDir = path.Join(ephemeralFSPath, utils.WhistDir)
+	}
+
 	// check if "/whist" already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid. The host-service shutting down
 	// from this panic will clean up the directory and the next run will work properly.

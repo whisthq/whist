@@ -31,6 +31,9 @@ then
   sudo mv tmp.json /etc/docker/daemon.json
   sudo systemctl start docker
 
+  # Export env vars so host service can read them
+  export "$EPHEMERAL_DEVICE_PATH" && export "$EPHEMERAL_FS_PATH"
+
 else
   echo "No ephemeral device path found."
 fi
