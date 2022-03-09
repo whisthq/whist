@@ -92,10 +92,10 @@ const checkPayment = checkPaymentFlow(
 const refreshAfterPaying = authRefreshFlow(
   fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
     withLatestFrom(
-      merge(
-        loggedInAuth.success.pipe(pluck("refreshToken")),
-        firstAuth.success.pipe(pluck("refreshToken"))
-      ).pipe(map((t) => ({ refreshToken: t })))
+      checkPayment.success.pipe(
+        pluck("refreshToken"),
+        map((t) => ({ refreshToken: t }))
+      )
     ),
     map(([, r]) => r)
   )
@@ -127,18 +127,9 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 // Observable that fires when Whist is ready to be launched
 const launchTrigger = emitOnSignal(
   combineLatest({
-    userEmail: merge(
-      loggedInAuth.success.pipe(pluck("userEmail")),
-      firstAuth.success.pipe(pluck("userEmail"))
-    ),
-    accessToken: merge(
-      loggedInAuth.success.pipe(pluck("accessToken")),
-      firstAuth.success.pipe(pluck("accessToken"))
-    ),
-    configToken: merge(
-      loggedInAuth.success.pipe(pluck("configToken")),
-      firstAuth.success.pipe(pluck("configToken"))
-    ),
+    userEmail: checkPayment.success.pipe(pluck("userEmail")),
+    accessToken: checkPayment.success.pipe(pluck("accessToken")),
+    configToken: checkPayment.success.pipe(pluck("configToken")),
     isNewConfigToken,
     importedData: merge(importedData, dontImportBrowserData),
     regions: merge(awsPing.cached, awsPing.refresh),
