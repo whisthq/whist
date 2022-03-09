@@ -3,7 +3,6 @@ package mandelbox // import "github.com/whisthq/whist/backend/services/host-serv
 // This file provides functions that manage user configs, including fetching, uploading, and encrypting them.
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/base32"
@@ -108,7 +107,6 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	if err != nil {
 		return utils.MakeError("Failed to encrypt configs for user %s for mandelbox %s with hashed token %s: %s", userID, mandelboxID, hash(configToken), err)
 	}
-	encryptedConfigBuffer := bytes.NewBuffer(encryptedConfig)
 
 	// Upload encrypted config to S3
 	s3Client, err := configutils.NewS3Client("us-east-1")
@@ -116,7 +114,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		return utils.MakeError("Error backing up user configs for user %s for mandelbox %s: error creating s3 client: %s", userID, mandelboxID, err)
 	}
 
-	uploadResult, err := configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKey(hash(configToken)), encryptedConfigBuffer)
+	uploadResult, err := configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKey(hash(configToken)), encryptedConfig)
 	if err != nil {
 		return utils.MakeError("Error uploading encrypted config for user %s for mandelbox %s to s3: %s", userID, mandelboxID, err)
 	}
@@ -310,17 +308,48 @@ func (mandelbox *mandelboxData) downloadUserConfig(s3Client *s3.Client, key stri
 	// Log config version
 	logger.Infof("Attempting to download user config key %s (version %s) for mandelbox %s", key, *headObject.VersionId, mandelbox.GetID())
 
-	// Download file into a pre-allocated in-memory buffer
-	// This should be okay as we don't expect configs to be very large
-	buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
-	numBytes, err := configutils.DownloadObjectToBuffer(s3Client, UserConfigS3Bucket, key, buf)
-	if err != nil {
-		return nil, utils.MakeError("Could not download object for key %s (version %s) for mandelbox %s: %s", key, *headObject.VersionId, mandelbox.GetID(), err)
+	// Get the md5 hash of the config file
+	validateIntegrity := true
+	configMetadata := headObject.Metadata
+	expectedMD5, ok := configMetadata["md5"]
+	if !ok {
+		validateIntegrity = false
 	}
 
-	logger.Infof("Downloaded %v bytes for user config key %s (version %s) for mandelbox %s", numBytes, key, *headObject.VersionId, mandelbox.GetID())
+	var downloadedFile []byte
+	var downloadSuccessful bool
+	var numBytesSuccessfullyDownloaded int64
 
-	return buf.Bytes(), nil
+	// Allow up to 3 retries on download if failure is because of checksum mismatch
+	for i := 0; i < 3; i++ {
+		// Download file into a pre-allocated in-memory buffer
+		// This should be okay as we don't expect configs to be very large
+		buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
+		numBytes, err := configutils.DownloadObjectToBuffer(s3Client, UserConfigS3Bucket, key, buf)
+		if err != nil {
+			return nil, utils.MakeError("Could not download object for key %s (version %s) for mandelbox %s: %s", key, *headObject.VersionId, mandelbox.GetID(), err)
+		}
+
+		// Check if the file was downloaded correctly
+		downloadedFile = buf.Bytes()
+		downloadHash := configutils.GetMD5Hash(downloadedFile)
+		if validateIntegrity && downloadHash != expectedMD5 {
+			logger.Warningf("MD5 hash mismatch for user config key %s (version %s) for mandelbox %s. Expected %s, got %s", key, *headObject.VersionId, mandelbox.GetID(), expectedMD5, downloadHash)
+			continue
+		}
+
+		downloadSuccessful = true
+		numBytesSuccessfullyDownloaded = numBytes
+		break
+	}
+
+	if !downloadSuccessful {
+		return nil, utils.MakeError("Could not download object (due to MD5 mismatch) for key %s (version %s) for mandelbox %s after 3 attempts", key, *headObject.VersionId, mandelbox.GetID())
+	}
+
+	logger.Infof("Downloaded %v bytes for user config key %s (version %s) for mandelbox %s", numBytesSuccessfullyDownloaded, key, *headObject.VersionId, mandelbox.GetID())
+
+	return downloadedFile, nil
 }
 
 // receiveAndSanityCheckEncryptionToken blocks until it receives the encryption
