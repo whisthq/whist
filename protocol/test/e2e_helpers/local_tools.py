@@ -3,6 +3,8 @@
 import os
 import subprocess
 
+GITHUB_SHA_LEN = 40
+
 
 def get_whist_branch_name(running_in_ci):
     """
@@ -63,7 +65,7 @@ def get_whist_github_sha(running_in_ci):
         subproc_handle = subprocess.Popen("git rev-parse HEAD", shell=True, stdout=subprocess.PIPE)
         subprocess_stdout = subproc_handle.stdout.readlines()
         converted_line = subprocess_stdout[0].decode("utf-8").strip()
-        if len(converted_line) == 40:
+        if len(converted_line) == GITHUB_SHA_LEN:
             github_sha = converted_line
 
     return github_sha

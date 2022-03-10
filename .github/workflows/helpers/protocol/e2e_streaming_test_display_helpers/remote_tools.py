@@ -15,14 +15,14 @@ from notifications.github_bot import github_comment_update
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def create_github_gist_post(github_gist_token, title, body):
+def create_github_gist_post(github_gist_token, title, files_list):
     """
     Create a secret Github Gist for the E2E results. Add one file for each tuple
-    in the body parameter. Print the html url of the secret Gist.
+    in the files_list parameter. Print the html url of the secret Gist.
     Args:
         github_gist_token (str): The Github Gist token to use for authentication
         title (str): The title to give to the Gist
-        body (str): A list of tuples, where each tuple contains the name of a file
+        files_list (str): A list of tuples, where each tuple contains the name of a file
                     to add to the Gist and the desired contents of the file
     Returns:
         None
@@ -32,8 +32,8 @@ def create_github_gist_post(github_gist_token, title, body):
     client = Github(github_gist_token)
     gh_auth_user = client.get_user()
     files_dict = {}
-    for t in body:
-        files_dict[t[0]] = InputFileContent(t[1])
+    for filename, file_contents in files_list:
+        files_dict[filename] = InputFileContent(file_contents)
     gist = gh_auth_user.create_gist(
         public=False,
         files=files_dict,
