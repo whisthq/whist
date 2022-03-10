@@ -153,7 +153,7 @@ static int sync_keyboard_state(void) {
         }
     }
 
-    // Also send caps lock and num lock status for syncronization
+    // Also send caps lock and num lock status for synchronization
     wcmsg.keyboard_state.state[FK_LGUI] = lgui_pressed;
     wcmsg.keyboard_state.state[FK_RGUI] = rgui_pressed;
 
@@ -437,11 +437,9 @@ int whist_client_main(int argc, const char* argv[]) {
             }
         }
 
-        // set the window minimum size
-        SDL_SetWindowMinimumSize((SDL_Window*)window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
-        // Make sure that ctrl+click is processed as a right click on Mac
-        SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
-        SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
+        // Send our initial width/height/codec to the server,
+        // so it can synchronize with us
+        send_message_dimensions();
 
         // Initialize audio and video renderer system
         WhistRenderer* whist_renderer = init_renderer(output_width, output_height);
