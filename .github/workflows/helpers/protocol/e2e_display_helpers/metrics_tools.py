@@ -11,47 +11,6 @@ from datetime import datetime, timedelta
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def parse_line(line):
-    def is_number(element):
-        try:
-            float(element)
-            return True
-        except ValueError:
-            return False
-
-    l = line.strip().split()
-    metric_name = list(filter(lambda x: '"' in x, l))[0].strip('"')
-    metric_values = list(filter(lambda x: is_number(x), l))
-
-    count = 0
-    normal_sum = 0.0
-    min_val = np.inf
-    max_val = -np.inf
-
-    if len(metric_values) == 1:
-        count = 1
-        if metric_name[0:4] == "MAX_":
-            max_val = float(metric_values[0])
-        elif metric_name[0:4] == "MIN_":
-            min_val = float(metric_values[0])
-        else:
-            normal_sum = float(metric_values[0])
-    else:
-        count = int(float(metric_values[1]))
-        normal_sum = float(metric_values[2])
-
-    assert count >= 0
-    assert normal_sum >= 0
-
-    return {
-        metric_name: metric_name,
-        max_val: max_val,
-        min_val: min_val,
-        count: count,
-        normal_sum: normal_sum,
-    }
-
-
 def extract_metrics(client_log_file, server_log_file):
     """
     Extract all the available server-side and client-side performance metrics for a
