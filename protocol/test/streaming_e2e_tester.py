@@ -239,7 +239,7 @@ if __name__ == "__main__":
     aws_credentials_filepath = args.aws_credentials_filepath
 
     # Create a boto3 client, create or start the instance(s).
-    boto3client = get_boto3client(region_name)
+    boto3client = boto3.client("ec2", region_name=region_name)
     server_instance_id = create_or_start_aws_instance(
         boto3client, region_name, use_existing_server_instance, ssh_key_name, running_in_ci
     )

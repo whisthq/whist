@@ -21,14 +21,14 @@ if __name__ == "__main__":
     for line in todo_list.readlines():
         cleanup_action, aws_region_name, instance_id = line.strip().split()
         # Connect to the E2 console
-        botoclient_handle = get_boto3client(aws_region_name)
+        boto3client = boto3.client("ec2", region_name=aws_region_name)
         # Check if we need to stop or terminate the instance
         if cleanup_action == "terminate":
             print(f"Terminating instance '{instance_id}' in region '{aws_region_name}' ...")
-            terminate_or_stop_aws_instance(botoclient_handle, instance_id, should_terminate=True)
+            terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=True)
         elif cleanup_action == "stop":
             print(f"Stopping instance '{instance_id}' in region '{aws_region_name}' ...")
-            terminate_or_stop_aws_instance(botoclient_handle, instance_id, should_terminate=False)
+            terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=False)
 
     # Close and delete the TODO-list upon completion of the cleanup
     todo_list.close()

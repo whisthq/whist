@@ -16,19 +16,6 @@ from e2e_helpers.local_tools import (
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def get_boto3client(region_name: str) -> botocore.client:
-    """
-    Create a Boto3 client to talk to the Amazon E2 service at the region of interest
-
-    Args:
-        region_name (str): The name of the region of interest (e.g. "us-east-1")
-
-    Returns:
-        (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
-    """
-    return boto3.client("ec2", region_name=region_name)
-
-
 def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
     """
     Get the AMI of the most recent AWS EC2 Amazon Machine Image running Ubuntu Server 20.04 Focal Fossa
