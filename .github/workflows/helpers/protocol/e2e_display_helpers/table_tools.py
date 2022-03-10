@@ -76,7 +76,7 @@ def generate_no_comparison_table(
                     [
                         k,
                         interesting_metrics[k]["entries"],
-                        "{:.3f}".format(interesting_metrics[k]["avg"]),
+                        f"{interesting_metrics[k]['avg']:.3f}",
                         interesting_metrics[k]["min"],
                         interesting_metrics[k]["max"],
                     ]
@@ -101,7 +101,7 @@ def generate_no_comparison_table(
                 [
                     k,
                     client_metrics[k]["entries"],
-                    "{:.3f}".format(client_metrics[k]["avg"]),
+                    f"{client_metrics[k]['avg']:.3f}",
                     client_metrics[k]["min"],
                     client_metrics[k]["max"],
                 ]
@@ -215,7 +215,7 @@ def generate_comparison_table(
                     "Metric",
                     "Entries (this branch)",
                     "Average (this branch)",
-                    "Average ({})".format(branch_name),
+                    f"Average ({branch_name})",
                     "Delta",
                     "",
                 ],
@@ -238,7 +238,7 @@ def generate_comparison_table(
                 "Metric",
                 "Entries (this branch)",
                 "Average (this branch)",
-                "Average ({})".format(branch_name),
+                f"Average ({branch_name})",
                 "Delta",
                 "",
             ],
@@ -261,7 +261,7 @@ def generate_comparison_table(
                 "Metric",
                 "Entries (this branch)",
                 "Average (this branch)",
-                "Average ({})".format(branch_name),
+                f"Average ({branch_name})",
                 "Delta",
                 "",
             ],

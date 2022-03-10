@@ -91,7 +91,7 @@ def create_ec2_instance(
     """
 
     branch_name = get_whist_branch_name(running_in_ci)
-    instance_name = "protocol-e2e-benchmarking-{}".format(branch_name)
+    instance_name = f"protocol-e2e-benchmarking-{branch_name}"
 
     kwargs = {
         "BlockDeviceMappings": [
@@ -146,11 +146,12 @@ def start_instance(boto3client: botocore.client, instance_id: str, max_retries: 
             print(response)
         except botocore.exceptions.ClientError as e:
             print(
-                "Could not start instance (retry {}/{}). Caught exception: {}".format(
-                    retry + 1, max_retries, e
-                )
+                f"Could not start instance (retry {retry + 1}/{max_retries}). Caught exception: {e}"
             )
-            if e.response["Error"]["Code"] == "IncorrectInstanceState" and retry < max_retries - 1:
+            if (
+                e.response["Error"]["Code"] == "IncorrectInstanceState"
+                or e.response["Error"]["Code"] == "IncorrectSpotRequestState"
+            ) and retry < max_retries - 1:
                 time.sleep(60)
                 continue
             else:
@@ -267,14 +268,10 @@ def create_or_start_aws_instance(
     # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
     instance_AMI = get_current_AMI(boto3client, region_name)
     if instance_AMI == "":
-        print("Error, could not get instance AMI for region {}".format(region_name))
+        print(f"Error, could not get instance AMI for region {region_name}")
     instance_type = "g4dn.xlarge"  # The type of instance we want to create
 
-    print(
-        "Creating AWS EC2 instance of size: {} and with AMI: {}...".format(
-            instance_type, instance_AMI
-        )
-    )
+    print(f"Creating AWS EC2 instance of size: {instance_type} and with AMI: {instance_AMI}...")
 
     # Create our EC2 instance
     instance_id = create_ec2_instance(

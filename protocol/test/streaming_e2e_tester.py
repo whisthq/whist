@@ -185,7 +185,7 @@ parser.add_argument(
     "--aws-credentials-filepath",
     help="The path to the file containing the AWS config credentials",
     type=str,
-    default="~/.aws/credentials",
+    default=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
 )
 
 parser.add_argument(
@@ -239,7 +239,7 @@ if __name__ == "__main__":
 
     # Load the SSH key
     if not os.path.isfile(ssh_key_path):
-        print("SSH key file {} does not exist".format(ssh_key_path))
+        print(f"SSH key file {ssh_key_path} does not exist")
         exit()
 
     # Load the AWS credentials path
@@ -287,9 +287,9 @@ if __name__ == "__main__":
             instances_to_be_stopped.append(client_instance_id)
     instances_file = open("instances_to_clean.txt", "a+")
     for i in instances_to_be_terminated:
-        instances_file.write("terminate {} {}\n".format(region_name, i))
+        instances_file.write(f"terminate {region_name} {i}\n")
     for i in instances_to_be_stopped:
-        instances_file.write("stop {} {}\n".format(region_name, i))
+        instances_file.write(f"stop {region_name} {i}\n")
     instances_file.close()
 
     # Get the IP address of the instance(s)
@@ -304,20 +304,18 @@ if __name__ == "__main__":
     client_hostname = client_instance_ip[0]["public"]
     client_private_ip = client_instance_ip[0]["private"]
     if not use_two_instances:
-        print("Connected to server/client AWS instance with hostname: {}!".format(server_hostname))
+        print(f"Connected to server/client AWS instance with hostname: {server_hostname}!")
     else:
         print(
-            "Connected to server AWS instance with hostname: {} and client AWS instance with hostname: {}!".format(
-                server_hostname, client_hostname
-            )
+            f"Connected to server AWS instance with hostname: {server_hostname} and client AWS instance with hostname: {client_hostname}!"
         )
 
     username = "ubuntu"
-    pexpect_prompt_server = "{}@ip-{}".format(username, server_private_ip.replace(".", "-"))
+    server_private_ip = server_private_ip.replace(".", "-")
+    client_private_ip = client_private_ip.replace(".", "-")
+    pexpect_prompt_server = f"{username}@ip-{server_private_ip}"
     pexpect_prompt_client = (
-        "{}@ip-{}".format(username, client_private_ip.replace(".", "-"))
-        if use_two_instances
-        else pexpect_prompt_server
+        f"{username}@ip-{client_private_ip}" if use_two_instances else pexpect_prompt_server
     )
     aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
 
@@ -335,8 +333,8 @@ if __name__ == "__main__":
     with open(metadata_filename, "w") as metadata_file:
         json.dump(experiment_metadata, metadata_file)
 
-    server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring_log.txt")
-    client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring_log.txt")
+    server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring.log")
+    client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring.log")
 
     manager = multiprocessing.Manager()
     args_dict = manager.dict()
@@ -372,10 +370,10 @@ if __name__ == "__main__":
         p2.start()
         p2.join()
 
-    server_log = open("{}/server_monitoring_log.txt".format(perf_logs_folder_name), "a")
-    client_log = open("{}/client_monitoring_log.txt".format(perf_logs_folder_name), "a")
-    server_cmd = "ssh {}@{} -i {}".format(username, server_hostname, ssh_key_path)
-    client_cmd = "ssh {}@{} -i {}".format(username, client_hostname, ssh_key_path)
+    server_log = open(os.path.join(perf_logs_folder_name, "server_monitoring.log"), "a")
+    client_log = open(os.path.join(perf_logs_folder_name, "client_monitoring.log"), "a")
+    server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
+    client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
 
     server_hs_process = attempt_ssh_connection(
         server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
@@ -426,6 +424,15 @@ if __name__ == "__main__":
         )
         client_restore_net_process.kill(0)
 
+    server_hang_detected = False
+    if shutdown_and_wait_server_exit(
+        server_pexpect_process, "Both whist-application and WhistServer have exited."
+    ):
+        print("Server has exited gracefully.")
+    else:
+        print("Server has not exited gracefully!")
+        server_hang_detected = True
+
     # Extract the client/server perf logs from the two docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
 
@@ -442,15 +449,6 @@ if __name__ == "__main__":
         )
         if not running_in_ci:
             log_grabber_client_process.expect(pexpect_prompt_client)
-
-    server_hang_detected = False
-    if shutdown_and_wait_server_exit(
-        server_pexpect_process, "Both whist-application and WhistServer have exited."
-    ):
-        print("Server has exited gracefully.")
-    else:
-        print("Server has not exited gracefully!")
-        server_hang_detected = True
 
     extract_server_logs_from_instance(
         log_grabber_server_process,
@@ -527,24 +525,41 @@ if __name__ == "__main__":
     else:
         # Save instance IDs to file for reuse by later runs
         with open("instances_left_on.txt", "w") as instances_file:
-            instances_file.write("{}\n".format(server_instance_id))
+            instances_file.write(f"{server_instance_id}\n")
             if client_instance_id != server_instance_id:
-                instances_file.write("{}\n".format(client_instance_id))
+                instances_file.write(f"{client_instance_id}\n")
 
     print("Instance successfully stopped/terminated, goodbye")
 
     # No longer need the new_instances.txt file because the script has already terminated (if needed) the instances itself
     os.remove("instances_to_clean.txt")
 
-    if server_hang_detected:
-        print("Exiting with failure due to server hang!")
+    client_metrics_file = os.path.join(perf_logs_folder_name, "client", "client.log")
+    server_metrics_file = os.path.join(perf_logs_folder_name, "server", "server.log")
+    experiment_metadata["server_failure"] = not os.path.isfile(server_metrics_file)
+    experiment_metadata["client_failure"] = not os.path.isfile(client_metrics_file)
+    # A test without connection errors will produce a client log that is well over 500 lines
+    experiment_metadata["client_server_connection_failure"] = (
+        not experiment_metadata["client_failure"]
+        and len(open(client_metrics_file).readlines()) <= 500
+    )
+    experiment_metadata["server_hang_detected"] = (
+        server_hang_detected and not experiment_metadata["server_failure"]
+    )
 
-        # Update experiment metadata
-        experiment_metadata["server_hang_detected"] = server_hang_detected
-        with open(metadata_filename, "w") as metadata_file:
-            json.dump(experiment_metadata, metadata_file)
+    # Update metadata file
+    with open(metadata_filename, "w") as metadata_file:
+        json.dump(experiment_metadata, metadata_file)
 
-        # Exit with error
-        sys.exit(-1)
-    else:
-        print("Done")
+    # Print error message and exit with error if needed
+    for cause, message in {
+        "server_failure": "Failed to run WhistServer",
+        "client_failure": "Failed to run WhistClient",
+        "client_server_connection_failure": "Whist Client failed to connect to the server",
+        "server_hang_detected": "WhistServer hang detected",
+    }.items():
+        if experiment_metadata[cause]:
+            print(f"{message}! Exiting with error. Check the logs for more details.")
+            sys.exit(-1)
+
+    print("Done")

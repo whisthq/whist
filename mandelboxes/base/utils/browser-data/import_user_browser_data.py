@@ -299,14 +299,21 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         browser = sys.argv[1]
         browser_data_file = sys.argv[2]
-        # Get browser data in file
-        with open(browser_data_file, "r") as file:
-            browser_data = json.load(file)
-            if "cookiesJSON" in browser_data and len(browser_data["cookiesJSON"]) > 0:
-                set_browser_cookies(browser, browser_data["cookiesJSON"])
+        if os.path.isfile(browser_data_file) and os.path.getsize(browser_data_file) > 0:
+            # Get browser data in file
+            with open(browser_data_file, "r") as file:
+                browser_data = json.load(file)
+                if "cookiesJSON" in browser_data and len(browser_data["cookiesJSON"]) > 0:
+                    set_browser_cookies(browser, browser_data["cookiesJSON"])
 
-            if "bookmarks" in browser_data and len(browser_data["bookmarks"]) > 0:
-                create_bookmark_file(browser, browser_data["bookmarks"])
+                if "bookmarks" in browser_data and len(browser_data["bookmarks"]) > 0:
+                    create_bookmark_file(browser, browser_data["bookmarks"])
 
-            if "extensions" in browser_data and len(browser_data["extensions"]) > 0:
-                create_extension_files(browser_data["extensions"])
+                if "extensions" in browser_data and len(browser_data["extensions"]) > 0:
+                    create_extension_files(browser_data["extensions"])
+        else:
+            print(
+                "Can't import user browser data because browser data file {} does not exist or it is empty".format(
+                    browser_data_file
+                )
+            )

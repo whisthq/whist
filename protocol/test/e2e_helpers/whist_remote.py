@@ -87,10 +87,8 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type, 
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     """
-    print("Building the server mandelbox in {} mode ...".format(cmake_build_type))
-    command = "cd ~/whist/mandelboxes && ./build.sh browsers/chrome --{} | tee ~/server_mandelbox_build.log".format(
-        cmake_build_type
-    )
+    print(f"Building the server mandelbox in {cmake_build_type} mode ...")
+    command = f"cd ~/whist/mandelboxes && ./build.sh browsers/chrome --{cmake_build_type} | tee ~/server_mandelbox_build.log"
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
     print("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
@@ -116,7 +114,7 @@ def run_server_on_instance(pexpect_process):
     server_docker_id = (
         server_mandelbox_output[-2].replace("\n", "").replace("\r", "").replace(" ", "")
     )
-    print("Whist Server started on EC2 instance, on Docker container {}!".format(server_docker_id))
+    print(f"Whist Server started on EC2 instance, on Docker container {server_docker_id}!")
 
     # Retrieve connection configs from server
     json_data = {}
@@ -156,17 +154,13 @@ def build_client_on_instance(
 
     """
     # Edit the run-whist-client.sh to make the client quit after the experiment is over
-    print("Setting the experiment duration to {}s...".format(testing_time))
-    command = "sed -i 's/timeout 240s/timeout {}s/g' ~/whist/mandelboxes/development/client/run-whist-client.sh".format(
-        testing_time
-    )
+    print(f"Setting the experiment duration to {testing_time}s...")
+    command = f"sed -i 's/timeout 240s/timeout {testing_time}s/g' ~/whist/mandelboxes/development/client/run-whist-client.sh"
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-    print("Building the dev client mandelbox in {} mode ...".format(cmake_build_type))
-    command = "cd ~/whist/mandelboxes && ./build.sh development/client --{} | tee ~/client_mandelbox_build.log".format(
-        cmake_build_type
-    )
+    print(f"Building the dev client mandelbox in {cmake_build_type} mode ...")
+    command = f"cd ~/whist/mandelboxes && ./build.sh development/client --{cmake_build_type} | tee ~/client_mandelbox_build.log"
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
     print("Finished building the dev client mandelbox on the EC2 instance")
@@ -213,18 +207,18 @@ def setup_network_conditions_client(
                 "Setting up client to run on a instance with the following networking conditions:"
             )
             if max_bandwidth != "none":
-                print("\t* Max bandwidth: {}".format(max_bandwidth))
+                print(f"\t* Max bandwidth: {max_bandwidth}")
             if net_delay != "none":
-                print("\t* Delay: {}ms".format(net_delay))
+                print(f"\t* Delay: {net_delay}ms")
             if pkt_drop_pctg != "none":
-                print("\t* Packet drop rate: {}".format(pkt_drop_pctg))
+                print(f"\t* Packet drop rate: {pkt_drop_pctg}")
 
         # Install ifconfig
-        command = "sudo apt install net-tools"
+        command = "sudo apt-get install -y net-tools"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         # Get network interface names (excluding loopback)
-        command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
+        command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
@@ -247,24 +241,22 @@ def setup_network_conditions_client(
 
         degradation_command = ""
         if net_delay != "none":
-            degradation_command += "delay {}ms ".format(net_delay)
+            degradation_command += f"delay {net_delay}ms "
         if pkt_drop_pctg != "none":
-            degradation_command += "loss {}% ".format(pkt_drop_pctg)
+            degradation_command += f"loss {pkt_drop_pctg}% "
         if max_bandwidth != "none":
-            degradation_command += "rate {}".format(max_bandwidth)
+            degradation_command += f"rate {max_bandwidth}"
 
         for device in ifconfig_output:
-            print("Applying network degradation to device {}".format(device))
+            print(f"Applying network degradation to device {device}")
             # add devices to delay incoming packets
-            commands.append("sudo tc qdisc add dev {} ingress".format(device))
+            commands.append(f"sudo tc qdisc add dev {device} ingress")
             commands.append(
-                "sudo tc filter add dev {} parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0".format(
-                    device
-                )
+                f"sudo tc filter add dev {device} parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0"
             )
 
             # Set outbound degradations
-            command = "sudo tc qdisc add dev {}root netem ".format(device)
+            command = f"sudo tc qdisc add dev {device} root netem "
             command += degradation_command
             commands.append(command)
 
@@ -296,11 +288,29 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     """
     print("Restoring network conditions to normal on client!")
     # Get network interface names (excluding loopback)
-    command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
+    command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
+    # Cannot use wait_until_cmd_done because we need to handle clase where ifconfig is not installed
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    result = pexpect_process.expect(
+        [pexpect_prompt, "sudo: ifconfig: command not found", pexpect.exceptions.TIMEOUT]
+    )
+    if result == 1:
+        # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know that no network degradations have been applied to the machine.
+        if not running_in_ci:
+            pexpect_process.expect(pexpect_prompt)
+        # If ifconfig is not installed, it means that we could not have applied network degradation conditions before, so we are done.
+        print("ifconfig is not installed, so we don't need to restore normal network conditions.")
+        return
+    elif result == 2:
+        # Catch timeouts manually here, instead of letting wait_until_cmd_done take care of it, because we cannot use wait_until_cmd_done (it is unsafe to use when we are looking to parse a command's stdout and we might be running this script in CI)
+        print("Error, testing script hanged! Check the logs for troubleshooting.")
+        sys.exit(-1)
 
     ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
+
+    if not running_in_ci:
+        pexpect_process.expect(pexpect_prompt)
+
     ifconfig_output = [
         x.replace("\r", "").replace(":", "")
         for x in ifconfig_output
@@ -314,11 +324,11 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     commands = []
 
     for device in ifconfig_output:
-        print("Restoring normal network conditions on device {}".format(device))
+        print(f"Restoring normal network conditions on device {device}")
         # Inbound degradations
-        commands.append("sudo tc qdisc del dev {} handle ffff: ingress".format(device))
+        commands.append(f"sudo tc qdisc del dev {device} handle ffff: ingress")
         # Outbound degradations
-        commands.append("sudo tc qdisc del dev {} root netem".format(device))
+        commands.append(f"sudo tc qdisc del dev {device} root netem")
 
     commands.append("sudo modprobe -r ifb")
 
@@ -343,18 +353,14 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
 
     """
     print("Running the dev client mandelbox, and connecting to the server!")
-    command = "cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{}'".format(
-        json.dumps(json_data)
-    )
+    command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{json.dumps(json_data)}'"
     pexpect_process.sendline(command)
     pexpect_process.expect(":/#")
     client_mandelbox_output = pexpect_process.before.decode("utf-8").strip().split("\n")
     client_docker_id = (
         client_mandelbox_output[-2].replace("\n", "").replace("\r", "").replace(" ", "")
     )
-    print(
-        "Whist dev client started on EC2 instance, on Docker container {}!".format(client_docker_id)
-    )
+    print(f"Whist dev client started on EC2 instance, on Docker container {client_docker_id}!")
 
     if simulate_scrolling:
         # Sleep for sometime so that the webpage can load.
@@ -365,6 +371,30 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
         pexpect_process.expect(":/#")
 
     return client_docker_id
+
+
+def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
+    # Check if we are running out of space
+    pexpect_process.sendline("df -h | grep --color=never /dev/root")
+    # We need to pass running_in_ci=True no matter what because we need to read the stdout
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci=True)
+    space_used_output = pexpect_process.before.decode("utf-8").strip().split("\n")
+    for line in reversed(space_used_output):
+        if "/dev/root" in line:
+            space_used_output = line.replace("\n", "").replace("\r", "").split()
+            break
+    space_used_pctg = int(space_used_output[-2][:-1])
+
+    if not running_in_ci:
+        pexpect_process.expect(pexpect_prompt)
+
+    # Clean up space on the instance by pruning all Docker containers if the disk is 75% (or more) full
+    if space_used_pctg >= 75:
+        print(f"Disk is {space_used_pctg}% full, pruning the docker containers...")
+        pexpect_process.sendline("docker system prune -af")
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    else:
+        print(f"Disk is {space_used_pctg}% full, no need to prune containers.")
 
 
 def server_setup_process(args_dict):
@@ -397,7 +427,7 @@ def server_setup_process(args_dict):
 
     # Initiate the SSH connections with the instance
     print("Initiating the SETUP ssh connection with the server AWS instance...")
-    server_cmd = "ssh {}@{} -i {}".format(username, server_hostname, ssh_key_path)
+    server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
     hs_process = attempt_ssh_connection(
         server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
     )
@@ -412,6 +442,8 @@ def server_setup_process(args_dict):
         running_in_ci,
         aws_credentials_filepath,
     )
+
+    prune_containers_if_needed(hs_process, pexpect_prompt_server, running_in_ci)
 
     if skip_git_clone == "false":
         clone_whist_repository_on_instance(
@@ -481,7 +513,7 @@ def client_setup_process(args_dict):
 
     client_log = open(client_log_filepath, "w")
 
-    client_cmd = "ssh {}@{} -i {}".format(username, client_hostname, ssh_key_path)
+    client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
 
     # If we are using the same instance for client and server, all the operations in this if-statement have already been done by server_setup_process
     if use_two_instances:
@@ -504,6 +536,8 @@ def client_setup_process(args_dict):
             running_in_ci,
             aws_credentials_filepath,
         )
+
+        prune_containers_if_needed(hs_process, pexpect_prompt_client, running_in_ci)
 
         if skip_git_clone == "false":
             clone_whist_repository_on_instance(
@@ -580,6 +614,7 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp, timeout_val
     pexpect_process.sendline("sleep 1")
     pexpect_process.expect(":/#")
     pexpect_process.sendline("pkill chrome")
+    pexpect_process.expect(":/#")
     pexpect_process.sendline("tail -f /var/log/whist/protocol-out.log")
 
     try:

@@ -216,25 +216,25 @@ def compute_deltas(
         new_entry = [
             k,
             client_dictionary[k]["entries"],
-            "{:.3f}".format(client_dictionary[k]["avg"]),
+            f"{client_dictionary[k]['avg']:.3f}",
         ]
 
         if client_dictionary[k]["compared_avg"] == "N/A":
             new_entry.append("N/A")
         else:
-            new_entry.append("{:.3f}".format(client_dictionary[k]["compared_avg"]))
+            new_entry.append(f"{client_dictionary[k]['compared_avg']:.3f}")
 
         delta_formatted = client_dictionary[k]["delta"]
         if client_dictionary[k]["delta"] != "-" and client_dictionary[k]["delta"] != "N/A":
-            delta_formatted = "{:.3f}".format(delta_formatted)
+            delta_formatted = f"{delta_formatted:.3f}"
             delta_pctg_formatted = client_dictionary[k]["delta_pctg"]
             if (
                 client_dictionary[k]["delta_pctg"] != "-"
                 and client_dictionary[k]["delta_pctg"] != "nan"
                 and client_dictionary[k]["delta_pctg"] != "N/A"
             ):
-                delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
-            new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
+                delta_pctg_formatted = f"{delta_pctg_formatted * 100.0:.3f}"
+            new_entry.append(f"{delta_formatted} ({delta_pctg_formatted}%)")
         else:
             new_entry.append(delta_formatted)
 
@@ -282,25 +282,25 @@ def compute_deltas(
         new_entry = [
             k,
             server_dictionary[k]["entries"],
-            "{:.3f}".format(server_dictionary[k]["avg"]),
+            f"{server_dictionary[k]['avg']:.3f}",
         ]
 
         if server_dictionary[k]["compared_avg"] == "N/A":
             new_entry.append("N/A")
         else:
-            new_entry.append("{:.3f}".format(server_dictionary[k]["compared_avg"]))
+            new_entry.append(f"{server_dictionary[k]['compared_avg']:.3f}")
 
         delta_formatted = server_dictionary[k]["delta"]
         if server_dictionary[k]["delta"] != "-" and server_dictionary[k]["delta"] != "N/A":
-            delta_formatted = "{:.3f}".format(delta_formatted)
+            delta_formatted = f"{delta_formatted:.3f}"
             delta_pctg_formatted = server_dictionary[k]["delta_pctg"]
             if (
                 server_dictionary[k]["delta_pctg"] != "-"
                 and server_dictionary[k]["delta_pctg"] != "nan"
                 and server_dictionary[k]["delta_pctg"] != "N/A"
             ):
-                delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
-            new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
+                delta_pctg_formatted = f"{delta_pctg_formatted * 100.0:.3f}"
+            new_entry.append(f"{delta_formatted} ({delta_pctg_formatted}%)")
         else:
             new_entry.append(delta_formatted)
 

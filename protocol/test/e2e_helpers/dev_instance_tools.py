@@ -76,7 +76,7 @@ def attempt_ssh_connection(
             ]
         )
         if result_index == 0:
-            print("\tSSH connection refused by host (retry {}/{})".format(retries + 1, max_retries))
+            print(f"\tSSH connection refused by host (retry {retries + 1}/{max_retries})")
             child.kill(0)
             time.sleep(30)
         elif result_index == 1 or result_index == 2:
@@ -86,16 +86,22 @@ def attempt_ssh_connection(
             print(f"SSH connection established with EC2 instance!")
             return child
         elif result_index >= 3:
-            print("\tSSH connection timed out (retry {}/{})".format(retries + 1, max_retries))
+            print(f"\tSSH connection timed out (retry {retries + 1}/{max_retries})")
             child.kill(0)
             time.sleep(30)
-    print("SSH connection refused by host {} times. Giving up now.".format(max_retries))
+    print(f"SSH connection refused by host {max_retries} times. Giving up now.")
     sys.exit(-1)
 
 
 def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci):
     """
     Wait until the currently-running command on a remote machine finishes its execution on the shell monitored to by a pexpect process.
+
+    N.B: Whenever running_in_ci=False, it is unsafe to parse the pexpect process's stdout output (with pexpect_process.before) after
+        a call to wait_until_cmd_done. If this script is running outside of a CI environment (running_in_ci=False), all bash prompts
+        are likely to be printed two times. If we are looking to parse the stdout output, we need the stdout that comes before the
+        first prompt is printed. Getting the stdout after a call wait_until_cmd_done, however, will discard the output of the command
+        executed by the pexpect_process and only return the stdout (usually empty) between the first and the second prompt.
 
     Args:
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process on the remote machine
@@ -180,7 +186,7 @@ def configure_aws_credentials(
     pexpect_prompt,
     aws_timeout,
     running_in_ci,
-    aws_credentials_filepath="~/.aws/credentials",
+    aws_credentials_filepath=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
 ):
     """
     Configure AWS credentials on a remote machine by copying them from the ones configures on the machine where this script is being run.
@@ -211,11 +217,7 @@ def configure_aws_credentials(
         aws_credentials_filepath_expanded = os.path.expanduser(aws_credentials_filepath)
 
         if not os.path.isfile(aws_credentials_filepath_expanded):
-            print(
-                "Could not find local AWS credential file at path {}!".format(
-                    aws_credentials_filepath
-                )
-            )
+            print(f"Could not find local AWS credential file at path {aws_credentials_filepath}!")
             return -1
         aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
         for line in aws_credentials_file.readlines():
@@ -226,11 +228,7 @@ def configure_aws_credentials(
                 break
         aws_credentials_file.close()
         if aws_access_key_id == "" or aws_secret_access_key == "":
-            print(
-                "Could not parse AWS credentials from file at path {}!".format(
-                    aws_credentials_filepath
-                )
-            )
+            print(f"Could not parse AWS credentials from file at path {aws_credentials_filepath}!")
             return -1
 
     pexpect_process.sendline("sudo apt-get update")
@@ -305,11 +303,7 @@ def clone_whist_repository_on_instance(
     """
     branch_name = get_whist_branch_name(running_in_ci)
 
-    print(
-        "Cloning branch {} of the whisthq/whist repository on the AWS instance ...".format(
-            branch_name
-        )
-    )
+    print(f"Cloning branch {branch_name} of the whisthq/whist repository on the AWS instance ...")
 
     # Retrieve whisthq/whist monorepo on the instance
     command = (
