@@ -155,12 +155,12 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: protocol
         run: |
-          # Build the protocol and its test suite
+          # Build the protocol and its test suite, note that ASan doesn't support detect_leaks on macOS clang
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -DCMAKE_C_COMPILER=/usr/local/opt/llvm/bin/clang -DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++ -DSANITIZE=address+undefined
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -DSANITIZE=address+undefined
           make -j WhistClient
-          make -j test ASAN_OPTIONS=detect_leaks=1
+          make -j test
 
       - name: Build the Protocol Client Library on macOS
         if: runner.os == 'macOS'
@@ -294,11 +294,12 @@ jobs:
       - name: Build and Test Protocol Client
         working-directory: protocol
         run: |
+          # Build the protocol and its test suite, note that ASan doesn't support detect_leaks on macOS clang
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -DCMAKE_C_COMPILER=/opt/homebrew/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/homebrew/llvm/bin/clang++ -DSANITIZE=address+undefined
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -DSANITIZE=address+undefined
           make -j WhistClient
-          make -j test ASAN_OPTIONS=detect_leaks=1
+          make -j test
 
       - name: Build the Protocol Client Library
         working-directory: protocol
