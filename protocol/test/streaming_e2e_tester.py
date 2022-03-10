@@ -22,7 +22,6 @@ from e2e_helpers.aws_tools import (
 from e2e_helpers.dev_instance_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
-    get_whist_branch_name,
 )
 
 # Get tools to programmatically run Whist components on a remote machine
