@@ -23,7 +23,8 @@ import {
 // so the user is remembered
 merge(
   fromTrigger(WhistTrigger.authFlowSuccess),
-  fromTrigger(WhistTrigger.authRefreshSuccess)
+  fromTrigger(WhistTrigger.authRefreshSuccess),
+  fromTrigger(WhistTrigger.checkPaymentFlowSuccess)
 ).subscribe(
   (args: {
     userEmail?: string
@@ -32,7 +33,7 @@ merge(
     configToken?: string
   }) => {
     toPairs(args).forEach(([key, value]) => {
-      if (value !== undefined) persistSet(`auth.${key}`, value)
+      if (value !== undefined && value !== "") persistSet(`auth.${key}`, value)
     })
   }
 )

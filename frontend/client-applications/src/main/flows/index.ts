@@ -7,7 +7,6 @@ import {
   share,
   mapTo,
   pluck,
-  withLatestFrom,
 } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -79,27 +78,11 @@ waitForSignal(
     fromTrigger(WhistTrigger.beginImport),
     of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
   ),
-  merge(loggedInAuth.success, firstAuth.success)
+  fromTrigger(WhistTrigger.authFlowSuccess)
 )
 
 // Unpack the access token to see if their payment is valid
-const checkPayment = checkPaymentFlow(
-  merge(loggedInAuth.success, firstAuth.success)
-)
-
-// If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
-// get new auth credentials
-const refreshAfterPaying = authRefreshFlow(
-  fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
-    withLatestFrom(
-      merge(
-        loggedInAuth.success.pipe(pluck("refreshToken")),
-        firstAuth.success.pipe(pluck("refreshToken"))
-      ).pipe(map((t) => ({ refreshToken: t })))
-    ),
-    map(([, r]) => r)
-  )
-)
+const checkPayment = checkPaymentFlow(fromTrigger(WhistTrigger.authFlowSuccess))
 
 const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
   take(1),
@@ -127,17 +110,14 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 // Observable that fires when Whist is ready to be launched
 const launchTrigger = emitOnSignal(
   combineLatest({
-    userEmail: merge(
-      loggedInAuth.success.pipe(pluck("userEmail")),
-      firstAuth.success.pipe(pluck("userEmail"))
+    userEmail: fromTrigger(WhistTrigger.checkPaymentFlowSuccess).pipe(
+      pluck("userEmail")
     ),
-    accessToken: merge(
-      loggedInAuth.success.pipe(pluck("accessToken")),
-      firstAuth.success.pipe(pluck("accessToken"))
+    accessToken: fromTrigger(WhistTrigger.checkPaymentFlowSuccess).pipe(
+      pluck("accessToken")
     ),
-    configToken: merge(
-      loggedInAuth.success.pipe(pluck("configToken")),
-      firstAuth.success.pipe(pluck("configToken"))
+    configToken: fromTrigger(WhistTrigger.authFlowSuccess).pipe(
+      pluck("configToken")
     ),
     isNewConfigToken,
     importedData: merge(importedData, dontImportBrowserData),
@@ -149,7 +129,7 @@ const launchTrigger = emitOnSignal(
   }),
   merge(
     zip(
-      checkPayment.success,
+      fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
       of(persistGet(ONBOARDED)).pipe(
         filter((onboarded) => onboarded as boolean)
       )
@@ -188,10 +168,7 @@ createTrigger(
 createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
 createTrigger(WhistTrigger.downloadProgress, update.progress)
 
-createTrigger(
-  WhistTrigger.authRefreshSuccess,
-  merge(refreshAtEnd.success, refreshAfterPaying.success)
-)
+createTrigger(WhistTrigger.authRefreshSuccess, refreshAtEnd.success)
 
 createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)
