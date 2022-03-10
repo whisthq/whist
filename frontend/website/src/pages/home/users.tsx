@@ -14,12 +14,6 @@ const features = [
     icon: GlobeAltIcon,
   },
   {
-    name: "Product Designers",
-    description:
-      "When working with large assets in 2D/3D, web-based design tools like Figma and your computer cries for a dedicated graphics card.",
-    icon: ChartPieIcon,
-  },
-  {
     name: "Old Macbook Owners",
     description:
       "When your laptop slows down because it can't keep up with your workload.",
@@ -30,6 +24,12 @@ const features = [
     description:
       "When you want any website to load at the speed of thought and videos to never buffer.",
     icon: ChatAltIcon,
+  },
+  {
+    name: "Product Designers",
+    description:
+      "When working with large assets in 2D/3D, web-based design tools like Figma and your computer cries for a dedicated graphics card.",
+    icon: ChartPieIcon,
   },
 ]
 

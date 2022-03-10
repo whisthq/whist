@@ -2,7 +2,7 @@ import React from "react"
 
 const Testimonial = () => {
   return (
-    <section className="mt-20 mb-12">
+    <section className="mt-20">
       <div className="max-w-7xl w-full mx-auto grid md:grid-cols-2 gap-y-6 lg:gap-y-0">
         <div className="bg-blue py-12 px-16 md:flex md:flex-col md:py-16 md:mr-3 rounded">
           <blockquote className="mt-6 md:flex-grow md:flex md:flex-col">
