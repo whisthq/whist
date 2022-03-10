@@ -261,7 +261,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	// Try scale up in given region
 	instanceNum := int32(instancesToScale)
 
-	createdInstances, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, imageID)
+	createdInstances, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, imageID)
 	if err != nil {
 		return utils.MakeError("Failed to spin up instances, created %v, err: %v", createdInstances, err)
 	}
@@ -272,13 +272,9 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	}
 
 	// Create slice with newly created instance ids
-	var (
-		createdInstanceIDs []string
-		instancesForDb     []subscriptions.Instance
-	)
+	var instancesForDb []subscriptions.Instance
 
 	for _, instance := range createdInstances {
-		createdInstanceIDs = append(createdInstanceIDs, instance.ID)
 		instancesForDb = append(instancesForDb, subscriptions.Instance{
 			ID:                instance.ID,
 			IPAddress:         instance.IPAddress,
@@ -293,12 +289,6 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 			UpdatedAt:         instance.UpdatedAt,
 		})
 		logger.Infof("Created tagged instance with ID %v", instance.ID)
-	}
-
-	// Wait for new instances to be ready before adding to db
-	err = s.Host.WaitForInstanceReady(scalingCtx, maxWaitTimeReady, createdInstanceIDs)
-	if err != nil {
-		return utils.MakeError("error waiting for new instances to be ready. Err: %v", err)
 	}
 
 	logger.Infof("Inserting newly created instances to database.")
@@ -348,18 +338,15 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	// create instance buffer with new image
 	logger.Infof("Creating new instance buffer for image %v", newImageID)
-	bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, DEFAULT_INSTANCE_BUFFER, newImageID)
+	bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, DEFAULT_INSTANCE_BUFFER, maxWaitTimeReady, newImageID)
 	if err != nil {
 		return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImageID, err)
 	}
 
 	// create slice of newly created instance ids
-	var (
-		bufferIDs      []string
-		instancesForDb []subscriptions.Instance
-	)
+	var instancesForDb []subscriptions.Instance
+
 	for _, instance := range bufferInstances {
-		bufferIDs = append(bufferIDs, instance.ID)
 		instancesForDb = append(instancesForDb, subscriptions.Instance{
 			ID:                instance.ID,
 			IPAddress:         instance.IPAddress,
@@ -373,12 +360,6 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 			CreatedAt:         instance.CreatedAt,
 			UpdatedAt:         instance.UpdatedAt,
 		})
-	}
-
-	// wait for buffer to be ready.
-	err = s.Host.WaitForInstanceReady(scalingCtx, maxWaitTimeReady, bufferIDs)
-	if err != nil {
-		return utils.MakeError("error waiting for instances to be ready. Error: %v", err)
 	}
 
 	logger.Infof("Inserting newly created instances to database.")

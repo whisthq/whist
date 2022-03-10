@@ -117,7 +117,7 @@ func (mh *mockHostHandler) Initialize(region string) error {
 	return nil
 }
 
-func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstances int32, imageID string) (createdInstances []subscriptions.Instance, err error) {
+func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTime time.Duration, imageID string) (createdInstances []subscriptions.Instance, err error) {
 	var newInstances []subscriptions.Instance
 	for i := 0; i < int(numInstances); i++ {
 		newInstances = append(newInstances, subscriptions.Instance{
