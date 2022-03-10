@@ -32,13 +32,14 @@ type ScalingEvent struct {
 // DefaultScalingAlgorithm abstracts the shared functionalities to be used
 // by all of the different, region-based scaling algorithms.
 type DefaultScalingAlgorithm struct {
-	Host               hosts.HostHandler
-	GraphQLClient      subscriptions.WhistGraphQLClient
-	DBClient           dbclient.WhistDBClient
-	Region             string
-	InstanceEventChan  chan ScalingEvent
-	ImageEventChan     chan ScalingEvent
-	ScheduledEventChan chan ScalingEvent
+	Host                 hosts.HostHandler
+	GraphQLClient        subscriptions.WhistGraphQLClient
+	DBClient             dbclient.WhistDBClient
+	Region               string
+	InstanceEventChan    chan ScalingEvent
+	ImageEventChan       chan ScalingEvent
+	ClientAppVersionChan chan ScalingEvent
+	ScheduledEventChan   chan ScalingEvent
 }
 
 // CreateEventChans creates the event channels if they don't alredy exist.
@@ -50,6 +51,9 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	}
 	if s.ImageEventChan == nil {
 		s.ImageEventChan = make(chan ScalingEvent, 100)
+	}
+	if s.ClientAppVersionChan == nil {
+		s.ClientAppVersionChan = make(chan ScalingEvent, 100)
 	}
 	if s.ScheduledEventChan == nil {
 		s.ScheduledEventChan = make(chan ScalingEvent, 100)
@@ -117,6 +121,27 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						}
 					}()
 				}
+			case versionEvent := <-s.ClientAppVersionChan:
+				logger.Infof("Scaling algorithm received a client app version database event with value: %v", versionEvent)
+				version := versionEvent.Data.(subscriptions.ClientAppVersion)
+
+				goroutineTracker.Add(1)
+				go func() {
+					defer goroutineTracker.Done()
+
+					// Create context for scaling operation
+					scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+					err := s.SwapoverImages(scalingCtx, versionEvent, version)
+
+					// Cancel context once the operation is done
+					scalingCancel()
+
+					if err != nil {
+						logger.Errorf("Error verifying instance scale down. Error: %v", err)
+					}
+				}()
+
 			case scheduledEvent := <-s.ScheduledEventChan:
 				switch scheduledEvent.Type {
 				case "SCHEDULED_SCALE_DOWN_EVENT":

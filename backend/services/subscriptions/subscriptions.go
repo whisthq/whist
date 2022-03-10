@@ -117,7 +117,7 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
 	configSubscriptions := []HasuraSubscription{
 		{
-			Query:     QueryInstancesByStatus,
+			Query:     QueryClientAppVersionChange,
 			Variables: map[string]interface{}{},
 			Result:    ClientAppVersionEvent{ClientAppVersions: []ClientAppVersion{}},
 			Handler: func(se SubscriptionEvent, m map[string]interface{}) bool {

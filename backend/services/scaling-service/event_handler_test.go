@@ -73,12 +73,13 @@ func TestStartDatabaseSubscriptions(t *testing.T) {
 	goroutinetracker := &sync.WaitGroup{}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent)
 	mockClient := &mockSubscriptionClient{}
+	mockConfigClient := &mockSubscriptionClient{}
 
 	// Override enabled condition
 	subscriptions.Enabled = true
 
 	// Start database subscriptions with mock client
-	StartDatabaseSubscriptions(ctx, goroutinetracker, subscriptionEvents, mockClient)
+	StartDatabaseSubscriptions(ctx, goroutinetracker, subscriptionEvents, mockClient, mockConfigClient)
 
 	testScalingSubscriptions := []subscriptions.HasuraSubscription{
 		{

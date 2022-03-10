@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
+	"github.com/whisthq/whist/backend/services/metadata/heroku"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -93,9 +94,6 @@ func main() {
 
 // StartDatabaseSubscriptions sets up the database subscriptions and starts the subscription client.
 func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent, subscriptionClient subscriptions.WhistSubscriptionClient, configClient subscriptions.WhistSubscriptionClient) {
-	subscriptions.SetupScalingSubscriptions(subscriptionClient)
-	subscriptions.SetupConfigSubscriptions(configClient)
-
 	// Setup and start subscriptions to main database
 	subscriptions.SetupScalingSubscriptions(subscriptionClient)
 	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents)
@@ -103,11 +101,14 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 		logger.Errorf("Failed to start database subscription client. Error: %s", err)
 	}
 
+	// Override heroku configurations to use the config Hasura server
+	heroku.UseConfigDatabase(true)
+
 	// Setup and start subscriptions to config database
-	subscriptions.SetupScalingSubscriptions(configClient)
+	subscriptions.SetupConfigSubscriptions(configClient)
 	err = subscriptions.Start(configClient, globalCtx, goroutineTracker, subscriptionEvents)
 	if err != nil {
-		logger.Errorf("Failed to start database subscription client. Error: %s", err)
+		logger.Errorf("Failed to start config database subscription client. Error: %s", err)
 	}
 }
 
@@ -226,7 +227,41 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				case *algos.DefaultScalingAlgorithm:
 					algorithm.InstanceEventChan <- scalingEvent
 				}
+			case *subscriptions.ClientAppVersionEvent:
+				var (
+					scalingEvent algos.ScalingEvent
+					version      subscriptions.ClientAppVersion
+				)
+
+				// We set the event type to DATABASE_CLIENT_VERSION_EVENT
+				// here so that we have more information about the event.
+				// DATABASE means the source of the event is the database
+				// and CLIENT_VERSION means it will perform an action with
+				// the client version information received from the database.
+				scalingEvent.Type = "DATABASE_CLIENT_VERSION_EVENT"
+
+				if len(subscriptionEvent.ClientAppVersions) > 0 {
+					version = subscriptionEvent.ClientAppVersions[0]
+				} else {
+					continue
+				}
+
+				for _, region := range algos.BundledRegions {
+					// Send both the regionImageMap and the client version
+					scalingEvent.Region = region
+					scalingEvent.Data = version
+
+					// Start scaling algorithm based on region
+					logger.Infof("Received database event.")
+					algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
+
+					switch algorithm := algorithm.(type) {
+					case *algos.DefaultScalingAlgorithm:
+						algorithm.ClientAppVersionChan <- scalingEvent
+					}
+				}
 			}
+
 		case scheduledEvent := <-scheduledEvents:
 			// Start scaling algorithm based on region
 			logger.Infof("Received scheduled event. %v", scheduledEvent)
