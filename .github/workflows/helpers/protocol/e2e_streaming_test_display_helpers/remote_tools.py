@@ -63,24 +63,37 @@ def create_slack_post(slack_webhook, title, gist_url):
         )
 
 
-def search_open_PR(branch_name):
+def associate_branch_to_open_pr(branch_name):
     """
     Check if there is an open PR associated with the specified branch. If so, return the PR number
 
     Args:
         branch_name (str): The name of the branch for which we are looking for an open PR
     Returns:
-        On success:
+        On success (an open PR is found):
             pr_number (int): The PR number of the open PR
-        On failure:
+        On failure (no open PR for the branch is found):
             -1
     """
-    # Search for an open PR connected to the current branch. If found, post results as a comment on that PR's page.
+    # Use Github CLI to search for an open PR connected to the current branch
     result = ""
     if len(branch_name) > 0:
         gh_cmd = f"gh pr list -H {branch_name}"
-        result = subprocess.check_output(gh_cmd, shell=True).decode("utf-8").strip().split()
-    pr_number = -1
-    if len(result) >= 3 and branch_name in result and result[0].isnumeric():
-        pr_number = int(result[0])
-    return pr_number
+        result = subprocess.check_output(gh_cmd, shell=True).decode("utf-8").strip().split("\t")
+
+    return_value = -1
+
+    # On success, result contains: ["<PR number>", "<PR name>", "<PR branch name>", "<DRAFT> if this is a draft PR"]
+    # On failure, success is a list containing an empty string: ['']
+    if len(result) >= 3:
+        pr_number, pr_name, pr_number = result[:3]
+        if pr_number.isnumeric() and branch_name == pr_branch_name:
+            print(
+                f"Found open PR #{pr_number}: '{pr_name}' associated with branch '{branch_name}'!"
+            )
+            return_value = int(pr_number)
+
+    if return_value == -1:
+        print(f"Found no open PR associated with branch '{branch_name}'!")
+
+    return return_value
