@@ -208,16 +208,13 @@ if __name__ == "__main__":
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
     ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
-    running_in_ci = os.getenv("CI")
-    if running_in_ci is None or running_in_ci == "false":
-        running_in_ci = False
-    else:
-        running_in_ci = True
+    running_in_ci = os.getenv("CI") == "true"
     testing_url = args.testing_url
     testing_time = args.testing_time
     region_name = args.region_name
-    use_two_instances = True if args.use_two_instances == "true" else False
-    simulate_scrolling = True if args.simulate_scrolling == "true" else False
+    # Convert boolean 'true'/'false' strings to Python booleans
+    use_two_instances = args.use_two_instances == "true"
+    simulate_scrolling = args.simulate_scrolling == "true"
 
     use_existing_client_instance = args.use_existing_client_instance
     use_existing_server_instance = args.use_existing_server_instance
@@ -313,7 +310,7 @@ if __name__ == "__main__":
     pexpect_prompt_client = (
         f"{username}@ip-{client_private_ip}" if use_two_instances else pexpect_prompt_server
     )
-    aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
+    aws_timeout_seconds_seconds = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
 
     experiment_metadata = {
         "start_time": experiment_start_time + " local time"
@@ -338,7 +335,7 @@ if __name__ == "__main__":
     args_dict["server_hostname"] = server_hostname
     args_dict["client_hostname"] = client_hostname
     args_dict["ssh_key_path"] = ssh_key_path
-    args_dict["aws_timeout"] = aws_timeout
+    args_dict["aws_timeout_seconds"] = aws_timeout_seconds
     args_dict["server_log_filepath"] = server_log_filepath
     args_dict["client_log_filepath"] = client_log_filepath
     args_dict["pexpect_prompt_server"] = pexpect_prompt_server
@@ -372,10 +369,12 @@ if __name__ == "__main__":
     client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
 
     server_hs_process = attempt_ssh_connection(
-        server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+        server_cmd, aws_timeout_seconds, server_log, pexpect_prompt_server, 5
     )
     client_hs_process = (
-        attempt_ssh_connection(client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5)
+        attempt_ssh_connection(
+            client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5
+        )
         if use_two_instances
         else server_hs_process
     )
@@ -388,11 +387,11 @@ if __name__ == "__main__":
         start_host_service_on_instance(client_hs_process)
 
     server_pexpect_process = attempt_ssh_connection(
-        server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+        server_cmd, aws_timeout_seconds, server_log, pexpect_prompt_server, 5
     )
 
     client_pexpect_process = attempt_ssh_connection(
-        client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+        client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5
     )
 
     # 5- Run the protocol server, and retrieve the connection configs
@@ -413,7 +412,7 @@ if __name__ == "__main__":
     if network_conditions != "normal":
         # Get new SSH connection because current ones are connected to the mandelboxes' bash, and we cannot exit them until we have copied over the logs
         client_restore_net_process = attempt_ssh_connection(
-            client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+            client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5
         )
         restore_network_conditions_client(
             client_restore_net_process, pexpect_prompt_client, running_in_ci
@@ -433,7 +432,7 @@ if __name__ == "__main__":
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
 
     log_grabber_server_process = attempt_ssh_connection(
-        server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+        server_cmd, aws_timeout_seconds, server_log, pexpect_prompt_server, 5
     )
     if not running_in_ci:
         log_grabber_server_process.expect(pexpect_prompt_server)
@@ -441,7 +440,7 @@ if __name__ == "__main__":
     log_grabber_client_process = log_grabber_server_process
     if use_two_instances:
         log_grabber_client_process = attempt_ssh_connection(
-            client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+            client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5
         )
         if not running_in_ci:
             log_grabber_client_process.expect(pexpect_prompt_client)
@@ -453,7 +452,7 @@ if __name__ == "__main__":
         ssh_key_path,
         username,
         server_hostname,
-        aws_timeout,
+        aws_timeout_seconds,
         perf_logs_folder_name,
         server_log,
         running_in_ci,
@@ -466,7 +465,7 @@ if __name__ == "__main__":
         ssh_key_path,
         username,
         client_hostname,
-        aws_timeout,
+        aws_timeout_seconds,
         perf_logs_folder_name,
         client_log,
         running_in_ci,
