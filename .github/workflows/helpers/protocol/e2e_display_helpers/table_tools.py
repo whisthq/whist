@@ -9,6 +9,10 @@ from datetime import datetime, timedelta
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
+from protocol.e2e_display_helpers.metrics_tools import (
+    compute_deltas,
+)
+
 
 def generate_no_comparison_table(
     results_file, experiment_metadata, most_interesting_metrics, client_metrics, server_metrics
@@ -26,7 +30,10 @@ def generate_no_comparison_table(
     Returns:
         None
     """
-
+    experiment_metrics = [
+        {"name": "CLIENT", "metrics": client_metrics},
+        {"name": "SERVER", "metrics": server_metrics},
+    ]
     with redirect_stdout(results_file):
         # Generate metadata table
         print("<details>")
@@ -56,85 +63,40 @@ def generate_no_comparison_table(
         print("<summary>Experiment results - Expand here</summary>")
         print("\n")
 
-        # Generate most interesting metric table
+        # Generate most interesting metric dictionary
         interesting_metrics = {}
-        for k in client_metrics:
-            if k in most_interesting_metrics:
-                interesting_metrics[k] = client_metrics[k]
-        for k in server_metrics:
-            if k in most_interesting_metrics:
-                interesting_metrics[k] = server_metrics[k]
-        if len(interesting_metrics) == 0:
-            print("NO INTERESTING METRICS\n")
-        else:
-            print("###### SUMMARY OF MOST INTERESTING METRICS: ######\n")
+        for item in experiment_metrics:
+            for k in item["metrics"]:
+                if k in most_interesting_metrics:
+                    interesting_metrics[k] = item["metrics"][k]
+        experiment_metrics.insert(0, {"name": "MOST INTERESTING", "metrics": interesting_metrics})
 
-            writer = MarkdownTableWriter(
-                # table_name="Interesting metrics",
-                headers=["Metric", "Entries", "Average", "Min", "Max"],
-                value_matrix=[
-                    [
-                        k,
-                        interesting_metrics[k]["entries"],
-                        f"{interesting_metrics[k]['avg']:.3f}",
-                        interesting_metrics[k]["min"],
-                        interesting_metrics[k]["max"],
-                    ]
-                    for k in interesting_metrics
-                ],
-                margin=1,  # add a whitespace for both sides of each cell
-                max_precision=3,
-            )
-            writer.write_table()
-            print("\n")
+        # Generate tables for most interesting metrics, client metrics, and server metrics
+        for item in experiment_metrics:
+            name = item["name"]
+            metrics = item["metrics"]
 
-        # Generate client metric
-        if len(client_metrics) == 0:
-            print("NO CLIENT METRICS\n")
-        else:
-            print("###### CLIENT METRICS: ######\n")
+            if len(metrics) == 0:
+                print(f"NO {name} METRICS\n")
+            else:
+                print(f"###### {name} METRICS: ######\n")
 
-        writer = MarkdownTableWriter(
-            # table_name="Client metrics",
-            headers=["Metric", "Entries", "Average", "Min", "Max"],
-            value_matrix=[
-                [
-                    k,
-                    client_metrics[k]["entries"],
-                    f"{client_metrics[k]['avg']:.3f}",
-                    client_metrics[k]["min"],
-                    client_metrics[k]["max"],
-                ]
-                for k in client_metrics
-            ],
-            margin=1,  # add a whitespace for both sides of each cell
-            max_precision=3,
-        )
-        writer.write_table()
-        print("\n")
-
-        if len(server_metrics) == 0:
-            print("NO SERVER METRICS\n")
-        else:
-            print("###### SERVER METRICS: ######\n")
-
-        writer = MarkdownTableWriter(
-            # table_name="Client metrics",
-            headers=["Metric", "Entries", "Average", "Min", "Max"],
-            value_matrix=[
-                [
-                    k,
-                    server_metrics[k]["entries"],
-                    server_metrics[k]["avg"],
-                    server_metrics[k]["min"],
-                    server_metrics[k]["max"],
-                ]
-                for k in server_metrics
-            ],
-            margin=1,  # add a whitespace for both sides of each cell
-            max_precision=3,
-        )
-        writer.write_table()
+                writer = MarkdownTableWriter(
+                    # table_name="Interesting metrics",
+                    headers=["Metric", "Entries", "Average"],
+                    value_matrix=[
+                        [
+                            k,
+                            metrics[k]["entries"],
+                            f"{metrics[k]['avg']:.3f}",
+                        ]
+                        for k in metrics
+                    ],
+                    margin=1,  # add a whitespace for both sides of each cell
+                    max_precision=3,
+                )
+                writer.write_table()
+                print("\n")
 
         print("\n")
         print("</details>")
@@ -143,12 +105,14 @@ def generate_no_comparison_table(
 
 def generate_comparison_table(
     results_file,
-    most_interesting_metrics,
     experiment_metadata,
     compared_experiment_metadata,
-    client_table_entries,
-    server_table_entries,
-    branch_name,
+    compared_branch_name,
+    most_interesting_metrics,
+    client_metrics,
+    server_metrics,
+    compared_client_metrics,
+    compared_server_metrics,
 ):
     """
     Create a Markdown table to display the client and server metrics for the current run,
@@ -165,6 +129,16 @@ def generate_comparison_table(
     Returns:
         None
     """
+
+    client_table_entries, server_table_entries = compute_deltas(
+        client_metrics, server_metrics, compared_client_metrics, compared_server_metrics
+    )
+
+    table_entries = [
+        {"name": "CLIENT", "metrics": client_table_entries},
+        {"name": "SERVER", "metrics": server_table_entries},
+    ]
+
     with redirect_stdout(results_file):
         # Generate metadata table
         print("<details>")
@@ -196,80 +170,40 @@ def generate_comparison_table(
         print("<summary>Experiment results - Expand here</summary>")
         print("\n")
 
-        # Generate most interesting metric table
-        interesting_metrics = []
-        for row in client_table_entries:
-            if row[0] in most_interesting_metrics:
-                interesting_metrics.append(row)
-        for row in server_table_entries:
-            if row[0] in most_interesting_metrics:
-                interesting_metrics.append(row)
-        if len(interesting_metrics) == 0:
-            print("NO INTERESTING METRICS\n")
-        else:
-            print("###### SUMMARY OF MOST INTERESTING METRICS: ######\n")
+        # Generate most interesting metric dictionary
+        interesting_metrics = [
+            row
+            for item in table_entries
+            for row in item["metrics"]
+            if row[0] in most_interesting_metrics
+        ]
+        table_entries.insert(0, {"name": "MOST INTERESTING", "metrics": interesting_metrics})
 
-            writer = MarkdownTableWriter(
-                # table_name="Interesting metrics",
-                headers=[
-                    "Metric",
-                    "Entries (this branch)",
-                    "Average (this branch)",
-                    f"Average ({branch_name})",
-                    "Delta",
-                    "",
-                ],
-                value_matrix=[i for i in interesting_metrics],
-                margin=1,  # add a whitespace for both sides of each cell
-                max_precision=3,
-            )
-            writer.write_table()
-            print("\n")
+        # Generate tables for most interesting metrics, client metrics, and server metrics
+        for item in table_entries:
+            name = item["name"]
+            entries = item["metrics"]
+            if len(entries) == 0:
+                print(f"NO {name} METRICS\n")
+            else:
+                print(f"###### SUMMARY OF {name} METRICS: ######\n")
 
-        # Generate client table
-        if len(client_table_entries) == 0:
-            print("NO CLIENT METRICS\n")
-        else:
-            print("###### CLIENT METRICS: ######\n")
-
-        writer = MarkdownTableWriter(
-            # table_name="Client metrics",
-            headers=[
-                "Metric",
-                "Entries (this branch)",
-                "Average (this branch)",
-                f"Average ({branch_name})",
-                "Delta",
-                "",
-            ],
-            value_matrix=[i for i in client_table_entries],
-            margin=1,  # add a whitespace for both sides of each cell
-            max_precision=3,
-        )
-        writer.write_table()
-        print("\n")
-
-        if len(server_table_entries) == 0:
-            print("NO SERVER METRICS\n")
-        else:
-            print("###### SERVER METRICS: ######\n")
-
-        # Generate server table
-        writer = MarkdownTableWriter(
-            # table_name="Server metrics",
-            headers=[
-                "Metric",
-                "Entries (this branch)",
-                "Average (this branch)",
-                f"Average ({branch_name})",
-                "Delta",
-                "",
-            ],
-            value_matrix=[i for i in server_table_entries],
-            margin=1,  # add a whitespace for both sides of each cell
-            max_precision=3,
-        )
-        writer.write_table()
+                writer = MarkdownTableWriter(
+                    # table_name="Interesting metrics",
+                    headers=[
+                        "Metric",
+                        "Entries (this branch)",
+                        "Average (this branch)",
+                        f"Average ({compared_branch_name})",
+                        "Delta",
+                        "",
+                    ],
+                    value_matrix=[i for i in entries],
+                    margin=1,  # add a whitespace for both sides of each cell
+                    max_precision=3,
+                )
+                writer.write_table()
+                print("\n")
 
         print("\n")
         print("</details>")

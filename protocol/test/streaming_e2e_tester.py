@@ -22,7 +22,6 @@ from e2e_helpers.aws_tools import (
 from e2e_helpers.dev_instance_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
-    get_whist_branch_name,
 )
 
 # Get tools to programmatically run Whist components on a remote machine
@@ -38,10 +37,7 @@ from e2e_helpers.whist_remote import (
 )
 
 # Get tools to programmatically run Whist components on a remote machine
-from e2e_helpers.remote_exp_tools import (
-    extract_server_logs_from_instance,
-    extract_client_logs_from_instance,
-)
+from e2e_helpers.remote_exp_tools import extract_logs_from_mandelbox
 
 # Get tools to run commands on local machine
 from e2e_helpers.local_tools import (
@@ -450,7 +446,7 @@ if __name__ == "__main__":
         if not running_in_ci:
             log_grabber_client_process.expect(pexpect_prompt_client)
 
-    extract_server_logs_from_instance(
+    extract_logs_from_mandelbox(
         log_grabber_server_process,
         pexpect_prompt_server,
         server_docker_id,
@@ -461,8 +457,9 @@ if __name__ == "__main__":
         perf_logs_folder_name,
         server_log,
         running_in_ci,
+        role="server",
     )
-    extract_client_logs_from_instance(
+    extract_logs_from_mandelbox(
         log_grabber_client_process,
         pexpect_prompt_client,
         client_docker_id,
@@ -473,6 +470,7 @@ if __name__ == "__main__":
         perf_logs_folder_name,
         client_log,
         running_in_ci,
+        role="client",
     )
 
     # Clean up the instance(s)

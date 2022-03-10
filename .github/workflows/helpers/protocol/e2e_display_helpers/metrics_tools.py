@@ -24,139 +24,75 @@ def extract_metrics(client_log_file, server_log_file):
         server_log_file (str): The path to the file (usually server.log) containing
                                 the server-side logs with the metrics
     Returns:
-        client_metrics2 (dict): the dictionary containing all the client metrics.
-        server_metrics2 (dict): the dictionary containing all the server metrics.
+        experiment_metrics (list): A list containing two dictionaries with the client
+                                 and server metrics, respectively.
     """
-    client_metrics = {}
-    server_metrics = {}
 
-    with open(client_log_file, "r") as f:
-        for line in f.readlines():
-            if "METRIC" in line:
-                l = line.strip().split()
-                metric_name = l[-3].strip('"')
-                metric_values = l[-1].strip('"').split(",")
+    experiment_metrics = []
 
-                count = 0
-                normal_sum = 0.0
-                min_val = np.inf
-                max_val = -np.inf
+    for log_file in (client_log_file, server_log_file):
+        new_experiment_metrics = {}
+        with open(log_file, "r") as f:
+            for line in f.readlines():
+                if "METRIC" in line:
+                    l = line.strip().split()
+                    metric_name = l[-3].strip('"')
+                    metric_values = l[-1].strip('"').split(",")
 
-                if len(metric_values) == 1:
-                    count = 1
-                    if metric_name[0:4] == "MAX_":
-                        max_val = float(metric_values[0])
-                    elif metric_name[0:4] == "MIN_":
-                        min_val = float(metric_values[0])
+                    count = 0
+                    normal_sum = 0.0
+                    min_val = np.inf
+                    max_val = -np.inf
+
+                    if len(metric_values) == 1:
+                        count = 1
+                        if metric_name[0:4] == "MAX_":
+                            max_val = float(metric_values[0])
+                        elif metric_name[0:4] == "MIN_":
+                            min_val = float(metric_values[0])
+                        else:
+                            normal_sum = float(metric_values[0])
                     else:
-                        normal_sum = float(metric_values[0])
-                else:
-                    count = int(metric_values[0])
-                    normal_sum = float(metric_values[1])
+                        count = int(metric_values[0])
+                        normal_sum = float(metric_values[1])
 
-                assert count >= 0
-                assert normal_sum >= 0
+                    assert count >= 0
+                    assert normal_sum >= 0
 
-                if metric_name not in client_metrics:
-                    client_metrics[metric_name] = {
-                        "entries": 0,
-                        "sum": 0,
-                        "min_val": min_val,
-                        "max_val": max_val,
-                    }
+                    if metric_name not in new_experiment_metrics:
+                        new_experiment_metrics[metric_name] = {
+                            "entries": 0,
+                            "sum": 0,
+                            "min_val": min_val,
+                            "max_val": max_val,
+                        }
 
-                client_metrics[metric_name]["entries"] += count
-                client_metrics[metric_name]["min_val"] = min(
-                    client_metrics[metric_name]["min_val"], min_val
+                    new_experiment_metrics[metric_name]["entries"] += count
+                    new_experiment_metrics[metric_name]["min_val"] = min(
+                        new_experiment_metrics[metric_name]["min_val"], min_val
+                    )
+                    new_experiment_metrics[metric_name]["max_val"] = max(
+                        new_experiment_metrics[metric_name]["max_val"], max_val
+                    )
+                    new_experiment_metrics[metric_name]["sum"] += normal_sum
+        for metric_name in new_experiment_metrics:
+            if new_experiment_metrics[metric_name]["min_val"] < np.inf:
+                new_experiment_metrics[metric_name]["avg"] = new_experiment_metrics[metric_name][
+                    "min_val"
+                ]
+            elif new_experiment_metrics[metric_name]["max_val"] > -np.inf:
+                new_experiment_metrics[metric_name]["avg"] = new_experiment_metrics[metric_name][
+                    "max_val"
+                ]
+            else:
+                new_experiment_metrics[metric_name]["avg"] = (
+                    new_experiment_metrics[metric_name]["sum"]
+                    / new_experiment_metrics[metric_name]["entries"]
                 )
-                client_metrics[metric_name]["max_val"] = max(
-                    client_metrics[metric_name]["max_val"], max_val
-                )
-                client_metrics[metric_name]["sum"] += normal_sum
 
-    with open(server_log_file, "r") as f:
-        for line in f.readlines():
-            if "METRIC" in line:
-                l = line.strip().split()
-                metric_name = l[-3].strip('"')
-                # metric_value = float(l[-1].strip('"'))
-                metric_values = l[-1].strip('"').split(",")
+        experiment_metrics.append(new_experiment_metrics)
 
-                count = 0
-                normal_sum = 0.0
-                min_val = np.inf
-                max_val = -np.inf
-
-                if len(metric_values) == 1:
-                    count = 1
-                    if metric_name[0:4] == "MAX_":
-                        max_val = float(metric_values[0])
-                    elif metric_name[0:4] == "MIN_":
-                        min_val = float(metric_values[0])
-                    else:
-                        normal_sum = float(metric_values[0])
-                else:
-                    count = int(metric_values[0])
-                    normal_sum = float(metric_values[1])
-
-                assert count >= 0
-                assert normal_sum >= 0
-
-                if metric_name not in server_metrics:
-                    server_metrics[metric_name] = {
-                        "entries": 0,
-                        "min_val": min_val,
-                        "max_val": max_val,
-                        "sum": 0,
-                    }
-
-                server_metrics[metric_name]["entries"] += count
-                server_metrics[metric_name]["min_val"] = min(
-                    server_metrics[metric_name]["min_val"], min_val
-                )
-                server_metrics[metric_name]["max_val"] = max(
-                    server_metrics[metric_name]["max_val"], max_val
-                )
-                server_metrics[metric_name]["sum"] += normal_sum
-
-    client_metrics2 = {}
-    server_metrics2 = {}
-
-    for metric_name in client_metrics:
-        if client_metrics[metric_name]["min_val"] < np.inf:
-            client_metrics2[metric_name] = {
-                "entries": client_metrics[metric_name]["entries"],
-                "avg": client_metrics[metric_name]["min_val"],
-            }
-        elif client_metrics[metric_name]["max_val"] > -np.inf:
-            client_metrics2[metric_name] = {
-                "entries": client_metrics[metric_name]["entries"],
-                "avg": client_metrics[metric_name]["max_val"],
-            }
-        else:
-            client_metrics2[metric_name] = {
-                "entries": client_metrics[metric_name]["entries"],
-                "avg": client_metrics[metric_name]["sum"] / client_metrics[metric_name]["entries"],
-            }
-
-    for metric_name in server_metrics:
-        if server_metrics[metric_name]["min_val"] < np.inf:
-            server_metrics2[metric_name] = {
-                "entries": server_metrics[metric_name]["entries"],
-                "avg": server_metrics[metric_name]["min_val"],
-            }
-        elif server_metrics[metric_name]["max_val"] > -np.inf:
-            server_metrics2[metric_name] = {
-                "entries": server_metrics[metric_name]["entries"],
-                "avg": server_metrics[metric_name]["max_val"],
-            }
-        else:
-            server_metrics2[metric_name] = {
-                "entries": server_metrics[metric_name]["entries"],
-                "avg": server_metrics[metric_name]["sum"] / server_metrics[metric_name]["entries"],
-            }
-
-    return client_metrics2, server_metrics2
+    return experiment_metrics
 
 
 def compute_deltas(
@@ -180,144 +116,81 @@ def compute_deltas(
         compared_server_dictionary (dict): The dictionary containing the metrics key-value pairs
                                             for the server from the compared run
     Returns:
-        client_table_entries (list): the list containing the entries for the client markdown
-                                    comparison table. Each element in the list of lists corresponds
-                                    to one row.
-        server_table_entries (list): the list containing the entries for the server markdown
-                                    comparison table. Each element in the list of lists corresponds
-                                    to one row.
+        table_entries (list): A list with two sublists. The two sublists contain the entries for
+                                the markdown comparison tables for the client and server,
+                                respectively. Each item in the sublists corresponds to one row
+                                in the table.
     """
+    metrics_dictionaries = [client_dictionary, server_dictionary]
+    compared_dictionaries = [compared_client_dictionary, compared_server_dictionary]
+    table_entries = []
 
-    # Augment client dictionary with metrics from client in compared run
-    for k in client_dictionary:
-        if k in compared_client_dictionary:
-            client_dictionary[k]["compared_entries"] = compared_client_dictionary[k]["entries"]
-            client_dictionary[k]["compared_avg"] = round(compared_client_dictionary[k]["avg"], 3)
-            client_dictionary[k]["delta"] = round(
-                client_dictionary[k]["avg"] - client_dictionary[k]["compared_avg"], 3
-            )
-            if client_dictionary[k]["delta"] == 0:
-                client_dictionary[k]["delta"] = "-"
-                client_dictionary[k]["delta_pctg"] = "-"
-            elif client_dictionary[k]["compared_avg"] == 0:
-                client_dictionary[k]["delta_pctg"] = "nan"
-            else:
-                client_dictionary[k]["delta_pctg"] = round(
-                    (client_dictionary[k]["delta"] / client_dictionary[k]["compared_avg"]), 3
+    for dictionary, compared_dictionary in zip(metrics_dictionaries, compared_dictionaries):
+        # Augment experiment dictionary with metrics from experiment we are comparing to
+        for k in dictionary:
+            if k in compared_dictionary:
+                dictionary[k]["compared_entries"] = compared_dictionary[k]["entries"]
+                dictionary[k]["compared_avg"] = round(compared_dictionary[k]["avg"], 3)
+                dictionary[k]["delta"] = round(
+                    dictionary[k]["avg"] - dictionary[k]["compared_avg"], 3
                 )
-        else:
-            client_dictionary[k]["compared_avg"] = "N/A"
-            client_dictionary[k]["delta"] = "N/A"
-            client_dictionary[k]["delta_pctg"] = "N/A"
+                if dictionary[k]["delta"] == 0:
+                    dictionary[k]["delta"] = "-"
+                    dictionary[k]["delta_pctg"] = "-"
+                elif dictionary[k]["compared_avg"] == 0:
+                    dictionary[k]["delta_pctg"] = "nan"
+                else:
+                    dictionary[k]["delta_pctg"] = round(
+                        (dictionary[k]["delta"] / dictionary[k]["compared_avg"]), 3
+                    )
+            else:
+                dictionary[k]["compared_avg"] = "N/A"
+                dictionary[k]["delta"] = "N/A"
+                dictionary[k]["delta_pctg"] = "N/A"
 
-    # Create client table entries with the desired format
-    client_table_entries = []
-    for k in client_dictionary:
-        new_entry = [
-            k,
-            client_dictionary[k]["entries"],
-            f"{client_dictionary[k]['avg']:.3f}",
-        ]
+        # Create table entries with the desired format
+        new_table_entries = []
+        for k in dictionary:
+            new_entry = [
+                k,
+                dictionary[k]["entries"],
+                f"{dictionary[k]['avg']:.3f}",
+            ]
 
-        if client_dictionary[k]["compared_avg"] == "N/A":
-            new_entry.append("N/A")
-        else:
-            new_entry.append(f"{client_dictionary[k]['compared_avg']:.3f}")
+            if dictionary[k]["compared_avg"] == "N/A":
+                new_entry.append("N/A")
+            else:
+                new_entry.append(f"{dictionary[k]['compared_avg']:.3f}")
 
-        delta_formatted = client_dictionary[k]["delta"]
-        if client_dictionary[k]["delta"] != "-" and client_dictionary[k]["delta"] != "N/A":
-            delta_formatted = f"{delta_formatted:.3f}"
-            delta_pctg_formatted = client_dictionary[k]["delta_pctg"]
+            delta_formatted = dictionary[k]["delta"]
+            if dictionary[k]["delta"] != "-" and dictionary[k]["delta"] != "N/A":
+                delta_formatted = f"{delta_formatted:.3f}"
+                delta_pctg_formatted = dictionary[k]["delta_pctg"]
+                if (
+                    dictionary[k]["delta_pctg"] != "-"
+                    and dictionary[k]["delta_pctg"] != "nan"
+                    and dictionary[k]["delta_pctg"] != "N/A"
+                ):
+                    delta_pctg_formatted = f"{delta_pctg_formatted * 100.0:.3f}"
+                new_entry.append(f"{delta_formatted} ({delta_pctg_formatted}%)")
+            else:
+                new_entry.append(delta_formatted)
+
+            emoji_delta = ""
             if (
-                client_dictionary[k]["delta_pctg"] != "-"
-                and client_dictionary[k]["delta_pctg"] != "nan"
-                and client_dictionary[k]["delta_pctg"] != "N/A"
+                dictionary[k]["delta"] != "-"
+                and dictionary[k]["delta"] != "N/A"
+                and dictionary[k]["delta_pctg"] != "-"
+                and dictionary[k]["delta_pctg"] != "nan"
+                and dictionary[k]["delta_pctg"] != "N/A"
             ):
-                delta_pctg_formatted = f"{delta_pctg_formatted * 100.0:.3f}"
-            new_entry.append(f"{delta_formatted} ({delta_pctg_formatted}%)")
-        else:
-            new_entry.append(delta_formatted)
+                if dictionary[k]["delta"] > 0:
+                    emoji_delta = "⬆️"
+                else:
+                    emoji_delta = "⬇️"
 
-        emoji_delta = ""
-        if (
-            client_dictionary[k]["delta"] != "-"
-            and client_dictionary[k]["delta"] != "N/A"
-            and client_dictionary[k]["delta_pctg"] != "-"
-            and client_dictionary[k]["delta_pctg"] != "nan"
-            and client_dictionary[k]["delta_pctg"] != "N/A"
-        ):
-            if client_dictionary[k]["delta"] > 0:
-                emoji_delta = "⬆️"
-            else:
-                emoji_delta = "⬇️"
+            new_entry.append(emoji_delta)
+            new_table_entries.append(new_entry)
+        table_entries.append(new_table_entries)
 
-        new_entry.append(emoji_delta)
-        client_table_entries.append(new_entry)
-
-    # Augment server dictionary with metrics from server in compared run
-    for k in server_dictionary:
-        if k in compared_server_dictionary:
-            server_dictionary[k]["compared_entries"] = compared_server_dictionary[k]["entries"]
-            server_dictionary[k]["compared_avg"] = round(compared_server_dictionary[k]["avg"], 3)
-            server_dictionary[k]["delta"] = round(
-                server_dictionary[k]["avg"] - server_dictionary[k]["compared_avg"], 3
-            )
-            if server_dictionary[k]["delta"] == 0:
-                server_dictionary[k]["delta"] = "-"
-                server_dictionary[k]["delta_pctg"] = "-"
-            elif server_dictionary[k]["compared_avg"] == 0:
-                server_dictionary[k]["delta_pctg"] = "nan"
-            else:
-                server_dictionary[k]["delta_pctg"] = round(
-                    (server_dictionary[k]["delta"] / server_dictionary[k]["compared_avg"]), 3
-                )
-        else:
-            server_dictionary[k]["compared_avg"] = "N/A"
-            server_dictionary[k]["delta"] = "N/A"
-            server_dictionary[k]["delta_pctg"] = "N/A"
-
-    # Create server table entries with the desired format
-    server_table_entries = []
-    for k in server_dictionary:
-        new_entry = [
-            k,
-            server_dictionary[k]["entries"],
-            f"{server_dictionary[k]['avg']:.3f}",
-        ]
-
-        if server_dictionary[k]["compared_avg"] == "N/A":
-            new_entry.append("N/A")
-        else:
-            new_entry.append(f"{server_dictionary[k]['compared_avg']:.3f}")
-
-        delta_formatted = server_dictionary[k]["delta"]
-        if server_dictionary[k]["delta"] != "-" and server_dictionary[k]["delta"] != "N/A":
-            delta_formatted = f"{delta_formatted:.3f}"
-            delta_pctg_formatted = server_dictionary[k]["delta_pctg"]
-            if (
-                server_dictionary[k]["delta_pctg"] != "-"
-                and server_dictionary[k]["delta_pctg"] != "nan"
-                and server_dictionary[k]["delta_pctg"] != "N/A"
-            ):
-                delta_pctg_formatted = f"{delta_pctg_formatted * 100.0:.3f}"
-            new_entry.append(f"{delta_formatted} ({delta_pctg_formatted}%)")
-        else:
-            new_entry.append(delta_formatted)
-
-        emoji_delta = ""
-        if (
-            server_dictionary[k]["delta"] != "-"
-            and server_dictionary[k]["delta"] != "N/A"
-            and server_dictionary[k]["delta_pctg"] != "-"
-            and server_dictionary[k]["delta_pctg"] != "nan"
-            and server_dictionary[k]["delta_pctg"] != "N/A"
-        ):
-            if server_dictionary[k]["delta"] > 0:
-                emoji_delta = "⬆️"
-            else:
-                emoji_delta = "⬇️"
-
-        new_entry.append(emoji_delta)
-        server_table_entries.append(new_entry)
-
-    return client_table_entries, server_table_entries
+    return table_entries
