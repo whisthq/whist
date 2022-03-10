@@ -69,7 +69,7 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
       region: JSON.stringify(
         ((persistGet(AWS_REGIONS_SORTED_BY_PROXIMITY) as any[]) ?? [])[0]
       ),
-    })
+    }).catch((err) => console.error(err))
 
     if (args.import) destroyProtocol(args.protocol)
 

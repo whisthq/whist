@@ -158,7 +158,9 @@ const createElectronWindow = (args: {
   show?: boolean
 }) => {
   try {
-    amplitudeLog(`Creating window ${args.hash}`)
+    amplitudeLog(`Creating window ${args.hash}`).catch((err) =>
+      console.error(err)
+    )
 
     const winAlreadyExists = getElectronWindow(args.hash)
     if (winAlreadyExists !== undefined) {
