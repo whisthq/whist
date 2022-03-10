@@ -116,7 +116,7 @@ jobs:
       - name: Stop or terminate leftover AWS instances
         if: always()
         working-directory: protocol/test
-        run: python3 clean_leftover_instances.py
+        run: python3 -m e2e_helpers.clean_leftover_instances
 
       # We parse the log files from the E2E performance tests above and display the results of the test.
       # We compare the performance to dev and the previous runs of the same branch, if available
