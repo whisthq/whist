@@ -83,8 +83,6 @@ jobs:
             echo "build_type=Debug" >> $GITHUB_ENV
           fi
 
-
-
       # We need to configure build parameters, to build for the proper architecture and with
       # the relevant flags for the selected build type. Note that we cannot/don't want to use
       # a lot of Brave-specific services, which are either omitted or filled-in blank.
@@ -94,23 +92,6 @@ jobs:
       # https://github.com/brave/brave-core/blob/master/build/commands/scripts/commands.js#L71
       - name: Configure build parameters
         run: |
-
-
-
-
-
-
-
-
-          npm config set notary_user=
-          npm config set notary_password=
-          npm config set mac_signing_keychain=login
-          npm config set mac_signing_identifier=
-          npm config set mac_installer_signing_identifier=
-
-
-
-
           # Set architecture and version
           # TODO: Retrieve version from configDB (can reuse code in whist-build-and-deploy.yml once we are ready)
           npm config set target_arch=${{ matrix.config.arch }}
@@ -140,6 +121,13 @@ jobs:
           npm config set brave_variations_server_url=https://variations.brave.com/seed
           npm config set webcompat_report_api_endpoin=https://webcompat.brave.com/1/webcompat
 
+          # TODO: Configure Apple Notarization
+          # npm config set notary_user=
+          # npm config set notary_password=
+          # npm config set mac_signing_keychain=login
+          # npm config set mac_signing_identifier=
+          # npm config set mac_installer_signing_identifier=
+
           # These are all related to Brave rewards/crypto, which we don't care about/cannot use, so 
           # we provide dummy values
           npm config set uphold_client_id=fake
@@ -152,16 +140,16 @@ jobs:
           npm config set rewards_grant_staging_endpoint=https://
           npm config set rewards_grant_prod_endpoint=https://
 
-      - name: Fetch Chromium source & dependencies
+      - name: Fetch Chromium Source & Dependencies
         run: npm run init
 
-      - name: Build Whist Browser
+      - name: Build Whist Chromium Browser
         run: npm run build ${{ env.build_type }}
 
-      - name: Tar & Upload Whist Browser to AWS S3
+      - name: Tar & Upload Whist Chromium Browser to AWS S3
         run: |
-          tar -zcvf ${{ env.${{ matrix.config.arch }}-binary-tar-name }} "Component_${{ matrix.config.arch }}/Brave Browser ${{ env.build_type }}.app"
-          aws s3 cp ${{ env.${{ matrix.config.arch }}-binary-tar-name }} ${{ env.${{ matrix.config.arch }}-s3-bucket-uri }}/${{ env.${{ matrix.config.arch }}-binary-tar-name }}
+          tar -zcvf "${{ env.${{ matrix.config.arch }}-binary-tar-name }}" "Component_${{ matrix.config.arch }}/Brave Browser" "${{ env.build_type }}.app"
+          aws s3 cp "${{ env.${{ matrix.config.arch }}-binary-tar-name }}" "${{ env.${{ matrix.config.arch }}-s3-bucket-uri }}/${{ env.${{ matrix.config.arch }}-binary-tar-name }}"
 
       ###################################################################################
 
@@ -178,7 +166,7 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          BODY = f"@releases :rotating_light: Failed to deploy Whist Browser (Nightly macOS) to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"@releases :rotating_light: Failed to deploy Whist Chromium Browser (Nightly macOS) to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
       - name: Notify Slack on Success
