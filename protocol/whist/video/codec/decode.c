@@ -304,6 +304,7 @@ static int try_setup_video_decoder(VideoDecoder* decoder) {
         decoder->device_type = AV_HWDEVICE_TYPE_VIDEOTOOLBOX;
         decoder->match_fmt = AV_PIX_FMT_VIDEOTOOLBOX;
 #else  // linux
+       // TODO : Support non-nvidia devices as well with AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI
         decoder->device_type = AV_HWDEVICE_TYPE_CUDA;
         decoder->match_fmt = AV_PIX_FMT_CUDA;
 #endif
@@ -364,7 +365,6 @@ static const DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYP
 #elif __APPLE__
 static const DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #else  // linux
-// TODO: Fix QSV
 static const DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #endif
 
