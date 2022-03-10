@@ -31,9 +31,6 @@ typedef struct Client {
     bool is_active;        // "protected" by `is_deactivating`
     bool is_deactivating;  // whether a client is in the process of deactivating
 
-    /* USER INFO */
-    int user_id;  // not lock protected
-
     /* NETWORK */
     SocketContext udp_context;  // "protected" by global `is_deactivating`
     SocketContext tcp_context;  // "protected" by global `is_deactivating`
