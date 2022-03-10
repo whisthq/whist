@@ -68,16 +68,22 @@ jobs:
           xcode-select --install
           xcodebuild -version
 
+      - name: Initialize the build environment
+        run: npm install
+
       - name: Configure build type
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+            # Production build, set official build as true and build Chromium as Release
+            npm config set is_official_build=true
             echo "build_type=Release" >> $GITHUB_ENV
           else
+            # Dev or Staging build, set official build as false and build Chromium as Debug
+            npm config set is_official_build=false
             echo "build_type=Debug" >> $GITHUB_ENV
           fi
 
-      - name: Initialize the build environment
-        run: npm install
+
 
       # We need to configure build parameters, to build for the proper architecture and with
       # the relevant flags for the selected build type. Note that we cannot/don't want to use
@@ -93,79 +99,64 @@ jobs:
 
 
 
-          npm config set target_arch "${{ matrix.config.arch }}"
-
-
-          npm config set version
 
 
 
-          # npm config set is_official_build=false 
-          # npm config set brave_services_key=somefakekey
-          # npm config set updater_dev_endpoint=https://
-          # npm config set updater_prod_endpoint=https://
-          # npm config set brave_stats_updater_url=https://
-          # npm config set brave_sync_endpoint=https://
-          # npm config set brave_variations_server_url=https:// https://variations.brave.com/seed
+          npm config set notary_user=
+          npm config set notary_password=
+          npm config set mac_signing_keychain=login
+          npm config set mac_signing_identifier=
+          npm config set mac_installer_signing_identifier=
 
 
-          
 
 
-          # We don't care about 
-          # npm config set uphold_client_id=fake
-          # npm config set uphold_client_secret=fake
-          # npm config set gemini_wallet_client_id=fake
-          # npm config set gemini_wallet_client_secret=fake
-          # npm config set gemini_api_url=https://
-          # npm config set gemini_oauth_url=https://
-          # npm config set rewards_grant_dev_endpoint=https://
-          # npm config set rewards_grant_staging_endpoint=https://
-          # npm config set rewards_grant_prod_endpoint=https://
-
-          npm config set brave_google_api_key=${{ secrets.WHIST_CHROMIUM_GOOGLE_API_KEY }}
-
+          # Set architecture and version
+          # TODO: Retrieve version from configDB (can reuse code in whist-build-and-deploy.yml once we are ready)
+          npm config set target_arch=${{ matrix.config.arch }}
+          npm config set version=0.0.0
 
           # Google Auth integration
+          # TODO: These GitHub Secrets are currently the values from the Whist Electron Application
+          # GCP project. Once we transition from Electron to Chromium officially, we'll want to sunset
+          # that GCP project and configure Google Auth within the Whist Chromium Browser GCP project.
           npm config set google_default_client_id=${{ secrets.WHIST_CHROMIUM_GOOGLE_CLIENT_ID }}
           npm config set google_default_client_secret=${{ secrets.WHIST_CHROMIUM_GOOGLE_CLIENT_SECRET }}
 
+          # Google APIs, the key is from the Whist Chromium Browser GCP project
+          npm config set brave_google_api_key=${{ secrets.WHIST_CHROMIUM_GOOGLE_API_KEY }}
           npm config set safebrowsing_api_endpoint=https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_GOOGLE_API_KEY }}
 
+          # TODO: Configure update server
+          npm config set updater_dev_endpoint=https://
+          npm config set updater_prod_endpoint=https://
+          npm config set brave_stats_updater_url=https://
 
-          # npm config set webcompat_report_api_endpoin=https://webcompat.brave.com/1/webcompat
-          npm config set notary_user
-          npm config set notary_password
-          npm config set mac_signing_keychain=login
-          npm config set mac_signing_identifier
-          npm config set mac_installer_signing_identifier
+          # TODO: Configure Brave Sync server
+          npm config set brave_sync_endpoint=https://
 
+          # Brave Services
+          npm config set brave_services_key=somefakekey
+          npm config set brave_variations_server_url=https://variations.brave.com/seed
+          npm config set webcompat_report_api_endpoin=https://webcompat.brave.com/1/webcompat
 
-
-
-
-
-
-
-
+          # These are all related to Brave rewards/crypto, which we don't care about/cannot use, so 
+          # we provide dummy values
+          npm config set uphold_client_id=fake
+          npm config set uphold_client_secret=fake
+          npm config set gemini_wallet_client_id=fake
+          npm config set gemini_wallet_client_secret=fake
+          npm config set gemini_api_url=https://
+          npm config set gemini_oauth_url=https://
+          npm config set rewards_grant_dev_endpoint=https://
+          npm config set rewards_grant_staging_endpoint=https://
+          npm config set rewards_grant_prod_endpoint=https://
 
       - name: Fetch Chromium source & dependencies
         run: npm run init
 
-      # TODO: I'm not sure this is needed (?)
-      # I got this from: https://github.com/brave/brave-browser/pull/20481/files
-      - name: Confirm dependencies installation
-        if: "${{ env.build_type }}" == "Release"
-        run: echo "Y" | ./src/build/install-build-deps.sh
-
       - name: Build Whist Browser
         run: npm run build ${{ env.build_type }}
-
-      # TODO: We'll need to grab the version from the config DB instead, I can just reuse
-      # the code in whist-build-and-deploy.yml here
-      - name: Add our own version stamp
-        if: "${{ env.build_type }}" == "Release"
-        run: echo "0.0.0" > out/Release/version
 
       - name: Tar & Upload Whist Browser to AWS S3
         run: |
