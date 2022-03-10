@@ -83,14 +83,12 @@ def generate_no_comparison_table(
 
                 writer = MarkdownTableWriter(
                     # table_name="Interesting metrics",
-                    headers=["Metric", "Entries", "Average", "Min", "Max"],
+                    headers=["Metric", "Entries", "Average"],
                     value_matrix=[
                         [
                             k,
                             metrics[k]["entries"],
                             f"{metrics[k]['avg']:.3f}",
-                            metrics[k]["min"],
-                            metrics[k]["max"],
                         ]
                         for k in metrics
                     ],
