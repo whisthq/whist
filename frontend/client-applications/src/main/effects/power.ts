@@ -16,7 +16,7 @@ import { WhistTrigger } from "@app/constants/triggers"
 import { amplitudeLog, logging } from "@app/main/utils/logging"
 import { persistClear } from "@app/main/utils/persist"
 import { destroyProtocol } from "@app/main/utils/protocol"
-import { emitOnSignal, waitForSignal } from "@app/main/utils/observables"
+import { emitOnSignal } from "@app/main/utils/observables"
 
 // Handles the application quit logic
 // When we detect that all windows have been closed, we put the application to sleep
@@ -41,10 +41,7 @@ const shouldSleep = merge(
         takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
       ),
       fromTrigger(WhistTrigger.userRequestedQuit),
-      waitForSignal(
-        fromTrigger(WhistTrigger.authRefreshSuccess),
-        fromTrigger(WhistTrigger.checkPaymentFlowFailure)
-      )
+      fromTrigger(WhistTrigger.stripeAuthRefresh)
     )
   ),
   take(1) // When we relaunch we reset the application; this ensures we don't relaunch multiple times
@@ -87,15 +84,12 @@ emitOnSignal(
   relaunch({ sleep: false })
 })
 
-waitForSignal(
-  fromTrigger(WhistTrigger.authRefreshSuccess).pipe(
-    withLatestFrom(fromTrigger(WhistTrigger.protocol))
-  ),
-  fromTrigger(WhistTrigger.checkPaymentFlowFailure)
-).subscribe(([, p]: [any, ChildProcess]) => {
-  destroyProtocol(p)
-  relaunch({ sleep: false })
-})
+fromTrigger(WhistTrigger.stripeAuthRefresh)
+  .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
+  .subscribe(([, p]: [any, ChildProcess]) => {
+    destroyProtocol(p)
+    relaunch({ sleep: false })
+  })
 
 fromTrigger(WhistTrigger.userRequestedQuit).subscribe(() => {
   amplitudeLog("Whist force quit")

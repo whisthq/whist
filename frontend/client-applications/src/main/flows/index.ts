@@ -7,7 +7,6 @@ import {
   share,
   mapTo,
   pluck,
-  withLatestFrom,
 } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -84,20 +83,6 @@ waitForSignal(
 
 // Unpack the access token to see if their payment is valid
 const checkPayment = checkPaymentFlow(fromTrigger(WhistTrigger.authFlowSuccess))
-
-// If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
-// get new auth credentials
-const refreshAfterPaying = authRefreshFlow(
-  fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
-    withLatestFrom(
-      fromTrigger(WhistTrigger.checkPaymentFlowSuccess).pipe(
-        pluck("refreshToken"),
-        map((t) => ({ refreshToken: t }))
-      )
-    ),
-    map(([, r]) => r)
-  )
-)
 
 const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
   take(1),
@@ -183,10 +168,7 @@ createTrigger(
 createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
 createTrigger(WhistTrigger.downloadProgress, update.progress)
 
-createTrigger(
-  WhistTrigger.authRefreshSuccess,
-  merge(refreshAtEnd.success, refreshAfterPaying.success)
-)
+createTrigger(WhistTrigger.authRefreshSuccess, refreshAtEnd.success)
 
 createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)

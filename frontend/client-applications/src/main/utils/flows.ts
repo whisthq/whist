@@ -37,8 +37,8 @@ export const fork = <T>(
       Map of filtered observables
   */
 
-  const shared = source
-  return mapValues(filters, (fn) => shared.pipe(filter(fn)))
+  const shared = source.pipe(share())
+  return mapValues(filters, (fn) => shared.pipe(filter(fn), share()))
 }
 
 export const flow = <T>(
