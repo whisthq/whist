@@ -217,9 +217,9 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             cached_resource.height == resource_to_register.height &&
             cached_resource.device_type == resource_to_register.device_type) {
             encoder->registered_resource = encoder->resource_cache[i];
-#if LOG_VIDEO
-            LOG_DEBUG("Using cached resource at entry %d", i);
-#endif
+            if (LOG_VIDEO) {
+                LOG_DEBUG("Using cached resource at entry %d", i);
+            }
             cache_hit = true;
             break;
         }
@@ -240,12 +240,12 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         encoder->resource_cache[0] = resource_to_register;
         encoder->registered_resource = encoder->resource_cache[0];
     }
-#if LOG_VIDEO
-    LOG_DEBUG("Registered resource data: texture %p, width %d, height %d, pitch %d, device %s",
-              encoder->registered_resource.texture_pointer, encoder->registered_resource.width,
-              encoder->registered_resource.height, encoder->registered_resource.pitch,
-              encoder->registered_resource.device_type == NVIDIA_DEVICE ? "Nvidia" : "X11");
-#endif
+    if (LOG_VIDEO) {
+        LOG_DEBUG("Registered resource data: texture %p, width %d, height %d, pitch %d, device %s",
+                  encoder->registered_resource.texture_pointer, encoder->registered_resource.width,
+                  encoder->registered_resource.height, encoder->registered_resource.pitch,
+                  encoder->registered_resource.device_type == NVIDIA_DEVICE ? "Nvidia" : "X11");
+    }
     // If on X11, we need to memcpy the capture into the encoder buffer
     // In accordance with Nvidia documentation, first we lock the buffer, then memcpy, then unlock
     // the buffer
@@ -260,13 +260,13 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             return -1;
         }
         encoder->pitch = lock_params.pitch;
-#if LOG_VIDEO
-        LOG_DEBUG("width: %d, height: %d, pitch: %d (lock pitch %d)",
-                  encoder->registered_resource.width, encoder->registered_resource.height,
-                  encoder->registered_resource.pitch, lock_params.pitch);
-        LOG_DEBUG("Buffer data ptr: %p, texture pointer: %p", lock_params.bufferDataPtr,
-                  encoder->registered_resource.texture_pointer);
-#endif
+        if (LOG_VIDEO) {
+            LOG_DEBUG("width: %d, height: %d, pitch: %d (lock pitch %d)",
+                      encoder->registered_resource.width, encoder->registered_resource.height,
+                      encoder->registered_resource.pitch, lock_params.pitch);
+            LOG_DEBUG("Buffer data ptr: %p, texture pointer: %p", lock_params.bufferDataPtr,
+                      encoder->registered_resource.texture_pointer);
+        }
         // memcpy input data
         // the encoder buffer might have a different pitch, so we have to copy row by row
         for (int i = 0; i < encoder->registered_resource.height; i++) {

@@ -1460,10 +1460,10 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         // TODO: Remove this mutex? send() is already thread-safe
         whist_lock_mutex(context->mutex);
         int ret;
-#if LOG_NETWORKING
-        LOG_INFO("Sending a WhistPacket of size %d (Total %d) over UDP", udp_packet_size,
-                 udp_network_packet_size);
-#endif
+        if (LOG_NETWORKING) {
+            LOG_INFO("Sending a WhistPacket of size %d (Total %d) over UDP", udp_packet_size,
+                     udp_network_packet_size);
+        }
         // Send the UDPPacket over the network
         ret = send(context->socket, (const char*)&udp_network_packet,
                    (size_t)udp_network_packet_size, 0);
@@ -1559,9 +1559,9 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
             decrypted_len = udp_network_packet.payload_size;
             memcpy(udp_packet, udp_network_packet.payload, udp_network_packet.payload_size);
         }
-#if LOG_NETWORKING
-        LOG_INFO("Received a WhistPacket of size %d over UDP", decrypted_len);
-#endif
+        if (LOG_NETWORKING) {
+            LOG_INFO("Received a WhistPacket of size %d over UDP", decrypted_len);
+        }
         if (network_payload_size) {
             *network_payload_size =
                 (UDPNETWORKPACKET_HEADER_SIZE + udp_network_packet.payload_size);
@@ -1711,12 +1711,10 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
             packet->udp_whist_segment_data.is_a_duplicate = is_duplicate;
             // Wrap in PACKET_VIDEO to prevent verbose audio.c logs
             // TODO: Fix this by making resend_packet not trigger nack logs
-#if LOG_NACKING
-            if (type == PACKET_VIDEO && !is_duplicate) {
+            if (LOG_NACKING && type == PACKET_VIDEO && !is_duplicate) {
                 LOG_INFO("NACKed video packet ID %d Index %d found of length %d. Relaying!",
                          packet_id, packet_index, packet->udp_whist_segment_data.segment_size);
             }
-#endif
             udp_send_udp_packet(context, packet);
         } else {
             // TODO: Calculate an aggregate and LOG_WARNING that,
@@ -1730,14 +1728,12 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
             }
         }
     } else {
-#if LOG_NACKING
         // TODO: Fix the ability to nack for an entire frame, using something like e.g. index -1
         // This will prevent this log from spamming, particularly on Audio
-        if (type == PACKET_VIDEO) {
+        if (LOG_NACKING && type == PACKET_VIDEO) {
             LOG_WARNING("NACKed %s packet %d %d not found",
                         type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index);
         }
-#endif
     }
 
     whist_unlock_mutex(context->nack_mutex[type_index]);

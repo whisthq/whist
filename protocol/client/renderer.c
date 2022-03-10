@@ -147,21 +147,23 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
     // Use a mutex to prevent multiple threads from rendering at once
     whist_lock_mutex(whist_renderer->renderer_mutex);
 
-#if LOG_RENDERER_THREAD_USAGE
-    // Log render thread usage
-    if (!whist_renderer->using_renderer_thread && whist_renderer->render_is_on_renderer_thread) {
-        LOG_INFO(
-            "try_render has not been called externally recently, "
-            "so defaulting to renderer thread usage now!");
-        whist_renderer->using_renderer_thread = true;
+    if (LOG_RENDERER_THREAD_USAGE) {
+        // Log render thread usage
+        if (!whist_renderer->using_renderer_thread &&
+            whist_renderer->render_is_on_renderer_thread) {
+            LOG_INFO(
+                "try_render has not been called externally recently, "
+                "so defaulting to renderer thread usage now!");
+            whist_renderer->using_renderer_thread = true;
+        }
+        if (whist_renderer->using_renderer_thread &&
+            !whist_renderer->render_is_on_renderer_thread) {
+            LOG_INFO(
+                "try_render has been called from somewhere else! "
+                "renderer thread will no longer be used now.");
+            whist_renderer->using_renderer_thread = false;
+        }
     }
-    if (whist_renderer->using_renderer_thread && !whist_renderer->render_is_on_renderer_thread) {
-        LOG_INFO(
-            "try_render has been called from somewhere else! "
-            "renderer thread will no longer be used now.");
-        whist_renderer->using_renderer_thread = false;
-    }
-#endif
 
     if (get_debug_console_override_values()->simulate_freeze) {
         whist_sleep(5);

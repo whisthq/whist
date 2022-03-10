@@ -421,9 +421,9 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
                 FATAL_ASSERT(tcp_network_packet->payload_size == get_tcp_packet_size(tcp_packet));
             }
 
-#if LOG_NETWORKING
-            LOG_INFO("Received a WhistPacket of size %d over TCP", tcp_network_packet_size);
-#endif
+            if (LOG_NETWORKING) {
+                LOG_INFO("Received a WhistPacket of size %d over TCP", tcp_network_packet_size);
+            }
 
             // Move the rest of the already read bytes,
             // to the beginning of the buffer to continue
@@ -762,11 +762,9 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
     // For now, the TCP network throttler is NULL, so this is a no-op.
     network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
 
-    //#if LOG_NETWORKING
     // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
     LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP", packet_size,
              tcp_packet_size);
-    //#endif
 
     // Send the packet
     bool failed = false;
