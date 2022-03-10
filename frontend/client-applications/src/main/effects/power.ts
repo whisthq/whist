@@ -50,10 +50,11 @@ const shouldSleep = merge(
   take(1) // When we relaunch we reset the application; this ensures we don't relaunch multiple times
 )
 
+/* eslint-disable @typescript-eslint/no-misused-promises */
 shouldSleep
   .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
-  .subscribe(([, p]: [any, ChildProcess]) => {
-    amplitudeLog("Whist sleeping")
+  .subscribe(async ([, p]: [any, ChildProcess]) => {
+    await amplitudeLog("Whist sleeping")
     logging("Application sleeping", {})
 
     destroyProtocol(p)
@@ -97,7 +98,8 @@ waitForSignal(
   relaunch({ sleep: false })
 })
 
-fromTrigger(WhistTrigger.userRequestedQuit).subscribe(() => {
-  amplitudeLog("Whist force quit")
+/* eslint-disable @typescript-eslint/no-misused-promises */
+fromTrigger(WhistTrigger.userRequestedQuit).subscribe(async () => {
+  await amplitudeLog("Whist force quit")
   app.exit()
 })

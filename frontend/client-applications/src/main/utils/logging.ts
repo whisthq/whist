@@ -91,20 +91,16 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
   return `${util.format(template)} \n`
 }
 
-export const amplitudeLog = (title: string, data?: object) => {
+export const amplitudeLog = async (title: string, data?: object) => {
   const userEmail = persistGet(CACHED_USER_EMAIL) ?? ""
 
   if (userEmail !== "")
-    amplitude
-      .logEvent({
-        event_type: `[${
-          (config.appEnvironment as string) ?? "LOCAL"
-        }] ${title}`,
-        session_id: sessionID,
-        user_id: userEmail as string,
-        event_properties: data ?? {},
-      })
-      .catch((err) => console.error(err))
+    await amplitude.logEvent({
+      event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
+      session_id: sessionID,
+      user_id: userEmail as string,
+      event_properties: data ?? {},
+    })
 }
 
 export const logging = (
