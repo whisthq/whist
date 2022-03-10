@@ -260,24 +260,22 @@ if __name__ == "__main__":
                         compared_client_log_path, compared_server_log_path
                     )
 
-                client_table_entries, server_table_entries = compute_deltas(
+                compared_experiment_metadata = parse_metadata(
+                    os.path.join(".", compared_branch_name)
+                )
+
+                generate_comparison_table(
+                    results_file,
+                    experiment["experiment_metadata"],
+                    compared_experiment_metadata,
+                    compared_branch_name,
+                    most_interesting_metrics,
                     experiment["client_metrics"],
                     experiment["server_metrics"],
                     compared_client_metrics,
                     compared_server_metrics,
                 )
-                compared_experiment_metadata = parse_metadata(
-                    os.path.join(".", compared_branch_name)
-                )
-                generate_comparison_table(
-                    results_file,
-                    most_interesting_metrics,
-                    experiment["experiment_metadata"],
-                    compared_experiment_metadata,
-                    client_table_entries,
-                    server_table_entries,
-                    compared_branch_name,
-                )
+
             else:
                 generate_no_comparison_table(
                     results_file,
