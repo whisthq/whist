@@ -1040,8 +1040,8 @@ jobs:
         if: runner.os == 'macOS'
         uses: apple-actions/import-codesign-certs@v1
         with:
-          p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
-          p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+          p12-file-base64: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
+          p12-password: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
 
       # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
       - name: Install macOS Notarization API Key
@@ -1176,8 +1176,8 @@ jobs:
       # - name: Install macOS Codesigning Certificates on macOS GHA Machine
       #   uses: apple-actions/import-codesign-certs@v1
       #   with:
-      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
-      #     p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
+      #     p12-password: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
 
       # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
       - name: Install macOS Notarization API Key
