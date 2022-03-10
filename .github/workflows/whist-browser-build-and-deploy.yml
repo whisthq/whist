@@ -58,7 +58,7 @@ jobs:
 
       # Building Brave/Chromium requires specific Node & npm versions, and Xcode. For full
       # details, see: https://github.com/whisthq/brave-browser#readme
-      - name: Log NodeJS, npm and Xcode versions
+      - name: Log NodeJS, NPM and Xcode versions
         run: |
           echo "NodeJS & npm versions:\n"
           node --version
@@ -80,8 +80,8 @@ jobs:
         run: npm install
 
       # We need to configure build parameters, to build for the proper architecture and with
-      # the relevant flags for he build type. Note that we cannot/don't want to use a lot of 
-      # Brave-specific services, which are either omitted or filled-in blank.
+      # the relevant flags for the selected build type. Note that we cannot/don't want to use
+      # a lot of Brave-specific services, which are either omitted or filled-in blank.
       #
       # List of potential flags can be found here:
       # https://github.com/whisthq/brave-core/blob/main/build/commands/lib/config.js#L77
@@ -91,7 +91,12 @@ jobs:
 
 
 
+
+
           npm config set target_arch "${{ matrix.config.arch }}"
+
+
+          npm config set version
 
 
 
@@ -101,46 +106,43 @@ jobs:
           # npm config set updater_prod_endpoint=https://
           # npm config set brave_stats_updater_url=https://
           # npm config set brave_sync_endpoint=https://
-          # npm config set brave_variations_server_url=https://
+          # npm config set brave_variations_server_url=https:// https://variations.brave.com/seed
+
+
+          
+
+
+          # We don't care about 
           # npm config set uphold_client_id=fake
           # npm config set uphold_client_secret=fake
-          # npm config set gemini_api_url=https://
-          # npm config set gemini_oauth_url=https://
           # npm config set gemini_wallet_client_id=fake
           # npm config set gemini_wallet_client_secret=fake
+          # npm config set gemini_api_url=https://
+          # npm config set gemini_oauth_url=https://
           # npm config set rewards_grant_dev_endpoint=https://
           # npm config set rewards_grant_staging_endpoint=https://
           # npm config set rewards_grant_prod_endpoint=https://
 
-
-npm config set brave_google_api_key=
-npm config set google_default_client_id
-npm config set google_default_client_secret
-npm config set brave_sync_endpoint
-npm config set safebrowsing_api_endpoint
-npm config set updater_prod_endpoint
-npm config set updater_dev_endpoint
+          npm config set brave_google_api_key=${{ secrets.WHIST_CHROMIUM_GOOGLE_API_KEY }}
 
 
-    this.webcompatReportApiEndpoint = getNPMConfig(['webcompat_report_api_endpoint']) || 'https://webcompat.brave.com/1/webcompat'
-npm config set version
+          # Google Auth integration
+          npm config set google_default_client_id=${{ secrets.WHIST_CHROMIUM_GOOGLE_CLIENT_ID }}
+          npm config set google_default_client_secret=${{ secrets.WHIST_CHROMIUM_GOOGLE_CLIENT_SECRET }}
+
+          npm config set safebrowsing_api_endpoint=https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_GOOGLE_API_KEY }}
 
 
-npm config set notary_user
-npm config set notary_password
-  this.mac_signing_keychain = getNPMConfig(['mac_signing_keychain']) || 'login'
-npm config set mac_signing_identifier
-npm config set mac_installer_signing_identifier
-npm config set brave_safetynet_api_key
-npm config set brave_variations_server_url         https://variations.brave.com/seed
-npm config set uphold_client_id
-npm config set uphold_client_secret
-npm config set uphold_staging_client_id
-npm config set uphold_staging_client_secret
+          # npm config set webcompat_report_api_endpoin=https://webcompat.brave.com/1/webcompat
+          npm config set notary_user
+          npm config set notary_password
+          npm config set mac_signing_keychain=login
+          npm config set mac_signing_identifier
+          npm config set mac_installer_signing_identifier
 
-      # TODO: configure the Chrome keys and other configs for creating a Release build
-      # This may require some Google keys, so I (Phil) need to look into that
-      # https://github.com/brave/brave-browser/pull/20481/files
+
+
+
 
 
 
