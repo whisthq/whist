@@ -37,10 +37,7 @@ from e2e_helpers.whist_remote import (
 )
 
 # Get tools to programmatically run Whist components on a remote machine
-from e2e_helpers.remote_exp_tools import (
-    extract_server_logs_from_instance,
-    extract_client_logs_from_instance,
-)
+from e2e_helpers.remote_exp_tools import extract_logs_from_mandelbox
 
 # Get tools to run commands on local machine
 from e2e_helpers.local_tools import (
@@ -449,9 +446,10 @@ if __name__ == "__main__":
         if not running_in_ci:
             log_grabber_client_process.expect(pexpect_prompt_client)
 
-    extract_server_logs_from_instance(
+    extract_logs_from_mandelbox(
         log_grabber_server_process,
         pexpect_prompt_server,
+        "server",
         server_docker_id,
         ssh_key_path,
         username,
@@ -461,9 +459,10 @@ if __name__ == "__main__":
         server_log,
         running_in_ci,
     )
-    extract_client_logs_from_instance(
+    extract_logs_from_mandelbox(
         log_grabber_client_process,
         pexpect_prompt_client,
+        "client",
         client_docker_id,
         ssh_key_path,
         username,
