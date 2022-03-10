@@ -161,15 +161,15 @@ withAppActivated(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
     .catch((err) => Sentry.captureException(err))
 })
 
-withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowSuccess)).subscribe(
-  () => {
-    const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
-    if (!onboarded) {
-      createOnboardingWindow()
-      destroyElectronWindow(WindowHashAuth)
-    }
+untilUpdateAvailable(
+  withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowSuccess))
+).subscribe(() => {
+  const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
+  if (!onboarded) {
+    createOnboardingWindow()
+    destroyElectronWindow(WindowHashAuth)
   }
-)
+})
 
 withAppActivated(fromTrigger(WhistTrigger.showSupportWindow)).subscribe(() => {
   hideElectronWindow(WindowHashOmnibar)

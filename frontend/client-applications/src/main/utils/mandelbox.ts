@@ -42,7 +42,11 @@ export const mandelboxCreateErrorMaintenance = (
 
 export const mandelboxCreateErrorUnavailable = (
   response: AsyncReturnType<typeof mandelboxRequest>
-) => response.status === 503
+) => response.status === 503 && response.json.error === "NO_INSTANCE_AVAILABLE"
+
+export const mandelboxCreateErrorCommitHash = (
+  response: AsyncReturnType<typeof mandelboxRequest>
+) => response.status === 503 && response.json.error === "COMMIT_HASH_MISMATCH"
 
 // Helper functions
 export const mandelboxRequest = async (

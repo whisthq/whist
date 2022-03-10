@@ -17,6 +17,7 @@ import {
   SERVER_TIMEOUT_ERROR,
   NO_INSTANCE_AVAILABLE,
   OFFLINE_ERROR,
+  COMMIT_HASH_MISMATCH,
 } from "@app/constants/error"
 import { WindowHashPayment, WindowHashAuth } from "@app/constants/windows"
 
@@ -25,6 +26,7 @@ import {
   mandelboxCreateErrorUnauthorized,
   mandelboxCreateErrorMaintenance,
   mandelboxCreateErrorUnavailable,
+  mandelboxCreateErrorCommitHash,
 } from "@app/main/utils/mandelbox"
 import { createErrorWindow } from "@app/main/utils/renderer"
 import { destroyElectronWindow } from "@app/main/utils/windows"
@@ -55,6 +57,8 @@ untilUpdateAvailable(
     createErrorWindow(MAINTENANCE_ERROR)
   } else if (mandelboxCreateErrorUnavailable(x)) {
     createErrorWindow(NO_INSTANCE_AVAILABLE)
+  } else if (mandelboxCreateErrorCommitHash(x)) {
+    createErrorWindow(COMMIT_HASH_MISMATCH)
   } else {
     createErrorWindow(MANDELBOX_INTERNAL_ERROR)
   }

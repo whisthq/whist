@@ -67,7 +67,7 @@ export const whistError = {
   },
   [COMMIT_HASH_MISMATCH]: {
     title: "Whist version is out of date :(",
-    text: "Please allow a few seconds for an update to download.",
+    text: "Due to an unexpected bug, our servers have updated but Whist has not. Please try relaunching in a few minutes and this error may go away.",
   },
   [MANDELBOX_INTERNAL_ERROR]: {
     title: "Unexpected server error :(",
