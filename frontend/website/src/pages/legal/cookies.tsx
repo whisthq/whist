@@ -28,7 +28,7 @@ const Cookies = () => {
       >
         <div style={{ fontSize: 40 }}>COOKIE POLICY</div>
         <div style={{ color: "#555555", marginBottom: 40 }}>
-          Last updated October 8th, 2020
+          Last updated March 8th, 2022
         </div>
         <p>
           Whist Technologies, Inc. (“we” or “us” or “our”) may use cookies and
