@@ -75,9 +75,6 @@ static char user_email[WHIST_ARGS_MAXLEN + 1] = "None";
 static char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
 extern bool using_stun;
 
-// given by server protocol during port discovery.
-extern int uid;
-
 // Keyboard state variables
 extern bool lgui_pressed;
 extern bool rgui_pressed;
@@ -407,7 +404,6 @@ int whist_client_main(int argc, char* argv[]) {
     handle_single_icon_launch_client_app(argc, argv);
 
     srand(rand() * (unsigned int)time(NULL) + rand());
-    uid = rand();
 
     LOG_INFO("Client protocol started.");
 

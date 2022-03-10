@@ -552,7 +552,6 @@ typedef struct WhistMultigestureMessage {
  * @details Init packet to be sent from client to server.
  */
 typedef struct ClientInitMessage {
-    int user_id;
     char user_email[WHIST_ARGS_MAXLEN + 1];
     WhistOSType os;
 } ClientInitMessage;

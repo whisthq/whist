@@ -38,7 +38,6 @@ extern volatile char client_binary_aes_private_key[16];
 SocketContext packet_udp_context = {0};
 SocketContext packet_tcp_context = {0};
 extern char *server_ip;
-int uid;
 extern bool using_stun;
 
 volatile bool connected = false;
@@ -94,7 +93,6 @@ int connect_to_server(bool with_stun) {
     // Construct init packet
     WhistClientMessage wcmsg = {0};
     wcmsg.type = CMESSAGE_INIT;
-    wcmsg.init_message.user_id = uid;
     // Copy email
     if (!safe_strncpy(wcmsg.init_message.user_email, user_email,
                       sizeof(wcmsg.init_message.user_email))) {
