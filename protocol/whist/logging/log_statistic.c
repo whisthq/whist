@@ -78,7 +78,7 @@ static void unsafe_print_statistics(void) {
             current_count = all_statistics[i].count;
         }
 
-        LOG_METRIC("\"%s\" : %.1f ( Count: %u | Sum: %.3f )", statistic_info[i].key,
+        LOG_METRIC("\"%s\" : %.1f, \"COUNT\": %u", statistic_info[i].key,
                    all_statistics[i].sum / current_count, current_count, all_statistics[i].sum);
 
         if (statistic_info[i].is_max_needed)
