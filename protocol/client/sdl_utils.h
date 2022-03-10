@@ -1,5 +1,5 @@
-#ifndef SDL_UTILS_H
-#define SDL_UTILS_H
+#ifndef WHIST_SDL_UTILS_H
+#define WHIST_SDL_UTILS_H
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file sdl_utils.h
@@ -227,4 +227,5 @@ void sdl_handle_drag_event(void);
  * @note                           This should be called when mouse exits the window or on mouseup
  */
 void sdl_end_drag_event(void);
-#endif  // SDL_UTILS_H
+
+#endif  // WHIST_SDL_UTILS_H
