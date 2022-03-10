@@ -767,10 +767,11 @@ int32_t multithreaded_send_video(void* opaque) {
                     LTRAction ltr_action;
                     ltr_get_next_action(state->ltr_context, &ltr_action, id);
 
-                    // TODO: demote this log message once this is stable.
-                    LOG_INFO("LTR action for frame ID %d: { %s, %d }", id,
-                             video_frame_type_string(ltr_action.frame_type),
-                             ltr_action.long_term_frame_index);
+                    if (LOG_LONG_TERM_REFERENCE_FRAMES) {
+                        LOG_INFO("LTR action for frame ID %d: { %s, %d }", id,
+                                 video_frame_type_string(ltr_action.frame_type),
+                                 ltr_action.long_term_frame_index);
+                    }
 
                     video_encoder_set_ltr_action(encoder, &ltr_action);
                     frame_type = ltr_action.frame_type;
