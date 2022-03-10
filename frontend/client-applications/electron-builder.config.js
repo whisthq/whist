@@ -55,7 +55,7 @@ const bundleConfig = {
     gatekeeperAssess: false,
     hardenedRuntime: true,
     icon: `build/${iconName}.png`,
-    minimumSystemVersion: "10.15.0",
+    minimumSystemVersion: "10.13.0",
     // For auto-update to work, "zip" format must be present in addition to .dmg
     target: ["dmg", "zip"],
     type: "distribution",
