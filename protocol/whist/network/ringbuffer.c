@@ -800,6 +800,7 @@ void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
     free_block(ring_buffer->packet_buffer_allocator, frame_data->packet_buffer);
     free(frame_data->received_indices);
     free(frame_data->num_times_index_nacked);
+    free(frame_data->last_nacked_timer);
 
     // Free FEC-related data, if any exists
     if (frame_data->num_fec_packets > 0) {
