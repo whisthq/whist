@@ -11,7 +11,6 @@ from dev_instance_tools import (
 def extract_logs_from_mandelbox(
     pexpect_process,
     pexpect_prompt,
-    role,
     docker_id,
     ssh_key_path,
     username,
@@ -20,6 +19,7 @@ def extract_logs_from_mandelbox(
     perf_logs_folder_name,
     log_grabber_log,
     running_in_ci,
+    role,
 ):
     """
     Extract the logs related to the run of the Whist server/client mandelbox (browsers/chrome) on a remote machine. This should be called after the client->server connection has terminated, but before the server/client container is stopped/destroyed.

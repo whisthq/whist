@@ -449,7 +449,6 @@ if __name__ == "__main__":
     extract_logs_from_mandelbox(
         log_grabber_server_process,
         pexpect_prompt_server,
-        role="server",
         server_docker_id,
         ssh_key_path,
         username,
@@ -458,11 +457,11 @@ if __name__ == "__main__":
         perf_logs_folder_name,
         server_log,
         running_in_ci,
+        role="server",
     )
     extract_logs_from_mandelbox(
         log_grabber_client_process,
         pexpect_prompt_client,
-        role="client",
         client_docker_id,
         ssh_key_path,
         username,
@@ -471,6 +470,7 @@ if __name__ == "__main__":
         perf_logs_folder_name,
         client_log,
         running_in_ci,
+        role="client",
     )
 
     # Clean up the instance(s)
