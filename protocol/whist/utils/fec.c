@@ -1,7 +1,4 @@
-//#include <pthread.h>
-
 #include <string.h>
-#include <SDL2/SDL_thread.h>
 
 #include "fec.h"
 #include "whist/core/whist.h"
@@ -84,7 +81,7 @@ Globals
 */
 
 // Holds the RSTable for each thread
-static SDL_TLSID rs_table_tls_id;
+static WhistThreadLocalStorageKey rs_table_tls_key;
 
 /*
 ============================
@@ -122,7 +119,7 @@ Public Function Implementations
 */
 
 void init_fec(void) {
-    rs_table_tls_id = SDL_TLSCreate();
+    rs_table_tls_key = whist_create_thread_local_storage();
     init_rs();
 }
 
@@ -386,13 +383,13 @@ static RSCode* get_rs_code(int k, int n) {
     FATAL_ASSERT(k <= n);
 
     // Get the rs code table for this thread
-    RSTable* rs_code_table = SDL_TLSGet(rs_table_tls_id);
+    RSTable* rs_code_table = whist_get_thread_local_storage(rs_table_tls_key);
 
     // If the table for this thread doesn't exist, initialize it
     if (rs_code_table == NULL) {
         rs_code_table = (RSTable*)safe_malloc(sizeof(RSTable));
         memset(rs_code_table, 0, sizeof(RSTable));
-        SDL_TLSSet(rs_table_tls_id, rs_code_table, free_rs_code_table);
+        whist_set_thread_local_storage(rs_table_tls_key, rs_code_table, free_rs_code_table);
     }
 
     // If (n, k)'s rs_code hasn't been create yet, create it
