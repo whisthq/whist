@@ -304,8 +304,8 @@ static int try_setup_video_decoder(VideoDecoder* decoder) {
         decoder->device_type = AV_HWDEVICE_TYPE_VIDEOTOOLBOX;
         decoder->match_fmt = AV_PIX_FMT_VIDEOTOOLBOX;
 #else  // linux
-        decoder->device_type = AV_HWDEVICE_TYPE_VAAPI;
-        decoder->match_fmt = AV_PIX_FMT_VAAPI;
+        decoder->device_type = AV_HWDEVICE_TYPE_CUDA;
+        decoder->match_fmt = AV_PIX_FMT_CUDA;
 #endif
 
         // get the appropriate hardware device
@@ -365,7 +365,7 @@ static const DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYP
 static const DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #else  // linux
 // TODO: Fix QSV
-static const DecodeType decoder_precedence[] = {/* DECODE_TYPE_QSV, */ DECODE_TYPE_SOFTWARE};
+static const DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #endif
 
 #define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))

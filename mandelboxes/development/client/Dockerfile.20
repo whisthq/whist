@@ -6,7 +6,7 @@ FROM whisthq/base:current-build as whist-development-client
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
-RUN apt-get install --no-install-recommends -y python3-dev gcc && pip install --no-cache-dir pynput
+RUN apt-get update && apt-get install --no-install-recommends -y python3-dev gcc && pip install --no-cache-dir pynput
 
 # Replace WhistServer startup scripts with WhistClient startup scripts
 RUN ln -sf /usr/share/whist/bin/WhistClient /usr/share/whist/WhistClient \
