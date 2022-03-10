@@ -66,30 +66,6 @@ def read_tags(tags, resource):
     return name, test == "True"
 
 
-def delete_if_older_than_one_day(region, task, cluster, time):
-    """
-    Determines if provided task is older than one day and stops it
-
-    Args:
-        region (str): region of where task/cluster is running
-        task (str): task ARN of task to check
-        cluster (str): cluster that the specified task is associated with
-        time (datetime): datetime object representing the timestamp an task was started
-
-    Returns:
-        str: indicator of whether stop was triggered or not
-    """
-    if has_elapsed_hours(time, 24):
-        client = boto3.client("ec2", region_name=region)
-        client.stop_task(
-            cluster=cluster,
-            task=task,
-            reason="Automatically stopped by resource cleanup script (older than 1 day).",
-        )
-        return " (stop triggered)"
-    return ""
-
-
 def get_all_aws_instances(region):
     """
     Gets all instances (and their info) from a given region
