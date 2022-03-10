@@ -374,11 +374,6 @@ int render_video(VideoContext* video_context) {
         // Declare user activity to prevent screensaver
         declare_user_activity();
 
-#if LOG_VIDEO
-        // LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_buffer_size,
-        //          get_timer(&frame_data.frame_creation_timer));
-#endif
-
         static timestamp_us last_rendered_time = 0;
 
         // Calculate E2E latency

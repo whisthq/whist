@@ -284,15 +284,15 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
         // Server simulates a nack for audio all the time. Hence log only for video.
         if (type == PACKET_VIDEO) {
             if (!frame_data->received_indices[segment_index]) {
-#if LOG_NACKING
-                LOG_INFO("NACK for video ID %d, Index %d received!", segment_id, segment_index);
-#endif
+                if (LOG_NACKING) {
+                    LOG_INFO("NACK for video ID %d, Index %d received!", segment_id, segment_index);
+                }
             } else {
                 ring_buffer->num_unnecessary_nacks_received++;
-#if LOG_NACKING
-                LOG_INFO("NACK for video ID %d, Index %d received, but didn't need it.", segment_id,
-                         segment_index);
-#endif
+                if (LOG_NACKING) {
+                    LOG_INFO("NACK for video ID %d, Index %d received, but didn't need it.",
+                             segment_id, segment_index);
+                }
             }
         }
     } else {
@@ -301,10 +301,10 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
         start_timer(&frame_data->last_nonnack_packet_timer);
         if (frame_data->num_times_index_nacked[segment_index] > 0) {
             ring_buffer->num_unnecessary_original_packets_received++;
-#if LOG_NACKING
-            LOG_INFO("Received original %s ID %d, Index %d, but we had NACK'ed for it.",
-                     type == PACKET_VIDEO ? "video" : "audio", segment_id, segment_index);
-#endif
+            if (LOG_NACKING) {
+                LOG_INFO("Received original %s ID %d, Index %d, but we had NACK'ed for it.",
+                         type == PACKET_VIDEO ? "video" : "audio", segment_id, segment_index);
+            }
         }
     }
 
@@ -526,14 +526,14 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
                         LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
                                     frame_data->original_packets_received,
                                     frame_data->num_original_packets);
-#if LOG_NETWORKING || LOG_NACKING
-                        for (int j = 0; j < frame_data->num_original_packets; j++) {
-                            if (!frame_data->received_indices[j]) {
-                                LOG_WARNING("Did not receive ID %d, Index %d. Nacked %d times.", i,
-                                            j, frame_data->num_times_index_nacked[j]);
+                        if (LOG_NETWORKING || LOG_NACKING) {
+                            for (int j = 0; j < frame_data->num_original_packets; j++) {
+                                if (!frame_data->received_indices[j]) {
+                                    LOG_WARNING("Did not receive ID %d, Index %d. Nacked %d times.",
+                                                i, j, frame_data->num_times_index_nacked[j]);
+                                }
                             }
                         }
-#endif
                     }
                     reset_frame(ring_buffer, frame_data);
                 } else if (frame_data->id != -1) {
@@ -885,11 +885,9 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
         frame_data->last_nacked_index = i;
     }
 
-#if LOG_NACKING
-    if (num_packets_nacked > 0) {
+    if (LOG_NACKING && num_packets_nacked > 0) {
         LOG_INFO("%s", nack_log_buffer);
     }
-#endif
 
     return num_packets_nacked;
 }
@@ -939,12 +937,10 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, int max_unordered_pack
         double saturated_nacking = avg_nacks_remaining <= 0;
 
         if (ring_buffer->last_nack_possibility && saturated_nacking) {
-#if LOG_NACKING
-            if (ring_buffer->type == PACKET_VIDEO) {
+            if (LOG_NACKING && ring_buffer->type == PACKET_VIDEO) {
                 LOG_INFO(
                     "Can't nack anymore! Hit NACK bitrate limit. Try increasing NACK bitrate?");
             }
-#endif
             ring_buffer->last_nack_possibility = false;
             ring_buffer->num_times_nacking_saturated++;
         }
@@ -953,11 +949,9 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, int max_unordered_pack
         return !saturated_nacking;
     } else {
         if (!ring_buffer->last_nack_possibility) {
-#if LOG_NACKING
-            if (ring_buffer->type == PACKET_VIDEO) {
+            if (LOG_NACKING && ring_buffer->type == PACKET_VIDEO) {
                 LOG_INFO("NACKing is possible again.");
             }
-#endif
             ring_buffer->last_nack_possibility = true;
         }
     }
@@ -984,9 +978,9 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, int max_unordered_pack
             // If this ID is larger than the last missing frame nack,
             // Start nacking for this ID
             if (ring_buffer->last_missing_frame_nack < id) {
-#if LOG_NACKING
-                LOG_INFO("NACKing for missing Frame ID %d", id);
-#endif
+                if (LOG_NACKING) {
+                    LOG_INFO("NACKing for missing Frame ID %d", id);
+                }
                 ring_buffer->last_missing_frame_nack = id;
                 ring_buffer->last_missing_frame_nack_index = -1;
             }
@@ -1004,12 +998,11 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, int max_unordered_pack
                     // To ensure the upper-bound on bandwidth usage
                     num_packets_nacked++;
                 }
-#if LOG_NACKING
                 // Log the finished NACK
-                if (ring_buffer->last_missing_frame_nack_index == NACK_PACKETS_MISSING_FRAME) {
+                if (LOG_NACKING &&
+                    ring_buffer->last_missing_frame_nack_index == NACK_PACKETS_MISSING_FRAME) {
                     LOG_INFO("Finished NACKing for missing Frame ID %d", id);
                 }
-#endif
             }
             continue;
         }
@@ -1055,21 +1048,17 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, int max_unordered_pack
         packets_nacked_this_frame += nack_missing_packets_up_to_index(
             ring_buffer, frame_data, nack_upto_index - unordered_packets,
             max_nacks - num_packets_nacked, latency);
-#if LOG_NACKING
-        if (packets_nacked_this_frame > 0) {
+        if (LOG_NACKING && packets_nacked_this_frame > 0) {
             LOG_INFO("~~ Frame ID %d Nacked for %d out-of-order packets", id,
                      packets_nacked_this_frame);
         }
-#endif
         // Add to total
         num_packets_nacked += packets_nacked_this_frame;
     }
 
-#if LOG_NACKING
-    if (num_packets_nacked > 0) {
+    if (LOG_NACKING && num_packets_nacked > 0) {
         LOG_INFO("Nacked %d/%d packets this Nacking round", num_packets_nacked, max_nacks);
     }
-#endif
 
     // Update the counters to track max nack bitrate
     ring_buffer->burst_counter += num_packets_nacked;

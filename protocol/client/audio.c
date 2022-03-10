@@ -327,9 +327,9 @@ static int safe_get_audio_queue(AudioContext* audio_context) {
         // If we have a device, get the queue size
         audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context->dev);
     }
-#if LOG_AUDIO
-    LOG_DEBUG("Audio Queue: %d", audio_device_queue);
-#endif
+    if (LOG_AUDIO) {
+        LOG_DEBUG("Audio Queue: %d", audio_device_queue);
+    }
     return audio_device_queue;
 }
 

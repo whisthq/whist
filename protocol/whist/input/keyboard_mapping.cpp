@@ -276,11 +276,9 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, WhistOST
         // If any origin key is pressed, then the modmap'ed key is considered pressed
         mapped_keys[mapped_key] |= whist_keycode < keyboard_state.num_keycodes &&
                                    (bool)keyboard_state.state[whist_keycode];
-#if LOG_KEYBOARD
-        if (mapped_keys[mapped_key]) {
+        if (LOG_KEYBOARD && mapped_keys[mapped_key]) {
             LOG_DEBUG("Syncing with %d pressed! From %d origin!", mapped_key, whist_keycode);
         }
-#endif
         // Remember which origin key that refers to
         origin_mapping[mapped_key] = (WhistKeycode)whist_keycode;
     }

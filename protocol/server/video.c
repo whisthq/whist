@@ -675,9 +675,10 @@ int32_t multithreaded_send_video(void* opaque) {
             accumulated_frames = capture_screen(device);
             if (accumulated_frames > 1) {
                 log_double_statistic(VIDEO_FPS_SKIPPED_IN_CAPTURE, 1.0);
-#if LOG_VIDEO
-                LOG_INFO("Missed Frames! %d frames passed since last capture", accumulated_frames);
-#endif
+                if (LOG_VIDEO) {
+                    LOG_INFO("Missed Frames! %d frames passed since last capture",
+                             accumulated_frames);
+                }
             }
             // If capture screen failed, we should try again
             if (accumulated_frames < 0) {
