@@ -281,10 +281,8 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
           BODY = "@releases :rotating_light: Failed to clean lingering Packer Instances and AMI Snapshots in `webserver-cleanup-lingering-packer-builders-and-ami-resources` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   # Notify Slack if an error occurs in the workflow, so that it can be fixed promptly
