@@ -35,30 +35,52 @@ def extract_metrics(client_log_file, server_log_file):
         with open(log_file, "r") as f:
             for line in f.readlines():
                 if "METRIC" in line:
-                    l = line.strip().split()
-                    metric_name = l[-3].strip('"')
-                    metric_values = l[-1].strip('"').split(",")
-
                     count = 0
                     normal_sum = 0.0
                     min_val = np.inf
                     max_val = -np.inf
+                    metric_name = ""
 
-                    if len(metric_values) == 1:
+                    l = line.strip().split()
+
+                    # For regular metrics, l has the following format:
+                    # [..., "<metric_name>", ":", "<local_average>,", "COUNT:", "<count>"]
+
+                    # For MAX/MIN aggregates, l has the following format:
+                    # [..., "<MAX or MIN>_<metric_name>", ":", "<max or min value>"]
+
+                    # Finally, some metrics just print a single value:
+                    # [..., "<metric_name>", ":", "<single_value>"]
+
+                    # We can use the second-to-last token to distinguish between the two. A regular metric log will print 'COUNT:', a MAX/MIN log will print ':'
+                    format_indicator = l[-2].replace('"', "")
+
+                    if format_indicator == "COUNT:":
+                        # Regular metric
+                        metric_name = l[-5].strip('"')
+                        count = int(l[-1])
+                        # Remove trailing comma
+                        local_average = float(l[-3].strip(","))
+                        normal_sum += local_average * count
+                    elif format_indicator == ":":
+                        # MAX/MIN aggregate
                         count = 1
+                        metric_name = l[-3].strip('"')
+                        metric_value = float(l[-1])
                         if metric_name[0:4] == "MAX_":
-                            max_val = float(metric_values[0])
+                            max_val = float(metric_value)
                         elif metric_name[0:4] == "MIN_":
-                            min_val = float(metric_values[0])
-                        else:
-                            normal_sum = float(metric_values[0])
+                            min_val = float(metric_value)
                     else:
-                        count = int(metric_values[0])
-                        normal_sum = float(metric_values[1])
+                        # Single-value metric (e.g `HANDSHAKE_CONNECT_TO_SERVER_TIME`)
+                        metric_name = l[-3].strip('"')
+                        metric_value = float(l[-1])
+                        count = 1
+                        normal_sum = metric_value
 
                     assert count >= 0
                     assert normal_sum >= 0
-
+                    # print(metric_name, count, normal_sum, min_val, max_val)
                     if metric_name not in new_experiment_metrics:
                         new_experiment_metrics[metric_name] = {
                             "entries": 0,
