@@ -32,10 +32,10 @@ const Hero = () => {
   const operatingSystem = getOperatingSystem(window)
 
   return (
-    <div className="mb-24 text-center pt-36">
+    <div className="mb-24 text-center pt-24">
       <div className="px-0 md:px-12">
         <Widget open={open} setOpen={setOpen} />
-        <div className="text-6xl md:text-7xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4 max-w-4xl mx-auto">
+        <div className="text-6xl md:text-8xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4 max-w-4xl mx-auto">
           A <span className="text-blue-light">faster, lighter</span> browser
         </div>
         {operatingSystem === "MacOS" ? (
@@ -44,12 +44,12 @@ const Hero = () => {
             <span className="text-blue-light">macOS 10.13+</span> and be{" "}
             <span className="text-blue-light">located in North America</span>.
             If you do not meet these requirements, please{" "}
-            <span
+            <button
               onClick={() => setOpen(true)}
-              className="text-blue-light cursor-pointer"
+              className="text-blue-light cursor-pointer inline-block"
             >
               leave us your email
-            </span>{" "}
+            </button>{" "}
             and we will notify you when we can support you!
           </div>
         ) : (

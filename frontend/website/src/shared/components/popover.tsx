@@ -12,7 +12,7 @@ const Popover = (props: {
       <div
         className={classNames(
           "absolute p-4 bg-gray-800 rounded duration-150 bottom-16 left-2 text-gray-400 text-sm text-left",
-          isHovering ? "opacity-100" : "opacity-0"
+          isHovering ? "opacity-100" : "hidden"
         )}
       >
         {props.popup}

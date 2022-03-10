@@ -35,7 +35,7 @@ export const Features = () => {
     */
 
   return (
-    <div className="mt-32 text-center">
+    <div className="text-center">
       <div className="pt-24">
         <div className="text-3xl md:text-5xl dark:text-gray-300 leading-normal">
           The first{" "}
@@ -49,7 +49,11 @@ export const Features = () => {
       </p>
       <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-3 lg:gap-y-0 lg:gap-x-8 m-auto text-left max-w-7xl">
         {supportLinks.map((link) => (
-          <div key={link.name} className="flex flex-col rounded bg-gray-800">
+          <div
+            key={link.name}
+            className="flex flex-col rounded"
+            style={{ border: "solid 1px rgb(31 41 55)" }}
+          >
             <div className="flex-1 relative pt-16 px-6 pb-8 md:px-8">
               <div className="top-0 p-3 inline-block bg-blue rounded transform -translate-y-1/2">
                 <link.icon

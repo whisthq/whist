@@ -23,14 +23,16 @@ export const Home = () => {
       <div className={classNames(padded, "bg-gray-900")}>
         <Header />
         <Hero />
-        <Features />
-        <Testimonial />
       </div>
-      <div className={classNames(padded, "bg-blue-darker")}>
+      <div className={classNames(padded, "bg-gray-900 mt-12")}>
         <Users />
+        <Testimonial />
       </div>
       <div className={classNames(padded, "bg-gray-900")}>
         <Benefits />
+      </div>
+      <div className={classNames(padded, "bg-gray-900 mt-12")}>
+        <Features />
       </div>
       <Footer />
     </>

@@ -83,9 +83,6 @@ export const Middle = () => {
         visible={true}
         title={
           <>
-            <div className="text-base font-semibold text-gray-500 tracking-wide uppercase mb-2">
-              Features
-            </div>
             <div className="text-gray-dark dark:text-gray-300">
               Use <span className="text-blue-light">near-zero memory</span>
             </div>
