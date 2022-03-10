@@ -413,7 +413,7 @@ def server_setup_process(args_dict):
     username = args_dict["username"]
     server_hostname = args_dict["server_hostname"]
     ssh_key_path = args_dict["ssh_key_path"]
-    aws_timeout = args_dict["aws_timeout"]
+    aws_timeout_seconds = args_dict["aws_timeout_seconds"]
     server_log_filepath = args_dict["server_log_filepath"]
     pexpect_prompt_server = args_dict["pexpect_prompt_server"]
     github_token = args_dict["github_token"]
@@ -429,7 +429,7 @@ def server_setup_process(args_dict):
     print("Initiating the SETUP ssh connection with the server AWS instance...")
     server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
     hs_process = attempt_ssh_connection(
-        server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+        server_cmd, aws_timeout_seconds, server_log, pexpect_prompt_server, 5
     )
     if not running_in_ci:
         hs_process.expect(pexpect_prompt_server)
@@ -438,7 +438,7 @@ def server_setup_process(args_dict):
     configure_aws_credentials(
         hs_process,
         pexpect_prompt_server,
-        aws_timeout,
+        aws_timeout_seconds,
         running_in_ci,
         aws_credentials_filepath,
     )
@@ -455,7 +455,13 @@ def server_setup_process(args_dict):
     if skip_host_setup == "false":
         # 1- Reboot instance for extra robustness
         hs_process = reboot_instance(
-            hs_process, server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5, running_in_ci
+            hs_process,
+            server_cmd,
+            aws_timeout_seconds,
+            server_log,
+            pexpect_prompt_server,
+            5,
+            running_in_ci,
         )
 
         # 2 - Fix DPKG issue in case it comes up
@@ -463,7 +469,12 @@ def server_setup_process(args_dict):
 
         # 3- run host-setup
         hs_process = run_host_setup_on_instance(
-            hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log, running_in_ci
+            hs_process,
+            pexpect_prompt_server,
+            server_cmd,
+            aws_timeout_seconds,
+            server_log,
+            running_in_ci,
         )
     else:
         print("Skipping host setup on server instance.")
@@ -471,7 +482,13 @@ def server_setup_process(args_dict):
     # 2- reboot and wait for it to come back up
     print("Rebooting the server EC2 instance (required after running the host setup)...")
     hs_process = reboot_instance(
-        hs_process, server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5, running_in_ci
+        hs_process,
+        server_cmd,
+        aws_timeout_seconds,
+        server_log,
+        pexpect_prompt_server,
+        5,
+        running_in_ci,
     )
 
     # 3- Build the protocol server
@@ -499,7 +516,7 @@ def client_setup_process(args_dict):
     username = args_dict["username"]
     client_hostname = args_dict["client_hostname"]
     ssh_key_path = args_dict["ssh_key_path"]
-    aws_timeout = args_dict["aws_timeout"]
+    aws_timeout_seconds = args_dict["aws_timeout_seconds"]
     client_log_filepath = args_dict["client_log_filepath"]
     pexpect_prompt_client = args_dict["pexpect_prompt_client"]
     github_token = args_dict["github_token"]
@@ -520,7 +537,7 @@ def client_setup_process(args_dict):
         # Initiate the SSH connections with the client instance
         print("Initiating the SETUP ssh connection with the client AWS instance...")
         hs_process = attempt_ssh_connection(
-            client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+            client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5
         )
         if not running_in_ci:
             hs_process.expect(pexpect_prompt_client)
@@ -532,7 +549,7 @@ def client_setup_process(args_dict):
         configure_aws_credentials(
             hs_process,
             pexpect_prompt_client,
-            aws_timeout,
+            aws_timeout_seconds,
             running_in_ci,
             aws_credentials_filepath,
         )
@@ -551,7 +568,7 @@ def client_setup_process(args_dict):
             hs_process = reboot_instance(
                 hs_process,
                 client_cmd,
-                aws_timeout,
+                aws_timeout_seconds,
                 client_log,
                 pexpect_prompt_client,
                 5,
@@ -566,7 +583,7 @@ def client_setup_process(args_dict):
                 hs_process,
                 pexpect_prompt_client,
                 client_cmd,
-                aws_timeout,
+                aws_timeout_seconds,
                 client_log,
                 running_in_ci,
             )
@@ -576,7 +593,13 @@ def client_setup_process(args_dict):
         # 2- reboot and wait for it to come back up
         print("Rebooting the client EC2 instance (required after running the host setup)...")
         hs_process = reboot_instance(
-            hs_process, client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5, running_in_ci
+            hs_process,
+            client_cmd,
+            aws_timeout_seconds,
+            client_log,
+            pexpect_prompt_client,
+            5,
+            running_in_ci,
         )
 
         hs_process.kill(0)
@@ -584,7 +607,7 @@ def client_setup_process(args_dict):
     # 6- Build the dev client
     print("Initiating the BUILD ssh connection with the client AWS instance...")
     client_pexpect_process = attempt_ssh_connection(
-        client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+        client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5
     )
     build_client_on_instance(
         client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type, running_in_ci

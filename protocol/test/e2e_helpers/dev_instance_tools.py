@@ -151,7 +151,7 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
 def configure_aws_credentials(
     pexpect_process,
     pexpect_prompt,
-    aws_timeout,
+    aws_timeout_seconds,
     running_in_ci,
     aws_credentials_filepath=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
 ):
@@ -161,7 +161,7 @@ def configure_aws_credentials(
     Args:
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
-        aws_timeout (int): Timeout to be used for the Pexpect process.
+        aws_timeout_seconds (int): Timeout to be used for the Pexpect process.
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
         aws_credentials_filepath(str): The path to the file where AWS stores the credentials on the machine where this script is run
     Returns:
@@ -215,7 +215,7 @@ def configure_aws_credentials(
 
         # We need to restore the timeout
         result = pexpect_process.expect(
-            [pexpect_prompt, pexpect.exceptions.TIMEOUT], timeout=aws_timeout
+            [pexpect_prompt, pexpect.exceptions.TIMEOUT], timeout=aws_timeout_seconds
         )
         if result == 1:
             print("Error, testing script hanged! Check the logs for troubleshooting.")
