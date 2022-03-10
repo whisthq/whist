@@ -8,24 +8,24 @@ import SpeedTest from "@app/assets/gifs/speedTest.gif"
 
 const features = [
   {
+    name: "Browsing Data Privacy",
+    description:
+      "Whist encrypts your browsing data with a private key that is cached only on your computer, not our servers.",
+  },
+  {
+    name: "End-to-end Encryption",
+    description:
+      "Your video, audio, and keyboard/mouse strokes are encrypted along every leg of the journey from server to client.",
+  },
+  {
     name: "Built-in VPN",
     description:
       "When you visit websites on Whist, you will not send the IP address of your computer but rather the IP of the datacenter that Whist runs on.",
   },
   {
-    name: "Browsing Data Privacy",
-    description:
-      "Whereas Chrome caches your browsing data (history, cookies, etc.) onto your computer, Whist encrypts it and stores it in a server that only you can access.",
-  },
-  {
     name: "Computer Info Privacy",
     description:
       "Normal websites track you by pulling information about your computer's operating system, location, etc. This is impossible to do with Whist.",
-  },
-  {
-    name: "Malware Protection",
-    description:
-      "Unwanted downloads will be downloaded onto a remote server instead of infecting your computer.",
   },
   {
     name: "Local Network Protection",
@@ -177,8 +177,8 @@ export const Middle = () => {
         }
         text={
           <div className="mt-2 text-md text-gray-400 mb-4">
-            Because Whist runs in a remote datacenter, your browser and all its
-            data are entirely decoupled from your personal computer.
+            Whist protects your fundamental right to the privacy of all your
+            browsing data
           </div>
         }
         image={
