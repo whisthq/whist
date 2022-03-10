@@ -80,7 +80,7 @@ def extract_metrics(client_log_file, server_log_file):
 
                     assert count >= 0
                     assert normal_sum >= 0
-                    # print(metric_name, count, normal_sum, min_val, max_val)
+
                     if metric_name not in new_experiment_metrics:
                         new_experiment_metrics[metric_name] = {
                             "entries": 0,
