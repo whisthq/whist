@@ -79,20 +79,18 @@ waitForSignal(
     fromTrigger(WhistTrigger.beginImport),
     of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
   ),
-  merge(loggedInAuth.success, firstAuth.success)
+  fromTrigger(WhistTrigger.authFlowSuccess)
 )
 
 // Unpack the access token to see if their payment is valid
-const checkPayment = checkPaymentFlow(
-  merge(loggedInAuth.success, firstAuth.success)
-)
+const checkPayment = checkPaymentFlow(fromTrigger(WhistTrigger.authFlowSuccess))
 
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
 const refreshAfterPaying = authRefreshFlow(
   fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
     withLatestFrom(
-      checkPayment.success.pipe(
+      fromTrigger(WhistTrigger.checkPaymentFlowSuccess).pipe(
         pluck("refreshToken"),
         map((t) => ({ refreshToken: t }))
       )
@@ -127,9 +125,15 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 // Observable that fires when Whist is ready to be launched
 const launchTrigger = emitOnSignal(
   combineLatest({
-    userEmail: checkPayment.success.pipe(pluck("userEmail")),
-    accessToken: checkPayment.success.pipe(pluck("accessToken")),
-    configToken: checkPayment.success.pipe(pluck("configToken")),
+    userEmail: fromTrigger(WhistTrigger.checkPaymentFlowSuccess).pipe(
+      pluck("userEmail")
+    ),
+    accessToken: fromTrigger(WhistTrigger.checkPaymentFlowSuccess).pipe(
+      pluck("accessToken")
+    ),
+    configToken: fromTrigger(WhistTrigger.checkPaymentFlowSuccess).pipe(
+      pluck("configToken")
+    ),
     isNewConfigToken,
     importedData: merge(importedData, dontImportBrowserData),
     regions: merge(awsPing.cached, awsPing.refresh),
@@ -140,7 +144,7 @@ const launchTrigger = emitOnSignal(
   }),
   merge(
     zip(
-      checkPayment.success,
+      fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
       of(persistGet(ONBOARDED)).pipe(
         filter((onboarded) => onboarded as boolean)
       )
