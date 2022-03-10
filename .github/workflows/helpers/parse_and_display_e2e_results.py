@@ -302,15 +302,15 @@ if __name__ == "__main__":
     # Create one file for each branch
 
     md_files = glob.glob("*.md")
-    body = []
-    merged_body = ""
-    for fn in md_files:
-        with open(fn, "r") as f:
+    files_list = []
+    merged_files = ""
+    for filename in md_files:
+        with open(filename, "r") as f:
             contents = f.read()
-            body.append((fn, contents))
-            merged_body += contents
+            files_list.append((filename, contents))
+            merged_files += contents
 
-    gist_url = create_github_gist_post(github_gist_token, title, body)
+    gist_url = create_github_gist_post(github_gist_token, title, files_list)
 
     # Post updates to Slack channel if we are on dev
     if current_branch_name == "dev":
@@ -325,7 +325,7 @@ if __name__ == "__main__":
                 github_repo,
                 pr_number,
                 identifier,
-                merged_body,
+                merged_files,
                 title=title,
                 update_date=True,
             )
