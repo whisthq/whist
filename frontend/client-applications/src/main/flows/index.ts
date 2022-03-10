@@ -131,7 +131,7 @@ const launchTrigger = emitOnSignal(
     accessToken: fromTrigger(WhistTrigger.checkPaymentFlowSuccess).pipe(
       pluck("accessToken")
     ),
-    configToken: fromTrigger(WhistTrigger.checkPaymentFlowSuccess).pipe(
+    configToken: fromTrigger(WhistTrigger.authFlowSuccess).pipe(
       pluck("configToken")
     ),
     isNewConfigToken,
