@@ -12,7 +12,6 @@ import platform
 
 # Get tools to create, destroy and manage AWS instances
 from e2e_helpers.aws_tools import (
-    get_boto3client,
     create_or_start_aws_instance,
     get_instance_ip,
     terminate_or_stop_aws_instance,
