@@ -7,4 +7,4 @@ set -Eeuo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 
-cd "$DIR/test" && ./WhistProtocolTest "${GTEST_ARGS[@]:-}"
+cd "$DIR/test" && ./WhistProtocolTest ASAN_OPTIONS=detect_leaks=1 "${GTEST_ARGS[@]:-}"
