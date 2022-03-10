@@ -28,7 +28,6 @@ from protocol.e2e_display_helpers.logs_tools import (
 
 from protocol.e2e_display_helpers.metrics_tools import (
     extract_metrics,
-    compute_deltas,
 )
 
 from protocol.e2e_display_helpers.remote_tools import (

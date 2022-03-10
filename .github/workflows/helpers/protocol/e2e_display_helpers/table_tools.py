@@ -9,6 +9,10 @@ from datetime import datetime, timedelta
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
+from protocol.e2e_display_helpers.metrics_tools import (
+    compute_deltas,
+)
+
 
 def generate_no_comparison_table(
     results_file, experiment_metadata, most_interesting_metrics, client_metrics, server_metrics
@@ -26,7 +30,10 @@ def generate_no_comparison_table(
     Returns:
         None
     """
-    experiment_metrics = [{"CLIENT": client_metrics}, {"SERVER": server_metrics}]
+    experiment_metrics = [
+        {"name": "CLIENT", "metrics": client_metrics},
+        {"name": "SERVER", "metrics": server_metrics},
+    ]
     with redirect_stdout(results_file):
         # Generate metadata table
         print("<details>")
@@ -58,15 +65,18 @@ def generate_no_comparison_table(
 
         # Generate most interesting metric dictionary
         interesting_metrics = {}
-        for _, metrics in experiment_metrics:
-            for k in metrics:
+        for item in experiment_metrics:
+            for k in item["metrics"]:
                 if k in most_interesting_metrics:
-                    interesting_metrics[k] = metrics[k]
-        experiment_metrics.insert(0, {"MOST INTERESTING": interesting_metrics})
+                    interesting_metrics[k] = item["metrics"][k]
+        experiment_metrics.insert(0, {"name": "MOST INTERESTING", "metrics": interesting_metrics})
 
         # Generate tables for most interesting metrics, client metrics, and server metrics
-        for name, dictionary in experiment_metrics:
-            if len(dictionary) == 0:
+        for item in experiment_metrics:
+            name = item["name"]
+            metrics = item["metrics"]
+
+            if len(metrics) == 0:
                 print(f"NO {name} METRICS\n")
             else:
                 print(f"###### {name} METRICS: ######\n")
@@ -77,12 +87,12 @@ def generate_no_comparison_table(
                     value_matrix=[
                         [
                             k,
-                            dictionary[k]["entries"],
-                            f"{dictionary[k]['avg']:.3f}",
-                            dictionary[k]["min"],
-                            dictionary[k]["max"],
+                            metrics[k]["entries"],
+                            f"{metrics[k]['avg']:.3f}",
+                            metrics[k]["min"],
+                            metrics[k]["max"],
                         ]
-                        for k in dictionary
+                        for k in metrics
                     ],
                     margin=1,  # add a whitespace for both sides of each cell
                     max_precision=3,
@@ -126,7 +136,10 @@ def generate_comparison_table(
         client_metrics, server_metrics, compared_client_metrics, compared_server_metrics
     )
 
-    table_entries = [{"CLIENT": client_table_entries}, {"SERVER": server_table_entries}]
+    table_entries = [
+        {"name": "CLIENT", "metrics": client_table_entries},
+        {"name": "SERVER", "metrics": server_table_entries},
+    ]
 
     with redirect_stdout(results_file):
         # Generate metadata table
@@ -162,14 +175,16 @@ def generate_comparison_table(
         # Generate most interesting metric dictionary
         interesting_metrics = [
             row
-            for row in entries
-            for _, entries in table_entries
+            for item in table_entries
+            for row in item["metrics"]
             if row[0] in most_interesting_metrics
         ]
-        table_entries.insert(0, {"MOST INTERESTING": interesting_metrics})
+        table_entries.insert(0, {"name": "MOST INTERESTING", "metrics": interesting_metrics})
 
         # Generate tables for most interesting metrics, client metrics, and server metrics
-        for name, entries in table_entries:
+        for item in table_entries:
+            name = item["name"]
+            entries = item["metrics"]
             if len(entries) == 0:
                 print(f"NO {name} METRICS\n")
             else:
@@ -181,7 +196,7 @@ def generate_comparison_table(
                         "Metric",
                         "Entries (this branch)",
                         "Average (this branch)",
-                        f"Average ({branch_name})",
+                        f"Average ({compared_branch_name})",
                         "Delta",
                         "",
                     ],
