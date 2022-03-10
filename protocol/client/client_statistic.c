@@ -42,8 +42,6 @@ void init_client_statistics(void) {
         (StatisticInfo){"VIDEO_RECEIVE_TIME", true, false, false};
     client_statistic_info[VIDEO_RENDER_TIME] =
         (StatisticInfo){"VIDEO_RENDER_TIME", true, false, false};
-    client_statistic_info[VIDEO_SDL_WRITE_TIME] =
-        (StatisticInfo){"VIDEO_SDL_WRITE_TIME", true, false, false};
     client_statistic_info[VIDEO_TIME_BETWEEN_FRAMES] =
         (StatisticInfo){"VIDEO_TIME_BETWEEN_FRAMES", true, false, false};
     client_statistic_info[VIDEO_UPDATE_TIME] =
