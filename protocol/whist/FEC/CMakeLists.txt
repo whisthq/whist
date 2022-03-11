@@ -1,6 +1,6 @@
 add_library(whistFEC STATIC
-	lugi_rs.c
-	fec.c
+        lugi_rs.c
+        fec.c
         )
 
 set_property(TARGET whistFEC PROPERTY
