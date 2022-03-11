@@ -185,10 +185,8 @@ void init_file_synchronizer(FileTransferType requested_actions) {
 }
 
 #ifdef _WIN32
-#define sep '\\'
 #define HOME_ENV_VAR "HOMEPATH"
 #else
-#define sep '/'
 #define HOME_ENV_VAR "HOME"
 #endif  // _WIN32
 void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
@@ -234,7 +232,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
             const char* downloads = "Downloads";
             char* download_file_dir = (char*)malloc(strlen(home_dir) + 1 + strlen(downloads) + 1);
             snprintf(download_file_dir, strlen(home_dir) + 1 + strlen(downloads) + 1, "%s%c%s",
-                     home_dir, sep, downloads);
+                     home_dir, PATH_SEPARATOR, downloads);
             file_dir = download_file_dir;
             break;
         }
@@ -251,7 +249,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     // Set transferring file filepath
     const size_t file_path_len = strlen(file_dir) + 1 + strlen(active_file->filename) + 1;
     active_file->file_path = (char*)safe_malloc(file_path_len + 1);
-    snprintf(active_file->file_path, file_path_len + 1, "%s%c%s", file_dir, sep,
+    snprintf(active_file->file_path, file_path_len + 1, "%s%c%s", file_dir, PATH_SEPARATOR,
              active_file->filename);
 
     active_file->transfer_type = file_metadata->transfer_type;
@@ -440,7 +438,7 @@ void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
     //     We could use `basename`, but it sadly is not cross-platform.
     char* temp_file_name = active_file->file_path;
     for (char* c = active_file->file_path; *c; ++c) {
-        if (*c == sep) temp_file_name = c + 1;
+        if (*c == PATH_SEPARATOR) temp_file_name = c + 1;
     }
     size_t filename_len = strlen(temp_file_name);
 
