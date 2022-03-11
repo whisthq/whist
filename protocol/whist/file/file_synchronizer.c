@@ -255,7 +255,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     active_file->transfer_type = file_metadata->transfer_type;
     active_file->event_info = file_metadata->event_info;
 
-    active_file->file_handle = fopen(active_file->file_path, "w");
+    active_file->file_handle = fopen(active_file->file_path, "wb");
     active_file->direction = FILE_WRITE_END;
 
     // Start the XDND drop process on the server as soon as the file exists
@@ -424,7 +424,7 @@ void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
     // Open read file and reset if open failed
     LOG_INFO("Opening global file id %d for reading", active_file->global_file_id);
 
-    active_file->file_handle = fopen(active_file->file_path, "r");
+    active_file->file_handle = fopen(active_file->file_path, "rb");
     if (active_file->file_handle == NULL) {
         LOG_ERROR("Could not open global file id %d for reading", active_file->global_file_id);
         // If file cannot be opened, then just abort the file transfer
