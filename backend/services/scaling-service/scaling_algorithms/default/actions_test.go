@@ -203,7 +203,7 @@ func TestVerifyInstanceScaleDown(t *testing.T) {
 			ImageID:           "test-image-id",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 	})
 	if !ok {
@@ -243,7 +243,7 @@ func TestVerifyCapacity(t *testing.T) {
 			ImageID:           "test-image-id",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 	})
 	if !ok {
@@ -275,7 +275,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 		{
 			ID:                "test-scale-down-instance-2",
@@ -283,7 +283,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 		{
 			ID:                "test-scale-down-instance-3",
@@ -291,7 +291,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 	}
 
@@ -310,7 +310,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id",
 			Status:            "DRAINING",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 		{
 			ID:                "test-scale-down-instance-2",
@@ -318,7 +318,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id",
 			Status:            "DRAINING",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 		{
 			ID:                "test-scale-down-instance-3",
@@ -326,7 +326,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 	})
 	if !ok {
@@ -367,7 +367,7 @@ func TestScaleUpIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id-scale-up",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 		{
 			ID:                "test-scale-up-instance",
@@ -375,7 +375,7 @@ func TestScaleUpIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id-scale-up",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 		{
 			ID:                "test-scale-up-instance",
@@ -383,7 +383,7 @@ func TestScaleUpIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id-scale-up",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 	})
 	if !ok {
@@ -415,7 +415,7 @@ func TestUpgradeImage(t *testing.T) {
 			ImageID:           "test-image-id-old",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 	}
 
@@ -434,7 +434,7 @@ func TestUpgradeImage(t *testing.T) {
 			ImageID:           "test-image-id-old",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 		{
 			ID:                "test-scale-up-instance",
@@ -442,7 +442,7 @@ func TestUpgradeImage(t *testing.T) {
 			ImageID:           "test-image-id-new",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: 3,
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 	})
 	if !ok {
