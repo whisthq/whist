@@ -9,6 +9,7 @@ import pexpect
 import json
 import multiprocessing
 import platform
+import boto3
 
 # Get tools to create, destroy and manage AWS instances
 from e2e_helpers.aws_tools import (

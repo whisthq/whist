@@ -9,12 +9,13 @@ from e2e_helpers.aws_tools import terminate_or_stop_aws_instance
 if __name__ == "__main__":
 
     filepath = os.path.join("instances_to_clean.txt")
-    todo_list = open(filepath, "r")
 
     # If the `instances_to_clean.txt` TODO-list does not exist, streaming_e2e_tester.py has already completed the cleanup, and we are done.
     if not os.path.exists(filepath) or not os.path.isfile(filepath):
         print("No leftover instances need to be stopped or terminated")
         sys.exit()
+
+    todo_list = open(filepath, "r")
 
     # Follow the TODO-list and stop/terminate any leftover instance.
     for line in todo_list.readlines():
