@@ -215,6 +215,7 @@ void rs_wrapper_encode(RSWrapper *rs_wrapper, void **src, void **dst, int sz) {
 int rs_wrapper_decode(RSWrapper *rs_wrapper, void **pkt, int *index, int num_pkt, int sz) {
     FATAL_ASSERT(rs_wrapper->num_groups > 0);
 
+
     // if num of groups is one, we can simply pass the decode request to the underlying lib without
     // maintain a lot of mappings
     if (rs_wrapper->num_groups == 1) {

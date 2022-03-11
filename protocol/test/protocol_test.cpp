@@ -50,17 +50,12 @@ extern "C" {
 #include <whist/utils/png.h>
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/utils/atomic.h>
-<<<<<<< HEAD
-#include <whist/fec/fec.h>
 #include <whist/utils/linked_list.h>
 #include <whist/utils/queue.h>
 #include <whist/utils/command_line.h>
-=======
 #include <whist/utils/linked_list.h>
-#include <whist/utils/queue.h>
-#include <whist/FEC/fec.h>
-#include <whist/FEC/rs_wrapper.h>
->>>>>>> af478ce7b... cm256 combined rebased new
+#include <whist/fec/fec.h>
+#include <whist/fec/rs_wrapper.h>
 
 #include "whist/core/error_codes.h"
 #include <whist/core/features.h>
@@ -1803,12 +1798,6 @@ typedef struct {
     LINKED_LIST_HEADER;
     int id;
 } TestItem;
-
-TEST_F(ProtocolTest, LinkedListTest) {
-    typedef struct {
-        LINKED_LIST_HEADER;
-        int id;
-    } TestItem;
 
 static int test_linked_list_compare(const void* a, const void* b) {
     return ((const TestItem*)a)->id - ((const TestItem*)b)->id;
