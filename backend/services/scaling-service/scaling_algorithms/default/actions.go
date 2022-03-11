@@ -444,7 +444,6 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	default:
 		commitHash = version.DevCommitHash
 	}
-
 	// Find protected image that matches the config db commit hash
 	for _, image := range protectedFromScaleDown {
 		if image.ClientSHA == commitHash {

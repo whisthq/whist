@@ -2,17 +2,20 @@ package scaling_algorithms
 
 import (
 	"context"
+	"os"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/hasura/go-graphql-client"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
 var (
 	testInstances subscriptions.WhistInstances
 	testImages    subscriptions.WhistImages
+	testAlgorithm *DefaultScalingAlgorithm
 )
 
 // mockDBClient is used to test all database interactions
@@ -191,20 +194,28 @@ func (mg *mockGraphQLClient) Mutate(context.Context, subscriptions.GraphQLQuery,
 	return nil
 }
 
-func TestVerifyInstanceScaleDown(t *testing.T) {
-	context, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+func setup() {
 	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
+	testAlgorithm = &DefaultScalingAlgorithm{
 		Region: "test-region",
 		Host:   &mockHostHandler{},
 	}
 	testDBClient := &mockDBClient{}
 	testGraphQLClient := &mockGraphQLClient{}
-
+	testAlgorithm.CreateEventChans()
 	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
 	testAlgorithm.CreateDBClient(testDBClient)
+}
+
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	os.Exit(code)
+}
+
+func TestVerifyInstanceScaleDown(t *testing.T) {
+	context, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// Populate test instances that will be used when
 	// mocking database functions.
@@ -262,17 +273,6 @@ func TestVerifyCapacity(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
-		Region: "test-region",
-		Host:   &mockHostHandler{},
-	}
-	testDBClient := &mockDBClient{}
-	testGraphQLClient := &mockGraphQLClient{}
-
-	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
-	testAlgorithm.CreateDBClient(testDBClient)
-
 	testInstances = subscriptions.WhistInstances{}
 
 	// Set the current image for testing
@@ -319,17 +319,6 @@ func TestVerifyCapacity(t *testing.T) {
 func TestScaleDownIfNecessary(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
-		Region: "test-region",
-		Host:   &mockHostHandler{},
-	}
-	testDBClient := &mockDBClient{}
-	testGraphQLClient := &mockGraphQLClient{}
-
-	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
-	testAlgorithm.CreateDBClient(testDBClient)
 
 	// Populate test instances that will be used when
 	// mocking database functions.
@@ -421,19 +410,8 @@ func TestScaleUpIfNecessary(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
-		Region: "test-region",
-		Host:   &mockHostHandler{},
-	}
-	testDBClient := &mockDBClient{}
-	testGraphQLClient := &mockGraphQLClient{}
-
 	testInstances = subscriptions.WhistInstances{}
 	testInstancesToScale := 3
-
-	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
-	testAlgorithm.CreateDBClient(testDBClient)
 
 	// Set the current image for testing
 	testImages = subscriptions.WhistImages{
@@ -493,19 +471,9 @@ func TestScaleUpIfNecessary(t *testing.T) {
 }
 
 func TestUpgradeImage(t *testing.T) {
+	t.Parallel()
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
-		Region: "test-region",
-		Host:   &mockHostHandler{},
-	}
-	testDBClient := &mockDBClient{}
-	testGraphQLClient := &mockGraphQLClient{}
-
-	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
-	testAlgorithm.CreateDBClient(testDBClient)
 
 	// Populate test instances that will be used when
 	// mocking database functions.
@@ -532,7 +500,7 @@ func TestUpgradeImage(t *testing.T) {
 			Provider:  "AWS",
 			Region:    "test-region",
 			ImageID:   "test-image-id-old",
-			ClientSHA: "test-sha-dev",
+			ClientSHA: graphql.String(metadata.GetGitCommit()),
 			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
 		},
 	}
@@ -570,9 +538,10 @@ func TestUpgradeImage(t *testing.T) {
 
 	testProtectedMap := map[string]subscriptions.Image{
 		"test-image-id-new": {
-			Provider: "AWS",
-			Region:   "test-region",
-			ImageID:  "test-image-id-new",
+			Provider:  "AWS",
+			Region:    "test-region",
+			ImageID:   "test-image-id-new",
+			ClientSHA: metadata.GetGitCommit(),
 		},
 	}
 	// Check that the new image was protected from scale down
@@ -580,34 +549,17 @@ func TestUpgradeImage(t *testing.T) {
 	if !ok {
 		t.Errorf("Protected from scale down map was not set correctly. Expected %v, got %v.", testProtectedMap, protectedFromScaleDown)
 	}
-
-	// We have to override the commit hash here for subsequent tests, since the
-	// metadata.gitCommit value is not set in CI.
-	if image, ok := protectedFromScaleDown["test-image-id-new"]; ok {
-		image.ClientSHA = "test-sha-dev"
-		protectedFromScaleDown["test-image-id-new"] = image
-	}
 }
 
 func TestSwapOverImages(t *testing.T) {
+	t.Parallel()
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
-		Region: "test-region",
-		Host:   &mockHostHandler{},
-	}
-	testDBClient := &mockDBClient{}
-	testGraphQLClient := &mockGraphQLClient{}
-
-	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
-	testAlgorithm.CreateDBClient(testDBClient)
-
 	testVersion := subscriptions.ClientAppVersion{
-		DevCommitHash:     "test-sha-dev",
-		StagingCommitHash: "test-sha-staging",
-		ProdCommitHash:    "test-sha-prod",
+		DevCommitHash:     metadata.GetGitCommit(),
+		StagingCommitHash: metadata.GetGitCommit(),
+		ProdCommitHash:    metadata.GetGitCommit(),
 	}
 
 	// Set the current image for testing
@@ -622,7 +574,7 @@ func TestSwapOverImages(t *testing.T) {
 			Provider:  "AWS",
 			Region:    "test-region",
 			ImageID:   "test-swapover-image-id",
-			ClientSHA: "test-sha-dev",
+			ClientSHA: graphql.String(metadata.GetGitCommit()),
 			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
 		},
 	}
@@ -649,7 +601,7 @@ func TestSwapOverImages(t *testing.T) {
 			Provider:  "AWS",
 			Region:    "test-region",
 			ImageID:   "test-image-id-new",
-			ClientSHA: "test-sha-dev",
+			ClientSHA: graphql.String(metadata.GetGitCommit()),
 			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
 		},
 	}
