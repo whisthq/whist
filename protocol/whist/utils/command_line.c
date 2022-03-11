@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "whist/core/whist.h"
+#include "whist/core/error_codes.h"
 #include "whist/utils/linked_list.h"
 
 #ifdef _MSC_VER
@@ -21,30 +22,31 @@
 // Enable for debugging command-line options.
 #define LOG_COMMAND_LINE false
 
-bool whist_handle_int_option_internal(const WhistCommandLineOption *opt, const char *value) {
+WhistStatus whist_handle_int_option_internal(const WhistCommandLineOption *opt, const char *value) {
     // Do this conversion in long-long to try to better catch extreme
     // out-of-range values.
     char *end;
     long long x = strtoll(value, &end, 0);
     if (end == value || *end != '\0') {
         // String is not a valid integer.
-        return false;
+        return WHIST_ERROR_SYNTAX;
     }
     if (x < opt->range_min || x > opt->range_max) {
         // Out of range.
-        return false;
+        return WHIST_ERROR_OUT_OF_RANGE;
     }
     *(int *)opt->variable = x;
-    return true;
+    return WHIST_SUCCESS;
 }
 
-bool whist_handle_bool_option_internal(const WhistCommandLineOption *opt, const char *value) {
+WhistStatus whist_handle_bool_option_internal(const WhistCommandLineOption *opt,
+                                              const char *value) {
     bool *variable = opt->variable;
 
     if (!value) {
         // No argument, set to true.
         *variable = true;
-        return true;
+        return WHIST_SUCCESS;
     }
 
     static const char *const true_strings[] = {
@@ -63,25 +65,26 @@ bool whist_handle_bool_option_internal(const WhistCommandLineOption *opt, const 
     for (unsigned int i = 0; i < ARRAY_LENGTH(true_strings); i++) {
         if (!strcasecmp(value, true_strings[i])) {
             *variable = true;
-            return true;
+            return WHIST_SUCCESS;
         }
     }
     for (unsigned int i = 0; i < ARRAY_LENGTH(false_strings); i++) {
         if (!strcasecmp(value, false_strings[i])) {
             *variable = false;
-            return true;
+            return WHIST_SUCCESS;
         }
     }
 
-    return false;
+    return WHIST_ERROR_SYNTAX;
 }
 
-bool whist_handle_string_option_internal(const WhistCommandLineOption *opt, const char *value) {
+WhistStatus whist_handle_string_option_internal(const WhistCommandLineOption *opt,
+                                                const char *value) {
     if (strlen(value) > opt->length) {
-        return false;
+        return WHIST_ERROR_TOO_LONG;
     }
     *(const char **)opt->variable = value;
-    return true;
+    return WHIST_SUCCESS;
 }
 
 static LinkedList option_list;
@@ -202,8 +205,8 @@ static const WhistCommandLineOption *find_long_option(const char *str, size_t le
     return matched;
 }
 
-static bool call_option_handler(const WhistCommandLineOption *opt, bool is_short,
-                                const char *value) {
+static WhistStatus call_option_handler(const WhistCommandLineOption *opt, bool is_short,
+                                       const char *value) {
     if (LOG_COMMAND_LINE) {
         if (is_short)
             printf("Setting option '%c'", opt->short_option);
@@ -215,8 +218,8 @@ static bool call_option_handler(const WhistCommandLineOption *opt, bool is_short
             printf(" with no value.\n");
     }
 
-    bool ret = opt->handler(opt, value);
-    if (!ret) {
+    WhistStatus ret = opt->handler(opt, value);
+    if (ret != WHIST_SUCCESS) {
         if (is_short)
             printf("Failed to parse option '%c'", opt->short_option);
         else
@@ -225,24 +228,25 @@ static bool call_option_handler(const WhistCommandLineOption *opt, bool is_short
             printf(" with value \"%s\".\n", value);
         else
             printf(".\n");
-        return true;
+        return ret;
     }
-    return false;
+    return WHIST_SUCCESS;
 }
 
-static bool call_operand_handler(WhistOperandHandler handler, int position, const char *value) {
-    bool ret = handler(position, value);
-    if (!ret) {
+static WhistStatus call_operand_handler(WhistOperandHandler handler, int position,
+                                        const char *value) {
+    WhistStatus ret = handler(position, value);
+    if (ret != WHIST_SUCCESS) {
         printf("Failed to parse argument %d \"%s\".\n", position, value);
-        return true;
+        return ret;
     }
-    return false;
+    return WHIST_SUCCESS;
 }
 
-bool whist_set_single_option(const char *name, const char *value) {
+WhistStatus whist_set_single_option(const char *name, const char *value) {
     size_t len = strlen(name);
     if (len < 1) {
-        return false;
+        return WHIST_ERROR_INVALID_ARGUMENT;
     }
     const WhistCommandLineOption *opt = NULL;
     if (len == 1) {
@@ -257,10 +261,11 @@ bool whist_set_single_option(const char *name, const char *value) {
     if (opt) {
         return call_option_handler(opt, false, value);
     }
-    return false;
+    return WHIST_ERROR_NOT_FOUND;
 }
 
-bool whist_parse_command_line(int argc, const char **argv, WhistOperandHandler operand_handler) {
+WhistStatus whist_parse_command_line(int argc, const char **argv,
+                                     WhistOperandHandler operand_handler) {
     bool show_help = false;
     WhistCommandLineOption help_option = {
         .long_option = "help",
@@ -307,14 +312,14 @@ bool whist_parse_command_line(int argc, const char **argv, WhistOperandHandler o
 #endif
 
     const WhistCommandLineOption *opt;
-    bool gone_wrong = false;
+    WhistStatus ret = WHIST_SUCCESS;
 
     int pos;
-    for (pos = 1; pos < argc && !gone_wrong; pos++) {
+    for (pos = 1; pos < argc && ret == WHIST_SUCCESS; pos++) {
         const char *arg = argv[pos];
         if (arg[0] != '-' || arg[1] == '\0') {
             // Operand, including "-".
-            gone_wrong = call_operand_handler(operand_handler, pos, arg);
+            ret = call_operand_handler(operand_handler, pos, arg);
         } else if (arg[1] == '-') {
             if (arg[2] == '\0') {
                 // Isolated "--" ends options.
@@ -331,33 +336,33 @@ bool whist_parse_command_line(int argc, const char **argv, WhistOperandHandler o
             }
             opt = find_long_option(&arg[2], len);
             if (!opt) {
-                gone_wrong = true;
+                ret = WHIST_ERROR_NOT_FOUND;
                 break;
             }
             if (opt->flags & WHIST_OPTION_REQUIRED_ARGUMENT) {
                 if (eq) {
-                    gone_wrong = call_option_handler(opt, false, eq + 1);
+                    ret = call_option_handler(opt, false, eq + 1);
                 } else if (pos + 1 == argc) {
                     printf("Option \"%s\" requires an argument.\n", opt->long_option);
-                    gone_wrong = true;
+                    ret = WHIST_ERROR_SYNTAX;
                 } else {
-                    gone_wrong = call_option_handler(opt, false, argv[pos + 1]);
+                    ret = call_option_handler(opt, false, argv[pos + 1]);
                     ++pos;
                 }
             } else if (opt->flags & WHIST_OPTION_OPTIONAL_ARGUMENT &&
                        (eq || (pos + 1 < argc && argv[pos + 1][0] != '-'))) {
                 if (eq) {
-                    gone_wrong = call_option_handler(opt, false, eq + 1);
+                    ret = call_option_handler(opt, false, eq + 1);
                 } else {
-                    gone_wrong = call_option_handler(opt, false, argv[pos + 1]);
+                    ret = call_option_handler(opt, false, argv[pos + 1]);
                     ++pos;
                 }
             } else {
                 if (eq) {
                     printf("Option \"%s\" does not take an argument.\n", opt->long_option);
-                    gone_wrong = true;
+                    ret = WHIST_ERROR_SYNTAX;
                 } else {
-                    gone_wrong = call_option_handler(opt, false, NULL);
+                    ret = call_option_handler(opt, false, NULL);
                 }
             }
         } else {
@@ -365,30 +370,30 @@ bool whist_parse_command_line(int argc, const char **argv, WhistOperandHandler o
             for (int i = 1; arg[i]; i++) {
                 opt = find_short_option(arg[i]);
                 if (!opt) {
-                    gone_wrong = true;
+                    ret = WHIST_ERROR_NOT_FOUND;
                     break;
                 }
                 if (opt->flags & WHIST_OPTION_REQUIRED_ARGUMENT) {
                     if (arg[i + 1]) {
-                        gone_wrong = call_option_handler(opt, true, &arg[i + 1]);
+                        ret = call_option_handler(opt, true, &arg[i + 1]);
                     } else if (pos + 1 < argc) {
-                        gone_wrong = call_option_handler(opt, true, argv[pos + 1]);
+                        ret = call_option_handler(opt, true, argv[pos + 1]);
                         ++pos;
                     } else {
                         printf("Option '%c' requires an argument.\n", opt->short_option);
-                        gone_wrong = true;
+                        ret = WHIST_ERROR_SYNTAX;
                     }
                     break;
                 } else if (opt->flags & WHIST_OPTION_OPTIONAL_ARGUMENT && arg[i + 1]) {
-                    gone_wrong = call_option_handler(opt, true, &arg[i + 1]);
+                    ret = call_option_handler(opt, true, &arg[i + 1]);
                     break;
                 } else if (opt->flags & WHIST_OPTION_OPTIONAL_ARGUMENT &&
                            (pos + 1 < argc && argv[pos + 1][0] != '-')) {
-                    gone_wrong = call_option_handler(opt, true, argv[pos + 1]);
+                    ret = call_option_handler(opt, true, argv[pos + 1]);
                     ++pos;
                     break;
                 } else {
-                    gone_wrong = call_option_handler(opt, true, NULL);
+                    ret = call_option_handler(opt, true, NULL);
                 }
             }
         }
@@ -403,14 +408,12 @@ bool whist_parse_command_line(int argc, const char **argv, WhistOperandHandler o
     linked_list_remove(&option_list, &help_option);
     linked_list_remove(&option_list, &version_option);
 
-    for (; pos < argc && !gone_wrong; pos++) {
-        gone_wrong = call_operand_handler(operand_handler, pos, argv[pos]);
+    for (; pos < argc && ret == WHIST_SUCCESS; pos++) {
+        ret = call_operand_handler(operand_handler, pos, argv[pos]);
     }
 
-    if (gone_wrong) {
+    if (ret != WHIST_SUCCESS) {
         printf("Try \"%s --help\" for more information.\n", argv[0]);
-        return false;
     }
-
-    return true;
+    return ret;
 }

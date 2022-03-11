@@ -50,8 +50,8 @@ Public Function Implementations
 */
 
 int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
-    bool ret = whist_parse_command_line(argc, (const char**)argv, NULL);
-    if (!ret) {
+    int ret = whist_parse_command_line(argc, (const char**)argv, NULL);
+    if (ret != WHIST_SUCCESS) {
         printf("Failed to parse command line!\n");
         return -1;
     }

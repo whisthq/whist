@@ -67,16 +67,16 @@ Command-line options
 ============================
 */
 
-static bool set_private_key(const WhistCommandLineOption *opt, const char *value) {
+static WhistStatus set_private_key(const WhistCommandLineOption *opt, const char *value) {
     if (!read_hexadecimal_private_key((char *)value, (char *)client_binary_aes_private_key,
                                       (char *)client_hex_aes_private_key)) {
         printf("Invalid hexadecimal string: %s\n", value);
-        return false;
+        return WHIST_ERROR_SYNTAX;
     }
-    return true;
+    return WHIST_SUCCESS;
 }
 
-static bool set_port_mapping(const WhistCommandLineOption *opt, const char *value) {
+static WhistStatus set_port_mapping(const WhistCommandLineOption *opt, const char *value) {
     char separator = '.';
     char c = separator;
     unsigned short origin_port;
@@ -95,7 +95,7 @@ static bool set_port_mapping(const WhistCommandLineOption *opt, const char *valu
             unsigned short invalid_s_len = (unsigned short)min(bytes_read + 1, 13);
             safe_strncpy(invalid_s, str, invalid_s_len);
             printf("Unable to parse the port mapping \"%s\"", invalid_s);
-            return false;
+            return WHIST_ERROR_SYNTAX;
         }
         // if %c was the end of the string, exit
         if (args_read < 3) {
@@ -104,7 +104,7 @@ static bool set_port_mapping(const WhistCommandLineOption *opt, const char *valu
         // Progress the string forwards
         str += bytes_read;
     }
-    return true;
+    return WHIST_SUCCESS;
 }
 
 COMMAND_LINE_INT_OPTION(output_width, 'w', "width", MIN_SCREEN_WIDTH, MAX_SCREEN_WIDTH,
@@ -124,14 +124,16 @@ COMMAND_LINE_BOOL_OPTION(using_piped_arguments, 'r', "read-pipe",
                          "Read arguments from stdin until EOF.  Don't need to pass "
                          "in IP if using this argument and passing with arg `ip`.")
 
-static bool parse_operand(int pos, const char *value) {
+static WhistStatus parse_operand(int pos, const char *value) {
+    // The first operand maps to the server-ip option.  Any subsequent
+    // operands are an error.
     static bool ip_set = false;
     if (!ip_set) {
         safe_strncpy((char *)server_ip, value, IP_MAXLEN + 1);
         ip_set = true;
-        return true;
+        return WHIST_SUCCESS;
     } else {
-        return false;
+        return WHIST_ERROR_ALREADY_SET;
     }
 }
 
@@ -156,8 +158,8 @@ int client_parse_args(int argc, char *argv[]) {
 
     using_piped_arguments = false;
 
-    bool ret = whist_parse_command_line(argc, (const char **)argv, &parse_operand);
-    if (!ret) {
+    WhistStatus ret = whist_parse_command_line(argc, (const char **)argv, &parse_operand);
+    if (ret != WHIST_SUCCESS) {
         printf("Failed to parse command line!\n");
         return -1;
     }
@@ -268,9 +270,13 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
             arg_name[strcspn(arg_name, "\n")] = 0;  // removes trailing newline, if exists
             arg_name[strcspn(arg_name, "\r")] = 0;  // removes trailing carriage return, if exists
 
-            bool opt_set = whist_set_single_option(arg_name, arg_value);
-            if (opt_set) {
+            int opt_ret = whist_set_single_option(arg_name, arg_value);
+            if (opt_ret == WHIST_SUCCESS) {
                 // Success, it was a normal option.
+            } else if (opt_ret != WHIST_ERROR_NOT_FOUND) {
+                // The option existed but parsing failed.
+                LOG_WARNING("Error settng piped arg %s: %s.", arg_name,
+                            whist_error_string(opt_ret));
             } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
                 // If arg_name is `ip`, then set IP address
                 if (!arg_value) {

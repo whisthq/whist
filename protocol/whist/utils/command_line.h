@@ -8,6 +8,7 @@
 
 #include <stdbool.h>
 
+#include "whist/core/error_codes.h"
 #include "linked_list.h"
 
 /**
@@ -31,17 +32,17 @@
  *                            "like this very-padded explanation which will "
  *                            "demonstrate how showing the help text works.")
  *
- * static bool callback(const WhistCommandLineOption *opt, const char *value) {
+ * static WhistStatus callback(const WhistCommandLineOption *opt, const char *value) {
  *     printf("Hello world!\n");
- *     return true;
+ *     return WHIST_SUCCESS;
  * }
  * COMMAND_LINE_CALLBACK_OPTION(callback, 'c', "callback", WHIST_OPTION_NO_ARGUMENT,
  *                              "Offer a traditional greeting.")
  *
  * int main(int argc, const char **argv) {
- *     bool ret = whist_parse_command_line(argc, argv, NULL);
- *     if (!ret) {
- *         printf("Failed to parse command line!\n");
+ *     int ret = whist_parse_command_line(argc, argv, NULL);
+ *     if (ret != WHIST_SUCCESS) {
+ *         printf("Failed to parse command line: %s.\n", whist_error_string(ret));
  *         return 1;
  *     }
  *
@@ -64,9 +65,9 @@ typedef struct WhistCommandLineOption WhistCommandLineOption;
  * @param opt    The option to be handled.
  * @param value  String value of the option.  If NULL, indicates that
  *               the option is present with no argument.
- * @return  True on success, false on error and parsing will then fail.
+ * @return  Success, or an error code and parsing will fail.
  */
-typedef bool (*WhistOptionHandler)(const WhistCommandLineOption *opt, const char *value);
+typedef WhistStatus (*WhistOptionHandler)(const WhistCommandLineOption *opt, const char *value);
 
 /**
  * Type for anonymous command-line operand handlers.
@@ -74,9 +75,9 @@ typedef bool (*WhistOptionHandler)(const WhistCommandLineOption *opt, const char
  * @param position  Position in the command-line that this operand
  *                  appears (array index in argv).
  * @param value     String value of the operand.
- * @return  True on success, false on error and parsing will then fail.
+ * @return  Success, or an error code and parsing will fail.
  */
-typedef bool (*WhistOperandHandler)(int position, const char *value);
+typedef WhistStatus (*WhistOperandHandler)(int position, const char *value);
 
 /**
  * Flags which apply to command-line options.
@@ -262,13 +263,21 @@ void whist_register_command_line_option(WhistCommandLineOption *opt);
  *               short option, then if that is not found then it will
  *               be interpreted as a long option.
  * @param value  Option value to set.
- * @return  True on success, false if the option is not found or the
- *          value was not valid.
+ * @return  Error code:
+ *  - WHIST_ERROR_INVALID_ARGUMENT: the option name was empty.
+ *  - WHIST_ERROR_NOT_FOUND: the option was not found.
+ *  - WHIST_ERROR_SYNTAX: the option value was invalid.
  */
-bool whist_set_single_option(const char *name, const char *value);
+WhistStatus whist_set_single_option(const char *name, const char *value);
 
 /**
  * Parse a command line.
+ *
+ * Parses the given command line, calling option handlers for option
+ * arguments and the given operand handler for non-option arguments.
+ *
+ * If the "help" or "version" options are specified, this will exit
+ * rather than returning.
  *
  * @param argc  Argument count passed to main().
  * @param argv  Argument vector passed to main().
@@ -276,10 +285,12 @@ bool whist_set_single_option(const char *name, const char *value);
  *                         (non-option) argument in the order that they
  *                         are seen.  If NULL, operand arguments are
  *                         considered an error.
- * @return  True on success, false if parsing failed or if some option
- *          value was invalid.
+ * @return  Error code:
+ *  - WHIST_ERROR_NOT_FOUND: an unknown option was specified.
+ *  - WHIST_ERROR_SYNTAX: option syntax was invalid.
  */
-bool whist_parse_command_line(int argc, const char **argv, WhistOperandHandler operand_handler);
+WhistStatus whist_parse_command_line(int argc, const char **argv,
+                                     WhistOperandHandler operand_handler);
 
 /**
  * @privatesection
@@ -287,9 +298,10 @@ bool whist_parse_command_line(int argc, const char **argv, WhistOperandHandler o
  * and should not be used directly.
  */
 
-bool whist_handle_int_option_internal(const WhistCommandLineOption *opt, const char *value);
-bool whist_handle_bool_option_internal(const WhistCommandLineOption *opt, const char *value);
-bool whist_handle_string_option_internal(const WhistCommandLineOption *opt, const char *value);
+WhistStatus whist_handle_int_option_internal(const WhistCommandLineOption *opt, const char *value);
+WhistStatus whist_handle_bool_option_internal(const WhistCommandLineOption *opt, const char *value);
+WhistStatus whist_handle_string_option_internal(const WhistCommandLineOption *opt,
+                                                const char *value);
 
 /** @} */
 

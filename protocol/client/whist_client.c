@@ -109,29 +109,29 @@ extern bool upload_initiated;
 
 // Command-line options.
 
-static bool set_user_email(const WhistCommandLineOption* opt, const char* value) {
+static WhistStatus set_user_email(const WhistCommandLineOption* opt, const char* value) {
     if (!safe_strncpy(user_email, value, sizeof(user_email))) {
         printf("User email is too long: %s\n", value);
-        return false;
+        return WHIST_ERROR_TOO_LONG;
     }
-    return true;
+    return WHIST_SUCCESS;
 }
 
-static bool set_png_icon(const WhistCommandLineOption* opt, const char* value) {
+static WhistStatus set_png_icon(const WhistCommandLineOption* opt, const char* value) {
     if (!safe_strncpy(icon_png_filename, value, sizeof(icon_png_filename))) {
         printf("Icon PNG filename is too long: %s\n", value);
-        return false;
+        return WHIST_ERROR_TOO_LONG;
     }
-    return true;
+    return WHIST_SUCCESS;
 }
 
-static bool set_new_tab_url(const WhistCommandLineOption* opt, const char* value) {
+static WhistStatus set_new_tab_url(const WhistCommandLineOption* opt, const char* value) {
     if (strlen(value) > MAX_URL_LENGTH) {
-        return false;
+        return WHIST_ERROR_TOO_LONG;
     }
     free((void*)new_tab_url);
     new_tab_url = strdup(value);
-    return true;
+    return WHIST_SUCCESS;
 }
 
 // Required declaration to avoid 'no previous prototype for function' error
