@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-import os, sys
+import os
+import sys
+import boto3
 from e2e_helpers.aws_tools import terminate_or_stop_aws_instance
 
 # Before exiting, the streaming_e2e_tester.py script stops/terminates all EC2 instances
@@ -41,4 +43,4 @@ if __name__ == "__main__":
 
     # Close and delete the TODO-list upon completion of the cleanup
     todo_list.close()
-    os.remove(todo_list)
+    os.remove(filepath)

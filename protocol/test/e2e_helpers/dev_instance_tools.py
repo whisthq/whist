@@ -79,10 +79,26 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, new_time
     Returns:
         None
     """
-    result = pexpect_process.expect([pexpect_prompt, pexpect.exceptions.TIMEOUT])
+    # Execute the command and apply the desired timeout if the new_timeout parameter is set.
+    result = 0
+    if new_timeout:
+        print(f"Resetting pexpect timeout to {new_timeout}...")
+        result = pexpect_process.expect(
+            [pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF], timeout=new_timeout
+        )
+    else:
+        result = pexpect_process.expect([pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF])
+
+    # Handle timeout and error cases
     if result == 1:
-        print("Error, testing script hanged! Check the logs for troubleshooting.")
+        print("Error: pexpect process timed out! Check the logs for troubleshooting.")
         sys.exit(-1)
+    elif result == 2:
+        print(
+            "Error: pexpect process encountered an unexpected exception! Check the logs for troubleshooting."
+        )
+        sys.exit(-1)
+
     # On a SSH connection, the prompt is printed two times on Mac (because of some obscure reason related to encoding and/or color printing on terminal)
     if not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
@@ -222,7 +238,7 @@ def configure_aws_credentials(
             # Download AWS installer
             "curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip",
             # Download the unzip program
-            "sudo apt install -y unzip",
+            "sudo apt-get install -y unzip",
             # Unzip the AWS installer
             "unzip -o awscliv2.zip",
             # Remove the zip file
