@@ -115,7 +115,7 @@ jobs:
         working-directory: protocol/test
         run: |
           aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"${{ env.BRANCH_NAME }}" --recursive
-          echo "\n\nDownload S3 logs with the following commands:"
+          echo ""; echo "Download S3 logs with the following commands:"
           cd perf_logs; for dir in */; do echo "aws s3 cp s3://whist-e2e-protocol-test-logs/${{ env.BRANCH_NAME }}/$dir $dir --recursive"; done
 
       - name: Stop or terminate leftover AWS instances

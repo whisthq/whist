@@ -80,13 +80,15 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, new_time
         None
     """
     # Execute the command and apply the desired timeout if the new_timeout parameter is set.
-    result = (
-        pexpect_process.expect(
+    result = 0
+    if new_timeout:
+        print(f"Resetting pexpect timeout to {new_timeout}...")
+        result = pexpect_process.expect(
             [pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF], timeout=new_timeout
         )
-        if new_timeout
-        else pexpect_process.expect([pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF])
-    )
+    else:
+        result = pexpect_process.expect([pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF])
+
     # Handle timeout and error cases
     if result == 1:
         print("Error: pexpect process timed out! Check the logs for troubleshooting.")

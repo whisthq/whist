@@ -43,4 +43,4 @@ if __name__ == "__main__":
 
     # Close and delete the TODO-list upon completion of the cleanup
     todo_list.close()
-    os.remove(todo_list)
+    os.remove(filepath)
