@@ -409,6 +409,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		}
 	}
 
+	s.SyncChan <- true
 	return nil
 }
 
@@ -416,6 +417,9 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 // To the latest one. This is done separately to avoid having downtimes during deploys, since
 // we have to wait until the client has updated its version on the config database.
 func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, event ScalingEvent, clientVersion interface{}) error {
+	// Block until the image upgrade has finished successfully
+	<-s.SyncChan
+
 	logger.Infof("Starting upgrade image swapover action for event: %v", event)
 	defer logger.Infof("Finished upgrade image swapover action for event: %v", event)
 

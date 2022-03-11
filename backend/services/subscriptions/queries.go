@@ -113,5 +113,5 @@ var QueryLatestImage struct {
 
 // QueryClientAppVersionChange returns the most recent change on the `desktop_app_version` config database table.
 var QueryClientAppVersionChange struct {
-	WhistClientAppVersions `graphql:"desktop_app_version()"`
+	WhistClientAppVersions `graphql:"desktop_app_version(where: {id: {_eq: $id}})"`
 }

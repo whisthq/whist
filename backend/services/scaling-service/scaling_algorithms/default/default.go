@@ -40,6 +40,7 @@ type DefaultScalingAlgorithm struct {
 	ImageEventChan       chan ScalingEvent
 	ClientAppVersionChan chan ScalingEvent
 	ScheduledEventChan   chan ScalingEvent
+	SyncChan             chan bool // This channel is used to sync actions
 }
 
 // CreateEventChans creates the event channels if they don't alredy exist.
@@ -57,6 +58,9 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	}
 	if s.ScheduledEventChan == nil {
 		s.ScheduledEventChan = make(chan ScalingEvent, 100)
+	}
+	if s.SyncChan == nil {
+		s.SyncChan = make(chan bool)
 	}
 }
 

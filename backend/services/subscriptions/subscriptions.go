@@ -73,6 +73,39 @@ func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]int
 	return (mandelbox.InstanceID == instanceID) && (mandelbox.Status == status)
 }
 
+// ClientAppVersionHandler handles events from the hasura subscription which
+// detects changes on the config database client app version to the current.
+func ClientAppVersionHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
+	result := event.(ClientAppVersionEvent)
+
+	var (
+		version    ClientAppVersion
+		commitHash string
+	)
+
+	if len(result.ClientAppVersions) > 0 {
+		version = result.ClientAppVersions[0]
+	}
+
+	if version == (ClientAppVersion{}) {
+		return false
+	}
+
+	// get the commit hash of the environment we are running in
+	switch metadata.GetAppEnvironmentLowercase() {
+	case string(metadata.EnvDev):
+		commitHash = version.DevCommitHash
+	case string(metadata.EnvStaging):
+		commitHash = version.StagingCommitHash
+	case string(metadata.EnvProd):
+		commitHash = version.ProdCommitHash
+	default:
+		commitHash = version.DevCommitHash
+	}
+
+	return metadata.GetGitCommit() == commitHash
+}
+
 // SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This
 // function is specific for the subscriptions used on the host service.
 func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClient) {
@@ -118,11 +151,16 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 // SetupConfigSubscriptions creates a slice of HasuraSubscriptions to start the client. This
 // function is specific for the subscriptions used for the config database.
 func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
+	// The version ID will always be 1
+	const versionID = 1
+
 	configSubscriptions := []HasuraSubscription{
 		{
-			Query:     QueryClientAppVersionChange,
-			Variables: map[string]interface{}{},
-			Result:    ClientAppVersionEvent{ClientAppVersions: []ClientAppVersion{}},
+			Query: QueryClientAppVersionChange,
+			Variables: map[string]interface{}{
+				"id": graphql.Int(versionID),
+			},
+			Result: ClientAppVersionEvent{ClientAppVersions: []ClientAppVersion{}},
 			Handler: func(se SubscriptionEvent, m map[string]interface{}) bool {
 				return true
 			},
