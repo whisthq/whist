@@ -98,6 +98,21 @@ typedef enum WhistThreadPriority {
 } WhistThreadPriority;
 
 /**
+ * Thread-local storage key type.
+ *
+ * This is used to store and retrieve data accessible only to
+ * the current thread.
+ */
+typedef SDL_TLSID WhistThreadLocalStorageKey;
+
+/**
+ * Thread-local storage destructor function type.
+ *
+ * Thread-local storage cleanup functions must match this signature.
+ */
+typedef void (*WhistThreadLocalStorageDestructor)(void*);
+
+/**
  * Initialize threading.
  *
  * This must be called before any threads are created.
@@ -152,6 +167,33 @@ void whist_wait_thread(WhistThread thread, int* ret);
  * @param priority  The priority value to set.
  */
 void whist_set_thread_priority(WhistThreadPriority priority);
+
+/**
+ * Create a new thread-local storage entry.
+ *
+ * @return  The thread-local storage key for the new entry.
+ */
+WhistThreadLocalStorageKey whist_create_thread_local_storage(void);
+
+/**
+ * Store data in a thread-local storage entry.
+ *
+ * @param key           The thread-local storage key in which to store data.
+ * @param data          The data to store.
+ * @param destructor    The cleanup function to call when destroying the
+ *                      thread-local storage data.
+ */
+void whist_set_thread_local_storage(WhistThreadLocalStorageKey key, void* data,
+                                    WhistThreadLocalStorageDestructor destructor);
+
+/**
+ * Retrieve data from a thread-local storage entry.
+ *
+ * @param key  The thread-local storage key from which to retrieve data.
+ *
+ * @return  The data stored in the thread-local storage entry.
+ */
+void* whist_get_thread_local_storage(WhistThreadLocalStorageKey key);
 
 /**
  * Sleep for at least a given number of milliseconds.

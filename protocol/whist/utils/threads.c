@@ -85,6 +85,23 @@ void whist_set_thread_priority(WhistThreadPriority priority) {
     }
 }
 
+WhistThreadLocalStorageKey whist_create_thread_local_storage(void) {
+    WhistThreadLocalStorageKey key = SDL_TLSCreate();
+    if (key == 0) {
+        LOG_FATAL("Failure creating thread local storage: %s", SDL_GetError());
+    }
+    return key;
+}
+
+void whist_set_thread_local_storage(WhistThreadLocalStorageKey key, void *data,
+                                    WhistThreadLocalStorageDestructor destructor) {
+    if (SDL_TLSSet(key, data, destructor) < 0) {
+        LOG_FATAL("Failure setting thread local storage: %s", SDL_GetError());
+    }
+}
+
+void *whist_get_thread_local_storage(WhistThreadLocalStorageKey key) { return SDL_TLSGet(key); }
+
 void whist_sleep(uint32_t ms) { SDL_Delay(ms); }
 
 void whist_usleep(uint32_t us) {
