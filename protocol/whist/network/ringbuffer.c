@@ -629,9 +629,16 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
     // Failed is a frame that's so far behind that we think we probably won't get it
     int greatest_failed_id = -1;
 
+    int max_unsynced_frames = MAX_UNSYNCED_FRAMES;
+
+    // If the frame is completely received, double the threshold as there is a chance to catchup.
+    if (is_ready_to_render(ring_buffer, currently_pending_id)) {
+        max_unsynced_frames *= 2;
+    }
+
     // If our rendering is more than MAX_UNSYNCED_FRAMES behind,
     // request an I-Frame
-    if (ring_buffer->max_id - currently_pending_id >= MAX_UNSYNCED_FRAMES) {
+    if (ring_buffer->max_id - currently_pending_id >= max_unsynced_frames) {
         greatest_failed_id = max(greatest_failed_id, currently_pending_id);
     }
 
@@ -652,6 +659,11 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
                 (time_to_transmit + (1.0 + ESTIMATED_JITTER_LATENCY_RATIO) * latency) *
                 MS_IN_SECOND;
             acceptable_staleness_ms = max(acceptable_staleness_ms, MIN_ACCEPTABLE_STALENESS_MS);
+            // If the frame is completely received, double the threshold(subject to the absolute
+            // max) as there is a chance to catchup.
+            if (is_ready_to_render(ring_buffer, currently_pending_id)) {
+                acceptable_staleness_ms *= 2;
+            }
             acceptable_staleness_ms = min(acceptable_staleness_ms, MAX_ACCEPTABLE_STALENESS_MS);
 
             if (frame_staleness * MS_IN_SECOND > acceptable_staleness_ms) {
@@ -672,12 +684,17 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
 
             // If a newer frame has failed, log it
             if (greatest_failed_id > ring_buffer->last_stream_reset_request_id) {
+                FrameData* failed_ctx = get_frame_at_id(ring_buffer, greatest_failed_id);
+                if (failed_ctx->id != greatest_failed_id) {
+                    failed_ctx = NULL;
+                }
                 LOG_INFO(
-                    "The most recent ID %d is %d frames ahead of currently pending %d. "
-                    "A stream reset is now being requested to catch-up, ID's <= %d are considered "
-                    "lost.",
+                    "The most recent ID %d is %d frames ahead of currently pending %d (%d/%d "
+                    "packets received). A stream reset is now being requested to catch-up, ID's <= "
+                    "%d are considered lost.",
                     ring_buffer->max_id, ring_buffer->max_id - currently_pending_id,
-                    currently_pending_id, greatest_failed_id);
+                    currently_pending_id, failed_ctx ? failed_ctx->original_packets_received : -1,
+                    failed_ctx ? failed_ctx->num_original_packets : -1, greatest_failed_id);
 
                 FrameData* ctx = get_frame_at_id(ring_buffer, currently_pending_id);
                 if (ctx->id == currently_pending_id) {
