@@ -871,21 +871,33 @@ TEST_F(ProtocolTest, BadDecrypt) {
 // Based on chunk size, the number of steps it takes to transfer the large image file
 constexpr int transfer_steps_large_image() { return LARGE_IMAGE_SIZE / CHUNK_SIZE + 1; }
 
-// Returns true if passed in file paths hold the same contents, false otherwise
-bool files_are_equal(const char* file_name, const char* file_name_other) {
-    FILE* f1 = fopen(file_name, "r");
-    FILE* f2 = fopen(file_name_other, "r");
+// Returns true if passed in file paths both exist and hold the same
+// contents, false otherwise.
+static bool files_are_equal(const char* file_name, const char* file_name_other) {
+    FILE* f1 = fopen(file_name, "rb");
+    if (f1 == NULL) {
+        return false;
+    }
 
-    char c1, c2;
+    FILE* f2 = fopen(file_name_other, "rb");
+    if (f2 == NULL) {
+        fclose(f1);
+        return false;
+    }
+
+    int c1, c2;
 
     // Loop through byte by byte and check equality
     do {
         c1 = fgetc(f1);
         c2 = fgetc(f2);
         if (c1 != c2) {
-            return false;
+            break;
         }
     } while (c1 != EOF && c2 != EOF);
+
+    fclose(f1);
+    fclose(f2);
 
     return c1 == EOF && c2 == EOF;
 }
