@@ -252,7 +252,9 @@ def configure_aws_credentials(
 
     for command, prompt in configuration_commands:
         pexpect_process.sendline(command)
-        # Passing running_in_ci=True if the prompt is not the pexpect_prompt, because only the pexpect_prompt can be printed twice by the process due to the encoding of colors (see wait_until_cmd_done docs)
+        # Passing running_in_ci=True if the prompt is not the pexpect_prompt,
+        # because only the pexpect_prompt can be printed twice by the process
+        # due to the encoding of colors (see wait_until_cmd_done docs)
         running_in_ci_setting = (prompt != pexpect_prompt) or running_in_ci
         wait_until_cmd_done(pexpect_process, prompt, running_in_ci=running_in_ci_setting)
 
