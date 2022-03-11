@@ -54,7 +54,7 @@ func (host *AWSHost) MakeTags(c context.Context, input *ec2.CreateTagsInput) (*e
 }
 
 // SpinDownInstances is responsible for launching `numInstances` number of instances with the received imageID.
-func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances int32, imageID string) ([]subscriptions.Instance, error) {
+func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTimeReady time.Duration, imageID string) ([]subscriptions.Instance, error) {
 	ctx, cancel := context.WithCancel(scalingCtx)
 	defer cancel()
 
@@ -114,7 +114,20 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 	}
 
 	// Create slice with instances to write to database
-	var outputInstances []subscriptions.Instance
+	var (
+		outputInstances   []subscriptions.Instance
+		outputInstanceIDs []string
+	)
+
+	// Get IDs of all created instances
+	for _, outputInstance := range result.Instances {
+		outputInstanceIDs = append(outputInstanceIDs, aws.ToString(outputInstance.InstanceId))
+	}
+
+	err = host.WaitForInstanceReady(scalingCtx, maxWaitTimeReady, outputInstanceIDs)
+	if err != nil {
+		return nil, utils.MakeError("failed to wait for new instances to be ready. Err: %v", err)
+	}
 
 	for _, outputInstance := range result.Instances {
 		var (
