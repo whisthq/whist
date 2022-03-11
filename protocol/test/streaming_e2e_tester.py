@@ -243,6 +243,10 @@ if __name__ == "__main__":
     server_instance_id = create_or_start_aws_instance(
         boto3client, region_name, use_existing_server_instance, ssh_key_name, running_in_ci
     )
+    if server_instance_id == "":
+        print("Creating new instance for the server failed!")
+        sys.exit(-1)
+
     client_instance_id = (
         create_or_start_aws_instance(
             boto3client, region_name, use_existing_client_instance, ssh_key_name, running_in_ci
@@ -250,6 +254,9 @@ if __name__ == "__main__":
         if use_two_instances
         else server_instance_id
     )
+    if client_instance_id == "":
+        print("Creating/starting new instance for the client failed!")
+        sys.exit(-1)
 
     leave_instances_on = args.leave_instances_on
 

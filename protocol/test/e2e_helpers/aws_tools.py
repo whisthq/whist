@@ -42,8 +42,11 @@ def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
             },
         ],
     )
+
     if len(response) < 1:
+        print(f"Error, could not get instance AMI for region {region_name}")
         return ""
+
     # Sort the Images in reverse order of creation
     images_list = sorted(response["Images"], key=itemgetter("CreationDate"), reverse=True)
     # Get the AMI of the most recent Image
@@ -107,7 +110,14 @@ def create_ec2_instance(
     }
 
     # Create the EC2 instance
-    resp = boto3client.run_instances(**kwargs)
+    try:
+        resp = boto3client.run_instances(**kwargs)
+    except botocore.exceptions.ClientError as e:
+        print(
+            f"Caught Boto3 client exception. Could not create EC2 instance with AMI '{instance_AMI}'"
+        )
+        return ""
+
     instance_id = resp["Instances"][0]["InstanceId"]
     print(
         f"Created EC2 instance with id: {instance_id}, type={instance_type}, ami={instance_AMI}, key_name={key_name}, disk_size={disk_size}"
@@ -142,6 +152,7 @@ def start_instance(boto3client: botocore.client, instance_id: str, max_retries: 
                 time.sleep(60)
                 continue
             else:
+                print(f"Could not start instance after {max_retries} retries. Giving up now.")
                 return False
         break
     return True
@@ -254,8 +265,6 @@ def create_or_start_aws_instance(
 
     # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
     instance_AMI = get_current_AMI(boto3client, region_name)
-    if instance_AMI == "":
-        print(f"Error, could not get instance AMI for region {region_name}")
     instance_type = "g4dn.xlarge"  # The type of instance we want to create
 
     print(f"Creating AWS EC2 instance of size: {instance_type} and with AMI: {instance_AMI}...")
@@ -270,6 +279,10 @@ def create_or_start_aws_instance(
         disk_size=64,
         running_in_ci=running_in_ci,
     )
+    if instance_id == "":
+        print("Creating instance failed, so we don't wait for it to start")
+        return ""
+
     # Give a little time for the instance to be recognized in AWS
     time.sleep(5)
 
