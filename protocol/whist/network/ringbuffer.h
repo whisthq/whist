@@ -20,7 +20,7 @@ Includes
 */
 
 #include <whist/core/whist.h>
-#include <whist/utils/fec.h>
+#include <whist/fec/fec.h>
 #include <whist/network/network_algorithm.h>
 #include "whist/utils/linked_list.h"
 
