@@ -264,27 +264,24 @@ if __name__ == "__main__":
     # by a successive Github action in case this script crashes before being able to terminate them itself.
     instances_to_be_terminated = []
     instances_to_be_stopped = []
+
     if server_instance_id != use_existing_server_instance:
         instances_to_be_terminated.append(server_instance_id)
         # Turning off skipping git clone and host setup if we created a new instance
         skip_git_clone = "false"
         skip_host_setup = "false"
-        # If we didn't intend to get a new instance, then turn off option to leave instance off
-        if use_existing_server_instance != "":
-            leave_instances_on = "false"
     else:
         instances_to_be_stopped.append(server_instance_id)
+
     if client_instance_id != server_instance_id:
         if client_instance_id != use_existing_client_instance:
             instances_to_be_terminated.append(client_instance_id)
             # Turning off skipping git clone and host setup if we created a new instance
             skip_git_clone = "false"
             skip_host_setup = "false"
-            # If we didn't intend to get a new instance, then turn off option to leave instance off
-            if use_existing_client_instance != "":
-                leave_instances_on = "false"
         else:
             instances_to_be_stopped.append(client_instance_id)
+
     instances_file = open("instances_to_clean.txt", "a+")
     for i in instances_to_be_terminated:
         instances_file.write(f"terminate {region_name} {i}\n")
@@ -317,7 +314,7 @@ if __name__ == "__main__":
     pexpect_prompt_client = (
         f"{username}@ip-{client_private_ip}" if use_two_instances else pexpect_prompt_server
     )
-    aws_timeout_seconds = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
+    aws_timeout_seconds = 1800  # 20 mins is not enough to build the browsers/chrome mandelbox, so we'll go ahead with 30 mins to be safe
 
     experiment_metadata = {
         "start_time": experiment_start_time + " local time"

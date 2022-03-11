@@ -60,7 +60,7 @@ def attempt_ssh_connection(
     sys.exit(-1)
 
 
-def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, new_timeout=None):
+def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=False):
     """
     Wait until the currently-running command on a remote machine finishes its execution on the shell monitored to by a pexpect process.
 
@@ -74,20 +74,21 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, new_time
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process on the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a new command
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
-        new_timeout (int): If a value is passed to new_timeout, we will use it to reset the pexpect process's timeout
+        watched_stdout_pattern (str): A string that we are looking for in the output of the command sent to the pexpect process
 
     Returns:
-        None
+        On Success:
+            If return_output is True:
+                stdout_list (list): the stdout output of the command, with one entry for each line of the original output.
+            Otherwise:
+                None
+        On Failure:
+            None because the function will exit with error.
+
     """
-    # Execute the command and apply the desired timeout if the new_timeout parameter is set.
-    result = 0
-    if new_timeout:
-        print(f"Resetting pexpect timeout to {new_timeout}...")
-        result = pexpect_process.expect(
-            [pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF], timeout=new_timeout
-        )
-    else:
-        result = pexpect_process.expect([pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF])
+    result = pexpect_process.expect([pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF])
+
+    watched_stdout_pattern_found = False
 
     # Handle timeout and error cases
     if result == 1:
@@ -99,9 +100,19 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, new_time
         )
         sys.exit(-1)
 
+    # Check for watched stdout pattern
+    pexpect_output = None
+    if return_output:
+        pexpect_output = [
+            line.replace("\r", "").replace("\n", "")
+            for line in pexpect_process.before.decode("utf-8").strip().split("\n")
+        ]
+
     # On a SSH connection, the prompt is printed two times on Mac (because of some obscure reason related to encoding and/or color printing on terminal)
     if not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
+
+    return pexpect_output
 
 
 def reboot_instance(
@@ -165,7 +176,7 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
 
-def configure_aws_credentials(
+def install_and_configure_aws(
     pexpect_process,
     pexpect_prompt,
     aws_timeout_seconds,
@@ -182,11 +193,10 @@ def configure_aws_credentials(
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
         aws_credentials_filepath(str): The path to the file where AWS stores the credentials on the machine where this script is run
     Returns:
-        On success:
-            0
-        On failure:
-            -1 on fatal error, -2 on error that will likely be gone if we retry
+        None
     """
+
+    # Step 1: Obtain AWS credentials
 
     aws_access_key_id = ""
     aws_secret_access_key = ""
@@ -196,13 +206,12 @@ def configure_aws_credentials(
         # In CI, the aws credentials are stored in the following env variables
         aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
         aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-
     else:
         # Extract AWS credentials from aws configuration file on disk
         aws_credentials_filepath_expanded = os.path.expanduser(aws_credentials_filepath)
         if not os.path.isfile(aws_credentials_filepath_expanded):
             print(f"Could not find local AWS credential file at path {aws_credentials_filepath}!")
-            return -1
+            sys.exit(-1)
         aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
         for line in aws_credentials_file.readlines():
             if "aws_access_key_id" in line:
@@ -219,20 +228,29 @@ def configure_aws_credentials(
         or len(aws_secret_access_key) == 0
     ):
         print(f"Could not obtain the AWS credentials!")
-        return -1
+        sys.exit(-1)
+
+    # Step 2: Install the AWS CLI if it's not already there
 
     pexpect_process.sendline("sudo apt-get -y update")
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     # Check if the AWS CLI is installed, and install it if not.
-    pexpect_process.sendline("which aws")
+    pexpect_process.sendline("aws -v")
+    stdout = wait_until_cmd_done(
+        pexpect_process,
+        pexpect_prompt,
+        running_in_ci,
+        return_output=True,
+    )
+    aws_not_installed = False
+    for line in stdout:
+        if "Command 'aws' not found, but can be installed with:" in line:
+            aws_not_installed = True
+            break
 
-    try:
-        pexpect_process.expect(r"/usr(.*?)aws", timeout=5)
-        print("AWS-CLI is already installed")
-    except pexpect.exceptions.TIMEOUT:
+    if aws_not_installed:
         # Download and install AWS CLI manually to avoid frequent apt install outages
-        print("Installing AWS-CLI manually")
         # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
         install_commands = [
             # Download AWS installer
@@ -249,33 +267,20 @@ def configure_aws_credentials(
 
         for command in install_commands:
             pexpect_process.sendline(command)
-            # We need to restore the timeout, which we changed to 5s above
-            wait_until_cmd_done(
-                pexpect_process, pexpect_prompt, running_in_ci, new_timeout=aws_timeout_seconds
-            )
-
+            wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         print("AWS-CLI installed manually")
+    else:
+        print("AWS-CLI is already installed")
 
-    # Configure AWS using the list below of tuples of the form:
-    # (<command>, <stdout pattern to wait for before proceeding to the next command>)
-    configuration_commands = [
-        ("aws configure", "AWS Access Key ID"),
-        (aws_access_key_id, "AWS Secret Access Key"),
-        (aws_secret_access_key, "Default region name"),
-        ("", "Default output format"),
-        ("", pexpect_prompt),
-    ]
-
-    for command, prompt in configuration_commands:
-        pexpect_process.sendline(command)
-        # Passing running_in_ci=True if the prompt is not the pexpect_prompt,
-        # because only the pexpect_prompt can be printed twice by the process
-        # due to the encoding of colors (see wait_until_cmd_done docs)
-        running_in_ci_setting = (prompt != pexpect_prompt) or running_in_ci
-        wait_until_cmd_done(pexpect_process, prompt, running_in_ci=running_in_ci_setting)
+    # Step 3: Set the AWS credentials
+    access_key_cmd = f"aws configure set aws_access_key_id {aws_access_key_id}"
+    pexpect_process.sendline(access_key_cmd)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    secret_access_key_cmd = f"aws configure set aws_secret_access_key {aws_secret_access_key}"
+    pexpect_process.sendline(secret_access_key_cmd)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     print("AWS configuration is now complete!")
-    return 0
 
 
 def clone_whist_repository_on_instance(
