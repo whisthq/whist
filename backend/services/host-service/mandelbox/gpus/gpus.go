@@ -7,6 +7,7 @@ import (
 	"math"
 	"sync"
 
+	"github.com/whisthq/whist/backend/services/constants"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -27,12 +28,6 @@ func init() {
 // Index is essentially a handle to a GPU on the system. It is the index of a
 // particular GPU in the output of `nvidia-smi`.
 type Index int
-
-// MaxMandelboxesPerGPU represents the maximum of mandelboxes we can assign to
-// each GPU and still maintain acceptable performance. Note that we are
-// assuming that all GPUs on a mandelbox are uniform (and that we are using
-// only one instance type).
-const MaxMandelboxesPerGPU = 3
 
 // gpuMetadata is a slice of GPU structs to keep track of usage and assigned mandelboxes
 var gpuMetadata []GPU
@@ -57,7 +52,7 @@ func Allocate(mandelboxID types.MandelboxID) (Index, error) {
 	var minVal uint8 = math.MaxUint8
 	for i, v := range gpuMetadata {
 		// Just skip full GPUs.
-		if v.usage >= MaxMandelboxesPerGPU {
+		if v.usage >= constants.MaxMandelboxesPerGPU {
 			continue
 		}
 		if v.usage < minVal {
