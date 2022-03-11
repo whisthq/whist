@@ -381,7 +381,9 @@ def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
     # Check if we are running out of space
     pexpect_process.sendline("df -h | grep --color=never /dev/root")
     # Since we are grabbing the output, running_in_ci must always be set to True in this case.
-    space_used_output = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
+    space_used_output = wait_until_cmd_done(
+        pexpect_process, pexpect_prompt, running_in_ci=True, return_output=True
+    )
     print(space_used_output)
     for line in reversed(space_used_output):
         if "/dev/root" in line:
