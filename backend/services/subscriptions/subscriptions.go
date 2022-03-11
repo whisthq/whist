@@ -104,7 +104,10 @@ func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClie
 func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 	scalingSubscriptions := []HasuraSubscription{
 		{
-			Query:   QueryClientAppVersionChange,
+			Query: QueryInstancesByStatus,
+			Variables: map[string]interface{}{
+				"status": graphql.String("DRAINING"),
+			},
 			Result:  InstanceEvent{[]Instance{}},
 			Handler: InstancesStatusHandler,
 		},

@@ -341,10 +341,6 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
 	}
 
-	if len(imageResult) == 0 {
-		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImageID)
-	}
-
 	// create instance buffer with new image
 	logger.Infof("Creating new instance buffer for image %v", newImageID)
 	bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, DEFAULT_INSTANCE_BUFFER, maxWaitTimeReady, newImageID)
@@ -392,15 +388,34 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// Protect the new instance buffer from scale down. This is done to avoid any downtimes
 	// during deploy, as the active image will be switched until the client app has updated
 	// its version on the config database.
+	protectedFromScaleDown = make(map[string]subscriptions.Image)
 	protectedFromScaleDown[newImageID] = newImage
+
+	// If the region does not have an existing image, insert the new one to the database.
+	if len(imageResult) == 0 {
+		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImageID)
+
+		updateParams := subscriptions.Image{
+			Provider:  "AWS",
+			Region:    event.Region,
+			ImageID:   newImageID,
+			ClientSHA: metadata.GetGitCommit(),
+			UpdatedAt: time.Now(),
+		}
+
+		_, err = s.DBClient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{updateParams})
+		if err != nil {
+			return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
+		}
+	}
 
 	return nil
 }
 
-// SwapoverImages is a scaling action that will switch the current image on the given region.
+// SwapOverImages is a scaling action that will switch the current image on the given region.
 // To the latest one. This is done separately to avoid having downtimes during deploys, since
 // we have to wait until the client has updated its version on the config database.
-func (s *DefaultScalingAlgorithm) SwapoverImages(scalingCtx context.Context, event ScalingEvent, clientVersion interface{}) error {
+func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, event ScalingEvent, clientVersion interface{}) error {
 	logger.Infof("Starting upgrade image swapover action for event: %v", event)
 	defer logger.Infof("Finished upgrade image swapover action for event: %v", event)
 
@@ -422,6 +437,8 @@ func (s *DefaultScalingAlgorithm) SwapoverImages(scalingCtx context.Context, eve
 		commitHash = version.StagingCommitHash
 	case string(metadata.EnvProd):
 		commitHash = version.ProdCommitHash
+	default:
+		commitHash = version.DevCommitHash
 	}
 
 	// Find protected image that matches the config db commit hash

@@ -132,7 +132,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 					// Create context for scaling operation
 					scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
-					err := s.SwapoverImages(scalingCtx, versionEvent, version)
+					err := s.SwapOverImages(scalingCtx, versionEvent, version)
 
 					// Cancel context once the operation is done
 					scalingCancel()

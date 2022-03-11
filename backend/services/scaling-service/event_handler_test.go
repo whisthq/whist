@@ -102,7 +102,7 @@ func TestStartDatabaseSubscriptions(t *testing.T) {
 	gotSubscription := mockClient.GetSubscriptions()[0]
 	ok := reflect.DeepEqual(gotSubscription.Query, testScalingSubscriptions[0].Query)
 	if !ok {
-		t.Errorf("Scaling service subscriptions query not set correctly. Got %v, want %v", gotSubscription.Query, testScalingSubscriptions[0].Query)
+		t.Errorf("Scaling service subscriptions query not set correctly. Got %T, want %T", gotSubscription.Query, testScalingSubscriptions[0].Query)
 	}
 	ok = reflect.DeepEqual(gotSubscription.Variables, testScalingSubscriptions[0].Variables)
 	if !ok {
