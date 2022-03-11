@@ -262,7 +262,7 @@ The build target for client is "WhistClient" and the server is "WhistServer".
 
 #### MacOS CLI
 
-You can simply run `cmake .` from the root folder, `/protocol/`, which will generate the makefiles. You can then run `make WhistClient` from the root folder, or cd into `/client` and run `make` to compile the MacOS client. The client will be in `/protocol/client/build64`.
+You can simply run `cmake -S . -B build` from the root folder, `protocol`, which will generate the makefiles in the `build` directory. You can then run `make WhistClient` from the `build` folder, or cd into `build/client` and run `make` to compile the MacOS client. The client will be in `protocol/build/client/build64`.
 
 #### Linux CLI
 
