@@ -53,7 +53,7 @@ type WhistImages []struct {
 	UpdatedAt time.Time      `graphql:"updated_at"`
 }
 
-// WhistClientAppVersions is the mapping of the `deskto_app_version` table on the config database.
+// WhistClientAppVersions is the mapping of the `desktop_app_version` table on the config database.
 // This type interacts directly with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal.
 // Only use for GraphQL operations. For operations that do not interact with the client, use the
 // `ClientAppVersion` type instead.
