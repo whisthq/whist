@@ -12,7 +12,7 @@ Includes
 
 #include "whist.h"  // header file for this protocol, includes winsock
 #include <whist/logging/logging.h>
-#include <whist/utils/fec.h>
+#include <whist/FEC/fec.h>
 #include <whist/utils/atomic.h>
 
 #include <ctype.h>

@@ -6,7 +6,7 @@ Includes
 
 #include "ringbuffer.h"
 #include <assert.h>
-#include <whist/utils/fec.h>
+#include <whist/FEC/fec.h>
 #include <whist/tools/protocol_analyzer.h>
 #include <whist/tools/debug_console.h>
 

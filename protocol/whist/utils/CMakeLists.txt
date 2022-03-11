@@ -12,8 +12,6 @@ add_library(whistUtils STATIC
         rwlock.c
         color.c
         threads.c
-        fec.c
-        rs.c
         os_utils.c
         linked_list.c
         queue.c

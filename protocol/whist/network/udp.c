@@ -11,7 +11,7 @@ Includes
 
 #include "udp.h"
 #include <whist/utils/aes.h>
-#include <whist/utils/fec.h>
+#include <whist/FEC/fec.h>
 #include <whist/utils/queue.h>
 #include <whist/network/network_algorithm.h>
 #include <whist/network/ringbuffer.h>

@@ -49,7 +49,7 @@ extern "C" {
 #include <whist/utils/png.h>
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/utils/atomic.h>
-#include <whist/utils/fec.h>
+#include <whist/FEC/fec.h>
 #include <whist/utils/linked_list.h>
 #include <whist/utils/queue.h>
 #include <whist/utils/command_line.h>
