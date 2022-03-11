@@ -28,8 +28,10 @@ jobs:
     name: "Protocol Streaming End-to-End Test"
     runs-on: ubuntu-20.04
     env:
-      CLIENT_INSTANCE_ID: "i-061d322780ae41d19"
-      SERVER_INSTANCE_ID: "i-0ceaa243ec8cfc667"
+      #CLIENT_INSTANCE_ID: "i-061d322780ae41d19"
+      #SERVER_INSTANCE_ID: "i-0ceaa243ec8cfc667"
+      CLIENT_INSTANCE_ID: ""
+      SERVER_INSTANCE_ID: ""
 
     steps:
       - name: Checkout Git Repository
