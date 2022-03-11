@@ -109,7 +109,12 @@ jobs:
           npm config set safebrowsing_api_endpoint=https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_GOOGLE_API_KEY }}
 
           # TODO: Configure update server
+          # TODO: Add support for `staging` update server
           npm config set updater_dev_endpoint=https://
+
+          npm config set updater_prod_endpoint=https://
+
+
           npm config set updater_prod_endpoint=https://
           npm config set brave_stats_updater_url=https://
 
