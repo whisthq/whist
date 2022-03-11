@@ -3,8 +3,17 @@
 import os, sys
 from e2e_helpers.aws_tools import terminate_or_stop_aws_instance
 
-# Before exiting, the streaming_e2e_tester.py script stops/terminates all EC2 instances (unless the `--leave-instances-on` flag is set to 'true') used in the E2E test. The script terminates all newly-created instances, and stops all pre-existing instances that were re-used. However, if streaming_e2e_tester.py crashes, it will likely do so before completing the cleanup.
-# To handle this scenario, we make the E2E script log a TODO-list of all cleanup actions that are required. The list is saved to a file called `instances_to_clean.txt` and located in the current working directory. Upon successful completion of the cleanup, the E2E will delete the file. If the E2E crashes, the file will still exist after the E2E has exited, and this script will follow the TODO-list and complete the cleanup.
+# Before exiting, the streaming_e2e_tester.py script stops/terminates all EC2 instances
+# (unless the `--leave-instances-on` flag is set to 'true') used in the E2E test.
+# The script terminates all newly-created instances, and stops all pre-existing instances that were re-used.
+
+# However, if streaming_e2e_tester.py crashes, it will likely do so before completing the cleanup.
+# To handle this scenario, we make the E2E script log a TODO-list of all cleanup actions that are
+# required. The list is saved to a file called `instances_to_clean.txt` and located in the current
+# working directory. Upon successful completion of the cleanup, the E2E will delete the file.
+
+# If the E2E crashes, the file will still exist after the E2E has exited, and this script
+# will follow the TODO-list and complete the cleanup.
 
 if __name__ == "__main__":
 

@@ -43,26 +43,6 @@ def create_github_gist_post(github_gist_token, title, files_list):
     return gist.html_url
 
 
-def create_slack_post(slack_webhook, title, gist_url):
-    """
-    Create a Slack post with the link to the newly-created Gist with the E2E results.
-    The post is made in the channel pointed to by the Slack webhook
-    Args:
-        slack_webhook (str): The Slack token/url to use for posting
-        title (str): The title to give to the Slack post
-        gist_url (str): The contents of the Gist (the table(s) in markdown format)
-    Returns:
-        None
-    """
-    if slack_webhook:
-        slack_post(
-            slack_webhook,
-            body=f"New E2E dev benchmark results available! Check them out here: {gist_url}\n",
-            slack_username="Whist Bot",
-            title=title,
-        )
-
-
 def associate_branch_to_open_pr(branch_name):
     """
     Check if there is an open PR associated with the specified branch. If so, return the PR number

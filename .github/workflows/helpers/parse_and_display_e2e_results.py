@@ -312,10 +312,16 @@ if __name__ == "__main__":
 
     gist_url = create_github_gist_post(github_gist_token, title, files_list)
 
-    # Post updates to Slack channel if we are on dev
-    if current_branch_name == "dev":
+    # Post updates to Slack channel if we are on branch `dev` and a slack webhook is set
+    if slack_webhook and current_branch_name == "dev":
         slack_catchy_title = f":rocket::face_with_cowboy_hat::bar_chart: {title} :rocket::face_with_cowboy_hat::bar_chart:"
-        create_slack_post(slack_webhook, slack_catchy_title, gist_url)
+        slack_post(
+            slack_webhook,
+            body=f"New E2E dev benchmark results available! Check them out here: {gist_url}\n",
+            slack_username="Whist Bot",
+            title=slack_catchy_title,
+        )
+
     # Otherwise post on Github if the branch is tied to a open PR
     else:
         pr_number = associate_branch_to_open_pr(current_branch_name)
