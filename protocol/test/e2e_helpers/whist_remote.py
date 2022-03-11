@@ -10,7 +10,7 @@ from dev_instance_tools import (
     reboot_instance,
     wait_until_cmd_done,
     attempt_ssh_connection,
-    configure_aws_credentials,
+    install_and_configure_aws,
     apply_dpkg_locking_fixup,
     clone_whist_repository_on_instance,
 )
@@ -109,11 +109,11 @@ def run_server_on_instance(pexpect_process):
     """
     command = "cd ~/whist/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
     pexpect_process.sendline(command)
-    pexpect_process.expect(":/#")
-    server_mandelbox_output = pexpect_process.before.decode("utf-8").strip().split("\n")
-    server_docker_id = (
-        server_mandelbox_output[-2].replace("\n", "").replace("\r", "").replace(" ", "")
+    # Need to wait for special mandelbox prompt ":/#". running_in_ci must always be set to True in this case.
+    server_mandelbox_output = wait_until_cmd_done(
+        pexpect_process, ":/#", running_in_ci=True, return_output=True
     )
+    server_docker_id = server_mandelbox_output[-2].replace(" ", "")
     print(f"Whist Server started on EC2 instance, on Docker container {server_docker_id}!")
 
     # Retrieve connection configs from server
@@ -220,11 +220,13 @@ def setup_network_conditions_client(
         # Get network interface names (excluding loopback)
         command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
         pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        # Since we are grabbing the output, running_in_ci must always be set to True in this case.
+        ifconfig_output = wait_until_cmd_done(
+            pexpect_process, pexpect_prompt, running_in_ci=True, return_output=True
+        )
 
-        ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
         ifconfig_output = [
-            x.replace("\r", "").replace(":", "")
+            x.replace(":", "")
             for x in ifconfig_output
             if "docker" not in x
             and "veth" not in x
@@ -356,10 +358,12 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{json.dumps(json_data)}'"
     pexpect_process.sendline(command)
     pexpect_process.expect(":/#")
-    client_mandelbox_output = pexpect_process.before.decode("utf-8").strip().split("\n")
-    client_docker_id = (
-        client_mandelbox_output[-2].replace("\n", "").replace("\r", "").replace(" ", "")
+
+    # Need to wait for special mandelbox prompt ":/#". running_in_ci must always be set to True in this case.
+    client_mandelbox_output = wait_until_cmd_done(
+        pexpect_process, ":/#", running_in_ci=True, return_output=True
     )
+    client_docker_id = client_mandelbox_output[-2].replace(" ", "")
     print(f"Whist dev client started on EC2 instance, on Docker container {client_docker_id}!")
 
     if simulate_scrolling:
@@ -376,12 +380,12 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
 def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
     # Check if we are running out of space
     pexpect_process.sendline("df -h | grep --color=never /dev/root")
-    # We need to pass running_in_ci=True no matter what because we need to read the stdout
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci=True)
-    space_used_output = pexpect_process.before.decode("utf-8").strip().split("\n")
+    # Since we are grabbing the output, running_in_ci must always be set to True in this case.
+    space_used_output = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
+    print(space_used_output)
     for line in reversed(space_used_output):
         if "/dev/root" in line:
-            space_used_output = line.replace("\n", "").replace("\r", "").split()
+            space_used_output = line.split()
             break
     space_used_pctg = int(space_used_output[-2][:-1])
 
@@ -435,7 +439,7 @@ def server_setup_process(args_dict):
         hs_process.expect(pexpect_prompt_server)
 
     print("Configuring AWS credentials on server instance...")
-    configure_aws_credentials(
+    install_and_configure_aws(
         hs_process,
         pexpect_prompt_server,
         aws_timeout_seconds,
@@ -546,7 +550,7 @@ def client_setup_process(args_dict):
         restore_network_conditions_client(hs_process, pexpect_prompt_client, running_in_ci)
 
         print("Configuring AWS credentials on client instance...")
-        configure_aws_credentials(
+        install_and_configure_aws(
             hs_process,
             pexpect_prompt_client,
             aws_timeout_seconds,

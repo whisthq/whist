@@ -32,7 +32,6 @@ from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
 
 from protocol.e2e_streaming_test_display_helpers.remote_tools import (
     create_github_gist_post,
-    create_slack_post,
     associate_branch_to_open_pr,
 )
 
