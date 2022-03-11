@@ -107,8 +107,6 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
             line.replace("\r", "").replace("\n", "")
             for line in pexpect_process.before.decode("utf-8").strip().split("\n")
         ]
-        print("pexpect_output: ")
-        print(pexpect_output)
 
     # On a SSH connection, the prompt is printed two times on Mac (because of some obscure reason related to encoding and/or color printing on terminal)
     if not running_in_ci:
@@ -275,11 +273,10 @@ def install_and_configure_aws(
         print("AWS-CLI is already installed")
 
     # Step 3: Set the AWS credentials
-
-    access_key_cmd = f"aws configure set {aws_access_key_id} default_access_key"
+    access_key_cmd = f"aws configure set aws_access_key_id {aws_access_key_id}"
     pexpect_process.sendline(access_key_cmd)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-    secret_access_key_cmd = f"aws configure set {aws_secret_access_key} default_secret_key"
+    secret_access_key_cmd = f"aws configure set aws_secret_access_key {aws_secret_access_key}"
     pexpect_process.sendline(secret_access_key_cmd)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 

@@ -384,7 +384,7 @@ def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
     space_used_output = wait_until_cmd_done(
         pexpect_process, pexpect_prompt, running_in_ci=True, return_output=True
     )
-    print(space_used_output)
+
     for line in reversed(space_used_output):
         if "/dev/root" in line:
             space_used_output = line.split()
