@@ -94,6 +94,10 @@ func GetHasuraURL() (string, error) {
 	return app.WebURL + "v1/graphql", nil
 }
 
+func GetUseConfigDatabase() bool {
+	return useConfigDatabase
+}
+
 func UseConfigDatabase(s bool) {
 	useConfigDatabase = s
 }

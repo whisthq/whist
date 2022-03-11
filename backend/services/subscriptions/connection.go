@@ -9,11 +9,17 @@ import (
 // Whist database connection strings
 
 const localHasuraURL = "http://localhost:8080/v1/graphql"
+const localHasuraConfigURL = "http://localhost:8082/v1/graphql"
 
 // getWhistHasuraParams obtains and returns the heroku parameters
 // from the metadata package that are necessary to initialize the client.
 func getWhistHasuraParams() (HasuraParams, error) {
-	if metadata.IsLocalEnv() {
+	if metadata.IsLocalEnv() && heroku.GetUseConfigDatabase() {
+		return HasuraParams{
+			URL:       localHasuraConfigURL,
+			AccessKey: "hasura",
+		}, nil
+	} else if metadata.IsLocalEnv() {
 		return HasuraParams{
 			URL:       localHasuraURL,
 			AccessKey: "hasura",
