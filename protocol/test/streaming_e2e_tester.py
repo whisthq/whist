@@ -310,7 +310,7 @@ if __name__ == "__main__":
     pexpect_prompt_client = (
         f"{username}@ip-{client_private_ip}" if use_two_instances else pexpect_prompt_server
     )
-    aws_timeout_seconds_seconds = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
+    aws_timeout_seconds = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
 
     experiment_metadata = {
         "start_time": experiment_start_time + " local time"
