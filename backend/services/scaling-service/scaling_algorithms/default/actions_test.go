@@ -196,7 +196,7 @@ func TestVerifyInstanceScaleDown(t *testing.T) {
 	}
 
 	// Check that an instance was scaled up after the test instance was removed
-	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
+	expectedInstances := subscriptions.WhistInstances{
 		{
 			ID:                "test-scale-up-instance",
 			Provider:          "AWS",
@@ -205,9 +205,10 @@ func TestVerifyInstanceScaleDown(t *testing.T) {
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
-	})
+	}
+	ok := reflect.DeepEqual(testInstances, expectedInstances)
 	if !ok {
-		t.Errorf("Failed to verify instance scale down. There were no instances scaled up after terminating test instance.")
+		t.Errorf("Failed to verify instance scale down. Expected %v, got %v", expectedInstances, testInstances)
 	}
 }
 
@@ -236,7 +237,7 @@ func TestVerifyCapacity(t *testing.T) {
 	}
 
 	// Check that an instance was scaled up
-	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
+	expectedInstances := subscriptions.WhistInstances{
 		{
 			ID:                "test-scale-up-instance",
 			Provider:          "AWS",
@@ -245,9 +246,10 @@ func TestVerifyCapacity(t *testing.T) {
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
-	})
+	}
+	ok := reflect.DeepEqual(testInstances, expectedInstances)
 	if !ok {
-		t.Errorf("Failed to verify instance scale down. There were no instances scaled up.")
+		t.Errorf("Failed to verify instance scale down. Expected %v, got %v", expectedInstances, testInstances)
 	}
 }
 
@@ -303,7 +305,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 	}
 
 	// Check that free instances were scaled down
-	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
+	expectedInstances := subscriptions.WhistInstances{
 		{
 			ID:                "test-scale-down-instance-1",
 			Provider:          "AWS",
@@ -328,9 +330,10 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
-	})
+	}
+	ok := reflect.DeepEqual(testInstances, expectedInstances)
 	if !ok {
-		t.Errorf("Instances were not scaled down correctly.")
+		t.Errorf("Instances were not scaled down correctly. Expected %v, got %v", expectedInstances, testInstances)
 	}
 }
 
@@ -360,7 +363,7 @@ func TestScaleUpIfNecessary(t *testing.T) {
 	}
 
 	// Check that an instance was scaled up after the test instance was removed
-	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
+	expectedInstances := subscriptions.WhistInstances{
 		{
 			ID:                "test-scale-up-instance",
 			Provider:          "AWS",
@@ -385,9 +388,10 @@ func TestScaleUpIfNecessary(t *testing.T) {
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
-	})
+	}
+	ok := reflect.DeepEqual(testInstances, expectedInstances)
 	if !ok {
-		t.Errorf("Did not scale up instances correctly while testing scale up action.")
+		t.Errorf("Did not scale up instances correctly while testing scale up action. Expected %v, got %v", expectedInstances, testInstances)
 	}
 }
 
@@ -427,7 +431,7 @@ func TestUpgradeImage(t *testing.T) {
 	}
 
 	// Check that an instance was scaled up after the test instance was removed
-	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
+	expectedInstances := subscriptions.WhistInstances{
 		{
 			ID:                "test-image-upgrade-instance",
 			Provider:          "AWS",
@@ -444,8 +448,9 @@ func TestUpgradeImage(t *testing.T) {
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
-	})
+	}
+	ok := reflect.DeepEqual(testInstances, expectedInstances)
 	if !ok {
-		t.Errorf("Did not scale up instances correctly while testing scale up action.")
+		t.Errorf("Did not scale up instances correctly while testing scale up action. Expected %v, got %v", expectedInstances, testInstances)
 	}
 }
