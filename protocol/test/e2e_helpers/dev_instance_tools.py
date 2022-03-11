@@ -222,7 +222,7 @@ def configure_aws_credentials(
             # Download AWS installer
             "curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip",
             # Download the unzip program
-            "sudo apt install -y unzip",
+            "sudo apt-get install -y unzip",
             # Unzip the AWS installer
             "unzip -o awscliv2.zip",
             # Remove the zip file

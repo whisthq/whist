@@ -113,7 +113,10 @@ jobs:
       - name: Upload logs to S3 for debugging purposes
         if: always()
         working-directory: protocol/test
-        run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"${{ env.BRANCH_NAME }}" --recursive
+        run: |
+          aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"${{ env.BRANCH_NAME }}" --recursive
+          echo "Download S3 logs with the following commands:"
+          for dir in perf_logs/*/; do echo "aws s3 cp s3://whist-e2e-protocol-test-logs/${{ env.BRANCH_NAME }}/$dir $dir --recursive"; done
 
       - name: Stop or terminate leftover AWS instances
         if: always()
