@@ -185,10 +185,8 @@ void init_file_synchronizer(FileTransferType requested_actions) {
 }
 
 #ifdef _WIN32
-#define sep '\\'
 #define HOME_ENV_VAR "HOMEPATH"
 #else
-#define sep '/'
 #define HOME_ENV_VAR "HOME"
 #endif  // _WIN32
 void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
@@ -234,7 +232,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
             const char* downloads = "Downloads";
             char* download_file_dir = (char*)malloc(strlen(home_dir) + 1 + strlen(downloads) + 1);
             snprintf(download_file_dir, strlen(home_dir) + 1 + strlen(downloads) + 1, "%s%c%s",
-                     home_dir, sep, downloads);
+                     home_dir, PATH_SEPARATOR, downloads);
             file_dir = download_file_dir;
             break;
         }
@@ -251,13 +249,13 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     // Set transferring file filepath
     const size_t file_path_len = strlen(file_dir) + 1 + strlen(active_file->filename) + 1;
     active_file->file_path = (char*)safe_malloc(file_path_len + 1);
-    snprintf(active_file->file_path, file_path_len + 1, "%s%c%s", file_dir, sep,
+    snprintf(active_file->file_path, file_path_len + 1, "%s%c%s", file_dir, PATH_SEPARATOR,
              active_file->filename);
 
     active_file->transfer_type = file_metadata->transfer_type;
     active_file->event_info = file_metadata->event_info;
 
-    active_file->file_handle = fopen(active_file->file_path, "w");
+    active_file->file_handle = fopen(active_file->file_path, "wb");
     active_file->direction = FILE_WRITE_END;
 
     // Start the XDND drop process on the server as soon as the file exists
@@ -426,7 +424,7 @@ void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
     // Open read file and reset if open failed
     LOG_INFO("Opening global file id %d for reading", active_file->global_file_id);
 
-    active_file->file_handle = fopen(active_file->file_path, "r");
+    active_file->file_handle = fopen(active_file->file_path, "rb");
     if (active_file->file_handle == NULL) {
         LOG_ERROR("Could not open global file id %d for reading", active_file->global_file_id);
         // If file cannot be opened, then just abort the file transfer
@@ -440,7 +438,7 @@ void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
     //     We could use `basename`, but it sadly is not cross-platform.
     char* temp_file_name = active_file->file_path;
     for (char* c = active_file->file_path; *c; ++c) {
-        if (*c == sep) temp_file_name = c + 1;
+        if (*c == PATH_SEPARATOR) temp_file_name = c + 1;
     }
     size_t filename_len = strlen(temp_file_name);
 

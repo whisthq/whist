@@ -239,6 +239,22 @@ Constants
 #define NORETURN __attribute__((noreturn))
 #endif
 
+#ifdef _WIN32
+#define PATH_SEPARATOR '\\'
+#define PATH_JOIN(left, right) left "\\" right
+#else
+/**
+ * Character used to separate directory components in paths.
+ */
+#define PATH_SEPARATOR '/'
+/**
+ * Join two constant strings representing file path components.
+ *
+ * Adds the platform-specific path separator.
+ */
+#define PATH_JOIN(left, right) left "/" right
+#endif
+
 /*
 ============================
 Custom Types

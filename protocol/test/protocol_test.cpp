@@ -107,7 +107,7 @@ TEST_F(ProtocolTest, InitSDL) {
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
-    char icon_filepath[] = "assets/icon_dev.png";
+    char icon_filepath[] = PATH_JOIN("assets", "icon_dev.png");
 
     int width = 500;
     int height = 375;
@@ -871,21 +871,33 @@ TEST_F(ProtocolTest, BadDecrypt) {
 // Based on chunk size, the number of steps it takes to transfer the large image file
 constexpr int transfer_steps_large_image() { return LARGE_IMAGE_SIZE / CHUNK_SIZE + 1; }
 
-// Returns true if passed in file paths hold the same contents, false otherwise
-bool files_are_equal(const char* file_name, const char* file_name_other) {
-    FILE* f1 = fopen(file_name, "r");
-    FILE* f2 = fopen(file_name_other, "r");
+// Returns true if passed in file paths both exist and hold the same
+// contents, false otherwise.
+static bool files_are_equal(const char* file_name, const char* file_name_other) {
+    FILE* f1 = fopen(file_name, "rb");
+    if (f1 == NULL) {
+        return false;
+    }
 
-    char c1, c2;
+    FILE* f2 = fopen(file_name_other, "rb");
+    if (f2 == NULL) {
+        fclose(f1);
+        return false;
+    }
+
+    int c1, c2;
 
     // Loop through byte by byte and check equality
     do {
         c1 = fgetc(f1);
         c2 = fgetc(f2);
         if (c1 != c2) {
-            return false;
+            break;
         }
     } while (c1 != EOF && c2 != EOF);
+
+    fclose(f1);
+    fclose(f2);
 
     return c1 == EOF && c2 == EOF;
 }
@@ -902,7 +914,7 @@ TEST_F(ProtocolTest, FileSynchronizerTestSingleTransfer) {
     EXPECT_EQ(linked_list_size(transferring_files_list), 0);
 
     // Read in a file to begin transfer - this is called when a transfer is initiated.
-    const char* read_file_name = "assets/large_image.png";
+    const char* read_file_name = PATH_JOIN("assets", "large_image.png");
     file_synchronizer_set_file_reading_basic_metadata(read_file_name, FILE_TRANSFER_DEFAULT, NULL);
     EXPECT_EQ(linked_list_size(transferring_files_list), 1);
 
@@ -946,7 +958,7 @@ TEST_F(ProtocolTest, FileSynchronizerTestSingleTransfer) {
     EXPECT_EQ(linked_list_size(transferring_files_list), 0);
 
     // Since the FILE_TRANSFER_DEFAULT flag is set - the file is written to the current directory
-    const char* write_file_name = "./large_image.png";
+    const char* write_file_name = PATH_JOIN(".", "large_image.png");
 
     // Verify that both files are equal
     EXPECT_TRUE(files_are_equal(read_file_name, write_file_name));
@@ -964,9 +976,16 @@ TEST_F(ProtocolTest, FileSynchronizerTestSingleTransfer) {
 TEST_F(ProtocolTest, FileSynchronizerMultipleFileTransfer) {
     // Since FILE_TRANSFER_DEFAULT is on, writes are saved to '.'
     const int num_files = 3;
-    const char* read_files[] = {"assets/large_image.png", "assets/image.png",
-                                "assets/100-frames-h264.mp4"};
-    const char* write_files[] = {"./large_image.png", "./image.png", "./100-frames-h264.mp4"};
+    const char* read_files[] = {
+        PATH_JOIN("assets", "large_image.png"),
+        PATH_JOIN("assets", "image.png"),
+        PATH_JOIN("assets", "100-frames-h264.mp4"),
+    };
+    const char* write_files[] = {
+        PATH_JOIN(".", "large_image.png"),
+        PATH_JOIN(".", "image.png"),
+        PATH_JOIN(".", "100-frames-h264.mp4"),
+    };
 
     init_file_synchronizer(FILE_TRANSFER_DEFAULT);
 
@@ -1036,7 +1055,7 @@ TEST_F(ProtocolTest, FileSynchronizerResetAll) {
     FileMetadata* file_metadata;
 
     // Begin reading file
-    file_synchronizer_set_file_reading_basic_metadata("assets/large_image.png",
+    file_synchronizer_set_file_reading_basic_metadata(PATH_JOIN("assets", "large_image.png"),
                                                       FILE_TRANSFER_DEFAULT, NULL);
     TransferringFile* active_file = (TransferringFile*)linked_list_head(transferring_files_list);
     file_synchronizer_open_file_for_reading(active_file, &file_metadata);
@@ -1069,7 +1088,7 @@ TEST_F(ProtocolTest, FileSynchronizerResetAll) {
 // different interpolation, etc.).
 TEST_F(ProtocolTest, PngToBmpToPng) {
     // Read in PNG
-    std::ifstream png_image("assets/image.png", std::ios::binary);
+    std::ifstream png_image(PATH_JOIN("assets", "image.png"), std::ios::binary);
 
     // copies all data into buffer
     std::vector<unsigned char> png_vec(std::istreambuf_iterator<char>(png_image), {});
@@ -1105,7 +1124,7 @@ TEST_F(ProtocolTest, PngToBmpToPng) {
 // `ffmpeg -i input-image.{ext} output.bmp` will generate such a BMP.
 TEST_F(ProtocolTest, BmpToPngToBmp) {
     // Read in PNG
-    std::ifstream bmp_image("assets/image.bmp", std::ios::binary);
+    std::ifstream bmp_image(PATH_JOIN("assets", "image.bmp"), std::ios::binary);
 
     // copies all data into buffer
     std::vector<unsigned char> bmp_vec(std::istreambuf_iterator<char>(bmp_image), {});
