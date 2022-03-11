@@ -63,7 +63,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "rs.h"
+#include "lugi_rs.h"
 
 typedef unsigned long u_long; // NOLINT
 /*
