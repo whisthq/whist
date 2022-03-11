@@ -127,7 +127,7 @@ int connect_to_server(bool with_stun) {
     while (tcp_packet == NULL && get_timer(&timer) < TCP_CONNECTION_WAIT) {
         socket_update(&packet_tcp_context);
         tcp_packet = get_packet(&packet_tcp_context, PACKET_MESSAGE);
-        SDL_Delay(5);
+        whist_sleep(5);
     }
 
     // If no tcp packet was found, just return -1
@@ -198,10 +198,10 @@ int send_server_quit_messages(int num_messages) {
     wcmsg.type = CMESSAGE_QUIT;
     int retval = 0;
     for (; num_messages > 0; num_messages--) {
-        SDL_Delay(50);
         if (send_wcmsg(&wcmsg) != 0) {
             retval = -1;
         }
+        whist_sleep(50);
     }
     return retval;
 }
