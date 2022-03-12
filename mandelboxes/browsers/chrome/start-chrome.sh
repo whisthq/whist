@@ -44,7 +44,7 @@ flags=(
 
 if [[ $DARK_MODE == true ]]; then
   features="$features,WebUIDarkMode"
-  flags+=(--force-dark-mode)
+  flags+=("--force-dark-mode")
 fi
 
 if [[ $RESTORE_LAST_SESSION == true ]]; then
