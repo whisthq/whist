@@ -264,7 +264,7 @@ def install_and_configure_aws(
 
         # apt-get fails from time to time
         error_msg = "E: Package 'awscli' has no installation candidate"
-        apt_get_failed = any(error_msg in item for item in stdout if isinstance(item, str))
+        apt_get_awscli_failed = any(error_msg in item for item in stdout if isinstance(item, str))
 
         if apt_get_awscli_failed:
             print(
