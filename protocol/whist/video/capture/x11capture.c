@@ -25,6 +25,7 @@ Includes
 #include <string.h>
 #include <sys/shm.h>
 #include <X11/Xutil.h>
+#include <X11/Xatom.h>
 
 /*
 ============================
@@ -34,6 +35,7 @@ Private Functions
 int handler(Display* d, XErrorEvent* a);
 char* get_window_name(Display* d, Window w);
 void log_tree(X11CaptureDevice* device, Window w);
+Window get_active_window(X11CaptureDevice* device);
 
 /*
 ============================
@@ -72,7 +74,6 @@ char* get_window_name(Display* d, Window w) {
         return "";
     }
 }
-        
 
 void log_tree(X11CaptureDevice* device, Window w) {
     Window curr = w;
@@ -82,11 +83,44 @@ void log_tree(X11CaptureDevice* device, Window w) {
     unsigned int nchildren;
 
     XQueryTree(device->display, curr, &root, &parent, &children, &nchildren);
-    LOG_INFO("Current window %s has %d children", get_window_name(device->display, curr), nchildren);
+    LOG_INFO("Current window %s has %d children", get_window_name(device->display, curr),
+             nchildren);
     if (nchildren != 0) {
         for (unsigned int i = 0; i < nchildren; i++) {
             LOG_INFO("Child %d name is %s", i, get_window_name(device->display, children[i]));
             log_tree(device, children[i]);
+        }
+    }
+}
+
+Window get_active_window(X11CaptureDevice* device) {
+    static bool atom_set = false;
+    static Atom net_active_window;
+    if (!atom_set) {
+        net_active_window = XInternAtom(device->display, "_NET_ACTIVE_WINDOW", False);
+        atom_set = true;
+    }
+    static Atom actual_type;
+    static int actual_format;
+    static unsigned long nitems, bytes_after;
+    static char* result;
+    if (XGetWindowProperty(device->display, device->root, net_active_window, 0, LONG_MAX / 4, False,
+                           AnyPropertyType, &actual_type, &actual_format, &nitems, &bytes_after,
+                           (unsigned char**)&result) == Success &&
+        *(unsigned long*)result != 0) {
+        Window active_window = (Window) * (unsigned long*)result;
+        // XFree(result);
+        return active_window;
+    } else {
+        // revert to XGetInputFocus
+        Window focus;
+        int revert;
+        XGetInputFocus(device->display, &focus, &revert);
+        if (focus != PointerRoot) {
+            return focus;
+        } else {
+            LOG_INFO("No active window found, setting root as active");
+            return device->root;
         }
     }
 }
@@ -119,25 +153,21 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
         LOG_ERROR("ERROR: create_x11_capture_device display did not open");
         return NULL;
     }
-    // get the focused window
-    Window root = DefaultRootWindow(device->display);
-    Window focus;
-    int revert;
-    XGetInputFocus(device->display, &focus, &revert);
-    if (focus != PointerRoot) {
-        XWindowAttributes attr;
-        XGetWindowAttributes(device->display, focus, &attr);
-        LOG_INFO("Focus width/height: %d %d", attr.width, attr.height);
-        device->root = focus;
-    } else {
-        device->root = root;
-    }
-    log_tree(device, device->root);
+    // get the root window
+    device->root = DefaultRootWindow(device->display);
+    // get the active window
+    device->active = get_active_window(device);
+    // logging for the active window
+    XWindowAttributes attr;
+    XGetWindowAttributes(device->display, device->active, &attr);
+    LOG_INFO("Active window width/height: %d %d", attr.width, attr.height);
+    log_tree(device, device->active);
+    // set remaining device parameters
     device->width = width;
     device->height = height;
     int damage_event, damage_error;
     XDamageQueryExtension(device->display, &damage_event, &damage_error);
-    device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
+    device->damage = XDamageCreate(device->display, device->active, XDamageReportRawRectangles);
     device->event = damage_event;
 
     if (!reconfigure_x11_capture_device(device, width, height, dpi)) {
@@ -156,7 +186,7 @@ bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, ui
     device->width = width;
     device->height = height;
     XWindowAttributes window_attributes;
-    if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
+    if (!XGetWindowAttributes(device->display, device->active, &window_attributes)) {
         LOG_ERROR("Error while getting window attributes");
         return false;
     }
@@ -223,21 +253,19 @@ int x11_capture_screen(X11CaptureDevice* device) {
 
     // check if the focused window has changed; if so, change damage
     static bool first = true;
-    static Window curr_focus;
+    static Window curr_active;
     if (first) {
-        curr_focus = device->root;
+        curr_active = device->active;
         first = false;
     }
-    Window focus;
-    int revert;
-    XGetInputFocus(device->display, &focus, &revert);
-    if (focus != curr_focus && focus != PointerRoot) {
+    Window active_window = get_active_window(device);
+    if (active_window != curr_active) {
         LOG_INFO("Focused window changed");
-        log_tree(device, focus);
+        log_tree(device, active_window);
         XWindowAttributes attr;
-        XGetWindowAttributes(device->display, focus, &attr);
-        LOG_INFO("Focus width/height: %d %d", attr.width, attr.height);
-        curr_focus = focus;
+        XGetWindowAttributes(device->display, active_window, &attr);
+        LOG_INFO("Active width/height: %d %d", attr.width, attr.height);
+        curr_active = active_window;
         /*
         device->root = focus;
         device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
@@ -264,16 +292,17 @@ int x11_capture_screen(X11CaptureDevice* device) {
         XDamageSubtract(device->display, device->damage, None, None);
 
         XWindowAttributes window_attributes;
-        if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
+        if (!XGetWindowAttributes(device->display, device->active, &window_attributes)) {
             LOG_ERROR("Couldn't get window width and height!");
             accumulated_frames = -1;
         } else if (device->width != window_attributes.width ||
                    device->height != window_attributes.height) {
-            LOG_ERROR("Wrong width/height! Expected %d %d but got %d %d", device->width, device->height, window_attributes.width, window_attributes.height);
+            LOG_ERROR("Wrong width/height! Expected %d %d but got %d %d", device->width,
+                      device->height, window_attributes.width, window_attributes.height);
             accumulated_frames = -1;
         } else {
             XErrorHandler prev_handler = XSetErrorHandler(handler);
-            if (!XShmGetImage(device->display, device->root, device->image, 0, 0, AllPlanes)) {
+            if (!XShmGetImage(device->display, device->active, device->image, 0, 0, AllPlanes)) {
                 LOG_ERROR("Error while capturing the screen");
                 accumulated_frames = -1;
             } else {

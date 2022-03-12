@@ -43,6 +43,7 @@ typedef struct X11CaptureDevice {
     XImage* image;
     XShmSegmentInfo segment;
     Window root;
+    Window active;
     int counter;
     int width;
     int height;
