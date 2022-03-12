@@ -254,7 +254,6 @@ void render_audio(AudioContext* audio_context) {
                     LOG_WARNING("Could not play audio!");
                 }
             }
-            }
         }
 
         // No longer rendering audio

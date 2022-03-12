@@ -1,19 +1,16 @@
 #ifndef WHIST_CLIENT_FRONTEND_H
 #define WHIST_CLIENT_FRONTEND_H
 
-typedef enum WhistFrontendType {
-    WHIST_FRONTEND_SDL,
-    WHIST_FRONTEND_EXTERNAL,
-} WhistFrontendType;
+typedef struct WhistFrontendFunctionTable WhistFrontendFunctionTable;
 
 typedef struct WhistFrontend {
     void* context;
-    int (*open_audio)(WhistFrontend* frontend, WhistAudioFormat* format);
-    int (*queue_audio)(WhistFrontend* frontend, uint8_t* audio_data, size_t audio_data_size);
+    WhistFrontendFunctionTable;
 } WhistFrontend;
 
 // Lifecycle
-WhistFrontend* whist_frontend_create(WhistFrontendType type);
+WhistFrontend* whist_frontend_create_sdl(WhistFrontendType type):
+WhistFrontend* whist_Frontend_create_external(WhistFrontendType type);
 int whist_frontend_destroy(WhistFrontend* frontend);
 
 // Audio
@@ -24,18 +21,41 @@ size_t whist_frontend_get_audio_buffer_size(WhistFrontend* frontend);
 int whist_frontend_close_audio(WhistFrontend* frontend);
 
 // Display
-int whist_frontend_get_window_virtual_size(WhistFrontend* frontend, int* width, int* height);
-int whist_frontend_get_window_pixel_size(WhistFrontend* frontend, int* width, int* height);
+struct {
+    struct {
+        unsigned int width;
+        unsigned int height;
+    } virtual_size;
+    struct {
+        unsigned int width;
+        unsigned int height;
+    } pixel_size;
+    struct {
+        int x;
+        int y;
+    } position;
+    bool fullscreen;
+    bool minimized;
+    bool visible;
+    int display_id;
+} FrontendWindowInfo;
+
+typedef struct FrontendDisplayInfo {
+    struct {
+        unsigned int width;
+        unsigned int height;
+    } display_size;
+    unsigned int display_dpi;
+    int display_id;
+} FrontendDisplayInfo;
+
+int whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info);
+int whist_get_display_info(int display_id, FrontendDisplayInfo* display_info);
 bool whist_frontend_window_changed_display(WhistFrontend* frontend);
-int whist_frontend_get_display_dpi(WhistFrontend* frontend, int* dpi);
-int whist_frontend_get_display_size(WhistFrontend* frontend, int* width, int* height);
-int whist_frontend_get_window_position(WhistFrontend* frontend, int* x, int* y);
-int whist_frontend_toggle_screensaver(WhistFrontend* frontend, bool enabled);
+int whist_frontend_set_screensaver_enabled(WhistFrontend* frontend, bool enabled);
 int whist_frontend_resize_window(WhistFrontend* frontend, int width, int height);
-bool whist_frontend_is_window_visible(WhistFrontend* frontend);
-bool whist_frontend_is_window_minimized(WhistFrontend* frontend);
-bool whist_frontend_toggle_window_minimized(WhistFrontend* frontend);
-int whist_frontend_toggle_window_fullscreen(WhistFrontend* frontend, bool enabled);
+int whist_frontend_set_window_minimized(WhistFrontend* frontend, bool minimized);
+int whist_frontend_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen);
 int whist_frontend_set_window_accent_color(WhistFrontend* frontend, WhistRGBColor color);
 
 // Title
