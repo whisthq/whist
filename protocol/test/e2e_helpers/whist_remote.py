@@ -293,26 +293,20 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
     # Cannot use wait_until_cmd_done because we need to handle clase where ifconfig is not installed
     pexpect_process.sendline(command)
-    result = pexpect_process.expect(
-        [pexpect_prompt, "sudo: ifconfig: command not found", pexpect.exceptions.TIMEOUT]
+
+    # Since we are grabbing the output, running_in_ci must always be set to True in this case.
+    ifconfig_output = wait_until_cmd_done(
+        pexpect_process, pexpect_prompt, running_in_ci=True, return_output=True
     )
-    if result == 1:
-        # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know that no network degradations have been applied to the machine.
-        if not running_in_ci:
-            pexpect_process.expect(pexpect_prompt)
-        # If ifconfig is not installed, it means that we could not have applied network degradation conditions before, so we are done.
-        print("ifconfig is not installed, so we don't need to restore normal network conditions.")
-        return
-    elif result == 2:
-        # Catch timeouts manually here, instead of letting wait_until_cmd_done take care of it, because we cannot use wait_until_cmd_done (it is unsafe to use when we are looking to parse a command's stdout and we might be running this script in CI)
-        print("Error, testing script hanged! Check the logs for troubleshooting.")
-        sys.exit(-1)
+    # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know that no network degradations have been applied to the machine.
+    for line in ifconfig_output:
+        if "sudo: ifconfig: command not found" in line:
+            print(
+                "ifconfig is not installed on the client instance, so we don't need to restore normal network conditions."
+            )
+            return
 
-    ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
-
-    if not running_in_ci:
-        pexpect_process.expect(pexpect_prompt)
-
+    # If ifconfig is installed, restore default network conditions (the code below is idempotent, so we don't need to check whether network degradations exist)
     ifconfig_output = [
         x.replace("\r", "").replace(":", "")
         for x in ifconfig_output
