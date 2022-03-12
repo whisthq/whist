@@ -367,6 +367,15 @@ if __name__ == "__main__":
         p2.start()
         p2.join()
 
+    # Check if the server or client setup failed. If so, eit.
+    if (
+        "server_setup_failed" in args_dict
+        and args_dict["server_setup_failed"]
+        or "client_setup_failed" in args_dict
+        and args_dict["client_setup_failed"]
+    ):
+        sys.exit(-1)
+
     server_log = open(os.path.join(perf_logs_folder_name, "server_monitoring.log"), "a")
     client_log = open(os.path.join(perf_logs_folder_name, "client_monitoring.log"), "a")
     server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"

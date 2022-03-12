@@ -299,12 +299,16 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
         pexpect_process, pexpect_prompt, running_in_ci=True, return_output=True
     )
     # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know that no network degradations have been applied to the machine.
-    for line in ifconfig_output:
-        if "sudo: ifconfig: command not found" in line:
-            print(
-                "ifconfig is not installed on the client instance, so we don't need to restore normal network conditions."
-            )
-            return
+
+    error_msg = "sudo: ifconfig: command not found"
+    ifconfig_not_installed = any(
+        error_msg in item for item in ifconfig_output if isinstance(item, str)
+    )
+    if ifconfig_not_installed:
+        print(
+            "ifconfig is not installed on the client instance, so we don't need to restore normal network conditions."
+        )
+        return
 
     # If ifconfig is installed, restore default network conditions (the code below is idempotent, so we don't need to check whether network degradations exist)
     ifconfig_output = [
@@ -351,7 +355,6 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     print("Running the dev client mandelbox, and connecting to the server!")
     command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{json.dumps(json_data)}'"
     pexpect_process.sendline(command)
-    pexpect_process.expect(":/#")
 
     # Need to wait for special mandelbox prompt ":/#". running_in_ci must always be set to True in this case.
     client_mandelbox_output = wait_until_cmd_done(
@@ -366,7 +369,7 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
         print("Simulating the mouse scroll events in the client")
         command = "python3 /usr/share/whist/mouse_events.py"
         pexpect_process.sendline(command)
-        pexpect_process.expect(":/#")
+        wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
 
     return client_docker_id
 
@@ -435,13 +438,17 @@ def server_setup_process(args_dict):
         hs_process.expect(pexpect_prompt_server)
 
     print("Configuring AWS credentials on server instance...")
-    install_and_configure_aws(
+    result = install_and_configure_aws(
         hs_process,
         pexpect_prompt_server,
         aws_timeout_seconds,
         running_in_ci,
         aws_credentials_filepath,
     )
+
+    if not result:
+        args_dict["server_setup_failed"] = True
+        sys.exit(-1)
 
     prune_containers_if_needed(hs_process, pexpect_prompt_server, running_in_ci)
 
@@ -546,13 +553,16 @@ def client_setup_process(args_dict):
         restore_network_conditions_client(hs_process, pexpect_prompt_client, running_in_ci)
 
         print("Configuring AWS credentials on client instance...")
-        install_and_configure_aws(
+        result = install_and_configure_aws(
             hs_process,
             pexpect_prompt_client,
             aws_timeout_seconds,
             running_in_ci,
             aws_credentials_filepath,
         )
+        if not result:
+            args_dict["client_setup_failed"] = True
+            sys.exit(-1)
 
         prune_containers_if_needed(hs_process, pexpect_prompt_client, running_in_ci)
 
@@ -634,17 +644,26 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp, timeout_val
 
     """
 
-    pexpect_process.sendline("sleep 1")
-    pexpect_process.expect(":/#")
+    # pexpect_process.sendline("sleep 1")
+    # pexpect_process.expect(":/#")
     pexpect_process.sendline("pkill chrome")
-    pexpect_process.expect(":/#")
-    pexpect_process.sendline("tail -f /var/log/whist/protocol-out.log")
+    wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
+    # pexpect_process.expect(":/#")
+    pexpect_process.sendline("tail /var/log/whist/protocol-out.log")
 
-    try:
-        pexpect_process.expect(exit_confirm_exp, timeout=timeout_value)
-        server_has_exited = True
-    except pexpect.exceptions.TIMEOUT:
-        server_has_exited = False
+    server_mandelbox_output = wait_until_cmd_done(
+        pexpect_process, ":/#", running_in_ci=True, return_output=True
+    )
+
+    server_has_exited = any(
+        exit_confirm_exp in item for item in server_mandelbox_output if isinstance(item, str)
+    )
+
+    # try:
+    #     pexpect_process.expect(exit_confirm_exp, timeout=timeout_value)
+    #     server_has_exited = True
+    # except pexpect.exceptions.TIMEOUT:
+    #     server_has_exited = False
 
     # Kill tail process
     pexpect_process.sendcontrol("c")
