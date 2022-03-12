@@ -190,8 +190,10 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
     //    and each argument/value pair on its own line
     while (keep_reading && *keep_waiting && keep_iterating) {
         if (!run_only_once) {
-            SDL_Delay(50);  // to keep the fan from freaking out
-                            // If stdin doesn't have any characters, continue the loop
+            // to keep the fan from freaking out
+            // If stdin doesn't have any characters, continue the loop
+            // TODO: Block/poll with a 50 ms timeout on the stdin fd instead
+            whist_sleep(50);
         } else {
             keep_iterating = false;
         }

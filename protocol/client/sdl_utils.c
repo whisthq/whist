@@ -372,7 +372,7 @@ void sdl_renderer_resize_window(int width, int height) {
     int desired_height = current_height - (current_height % 2);
     static int prev_desired_width = 0;
     static int prev_desired_height = 0;
-    static int tries = 0;  // number of attemps to force window size to be prev_desired_width/height
+    static int tries = 0;  // number of attempts to force window size to be prev_desired_width/height
     if (current_width != desired_width || current_height != desired_height) {
         // Avoid trying to force the window size forever, stop after 4 attempts
         if (!(prev_desired_width == desired_width && prev_desired_height == desired_height &&

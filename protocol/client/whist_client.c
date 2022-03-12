@@ -353,7 +353,7 @@ int whist_client_main(int argc, const char* argv[]) {
         SDL_Event event;
         while (continue_pumping) {
             // If we don't delay, your computer's CPU will freak out
-            SDL_Delay(50);
+            whist_sleep(50);
             if (SDL_PollEvent(&event)) {
                 switch (event.type) {
                     case SDL_QUIT: {
@@ -416,7 +416,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
-            SDL_Delay(1000);
+            whist_sleep(1000);
         }
 
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
