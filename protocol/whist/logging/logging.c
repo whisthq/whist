@@ -645,6 +645,10 @@ static void unix_crash_handler(int sig) {
         struct sigaction sa = {0};
         sa.sa_handler = SIG_DFL;
         sigaction(sig, &sa, NULL);
+
+        // Then we must re-raise the signal to allow the error monitor to
+        // handle it
+        raise(sig);
     } else {
         // If the error monitor isn't initialized, we just exit
         exit(1);
