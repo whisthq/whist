@@ -239,26 +239,21 @@ void render_audio(AudioContext* audio_context) {
             }
 
             // While there are frames to decode...
-            while (true) {
-                // Decode the frame
-                int res = audio_decoder_get_frame(audio_context->audio_decoder);
-                if (res == 0) {
-                    // Buffer to hold the decoded data
-                    static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
-                    // Get the decoded data
-                    audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
+            while (audio_decoder_get_frame(audio_context->audio_decoder) == 0) {
+                // Buffer to hold the decoded data
+                static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+                // Get the decoded data
+                audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
 
-                    // Queue the decoded_data into the audio device
-                    res = SDL_QueueAudio(
-                        audio_context->dev, decoded_data,
-                        audio_decoder_get_frame_data_size(audio_context->audio_decoder));
+                // Queue the decoded_data into the audio device
+                int res = SDL_QueueAudio(
+                    audio_context->dev, decoded_data,
+                    audio_decoder_get_frame_data_size(audio_context->audio_decoder));
 
-                    if (res < 0) {
-                        LOG_WARNING("Could not play audio!");
-                    }
-                } else {
-                    break;
+                if (res < 0) {
+                    LOG_WARNING("Could not play audio!");
                 }
+            }
             }
         }
 
