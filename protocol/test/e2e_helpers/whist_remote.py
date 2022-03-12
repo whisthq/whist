@@ -299,12 +299,16 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
         pexpect_process, pexpect_prompt, running_in_ci=True, return_output=True
     )
     # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know that no network degradations have been applied to the machine.
-    for line in ifconfig_output:
-        if "sudo: ifconfig: command not found" in line:
-            print(
-                "ifconfig is not installed on the client instance, so we don't need to restore normal network conditions."
-            )
-            return
+
+    error_msg = "sudo: ifconfig: command not found"
+    ifconfig_not_installed = any(
+        error_msg in item for item in ifconfig_output if isinstance(item, str)
+    )
+    if ifconfig_not_installed:
+        print(
+            "ifconfig is not installed on the client instance, so we don't need to restore normal network conditions."
+        )
+        return
 
     # If ifconfig is installed, restore default network conditions (the code below is idempotent, so we don't need to check whether network degradations exist)
     ifconfig_output = [

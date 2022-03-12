@@ -243,32 +243,71 @@ def install_and_configure_aws(
         running_in_ci,
         return_output=True,
     )
-    aws_not_installed = False
-    for line in stdout:
-        if "Command 'aws' not found, but can be installed with:" in line:
-            aws_not_installed = True
-            break
+
+    # Check if the message below, indicating that aws is not installed, is present in the output.
+    error_msg = "Command 'aws' not found, but can be installed with:"
+    aws_not_installed = any(error_msg in item for item in stdout if isinstance(item, str))
+
+    # Attempt installation using apt-get
 
     if aws_not_installed:
-        # Download and install AWS CLI manually to avoid frequent apt install outages
-        # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-        install_commands = [
-            # Download AWS installer
-            "curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip",
-            # Download the unzip program
-            "sudo apt-get install -y unzip",
-            # Unzip the AWS installer
-            "unzip -o awscliv2.zip",
-            # Remove the zip file
-            "rm awscliv2.zip",
-            # Install AWS
-            "sudo ./aws/install",
-        ]
+        # Attemp to install using apt-get
+        print("Installing AWS-CLI using apt-get")
 
-        for command in install_commands:
+        pexpect_process.sendline("sudo apt-get install -y awscli")
+        stdout = wait_until_cmd_done(
+            pexpect_process,
+            pexpect_prompt,
+            running_in_ci,
+            return_output=True,
+        )
+
+        # apt-get fails from time to time
+        error_msg = "E: Package 'awscli' has no installation candidate"
+        apt_get_failed = any(error_msg in item for item in stdout if isinstance(item, str))
+
+        if apt_get_awscli_failed:
+            print(
+                "Installing AWS-CLI using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
+            )
+
+            # Attempt to install manually. This also fails from time to time, because we need apt-get to install the `unzip` package
+            # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+            print("Installing AWS-CLI from source")
+
+            # Download the unzip program
+            command = "sudo apt-get install -y unzip"
             pexpect_process.sendline(command)
-            wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-        print("AWS-CLI installed manually")
+            stdout = wait_until_cmd_done(
+                pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+            )
+            error_msg = "E: Package 'unzip' has no installation candidate"
+            apt_get_unzip_failed = any(
+                error_msg in item for item in stdout if isinstance(item, str)
+            )
+
+            if apt_get_unzip_failed:
+                print(
+                    "Installing 'unzip' using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
+                )
+                print("Installing AWS-CLI from source failed")
+                sys.exit(-1)
+
+            install_commands = [
+                # Download AWS installer
+                "curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip",
+                # Unzip the AWS installer
+                "unzip -o awscliv2.zip",
+                # Remove the zip file
+                "rm awscliv2.zip",
+                # Install AWS
+                "sudo ./aws/install",
+            ]
+
+            for command in install_commands:
+                pexpect_process.sendline(command)
+                wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+            print("AWS-CLI installed manually")
     else:
         print("AWS-CLI is already installed")
 
