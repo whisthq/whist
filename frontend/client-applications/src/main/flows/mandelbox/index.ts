@@ -60,6 +60,7 @@ export default flow(
             desired_timezone: t.timezone,
             client_dpi: screen.getPrimaryDisplay()?.scaleFactor * 96,
             restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
+            kiosk_mode: true, // TODO(phil): Make this configurable
             initial_key_repeat: t.initialKeyRepeat,
             key_repeat: t.keyRepeat,
             ...(appEnvironment === WhistEnvironments.LOCAL && {

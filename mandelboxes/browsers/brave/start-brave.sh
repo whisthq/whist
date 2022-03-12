@@ -34,12 +34,12 @@ flags=(
   "--enable-gpu-rasterization"
   "--enable-zero-copy"
   "--double-buffer-compositing"
-  "--disable-smooth-scrolling"
+  "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
   "--disable-font-subpixel-positioning"
   "--force-color-profile=display-p3-d65"
   "--disable-gpu-process-crash-limit"
-  "--disable-notifications" #This is tech debt, remove when notification redirection is implemented
   "--no-default-browser-check"
+  "--load-extension=/opt/teleport/chrome-extension"
 )
 
 if [[ $DARK_MODE == true ]]; then
@@ -57,6 +57,13 @@ flags+=("--flag-switches-end")
 # Pass user agent corresponding to user's OS from JSON-transport
 if [[ -n "$USER_AGENT" ]]; then
   flags+=("--user-agent=$USER_AGENT")
+fi
+
+# Start Brave in Kiosk mode (full-screen). This flag is used when the client is a 
+# local Chromium browser integrating Whist to avoid duplicating the URL bar in the cloud tabs, and should
+# not be set when the client is a fully-streamed browser rendered via SDL.
+if [[ -n "$KIOSK_MODE" ]]; then
+  flags+=("--kiosk")
 fi
 
 # Passing the initial url from json transport as a parameter to the brave-browser command. If the url is not
