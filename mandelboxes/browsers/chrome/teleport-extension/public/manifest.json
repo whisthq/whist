@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "manifest_version": 3,
   "description": "__MSG_extDesc__",
-  "icons": {},
   "background": {
     "service_worker": "js/worker.js"
   },
