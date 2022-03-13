@@ -1,5 +1,23 @@
 #!/bin/bash
 
+
+
+
+RUN wget -qO - https://sentry.io/get-cli/ --no-check-certificate | bash
+ENV SENTRY_DSN https://6765c9aeb9c449a599ca6242829799b8@o400459.ingest.sentry.io/6073955
+
+# # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+case ${APP_ENV} in
+  dev|staging|prod)
+    # SENTRY_DSN is already set at initialization of scaling-service
+    export SENTRY_ENVIRONMENT=${APP_ENV}
+    eval "$(sentry-cli bash-hook)"
+    ;;
+  *)
+    echo "Sentry environment not set, skipping Sentry error handler"
+    ;;
+esac
+
 # Exit on subcommand errors
 set -Eeuo pipefail
 

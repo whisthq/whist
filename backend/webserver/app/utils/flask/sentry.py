@@ -26,5 +26,8 @@ def init_and_ensure_sentry_connection(env: str, sentry_dsn: str) -> None:
         release="webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),  # FIXME no env usage
     )
 
+    # We also export SENTRY_DSN to the environment so that we can use it in the ec2_userdata.sh script
+    os.environ.setdefault('SENTRY_DSN', sentry_dsn)
+
     # If you want to test Sentry, uncomment the following
     # sentry_sdk.capture_message("WEBSERVER SENTRY INITIALIZATION TEST MESSAGE", level="debug")
