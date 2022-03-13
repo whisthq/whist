@@ -207,7 +207,7 @@ echo "Remaining job PIDs: $(jobs -p)"
 # Note: Chromium has many processes, and some of them sometimes go rogue (for example, detaching
 # the devtool window). To ensure we kill everything and avoid hangs, we use the process group ID (PGID)
 # instead of the regular process ID (PID)
-kill -- -$(pgrep $whist_application_pid) ||:  
+kill -- -$(pgrep $whist_application_pid) ||:
 kill $whist_server_pid ||:
 
 # Wait for whist-application to finish terminating, ignoring exit code
