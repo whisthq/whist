@@ -1,10 +1,10 @@
 import React from "react"
 import ReactDOM from "react-dom"
 
-// const show = window.location.search.split("show=")[1]
+import Welcome from "./welcome"
 
 const Root = () => {
-  return <>404 Not Found</>
+  return <Welcome />
 }
 
 ReactDOM.render(<Root />, document.querySelector("#root"))

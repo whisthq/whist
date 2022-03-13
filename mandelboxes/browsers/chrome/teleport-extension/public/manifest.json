@@ -13,7 +13,7 @@
     "downloads.shelf",
     "nativeMessaging",
     "tabs",
-    "webRequest"
+    "webNavigation"
   ],
   "host_permissions": ["*://*/*"],
   "action": {
