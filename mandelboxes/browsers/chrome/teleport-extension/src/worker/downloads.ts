@@ -76,10 +76,12 @@ const tryRestoreTabLocation = async (
 
 // Switch focused tab to match the requested URL
 const createNewTab = async (
+  tabId: number,
   newtabUrl: string
 ) => {
   try {
     await chrome.tabs.create({
+      openerTabId: tabId,
       active: true, // Switch to the new tab
       url: newtabUrl,
     })
@@ -90,7 +92,7 @@ const createNewTab = async (
     ) {
       await new Promise<void>((resolve) =>
         setTimeout(() => {
-          createNewTab(newtabUrl)
+          createNewTab(tabId, newtabUrl)
           resolve()
         }, 50)
       )
@@ -100,21 +102,22 @@ const createNewTab = async (
 
 // Switch currently-active tab to match the requested tab
 const switchActiveTab = async (
+  tabId: number,
   tabToFocusUrl: string,
 ) => {
   try {
-    var found = false;
-    var tabId;
+    var found: boolean = false;
+    var desiredTabId: number = -1;
     // Loop over all tabs to find the one we want to switch to
-    chrome.tabs.query({}, function (tabs) {
+    chrome.tabs.query({}, function (tabs: chrome.tabs.Tab[]) {
       for (var i = 0; i < tabs.length; i++) {
           if (tabs[i].url.search(tabToFocusUrl) > -1) {
               found = true;
-              tabId = tabs[i].id;
+              desiredTabId = tabs[i].id;
           }
       }
       if (found) {
-        chrome.tabs.update(tabId, {active: true});
+        chrome.tabs.update(desiredTabId, {active: true});
       } else {
         throw "Error: Could not find tab to switch to."
       }
@@ -126,7 +129,7 @@ const switchActiveTab = async (
     ) {
       await new Promise<void>((resolve) =>
         setTimeout(() => {
-          switchActiveTab(tabToFocusURL)
+          switchActiveTab(tabId, tabToFocusUrl)
           resolve()
         }, 50)
       )
