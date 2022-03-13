@@ -25,13 +25,15 @@ jobs:
   # This job cross-compiles the Whist Browser to x64 from our NYC office M1 Mac Mini self-hosted runner.
   whist-browser-build-macos:
     name: "Nightly: macOS (${{ matrix.config.arch}})"
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ${{ matrix.config.runner}}
 
     strategy:
       matrix:
         config:
-          - arch: "x64"
+          # - arch: "x64"
+          #   runner: [self-hosted, macOS, X64] # TODO: Need to create this runner on MacStadium
           - arch: "arm64"
+            runner: [self-hosted, macOS, ARM64]
 
     env:
       x64-binary-tar-name: whist-browser-macos-x64.tar.gz
