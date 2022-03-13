@@ -1,6 +1,8 @@
 import React from "react"
 import { NewspaperIcon, PhoneIcon, SupportIcon } from "@heroicons/react/outline"
 
+import URLs from "@app/shared/constants/urls"
+
 const supportLinks = [
   {
     name: "Sales",
@@ -34,7 +36,7 @@ const Emails = () => (
         Our support team is available over email using the links below. For
         faster responses, you may also join our{" "}
         <a
-          href="https://discord.com/invite/HjPpDGvEeA"
+          href={URLs.DISCORD}
           target="_blank"
           className="text-gray-300 hover:text-blue-light"
           rel="noreferrer"

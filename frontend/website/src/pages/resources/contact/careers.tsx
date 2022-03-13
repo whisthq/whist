@@ -1,5 +1,7 @@
 import React from "react"
 
+import URLs from "@app/shared/constants/urls"
+
 const Careers = () => (
   <>
     <div
@@ -33,7 +35,7 @@ const Careers = () => (
               with us!
             </p>
             <a
-              href="https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9"
+              href={URLs.NOTION_CAREERS}
               target="_blank"
               rel="noreferrer"
             >

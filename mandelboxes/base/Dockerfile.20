@@ -198,14 +198,16 @@ COPY --from=build-assets --chmod=550 nvidia-driver/nvidia-driver-installer.run /
 RUN sh nvidia-driver-installer.run -x
 
 # Install the driver to a folder
+# Note: We don't install `--install-compat32-libs` because it's not needed/supported
+# on our Dockerfiles, which run 64-bit kernels.
 RUN mkdir /dist /ignore && \
     cd NVIDIA* && \
     ./nvidia-installer --silent \
     --x-prefix=/dist/usr \
+    --x-module-path=/dist/usr/lib/xorg/modules \
     --opengl-prefix=/dist/usr \
-    --compat32-prefix=/dist/usr \
-    --install-compat32-libs \
     --utility-prefix=/dist/usr \
+    --utility-libdir=dist/usr/lib \
     --documentation-prefix=/ignore \
     --no-nvidia-modprobe \
     --no-rpms \

@@ -35,6 +35,7 @@ int display_notification(WhistNotification notif) {
 
     n.title = [NSString stringWithUTF8String:title];
     n.informativeText = [NSString stringWithUTF8String:msg];
+    n.soundName = NSUserNotificationDefaultSoundName;
 
     [NSUserNotificationCenter.defaultUserNotificationCenter deliverNotification:n];
 
