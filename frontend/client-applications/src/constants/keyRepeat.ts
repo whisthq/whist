@@ -1,13 +1,33 @@
+//
 // Initial key repeat values
-export const INITIAL_KEY_REPEAT_MIN_MAC = 15
-export const INITIAL_KEY_REPEAT_MIN_LINUX = 115
+// These correspond to the amount of time (in milliseconds) that the key is held down before the key repeat starts.
+//
+
+// Obtained experimentally by @philippemnoel
+export const KEY_REPEAT_DELAY_MIN_LINUX = 1 
+export const KEY_REPEAT_DELAY_MAX_LINUX = 2000 // This one is unbounded, but we'll cap it at 2000ms
+
+// Obtained experimentally by @philippemnoel
+export const KEY_REPEAT_DELAY_MIN_MAC = 15
+export const KEY_REPEAT_DELAY_MAX_MAC = 120
+
 // Initial key repeat ranges
-export const INITIAL_KEY_REPEAT_RANGE_MAC = 120 - INITIAL_KEY_REPEAT_MIN_MAC
-export const INITIAL_KEY_REPEAT_RANGE_LINUX =
-  2000 - INITIAL_KEY_REPEAT_MIN_LINUX
+export const KEY_REPEAT_DELAY_RANGE_MAC = KEY_REPEAT_DELAY_MAX_MAC - KEY_REPEAT_DELAY_MIN_MAC
+export const KEY_REPEAT_DELAY_RANGE_LINUX = KEY_REPEAT_DELAY_MAX_LINUX - KEY_REPEAT_DELAY_MIN_LINUX
+
+//
 // Key repeat values
-export const KEY_REPEAT_MIN_MAC = 2.0
-export const KEY_REPEAT_MIN_LINUX = 9.0
+// These correspond to the amount of time (in milliseconds) between key repeats.
+//
+
+// Obtained experimentally by @philippemnoel
+export const KEY_REPEAT_RATE_MIN_LINUX = 1
+export const KEY_REPEAT_RATE_MAX_LINUX = 255 // Note: xset will fail if this is set to higher than 255
+
+// Obtained experimentally by @philippemnoel
+export const KEY_REPEAT_RATE_MIN_MAC = 2
+export const KEY_REPEAT_RATE_MAX_MAC = 120
+
 // Key repeat ranges
-export const KEY_REPEAT_RANGE_MAC = 120 - KEY_REPEAT_MIN_MAC
-export const KEY_REPEAT_RANGE_LINUX = 1000 - KEY_REPEAT_MIN_LINUX
+export const KEY_REPEAT_RATE_RANGE_MAC = KEY_REPEAT_RATE_MAX_MAC - KEY_REPEAT_RATE_MIN_MAC
+export const KEY_REPEAT_RATE_RANGE_LINUX = KEY_REPEAT_RATE_MAX_LINUX - KEY_REPEAT_RATE_MIN_LINUX
