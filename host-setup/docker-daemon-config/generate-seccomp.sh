@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script genreates the seccomp profile for the Docker daemon, with the updates to optimize for Whist.
+
+# Exit on subcommand errors
 set -Eeuo pipefail
 
 # Retrieve source directory of this script

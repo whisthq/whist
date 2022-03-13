@@ -1,7 +1,7 @@
 # Whist uinput device rules.
 # To be placed in "/etc/udev/rules.d".
 
-# Udev assumes the device is a tablet because it only generates abs x/y events,
+# Udev assumes the device is a tablet because it only generates absolute x/y events,
 # but we want the libinput driver to treat it as a mouse so it moves the pointer.
 ACTION=="add|change", SUBSYSTEM=="input", ATTRS{name}=="Whist Virtual Absolute Input", ENV{ID_INPUT_TABLET}="", ENV{ID_INPUT_MOUSE}="1"
 
