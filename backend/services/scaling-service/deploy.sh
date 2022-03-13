@@ -25,7 +25,6 @@ DEPLOY_DIR="$SCALING_SERVICE_DIR/deploy"
 IMAGE_FILE="$DEPLOY_DIR/images.json"
 PROCFILE="$DEPLOY_DIR/Procfile"
 
-
 # Copy the binary to the scaling service deploy directory. This is necessary because we will use as standalone repo.
 mkdir -p "$DEPLOY_DIR" && cp ./backend/services/build/scaling-service "$DEPLOY_DIR"
 
@@ -35,7 +34,7 @@ echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
 # Write Procfile
 echo -e "scaling: ./scaling-service" > "$PROCFILE"
 
-# populate the deploy/ directory
+# Populate the deploy/ directory
 mv "$DEPLOY_DIR" ..
 git switch --orphan deploy-branch
 git clean -dfx # remove any .gitignored files that might remain

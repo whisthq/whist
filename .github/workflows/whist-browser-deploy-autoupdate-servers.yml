@@ -1,0 +1,76 @@
+# workflows/whist-browser-deploy-autoupdate-servers.yml
+#
+# Whist Browser: Deploy Autoupdate Servers
+
+
+
+# Deploy the Chromium component autoupdate servers for the Whist Browser, bundling the Whist monorepo and the Brave Chromium browser for
+# our dev environment, nightly.
+
+name: "Whist Browser: Deploy Autoupdate Servers"
+
+
+
+# We deploy new dependencies on modifications to this file (i.e. building a new version) or
+# manual dispatch on our default repository branch, which is `dev`
+on:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - ".github/workflows/whist-browser-deploy-autoupdate-servers.yml"
+  push:
+    branches:
+      - dev
+    paths:
+      - ".github/workflows/whist-browser-deploy-autoupdate-servers.yml"
+  workflow_dispatch:
+
+
+on:
+  workflow_dispatch:
+  # On dev, we run a nightly build on weekdays (days of the week 1-5) at 00:01 UTC.
+  schedule:
+    - cron: "1 0 * * 1,2,3,4,5"
+  # On staging & prod, we run a build for each promotion (push to branch).
+  push:
+    branches:
+      - prod
+      - staging
+    paths-ignore:
+      - "README.md"
+      - "**/README.md"
+      - ".github/workflows/README.md"
+  workflow_dispatch:
+
+
+
+jobs:
+  # This job cross-compiles the Whist Browser to x64 from our NYC office M1 Mac Mini self-hosted runner.
+  whist-browser-build-macos:
+    name: "Nightly: macOS (${{ matrix.config.arch}})"
+    runs-on: [self-hosted, macOS, ARM64]
+
+    strategy:
+      matrix:
+        config:
+          - arch: "x64"
+          - arch: "arm64"
+
+    env:
+      x64-binary-tar-name: whist-browser-macos-x64.tar.gz
+      x64-s3-bucket-uri: s3://whist-browser-macos-x64
+      arm64-binary-tar-name: whist-browser-macos-arm64.tar.gz
+      arm64-s3-bucket-uri: s3://whist-browser-macos-arm64
+      s3-bucket-region: us-east-1
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+        with:
+          repository: whisthq/brave-browser
+          ref: main
+          fetch-depth: 1 # Only fetch the latest commit, since the history is so large
+          token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+
+
