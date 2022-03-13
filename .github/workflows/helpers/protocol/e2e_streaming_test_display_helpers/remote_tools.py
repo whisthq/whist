@@ -66,7 +66,7 @@ def associate_branch_to_open_pr(branch_name):
     # On success, result contains: ["<PR number>", "<PR name>", "<PR branch name>", "<DRAFT> if this is a draft PR"]
     # On failure, success is a list containing an empty string: ['']
     if len(result) >= 3:
-        pr_number, pr_name, pr_number = result[:3]
+        pr_number, pr_name, pr_branch_name = result[:3]
         if pr_number.isnumeric() and branch_name == pr_branch_name:
             print(
                 f"Found open PR #{pr_number}: '{pr_name}' associated with branch '{branch_name}'!"

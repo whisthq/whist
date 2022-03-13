@@ -637,17 +637,24 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp, timeout_val
 
     """
 
-    pexpect_process.sendline("sleep 1")
-    pexpect_process.expect(":/#")
+    #pexpect_process.sendline("sleep 1")
+    #pexpect_process.expect(":/#")
     pexpect_process.sendline("pkill chrome")
-    pexpect_process.expect(":/#")
+    wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
+    #pexpect_process.expect(":/#")
     pexpect_process.sendline("tail -f /var/log/whist/protocol-out.log")
 
-    try:
-        pexpect_process.expect(exit_confirm_exp, timeout=timeout_value)
-        server_has_exited = True
-    except pexpect.exceptions.TIMEOUT:
-        server_has_exited = False
+    server_mandelbox_output = wait_until_cmd_done(
+        pexpect_process, ":/#", running_in_ci=True, return_output=True
+    )
+    
+    server_has_exited = any(exit_confirm_exp in item for item in server_mandelbox_output if isinstance(item, str))
+
+    # try:
+    #     pexpect_process.expect(exit_confirm_exp, timeout=timeout_value)
+    #     server_has_exited = True
+    # except pexpect.exceptions.TIMEOUT:
+    #     server_has_exited = False
 
     # Kill tail process
     pexpect_process.sendcontrol("c")
