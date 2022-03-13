@@ -39,15 +39,6 @@ const initFileSyncHandler = () => {
       )
     }
   )
-
-  // Listen for popup upload button click
-  chrome.runtime.onMessage.addListener(
-    (msg: string, sender: chrome.runtime.MessageSender, sendResponse: any) => {
-      hostPort.postMessage({ fileUploadTrigger: true})
-      sendResponse({});
-    }
-  )
-
 }
 
 // Try to cancel or undo a tab drag-out
