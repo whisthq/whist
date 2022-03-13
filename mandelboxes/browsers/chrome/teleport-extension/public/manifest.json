@@ -5,10 +5,16 @@
   "description": "__MSG_extDesc__",
   "icons": {},
   "background": {
-    "service_worker": "js/serviceWorker.js"
+    "service_worker": "js/worker.js"
   },
   "default_locale": "en",
-  "permissions": ["downloads", "downloads.shelf", "nativeMessaging", "tabs"],
+  "permissions": [
+    "downloads",
+    "downloads.shelf",
+    "nativeMessaging",
+    "tabs",
+    "webRequest"
+  ],
   "host_permissions": ["*://*/*"],
   "action": {
     "default_popup": "templates/popup_fallback.html",
@@ -20,9 +26,9 @@
     }
   },
   "icons": {
-      "16": "/icons/whist_logo_16.png",
-      "32": "/icons/whist_logo_32.png",
-      "48": "/icons/whist_logo_48.png",
-      "128": "/icons/whist_logo_128.png"
+    "16": "/icons/whist_logo_16.png",
+    "32": "/icons/whist_logo_32.png",
+    "48": "/icons/whist_logo_48.png",
+    "128": "/icons/whist_logo_128.png"
   }
 }

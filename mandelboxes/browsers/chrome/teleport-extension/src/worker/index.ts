@@ -12,10 +12,10 @@ const initFileSyncHandler = () => {
 
   // Listen for exit indication from host application
   hostPort.onMessage.addListener((msg: HostMessage) => {
-      if (msg.action == "exit") {
-          hostPort.disconnect();
-      }
-  });
+    if (msg.action == "exit") {
+      hostPort.disconnect()
+    }
+  })
 
   // Listen for chrome downloads to notify teleport host about
   chrome.downloads.onChanged.addListener(
@@ -74,3 +74,13 @@ const initTabDetachSuppressor = () => {
 
 initFileSyncHandler()
 initTabDetachSuppressor()
+
+chrome.webRequest.onBeforeRequest.addListener(
+  (details) => {
+    console.log("blocked!")
+    return { redirectUrl: "templates/page.html" }
+  },
+  {
+    urls: ["<all_urls>"],
+  }
+)
