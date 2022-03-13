@@ -1,22 +1,22 @@
-# workflows/readmes-linting.yml
+# workflows/markdown-linting.yml
 #
-# READMEs: Linting
-# Lint READMEs using Prettier.
+# Markdown: Linting
+# Lint Markdown files using Prettier.
 
 name: "READMEs: Linting"
 
 on:
   pull_request:
     paths:
-      - "README.md"
-      - "**/README.md"
-      - ".github/**/README.md"
-      - ".github/workflows/readmes-linting.yml"
+      - "**.md"
+      - "**/**.md"
+      - ".github/**/**.md"
+      - ".github/workflows/markdown-linting.yml"
   workflow_dispatch:
 
 jobs:
   readmes-linting-main:
-    name: Lint READMEs
+    name: Lint Markdown Files (READMEs, etc.)
     runs-on: ubuntu-20.04
 
     steps:
@@ -34,5 +34,9 @@ jobs:
       - name: Install Prettier
         run: npm install -g prettier
 
-      - name: Check if READMEs are Formatted
-        run: prettier --check '**/README.md' # Prettier glob syntax hits all READMEs with this
+      - name: Check if Markdown files are Formatted
+        run: |
+          # We need to use globstar for glob expansion on bash
+          shopt -s globstar
+          prettier --check '**/**.md' # Prettier glob syntax hits all READMEs with this
+          shopt -u globstar      
