@@ -2,20 +2,30 @@
 ARG BuildAssetPackage "protocol"
 FROM whist/build-assets:$BuildAssetPackage as build-assets
 
+#########################################################
+# Whist Chromium Extension Build Stage
+#########################################################
+
 FROM ubuntu:20.04 as whist-teleport-chrome-extension
+
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
 COPY teleport-extension /teleport-extension
 
 RUN apt-get update && apt-get install -y --allow-downgrades --no-install-recommends curl ca-certificates
 
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash \
-    &&  . /root/.nvm/nvm.sh \
+    &&  ./root/.nvm/nvm.sh \
     && echo "yarn" > /root/.nvm/default-packages \
     && nvm install 16 \
     && nvm use 16 \
     && cd /teleport-extension \
     && yarn \
     && yarn build
+
+#########################################################
+# Chrome Build Stage
+#########################################################
 
 FROM whisthq/base:current-build as whist-browsers-chrome
 
@@ -87,7 +97,7 @@ COPY --from=whist-teleport-chrome-extension /teleport-extension/build /opt/telep
 RUN mkdir -p /etc/opt/chrome/native-messaging-hosts \
     && echo {} \
     | jq '.name="whist_teleport_extension_host"' \
-    | jq '.description="Whist Teleport Chrome Extension Host"' \
+    | jq '.description="Whist Teleport Chromium Extension Host"' \
     | jq '.path="/opt/teleport/chrome-extension-host"' \
     | jq '.type="stdio"' \
     # This ID is a hash of the path to the teleport chrome extension.
@@ -106,17 +116,17 @@ RUN mkdir -p /home/whist/.config/google-chrome \
     && touch /home/whist/.config/google-chrome/'First Run' \
     && chown whist:whist /home/whist/.config/google-chrome{,/'First Run'}
 
-# Install Whist wrapper script to run Google Chrome into /usr/bin
-ENV WHIST_DEST_BROWSER="chrome"
-COPY start-chrome.sh /usr/bin/start-chrome
-RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whist-application
-
 # Install and configure our kde proxy
 COPY --chmod=555 teleport-kde-proxy.py /opt/teleport/teleport-kde-proxy.py
 RUN apt-get update && apt-get install -y --no-install-recommends kdialog \
     && rm usr/bin/kdialog \
     && ln -s /opt/teleport/teleport-kde-proxy.py /usr/bin/kdialog \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Whist wrapper script to run Google Chrome into /usr/bin
+ENV WHIST_DEST_BROWSER="chrome"
+COPY start-chrome.sh /usr/bin/start-chrome
+RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whist-application
 
 # If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/
