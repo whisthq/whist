@@ -9,7 +9,7 @@
     "outDir": "build/js",
     "noEmitOnError": true,
     "jsx": "react",
-    "typeRoots": ["node_modules/@types"],
+    "typeRoots": ["node_modules/@types", "src/@types"],
     "baseUrl": "./",
     "paths": {
       "@app/*": ["src/*"]

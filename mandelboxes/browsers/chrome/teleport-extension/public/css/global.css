@@ -1,0 +1,18 @@
+@font-face {
+  font-family: "Whist";
+  src: url("../fonts/Futura.ttc");
+  font-weight: bold; /* normal == 400 */
+  font-style: bold;
+}
+
+@font-face {
+  font-family: "Whist";
+  src: url("../fonts/Myriad.otf");
+  font-weight: normal; /* normal == 400 */
+  font-style: normal;
+}
+
+div,
+p {
+  letter-spacing: 0.05em !important;
+}

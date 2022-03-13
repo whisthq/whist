@@ -4,7 +4,11 @@ import ReactDOM from "react-dom"
 import Welcome from "./welcome"
 
 const Root = () => {
-  return <Welcome />
+  return (
+    <div className="relative font-body">
+      <Welcome />
+    </div>
+  )
 }
 
 ReactDOM.render(<Root />, document.querySelector("#root"))
