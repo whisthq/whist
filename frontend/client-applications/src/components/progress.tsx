@@ -15,7 +15,7 @@ export const Progress = (props: {
     >
       <div
         style={{ width: `${props.percent.toString()}%` }}
-        className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient`}
+        className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient transition-width duration-150 ease`}
       ></div>
     </div>
   </div>
