@@ -30,7 +30,7 @@ cd build-debug
 make -j
 ```
 
-By default, `dtrace` is disabled on macOS -- mac users will need to disable system integrity protections for `dtrace` specifically. If you have trouble with the [online guide](https://poweruser.blog/using-dtrace-with-sip-enabled-3826a352e64bj) for doing this, then please reach out to @rpadaki who can help you to configure your system.
+By default, `dtrace` is disabled on macOS -- mac users will need to disable system integrity protections for `dtrace` specifically. If you have trouble with the [online guide](https://poweruser.blog/using-dtrace-with-sip-enabled-3826a352e64bj) for doing this, then please reach out to `@rpadaki` who can help you to configure your system.
 
 #### Perf Flamegraph
 
