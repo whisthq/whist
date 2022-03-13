@@ -39,4 +39,4 @@ jobs:
           # We need to use globstar for glob expansion on bash
           shopt -s globstar
           prettier --check '**/**.md' # Prettier glob syntax hits all READMEs with this
-          shopt -u globstar      
+          shopt -u globstar
