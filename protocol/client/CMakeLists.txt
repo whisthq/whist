@@ -15,6 +15,8 @@ set(WHIST_CLIENT_DEPENDS
         sync_packets.c
         client_statistic.c
         renderer.c
+        frontend/frontend.c
+        frontend/sdl.c
 )
 
 if(CLIENT_SHARED_LIB)

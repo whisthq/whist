@@ -1,17 +1,29 @@
 #ifndef WHIST_CLIENT_FRONTEND_H
 #define WHIST_CLIENT_FRONTEND_H
 
-typedef struct WhistFrontendFunctionTable WhistFrontendFunctionTable;
+#include <whist/core/whist.h>
 
-typedef struct WhistFrontend {
+typedef struct WhistFrontend WhistFrontend;
+
+typedef struct WhistFrontendFunctionTable {
+    int (*init)(WhistFrontend* frontend);
+    void (*destroy)(WhistFrontend* frontend);
+} WhistFrontendFunctionTable;
+
+typedef void WhistFrontendEvent;
+typedef void WhistAudioFormat;
+
+struct WhistFrontend {
     void* context;
-    WhistFrontendFunctionTable;
-} WhistFrontend;
+    const WhistFrontendFunctionTable* call;
+};
+
+const WhistFrontendFunctionTable* sdl_get_function_table(void);
 
 // Lifecycle
-WhistFrontend* whist_frontend_create_sdl(WhistFrontendType type):
-WhistFrontend* whist_Frontend_create_external(WhistFrontendType type);
-int whist_frontend_destroy(WhistFrontend* frontend);
+WhistFrontend* whist_frontend_create_sdl(void);
+WhistFrontend* whist_Frontend_create_external(void);
+void whist_frontend_destroy(WhistFrontend* frontend);
 
 // Audio
 int whist_frontend_open_audio(WhistFrontend* frontend, WhistAudioFormat* format);
@@ -21,7 +33,7 @@ size_t whist_frontend_get_audio_buffer_size(WhistFrontend* frontend);
 int whist_frontend_close_audio(WhistFrontend* frontend);
 
 // Display
-struct {
+typedef struct {
     struct {
         unsigned int width;
         unsigned int height;
