@@ -355,7 +355,6 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     print("Running the dev client mandelbox, and connecting to the server!")
     command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{json.dumps(json_data)}'"
     pexpect_process.sendline(command)
-    pexpect_process.expect(":/#")
 
     # Need to wait for special mandelbox prompt ":/#". running_in_ci must always be set to True in this case.
     client_mandelbox_output = wait_until_cmd_done(
@@ -370,7 +369,7 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
         print("Simulating the mouse scroll events in the client")
         command = "python3 /usr/share/whist/mouse_events.py"
         pexpect_process.sendline(command)
-        pexpect_process.expect(":/#")
+        wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
 
     return client_docker_id
 
