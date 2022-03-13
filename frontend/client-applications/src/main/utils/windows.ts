@@ -47,27 +47,6 @@ const createView = (url: string, win?: BrowserWindow) => {
   return view
 }
 
-// This function is used to detect whether this code is being run in Electron (in which case we don't want to ask the
-// server-side Chromium to set Kiosk mode), or not.
-function isElectron() {
-  // Renderer process
-  if (typeof window !== 'undefined' && typeof window.process === 'object' && window.process.type === 'renderer') {
-      return true;
-  }
-
-  // Main process
-  if (typeof process !== 'undefined' && typeof process.versions === 'object' && !!process.versions.electron) {
-      return true;
-  }
-
-  // Detect the user agent when the `nodeIntegration` option is set to true
-  if (typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.indexOf('Electron') >= 0) {
-      return true;
-  }
-
-  return false;
-}
-
 const getElectronWindow = (hash: string) => {
   for (const win of BrowserWindow.getAllWindows()) {
     if (getElectronWindowHash(win) === hash) return win
@@ -235,7 +214,6 @@ const createElectronWindow = (args: {
 }
 
 export {
-  isElectron,
   getElectronWindowHash,
   hideElectronWindow,
   showElectronWindow,

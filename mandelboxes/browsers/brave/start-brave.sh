@@ -59,7 +59,7 @@ if [[ -n "$USER_AGENT" ]]; then
   flags+=("--user-agent=$USER_AGENT")
 fi
 
-# Start Brave in Kiosk mode (full-screen). This flag is used when the client is a 
+# Start Brave in Kiosk mode (full-screen). This flag is used when the client is a
 # local Chromium browser integrating Whist to avoid duplicating the URL bar in the cloud tabs, and should
 # not be set when the client is a fully-streamed browser rendered via SDL.
 if [[ -n "$KIOSK_MODE" ]]; then

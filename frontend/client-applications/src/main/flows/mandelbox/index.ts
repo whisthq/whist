@@ -12,7 +12,6 @@ import {
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/main/utils/flows"
-import { isElectron } from "@app/main/utils/windows"
 import { persistGet } from "@app/main/utils/persist"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
@@ -61,7 +60,7 @@ export default flow(
             desired_timezone: t.timezone,
             client_dpi: screen.getPrimaryDisplay()?.scaleFactor * 96,
             restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
-            kiosk_mode: !isElectron(), // We only want the server-side Chromium to be in Kiosk mode if the client is running within a Chromium browser, not within Electron            
+            kiosk_mode: false, // We only want the server-side Chromium to be in Kiosk mode if the client is running within a Chromium browser, not within Electron            
             initial_key_repeat: t.initialKeyRepeat,
             key_repeat: t.keyRepeat,
             ...(appEnvironment === WhistEnvironments.LOCAL && {
