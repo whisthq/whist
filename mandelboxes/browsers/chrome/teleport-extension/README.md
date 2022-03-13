@@ -1,20 +1,11 @@
 # Whist Teleport Extension
 
-This project contains the server-side Whist Chromium extension, known as Teleport. It is a browser extension that we install on all server-side browsers (Chrome, Brave) to allow Whist to correlate the state of the server-side browser with the state of the client-side browser. 
-
-For instance, we use it for synchronizing file state between the client and server when a file upload message is received, allowing us to perform file upload over the network.
-
-
-
-
+This project contains the server-side Whist Chromium extension, known as Whist Teleport. It is a browser extension that we install on all server-side browsers (Chrome, Brave) we run, to allow Whist to correlate the state of the server-side browser with the state of the client-side browser (for instance, for file upload and tab switching).
 
 ## Development
 
+This project is developed as a regular TypeScript project with Webpack as the module bundler. Please adhere to the usual Whist code standards for TypeScript.
 
+## Publishing
 
-
-
-
-
-
-TODO. We should write a README for this project.
+This project gets installed directly in the Chrome Dockerfile, which gets shipped as part of our standard deployment pipeline. All changes you merge into this project will automatically be bunlded in the next deployment.
