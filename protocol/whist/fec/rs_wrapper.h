@@ -51,14 +51,14 @@ int rs_wrapper_decode(RSWrapper *rs_wrapper, void **pkt, int *index, int num_pkt
 // the below 3 functions are used to help detect if decode can happen, in O(1) time
 // they are necessary bc num_real_buffers of buffers don't guarantee to recovery any more
 
-// init or reinit the counters inside rs_wrapper, so that you can use it from scratch
-void rs_wrapper_decode_helper_reinit(RSWrapper *rs_wrapper);
-
 // register an index as "received"
 void rs_wrapper_decode_helper_register_index(RSWrapper *rs_wrapper, int index);
 
 // detect if decode can happen
 bool rs_wrapper_decode_helper_can_decode(RSWrapper *rs_wrapper);
+
+// reset the counters inside rs_wrapper, so that you can use it from scratch
+void rs_wrapper_decode_helper_reset(RSWrapper *rs_wrapper);
 
 /*
 the below functions are mainly for testing
