@@ -4,10 +4,9 @@
  * @brief This file contains utility functions for triggers/flows.
  */
 
-import { Observable, ReplaySubject } from "rxjs"
+import { Observable, ReplaySubject, of } from "rxjs"
 import { filter, share, map, tap } from "rxjs/operators"
 import { withMocking } from "@app/testing"
-import { logging, LogLevel } from "@app/main/utils/logging"
 import { WhistTrigger } from "@app/constants/triggers"
 
 import mapValues from "lodash.mapvalues"
@@ -63,7 +62,13 @@ export const flow = <T>(
     let triggerPayload: object | undefined = {}
 
     trigger.subscribe((x?: any) => {
-      logging(`Flow ${name} started`, x)
+      createTrigger(
+        WhistTrigger.logging,
+        of({
+          title: `Flow ${name} started`,
+          data: x,
+        })
+      )
       startTime = Date.now() // Get the timestamp of when the flow started running
       triggerPayload = x // Save the trigger payload for logging down below
     })
@@ -71,14 +76,16 @@ export const flow = <T>(
     return mapValues(withMocking(name, trigger, flowFn), (obs, key) => {
       return obs.pipe(
         tap((value) => {
-          logging(
-            `${name}.${key}`, // e.g. authFlow.success
-            {
-              input: triggerPayload,
-              output: value,
-            }, // Log both the flow input (trigger) and output
-            LogLevel.DEBUG,
-            Date.now() - startTime // This is how long the flow took run
+          createTrigger(
+            WhistTrigger.logging,
+            of({
+              title: `${name}.${key}`,
+              data: {
+                input: triggerPayload,
+                output: value,
+              }, // Log both the flow input (trigger) and output
+              msElapsed: Date.now() - startTime, // This is how long the flow took run
+            })
           )
         }),
         share()
@@ -100,13 +107,7 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
         Original observable
     */
 
-  const startTime = Date.now()
-
   obs.pipe(share()).subscribe((x: any) => {
-    if (!["protocolStdoutData"].includes(name)) {
-      logging(`${name}`, { payload: x }, LogLevel.DEBUG, Date.now() - startTime)
-    }
-
     TriggerChannel.next({
       name: `${name}`,
       payload: x,

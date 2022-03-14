@@ -25,11 +25,10 @@ import {
   pipeURLToProtocol,
   destroyProtocol,
   launchProtocol,
-  logProtocolStdoutLocally,
 } from "@app/main/utils/protocol"
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated, emitOnSignal } from "@app/main/utils/observables"
-import { amplitudeLog, logToLogz } from "@app/main/utils/logging"
+import { logToAmplitude, logToLogzio } from "@app/main/utils/logging"
 import { persistGet } from "../utils/persist"
 import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 
@@ -64,7 +63,7 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
     }))
   )
   .subscribe((args: { info: any; protocol: ChildProcess; import: boolean }) => {
-    amplitudeLog("Creating window PROTOCOL", {
+    logToAmplitude("Creating window PROTOCOL", {
       ...args.info,
       region: JSON.stringify(
         ((persistGet(AWS_REGIONS_SORTED_BY_PROXIMITY) as any[]) ?? [])[0]
@@ -76,13 +75,6 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
     args.protocol === undefined || args.import
       ? launchProtocol(args.info).catch((err) => Sentry.captureException(err))
       : pipeNetworkInfo(args.protocol, args.info)
-  })
-
-// When the protocol is launched, pipe stdout to a .log file in the user's cache
-fromTrigger(WhistTrigger.protocol)
-  .pipe(filter((p) => p !== undefined))
-  .subscribe((p) => {
-    logProtocolStdoutLocally(p).catch((err) => Sentry.captureException(err))
   })
 
 // Also send protocol logs to logz.io
@@ -98,13 +90,13 @@ fromTrigger(WhistTrigger.protocolStdoutData).subscribe((data: string) => {
   // Leave the last line in the buffer to be appended to later
   stdoutBuffer.buffer = lines.length === 0 ? "" : (lines.pop() as string)
   // Print the rest of the lines
-  lines.forEach((line: string) => logToLogz(line, "protocol"))
+  lines.forEach((line: string) => logToLogzio(line, "protocol"))
 })
 
 fromTrigger(WhistTrigger.protocolStdoutEnd).subscribe(() => {
   // Send the last line, so long as it's not empty
   if (stdoutBuffer.buffer !== "") {
-    logToLogz(stdoutBuffer.buffer, "protocol")
+    logToLogzio(stdoutBuffer.buffer, "protocol")
     stdoutBuffer.buffer = ""
   }
 })
