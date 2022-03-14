@@ -53,6 +53,7 @@ Includes
 #define USE_GPU 0
 #define USE_MONITOR 0
 #define SAVE_VIDEO_OUTPUT 0
+#define MAX_WINDOWS 2
 
 // VBV Buffer size in seconds / Burst ratio. Setting it to a very low number as recomended for Ultra
 // low latency applications
@@ -69,6 +70,12 @@ static bool run_multithreaded_send_video_packets;
 static int send_frame_id;
 static int currently_sending_index;
 static NetworkSettings network_settings;
+
+struct DeviceEncoder {
+    CaptureDevice rdevice;
+    CaptureDevice* device;
+    VideoEncoder* encoder;
+};
 /*
 ============================
 Private Functions
@@ -556,13 +563,16 @@ int32_t multithreaded_send_video(void* opaque) {
         fp = fopen("/var/log/whist/output.h264", "wb");
     }
 
-    // Capture Device
-    CaptureDevice rdevice;
-    CaptureDevice* device = NULL;
+    DeviceEncoder devices[MAX_WINDOWS];
+    for (int i = 0; i < MAX_WINDOWS; i++) {
+        devices[i].device = NULL;
+        devices[i].encoder = NULL;
+    }
+
+    DeviceEncoder current_device = devices[0];
+    int last_created_device_index = -1;
 
     whist_cursor_capture_init();
-
-    VideoEncoder* encoder = NULL;
 
     WhistTimer world_timer;
     start_timer(&world_timer);
@@ -642,17 +652,33 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // If we got an update device request, we should update the device
         if (state->update_device) {
-            update_current_device(state, &statistics_timer, device, encoder, true_width,
+            update_current_device(state, &statistics_timer, current_device.device, current_device.encoder, true_width,
                                   true_height);
             state->stream_needs_restart = true;
         }
 
-        // If no device is set, we need to create one
-        if (device == NULL) {
-            if (create_new_device(state, &statistics_timer, &device, &rdevice, &encoder, true_width,
+        // TODO: unclear how this will interact with dimension computations
+        WhistWindow active_window = get_active_window();
+        bool has_device = false;
+        for (int i = 0; i < MAX_WINDOWS; i++) {
+            if (device_has_window(devices[i].device, active_window)) {
+                current_device = devices[i];
+                has_device = true;
+            }
+        }
+        if (!has_device) {
+            // destroy the last capture device and encoder if needed
+            destroy_capture_device(devices[last_created_device_index].device);
+            destroy_video_encoder(devices[last_created_device_index].encoder);
+            last_created_device_index = (last_created_device_index + 1) % MAX_WINDOWS;
+
+            if (create_new_device(state, &statistics_timer, &devices[last_created_device_index].device,
+            &devices[last_created_device_index].rdevice,
+            &devices[last_created_device_index].encoder, true_width,
                                   true_height) < 0) {
                 continue;
             }
+            current_device = devices[last_created_device_index];
             state->stream_needs_restart = true;
         }
 
@@ -678,7 +704,7 @@ int32_t multithreaded_send_video(void* opaque) {
                 (double)network_settings.burst_bitrate / network_settings.video_bitrate;
             int vbv_size =
                 (VBV_IN_SEC_BY_BURST_BITRATE_RATIO * video_bitrate * burst_bitrate_ratio);
-            encoder = update_video_encoder(state, encoder, device, video_bitrate, video_codec,
+            current_device.encoder = update_video_encoder(state, current_device.encoder, current_device.device, video_bitrate, video_codec,
                                            video_fps, vbv_size);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
@@ -719,7 +745,7 @@ int32_t multithreaded_send_video(void* opaque) {
         int accumulated_frames = 0;
         if ((!state->stop_streaming || state->stream_needs_restart)) {
             start_timer(&statistics_timer);
-            accumulated_frames = capture_screen(device);
+            accumulated_frames = capture_screen(current_device.device);
             if (accumulated_frames > 1) {
                 log_double_statistic(VIDEO_FRAMES_SKIPPED_IN_CAPTURE, (accumulated_frames - 1));
                 if (LOG_VIDEO) {
@@ -729,7 +755,7 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             // If capture screen failed, we should try again
             if (accumulated_frames < 0) {
-                retry_capture_screen(state, device, encoder);
+                retry_capture_screen(state, current_device.device, current_device.encoder);
                 continue;
             }
             // Immediately bring consecutives to 0, when a new frame is captured
@@ -791,8 +817,8 @@ int32_t multithreaded_send_video(void* opaque) {
                 // This function will try to CUDA/OpenGL optimize the transfer by
                 // only passing a GPU reference rather than copy to/from the CPU
                 start_timer(&statistics_timer);
-                if (transfer_capture(device, encoder, &state->stream_needs_restart) != 0) {
-                    // If there was a failure, exit
+                if (transfer_capture(current_device.device, current_device.encoder, &state->stream_needs_restart) != 0) {
+                    // if there was a failure, exit
                     LOG_ERROR("transfer_capture failed! Exiting!");
                     state->exiting = true;
                     break;
@@ -821,11 +847,11 @@ int32_t multithreaded_send_video(void* opaque) {
                                  ltr_action.long_term_frame_index);
                     }
 
-                    video_encoder_set_ltr_action(encoder, &ltr_action);
+                    video_encoder_set_ltr_action(current_device.encoder, &ltr_action);
                     frame_type = ltr_action.frame_type;
                 } else {
                     if (state->stream_needs_restart || state->stream_needs_recovery) {
-                        video_encoder_set_iframe(encoder);
+                        video_encoder_set_iframe(current_device.encoder);
                         frame_type = VIDEO_FRAME_TYPE_INTRA;
                     } else {
                         frame_type = VIDEO_FRAME_TYPE_NORMAL;
@@ -836,7 +862,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
                 start_timer(&statistics_timer);
 
-                int res = video_encoder_encode(encoder);
+                int res = video_encoder_encode(current_device.encoder);
                 if (res < 0) {
                     // bad boy error
                     LOG_ERROR("Error encoding video frame!");
@@ -870,8 +896,14 @@ int32_t multithreaded_send_video(void* opaque) {
                             }
                             fflush(fp);
                         }
+<<<<<<< HEAD
                         send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
                                               encoder, id, client_input_timestamp,
+=======
+#endif
+                        send_populated_frames(state, &statistics_timer, &server_frame_timer, current_device.device,
+                                              current_device.encoder, id, client_input_timestamp,
+>>>>>>> e4f6d29ec (Multiple devices and encoders in multithreaded_send_video)
                                               server_timestamp);
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
@@ -906,14 +938,16 @@ int32_t multithreaded_send_video(void* opaque) {
     whist_destroy_semaphore(producer);
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device,
     // So we destroy the encoder first
-    if (encoder) {
-        multithreaded_destroy_encoder(encoder);
-        encoder = NULL;
+    for (int i = 0; i < MAX_WINDOWS; i++) {
+    if (devices[i].encoder) {
+        multithreaded_destroy_encoder(devices[i].encoder);
+        devices[i].encoder = NULL;
     }
-    if (device) {
-        destroy_capture_device(device);
-        device = NULL;
+    if (devices[i].device) {
+        destroy_capture_device(devices[i].device);
+        devices[i].device = NULL;
     }
 
+    }
     return 0;
 }

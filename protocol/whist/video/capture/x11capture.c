@@ -35,7 +35,6 @@ Private Functions
 int handler(Display* d, XErrorEvent* a);
 char* get_window_name(Display* d, Window w);
 void log_tree(X11CaptureDevice* device, Window w);
-Window get_active_window(X11CaptureDevice* device);
 
 /*
 ============================
@@ -93,18 +92,26 @@ void log_tree(X11CaptureDevice* device, Window w) {
     }
 }
 
-Window get_active_window(X11CaptureDevice* device) {
+Window x11_get_active_window() {
+    static Display* display = NULL;
+    static Window root = 0;
+    if (!display) {
+        display = XOpenDisplay(NULL);
+    }
+    if (!root) {
+        root = DefaultRootWindow(display);
+    }
     static bool atom_set = false;
     static Atom net_active_window;
     if (!atom_set) {
-        net_active_window = XInternAtom(device->display, "_NET_ACTIVE_WINDOW", False);
+        net_active_window = XInternAtom(display, "_NET_ACTIVE_WINDOW", False);
         atom_set = true;
     }
     static Atom actual_type;
     static int actual_format;
     static unsigned long nitems, bytes_after;
     static char* result;
-    if (XGetWindowProperty(device->display, device->root, net_active_window, 0, LONG_MAX / 4, False,
+    if (XGetWindowProperty(display, root, net_active_window, 0, LONG_MAX / 4, False,
                            AnyPropertyType, &actual_type, &actual_format, &nitems, &bytes_after,
                            (unsigned char**)&result) == Success &&
         *(unsigned long*)result != 0) {
@@ -115,12 +122,12 @@ Window get_active_window(X11CaptureDevice* device) {
         // revert to XGetInputFocus
         Window focus;
         int revert;
-        XGetInputFocus(device->display, &focus, &revert);
+        XGetInputFocus(display, &focus, &revert);
         if (focus != PointerRoot) {
             return focus;
         } else {
             LOG_INFO("No active window found, setting root as active");
-            return device->root;
+            return root;
         }
     }
 }
@@ -130,7 +137,7 @@ Window get_active_window(X11CaptureDevice* device) {
 Public Function Implementations
 ============================
 */
-X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi) {
+X11CaptureDevice* create_x11_capture_device(Window active_window, uint32_t width, uint32_t height, uint32_t dpi) {
     /*
         Create an X11 device that will capture a screen of the specified width, height, and DPI
        using the X11 API.
@@ -156,7 +163,8 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     // get the root window
     device->root = DefaultRootWindow(device->display);
     // get the active window
-    device->active = get_active_window(device);
+    // device->active = x11_get_active_window();
+    device->active = active_window;
     // logging for the active window
     XWindowAttributes attr;
     XGetWindowAttributes(device->display, device->active, &attr);

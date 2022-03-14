@@ -32,12 +32,19 @@ Custom Types
 ============================
 */
 
+typedef struct WhistWindow {
+#ifdef __linux__
+    Window window;
+#endif
+} WhistWindow;
+
 typedef struct CaptureDevice {
     int width;
     int height;
     int pitch;
     void* frame_data;
     WhistRGBColor corner_color;
+    WhistWindow active_window;
     void* internal;
 
 #ifdef __linux__
@@ -75,7 +82,7 @@ Public Functions
  *
  * @returns                        0 if succeeded, else -1
  */
-int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
+int create_capture_device(CaptureDevice* device, WhistWindow window, uint32_t width, uint32_t height, uint32_t dpi);
 
 /**
  * @brief                          Tries to reconfigure the capture device
@@ -131,5 +138,14 @@ void destroy_capture_device(CaptureDevice* device);
  *                  device is opened.  Must be a static string.
  */
 void file_capture_set_input_filename(const char* filename);
+
+/**
+ * @brief Get the current active window
+ * 
+ * @returns A WhistWindow struct with the current window
+ */
+WhistWindow get_active_window();
+
+bool device_has_window(CaptureDevice* device, WhistWindow window);
 
 #endif  // VIDEO_CAPTURE_H

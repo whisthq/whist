@@ -197,7 +197,7 @@ static void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_
 Public Function Implementations
 ============================
 */
-int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
+int create_capture_device(CaptureDevice* device, WhistWindow window, uint32_t width, uint32_t height, uint32_t dpi) {
     /*
        Initialize the capture device at device with the given width, height and DPI. We use Nvidia
        whenever possible, and fall back to X11 when not. See nvidiacapture.c and x11capture.c for
@@ -288,7 +288,7 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     // Create the X11 capture device; when the nvidia manager thread finishes creation, active
     // capture device will change
     device->active_capture_device = X11_DEVICE;
-    device->x11_capture_device = create_x11_capture_device(width, height, dpi);
+    device->x11_capture_device = create_x11_capture_device(window.active_window, width, height, dpi);
     if (device->x11_capture_device) {
         return 0;
     } else {
@@ -362,6 +362,21 @@ int capture_screen(CaptureDevice* device) {
                 device->corner_color = device->x11_capture_device->corner_color;
             }
             return ret;
+        default:
+            LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
+            return -1;
+    }
+}
+
+bool device_has_window(CaptureDevice* device, WhistWindow window) {
+    if (device == NULL) {
+        return false;
+    }
+    switch (device->active_capture_device) {
+        case NVIDIA_DEVICE:
+            return false;
+        case X11_DEVICE:
+            return device->x11_capture_device->active == window.window;
         default:
             LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
             return -1;
@@ -456,4 +471,12 @@ int transfer_screen(CaptureDevice* device) {
         device->pitch = device->x11_capture_device->pitch;
     }
     return 0;
+}
+
+WhistWindow get_active_window() {
+    Window w = x11_get_active_window();
+    WhistWindow a = {0};
+    a.active_window = w;
+    // do whatever other setup we'd need
+    return a;
 }

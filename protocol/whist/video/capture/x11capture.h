@@ -69,7 +69,7 @@ Public Functions
  *
  * @returns         A pointer to the newly created X11CaptureDevice
  */
-X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi);
+X11CaptureDevice* create_x11_capture_device(Window active_window, uint32_t width, uint32_t height, uint32_t dpi);
 
 bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, uint32_t height,
                                     uint32_t dpi);
@@ -90,5 +90,7 @@ int x11_capture_screen(X11CaptureDevice* device);
  * @param device    Device to destroy
  */
 void destroy_x11_capture_device(X11CaptureDevice* device);
+
+Window x11_get_active_window();
 
 #endif  // CAPTURE_X11CAPTURE_H
