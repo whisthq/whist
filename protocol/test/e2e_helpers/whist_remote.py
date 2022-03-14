@@ -447,7 +447,6 @@ def server_setup_process(args_dict):
     )
 
     if not result:
-        args_dict["server_setup_failed"] = True
         sys.exit(-1)
 
     prune_containers_if_needed(hs_process, pexpect_prompt_server, running_in_ci)
@@ -561,7 +560,6 @@ def client_setup_process(args_dict):
             aws_credentials_filepath,
         )
         if not result:
-            args_dict["client_setup_failed"] = True
             sys.exit(-1)
 
         prune_containers_if_needed(hs_process, pexpect_prompt_client, running_in_ci)
