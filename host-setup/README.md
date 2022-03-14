@@ -6,6 +6,8 @@ An AMI is an operating system image, in our case a snapshot of Linux Ubuntu with
 
 The `setup_host.sh` script lets you set up an EC2 instance host either for development or deployment. You can pass `--help` or `--usage` into that script to see some more details.
 
+This folder also contains our configuration files for Filebeat, which we use for sending logs to Logz.io, our ELK platform, and for Docker, which we use to enforce strict container security.
+
 ## Setting Up a Personal Development Instance
 
 To set up your personal Whist development instance:
@@ -97,6 +99,3 @@ The Whist AMIs get automatically published to AWS EC2 through the `whist-build-a
 The workflow uses [Packer](https://www.packer.io/) to automatically build and provision AMIs, before copying to all active regions. Packer is run with a single command, a configuration file (`ami_config.json.pkr.hcl`), which is your source of truth for troubleshooting Packer issues.
 
 Enjoy!
-
-
-add sth for filebeat and seccomp
