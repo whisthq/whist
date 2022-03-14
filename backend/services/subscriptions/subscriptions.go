@@ -172,7 +172,7 @@ func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
 // Start is the main function in the subscriptions package. It initializes a client, sets up the received subscriptions,
 // and starts a goroutine for the client. It also has a goroutine to close the client and subscriptions when the global
 // context gets cancelled.
-func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
+func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent, useConfigDB bool) error {
 	if !Enabled {
 		logger.Infof("Running in app environment %s so not enabling Subscription client code.", metadata.GetAppEnvironment())
 		return nil
@@ -182,7 +182,7 @@ func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, gorou
 	var subscriptionIDs []string
 
 	// Initialize subscription client
-	whistClient.Initialize()
+	whistClient.Initialize(useConfigDB)
 
 	// Start goroutine that shuts down the client if the global context gets
 	// cancelled.

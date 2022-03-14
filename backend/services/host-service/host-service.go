@@ -810,7 +810,7 @@ func main() {
 
 	subscriptionClient := &subscriptions.SubscriptionClient{}
 	subscriptions.SetupHostSubscriptions(string(instanceID), subscriptionClient)
-	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents)
+	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents, false)
 	if err != nil {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
 	}

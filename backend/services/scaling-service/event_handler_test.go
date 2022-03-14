@@ -23,7 +23,7 @@ type mockSubscriptionClient struct {
 	SubscriptionIDs []string
 }
 
-func (mc *mockSubscriptionClient) Initialize() error {
+func (mc *mockSubscriptionClient) Initialize(useConfigDB bool) error {
 	mc.Initialized = true
 	return nil
 }

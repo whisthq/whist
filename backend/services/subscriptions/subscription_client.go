@@ -21,7 +21,7 @@ var Enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 // WhistSubscriptionClient is an interface used to abstract the interactions with
 // the official Hasura client.
 type WhistSubscriptionClient interface {
-	Initialize() error
+	Initialize(bool) error
 	GetSubscriptions() []HasuraSubscription
 	SetSubscriptions([]HasuraSubscription)
 	GetSubscriptionIDs() []string
@@ -44,13 +44,26 @@ type SubscriptionClient struct {
 
 // Initialize creates the client. This function is respinsible from fetching the server
 // information from Heroku.
-func (wc *SubscriptionClient) Initialize() error {
+func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 	logger.Infof("Setting up Subscription client...")
 
-	params, err := getWhistHasuraParams()
-	if err != nil {
-		// Error obtaining the connection parameters, we stop and don't setup the client
-		return utils.MakeError("error creating hasura client: %v", err)
+	var (
+		params HasuraParams
+		err    error
+	)
+
+	if useConfigDB {
+		params, err = getWhistHasuraParams()
+		if err != nil {
+			// Error obtaining the connection parameters, we stop and don't setup the client
+			return utils.MakeError("error creating hasura client: %v", err)
+		}
+	} else {
+		params, err = getWhistConfigHasuraParams()
+		if err != nil {
+			// Error obtaining the connection parameters, we stop and don't setup the client
+			return utils.MakeError("error creating hasura client: %v", err)
+		}
 	}
 
 	wc.SetParams(params)

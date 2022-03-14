@@ -16,7 +16,7 @@ type mockWhistClient struct {
 	SubscriptionIDs []string
 }
 
-func (cl *mockWhistClient) Initialize() error {
+func (cl *mockWhistClient) Initialize(useConfigDB bool) error {
 	return nil
 }
 

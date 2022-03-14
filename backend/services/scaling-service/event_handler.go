@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
-	"github.com/whisthq/whist/backend/services/metadata/heroku"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -96,17 +95,14 @@ func main() {
 func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent, subscriptionClient subscriptions.WhistSubscriptionClient, configClient subscriptions.WhistSubscriptionClient) {
 	// Setup and start subscriptions to main database
 	subscriptions.SetupScalingSubscriptions(subscriptionClient)
-	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents)
+	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents, false)
 	if err != nil {
 		logger.Errorf("Failed to start database subscription client. Error: %s", err)
 	}
 
-	// Override heroku configurations to use the config Hasura server
-	heroku.UseConfigDatabase(true)
-
 	// Setup and start subscriptions to config database
 	subscriptions.SetupConfigSubscriptions(configClient)
-	err = subscriptions.Start(configClient, globalCtx, goroutineTracker, subscriptionEvents)
+	err = subscriptions.Start(configClient, globalCtx, goroutineTracker, subscriptionEvents, true)
 	if err != nil {
 		logger.Errorf("Failed to start config database subscription client. Error: %s", err)
 	}

@@ -17,10 +17,6 @@ var apiKey string
 // override the default logic used to determine which Heroku app to connect to.
 var appNameOverride string
 
-// This variable can be set to return connection parameters from the config
-// database instead of the main dev/stging/prod databases.
-var useConfigDatabase bool
-
 var client heroku.Client = heroku.Client{Username: email, Password: apiKey}
 
 // GetAppName provides the Heroku app name to use based on the app environment
@@ -61,10 +57,6 @@ func GetHasuraName() string {
 		return appNameOverride
 	}
 
-	if useConfigDatabase {
-		return "whist-config-hasura"
-	}
-
 	switch metadata.GetAppEnvironment() {
 	case metadata.EnvDev:
 		return "whist-dev-hasura"
@@ -78,10 +70,22 @@ func GetHasuraName() string {
 	}
 }
 
+// GetConfigHasuraName provides the Heroku app name for the Hasura server that
+// is connected to the configuration database.
+func GetConfigHasuraName() string {
+	return "whist-config-hasura"
+}
+
 // GetHasuraConfig returns the Heroku environment config for the hasura server returned by
 // GetHasuraName.
 func GetHasuraConfig() (map[string]string, error) {
 	return client.ConfigVarInfo(GetHasuraName())
+}
+
+// GetConfigHasuraVars returns the Heroku environment config for the hasura server returned by
+// GetConfigHasuraName.
+func GetConfigHasuraVars() (map[string]string, error) {
+	return client.ConfigVarInfo(GetConfigHasuraName())
 }
 
 // GetHasuraURL returns the Heroku web url for the hasura server returned by
@@ -94,10 +98,12 @@ func GetHasuraURL() (string, error) {
 	return app.WebURL + "v1/graphql", nil
 }
 
-func GetUseConfigDatabase() bool {
-	return useConfigDatabase
-}
-
-func UseConfigDatabase(s bool) {
-	useConfigDatabase = s
+// GetConfigHasuraURL returns the Heroku web url for the hasura server returned by
+// GetHasuraName.
+func GetConfigHasuraURL() (string, error) {
+	app, err := client.AppInfo(GetConfigHasuraName())
+	if err != nil {
+		return "", err
+	}
+	return app.WebURL + "v1/graphql", nil
 }
