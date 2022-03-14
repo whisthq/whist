@@ -14,7 +14,7 @@ from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
 )
 
 
-def generate_no_comparison_table(
+def generate_results_table(
     results_file, experiment_metadata, most_interesting_metrics, client_metrics, server_metrics
 ):
     """

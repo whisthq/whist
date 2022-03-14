@@ -186,59 +186,102 @@ parser.add_argument(
 
 parser.add_argument(
     "--network-conditions",
-    help="The network condition for the experiment. The input is in the form of three comma-separated floats indicating the max bandwidth, delay (in ms), and percentage of packet drops (in the range [0.0,1.0]). 'normal' will allow the network to run with no degradation.",
+    help="The network condition for the experiment. The input is in the form of three comma-separated floats \
+    indicating the max bandwidth, delay (in ms), and percentage of packet drops (in the range [0.0,1.0]). \
+    'normal' will allow the network to run with no degradation.",
     type=str,
     default="normal",
+)
+
+parser.add_argument(
+    "--aws-timeout-seconds",
+    help="The timeout after which we give up on commands that have not finished on a remote AWS E2 instance. \
+    This value should not be set to less than 20mins (1200s)",
+    type=int,
+    default=1200,
+)
+
+parser.add_argument(
+    "--username",
+    help="The username to use to access the AWS EC2 instance(s)",
+    type=string,
+    default="ubuntu",
+)
+
+parser.add_argument(
+    "--ssh-connection-retries",
+    help="The number of times to retry if a SSH connection is refused or if the connection attempt times out",
+    type=int,
+    default=5,
 )
 
 args = parser.parse_args()
 
 
-# This main loop creates two AWS EC2 instances, one client, one server, and sets up
-# a protocol streaming test between them
 if __name__ == "__main__":
 
-    # Create local folder for logs
+    # 1 - Parse args from the command line
+    ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
+    ssh_key_path = args.ssh_key_path
+    github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
+    testing_url = args.testing_url
+    testing_time = args.testing_time
+    region_name = args.region_name
+    use_existing_client_instance = args.use_existing_client_instance
+    use_existing_server_instance = args.use_existing_server_instance
+    skip_git_clone = args.skip_git_clone
+    skip_host_setup = args.skip_host_setup
+    network_conditions = args.network_conditions
+    aws_credentials_filepath = args.aws_credentials_filepath
+    leave_instances_on = args.leave_instances_on
+    aws_timeout_seconds = args.aws_timeout_seconds
+    username = args.username
+    ssh_connection_retries = args.ssh_connection_retries
+    # Convert boolean 'true'/'false' strings to Python booleans
+    use_two_instances = args.use_two_instances == "true"
+    simulate_scrolling = args.simulate_scrolling == "true"
+    running_in_ci = os.getenv("CI") == "true"
+
+    # 2 - Perform a sanity check on the arguments and load the SSH key from file
+    if use_existing_client_instance != "" and not use_two_instances:
+        print(
+            "Error: the `use-two-instances` flag is set to `false` but a non-empty \
+            instance ID was passed with the `use-existing-client-instance` flag."
+        )
+        sys.exit(-1)
+    if not os.path.isfile(ssh_key_path):
+        print(f"SSH key file {ssh_key_path} does not exist")
+        exit()
+
+    # 3 - Create a local folder to store the experiment metadata and all the logs
+    # (monitoring logs and metrics logs)
     experiment_start_time = time.strftime("%Y_%m_%d@%H-%M-%S")
     perf_logs_folder_name = os.path.join("perf_logs", experiment_start_time)
     os.makedirs(os.path.join(perf_logs_folder_name, "server"))
     os.makedirs(os.path.join(perf_logs_folder_name, "client"))
 
-    # Retrieve args
-    ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
-    ssh_key_path = args.ssh_key_path
-    github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
-    running_in_ci = os.getenv("CI") == "true"
-    testing_url = args.testing_url
-    testing_time = args.testing_time
-    region_name = args.region_name
-    # Convert boolean 'true'/'false' strings to Python booleans
-    use_two_instances = args.use_two_instances == "true"
-    simulate_scrolling = args.simulate_scrolling == "true"
+    metadata_filename = os.path.join(perf_logs_folder_name, "experiment_metadata.json")
+    server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring.log")
+    client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring.log")
 
-    use_existing_client_instance = args.use_existing_client_instance
-    use_existing_server_instance = args.use_existing_server_instance
+    client_metrics_file = os.path.join(perf_logs_folder_name, "client", "client.log")
+    server_metrics_file = os.path.join(perf_logs_folder_name, "server", "server.log")
 
-    if use_existing_client_instance != "" and not use_two_instances:
-        print(
-            "Error: the `use-two-instances` flag is set to `false` but a non-empty instance ID was passed with the `use-existing-client-instance` flag."
-        )
-        sys.exit(-1)
+    experiment_metadata = {
+        "start_time": experiment_start_time + " local time"
+        if not running_in_ci
+        else experiment_start_time + " UTC",
+        "network_conditions": network_conditions,
+        "using_two_instances": use_two_instances,
+        "branch_name": get_whist_branch_name(running_in_ci),
+        "github_sha": get_whist_github_sha(running_in_ci),
+        "server_hang_detected": False,
+    }
 
-    skip_git_clone = args.skip_git_clone
-    skip_host_setup = args.skip_host_setup
+    with open(metadata_filename, "w") as metadata_file:
+        json.dump(experiment_metadata, metadata_file)
 
-    network_conditions = args.network_conditions
-
-    # Load the SSH key
-    if not os.path.isfile(ssh_key_path):
-        print(f"SSH key file {ssh_key_path} does not exist")
-        exit()
-
-    # Load the AWS credentials path
-    aws_credentials_filepath = args.aws_credentials_filepath
-
-    # Create a boto3 client, create or start the instance(s).
+    # 4 - Create a boto3 client, connect to the EC2 console, and create or start the instance(s).
     boto3client = boto3.client("ec2", region_name=region_name)
     server_instance_id = create_or_start_aws_instance(
         boto3client, region_name, use_existing_server_instance, ssh_key_name, running_in_ci
@@ -246,7 +289,6 @@ if __name__ == "__main__":
     if server_instance_id == "":
         print("Creating new instance for the server failed!")
         sys.exit(-1)
-
     client_instance_id = (
         create_or_start_aws_instance(
             boto3client, region_name, use_existing_client_instance, ssh_key_name, running_in_ci
@@ -258,10 +300,9 @@ if __name__ == "__main__":
         print("Creating/starting new instance for the client failed!")
         sys.exit(-1)
 
-    leave_instances_on = args.leave_instances_on
-
-    # Save to 'instances_to_clean.txt' file names of new instances that were created. These will have to be terminated
-    # by a successive Github action in case this script crashes before being able to terminate them itself.
+    # 5 - Create a todo-list of EC2 cleanup steps we need to do at the end of the test.
+    # Save the todo-list to a file named `instances_to_clean.txt` so that we can retrieve
+    # it in case  this script crashes.
     instances_to_be_terminated = []
     instances_to_be_stopped = []
 
@@ -289,69 +330,63 @@ if __name__ == "__main__":
         instances_file.write(f"stop {region_name} {i}\n")
     instances_file.close()
 
-    # Get the IP address of the instance(s)
+    # 6 - Get the IP address of the instance(s) that are now running
     server_instance_ip = get_instance_ip(boto3client, server_instance_id)
     server_hostname = server_instance_ip[0]["public"]
-    server_private_ip = server_instance_ip[0]["private"]
+    server_private_ip = server_instance_ip[0]["private"].replace(".", "-")
+
     client_instance_ip = (
         get_instance_ip(boto3client, client_instance_id)
         if use_two_instances
         else server_instance_ip
     )
     client_hostname = client_instance_ip[0]["public"]
-    client_private_ip = client_instance_ip[0]["private"]
+    client_private_ip = client_instance_ip[0]["private"].replace(".", "-")
+
+    # Notify the user that we are connecting to the EC2 instance(s)
     if not use_two_instances:
-        print(f"Connected to server/client AWS instance with hostname: {server_hostname}!")
+        print(f"Connecting to server/client AWS instance with hostname: {server_hostname}...")
     else:
         print(
-            f"Connected to server AWS instance with hostname: {server_hostname} and client AWS instance with hostname: {client_hostname}!"
+            f"Connecting to server AWS instance with hostname: {server_hostname} and client AWS \
+            instance with hostname: {client_hostname}..."
         )
 
-    username = "ubuntu"
-    server_private_ip = server_private_ip.replace(".", "-")
-    client_private_ip = client_private_ip.replace(".", "-")
+    # Create variables containing the commands to launch SSH connections to the client/server instance(s) and
+    # generate strings containing the shell prompt(s) that we expect on the EC2 instance(s) when running commands.
+    server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
+    client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
     pexpect_prompt_server = f"{username}@ip-{server_private_ip}"
     pexpect_prompt_client = (
         f"{username}@ip-{client_private_ip}" if use_two_instances else pexpect_prompt_server
     )
-    aws_timeout_seconds = 1200  # 10 mins is not enough to build the browsers/chrome mandelbox, so we'll go ahead with 20 mins to be safe
 
-    experiment_metadata = {
-        "start_time": experiment_start_time + " local time"
-        if not running_in_ci
-        else experiment_start_time + " UTC",
-        "network_conditions": network_conditions,
-        "using_two_instances": use_two_instances,
-        "branch_name": get_whist_branch_name(running_in_ci),
-        "github_sha": get_whist_github_sha(running_in_ci),
-        "server_hang_detected": False,
-    }
-    metadata_filename = os.path.join(perf_logs_folder_name, "experiment_metadata.json")
-    with open(metadata_filename, "w") as metadata_file:
-        json.dump(experiment_metadata, metadata_file)
-
-    server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring.log")
-    client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring.log")
-
+    # 7 - Setup the client and the server. Use multiprocesssing to parallelize the work in case
+    # we are using two instances. If we are using one instance, the setup will happen sequentially.
     manager = multiprocessing.Manager()
-    args_dict = manager.dict()
-    args_dict["username"] = username
-    args_dict["server_hostname"] = server_hostname
-    args_dict["client_hostname"] = client_hostname
-    args_dict["ssh_key_path"] = ssh_key_path
-    args_dict["aws_timeout_seconds"] = aws_timeout_seconds
-    args_dict["server_log_filepath"] = server_log_filepath
-    args_dict["client_log_filepath"] = client_log_filepath
-    args_dict["pexpect_prompt_server"] = pexpect_prompt_server
-    args_dict["pexpect_prompt_client"] = pexpect_prompt_client
-    args_dict["github_token"] = github_token
-    args_dict["use_two_instances"] = use_two_instances
-    args_dict["testing_time"] = testing_time
-    args_dict["aws_credentials_filepath"] = aws_credentials_filepath
-    args_dict["cmake_build_type"] = args.cmake_build_type
-    args_dict["running_in_ci"] = running_in_ci
-    args_dict["skip_git_clone"] = skip_git_clone
-    args_dict["skip_host_setup"] = skip_host_setup
+
+    # We pass all parameters and other data to the setup processes via a dictionary
+    args_dict = manager.dict(
+        {
+            "username": username,
+            "server_hostname": server_hostname,
+            "client_hostname": client_hostname,
+            "ssh_key_path": ssh_key_path,
+            "aws_timeout_seconds": aws_timeout_seconds,
+            "server_log_filepath": server_log_filepath,
+            "client_log_filepath": client_log_filepath,
+            "pexpect_prompt_server": pexpect_prompt_server,
+            "pexpect_prompt_client": pexpect_prompt_client,
+            "github_token": github_token,
+            "use_two_instances": use_two_instances,
+            "testing_time": testing_time,
+            "aws_credentials_filepath": aws_credentials_filepath,
+            "cmake_build_type": args.cmake_build_type,
+            "running_in_ci": running_in_ci,
+            "skip_git_clone": skip_git_clone,
+            "skip_host_setup": skip_host_setup,
+        }
+    )
 
     # If using two instances, parallelize the host-setup and building of the docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
@@ -371,54 +406,76 @@ if __name__ == "__main__":
     if p1.exitcode == -1 or p2.exitcode == -1:
         sys.exit(-1)
 
+    # 8 - Open the server/client monitoring logs
     server_log = open(os.path.join(perf_logs_folder_name, "server_monitoring.log"), "a")
     client_log = open(os.path.join(perf_logs_folder_name, "client_monitoring.log"), "a")
-    server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
-    client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
 
+    # 9 - Run the host service on the client and the server. We don't parallelize here for simplicity, given
+    # that all operations below do not take too much time.
+
+    # Start SSH connection(s) to the EC2 instance(s) to run the host-service commands
     server_hs_process = attempt_ssh_connection(
-        server_cmd, aws_timeout_seconds, server_log, pexpect_prompt_server, 5, running_in_ci
+        server_cmd,
+        aws_timeout_seconds,
+        server_log,
+        pexpect_prompt_server,
+        ssh_connection_retries,
+        running_in_ci,
     )
     client_hs_process = (
         attempt_ssh_connection(
-            client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5, running_in_ci
+            client_cmd,
+            aws_timeout_seconds,
+            client_log,
+            pexpect_prompt_client,
+            ssh_connection_retries,
+            running_in_ci,
         )
         if use_two_instances
         else server_hs_process
     )
 
-    # Build and run host-service on server
+    # Launch the host-service on the client and server instance(s)
     start_host_service_on_instance(server_hs_process, pexpect_prompt_server)
-
     if use_two_instances:
-        # Build and run host-service on server
         start_host_service_on_instance(client_hs_process, pexpect_prompt_client)
 
+    # 10 - Run the browser/chrome server mandelbox on the server instance
+    # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
     server_pexpect_process = attempt_ssh_connection(
         server_cmd, aws_timeout_seconds, server_log, pexpect_prompt_server, 5, running_in_ci
     )
+    # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
+    # we need to pass the client for it to connect
+    server_docker_id, server_configs_data = run_server_on_instance(server_pexpect_process)
+    # Augment the configs with the initial url we want to visit
+    server_configs_data["initial_url"] = testing_url
 
+    # 11 - Run the development/client client mandelbox on the client instance
+    # Start SSH connection(s) to the EC2 instance(s) to run the development/client
+    # client mandelbox on the client instance
     client_pexpect_process = attempt_ssh_connection(
         client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5, running_in_ci
     )
 
-    # 5- Run the protocol server, and retrieve the connection configs
-    server_docker_id, json_data = run_server_on_instance(server_pexpect_process)
-    json_data["initial_url"] = testing_url
-
-    # Set up the network degradation conditions
+    # Set up the artifical network degradation conditions on the client, if needed
     setup_network_conditions_client(
         client_pexpect_process, pexpect_prompt_client, network_conditions, running_in_ci
     )
-    # Run the dev client
-    client_docker_id = run_client_on_instance(client_pexpect_process, json_data, simulate_scrolling)
 
-    # Wait <testing_time> seconds to generate enough data
+    # Run the dev client on the client instance, using the server configs obtained above
+    client_docker_id = run_client_on_instance(
+        client_pexpect_process, server_configs_data, simulate_scrolling
+    )
+
+    # 12 - Sit down and wait Wait <testing_time> seconds to let the test run to completion
     time.sleep(testing_time)
 
-    # Restore un-degradated network conditions in case the instance is reused later on. Do this before downloading the logs to prevent the donwload from taking a long time.
+    # 13 - Restore un-degradated network conditions in case the instance is reused later on.
+    # Do this before downloading the logs to prevent the download from taking a long time.
     if network_conditions != "normal":
-        # Get new SSH connection because current ones are connected to the mandelboxes' bash, and we cannot exit them until we have copied over the logs
+        # Get new SSH connection because current ones are connected to the mandelboxes' bash,
+        # and we cannot exit them until we have copied over the logs
         client_restore_net_process = attempt_ssh_connection(
             client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5, running_in_ci
         )
@@ -427,16 +484,16 @@ if __name__ == "__main__":
         )
         client_restore_net_process.kill(0)
 
+    # 14 - Quit the server and check whether it shuts down gracefully or whether it hangs
     server_hang_detected = False
-    if shutdown_and_wait_server_exit(
-        server_pexpect_process, "Both whist-application and WhistServer have exited."
-    ):
+    server_shutdown_desired_message = "Both whist-application and WhistServer have exited."
+    if shutdown_and_wait_server_exit(server_pexpect_process, server_shutdown_desired_message):
         print("Server has exited gracefully.")
     else:
         print("Server has not exited gracefully!")
         server_hang_detected = True
 
-    # Extract the client/server perf logs from the two docker containers
+    # 15 - Extract the client/server protocol logs from the two docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
 
     log_grabber_server_process = attempt_ssh_connection(
@@ -476,15 +533,14 @@ if __name__ == "__main__":
         role="client",
     )
 
-    # Clean up the instance(s)
-
+    # 16 - Clean up the instance(s) by stopping all docker containers and quitting the host-service.
     # Exit the server/client mandelboxes
     server_pexpect_process.sendline("exit")
     wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server, running_in_ci)
     client_pexpect_process.sendline("exit")
     wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
 
-    # Delete all Docker containers
+    # Stop and delete any leftover Docker containers
 
     command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
     server_pexpect_process.sendline(command)
@@ -501,17 +557,17 @@ if __name__ == "__main__":
         client_hs_process.kill(0)
 
     # Terminate all pexpect processes
-    # hs_process.kill(0)
     server_pexpect_process.kill(0)
     client_pexpect_process.kill(0)
     log_grabber_server_process.kill(0)
     if use_two_instances:
         log_grabber_client_process.kill(0)
 
-    # Close the log files
+    # 17 - Close all the log files
     server_log.close()
     client_log.close()
 
+    # 18 - Stop or terminate the AWS EC2 instance(s)
     if leave_instances_on == "false":
         # Terminate or stop AWS instance(s)
         terminate_or_stop_aws_instance(
@@ -532,14 +588,20 @@ if __name__ == "__main__":
 
     print("Instance successfully stopped/terminated, goodbye")
 
-    # No longer need the new_instances.txt file because the script has already terminated (if needed) the instances itself
+    # 19 - Delete the cleanup todo-list, because we already completed it.
     os.remove("instances_to_clean.txt")
 
-    client_metrics_file = os.path.join(perf_logs_folder_name, "client", "client.log")
-    server_metrics_file = os.path.join(perf_logs_folder_name, "server", "server.log")
+    # 20 - Check if either of the WhistServer/WhistClient failed to start, or whether the client failed
+    # to connect to the server. If so, add the error to the metadata, and exit with an error code (-1).
+
+    # The server_metrics_file (server.log) and the client_metrics_file (client.log) fail to exist if
+    # the WhistServer/WhistClient did not start
     experiment_metadata["server_failure"] = not os.path.isfile(server_metrics_file)
     experiment_metadata["client_failure"] = not os.path.isfile(client_metrics_file)
-    # A test without connection errors will produce a client log that is well over 500 lines
+
+    # A test without connection errors will produce a client log that is well over 500 lines.
+    # This is a heuristic that works surprisingly well under the current protocol setup.
+    # If the connection failed, trigger an error.
     experiment_metadata["client_server_connection_failure"] = (
         not experiment_metadata["client_failure"]
         and len(open(client_metrics_file).readlines()) <= 500
@@ -548,11 +610,11 @@ if __name__ == "__main__":
         server_hang_detected and not experiment_metadata["server_failure"]
     )
 
-    # Update metadata file
+    # 21 - Update metadata file with any new metadata that we added
     with open(metadata_filename, "w") as metadata_file:
         json.dump(experiment_metadata, metadata_file)
 
-    # Print error message and exit with error if needed
+    # 22 - Print error message and exit with error if needed
     for cause, message in {
         "server_failure": "Failed to run WhistServer",
         "client_failure": "Failed to run WhistClient",
@@ -563,4 +625,5 @@ if __name__ == "__main__":
             print(f"{message}! Exiting with error. Check the logs for more details.")
             sys.exit(-1)
 
+    # 23 - Success!
     print("Done")
