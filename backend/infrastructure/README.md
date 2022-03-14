@@ -6,20 +6,60 @@ by Terraform.
 The Whist infrastructure Terraform defines all configuration required to enable a specific public cloud region for both development and running users, except from the actual EC2 instances powering user's cloud browsers. This is handled specifically by the Whist backend system, which is responsible for handling compute and scaling for users. The Whist backend
 is specifically designed for responsiveness and scalability, and handles cloud resources which change dynamically (i.e. scaling EC2 instances up and down based on demand), while the Terraform configuration is designed for static and security-related configuration, and handles cloud resources which must remain constant (and consistant) across cloud regions.
 
+## Development 
+
+To use, first install and setup Terraform as described in [their setup
+documentation](https://learn.hashicorp.com/tutorials/terraform/install-cli).
+
+### Overview
+
 Each directory within `infrastructure/` contains the Terraform configuration for the Whist
 infrastructure for a specific Whist environment (i.e. `dev`, etc.). At the time of writing, each environment only 
-supports `aws`, but more cloud providers are planned to be supported in the future.
+supports `aws`, but more cloud providers are planned to be supported in the future. Global cloud resources should go in `/modules`, while per-environment cloud resources should go in either `/dev`, `/staging` or `/prod`.
 
 NOTE: `global` in this project refers to the definition of `global` in AWS. If
 a resource is global, it means that a single declaration of said resource will
 span all regions within an AWS account (such as IAM or S3 namespaces).
 
-## Setup
 
-To use, first install and setup Terraform as described in [their setup
-documentation](https://learn.hashicorp.com/tutorials/terraform/install-cli).
 
-## Overview
+
+
+
+### Adding other regions/cloud providers
+
+
+## How do I add support for a new region?
+
+If the infrastructure for the new region is the same as `common`, then
+all that is necessary is to define the module with a source as `./regions/common`
+and the `region` parameter being the new region to deploy to.
+
+
+
+
+If the infrastructure to the new region is unqiue, you will need to create
+a new folder in the `regions` directory and then instaniate said
+new module in `main.tf` in the infrastructure root directory.
+
+After all of that, run `terraform apply` to deploy the infrastructure to the new region.
+
+
+
+
+
+### Styling
+
+
+We use [TFLint](https://github.com/terraform-linters/tflint)
+
+
+
+## Publishing
+
+
+
+
 
 
 
@@ -73,17 +113,3 @@ For example, to add a new environment, say `gamma`, to all regions, add
 `infrastructure/aws/resources/networking/variables.tf` file and
 run `terraform apply`.
 
-## How do I add support for a new region?
-
-If the infrastructure for the new region is the same as `common`, then
-all that is necessary is to define the module with a source as `./regions/common`
-and the `region` parameter being the new region to deploy to.
-
-
-
-
-If the infrastructure to the new region is unqiue, you will need to create
-a new folder in the `regions` directory and then instaniate said
-new module in `main.tf` in the infrastructure root directory.
-
-After all of that, run `terraform apply` to deploy the infrastructure to the new region.
