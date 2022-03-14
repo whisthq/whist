@@ -1,8 +1,3 @@
-# this lib is 10x slower when compiled with O0
-# so, we always compile it with O2, even for debug release
-# TODO the below line doesn't work for MSVC
-#add_compile_options("-O2")
-
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     #message(WARNING "Current ARCH is LINUx!!!")
     add_compile_options("-mavx2")

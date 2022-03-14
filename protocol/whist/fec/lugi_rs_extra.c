@@ -1,7 +1,7 @@
 
 #include <string.h>
 #include <SDL2/SDL_thread.h>
-#include "lugi_rs_helper.h"
+#include "lugi_rs_extra.h"
 #include "rs_common.h"
 #include <whist/logging/logging.h>
 

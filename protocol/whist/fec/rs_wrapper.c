@@ -7,7 +7,7 @@
 #include "whist/fec/lugi_rs.h"
 #include "whist/fec/cm256/cm256.h"
 #include "rs_common.h"
-#include "lugi_rs_helper.h"
+#include "lugi_rs_extra.h"
 #include "rs_wrapper.h"
 
 /*

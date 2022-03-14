@@ -36,13 +36,9 @@ Defines
 
 #define MAX_NUM_BUFFERS 1024
 
-// The most amount of buffers that RS accepts
-#define MAX_RS_BUFFERS 0xff
 // We only use 2 bytes to store the buffer size,
 // so we need to cap the buffer size as such
 #define MAX_BUFFER_SIZE ((1 << (8 * FEC_HEADER_SIZE)) - 1)
-
-#define RS_TABLE_SIZE 256  // size of row and column
 
 typedef unsigned short u16_t;  // NOLINT
 
@@ -84,12 +80,6 @@ Globals
 Private Function Declarations
 ============================
 */
-
-// write a 16bit uint into buffer
-void write_u16(char* p, u16_t w);
-
-// read a 16bit uint from buffer
-u16_t read_u16(char* p);
 
 // write a 16bit uint into buffer
 void write_u16_to_buffer(char* p, uint16_t w);
@@ -374,17 +364,6 @@ void destroy_fec_decoder(FECDecoder* fec_decoder) {
 Private Function Implementations
 ============================
 */
-
-void write_u16(char* p, u16_t w) {
-    *(unsigned char*)(p + 1) = (w & 0xff);
-    *(unsigned char*)(p + 0) = (w >> 8);
-}
-u16_t read_u16(char* p) {
-    u16_t res;
-    res = *(const unsigned char*)(p + 0);
-    res = *(const unsigned char*)(p + 1) + (res << 8);
-    return res;
-}
 
 // the below two functions works based on the fact that all our supported platforms are little
 // endian, and unaligned memory access are supported
