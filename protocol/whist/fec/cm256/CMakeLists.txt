@@ -1,3 +1,5 @@
+add_compile_options("-O2")
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_compile_options("-mavx2")
     add_compile_options("-Wno-restrict")
