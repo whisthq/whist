@@ -13,7 +13,7 @@ from e2e_helpers.local_tools import (
 
 
 def attempt_ssh_connection(
-    ssh_command, timeout_value, log_file_handle, pexpect_prompt, max_retries
+    ssh_command, timeout_value, log_file_handle, pexpect_prompt, max_retries, running_in_ci
 ):
     """
     Attempt to establish a SSH connection to a remote machine. It is normal for the function to need several attempts before successfully opening a SSH connection to the remote machine.
@@ -51,6 +51,8 @@ def attempt_ssh_connection(
                 child.sendline("yes")
                 child.expect(pexpect_prompt)
             print(f"SSH connection established with EC2 instance!")
+            if not running_in_ci:
+                child.expect(pexpect_prompt)
             return child
         elif result_index >= 3:
             print(f"\tSSH connection timed out (retry {retries + 1}/{max_retries})")
@@ -63,12 +65,6 @@ def attempt_ssh_connection(
 def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=False):
     """
     Wait until the currently-running command on a remote machine finishes its execution on the shell monitored to by a pexpect process.
-
-    N.B: Whenever running_in_ci=False, it is unsafe to parse the pexpect process's stdout output (with pexpect_process.before) after
-        a call to wait_until_cmd_done. If this script is running outside of a CI environment (running_in_ci=False), all bash prompts
-        are likely to be printed two times. If we are looking to parse the stdout output, we need the stdout that comes before the
-        first prompt is printed. Getting the stdout after a call wait_until_cmd_done, however, will discard the output of the command
-        executed by the pexpect_process and only return the stdout (usually empty) between the first and the second prompt.
 
     Args:
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process on the remote machine
@@ -136,7 +132,7 @@ def reboot_instance(
     pexpect_process.kill(0)
     time.sleep(5)
     pexpect_process = attempt_ssh_connection(
-        ssh_cmd, timeout_value, log_file_handle, pexpect_prompt, retries
+        ssh_cmd, timeout_value, log_file_handle, pexpect_prompt, retries, running_in_ci
     )
     print("Reboot complete")
     return pexpect_process
