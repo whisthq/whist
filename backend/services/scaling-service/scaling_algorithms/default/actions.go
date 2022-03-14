@@ -171,6 +171,10 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// have support for more instance types. For now default to `g4dn.2xlarge`.
 	extraCapacity := DESIRED_FREE_MANDELBOXES + (DEFAULT_INSTANCE_BUFFER * instanceCapacity["g4dn.2xlarge"])
 
+	// Acquire lock on protected from scale down map
+	s.protectedMapLock.Lock()
+	defer s.protectedMapLock.Unlock()
+
 	// Create a list of instances that can be scaled down from the active instances list.
 	// For this, we have to consider the following conditions:
 	// 1. Does the instance have any running mandelboxes? If so, don't scale down.
@@ -381,6 +385,10 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		UpdatedAt: time.Now(),
 	}
 
+	// Acquire lock on protected from scale down map
+	s.protectedMapLock.Lock()
+	defer s.protectedMapLock.Unlock()
+
 	// Protect the new instance buffer from scale down. This is done to avoid any downtimes
 	// during deploy, as the active image will be switched until the client app has updated
 	// its version on the config database.
@@ -419,8 +427,8 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	// Block until the image upgrade has finished successfully
 	<-s.SyncChan
 
-	logger.Infof("Starting upgrade image swapover action for event: %v", event)
-	defer logger.Infof("Finished upgrade image swapover action for event: %v", event)
+	logger.Infof("Starting image swapover action for event: %v", event)
+	defer logger.Infof("Finished image swapover action for event: %v", event)
 
 	// version is the entry we receive from the config database
 	version := clientVersion.(subscriptions.ClientAppVersion)
@@ -443,6 +451,10 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	default:
 		commitHash = version.DevCommitHash
 	}
+
+	// Acquire lock on protected from scale down map
+	s.protectedMapLock.Lock()
+	defer s.protectedMapLock.Unlock()
 
 	// Find protected image that matches the config db commit hash
 	for _, image := range s.protectedFromScaleDown {

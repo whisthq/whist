@@ -42,6 +42,7 @@ type DefaultScalingAlgorithm struct {
 	ScheduledEventChan     chan ScalingEvent
 	SyncChan               chan bool                      // This channel is used to sync actions
 	protectedFromScaleDown map[string]subscriptions.Image // Use a map to keep track of images that should not be scaled down
+	protectedMapLock       sync.Mutex
 }
 
 // CreateEventChans creates the event channels if they don't alredy exist.
