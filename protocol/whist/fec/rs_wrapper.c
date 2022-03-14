@@ -377,7 +377,7 @@ inline static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int 
             break;
         }
         default: {
-            LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation);
+            LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation_to_use);
         }
     }
 }
@@ -422,7 +422,7 @@ inline static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int
             return rs_decode(rs_code, pkt, index, sz);
         }
         default: {
-            LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation);
+            LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation_to_use);
         }
     }
 }
@@ -533,7 +533,7 @@ static double overhead_of_group(int num_real_buffers, int num_fec_buffers) {
     double k = num_real_buffers;
     double m = num_fec_buffers;
     double l = MAX_PACKET_SEGMENT_SIZE;
-    switch (rs_implementation) {
+    switch (rs_implementation_to_use) {
         case CM256: {
             // O(k^2) to invert a Cauchy Matrix
             // O(k*m*l) to generate recovery symbols
@@ -547,7 +547,7 @@ static double overhead_of_group(int num_real_buffers, int num_fec_buffers) {
             return (k * k * k + k * m * l) / ((k + m) * l);
         }
         default: {
-            LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation);
+            LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation_to_use);
         }
     }
 }
