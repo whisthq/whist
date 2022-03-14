@@ -17,7 +17,7 @@ Defines
 */
 
 // a list of RS Implementations
-typedef enum { RS_LUGI = 0, CM256 = 1, NUM_RS_IMPLEMENTATIONS = 2 } RSImplementation;
+typedef enum { LUGI_RS = 0, CM256 = 1, NUM_RS_IMPLEMENTATIONS = 2 } RSImplementation;
 
 // the info of position of where a buffer locates in the groups
 typedef struct {
@@ -51,7 +51,7 @@ Globals
 */
 
 // the implementation to use
-static RSImplementation rs_implementation = CM256;
+static RSImplementation rs_implementation_to_use = CM256;
 
 // the max size of group for encoding/decoding in rs_wrapper
 // if num of total buffers is large than this, rs_wrapper will split the encoding/decoding into
@@ -61,7 +61,7 @@ static int rs_wrapper_max_group_size = 256;
 
 // another limitation for group spliting, after split the "overhead" of each group will not exceed
 // this value. set overhead_of_group() function for the definition of overhead
-static double rs_wrapper_max_group_overhead = 20;
+static double rs_wrapper_max_group_overhead = 20.0;
 
 static int verbose_log = 0;
 
@@ -103,6 +103,8 @@ static RSWrapper *rs_wrapper_create_inner(int num_real_buffers, int num_total_bu
                                           int num_groups);
 
 // defines the "overhead" of a group
+// the "overhead" here is defined as roughly how much "unit" of computation is spent on average on
+// each input+output bytes
 static double overhead_of_group(int num_real_buffers, int num_fec_buffers);
 /*
 ============================
@@ -306,19 +308,6 @@ void rs_wrapper_decode_helper_reset(RSWrapper *rs_wrapper) {
     }
 }
 
-void rs_wrapper_test(void) {
-    int num_real = 99, num_fec = 30;
-    RSWrapper *rs_wrapper = rs_wrapper_create(num_real, num_real + num_fec);
-
-    fprintf(stderr, "num_groups=%d\n", rs_wrapper->num_groups);
-    for (int i = 0; i < num_real + num_fec; i++) {
-        SubIndexInfo info = index_full_to_sub(rs_wrapper, i);
-        int check = index_sub_to_full(rs_wrapper, info.group_id, info.sub_index);
-        fprintf(stderr, "<index=%d check=%d>", i, check);
-    }
-    fprintf(stderr, "\n");
-}
-
 int rs_wrapper_set_max_group_size(int a) {
     int save = rs_wrapper_max_group_size;
     if (a > 0) {
@@ -327,7 +316,7 @@ int rs_wrapper_set_max_group_size(int a) {
     return save;
 }
 
-double rs_wrapper_set_max_group_overhead(int a) {
+double rs_wrapper_set_max_group_overhead(double a) {
     int save = rs_wrapper_max_group_overhead;
     if (a > 0) {
         rs_wrapper_max_group_overhead = a;
@@ -359,7 +348,7 @@ inline static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int 
     }
 
     FATAL_ASSERT(n <= RS_FIELD_SIZE);
-    switch (rs_implementation) {
+    switch (rs_implementation_to_use) {
         case CM256: {
             cm256_encoder_params params;
             params.OriginalCount = k;
@@ -380,7 +369,7 @@ inline static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int 
             free(blocks);
             break;
         }
-        case RS_LUGI: {
+        case LUGI_RS: {
             RSCode *rs_code = get_rs_code(k, n);
             for (int i = 0; i < fec_num; i++) {
                 rs_encode(rs_code, src, dst[i], k + i, sz);
@@ -403,7 +392,7 @@ inline static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int
     }
     FATAL_ASSERT(n <= RS_FIELD_SIZE);
 
-    switch (rs_implementation) {
+    switch (rs_implementation_to_use) {
         case CM256: {
             cm256_encoder_params params;
             params.OriginalCount = k;
@@ -428,7 +417,7 @@ inline static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int
             free(blocks);
             return r;
         }
-        case RS_LUGI: {
+        case LUGI_RS: {
             RSCode *rs_code = get_rs_code(k, n);
             return rs_decode(rs_code, pkt, index, sz);
         }
@@ -535,8 +524,30 @@ static RSWrapper *rs_wrapper_create_inner(int num_real_buffers, int num_total_bu
 }
 
 static double overhead_of_group(int num_real_buffers, int num_fec_buffers) {
-    // most of RS lib has a encode time complexity and a worse decode time complexity of
-    // O(num_real_buffers*num_fec_buffers). the "overhead" here is defined as how much "unit" of
-    // computation is spent on average on each buffer (original + fec)
-    return ((double)num_real_buffers * num_fec_buffers) / (num_real_buffers + num_fec_buffers);
+    // the "overhead" here is defined as roughly how much "unit" of computation is spent on average
+    // on each input+output bytes
+
+    // the (worst-case) decode time complexity is almost always >= encode, so we only optimize for
+    // decode overhead
+
+    double k = num_real_buffers;
+    double m = num_fec_buffers;
+    double l = MAX_PACKET_SEGMENT_SIZE;
+    switch (rs_implementation) {
+        case CM256: {
+            // O(k^2) to invert a Cauchy Matrix
+            // O(k*m*l) to generate recovery symbols
+            // (k+m)*l bytes in total for input +output
+            return (k * k + k * m * l) / ((k + m) * l);
+        }
+        case LUGI_RS: {
+            // O(k^3) to invert a Vandermonde Matrix
+            // O(k*m*l) to generate recovery symbols
+            // (k+m)*l bytes in total for input +output
+            return (k * k * k + k * m * l) / ((k + m) * l);
+        }
+        default: {
+            LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation);
+        }
+    }
 }

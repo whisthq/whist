@@ -64,14 +64,11 @@ void rs_wrapper_decode_helper_reset(RSWrapper *rs_wrapper);
 the below functions are mainly for testing
 */
 
-// a function for test during developing
-void rs_wrapper_test(void);
-
 // set the inner rs_wrapper_max_group_size to the given value
 // returns the old value
 int rs_wrapper_set_max_group_size(int value);
 
-double rs_wrapper_set_max_group_overhead(int value);
+double rs_wrapper_set_max_group_overhead(double value);
 
 void rs_wrapper_set_verbose_log(int value);
 /*
