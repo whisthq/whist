@@ -112,7 +112,9 @@ void init_fec(void) { init_rs_wrapper(); }
 // a = bc/(1-c)
 int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
     double ratio = fec_packet_ratio / (1.0 - fec_packet_ratio);
-    return num_real_packets * ratio;
+
+    // return the num of fec packets, round to next integer
+    return num_real_packets * ratio + 0.999;
 }
 
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {

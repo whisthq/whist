@@ -71,7 +71,7 @@ void rs_wrapper_test(void);
 // returns the old value
 int rs_wrapper_set_max_group_size(int value);
 
-int rs_wrapper_set_max_group_cost(int value);
+int rs_wrapper_set_max_group_overhead(int value);
 
 void rs_wrapper_set_verbose_log(int value);
 /*
