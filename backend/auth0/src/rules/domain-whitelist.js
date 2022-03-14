@@ -6,7 +6,7 @@
 function emailDomainWhitelist(user, context, callback) {
     // For the `dev` and `staging` environments, we only want Whist team members to
     // have access, for security purposes.
-    if (context.tenant == 'fractal-dev' || context.tenant == 'fractal-staging') {
+    if (context.tenant === 'fractal-dev' || context.tenant === 'fractal-staging') {
         // Access should only be granted to verified users
         if (!user.email || !user.email_verified) {
             return callback(new UnauthorizedError('Access denied.'));
