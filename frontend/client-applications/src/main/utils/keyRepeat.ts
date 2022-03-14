@@ -71,7 +71,8 @@ const getKeyRepeat = () => {
     // Convert the key repetition delay from Mac scale (slowest=120, fastest=2) to Linux scale (slowest=9, fastest=1000). NB: the units on Mac and Linux are multiplicative inverse.
     const keyRepeatFloat =
       (1.0 -
-        (parseInt(keyRepeat) - KEY_REPEAT_RATE_MIN_MAC) / KEY_REPEAT_RATE_RANGE_MAC) *
+        (parseInt(keyRepeat) - KEY_REPEAT_RATE_MIN_MAC) /
+          KEY_REPEAT_RATE_RANGE_MAC) *
         KEY_REPEAT_RATE_RANGE_LINUX +
       KEY_REPEAT_RATE_MIN_LINUX
     keyRepeat = keyRepeatFloat.toFixed()
