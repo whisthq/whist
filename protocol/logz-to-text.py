@@ -83,8 +83,8 @@ def validate_args(argv):
 # To get the current time in ElasticSearch timestamp format, pass in 0
 # when calling this function
 def get_time_from_now_in_days_formatted(days):
-    now = str(datetime.utcnow() - timedelta(days=days))
-    return now[:10] + "T" + now[11:23] + "Z"
+    now = datetime.isoformat(datetime.utcnow() - timedelta(days=days))
+    return now + "Z"
 
 
 # Sends the initial request to the POST Logz.io scroll API
@@ -154,7 +154,7 @@ def get_logs_page(headers, scroll_id):
 
 # This will sort the logs by date and time
 def sort_logs(parsed_logs):
-    return parsed_logs.sort(key=lambda log: datetime.strptime(log[1], "%Y-%m-%d %H:%M:%S.%f"))
+    return parsed_logs.sort(key=lambda log: log["timestamp"])
 
 
 # Parses all the logs from the log_page
@@ -174,31 +174,22 @@ def parse_logs(parsed_logs, logs_page):
         # We need the component to separate out server vs client logs
         component = log["_source"]["component"]
 
-        # Sometimes, in errors, we do not include hour-month-day, so check
-        # if the first character to see if it's a number.
-        message_begins_with_time = (
-            len(message) > 2
-            and message[0].isnumeric()
-            and message[1].isnumeric()
-            and message[2] == ":"
-        )
 
-        if not message_begins_with_time:
-            # if we do not provide an hour-minute-second,
-            # use the hour-minute-second from logz_io timestamp
-            hour_minute_second_ms = logz_io_timestamp[11:23] + "000"
-        else:
-            # otherwise, use our hour-minute-second
-            hour_minute_second_ms = message[:15]
+        try:
+            message_start = message.split()[0]
+            timestamp = datetime.fromisoformat(message_start)
+        except ValueError:
+            logz_io_timestamp = log["_source"]["@timestamp"]
+            # Strip the trailing 'Z' from logz_io_timestamp
+            timestamp = datetime.fromisoformat(logz_io_timestamp.strip("Z"))
 
-        timestamp = year_month_day + " " + hour_minute_second_ms
         if component == "clientapp":
             # if it's client app, then we know these are logs from the client
-            parsed_logs.append(("client", timestamp, message))
+            origin = "client"
         else:
             # otherwise, this is mandlebox, so these are logs from the server
-            parsed_logs.append(("server", timestamp, message))
-
+            origin = "server"
+        parsed_logs.append({ "origin": origin, "timestamp": timestamp, "message": message })
 
 # Writes the server and client logs to two separate files
 # File names are SESSION_ID-client.log and SESSION_ID-server.log
@@ -229,11 +220,11 @@ def write_logs_to_files(parsed_logs, session_id, account):
     client_file = open(client_file_path, "w")
     server_file = open(server_file_path, "w")
     for log in parsed_logs:
-        if log[0] == "client":
-            client_file.write(log[2])
+        if log["origin"] == "client":
+            client_file.write(log["message"])
             client_file.write("\n")
         else:
-            server_file.write(log[2])
+            server_file.write(log["message"])
             server_file.write("\n")
     server_file.close()
     client_file.close()
