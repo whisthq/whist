@@ -9,7 +9,7 @@ In this document we will describe the Whist Congestion Control algorithm. The pr
 # Pacer (Network Throttler)
 
 Pacing is used to actuate the target bitrate computed by the congestion control algorithm. (This is called as Network Throttler inside Whist code).
-When media encoder produces data, this is fed into a Pacer queue. The Pacer sends a group of packets to the network every burst_time interval. RECOMMENDED value for burst_time is 5 ms.  The size of a group of packets is computed as the product between the target bitrate and the burst_time. The group of packets that are sent in a burst_time interval, should be assigned a group_id for easier reference on the client side. group_id could start with 1 and is incremented for each burst.
+When media encoder produces data, this is fed into a Pacer queue. The Pacer sends a group of packets to the network every burst_time interval. RECOMMENDED value for burst_time is 5 ms. The size of a group of packets is computed as the product between the target bitrate and the burst_time. The group of packets that are sent in a burst_time interval, should be assigned a group_id for easier reference on the client side. group_id could start with 1 and is incremented for each burst.
 
 # Algorithm
 
@@ -17,11 +17,11 @@ This algorithm is run only for video packets. Audio packets are ignored as they 
 
 ## Arrival time model
 
-We define the inter-arrival time, t(i) - t(i-1), as the difference in arrival time of two groups of packets.  Correspondingly, the inter-departure time, T(i) - T(i-1), is defined as the difference in departure-time of two groups of packets.  Finally, the inter-group delay variation, d(i), is defined as the difference between the inter-arrival time and the inter-departure time.  Or interpreted differently, as the difference between the delay of group i and group i-1.
+We define the inter-arrival time, t(i) - t(i-1), as the difference in arrival time of two groups of packets. Correspondingly, the inter-departure time, T(i) - T(i-1), is defined as the difference in departure-time of two groups of packets. Finally, the inter-group delay variation, d(i), is defined as the difference between the inter-arrival time and the inter-departure time. Or interpreted differently, as the difference between the delay of group i and group i-1.
 
     d(i) = t(i) - t(i-1) - (T(i) - T(i-1))
 
-An inter-departure time is computed between consecutive groups as T(i) - T(i-1), where T(i) is the departure timestamp of the last packet in the current packet group being processed.  Any packets received out of order are ignored by the arrival-time model.
+An inter-departure time is computed between consecutive groups as T(i) - T(i-1), where T(i) is the departure timestamp of the last packet in the current packet group being processed. Any packets received out of order are ignored by the arrival-time model.
 
 Each group is assigned a receive time t(i), which corresponds to the time at which the last packet of the group was received.
 
@@ -30,13 +30,13 @@ Each group is assigned a receive time t(i), which corresponds to the time at whi
 The parameter d(i) is readily available for each group of packets, i > 1. We will use a EWMA filter to remove any noise in d(i), to get a inter-group delay variation estimate m(i).
 
 For i > 1,
-    `m(i) = m(i - 1) * (1 - EWMA_FACTOR) + d(i) * EWMA_FACTOR`
+`m(i) = m(i - 1) * (1 - EWMA_FACTOR) + d(i) * EWMA_FACTOR`
 
 The RECOMMENDED value for EWMA_FACTOR is 0.3.
 
 As a the special case to handle initialization,
 For i == 1
-    `m(i) = d(i)`
+`m(i) = d(i)`
 
 ## Over-use detector
 
@@ -54,29 +54,28 @@ The rate control is designed to increase the estimate of the available bandwidth
 As soon as over-use has been detected, the available bandwidth estimated by the controller is decreased.
 
 The rate control subsystem has 3 states: Increase, Decrease and Hold.
-   - "Increase" is the state when no congestion is detected
-   - "Decrease" is the state where congestion is detected
-   - "Hold" is a state that waits until built-up queues have drained before going to "increase" state.
+
+- "Increase" is the state when no congestion is detected
+- "Decrease" is the state where congestion is detected
+- "Hold" is a state that waits until built-up queues have drained before going to "increase" state.
 
 The state transitions (with blank fields meaning "remain in state") are:
 
-|Signal \ State| Hold      | Increase   |Decrease|
-| -----------  | ----------| ---------- | ------ |
-|  Over-use    | Decrease  |  Decrease  |        |
-|  Normal      | Increase  |            |  Hold  |
-|  Under-use   |           |   Hold     |  Hold  |
+| Signal \ State | Hold     | Increase | Decrease |
+| -------------- | -------- | -------- | -------- |
+| Over-use       | Decrease | Decrease |          |
+| Normal         | Increase |          | Hold     |
+| Under-use      |          | Hold     | Hold     |
 
 New bitrate message is sent once every update_interval duration, except when switching from Increase state to Decrease state where a new bitrate message will be sent immediately. The RECOMMENDED value of update_interval is 1 second
 
 Herein we define incoming_bitrate R(i) as follows. It is the incoming bitrate measured over the last 250ms.
 
 The new bitrate A(i) will be calculated as follows
+
 ### Increase bitrate
 
-The bitrate is increased to a new value only if the following conditions are met.
-    - System is currently in "Increase state"
-    - update_interval duration has passed since we sent the last new bitrate message
-    - R(i) is greater than BANDWITH_USED_THRESHOLD times of A(i-1). The RECOMMENDED value of BANDWITH_USED_THRESHOLD is 0.95
+The bitrate is increased to a new value only if the following conditions are met. - System is currently in "Increase state" - update_interval duration has passed since we sent the last new bitrate message - R(i) is greater than BANDWITH_USED_THRESHOLD times of A(i-1). The RECOMMENDED value of BANDWITH_USED_THRESHOLD is 0.95
 
 The bitrate A(i) is updated as per the below equation
 
@@ -86,9 +85,7 @@ The value of increase_percent(i), is a value that starts with a high initial val
 
 ### Decrease bitrate
 
-The bitrate is decreased to a new value only if the following conditions are met.
-    - System is currently in "Decrease state"
-    - update_interval duration has passed since we sent the last "decrease" bitrate message
+The bitrate is decreased to a new value only if the following conditions are met. - System is currently in "Decrease state" - update_interval duration has passed since we sent the last "decrease" bitrate message
 
 The bitrate A(i) is updated as per the below equation
 
@@ -120,7 +117,6 @@ where,
 
 The RECOMMENDED value of CONVERGENCE_THRESHOLD_LOW is 0.80
 The RECOMMENDED value of CONVERGENCE_THRESHOLD_HIGH is 1.1
-
 
 ### Increase percentage
 
@@ -167,20 +163,20 @@ The RECOMMENDED value of INITIAL_PRE_BURST_MODE_COUNT is 5
 
 ## RECOMMENDED values and reasons
 
-| Parameter                     | RECOMMENDED value | Reason     |
-| ----------------------------- | ----------------- | ---------- |
-|  burst_time                   | 5ms               | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-4)  |
-|  EWMA_FACTOR                  | 0.3               | Based on heuristics. Not sure if it will work for all cases. We might need to replace this with a kalman filter, where this factor is changed adaptively. TODO for future. |
-|  del_var_th                   | 10ms              | Based on heuristics. Google Congestion control recommends an adaptive threshold of [6ms to 600ms](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.4), based on current network conditions. They mention that a static value will lead to starvation if there is a concurrent TCP flow. TODO for future. |
-|  overuse_time_th              | 10ms              | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.4) |
-|  update_interval              | 1 second          | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-3) |
-|  INITIAL_INCREASE_PERCENTAGE  | 4                 | Based on heuristics. A 4% increase every 1 second, will mean that we can double the bitrate in 18 seconds. This is quick enough to reach to available bandwidth. Also this is small enough to make sure that we don't lose a lot of packets when there is a congestion triggered due to this increase. Google Congestion control uses a different algorithm for increasing bitrate that didn't work for me very well. Maybe a TODO for future, if ppl find any limitations with this |
-|  DECREASE_RATIO               | 0.95              | Based on heuristics or faster convergence. [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.5) suggests a value between 0.8 to 0.95  |
-|  CONVERGENCE_THRESHOLD_LOW    | 0.8               | Based on heuristics or faster convergence. Google Congestion control have such concepts such as conditional saturate bandwidth which uses this value. These are our improvisations |
-|  CONVERGENCE_THRESHOLD_HIGH   | 1.1               | Based on heuristics or faster convergence. Google Congestion control have such concepts such as conditional saturate bandwidth which uses this value. These are our improvisations |
-|  BANDWITH_USED_THRESHOLD      | 0.95              | Based on heuristics. Google Congestion control have a such concept of conditional saturate bandwidth. It always assumes bandwidth is fully used. These are our improvisations |
-|  BURST_BITRATE_RATIO          | 4                 | The current value being used in the dev branch, as of writing this document |
-| INITIAL_PRE_BURST_MODE_COUNT  | 5                 | Based on heuristics. Google Congestion control doesn't have a concept of burst bitrate |
+| Parameter                    | RECOMMENDED value | Reason                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| burst_time                   | 5ms               | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-4)                                                                                                                                                                                                                                                                                                                                                                            |
+| EWMA_FACTOR                  | 0.3               | Based on heuristics. Not sure if it will work for all cases. We might need to replace this with a kalman filter, where this factor is changed adaptively. TODO for future.                                                                                                                                                                                                                                                                                                           |
+| del_var_th                   | 10ms              | Based on heuristics. Google Congestion control recommends an adaptive threshold of [6ms to 600ms](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.4), based on current network conditions. They mention that a static value will lead to starvation if there is a concurrent TCP flow. TODO for future.                                                                                                                                                      |
+| overuse_time_th              | 10ms              | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.4)                                                                                                                                                                                                                                                                                                                                                                          |
+| update_interval              | 1 second          | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-3)                                                                                                                                                                                                                                                                                                                                                                            |
+| INITIAL_INCREASE_PERCENTAGE  | 4                 | Based on heuristics. A 4% increase every 1 second, will mean that we can double the bitrate in 18 seconds. This is quick enough to reach to available bandwidth. Also this is small enough to make sure that we don't lose a lot of packets when there is a congestion triggered due to this increase. Google Congestion control uses a different algorithm for increasing bitrate that didn't work for me very well. Maybe a TODO for future, if ppl find any limitations with this |
+| DECREASE_RATIO               | 0.95              | Based on heuristics or faster convergence. [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.5) suggests a value between 0.8 to 0.95                                                                                                                                                                                                                                                                                               |
+| CONVERGENCE_THRESHOLD_LOW    | 0.8               | Based on heuristics or faster convergence. Google Congestion control have such concepts such as conditional saturate bandwidth which uses this value. These are our improvisations                                                                                                                                                                                                                                                                                                   |
+| CONVERGENCE_THRESHOLD_HIGH   | 1.1               | Based on heuristics or faster convergence. Google Congestion control have such concepts such as conditional saturate bandwidth which uses this value. These are our improvisations                                                                                                                                                                                                                                                                                                   |
+| BANDWITH_USED_THRESHOLD      | 0.95              | Based on heuristics. Google Congestion control have a such concept of conditional saturate bandwidth. It always assumes bandwidth is fully used. These are our improvisations                                                                                                                                                                                                                                                                                                        |
+| BURST_BITRATE_RATIO          | 4                 | The current value being used in the dev branch, as of writing this document                                                                                                                                                                                                                                                                                                                                                                                                          |
+| INITIAL_PRE_BURST_MODE_COUNT | 5                 | Based on heuristics. Google Congestion control doesn't have a concept of burst bitrate                                                                                                                                                                                                                                                                                                                                                                                               |
 
 # References
 
