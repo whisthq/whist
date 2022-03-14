@@ -19,14 +19,14 @@ def create_github_gist_post(github_gist_token, title, files_list):
     """
     Create a secret Github Gist for the E2E results. Add one file for each tuple
     in the files_list parameter. Print the html url of the secret Gist.
+
     Args:
-        github_gist_token (str): The Github Gist token to use for authentication
-        title (str): The title to give to the Gist
-        files_list (str): A list of tuples, where each tuple contains the name of a file
+        github_gist_token: The Github Gist token to use for authentication
+        title: The title to give to the Gist
+        files_list: A list of tuples, where each tuple contains the name of a file
                     to add to the Gist and the desired contents of the file
     Returns:
         None
-
     """
     # Display the results as a Github Gist
     client = Github(github_gist_token)
@@ -49,6 +49,7 @@ def associate_branch_to_open_pr(branch_name):
 
     Args:
         branch_name (str): The name of the branch for which we are looking for an open PR
+
     Returns:
         On success (an open PR is found):
             pr_number (int): The PR number of the open PR
