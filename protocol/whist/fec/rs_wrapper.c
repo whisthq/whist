@@ -2,7 +2,7 @@
 #include <SDL2/SDL_thread.h>
 
 #include <whist/core/whist.h>
-#include <whist/fec/cm256/cm256.h>
+#include "cm256/cm256.h"
 #include "rs_common.h"
 #include "lugi_rs_extra.h"
 #include "rs_wrapper.h"
@@ -74,36 +74,133 @@ two function below are interfaces to talk with the RS libs. In addition they han
 with dup and dedup
 */
 
-// do rs_encode, or simply duplicate the buffer if k is 1
-// when k is 1, n can be arbitrary large, otherwise k<=n<=256
-static inline void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int sz);
+/**
+ * @brief                          do RS encode with the RS wrapper, handle k=1 with dup
+ *
+ * @param k                        num of original buffers
+ * @param n                        num of total buffers (original+redundant)
+ * @param src                      an arrary of original buffers
+ * @param dst                      an arrary of redundant buffers, the memeroy should be already
+ *                                 allocated before passing here
+ * @param sz                       size of buffers
+ *
+ * @note                           when k is 1, n can be arbitrary large, otherwise k<=n<=256
+ */
+static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int sz);
 
-// do rs_decode, or simply deduo the buffer if k is 1
-// when k is 1, n can be arbitrary large, otherwise k<=n<=256
-static inline int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int sz);
+/**
+ * @brief                          do RS decode with the RS wrapper
+ *
+ * @param k                        num of original buffers
+ * @param n                        num of total buffers (original+redundant)
+ * @param pkt                      an array of input buffers, may contain orginal buffer and
+ *                                 redundant buffer in any order
+ * @param index                    an array of index of buffers
+ * @param dst                      an arrary of output buffers, the memeroy should be already
+ *                                 allocated before passing here
+ *
+ * @param sz                       size of buffers
+ * @returns                        zero on success
+ */
+
+/**
+ * @brief                          do RS decode with the RS wrapper
+ *
+ * @param k                        num of original buffers
+ * @param n                        num of total buffers (original+redundant)
+ * @param rs_wrapper               RSwrapper object created by rs_wrapper_create()
+ * @param pkt                      an array of input buffers, may contain orginal buffer and
+ *                                 redundant buffer in any order. used as output as well
+ * @param index                    an array of index of buffers
+ * @param sz                       size of buffers
+ *
+ * @returns                        zero on success
+ *
+ * @note                           after success, all orginal buffers are store inside the
+ *                                 first k position of pkt, in correct
+ *                                 order. when k is 1, n can be arbitrary large, otherwise
+ *                                 k<=n<=256
+ */
+static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int sz);
 
 /*
 the below 3 functions are highly associated, they decide how to partition the buffers, and how to do
 the mapping
 */
 
-// generate a partition plan for the rs_wrapper, and fill that into rs_wrapper
+/**
+ * @brief                          do RS decode with the RS wrapper
+ *
+ * @param rs_wrapper               (input and output) RSwrapper object created by
+ *                                 rs_wrapper_create()
+ * @note                           the function reads basics parameters inside rs_wrapper, and fill
+ *                                 the partition info into rs_wrapper
+ */
 static void fill_partition_plan(RSWrapper *rs_wrapper);
 
-// map the full index into sub index (and group_id)
+/**
+ * @brief                          map the full index into sub index (and group_id)
+ *
+ * @param rs_wrapper               RSwrapper object created by rs_wrapper_create()
+ * @param index                    the full index before splitting into groups
+ *
+ * @returns                        group id, with sub_index inside group
+ */
 static SubIndexInfo index_full_to_sub(RSWrapper *rs_wrapper, int index);
 
-// map the group_id and sub_index into full index
+/**
+ * @brief                          map the group_id and sub_index into full index
+ *
+ * @param rs_wrapper               RSwrapper object created by rs_wrapper_create()
+ * @param group_id                 the id of group, i.e. the index of group
+ * @param sub_index                the sub index inside group
+ *
+ * @returns                        the full index without groups involved
+ */
 static int index_sub_to_full(RSWrapper *rs_wrapper, int group_id, int sub_index);
 
-// the inner version of rs_wrapper_create, let you control num of groups by yourself
+/**
+ * @brief                          the inner version of rs_wrapper_create, with on extra parameter,
+ *                                 allow you to control of num of groups
+ *
+ * @param num_real_buffers         num of original buffers
+ * @param num_total_buffers        num of buffers in total
+ * @param num_groups               num of groups spliting into
+ *
+ * @returns                        The RS wrapper
+ */
 static RSWrapper *rs_wrapper_create_inner(int num_real_buffers, int num_total_buffers,
                                           int num_groups);
 
-// defines the "overhead" of a group
-// the "overhead" here is defined as roughly how much "unit" of computation is spent on average on
-// each input+output bytes
+/**
+ * @brief                          defines and calculates the "overhead" of a group
+ *
+ * @param num_real_buffers         num of original buffers of group
+ * @param num_fec_buffer           num of fec buffers of group
+ *
+ * @returns                        The "overhead" of group
+ *
+ * @note                           the "overhead" here is defined as roughly how much "unit" of
+ *                                 computation is spent on average on each input+output bytes.
+ *                                 see details in the implemnetation of this function below
+ */
 static double overhead_of_group(int num_real_buffers, int num_fec_buffers);
+
+/**
+ * @brief                          a helper function to help decide partiton of an integer.
+ *
+ * @param integer_to_partition     the integer to partition
+ * @param group_id                 the id of group
+ * @param group_num                the num of groups
+ * @returns                        The num of buffers inside the group with the above id
+ *
+ * @note                           fill_partition_plan() calls this function inside.
+ *                                 fill_partition_plan aims at partition plan of FEC
+ *                                 this function is only a helper function aims at partition
+ *                                 an integer
+ */
+static int int_partition_helper(int integer_to_partition, int group_id, int group_num);
+
 /*
 ============================
 Public Function Implementations
@@ -127,10 +224,17 @@ RSWrapper *rs_wrapper_create(int num_real_buffers, int num_total_buffers) {
     int num_fec_buffers = num_total_buffers - num_real_buffers;
 
     int num_groups = -1;
+
+    // try each num of groups start from 1 to num_real_buffers - 1
+    // see if the num satifise the max_group_size and max_group_overhead limitation
     for (int i = 1; i < num_real_buffers; i++) {
+        // compute the max num of packets inside each group, the assumption is the groups are
+        // partitoned evenly
         int max_num_real_in_groups = int_div_roundup(num_real_buffers, i);
         int max_num_fec_in_groups = int_div_roundup(num_fec_buffers, i);
 
+        // if this num of groups satisfies both the max_group_size and max_group_overhead
+        // limitation, use this num
         if ((max_num_real_in_groups + max_num_fec_in_groups <= rs_wrapper_max_group_size) &&
             (overhead_of_group(max_num_real_in_groups, max_num_fec_in_groups) <=
              rs_wrapper_max_group_overhead)) {
@@ -145,6 +249,7 @@ RSWrapper *rs_wrapper_create(int num_real_buffers, int num_total_buffers) {
         num_groups = num_real_buffers;
     }
 
+    // call inner function to do the rest works
     return rs_wrapper_create_inner(num_real_buffers, num_total_buffers, num_groups);
 }
 
@@ -285,10 +390,16 @@ void rs_wrapper_destory(RSWrapper *rs_wrapper) {
 }
 
 void rs_wrapper_decode_helper_register_index(RSWrapper *rs_wrapper, int index) {
+    // calculate the corresponding group
     SubIndexInfo info = index_full_to_sub(rs_wrapper, index);
+
+    // increase the counter of regisitered buffer inside the corrresponding group
     rs_wrapper->group_infos[info.group_id].num_buffers_registered++;
+
+    // if that group get enough packets for decoding
     if (rs_wrapper->group_infos[info.group_id].num_buffers_registered ==
         rs_wrapper->group_infos[info.group_id].num_real_buffers) {
+        // decreases the counter of groups pending
         rs_wrapper->num_pending_groups--;
         FATAL_ASSERT(rs_wrapper->num_pending_groups >= 0);
     }
@@ -296,10 +407,12 @@ void rs_wrapper_decode_helper_register_index(RSWrapper *rs_wrapper, int index) {
 
 bool rs_wrapper_decode_helper_can_decode(RSWrapper *rs_wrapper) {
     FATAL_ASSERT(rs_wrapper->num_pending_groups >= 0);
+    // if num of pending groups becomes 0, then we can decoder
     return rs_wrapper->num_pending_groups == 0;
 }
 
 void rs_wrapper_decode_helper_reset(RSWrapper *rs_wrapper) {
+    // reset all the counters
     rs_wrapper->num_pending_groups = rs_wrapper->num_groups;
     for (int i = 0; i < rs_wrapper->num_groups; i++) {
         rs_wrapper->group_infos[i].num_buffers_registered = 0;
@@ -333,11 +446,12 @@ Private Function Implementations
 static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int sz) {
     FATAL_ASSERT(k >= 0 && k < RS_FIELD_SIZE);
     FATAL_ASSERT(n >= 0);
-    // FATAL_ASSERT(index >= k && index < n);
     FATAL_ASSERT(k <= n);
 
+    // the num of fec packets
     int fec_num = n - k;
 
+    // handle k==1 case with duplication
     if (k == 1) {
         for (int i = 0; i < fec_num; i++) {
             memcpy(dst[i], src[0], sz);
@@ -346,6 +460,8 @@ static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int sz) {
     }
 
     FATAL_ASSERT(n <= RS_FIELD_SIZE);
+
+    // call the underlying lib according to rs_implementation_to_use
     switch (rs_implementation_to_use) {
         case CM256: {
             cm256_encoder_params params;
@@ -385,12 +501,14 @@ static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int sz) {
     FATAL_ASSERT(n >= 0);
     FATAL_ASSERT(k <= n);
 
+    // handle k==1 case with dedup
     if (k == 1) {
         index[0] = 0;
         return 0;
     }
     FATAL_ASSERT(n <= RS_FIELD_SIZE);
 
+    // call the underlying lib according to rs_implementation_to_use
     switch (rs_implementation_to_use) {
         case CM256: {
             cm256_encoder_params params;
@@ -407,7 +525,6 @@ static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int sz) {
             int r = cm256_decode(params, blocks);
 
             FATAL_ASSERT(r == 0);
-            // if(r!=0) return r;
 
             for (int i = 0; i < params.OriginalCount; i++) {
                 pkt[blocks[i].Index] = (char *)blocks[i].Block;
@@ -438,6 +555,7 @@ static void fill_partition_plan(RSWrapper *rs_wrapper) {
     int num_real_buffers = rs_wrapper->num_real_buffers;
     int num_fec_buffers = rs_wrapper->num_fec_buffers;
 
+    // get num of original buffers and fec buffers for each group
     for (int i = 0; i < num_groups; i++) {
         rs_wrapper->group_infos[i].num_real_buffers =
             int_partition_helper(num_real_buffers, i, num_groups);
@@ -449,6 +567,7 @@ static void fill_partition_plan(RSWrapper *rs_wrapper) {
 static SubIndexInfo index_full_to_sub(RSWrapper *rs_wrapper, int index) {
     FATAL_ASSERT(0 <= index && index < rs_wrapper->num_real_buffers + rs_wrapper->num_fec_buffers);
 
+    // index mapping to group id and sub_index
     SubIndexInfo info;
     if (index < rs_wrapper->num_real_buffers) {
         info.group_id = index % rs_wrapper->num_groups;
@@ -463,6 +582,8 @@ static SubIndexInfo index_full_to_sub(RSWrapper *rs_wrapper, int index) {
 
 static int index_sub_to_full(RSWrapper *rs_wrapper, int group_id, int sub_index) {
     FATAL_ASSERT(0 <= group_id && group_id < rs_wrapper->num_groups);
+
+    // group id and sub_index mapping back
     if (sub_index < rs_wrapper->group_infos[group_id].num_real_buffers) {
         return group_id + sub_index * rs_wrapper->num_groups;
     } else {
@@ -472,7 +593,6 @@ static int index_sub_to_full(RSWrapper *rs_wrapper, int group_id, int sub_index)
     }
 }
 
-// create a rs_wrapper, while let you control the num_groups by yourself
 static RSWrapper *rs_wrapper_create_inner(int num_real_buffers, int num_total_buffers,
                                           int num_groups) {
     FATAL_ASSERT(num_real_buffers > 0);
