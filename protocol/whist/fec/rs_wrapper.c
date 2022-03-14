@@ -1,11 +1,8 @@
-//#include <pthread.h>
-
 #include <string.h>
 #include <SDL2/SDL_thread.h>
 
-#include "whist/core/whist.h"
-#include "whist/fec/lugi_rs.h"
-#include "whist/fec/cm256/cm256.h"
+#include <whist/core/whist.h>
+#include <whist/fec/cm256/cm256.h>
 #include "rs_common.h"
 #include "lugi_rs_extra.h"
 #include "rs_wrapper.h"
@@ -30,7 +27,7 @@ typedef struct {
     int num_real_buffers;        // num of real buffers of the group
     int num_fec_buffers;         // num of fec buffers of the group
     int num_buffers_registered;  // stores how many buffers we have "received" for this group, to
-                                 // help detect if decoding can happen in O(1) time
+                                 // help detect if decoding can happen, in O(1) time
 } GroupInfo;
 
 // the main struct of RSWrapper
@@ -63,6 +60,7 @@ static int rs_wrapper_max_group_size = 256;
 // this value. set overhead_of_group() function for the definition of overhead
 static double rs_wrapper_max_group_overhead = 20.0;
 
+// only for debug and testing
 static int verbose_log = 0;
 
 /*
@@ -72,8 +70,8 @@ Private Function Declarations
 */
 
 /*
-two function below are interfaces to talk with the RS libs. In addition it handles special case with
-dup and dedup
+two function below are interfaces to talk with the RS libs. In addition they handle special case
+with dup and dedup
 */
 
 // do rs_encode, or simply duplicate the buffer if k is 1
@@ -332,7 +330,7 @@ Private Function Implementations
 ============================
 */
 
-inline static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int sz) {
+static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int sz) {
     FATAL_ASSERT(k >= 0 && k < RS_FIELD_SIZE);
     FATAL_ASSERT(n >= 0);
     // FATAL_ASSERT(index >= k && index < n);
@@ -381,7 +379,8 @@ inline static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int 
         }
     }
 }
-inline static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int sz) {
+
+static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int sz) {
     FATAL_ASSERT(k >= 0 && k < RS_FIELD_SIZE);
     FATAL_ASSERT(n >= 0);
     FATAL_ASSERT(k <= n);

@@ -61,7 +61,9 @@ bool rs_wrapper_decode_helper_can_decode(RSWrapper *rs_wrapper);
 void rs_wrapper_decode_helper_reset(RSWrapper *rs_wrapper);
 
 /*
-the below functions are mainly for testing
+============================
+Public Functions, only for testing
+============================
 */
 
 // set the inner rs_wrapper_max_group_size to the given value

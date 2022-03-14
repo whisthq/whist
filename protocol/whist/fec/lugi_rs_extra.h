@@ -2,7 +2,7 @@
 #include "whist/fec/lugi_rs.h"
 
 /**
- * @brief                          init the lugi_rs_extra system.
+ * @brief                          init the lugi_rs_extra subsystem.
  *
  * @note                           this function calls init_rs() of lugi's RS. No need to call
  *                                 init_rs() again.
