@@ -1,17 +1,21 @@
-add_compile_options("-O2")
+# this lib is 10x slower when compiled with O0
+# so, we always compile it with O2, even for debug release
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    #message(WARNING "Current ARCH is LINUx!!!")
     add_compile_options("-mavx2")
     add_compile_options("-Wno-restrict")
-    #message(WARNING "Current ARCH is LINUx!!!")
+    add_compile_options("-O2")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if(${MACOS_ARCHITECTURE} MATCHES "arm")
         #message(WARNING "Current ARCH is macos arm!!!")
+        add_compile_options("-O2")
     elseif( ${MACOS_ARCHITECTURE} MATCHES "x86" )
-        add_compile_options("-mavx2")
         #message(WARNING "Current ARCH is macos x86 or x64!!!")
+        add_compile_options("-mavx2")
+        add_compile_options("-O2")
     else()
         message(FATAL "unknown Darwin architecture: ${MACOS_ARCHITECTURE} ")
     endif()
@@ -19,11 +23,14 @@ endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if(MSVC)
-        add_compile_options("/arch:AVX2")
         #message(WARNING "Current ARCH is windows with MSVC!!!")
+        add_compile_options("/arch:AVX2")
+        # TODO the below line doesn't work for MSVC
+        #add_compile_options("-O2")
     else()
-        add_compile_options("-mavx2")
         #message(WARNING "Current ARCH is windows with non-MSVC!!!")
+        add_compile_options("-mavx2")
+        add_compile_options("-O2")
     endif()
 endif()
 

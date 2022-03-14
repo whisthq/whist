@@ -1684,7 +1684,7 @@ TEST_F(ProtocolTest, FECTest) {
 TEST_F(ProtocolTest, FECTest2) {
     WhistTimer timer;
     WhistTimer timer2;
-    const int verbose_print = 1;
+    const int verbose_print = 0;
     init_fec();
 
     // better random generator than rand()

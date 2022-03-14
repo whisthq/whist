@@ -16,7 +16,7 @@ Defines
 ============================
 */
 
-#define USE_CM256 1
+#define USE_CM256 0
 
 // the info of position of where a buffer locates in the groups
 typedef struct {
@@ -75,6 +75,7 @@ static inline void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int 
 // do rs_decode, of simply deduo the buffer if k is 1
 // when k is 1, n can be arbitrary large, otherwise k<=n<=256
 static inline int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int sz);
+
 
 // the inner version of rs_wrapper_create, let you control num of groups by yourself
 static RSWrapper *rs_wrapper_create_inner(int num_real_buffers, int num_total_buffers,
