@@ -9,13 +9,11 @@
 import { app } from "electron"
 import path from "path"
 import events from "events"
-import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 import { sessionID, MAX_URL_LENGTH } from "@app/constants/app"
-import { electronLogPath } from "@app/main/utils/logging"
-import config, { loggingFiles } from "@app/config/environment"
+import config from "@app/config/environment"
 
 const { protocolName, protocolFolder } = config
 

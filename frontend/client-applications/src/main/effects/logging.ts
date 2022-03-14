@@ -45,20 +45,20 @@ const shouldNotLog = sleep.pipe(
   mapTo(false)
 )
 
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
 fromTrigger(WhistTrigger.logging)
   .pipe(withLatestFrom(merge(shouldLog, shouldNotLog), userEmail))
-  .subscribe(([logs, shouldLog, email]) => {
+  .subscribe(([logs, shouldLog, email]: [any, boolean, string]) => {
     if (shouldLog) {
-      if (!fs.existsSync(electronLogPath)) logFile = openLogFile()
+      if (logFile === undefined) logFile = openLogFile()
 
       const filtered = filterLogData(logs.data)
       const formatted = formatLogs(
         `${logs.title as string} -- ${email} -- ${(
           logs.msElapsed ?? 0
-        ).toString()}
-         ms since flow/trigger was started and ${(
-           Date.now() - sessionID
-         ).toString()} ms since app was started`,
+        ).toString()} ms since flow/trigger was started and ${(
+          Date.now() - sessionID
+        ).toString()} ms since app was started`,
         filtered
       )
 

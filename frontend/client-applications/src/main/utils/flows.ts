@@ -107,8 +107,6 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
         Original observable
     */
 
-  const startTime = Date.now()
-
   obs.pipe(share()).subscribe((x: any) => {
     TriggerChannel.next({
       name: `${name}`,
