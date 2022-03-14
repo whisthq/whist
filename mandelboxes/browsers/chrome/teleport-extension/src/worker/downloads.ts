@@ -39,14 +39,6 @@ const initFileSyncHandler = () => {
       )
     }
   )
-
-  // Listen for popup upload button click
-  chrome.runtime.onMessage.addListener(
-    (msg: string, sender: chrome.runtime.MessageSender, sendResponse: any) => {
-      hostPort.postMessage({ fileUploadTrigger: true })
-      sendResponse({})
-    }
-  )
 }
 
 export { initFileSyncHandler }
