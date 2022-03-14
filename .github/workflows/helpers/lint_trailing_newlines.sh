@@ -9,5 +9,4 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Working directory is whist/
 cd "$DIR"/../../..
 
-fd --hidden --exclude .git --exec .github/workflows/helpers/fix_trailing_newline.sh
-
+fd --exec .github/workflows/helpers/fix_trailing_newline.sh
