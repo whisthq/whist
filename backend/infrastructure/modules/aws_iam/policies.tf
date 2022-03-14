@@ -1,7 +1,10 @@
-# In this file we define the policies for IAM roles and user groups
+# In this file we define the policies for our IAM roles and user groups
 
+#
 # Data for IAM role assume policies
+#
 
+# This policy is used for AWS service roles, like Compute Optimizer, etc.
 data "aws_iam_policy_document" "EC2AssumeRolePolicy" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -13,10 +16,13 @@ data "aws_iam_policy_document" "EC2AssumeRolePolicy" {
   }
 }
 
-# Custom policies for IAM roles
+#
+# Custom Whist policies for IAM roles
+#
 
 # This policy is meant to have S3 read only access, EC2 read access
-# and permissions to start and terminate instances (on-demand and spot)
+# and permissions to start and terminate instances (on-demand and spot). 
+# It is used by our backend for scaling instances up and down.
 data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
   statement {
     # This statement represents the EC2ReadOnlyAccess permissions
@@ -29,7 +35,7 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
     ]
   }
 
-  # This statement adds permissions to interact with instances
+  # This statement adds permissions to interact with EC2 instances
   statement {
     actions = [
       "ec2:CreateTags",
@@ -63,8 +69,9 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
     ]
   }
 
-  # This statement will only evaluate if the environment is not prod.
-  # It enables SSM to access instances.
+  # This statement will only evaluate if the environment is not `prod`.
+  # It enables SSM to access instances (for debugging), but does not allow
+  # it in `prod` (for user privacy/security).
   dynamic "statement" {
     for_each = var.env != "prod" ? [1] : []
     content {
@@ -92,11 +99,12 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
   }
 }
 
-# This policy gives Packer the minimum amount of permissions to work. 
-# It is a slightly modified version to include spot instance access.
-# See: https://www.packer.io/plugins/builders/amazon#iam-task-or-instance-role
+# This policy gives Packer the minimum amount of permissions to create AMIs. It 
+# is based on Packer's documentation, although it is slightly modified to include
+# Spot instance access. See: https://www.packer.io/plugins/builders/amazon#iam-task-or-instance-role
 data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
-  # This statement adds permissions to interact w
+  # This statement adds permissions to interact with EC2 for 
+  # creating AMIs
   statement {
     sid = "PackerImageAccess"
     actions = [
@@ -114,6 +122,7 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
   }
 
+  # This statement adds permissions to interact with EBS
   statement {
     sid = "PackerSnapshotAccess"
     actions = [
@@ -128,6 +137,8 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
   }
 
+  # This statement adds permissions to interact with EC2 + EBS together
+  # (i.e. detach an EBS volume from an EC2 instance)
   statement {
     sid = "PackerVolumeAccess"
     actions = [
@@ -143,6 +154,8 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
   }
 
+  # This statement adds permissions to create new Security Groups for the 
+  # Packer Builder instances
   statement {
     sid = "PackerSecurityGroupAccess"
     actions = [
@@ -157,6 +170,8 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
   }
 
+  # This statement adds permissions to create SSH keypairs for Packer to communicate
+  # with the Packer Builder instances
   statement {
     sid = "PackerSecurityAccess"
     actions = [
@@ -174,6 +189,8 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
   }
 
+  # This statement adds permissions to run EC2 instances, both regular
+  # and Spot instances
   statement {
     sid = "PackerInstanceAccess"
     actions = [
@@ -194,10 +211,12 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
   }
 }
 
-# Custom group policies
+#
+# Custom Whist group policies
+#
 
-# This policy forces user to enable 2FA on their account, and
-# restricts access to resources otherwise.
+# This policy forces user to enable 2-FA on their account, and
+# restricts access to AWS Console resources otherwise.
 data "aws_iam_policy_document" "MFAPolicy" {
   statement {
     sid = "AllowViewAccountInfo"
@@ -231,6 +250,7 @@ data "aws_iam_policy_document" "MFAPolicy" {
     effect    = "Allow"
     resources = ["arn:aws:iam::*:user/$${aws:username}"]
   }
+  
   statement {
     sid = "AllowManageOwnSSHPublicKeys"
     actions = [
@@ -243,6 +263,7 @@ data "aws_iam_policy_document" "MFAPolicy" {
     effect    = "Allow"
     resources = ["arn:aws:iam::*:user/$${aws:username}"]
   }
+
   statement {
     sid = "AllowManageOwnGitCredentials"
     actions = [
@@ -255,6 +276,7 @@ data "aws_iam_policy_document" "MFAPolicy" {
     effect    = "Allow"
     resources = ["arn:aws:iam::*:user/$${aws:username}"]
   }
+
   statement {
     sid = "AllowManageOwnVirtualMFADevice"
     actions = [
@@ -264,6 +286,7 @@ data "aws_iam_policy_document" "MFAPolicy" {
     effect    = "Allow"
     resources = ["arn:aws:iam::*:user/$${aws:username}"]
   }
+
   statement {
     sid = "AllowManageOwnUserMFA"
     actions = [
@@ -275,6 +298,7 @@ data "aws_iam_policy_document" "MFAPolicy" {
     effect    = "Allow"
     resources = ["arn:aws:iam::*:user/$${aws:username}"]
   }
+
   statement {
     sid = "DenyAllExceptListedIfNoMFA"
     not_actions = [
