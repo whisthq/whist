@@ -1,6 +1,7 @@
 /* domain-whitelist.js
-
-   This rule will only allow access to users with specific email domains.
+ *
+ * This rule will only allow access to users with a @whist.com email address to
+ * access our `dev` and `staging` Auth0 tenants (and thus application(s)).
  */
 
 function emailDomainWhitelist(user, context, callback) {
