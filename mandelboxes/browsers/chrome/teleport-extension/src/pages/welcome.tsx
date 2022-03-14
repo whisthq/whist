@@ -10,7 +10,7 @@ const Welcome = () => (
         className="w-16 h-16 mx-auto opacity-0 animate-fade-in-up"
       />
       <div
-        className="mt-12 text-8xl font-bold text-gray-300 opacity-0 animate-fade-in-up"
+        className="mt-12 text-7xl font-bold text-gray-300 opacity-0 animate-fade-in-up"
         style={{ animationDelay: "600ms" }}
       >
         Welcome to{" "}
@@ -31,7 +31,7 @@ const Welcome = () => (
       className="outline-none absolute bottom-12 mx-auto opacity-0 animate-fade-in-up"
       style={{ animationDelay: "2000ms" }}
     >
-      <button className="px-12 py-4 text-gray-300 text-lg animate-pulse">
+      <button className="px-12 py-4 text-gray-300 text-lg font-bold animate-pulse">
         Show me the speed
       </button>
     </a>
