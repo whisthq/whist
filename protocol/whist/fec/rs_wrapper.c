@@ -38,6 +38,7 @@ struct RSWrapper {
     int num_fec_buffers;             // num of total FEC buffers
     int num_pending_groups;          // how many group havn't "received" enough buffers for decoding
     int group_max_num_real_buffers;  // the max num of real_buffers of all groups
+    int group_max_num_fec_buffers;   // the max num of fec_buffers of all groups
     GroupInfo *group_infos;          // an array of GroupInfo
 };
 
@@ -69,7 +70,7 @@ and dedup with the same interface
 
 // do rs_encode, or simply duplicate the buffer if k is 1
 // when k is 1, n can be arbitrary large, otherwise k<=n<=256
-static inline void rs_encode_or_dup(int k, int n, void *src[], void *dst, int index, int sz);
+static inline void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int sz);
 
 // do rs_decode, of simply deduo the buffer if k is 1
 // when k is 1, n can be arbitrary large, otherwise k<=n<=256
@@ -103,7 +104,6 @@ Public Function Implementations
 void init_rs_wrapper(void) {
     static int initialized = 0;
     if (initialized == 0) {
-        init_rs();
         lugi_rs_helper_init();
         FATAL_ASSERT(cm256_init() == 0);
         initialized = 1;
@@ -151,14 +151,13 @@ void rs_wrapper_encode(RSWrapper *rs_wrapper, void **src, void **dst, int sz) {
         int k = rs_wrapper->group_infos[0].num_real_buffers;
         int n = k + rs_wrapper->group_infos[0].num_fec_buffers;
 
-        for (int i = 0; i < rs_wrapper->num_fec_buffers; i++) {
-            rs_encode_or_dup(k, n, src, dst[i], rs_wrapper->num_real_buffers + i, sz);
-        }
+        rs_encode_or_dup(k, n, src, dst, sz);
         return;
     }
 
     // a buffer to store a subset of src
     void **src_sub = malloc(sizeof(void *) * rs_wrapper->group_max_num_real_buffers);
+    void **dst_sub = malloc(sizeof(void *) * rs_wrapper->group_max_num_fec_buffers);
 
     // perform the encoding group-wise
     for (int i = 0; i < rs_wrapper->num_groups; i++) {
@@ -167,10 +166,18 @@ void rs_wrapper_encode(RSWrapper *rs_wrapper, void **src, void **dst, int sz) {
             int full_index = index_sub_to_full(rs_wrapper, i, j);
             src_sub[j] = src[full_index];
         }
+        for (int j = 0; j < rs_wrapper->group_infos[i].num_fec_buffers; j++) {
+            int sub_index = rs_wrapper->group_infos[i].num_real_buffers + j;
+            int full_index = index_sub_to_full(rs_wrapper, i, sub_index);
+            dst_sub[j] = dst[full_index - rs_wrapper->num_real_buffers];
+        }
 
         // give a short name for those two values
         int k = rs_wrapper->group_infos[i].num_real_buffers;
         int n = k + rs_wrapper->group_infos[i].num_fec_buffers;
+
+        rs_encode_or_dup(k, n, src_sub, dst_sub, sz);
+        /*
 
         for (int j = 0; j < rs_wrapper->group_infos[i].num_fec_buffers; j++) {
             // map the indexes
@@ -180,9 +187,10 @@ void rs_wrapper_encode(RSWrapper *rs_wrapper, void **src, void **dst, int sz) {
             // do encoding with the underlying lib
             rs_encode_or_dup(k, n, src_sub, dst[full_index - rs_wrapper->num_real_buffers],
                              sub_index, sz);
-        }
+        }*/
     }
     free(src_sub);
+    free(dst_sub);
 }
 
 // do decode with the rs_wrapper
@@ -351,16 +359,21 @@ Private Function Implementations
 ============================
 */
 
-inline static void rs_encode_or_dup(int k, int n, void *src[], void *dst, int index, int sz) {
+inline static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int sz) {
     FATAL_ASSERT(k >= 0 && k < RS_FIELD_SIZE);
     FATAL_ASSERT(n >= 0);
-    FATAL_ASSERT(index >= k && index < n);
+    // FATAL_ASSERT(index >= k && index < n);
     FATAL_ASSERT(k <= n);
 
+    int fec_num = n - k;
+
     if (k == 1) {
-        memcpy(dst, src[0], sz);
+        for (int i = 0; i < fec_num; i++) {
+            memcpy(dst[i], src[0], sz);
+        }
         return;
     }
+
     FATAL_ASSERT(n <= RS_FIELD_SIZE);
     if (USE_CM256) {
         cm256_encoder_params params;
@@ -376,13 +389,17 @@ inline static void rs_encode_or_dup(int k, int n, void *src[], void *dst, int in
             blocks[i].Index = i;
         }
 
-        cm256_encode_block(params, blocks, index, dst);
+        for (int i = 0; i < fec_num; i++) {
+            cm256_encode_block(params, blocks, k + i, dst[i]);
+        }
 
         free(blocks);
 
     } else {
         RSCode *rs_code = get_rs_code(k, n);
-        rs_encode(rs_code, src, dst, index, sz);
+        for (int i = 0; i < fec_num; i++) {
+            rs_encode(rs_code, src, dst[i], k + i, sz);
+        }
     }
 }
 inline static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int sz) {
@@ -500,6 +517,8 @@ static RSWrapper *rs_wrapper_create_inner(int num_real_buffers, int num_total_bu
         FATAL_ASSERT(rs_wrapper->group_infos[i].num_real_buffers >= 0);
         rs_wrapper->group_max_num_real_buffers = max(rs_wrapper->group_max_num_real_buffers,
                                                      rs_wrapper->group_infos[i].num_real_buffers);
+        rs_wrapper->group_max_num_fec_buffers =
+            max(rs_wrapper->group_max_num_fec_buffers, rs_wrapper->group_infos[i].num_fec_buffers);
 
         if (rs_wrapper->group_max_num_real_buffers != 1) {
             // warm up the rs_table, so that some computation happens at creation time, so that
