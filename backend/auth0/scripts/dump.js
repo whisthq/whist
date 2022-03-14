@@ -1,19 +1,20 @@
-/*
-  Updates the local tenant.yaml file to match the current Auth0 configuration. This is necessary
-  so that tenant.yaml matches any modifications made in the Auth0 UI, so that none of those modifications
-  are overwritten on a new code push
-
-  To be called via:
-  yarn dump:[env]
-*/
+/* dump.js
+ *
+ * Updates the local tenant.yaml file to match the current Auth0 configuration. This is necessary
+ * so that tenant.yaml matches any modifications made in the Auth0 UI, so that none of those modifications
+ * are overwritten on a new code push
+ *
+ * To be called via:
+ * yarn dump:[env]
+ */
 
 const fs = require("fs")
 const YAML = require("yaml")
 const { dump } = require("auth0-deploy-cli")
 const { getConfig } = require("./config")
 
+// Auth0 tenant
 const env = process.argv[2]
-
 const config = getConfig(env)
 
 const arrayEquals = (l1, l2) => {
@@ -44,6 +45,8 @@ const applyMappings = (obj, mappings) => {
   return obj
 }
 
+// Retrieve the current Auth0 configuration from Auth0, and apply it
+// to the local Auth0 tenant.yaml file.
 dump({
   output_folder: ".",
   format: "yaml",
@@ -56,10 +59,9 @@ dump({
       Object.entries(config.AUTH0_KEYWORD_REPLACE_MAPPINGS)
     )
     const output = YAML.stringify(mappedYaml, { schema: "yaml-1.1" })
-      // Auth0 errors if @@TAG@@ is in quotes, so remove the quotes
+      // Auth0 errors if @@TAG@@ is in quotes, so we remove the quotes
       .replace(/\"@@|@@\"/g, "@@")
     fs.writeFileSync("tenant.yaml", output)
-
     console.log(`Successfully dumped from Auth0 ${env} tenant!`)
   })
   .catch((err) =>

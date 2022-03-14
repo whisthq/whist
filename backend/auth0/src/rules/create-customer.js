@@ -1,8 +1,8 @@
 /* create-customer.js
-
-   Each time a user logs in, determine whether or not a Stripe customer record
-   is already associated with their account. If no such record exists, create
-   one and start a free trial of Whist.
+ *
+ * Each time a user logs in, determine whether or not a Stripe customer record
+ * is already associated with their account. If no such record exists, create
+ * one and start a free trial of Whist.
  */
 
 function createCustomer(user, context, callback) {

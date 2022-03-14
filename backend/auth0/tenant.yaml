@@ -1,4 +1,9 @@
 rules:
+  - name: create-customer
+    script: ./rules/create-customer.js
+    stage: login_success
+    enabled: true
+    order: 1
   - name: add-customer-id-claim
     script: ./rules/add-customer-id-claim.js
     stage: login_success
@@ -9,17 +14,9 @@ rules:
     stage: login_success
     enabled: true
     order: 3
-  - name: create-customer
-    script: ./rules/create-customer.js
-    stage: login_success
-    enabled: true
-    order: 1
 rulesConfigs: []
 hooks: []
 pages:
-  - name: guardian_multifactor
-    enabled: false
-    html: ./pages/guardian_multifactor.html
   - name: login
     enabled: true
     html: ./pages/login.html
@@ -46,8 +43,8 @@ clients:
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
-    description: A service that performs administrative operations on the Fractal
-      webserver(s) on behalf of Fractal developers
+    description: A service that performs administrative operations on the Whist
+      webserver(s) on behalf of Whist developers
     grant_types:
       - client_credentials
     is_first_party: true
@@ -258,31 +255,6 @@ clientGrants:
     audience: "##WHIST_AUTHENTICATION_API##"
     scope:
       - backend
-guardianFactors:
-  - name: duo
-    enabled: false
-  - name: email
-    enabled: false
-  - name: otp
-    enabled: false
-  - name: push-notification
-    enabled: false
-  - name: recovery-code
-    enabled: true
-  - name: sms
-    enabled: false
-  - name: webauthn-platform
-    enabled: false
-  - name: webauthn-roaming
-    enabled: false
-guardianFactorProviders: []
-guardianFactorTemplates: []
-guardianPolicies:
-  policies: []
-guardianPhoneFactorSelectedProvider:
-  provider: auth0
-guardianPhoneFactorMessageTypes:
-  message_types: []
 roles:
   - name: Developer
     description: Whist developers
