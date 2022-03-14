@@ -188,7 +188,14 @@ int multithreaded_manage_client(void *opaque) {
     start_timer(&first_client_timer);
 
     while (!state->exiting) {
-        LOG_INFO("Is a client connected? %s", state->client.is_active ? "yes" : "no");
+        if (true) {
+            static timestamp_us last_log_time = 0;
+            timestamp_us now = current_time_us();
+            if (now - last_log_time > 10 * US_IN_SECOND) {
+                LOG_INFO("Is a client connected? %s", state->client.is_active ? "yes" : "no");
+                last_log_time = now;
+            }
+        }
 
         // If all threads have stopped using the active client, we can finally quit it
         if (state->client.is_deactivating && !threads_still_holding_active()) {
