@@ -34,7 +34,7 @@ flags=(
   "--enable-gpu-rasterization"
   "--enable-zero-copy"
   "--double-buffer-compositing"
-  "--disable-smooth-scrolling"
+  "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
   "--disable-font-subpixel-positioning"
   "--force-color-profile=display-p3-d65"
   "--disable-gpu-process-crash-limit"
@@ -44,7 +44,7 @@ flags=(
 
 if [[ $DARK_MODE == true ]]; then
   features="$features,WebUIDarkMode"
-  flags+=(--force-dark-mode)
+  flags+=("--force-dark-mode")
 fi
 
 if [[ $RESTORE_LAST_SESSION == true ]]; then
@@ -59,7 +59,14 @@ if [[ -n "$USER_AGENT" ]]; then
   flags+=("--user-agent=$USER_AGENT")
 fi
 
-# Passing the initial url from json transport as a parameter to the google-chrome command. If the url is not
+# Start Chrome in Kiosk mode (full-screen). This flag is used when the client is a
+# local Chromium browser integrating Whist to avoid duplicating the URL bar in the cloud tabs, and should
+# not be set when the client is a fully-streamed browser rendered via SDL.
+if [[ -n "$KIOSK_MODE" ]]; then
+  flags+=("--kiosk")
+fi
+
+# Passing the initial url from JSON transport as a parameter to the google-chrome command. If the url is not
 # empty, Chrome will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.
 flags+=("$INITIAL_URL")
