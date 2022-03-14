@@ -121,7 +121,7 @@ const Loading = (props: {
           percent={0}
           className="h-2"
           mockProgress={true}
-          mockSpeed={3}
+          mockSpeed={2.5}
         />
       </div>
       <div className="w-full text-center">
