@@ -35,7 +35,8 @@ module "secrets-manager" {
 }
 
 # Enable all AWS regions on Terraform. Doing this will create
-# all multi-region resources on each region declared below.
+# all multi-region resources on each region declared below. See 
+# `providers.tf` for the provider abbreviations used below.
 
 # ------------------------------ North America modules ------------------------------ #
 
