@@ -13,7 +13,7 @@ import Sentry from "@sentry/electron"
 import { fromTrigger } from "@app/main/utils/flows"
 import { relaunch } from "@app/main/utils/app"
 import { WhistTrigger } from "@app/constants/triggers"
-import { amplitudeLog, logging } from "@app/main/utils/logging"
+import { logToAmplitude } from "@app/main/utils/logging"
 import { persistClear } from "@app/main/utils/persist"
 import { destroyProtocol } from "@app/main/utils/protocol"
 import { emitOnSignal } from "@app/main/utils/observables"
@@ -51,8 +51,7 @@ const shouldSleep = merge(
 shouldSleep
   .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
   .subscribe(async ([, p]: [any, ChildProcess]) => {
-    await amplitudeLog("Whist sleeping")
-    logging("Application sleeping", {})
+    await logToAmplitude("Whist sleeping")
 
     destroyProtocol(p)
     relaunch({ sleep: true })
@@ -94,6 +93,6 @@ fromTrigger(WhistTrigger.stripeAuthRefresh)
 
 /* eslint-disable @typescript-eslint/no-misused-promises */
 fromTrigger(WhistTrigger.userRequestedQuit).subscribe(async () => {
-  await amplitudeLog("Whist force quit")
+  await logToAmplitude("Whist force quit")
   app.exit()
 })

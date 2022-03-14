@@ -92,6 +92,9 @@ const WhistTrigger = {
 
   // Protocol triggers
   protocolError: "protocolError",
+
+  // Logging triggers
+  logging: "logging",
 }
 
 export { WhistTrigger }

@@ -7,7 +7,7 @@ import {
 } from "electron"
 
 import config from "@app/config/environment"
-import { amplitudeLog } from "@app/main/utils/logging"
+import { logToAmplitude } from "@app/main/utils/logging"
 import { ipcBroadcastUIEvent } from "@app/main/utils/ipc"
 import { UIEvent } from "@app/@types/uiEvent"
 
@@ -158,7 +158,7 @@ const createElectronWindow = (args: {
   show?: boolean
 }) => {
   try {
-    amplitudeLog(`Creating window ${args.hash}`).catch((err) =>
+    logToAmplitude(`Creating window ${args.hash}`).catch((err) =>
       console.error(err)
     )
 
