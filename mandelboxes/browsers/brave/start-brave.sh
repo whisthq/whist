@@ -39,7 +39,6 @@ flags=(
   "--force-color-profile=display-p3-d65"
   "--disable-gpu-process-crash-limit"
   "--no-default-browser-check"
-  "--load-extension=/opt/teleport/chrome-extension"
 )
 
 if [[ $DARK_MODE == true ]]; then
