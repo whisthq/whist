@@ -11,7 +11,6 @@ set(WHIST_CLIENT_DEPENDS
         sdl_utils.c
         handle_server_message.c
         video.c
-        sdlscreeninfo.c
         sync_packets.c
         client_statistic.c
         renderer.c
