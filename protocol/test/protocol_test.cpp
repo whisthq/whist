@@ -1684,7 +1684,7 @@ TEST_F(ProtocolTest, FECTest) {
 TEST_F(ProtocolTest, FECTest2) {
     WhistTimer timer;
     WhistTimer timer2;
-    const int verbose_print = 1;
+    const int verbose_print = 0;
     init_fec();
 
     // better random generator than rand()
@@ -1697,20 +1697,20 @@ TEST_F(ProtocolTest, FECTest2) {
     const int large_buffer_size = num_segments * (segment_size - FEC_HEADER_SIZE) - 10;
     const double fec_ratio = 0.5;
     // std::vector<int> max_group_sizes = {32, 64, 128, 256};
-    std::vector<int> max_group_overheads = {5, 10, 20, 40, 999999};
+    std::vector<double> max_group_overheads = {5, 10, 20, 40, 999999};
 
-    int saved_max_group_overhead = rs_wrapper_set_max_group_overhead(-1);
+    double saved_max_group_overhead = rs_wrapper_set_max_group_overhead(-1);
 
     if (verbose_print) {
         rs_wrapper_set_verbose_log(1);
     }
 
     for (int idx = 0; idx < (int)max_group_overheads.size(); idx++) {
-        int max_group_overhead = max_group_overheads[idx];
+        double max_group_overhead = max_group_overheads[idx];
         rs_wrapper_set_max_group_overhead(max_group_overhead);
 
         if (verbose_print) {
-            fprintf(stderr, "=====current max_group_overhead=%d=====\n", max_group_overhead);
+            fprintf(stderr, "=====current max_group_overhead=%f=====\n", max_group_overhead);
         }
 
         char buf[large_buffer_size];

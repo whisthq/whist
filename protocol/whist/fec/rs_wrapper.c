@@ -59,9 +59,9 @@ static RSImplementation rs_implementation = CM256;
 // of a macro, for easy testing; client and server should have same value
 static int rs_wrapper_max_group_size = 256;
 
-// another limitation for group spliting, after split the "overhead" of each group will not exceed this value.
-// set overhead_of_group() function for the definition of overhead
-static int rs_wrapper_max_group_overhead = 20;
+// another limitation for group spliting, after split the "overhead" of each group will not exceed
+// this value. set overhead_of_group() function for the definition of overhead
+static double rs_wrapper_max_group_overhead = 20;
 
 static int verbose_log = 0;
 
@@ -103,7 +103,7 @@ static RSWrapper *rs_wrapper_create_inner(int num_real_buffers, int num_total_bu
                                           int num_groups);
 
 // defines the "overhead" of a group
-static double overhead_of_group(int num_real_buffers,int num_fec_buffers);
+static double overhead_of_group(int num_real_buffers, int num_fec_buffers);
 /*
 ============================
 Public Function Implementations
@@ -132,7 +132,8 @@ RSWrapper *rs_wrapper_create(int num_real_buffers, int num_total_buffers) {
         int max_num_fec_in_groups = int_div_roundup(num_fec_buffers, i);
 
         if ((max_num_real_in_groups + max_num_fec_in_groups <= rs_wrapper_max_group_size) &&
-            ( overhead_of_group(max_num_real_in_groups,max_num_fec_in_groups) <= rs_wrapper_max_group_overhead)) {
+            (overhead_of_group(max_num_real_in_groups, max_num_fec_in_groups) <=
+             rs_wrapper_max_group_overhead)) {
             num_groups = i;
             break;
         }
@@ -326,7 +327,7 @@ int rs_wrapper_set_max_group_size(int a) {
     return save;
 }
 
-int rs_wrapper_set_max_group_overhead(int a) {
+double rs_wrapper_set_max_group_overhead(int a) {
     int save = rs_wrapper_max_group_overhead;
     if (a > 0) {
         rs_wrapper_max_group_overhead = a;
@@ -534,9 +535,9 @@ static RSWrapper *rs_wrapper_create_inner(int num_real_buffers, int num_total_bu
     return rs_wrapper;
 }
 
-static double overhead_of_group(int num_real_buffers,int num_fec_buffers)
-{
-    // most of RS lib has a encode time complexity and a worse decode time complexity of O(num_real_buffers*num_fec_buffers).
-    // the "overhead" here is defined as how much "unit" of computation is spent on average on each buffer (original + fec)
-    return ((double)num_real_buffers*num_fec_buffers)/(num_real_buffers+num_fec_buffers);
+static double overhead_of_group(int num_real_buffers, int num_fec_buffers) {
+    // most of RS lib has a encode time complexity and a worse decode time complexity of
+    // O(num_real_buffers*num_fec_buffers). the "overhead" here is defined as how much "unit" of
+    // computation is spent on average on each buffer (original + fec)
+    return ((double)num_real_buffers * num_fec_buffers) / (num_real_buffers + num_fec_buffers);
 }
