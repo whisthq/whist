@@ -2,6 +2,7 @@ package scaling_algorithms
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/hasura/go-graphql-client"
@@ -14,7 +15,10 @@ import (
 
 // Use a map to keep track of images that should not be scaled down.
 // This should only be used in the context of a deploy to avoid downtimes.
-var protectedFromScaleDown map[string]subscriptions.Image
+var (
+	protectedFromScaleDown map[string]subscriptions.Image
+	protectedMapLock       sync.Mutex
+)
 
 // VerifyInstanceScaleDown is a scaling action which fires when an instance is marked as DRAINING
 // on the database. Its purpose is to verify and wait until the instance is terminated from the
@@ -385,6 +389,10 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		UpdatedAt: time.Now(),
 	}
 
+	// Acquire lock on protected from scale down map
+	protectedMapLock.Lock()
+	defer protectedMapLock.Unlock()
+
 	// Protect the new instance buffer from scale down. This is done to avoid any downtimes
 	// during deploy, as the active image will be switched until the client app has updated
 	// its version on the config database.
@@ -409,6 +417,9 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		}
 	}
 
+	// Notify through the synchan that the image upgrade is done
+	// so that we can continue to swapover images when the config
+	// database updates
 	s.SyncChan <- true
 	return nil
 }
@@ -444,6 +455,11 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	default:
 		commitHash = version.DevCommitHash
 	}
+
+	// Acquire lock on protected from scale down map
+	protectedMapLock.Lock()
+	defer protectedMapLock.Unlock()
+
 	// Find protected image that matches the config db commit hash
 	for _, image := range protectedFromScaleDown {
 		if image.ClientSHA == commitHash {
