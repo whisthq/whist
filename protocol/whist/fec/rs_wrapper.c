@@ -436,7 +436,6 @@ inline static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int
             LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation);
         }
     }
-
 }
 
 static int int_partition_helper(int total, int group_id, int group_num) {
