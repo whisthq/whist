@@ -222,7 +222,7 @@ def setup_network_conditions_client(
         pexpect_process.sendline(command)
         # Since we are grabbing the output, running_in_ci must always be set to True in this case.
         ifconfig_output = wait_until_cmd_done(
-            pexpect_process, pexpect_prompt, running_in_ci=True, return_output=True
+            pexpect_process, pexpect_prompt, running_in_ci, return_output=True
         )
 
         ifconfig_output = [
@@ -294,9 +294,8 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     # Cannot use wait_until_cmd_done because we need to handle clase where ifconfig is not installed
     pexpect_process.sendline(command)
 
-    # Since we are grabbing the output, running_in_ci must always be set to True in this case.
     ifconfig_output = wait_until_cmd_done(
-        pexpect_process, pexpect_prompt, running_in_ci=True, return_output=True
+        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
     )
     # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know that no network degradations have been applied to the machine.
 
@@ -377,19 +376,14 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
 def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
     # Check if we are running out of space
     pexpect_process.sendline("df -h | grep --color=never /dev/root")
-    # Since we are grabbing the output, running_in_ci must always be set to True in this case.
     space_used_output = wait_until_cmd_done(
-        pexpect_process, pexpect_prompt, running_in_ci=True, return_output=True
+        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
     )
-
     for line in reversed(space_used_output):
         if "/dev/root" in line:
             space_used_output = line.split()
             break
     space_used_pctg = int(space_used_output[-2][:-1])
-
-    if not running_in_ci:
-        pexpect_process.expect(pexpect_prompt)
 
     # Clean up space on the instance by pruning all Docker containers if the disk is 75% (or more) full
     if space_used_pctg >= 75:

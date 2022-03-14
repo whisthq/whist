@@ -74,7 +74,6 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process on the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a new command
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
-        watched_stdout_pattern (str): A string that we are looking for in the output of the command sent to the pexpect process
 
     Returns:
         On Success:
@@ -87,8 +86,6 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
 
     """
     result = pexpect_process.expect([pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF])
-
-    watched_stdout_pattern_found = False
 
     # Handle timeout and error cases
     if result == 1:
