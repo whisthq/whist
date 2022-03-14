@@ -312,6 +312,12 @@ Next, run `cd test`. Now:
 
 To run the unit tests for the protocol, run `./WhistProtocolTest`
 
+On macOS, `make -j test` will build and run the unit tests.
+
+If only a particular test case needs to be run, then use the below `--gtest_filter` argument like in the example below.
+
+`GTEST_ARGS="--gtest_filter=ProtocolTest.LoggerTest" make test`
+
 ### Continuous Integration
 
 For every push or PR, the code will be automatically linted via clang-format according to the [styling](#styling) guidelines.

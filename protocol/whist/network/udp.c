@@ -197,6 +197,7 @@ typedef struct {
     NetworkSettings current_network_settings;
     // The network settings we're asking the other side to follow
     NetworkSettings desired_network_settings;
+    WhistMutex congestion_control_mutex;
     WhistTimer last_network_settings_time;
     // Group related stats and variables required for congestion control
     GroupStats group_stats[MAX_GROUP_STATS];
@@ -454,17 +455,22 @@ UDP Implementation of Network.h Interface
 ============================
 */
 
+static void send_desired_network_settings(UDPContext* context) {
+    UDPPacket network_settings_packet;
+    network_settings_packet.type = UDP_NETWORK_SETTINGS;
+    network_settings_packet.udp_network_settings_data.network_settings =
+        context->desired_network_settings;
+    udp_send_udp_packet(context, &network_settings_packet);
+}
+
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
                                    timestamp_us arrival_time, int group_id) {
+    whist_lock_mutex(context->congestion_control_mutex);
     // Initialize desired_network_settings if it is not done yet. Also send that starting bitrate
     // setting to server.
     if (context->desired_network_settings.video_bitrate == 0) {
         context->desired_network_settings = get_starting_network_settings();
-        UDPPacket network_settings_packet;
-        network_settings_packet.type = UDP_NETWORK_SETTINGS;
-        network_settings_packet.udp_network_settings_data.network_settings =
-            context->desired_network_settings;
-        udp_send_udp_packet(context, &network_settings_packet);
+        send_desired_network_settings(context);
     }
     bool send_network_settings = false;
     if (!FEATURE_ENABLED(WHIST_CONGESTION_CONTROL)) {
@@ -488,7 +494,6 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             }
             start_timer(&context->last_network_settings_time);
         }
-        UNUSED(get_incoming_bitrate);
     } else {
         GroupStats* group_stats = &context->group_stats[group_id % MAX_GROUP_STATS];
         // As per WCC.md,
@@ -516,12 +521,9 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         }
     }
     if (send_network_settings) {
-        UDPPacket network_settings_packet;
-        network_settings_packet.type = UDP_NETWORK_SETTINGS;
-        network_settings_packet.udp_network_settings_data.network_settings =
-            context->desired_network_settings;
-        udp_send_udp_packet(context, &network_settings_packet);
+        send_desired_network_settings(context);
     }
+    whist_unlock_mutex(context->congestion_control_mutex);
 }
 
 static bool udp_update(void* raw_context) {
@@ -943,8 +945,9 @@ static void udp_destroy_socket_context(void* raw_context) {
         }
     }
 
-    // Destroy the timestamp mutex
+    // Destroy the mutexes
     whist_destroy_mutex(context->timestamp_mutex);
+    whist_destroy_mutex(context->congestion_control_mutex);
 
     closesocket(context->socket);
     if (context->network_throttler != NULL) {
@@ -982,6 +985,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     memset(context, 0, sizeof(UDPContext));
     // Create the mutex
     context->timestamp_mutex = whist_create_mutex();
+    context->congestion_control_mutex = whist_create_mutex();
     context->last_ping_id = -1;
     // Whether or not we've ever connected
     context->connected = false;
@@ -1228,6 +1232,23 @@ bool udp_handle_pending_nacks(void* raw_context) {
         ret = true;
     }
     return ret;
+}
+
+void udp_handle_resize(SocketContext* socket_context, int dpi) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    if (context == NULL) {
+        return;
+    }
+    whist_lock_mutex(context->congestion_control_mutex);
+    network_algo_set_dpi(dpi);
+    NetworkSettings starting_network_settings = get_starting_network_settings();
+    // If the current bitrate is lesser than the starting bitrate of the new screen, use the
+    // new starting bitrate to avoid pixelation
+    if (context->desired_network_settings.video_bitrate < starting_network_settings.video_bitrate) {
+        context->desired_network_settings = starting_network_settings;
+        send_desired_network_settings(context);
+    }
+    whist_unlock_mutex(context->congestion_control_mutex);
 }
 /*
 ============================
