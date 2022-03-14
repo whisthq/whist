@@ -174,7 +174,6 @@ def parse_logs(parsed_logs, logs_page):
         # We need the component to separate out server vs client logs
         component = log["_source"]["component"]
 
-
         try:
             message_start = message.split()[0]
             timestamp = datetime.fromisoformat(message_start)
@@ -189,7 +188,8 @@ def parse_logs(parsed_logs, logs_page):
         else:
             # otherwise, this is mandlebox, so these are logs from the server
             origin = "server"
-        parsed_logs.append({ "origin": origin, "timestamp": timestamp, "message": message })
+        parsed_logs.append({"origin": origin, "timestamp": timestamp, "message": message})
+
 
 # Writes the server and client logs to two separate files
 # File names are SESSION_ID-client.log and SESSION_ID-server.log
