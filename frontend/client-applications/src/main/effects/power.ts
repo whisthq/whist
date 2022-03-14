@@ -43,7 +43,7 @@ const shouldSleep = merge(
       fromTrigger(WhistTrigger.userRequestedQuit),
       fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
         withLatestFrom(fromTrigger(WhistTrigger.protocolConnection)),
-        filter(([, connected]) => !connected)
+        filter(([, connected]: [any, boolean]) => !connected)
       )
     )
   ),
@@ -90,7 +90,7 @@ emitOnSignal(
 fromTrigger(WhistTrigger.stripeAuthRefresh)
   .pipe(
     withLatestFrom(fromTrigger(WhistTrigger.protocolConnection)),
-    filter(([, connected]) => !connected)
+    filter(([, connected]: [any, boolean]) => !connected)
   )
   .subscribe(() => {
     relaunch({ sleep: false })
