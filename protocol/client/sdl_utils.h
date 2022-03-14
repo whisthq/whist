@@ -22,6 +22,7 @@ Includes
 #include <whist/core/whist.h>
 #include "sdlscreeninfo.h"
 #include "video.h"
+#include "frontend/frontend.h"
 
 /*
 ============================
@@ -55,7 +56,8 @@ bool get_skip_taskbar(void);
  * @returns                        NULL if fails to create SDL window, else it
  *                                 returns the SDL window variable
  */
-SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename);
+SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename,
+                     WhistFrontend** frontend);
 
 /**
  * @brief                          Destroys an SDL window and associated

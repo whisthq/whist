@@ -8,6 +8,11 @@ typedef struct WhistFrontend WhistFrontend;
 typedef struct WhistFrontendFunctionTable {
     int (*init)(WhistFrontend* frontend);
     void (*destroy)(WhistFrontend* frontend);
+    void (*open_audio)(WhistFrontend* frontend, unsigned int frequency, unsigned int channels);
+    bool (*audio_is_open)(WhistFrontend* frontend);
+    void (*close_audio)(WhistFrontend* frontend);
+    int (*queue_audio)(WhistFrontend* frontend, const uint8_t* data, size_t size);
+    size_t (*get_audio_buffer_size)(WhistFrontend* frontend);
 } WhistFrontendFunctionTable;
 
 typedef void WhistFrontendEvent;
@@ -15,6 +20,7 @@ typedef void WhistAudioFormat;
 
 struct WhistFrontend {
     void* context;
+    unsigned int id;
     const WhistFrontendFunctionTable* call;
 };
 
@@ -22,15 +28,18 @@ const WhistFrontendFunctionTable* sdl_get_function_table(void);
 
 // Lifecycle
 WhistFrontend* whist_frontend_create_sdl(void);
-WhistFrontend* whist_Frontend_create_external(void);
+WhistFrontend* whist_frontend_create_external(void);
+unsigned int whist_frontend_get_id(WhistFrontend* frontend);
 void whist_frontend_destroy(WhistFrontend* frontend);
 
 // Audio
-int whist_frontend_open_audio(WhistFrontend* frontend, WhistAudioFormat* format);
-int whist_frontend_queue_audio(WhistFrontend* frontend, uint8_t* audio_data, size_t audio_data_size);
-int whist_frontend_toggle_audio(WhistFrontend* frontend, bool enabled);
+void whist_frontend_open_audio(WhistFrontend* frontend, unsigned int frequency,
+                               unsigned int channels);
+int whist_frontend_queue_audio(WhistFrontend* frontend, const uint8_t* audio_data,
+                               size_t audio_data_size);
 size_t whist_frontend_get_audio_buffer_size(WhistFrontend* frontend);
-int whist_frontend_close_audio(WhistFrontend* frontend);
+bool whist_frontend_audio_is_open(WhistFrontend* frontend);
+void whist_frontend_close_audio(WhistFrontend* frontend);
 
 // Display
 typedef struct {
@@ -90,7 +99,7 @@ int whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, in
 
 // Video
 int whist_frontend_render_solid(WhistFrontend* frontend, WhistRGBColor color);
-int whist_frontend_render_nv12(WhistFrontend* frontend, uint8_t *y_plane, uint8_t *uv_plane,
+int whist_frontend_render_nv12(WhistFrontend* frontend, uint8_t* y_plane, uint8_t* uv_plane,
                                int y_stride, int uv_stride, int x, int y, int width, int height);
 int whist_frontend_render_png(WhistFrontend* frontend, const char* filename);
 

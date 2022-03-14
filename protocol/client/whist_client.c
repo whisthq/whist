@@ -428,10 +428,12 @@ int whist_client_main(int argc, const char* argv[]) {
         }
 
         connected = true;
+        WhistFrontend* frontend = NULL;
 
         // Initialize the SDL window (and only do this once!)
         if (!window) {
-            window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
+            window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename,
+                              &frontend);
             if (!window) {
                 LOG_FATAL("Failed to initialize SDL");
             }
@@ -442,7 +444,7 @@ int whist_client_main(int argc, const char* argv[]) {
         send_message_dimensions();
 
         // Initialize audio and video renderer system
-        WhistRenderer* whist_renderer = init_renderer(output_width, output_height);
+        WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
 
         // reset because now connected
         try_amount = 0;
