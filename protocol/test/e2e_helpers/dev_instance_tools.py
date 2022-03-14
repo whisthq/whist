@@ -228,7 +228,7 @@ def install_and_configure_aws(
         or len(aws_secret_access_key) == 0
     ):
         print(f"Could not obtain the AWS credentials!")
-        sys.exit(-1)
+        return False
 
     # Step 2: Install the AWS CLI if it's not already there
 
@@ -291,7 +291,7 @@ def install_and_configure_aws(
                     "Installing 'unzip' using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
                 )
                 print("Installing AWS-CLI from source failed")
-                sys.exit(-1)
+                return False
 
             install_commands = [
                 # Download AWS installer
@@ -320,6 +320,7 @@ def install_and_configure_aws(
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     print("AWS configuration is now complete!")
+    return True
 
 
 def clone_whist_repository_on_instance(
