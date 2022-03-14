@@ -545,9 +545,9 @@ func TestUpgradeImage(t *testing.T) {
 		},
 	}
 	// Check that the new image was protected from scale down
-	ok = compareProtectedMaps(protectedFromScaleDown, testProtectedMap)
+	ok = compareProtectedMaps(testAlgorithm.protectedFromScaleDown, testProtectedMap)
 	if !ok {
-		t.Errorf("Protected from scale down map was not set correctly. Expected %v, got %v.", testProtectedMap, protectedFromScaleDown)
+		t.Errorf("Protected from scale down map was not set correctly. Expected %v, got %v.", testProtectedMap, testAlgorithm.protectedFromScaleDown)
 	}
 }
 
@@ -585,9 +585,9 @@ func TestSwapOverImages(t *testing.T) {
 	}
 
 	// Check that the new image was unprotected successfully
-	ok := compareProtectedMaps(protectedFromScaleDown, map[string]subscriptions.Image{})
+	ok := compareProtectedMaps(testAlgorithm.protectedFromScaleDown, map[string]subscriptions.Image{})
 	if !ok {
-		t.Errorf("Expected protected from scale down map to be empty, got: %v", protectedFromScaleDown)
+		t.Errorf("Expected protected from scale down map to be empty, got: %v", testAlgorithm.protectedFromScaleDown)
 	}
 
 	expectedImages := subscriptions.WhistImages{

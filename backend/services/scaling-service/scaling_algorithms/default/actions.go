@@ -2,7 +2,6 @@ package scaling_algorithms
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/hasura/go-graphql-client"
@@ -11,13 +10,6 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
-)
-
-// Use a map to keep track of images that should not be scaled down.
-// This should only be used in the context of a deploy to avoid downtimes.
-var (
-	protectedFromScaleDown map[string]subscriptions.Image
-	protectedMapLock       sync.Mutex
 )
 
 // VerifyInstanceScaleDown is a scaling action which fires when an instance is marked as DRAINING
@@ -195,7 +187,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			continue
 		}
 
-		_, protected := protectedFromScaleDown[string(instance.ImageID)]
+		_, protected := s.protectedFromScaleDown[string(instance.ImageID)]
 		if protected {
 			// Don't scale down instances with a protected image id. This is because the
 			// image id will not be switched over until the client has updated its version
@@ -389,15 +381,11 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		UpdatedAt: time.Now(),
 	}
 
-	// Acquire lock on protected from scale down map
-	protectedMapLock.Lock()
-	defer protectedMapLock.Unlock()
-
 	// Protect the new instance buffer from scale down. This is done to avoid any downtimes
 	// during deploy, as the active image will be switched until the client app has updated
 	// its version on the config database.
-	protectedFromScaleDown = make(map[string]subscriptions.Image)
-	protectedFromScaleDown[newImageID] = newImage
+	s.protectedFromScaleDown = make(map[string]subscriptions.Image)
+	s.protectedFromScaleDown[newImageID] = newImage
 
 	// If the region does not have an existing image, insert the new one to the database.
 	if len(imageResult) == 0 {
@@ -456,12 +444,8 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 		commitHash = version.DevCommitHash
 	}
 
-	// Acquire lock on protected from scale down map
-	protectedMapLock.Lock()
-	defer protectedMapLock.Unlock()
-
 	// Find protected image that matches the config db commit hash
-	for _, image := range protectedFromScaleDown {
+	for _, image := range s.protectedFromScaleDown {
 		if image.ClientSHA == commitHash {
 			newImage = image
 			newImageID = image.ImageID
@@ -502,7 +486,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	}
 
 	// Unprotect the image until we have successfully swapped images in database
-	delete(protectedFromScaleDown, newImage.ImageID)
+	delete(s.protectedFromScaleDown, newImage.ImageID)
 
 	return nil
 }

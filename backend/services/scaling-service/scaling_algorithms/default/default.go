@@ -32,15 +32,16 @@ type ScalingEvent struct {
 // DefaultScalingAlgorithm abstracts the shared functionalities to be used
 // by all of the different, region-based scaling algorithms.
 type DefaultScalingAlgorithm struct {
-	Host                 hosts.HostHandler
-	GraphQLClient        subscriptions.WhistGraphQLClient
-	DBClient             dbclient.WhistDBClient
-	Region               string
-	InstanceEventChan    chan ScalingEvent
-	ImageEventChan       chan ScalingEvent
-	ClientAppVersionChan chan ScalingEvent
-	ScheduledEventChan   chan ScalingEvent
-	SyncChan             chan bool // This channel is used to sync actions
+	Host                   hosts.HostHandler
+	GraphQLClient          subscriptions.WhistGraphQLClient
+	DBClient               dbclient.WhistDBClient
+	Region                 string
+	InstanceEventChan      chan ScalingEvent
+	ImageEventChan         chan ScalingEvent
+	ClientAppVersionChan   chan ScalingEvent
+	ScheduledEventChan     chan ScalingEvent
+	SyncChan               chan bool                      // This channel is used to sync actions
+	protectedFromScaleDown map[string]subscriptions.Image // Use a map to keep track of images that should not be scaled down
 }
 
 // CreateEventChans creates the event channels if they don't alredy exist.
