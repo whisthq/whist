@@ -1,5 +1,4 @@
-#ifndef RS_WRAPPER_H
-#define RS_WRAPPER_H
+#pragma once
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file rs_wrapper.h
@@ -79,5 +78,3 @@ void rs_wrapper_set_verbose_log(int value);
 //warp up the rs_table inside, helpful for measuring performance
 void rs_table_warmup(void);
 */
-
-#endif

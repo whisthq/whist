@@ -2,7 +2,8 @@ add_subdirectory(cm256)
 
 add_library(whistFEC STATIC
         lugi_rs.c
-	rs_wrapper.c
+        lugi_rs_helper.c
+        rs_wrapper.c
         fec.c
         )
 

@@ -1697,7 +1697,7 @@ TEST_F(ProtocolTest, FECTest2) {
     const int large_buffer_size = num_segments * (segment_size - FEC_HEADER_SIZE) - 10;
     const double fec_ratio = 0.5;
     // std::vector<int> max_group_sizes = {32, 64, 128, 256};
-    std::vector<int> max_group_costs = {10, 100, 1000, 4000};
+    std::vector<int> max_group_costs = {10, 100, 1000, 4000, 999999};
 
     int saved_max_group_cost = rs_wrapper_set_max_group_cost(-1);
 

@@ -1,29 +1,29 @@
 /*
-	Copyright (c) 2015 Christopher A. Taylor.  All rights reserved.
+    Copyright (c) 2015 Christopher A. Taylor.  All rights reserved.
 
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
 
-	* Redistributions of source code must retain the above copyright notice,
-	  this list of conditions and the following disclaimer.
-	* Redistributions in binary form must reproduce the above copyright notice,
-	  this list of conditions and the following disclaimer in the documentation
-	  and/or other materials provided with the distribution.
-	* Neither the name of CM256 nor the names of its contributors may be
-	  used to endorse or promote products derived from this software without
-	  specific prior written permission.
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+    * Neither the name of CM256 nor the names of its contributors may be
+      used to endorse or promote products derived from this software without
+      specific prior written permission.
 
-	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-	ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-	LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-	CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifndef CM256_H
@@ -35,7 +35,6 @@
 
 // Library version
 #define CM256_VERSION 2
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +50,6 @@ extern "C" {
  */
 extern int cm256_init_(int version);
 #define cm256_init() cm256_init_(CM256_VERSION)
-
 
 // Encoder parameters
 typedef struct cm256_encoder_params_t {
@@ -80,19 +78,17 @@ typedef struct cm256_block_t {
     // Ignored during encoding, required during decoding.
 } cm256_block;
 
-
 // Compute the value to put in the Index member of cm256_block
-static inline unsigned char cm256_get_recovery_block_index(cm256_encoder_params params, int recoveryBlockIndex)
-{
+static inline unsigned char cm256_get_recovery_block_index(cm256_encoder_params params,
+                                                           int recoveryBlockIndex) {
     assert(recoveryBlockIndex >= 0 && recoveryBlockIndex < params.RecoveryCount);
     return (unsigned char)(params.OriginalCount + recoveryBlockIndex);
 }
-static inline unsigned char cm256_get_original_block_index(cm256_encoder_params params, int originalBlockIndex)
-{
+static inline unsigned char cm256_get_original_block_index(cm256_encoder_params params,
+                                                           int originalBlockIndex) {
     assert(originalBlockIndex >= 0 && originalBlockIndex < params.OriginalCount);
     return (unsigned char)(originalBlockIndex);
 }
-
 
 /*
  * Cauchy MDS GF(256) encode
@@ -126,18 +122,17 @@ static inline unsigned char cm256_get_original_block_index(cm256_encoder_params 
  *
  * Returns 0 on success, and any other code indicates failure.
  */
-extern int cm256_encode(
-    cm256_encoder_params params, // Encoder parameters
-    cm256_block* originals,      // Array of pointers to original blocks
-    void* recoveryBlocks);       // Output recovery blocks end-to-end
+extern int cm256_encode(cm256_encoder_params params,  // Encoder parameters
+                        cm256_block* originals,       // Array of pointers to original blocks
+                        void* recoveryBlocks);        // Output recovery blocks end-to-end
 
 // Encode one block.
 // Note: This function does not validate input, use with care.
 extern void cm256_encode_block(
-    cm256_encoder_params params, // Encoder parameters
-    cm256_block* originals,      // Array of pointers to original blocks
-    int recoveryBlockIndex,      // Return value from cm256_get_recovery_block_index()
-    void* recoveryBlock);        // Output recovery block
+    cm256_encoder_params params,  // Encoder parameters
+    cm256_block* originals,       // Array of pointers to original blocks
+    int recoveryBlockIndex,       // Return value from cm256_get_recovery_block_index()
+    void* recoveryBlock);         // Output recovery block
 
 /*
  * Cauchy MDS GF(256) decode
@@ -157,14 +152,11 @@ extern void cm256_encode_block(
  *
  * Returns 0 on success, and any other code indicates failure.
  */
-extern int cm256_decode(
-    cm256_encoder_params params, // Encoder parameters
-    cm256_block* blocks);        // Array of 'originalCount' blocks as described above
-
+extern int cm256_decode(cm256_encoder_params params,  // Encoder parameters
+                        cm256_block* blocks);  // Array of 'originalCount' blocks as described above
 
 #ifdef __cplusplus
 }
 #endif
 
-
-#endif // CM256_H
+#endif  // CM256_H

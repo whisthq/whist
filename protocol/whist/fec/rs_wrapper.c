@@ -6,6 +6,8 @@
 #include "whist/core/whist.h"
 #include "whist/fec/lugi_rs.h"
 #include "whist/fec/cm256/cm256.h"
+#include "rs_common.h"
+#include "lugi_rs_helper.h"
 #include "rs_wrapper.h"
 
 /*
@@ -14,15 +16,7 @@ Defines
 ============================
 */
 
-// the size of field our rs lib working on
-#define RS_FIELD_SIZE 256
-
-// size of row and column of RSTable
-#define RS_TABLE_SIZE (RS_FIELD_SIZE + 1)
 #define USE_CM256 1
-
-// This is the type for the rs_table we use for caching
-typedef RSCode *RSTable[RS_TABLE_SIZE][RS_TABLE_SIZE];
 
 // the info of position of where a buffer locates in the groups
 typedef struct {
@@ -53,14 +47,11 @@ Globals
 ============================
 */
 
-// Holds the RSTable for each thread
-static SDL_TLSID rs_table_tls_id;
-
 // the max size of group for encoding/decoding in rs_wrapper
 // if num of total buffers is large than this, rs_wrapper will split the encoding/decoding into
 // multiple groups, so that each group does not exceed the below size; it's stored in an int instead
 // of a macro, for easy testing; client and server should have same value
-static int rs_wrapper_max_group_size = 128;
+static int rs_wrapper_max_group_size = 256;
 static int rs_wrapper_max_group_cost = 4000;
 
 static int verbose_log = 0;
@@ -70,23 +61,6 @@ static int verbose_log = 0;
 Private Function Declarations
 ============================
 */
-
-/**
- * @brief                          Gets an rs_code
- *
- * @param k                        The number of original packets
- * @param n                        The total number of packets
- *
- * @returns                        The RSCode for that (n, k) tuple
- */
-static RSCode *get_rs_code(int k, int n);
-
-/**
- * @brief                          Frees an RSTable
- *
- * @param opaque                   The RSTable* to free
- */
-static void free_rs_code_table(void *opaque);
 
 /*
 below are two function are a very light innder wrapper of the rs lib, handle special case with dup
@@ -129,8 +103,8 @@ Public Function Implementations
 void init_rs_wrapper(void) {
     static int initialized = 0;
     if (initialized == 0) {
-        rs_table_tls_id = SDL_TLSCreate();
         init_rs();
+        lugi_rs_helper_init();
         FATAL_ASSERT(cm256_init() == 0);
         initialized = 1;
     }
@@ -158,7 +132,7 @@ RSWrapper *rs_wrapper_create(int num_real_buffers, int num_total_buffers) {
         int max_num_real_in_groups = int_div_roundup(num_real_buffers, num_groups);
         int max_num_fec_in_groups = int_div_roundup(num_fec_buffers, num_groups);
 
-        if ((max_num_real_in_groups + max_num_fec_in_groups <= RS_FIELD_SIZE - 1) &&
+        if ((max_num_real_in_groups + max_num_fec_in_groups <= rs_wrapper_max_group_size) &&
             (max_num_real_in_groups * max_num_fec_in_groups <= rs_wrapper_max_group_cost)) {
             break;
         }
@@ -376,49 +350,6 @@ void rs_table_warmup(void)
 Private Function Implementations
 ============================
 */
-
-static RSCode *get_rs_code(int k, int n) {
-    FATAL_ASSERT(k <= n);
-    FATAL_ASSERT(n <= RS_FIELD_SIZE);
-
-    // Get the rs code table for this thread
-    RSTable *rs_code_table = SDL_TLSGet(rs_table_tls_id);
-
-    // If the table for this thread doesn't exist, initialize it
-    if (rs_code_table == NULL) {
-        rs_code_table = (RSTable *)safe_malloc(sizeof(RSTable));
-        memset(rs_code_table, 0, sizeof(RSTable));
-        SDL_TLSSet(rs_table_tls_id, rs_code_table, free_rs_code_table);
-    }
-
-    // If (n, k)'s rs_code hasn't been create yet, create it
-    if ((*rs_code_table)[k][n] == NULL) {
-        (*rs_code_table)[k][n] = rs_new(k, n);
-    }
-
-    // Now return the rs_code for (n, k)
-    return (RSCode *)((*rs_code_table)[k][n]);
-    // We make a redundant (RSCode*) because cppcheck parses the type wrong
-}
-
-static void free_rs_code_table(void *raw_rs_code_table) {
-    RSTable *rs_code_table = (RSTable *)raw_rs_code_table;
-
-    // If the table was never created, we have nothing to free
-    if (rs_code_table == NULL) return;
-
-    // Find any rs_code entries, and free them
-    for (int i = 0; i < RS_TABLE_SIZE; i++) {
-        for (int j = i; j < RS_TABLE_SIZE; j++) {
-            if ((*rs_code_table)[i][j] != NULL) {
-                rs_free((*rs_code_table)[i][j]);
-            }
-        }
-    }
-
-    // Now free the entire table
-    free(rs_code_table);
-}
 
 inline static void rs_encode_or_dup(int k, int n, void *src[], void *dst, int index, int sz) {
     FATAL_ASSERT(k >= 0 && k < RS_FIELD_SIZE);
