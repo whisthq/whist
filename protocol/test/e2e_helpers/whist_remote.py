@@ -649,7 +649,7 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp, timeout_val
     pexpect_process.sendline("pkill chrome")
     wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
     # pexpect_process.expect(":/#")
-    pexpect_process.sendline("tail -f /var/log/whist/protocol-out.log")
+    pexpect_process.sendline("tail /var/log/whist/protocol-out.log")
 
     server_mandelbox_output = wait_until_cmd_done(
         pexpect_process, ":/#", running_in_ci=True, return_output=True
