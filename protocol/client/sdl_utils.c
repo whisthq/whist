@@ -352,7 +352,7 @@ void sdl_renderer_resize_window(int width, int height) {
              current_height);
 
 #ifndef __linux__
-    int dpi = current_width / get_window_virtual_width((SDL_Window*)window);
+    int dpi = get_native_window_dpi((SDL_Window*)window);
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
     // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
@@ -376,7 +376,10 @@ void sdl_renderer_resize_window(int width, int height) {
                 tries = 0;
             }
 
-            SDL_SetWindowSize((SDL_Window*)window, desired_width / dpi, desired_height / dpi);
+            // The default DPI (no scaling) is 96, hence this magic number to divide by the scaling
+            // factor
+            SDL_SetWindowSize((SDL_Window*)window, desired_width * 96 / dpi,
+                              desired_height * 96 / dpi);
             LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
                      desired_width, desired_height);
             current_width = get_window_pixel_width((SDL_Window*)window);
@@ -774,8 +777,9 @@ static void sdl_present_pending_framebuffer(void) {
         return;
     }
 
-    // Wipes the renderer to all-black before we present
-    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    // Wipes the renderer to background color before we present
+    SDL_SetRenderDrawColor(sdl_renderer, background_color.red, background_color.green,
+                           background_color.blue, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(sdl_renderer);
 
     WhistTimer statistics_timer;
