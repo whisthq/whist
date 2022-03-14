@@ -83,14 +83,14 @@ void sdl_renderer_resize_window(int width, int height);
 void sdl_update_framebuffer_loading_screen(int idx);
 
 // The pixel format required for the data/linesize passed into sdl_update_framebuffer
-#define SDL_FRAMEBUFFER_PIXEL_FORMAT AV_PIX_FMT_NV12
+#define WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT AV_PIX_FMT_NV12
 
 /**
  * @brief                          Update the renderer's framebuffer,
  *                                 using the provided texture.
  *
  * @param data                     The data pointers to the image
- *                                 The image must be of the format SDL_FRAMEBUFFER_PIXEL_FORMAT
+ *                                 The image must be of the format WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT
  * @param linesize                 The linesize data for the image
  * @param width                    The width of the image
  * @param height                   The height of the image

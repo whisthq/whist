@@ -467,7 +467,7 @@ void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize
             video_context->sws = NULL;
         }
 
-        if (input_format == SDL_FRAMEBUFFER_PIXEL_FORMAT) {
+        if (input_format == WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT) {
             // If the pixel format already matches, we require no pixel format conversion,
             // we can just pass directly to the renderer!
             LOG_INFO("The input format is already correct, no sws needed!");
@@ -475,12 +475,12 @@ void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize
             // We need to create a new context to handle the pixel fmt conversion
             LOG_INFO("Creating sws context to convert from %s to %s",
                      av_get_pix_fmt_name(input_format),
-                     av_get_pix_fmt_name(SDL_FRAMEBUFFER_PIXEL_FORMAT));
+                     av_get_pix_fmt_name(WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT));
             video_context->sws =
                 sws_getContext(width, height, input_format, width, height,
-                               SDL_FRAMEBUFFER_PIXEL_FORMAT, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+                               WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT, SWS_FAST_BILINEAR, NULL, NULL, NULL);
             av_image_alloc(static_data, static_linesize, width, height,
-                           SDL_FRAMEBUFFER_PIXEL_FORMAT, 32);
+                           WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT, 32);
         }
     }
 
