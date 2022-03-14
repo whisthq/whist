@@ -204,7 +204,7 @@ parser.add_argument(
 parser.add_argument(
     "--username",
     help="The username to use to access the AWS EC2 instance(s)",
-    type=string,
+    type=str,
     default="ubuntu",
 )
 
