@@ -9,7 +9,7 @@ terraform {
   required_version = ">= 0.14.9"
 }
 
-# Here we call the modules needed across every region
+# Here we call the modules needed across every AWS region
 
 module "vpc" {
   source     = "../aws_vpc"

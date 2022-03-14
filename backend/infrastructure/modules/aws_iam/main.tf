@@ -77,14 +77,14 @@ resource "aws_iam_role" "EC2DeploymentRole" {
 }
 
 # Create an instance profile for the deployment role because 
-# Terraform doesn't create it by default. Use a different instance
+# Terraform doesn't create it by default. We use a different instance
 # profile for each environment.
 resource "aws_iam_instance_profile" "EC2DeploymentRoleInstanceProfile" {
    name = "EC2DeploymentRoleInstanceProfile${var.env}"
    role = aws_iam_role.EC2DeploymentRole.name
 }
 
-#IAM User groups
+# IAM User groups
 
 resource "aws_iam_group" "Whist2FA" {
   count = var.env == "prod" ? 1 : 0
@@ -108,7 +108,7 @@ resource "aws_iam_group" "WhistEngineers" {
 
 # Users
 
-# This user has the DeploymentRolePolicy attached, and will simply pass those permissions to the DeploymentRole so it is able to manage instances.
+# This user has the DeploymentRolePolicy attached, and will simply pass those permissions to the DeploymentRole so it is able to manage user EC2 instances.
 resource "aws_iam_user" "WhistEC2PassRoleUser" {
   name = "WhistEC2PassRole${var.env}"
 
@@ -128,6 +128,7 @@ resource "aws_iam_access_key" "WhistEC2PassRoleUserAccessKey" {
 
 # Custom group policies
 
+# This policy forces 2-FA for all Whist engineers on AWS.
 resource "aws_iam_group_policy" "ForceMFA" {
   count  = var.env == "prod" ? 1 : 0
   name   = "ForceMFA"

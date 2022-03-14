@@ -1,38 +1,3 @@
-# ------------------------------ Buckets for Chromium builds ------------------------------ #
-
-# Bucket for storing Chromium builds for MacOS Arm64
-resource "aws_s3_bucket" "whist-chromium-macos-arm64" {
-  bucket = "whist-chromium-macos-arm64-${var.env}"
-
-  tags = {
-    Name        = "whist-chromium-macos-arm64-${var.env}"
-    Env         = var.env
-    Terraform   = true
-  }
-}
-
-# Bucket for storing Chromium builds for MacOS x64
-resource "aws_s3_bucket" "whist-chromium-macos-x64" {
-  bucket = "whist-chromium-macos-x64-${var.env}"
-
-  tags = {
-    Name        = "whist-chromium-macos-${var.env}"
-    Env         = var.env
-    Terraform   = true
-  }
-}
-
-# Bucket for storing Chromium builds for Windows
-resource "aws_s3_bucket" "whist-chromium-windows" {
-  bucket = "whist-chromium-windows-${var.env}"
-
-  tags = {
-    Name        = "whist-chromium-windows-${var.env}"
-    Env         = var.env
-    Terraform   = true
-  }
-}
-
 # ------------------------------ Buckets for user app configs ------------------------------ #
 
 # Bucket for storing user configurations

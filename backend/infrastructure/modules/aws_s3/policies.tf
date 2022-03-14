@@ -1,29 +1,3 @@
-# ------------------------------ Policies for Chromium builds ------------------------------ #
-
-resource "aws_s3_bucket_public_access_block" "whist-chromium-macos-arm64" {
-  bucket                  = aws_s3_bucket.whist-chromium-macos-arm64.id
-  block_public_acls       = false
-  block_public_policy     = false
-  restrict_public_buckets = false
-  ignore_public_acls      = false
-}
-
-resource "aws_s3_bucket_public_access_block" "whist-chromium-macos-x64" {
-  bucket                  = aws_s3_bucket.whist-chromium-macos-x64.id
-  block_public_acls       = false
-  block_public_policy     = false
-  restrict_public_buckets = false
-  ignore_public_acls      = false
-}
-
-resource "aws_s3_bucket_public_access_block" "whist-chromium-windows" {
-  bucket                  = aws_s3_bucket.whist-chromium-windows.id
-  block_public_acls       = false
-  block_public_policy     = false
-  restrict_public_buckets = false
-  ignore_public_acls      = false
-}
-
 # ------------------------------ Policies for user app configs ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-user-app-configs" {
