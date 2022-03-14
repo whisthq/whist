@@ -202,6 +202,15 @@ bool udp_handle_pending_nacks(void* raw_context);
 void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int max_frame_size,
                               int num_buffers);
 
+/**
+ * @brief                          Handle screen resize, by adjusting the bitrates accordingly
+ *
+ * @param context                  The UDP SocketContext
+ * @param dpi                      Current screen DPI
+ *
+ */
+void udp_handle_resize(SocketContext* context, int dpi);
+
 // TODO: Move to network.h, and make it more generic (E.g., "avg bitrate" / "fec ratio")
 NetworkSettings udp_get_network_settings(SocketContext* context);
 
