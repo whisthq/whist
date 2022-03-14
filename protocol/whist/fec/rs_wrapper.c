@@ -434,7 +434,6 @@ inline static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int
         }
         default: {
             LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation);
-            return -1;
         }
     }
 
