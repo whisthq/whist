@@ -22,23 +22,33 @@ def extract_logs_from_mandelbox(
     role,
 ):
     """
-    Extract the logs related to the run of the Whist server/client mandelbox (browsers/chrome) on a remote machine. This should be called after the client->server connection has terminated, but before the server/client container is stopped/destroyed.
+    Extract the logs related to the run of the Whist server/client mandelbox (browsers/chrome)
+    on a remote machine. This should be called after the client->server connection has terminated,
+    but before the server/client container is stopped/destroyed.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
-        docker_id (str): The Docker ID of the container running the Whist server/client (browsers/chrome or development/client mandelbox) on the remote machine
-        ssh_key_path (str): The path (on the machine where this script is run) to the file storing the public RSA key used for SSH connections
-        username (str): The username to be used on the remote machine (default is 'ubuntu')
-        hostname(str): The host name of the remote machine where the server/client was running on
-        timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection to the remote machine.
-        perf_logs_folder_name (str): The path to the folder (on the machine where this script is run) where to store the logs
-        log_grabber_log (file object): The file (already opened) to use for logging the terminal output from the shell process used to download the logs
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
+                                interact with the remote machine
+        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
+                                ready to execute a command
+        docker_id: The Docker ID of the container running the Whist server/client
+                                (browsers/chrome or development/client mandelbox)
+                                on the remote machine
+        ssh_key_path: The path (on the machine where this script is run) to the file storing
+                                the public RSA key used for SSH connections
+        username: The username to be used on the remote machine (default is 'ubuntu')
+        hostname: The host name of the remote machine where the server/client was running on
+        timeout_value: The amount of time (in seconds) to wait before timing out the attemps to
+                                gain a SSH connection to the remote machine.
+        perf_logs_folder_name: The path to the folder (on the machine where this script is run)
+                                where to store the logs
+        log_grabber_log: The file (already opened) to use for logging the terminal output from
+                                the shell process used to download the logs
+        running_in_ci: A boolean indicating whether this script is currently running in CI
+        role: Controls whether to extract the `server` logs or the `client` logs
 
-    Return:
+    Returns:
         None
-
     """
     command = f"rm -rf ~/perf_logs/{role}; mkdir -p ~/perf_logs/{role}"
     pexpect_process.sendline(command)

@@ -8,20 +8,22 @@ GITHUB_SHA_LEN = 40
 
 def get_whist_branch_name(running_in_ci):
     """
-    Retrieve the branch name of the repository to which the folder from which this script is run belongs to.
+    Retrieve the whisthq/whist branch name currently checked out by the folder containing this script.
+
     Args:
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        running_in_ci: A boolean indicating whether this script is currently running in CI
+
     Returns:
         On success:
-            branch_name (string): The name of the branch
+            branch_name: The name of the branch currently checked out (or the empty string)
         On failure:
             empty string
     """
-
     branch_name = ""
 
     if running_in_ci:
-        # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable (in case this script is being run as part of a PR)
+        # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment
+        # variable (in case this script is being run as part of a PR)
         b = os.getenv("GITHUB_REF_NAME").split("/")
         if len(b) != 2 or not b[0].isnumeric() or b[1] != "merge":
             branch_name = os.getenv("GITHUB_REF_NAME")
@@ -30,7 +32,6 @@ def get_whist_branch_name(running_in_ci):
     else:
         # Locally, we can find the branch using the 'git branch' command.
         # WARNING: this command will fail on detached HEADS.
-
         subproc_handle = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
         subprocess_stdout = subproc_handle.stdout.readlines()
 
@@ -45,16 +46,17 @@ def get_whist_branch_name(running_in_ci):
 
 def get_whist_github_sha(running_in_ci):
     """
-    Retrieve the commit hash of the latest commit in the current repository to be used. This function assumes that 'git pull' was called right beforehand
+    Retrieve the commit hash of the latest commit in the local repository.
+
     Args:
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        running_in_ci: A boolean indicating whether this script is currently running in CI
+
     Returns:
         On success:
-            branch_name (string): The name of the branch
+            github_sha: The SHA commit hash
         On failure:
             empty string
     """
-
     github_sha = ""
 
     if running_in_ci:

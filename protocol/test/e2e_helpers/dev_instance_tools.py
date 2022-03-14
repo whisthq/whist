@@ -16,20 +16,25 @@ def attempt_ssh_connection(
     ssh_command, timeout_value, log_file_handle, pexpect_prompt, max_retries, running_in_ci
 ):
     """
-    Attempt to establish a SSH connection to a remote machine. It is normal for the function to need several attempts before successfully opening a SSH connection to the remote machine.
+    Attempt to establish a SSH connection to a remote machine. It is normal for the function to
+    need several attempts before successfully opening a SSH connection to the remote machine.
 
     Args:
-        ssh_cmd (str): The shell command to use to establish a SSH connection to the remote machine.
-        timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection to the remote machine.
-        log_file_handle (file object): The file (already opened) to use for logging the terminal output from the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
-        max_retries (int): The maximum number of attempts to use before giving up on establishing a SSH connection to the remote machine
+        ssh_command: The shell command to use to establish a SSH connection to the remote machine.
+        timeout_value: The amount of time to wait before timing out the attemps to gain a SSH connection
+                        to the remote machine.
+        log_file_handle: The file (already opened) to use for logging the terminal output from the
+                        remote machine
+        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready
+                        to execute a command
+        max_retries: The maximum number of attempts to use before giving up on establishing a SSH
+                    connection to the remote machine
 
     Returns:
         On success:
-            pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process to be used from now on to interact with the remote machine.
+            pexpect_process: The Pexpect process to be used from now on to interact with the remote machine.
         On failure:
-            None
+            None and exit with exitcode -1
     """
     for retries in range(max_retries):
         child = pexpect.spawn(ssh_command, timeout=timeout_value, logfile=log_file_handle.buffer)
@@ -43,43 +48,58 @@ def attempt_ssh_connection(
             ]
         )
         if result_index == 0:
+            # If the connection  was refused, sleep for 30s and then retry
+            # (unless we exceeded the max number of retries)
             print(f"\tSSH connection refused by host (retry {retries + 1}/{max_retries})")
             child.kill(0)
             time.sleep(30)
         elif result_index == 1 or result_index == 2:
+            # SSH connection established successfully!
+            print(f"SSH connection established with EC2 instance!")
+            # Confirm that we want to connect, if asked
             if result_index == 1:
                 child.sendline("yes")
                 child.expect(pexpect_prompt)
-            print(f"SSH connection established with EC2 instance!")
+            # Wait for one more print of the prompt if required
             if not running_in_ci:
                 child.expect(pexpect_prompt)
+            # Return the pexpect_process handle to the caller
             return child
         elif result_index >= 3:
+            # If the connection timed out, sleep for 30s and then retry
+            # (unless we exceeded the max number of retries)
             print(f"\tSSH connection timed out (retry {retries + 1}/{max_retries})")
             child.kill(0)
             time.sleep(30)
+    # Give up if the SSH connection was refused too many times.
     print(f"SSH connection refused by host {max_retries} times. Giving up now.")
     sys.exit(-1)
 
 
 def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=False):
     """
-    Wait until the currently-running command on a remote machine finishes its execution on the shell monitored to by a pexpect process.
+    Wait until the currently-running command on a remote machine finishes its execution on the shell
+    monitored to by a pexpect process.
+
+    If the machine running this script is not a CI runner, handling color/formatted stdout on the remote
+    machine will require special care. In particular, the shell prompt will be printed twice, and we have
+    to wait for that to happen before sending another command.
+
+    This function also has the option to return the shell stdout in a list of strings format.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process on the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a new command
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        pexpect_process: The Pexpect process monitoring the execution of the process on the remote machine
+        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready to
+                        execute a new command
+        running_in_ci: A boolean indicating whether this script is currently running in CI
+        return_output: A boolean controlling whether to return the stdout output in a list of strings format
 
     Returns:
         On Success:
-            If return_output is True:
-                stdout_list (list): the stdout output of the command, with one entry for each line of the original output.
-            Otherwise:
-                None
+            pexpect_output: the stdout output of the command, with one entry for each line of the original
+                            output. If return_output=False, pexpect_output is set to None
         On Failure:
-            None because the function will exit with error.
-
+            None and exit with exitcode -1
     """
     result = pexpect_process.expect([pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF])
 
@@ -93,7 +113,8 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
         )
         sys.exit(-1)
 
-    # Check for watched stdout pattern
+    # Clean stdout output and save it in a list, one line per element. We need to do this before calling expect
+    # again (if we are not in CI), otherwise the output will be overwritten.
     pexpect_output = None
     if return_output:
         pexpect_output = [
@@ -101,7 +122,10 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
             for line in pexpect_process.before.decode("utf-8").strip().split("\n")
         ]
 
-    # On a SSH connection, the prompt is printed two times on Mac (because of some obscure reason related to encoding and/or color printing on terminal)
+    # Colored/formatted stdout (such as the bash prompt) is duplicated when piped to a pexpect process.
+    # This is likely a platform-dependent behavior and does not occur when running this script in CI. If
+    # we are not in CI, we need to wait for the duplicated prompt to be printed before moving forward, otherwise
+    # the duplicated prompt will interfere with the next command that we send.
     if not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
 
@@ -115,22 +139,28 @@ def reboot_instance(
     Reboot a remote machine and establish a new SSH connection after the machine comes back up.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
-        ssh_cmd (str): The shell command to use to establish a new SSH connection to the remote machine after the current connection is broken by the reboot.
-        timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection to the remote machine.
-        log_file_handle (file object): The file (already opened) to use for logging the terminal output from the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
-        retries (int): Maximum number of attempts before giving up on gaining a new SSH connection after rebooting the remote machine.
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
-    Returns:
-        None
-    """
+        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact
+                        with the remote machine
+        ssh_cmd: The shell command to use to establish a new SSH connection to the remote machine after
+                        the current connection is broken by the reboot.
+        timeout_value: The amount of time to wait before timing out the attemps to gain a SSH connection
+                        to the remote machine.
+        log_file_handle: The file (already opened) to use for logging the terminal output from the remote
+                        machine
+        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready to
+                        execute a command
+        retries: Maximum number of attempts before giving up on gaining a new SSH connection after
+                        rebooting the remote machine.
+        running_in_ci: A boolean indicating whether this script is currently running in CI
 
-    pexpect_process.sendline(" ")
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    Returns:
+        pexpect_process: The new Pexpect process created with pexpect.spawn(...) and to be used to interact
+                        with the remote machine after the reboot
+    """
+    # Trigger the reboot
     pexpect_process.sendline("sudo reboot")
     pexpect_process.kill(0)
-    time.sleep(5)
+    # Connect again
     pexpect_process = attempt_ssh_connection(
         ssh_cmd, timeout_value, log_file_handle, pexpect_prompt, retries, running_in_ci
     )
@@ -143,11 +173,12 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
     Prevent dpkg locking issues such as the following one:
     - E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
     - E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
-    - See also here: https://github.com/ray-project/ray/blob/master/doc/examples/lm/lm-cluster.yaml
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used
+                            to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when
+                            it is ready to execute a command
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
     Returns:
         None
@@ -161,7 +192,8 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
         "sudo pkill -9 apt",
         "sudo pkill -9 apt-get",
         "sudo pkill -9 dpkg",
-        "sudo rm /var/lib/apt/lists/lock; sudo rm /var/lib/apt/lists/lock-frontend; sudo rm /var/cache/apt/archives/lock; sudo rm /var/lib/dpkg/lock",
+        "sudo rm /var/lib/apt/lists/lock; \
+        sudo rm /var/lib/apt/lists/lock-frontend; sudo rm /var/cache/apt/archives/lock; sudo rm /var/lib/dpkg/lock",
         "sudo dpkg --configure -a",
     ]
     for command in dpkg_commands:
@@ -177,26 +209,27 @@ def install_and_configure_aws(
     aws_credentials_filepath=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
 ):
     """
-    Configure AWS credentials on a remote machine by copying them from the ones configures on the machine where this script is being run.
+    Install the AWS CLI and configure the AWS credentials on a remote machine by copying them
+    from the ones configured on the machine where this script is being run.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
-        aws_timeout_seconds (int): Timeout to be used for the Pexpect process.
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
-        aws_credentials_filepath(str): The path to the file where AWS stores the credentials on the machine where this script is run
+        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used
+                                to interact with the remote machine
+        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
+                                is ready to execute a command
+        aws_timeout_seconds: Timeout to be used for the Pexpect process.
+        running_in_ci: A boolean indicating whether this script is currently running in CI
+        aws_credentials_filepath: The path to the file where AWS stores the credentials on
+                                the machine where this script is run
     Returns:
-        None
+        True if the AWS installation and configuration succeeded, False otherwise.
     """
-
-    # Step 1: Obtain AWS credentials
-
+    # Step 1: Obtain AWS credentials from the local machine
     aws_access_key_id = ""
     aws_secret_access_key = ""
-
     if running_in_ci:
-        print("Getting the AWS credentials from environment variables...")
         # In CI, the aws credentials are stored in the following env variables
+        print("Getting the AWS credentials from environment variables...")
         aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
         aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
     else:
@@ -224,7 +257,6 @@ def install_and_configure_aws(
         return False
 
     # Step 2: Install the AWS CLI if it's not already there
-
     pexpect_process.sendline("sudo apt-get -y update")
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
@@ -244,7 +276,7 @@ def install_and_configure_aws(
     # Attempt installation using apt-get
 
     if aws_not_installed:
-        # Attemp to install using apt-get
+        # Attempt to install using apt-get
         print("Installing AWS-CLI using apt-get")
 
         pexpect_process.sendline("sudo apt-get install -y awscli")
@@ -255,17 +287,18 @@ def install_and_configure_aws(
             return_output=True,
         )
 
-        # apt-get fails from time to time
+        # Check if the apt-get installation failed (it happens from time to time)
         error_msg = "E: Package 'awscli' has no installation candidate"
         apt_get_awscli_failed = any(error_msg in item for item in stdout if isinstance(item, str))
 
         if apt_get_awscli_failed:
             print(
-                "Installing AWS-CLI using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
+                "Installing AWS-CLI using apt-get failed. \
+                This usually happens when the Ubuntu package lists are being updated."
             )
 
-            # Attempt to install manually. This also fails from time to time, because we need apt-get to install the `unzip` package
-            # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+            # Attempt to install manually. This can also fail from time to time, because we need apt-get
+            # to install the `unzip` package
             print("Installing AWS-CLI from source")
 
             # Download the unzip program
@@ -281,7 +314,8 @@ def install_and_configure_aws(
 
             if apt_get_unzip_failed:
                 print(
-                    "Installing 'unzip' using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
+                    "Installing 'unzip' using apt-get failed. \
+                    This usually happens when the Ubuntu package lists are being updated."
                 )
                 print("Installing AWS-CLI from source failed")
                 return False
@@ -320,13 +354,17 @@ def clone_whist_repository_on_instance(
     github_token, pexpect_process, pexpect_prompt, running_in_ci
 ):
     """
-    Clone the Whist repository on a remote machine, and check out the same branch used locally on the machine where this script is run.
+    Clone the Whist repository on a remote machine, and check out the same branch used locally
+    on the machine where this script is run.
 
     Args:
-        github_token (str): The secret token to use to access the Whist private repository on GitHub
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        github_token: The secret token to use to access the Whist private repository on GitHub
+        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
+                        interact with the remote machine
+        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
+                        ready to execute a command
+        running_in_ci: A boolean indicating whether this script is currently running in CI
+
     Returns:
         None
     """
