@@ -74,47 +74,4 @@ int get_window_virtual_width(SDL_Window* window);
  */
 int get_window_virtual_height(SDL_Window* window);
 
-/**
- * @brief                          Get the virtual width of a monitor/screen, in
- *                                 pixels (i.e. 1440x900 instead of 2880x1800)
- *
- * @returns                        The virtual width of the monitor/screen, in
- *                                 pixels
- */
-int get_virtual_screen_width(void);
-
-/**
- * @brief                          Get the virtual height of a monitor/screen,
- *                                 in pixels (i.e. 1440x900 instead of
- *                                 2880x1800)
- *
- * @returns                        The virtual height of the monitor/screen, in
- *                                 pixels
- */
-int get_virtual_screen_height(void);
-
-/**
- * @brief                          Get the physical width of a monitor/screen,
- *                                 in pixels
- *
- * @param window		           SDL Window associated with the monitor/screen
- *                                 to find the physical width of, in pixels
- *
- * @returns                        The physical width of the monitor/screen, in
- *                                 pixels
- */
-int get_pixel_screen_width(SDL_Window* window);
-
-/**
- * @brief                          Get the physical height of a monitor/screen,
- *                                 in pixels
- *
- * @param window		           SDL Window associated with the monitor/screen
- *                                 to find the physical height of, in pixels
- *
- * @returns                        The physical height of the monitor/screen, in
- *                                 pixels
- */
-int get_pixel_screen_height(SDL_Window* window);
-
 #endif  // SDL_SCREEN_INFO_H

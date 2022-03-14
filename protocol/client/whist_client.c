@@ -173,25 +173,7 @@ static int sync_keyboard_state(void) {
     return 0;
 }
 
-static volatile bool continue_pumping = false;
-
-static int multithreaded_read_piped_arguments(void* keep_piping) {
-    /*
-        Thread function to read piped arguments from stdin
-
-        Arguments:
-            keep_piping (void*): whether to keep piping from stdin
-
-        Returns:
-            (int) 0 on success, -1 on failure
-    */
-
-    int ret = read_piped_arguments((bool*)keep_piping, /*run_only_once=*/false);
-    continue_pumping = false;
-    return ret;
-}
-
-static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
+static void handle_single_icon_launch_client_app(int argc, char* argv[]) {
     // This function handles someone clicking the protocol icon as a means of starting Whist by
     // instead launching the client app
     // If argc == 1 (no args passed), then check if client app path exists
@@ -341,91 +323,60 @@ int whist_client_main(int argc, const char* argv[]) {
     client_exiting = false;
     WhistExitCode exit_code = WHIST_EXIT_SUCCESS;
 
-    // While showing the SDL loading screen, read in any piped arguments
-    //    If the arguments are bad, then skip to the destruction phase
-    continue_pumping = true;
-    bool keep_piping = true;
-    WhistThread pipe_arg_thread =
-        whist_create_thread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
-    if (pipe_arg_thread == NULL) {
-        exit_code = WHIST_EXIT_FAILURE;
-    } else {
-        SDL_Event event;
-        while (continue_pumping) {
-            // If we don't delay, your computer's CPU will freak out
-            whist_sleep(50);
-            if (SDL_PollEvent(&event)) {
-                switch (event.type) {
-                    case SDL_QUIT: {
-                        client_exiting = true;
-                        keep_piping = false;
-                        break;
-                    }
-                    case SDL_WINDOWEVENT: {
-                        if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                            output_width = get_window_pixel_width((SDL_Window*)window);
-                            output_height = get_window_pixel_height((SDL_Window*)window);
-                        }
-                        break;
-                    }
-                    default: {
-                        break;
-                    }
-                }
-            }
+    // Read in any piped arguments. If the arguments are bad, then skip to the destruction phase
+    switch (read_piped_arguments(false)) {
+        case -2: {
+            // Fatal reading pipe or similar
+            LOG_ERROR("Failed to read piped arguments -- exiting");
+            exit_code = WHIST_EXIT_FAILURE;
+            break;
         }
-        int pipe_arg_ret;
-        whist_wait_thread(pipe_arg_thread, &pipe_arg_ret);
-        switch (pipe_arg_ret) {
-            case -2: {
-                // Fatal reading pipe or similar
-                LOG_ERROR("Failed to read piped arguments -- exiting");
-                exit_code = WHIST_EXIT_FAILURE;
-                break;
-            }
-            case -1: {
-                // Invalid arguments
-                LOG_ERROR("Invalid piped arguments -- exiting");
-                exit_code = WHIST_EXIT_CLI;
-                break;
-            }
-            case 1: {
-                // Arguments prompt graceful exit
-                LOG_INFO("Piped argument prompts graceful exit");
-                exit_code = WHIST_EXIT_SUCCESS;
-                client_exiting = true;
-                break;
-            }
-            default: {
-                // Success, so nothing to do
-                break;
-            }
+        case -1: {
+            // Invalid arguments
+            LOG_ERROR("Invalid piped arguments -- exiting");
+            exit_code = WHIST_EXIT_CLI;
+            break;
+        }
+        case 1: {
+            // Arguments prompt graceful exit
+            LOG_INFO("Piped argument prompts graceful exit");
+            exit_code = WHIST_EXIT_SUCCESS;
+            client_exiting = true;
+            break;
+        }
+        default: {
+            // Success, so nothing to do
+            break;
         }
     }
 
-    SDL_Event sdl_msg;
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
     for (try_amount = 0;
          try_amount < max_connection_attempts && !client_exiting && exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
-        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
-            client_exiting = true;
-        }
-
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
-            whist_sleep(1000);
+            // TODO: This was a sleep 1000, but I don't think we should ever show the user
+            // a frozen window for 1 second if we're not connected to the server. Better to
+            // show a "reconnecting" message within the main loop.
+            whist_sleep(300);
         }
 
-        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
-            client_exiting = true;
+        WhistTimer handshake_time;
+        start_timer(&handshake_time);  // start timer for measuring handshake time
+        LOG_INFO("Begin measuring handshake");
+
+        if (connect_to_server(using_stun) != 0) {
+            LOG_WARNING("Failed to connect to server.");
+            continue;
         }
 
-        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
-            client_exiting = true;
-        }
+        // Log to METRIC for cross-session tracking and INFO for developer-facing logging
+        double connect_to_server_time = get_timer(&handshake_time);
+        LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
+        LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
 
         connected = true;
         WhistFrontend* frontend = NULL;
@@ -529,8 +480,7 @@ int whist_client_main(int argc, const char* argv[]) {
             }
 
             if (get_timer(&new_tab_url_timer) * MS_IN_SECOND > 50.0) {
-                bool keep_piping2 = true;
-                int piped_args_ret = read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
+                int piped_args_ret = read_piped_arguments(true);
                 switch (piped_args_ret) {
                     case -2: {
                         // Fatal reading pipe or similar

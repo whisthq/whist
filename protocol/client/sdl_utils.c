@@ -210,21 +210,24 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // Allow the screensaver to activate
     SDL_EnableScreenSaver();
 
-    // TODO: make this a commandline argument based on client app settings!
-    int full_width = get_virtual_screen_width();
-    int full_height = get_virtual_screen_height();
-
     bool maximized = target_output_width == 0 && target_output_height == 0;
 
-    // Default output dimensions will be a quarter of the full screen if the window
-    // starts maximized. Even if this isn't a multiple of 8, it's fine because
-    // clicking the minimize button will trigger an SDL resize event
+    // Grab the default display dimensions -- if the window starts maximized and
+    // the user then unmaximizes (double click the titlebar on macOS), we will
+    // set the default size of the unmaximized window to be 50% of the display's
+    // width and height. Even if this isn't a multiple of 8, it's fine because
+    // clicking the minimize button will trigger an SDL resize event.
+    SDL_DisplayMode displayInfo;
+    if (SDL_GetDesktopDisplayMode(0, &displayInfo)) {
+        LOG_WARNING("SDL_GetCurrentDisplayMode failed: %s", SDL_GetError());
+    }
+
     if (target_output_width == 0) {
-        target_output_width = full_width / 2;
+        target_output_width = displayInfo.w / 2;
     }
 
     if (target_output_height == 0) {
-        target_output_height = full_height / 2;
+        target_output_height = displayInfo.h / 2;
     }
 
     SDL_Window* sdl_window;
