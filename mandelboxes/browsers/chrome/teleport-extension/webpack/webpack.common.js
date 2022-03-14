@@ -1,5 +1,6 @@
 const path = require("path")
 const CopyPlugin = require("copy-webpack-plugin")
+const HtmlWebpackPlugin = require("html-webpack-plugin")
 const { ProvidePlugin } = require("webpack")
 
 const srcDir = path.join(__dirname, "..", "src")
@@ -7,7 +8,8 @@ const outDir = path.join(__dirname, "..", "build", "js")
 
 module.exports = {
   entry: {
-    serviceWorker: path.join(srcDir, "serviceWorker.ts"),
+    worker: path.join(srcDir, "worker", "index.ts"),
+    pages: path.join(srcDir, "pages", "index.tsx"),
   },
   output: {
     path: outDir,
@@ -20,12 +22,19 @@ module.exports = {
         use: "ts-loader",
         exclude: /node_modules/,
       },
+      {
+        test: /\.(jpe?g|png|gif|svg)$/i,
+        loader: "file-loader",
+      },
     ],
   },
   resolve: {
     extensions: [".ts", ".tsx", ".js"],
     fallback: {
       path: require.resolve("path-browserify"),
+    },
+    alias: {
+      "@app": srcDir,
     },
   },
   plugins: [
@@ -35,5 +44,14 @@ module.exports = {
     new ProvidePlugin({
       process: "process/browser",
     }),
+    new HtmlWebpackPlugin({
+      template: path.join(srcDir, "..", "public", "templates", "page.html"),
+      filename: "page.html",
+      chunks: ["page"],
+      cache: false,
+    }),
   ],
+  externals: {
+    modules: [path.join(srcDir, "..", "node_modules")],
+  },
 }
