@@ -41,7 +41,10 @@ const shouldSleep = merge(
         takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
       ),
       fromTrigger(WhistTrigger.userRequestedQuit),
-      fromTrigger(WhistTrigger.stripeAuthRefresh)
+      fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
+        withLatestFrom(fromTrigger(WhistTrigger.protocolConnection)),
+        filter(([, connected]: [any, boolean]) => !connected)
+      )
     )
   ),
   take(1) // When we relaunch we reset the application; this ensures we don't relaunch multiple times
@@ -85,9 +88,11 @@ emitOnSignal(
 })
 
 fromTrigger(WhistTrigger.stripeAuthRefresh)
-  .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
-  .subscribe(([, p]: [any, ChildProcess]) => {
-    destroyProtocol(p)
+  .pipe(
+    withLatestFrom(fromTrigger(WhistTrigger.protocolConnection)),
+    filter(([, connected]: [any, boolean]) => !connected)
+  )
+  .subscribe(() => {
     relaunch({ sleep: false })
   })
 
