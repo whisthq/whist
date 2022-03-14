@@ -1,9 +1,10 @@
-/*
-  Deploys the configuration defined by tenant.yaml to a given Auth0 tenant.
-
-  To be called via:
-  yarn deploy:[env]
-*/
+/* deploy.js
+ *
+ * Deploys the configuration defined by tenant.yaml to a given Auth0 tenant.
+ *
+ * To be called via:
+ * yarn deploy:[env]
+ */
 
 const { deploy } = require("auth0-deploy-cli")
 const { getConfig } = require("./config")

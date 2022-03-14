@@ -1,3 +1,12 @@
+/* config.js
+ *
+ * Retrieves the configuration for the specified Auth0 tenant.
+ *
+ * To be called via:
+ * yarn deploy:[env]
+ */
+
+// These don't need to be secrets, they're public values.
 const clientIDs = {
   dev: "6cd4nskyIHQOePVM6q7FU3x7i5sZLwl1",
   staging: "2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5",

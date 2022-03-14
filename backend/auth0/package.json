@@ -1,7 +1,7 @@
 {
     "name": "whist-auth0",
     "version": "1.0.0",
-    "description": "Whist Auth0 configuration and hooks",
+    "description": "Whist Auth0 configuration and rules",
     "repository": "https://github.com/whisthq/whist.git",
     "license": "UNLICENSED",
     "private": true,
