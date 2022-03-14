@@ -10,7 +10,7 @@ Each directory within `infrastructure/` contains the Terraform configuration for
 infrastructure for a specific Whist environment (i.e. `dev`, etc.). At the time of writing, each environment only 
 supports `aws`, but more cloud providers are planned to be supported in the future.
 
-NOTE: `global` in this subfolder refers to the definition of `global` in AWS. If
+NOTE: `global` in this project refers to the definition of `global` in AWS. If
 a resource is global, it means that a single declaration of said resource will
 span all regions within an AWS account (such as IAM or S3 namespaces).
 

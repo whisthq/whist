@@ -1,6 +1,8 @@
+#
 # IAM service-linked roles
+#
 
-# This role is linked to Systems Manager service, and includes all of the permissions required by that service.
+# This role is linked to the Systems Manager service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForSSM" {
   count            = var.env == "prod" ? 1 : 0
   aws_service_name = "ssm.amazonaws.com"
@@ -11,7 +13,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForSSM" {
   }
 }
 
-# This role is linked to Compute Optimizer service, and includes all of the permissions required by that service.
+# This role is linked to the Compute Optimizer service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForComputeOptimizer" {
   count            = var.env == "prod" ? 1 : 0
   aws_service_name = "compute-optimizer.amazonaws.com"
@@ -22,7 +24,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForComputeOptimizer" {
   }
 }
 
-# This role is linked to EC2 Spot service, and includes all of the permissions required by that service.
+# This role is linked to the EC2 Spot service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForEC2Spot" {
   count            = var.env == "prod" ? 1 : 0
   aws_service_name = "spot.amazonaws.com"
@@ -33,7 +35,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForEC2Spot" {
   }
 }
 
-# This role is linked to Service Quotas service, and includes all of the permissions required by that service.
+# This role is linked to the Service Quotas service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForServiceQuotas" {
   count            = var.env == "prod" ? 1 : 0
   aws_service_name = "servicequotas.amazonaws.com"
@@ -44,7 +46,9 @@ resource "aws_iam_service_linked_role" "ServiceRoleForServiceQuotas" {
   }
 }
 
-# IAM roles
+#
+# IAM Whist-created roles
+#
 
 # This role is used by Packer to build AMIs, its policy has the minimum amount of permissions to operate.
 resource "aws_iam_role" "PackerAMIBuilder" {
@@ -76,7 +80,7 @@ resource "aws_iam_role" "EC2DeploymentRole" {
   }
 }
 
-# Create an instance profile for the deployment role because 
+# We create an instance profile for the deployment role because 
 # Terraform doesn't create it by default. We use a different instance
 # profile for each environment.
 resource "aws_iam_instance_profile" "EC2DeploymentRoleInstanceProfile" {
@@ -84,31 +88,43 @@ resource "aws_iam_instance_profile" "EC2DeploymentRoleInstanceProfile" {
    role = aws_iam_role.EC2DeploymentRole.name
 }
 
+#
 # IAM User groups
+#
 
+# All Whist employees are in this group. It forces 2-FA for all AWS console users.
 resource "aws_iam_group" "Whist2FA" {
   count = var.env == "prod" ? 1 : 0
   name  = "Whist2FA"
 }
 
+# This group confers full AWS administrative privileges to its members.
 resource "aws_iam_group" "WhistAdmins" {
   count = var.env == "prod" ? 1 : 0
   name  = "WhistAdmins"
 }
 
+# This group contains the Whist IAM role (s) used in our GitHub Actions pipelines.
 resource "aws_iam_group" "WhistCI" {
   count = var.env == "prod" ? 1 : 0
   name  = "WhistCI"
 }
 
+# This is the general user group for Whist engineers, containing the necessary 
+# permissions for developing Whist.
 resource "aws_iam_group" "WhistEngineers" {
   count = var.env == "prod" ? 1 : 0
   name  = "WhistEngineers"
 }
 
-# Users
+#
+# IAM Users
+#
 
-# This user has the DeploymentRolePolicy attached, and will simply pass those permissions to the DeploymentRole so it is able to manage user EC2 instances.
+# Employee users are created/deleted manually by the Whist team when an employee joins/leaves.
+
+# This user has the DeploymentRolePolicy attached, and will simply pass those permissions to the
+# DeploymentRole so it is able to manage user EC2 instances.
 resource "aws_iam_user" "WhistEC2PassRoleUser" {
   name = "WhistEC2PassRole${var.env}"
 
@@ -119,16 +135,21 @@ resource "aws_iam_user" "WhistEC2PassRoleUser" {
   }
 }
 
-# User access keys
+#
+# IAM User access keys
+#
 
 resource "aws_iam_access_key" "WhistEC2PassRoleUserAccessKey" {
   user   = aws_iam_user.WhistEC2PassRoleUser.name
   status = "Active"
 }
 
-# Custom group policies
+#
+# IAM Custom group policies
+#
 
-# This policy forces 2-FA for all Whist engineers on AWS.
+# This policy forces 2-FA for all Whist engineers on AWS, and is attached to the 
+# Whist2FA group.
 resource "aws_iam_group_policy" "ForceMFA" {
   count  = var.env == "prod" ? 1 : 0
   name   = "ForceMFA"
@@ -136,15 +157,18 @@ resource "aws_iam_group_policy" "ForceMFA" {
   policy = data.aws_iam_policy_document.MFAPolicy.json
 }
 
+#
+# IAM AWS-managed group policies
+#
 
-# AWS managed group policies
-
+# This policy gives WhistAdmins full AWS permissions.
 resource "aws_iam_group_policy_attachment" "AdminPolicy" {
   count      = var.env == "prod" ? 1 : 0
   group      = aws_iam_group.WhistAdmins[0].name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
+# This policy gives WhistCI the basic permissions required for our GitHub Actions pipelines to function.
 resource "aws_iam_group_policy_attachment" "CIPolicy" {
   group = aws_iam_group.WhistCI[0].name
   for_each = var.env == "prod" ? toset([
@@ -157,6 +181,7 @@ resource "aws_iam_group_policy_attachment" "CIPolicy" {
   policy_arn = each.value
 }
 
+# This policy gives WhistEngineers the basic permissions required for our developing Whist.
 resource "aws_iam_group_policy_attachment" "EngineeringPolicy" {
   group = aws_iam_group.WhistEngineers[0].name
   for_each = var.env == "prod" ? toset([
@@ -169,7 +194,9 @@ resource "aws_iam_group_policy_attachment" "EngineeringPolicy" {
   policy_arn = each.value
 }
 
-# Policy and policy attachment for WhistEC2PassRoleUser
+#
+# IAM Policy and policy attachment for WhistEC2PassRoleUser
+#
 
 resource "aws_iam_policy" "WhistEC2PassRoleUserPolicy" {
   name        = "WhistEC2PassRoleUserPolicy${var.env}"
