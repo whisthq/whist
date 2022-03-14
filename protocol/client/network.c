@@ -30,15 +30,10 @@ Includes
 #include "client_statistic.h"
 #include "audio.h"
 
-// Init information
-extern char user_email[WHIST_ARGS_MAXLEN + 1];
-
 // Data
 extern volatile char client_binary_aes_private_key[16];
 SocketContext packet_udp_context = {0};
 SocketContext packet_tcp_context = {0};
-extern char *server_ip;
-extern bool using_stun;
 
 volatile bool connected = false;
 
@@ -56,21 +51,11 @@ Public Function Implementations
 ============================
 */
 
-int connect_to_server(bool with_stun) {
-    /*
-        Connect to the server. Must be called after `discover_ports()`.
-
-        Arguments:
-            using_stun (bool): whether we are using the STUN server
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
+int connect_to_server(const char *server_ip, bool with_stun, const char *user_email) {
     LOG_INFO("using stun is %d", with_stun);
 
     // Connect over UDP first,
-    if (!create_udp_socket_context(&packet_udp_context, server_ip, BASE_UDP_PORT,
+    if (!create_udp_socket_context(&packet_udp_context, (char *)server_ip, BASE_UDP_PORT,
                                    UDP_CONNECTION_TIMEOUT, UDP_CONNECTION_WAIT, with_stun,
                                    (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to establish UDP connection from server");
@@ -80,7 +65,7 @@ int connect_to_server(bool with_stun) {
     LOG_INFO("create_udp_socket_context() done");
 
     // Then connect over TCP
-    if (!create_tcp_socket_context(&packet_tcp_context, server_ip, BASE_TCP_PORT,
+    if (!create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, BASE_TCP_PORT,
                                    TCP_CONNECTION_TIMEOUT, TCP_CONNECTION_WAIT, with_stun,
                                    (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to establish TCP connection with server.");

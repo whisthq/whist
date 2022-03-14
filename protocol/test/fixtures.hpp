@@ -186,4 +186,10 @@ Matchers
 #define LOG_ERROR_MATCHER ::testing::HasSubstr("ERROR")
 #define LOG_FATAL_MATCHER ::testing::HasSubstr("FATAL")
 
+/*
+ * Extra macro to expect a success return code.
+ */
+#define EXPECT_SUCCESS(val) \
+    EXPECT_PRED_FORMAT2(::testing::internal::EqHelper::Compare, val, WHIST_SUCCESS)
+
 #endif  // TEST_FIXTURES_HPP

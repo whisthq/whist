@@ -68,14 +68,14 @@ Command-line options
 ============================
 */
 
-static bool set_environment_option(const WhistCommandLineOption *opt, const char *value) {
+static WhistStatus set_environment_option(const WhistCommandLineOption *opt, const char *value) {
     whist_error_monitor_set_environment(value);
-    return true;
+    return WHIST_SUCCESS;
 }
 
-static bool set_session_id_option(const WhistCommandLineOption *opt, const char *value) {
+static WhistStatus set_session_id_option(const WhistCommandLineOption *opt, const char *value) {
     whist_error_monitor_set_session_id(value);
-    return true;
+    return WHIST_SUCCESS;
 }
 
 COMMAND_LINE_CALLBACK_OPTION(set_environment_option, 'e', "environment",

@@ -69,10 +69,10 @@ extern volatile SDL_Window* window;
 
 extern volatile int output_width;
 extern volatile int output_height;
-static const char* program_name;
-extern volatile char* server_ip;
-static char user_email[WHIST_ARGS_MAXLEN + 1] = "None";
-static char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
+static char* program_name;
+static char* server_ip;
+static char* user_email;
+static char* icon_png_filename;
 extern bool using_stun;
 
 // Keyboard state variables
@@ -96,7 +96,7 @@ extern volatile bool connected;
 extern volatile bool client_exiting;
 static int try_amount;
 
-static const char* new_tab_url;
+static char* new_tab_url;
 
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
@@ -109,87 +109,15 @@ extern bool upload_initiated;
 
 // Command-line options.
 
-static bool set_user_email(const WhistCommandLineOption* opt, const char* value) {
-    if (!safe_strncpy(user_email, value, sizeof(user_email))) {
-        printf("User email is too long: %s\n", value);
-        return false;
-    }
-    return true;
-}
-
-static bool set_png_icon(const WhistCommandLineOption* opt, const char* value) {
-    if (!safe_strncpy(icon_png_filename, value, sizeof(icon_png_filename))) {
-        printf("Icon PNG filename is too long: %s\n", value);
-        return false;
-    }
-    return true;
-}
-
-static bool set_new_tab_url(const WhistCommandLineOption* opt, const char* value) {
-    if (strlen(value) > MAX_URL_LENGTH) {
-        return false;
-    }
-    free((void*)new_tab_url);
-    new_tab_url = strdup(value);
-    return true;
-}
-
-// Required declaration to avoid 'no previous prototype for function' error
-char* get_user_email(void);
-char* get_png_icon_filename(void);
-char* get_new_tab_url(void);
-char* get_program_name(void);
-
-char* get_user_email(void) {
-    char* user_email_copy = (char*)calloc(WHIST_ARGS_MAXLEN + 1, sizeof(char));
-    if (!safe_strncpy(user_email_copy, user_email, WHIST_ARGS_MAXLEN + 1)) {
-        free(user_email_copy);
-        return NULL;
-    }
-    return user_email_copy;
-}
-
-char* get_png_icon_filename(void) {
-    char* icon_png_filename_copy = (char*)calloc(WHIST_ARGS_MAXLEN + 1, sizeof(char));
-    if (!safe_strncpy(icon_png_filename_copy, icon_png_filename, WHIST_ARGS_MAXLEN + 1)) {
-        free(icon_png_filename_copy);
-        return NULL;
-    }
-    return icon_png_filename_copy;
-}
-
-char* get_new_tab_url(void) {
-    if (!new_tab_url) {
-        return NULL;
-    }
-    char* new_tab_url_copy = (char*)calloc(strlen(new_tab_url) + 1, sizeof(char));
-    if (!safe_strncpy(new_tab_url_copy, new_tab_url, strlen(new_tab_url) + 1)) {
-        free(new_tab_url_copy);
-        return NULL;
-    }
-    return new_tab_url_copy;
-}
-
-char* get_program_name(void) {
-    if (!program_name) {
-        return NULL;
-    }
-    char* program_name_copy = (char*)calloc(strlen(program_name) + 1, sizeof(char));
-    if (!safe_strncpy(program_name_copy, program_name, strlen(program_name) + 1)) {
-        free(program_name_copy);
-        return NULL;
-    }
-    return program_name_copy;
-}
-
-COMMAND_LINE_CALLBACK_OPTION(set_user_email, 'u', "user", WHIST_OPTION_REQUIRED_ARGUMENT,
-                             "Tell Whist the user's email.  Default: None.")
-COMMAND_LINE_CALLBACK_OPTION(set_png_icon, 'i', "icon", WHIST_OPTION_REQUIRED_ARGUMENT,
-                             "Set the protocol window icon from a 64x64 pixel png file.")
-COMMAND_LINE_CALLBACK_OPTION(set_new_tab_url, 'x', "new-tab-url", WHIST_OPTION_REQUIRED_ARGUMENT,
-                             "URL to open in new tab.")
+COMMAND_LINE_STRING_OPTION(user_email, 'u', "user", WHIST_ARGS_MAXLEN,
+                           "Tell Whist the user's email.  Default: None.")
+COMMAND_LINE_STRING_OPTION(icon_png_filename, 'i', "icon", WHIST_ARGS_MAXLEN,
+                           "Set the protocol window icon from a 64x64 pixel png file.")
+COMMAND_LINE_STRING_OPTION(new_tab_url, 'x', "new-tab-url", MAX_URL_LENGTH,
+                           "URL to open in new tab.")
 COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
                            "Set the window title.  Default: Whist.")
+COMMAND_LINE_STRING_OPTION(server_ip, 0, "server-ip", IP_MAXLEN, "Set the server IP to connect to.")
 
 static int sync_keyboard_state(void) {
     /*
@@ -263,7 +191,7 @@ static int multithreaded_read_piped_arguments(void* keep_piping) {
     return ret;
 }
 
-static void handle_single_icon_launch_client_app(int argc, char* argv[]) {
+static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
     // This function handles someone clicking the protocol icon as a means of starting Whist by
     // instead launching the client app
     // If argc == 1 (no args passed), then check if client app path exists
@@ -376,19 +304,13 @@ static void send_new_tab_url_if_needed(void) {
     }
 }
 
-int whist_client_main(int argc, char* argv[]) {
-    if (alloc_parsed_args() != 0) {
-        return WHIST_EXIT_FAILURE;
-    }
-
+int whist_client_main(int argc, const char* argv[]) {
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
         // invalid usage
-        free_parsed_args();
         return WHIST_EXIT_CLI;
     } else if (ret == 1) {
         // --help or --version
-        free_parsed_args();
         return WHIST_EXIT_SUCCESS;
     }
 
@@ -558,7 +480,7 @@ int whist_client_main(int argc, char* argv[]) {
         start_timer(&handshake_time);  // start timer for measuring handshake time
         LOG_INFO("Begin measuring handshake");
 
-        if (connect_to_server(using_stun) != 0) {
+        if (connect_to_server(server_ip, using_stun, user_email) != 0) {
             LOG_WARNING("Failed to connect to server.");
             continue;
         }
@@ -733,8 +655,6 @@ int whist_client_main(int argc, char* argv[]) {
     // error monitor breadcrumbs and events can finish being reported
     // before we close the error monitor.
     whist_error_monitor_shutdown();
-
-    free_parsed_args();
 
     LOG_INFO("Protocol has shutdown gracefully");
 

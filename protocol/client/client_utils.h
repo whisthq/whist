@@ -58,7 +58,7 @@ Public Functions
  * @returns                        Returns -1 on failure, 0 on success, 1 on args prompting
  *                                 graceful exit (help, version, etc.)
  */
-int client_parse_args(int argc, char* argv[]);
+int client_parse_args(int argc, const char* argv[]);
 
 /**
  * @brief                          Read arguments from the stdin pipe if `using_piped_arguments`
@@ -73,20 +73,6 @@ int client_parse_args(int argc, char* argv[]);
  *                                 1 on args prompting graceful exit (kill, etc.)
  */
 int read_piped_arguments(bool* keep_waiting, bool run_only_once);
-
-/**
- * @brief                          Init any allocated memory for parsed args
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int alloc_parsed_args(void);
-
-/**
- * @brief                          Free any allocated memory for parsed args
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int free_parsed_args(void);
 
 /**
  * @brief                          Update mouse location if the mouse state has

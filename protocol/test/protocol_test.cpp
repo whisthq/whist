@@ -54,21 +54,16 @@ extern "C" {
 #include <whist/utils/queue.h>
 #include <whist/utils/command_line.h>
 
+#include "whist/core/error_codes.h"
 #include <whist/core/features.h>
 
 extern int output_width;
 extern int output_height;
 extern WhistMutex window_resize_mutex;
 extern volatile SDL_Window* window;
-extern volatile char* server_ip;
 extern volatile char client_hex_aes_private_key[33];
 extern unsigned short port_mappings[USHRT_MAX + 1];
-char* get_user_email(void);
-char* get_png_icon_filename(void);
-char* get_new_tab_url(void);
-char* get_program_name(void);
 
-bool get_catch_segfaults_flag();
 bool whist_error_monitor_environment_set(void);
 char* get_error_monitor_environment(void);
 char* get_error_monitor_session_id(void);
@@ -1793,15 +1788,16 @@ static const char* test_option_callback;
 static int test_operand_position;
 static const char* test_operand_value;
 
-static bool test_option_callback_function(const WhistCommandLineOption* opt, const char* value) {
+static WhistStatus test_option_callback_function(const WhistCommandLineOption* opt,
+                                                 const char* value) {
     test_option_callback = value;
-    return true;
+    return WHIST_SUCCESS;
 }
 
-static bool test_operand_callback_function(int pos, const char* value) {
+static WhistStatus test_operand_callback_function(int pos, const char* value) {
     test_operand_position = pos;
     test_operand_value = value;
-    return true;
+    return WHIST_SUCCESS;
 }
 
 // These option names must not conflict with options anywhere else.
@@ -1820,122 +1816,144 @@ TEST_F(ProtocolTest, CommandLineTest) {
     const char* argv[10] = {"command-line-test"};
 
     // Empty command-line.
-    EXPECT_TRUE(whist_parse_command_line(1, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(1, argv, NULL));
 
     // Single operand.
     argv[1] = "foo";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, &test_operand_callback_function));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, &test_operand_callback_function));
     EXPECT_EQ(test_operand_position, 1);
     EXPECT_STREQ(test_operand_value, "foo");
 
     // Single integer option in various forms.
     argv[1] = "-417";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_EQ(test_option_int, 17);
     argv[1] = "--test-int=29";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_EQ(test_option_int, 29);
     argv[1] = "-4";
     argv[2] = "42";
-    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(3, argv, NULL));
     EXPECT_EQ(test_option_int, 42);
     argv[1] = "--test-int";
     argv[2] = "53";
-    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(3, argv, NULL));
     EXPECT_EQ(test_option_int, 53);
+
+    // Also check retrieving the value again.
+    int int_value;
+    EXPECT_SUCCESS(whist_option_get_int_value("test-int", &int_value));
+    EXPECT_EQ(int_value, 53);
 
     // Single boolean in various forms
     argv[1] = "-5";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_EQ(test_option_bool_1, true);
     argv[1] = "-5off";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_EQ(test_option_bool_1, false);
     argv[1] = "-5";
     argv[2] = "TRUE";
-    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(3, argv, NULL));
     EXPECT_EQ(test_option_bool_1, true);
     argv[1] = "-5";
     argv[2] = "No";
-    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(3, argv, NULL));
     EXPECT_EQ(test_option_bool_1, false);
     argv[1] = "--test-bool-1";
     argv[2] = "-442";
-    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(3, argv, NULL));
     EXPECT_EQ(test_option_bool_1, true);
     EXPECT_EQ(test_option_int, 42);
     argv[1] = "--test-bool-1";
     argv[2] = "0";
-    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(3, argv, NULL));
     EXPECT_EQ(test_option_bool_1, false);
+
+    // Retrieving a boolean value.
+    bool bool_value;
+    EXPECT_SUCCESS(whist_option_get_bool_value("5", &bool_value));
+    EXPECT_EQ(bool_value, false);
 
     // Multiple boolean flags.
     argv[1] = "-5";
     argv[2] = "-6";
     argv[3] = "-7";
-    EXPECT_TRUE(whist_parse_command_line(4, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(4, argv, NULL));
     EXPECT_EQ(test_option_bool_1, true);
     EXPECT_EQ(test_option_bool_2, true);
     EXPECT_EQ(test_option_bool_3, true);
 
     // Single string option.
     argv[1] = "-8foo";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_STREQ(test_option_string, "foo");
     argv[1] = "--test-string";
     argv[2] = "bar";
-    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(3, argv, NULL));
     EXPECT_STREQ(test_option_string, "bar");
+
+    // Retrieving a string value.
+    const char* string_value;
+    EXPECT_SUCCESS(whist_option_get_string_value("test-string", &string_value));
+    EXPECT_STREQ(string_value, "bar");
+    EXPECT_EQ(string_value, test_option_string);
 
     // Callback function.
     argv[1] = "-9hello";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_STREQ(test_option_callback, "hello");
     argv[1] = "--test-callback";
     argv[2] = "world";
-    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(3, argv, NULL));
     EXPECT_STREQ(test_option_callback, "world");
 
     // Abbreviated names.
     argv[1] = "--test-str=test";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_STREQ(test_option_string, "test");
     argv[1] = "--test-call";
     argv[2] = "foo";
-    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(3, argv, NULL));
     EXPECT_STREQ(test_option_callback, "foo");
 
     // Different integer formats.
     argv[1] = "--test-int=-1";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_EQ(test_option_int, -1);
     argv[1] = "--test-int=0x1234";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_EQ(test_option_int, 0x1234);
 
     // Out-of-range integers.
     argv[1] = "--test-int=2000000000";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_EQ(test_option_int, 2000000000);
     argv[1] = "--test-int=3000000000";
-    EXPECT_FALSE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(whist_parse_command_line(2, argv, NULL), WHIST_ERROR_OUT_OF_RANGE);
     argv[1] = "--test-int=-2000000000";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_EQ(test_option_int, -2000000000);
     argv[1] = "--test-int=-3000000000";
-    EXPECT_FALSE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(whist_parse_command_line(2, argv, NULL), WHIST_ERROR_OUT_OF_RANGE);
     argv[1] = "--test-int=0x7fffffff";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_EQ(test_option_int, 2147483647);
     argv[1] = "--test-int=0x80000000";
-    EXPECT_FALSE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(whist_parse_command_line(2, argv, NULL), WHIST_ERROR_OUT_OF_RANGE);
 
     // Too-long strings.
     argv[1] = "--test-string=1234567890123456";
-    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_SUCCESS(whist_parse_command_line(2, argv, NULL));
     EXPECT_STREQ(test_option_string, "1234567890123456");
     argv[1] = "--test-string=12345678901234567";
-    EXPECT_FALSE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(whist_parse_command_line(2, argv, NULL), WHIST_ERROR_TOO_LONG);
+
+    // Retrieving a nonexistent value.
+    int missing_value;
+    int* missing_pointer = &missing_value;
+    EXPECT_EQ(whist_option_get_int_value("nonexistent", &missing_value), WHIST_ERROR_NOT_FOUND);
+    EXPECT_EQ(missing_pointer, &missing_value);
 
     // Everything together.
     argv[1] = "--test-int=-17";
@@ -1946,7 +1964,7 @@ TEST_F(ProtocolTest, CommandLineTest) {
     argv[6] = "--test-str";
     argv[7] = "foo";
     argv[8] = "bar";
-    EXPECT_TRUE(whist_parse_command_line(9, argv, &test_operand_callback_function));
+    EXPECT_SUCCESS(whist_parse_command_line(9, argv, &test_operand_callback_function));
     EXPECT_EQ(test_option_int, -17);
     EXPECT_EQ(test_option_bool_1, false);
     EXPECT_EQ(test_option_bool_2, true);
@@ -1957,85 +1975,73 @@ TEST_F(ProtocolTest, CommandLineTest) {
 }
 
 TEST_F(ProtocolTest, ClientParseEmpty) {
-    EXPECT_EQ(alloc_parsed_args(), 0);
-    char argv0[] = "./wclient";
-    char* argv[] = {argv0};
+    const char* argv[] = {"./wclient"};
     int argc = ARRAY_LENGTH(argv);
     int ret_val = client_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 0);
-    EXPECT_EQ(free_parsed_args(), 0);
 }
 
 TEST_F(ProtocolTest, ClientParseHelp) {
-    char argv0[] = "./wclient";
-    char argv1[] = "--help";
-    char* argv[] = {argv0, argv1};
+    const char* argv[] = {"./wclient", "--help"};
     int argc = ARRAY_LENGTH(argv);
     EXPECT_EXIT(client_parse_args(argc, argv), testing::ExitedWithCode(0), "");
     check_stdout_line(::testing::StartsWith("Usage:"));
 }
 
 TEST_F(ProtocolTest, ClientParseArgs) {
-    EXPECT_EQ(alloc_parsed_args(), 0);
-    char argv0[] = "./wclient";
-    // Required urls: IP, port mappings, AES key
-    char argv1[] = "16.72.29.190";
-    char argv2[] = "-p32262:7415.32263:66182.32273:12774";
-    char argv3[] = "-k";
-    char argv4[] = "9d3ff73c663e13bce0780d1b95c89582";
-    // Enable the debug console on a port
-    char argv5[] = "--debug-console";
-    char argv6[] = "9090";
-    // Disable catching segfaults on server (developer mode)
-    char argv7[] = "-D";
-    // Enable features
-    char argv8[] = "--enable-features";
-    char argv9[] = "packet encryption,long-term reference frames";
-    // Set environment to
-    char argv10[] = "-e";
-    char argv11[] = "staging";
-    // Set width and height
-    char argv12[] = "-w";
-    char argv13[] = "500";
-    char argv14[] = "-h";
-    char argv15[] = "750";
-    // Set the icon (using a 64x64 png file)
-    char argv16[] = "-i";
-    char argv17[] = "assets/icon_dev.png";
-    // Set the protocol window title
-    char argv18[] = "-n";
-    char argv19[] = "Test Title 1234567890 ?!";
-    // Pass URL to open up in new tab
-    char argv20[] = "-x";
-    char argv21[] = "https://www.nytimes.com/";
-    // Add additional port mappings
-    char argv22[] = "-p";
-    char argv23[] = "8787:6969.1234:7248";
-    // Set the session id
-    char argv24[] = "-d";
-    char argv25[] = "2rhfnq384";
-    // Request to launch protocol without an icon in the taskbar
-    char argv26[] = "-s";
-    // Pass the user's email
-    char argv27[] = "-u";
-    char argv28[] = "user@whist.com";
-
-    char* argv[] = {argv0,  argv1,  argv2,  argv3,  argv4,  argv5,  argv6,  argv7,  argv8,  argv9,
-                    argv10, argv11, argv12, argv13, argv14, argv15, argv16, argv17, argv18, argv19,
-                    argv20, argv21, argv22, argv23, argv24, argv25, argv26, argv27, argv28};
+    const char* argv[] = {
+        "./wclient",
+        // Required urls: IP, port mappings, AES key
+        "16.72.29.190",
+        "-p32262:7415.32263:66182.32273:12774",
+        "-k",
+        "9d3ff73c663e13bce0780d1b95c89582",
+        // Enable the debug console on a port
+        "--debug-console",
+        "9090",
+        // Disable catching segfaults on server (developer mode)
+        "-D",
+        // Enable features
+        "--enable-features",
+        "packet encryption,long-term reference frames",
+        // Set environment to
+        "-e",
+        "staging",
+        // Set width and height
+        "-w",
+        "500",
+        "-h",
+        "750",
+        // Set the icon (using a 64x64 png file)
+        "-i",
+        "assets/icon_dev.png",
+        // Set the protocol window title
+        "-n",
+        "Test Title 1234567890 ?!",
+        // Pass URL to open up in new tab
+        "-x",
+        "https://www.nytimes.com/",
+        // Add additional port mappings
+        "-p",
+        "8787:6969.1234:7248",
+        // Set the session id
+        "-d",
+        "2rhfnq384",
+        // Request to launch protocol without an icon in the taskbar
+        "-s",
+        // Pass the user's email
+        "-u",
+        "user@whist.com",
+    };
     int argc = ARRAY_LENGTH(argv);
     int ret_val = client_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 0);
 
-    // Check that the server ip was saved properly. Use a loop (instead of strcmp) because server_ip
-    // is volatile.
-    size_t server_ip_len = 0, argv1_len = strlen(argv1);
-    while (server_ip[server_ip_len] != '\0') {
-        EXPECT_TRUE(server_ip_len <= argv1_len);
-        EXPECT_EQ(server_ip[server_ip_len], argv1[server_ip_len]);
-        server_ip_len++;
-    }
-    EXPECT_EQ(server_ip_len, argv1_len);
+    // Check that the server ip was saved properly.
+    const char* server_ip;
+    EXPECT_SUCCESS(whist_option_get_string_value("server-ip", &server_ip));
+    EXPECT_TRUE(server_ip != NULL);
+    EXPECT_STREQ(server_ip, argv[1]);
 
     // Check the port mappings
     EXPECT_EQ(port_mappings[32262], 7415);
@@ -2047,61 +2053,54 @@ TEST_F(ProtocolTest, ClientParseArgs) {
 
     // Check that the AES key was saved properly. Use a loop (instead of strcmp) because
     // client_hex_aes_private_key is volatile.
-    size_t aes_key_len = 0, argv4_len = strlen(argv4);
+    size_t aes_key_len = 0, argv4_len = strlen(argv[4]);
     while (client_hex_aes_private_key[aes_key_len] != '\0') {
         EXPECT_TRUE(aes_key_len <= argv4_len);
-        if (isdigit(client_hex_aes_private_key[aes_key_len])) {
-            EXPECT_EQ(client_hex_aes_private_key[aes_key_len], argv4[aes_key_len]);
-        } else {
-            EXPECT_EQ(client_hex_aes_private_key[aes_key_len] - 'A' + 'a', argv4[aes_key_len]);
-        }
-
+        EXPECT_EQ(tolower(client_hex_aes_private_key[aes_key_len]), argv[4][aes_key_len]);
         aes_key_len++;
     }
     EXPECT_EQ(aes_key_len, argv4_len);
 
     // Check that the debugging console was turned on at the desired port
-    int debug_console_port = atoi(argv6);
+    int debug_console_port = atoi(argv[6]);
     EXPECT_EQ(get_debug_console_listen_port(), debug_console_port);
 
     // Check that we are not catching seg faults, given that developer mode is on.
-    EXPECT_TRUE(get_do_not_catch_segfaults_flag());
+    bool developer_flag;
+    EXPECT_SUCCESS(whist_option_get_bool_value("developer-mode", &developer_flag));
+    EXPECT_TRUE(developer_flag);
     whist_init_features();
 
     // Check the environment
     EXPECT_TRUE(whist_error_monitor_environment_set());
-    char* enviroment_copy = get_error_monitor_environment();
-    EXPECT_TRUE(enviroment_copy != NULL);
-    EXPECT_EQ(strlen(enviroment_copy), strlen("staging"));
-    EXPECT_EQ(strcmp(enviroment_copy, argv11), 0);
-    free(enviroment_copy);
+    char* environment_copy = get_error_monitor_environment();
+    EXPECT_TRUE(environment_copy != NULL);
+    EXPECT_STREQ(environment_copy, argv[11]);
+    free(environment_copy);
 
     // Check the width and the height
-    int width = atoi(argv13);
-    int height = atoi(argv15);
+    int width = atoi(argv[13]);
+    int height = atoi(argv[15]);
     EXPECT_EQ(width, output_width);
     EXPECT_EQ(height, output_height);
 
     // Check that the icon filename was set correctly
-    char* png_icon_filename_copy = get_png_icon_filename();
-    EXPECT_TRUE(png_icon_filename_copy != NULL);
-    EXPECT_EQ(strlen(png_icon_filename_copy), strlen(argv17));
-    EXPECT_EQ(strcmp(png_icon_filename_copy, argv17), 0);
-    free(png_icon_filename_copy);
+    const char* png_icon_filename;
+    EXPECT_SUCCESS(whist_option_get_string_value("icon", &png_icon_filename));
+    EXPECT_TRUE(png_icon_filename != NULL);
+    EXPECT_STREQ(png_icon_filename, argv[17]);
 
     // Check the window title
-    char* program_name_copy = get_program_name();
-    EXPECT_TRUE(program_name_copy != NULL);
-    EXPECT_EQ(strlen(program_name_copy), strlen(argv19));
-    EXPECT_EQ(strcmp(program_name_copy, argv19), 0);
-    free(program_name_copy);
+    const char* program_name;
+    EXPECT_SUCCESS(whist_option_get_string_value("name", &program_name));
+    EXPECT_TRUE(program_name != NULL);
+    EXPECT_STREQ(program_name, argv[19]);
 
     // Check that the url was saved properly
-    char* new_tab_url = get_new_tab_url();
+    const char* new_tab_url;
+    EXPECT_SUCCESS(whist_option_get_string_value("new-tab-url", &new_tab_url));
     EXPECT_TRUE(new_tab_url != NULL);
-    EXPECT_EQ(strlen(new_tab_url), strlen(argv21));
-    EXPECT_EQ(strcmp(new_tab_url, argv21), 0);
-    free(new_tab_url);
+    EXPECT_STREQ(new_tab_url, argv[21]);
 
     // Check the additional port mappings
     EXPECT_EQ(port_mappings[8787], 6969);
@@ -2120,21 +2119,42 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     // Check session id
     char* session_id_copy = get_error_monitor_session_id();
     EXPECT_TRUE(session_id_copy != NULL);
-    EXPECT_EQ(strlen(session_id_copy), strlen(argv25));
-    EXPECT_EQ(strcmp(session_id_copy, argv25), 0);
+    EXPECT_EQ(strlen(session_id_copy), strlen(argv[25]));
+    EXPECT_EQ(strcmp(session_id_copy, argv[25]), 0);
     free(session_id_copy);
 
     // Check skip taskbar
     EXPECT_TRUE(get_skip_taskbar());
 
     // Check user email
-    char* user_email_copy = get_user_email();
-    EXPECT_TRUE(user_email_copy != NULL);
-    EXPECT_EQ(strlen(user_email_copy), strlen(argv28));
-    EXPECT_EQ(strcmp(user_email_copy, argv28), 0);
-    free(user_email_copy);
+    const char* user_email;
+    EXPECT_SUCCESS(whist_option_get_string_value("user", &user_email));
+    EXPECT_TRUE(user_email != NULL);
+    EXPECT_STREQ(user_email, argv[28]);
+}
 
-    EXPECT_EQ(free_parsed_args(), 0);
+TEST_F(ProtocolTest, ErrorCodes) {
+    // Success / no-error is zero.
+    EXPECT_EQ(WHIST_SUCCESS, 0);
+
+    // Unknown errors are minus-one, for compatibility with functions
+    // before error codes were added.
+    EXPECT_EQ(WHIST_ERROR_UNKNOWN, -1);
+
+    // Other errors are negative.
+    EXPECT_LT(WHIST_ERROR_INVALID_ARGUMENT, -1);
+
+    // Error string function should return a string.
+    EXPECT_STREQ(whist_error_string(WHIST_ERROR_NOT_FOUND), "not found");
+
+    // Invalid error codes should also return a string.
+    EXPECT_STREQ(whist_error_string((WhistStatus)9001), "invalid error code");
+
+    // Error string function should return something for all values.
+    for (int e = 10; e > -100; e--) {
+        const char* str = whist_error_string((WhistStatus)e);
+        EXPECT_TRUE(str != NULL);
+    }
 }
 
 /*

@@ -99,7 +99,7 @@ static bool command_line_feature_list(const char *value, bool enable) {
             command_line_override_mask |= 1 << feature->feature;
         } else {
             printf("Unable to enable unknown feature \"%.*s\".\n", (int)len, start);
-            return false;
+            return WHIST_ERROR_NOT_FOUND;
         }
 
         if (end)
@@ -107,14 +107,14 @@ static bool command_line_feature_list(const char *value, bool enable) {
         else
             break;
     }
-    return true;
+    return WHIST_SUCCESS;
 }
 
-static bool enable_features(const WhistCommandLineOption *opt, const char *value) {
+static WhistStatus enable_features(const WhistCommandLineOption *opt, const char *value) {
     return command_line_feature_list(value, true);
 }
 
-static bool disable_features(const WhistCommandLineOption *opt, const char *value) {
+static WhistStatus disable_features(const WhistCommandLineOption *opt, const char *value) {
     return command_line_feature_list(value, false);
 }
 
