@@ -1,4 +1,4 @@
-############################# Input #####################################
+############################# Input #############################
 filebeat.inputs:
   - type: log
     paths:
@@ -9,21 +9,20 @@ filebeat.inputs:
       logzio_codec: plain
 
       # Your Logz.io account token. You can find your token at
-      #  https://app.logz.io/#/dashboard/settings/manage-accounts
+      # https://app.logz.io/#/dashboard/settings/manage-accounts
       token: DUMMY_TOKEN_REPLACE_ME
 
-      # Logz.io uses log type to parse your logs. Logs of the same type are
-      #  parsed the same way. For more information, see
-      #  https://docs.logz.io/user-guide/log-shipping/built-in-log-types.html
+      # Logz.io uses log type to parse your logs. Logs of the same types are
+      # parsed the same way. For more information, see
+      # https://docs.logz.io/user-guide/log-shipping/built-in-log-types.html
       #
       # For custom parsing you can:
-      #  - Configure Logstash in your system
-      #  - Use the Data Parsing wizard
-      #    (https://app.logz.io/#/dashboard/data-parsing/)
-      #  - Get help from the Support team (email help@logz.io)
+      # - Configure Logstash in your system
+      # - Use the Data Parsing wizard (https://app.logz.io/#/dashboard/data-parsing/)
+      # - Get help from the Support team (email help@logz.io)
       # type: LOG-TYPE
 
-    # For logz, fields_under_root must be set to `true`. Do not change this option.
+    # For Logz.io, fields_under_root must be set to `true`. Do not change this option.
     fields_under_root: true
     encoding: utf-8
     ignore_older: 3h
@@ -32,7 +31,7 @@ filebeat.inputs:
     # option. On the `pattern` line, give a Filebeat-supported regex pattern.
     # Filebeat combines lines when it finds the regex pattern. Supported regex
     # patterns are at https://www.elastic.co/guide/en/beats/filebeat/current/regexp-support.html
-    #multiline:
+    # multiline:
     #  pattern: # Regex pattern to match
     #  negate: true
     #  match: after
@@ -58,32 +57,33 @@ processors:
       # https://www.elastic.co/guide/en/beats/filebeat/current/dissect.html
       # We use the dissect processor to parse out the metadata for logs based on file-path.
       # Logs are mounted from mandelboxes onto host through bind mounts declared by the host service.
-      # A filepath looks like below.
+      # A filepath looks like below:
       # /whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/protocol-out.log
       tokenizer: "/whist/temp/logs/%{container_id}/%{session_id}/%{sub_component}-%{log_level}.log"
       field: "log.file.path"
       target_prefix: ""
-      # setting ignore_failure to false will stop execection of subsequent processors if dissect errors out for some reason.
+      # setting ignore_failure to false will stop execution of subsequent processors if dissect errors out for some reason.
       ignore_failure: true
 
+  # This allows us to add metadata about the specific cloud provider Filebeat is running on.
   # https://www.elastic.co/guide/en/beats/filebeat/current/add-cloud-metadata.html
   - add_cloud_metadata:
       # timeout: 3s
       providers:
         - aws
 
-############################# Output ##########################################
+############################# Output #############################
 output:
   logstash:
     # Use the Logz.io listener URL for your region. For help finding your
-    # region's listener URL, see:
-    # https://docs.logz.io/user-guide/accounts/account-region.html
+    # region's listener URL, see https://docs.logz.io/user-guide/accounts/account-region.html
     hosts: ["listener.logz.io:5015"]
 
     ssl:
       # For Linux, download the Logz.io public certificate to this folder.
       # Run this command:
-      #   `sudo curl https://raw.githubusercontent.com/logzio/public-certificates/master/TrustExternalCARoot_and_USERTrustRSAAAACA.crt --create-dirs -o /etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt`
-      # For Windows, replace the filepath with the certificate's location.
+      #  `sudo curl https://raw.githubusercontent.com/logzio/public-certificates/master/TrustExternalCARoot_and_USERTrustRSAAAACA.crt --create-dirs -o /etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt`
+      # For Windows, replace the filepath with the certificate's location. Note that we only run Linux servers,
+      # so you should have a very good reason for doing this on Windows.
       certificate_authorities:
         - "/etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt"

@@ -40,7 +40,7 @@ def slack_post(
     body = fmt.default_message_slack(body, title, code, lang)
     data = {
         "username": slack_username,
-        "icon_emoji": ":fractal:",
+        "icon_emoji": ":whist:",
         "link_names": 1,  # this makes @channel, @whist_employee work
         "type": "mrkdwn",
         "text": body,

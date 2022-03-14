@@ -3,7 +3,6 @@
  * pleaser refer to this link: https://www.packer.io/docs/builders/amazon/ebs
 **/
 
-
 /* 
  * Variables passed to Packer via the -var-file flag, as a JSON file.
 **/
