@@ -40,8 +40,6 @@ Defines
 // so we need to cap the buffer size as such
 #define MAX_BUFFER_SIZE ((1 << (8 * FEC_HEADER_SIZE)) - 1)
 
-typedef unsigned short u16_t;  // NOLINT
-
 struct FECEncoder {
     int num_accepted_buffers;
     int num_buffers;

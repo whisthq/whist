@@ -115,7 +115,7 @@ Public Function Implementations
 void init_rs_wrapper(void) {
     static int initialized = 0;
     if (initialized == 0) {
-        lugi_rs_helper_init();
+        lugi_rs_extra_init();
         FATAL_ASSERT(cm256_init() == 0);
         // TODO: produce a warning log if cm256 fails to use AVX2
         initialized = 1;
@@ -370,7 +370,7 @@ inline static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int 
             break;
         }
         case LUGI_RS: {
-            RSCode *rs_code = get_rs_code(k, n);
+            RSCode *rs_code = lugi_rs_extra_get_rs_code(k, n);
             for (int i = 0; i < fec_num; i++) {
                 rs_encode(rs_code, src, dst[i], k + i, sz);
             }
@@ -418,7 +418,7 @@ inline static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int
             return r;
         }
         case LUGI_RS: {
-            RSCode *rs_code = get_rs_code(k, n);
+            RSCode *rs_code = lugi_rs_extra_get_rs_code(k, n);
             return rs_decode(rs_code, pkt, index, sz);
         }
         default: {
