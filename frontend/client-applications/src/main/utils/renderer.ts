@@ -154,9 +154,12 @@ const createUpdateWindow = () =>
 
 const createLaunchLoadingWindow = () =>
   createElectronWindow({
-    ...width.md,
-    ...height.sm,
+    ...width.sm,
+    ...height.md,
     hash: WindowHashLaunchLoading,
+    options: {
+      fullscreenable: false,
+    },
   })
 
 const createImportLoadingWindow = () =>

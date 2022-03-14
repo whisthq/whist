@@ -1,0 +1,3 @@
+export const MAX_ACCEPTABLE_PING_MS = 50
+export const MAX_ACCEPTABLE_JITTER_MS = 15
+export const MIN_ACCEPTABLE_DOWNLOAD_MBPS = 30
