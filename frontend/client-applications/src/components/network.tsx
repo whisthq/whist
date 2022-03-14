@@ -3,10 +3,11 @@ import classNames from "classnames"
 
 import { Progress } from "@app/components/progress"
 import { WhistButton, WhistButtonState } from "@app/components/button"
-
-const MAX_ACCEPTABLE_PING_MS = 50
-const MAX_ACCEPTABLE_JITTER_MS = 15
-const MIN_ACCEPTABLE_DOWNLOAD_MBPS = 30
+import {
+  MAX_ACCEPTABLE_JITTER_MS,
+  MAX_ACCEPTABLE_PING_MS,
+  MIN_ACCEPTABLE_DOWNLOAD_MBPS,
+} from "@app/constants/network"
 
 enum NetworkTestState {
   IN_PROGRESS,

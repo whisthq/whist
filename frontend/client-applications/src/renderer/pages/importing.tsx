@@ -1,26 +1,8 @@
-import React, { useState, useEffect } from "react"
+import React from "react"
 
 import { Progress } from "@app/components/progress"
 
 const Importing = () => {
-  const [progress, setProgress] = useState(1)
-
-  useEffect(() => {
-    let _progress = progress
-
-    const interval = setInterval(() => {
-      if (_progress >= 96) clearInterval(interval)
-
-      if (_progress <= 80) {
-        _progress += 0.02
-      } else {
-        _progress += 0.01
-      }
-
-      setProgress(_progress)
-    }, 0.1)
-  }, [])
-
   return (
     <div className="flex flex-col justify-center items-center bg-gray-900 h-screen text-center">
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
@@ -32,7 +14,7 @@ const Importing = () => {
           This could take up to 20 seconds
         </div>
         <div className="mt-6">
-          <Progress percent={progress} className="h-2" />
+          <Progress percent={0} className="h-2" mockProgress={true} />
         </div>
       </div>
     </div>
