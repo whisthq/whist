@@ -31,7 +31,7 @@ Defines
 // (Only used for testing phase of FEC)
 // This refers to the percentage of packets that will be FEC packets
 #define AUDIO_FEC_RATIO 0.0
-#define VIDEO_FEC_RATIO 0.0
+#define VIDEO_FEC_RATIO 0.08
 
 typedef struct {
     int num_nacks_per_second;
