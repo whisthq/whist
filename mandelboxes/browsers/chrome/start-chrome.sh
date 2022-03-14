@@ -42,12 +42,12 @@ flags=(
   "--load-extension=/opt/teleport/chrome-extension"
 )
 
-if [[ $DARK_MODE == true ]]; then
+if [[ "$DARK_MODE" == true ]]; then
   features="$features,WebUIDarkMode"
   flags+=("--force-dark-mode")
 fi
 
-if [[ $RESTORE_LAST_SESSION == true ]]; then
+if [[ "$RESTORE_LAST_SESSION" == true ]]; then
   flags+=("--restore-last-session")
 fi
 
@@ -62,7 +62,7 @@ fi
 # Start Chrome in Kiosk mode (full-screen). This flag is used when the client is a
 # local Chromium browser integrating Whist to avoid duplicating the URL bar in the cloud tabs, and should
 # not be set when the client is a fully-streamed browser rendered via SDL.
-if [[ -n "$KIOSK_MODE" ]]; then
+if [[ "$KIOSK_MODE" == true ]]; then
   flags+=("--kiosk")
 fi
 
