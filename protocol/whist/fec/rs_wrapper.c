@@ -76,7 +76,6 @@ static inline void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int 
 // when k is 1, n can be arbitrary large, otherwise k<=n<=256
 static inline int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int sz);
 
-
 // the inner version of rs_wrapper_create, let you control num of groups by yourself
 static RSWrapper *rs_wrapper_create_inner(int num_real_buffers, int num_total_buffers,
                                           int num_groups);
