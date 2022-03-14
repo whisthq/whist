@@ -83,8 +83,14 @@ WhistStatus whist_handle_string_option_internal(const WhistCommandLineOption *op
     if (strlen(value) > opt->length) {
         return WHIST_ERROR_TOO_LONG;
     }
-    *(const char **)opt->variable = value;
-    return WHIST_SUCCESS;
+    char **var = opt->variable;
+    free(*var);
+    *var = strdup(value);
+    if (!*var) {
+        return WHIST_ERROR_OUT_OF_MEMORY;
+    } else {
+        return WHIST_SUCCESS;
+    }
 }
 
 static LinkedList option_list;
@@ -205,6 +211,21 @@ static const WhistCommandLineOption *find_long_option(const char *str, size_t le
     return matched;
 }
 
+static const WhistCommandLineOption *find_option(const char *name) {
+    size_t len = strlen(name);
+    if (len < 1) {
+        return NULL;
+    }
+    const WhistCommandLineOption *opt = NULL;
+    if (len == 1) {
+        opt = find_short_option(name[0]);
+    }
+    if (opt == NULL) {
+        opt = find_long_option(name, len);
+    }
+    return opt;
+}
+
 static WhistStatus call_option_handler(const WhistCommandLineOption *opt, bool is_short,
                                        const char *value) {
     if (LOG_COMMAND_LINE) {
@@ -264,6 +285,25 @@ WhistStatus whist_set_single_option(const char *name, const char *value) {
     return WHIST_ERROR_NOT_FOUND;
 }
 
+static void free_allocated_options(void) {
+    linked_list_for_each(&option_list, WhistCommandLineOption, opt) {
+        if (!(opt->flags & WHIST_OPTION_ALLOCATED)) {
+            continue;
+        }
+        char **var = opt->variable;
+        free(*var);
+        *var = NULL;
+    }
+}
+
+static void set_option_exit_handler(void) {
+    static bool exit_handler_set = false;
+    if (!exit_handler_set) {
+        atexit(&free_allocated_options);
+        exit_handler_set = true;
+    }
+}
+
 WhistStatus whist_parse_command_line(int argc, const char **argv,
                                      WhistOperandHandler operand_handler) {
     bool show_help = false;
@@ -310,6 +350,9 @@ WhistStatus whist_parse_command_line(int argc, const char **argv,
         exit(EXIT_FAILURE);
     }
 #endif
+
+    // Add the exit handler
+    set_option_exit_handler();
 
     const WhistCommandLineOption *opt;
     WhistStatus ret = WHIST_SUCCESS;
@@ -416,4 +459,34 @@ WhistStatus whist_parse_command_line(int argc, const char **argv,
         printf("Try \"%s --help\" for more information.\n", argv[0]);
     }
     return ret;
+}
+
+WhistStatus whist_option_get_int_value(const char *name, int *value) {
+    const WhistCommandLineOption *opt = find_option(name);
+    if (opt) {
+        *value = *(int *)opt->variable;
+        return WHIST_SUCCESS;
+    } else {
+        return WHIST_ERROR_NOT_FOUND;
+    }
+}
+
+WhistStatus whist_option_get_bool_value(const char *name, bool *value) {
+    const WhistCommandLineOption *opt = find_option(name);
+    if (opt) {
+        *value = *(bool *)opt->variable;
+        return WHIST_SUCCESS;
+    } else {
+        return WHIST_ERROR_NOT_FOUND;
+    }
+}
+
+WhistStatus whist_option_get_string_value(const char *name, const char **value) {
+    const WhistCommandLineOption *opt = find_option(name);
+    if (opt) {
+        *value = *(const char **)opt->variable;
+        return WHIST_SUCCESS;
+    } else {
+        return WHIST_ERROR_NOT_FOUND;
+    }
 }

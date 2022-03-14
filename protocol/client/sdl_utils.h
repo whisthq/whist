@@ -49,7 +49,8 @@ bool get_skip_taskbar(void);
  *
  * @param name                     The title of the window
  *
- * @param icon_filename            The filename of the window icon, pointing to a 64x64 png
+ * @param icon_filename            The filename of the window icon, pointing to a 64x64 png,
+ *                                 or NULL to use the default icon.
  *
  * @returns                        NULL if fails to create SDL window, else it
  *                                 returns the SDL window variable

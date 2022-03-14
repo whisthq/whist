@@ -39,17 +39,12 @@ Bad Globals [TODO: Remove these or give them `static`!]
 // Taken from main.c
 volatile char client_binary_aes_private_key[16];
 volatile char client_hex_aes_private_key[33];
-volatile char *server_ip;
 extern int output_width;
 extern int output_height;
 volatile SDL_Window *window;
 
 // From main.c
 volatile bool update_bitrate = false;
-
-// This variables should stay as arrays - we call sizeof() on them
-char user_email[WHIST_ARGS_MAXLEN + 1];
-static char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
 
 bool using_stun = false;
 
@@ -129,9 +124,8 @@ static WhistStatus parse_operand(int pos, const char *value) {
     // operands are an error.
     static bool ip_set = false;
     if (!ip_set) {
-        safe_strncpy((char *)server_ip, value, IP_MAXLEN + 1);
         ip_set = true;
-        return WHIST_SUCCESS;
+        return whist_set_single_option("server-ip", value);
     } else {
         return WHIST_ERROR_ALREADY_SET;
     }
@@ -143,7 +137,7 @@ Public Function Implementations
 ============================
 */
 
-int client_parse_args(int argc, char *argv[]) {
+int client_parse_args(int argc, const char *argv[]) {
     // Initialize private key to default
     memcpy((char *)&client_binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
            sizeof(client_binary_aes_private_key));
@@ -151,10 +145,7 @@ int client_parse_args(int argc, char *argv[]) {
            sizeof(client_hex_aes_private_key));
 
     // default user email
-    safe_strncpy(user_email, "None", sizeof(user_email));
-
-    // default icon filename
-    safe_strncpy(icon_png_filename, "", sizeof(icon_png_filename));
+    whist_set_single_option("user", "None");
 
     using_piped_arguments = false;
 
@@ -282,8 +273,8 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
                 if (!arg_value) {
                     LOG_WARNING("Must pass arg_value with `ip` arg_name");
                 } else {
-                    safe_strncpy((char *)server_ip, arg_value, IP_MAXLEN + 1);
-                    LOG_INFO("Connecting to IP %s", server_ip);
+                    whist_set_single_option("server-ip", arg_value);
+                    LOG_INFO("Connecting to IP %s", arg_value);
                 }
             } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
                 // If arg_name is `kill`, then return indication for graceful exit
@@ -314,42 +305,15 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
         available_chars = 0;
     }
 
-    if (*keep_waiting && strlen((char *)server_ip) == 0) {
-        LOG_ERROR(
-            "Need IP: if not passed in directly, IP must be passed in via pipe with arg name `ip`");
-        return -1;
-    }
-
-    return 0;
-}
-
-int alloc_parsed_args(void) {
-    /*
-        Init any allocated memory for parsed args
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-    server_ip = safe_malloc(IP_MAXLEN + 1);
-
-    if (!server_ip) {
-        return -1;
-    }
-
-    memset((char *)server_ip, 0, IP_MAXLEN + 1);
-
-    return 0;
-}
-
-int free_parsed_args(void) {
-    /*
-        Free any allocated memory for parsed args
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-    if (server_ip) {
-        free((char *)server_ip);
+    if (*keep_waiting) {
+        const char *server_ip = NULL;
+        if (whist_option_get_string_value("server-ip", &server_ip) != WHIST_SUCCESS ||
+            server_ip == NULL) {
+            LOG_ERROR(
+                "Need IP: if not passed in directly, IP must "
+                "be passed in via pipe with arg name `ip`");
+            return -1;
+        }
     }
 
     return 0;

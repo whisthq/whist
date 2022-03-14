@@ -332,8 +332,6 @@ static bool do_not_catch_segfaults;
 COMMAND_LINE_BOOL_OPTION(do_not_catch_segfaults, 'D', "developer-mode",
                          "Run the server in developer mode (don't catch segfaults).")
 
-bool get_do_not_catch_segfaults_flag(void) { return do_not_catch_segfaults; }
-
 void whist_init_logger(void) {
     if (!do_not_catch_segfaults) init_backtrace_handler();
 

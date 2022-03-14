@@ -176,7 +176,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
             target_output_height (int): The height of the SDL window to create, in pixels
             name (char*): The title of the window
             icon_filename (char*): The filename of the window icon, pointing to a 64x64 png,
-                or "" for the default icon
+                or NULL for the default icon
 
         Return:
             sdl_window (SDL_Window*): NULL if fails to create SDL window, else the created SDL
@@ -273,7 +273,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     }
 
     // Set icon, if an icon_filename was given
-    if (strcmp(icon_filename, "") != 0) {
+    if (icon_filename != NULL) {
         SDL_Surface* icon_surface = sdl_surface_from_png_file(icon_filename);
         SDL_SetWindowIcon(sdl_window, icon_surface);
         sdl_free_png_file_rgb_surface(icon_surface);

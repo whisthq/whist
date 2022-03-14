@@ -26,14 +26,15 @@ Public Functions
 */
 
 /**
- * @brief                          Connect to the server. Must be called after
- *                                 `discover_ports()`.
+ * @brief                          Connect to the server.
  *
+ * @param server_ip                Server IP address to connect to.
  * @param using_stun               Whether we are using the STUN server
+ * @param user_email               User email to provide.
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int connect_to_server(bool using_stun);
+int connect_to_server(const char* server_ip, bool using_stun, const char* user_email);
 
 int close_connections(void);
 

@@ -102,6 +102,12 @@ enum {
      * This applies to internally-generated options like "--help".
      */
     WHIST_OPTION_INTERNAL = 8,
+    /**
+     * The option variable is allocated by the command-line handling.
+     *
+     * And therefore needs to be freed by it as well.
+     */
+    WHIST_OPTION_ALLOCATED = 16,
 };
 
 /**
@@ -215,7 +221,7 @@ void whist_register_command_line_option(WhistCommandLineOption *opt);
             short_option,                                                                      \
             long_option,                                                                       \
             help_text,                                                                         \
-            WHIST_OPTION_REQUIRED_ARGUMENT,                                                    \
+            WHIST_OPTION_REQUIRED_ARGUMENT | WHIST_OPTION_ALLOCATED,                           \
             &whist_handle_string_option_internal,                                              \
             (void *)&variable,                                                                 \
             0,                                                                                 \
@@ -291,6 +297,33 @@ WhistStatus whist_set_single_option(const char *name, const char *value);
  */
 WhistStatus whist_parse_command_line(int argc, const char **argv,
                                      WhistOperandHandler operand_handler);
+
+/**
+ * Fetch the value of a named int option.
+ *
+ * @param name   Name of the option to get.
+ * @param value  On success, written with the value.
+ * @return  Error code.
+ */
+WhistStatus whist_option_get_int_value(const char *name, int *value);
+
+/**
+ * Fetch the value of a named bool option.
+ *
+ * @param name   Name of the option to get.
+ * @param value  On success, written with the value.
+ * @return  Error code.
+ */
+WhistStatus whist_option_get_bool_value(const char *name, bool *value);
+
+/**
+ * Fetch the value of a named string option.
+ *
+ * @param name   Name of the option to get.
+ * @param value  On success, written with the value.
+ * @return  Error code.
+ */
+WhistStatus whist_option_get_string_value(const char *name, const char **value);
 
 /**
  * @privatesection
