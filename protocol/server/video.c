@@ -539,6 +539,8 @@ int32_t multithreaded_send_video(void* opaque) {
     int start_frame_id = id;
     WhistTimer start_frame_timer;
     start_timer(&start_frame_timer);
+    WhistTimer last_frame_timer;
+    start_timer(&last_frame_timer);
 
     state->pending_encoder = false;
     state->encoder_finished = false;
@@ -709,7 +711,6 @@ int32_t multithreaded_send_video(void* opaque) {
         // the current fps due to a past low fps (which could occur due to any unpredictable
         // situation, such as network throttling)
         if (get_timer(&start_frame_timer) > AVG_FPS_DURATION) {
-            LOG_INFO("Reset encoder FPS timer");
             start_timer(&start_frame_timer);
             start_frame_id = id;
         }
@@ -719,8 +720,10 @@ int32_t multithreaded_send_video(void* opaque) {
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
         if (state->client.is_active &&
             (accumulated_frames > 0 || state->stream_needs_restart ||
-             get_timer(&start_frame_timer) > (double)(id - start_frame_id) / min_fps)) {
+             (get_timer(&start_frame_timer) > (double)(id - start_frame_id) / min_fps &&
+              get_timer(&last_frame_timer) > 1.0 / min_fps))) {
             // This loop only runs ~1/current_fps times per second, every 16-100ms
+            start_timer(&last_frame_timer);
 
             if (accumulated_frames == 0) {
                 // Slowly increment while receiving identical frames

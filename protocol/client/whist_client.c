@@ -501,20 +501,6 @@ int whist_client_main(int argc, char* argv[]) {
             client_exiting = true;
         }
 
-        WhistTimer handshake_time;
-        start_timer(&handshake_time);  // start timer for measuring handshake time
-        LOG_INFO("Begin measuring handshake");
-
-        if (connect_to_server(using_stun) != 0) {
-            LOG_WARNING("Failed to connect to server.");
-            continue;
-        }
-
-        // Log to METRIC for cross-session tracking and INFO for developer-facing logging
-        double connect_to_server_time = get_timer(&handshake_time);
-        LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
-        LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
-
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
             client_exiting = true;
         }
@@ -535,10 +521,6 @@ int whist_client_main(int argc, char* argv[]) {
         SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
         SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
 
-        // Send our initial width/height/codec to the server,
-        // so it can synchronize with us
-        send_message_dimensions();
-
         // Initialize audio and video renderer system
         WhistRenderer* whist_renderer = init_renderer(output_width, output_height);
 
@@ -550,10 +532,6 @@ int whist_client_main(int argc, char* argv[]) {
         // the udp/tcp threads
         init_clipboard_synchronizer(true);
         init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
-
-        // Create threads to receive udp/tcp packets and handle them as needed
-        // Pass the whist_renderer so that udp packets can be fed into it
-        init_packet_synchronizers(whist_renderer);
 
         // Add listeners for global file drag events
         initiate_out_of_window_drag_handlers();
@@ -575,6 +553,28 @@ int whist_client_main(int argc, char* argv[]) {
 
         WhistTimer cpu_usage_statistics_timer;
         start_timer(&cpu_usage_statistics_timer);
+
+        WhistTimer handshake_time;
+        start_timer(&handshake_time);  // start timer for measuring handshake time
+        LOG_INFO("Begin measuring handshake");
+
+        if (connect_to_server(using_stun) != 0) {
+            LOG_WARNING("Failed to connect to server.");
+            continue;
+        }
+
+        // Log to METRIC for cross-session tracking and INFO for developer-facing logging
+        double connect_to_server_time = get_timer(&handshake_time);
+        LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
+        LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
+
+        // Create threads to receive udp/tcp packets and handle them as needed
+        // Pass the whist_renderer so that udp packets can be fed into it
+        init_packet_synchronizers(whist_renderer);
+
+        // Send our initial width/height/codec to the server,
+        // so it can synchronize with us
+        send_message_dimensions();
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
