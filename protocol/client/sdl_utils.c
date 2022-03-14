@@ -47,10 +47,6 @@ static WhistMutex renderer_mutex;
 // pending render Update
 static volatile bool pending_render = false;
 
-// Loading screen framebuffer update
-static volatile bool pending_loadingscreen = false;
-static int pending_loadingscreen_idx;
-
 static volatile bool prev_insufficient_bandwidth = false;
 
 // NV12 framebuffer update
@@ -60,14 +56,8 @@ static int pending_nv12data_linesize[4];
 static int pending_nv12data_width;
 static int pending_nv12data_height;
 
-#define LOADING_SOLID_COLOR true
-
 // The background color for the loading screen
-#if LOADING_SOLID_COLOR
 static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
-#else
-static const WhistRGBColor background_color = {255, 255, 255};  // white
-#endif  // LOADING_SOLID_COLOR
 
 // Window Color Update
 static volatile WhistRGBColor* native_window_color = NULL;
@@ -127,13 +117,6 @@ static void sdl_free_png_file_rgb_surface(SDL_Surface* surface);
  *                                 Then RenderPresent if sdl_render_framebuffer is pending.
  */
 static void sdl_present_pending_framebuffer(void);
-
-/**
- * @brief                          Renders out the loading screen
- *
- * @note                           Must be called on the main thread
- */
-static void sdl_render_loading_screen(void);
 
 /**
  * @brief                          Renders out the insufficient bandwidth error message
@@ -278,7 +261,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // Render a black screen before anything else,
     // To prevent being exposed to random colors
     pending_nv12data = false;
-    pending_loadingscreen = false;
     pending_render = true;
     sdl_present_pending_framebuffer();
 
@@ -431,24 +413,6 @@ void sdl_renderer_resize_window(int width, int height) {
     LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, output_width, output_height);
 }
 
-void sdl_update_framebuffer_loading_screen(int idx) {
-    /*
-        Make the screen black and show the loading screen
-        Arguments:
-            idx (int): the index of the loading frame
-    */
-
-    whist_lock_mutex(renderer_mutex);
-
-    // Clear any other pending framebuffer
-    pending_nv12data = false;
-    // Mark the pending framebuffer as the loading screen
-    pending_loadingscreen_idx = idx;
-    pending_loadingscreen = true;
-
-    whist_unlock_mutex(renderer_mutex);
-}
-
 void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height) {
     whist_lock_mutex(renderer_mutex);
 
@@ -456,8 +420,6 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
     if (width < 0 || width > MAX_SCREEN_WIDTH || height < 0 || height > MAX_SCREEN_HEIGHT) {
         LOG_ERROR("Invalid Dimensions! %dx%d. nv12 update dropped", width, height);
     } else {
-        // Clear any other pending framebuffer
-        pending_loadingscreen = false;
         // Overwrite the pending framebuffer metadata,
         // And mark the nv12 framebuffer as pending
         memcpy(pending_nv12data_data, data, sizeof(pending_nv12data_data));
@@ -817,11 +779,6 @@ static void sdl_present_pending_framebuffer(void) {
         sdl_render_nv12data();
     }
 
-    // Render the loading screen, if any exists
-    if (pending_loadingscreen) {
-        sdl_render_loading_screen();
-    }
-
     if (insufficient_bandwidth) {
         sdl_render_insufficient_bandwidth();
     }
@@ -844,55 +801,6 @@ static void sdl_present_pending_framebuffer(void) {
     pending_render = false;
     pending_overlay_removal = false;
     whist_unlock_mutex(renderer_mutex);
-}
-
-static void sdl_render_loading_screen(void) {
-    FATAL_ASSERT(pending_loadingscreen == true);
-
-#if LOADING_SOLID_COLOR
-    SDL_SetRenderDrawColor(sdl_renderer, background_color.red, background_color.green,
-                           background_color.blue, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(sdl_renderer);
-#else
-#define NUMBER_LOADING_FRAMES 50
-    int gif_frame_index = pending_loadingscreen_idx % NUMBER_LOADING_FRAMES;
-
-    char frame_filename[256];
-    snprintf(frame_filename, sizeof(frame_filename), "images/frame_%02d.png", gif_frame_index);
-
-    SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_filename);
-    if (loading_screen == NULL) {
-        LOG_ERROR("Loading screen image failed to load: %s", frame_filename);
-    } else {
-        SDL_Texture* loading_screen_texture =
-            SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
-
-        // The surface can now be freed
-        sdl_free_png_file_rgb_surface(loading_screen);
-
-        // Position the rectangle such that the texture will be centered
-        int w, h;
-        SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
-        SDL_Rect centered_rect = {
-            .x = output_width / 2 - w / 2,
-            .y = output_height / 2 - h / 2,
-            .w = w,
-            .h = h,
-        };
-
-        // The texture is semi-transparent, so we clear to white first
-        SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(sdl_renderer);
-        // Now, we write the texture out to the renderer
-        SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &centered_rect);
-
-        // The loading screen texture may now be destroyed
-        SDL_DestroyTexture(loading_screen_texture);
-    }
-#endif
-
-    // The loading screen render is no longer pending
-    pending_loadingscreen = false;
 }
 
 static void sdl_render_insufficient_bandwidth(void) {

@@ -20,7 +20,6 @@ Includes
 */
 
 #include <whist/core/whist.h>
-#include "sdlscreeninfo.h"
 #include "video.h"
 #include "frontend/frontend.h"
 

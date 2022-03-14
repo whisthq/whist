@@ -33,7 +33,6 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/rwlock.h>
 #include "whist/core/features.h"
-#include "sdlscreeninfo.h"
 #include "native_window_utils.h"
 #include "network.h"
 #include "client_utils.h"
@@ -64,9 +63,6 @@ struct VideoContext {
     int last_frame_height;
     CodecType last_frame_codec;
 
-    // Loading animation data
-    int loading_index;
-    WhistTimer last_loading_frame_timer;
     bool has_video_rendered_yet;
 
     // Context of the frame that is currently being rendered
@@ -143,14 +139,7 @@ VideoContext* init_video(int initial_width, int initial_height) {
     video_context->last_frame_height = initial_height;
     video_context->last_frame_codec = CODEC_TYPE_H264;
 
-    // Init loading animation variables
-    video_context->loading_index = 0;
-    start_timer(&video_context->last_loading_frame_timer);
-    // Present first frame of loading animation
-    sdl_update_framebuffer_loading_screen(video_context->loading_index);
     sdl_render_framebuffer();
-    // Then progress the animation
-    video_context->loading_index++;
 
     // Return the new struct
     return (VideoContext*)video_context;
@@ -350,9 +339,6 @@ int render_video(VideoContext* video_context) {
             }
         }
 
-        // Invalidate loading animation once rendering occurs
-        video_context->loading_index = -1;
-
         // Render out the cursor image
         if (cursor_image) {
             TIME_RUN(sdl_update_cursor(cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
@@ -403,19 +389,6 @@ int render_video(VideoContext* video_context) {
         }
         start_timer(&last_frame_timer);
         last_frame_timer_started = true;
-    } else if (video_context->loading_index >= 0) {
-        // If we didn't get a frame, and loading_index is valid,
-        // Render the loading animation
-        const float loading_animation_fps = 20.0;
-        if (get_timer(&video_context->last_loading_frame_timer) > 1 / loading_animation_fps) {
-            // Present the loading screen
-            sdl_update_framebuffer_loading_screen(video_context->loading_index);
-            sdl_render_framebuffer();
-            // Progress animation
-            video_context->loading_index++;
-            // Reset timer
-            start_timer(&video_context->last_loading_frame_timer);
-        }
     }
 
     return 0;

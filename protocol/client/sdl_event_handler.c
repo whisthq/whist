@@ -20,7 +20,6 @@ Includes
 #include "sdl_event_handler.h"
 
 #include <whist/logging/logging.h>
-#include "sdlscreeninfo.h"
 #include "sdl_utils.h"
 #include "audio.h"
 #include "client_utils.h"

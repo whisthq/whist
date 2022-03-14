@@ -37,7 +37,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/sdl_utils.c
         ../client/handle_server_message.c
         ../client/video.c
-        ../client/sdlscreeninfo.c
         ../client/sync_packets.c
         ../client/renderer.c
 
