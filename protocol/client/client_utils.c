@@ -319,38 +319,6 @@ int read_piped_arguments(bool run_only_once) {
     return 0;
 }
 
-int alloc_parsed_args(void) {
-    /*
-        Init any allocated memory for parsed args
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-    server_ip = safe_malloc(IP_MAXLEN + 1);
-
-    if (!server_ip) {
-        return -1;
-    }
-
-    memset((char *)server_ip, 0, IP_MAXLEN + 1);
-
-    return 0;
-}
-
-int free_parsed_args(void) {
-    /*
-        Free any allocated memory for parsed args
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-    if (server_ip) {
-        free((char *)server_ip);
-    }
-
-    return 0;
-}
-
 int update_mouse_motion(void) {
     /*
         Update mouse location if the mouse state has updated since the last call

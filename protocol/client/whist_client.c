@@ -173,7 +173,7 @@ static int sync_keyboard_state(void) {
     return 0;
 }
 
-static void handle_single_icon_launch_client_app(int argc, char* argv[]) {
+static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
     // This function handles someone clicking the protocol icon as a means of starting Whist by
     // instead launching the client app
     // If argc == 1 (no args passed), then check if client app path exists
@@ -353,6 +353,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
+    WhistFrontend* frontend = NULL;
     for (try_amount = 0;
          try_amount < max_connection_attempts && !client_exiting && exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
@@ -364,23 +365,6 @@ int whist_client_main(int argc, const char* argv[]) {
             whist_sleep(300);
         }
 
-        WhistTimer handshake_time;
-        start_timer(&handshake_time);  // start timer for measuring handshake time
-        LOG_INFO("Begin measuring handshake");
-
-        if (connect_to_server(using_stun) != 0) {
-            LOG_WARNING("Failed to connect to server.");
-            continue;
-        }
-
-        // Log to METRIC for cross-session tracking and INFO for developer-facing logging
-        double connect_to_server_time = get_timer(&handshake_time);
-        LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
-        LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
-
-        connected = true;
-        WhistFrontend* frontend = NULL;
-
         // Initialize the SDL window (and only do this once!)
         if (!window) {
             window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename,
@@ -389,10 +373,6 @@ int whist_client_main(int argc, const char* argv[]) {
                 LOG_FATAL("Failed to initialize SDL");
             }
         }
-
-        // Send our initial width/height/codec to the server,
-        // so it can synchronize with us
-        send_message_dimensions();
 
         // Initialize audio and video renderer system
         WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
@@ -435,6 +415,7 @@ int whist_client_main(int argc, const char* argv[]) {
             LOG_WARNING("Failed to connect to server.");
             continue;
         }
+        connected = true;
 
         // Log to METRIC for cross-session tracking and INFO for developer-facing logging
         double connect_to_server_time = get_timer(&handshake_time);

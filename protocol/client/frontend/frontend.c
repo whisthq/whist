@@ -55,3 +55,13 @@ size_t whist_frontend_get_audio_buffer_size(WhistFrontend* frontend) {
     FATAL_ASSERT(frontend != NULL);
     return frontend->call->get_audio_buffer_size(frontend);
 }
+
+void temp_frontend_set_window(WhistFrontend* frontend, void* window) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->temp_set_window(frontend, window);
+}
+
+int whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info) {
+    FATAL_ASSERT(frontend != NULL);
+    return frontend->call->get_window_info(frontend, info);
+}

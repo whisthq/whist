@@ -4,6 +4,7 @@
 
 typedef struct SDLFrontendContext {
     SDL_AudioDeviceID audio_device;
+    SDL_Window* window;
 } SDLFrontendContext;
 
 static atomic_int sdl_initialized = ATOMIC_VAR_INIT(0);
@@ -93,6 +94,22 @@ static size_t sdl_get_audio_buffer_size(WhistFrontend* frontend) {
     return SDL_GetQueuedAudioSize(context->audio_device);
 }
 
+static int sdl_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info) {
+    SDLFrontendContext* context = frontend->context;
+    if (context->window == NULL) {
+        return -1;
+    }
+    SDL_GL_GetDrawableSize(context->window, &info->pixel_size.width, &info->pixel_size.height);
+    SDL_GetWindowSize(context->window, &info->virtual_size.width, &info->virtual_size.height);
+    SDL_GetWindowPosition(context->window, &info->position.x, &info->position.y);
+    return 0;
+}
+
+static void temp_sdl_set_window(WhistFrontend* frontend, void* window) {
+    SDLFrontendContext* context = frontend->context;
+    context->window = (SDL_Window*)window;
+}
+
 static const WhistFrontendFunctionTable sdl_function_table = {
     .init = sdl_init_frontend,
     .destroy = sdl_destroy_frontend,
@@ -101,6 +118,8 @@ static const WhistFrontendFunctionTable sdl_function_table = {
     .close_audio = sdl_close_audio,
     .queue_audio = sdl_queue_audio,
     .get_audio_buffer_size = sdl_get_audio_buffer_size,
+    .get_window_info = sdl_get_window_info,
+    .temp_set_window = temp_sdl_set_window,
 };
 
 const WhistFrontendFunctionTable* sdl_get_function_table(void) { return &sdl_function_table; }

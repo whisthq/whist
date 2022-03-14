@@ -245,6 +245,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, target_output_width, target_output_height,
                                   window_flags);
+    // temporary hook -- remove during refactor
+    temp_frontend_set_window(out_frontend, sdl_window);
     if (!sdl_window) {
         LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
         return NULL;
@@ -309,9 +311,13 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
-    output_width = get_window_pixel_width((SDL_Window*)sdl_window);
-    output_height = get_window_pixel_height((SDL_Window*)sdl_window);
-
+    FrontendWindowInfo info;
+    if (whist_frontend_get_window_info(out_frontend, &info)) {
+        LOG_ERROR("Failed to get window info");
+    } else {
+        output_width = info.pixel_size.width;
+        output_height = info.pixel_size.height;
+    }
     return sdl_window;
 }
 
@@ -361,8 +367,8 @@ WhistTimer window_resize_timer;
 volatile bool pending_resize_message = false;
 void sdl_renderer_resize_window(int width, int height) {
     // Try to make pixel width and height conform to certain desirable dimensions
-    int current_width = get_window_pixel_width((SDL_Window*)window);
-    int current_height = get_window_pixel_height((SDL_Window*)window);
+    int current_width, current_height;
+    SDL_GL_GetDrawableSize((SDL_Window*)window, &current_width, &current_height);
 
     LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
              current_height);
@@ -399,8 +405,7 @@ void sdl_renderer_resize_window(int width, int height) {
                               desired_height * 96 / dpi);
             LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
                      desired_width, desired_height);
-            current_width = get_window_pixel_width((SDL_Window*)window);
-            current_height = get_window_pixel_height((SDL_Window*)window);
+            SDL_GL_GetDrawableSize((SDL_Window*)window, &current_width, &current_height);
 
             if (current_width != desired_width || current_height != desired_height) {
                 LOG_WARNING(

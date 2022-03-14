@@ -4,15 +4,22 @@
 #include <whist/core/whist.h>
 
 typedef struct WhistFrontend WhistFrontend;
-
+typedef struct FrontendWindowInfo FrontendWindowInfo;
 typedef struct WhistFrontendFunctionTable {
+    // Lifecycle
     int (*init)(WhistFrontend* frontend);
     void (*destroy)(WhistFrontend* frontend);
+
+    // Audio
     void (*open_audio)(WhistFrontend* frontend, unsigned int frequency, unsigned int channels);
     bool (*audio_is_open)(WhistFrontend* frontend);
     void (*close_audio)(WhistFrontend* frontend);
     int (*queue_audio)(WhistFrontend* frontend, const uint8_t* data, size_t size);
     size_t (*get_audio_buffer_size)(WhistFrontend* frontend);
+
+    // Display
+    void (*temp_set_window)(WhistFrontend* frontend, void* window);
+    int (*get_window_info)(WhistFrontend* frontend, FrontendWindowInfo* info);
 } WhistFrontendFunctionTable;
 
 typedef void WhistFrontendEvent;
@@ -42,15 +49,15 @@ bool whist_frontend_audio_is_open(WhistFrontend* frontend);
 void whist_frontend_close_audio(WhistFrontend* frontend);
 
 // Display
-typedef struct {
+struct FrontendWindowInfo {
     struct {
-        unsigned int width;
-        unsigned int height;
-    } virtual_size;
-    struct {
-        unsigned int width;
-        unsigned int height;
+        int width;
+        int height;
     } pixel_size;
+    struct {
+        int width;
+        int height;
+    } virtual_size;
     struct {
         int x;
         int y;
@@ -59,19 +66,11 @@ typedef struct {
     bool minimized;
     bool visible;
     int display_id;
-} FrontendWindowInfo;
+};
 
-typedef struct FrontendDisplayInfo {
-    struct {
-        unsigned int width;
-        unsigned int height;
-    } display_size;
-    unsigned int display_dpi;
-    int display_id;
-} FrontendDisplayInfo;
-
+void temp_frontend_set_window(WhistFrontend* frontend, void* window);
 int whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info);
-int whist_get_display_info(int display_id, FrontendDisplayInfo* display_info);
+// int whist_get_display_info(int display_id, FrontendDisplayInfo* display_info);
 bool whist_frontend_window_changed_display(WhistFrontend* frontend);
 int whist_frontend_set_screensaver_enabled(WhistFrontend* frontend, bool enabled);
 int whist_frontend_resize_window(WhistFrontend* frontend, int width, int height);
