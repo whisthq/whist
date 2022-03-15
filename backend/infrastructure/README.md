@@ -5,7 +5,7 @@ The directory contains the source code for Whist's infrastructure as defined by 
 The Whist Terraform infrastructure defines all configuration required to enable a specific public cloud region for both development and running users, except from the actual EC2 instances powering users' cloud browsers. This is handled specifically by the Whist backend system, which is responsible for handling compute and scaling for users. The Whist backend
 is specifically designed for responsiveness and scalability, and handles cloud resources which change dynamically (i.e. scaling EC2 instances up and down based on demand), while the Terraform configuration is designed for static and security-related configuration, and handles cloud resources which must remain constant (and consistant) across cloud regions.
 
-## Development 
+## Development
 
 To use, first install and setup Terraform as described in [their setup documentation](https://learn.hashicorp.com/tutorials/terraform/install-cli).
 
@@ -19,7 +19,7 @@ Terraform must keep a state file tracked somewhere. Our Terraform state is store
 
 ### Adding New Resources
 
-When adding new public cloud resources, make sure to add them per-environment, and apply them per-environment in your code. You can follow the existing structure for defining Terraform variables. If you need to add a new resource type or a new public cloud, please follow the structure of `public-cloud_resource/` unless the resource is global and can be built in to `/modules`.
+When adding new public cloud resources, make sure to add them per-environment, and apply them per-environment in your code (when applicable). You can follow the existing structure for defining Terraform variables. If you need to add a new resource type or a new public cloud, please follow the structure of `public-cloud_resource/` unless the resource is global and can be built in to `/modules`. Note that **all** public cloud resources should be defined in Terraform, so that we can easily keep track of what the resources are, what they are used for, and who created them.
 
 Once you are done, you can check for Terraform code formatting with `terraform fmt -check` and you can validate your Terraform configuration with `terraform validate`. Lastly, you can use `terraform plan` to get a list of changes that will be made to the infrastructure.
 
