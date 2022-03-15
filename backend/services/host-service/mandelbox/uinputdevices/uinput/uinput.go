@@ -1,25 +1,25 @@
 /*
-Package uinput is a pure go package that provides access to the userland input
-device driver uinput on linux systems. This package used to be a separate
-dependency/codebase, but was rolled into the host service for ease of
-development. See the README in this directory for more details.
-
-Virtual keyboard devices as well as virtual mouse input devices may be created using this package.
-The keycodes and other event definitions, that are available and can be used to trigger input events,
-are part of this package ("Key1" for number 1, for example).
-
-In order to use the virtual keyboard, you will need to follow these three steps:
-
-	1. Initialize the device
-		Example: vk, err := CreateKeyboard("/dev/uinput", "Virtual Keyboard")
-
-	2. Send Button events to the device
-		Example (print a single D):
-			err = vk.KeyPress(uinput.KeyD)
-
-		Example (keep moving right by holding down right arrow key):
-				 err = vk.KeyDown(uinput.KeyRight)
-
+ * Package uinput is a pure go package that provides access to the userland input
+ * device driver uinput on linux systems. This package used to be a separate
+ * dependency/codebase, but was rolled into the host service for ease of
+ * development. See the README in this directory for more details.
+ *
+ * Virtual keyboard devices as well as virtual mouse input devices may be created using this package.
+ * The keycodes and other event definitions, that are available and can be used to trigger input events,
+ * are part of this package ("Key1" for number 1, for example).
+ *
+ * In order to use the virtual keyboard, you will need to follow these three steps:
+ *
+ * 	1. Initialize the device
+ * 		Example: vk, err := CreateKeyboard("/dev/uinput", "Virtual Keyboard")
+ *
+ * 	2. Send Button events to the device
+ * 		Example (print a single D):
+ * 			err = vk.KeyPress(uinput.KeyD)
+ *
+ * 		Example (keep moving right by holding down right arrow key):
+ * 				 err = vk.KeyDown(uinput.KeyRight)
+ *
 		Example (stop moving right by releasing the right arrow key):
 				 err = vk.KeyUp(uinput.KeyRight)
 
