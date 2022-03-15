@@ -634,9 +634,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Enable xorg-confg updater service
-RUN systemctl enable whist-update-xorg-conf
-
 # Install playerctl for media keys support. We install playerctl straight from
 # Github releases because as usual the Ubuntu package is horribly out of date
 # (and in particular don't support daemon mode).
@@ -652,10 +649,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
-
-
-# Enable X11 display launching service
-RUN systemctl enable whist-display
 
 # Set display environment variable
 ENV DISPLAY :10
@@ -748,8 +741,6 @@ RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service \
     && systemctl mask pulseaudio \
     && chmod -x /usr/bin/start-pulseaudio-x11
 
-RUN systemctl enable whist-audio
-
 #########################
 # Startup
 #########################
@@ -763,10 +754,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && pip install --no-cache-dir -r /requirements.txt \
     && rm /requirements.txt \
     && rm -rf /tmp/* /var/tmp/*
-
-
-# Enable first systemd service
-RUN systemctl enable whist-startup
 
 # Set up the entrypoint for the mandelbox (which starts systemd)
 CMD ["/usr/share/whist/entrypoint.sh"]
@@ -837,9 +824,6 @@ RUN /usr/share/whist/setup-linux-build-environment.sh \
     && rm -rf /tmp/* /var/tmp/* \
     && rm /usr/share/whist/setup-linux-build-environment.sh
 
-# Enable service which launches both the server protocol and the application
-RUN systemctl enable whist-main
-
 #########################
 # Hydaulic Press Layer
 #########################
@@ -847,6 +831,9 @@ RUN systemctl enable whist-main
 # Copy over the big squashed layer from hydraulic-press stage direclty
 # into our filesystem
 COPY --from=hydraulic-press /hydraulic-squash /
+
+# Enable the systemd services we just copied over
+RUN systemctl enable whist-{startup,update-xorg-conf,display,audio,main}
 
 #########################
 # Cleanup
