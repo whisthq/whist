@@ -3,7 +3,7 @@
 import os
 import sys
 import boto3
-from e2e_helpers.aws_tools import terminate_or_stop_aws_instance
+from e2e_helpers.aws.aws_tools import terminate_or_stop_aws_instance
 
 # Before exiting, the streaming_e2e_tester.py script stops/terminates all EC2 instances
 # (unless the `--leave-instances-on` flag is set to 'true') used in the E2E test.
@@ -19,7 +19,7 @@ from e2e_helpers.aws_tools import terminate_or_stop_aws_instance
 
 if __name__ == "__main__":
 
-    filepath = os.path.join("instances_to_clean.txt")
+    filepath = os.path.join("instances_to_remove.txt")
 
     # If the `instances_to_clean.txt` TODO-list does not exist, streaming_e2e_tester.py has already completed the cleanup, and we are done.
     if not os.path.exists(filepath) or not os.path.isfile(filepath):
