@@ -160,10 +160,8 @@ func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
 			Variables: map[string]interface{}{
 				"id": graphql.Int(versionID),
 			},
-			Result: ClientAppVersionEvent{ClientAppVersions: []ClientAppVersion{}},
-			Handler: func(se SubscriptionEvent, m map[string]interface{}) bool {
-				return true
-			},
+			Result:  ClientAppVersionEvent{ClientAppVersions: []ClientAppVersion{}},
+			Handler: ClientAppVersionHandler,
 		},
 	}
 	whistClient.SetSubscriptions(configSubscriptions)

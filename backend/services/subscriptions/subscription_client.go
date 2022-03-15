@@ -53,13 +53,13 @@ func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 	)
 
 	if useConfigDB {
-		params, err = getWhistHasuraParams()
+		params, err = getWhistConfigHasuraParams()
 		if err != nil {
 			// Error obtaining the connection parameters, we stop and don't setup the client
 			return utils.MakeError("error creating hasura client: %v", err)
 		}
 	} else {
-		params, err = getWhistConfigHasuraParams()
+		params, err = getWhistHasuraParams()
 		if err != nil {
 			// Error obtaining the connection parameters, we stop and don't setup the client
 			return utils.MakeError("error creating hasura client: %v", err)

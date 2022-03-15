@@ -415,8 +415,18 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	// Notify through the synchan that the image upgrade is done
 	// so that we can continue to swapover images when the config
-	// database updates
-	s.SyncChan <- true
+	// database updates. We time out here in case the client app
+	// failed to deploy, and if it does we rollback the new version.
+	select {
+	case s.SyncChan <- true:
+		logger.Infof("Finished upgrading image %v in region %v", newImageID, event.Region)
+	case <-time.After(1 * time.Minute):
+		// Clear protected map since the client app deploy didn't complete successfully.
+		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
+
+		return utils.MakeError("Timed out waiting for config database to swap versions. Rolling back deploy of new version.")
+	}
+
 	return nil
 }
 
@@ -424,8 +434,20 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 // To the latest one. This is done separately to avoid having downtimes during deploys, since
 // we have to wait until the client has updated its version on the config database.
 func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, event ScalingEvent, clientVersion interface{}) error {
-	// Block until the image upgrade has finished successfully
-	<-s.SyncChan
+	// Block until the image upgrade has finished successfully.
+	// We time out here in case something went wrong with the
+	// upgrade image action, in which case we roll back the new version.
+	select {
+	case <-s.SyncChan:
+		logger.Infof("Got signal that image upgrade action finished correctly.")
+	case <-time.After(1 * time.Minute):
+		// Clear protected map since the image upgrade didn't complete successfully.
+		s.protectedMapLock.Lock()
+		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
+		s.protectedMapLock.Unlock()
+
+		return utils.MakeError("Timed out waiting for image upgrade to finish. Rolling back deploy of new version.")
+	}
 
 	logger.Infof("Starting image swapover action for event: %v", event)
 	defer logger.Infof("Finished image swapover action for event: %v", event)
