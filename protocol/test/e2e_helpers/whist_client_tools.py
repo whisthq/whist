@@ -5,6 +5,7 @@ import time
 import sys
 import os
 import pexpect
+import json
 
 from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,
