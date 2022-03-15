@@ -48,7 +48,7 @@ Globals
 */
 
 // the implementation to use
-static RSImplementation rs_implementation_to_use = CM256;
+static RSImplementation rs_implementation_to_use = LUGI_RS;
 
 // the max size of group for encoding/decoding in rs_wrapper
 // if num of total buffers is large than this, rs_wrapper will split the encoding/decoding into
