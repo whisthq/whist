@@ -19,14 +19,16 @@ def generate_no_comparison_table(
 ):
     """
     Create a Markdown table to display the client and server metrics for the current run.
-    Also include a table with the metadate of the run, and a table with the most interesting
+    Also include a table with the metadata of the run, and a table with the most interesting
     metrics. Do not include comparisons with other runs.
+
     Args:
-        results_file (file): The open file where we want to save the markdown table
-        experiment_metadata (dict): The metadata key-value pairs for the current run
-        most_interesting_metrics (list): list of metrics that we want to display at the top (if found)
-        client_metrics (dict): the client key-value pairs for the current run
-        server_metrics (dict): the server key-value pairs for the current run
+        results_file: The open file where we want to save the markdown table
+        experiment_metadata: The metadata key-value pairs for the current run
+        most_interesting_metrics: list of metrics that we want to display at the top (if found)
+        client_metrics: the client key-value pairs with metrics from the current run
+        server_metrics: the server key-value pairs with metrics from the current run
+
     Returns:
         None
     """
@@ -118,14 +120,18 @@ def generate_comparison_table(
     Create a Markdown table to display the client and server metrics for the current run,
     as well as those from a compared run. Also include a table with the metadata of the run,
     and a table with the most interesting metrics.
+
     Args:
-        results_file (file): The open file where we want to save the markdown table
-        most_interesting_metrics (list): list of metrics that we want to display at the top (if found)
-        experiment_metadata (dict): The metadata key-value pairs for the current run
-        compared_experiment_metadata (dict): The metadata key-value pairs for the compared run
-        client_table_entries (list): the table entries for the client table
-        server_table_entries (list): the table entries for the server table
-        branch_name (str): the name of the branch for the compared run
+        results_file: The open file where we want to save the markdown table
+        experiment_metadata: The metadata key-value pairs for the current run
+        compared_experiment_metadata: he metadata key-value pairs for the run we are comparing against
+        compared_branch_name: The name of the branch that we are comparing against
+        most_interesting_metrics: list of metrics that we want to display at the top (if found)
+        client_metrics: the client key-value pairs with metrics from the current run
+        server_metrics: the server key-value pairs with metrics from the current run
+        compared_client_metrics: the client key-value pairs with metrics from the compared run
+        compared_server_metrics: the server key-value pairs with metrics from the compared run
+
     Returns:
         None
     """

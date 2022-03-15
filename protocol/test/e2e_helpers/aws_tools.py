@@ -79,7 +79,6 @@ def create_ec2_instance(
     Returns:
         instance_id (str): The ID of the created instance
     """
-
     branch_name = get_whist_branch_name(running_in_ci)
     instance_name = f"protocol-e2e-benchmarking-{branch_name}"
 
@@ -133,10 +132,10 @@ def start_instance(boto3client: botocore.client, instance_id: str, max_retries: 
     Args:
         boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
         instance_id (str): The ID of the instance to start
+
     Returns:
         success (bool): indicates whether the start succeeded.
     """
-
     for retry in range(max_retries):
         try:
             response = boto3client.start_instances(InstanceIds=[instance_id], DryRun=False)
@@ -217,7 +216,8 @@ def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
         instance_id (str): The ID of the instance of interest
 
     Returns:
-        retval (list): A list of dictionaries with the public and private IPs of every instance with instance id equal to the parameter.
+        retval (list): A list of dictionaries with the public and private IPs of every instance
+                        with instance id equal to the parameter.
     """
     retval = []
 
@@ -246,12 +246,15 @@ def create_or_start_aws_instance(
         boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
         region_name (str): The name of the region of interest (e.g. "us-east-1")
         existing_instance_id (str): The ID of the instance to connect to, or "" to create a new one
-        ssh_key_name (str): The name of the AWS key to use to create a new instance. This parameter is ignored if a valid instance ID is passed to the existing_instance_id parameter.
+        ssh_key_name (str): The name of the AWS key to use to create a new instance. This parameter is
+                            ignored if a valid instance ID is passed to the existing_instance_id parameter.
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
-    Returns:
-        instance_id (str): the ID of the started instance. This can be the existing instance (if we passed a existing_instance_id) or the new instance (if we passed an empty string to existing_instance_id)
-    """
 
+    Returns:
+        instance_id (str): the ID of the started instance. This can be the existing instance
+                            (if we passed a existing_instance_id) or the new instance
+                            (if we passed an empty string to existing_instance_id)
+    """
     # Attempt to start existing instance
     if existing_instance_id != "":
         instance_id = existing_instance_id
@@ -300,6 +303,7 @@ def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
         boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
         instance_id (str): The ID of the instance to stop or terminate
         should_terminate (bool): A boolean indicating whether the instance should be terminated (instead of stopped)
+
     Returns:
         None
     """

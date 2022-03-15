@@ -52,14 +52,16 @@ parser.add_argument(
 parser.add_argument(
     "--compared-branch-names",
     nargs="*",
-    help="The branches to compare the results to. Empty branch name will result in no comparisons. Passing the current branch will result in a comparison with the previous results for the same branch",
+    help="The branches to compare the results to. Empty branch name will result in no comparisons. \
+    Passing the current branch will result in a comparison with the previous results for the same branch",
     type=str,
     default="",
 )
 
 parser.add_argument(
     "--network_conditions_matching_way",
-    help="Whether to only compare with runs with the same network conditions (match), only with those without degradation (normal_only) or don't care (do_not_care)",
+    help="Whether to only compare with runs with the same network conditions (match), only with those \
+    without degradation (normal_only) or don't care (do_not_care)",
     type=str,
     choices=[
         "match",
@@ -111,7 +113,8 @@ if __name__ == "__main__":
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
 
     current_branch_name = ""
-    # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable (in case this script is being run as part of a PR)
+    # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable
+    # (in case this script is being run as part of a PR)
     b = github_ref_name.split("/")
     if len(b) != 2 or not b[0].isnumeric() or b[1] != "merge":
         current_branch_name = github_ref_name
@@ -139,7 +142,8 @@ if __name__ == "__main__":
     if not os.path.isdir(logs_root_dir):
         print(f"Error, logs folder {logs_root_dir} does not exist!")
         sys.exit(-1)
-    # Look for the most recent logs folder created on the same day (or the day before in case the test ran right before midnight).
+    # Look for the most recent logs folder created on the same day (or the day before in case the test ran
+    # right before midnight).
     current_time = datetime.now()
     last_hour = current_time - timedelta(hours=1)
 
@@ -225,7 +229,8 @@ if __name__ == "__main__":
             )
             if experiment["outcome"] != "success":
                 results_file.write(
-                    f":bangbang::warning: WARNING: the outcome of the experiment below was: `{experiment['outcome']}` and the results below (if any) might be inaccurate!\n\n"
+                    f":bangbang::warning: WARNING: the outcome of the experiment below was: `{experiment['outcome']}` \
+                    and the results below (if any) might be inaccurate!\n\n"
                 )
             if experiment["client_metrics"] is None or experiment["server_metrics"] is None:
                 continue
@@ -250,7 +255,8 @@ if __name__ == "__main__":
                     compared_server_log_path
                 ):
                     print(
-                        f"Could not parse {compared_branch_name} client/server logs. Unable to compare performance results to latest {compared_branch_name} measurements."
+                        f"Could not parse {compared_branch_name} client/server logs. Unable to compare performance results \
+                        to latest {compared_branch_name} measurements."
                     )
                 else:
                     # Extract the metric values and save them in a dictionary
