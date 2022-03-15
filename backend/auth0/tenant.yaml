@@ -14,11 +14,6 @@ rules:
     stage: login_success
     enabled: true
     order: 3
-  - name: domain-whitelist
-    script: ./rules/domain-whitelist.js
-    stage: login_success
-    enabled: true
-    order: 4
 rulesConfigs: []
 hooks: []
 pages:
