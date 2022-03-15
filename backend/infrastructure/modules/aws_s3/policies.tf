@@ -114,36 +114,6 @@ resource "aws_s3_bucket_public_access_block" "whist-terraform-state" {
 
 # ------------------------------ Configure server side encryption ------------------------------ #
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-macos-arm64-encryption" {
-  bucket = aws_s3_bucket.whist-chromium-macos-arm64.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-macos-x64-encryption" {
-  bucket = aws_s3_bucket.whist-chromium-macos-x64.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-windows-encryption" {
-  bucket = aws_s3_bucket.whist-chromium-windows.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-user-app-configs-encryption" {
   bucket = aws_s3_bucket.whist-user-app-configs.id
 
