@@ -486,6 +486,7 @@ if __name__ == "__main__":
         server_log,
         use_existing_server_instance,
         server_pexpect_process,
+        server_hs_process,
         pexpect_prompt_server,
         client_hostname,
         client_instance_id,
@@ -494,6 +495,7 @@ if __name__ == "__main__":
         client_log,
         use_existing_client_instance,
         client_pexpect_process,
+        client_hs_process
         pexpect_prompt_client,
         aws_timeout_seconds,
         ssh_connection_retries,
