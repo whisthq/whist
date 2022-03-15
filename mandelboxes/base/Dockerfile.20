@@ -281,7 +281,7 @@ ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 ENV HYDRAULIC_ROOT /hydraulic-squash
 
-RUN mkdir -p $HYDRAULIC_ROOT/{etc,usr/share/whist/private,run/user,/home/whist}
+RUN mkdir -p $HYDRAULIC_ROOT/{etc,usr/share/whist/private,root,run/user,/home/whist}
 
 #########################
 # Permissions
@@ -303,7 +303,11 @@ RUN \
     # Set /usr/share/whist to root-only
     && chgrp root -R $HYDRAULIC_ROOT/usr/share/whist \
     && chown root:root $HYDRAULIC_ROOT/usr/share/whist \
-    && chmod 600 -R $HYDRAULIC_ROOT/usr/share/whist
+    && chmod 600 -R $HYDRAULIC_ROOT/usr/share/whist \
+    # Set /root to root-only
+    && chgrp root -R $HYDRAULIC_ROOT/root \
+    && chown root:root $HYDRAULIC_ROOT/root \
+    && chmod 600 -R $HYDRAULIC_ROOT/root
 
     # Set up script to run a program as user `whist` (make sure to do
     # this after setting /usr/share/whist to 600)
