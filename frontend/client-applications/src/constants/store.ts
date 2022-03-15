@@ -1,4 +1,4 @@
-export const ONBOARDED = "data.onboarded"
+export const ONBOARDED = "data.shouldOnboard"
 export const RESTORE_LAST_SESSION = "data.restoreLastSession"
 export const WHIST_IS_DEFAULT_BROWSER = "data.whistIsDefaultBrowser"
 export const EXIT_TYPEFORM_SUBMITTED = "data.exitTypeformSubmitted"
