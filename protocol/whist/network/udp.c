@@ -625,6 +625,10 @@ static bool udp_update(void* raw_context) {
                     (int)round(context->unordered_packet_info.max_unordered_packets),
                     &context->desired_network_settings);
             }
+            if (i == PACKET_AUDIO) {
+                try_making_up_missing_audio(context->ring_buffers[i]);
+                try_dropping_excess_audio(context->ring_buffers[i]);
+            }
         }
     }
 

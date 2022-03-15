@@ -84,6 +84,13 @@ struct AudioContext {
     // Overflow/underflow state
     bool is_flushing_audio;
     bool is_buffering_audio;
+
+    // The last frame queued to the audio device.  This is persistent
+    // because we will use it when concealing missing frames.
+    // 960 = 10ms of audio at 48kHz * 2 (stereo).
+    float current_frame[960];
+    // Size of all audio frames from the current decoder.
+    size_t frame_size;
 };
 
 /*
@@ -211,8 +218,15 @@ void render_audio(AudioContext* audio_context) {
         FATAL_ASSERT(audio_context->render_context != NULL);
         AudioFrame* audio_frame = (AudioFrame*)audio_context->render_context;
 
+        bool conceal_frame = false;
+        if (audio_frame->data_length == 0) {
+            // This is a fake frame made by the ring buffer to indicate
+            // that the client should conceal loss.
+            conceal_frame = true;
+        }
+
         // Mark as pending refresh when the audio frequency is being updated
-        if (audio_context->audio_frequency != audio_frame->audio_frequency) {
+        if (!conceal_frame && audio_context->audio_frequency != audio_frame->audio_frequency) {
             LOG_INFO("Updating audio frequency to %d!", audio_frame->audio_frequency);
             audio_context->audio_frequency = audio_frame->audio_frequency;
             audio_context->pending_refresh = true;
@@ -232,32 +246,57 @@ void render_audio(AudioContext* audio_context) {
         // If we have a valid audio device to render with...
         if (audio_context->dev != 0) {
             whist_analyzer_record_decode_audio();
-            // Send the encoded frame to the decoder
-            if (audio_decoder_send_packets(audio_context->audio_decoder, audio_frame->data,
-                                           audio_frame->data_length) < 0) {
-                LOG_FATAL("Failed to send packets to decoder!");
-            }
 
-            // While there are frames to decode...
-            while (true) {
-                // Decode the frame
-                int res = audio_decoder_get_frame(audio_context->audio_decoder);
-                if (res == 0) {
-                    // Buffer to hold the decoded data
-                    static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
-                    // Get the decoded data
-                    audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
+            if (conceal_frame) {
+                // Play the previous frame backwards.
+                size_t sample_count = audio_context->frame_size / sizeof(float);
+                for (size_t i = 0; i < sample_count; i += 2) {
+                    // Swap in pairs, because there are two channels.
+                    float c1 = audio_context->current_frame[i];
+                    float c2 = audio_context->current_frame[i + 1];
+                    audio_context->current_frame[i] =
+                        audio_context->current_frame[sample_count - i - 2];
+                    audio_context->current_frame[i + 1] =
+                        audio_context->current_frame[sample_count - i - 1];
+                    audio_context->current_frame[sample_count - i - 2] = c1;
+                    audio_context->current_frame[sample_count - i - 1] = c2;
+                }
 
-                    // Queue the decoded_data into the audio device
-                    res = SDL_QueueAudio(
-                        audio_context->dev, decoded_data,
-                        audio_decoder_get_frame_data_size(audio_context->audio_decoder));
+                SDL_QueueAudio(audio_context->dev, audio_context->current_frame,
+                               (uint32_t)audio_context->frame_size);
 
-                    if (res < 0) {
-                        LOG_WARNING("Could not play audio!");
+                // Overwrite with silence - we don't want to play that
+                // frame more than once.
+                memset(audio_context->current_frame, 0, audio_context->frame_size);
+
+            } else {
+                // Send the encoded frame to the decoder
+                if (audio_decoder_send_packets(audio_context->audio_decoder, audio_frame->data,
+                                               audio_frame->data_length) < 0) {
+                    LOG_FATAL("Failed to send packets to decoder!");
+                }
+
+                // While there are frames to decode...
+                while (true) {
+                    // Decode the frame
+                    int res = audio_decoder_get_frame(audio_context->audio_decoder);
+                    if (res == 0) {
+                        // Get the decoded data
+                        audio_decoder_packet_readout(audio_context->audio_decoder,
+                                                     (uint8_t*)audio_context->current_frame);
+                        audio_context->frame_size =
+                            audio_decoder_get_frame_data_size(audio_context->audio_decoder);
+
+                        // Queue the decoded_data into the audio device
+                        res = SDL_QueueAudio(audio_context->dev, audio_context->current_frame,
+                                             (uint32_t)audio_context->frame_size);
+
+                        if (res < 0) {
+                            LOG_WARNING("Could not play audio!");
+                        }
+                    } else {
+                        break;
                     }
-                } else {
-                    break;
                 }
             }
         }
@@ -305,6 +344,9 @@ static void init_audio_device(AudioContext* audio_context) {
 
     // Initialize the decoder
     audio_context->audio_decoder = create_audio_decoder(audio_context->audio_frequency);
+
+    audio_context->frame_size = audio_decoder_get_frame_data_size(audio_context->audio_decoder);
+    FATAL_ASSERT(audio_context->frame_size <= sizeof(audio_context->current_frame));
 }
 
 static void destroy_audio_device(AudioContext* audio_context) {

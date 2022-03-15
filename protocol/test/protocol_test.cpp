@@ -1519,6 +1519,126 @@ TEST_F(ProtocolTest, RingBufferTest) {
     destroy_ring_buffer(video_buffer);
 }
 
+TEST_F(ProtocolTest, RingBufferAudioMissingTest) {
+    int ring_buffer_size = 10;
+    RingBuffer* audio_buffer =
+        init_ring_buffer(PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, ring_buffer_size, NULL, dummy_nack,
+                         dummy_stream_reset);
+
+    constexpr size_t audio_size = 80;
+    constexpr size_t frame_size = offsetof(AudioFrame, data) + audio_size;
+
+    // We lose packet 20 and want to recover soon after.
+    for (int id = 10; id < 30; id++) {
+        if (id != 20) {
+            uint8_t data[frame_size];
+            memset(data, id, frame_size);
+
+            AudioFrame* overlay = (AudioFrame*)data;
+            overlay->audio_frequency = AUDIO_FREQUENCY;
+            overlay->data_length = 80;
+
+            WhistSegment seg = {};
+            seg.whist_type = PACKET_AUDIO;
+            seg.id = id;
+            seg.index = 0;
+            seg.num_indices = 1;
+            seg.segment_size = frame_size;
+            memcpy(seg.segment_data, data, frame_size);
+
+            ring_buffer_receive_segment(audio_buffer, &seg);
+            EXPECT_EQ(audio_buffer->max_id, id);
+        }
+
+        try_making_up_missing_audio(audio_buffer);
+
+        if (id <= 10) {
+            continue;
+        }
+
+        bool ready;
+        int target_id;
+        if (id <= 20) {
+            ready = true;
+            target_id = id - 1;
+        } else if (id < 23) {
+            ready = false;
+            target_id = 20;
+        } else {
+            ready = true;
+            target_id = id - 3;
+        }
+
+        if (ready) {
+            EXPECT_TRUE(is_ready_to_render(audio_buffer, target_id));
+
+            FrameData* frame = set_rendering(audio_buffer, target_id);
+            if (target_id != 20) {
+                EXPECT_EQ(frame->frame_buffer_size, frame_size);
+                EXPECT_EQ(frame->frame_buffer[audio_size], target_id);
+            } else {
+                EXPECT_EQ(frame->frame_buffer_size, 0);
+            }
+        } else {
+            EXPECT_FALSE(is_ready_to_render(audio_buffer, target_id));
+        }
+    }
+
+    destroy_ring_buffer(audio_buffer);
+}
+
+TEST_F(ProtocolTest, RingBufferAudioOverflowTest) {
+    int ring_buffer_size = 10;
+    RingBuffer* audio_buffer =
+        init_ring_buffer(PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, ring_buffer_size, NULL, dummy_nack,
+                         dummy_stream_reset);
+
+    constexpr size_t audio_size = 80;
+    constexpr size_t frame_size = offsetof(AudioFrame, data) + audio_size;
+
+    int target_id = 10;
+    for (int id = 10; id < 300; id++) {
+        uint8_t data[frame_size];
+        memset(data, id, frame_size);
+
+        AudioFrame* overlay = (AudioFrame*)data;
+        overlay->audio_frequency = AUDIO_FREQUENCY;
+        overlay->data_length = 80;
+
+        WhistSegment seg = {};
+        seg.whist_type = PACKET_AUDIO;
+        seg.id = id;
+        seg.index = 0;
+        seg.num_indices = 1;
+        seg.segment_size = frame_size;
+        memcpy(seg.segment_data, data, frame_size);
+
+        ring_buffer_receive_segment(audio_buffer, &seg);
+        EXPECT_EQ(audio_buffer->max_id, id);
+
+        try_dropping_excess_audio(audio_buffer);
+
+        // Don't remove anything 10% of the time.
+        if (id % 10 == 0) {
+            if (id >= 90) {
+                // One packet will get skipped.
+                ++target_id;
+            }
+            continue;
+        }
+
+        EXPECT_TRUE(is_ready_to_render(audio_buffer, target_id));
+
+        FrameData* frame = set_rendering(audio_buffer, target_id);
+
+        EXPECT_EQ(frame->id, target_id);
+
+        ++target_id;
+    }
+
+    destroy_ring_buffer(audio_buffer);
+}
+
 TEST_F(ProtocolTest, FECTest) {
 #define NUM_FEC_PACKETS 4
 

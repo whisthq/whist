@@ -711,6 +711,50 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
     }
 }
 
+void try_making_up_missing_audio(RingBuffer* ring_buffer) {
+    if (ring_buffer->last_rendered_id == -1) {
+        // No output, nothing to do yet.
+        return;
+    }
+
+    int target_id = ring_buffer->last_rendered_id + 1;
+
+    if (target_id + 2 >= ring_buffer->max_id) {
+        // Only do something if we have received several packets beyond
+        // the one we want next.
+        return;
+    }
+
+    FrameData* frame_data = get_frame_at_id(ring_buffer, target_id);
+    if (frame_data->id == target_id) {
+        // We've got the next packet, nothing to do.
+        return;
+    }
+
+    LOG_INFO("Inventing audio ID %d.", target_id);
+
+    memset(frame_data, 0, sizeof(*frame_data));
+    frame_data->id = target_id;
+    frame_data->dummy_audio_frame = true;
+}
+
+void try_dropping_excess_audio(RingBuffer* ring_buffer) {
+    if (ring_buffer->last_rendered_id == -1) {
+        // No output, nothing to do yet.
+        return;
+    }
+
+    int target_id = ring_buffer->last_rendered_id + 1;
+
+    if (target_id + 8 >= ring_buffer->max_id) {
+        // Not close to overflow, nothing to do.
+        return;
+    }
+
+    // Skip over the current frame to catch up.
+    reset_stream(ring_buffer, target_id + 1);
+}
+
 NetworkStatistics get_network_statistics(RingBuffer* ring_buffer) {
     // Get the time since last `get_network_statistics` call
     double statistics_time = get_timer(&ring_buffer->network_statistics_timer);
@@ -847,7 +891,14 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
 
 // Get a pointer to a framebuffer for that id, if such a framebuffer is possible to construct
 char* get_framebuffer(RingBuffer* ring_buffer, FrameData* current_frame) {
-    if (current_frame->num_fec_packets > 0) {
+    if (current_frame->dummy_audio_frame) {
+        static WhistPacket dummy_audio_packet = {
+            .type = PACKET_AUDIO, .id = 0, .payload_size = sizeof(AudioFrame),
+            // data is correctly filled with zeroes - the only field in
+            // AudioFrame that we care about is data_length.
+        };
+        return (char*)&dummy_audio_packet;
+    } else if (current_frame->num_fec_packets > 0) {
         if (current_frame->successful_fec_recovery) {
             return current_frame->fec_frame_buffer;
         } else {

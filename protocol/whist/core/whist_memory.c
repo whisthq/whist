@@ -262,6 +262,10 @@ void free_block(BlockAllocator* blk_allocator, void* block) {
             block (void*): The block to free
     */
 
+    if (block == NULL) {
+        return;
+    }
+
     // If there's room in the free block list, just store the free block there instead
     if (blk_allocator->num_free_blocks < MAX_FREES) {
         mark_unused_region(block);

@@ -56,6 +56,10 @@ typedef struct FrameData {
     WhistTimer* last_nacked_timer;
     char* packet_buffer;
 
+    // Set if this is a dummy audio frame inserted in place of a lost
+    // frame to avoid gaps in playback.
+    bool dummy_audio_frame;
+
     // When the FrameData is being rendered,
     // this is the data that's being rendered
     char* frame_buffer;
@@ -278,6 +282,22 @@ void reset_stream(RingBuffer* ring_buffer, int id);
 void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency,
                                               int max_unordered_packets,
                                               NetworkSettings* network_settings);
+
+/**
+ * @brief   If this is an audio stream and it looks like it is behind, make up
+ *          an audio packet to avoid delaying the stream.
+ *
+ * @param ring_buffer  Ring buffer to use.
+ */
+void try_making_up_missing_audio(RingBuffer* ring_buffer);
+
+/**
+ * @brief   If this is an audio stream and it looks like it is head, drop an
+ *          excess audio packet to avoid overflowing the client.
+ *
+ * @param ring_buffer  Ring buffer to use.
+ */
+void try_dropping_excess_audio(RingBuffer* ring_buffer);
 
 /**
  * @brief                         Get network statistics from the ringbuffer
