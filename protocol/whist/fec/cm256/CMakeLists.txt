@@ -16,7 +16,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         #message(WARNING "Current ARCH is macos x86 or x64!!!")
         add_compile_options("-mavx2")
         # the below line fails mac ci, can't reproduce locally
-        # TODO fix this 
+        # TODO fix this
         # add_compile_options("-O2")
     else()
         message(FATAL "unknown Darwin architecture: ${MACOS_ARCHITECTURE} ")
@@ -28,7 +28,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         #message(WARNING "Current ARCH is windows with MSVC!!!")
         add_compile_options("/arch:AVX2")
         # the below line triggers MSVC complaint: "/RTC1 incompatible with /O2"
-        # TODO fix this 
+        # TODO fix this
         # add_compile_options("/O2")
     else()
         #message(WARNING "Current ARCH is windows with non-MSVC!!!")
