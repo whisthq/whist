@@ -51,10 +51,6 @@ from e2e_helpers.whist_server_tools import (
 )
 
 
-# Get tools to programmatically run Whist components on a remote machine
-from e2e_helpers.remote_exp_tools import extract_logs_from_mandelbox
-
-
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
