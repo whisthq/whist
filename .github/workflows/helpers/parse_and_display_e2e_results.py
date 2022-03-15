@@ -245,7 +245,7 @@ if __name__ == "__main__":
                 delay = human_readable_network_conditions[1]
                 packet_drops = float(human_readable_network_conditions[2]) * 100.0
                 human_readable_network_conditions = (
-                    f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops:.2f}"
+                    f"Bandwidth: {bandwidth}, Delay: {delay} ms, Packet Drops: {packet_drops:.2f}"
                 )
             results_file.write(
                 f"### Experiment {j+1} - Network conditions: {human_readable_network_conditions}\n"
