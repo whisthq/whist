@@ -4,11 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -535,79 +537,101 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	logger.Infof("Starting mandelbox assign action for event: %v", event)
 	defer logger.Infof("Finished mandelbox assign action for event: %v", event)
 
+	// We want to verify if we have the desired capacity after assigning a mandelbox
+	defer func() {
+		err := s.VerifyCapacity(scalingCtx, event)
+		if err != nil {
+			logger.Errorf("Error verifying capacity on %v. Err: %v", event.Region, err)
+		}
+	}()
+
 	mandelboxRequest := event.Data.(httputils.MandelboxAssignRequest)
-	// TODO: sanitize email
-	unsafeEmail := mandelboxRequest.UserEmail
+
+	// Note: we receive the email from the client, so its value should
+	// not be trusted for anything else other than logging since
+	// it can be spoofed. We sanitize the email before using to help mitigate
+	// potential attacks.
+	unsafeEmail, err := helpers.SanitizeEmail(mandelboxRequest.UserEmail)
+	if err != nil {
+		// err is already wrapped here
+		return err
+	}
 
 	var (
 		requestedRegions = mandelboxRequest.Regions
 		allowedRegions   []string
+		assignedInstance subscriptions.Instance
 	)
 
-	// Populate enabledRegions
-	for _, enabledRegion := range BundledRegions {
+	// Populate allowedRegions
+	for _, bundledRegion := range BundledRegions {
 		for _, requestedRegion := range requestedRegions {
-			if enabledRegion == requestedRegion {
+			if bundledRegion == requestedRegion {
 				allowedRegions = append(allowedRegions, requestedRegion)
 			}
 		}
 	}
 
+	// This condition is to accomodate the worflow for developers of client_apps
+	// to test their changes without needing to update the development database with
+	// commit_hashes on their local machines.
+	if metadata.IsLocalEnv() && mandelboxRequest.CommitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {
+		// Query for the latest image id
+		imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
+		if err != nil {
+			return utils.MakeError("failed to query database for current image. Err: %v", err)
+		}
+
+		if len(imageResult) == 0 {
+			return utils.MakeError("Image not found on %v.", event.Region)
+		}
+
+		mandelboxRequest.CommitHash = string(imageResult[0].ImageID)
+	}
+
+	// Start looking for instances
 	for _, region := range allowedRegions {
 		logger.Infof("Trying to find instance for user %v in region %v, with commit hash %v. (client reported email %v, this value might not be accurate and is untrusted)",
 			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail)
 
 		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, mandelboxRequest.CommitHash)
 		if err != nil {
-			return utils.MakeError("Err: %v", err)
+			return utils.MakeError("failed to query for instance with capacity. Err: %v", err)
 		}
 
 		if len(instanceResult) == 0 {
 			logger.Warningf("Failed to find an instance in %v for commit hash %v. Trying on next region.", region, mandelboxRequest.CommitHash)
 		}
+
+		assignedInstance = subscriptions.Instance{
+			ID:                string(instanceResult[0].ID),
+			IPAddress:         string(instanceResult[0].IPAddress),
+			Provider:          string(instanceResult[0].Provider),
+			Region:            string(instanceResult[0].Region),
+			ImageID:           string(instanceResult[0].ImageID),
+			ClientSHA:         string(instanceResult[0].ClientSHA),
+			Type:              string(instanceResult[0].Type),
+			RemainingCapacity: int64(instanceCapacity[string(instanceResult[0].Type)]),
+			Status:            string(instanceResult[0].Status),
+			CreatedAt:         instanceResult[0].CreatedAt,
+			UpdatedAt:         instanceResult[0].UpdatedAt,
+		}
 	}
 
-	return nil
-}
-
-// RemainingCapacity is the action responsible for computing remaining capacity. This value will be sent
-// to the website and will be used to limit downloads.
-func (s *DefaultScalingAlgorithm) RemainingCapacity(scalingCtx context.Context, event ScalingEvent) error {
-	logger.Infof("Starting remaining capacity action for event: %v", event)
-	defer logger.Infof("Finished remaining capacity action for event: %v", event)
-
-	// Get request before computing capacity
-	if event.Data == nil {
-		return utils.MakeError("got an empty event data. Not performing capacity action.")
+	if assignedInstance == (subscriptions.Instance{}) {
+		return utils.MakeError("failed to assign instance.")
 	}
-	req := event.Data.(httputils.RemainingCapacityRequest)
 
-	// Query for the latest image id
-	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
+	mandelboxID, err := uuid.NewRandom()
 	if err != nil {
-		return utils.MakeError("failed to query database for current image. Err: %v", err)
+		return utils.MakeError("failed to create a mandelbox id. Err: %v", err)
 	}
 
-	if len(imageResult) == 0 {
-		logger.Warningf("Image not found on %v. Not performing any scaling actions.", event.Region)
-		return nil
-	}
-	latestImageID := string(imageResult[0].ImageID)
+	// Return result to assign request
+	mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+		IP:          assignedInstance.IPAddress,
+		MandelboxID: types.MandelboxID(mandelboxID),
+	}, nil)
 
-	// This query will return all instances with the ACTIVE status
-	allActive, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
-	if err != nil {
-		return utils.MakeError("failed to query database for active instances. Err: %v", err)
-	}
-
-	// This query will return all instances with the PRE_CONNECTION status
-	allStarting, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "PRE_CONNECTION", event.Region)
-	if err != nil {
-		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
-	}
-
-	mandelboxCapacity := helpers.ComputeExpectedMandelboxCapacity(latestImageID, allActive, allStarting)
-
-	req.ReturnResult(mandelboxCapacity, nil)
 	return nil
 }

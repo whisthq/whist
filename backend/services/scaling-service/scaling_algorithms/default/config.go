@@ -21,6 +21,8 @@ var (
 	desiredFreeMandelboxesPerRegion = 2
 )
 
+const CLIENT_COMMIT_HASH_DEV_OVERRIDE = "local-dev"
+
 // VCPUsPerMandelbox indicates the number of vCPUs allocated per mandelbox.
 const VCPUsPerMandelbox = 4
 

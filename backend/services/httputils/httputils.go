@@ -7,6 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -71,6 +72,8 @@ type MandelboxAssignRequest struct {
 }
 
 type MandelboxAssignRequestResult struct {
+	IP          string            `json:"ip"`
+	MandelboxID types.MandelboxID `json:"mandelbox_id"`
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP

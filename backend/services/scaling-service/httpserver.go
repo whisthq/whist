@@ -15,29 +15,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func RemainingCapacityHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
-	// Verify that we got a GET request
-	err := verifyRequestType(w, req, http.MethodGet)
-	if err != nil {
-		logger.Errorf("Error verifying request type. Err: %v", err)
-	}
-
-	var reqdata httputils.RemainingCapacityRequest
-	// Once we have validated the request send it to
-	// the scaling algorithm for processing. Since this
-	// event does not deal with AWS directly, send to the
-	// default us-east-1 scaling algorithm.
-	events <- algos.ScalingEvent{
-		ID:     uuid.NewString(),
-		Type:   "SERVER_REMAINING_CAPACITY_EVENT",
-		Region: "us-east-1",
-		Data:   reqdata,
-	}
-	res := <-reqdata.ResultChan
-
-	res.Send(w)
-}
-
 func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
 	err := verifyRequestType(w, req, http.MethodPost)
@@ -167,15 +144,13 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 
 	// Create the final assign handler, with the necessary middleware
 	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, createHandler(MandelboxAssignHandler)))
-	capacityHandler := throttleMiddleware(limiter, createHandler(RemainingCapacityHandler))
 
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.Handle("/mandelbox/assign", assignHandler)
-	mux.Handle("/capacity", http.HandlerFunc(capacityHandler))
 
-	// Add timeouts to help mitigate potential rogue clients
+	// Set read/write timeouts to help mitigate potential rogue clients
 	// or DDOS attacks.
 	srv := &http.Server{
 		Addr:         "0.0.0.0:8082",

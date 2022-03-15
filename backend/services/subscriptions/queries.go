@@ -93,9 +93,9 @@ var QueryInstancesByStatus struct {
 }
 
 // QueryInstanceByClientSHA returns an instance that matches the given commit hash and has free space
-// to run a mandelbox.
+// to run a mandelbox. Return results ordered by capacity, so we efficiently allocate mandelboxes.
 var QueryInstanceByClientSHA struct {
-	WhistInstances `graphql:"whist_instances(where: {client_sha: {_eq: $client_sha}}, _and: {remaining_capacity: {_gt: 0}})"`
+	WhistInstances `graphql:"whist_instances(where: {client_sha: {_eq: $client_sha}}, _and: {remaining_capacity: {_gt: 0}}, order_by: {remaining_capacity: asc})"`
 }
 
 // QueryInstancesByImageID returns any instance with the given image id.
