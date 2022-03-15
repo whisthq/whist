@@ -25,7 +25,7 @@ fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
   autoUpdater.downloadUpdate().catch((err) => Sentry.captureException(err))
 })
 
-withAppActivated(timer(0, CHECK_UPDATE_INTERVAL_IN_MS)).subscribe(() => {
+timer(0, CHECK_UPDATE_INTERVAL_IN_MS).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
   // so we need to set autoDownload = false
   autoUpdater.autoDownload = false

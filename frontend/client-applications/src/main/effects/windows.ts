@@ -192,13 +192,11 @@ withAppActivated(fromTrigger(WhistTrigger.importTabs)).subscribe(() => {
 })
 // When the protocol launches, destroy the loading window and onboarding window
 // if they are open
-withAppActivated(
-  fromTrigger(WhistTrigger.protocolConnection).pipe(
-    filter((connected) => connected)
-  )
-).subscribe(() => {
-  destroyElectronWindow(WindowHashLaunchLoading)
-  destroyElectronWindow(WindowHashImportLoading)
-  destroyElectronWindow(WindowHashOnboarding)
-  destroyElectronWindow(WindowHashImport)
-})
+withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowSuccess)).subscribe(
+  () => {
+    destroyElectronWindow(WindowHashLaunchLoading)
+    destroyElectronWindow(WindowHashImportLoading)
+    destroyElectronWindow(WindowHashOnboarding)
+    destroyElectronWindow(WindowHashImport)
+  }
+)
