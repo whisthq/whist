@@ -235,8 +235,20 @@ if __name__ == "__main__":
         results_file = open(f"streaming_e2e_test_results_{i}.md", "w")
         results_file.write(f"## Results compared to branch {compared_branch_name}\n")
         for j, experiment in enumerate(experiments):
+            human_readable_network_conditions = experiment["network_conditions"]
+            if (
+                human_readable_network_conditions != "unknown"
+                and human_readable_network_conditions != "normal"
+            ):
+                human_readable_network_conditions = human_readable_network_conditions.split(",")
+                bandwidth = human_readable_network_conditions[0]
+                delay = human_readable_network_conditions[1]
+                packet_drops = float(human_readable_network_conditions[2]) * 100.0
+                human_readable_network_conditions = (
+                    f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops:.2f}"
+                )
             results_file.write(
-                f"### Experiment {j+1} - Network conditions: {experiment['network_conditions']}\n"
+                f"### Experiment {j+1} - Network conditions: {human_readable_network_conditions}\n"
             )
             if experiment["outcome"] != "success":
                 results_file.write(
