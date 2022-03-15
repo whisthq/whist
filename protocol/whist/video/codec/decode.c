@@ -77,7 +77,8 @@ static void set_opt(VideoDecoder* decoder, char* option, char* value) {
     */
     int ret = av_opt_set(decoder->context->priv_data, option, value, 0);
     if (ret < 0) {
-        LOG_WARNING("Could not av_opt_set %s to %s!", option, value);
+        LOG_WARNING("Could not av_opt_set %s to %s for DecodeType %d!", option, value,
+                    decoder->type);
     }
 }
 
