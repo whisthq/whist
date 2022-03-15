@@ -593,7 +593,7 @@ RUN \
     && chown root:root /run/user \
     && mkdir -p /usr/share/whist/private \
     # Set /usr/share/whist to root-only
-    chgrp root -R /usr/share/whist \
+    && chgrp root -R /usr/share/whist \
     && chown root:root /usr/share/whist \
     && chmod 600 -R /usr/share/whist
 
