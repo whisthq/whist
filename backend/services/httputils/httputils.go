@@ -26,7 +26,7 @@ type RequestResult struct {
 	Err    error       `json:"error"`
 }
 
-// send is called to send an HTTP response
+// Send is called to send an HTTP response
 func (r RequestResult) Send(w http.ResponseWriter) {
 	var buf []byte
 	var err error

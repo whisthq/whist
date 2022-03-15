@@ -178,7 +178,7 @@ func getAppName(mandelboxSubscription subscriptions.Mandelbox, transportRequestM
 		// Receive the json transport request immediately when running on local env
 		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
-		// We will wait 1 minute to get the transport request
+		// We will wait 1 minute to get the JSON transport request
 		select {
 		case transportRequest := <-jsonchan:
 			req = transportRequest

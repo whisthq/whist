@@ -1,6 +1,6 @@
 /*
-Package whistlogger contains the logic for our custom logging system, including sending events to Logz.io and Sentry.
-*/
+ * Package whistlogger contains the logic for our custom logging system, including sending events to Logz.io and Sentry.
+ */
 package whistlogger // import "github.com/whisthq/whist/backend/services/whistlogger"
 
 import (
@@ -20,12 +20,12 @@ func init() {
 	// Set some options for the Go logging package.
 	log.Default().SetFlags(log.Ldate | log.Lmicroseconds | log.LUTC)
 
-	// The first thing we want to do is to initialize logzio and Sentry so that
+	// The first thing we want to do is to initialize Logz.io and Sentry so that
 	// we can catch any errors that might occur, or logs if we print them.
 	// The credentials for Sentry are hardcoded into the host-service,
-	// and the credentials for logzio are written to the environment file used
+	// and the credentials for Logz.io are written to the environment file used
 	// by host-service systemd service.
-	// It is more likely that logzio initialization would fail, So we initialize
+	// It is more likely that Logz.io initialization would fail, so we initialize
 	// Sentry first.
 
 	// Note that according to the Sentry Go documentation, if we run
@@ -181,7 +181,7 @@ func Info(format string, v ...interface{}) {
 	}
 }
 
-// SilentInfo sends info + timestamp directly to logz.io, bypassing stdout.
+// SilentInfo sends info + timestamp directly to Logz.io, bypassing stdout.
 func SilentInfo(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
 	if logzioTransport != nil {

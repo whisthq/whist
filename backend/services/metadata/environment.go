@@ -21,8 +21,8 @@ func init() {
 	}
 }
 
-// An AppEnvironment represents either localdev or localdevwithdb (i.e. a personal
-// instance), dev (i.e. talking to the dev webserver), staging, or prod
+// An AppEnvironment represents either localdev or localdevwithdb (i.e. an engineer's
+// personal instance), dev (i.e. talking to the dev webserver), staging, or prod
 type AppEnvironment string
 
 // Constants for the various AppEnvironments. DO NOT CHANGE THESE without
@@ -90,7 +90,7 @@ func GetAppEnvironmentLowercase() string {
 	return strings.ToLower(string(GetAppEnvironment()))
 }
 
-// IsRunningInCI returns true if the host service is running in continuous
+// IsRunningInCI returns true if the host-service is running in continuous
 // integration (i.e. for tests), and false otherwise.
 func IsRunningInCI() bool {
 	strCI := strings.ToLower(os.Getenv("CI"))

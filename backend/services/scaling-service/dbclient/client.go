@@ -7,7 +7,7 @@ import (
 )
 
 // WhistDBClient is an interface that abstracts all interactions with
-// the database, it includes query, insert, update and delete methos for
+// the database, it includes query, insert, update and delete methods for
 // the `whist.instances` and `whist.images` table. By abstracting the methods
 // we can easily test and mock the scaling algorithm actions.
 type WhistDBClient interface {

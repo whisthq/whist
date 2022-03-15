@@ -1,20 +1,20 @@
 /*
-Package subscriptions is responsible for implementing a pubsub architecture
-on the host-service. This is achieved using Hasura live subscriptions, so that
-the host-service can be notified instantly of any change in the database
-*/
+ * Package subscriptions is responsible for implementing a pubsub architecture
+ * on the Whist backend services. This is achieved using Hasura live subscriptions, so that
+ * the host-service  and scaling-service can be notified instantly of any change in the database.
+ */
 package subscriptions // import "github.com/whisthq/whist/backend/services/subscriptions"
 
 import (
 	"context"
 	"sync"
 
-	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
+	graphql "github.com/hasura/go-graphql-client" // We use Hasura's own GraphQL client for Go
 	"github.com/whisthq/whist/backend/services/metadata"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
-// InstanceStatusHandler handles events from the hasura subscription which
+// InstanceStatusHandler handles events from the Hasura subscription which
 // detects changes on instance instanceName to the given status in the database.
 func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
 	result := event.(InstanceEvent)
@@ -34,7 +34,7 @@ func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interfa
 	return (instance.ID == id) && (instance.Status == status)
 }
 
-// InstancesStatusHandler handles events from the hasura subscription which
+// InstancesStatusHandler handles events from the Hasura subscription which
 // detects changes on all instances to the given status in the database.
 func InstancesStatusHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
 	result := event.(InstanceEvent)
@@ -53,7 +53,7 @@ func InstancesStatusHandler(event SubscriptionEvent, variables map[string]interf
 	return instance.Status == status
 }
 
-// MandelboxAllocatedHandler handles events from the hasura subscription which
+// MandelboxAllocatedHandler handles events from the Hasura subscription which
 // detects changes on instance instanceName to the given status in the database.
 func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
 	result := event.(MandelboxEvent)
@@ -107,7 +107,7 @@ func ClientAppVersionHandler(event SubscriptionEvent, variables map[string]inter
 }
 
 // SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This
-// function is specific for the subscriptions used on the host service.
+// function is specific for the subscriptions used on the host-service.
 func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClient) {
 	hostSubscriptions := []HasuraSubscription{
 		{
@@ -133,7 +133,7 @@ func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClie
 }
 
 // SetupScalingSubscriptions creates a slice of HasuraSubscriptions to start the client. This
-// function is specific for the subscriptions used on the scaling service.
+// function is specific for the subscriptions used on the scaling-service.
 func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 	scalingSubscriptions := []HasuraSubscription{
 		{
