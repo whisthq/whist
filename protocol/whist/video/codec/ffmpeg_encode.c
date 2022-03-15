@@ -52,7 +52,7 @@ static bool set_opt(FFmpegEncoder *encoder, char *option, char *value) {
     */
     int ret = av_opt_set(encoder->context->priv_data, option, value, 0);
     if (ret < 0) {
-        LOG_WARNING("Could not av_opt_set %s to %s!", option, value);
+        LOG_WARNING("Could not av_opt_set %s to %s for EncodeType %d!", option, value, encoder->type);
         return false;
     } else {
         return true;

@@ -77,7 +77,7 @@ static void set_opt(VideoDecoder* decoder, char* option, char* value) {
     */
     int ret = av_opt_set(decoder->context->priv_data, option, value, 0);
     if (ret < 0) {
-        LOG_WARNING("Could not av_opt_set %s to %s!", option, value);
+        LOG_WARNING("Could not av_opt_set %s to %s for DecodeType %d!", option, value, decoder->type);
     }
 }
 
@@ -90,7 +90,12 @@ static void set_decoder_opts(VideoDecoder* decoder) {
     */
     // decoder->context->flags |= AV_CODEC_FLAG_LOW_DELAY;
     // decoder->context->flags2 |= AV_CODEC_FLAG2_FAST;
-    set_opt(decoder, "async_depth", "1");
+    if (decoder->match_fmt == AV_PIX_FMT_QSV ||
+        decoder->match_fmt == AV_PIX_FMT) {
+        // this option is only supported on QSV decoders, 
+        // according to: https://ffmpeg.org/ffmpeg-all.html#async
+        set_opt(decoder, "async_depth", "1");
+    }
 }
 
 static int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
