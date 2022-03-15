@@ -14,6 +14,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     else()
         message(FATAL "unknown Darwin architecture: ${MACOS_ARCHITECTURE} ")
     endif()
+    add_compile_options("-O2")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
