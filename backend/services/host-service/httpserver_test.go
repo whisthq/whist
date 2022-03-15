@@ -287,7 +287,7 @@ func TestProcessJSONDataRequestEmptyBody(t *testing.T) {
 	}
 }
 
-// TestHandleJSONTransportRequest checks if valid fields will successfully send json transport request
+// TestHandleJSONTransportRequest checks if valid fields will successfully send JSON transport request
 func TestHandleJSONTransportRequest(t *testing.T) {
 	testJSONTransportRequest := JSONTransportRequest{
 		ConfigEncryptionToken: "testToken1234",
@@ -316,7 +316,7 @@ func TestGetJSONTransportRequestChannel(t *testing.T) {
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
-	// getJSONTransportRequestChannel will create a new json trasport request channel with the mandelboxID
+	// getJSONTransportRequestChannel will create a new JSON transport request channel with the mandelboxID
 	testJsonChan := getJSONTransportRequestChannel(mandelboxID, testTransportRequestMap, testmux)
 
 	if _, ok := interface{}(testJsonChan).(chan *JSONTransportRequest); !ok {
@@ -375,7 +375,7 @@ func TestGetAppNameNoRequest(t *testing.T) {
 	}
 }
 
-// TestGetAppName will set appName to json request app name
+// TestGetAppName will set appName to JSON request app name
 func TestGetAppName(t *testing.T) {
 	var appNames = []string{"browsers/chrome", "browsers/brave", "browsers/test"}
 

@@ -56,7 +56,7 @@ func (wc *GraphQLClient) Initialize() error {
 	}
 	wc.SetParams(params)
 
-	// Create http client for authenticating the GraphQL client
+	// Create HTTP client for authenticating the GraphQL client
 	httpClient := http.Client{
 		Transport: &withAdminSecretTransport{
 			AdminSecret: wc.GetParams().AccessKey,
@@ -75,7 +75,7 @@ func (wc *GraphQLClient) SetParams(params HasuraParams) {
 	wc.Params = params
 }
 
-// Query executes the given GraphQL query and assigns the reeturned values to
+// Query executes the given GraphQL query and assigns the returned values to
 // the provided interface.
 func (wc *GraphQLClient) Query(ctx context.Context, query GraphQLQuery, variables map[string]interface{}) error {
 	dbCtx, cancel := context.WithCancel(ctx)

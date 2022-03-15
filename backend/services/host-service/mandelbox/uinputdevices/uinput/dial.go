@@ -62,7 +62,7 @@ func createDial(path string, name []byte) (fd *os.File, err error) {
 		return nil, fmt.Errorf("failed to register dial input device: %v", err)
 	}
 
-	// register dial events
+	// Register dial events
 	err = ioctl(deviceFile, uiSetRelBit, uintptr(relDial))
 	if err != nil {
 		deviceFile.Close()

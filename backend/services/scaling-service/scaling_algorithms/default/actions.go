@@ -157,7 +157,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}
 	latestImageID := string(imageResult[0].ImageID)
 
-	// query database for all active instances (status ACTIVE) without mandelboxes
+	// Query database for all active instances (status ACTIVE) without mandelboxes
 	allActive, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for active instances. Err: %v", err)
@@ -218,7 +218,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		}
 	}
 
-	// check database for draining instances without running mandelboxes
+	// Check database for draining instances without running mandelboxes
 	drainingInstances, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "DRAINING", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for lingering instances. Err: %v", err)
@@ -310,7 +310,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 
 	logger.Infof("Inserting newly created instances to database.")
 
-	// If successful, write to db
+	// If successful, write to database
 	affectedRows, err := s.DBClient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
 	if err != nil {
 		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
@@ -351,7 +351,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImageID, err)
 	}
 
-	// create slice of newly created instance ids
+	// Create slice of newly created instance IDs
 	var instancesForDb []subscriptions.Instance
 
 	for _, instance := range bufferInstances {
@@ -372,7 +372,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	logger.Infof("Inserting newly created instances to database.")
 
-	// If successful, write to db
+	// If successful, write to database
 	affectedRows, err := s.DBClient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
 	if err != nil {
 		return utils.MakeError("Failed to insert instances into database. Error: %v", err)

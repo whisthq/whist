@@ -172,7 +172,7 @@ func createMouse(path string, name []byte) (fd *os.File, err error) {
 		return nil, fmt.Errorf("failed to register key device: %v", err)
 	}
 
-	// register button events (in order to enable left, right, middle, button 4, and button 5 click)
+	// Register button events (in order to enable left, right, middle, button 4, and button 5 click)
 	for _, event := range []int{evBtnLeft, evBtnRight, evBtnMiddle, evBtnSide, evBtnExtra} {
 		err = ioctl(deviceFile, uiSetKeyBit, uintptr(event))
 		if err != nil {

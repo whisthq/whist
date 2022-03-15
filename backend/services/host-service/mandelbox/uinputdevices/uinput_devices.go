@@ -1,8 +1,8 @@
 /*
-Package uinputdevices abstracts away the allocation and assignment of uinput
-devices for mandelboxes. Much of its functionality is provided by the nested
-`uinput` package.
-*/
+ * Package uinputdevices abstracts away the allocation and assignment of uinput
+ * devices for mandelboxes. Much of its functionality is provided by the nested
+ * `uinput` package.
+ */
 package uinputdevices // import "github.com/whisthq/whist/backend/services/host-service/mandelbox/uinputdevices"
 
 import (
@@ -213,8 +213,7 @@ func getDeviceFilePath(fd *os.File) (string, error) {
 
 // In summary, this function computes the argument that gets passed to the
 // ioctl system call. For more details, and an explanation of the argument
-// names to linuxIoc, see:
-// https://www.kernel.org/doc/html/latest/driver-api/ioctl.html
+// names to linuxIoc, see: ttps://www.kernel.org/doc/html/latest/driver-api/ioctl.html
 func linuxUIGetSysName(len uintptr) uintptr {
 	// from ioctl.h and uinput.h
 	const (

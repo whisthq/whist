@@ -1,6 +1,6 @@
 /*
-Package ttys abstracts away allocation and assignment of TTY devices for mandelboxes.
-*/
+ * Package ttys abstracts away allocation and assignment of TTY devices for mandelboxes.
+ */
 package ttys // import "github.com/whisthq/whist/backend/services/host-service/mandelbox/ttys"
 
 import (
@@ -26,7 +26,7 @@ type ttyStatus byte
 const (
 	// We need to allocate the first 10 for the system.
 	minAllowedTTY = 10 // inclusive
-	maxAllowedTTY = 64 //exclusive
+	maxAllowedTTY = 64 // exclusive
 
 	reserved ttyStatus = iota
 	inUse
