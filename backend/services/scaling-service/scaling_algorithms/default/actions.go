@@ -420,7 +420,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	select {
 	case s.SyncChan <- true:
 		logger.Infof("Finished upgrading image %v in region %v", newImageID, event.Region)
-	case <-time.After(1 * time.Minute):
+	case <-time.After(1 * time.Hour):
 		// Clear protected map since the client app deploy didn't complete successfully.
 		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
 
@@ -440,7 +440,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	select {
 	case <-s.SyncChan:
 		logger.Infof("Got signal that image upgrade action finished correctly.")
-	case <-time.After(1 * time.Minute):
+	case <-time.After(1 * time.Hour):
 		// Clear protected map since the image upgrade didn't complete successfully.
 		s.protectedMapLock.Lock()
 		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
