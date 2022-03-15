@@ -2,6 +2,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     #message(WARNING "Current ARCH is LINUx!!!")
     add_compile_options("-mavx2")
     add_compile_options("-Wno-restrict")
+    add_compile_options("-O2")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
