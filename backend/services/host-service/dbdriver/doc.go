@@ -25,7 +25,7 @@
 // Q: Why not use `sqlboiler`?
 // A: The idea of generating code based on the schema caught my attention,
 // since it would help us ensure that changes to the schema also get reflected
-// in the host service code. However, the specific implementation proposed by
+// in the host-service code. However, the specific implementation proposed by
 // `sqlboiler` isn't well-suited to our deployment since it would require us to
 // spin up a local webserver deployment every time we wanted to build the host
 // service. A solution that worked directly with `schema.sql` (which
