@@ -53,6 +53,7 @@ const launchProtocol = async (info?: {
       environment: config.deployEnv,
       "session-id": sessionID.toString(),
     }),
+    "disable-features": "LongTermReference",
   }
 
   const protocolArguments = [
