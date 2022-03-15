@@ -8,7 +8,7 @@ import paramiko
 import subprocess
 from operator import itemgetter
 
-from e2e_helpers.local_tools import (
+from e2e_helpers.common.git_tools import (
     get_whist_branch_name,
 )
 

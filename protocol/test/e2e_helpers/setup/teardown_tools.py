@@ -1,0 +1,290 @@
+#!/usr/bin/env python3
+
+import pexpect
+
+# Get tools to run operations on a dev instance via SSH
+from e2e_helpers.common.ssh_tools import (
+    attempt_ssh_connection,
+    wait_until_cmd_done,
+)
+
+from e2e_helpers.aws.aws_tools import (
+    terminate_or_stop_aws_instance,
+)
+
+from e2e_helpers.setup.network_tools import (
+    restore_network_conditions,
+)
+
+# add the current directory to the path no matter where this is called from
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
+
+
+def extract_logs_from_mandelbox(
+    pexpect_process,
+    pexpect_prompt,
+    docker_id,
+    ssh_key_path,
+    username,
+    hostname,
+    timeout_value,
+    perf_logs_folder_name,
+    log_grabber_log,
+    running_in_ci,
+    role,
+):
+    """
+    Extract the logs related to the run of the Whist server/client mandelbox (browsers/chrome)
+    on a remote machine. This should be called after the client->server connection has terminated,
+    but before the server/client container is stopped/destroyed.
+
+    Args:
+        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
+                                interact with the remote machine
+        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
+                                ready to execute a command
+        docker_id: The Docker ID of the container running the Whist server/client
+                                (browsers/chrome or development/client mandelbox)
+                                on the remote machine
+        ssh_key_path: The path (on the machine where this script is run) to the file storing
+                                the public RSA key used for SSH connections
+        username: The username to be used on the remote machine (default is 'ubuntu')
+        hostname: The host name of the remote machine where the server/client was running on
+        timeout_value: The amount of time (in seconds) to wait before timing out the attemps to
+                                gain a SSH connection to the remote machine.
+        perf_logs_folder_name: The path to the folder (on the machine where this script is run)
+                                where to store the logs
+        log_grabber_log: The file (already opened) to use for logging the terminal output from
+                                the shell process used to download the logs
+        running_in_ci: A boolean indicating whether this script is currently running in CI
+        role: Controls whether to extract the `server` logs or the `client` logs
+
+    Returns:
+        None
+    """
+    command = f"rm -rf ~/perf_logs/{role}; mkdir -p ~/perf_logs/{role}"
+    pexpect_process.sendline(command)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+    logfiles = [
+        f"/usr/share/whist/{role}.log",
+        "/usr/share/whist/teleport.log",
+        "/usr/share/whist/display.log",
+        # Var Logs!
+        "/var/log/whist/audio-err.log",
+        "/var/log/whist/audio-out.log",
+        "/var/log/whist/display-err.log",
+        "/var/log/whist/display-out.log",
+        "/var/log/whist/entry-err.log",
+        "/var/log/whist/entry-out.log",
+        "/var/log/whist/update_xorg_conf-err.log",
+        "/var/log/whist/update_xorg_conf-out.log",
+        "/var/log/whist/protocol-err.log",
+        "/var/log/whist/protocol-out.log",
+    ]
+    for file_path in logfiles:
+        command = f"docker cp {docker_id}:{file_path} ~/perf_logs/{role}/"
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+    # Download all the logs from the AWS machine
+    command = (
+        f"scp -r -i {ssh_key_path} {username}@{hostname}:~/perf_logs/{role} {perf_logs_folder_name}"
+    )
+
+    local_process = pexpect.spawn(command, timeout=timeout_value, logfile=log_grabber_log.buffer)
+    local_process.expect(["\$", pexpect.EOF])
+    local_process.kill(0)
+
+
+def complete_experiment_and_save_results(
+    server_hostname,
+    server_instance_id,
+    server_docker_id,
+    server_cmd,
+    server_log,
+    use_existing_server_instance,
+    server_pexpect_process,
+    pexpect_prompt_server,
+    client_hostname,
+    client_instance_id,
+    client_docker_id,
+    client_cmd,
+    client_log,
+    use_existing_client_instance,
+    client_pexpect_process,
+    pexpect_prompt_client,
+    aws_timeout_seconds,
+    ssh_connection_retries,
+    username,
+    ssh_key_path,
+    boto3client,
+    running_in_ci,
+    use_two_instances,
+    network_conditions,
+    perf_logs_folder_name,
+    experiment_metadata,
+    metadata_filename,
+):
+
+    # 1 - Restore un-degradated network conditions in case the instance is reused later on.
+    # Do this before downloading the logs to prevent the download from taking a long time.
+    if network_conditions != "normal":
+        # Get new SSH connection because current ones are connected to the mandelboxes' bash,
+        # and we cannot exit them until we have copied over the logs
+        client_restore_net_process = attempt_ssh_connection(
+            client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5, running_in_ci
+        )
+        restore_network_conditions(client_restore_net_process, pexpect_prompt_client, running_in_ci)
+        client_restore_net_process.kill(0)
+
+    # 2 - Quit the server and check whether it shuts down gracefully or whether it hangs
+    server_hang_detected = False
+    server_shutdown_desired_message = "Both whist-application and WhistServer have exited."
+    if shutdown_and_wait_server_exit(server_pexpect_process, server_shutdown_desired_message):
+        print("Server has exited gracefully.")
+    else:
+        print("Server has not exited gracefully!")
+        server_hang_detected = True
+
+    # 3 - Extract the client/server protocol logs from the two docker containers
+    print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
+
+    log_grabber_server_process = attempt_ssh_connection(
+        server_cmd,
+        aws_timeout_seconds,
+        server_log,
+        pexpect_prompt_server,
+        ssh_connection_retries,
+        running_in_ci,
+    )
+
+    log_grabber_client_process = log_grabber_server_process
+    if use_two_instances:
+        log_grabber_client_process = attempt_ssh_connection(
+            client_cmd,
+            aws_timeout_seconds,
+            client_log,
+            pexpect_prompt_client,
+            ssh_connection_retries,
+            running_in_ci,
+        )
+
+    extract_logs_from_mandelbox(
+        log_grabber_server_process,
+        pexpect_prompt_server,
+        server_docker_id,
+        ssh_key_path,
+        username,
+        server_hostname,
+        aws_timeout_seconds,
+        perf_logs_folder_name,
+        server_log,
+        running_in_ci,
+        role="server",
+    )
+    extract_logs_from_mandelbox(
+        log_grabber_client_process,
+        pexpect_prompt_client,
+        client_docker_id,
+        ssh_key_path,
+        username,
+        client_hostname,
+        aws_timeout_seconds,
+        perf_logs_folder_name,
+        client_log,
+        running_in_ci,
+        role="client",
+    )
+
+    # 4 - Clean up the instance(s) by stopping all docker containers and quitting the host-service.
+    # Exit the server/client mandelboxes
+    server_pexpect_process.sendline("exit")
+    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server, running_in_ci)
+    client_pexpect_process.sendline("exit")
+    wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
+
+    # Stop and delete any leftover Docker containers
+
+    command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
+    server_pexpect_process.sendline(command)
+    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server, running_in_ci)
+    if use_two_instances:
+        client_pexpect_process.sendline(command)
+        wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
+
+    # Terminate the host service
+    server_hs_process.sendcontrol("c")
+    server_hs_process.kill(0)
+    if use_two_instances:
+        client_hs_process.sendcontrol("c")
+        client_hs_process.kill(0)
+
+    # Terminate all pexpect processes
+    server_pexpect_process.kill(0)
+    client_pexpect_process.kill(0)
+    log_grabber_server_process.kill(0)
+    if use_two_instances:
+        log_grabber_client_process.kill(0)
+
+    # 5 - Close all the log files
+    server_log.close()
+    client_log.close()
+
+    # 6 - Stop or terminate the AWS EC2 instance(s)
+    if leave_instances_on == "false":
+        # Terminate or stop AWS instance(s)
+        terminate_or_stop_aws_instance(
+            boto3client, server_instance_id, server_instance_id != use_existing_server_instance
+        )
+        if use_two_instances:
+            terminate_or_stop_aws_instance(
+                boto3client,
+                client_instance_id,
+                client_instance_id != use_existing_client_instance,
+            )
+    else:
+        # Save instance IDs to file for reuse by later runs
+        with open("instances_left_on.txt", "w") as instances_file:
+            instances_file.write(f"{server_instance_id}\n")
+            if client_instance_id != server_instance_id:
+                instances_file.write(f"{client_instance_id}\n")
+
+    print("Instance successfully stopped/terminated, goodbye")
+
+    # 7 - Delete the cleanup todo-list, because we already completed it.
+    os.remove("instances_to_remove.txt")
+
+    # 8 - Check if either of the WhistServer/WhistClient failed to start, or whether the client failed
+    # to connect to the server. If so, add the error to the metadata, and exit with an error code (-1).
+
+    # The server_metrics_file (server.log) and the client_metrics_file (client.log) fail to exist if
+    # the WhistServer/WhistClient did not start
+    experiment_metadata["server_failure"] = not os.path.isfile(server_metrics_file)
+    experiment_metadata["client_failure"] = not os.path.isfile(client_metrics_file)
+
+    # A test without connection errors will produce a client log that is well over 500 lines.
+    # This is a heuristic that works surprisingly well under the current protocol setup.
+    # If the connection failed, trigger an error.
+    experiment_metadata["client_server_connection_failure"] = (
+        not experiment_metadata["client_failure"]
+        and len(open(client_metrics_file).readlines()) <= 500
+    )
+    experiment_metadata["server_hang_detected"] = (
+        server_hang_detected and not experiment_metadata["server_failure"]
+    )
+
+    # 9 - Update metadata file with any new metadata that we added
+    with open(metadata_filename, "w") as metadata_file:
+        json.dump(experiment_metadata, metadata_file)
+
+    # 10 - Print error message and exit with error if needed
+    for cause, message in {
+        "server_failure": "Failed to run WhistServer",
+        "client_failure": "Failed to run WhistClient",
+        "client_server_connection_failure": "Whist Client failed to connect to the server",
+        "server_hang_detected": "WhistServer hang detected",
+    }.items():
+        if experiment_metadata[cause]:
+            print(f"{message}! Exiting with error. Check the logs for more details.")
+            sys.exit(-1)
