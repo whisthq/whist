@@ -16,9 +16,9 @@ const Importer = (props: {
     setBrowser(b)
   }
 
-  const onSubmit = (b: string) => {
+  const onSubmit = (b?: string) => {
     setProcessing(true)
-    props.onSubmit(b)
+    props.onSubmit(b ?? browser)
   }
 
   useEffect(() => {
@@ -69,7 +69,7 @@ const Importer = (props: {
                 ? WhistButtonState.PROCESSING
                 : WhistButtonState.DEFAULT
             }
-            onClick={() => onSubmit(browser)}
+            onClick={onSubmit}
           />
         </div>
         {props.allowSkip && (
