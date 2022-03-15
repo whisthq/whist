@@ -281,7 +281,7 @@ ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 ENV HYDRAULIC_ROOT /hydraulic-squash
 
-RUN mkdir -p $HYDRAULIC_ROOT/{bin,etc,usr/share/whist/private,run/user,/home/whist}
+RUN mkdir -p $HYDRAULIC_ROOT/{etc,usr/share/whist/private,run/user,/home/whist}
 
 #########################
 # Permissions
@@ -320,7 +320,7 @@ COPY input/Xmodmap $HYDRAULIC_ROOT/root/.Xmodmap
 #########################
 
 # Copy configuration for X11 display
-COPY display/whist-display.conf /usr/share/X11/xorg.conf.d/01-whist-display.conf
+COPY display/whist-display.conf $HYDRAULIC_ROOT/usr/share/X11/xorg.conf.d/01-whist-display.conf
 
 # Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
 COPY --chown=root:root --chmod=600 display/whist-update-xorg-conf.service $HYDRAULIC_ROOT/etc/systemd/system/
@@ -328,7 +328,7 @@ COPY --chmod=550 display/update-xorg-conf.sh $HYDRAULIC_ROOT/usr/share/whist/
 
 # Set up Whist service to launch X11 display
 COPY display/whist-display-config.env $HYDRAULIC_ROOT/usr/share/whist
-COPY display/xinitrc /root/.xinitrc
+COPY display/xinitrc $HYDRAULIC_ROOT/root/.xinitrc
 COPY --chown=root:root --chmod=600 display/whist-display.service $HYDRAULIC_ROOT/etc/systemd/system
 COPY --chmod=550 display/whist-display.sh $HYDRAULIC_ROOT/usr/share/whist/whist-display.sh
 
