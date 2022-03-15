@@ -21,9 +21,7 @@ from e2e_helpers.setup.network_tools import (
     restore_network_conditions,
 )
 
-from e2e_helpers.whist_server_tools import (
-    shutdown_and_wait_server_exit
-)
+from e2e_helpers.whist_server_tools import shutdown_and_wait_server_exit
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -147,7 +145,12 @@ def complete_experiment_and_save_results(
         # Get new SSH connection because current ones are connected to the mandelboxes' bash,
         # and we cannot exit them until we have copied over the logs
         client_restore_net_process = attempt_ssh_connection(
-            client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5, running_in_ci
+            client_cmd,
+            aws_timeout_seconds,
+            client_log,
+            pexpect_prompt_client,
+            ssh_connection_retries,
+            running_in_ci,
         )
         restore_network_conditions(client_restore_net_process, pexpect_prompt_client, running_in_ci)
         client_restore_net_process.kill(0)

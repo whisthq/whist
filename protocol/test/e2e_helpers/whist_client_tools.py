@@ -66,6 +66,7 @@ def client_setup_process(args_dict):
     running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
+    ssh_connection_retries = args_dict["ssh_connection_retries"]
 
     client_log = open(client_log_filepath, "w")
 
@@ -76,7 +77,12 @@ def client_setup_process(args_dict):
         # Initiate the SSH connections with the client instance
         print("Initiating the SETUP ssh connection with the client AWS instance...")
         hs_process = attempt_ssh_connection(
-            client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5, running_in_ci
+            client_cmd,
+            aws_timeout_seconds,
+            client_log,
+            pexpect_prompt_client,
+            ssh_connection_retries,
+            running_in_ci,
         )
 
         # Restore network conditions in case a previous run failed / was canceled before restoring the normal conditions.
@@ -108,7 +114,7 @@ def client_setup_process(args_dict):
                 aws_timeout_seconds,
                 client_log,
                 pexpect_prompt_client,
-                5,
+                ssh_connection_retries,
                 running_in_ci,
             )
 
@@ -120,6 +126,7 @@ def client_setup_process(args_dict):
                 hs_process,
                 pexpect_prompt_client,
                 client_cmd,
+                ssh_connection_retries,
                 aws_timeout_seconds,
                 client_log,
                 running_in_ci,
@@ -135,7 +142,7 @@ def client_setup_process(args_dict):
             aws_timeout_seconds,
             client_log,
             pexpect_prompt_client,
-            5,
+            ssh_connection_retries,
             running_in_ci,
         )
 
@@ -144,7 +151,12 @@ def client_setup_process(args_dict):
     # 6- Build the dev client
     print("Initiating the BUILD ssh connection with the client AWS instance...")
     client_pexpect_process = attempt_ssh_connection(
-        client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5, running_in_ci
+        client_cmd,
+        aws_timeout_seconds,
+        client_log,
+        pexpect_prompt_client,
+        ssh_connection_retries,
+        running_in_ci,
     )
     build_client_on_instance(
         client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type, running_in_ci

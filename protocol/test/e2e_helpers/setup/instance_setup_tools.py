@@ -202,7 +202,15 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, runnin
     print("Finished downloading whisthq/whist on EC2 instance")
 
 
-def run_host_setup(pexpect_process, pexpect_prompt, ssh_cmd, timeout_value, logfile, running_in_ci):
+def run_host_setup(
+    pexpect_process,
+    pexpect_prompt,
+    ssh_cmd,
+    ssh_connection_retries,
+    timeout_value,
+    logfile,
+    running_in_ci,
+):
     """
     Run Whist's host setup on a remote machine accessible via a SSH connection within a pexpect process.
 
@@ -240,7 +248,13 @@ def run_host_setup(pexpect_process, pexpect_prompt, ssh_cmd, timeout_value, logf
             "Running into severe locking issues (happens frequently), rebooting the instance and trying again!"
         )
         pexpect_process = reboot_instance(
-            pexpect_process, ssh_cmd, timeout_value, logfile, pexpect_prompt, 5, running_in_ci
+            pexpect_process,
+            ssh_cmd,
+            timeout_value,
+            logfile,
+            pexpect_prompt,
+            ssh_connection_retries,
+            running_in_ci,
         )
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)

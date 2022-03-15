@@ -55,6 +55,7 @@ def server_setup_process(args_dict):
     running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
+    ssh_connection_retries = args_dict["ssh_connection_retries"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -62,7 +63,12 @@ def server_setup_process(args_dict):
     print("Initiating the SETUP ssh connection with the server AWS instance...")
     server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
     hs_process = attempt_ssh_connection(
-        server_cmd, aws_timeout_seconds, server_log, pexpect_prompt_server, 5, running_in_ci
+        server_cmd,
+        aws_timeout_seconds,
+        server_log,
+        pexpect_prompt_server,
+        ssh_connection_retries,
+        running_in_ci,
     )
 
     print("Configuring AWS credentials on server instance...")
@@ -92,7 +98,7 @@ def server_setup_process(args_dict):
             aws_timeout_seconds,
             server_log,
             pexpect_prompt_server,
-            5,
+            ssh_connection_retries,
             running_in_ci,
         )
 
@@ -104,6 +110,7 @@ def server_setup_process(args_dict):
             hs_process,
             pexpect_prompt_server,
             server_cmd,
+            ssh_connection_retries,
             aws_timeout_seconds,
             server_log,
             running_in_ci,
@@ -119,7 +126,7 @@ def server_setup_process(args_dict):
         aws_timeout_seconds,
         server_log,
         pexpect_prompt_server,
-        5,
+        ssh_connection_retries,
         running_in_ci,
     )
 

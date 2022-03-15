@@ -391,6 +391,7 @@ if __name__ == "__main__":
             "running_in_ci": running_in_ci,
             "skip_git_clone": skip_git_clone,
             "skip_host_setup": skip_host_setup,
+            "ssh_connection_retries": ssh_connection_retries,
         }
     )
 
