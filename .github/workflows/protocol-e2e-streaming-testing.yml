@@ -115,15 +115,11 @@ jobs:
       # Steps below acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
       - name: Get branch name (merge)
         if: ${{ always() && (github.event_name != 'pull_request') }}
-        run: |
-          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-          echo "RUN_TRIGGERED_BY_PR=false" >> $GITHUB_ENV
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
 
       - name: Get branch name (pull request)
         if: ${{ always() && (github.event_name == 'pull_request') }}
-        run: |
-          echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-          echo "RUN_TRIGGERED_BY_PR=true" >> $GITHUB_ENV
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
 
       # need one more section like this to ensure the S3 command works in case of failure/timeout of the Python script above
       - name: Upload logs to S3 for debugging purposes
@@ -150,6 +146,6 @@ jobs:
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
-        run: python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py --compared-branch-name "dev" "${{ env.BRANCH_NAME }}" --e2e-script-outcomes "${{ steps.e2e_streaming_test0.outcome }}" "${{ steps.e2e_streaming_test1.outcome }}" "${{ steps.e2e_streaming_test2.outcome }}" "${{ steps.e2e_streaming_test3.outcome }}" --post-results-on-slack="${{ env.RUN_TRIGGERED_BY_PR }}"
+        run: python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py --compared-branch-name "dev" "${{ env.BRANCH_NAME }}" --e2e-script-outcomes "${{ steps.e2e_streaming_test0.outcome }}" "${{ steps.e2e_streaming_test1.outcome }}" "${{ steps.e2e_streaming_test2.outcome }}" "${{ steps.e2e_streaming_test3.outcome }}" --post-results-on-slack="${{ github.event_name == 'schedule' }}"
 
   #######################################################################################
