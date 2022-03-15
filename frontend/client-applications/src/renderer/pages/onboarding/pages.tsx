@@ -428,7 +428,7 @@ const NetworkTest = () => {
           <span className="font-bold text-gray-300 text-blue-light">
             {awsRegionName(mainState?.regions?.[0]) ?? "- - -"}
           </span>
-          . If your Internet conditions have changed, you can
+          . To re-test your Internet and closest server, you can
           <br />
           <span
             className={classNames(

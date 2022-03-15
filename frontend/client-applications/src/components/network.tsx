@@ -31,8 +31,8 @@ const getNetworkTestState = (
   // Network test is finished and the network is good
   if (
     networkInfo.downloadMbps >= MIN_ACCEPTABLE_DOWNLOAD_MBPS &&
-    networkInfo.jitter < MAX_ACCEPTABLE_JITTER_MS &&
-    networkInfo.ping < MAX_ACCEPTABLE_PING_MS
+    networkInfo.jitter <= MAX_ACCEPTABLE_JITTER_MS &&
+    networkInfo.ping <= MAX_ACCEPTABLE_PING_MS
   )
     return NetworkTestState.NETWORK_GOOD
 
@@ -76,7 +76,7 @@ const Text = (props: { state: NetworkTestState }) => {
     default:
       return (
         <div className="text-gray-100 font-bold text-2xl mt-4 leading-10">
-          Your Internet is not strong enough
+          Your Internet may not be strong
         </div>
       )
   }
