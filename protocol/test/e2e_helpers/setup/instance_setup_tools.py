@@ -4,7 +4,6 @@ import pexpect
 import os
 import sys
 import time
-import subprocess
 
 from e2e_helpers.common.git_tools import (
     get_whist_branch_name,

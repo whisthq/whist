@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import pexpect
-import json
-import platform
 import time
+import sys
+import os
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))

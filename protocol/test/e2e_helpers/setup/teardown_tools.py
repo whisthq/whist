@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
 import pexpect
+import time
+import sys
+import os
+import boto3
 
 # Get tools to run operations on a dev instance via SSH
 from e2e_helpers.common.ssh_tools import (

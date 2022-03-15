@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import pexpect
-import json
-import platform
 import time
+import sys
+import os
+import pexpect
 
 from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,

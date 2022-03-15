@@ -4,7 +4,6 @@ import pexpect
 import os
 import sys
 import time
-import subprocess
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
