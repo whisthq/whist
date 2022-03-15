@@ -236,11 +236,11 @@ if __name__ == "__main__":
         results_file.write(f"## Results compared to branch {compared_branch_name}\n")
         for j, experiment in enumerate(experiments):
             results_file.write(
-                f"### Experiment {j} - Network conditions: {experiment['network_conditions']}\n"
+                f"### Experiment {j+1} - Network conditions: {experiment['network_conditions']}\n"
             )
             if experiment["outcome"] != "success":
                 results_file.write(
-                    f":bangbang::warning: WARNING: the outcome of the experiment below was: `{experiment['outcome']}` \
+                    f":x: WARNING: the outcome of the experiment below was: `{experiment['outcome']}` \
                     and the results below (if any) might be inaccurate!\n\n"
                 )
             if experiment["client_metrics"] is None or experiment["server_metrics"] is None:
@@ -317,7 +317,7 @@ if __name__ == "__main__":
 
     # Create one file for each branch
 
-    md_files = glob.glob("*.md")
+    md_files = glob.glob("streaming_e2e_test_results_*.md")
     files_list = []
     merged_files = ""
     for filename in md_files:
@@ -328,12 +328,21 @@ if __name__ == "__main__":
 
     gist_url = create_github_gist_post(github_gist_token, title, files_list)
 
-    # Post updates to Slack channel if we are on branch `dev` and a slack webhook is set
+    test_outcome_verb = "succeeded :white_check_mark:"
+    for outcome in e2e_script_outcomes:
+        if outcome == "cancelled":
+            test_outcome_verb = "was cancelled :x:"
+        elif outcome == "skipped":
+            test_outcome_verb = "was skipped :x:"
+        elif outcome == "failure":
+            test_outcome_verb = "failed :x:"
+
+    # Post updates to Slack channel if desired
     if slack_webhook and post_results_on_slack:
         slack_catchy_title = f":rocket::face_with_cowboy_hat::bar_chart: {title} :rocket::face_with_cowboy_hat::bar_chart:"
         slack_post(
             slack_webhook,
-            body=f"New E2E dev benchmark results available! Check them out here: {gist_url}\n",
+            body=f"New E2E `{current_branch_name}` test results available! The test {test_outcome_verb}. Check out the details here: {gist_url}\n",
             slack_username="Whist Bot",
             title=slack_catchy_title,
         )
