@@ -46,3 +46,7 @@ yarn-error.log*
 
 # Streaming protocol testing
 perf_logs
+
+# Local Netlify folder
+# (netlify wants this line in root, not website gitignore)
+.netlify
