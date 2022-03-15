@@ -436,35 +436,35 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /tmp/* /var/tmp/*
 
 # Install time while avoiding interactive installation for tzdata - uses UTC
-ENV LOCAL="yes"
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    tzdata \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
+RUN (
+      export LOCAL="yes"
+      apt-get update && apt-get install --no-install-recommends -y \
+      tzdata \
+      && apt-get autoremove -y \
+      && apt-get clean \
+      && rm -rf /tmp/* /var/tmp/*
+    )
 
 #########################
 # Permissions
 #########################
 
-# Create whist user with dynamic, random password and do NOT add to sudo group
-RUN useradd --create-home whist \
-    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
-    && echo whist:"${password}" | chpasswd
-
-# Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
-RUN echo "Set disable_coredump false" >> /etc/sudo.conf
-
 # Mount cgroup from host (Is this needed?)
 VOLUME [ "/sys/fs/cgroup" ]
 
-# Set appropriate user permissions and create /whist/ Directory and Subdirectories in /usr/share
-RUN chown -vR whist:whist /home/whist \
+RUN \
+    # Create whist user with dynamic, random password and do NOT add to sudo group
+    useradd --create-home whist \
+    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
+    && echo whist:"${password}" | chpasswd \
+    # Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
+    && echo "Set disable_coredump false" >> /etc/sudo.conf \
+    # Set appropriate user permissions and create /whist/ Directory and Subdirectories in /usr/share
+    && chown -vR whist:whist /home/whist \
     && chown root:root /run/user \
-    && mkdir -p /usr/share/whist/private
-
-# Set /usr/share/whist to root-only
-RUN chgrp root -R /usr/share/whist \
+    && mkdir -p /usr/share/whist/private \
+    # Set /usr/share/whist to root-only
+    chgrp root -R /usr/share/whist \
     && chown root:root /usr/share/whist \
     && chmod 600 -R /usr/share/whist
 
@@ -676,8 +676,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /tmp/* /var/tmp/*
 
 # Add inotify file watching blocker
-COPY --chmod=555 utils/block-until-file-exists.sh /usr/local/bin/block-until-file-exists.sh
-COPY --chmod=555 utils/block-while-file-exists.sh /usr/local/bin/block-while-file-exists.sh
+COPY --chmod=555 utils/block-until-file-exists.sh utils/block-while-file-exists.sh /usr/local/bin
 
 # Set up first systemd service
 COPY --chmod=550 startup/whist-startup.sh /usr/share/whist
