@@ -161,7 +161,7 @@ jobs:
           db_instance_ids.update(set(get_instance_ids(os.environ['DATABASE_PROD_URL'], "${{ matrix.aws-region }}")))
 
           def is_not_registed_in_db(instance):
-            return f"{instance[0]}" not in db_instance_ids
+            return f"{instance[1]}" not in db_instance_ids
 
           hanging_instances = list(filter(is_not_registed_in_db, instances))
 
@@ -172,7 +172,7 @@ jobs:
             msg = ""
 
             for instance in hanging_instances:
-              msg += f"     - `{instance[0]}`\n"
+              msg += f"     - `{instance[1]}`\n"
 
             BODY = "*Instances* in AWS but not in our databases in _${{ matrix.aws-region }}_:\n%s" % msg
             slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
