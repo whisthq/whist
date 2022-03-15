@@ -58,6 +58,7 @@ static int rs_wrapper_max_group_size = 256;
 
 // another limitation for group spliting, after split the "overhead" of each group will not exceed
 // this value. set overhead_of_group() function for the definition of overhead
+// with 20.0, each group's size will roughly at original + fec of 100+25 / 40+40.
 static double rs_wrapper_max_group_overhead = 20.0;
 
 // only for debug and testing
