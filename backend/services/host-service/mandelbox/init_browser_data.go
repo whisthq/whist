@@ -53,7 +53,7 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData B
 		initialBrowserData.Bookmarks = nil
 	}
 
-	// Convert struct into json string
+	// Convert struct into JSON string
 	data, err := json.Marshal(initialBrowserData)
 
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"github.com/whisthq/whist/backend/services/types"
 )
 
+// This type defines a standard Chromium Bookmark object
 type Bookmark struct {
 	Children     []Bookmark `json:"children,omitempty"`
 	DateAdded    string     `json:"date_added,omitempty"`
@@ -17,6 +18,7 @@ type Bookmark struct {
 	Url          string     `json:"url,omitempty"`
 }
 
+// This type defines a collection of many Bookmark objects
 type Bookmarks struct {
 	Checksum     string              `json:"checksum,omitempty"`
 	Roots        map[string]Bookmark `json:"roots,omitempty"`
