@@ -281,7 +281,7 @@ ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 ENV HYDRAULIC_ROOT /hydraulic-squash
 
-RUN mkdir -p $HYDRAULIC_ROOT/{bin,etc,usr/share/whist/private,runuser,/home/whist}
+RUN mkdir -p $HYDRAULIC_ROOT/{bin,etc,usr/share/whist/private,run/user,/home/whist}
 
 #########################
 # Permissions
@@ -301,7 +301,7 @@ RUN \
     && chown -vR whist:whist $HYDRAULIC_ROOT/home/whist \
     && chown root:root $HYDRAULIC_ROOT/run/user \
     # Set /usr/share/whist to root-only
-    chgrp root -R $HYDRAULIC_ROOT/usr/share/whist \
+    && chgrp root -R $HYDRAULIC_ROOT/usr/share/whist \
     && chown root:root $HYDRAULIC_ROOT/usr/share/whist \
     && chmod 600 -R $HYDRAULIC_ROOT/usr/share/whist
 
@@ -392,7 +392,7 @@ COPY --chmod=550 startup/entrypoint.sh $HYDRAULIC_ROOT/usr/share/whist/entrypoin
 COPY --chmod=555 main/run-whist-application.sh $HYDRAULIC_ROOT/usr/bin/run-whist-application.sh
 
 # Consolidate and copy teleport executable and launcher script
-COPY --chmod=555 --from=whist-teleport-drag-drop $HYDRAULIC_ROOT/whist-teleport-drag-drop/build/whist-teleport-drag-drop /opt/teleport/drag-drop
+COPY --chmod=555 --from=whist-teleport-drag-drop /whist-teleport-drag-drop/build/whist-teleport-drag-drop $HYDRAULIC_ROOT/opt/teleport/drag-drop
 COPY --chmod=555 teleport/drag-drop/run-whist-teleport-drag-drop.sh $HYDRAULIC_ROOT/usr/bin/run-whist-teleport-drag-drop.sh
 
 # Install whist-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
@@ -826,6 +826,9 @@ RUN ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open
 
 # Set up the Whist server protocol
 
+# Set up Whist Protocol symlink
+RUN ln -sf /usr/share/whist/bin/WhistServer /usr/share/whist/WhistServer
+
 # Install protocol dependencies
 COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup-linux-build-environment.sh
 RUN /usr/share/whist/setup-linux-build-environment.sh \
@@ -833,9 +836,6 @@ RUN /usr/share/whist/setup-linux-build-environment.sh \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/* \
     && rm /usr/share/whist/setup-linux-build-environment.sh
-
-# Set up Whist Protocol symlink
-RUN ln -sf /usr/share/whist/bin/WhistServer /usr/share/whist/WhistServer
 
 # Enable service which launches both the server protocol and the application
 RUN systemctl enable whist-main
