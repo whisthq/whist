@@ -36,9 +36,9 @@ RUN mkdir -p /etc/opt/brave/policies/managed \
     && echo {} \
     # Whitelist streamed URI protocols (zoommtg,slack,spotify,discord)
     | jq '.URLWhitelist=["zoommtg://*","slack://*","spotify://*","discord://*"]' \
-    # Explicitly allow URL bar search suggestions (we previously had an issue with 
-    # search suggestions causing latency)
-    | jq '.SearchSuggestEnabled=true' \
+    # Disable search suggestions (as a workaround to improve URL bar
+    # keyboard input until we can fork the browser and fix it)
+    | jq '.SearchSuggestEnabled=false' \
     # Disable background apps (to prevent apps like Superhuman from
     # indefinitely blocking mandelbox shutdown).
     | jq '.BackgroundModeEnabled=false' \
