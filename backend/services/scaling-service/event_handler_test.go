@@ -60,7 +60,7 @@ func (mc *mockSubscriptionClient) Run(*sync.WaitGroup) {
 	mc.Started = true
 }
 
-func (mc *mockSubscriptionClient) Close([]string) error {
+func (mc *mockSubscriptionClient) Close() error {
 	return nil
 }
 

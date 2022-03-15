@@ -30,7 +30,7 @@ type WhistSubscriptionClient interface {
 	SetParams(HasuraParams)
 	Subscribe(GraphQLQuery, map[string]interface{}, SubscriptionEvent, Handlerfn, chan SubscriptionEvent) (string, error)
 	Run(*sync.WaitGroup)
-	Close([]string) error
+	Close() error
 }
 
 // SubscriptionClient implements WhistSubscriptionClient and is exposed to be used
@@ -176,11 +176,11 @@ func (wc *SubscriptionClient) Run(goroutineTracker *sync.WaitGroup) {
 
 // Close manages all the logic to unsubscribe to every subscription and close the connection
 // to the Hasura server correctly.
-func (wc *SubscriptionClient) Close(subscriptionIDs []string) error {
+func (wc *SubscriptionClient) Close() error {
 	// We have to ensure we unsubscribe to every subscription
 	// before closing the client, otherwise it will result in a deadlock!
 	logger.Infof("Closing Hasura subscriptions...")
-	for _, id := range subscriptionIDs {
+	for _, id := range wc.GetSubscriptionIDs() {
 		// This is safe to do because the Unsubscribe method
 		// acquires a lock when closing the connection.
 		err := wc.Hasura.Unsubscribe(id)

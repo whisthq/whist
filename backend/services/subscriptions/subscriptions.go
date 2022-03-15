@@ -190,7 +190,7 @@ func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, gorou
 
 		// Listen for global context cancellation
 		<-globalCtx.Done()
-		whistClient.Close(whistClient.GetSubscriptionIDs())
+		whistClient.Close()
 	}()
 
 	// Send subscriptions to the client

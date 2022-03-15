@@ -80,7 +80,7 @@ func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]in
 
 func (cl *mockWhistClient) Run(goroutinetracker *sync.WaitGroup) {}
 
-func (cl *mockWhistClient) Close(subscriptionIDs []string) error {
+func (cl *mockWhistClient) Close() error {
 	return nil
 }
 func TestInstanceStatusHandler(t *testing.T) {

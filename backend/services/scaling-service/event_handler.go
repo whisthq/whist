@@ -75,7 +75,7 @@ func main() {
 	})
 
 	// Start main event loop
-	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents, scheduledEvents, algorithmByRegionMap)
+	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents, scheduledEvents, algorithmByRegionMap, configClient)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -134,7 +134,11 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 
-	regionImageMap := getRegionImageMap()
+	regionImageMap, err := getRegionImageMap()
+	if err != nil {
+		logger.Errorf("Error while getting regionImageMap. Err: %v", err)
+		return
+	}
 
 	// Send image upgrade event to scheduled chan.
 	scheduledEvents <- algos.ScalingEvent{
@@ -149,14 +153,13 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 	}
 }
 
-func getRegionImageMap() map[string]interface{} {
+func getRegionImageMap() (map[string]interface{}, error) {
 	var regionImageMap map[string]interface{}
 
 	// Get current working directory to read images file.
 	currentWorkingDirectory, err := os.Getwd()
 	if err != nil {
-		logger.Errorf("Failed to get working directory. Err: %v", err)
-		return nil
+		return nil, utils.MakeError("Failed to get working directory. Err: %v", err)
 	}
 
 	// Read file which contains the region to image on JSON format. This file will
@@ -164,18 +167,16 @@ func getRegionImageMap() map[string]interface{} {
 	// The file is also generated during deploy and lives in the scaling service directory.
 	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "images.json"))
 	if err != nil {
-		logger.Errorf("Failed to read region to image map from file. Not performing image upgrade. Err: %v", err)
-		return nil
+		return nil, utils.MakeError("Failed to read region to image map from file. Not performing image upgrade. Err: %v", err)
 	}
 
 	// Try to unmarshal contents of file into a map
 	err = json.Unmarshal(content, &regionImageMap)
 	if err != nil {
-		logger.Errorf("Failed to unmarshal region to image map. Not performing image upgrade. Err: %v", err)
-		return nil
+		return nil, utils.MakeError("Failed to unmarshal region to image map. Not performing image upgrade. Err: %v", err)
 	}
 
-	return regionImageMap
+	return regionImageMap, nil
 }
 
 // getScalingAlgorithm is a helper function that returns the scaling algorithm from the sync map.
@@ -195,10 +196,8 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 
 // eventLoop is the main loop of the scaling service which will receive events from different sources
 // and send them to the appropiate channels.
-func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup,
-	subscriptionEvents <-chan subscriptions.SubscriptionEvent, scheduledEvents <-chan algos.ScalingEvent, algorithmByRegion *sync.Map) {
-
-	var clientAppVersionSwitched bool
+func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, subscriptionEvents <-chan subscriptions.SubscriptionEvent,
+	scheduledEvents <-chan algos.ScalingEvent, algorithmByRegion *sync.Map, configClient *subscriptions.SubscriptionClient) {
 
 	for {
 		select {
@@ -238,14 +237,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 					version      subscriptions.ClientAppVersion
 				)
 
-				// Its necessary to check for this since we only want to
-				// do the image swapover once, but Hasura will keep receiving
-				// the event. This is because we subscribe to any change on the
-				// config database (since the commit hash is not known beforehand).
-				if clientAppVersionSwitched {
-					break
-				}
-
 				// We set the event type to DATABASE_CLIENT_VERSION_EVENT
 				// here so that we have more information about the event.
 				// DATABASE means the source of the event is the database
@@ -260,7 +251,11 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				// TODO: once we keep track of client versions per region,
 				// get the region directly from the database. For now use
 				// the regionImageMap.
-				regionImageMap := getRegionImageMap()
+				regionImageMap, err := getRegionImageMap()
+				if err != nil {
+					logger.Errorf("Error getting regionImageMap. Err: %v", err)
+					break
+				}
 
 				for region := range regionImageMap {
 					scalingEvent.Region = region
@@ -276,7 +271,14 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 					}
 				}
 
-				clientAppVersionSwitched = true
+				// Its necessary to close the config client since we only want to
+				// do the image swapover once, but Hasura will keep receiving
+				// the event after it has switched.
+				err = configClient.Close()
+				if err != nil {
+					// err is already wrapped here
+					logger.Error(err)
+				}
 			}
 
 		case scheduledEvent := <-scheduledEvents:
