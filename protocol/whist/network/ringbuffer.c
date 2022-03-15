@@ -412,9 +412,10 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
         // If we were able to successfully decode the frame, mark it as such!
         if (frame_size >= 0) {
             if (frame_data->original_packets_received < frame_data->num_original_packets) {
-                if (LOG_FEC) {
+                if (LOG_FEC_DECODE) {
                     LOG_INFO(
-                        "Successfully recovered %d/%d Packet %d, using %d FEC packets, in %fms",
+                        "[FEC] Successfully recovered %d/%d Packet %d, using %d FEC packets, in "
+                        "%fms",
                         frame_data->original_packets_received, frame_data->num_original_packets,
                         frame_data->id, frame_data->fec_packets_received, decode_time);
                 }

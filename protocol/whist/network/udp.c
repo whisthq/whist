@@ -754,8 +754,14 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
         fec_encoder = create_fec_encoder(num_indices, num_fec_packets, MAX_PACKET_SEGMENT_SIZE);
         // Pass the buffer that we'll be encoding with FEC
         fec_encoder_register_buffer(fec_encoder, (char*)whist_packet, whist_packet_size);
+
+        WhistTimer encode_timer;
+        start_timer(&encode_timer);
         // If using FEC, populate the UDP payload buffers with the FEC encoded buffers
         fec_get_encoded_buffers(fec_encoder, (void**)buffers, buffer_sizes);
+        double encode_time = get_timer(&encode_timer) * MS_IN_SECOND;
+        LOG_INFO("[FEC] encoded %d original + %d redundant buffers, in %f ms", num_indices,
+                 num_fec_packets, encode_time);
     } else {
         // When not using FEC, split up the packets using MAX_PACKET_SEGMENT_SIZE
         int current_position = 0;
