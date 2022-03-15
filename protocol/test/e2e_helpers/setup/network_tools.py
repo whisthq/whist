@@ -5,6 +5,11 @@ import time
 import sys
 import os
 
+from e2e_helpers.common.ssh_tools import (
+    attempt_ssh_connection,
+    wait_until_cmd_done,
+)
+
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 

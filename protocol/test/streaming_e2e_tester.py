@@ -442,9 +442,9 @@ if __name__ == "__main__":
     )
 
     # Launch the host-service on the client and server instance(s)
-    start_host_service_on_instance(server_hs_process, pexpect_prompt_server)
+    start_host_service(server_hs_process, pexpect_prompt_server)
     if use_two_instances:
-        start_host_service_on_instance(client_hs_process, pexpect_prompt_client)
+        start_host_service(client_hs_process, pexpect_prompt_client)
 
     # 10 - Run the browser/chrome server mandelbox on the server instance
     # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
