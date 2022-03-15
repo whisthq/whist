@@ -498,15 +498,18 @@ int whist_client_main(int argc, const char* argv[]) {
             }
 
             if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
-                static int current_display = -1;
-                int sdl_display = SDL_GetWindowDisplayIndex((SDL_Window*)window);
+                static int cached_display_index = -1;
+                FrontendWindowInfo window_info;
+                if (whist_frontend_get_window_info(frontend, &window_info) != 0) {
+                    LOG_FATAL("Failed to get window display index");
+                }
 
-                if (current_display != sdl_display) {
-                    if (current_display) {
+                if (cached_display_index != window_info.display_index) {
+                    if (cached_display_index) {
                         // Update DPI to new monitor
                         send_message_dimensions();
                     }
-                    current_display = sdl_display;
+                    cached_display_index = window_info.display_index;
                 }
 
                 start_timer(&monitor_change_timer);

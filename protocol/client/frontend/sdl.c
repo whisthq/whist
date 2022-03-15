@@ -102,6 +102,7 @@ static int sdl_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info
     SDL_GL_GetDrawableSize(context->window, &info->pixel_size.width, &info->pixel_size.height);
     SDL_GetWindowSize(context->window, &info->virtual_size.width, &info->virtual_size.height);
     SDL_GetWindowPosition(context->window, &info->position.x, &info->position.y);
+    info->display_index = SDL_GetWindowDisplayIndex(context->window);
     return 0;
 }
 

@@ -34,11 +34,6 @@ extern volatile bool insufficient_bandwidth;
 extern volatile SDL_Window* window;
 static bool skip_taskbar;
 
-#if defined(_WIN32)
-static HHOOK g_h_keyboard_hook;
-static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param);
-#endif
-
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* frame_buffer = NULL;
@@ -119,6 +114,15 @@ static void sdl_free_png_file_rgb_surface(SDL_Surface* surface);
 static void sdl_present_pending_framebuffer(void);
 
 /**
+ * @brief                          Renders out a solid color to the framebuffer
+ *
+ * @param color                    The color to render
+ *
+ * @note                           Must be called on the main thread
+ */
+static void sdl_render_solid_color(WhistRGBColor color);
+
+/**
  * @brief                          Renders out the insufficient bandwidth error message
  *
  * @note                           Must be called on the main thread
@@ -170,14 +174,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
-#endif
-
-#if defined(_WIN32)
-    if (CAPTURE_SPECIAL_WINDOWS_KEYS) {
-        // Hook onto windows keyboard to intercept windows special key combinations
-        g_h_keyboard_hook =
-            SetWindowsHookEx(WH_KEYBOARD_LL, low_level_keyboard_proc, GetModuleHandle(NULL), 0);
-    }
 #endif
 
     WhistFrontend* out_frontend = whist_frontend_create_sdl();
@@ -762,9 +758,7 @@ static void sdl_present_pending_framebuffer(void) {
     }
 
     // Wipes the renderer to background color before we present
-    SDL_SetRenderDrawColor(sdl_renderer, background_color.red, background_color.green,
-                           background_color.blue, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(sdl_renderer);
+    sdl_render_solid_color(background_color);
 
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
@@ -801,6 +795,11 @@ static void sdl_present_pending_framebuffer(void) {
     pending_render = false;
     pending_overlay_removal = false;
     whist_unlock_mutex(renderer_mutex);
+}
+
+static void sdl_render_solid_color(WhistRGBColor color) {
+    SDL_SetRenderDrawColor(sdl_renderer, color.red, color.green, color.blue, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(sdl_renderer);
 }
 
 static void sdl_render_insufficient_bandwidth(void) {
@@ -924,102 +923,6 @@ static void sdl_free_png_file_rgb_surface(SDL_Surface* surface) {
     SDL_FreeSurface(surface);
     free(pixels);
 }
-
-#if defined(_WIN32)
-static void send_captured_key(SDL_Keycode key, int type, int time) {
-    /*
-        Send a key to SDL event queue, presumably one that is captured and wouldn't
-        naturally make it to the event queue by itself
-
-        Arguments:
-            key (SDL_Keycode): key that was captured
-            type (int): event type (press or release)
-            time (int): time that the key event was registered
-    */
-
-    SDL_Event e = {0};
-    e.type = type;
-    e.key.keysym.sym = key;
-    e.key.keysym.scancode = SDL_GetScancodeFromName(SDL_GetKeyName(key));
-    e.key.timestamp = time;
-    SDL_PushEvent(&e);
-}
-
-HHOOK mule;
-static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param) {
-    /*
-        Function to capture keyboard strokes and block them if they encode special
-        key combinations, with intent to redirect them to send_captured_key so that the
-        keys can still be streamed over to the host
-
-        Arguments:
-            n_code (INT): keyboard code
-            w_param (WPARAM): w_param to be passed to CallNextHookEx
-            l_param (LPARAM): l_param to be passed to CallNextHookEx
-
-        Return:
-            (LRESULT CALLBACK): CallNextHookEx return callback value
-    */
-
-    // By returning a non-zero value from the hook procedure, the
-    // message does not get passed to the target window
-    KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)l_param;
-    int flags = SDL_GetWindowFlags((SDL_Window*)window);
-    if ((flags & SDL_WINDOW_INPUT_FOCUS)) {
-        switch (n_code) {
-            case HC_ACTION: {
-                // Check to see if the CTRL key is pressed
-                BOOL b_control_key_down = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
-                BOOL b_alt_key_down = pkbhs->flags & LLKHF_ALTDOWN;
-
-                int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
-                int time = pkbhs->time;
-
-                // Disable LWIN
-                if (pkbhs->vkCode == VK_LWIN) {
-                    send_captured_key(SDLK_LGUI, type, time);
-                    return 1;
-                }
-
-                // Disable RWIN
-                if (pkbhs->vkCode == VK_RWIN) {
-                    send_captured_key(SDLK_RGUI, type, time);
-                    return 1;
-                }
-
-                // Disable CTRL+ESC
-                if (pkbhs->vkCode == VK_ESCAPE && b_control_key_down) {
-                    send_captured_key(SDLK_ESCAPE, type, time);
-                    return 1;
-                }
-
-                // Disable ALT+ESC
-                if (pkbhs->vkCode == VK_ESCAPE && b_alt_key_down) {
-                    send_captured_key(SDLK_ESCAPE, type, time);
-                    return 1;
-                }
-
-                // Disable ALT+TAB
-                if (pkbhs->vkCode == VK_TAB && b_alt_key_down) {
-                    send_captured_key(SDLK_TAB, type, time);
-                    return 1;
-                }
-
-                // Disable ALT+F4
-                if (pkbhs->vkCode == VK_F4 && b_alt_key_down) {
-                    send_captured_key(SDLK_F4, type, time);
-                    return 1;
-                }
-
-                break;
-            }
-            default:
-                break;
-        }
-    }
-    return CallNextHookEx(mule, n_code, w_param, l_param);
-}
-#endif
 
 // 20th of the window - usually close to file icon sizes + doesn't become disruptive if window is
 // small

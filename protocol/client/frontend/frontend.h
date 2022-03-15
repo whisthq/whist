@@ -65,7 +65,7 @@ struct FrontendWindowInfo {
     bool fullscreen;
     bool minimized;
     bool visible;
-    int display_id;
+    int display_index;
 };
 
 void temp_frontend_set_window(WhistFrontend* frontend, void* window);
