@@ -1,20 +1,20 @@
 /*
-The Whist Host Service is responsible for orchestrating mandelboxes (i.e.
-Whist-enabled containers) on EC2 instances (referred to as "hosts" throughout
-the codebase). The host service is responsible for making Docker calls to start
-and stop mandelboxes, for enabling multiple mandelboxes to run concurrently on
-the same host (by dynamically allocating and assigning resources), and for
-passing startup data to the mandelboxes, both from the rest of the backend and
-from the user's client application.
-
-If you are just interested in seeing what endpoints the host service exposes
-(i.e. for frontend development), check out the file `httpserver.go`.
-
-The main package of the host service contains the main logic and the most
-comments to explain the design decisions of the host service. It also contains
-an HTTPS server that exposes the necessary endpoints and sets up the necessary
-infrastructure for concurrent handlers, etc.
-*/
+ * The Whist Host-Service is responsible for orchestrating mandelboxes (i.e.
+ * Whist-enabled containers) on EC2 instances (referred to as "hosts" throughout
+ * the codebase). The host-service is responsible for making Docker calls to start
+ * and stop mandelboxes, for enabling multiple mandelboxes to run concurrently on
+ * the same host (by dynamically allocating and assigning resources), and for
+ * passing startup data to the mandelboxes, both from the rest of the backend and
+ * from the user's frontend application.
+ *
+ * If you are just interested in seeing what endpoints the host-service exposes
+ * (i.e. for frontend development), check out the file `httpserver.go`.
+ *
+ * The main package of the host service contains the main logic and the most
+ * comments to explain the design decisions of the host service. It also contains
+ * an HTTPS server that exposes the necessary endpoints and sets up the necessary
+ * infrastructure for concurrent handlers, etc.
+ */
 package main
 
 import (
@@ -79,7 +79,7 @@ func init() {
 	// its own user in the future.
 	if os.Geteuid() != 0 {
 		// We can do a "real" panic here because it's in an init function, so we
-		// haven't even entered the host service main() yet.
+		// haven't even entered the host-service main() yet.
 		logger.Panicf(nil, "This service needs to run as root!")
 	}
 }
@@ -94,7 +94,7 @@ func createDockerClient() (*dockerclient.Client, error) {
 	return client, nil
 }
 
-// Given a list of regexes, find a docker image whose name matches the earliest
+// Given a list of regexes, find a Docker image whose name matches the earliest
 // possible regex in the list.
 func dockerImageFromRegexes(globalCtx context.Context, dockerClient dockerclient.CommonAPIClient, regexes []string) string {
 	imageFilters := dockerfilters.NewArgs(
@@ -118,7 +118,7 @@ func dockerImageFromRegexes(globalCtx context.Context, dockerClient dockerclient
 	return ""
 }
 
-// Drain and shutdown the host service
+// Drain and shutdown the host-service
 func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
 	logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
 	shutdownInstanceOnExit = true
@@ -237,7 +237,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
-	// We need to compute the docker image to use for this mandelbox. In local
+	// We need to compute the Docker image to use for this mandelbox. In local
 	// development, we want to accept any string so that we can run arbitrary
 	// containers as mandelboxes, including custom-tagged ones. However, in
 	// deployments we only want to accept the specific apps that are enabled, and
@@ -256,7 +256,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		image = utils.Sprintf("ghcr.io/whisthq/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
 	}
 
-	// We now create the underlying docker container for this mandelbox.
+	// We now create the underlying Docker container for this mandelbox.
 	exposedPorts := make(dockernat.PortSet)
 	exposedPorts[dockernat.Port("32262/tcp")] = struct{}{}
 	exposedPorts[dockernat.Port("32263/udp")] = struct{}{}
@@ -403,7 +403,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return nil
 	})
 
-	// Start docker container
+	// Start Docker container
 	postCreateGroup.Go(func() error {
 		err = dockerClient.ContainerStart(mandelbox.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 		if err != nil {
@@ -431,10 +431,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
 	if req == nil {
-		// Receive the json transport request from the client via the httpserver.
+		// Receive the JSON transport request from the client via the httpserver.
 		jsonChan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
-		// Set a timeout for the json transport request to prevent the mandelbox from waiting forever.
+		// Set a timeout for the JSON transport request to prevent the mandelbox from waiting forever.
 		select {
 		case transportRequest := <-jsonChan:
 			req = transportRequest
@@ -512,14 +512,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as ready", mandelboxSubscription.ID)
 
-	// Don't wait for whist application to start up in local environment. We do
+	// Don't wait for whist-application to start up in local environment. We do
 	// this because in local environments, we want to provide the developer a
 	// shell into the container immediately, not conditional on everything
 	// starting up properly.
 	if !metadata.IsLocalEnv() {
-		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s whist application to start up...", mandelboxSubscription.ID)
+		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s whist-application to start up...", mandelboxSubscription.ID)
 		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20, nil); err != nil {
-			logAndReturnError("Error waiting for mandelbox %s whist application to start: %s", mandelboxSubscription.ID, err)
+			logAndReturnError("Error waiting for mandelbox %s whist-application to start: %s", mandelboxSubscription.ID, err)
 			return
 		}
 
@@ -563,7 +563,7 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 	transportRequestMap[mandelboxID] = nil
 	transportMapLock.Unlock()
 
-	// Gracefully shut down the mandelbox docker container
+	// Gracefully shut down the mandelbox Docker container
 	stopTimeout := 30 * time.Second
 	err = dockerClient.ContainerStop(mandelbox.GetContext(), id, &stopTimeout)
 
@@ -607,7 +607,8 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 // (e.g. TTYs) on disk
 func initializeFilesystem(globalCancel context.CancelFunc) {
 	// check if "/whist" already exists --- if so, panic, since
-	// we don't know why it's there or if it's valid
+	// we don't know why it's there or if it's valid. The host-service shutting down
+	// from this panic will clean up the directory and the next run will work properly.
 	if _, err := os.Lstat(utils.WhistDir); !os.IsNotExist(err) {
 		if err == nil {
 			logger.Panicf(globalCancel, "Directory %s already exists!", utils.WhistDir)
@@ -671,7 +672,7 @@ func uninitializeFilesystem() {
 }
 
 func main() {
-	// The first thing we want to do is to initialize logzio and Sentry so that
+	// The first thing we want to do is to initialize Logz.io and Sentry so that
 	// we can catch any errors that might occur, or logs if we print them.
 	logger.InitHostLogging()
 
@@ -689,7 +690,7 @@ func main() {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 	defer func() {
-		// This function cleanly shuts down the Whist Host Service. Note that
+		// This function cleanly shuts down the Whist Host-Service. Note that
 		// besides the host machine itself being forcefully shut down, this
 		// deferred function from main() should be the _only_ way that the host
 		// service exits. In particular, it should be as a result of a panic() in
@@ -780,7 +781,7 @@ func main() {
 
 	if err := dbdriver.RegisterInstance(); err != nil {
 		// If the instance starts up and sees its status as unresponsive or
-		// draining, the webserver doesn't want it anymore so we should shut down.
+		// draining, the backend doesn't want it anymore so we should shut down.
 
 		// TODO: make this a bit more robust
 		if !metadata.IsLocalEnv() && strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining)) {
@@ -845,7 +846,7 @@ var eventLoopKeepalive = make(chan interface{}, 1)
 func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc,
 	goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
 	httpServerEvents <-chan httputils.ServerRequest, subscriptionEvents <-chan subscriptions.SubscriptionEvent) {
-	// Note that we don't use globalCtx for the docker Context, since we still
+	// Note that we don't use globalCtx for the Docker Context, since we still
 	// wish to process Docker events after the global context is cancelled.
 	dockerContext, dockerContextCancel := context.WithCancel(context.Background())
 	defer dockerContextCancel()

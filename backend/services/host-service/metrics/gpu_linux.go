@@ -1,4 +1,5 @@
 //go:build linux
+
 /*
  * This package is responsible for handling GPU-related functions on Linux, like
  * collecting metrics. Note that it assumes we are using an NVIDIA GPU, and that
@@ -30,6 +31,7 @@ func shutdownGPUMetricsCollector() {
 	}
 }
 
+// Calculate GPU utilization and memory usage.
 func (newMetrics *RuntimeMetrics) collectGPUMetrics() []error {
 	if numGPUs, nvmlRet := nvml.DeviceGetCount(); nvmlRet != nvml.SUCCESS {
 		newMetrics.NumberOfGPUs = -1

@@ -1,7 +1,7 @@
 /*
- * Package uinput is a pure go package that provides access to the userland input
- * device driver uinput on linux systems. This package used to be a separate
- * dependency/codebase, but was rolled into the host service for ease of
+ * Package uinput is a pure Go package that provides access to the userland input
+ * device driver uinput on Linux systems. This package used to be a separate
+ * dependency/codebase, but was rolled into the host-service for ease of
  * development. See the README in this directory for more details.
  *
  * Virtual keyboard devices as well as virtual mouse input devices may be created using this package.
@@ -53,10 +53,9 @@
  * 	3. Close the device
  * 		Example: err = vm.Close()
  *
- *
- * If you'd like to use absolute input events (move the cursor to specific positions on screen), use the touch pad.
+ * If you'd like to use absolute input events (move the cursor to specific positions on screen), use the touchpad.
  * Note that you'll need to specify the size of the screen area you want to use when you initialize the
- * device. Here are a few examples of how to use the virtual touch pad:
+ * device. Here are a few examples of how to use the virtual touchpad:
  *
  * 	1. Initialize the device:
  * 		Example: vt, err := CreateTouchPad("/dev/uinput", "DontTouchThis", 0, 1024, 0, 768)
@@ -172,7 +171,7 @@ func releaseDevice(deviceFile *os.File) (err error) {
 	return ioctl(deviceFile, uiDevDestroy, uintptr(0))
 }
 
-// Note that mice and touch pads do have buttons as well. Therefore, this function is used
+// Note that mice and touchpads do have buttons as well. Therefore, this function is used
 // by all currently available devices and resides in the main source file.
 func sendBtnEvent(deviceFile *os.File, keys []int, btnState int) (err error) {
 	for _, key := range keys {
@@ -214,7 +213,7 @@ func inputEventToBuffer(iev inputEvent) (buffer []byte, err error) {
 	return buf.Bytes(), nil
 }
 
-// original function taken from: https://github.com/tianon/debian-golang-pty/blob/master/ioctl.go
+// Original function taken from: https://github.com/tianon/debian-golang-pty/blob/master/ioctl.go
 func ioctl(deviceFile *os.File, cmd, ptr uintptr) error {
 	_, _, errorCode := syscall.Syscall(syscall.SYS_IOCTL, deviceFile.Fd(), cmd, ptr)
 	if errorCode != 0 {
