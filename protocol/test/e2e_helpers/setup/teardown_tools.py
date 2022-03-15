@@ -5,6 +5,7 @@ import time
 import sys
 import os
 import boto3
+import json
 
 # Get tools to run operations on a dev instance via SSH
 from e2e_helpers.common.ssh_tools import (
@@ -18,6 +19,10 @@ from e2e_helpers.aws.aws_tools import (
 
 from e2e_helpers.setup.network_tools import (
     restore_network_conditions,
+)
+
+from e2e_helpers.whist_server_tools import (
+    shutdown_and_wait_server_exit
 )
 
 # add the current directory to the path no matter where this is called from
