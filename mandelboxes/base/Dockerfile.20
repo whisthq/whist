@@ -264,7 +264,146 @@ RUN cd /whist-teleport-drag-drop/src \
     && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
     && gcc -Wall unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
 
-################ STAGE 5: whist-base ######################
+################ STAGE 6: hydraulic-press #####################
+# - Copy, set permissions for, and install all base mandelbox
+#   scripts, services, and config files to the hydraulic-squash
+#   directory so that they can be neatly organized here while
+#   only taking up one Docker layer in whist-base
+# EXPOSES the hydraulic-squash directory
+###############################################################
+FROM ubuntu:20.04 as hydraulic-press
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+ENV HYDRAULIC_ROOT /hydraulic-squash
+
+RUN mkdir -p $HYDRAULIC_ROOT/{bin,etc,usr/share/whist/private,runuser,/home/whist}
+
+#########################
+# Permissions
+#########################
+
+# Mount cgroup from host (Is this needed?)
+VOLUME [ "/sys/fs/cgroup" ]
+
+RUN \
+    # Create whist user with dynamic, random password and do NOT add to sudo group
+    useradd --create-home whist \
+    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
+    && echo whist:"${password}" | chpasswd \
+    # Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
+    && echo "Set disable_coredump false" >> $HYDRAULIC_ROOT/etc/sudo.conf \
+    # Set appropriate user permissions and create /whist/ Directory and Subdirectories in /usr/share
+    && chown -vR whist:whist $HYDRAULIC_ROOT/home/whist \
+    && chown root:root $HYDRAULIC_ROOT/run/user \
+    # Set /usr/share/whist to root-only
+    chgrp root -R $HYDRAULIC_ROOT/usr/share/whist \
+    && chown root:root $HYDRAULIC_ROOT/usr/share/whist \
+    && chmod 600 -R $HYDRAULIC_ROOT/usr/share/whist
+
+    # Set up script to run a program as user `whist` (make sure to do
+    # this after setting /usr/share/whist to 600)
+    COPY --chmod=550 utils/run-as-whist-user.sh $HYDRAULIC_ROOT/usr/share/whist/run-as-whist-user.sh
+
+#########################
+# Input
+#########################
+
+COPY input/Xmodmap $HYDRAULIC_ROOT/root/.Xmodmap
+
+#########################
+# Display
+#########################
+
+# Copy configuration for X11 display
+COPY display/whist-display.conf /usr/share/X11/xorg.conf.d/01-whist-display.conf
+
+# Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
+COPY --chown=root:root --chmod=600 display/whist-update-xorg-conf.service $HYDRAULIC_ROOT/etc/systemd/system/
+COPY --chmod=550 display/update-xorg-conf.sh $HYDRAULIC_ROOT/usr/share/whist/
+
+# Set up Whist service to launch X11 display
+COPY display/whist-display-config.env $HYDRAULIC_ROOT/usr/share/whist
+COPY display/xinitrc /root/.xinitrc
+COPY --chown=root:root --chmod=600 display/whist-display.service $HYDRAULIC_ROOT/etc/systemd/system
+COPY --chmod=550 display/whist-display.sh $HYDRAULIC_ROOT/usr/share/whist/whist-display.sh
+
+# I-Bus launcher script
+COPY --chmod=555 display/run_ibus.sh $HYDRAULIC_ROOT/home/whist/run_ibus.sh
+
+# Set up script to update display DPI on-the-fly
+COPY --chmod=550 display/update-whist-dpi.sh $HYDRAULIC_ROOT/usr/share/whist/update-whist-dpi.sh
+
+#########################
+# Theme
+#########################
+
+# Set up fontconfig to us the fonts we configure
+COPY --chown=whist display/theme/fonts.conf $HYDRAULIC_ROOT/home/whist/.config/fontconfig/fonts.conf
+
+# Set up window manager running on X server, with GTK/QT theming
+COPY display/theme/gtk-3-settings.ini $HYDRAULIC_ROOT/etc/gtk-3.0/settings.ini
+COPY display/theme/gtkrc-2.0 /root/.gtkrc-2.0
+COPY --chown=whist display/theme/gtkrc-2.0 $HYDRAULIC_ROOT/home/whist/.gtkrc-2.0
+COPY display/theme/qt4-settings.conf $HYDRAULIC_ROOT/root/.config/Trolltech.conf
+COPY --chown=whist display/theme/qt4-settings.conf $HYDRAULIC_ROOT/home/whist/.config/Trolltech.conf
+COPY display/theme/awesome-rc.lua $HYDRAULIC_ROOT/home/whist/.config/awesome/rc.lua
+
+#########################
+# Audio
+#########################
+
+# Set up service to start pulseaudio
+COPY --chmod=550 audio/run-pulseaudio.sh $HYDRAULIC_ROOT/usr/share/whist
+COPY audio/pulse-client.conf $HYDRAULIC_ROOT/etc/pulse/client.conf
+COPY audio/pulse-daemon.conf $HYDRAULIC_ROOT/etc/pulse/daemon.conf
+COPY --chown=root:root --chmod=600 audio/whist-audio.service $HYDRAULIC_ROOT/etc/systemd/system
+
+#########################
+# Startup
+#########################
+
+# Set up user config map for mandelbox startup
+COPY startup/app-config-map.json $HYDRAULIC_ROOT/usr/share/whist/app-config-map.json
+
+# Set up custom config scripts
+COPY utils/browser-data/import_user_browser_data.py $HYDRAULIC_ROOT/usr/share/whist/import_user_browser_data.py
+
+# Add inotify file watching blockers
+COPY --chmod=555 utils/block-until-file-exists.sh $HYDRAULIC_ROOT/usr/local/bin/block-until-file-exists.sh
+COPY --chmod=555 utils/block-while-file-exists.sh $HYDRAULIC_ROOT/usr/local/bin/block-while-file-exists.sh
+
+# Copy startup systemd service
+COPY --chmod=550 startup/whist-startup.sh $HYDRAULIC_ROOT/usr/share/whist
+COPY --chown=root:root --chmod=600 startup/whist-startup.service $HYDRAULIC_ROOT/etc/systemd/system
+
+# Dockerfile entrypoint (starts systemd)
+COPY --chmod=550 startup/entrypoint.sh $HYDRAULIC_ROOT/usr/share/whist/entrypoint.sh
+
+#########################
+# Main
+#########################
+
+# Script to launch `whist-application` as the `whist` user
+COPY --chmod=555 main/run-whist-application.sh $HYDRAULIC_ROOT/usr/bin/run-whist-application.sh
+
+# Consolidate and copy teleport executable and launcher script
+COPY --chmod=555 --from=whist-teleport-drag-drop $HYDRAULIC_ROOT/whist-teleport-drag-drop/build/whist-teleport-drag-drop /opt/teleport/drag-drop
+COPY --chmod=555 teleport/drag-drop/run-whist-teleport-drag-drop.sh $HYDRAULIC_ROOT/usr/bin/run-whist-teleport-drag-drop.sh
+
+# Install whist-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
+# See whist-teleport-uri-handler.desktop for a list of currently-supported protocols.
+COPY --chmod=555 teleport/uri-handler/whist-teleport-uri-handler.sh $HYDRAULIC_ROOT/opt/teleport/uri-handler
+
+# Service which launches the server protocol and application
+COPY --chmod=550 main/run-whist-server.sh $HYDRAULIC_ROOT/usr/share/whist/run-whist-server.sh
+COPY --chown=root:root --chmod=600 main/whist-main.service $HYDRAULIC_ROOT/etc/systemd/system
+
+################ STAGE 7: whist-base ######################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
@@ -272,7 +411,9 @@ RUN cd /whist-teleport-drag-drop/src \
 #   nvidia-grid-driver
 # - Copy and install teleport FUSE service from
 #   whist-teleport-fuse
-# - Install and configure all necessary components for
+# - Copy all base mandelbox files and scripts from
+#   hydraulic-press
+# - Install and configure any necessary packages for
 #   our base mandelbox image
 # EXPOSES all of whist-base as the final image
 #############################################################
@@ -324,12 +465,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Remove all sysinit.target systemd services except tmpfile cleaners (and
-# switch back workdir)
-WORKDIR /lib/systemd/system/sysinit.target.wants/
 # hadolint ignore=SC2010
-RUN ls | grep -v systemd-tmpfiles-setup | xargs rm -f
-WORKDIR /
+RUN ls -d /lib/systemd/system/sysinit.target.wants/* | grep -v systemd-tmpfiles-setup | xargs rm -f
 
 # Remove some more systemd services to minimize what's running on our images
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
@@ -364,7 +501,7 @@ ENV init /sbin/init
 
 # Copy libinput and xf86-input-libinput
 COPY --from=libinput-build /libinput-whist.deb /deb/libinput-whist.deb
-COPY --from=xf86-input-libinput-build /xf86-input-libinput-whist.deb deb/xf86-input-libinput-whist.deb
+COPY --from=xf86-input-libinput-build /xf86-input-libinput-whist.deb /deb/xf86-input-libinput-whist.deb
 
 # Install libinput and xf86-input-libinput
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -384,8 +521,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
-
-COPY input/Xmodmap /root/.Xmodmap
 
 #########################
 # General Utilities
@@ -410,7 +545,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install general utility packages
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+RUN apt-get update \
+    # Avoid interactive installation for tzdata (defaults to UTC)
+    && LOCAL="yes" \
+    apt-get install --allow-downgrades --no-install-recommends -y \
     xvfb \
     wmctrl \
     gnupg2 \
@@ -431,19 +569,10 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     less \
     vim \
     nano \
+    tzdata \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
-
-# Install time while avoiding interactive installation for tzdata - uses UTC
-RUN (
-      export LOCAL="yes"
-      apt-get update && apt-get install --no-install-recommends -y \
-      tzdata \
-      && apt-get autoremove -y \
-      && apt-get clean \
-      && rm -rf /tmp/* /var/tmp/*
-    )
 
 #########################
 # Permissions
@@ -467,10 +596,6 @@ RUN \
     chgrp root -R /usr/share/whist \
     && chown root:root /usr/share/whist \
     && chmod 600 -R /usr/share/whist
-
-# Set up script to run a program as user `whist` (make sure to do
-# this after setting /usr/share/whist to 600)
-COPY --chmod=550 utils/run-as-whist-user.sh /usr/share/whist/run-as-whist-user.sh
 
 #########################
 # Hardware Acceleration
@@ -509,12 +634,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Copy configuration for X11 display
-COPY display/whist-display.conf /usr/share/X11/xorg.conf.d/01-whist-display.conf
-
-# Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
-COPY --chown=root:root --chmod=600 display/whist-update-xorg-conf.service /etc/systemd/system/
-COPY --chmod=550 display/update-xorg-conf.sh /usr/share/whist/
+# Enable xorg-confg updater service
 RUN systemctl enable whist-update-xorg-conf
 
 # Install playerctl for media keys support. We install playerctl straight from
@@ -524,8 +644,7 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
     && dpkg -i ./playerctl-2.3.1_amd64.deb \
     && rm ./playerctl-2.3.1_amd64.deb
 
-# ibus support
-
+# I-Bus support
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ibus ibus-pinyin ibus-anthy ibus-hangul ibus-unikey \
     ibus-gtk ibus-gtk3 \
@@ -534,17 +653,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-COPY --chmod=555 display/run_ibus.sh /home/whist/run_ibus.sh
 
-# Set up Whist service to launch X11 display
-COPY display/whist-display-config.env /usr/share/whist
-COPY display/xinitrc /root/.xinitrc
-COPY --chown=root:root --chmod=600 display/whist-display.service /etc/systemd/system
-COPY --chmod=550 display/whist-display.sh /usr/share/whist/whist-display.sh
+# Enable X11 display launching service
 RUN systemctl enable whist-display
-
-# Set up script to update display DPI on-the-fly
-COPY --chmod=550 display/update-whist-dpi.sh /usr/share/whist/update-whist-dpi.sh
 
 # Set display environment variable
 ENV DISPLAY :10
@@ -596,20 +707,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Use twemoji font
 RUN wget -qO /usr/local/share/fonts/TwemojiMozilla.ttf https://github.com/mozilla/twemoji-colr/releases/download/v0.5.1/TwemojiMozilla.ttf
 
-# Set up fontconfig to use our nice fots
-COPY --chown=whist display/theme/fonts.conf /home/whist/.config/fontconfig/fonts.conf
-
 # Install WhiteSur cursor and icons, for macOS-like theming
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
-
-# Set up window manager running on X server, with GTK/QT theming
-COPY display/theme/gtk-3-settings.ini /etc/gtk-3.0/settings.ini
-COPY display/theme/gtkrc-2.0 /root/.gtkrc-2.0
-COPY --chown=whist display/theme/gtkrc-2.0 /home/whist/.gtkrc-2.0
-COPY display/theme/qt4-settings.conf /root/.config/Trolltech.conf
-COPY --chown=whist display/theme/qt4-settings.conf /home/whist/.config/Trolltech.conf
-COPY display/theme/awesome-rc.lua /home/whist/.config/awesome/rc.lua
 
 #########################
 # Audio
@@ -648,25 +748,14 @@ RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service \
     && systemctl mask pulseaudio \
     && chmod -x /usr/bin/start-pulseaudio-x11
 
-# Set up service to start pulseaudio
-COPY --chmod=550 audio/run-pulseaudio.sh /usr/share/whist
-COPY audio/pulse-client.conf /etc/pulse/client.conf
-COPY audio/pulse-daemon.conf /etc/pulse/daemon.conf
-COPY --chown=root:root --chmod=600 audio/whist-audio.service /etc/systemd/system
 RUN systemctl enable whist-audio
 
 #########################
 # Startup
 #########################
 
-# Set up user config map for mandelbox startup
-COPY startup/app-config-map.json /usr/share/whist/app-config-map.json
-
-# Set up custom config scripts
-COPY utils/browser-data/requirements.txt /requirements.txt
-COPY utils/browser-data/import_user_browser_data.py /usr/share/whist/import_user_browser_data.py
-
 # Install Dependencies for Cookie Import
+COPY utils/browser-data/requirements.txt /requirements.txt
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     && apt-get clean \
@@ -675,16 +764,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm /requirements.txt \
     && rm -rf /tmp/* /var/tmp/*
 
-# Add inotify file watching blocker
-COPY --chmod=555 utils/block-until-file-exists.sh utils/block-while-file-exists.sh /usr/local/bin
 
-# Set up first systemd service
-COPY --chmod=550 startup/whist-startup.sh /usr/share/whist
-COPY --chown=root:root --chmod=600 startup/whist-startup.service /etc/systemd/system
+# Enable first systemd service
 RUN systemctl enable whist-startup
 
 # Set up the entrypoint for the mandelbox (which starts systemd)
-COPY --chmod=550 startup/entrypoint.sh /usr/share/whist/entrypoint.sh
 CMD ["/usr/share/whist/entrypoint.sh"]
 
 #########################
@@ -719,9 +803,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 # Set up the default Whist application symlink
 RUN ln -sf "$(which xeyes)" /usr/bin/whist-application
 
-# Set up script to launch `whist-application` as the `whist` user
-COPY --chmod=555 main/run-whist-application.sh /usr/bin/run-whist-application.sh
-
 # Set up the teleport drag-drop service
 
 # Install FUSE dependencies
@@ -730,11 +811,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
-
-COPY --chmod=555 --from=whist-teleport-drag-drop /whist-teleport-drag-drop/build/whist-teleport-drag-drop /opt/teleport/drag-drop
-
-# Set up script to launch teleport functionality
-COPY --chmod=555 teleport/drag-drop/run-whist-teleport-drag-drop.sh /usr/bin/run-whist-teleport-drag-drop.sh
 
 # Set up the teleport URI handler
 
@@ -745,9 +821,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Install whist-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
-# See whist-teleport-uri-handler.desktop for a list of currently-supported protocols.
-COPY --chmod=555 teleport/uri-handler/whist-teleport-uri-handler.sh /opt/teleport/uri-handler
+# Overwrite xdg-open with our handler
 RUN ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open
 
 # Set up the Whist server protocol
@@ -763,11 +837,16 @@ RUN /usr/share/whist/setup-linux-build-environment.sh \
 # Set up Whist Protocol symlink
 RUN ln -sf /usr/share/whist/bin/WhistServer /usr/share/whist/WhistServer
 
-# Set up the service which launches both the server protocol and the application
-
-COPY --chmod=550 main/run-whist-server.sh /usr/share/whist/run-whist-server.sh
-COPY --chown=root:root --chmod=600 main/whist-main.service /etc/systemd/system
+# Enable service which launches both the server protocol and the application
 RUN systemctl enable whist-main
+
+#########################
+# Hydaulic Press Layer
+#########################
+
+# Copy over the big squashed layer from hydraulic-press stage direclty
+# into our filesystem
+COPY --from=hydraulic-press /hydraulic-squash /
 
 #########################
 # Cleanup
