@@ -8,7 +8,7 @@ import paramiko
 import subprocess
 from operator import itemgetter
 
-from e2e_helpers.local_tools import (
+from e2e_helpers.common.git_tools import (
     get_whist_branch_name,
 )
 
@@ -258,7 +258,7 @@ def create_or_start_aws_instance(
     # Attempt to start existing instance
     if existing_instance_id != "":
         instance_id = existing_instance_id
-        result = start_instance(boto3client, instance_id, 5)
+        result = start_instance(boto3client, instance_id, max_retries=5)
         if result is True:
             # Wait for the instance to be running
             wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)

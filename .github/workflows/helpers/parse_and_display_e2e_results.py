@@ -16,7 +16,7 @@ from notifications.slack_bot import slack_post
 from notifications.github_bot import github_comment_update
 
 from protocol.e2e_streaming_test_display_helpers.table_tools import (
-    generate_no_comparison_table,
+    generate_results_table,
     generate_comparison_table,
 )
 
@@ -30,7 +30,7 @@ from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
     extract_metrics,
 )
 
-from protocol.e2e_streaming_test_display_helpers.remote_tools import (
+from protocol.e2e_streaming_test_display_helpers.git_tools import (
     create_github_gist_post,
     associate_branch_to_open_pr,
 )
@@ -281,7 +281,7 @@ if __name__ == "__main__":
                 )
 
             else:
-                generate_no_comparison_table(
+                generate_results_table(
                     results_file,
                     experiment["experiment_metadata"],
                     most_interesting_metrics,
