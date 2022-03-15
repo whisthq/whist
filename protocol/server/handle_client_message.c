@@ -364,7 +364,10 @@ static int handle_frame_ack_message(whist_server_state *state, WhistClientMessag
                  "Received frame ack but long-term reference frames "
                  "are not enabled.");
 
-    LOG_INFO("Received frame ack for frame ID %d.", wcmsg->frame_ack.frame_id);
+    if (LOG_LONG_TERM_REFERENCE_FRAMES) {
+        LOG_INFO("Received frame ack for frame ID %d.", wcmsg->frame_ack.frame_id);
+    }
+
     state->frame_ack_id = wcmsg->frame_ack.frame_id;
     state->update_frame_ack = true;
 
