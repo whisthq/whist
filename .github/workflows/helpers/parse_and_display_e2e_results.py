@@ -85,6 +85,15 @@ parser.add_argument(
     default="success",
 )
 
+parser.add_argument(
+    "--post-results-on-slack",
+    help="Whether to post the results of the experiment on Slack. This should happen for the nightly runs of \
+    the experiment, but not when the experiment is run as part of a PR",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -120,6 +129,8 @@ if __name__ == "__main__":
         current_branch_name = github_ref_name
     else:
         current_branch_name = os.getenv("GITHUB_HEAD_REF")
+
+    post_results_on_slack = args.post_results_on_slack == "true"
 
     # A list of metrics to display (if found) in main table
     most_interesting_metrics = {
@@ -318,7 +329,7 @@ if __name__ == "__main__":
     gist_url = create_github_gist_post(github_gist_token, title, files_list)
 
     # Post updates to Slack channel if we are on branch `dev` and a slack webhook is set
-    if slack_webhook and current_branch_name == "dev":
+    if slack_webhook and post_results_on_slack:
         slack_catchy_title = f":rocket::face_with_cowboy_hat::bar_chart: {title} :rocket::face_with_cowboy_hat::bar_chart:"
         slack_post(
             slack_webhook,
