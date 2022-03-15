@@ -109,7 +109,7 @@ common_steps () {
 
   # We don't need to configure the AWS CLI (only install it) because this script runs
   # on an AWS EC2 instance, which have awscli automatically configured
-  sudo apt install -y awscli
+  sudo apt-get install -y awscli
 
   echo "================================================"
   echo "Installing NVIDIA drivers..."

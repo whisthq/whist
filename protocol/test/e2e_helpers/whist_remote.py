@@ -10,7 +10,7 @@ from dev_instance_tools import (
     reboot_instance,
     wait_until_cmd_done,
     attempt_ssh_connection,
-    configure_aws_credentials,
+    install_and_configure_aws,
     apply_dpkg_locking_fixup,
     clone_whist_repository_on_instance,
 )
@@ -39,11 +39,13 @@ def run_host_setup_on_instance(
     print("Running the host setup on the instance ...")
     command = "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
     pexpect_process.sendline(command)
-    result = pexpect_process.expect([pexpect_prompt, "E: Could not get lock"])
-    if platform.system() == "Darwin" or result == 1:
-        pexpect_process.expect(pexpect_prompt)
+    host_setup_output = wait_until_cmd_done(
+        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+    )
 
-    if result == 1:
+    error_msg = "E: Could not get lock"
+    dpkg_lock_issue = any(error_msg in item for item in host_setup_output if isinstance(item, str))
+    if dpkg_lock_issue == 1:
         # If still getting lock issues, no alternative but to reboot
         print(
             "Running into severe locking issues (happens frequently), rebooting the instance and trying again!"
@@ -58,7 +60,7 @@ def run_host_setup_on_instance(
     return pexpect_process
 
 
-def start_host_service_on_instance(pexpect_process):
+def start_host_service_on_instance(pexpect_process, pexpect_prompt):
     """
     Run Whist's host service on a remote machine accessible via a SSH connection within a pexpect process.
 
@@ -70,7 +72,18 @@ def start_host_service_on_instance(pexpect_process):
     print("Starting the host service on the EC2 instance...")
     command = "sudo rm -rf /whist && cd ~/whist/backend/services && make run_host_service | tee ~/host_service.log"
     pexpect_process.sendline(command)
-    pexpect_process.expect("Entering event loop...")
+
+    desired_output = "Entering event loop..."
+
+    result = pexpect_process.expect(
+        [desired_output, pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF]
+    )
+
+    # If the desired output does not get printed, handle potential host service startup issues.
+    if result != 0:
+        print("Host service failed to start! Check the logs for troubleshooting!")
+        sys.exit(-1)
+
     print("Host service is ready!")
 
 
@@ -109,11 +122,11 @@ def run_server_on_instance(pexpect_process):
     """
     command = "cd ~/whist/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
     pexpect_process.sendline(command)
-    pexpect_process.expect(":/#")
-    server_mandelbox_output = pexpect_process.before.decode("utf-8").strip().split("\n")
-    server_docker_id = (
-        server_mandelbox_output[-2].replace("\n", "").replace("\r", "").replace(" ", "")
+    # Need to wait for special mandelbox prompt ":/#". running_in_ci must always be set to True in this case.
+    server_mandelbox_output = wait_until_cmd_done(
+        pexpect_process, ":/#", running_in_ci=True, return_output=True
     )
+    server_docker_id = server_mandelbox_output[-2].replace(" ", "")
     print(f"Whist Server started on EC2 instance, on Docker container {server_docker_id}!")
 
     # Retrieve connection configs from server
@@ -220,17 +233,27 @@ def setup_network_conditions_client(
         # Get network interface names (excluding loopback)
         command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
         pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-        ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
-        ifconfig_output = [
-            x.replace("\r", "").replace(":", "")
+        ifconfig_output = wait_until_cmd_done(
+            pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+        )
+
+        blacklisted_expressions = [
+            pexpect_prompt,
+            "docker",
+            "veth",
+            "ifb",
+            "ifconfig",
+            "\\",
+            "~",
+            ";",
+        ]
+        network_devices = [
+            x.replace(":", "")
             for x in ifconfig_output
-            if "docker" not in x
-            and "veth" not in x
-            and "ifb" not in x
-            and "sudo ifconfig -a" not in x
-            and pexpect_prompt not in x
+            if not any(
+                blacklisted_expression in x for blacklisted_expression in blacklisted_expressions
+            )
         ]
 
         commands = []
@@ -247,7 +270,7 @@ def setup_network_conditions_client(
         if max_bandwidth != "none":
             degradation_command += f"rate {max_bandwidth}"
 
-        for device in ifconfig_output:
+        for device in network_devices:
             print(f"Applying network degradation to device {device}")
             # add devices to delay incoming packets
             commands.append(f"sudo tc qdisc add dev {device} ingress")
@@ -291,39 +314,35 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
     # Cannot use wait_until_cmd_done because we need to handle clase where ifconfig is not installed
     pexpect_process.sendline(command)
-    result = pexpect_process.expect(
-        [pexpect_prompt, "sudo: ifconfig: command not found", pexpect.exceptions.TIMEOUT]
+
+    ifconfig_output = wait_until_cmd_done(
+        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
     )
-    if result == 1:
-        # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know that no network degradations have been applied to the machine.
-        if not running_in_ci:
-            pexpect_process.expect(pexpect_prompt)
-        # If ifconfig is not installed, it means that we could not have applied network degradation conditions before, so we are done.
-        print("ifconfig is not installed, so we don't need to restore normal network conditions.")
+
+    # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know that no network degradations have been applied to the machine.
+    error_msg = "sudo: ifconfig: command not found"
+    ifconfig_not_installed = any(
+        error_msg in item for item in ifconfig_output if isinstance(item, str)
+    )
+    if ifconfig_not_installed:
+        print(
+            "ifconfig is not installed on the client instance, so we don't need to restore normal network conditions."
+        )
         return
-    elif result == 2:
-        # Catch timeouts manually here, instead of letting wait_until_cmd_done take care of it, because we cannot use wait_until_cmd_done (it is unsafe to use when we are looking to parse a command's stdout and we might be running this script in CI)
-        print("Error, testing script hanged! Check the logs for troubleshooting.")
-        sys.exit(-1)
 
-    ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
-
-    if not running_in_ci:
-        pexpect_process.expect(pexpect_prompt)
-
-    ifconfig_output = [
-        x.replace("\r", "").replace(":", "")
+    # Get names of network devices
+    blacklisted_expressions = [pexpect_prompt, "docker", "veth", "ifb", "ifconfig", "\\", "~", ";"]
+    network_devices = [
+        x.replace(":", "")
         for x in ifconfig_output
-        if "docker" not in x
-        and "veth" not in x
-        and "ifb" not in x
-        and "sudo ifconfig -a" not in x
-        and pexpect_prompt not in x
+        if not any(
+            blacklisted_expression in x for blacklisted_expression in blacklisted_expressions
+        )
     ]
 
     commands = []
 
-    for device in ifconfig_output:
+    for device in network_devices:
         print(f"Restoring normal network conditions on device {device}")
         # Inbound degradations
         commands.append(f"sudo tc qdisc del dev {device} handle ffff: ingress")
@@ -355,11 +374,12 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     print("Running the dev client mandelbox, and connecting to the server!")
     command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{json.dumps(json_data)}'"
     pexpect_process.sendline(command)
-    pexpect_process.expect(":/#")
-    client_mandelbox_output = pexpect_process.before.decode("utf-8").strip().split("\n")
-    client_docker_id = (
-        client_mandelbox_output[-2].replace("\n", "").replace("\r", "").replace(" ", "")
+
+    # Need to wait for special mandelbox prompt ":/#". running_in_ci must always be set to True in this case.
+    client_mandelbox_output = wait_until_cmd_done(
+        pexpect_process, ":/#", running_in_ci=True, return_output=True
     )
+    client_docker_id = client_mandelbox_output[-2].replace(" ", "")
     print(f"Whist dev client started on EC2 instance, on Docker container {client_docker_id}!")
 
     if simulate_scrolling:
@@ -368,7 +388,7 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
         print("Simulating the mouse scroll events in the client")
         command = "python3 /usr/share/whist/mouse_events.py"
         pexpect_process.sendline(command)
-        pexpect_process.expect(":/#")
+        wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
 
     return client_docker_id
 
@@ -376,17 +396,14 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
 def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
     # Check if we are running out of space
     pexpect_process.sendline("df -h | grep --color=never /dev/root")
-    # We need to pass running_in_ci=True no matter what because we need to read the stdout
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci=True)
-    space_used_output = pexpect_process.before.decode("utf-8").strip().split("\n")
+    space_used_output = wait_until_cmd_done(
+        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+    )
     for line in reversed(space_used_output):
         if "/dev/root" in line:
-            space_used_output = line.replace("\n", "").replace("\r", "").split()
+            space_used_output = line.split()
             break
     space_used_pctg = int(space_used_output[-2][:-1])
-
-    if not running_in_ci:
-        pexpect_process.expect(pexpect_prompt)
 
     # Clean up space on the instance by pruning all Docker containers if the disk is 75% (or more) full
     if space_used_pctg >= 75:
@@ -413,7 +430,7 @@ def server_setup_process(args_dict):
     username = args_dict["username"]
     server_hostname = args_dict["server_hostname"]
     ssh_key_path = args_dict["ssh_key_path"]
-    aws_timeout = args_dict["aws_timeout"]
+    aws_timeout_seconds = args_dict["aws_timeout_seconds"]
     server_log_filepath = args_dict["server_log_filepath"]
     pexpect_prompt_server = args_dict["pexpect_prompt_server"]
     github_token = args_dict["github_token"]
@@ -429,19 +446,20 @@ def server_setup_process(args_dict):
     print("Initiating the SETUP ssh connection with the server AWS instance...")
     server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
     hs_process = attempt_ssh_connection(
-        server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+        server_cmd, aws_timeout_seconds, server_log, pexpect_prompt_server, 5, running_in_ci
     )
-    if not running_in_ci:
-        hs_process.expect(pexpect_prompt_server)
 
     print("Configuring AWS credentials on server instance...")
-    configure_aws_credentials(
+    result = install_and_configure_aws(
         hs_process,
         pexpect_prompt_server,
-        aws_timeout,
+        aws_timeout_seconds,
         running_in_ci,
         aws_credentials_filepath,
     )
+
+    if not result:
+        sys.exit(-1)
 
     prune_containers_if_needed(hs_process, pexpect_prompt_server, running_in_ci)
 
@@ -455,7 +473,13 @@ def server_setup_process(args_dict):
     if skip_host_setup == "false":
         # 1- Reboot instance for extra robustness
         hs_process = reboot_instance(
-            hs_process, server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5, running_in_ci
+            hs_process,
+            server_cmd,
+            aws_timeout_seconds,
+            server_log,
+            pexpect_prompt_server,
+            5,
+            running_in_ci,
         )
 
         # 2 - Fix DPKG issue in case it comes up
@@ -463,7 +487,12 @@ def server_setup_process(args_dict):
 
         # 3- run host-setup
         hs_process = run_host_setup_on_instance(
-            hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log, running_in_ci
+            hs_process,
+            pexpect_prompt_server,
+            server_cmd,
+            aws_timeout_seconds,
+            server_log,
+            running_in_ci,
         )
     else:
         print("Skipping host setup on server instance.")
@@ -471,7 +500,13 @@ def server_setup_process(args_dict):
     # 2- reboot and wait for it to come back up
     print("Rebooting the server EC2 instance (required after running the host setup)...")
     hs_process = reboot_instance(
-        hs_process, server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5, running_in_ci
+        hs_process,
+        server_cmd,
+        aws_timeout_seconds,
+        server_log,
+        pexpect_prompt_server,
+        5,
+        running_in_ci,
     )
 
     # 3- Build the protocol server
@@ -499,7 +534,7 @@ def client_setup_process(args_dict):
     username = args_dict["username"]
     client_hostname = args_dict["client_hostname"]
     ssh_key_path = args_dict["ssh_key_path"]
-    aws_timeout = args_dict["aws_timeout"]
+    aws_timeout_seconds = args_dict["aws_timeout_seconds"]
     client_log_filepath = args_dict["client_log_filepath"]
     pexpect_prompt_client = args_dict["pexpect_prompt_client"]
     github_token = args_dict["github_token"]
@@ -520,22 +555,22 @@ def client_setup_process(args_dict):
         # Initiate the SSH connections with the client instance
         print("Initiating the SETUP ssh connection with the client AWS instance...")
         hs_process = attempt_ssh_connection(
-            client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+            client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5, running_in_ci
         )
-        if not running_in_ci:
-            hs_process.expect(pexpect_prompt_client)
 
         # Restore network conditions in case a previous run failed / was canceled before restoring the normal conditions.
         restore_network_conditions_client(hs_process, pexpect_prompt_client, running_in_ci)
 
         print("Configuring AWS credentials on client instance...")
-        configure_aws_credentials(
+        result = install_and_configure_aws(
             hs_process,
             pexpect_prompt_client,
-            aws_timeout,
+            aws_timeout_seconds,
             running_in_ci,
             aws_credentials_filepath,
         )
+        if not result:
+            sys.exit(-1)
 
         prune_containers_if_needed(hs_process, pexpect_prompt_client, running_in_ci)
 
@@ -551,7 +586,7 @@ def client_setup_process(args_dict):
             hs_process = reboot_instance(
                 hs_process,
                 client_cmd,
-                aws_timeout,
+                aws_timeout_seconds,
                 client_log,
                 pexpect_prompt_client,
                 5,
@@ -566,7 +601,7 @@ def client_setup_process(args_dict):
                 hs_process,
                 pexpect_prompt_client,
                 client_cmd,
-                aws_timeout,
+                aws_timeout_seconds,
                 client_log,
                 running_in_ci,
             )
@@ -576,7 +611,13 @@ def client_setup_process(args_dict):
         # 2- reboot and wait for it to come back up
         print("Rebooting the client EC2 instance (required after running the host setup)...")
         hs_process = reboot_instance(
-            hs_process, client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5, running_in_ci
+            hs_process,
+            client_cmd,
+            aws_timeout_seconds,
+            client_log,
+            pexpect_prompt_client,
+            5,
+            running_in_ci,
         )
 
         hs_process.kill(0)
@@ -584,7 +625,7 @@ def client_setup_process(args_dict):
     # 6- Build the dev client
     print("Initiating the BUILD ssh connection with the client AWS instance...")
     client_pexpect_process = attempt_ssh_connection(
-        client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+        client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5, running_in_ci
     )
     build_client_on_instance(
         client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type, running_in_ci
@@ -611,17 +652,22 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp, timeout_val
 
     """
 
-    pexpect_process.sendline("sleep 1")
-    pexpect_process.expect(":/#")
+    # Shut down Chrome
     pexpect_process.sendline("pkill chrome")
-    pexpect_process.expect(":/#")
-    pexpect_process.sendline("tail -f /var/log/whist/protocol-out.log")
+    wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
+    # Give WhistServer 10s to shutdown properly
+    pexpect_process.sendline("sleep 10")
+    wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
+    # Check the log to see if WhistServer shut down gracefully or if there was a server hang
+    pexpect_process.sendline("tail /var/log/whist/protocol-out.log")
 
-    try:
-        pexpect_process.expect(exit_confirm_exp, timeout=timeout_value)
-        server_has_exited = True
-    except pexpect.exceptions.TIMEOUT:
-        server_has_exited = False
+    server_mandelbox_output = wait_until_cmd_done(
+        pexpect_process, ":/#", running_in_ci=True, return_output=True
+    )
+
+    server_has_exited = any(
+        exit_confirm_exp in item for item in server_mandelbox_output if isinstance(item, str)
+    )
 
     # Kill tail process
     pexpect_process.sendcontrol("c")

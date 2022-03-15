@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
-from protocol.e2e_display_helpers.metrics_tools import (
+from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
     compute_deltas,
 )
 

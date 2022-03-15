@@ -15,25 +15,24 @@ sys.path.append(".github/workflows/helpers")
 from notifications.slack_bot import slack_post
 from notifications.github_bot import github_comment_update
 
-from protocol.e2e_display_helpers.table_tools import (
+from protocol.e2e_streaming_test_display_helpers.table_tools import (
     generate_no_comparison_table,
     generate_comparison_table,
 )
 
-from protocol.e2e_display_helpers.logs_tools import (
+from protocol.e2e_streaming_test_display_helpers.logs_tools import (
     parse_metadata,
     download_latest_logs,
     logs_contain_errors,
 )
 
-from protocol.e2e_display_helpers.metrics_tools import (
+from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
     extract_metrics,
 )
 
-from protocol.e2e_display_helpers.remote_tools import (
+from protocol.e2e_streaming_test_display_helpers.remote_tools import (
     create_github_gist_post,
-    create_slack_post,
-    search_open_PR,
+    associate_branch_to_open_pr,
 )
 
 
@@ -302,30 +301,36 @@ if __name__ == "__main__":
     # Create one file for each branch
 
     md_files = glob.glob("*.md")
-    body = []
-    merged_body = ""
-    for fn in md_files:
-        with open(fn, "r") as f:
+    files_list = []
+    merged_files = ""
+    for filename in md_files:
+        with open(filename, "r") as f:
             contents = f.read()
-            body.append((fn, contents))
-            merged_body += contents
+            files_list.append((filename, contents))
+            merged_files += contents
 
-    gist_url = create_github_gist_post(github_gist_token, title, body)
+    gist_url = create_github_gist_post(github_gist_token, title, files_list)
 
-    # Post updates to Slack channel if we are on dev
-    if current_branch_name == "dev":
+    # Post updates to Slack channel if we are on branch `dev` and a slack webhook is set
+    if slack_webhook and current_branch_name == "dev":
         slack_catchy_title = f":rocket::face_with_cowboy_hat::bar_chart: {title} :rocket::face_with_cowboy_hat::bar_chart:"
-        create_slack_post(slack_webhook, slack_catchy_title, gist_url)
+        slack_post(
+            slack_webhook,
+            body=f"New E2E dev benchmark results available! Check them out here: {gist_url}\n",
+            slack_username="Whist Bot",
+            title=slack_catchy_title,
+        )
+
     # Otherwise post on Github if the branch is tied to a open PR
     else:
-        pr_number = search_open_PR(current_branch_name)
+        pr_number = associate_branch_to_open_pr(current_branch_name)
         if pr_number != -1:
             github_comment_update(
                 github_token,
                 github_repo,
                 pr_number,
                 identifier,
-                merged_body,
+                merged_files,
                 title=title,
                 update_date=True,
             )
