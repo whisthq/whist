@@ -11,7 +11,7 @@ import multiprocessing
 import boto3
 
 # Get tools to create, destroy and manage AWS instances
-from e2e_helpers.aws.aws_tools import (
+from e2e_helpers.boto3.boto3_tools import (
     create_or_start_aws_instance,
     get_instance_ip,
     terminate_or_stop_aws_instance,

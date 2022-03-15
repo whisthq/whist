@@ -13,7 +13,7 @@ from e2e_helpers.common.ssh_tools import (
     wait_until_cmd_done,
 )
 
-from e2e_helpers.aws.aws_tools import (
+from e2e_helpers.boto3.boto3_tools import (
     terminate_or_stop_aws_instance,
 )
 
