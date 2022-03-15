@@ -760,8 +760,10 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
         // If using FEC, populate the UDP payload buffers with the FEC encoded buffers
         fec_get_encoded_buffers(fec_encoder, (void**)buffers, buffer_sizes);
         double encode_time = get_timer(&encode_timer) * MS_IN_SECOND;
-        LOG_INFO("[FEC] encoded %d original + %d redundant buffers, in %f ms", num_indices,
-                 num_fec_packets, encode_time);
+        if (LOG_FEC_ENCODE) {
+            LOG_INFO("[FEC] encoded %d original + %d redundant buffers, in %f ms", num_indices,
+                     num_fec_packets, encode_time);
+        }
     } else {
         // When not using FEC, split up the packets using MAX_PACKET_SEGMENT_SIZE
         int current_position = 0;
