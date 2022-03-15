@@ -8,7 +8,7 @@ passing startup data to the mandelboxes, both from the rest of the backend and
 from the user's client application.
 
 If you are just interested in seeing what endpoints the host service exposes
-(i.e. for client-app development), check out the file `httpserver.go`.
+(i.e. for frontend development), check out the file `httpserver.go`.
 
 The main package of the host service contains the main logic and the most
 comments to explain the design decisions of the host service. It also contains

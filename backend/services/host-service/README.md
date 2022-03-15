@@ -1,3 +1,1 @@
 # Whist Host-Service
-
-

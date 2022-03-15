@@ -1,2 +1,1 @@
 # Whist Scaling-Service
-
