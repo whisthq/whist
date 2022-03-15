@@ -148,10 +148,10 @@ resource "aws_iam_group_policy_attachment" "CIPolicy" {
   group = aws_iam_group.WhistCI[0].name
   for_each = var.env == "prod" ? toset([
     "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
-    "arn:aws:iam::aws:policy/IAMFullAccess",
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",
     "arn:aws:iam::aws:policy/AmazonVPCFullAccess",
-    "arn:aws:iam::aws:policy/AmazonSecretsManagerReadWrite",
+    "arn:aws:iam::aws:policy/IAMFullAccess",
+    "arn:aws:iam::aws:policy/SecretsManagerReadWrite",
   ]) : []
   policy_arn = each.value
 }
