@@ -90,12 +90,7 @@ static void set_decoder_opts(VideoDecoder* decoder) {
     */
     // decoder->context->flags |= AV_CODEC_FLAG_LOW_DELAY;
     // decoder->context->flags2 |= AV_CODEC_FLAG2_FAST;
-    if (decoder->match_fmt == AV_PIX_FMT_QSV ||
-        decoder->match_fmt == AV_PIX_FMT) {
-        // this option is only supported on QSV decoders, 
-        // according to: https://ffmpeg.org/ffmpeg-all.html#async
-        set_opt(decoder, "async_depth", "1");
-    }
+    set_opt(decoder, "async_depth", "1");
 }
 
 static int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
