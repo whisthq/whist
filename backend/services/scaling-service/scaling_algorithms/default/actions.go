@@ -193,9 +193,12 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 		_, protected := s.protectedFromScaleDown[string(instance.ImageID)]
 		if protected {
-			// Don't scale down instances with a protected image id. This is because the
-			// image id will not be switched over until the client has updated its version
-			// on the config database.
+			// Don't scale down instances with a protected image id. A protected
+			// image id refers to the image id that was built and passed by the
+			// `build-and-deploy` workflow, that is waiting for the config database
+			// to update commit hashes. For this reason, we don't scale down the
+			// instance buffer created for this image, instead we "protect" it until
+			// its ready to use, to avoid downtimes and to create the buffer only once.
 			logger.Infof("Not scaling down instance %v because it has an image id that is protected from scale down.", instance.ID)
 			continue
 		}
@@ -415,7 +418,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	// Notify through the synchan that the image upgrade is done
 	// so that we can continue to swapover images when the config
-	// database updates. We time out here in case the client app
+	// database updates. We time out here in case the frontend build
 	// failed to deploy, and if it does we rollback the new version.
 	select {
 	case s.SyncChan <- true:
@@ -432,7 +435,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 // SwapOverImages is a scaling action that will switch the current image on the given region.
 // To the latest one. This is done separately to avoid having downtimes during deploys, since
-// we have to wait until the client has updated its version on the config database.
+// we have to wait until the frontend has updated its version on the config database.
 func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, event ScalingEvent, clientVersion interface{}) error {
 	// Block until the image upgrade has finished successfully.
 	// We time out here in case something went wrong with the

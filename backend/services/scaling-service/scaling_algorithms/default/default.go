@@ -98,6 +98,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 	}
 
 	// Start algorithm main event loop
+	// Track this goroutine so we can wait for it to
+	// finish if the global context gets cancelled.
 	goroutineTracker.Add(1)
 	go func() {
 
@@ -111,6 +113,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 
 				if instance.Status == "DRAINING" {
 
+					// Track this goroutine so we can wait for it to
+					// finish if the global context gets cancelled.
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
@@ -131,6 +135,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 				logger.Infof("Scaling algorithm received a client app version database event with value: %v", versionEvent)
 				version := versionEvent.Data.(subscriptions.ClientAppVersion)
 
+				// Track this goroutine so we can wait for it to
+				// finish if the global context gets cancelled.
 				goroutineTracker.Add(1)
 				go func() {
 					defer goroutineTracker.Done()
@@ -168,6 +174,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 				case "SCHEDULED_IMAGE_UPGRADE_EVENT":
 					logger.Infof("Scaling algorithm received an image upgrade event with value: %v", scheduledEvent)
 
+					// Track this goroutine so we can wait for it to
+					// finish if the global context gets cancelled.
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
@@ -194,6 +202,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 				}
 			case <-globalCtx.Done():
 				logger.Info("Global context has been cancelled. Exiting from default scaling algorithm event loop...")
+				goroutineTracker.Wait()
+				logger.Infof("Finished waiting for all goroutines to finish. Scaling algorithm from %v exited.", s.Region)
 				return
 			}
 		}

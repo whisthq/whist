@@ -151,7 +151,9 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 // SetupConfigSubscriptions creates a slice of HasuraSubscriptions to start the client. This
 // function is specific for the subscriptions used for the config database.
 func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
-	// The version ID will always be 1
+	// The version ID is always set to 1 on the database, since there
+	// is only one row in the `desktop_client_app_version` which contains
+	// all of the dev/staging/prod commit hashes.
 	const versionID = 1
 
 	configSubscriptions := []HasuraSubscription{
@@ -169,7 +171,8 @@ func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
 
 // Start is the main function in the subscriptions package. It initializes a client, sets up the received subscriptions,
 // and starts a goroutine for the client. It also has a goroutine to close the client and subscriptions when the global
-// context gets cancelled.
+// context gets cancelled. It's possible to subscribe to the config database instead of the dev/staging/prod database by
+// setting the `useConfigDatabase` argument.
 func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent, useConfigDB bool) error {
 	if !Enabled {
 		logger.Infof("Running in app environment %s so not enabling Subscription client code.", metadata.GetAppEnvironment())

@@ -807,10 +807,13 @@ func main() {
 		metrics.Increment("ErrorRate")
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
+	// It's not necessary to subscribe to the config database
+	// in the host service
+	useConfigDB := false
 
 	subscriptionClient := &subscriptions.SubscriptionClient{}
 	subscriptions.SetupHostSubscriptions(string(instanceID), subscriptionClient)
-	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents, false)
+	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents, useConfigDB)
 	if err != nil {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
 	}

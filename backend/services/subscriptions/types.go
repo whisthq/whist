@@ -99,7 +99,7 @@ type InstanceEvent struct {
 }
 
 // MandelboxEvent represents an occurred event on the
-// `whist.mandelbox` database table.This struct is
+// `whist.mandelbox` database table. This struct is
 // meant to be used by any event that operates on the
 // whist_mandelbox database table.
 type MandelboxEvent struct {
@@ -107,7 +107,7 @@ type MandelboxEvent struct {
 }
 
 // ImageEvent represents an occurred event on the
-// `whist.image` database table.This struct is
+// `whist.image` database table. This struct is
 // meant to be used by any event that operates on the
 // whist_images database table.
 type ImageEvent struct {
@@ -115,7 +115,7 @@ type ImageEvent struct {
 }
 
 // ClientAppVersionEvent represents an occurred event on the
-// `dekstop_app_version` config database table.This struct is
+// `dekstop_app_version` config database table. This struct is
 // meant to be used by any event that operates on the
 // desktop_app_version database table.
 type ClientAppVersionEvent struct {

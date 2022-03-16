@@ -75,7 +75,7 @@ func main() {
 	})
 
 	// Start main event loop
-	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents, scheduledEvents, algorithmByRegionMap, configClient)
+	go eventLoop(globalCtx, globalCancel, subscriptionEvents, scheduledEvents, algorithmByRegionMap, configClient)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -94,15 +94,22 @@ func main() {
 // StartDatabaseSubscriptions sets up the database subscriptions and starts the subscription client.
 func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent, subscriptionClient subscriptions.WhistSubscriptionClient, configClient subscriptions.WhistSubscriptionClient) {
 	// Setup and start subscriptions to main database
+
+	// The first client will subscribe to the dev/staging/prod database
+	useConfigDatabase := false
+
 	subscriptions.SetupScalingSubscriptions(subscriptionClient)
-	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents, false)
+	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents, useConfigDatabase)
 	if err != nil {
 		logger.Errorf("Failed to start database subscription client. Error: %s", err)
 	}
 
+	// The second client will subscribe to the config database
+	useConfigDatabase = true
+
 	// Setup and start subscriptions to config database
 	subscriptions.SetupConfigSubscriptions(configClient)
-	err = subscriptions.Start(configClient, globalCtx, goroutineTracker, subscriptionEvents, true)
+	err = subscriptions.Start(configClient, globalCtx, goroutineTracker, subscriptionEvents, useConfigDatabase)
 	if err != nil {
 		logger.Errorf("Failed to start config database subscription client. Error: %s", err)
 	}
@@ -196,7 +203,7 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 
 // eventLoop is the main loop of the scaling service which will receive events from different sources
 // and send them to the appropiate channels.
-func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, subscriptionEvents <-chan subscriptions.SubscriptionEvent,
+func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, subscriptionEvents <-chan subscriptions.SubscriptionEvent,
 	scheduledEvents <-chan algos.ScalingEvent, algorithmByRegion *sync.Map, configClient *subscriptions.SubscriptionClient) {
 
 	for {
