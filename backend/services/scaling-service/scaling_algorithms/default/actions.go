@@ -586,7 +586,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			return utils.MakeError("Image not found on %v.", event.Region)
 		}
 
-		mandelboxRequest.CommitHash = string(imageResult[0].ImageID)
+		mandelboxRequest.CommitHash = string(imageResult[0].ClientSHA)
 	}
 
 	// Start looking for instances
@@ -594,13 +594,14 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		logger.Infof("Trying to find instance for user %v in region %v, with commit hash %v. (client reported email %v, this value might not be accurate and is untrusted)",
 			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail)
 
-		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, mandelboxRequest.CommitHash)
+		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, region, mandelboxRequest.CommitHash)
 		if err != nil {
 			return utils.MakeError("failed to query for instance with capacity. Err: %v", err)
 		}
 
 		if len(instanceResult) == 0 {
 			logger.Warningf("Failed to find an instance in %v for commit hash %v. Trying on next region.", region, mandelboxRequest.CommitHash)
+			continue
 		}
 
 		assignedInstance = subscriptions.Instance{
@@ -616,6 +617,8 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			CreatedAt:         instanceResult[0].CreatedAt,
 			UpdatedAt:         instanceResult[0].UpdatedAt,
 		}
+		logger.Infof("Found instance %v for user %v in %v", assignedInstance.ID, unsafeEmail, region)
+		break
 	}
 
 	if assignedInstance == (subscriptions.Instance{}) {
@@ -626,6 +629,39 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	if err != nil {
 		return utils.MakeError("failed to create a mandelbox id. Err: %v", err)
 	}
+
+	mandelboxesForDb := []subscriptions.Mandelbox{
+		{
+			ID:         types.MandelboxID(mandelboxID),
+			App:        "CHROME", // TODO: set to other apps once we receive it on the assign request
+			InstanceID: assignedInstance.ID,
+			UserID:     mandelboxRequest.UserID,
+			SessionID:  utils.Sprintf("%v", mandelboxRequest.SessionID),
+			Status:     "ALLOCATED",
+			CreatedAt:  time.Now(),
+		},
+	}
+
+	// Allocate mandelbox on database, this will start the mandelbox inside the assigned instance
+	affectedRows, err := s.DBClient.InsertMandelboxes(scalingCtx, s.GraphQLClient, mandelboxesForDb)
+	if err != nil {
+		return utils.MakeError("error while inserting mandelbox to database. Err: %v", err)
+	}
+
+	logger.Infof("Inserted %v rows to database.", affectedRows)
+
+	// Subtract 1 from the current instance capacity because we allocated a mandelbox
+	updatedCapacity := assignedInstance.RemainingCapacity - 1
+	instanceUpdateParams := map[string]interface{}{
+		"remainingCapacity": updatedCapacity,
+	}
+
+	affectedRows, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, instanceUpdateParams)
+	if err != nil {
+		return utils.MakeError("error while updating instance capacity on database. Err: %v", err)
+	}
+
+	logger.Infof("Updated %v rows in database.", affectedRows)
 
 	// Return result to assign request
 	mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{

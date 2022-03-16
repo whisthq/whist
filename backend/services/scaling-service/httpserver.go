@@ -10,6 +10,7 @@ import (
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/scaling-service/payments"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 	"golang.org/x/time/rate"
@@ -52,13 +53,15 @@ func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.Ser
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
 	}
-	logger.Infof("claims are %v", claims)
 
 	_, err = httputils.ParseRequest(w, r, s)
 	if err != nil {
 		return utils.MakeError("Error while parsing request. Err: %v", err)
 	}
 
+	// Add user id to the request. This way we don't expose the
+	// access token to other processes that don't need access to it.
+	s.(*httputils.MandelboxAssignRequest).UserID = types.UserID(claims.Subject)
 	return nil
 }
 
@@ -153,7 +156,7 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	// Set read/write timeouts to help mitigate potential rogue clients
 	// or DDOS attacks.
 	srv := &http.Server{
-		Addr:         "0.0.0.0:8082",
+		Addr:         "0.0.0.0:7730",
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 		IdleTimeout:  120 * time.Second,

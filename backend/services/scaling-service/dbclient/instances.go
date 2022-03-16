@@ -8,10 +8,15 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
-func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, commitHash string) (subscriptions.WhistInstances, error) {
+func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string, commitHash string) (subscriptions.WhistInstances, error) {
+	// The status will always be active, because we want instances
+	// that are ready to accept mandelboxes (the host service is running)
+	const status = "ACTIVE"
 	instancesQuery := subscriptions.QueryInstanceByClientSHA
 	queryParams := map[string]interface{}{
+		"region":     graphql.String(region),
 		"client_sha": graphql.String(commitHash),
+		"status":     graphql.String(status),
 	}
 	err := graphQLClient.Query(scalingCtx, &instancesQuery, queryParams)
 
@@ -84,7 +89,7 @@ func (client *DBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 	return int(insertMutation.MutationResponse.AffectedRows), err
 }
 
-// UpdateInstance updates the received fields on the database.
+// UpdateInstance updates the received fields on the database. Use a map[string]interface{} because the fields to update are dynamic and not known beforehand.
 func (client *DBClient) UpdateInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams map[string]interface{}) (int, error) {
 	updateMutation := subscriptions.UpdateInstanceStatus
 	err := graphQLClient.Mutate(scalingCtx, &updateMutation, updateParams)

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os/exec"
 
-	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -55,7 +54,6 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 	w.WriteHeader(status)
 	if err != nil {
 		logger.Errorf("Error marshalling a %v HTTP Response body: %s", status, err)
-		metrics.Increment("ErrorRate")
 	}
 	_, _ = w.Write(buf)
 }
@@ -68,6 +66,7 @@ type MandelboxAssignRequest struct {
 	CommitHash string             `json:"client_commit_hash"`
 	SessionID  int64              `json:"session_id"`
 	UserEmail  string             `json:"user_email"`
+	UserID     types.UserID       // The userID is obtained from the access token
 	ResultChan chan RequestResult // Channel to pass the request result between goroutines
 }
 

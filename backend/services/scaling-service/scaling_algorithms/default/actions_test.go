@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	testInstances subscriptions.WhistInstances
-	testImages    subscriptions.WhistImages
-	testAlgorithm *DefaultScalingAlgorithm
-	testLock      sync.Mutex
+	testInstances   subscriptions.WhistInstances
+	testImages      subscriptions.WhistImages
+	testMandelboxes subscriptions.WhistMandelboxes
+	testAlgorithm   *DefaultScalingAlgorithm
+	testLock        sync.Mutex
 )
 
 // mockDBClient is used to test all database interactions
@@ -30,7 +31,7 @@ func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient 
 	return testInstances, nil
 }
 
-func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) (subscriptions.WhistInstances, error) {
+func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string, hash string) (subscriptions.WhistInstances, error) {
 	return testInstances, nil
 }
 
@@ -173,6 +174,32 @@ func (db *mockDBClient) UpdateImage(scalingCtx context.Context, graphQLClient su
 		}
 	}
 	return len(testImages), nil
+}
+
+func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, insertParams []subscriptions.Mandelbox) (int, error) {
+	testLock.Lock()
+	defer testLock.Unlock()
+
+	for _, mandelbox := range insertParams {
+		testMandelboxes = append(testMandelboxes, struct {
+			ID         graphql.String `graphql:"id"`
+			App        graphql.String `graphql:"app"`
+			InstanceID graphql.String `graphql:"instance_id"`
+			UserID     graphql.String `graphql:"user_id"`
+			SessionID  graphql.String `graphql:"session_id"`
+			Status     graphql.String `graphql:"status"`
+			CreatedAt  time.Time      `graphql:"created_at"`
+		}{
+			ID:         graphql.String(mandelbox.ID.String()),
+			App:        graphql.String(mandelbox.App),
+			InstanceID: graphql.String(mandelbox.InstanceID),
+			UserID:     graphql.String(mandelbox.UserID),
+			SessionID:  graphql.String(mandelbox.SessionID),
+			Status:     graphql.String(mandelbox.Status),
+			CreatedAt:  mandelbox.CreatedAt,
+		})
+	}
+	return len(testMandelboxes), nil
 }
 
 // mockHostHandler is used to test all interactions with cloud providers
