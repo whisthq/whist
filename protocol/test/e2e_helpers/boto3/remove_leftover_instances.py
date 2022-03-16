@@ -3,7 +3,7 @@
 import os
 import sys
 import boto3
-from e2e_helpers.boto3 import terminate_or_stop_aws_instance
+from e2e_helpers.boto3.boto3_tools import terminate_or_stop_aws_instance
 
 # Before exiting, the streaming_e2e_tester.py script stops/terminates all EC2 instances
 # (unless the `--leave-instances-on` flag is set to 'true') used in the E2E test.

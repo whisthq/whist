@@ -194,9 +194,9 @@ if __name__ == "__main__":
             network_conditions = experiment_metadata["network_conditions"]
         if network_conditions != "normal" and "," in network_conditions:
             network_conditions = network_conditions.split(",")
-            bandwidth = network_conditions[0]
-            delay = network_conditions[1]
-            packet_drops = float(network_conditions[2]) * 100.0
+            bandwidth = network_conditions[0] if network_conditions[0] != "none" else "full available"
+            delay = network_conditions[1] + " ms" if network_conditions[1] != "none" else network_conditions[1]
+            packet_drops = float(network_conditions[2]) * 100.0 if network_conditions[2] != "none" else network_conditions[2]
             network_conditions = (
                 f"Bandwidth: {bandwidth}, Delay: {delay} ms, Packet Drops: {packet_drops:.2f}"
             )
