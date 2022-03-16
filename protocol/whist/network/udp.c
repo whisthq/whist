@@ -111,8 +111,8 @@ typedef struct {
 
 // Size of the UDPPacket header, excluding the payload
 #define UDPNETWORKPACKET_HEADER_SIZE ((int)(offsetof(UDPNetworkPacket, payload)))
-#define UDP_PING_INTERVAL_MS 500.0
-#define UDP_PONG_TIMEOUT 5000.0
+#define UDP_PING_INTERVAL 0.1  // In seconds
+#define UDP_PONG_TIMEOUT 5.0   // In seconds
 #define MAX_GROUP_STATS 8
 // Incoming bitrate related constants. Choose power-of-two only for an efficient computations
 #define INCOMING_BITRATE_WINDOW_MS 1024
@@ -126,6 +126,8 @@ typedef struct {
 
 // Newer out-of-order values will get this weightage in EWMA filter
 #define OUT_OF_ORDER_EWMA_FACTOR 0.01
+// Let's choose a nearest power of two, greater than (UDP_PONG_TIMEOUT / UDP_PING_INTERVAL)
+#define MAX_PINGS_IN_FLIGHT 64
 
 typedef struct {
     bool pending_stream_reset;
@@ -161,9 +163,11 @@ typedef struct {
 
     // Ping/Pong data and timers
     int last_ping_id;
-    WhistTimer last_ping_timer;
+    int last_pong_id;
+    WhistTimer ping_timer[MAX_PINGS_IN_FLIGHT];
     WhistTimer last_pong_timer;
     bool connection_lost;
+    double latency;
 
     // Latency Calculation (Only used on server)
     WhistMutex timestamp_mutex;
@@ -193,10 +197,7 @@ typedef struct {
     // Whether or not pending_packets[i] contains a pending packet
     bool has_pending_packet[NUM_PACKET_TYPES];
 
-    // The current network settings the other side asked us to follow
-    NetworkSettings current_network_settings;
-    // The network settings we're asking the other side to follow
-    NetworkSettings desired_network_settings;
+    NetworkSettings network_settings;
     WhistMutex congestion_control_mutex;
     WhistTimer last_network_settings_time;
     // Group related stats and variables required for congestion control
@@ -221,7 +222,7 @@ typedef struct {
 
 // The amount to weigh a older pings' latency,
 // on the ewma latency value
-#define PING_LAMBDA 0.6
+#define PING_LAMBDA 0.7
 
 // How often should the client send connection attempts
 #define CONNECTION_ATTEMPT_INTERVAL_MS 5
@@ -239,7 +240,6 @@ Globals
 
 // TODO: Remove bad globals
 extern unsigned short port_mappings[USHRT_MAX + 1];
-volatile double latency;
 
 /*
 ============================
@@ -458,8 +458,7 @@ UDP Implementation of Network.h Interface
 static void send_desired_network_settings(UDPContext* context) {
     UDPPacket network_settings_packet;
     network_settings_packet.type = UDP_NETWORK_SETTINGS;
-    network_settings_packet.udp_network_settings_data.network_settings =
-        context->desired_network_settings;
+    network_settings_packet.udp_network_settings_data.network_settings = context->network_settings;
     udp_send_udp_packet(context, &network_settings_packet);
 }
 
@@ -468,8 +467,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     whist_lock_mutex(context->congestion_control_mutex);
     // Initialize desired_network_settings if it is not done yet. Also send that starting bitrate
     // setting to server.
-    if (context->desired_network_settings.video_bitrate == 0) {
-        context->desired_network_settings = get_starting_network_settings();
+    if (context->network_settings.video_bitrate == 0) {
+        context->network_settings = get_starting_network_settings();
         send_desired_network_settings(context);
     }
     bool send_network_settings = false;
@@ -484,12 +483,11 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             // Get network statistics and desired network settings
             NetworkStatistics network_statistics =
                 get_network_statistics(context->ring_buffers[PACKET_VIDEO]);
-            NetworkSettings desired_network_settings =
-                get_desired_network_settings(network_statistics);
+            NetworkSettings network_settings = get_desired_network_settings(network_statistics);
             // If we have new desired network settings for the other socket,
-            if (memcmp(&context->desired_network_settings, &desired_network_settings,
-                       sizeof(NetworkSettings)) != 0) {
-                context->desired_network_settings = desired_network_settings;
+            if (memcmp(&context->network_settings, &network_settings, sizeof(NetworkSettings)) !=
+                0) {
+                context->network_settings = network_settings;
                 send_network_settings = true;
             }
             start_timer(&context->last_network_settings_time);
@@ -514,7 +512,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                 send_network_settings = whist_congestion_controller(
                     curr_group_stats, prev_group_stats, get_incoming_bitrate(context),
                     get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO]),
-                    &context->desired_network_settings);
+                    &context->network_settings);
             }
             context->prev_group_id = context->curr_group_id;
             context->curr_group_id = group_id;
@@ -615,17 +613,22 @@ static bool udp_update(void* raw_context) {
     // Try nacking or requesting a stream reset
     // *************
 
-    for (int i = 0; i < NUM_PACKET_TYPES; i++) {
-        if (context->ring_buffers[i] != NULL) {
-            // At the moment we only nack for video
-            // TODO: Make this not packet-type-dependent
-            if (i == (int)PACKET_VIDEO) {
-                try_recovering_missing_packets_or_frames(
-                    context->ring_buffers[i], latency,
-                    (int)round(context->unordered_packet_info.max_unordered_packets),
-                    &context->desired_network_settings);
-            }
+    if (context->ring_buffers[PACKET_VIDEO] != NULL) {
+        double estimated_latency = context->latency;
+        double time_since_last_ping;
+        // If there is/are ping(s) in flight for a long time, then update the estimated latency
+        // accordingly.
+        if (context->last_ping_id > context->last_pong_id &&
+            (time_since_last_ping = get_timer(
+                 &context->ping_timer[(context->last_pong_id + 1) % MAX_PINGS_IN_FLIGHT])) >
+                context->latency) {
+            estimated_latency =
+                PING_LAMBDA * context->latency + time_since_last_ping * (1.0 - PING_LAMBDA);
         }
+        try_recovering_missing_packets_or_frames(
+            context->ring_buffers[PACKET_VIDEO], estimated_latency,
+            (int)round(context->unordered_packet_info.max_unordered_packets),
+            &context->network_settings);
     }
 
     return true;
@@ -987,6 +990,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     context->timestamp_mutex = whist_create_mutex();
     context->congestion_control_mutex = whist_create_mutex();
     context->last_ping_id = -1;
+    context->last_pong_id = -1;
     // Whether or not we've ever connected
     context->connected = false;
     // Whether or not we've connected, but then lost the connection
@@ -1163,7 +1167,7 @@ void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType typ
 NetworkSettings udp_get_network_settings(SocketContext* socket_context) {
     UDPContext* context = (UDPContext*)socket_context->context;
 
-    return context->current_network_settings;
+    return context->network_settings;
 }
 
 // TODO: Pull E2E calculations inside of udp.c
@@ -1244,8 +1248,8 @@ void udp_handle_resize(SocketContext* socket_context, int dpi) {
     NetworkSettings starting_network_settings = get_starting_network_settings();
     // If the current bitrate is lesser than the starting bitrate of the new screen, use the
     // new starting bitrate to avoid pixelation
-    if (context->desired_network_settings.video_bitrate < starting_network_settings.video_bitrate) {
-        context->desired_network_settings = starting_network_settings;
+    if (context->network_settings.video_bitrate < starting_network_settings.video_bitrate) {
+        context->network_settings = starting_network_settings;
         send_desired_network_settings(context);
     }
     whist_unlock_mutex(context->congestion_control_mutex);
@@ -1633,9 +1637,34 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
             FATAL_ASSERT(packet->udp_nack_data.whist_type == PACKET_VIDEO);
             NackID nack_id;
             nack_id.frame_id = packet->udp_nack_data.id;
-            nack_id.packet_index = packet->udp_nack_data.index;
-            if (fifo_queue_enqueue_item(context->nack_queue, &nack_id) < 0) {
-                LOG_ERROR("Failed to enqueue NACK request");
+            if ((short)packet->udp_nack_data.index >= 0) {
+                nack_id.packet_index = packet->udp_nack_data.index;
+                if (fifo_queue_enqueue_item(context->nack_queue, &nack_id) < 0) {
+                    LOG_ERROR("Failed to enqueue NACK request");
+                }
+            } else {
+                // NACK for all packets in a frame when index is negative
+                whist_lock_mutex(context->nack_mutex[PACKET_VIDEO]);
+                UDPPacket* first_packet =
+                    &context
+                         ->nack_buffers[PACKET_VIDEO][nack_id.frame_id %
+                                                      context->nack_num_buffers[PACKET_VIDEO]][0];
+                if (first_packet->udp_whist_segment_data.id != nack_id.frame_id) {
+                    LOG_WARNING("NACKed video packet %d not found, ID %d was located instead.",
+                                nack_id.frame_id, first_packet->udp_whist_segment_data.id);
+                    whist_unlock_mutex(context->nack_mutex[PACKET_VIDEO]);
+                    break;
+                }
+                for (int i = 0; i < first_packet->udp_whist_segment_data.num_indices; i++) {
+                    nack_id.packet_index = i;
+                    if (LOG_NACKING) {
+                        LOG_INFO("Generating Nack for Frame ID %d, index %d", nack_id.frame_id, i);
+                    }
+                    if (fifo_queue_enqueue_item(context->nack_queue, &nack_id) < 0) {
+                        LOG_ERROR("Failed to enqueue NACK request");
+                    }
+                }
+                whist_unlock_mutex(context->nack_mutex[PACKET_VIDEO]);
             }
             break;
         }
@@ -1779,16 +1808,17 @@ void udp_update_ping(UDPContext* context) {
         // If we've pinged before,
         // we should check for pongs or repings
 
-        // Progress to to the next ping after UDP_PING_INTERVAL_MS
-        if (get_timer(&context->last_ping_timer) * MS_IN_SECOND > UDP_PING_INTERVAL_MS) {
+        // Progress to to the next ping after UDP_PING_INTERVAL
+        if (get_timer(&context->ping_timer[context->last_ping_id % MAX_PINGS_IN_FLIGHT]) >
+            UDP_PING_INTERVAL) {
             // Mark that we want to send the next ping ID
             send_ping_id = context->last_ping_id + 1;
         }
 
         // If it's been too long since the last pong, give up and mark the failure
-        if (get_timer(&context->last_pong_timer) * MS_IN_SECOND > UDP_PONG_TIMEOUT) {
-            LOG_WARNING("Server disconnected: No pong response received for %d ms",
-                        (int)UDP_PONG_TIMEOUT);
+        if (get_timer(&context->last_pong_timer) > UDP_PONG_TIMEOUT) {
+            LOG_WARNING("Server disconnected: No pong response received for %.2f seconds",
+                        UDP_PONG_TIMEOUT);
             context->connection_lost = true;
         }
     }
@@ -1804,7 +1834,7 @@ void udp_update_ping(UDPContext* context) {
             LOG_WARNING("Failed to send ping! (ID: %d)", send_ping_id);
         }
         // Reset the last ping timer, because we sent a ping
-        start_timer(&context->last_ping_timer);
+        start_timer(&context->ping_timer[send_ping_id % MAX_PINGS_IN_FLIGHT]);
         LOG_INFO("Ping! %d", send_ping_id);
         // Update the last ping ID,
         context->last_ping_id = send_ping_id;
@@ -1831,12 +1861,18 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     start_timer(&context->last_pong_timer);
 
     double ping_time = (current_time_us() - ping_send_timestamp) / (double)US_IN_SECOND;
+    context->last_pong_id = id;
 
     log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
     LOG_INFO("Pong %d received: took %f milliseconds", id, ping_time * MS_IN_SECOND);
 
+    // Initialize the latency
+    if (context->latency == 0) {
+        context->latency = ping_time;
+    }
+
     // Calculate latency
-    latency = PING_LAMBDA * latency + (1 - PING_LAMBDA) * ping_time;
+    context->latency = PING_LAMBDA * context->latency + (1 - PING_LAMBDA) * ping_time;
 }
 
 void udp_handle_network_settings(void* raw_context, NetworkSettings network_settings) {
@@ -1868,7 +1904,7 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
     context->fec_packet_ratios[PACKET_AUDIO] = audio_fec_ratio;
 
     // Set internal network settings, so that it can be requested for later
-    context->current_network_settings = network_settings;
+    context->network_settings = network_settings;
 }
 
 size_t udp_packet_max_size(void) { return (sizeof(UDPNetworkPacket)); }

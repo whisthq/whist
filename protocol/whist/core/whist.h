@@ -167,7 +167,7 @@ Defines
 // Sometimes congestion control chooses a really low bitrate at which the visual quality is
 // unbearable. To avoid that we set a lower bound on video quality and drop frames if they are going
 // to exceed the bitrate chosen by congestion control algorithm. Higher the QP, Lower the bitrate
-// and Lower the visual quality. Allowed QP range is 0-51 (for both all kind of frames).
+// and Lower the visual quality. Allowed QP range is 0-51 (for all kind of frames).
 #define MAX_QP 40                  // Max QP value of video frames
 #define MAX_INTRA_QP (MAX_QP + 6)  // Higher QP value for intra frames if supported by the encoder
 

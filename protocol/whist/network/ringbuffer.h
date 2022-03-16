@@ -44,7 +44,6 @@ Defines
  * TODO: Pull this into RingBuffer.c, and stop exposing it to the client
  */
 typedef struct FrameData {
-    WhistPacketType type;
     int num_original_packets;
     int num_fec_packets;
     int prev_frame_num_duplicate_packets;
@@ -63,18 +62,16 @@ typedef struct FrameData {
 
     // FEC logic
     char* fec_frame_buffer;
+    FECDecoder* fec_decoder;
     bool successful_fec_recovery;
 
     // Nack logic
-
-    // Whether or not we're in "recovery mode"
-    bool recovery_mode;
-    int* num_times_index_nacked;
-    int num_times_nacked;
-    int last_nacked_index;
+    unsigned char num_entire_frame_nacked;
+    int entire_frame_nacked_id;
+    WhistTimer last_frame_nack_timer;
+    unsigned char* num_times_index_nacked;
     WhistTimer last_nonnack_packet_timer;
     WhistTimer frame_creation_timer;
-    FECDecoder* fec_decoder;
 } FrameData;
 
 /**
@@ -136,8 +133,6 @@ typedef struct RingBuffer {
     // The next ID that should be rendered, marks
     // the lowest packet ID we're interested in nacking about
     int last_rendered_id;
-    int last_missing_frame_nack;
-    int last_missing_frame_nack_index;
     int most_recent_reset_id;
     WhistTimer last_stream_reset_request_timer;
     int last_stream_reset_request_id;
