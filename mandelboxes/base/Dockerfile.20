@@ -766,10 +766,8 @@ CMD ["/usr/share/whist/entrypoint.sh"]
 # Main
 #########################
 
-# Set up the default (harmless/useless) Whist application (eyes)
-
-# Install xeyes and dependencies
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    # Set up the default (harmless/useless) Whist application (xeyes) and dependencies
     libc6 \
     libfontconfig1 \
     libfreetype6 \
@@ -787,38 +785,21 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     xbitmaps \
     x11-utils \
     x11-apps \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Set up the default Whist application symlink
-RUN ln -sf "$(which xeyes)" /usr/bin/whist-application
-
-# Set up the teleport drag-drop service
-
-# Install FUSE dependencies
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    # FUSE dependency for drag-drop
     fuse3 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Set up the teleport URI handler
-
-# Install XDG dependencies
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    # XDG dependency for URI handler
     xdg-utils \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Overwrite xdg-open with our handler
-RUN ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open
-
-# Set up the Whist server protocol
-
-# Set up Whist Protocol symlink
-RUN ln -sf /usr/share/whist/bin/WhistServer /usr/share/whist/WhistServer
+# Symlink relevant applications
+# Set default whist-application to xeyes
+RUN ln -sf "$(which xeyes)" /usr/bin/whist-application \
+    # Overwrite xdg-open with our URI handler
+    && ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open \
+    # Set up Whist Protocol symlink (TODO: We don't need to do this)
+    && ln -sf /usr/share/whist/bin/WhistServer /usr/share/whist/WhistServer
 
 # Install protocol dependencies
 COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup-linux-build-environment.sh
