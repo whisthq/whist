@@ -44,10 +44,24 @@ module.exports = {
             opacity: "1.0",
           },
         },
+        "translate-up": {
+          "0%": {
+            transform: "translateY(100px)",
+          },
+          "60%": {
+            opacity: "1.0",
+            transform: "translateY(100px)",
+          },
+          "100%": {
+            opacity: "1.0",
+            transform: "translateY(0)",
+          },
+        },
       },
       animation: {
         "fade-in-up": "fade-in-up 1s ease-out forwards",
         "fade-in": "fade-in 1s ease-out forwards",
+        "translate-up": "translate-up 3s ease-out forwards",
       },
       transitionProperty: {
         width: "width",

@@ -1,7 +1,10 @@
 import React from "react"
-import Logo from "@app/components/icons/logo.svg"
+
+import { initGradient } from "@app/renderer/utils/gradient"
 
 const Welcome = (props: { onSubmit: () => void }) => {
+  initGradient()
+
   const onKeyDown = (evt: any) => {
     if (evt.key === "Enter") props.onSubmit()
   }
@@ -10,43 +13,28 @@ const Welcome = (props: { onSubmit: () => void }) => {
     <div
       onKeyDown={onKeyDown}
       tabIndex={0}
-      className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
+      className="flex flex-col h-screen w-full font-body outline-none bg-blue"
     >
+      <canvas
+        id="gradient-canvas"
+        className="opacity-0 animate-fade-in"
+        style={{ animationDelay: "5000ms" }}
+      ></canvas>
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-      <div className="m-auto text-center mt-24">
-        <img
-          src={Logo}
-          className="w-28 h-28 m-auto animate-fade-in-up opacity-0"
-        />
+      <div className="absolute m-auto text-center mt-24 z-50 w-full h-full mix-blend-overlay">
         <div
-          className="text-gray-100 text-4xl mt-8 animate-fade-in-up opacity-0"
-          style={{ animationDelay: "400ms" }}
+          className="text-gray-100 text-6xl mt-20 animate-fade-in opacity-0 font-bold max-w-lg mx-auto animate-translate-up"
+          style={{ animationDelay: "1000ms" }}
         >
-          Sign in to <span className="font-bold">Whist</span>
+          Experience a browser without limits
         </div>
-        <div
-          className="text-gray-400 mt-2 animate-fade-in-up opacity-0"
-          style={{ animationDelay: "800ms" }}
-        >
-          A next-generation cloud-streamed browser
-        </div>
-        <div
-          className="h-px w-32 bg-gray-700 rounded m-auto mt-8 animate-fade-in-up opacity-0"
-          style={{ animationDelay: "1200ms" }}
-        ></div>
         <button
-          className="mt-12 text-gray-100 outline-none animate-fade-in-up opacity-0"
+          className="mt-32 text-gray-100 outline-none animate-fade-in opacity-0 bg-white bg-opacity-20 rounded px-8 py-4 tracking-widest"
           onClick={props.onSubmit}
-          style={{ animationDelay: "2200ms" }}
+          style={{ animationDelay: "4000ms" }}
           autoFocus={true}
         >
-          <div className="animate-pulse">
-            Click{" "}
-            <kbd className="bg-gray-700 rounded px-2 py-1 text-xs mx-1">
-              here
-            </kbd>{" "}
-            to create an account
-          </div>
+          Login to Continue
         </button>
       </div>
     </div>
