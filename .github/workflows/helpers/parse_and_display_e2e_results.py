@@ -245,9 +245,14 @@ if __name__ == "__main__":
         summary_file.write("### Experiments summary:\n\n")
         for i, experiment in enumerate(experiments):
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
-            results_file.write(
-                f"* **Experiment {i+1}** - Network conditions: {experiment['network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}. Download logs (if they exist) with command: `aws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive`\n"
-            )
+            if experiment['dirname'] is not None:
+                results_file.write(
+                    f"* **Experiment {i+1}** - Network conditions: {experiment['network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}. Download logs (if they exist) with command: `aws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive`\n"
+                )
+            else:
+                results_file.write(
+                    f"* **Experiment {i+1}** - Network conditions: {experiment['network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}.`\n"
+                )
         results_file.write("\n")
 
     for i, compared_branch_name in enumerate(compared_branch_names):
