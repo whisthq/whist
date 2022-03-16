@@ -98,6 +98,9 @@ char* generate_random_string(size_t length) {
  * client/sdl_utils.c
  **/
 
+// Disable this test on Linux because our Linux CI environment
+// doesn't have a working X11 server.
+#ifndef __linux__
 TEST_F(ProtocolTest, InitSDL) {
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
@@ -359,9 +362,11 @@ TEST_F(ProtocolTest, InitSDL) {
 
     destroy_sdl(new_window);
     whist_destroy_mutex(window_resize_mutex);
+    whist_frontend_destroy(frontend);
 
     check_stdout_line(::testing::HasSubstr("Destroying SDL"));
 }
+#endif  // defined(__linux__)
 
 // Test network calls ignoring EINTR.
 
