@@ -27,6 +27,6 @@ Once you are done, you can check for Terraform code formatting with `terraform f
 
 If you need to add support for a new region within an existing cloud provider, follow the module definitions in `main.tf` within a specific environment. Note that it is **essential** for Terraform to be consistent across regions, as we make assumptions that deploy and development resources will be named analogously across regions. Since non-compute resources are usually very cheap to create, we recommend automatically enabling **all** regions when adding a new cloud provider.
 
-## Publishing
+## Deployment
 
 NOTE: You should **NEVER** manually deploy the Terraform infrastructure to Whist. We deploy Terraform as part of our CI pipeline using the `whist-build-and-deploy.yml` file. You can test deploying changes within your own AWS personal account or within a test environment by running `terraform apply` once you're done with your changes.
