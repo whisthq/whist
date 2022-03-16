@@ -435,7 +435,9 @@ int whist_client_main(int argc, const char* argv[]) {
             if (!window) {
                 LOG_FATAL("Failed to initialize SDL");
             }
+            LOG_INFO("[SDL]window created!!!!!!!!!!!!!!!!!!!!!!!!!!");
         }
+
 
         // set the window minimum size
         SDL_SetWindowMinimumSize((SDL_Window*)window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
@@ -498,9 +500,11 @@ int whist_client_main(int argc, const char* argv[]) {
         // so it can synchronize with us
         send_message_dimensions();
 
+        int first_time=1;
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
+
             // This should be called BEFORE the call to read_piped_arguments,
             // otherwise one URL may get lost.
             send_new_tab_url_if_needed();
@@ -510,6 +514,13 @@ int whist_client_main(int argc, const char* argv[]) {
 
             // Try rendering anything out, if there's something to render out
             renderer_try_render(whist_renderer);
+
+            extern int g_has_rendered_yet;
+            if(first_time&&g_has_rendered_yet)
+            {
+                SDL_ShowWindow((SDL_Window *)window);
+                first_time=0;
+            }
 
             // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set
             // because getting cpu usage statistics is expensive.

@@ -231,7 +231,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     const uint32_t window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL |
                                   SDL_WINDOW_RESIZABLE | (maximized ? SDL_WINDOW_MAXIMIZED : 0) |
-                                  (skip_taskbar ? SDL_WINDOW_SKIP_TASKBAR : 0);
+                                  (skip_taskbar ? SDL_WINDOW_SKIP_TASKBAR : 0|SDL_WINDOW_HIDDEN);
 
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
