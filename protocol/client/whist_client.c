@@ -304,6 +304,31 @@ static void send_new_tab_url_if_needed(void) {
     }
 }
 
+/*
+const int Error=-1;
+const int Done=1;
+const int Pending=0;
+int init_result=Pending;
+*/
+static int handshake_thread(void * a)
+{
+        WhistTimer handshake_time;
+        start_timer(&handshake_time);  // start timer for measuring handshake time
+        LOG_INFO("Begin measuring handshake");
+
+        if (connect_to_server(server_ip, using_stun, user_email) != 0) {
+            LOG_WARNING("Failed to connect to server.");
+            return -1;
+        }
+
+        // Log to METRIC for cross-session tracking and INFO for developer-facing logging
+        double connect_to_server_time = get_timer(&handshake_time);
+        LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
+        LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
+        return 0;
+}
+
+
 int whist_client_main(int argc, const char* argv[]) {
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
@@ -414,6 +439,14 @@ int whist_client_main(int argc, const char* argv[]) {
             client_exiting = true;
         }
 
+        extern int g_renderer_inited;
+        extern WhistRenderer* g_renderer;
+
+        g_renderer_inited=0;
+        g_renderer=0;
+
+        WhistThread hs_thread=  whist_create_thread(handshake_thread, "handshake",0);
+
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
@@ -429,6 +462,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
         connected = true;
 
+        LOG_INFO("[SDL]before window created!!!!!!!!!!!!!!!!!!!!!!!!!!");
         // Initialize the SDL window (and only do this once!)
         if (!window) {
             window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
@@ -447,6 +481,11 @@ int whist_client_main(int argc, const char* argv[]) {
 
         // Initialize audio and video renderer system
         WhistRenderer* whist_renderer = init_renderer(output_width, output_height);
+
+        int hs_ret;
+        whist_wait_thread(hs_thread, &hs_ret);
+        
+        if(hs_ret==-1) continue;
 
         // reset because now connected
         try_amount = 0;
@@ -478,19 +517,6 @@ int whist_client_main(int argc, const char* argv[]) {
         WhistTimer cpu_usage_statistics_timer;
         start_timer(&cpu_usage_statistics_timer);
 
-        WhistTimer handshake_time;
-        start_timer(&handshake_time);  // start timer for measuring handshake time
-        LOG_INFO("Begin measuring handshake");
-
-        if (connect_to_server(server_ip, using_stun, user_email) != 0) {
-            LOG_WARNING("Failed to connect to server.");
-            continue;
-        }
-
-        // Log to METRIC for cross-session tracking and INFO for developer-facing logging
-        double connect_to_server_time = get_timer(&handshake_time);
-        LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
-        LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
 
         // Create threads to receive udp/tcp packets and handle them as needed
         // Pass the whist_renderer so that udp packets can be fed into it
@@ -503,6 +529,9 @@ int whist_client_main(int argc, const char* argv[]) {
         int first_time=1;
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
+
+
+        LOG_INFO("[INIT] all done!!!!!!!!!!!!!!!!");
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
 
             // This should be called BEFORE the call to read_piped_arguments,

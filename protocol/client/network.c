@@ -95,6 +95,13 @@ int connect_to_server(const char *server_ip, bool with_stun, const char *user_em
     wcmsg.init_message.os = WHIST_LINUX;
 #endif
 
+    extern int  g_renderer_inited;
+
+    while(g_renderer_inited)
+    {
+        whist_sleep(5);
+    }
+    
     // Send the init packet
     if (send_packet(&packet_tcp_context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1,
                     false) < 0) {

@@ -60,6 +60,8 @@ Public Function Implementations
 ============================
 */
 
+WhistRenderer* g_renderer=0;
+int g_renderer_inited=0;
 WhistRenderer* init_renderer(int initial_width, int initial_height) {
     WhistRenderer* whist_renderer = (WhistRenderer*)safe_malloc(sizeof(WhistRenderer));
     memset(whist_renderer, 0, sizeof(WhistRenderer));
@@ -83,6 +85,8 @@ WhistRenderer* init_renderer(int initial_width, int initial_height) {
         whist_create_thread(multithreaded_renderer, "multithreaded_renderer", whist_renderer);
 
     // Return the struct
+
+    g_renderer=whist_renderer;
     return whist_renderer;
 }
 
