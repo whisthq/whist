@@ -87,6 +87,7 @@ WhistRenderer* init_renderer(int initial_width, int initial_height) {
     // Return the struct
 
     g_renderer=whist_renderer;
+    g_renderer_inited=1;
     return whist_renderer;
 }
 

@@ -97,7 +97,7 @@ int connect_to_server(const char *server_ip, bool with_stun, const char *user_em
 
     extern int  g_renderer_inited;
 
-    while(g_renderer_inited)
+    while(!g_renderer_inited)
     {
         whist_sleep(5);
     }
