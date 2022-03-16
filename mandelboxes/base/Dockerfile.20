@@ -798,8 +798,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 RUN ln -sf "$(which xeyes)" /usr/bin/whist-application \
     # Overwrite xdg-open with our URI handler
     && ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open \
-    # Set up Whist Protocol symlink (TODO: We don't need to do this)
-    && ln -sf /usr/share/whist/bin/WhistServer /usr/share/whist/WhistServer
 
 # Install protocol dependencies
 COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup-linux-build-environment.sh
@@ -825,7 +823,7 @@ RUN systemctl enable whist-{startup,update-xorg-conf,display,audio,main}
 #########################
 
 # Install Whist Protocol binaries and helper files
-# We do this last and symlink `/usr/share/whist/bin` earlier
-# to make it easier to modify the protocol and rebuild the base
-# Dockerfile without needing to redo many steps
-COPY --from=build-assets protocol/* /usr/share/whist/bin/
+# We do this last to make it easier to modify the
+# protocol and rebuild the base Dockerfile without
+# needing to redo many steps
+COPY --from=build-assets protocol/* /usr/share/whist/

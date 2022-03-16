@@ -33,4 +33,4 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 RUN ln -sf "$(which xterm)" /usr/bin/whist-application
 
 # If needed, install WhistServer and helpers. Must be last step.
-COPY --from=build-assets protocol/* /usr/share/whist/bin/
+COPY --from=build-assets protocol/* /usr/share/whist/

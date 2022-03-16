@@ -35,8 +35,8 @@ The `perf` flamegraph is especially useful on the server side, but some setup is
 When `perf` generates profiling data, it expects to locate the binary at the command path associated with the process _inside the mandelbox_. Therefore, you will need to use symlinks to fake the mandelbox binary location from the host. To do this, simply run on the host:
 
 ```bash
-mkdir -p /usr/share/whist/bin
-sudo ln -sf /home/ubuntu/whist/protocol/build-docker/server/build64 /usr/share/whist/bin
+mkdir -p /usr/share/whist
+sudo ln -sf /home/ubuntu/whist/protocol/build-docker/server/build64 /usr/share/whist
 ```
 
 Note that for the client side of the end-to-end testing framework, the above command is modified to match the client protocol. If you have cloned the monorepo to a different location in your instance, please modify the above command appropriately.
