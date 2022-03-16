@@ -148,9 +148,6 @@ void renderer_update(WhistRenderer* whist_renderer) {
     }
 }
 
-
-int g_has_rendered_yet=0;// hack for testing
-
 void renderer_try_render(WhistRenderer* whist_renderer) {
     // Use a mutex to prevent multiple threads from rendering at once
     whist_lock_mutex(whist_renderer->renderer_mutex);
@@ -186,8 +183,6 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
     // Render out any pending audio or video
     render_video(whist_renderer->video_context);
     if (has_video_rendered_yet(whist_renderer->video_context)) {
-        if(!g_has_rendered_yet)
-            g_has_rendered_yet=1;
         // Only render audio, if the video has rendered something
         // This is because it feels weird when audio is played to the loading screen
         render_audio(whist_renderer->audio_context);

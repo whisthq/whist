@@ -198,6 +198,8 @@ void receive_video(VideoContext* video_context, VideoFrame* video_frame) {
     }
 }
 
+int g_has_rendered_yet=0;// hack for testing
+
 int render_video(VideoContext* video_context) {
     WhistTimer statistics_timer;
 
@@ -217,7 +219,7 @@ int render_video(VideoContext* video_context) {
 
         // If server thinks the window isn't visible, but the window is visible now,
         // Send a START_STREAMING message
-        if (!frame->is_window_visible && sdl_is_window_visible()) {
+        if (g_has_rendered_yet && !frame->is_window_visible && sdl_is_window_visible()) {
             // The server thinks the client window is occluded/minimized, but it isn't. So
             // we'll correct it. NOTE: Most of the time, this is just because there was a
             // delay between the window losing visibility and the server reacting.
@@ -231,6 +233,13 @@ int render_video(VideoContext* video_context) {
 
         whist_analyzer_record_decode_video();
         if (!frame->is_empty_frame) {
+
+            if(frame->frame_type==VIDEO_FRAME_TYPE_INTRA)
+            {
+                if(!g_has_rendered_yet)
+                 g_has_rendered_yet=1;
+            }
+
             if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
                 // Indicate to the server that this frame is received
                 // in full and will be decoded.
