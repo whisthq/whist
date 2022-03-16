@@ -192,23 +192,29 @@ if __name__ == "__main__":
         network_conditions = "normal"
         if experiment_metadata and "network_conditions" in experiment_metadata:
             network_conditions = experiment_metadata["network_conditions"]
-        if network_conditions != "normal" and "," in network_conditions:
-            network_conditions = network_conditions.split(",")
+        human_readable_network_conditions = network_conditions
+        if (
+            human_readable_network_conditions != "normal"
+            and "," in human_readable_network_conditions
+        ):
+            human_readable_network_conditions = human_readable_network_conditions.split(",")
             bandwidth = (
-                network_conditions[0] if network_conditions[0] != "none" else "full available"
+                human_readable_network_conditions[0]
+                if human_readable_network_conditions[0] != "none"
+                else "full available"
             )
             delay = (
-                network_conditions[1] + " ms"
-                if network_conditions[1] != "none"
-                else network_conditions[1]
+                human_readable_network_conditions[1] + " ms"
+                if human_readable_network_conditions[1] != "none"
+                else human_readable_network_conditions[1]
             )
             packet_drops = (
-                "{:.2f}".format(float(network_conditions[2]) * 100.0)
-                if network_conditions[2] != "none"
-                else network_conditions[2]
+                "{:.2f}%".format(float(human_readable_network_conditions[2]) * 100.0)
+                if human_readable_network_conditions[2] != "none"
+                else human_readable_network_conditions[2]
             )
-            network_conditions = (
-                f"Bandwidth: {bandwidth}, Delay: {delay} ms, Packet Drops: {packet_drops}"
+            human_readable_network_conditions = (
+                f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}"
             )
 
         client_metrics = None
@@ -228,6 +234,7 @@ if __name__ == "__main__":
             "network_conditions": network_conditions
             if (client_metrics is not None and server_metrics is not None)
             else "unknown",
+            "human_readable_network_conditions": human_readable_network_conditions,
             "outcome": e2e_script_outcomes[i],
             "dirname": os.path.basename(log_dir),
         }
@@ -235,7 +242,7 @@ if __name__ == "__main__":
         experiments.append(experiment_entry)
         found_error = client_metrics is None or server_metrics is None
         print(
-            f"\t+ Folder: {log_dir} with network_conditions: {network_conditions}. Error: {found_error}"
+            f"\t+ Folder: {log_dir} with network_conditions: {human_readable_network_conditions}. Error: {found_error}"
         )
 
     # Add entries for experiments that failed or were skipped
@@ -256,14 +263,14 @@ if __name__ == "__main__":
         for i, experiment in enumerate(experiments):
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
             if experiment["dirname"] is not None:
-                results_file.write(
-                    f"* **Experiment {i+1}** - Network conditions: {experiment['network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}. Download logs (if they exist) with command: `aws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive`\n"
+                summary_file.write(
+                    f"* **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}. Download logs (if they exist) with command: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
                 )
             else:
-                results_file.write(
-                    f"* **Experiment {i+1}** - Network conditions: {experiment['network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}.`\n"
+                summary_file.write(
+                    f"* **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}.`\n"
                 )
-        results_file.write("\n")
+        summary_file.write("\n")
 
     for i, compared_branch_name in enumerate(compared_branch_names):
         print(f"Comparing to branch {compared_branch_name}")
@@ -272,7 +279,7 @@ if __name__ == "__main__":
         results_file.write(f"## Results compared to branch {compared_branch_name}\n")
         for j, experiment in enumerate(experiments):
             results_file.write(
-                f"### Experiment {j+1} - Network conditions: {experiment['network_conditions']}\n"
+                f"### Experiment {j+1} - Network conditions: {experiment['human_readable_network_conditions']}\n"
             )
             if experiment["outcome"] != "success":
                 results_file.write(

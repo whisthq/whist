@@ -127,9 +127,11 @@ python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </p
 ---
 
 ### The `Protocol: End-to-End Streaming Testing` CI workflow
+
 The `Protocol: End-to-End Streaming Testing` workflow defines a Github CI Action that automatically runs the End-To-End streaming test within a Github runner, retrieves and saves the logs to a S3 bucket, and post the results to Github Gist, as a comment on a PR body, and/or on Slack, depending on the settings.
 
 #### Triggers
+
 The `Protocol: End-to-End Streaming Testing` workflow is currently set up so that it is triggered by 3 events:
 
 1. `schedule`: on weekdays at 00:01am UTC, we run the test on the default branch (`dev`), using the latest commit.
@@ -137,6 +139,7 @@ The `Protocol: End-to-End Streaming Testing` workflow is currently set up so tha
 3. `workflow_dispatch`: the test can also be run manually by triggering the workflow from [this page.](https://github.com/whisthq/whist/actions/workflows/protocol-e2e-streaming-testing.yml)
 
 #### Network conditions
+
 The `Protocol: End-to-End Streaming Testing` workflow runs the E2E test a total of 4 times, one for each of the following network conditions on the client EC2 instance:
 
 1. _Normal condition_: no artificial network condition degradation is applied
@@ -145,24 +148,27 @@ The `Protocol: End-to-End Streaming Testing` workflow runs the E2E test a total 
 4. _Reduced bandwidth, packet drops, and delay_: the client bandwidth is artificially limited to a max transmit/receive rate of 1Mbit/s, and incoming/outgoing packets are dropped with a probability of 10%, and an additional delay of 100ms is applied to all traffic.
 
 #### Instances used
+
 Running the test on fresh instances is relatively time-consuming, mainly due to the time that it takes to build the `mandelbox/base` Docker container, upon which both the server (`browsers/chrome`) and the client (`development/client`) mandelbox are based. More specifically, each E2E run on a fresh instance currently takes about 40mins, so testing under 4 different network conditions would take a total of 160mins.
 We can significantly reduce the test time by reusing instances, which speeds up the build phase thanks to caching. To do so, we created the following two instances on `us-east-1`:
 
 1. `protocol-integration-tester-client` with instance ID: `i-061d322780ae41d19`
 2. `protocol-integration-tester-server` with instance ID: `i-0ceaa243ec8cfc667`
 
-These instances are started every time a `Protocol: End-to-End Streaming Testing` workflow is run, and stopped once the workflow completes. 
+These instances are started every time a `Protocol: End-to-End Streaming Testing` workflow is run, and stopped once the workflow completes.
 
 If you need to access the two machines above, you can do so by using the key name `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR` and the corresponding certificate `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR.pem`, which is stored on S3 in the `fractal-dev-secrets/E2E_test_secrets/` folder.
 
 #### Turnstyle
-Because multiple instances of the `Protocol: End-to-End Streaming Testing` can run at once, and we can only run one test at a time on the two instances above, we need a mechanism for the workflow instances to coordinate, so that no two of them run concurrently. We can do this through the Turnstyle Github Action, using [this version](https://github.com/rpadaki/turnstyle) from @rpadaki. 
+
+Because multiple instances of the `Protocol: End-to-End Streaming Testing` can run at once, and we can only run one test at a time on the two instances above, we need a mechanism for the workflow instances to coordinate, so that no two of them run concurrently. We can do this through the Turnstyle Github Action, using [this version](https://github.com/rpadaki/turnstyle) from @rpadaki.
 
 #### Posting logs to S3
-Upon completion of the test (no matter if the steps succeeded, failed, were cancelled, or were skipped), we upload all protocol logs to S3. The logs are available at the path `s3://whist-e2e-protocol-test-logs/<branch_name>/datetime`. 
+
+Upon completion of the test (no matter if the steps succeeded, failed, were cancelled, or were skipped), we upload all protocol logs to S3. The logs are available at the path `s3://whist-e2e-protocol-test-logs/<branch_name>/datetime`.
 
 After a run of the workflow, you can quickly download the logs from S3 by copying the commands that are printed at the end of the `Upload logs to S3 for debugging purposes` step output on CI and running them in your terminal.
 
 #### Posting results
-Upon completion of the test, the `Protocol: End-to-End Streaming Testing` posts the results on a secret Github Gist, which is accessible by the link that is printed at the end of the `Parse & Display Test Results` step output on CI. For nightly runs on `dev`, we also post the result on Slack, in the `alerts-dev` channel. When the workflow is triggered by a commit to a branch with an open PR, we also post the results as a comment to that PR's body.
 
+Upon completion of the test, the `Protocol: End-to-End Streaming Testing` posts the results on a secret Github Gist, which is accessible by the link that is printed at the end of the `Parse & Display Test Results` step output on CI. For nightly runs on `dev`, we also post the result on Slack, in the `alerts-dev` channel. When the workflow is triggered by a commit to a branch with an open PR, we also post the results as a comment to that PR's body.
