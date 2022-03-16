@@ -171,7 +171,6 @@ int read_piped_arguments(bool run_only_once) {
     char read_char = 0;
     bool keep_reading = true;
     bool finished_line = false;
-    bool keep_iterating = true;
 
 #ifndef _WIN32
     int available_chars;

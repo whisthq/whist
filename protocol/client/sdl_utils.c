@@ -196,17 +196,17 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // set the default size of the unmaximized window to be 50% of the display's
     // width and height. Even if this isn't a multiple of 8, it's fine because
     // clicking the minimize button will trigger an SDL resize event.
-    SDL_DisplayMode displayInfo;
-    if (SDL_GetDesktopDisplayMode(0, &displayInfo)) {
+    SDL_DisplayMode display_info;
+    if (SDL_GetDesktopDisplayMode(0, &display_info)) {
         LOG_WARNING("SDL_GetCurrentDisplayMode failed: %s", SDL_GetError());
     }
 
     if (target_output_width == 0) {
-        target_output_width = displayInfo.w / 2;
+        target_output_width = display_info.w / 2;
     }
 
     if (target_output_height == 0) {
-        target_output_height = displayInfo.h / 2;
+        target_output_height = display_info.h / 2;
     }
 
     SDL_Window* sdl_window;
