@@ -55,20 +55,25 @@ from e2e_helpers.whist_server_tools import (
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 DESCRIPTION = """
-This script will spin a g4dn.xlarge EC2 instance with two Docker containers
-and run a protocol streaming performance test between the two of them. 
+This script will spin one or two g4dn.xlarge EC2 instances (depending on the parameters you pass in), \
+start two Docker containers (one for the Whist client, one for the Whist server), and run a protocol \
+streaming performance test between the two of them. In case one EC2 instance is used, the two Docker \
+containers are started on the same instance.
 """
 
 parser = argparse.ArgumentParser(description=DESCRIPTION)
 
 parser.add_argument(
     "--ssh-key-name",
-    help="The name of the AWS RSA SSH key you wish to use to connect to the instances for configuration. This is most likely the name of your personal development keypair in AWS. Required.",
+    help="The name of the AWS RSA SSH key you wish to use to access the E2 instance(s). If you are running the \
+    script locally, the key name is likely of the form <yourname-key>. Make sure to pass the key-name for the \
+    region of interest. Required.",
     required=True,
 )
 parser.add_argument(
     "--ssh-key-path",
-    help="The full path to your RSA SSH key corresponding to the --ssh-key-name you provided. Required.",
+    help="The path to the .pem certificate on this machine to use in connection to the RSA SSH key passed to \
+    the --ssh-key-name arg. Required.",
     required=True,
 )
 parser.add_argument(
@@ -79,7 +84,8 @@ parser.add_argument(
 
 parser.add_argument(
     "--region-name",
-    help="The AWS region to use for testing",
+    help="The AWS region to use for testing. If you are looking to re-use an instance for the client and/or server, \
+    the instance(s) must live on the region passed to this parameter.",
     type=str,
     choices=[
         "us-east-1",
@@ -108,14 +114,21 @@ parser.add_argument(
 
 parser.add_argument(
     "--use-existing-server-instance",
-    help="The ID of the existing instance to use for the test. If left empty, a clean instance will be generated instead.",
+    help="The instance ID of an existing instance to use for the Whist server during the E2E test. You can only \
+    pass a value to this parameter if you passed `true` to --use-two-instances. Otherwise, the server will be \
+    installed and run on the same instance as the client. The instance will be stopped upon completion. \
+    If left empty (and --use-two-instances=true), a clean new instance will be generated instead, and it will \
+    be terminated (instead of being stopped) upon completion of the test.",
     type=str,
     default="",
 )
 
 parser.add_argument(
     "--use-existing-client-instance",
-    help="The ID of the existing instance to use for the test. If left empty, a clean instance will be generated instead.",
+    help="The instance ID of an existing instance to use for the Whist dev client during the E2E test. If the flag \
+    --use-two-instances=false is used (or if the flag --use-two-instances is not used), the Whist server will also \
+    run on this instance. The instance will be stopped upon completion. If left empty, a clean new instance will \
+    be generated instead, and it will be terminated (instead of being stopped) upon completion of the test.",
     type=str,
     default="",
 )
@@ -130,7 +143,8 @@ parser.add_argument(
 
 parser.add_argument(
     "--leave-instances-on",
-    help="This option allows you to avoid stopping/terminating the instances upon completion of the test",
+    help="This option allows you to override the default behavior and leave the instances running upon completion \
+    of the test, instead of stopping (if reusing existing ones) or terminating (if creating new ones) them.",
     type=str,
     choices=["false", "true"],
     default="false",
@@ -138,7 +152,8 @@ parser.add_argument(
 
 parser.add_argument(
     "--skip-host-setup",
-    help="This option allows you to skip the host-setup on the instances to be used for the test",
+    help="This option allows you to skip the host-setup on the instances to be used for the test. \
+    This will save you a good amount of time.",
     type=str,
     choices=["false", "true"],
     default="false",
@@ -146,7 +161,10 @@ parser.add_argument(
 
 parser.add_argument(
     "--skip-git-clone",
-    help="This option allows you to skip cloning the Whist repository on the instances to be used for the test",
+    help="This option allows you to skip cloning the Whist repository on the instance(s) to be used for the test. \
+    The test will also not checkout the current branch or pull from Github, using the code from the whist folder \
+    on the existing instance(s) as is. This option is useful if you need to run several tests in succession \
+    using code from the same commit.",
     type=str,
     choices=["false", "true"],
     default="false",
@@ -163,21 +181,23 @@ parser.add_argument(
 
 parser.add_argument(
     "--testing-url",
-    help="The URL to visit for testing",
+    help="The URL to visit during the test. The default is a 4K video stored on S3.",
     type=str,
     default="https://fractal-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4",
 )
 
 parser.add_argument(
     "--testing-time",
-    help="The length of the performance test in seconds",
+    help="The time (in seconds) to wait at the URL from the `--testing-url` flag before shutting down the \
+    client/server and grabbing the logs and metrics. The default value is the duration of the 4K video \
+    from S3 mentioned above.",
     type=int,
     default=126,  # Length of the video in link above is 2mins, 6seconds
 )
 
 parser.add_argument(
     "--cmake-build-type",
-    help="The cmake build type to use",
+    help="The Cmake build type to use when building the protocol.",
     type=str,
     choices=["dev", "prod", "metrics"],
     default="metrics",
@@ -185,7 +205,9 @@ parser.add_argument(
 
 parser.add_argument(
     "--aws-credentials-filepath",
-    help="The path to the file containing the AWS config credentials",
+    help="The path (on the machine running this script) to the file containing the AWS credentials to use \
+    to access the Whist AWS console. The file should contain the access key id and the secret access key. \
+    It is created/updated when running `aws configure`",
     type=str,
     default=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
 )
@@ -194,7 +216,8 @@ parser.add_argument(
     "--network-conditions",
     help="The network condition for the experiment. The input is in the form of three comma-separated floats \
     indicating the max bandwidth, delay (in ms), and percentage of packet drops (in the range [0.0,1.0]). \
-    'normal' will allow the network to run with no degradation.",
+    'normal' will allow the network to run with no degradation. For example, pass --network-conditions \
+    1Mbit,100,0.1 to simulate a bandwidth of 1Mbit/s, 100ms delay and 10 percent probability of packet drop",
     type=str,
     default="normal",
 )
