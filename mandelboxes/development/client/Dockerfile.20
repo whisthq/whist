@@ -29,5 +29,5 @@ COPY mouse_events.py /usr/share/whist/mouse_events.py
 COPY --chown=root:root --chmod=600 whist-main.service /etc/systemd/system
 RUN systemctl enable whist-main
 
-# Install Whist Protocol binaries and helper files (if necessary)
+# If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/bin/

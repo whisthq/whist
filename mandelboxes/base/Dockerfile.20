@@ -264,7 +264,7 @@ RUN cd /whist-teleport-drag-drop/src \
     && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
     && gcc -Wall unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
 
-################ STAGE 6: hydraulic-press #####################
+################ STAGE 5: hydraulic-press #####################
 # - Copy, set permissions for, and install all base mandelbox
 #   scripts, services, and config files to the hydraulic-squash
 #   directory so that they can be neatly organized here while
@@ -407,7 +407,7 @@ COPY --chmod=555 teleport/uri-handler/whist-teleport-uri-handler.sh $HYDRAULIC_R
 COPY --chmod=550 main/run-whist-server.sh $HYDRAULIC_ROOT/usr/share/whist/run-whist-server.sh
 COPY --chown=root:root --chmod=600 main/whist-main.service $HYDRAULIC_ROOT/etc/systemd/system
 
-################ STAGE 7: whist-base ######################
+################ STAGE 6: whist-base ######################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build

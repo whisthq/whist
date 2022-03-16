@@ -58,5 +58,5 @@ ENV WHIST_DEST_BROWSER="brave"
 COPY start-brave.sh /usr/bin/start-brave
 RUN chmod +x /usr/bin/start-brave && ln -sf /usr/bin/start-brave /usr/bin/whist-application
 
-# Install Whist Protocol binaries and helper files (if necessary)
+# If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/bin/

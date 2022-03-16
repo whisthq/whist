@@ -32,5 +32,5 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 # Set up the xterm Whist application symlink
 RUN ln -sf "$(which xterm)" /usr/bin/whist-application
 
-# Install Whist Protocol binaries and helper files (if necessary)
+# If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/bin/
