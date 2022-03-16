@@ -16,9 +16,11 @@ const Importer = (props: {
     setBrowser(b)
   }
 
-  const onSubmit = (b: string) => {
+  const onSubmit = (shouldImport: boolean) => {
     setProcessing(true)
-    props.onSubmit(b)
+    setTimeout(() => {
+      props.onSubmit(shouldImport ? browser : "")
+    }, 2000)
   }
 
   useEffect(() => {
@@ -69,14 +71,14 @@ const Importer = (props: {
                 ? WhistButtonState.PROCESSING
                 : WhistButtonState.DEFAULT
             }
-            onClick={() => onSubmit(browser)}
+            onClick={() => onSubmit(true)}
           />
         </div>
         {props.allowSkip && (
           <div className="relative top-12">
             <button
               className="text-blue-light font-bold outline-none bg-none"
-              onClick={() => onSubmit("")}
+              onClick={() => onSubmit(false)}
             >
               Skip for now
             </button>
