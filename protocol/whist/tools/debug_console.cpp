@@ -53,7 +53,7 @@ Globals
 // the UDP port debug console listens on
 // if you use debug_console heavily, during developing you can set this to a positive
 // value, then debug console will start by default
-static int debug_console_listen_port = 9090;
+static int debug_console_listen_port = -1;
 static SOCKET debug_console_listen_socket = INVALID_SOCKET;
 
 static int atexit_handler_inserted = 0;
