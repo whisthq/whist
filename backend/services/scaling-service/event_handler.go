@@ -251,8 +251,12 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, subsc
 				// the client version information received from the database.
 				scalingEvent.Type = "DATABASE_CLIENT_VERSION_EVENT"
 
-				if len(subscriptionEvent.ClientAppVersions) > 0 {
+				// We only expect one version to come from the database subscription,
+				// anything more or less than it indicates an error in our backend.
+				if len(subscriptionEvent.ClientAppVersions) == 1 {
 					version = subscriptionEvent.ClientAppVersions[0]
+				} else {
+					logger.Errorf("Unexpected length of %v in version received from the config database.", len(subscriptionEvent.ClientAppVersions))
 				}
 
 				// TODO: once we keep track of client versions per region,
