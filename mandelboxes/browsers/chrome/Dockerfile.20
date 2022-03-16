@@ -111,12 +111,12 @@ ENV WHIST_DEST_BROWSER="chrome"
 COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whist-application
 
-# Install Whist Protocol binaries and helper files (if necessary)
-COPY --from=build-assets protocol/* /usr/share/whist/bin/
-
 # Install and configure our kde proxy
 COPY --chmod=555 teleport-kde-proxy.py /opt/teleport/teleport-kde-proxy.py
 RUN apt-get update && apt-get install -y --no-install-recommends kdialog \
     && rm usr/bin/kdialog \
     && ln -s /opt/teleport/teleport-kde-proxy.py /usr/bin/kdialog \
     && rm -rf /var/lib/apt/lists/*
+
+# If needed, install WhistServer and helpers. Must be last step.
+COPY --from=build-assets protocol/* /usr/share/whist/bin/
