@@ -325,9 +325,7 @@ void destroy_sdl(SDL_Window* window_param) {
     }
 
     LOG_INFO("Destroying SDL");
-#if defined(_WIN32)
-    UnhookWindowsHookEx(g_h_keyboard_hook);
-#endif
+
     if (window_param) {
         SDL_DestroyWindow((SDL_Window*)window_param);
         window_param = NULL;
