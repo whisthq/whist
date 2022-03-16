@@ -717,6 +717,32 @@ TEST_F(ProtocolTest, LogThreadTest) {
     destroy_logger();
 }
 
+TEST_F(ProtocolTest, LogRateLimitTest) {
+    whist_init_logger();
+
+    for (int i = 0; i <= 30; i++) {
+        if (i == 10 || i == 30) {
+            whist_sleep(1000);
+        }
+        LOG_INFO_RATE_LIMITED(1.0, 3, "Test %d", i);
+    }
+
+    destroy_logger();
+
+    expect_thread_logs("Logger Thread");
+
+    check_stdout_line(::testing::HasSubstr("Logging initialized!"));
+    check_stdout_line(::testing::EndsWith("Test 0"));
+    check_stdout_line(::testing::EndsWith("Test 1"));
+    check_stdout_line(::testing::EndsWith("Test 2"));
+    check_stdout_line(::testing::EndsWith("Test 10"));
+    check_stdout_line(::testing::HasSubstr("7 messages suppressed since"));
+    check_stdout_line(::testing::EndsWith("Test 11"));
+    check_stdout_line(::testing::EndsWith("Test 12"));
+    check_stdout_line(::testing::EndsWith("Test 30"));
+    check_stdout_line(::testing::HasSubstr("17 messages suppressed since"));
+}
+
 /**
  * utils/color.c
  **/
