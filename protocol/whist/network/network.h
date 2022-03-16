@@ -183,6 +183,7 @@ typedef struct {
     double video_fec_ratio;
     CodecType desired_codec;
     bool saturate_bandwidth;
+    bool congestion_detected;
 } NetworkSettings;
 
 /**
