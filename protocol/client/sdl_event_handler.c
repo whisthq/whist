@@ -27,7 +27,7 @@ Includes
 #include "network.h"
 #include "native_window_utils.h"
 #include <whist/utils/atomic.h>
-#include <whist/tools/debug_console.h>
+#include <whist/debug/debug_console.h>
 
 // Keyboard state variables
 static bool alt_pressed = false;

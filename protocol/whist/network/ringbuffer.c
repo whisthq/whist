@@ -7,8 +7,8 @@ Includes
 #include "ringbuffer.h"
 #include <assert.h>
 #include <whist/fec/fec.h>
-#include <whist/tools/protocol_analyzer.h>
-#include <whist/tools/debug_console.h>
+#include <whist/debug/protocol_analyzer.h>
+#include <whist/debug/debug_console.h>
 
 /*
 ============================

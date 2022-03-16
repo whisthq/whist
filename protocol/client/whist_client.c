@@ -51,7 +51,7 @@ Includes
 #include "native_window_utils.h"
 #include "client_statistic.h"
 #include "renderer.h"
-#include <whist/tools/debug_console.h>
+#include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
 
 #ifdef __APPLE__

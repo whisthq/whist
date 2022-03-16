@@ -119,4 +119,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends kdialog \
     && rm -rf /var/lib/apt/lists/*
 
 # If needed, install WhistServer and helpers. Must be last step.
-COPY --from=build-assets protocol/* /usr/share/whist/bin/
+COPY --from=build-assets protocol/* /usr/share/whist/

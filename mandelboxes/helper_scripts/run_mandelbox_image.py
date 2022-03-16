@@ -75,7 +75,7 @@ args = parser.parse_args()
 HOST_SERVICE_URL = f"https://{args.host_address}:{args.host_port}/"
 HOST_SERVICE_CERT_PATH = "/whist/cert.pem"
 local_host_service = args.host_address == "127.0.0.1"
-mandelbox_server_path = os.path.abspath("/usr/share/whist/bin")
+mandelbox_server_path = os.path.abspath("/usr/share/whist")
 
 PortBindings = namedtuple(
     "PortBindings", ["host_port_32262tcp", "host_port_32263udp", "host_port_32273tcp"]

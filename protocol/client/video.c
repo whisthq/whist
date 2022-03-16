@@ -38,7 +38,7 @@ Includes
 #include "network.h"
 #include "client_utils.h"
 #include "client_statistic.h"
-#include <whist/tools/protocol_analyzer.h>
+#include <whist/debug/protocol_analyzer.h>
 
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false

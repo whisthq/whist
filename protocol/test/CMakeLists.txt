@@ -45,7 +45,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../whist/utils/lodepng.cpp
 
         # Debug console
-        ../whist/tools/debug_console.cpp
+        ../whist/debug/debug_console.cpp
     )
 # Server & Client files, for Windows/Linux (supported on both client and server)
 else()
@@ -96,7 +96,7 @@ else()
         ../whist/utils/lodepng.cpp
 
         # Debug console
-        ../whist/tools/debug_console.cpp
+        ../whist/debug/debug_console.cpp
 )
 endif()
 
