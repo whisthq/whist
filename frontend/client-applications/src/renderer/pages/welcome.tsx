@@ -18,7 +18,7 @@ const Welcome = (props: { onSubmit: () => void }) => {
       <canvas
         id="gradient-canvas"
         className="opacity-0 animate-fade-in"
-        style={{ animationDelay: "5000ms" }}
+        style={{ animationDelay: "5500ms" }}
       ></canvas>
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div className="absolute m-auto text-center mt-24 z-50 w-full h-full mix-blend-overlay">
