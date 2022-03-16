@@ -85,6 +85,15 @@ parser.add_argument(
     default="success",
 )
 
+parser.add_argument(
+    "--post-results-on-slack",
+    help="Whether to post the results of the experiment on Slack. This should happen for the nightly runs of \
+    the experiment, but not when the experiment is run as part of a PR",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -120,6 +129,8 @@ if __name__ == "__main__":
         current_branch_name = github_ref_name
     else:
         current_branch_name = os.getenv("GITHUB_HEAD_REF")
+
+    post_results_on_slack = args.post_results_on_slack == "true"
 
     # A list of metrics to display (if found) in main table
     most_interesting_metrics = {
@@ -176,9 +187,29 @@ if __name__ == "__main__":
         server_log_file = os.path.join(log_dir, "server", "server.log")
 
         experiment_metadata = parse_metadata(log_dir)
+
+        # Get network conditions, and format them in human-readable form
         network_conditions = "normal"
         if experiment_metadata and "network_conditions" in experiment_metadata:
             network_conditions = experiment_metadata["network_conditions"]
+        if network_conditions != "normal" and "," in network_conditions:
+            network_conditions = network_conditions.split(",")
+            bandwidth = (
+                network_conditions[0] if network_conditions[0] != "none" else "full available"
+            )
+            delay = (
+                network_conditions[1] + " ms"
+                if network_conditions[1] != "none"
+                else network_conditions[1]
+            )
+            packet_drops = (
+                "{:.2f}".format(float(network_conditions[2]) * 100.0)
+                if network_conditions[2] != "none"
+                else network_conditions[2]
+            )
+            network_conditions = (
+                f"Bandwidth: {bandwidth}, Delay: {delay} ms, Packet Drops: {packet_drops}"
+            )
 
         client_metrics = None
         server_metrics = None
@@ -198,6 +229,7 @@ if __name__ == "__main__":
             if (client_metrics is not None and server_metrics is not None)
             else "unknown",
             "outcome": e2e_script_outcomes[i],
+            "dirname": os.path.basename(log_dir),
         }
 
         experiments.append(experiment_entry)
@@ -214,22 +246,37 @@ if __name__ == "__main__":
             "server_metrics": None,
             "network_conditions": "unknown",
             "outcome": e2e_script_outcomes[i],
+            "dirname": None,
         }
         experiments.append(experiment_entry)
         print("\t+ Adding empty entry for failed/skipped experiment")
 
+    with open(f"streaming_e2e_test_results_0.md", "w") as summary_file:
+        summary_file.write("### Experiments summary:\n\n")
+        for i, experiment in enumerate(experiments):
+            outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
+            if experiment["dirname"] is not None:
+                results_file.write(
+                    f"* **Experiment {i+1}** - Network conditions: {experiment['network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}. Download logs (if they exist) with command: `aws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive`\n"
+                )
+            else:
+                results_file.write(
+                    f"* **Experiment {i+1}** - Network conditions: {experiment['network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}.`\n"
+                )
+        results_file.write("\n")
+
     for i, compared_branch_name in enumerate(compared_branch_names):
         print(f"Comparing to branch {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
-        results_file = open(f"streaming_e2e_test_results_{i}.md", "w")
+        results_file = open(f"streaming_e2e_test_results_{i+1}.md", "w")
         results_file.write(f"## Results compared to branch {compared_branch_name}\n")
         for j, experiment in enumerate(experiments):
             results_file.write(
-                f"### Experiment {j} - Network conditions: {experiment['network_conditions']}\n"
+                f"### Experiment {j+1} - Network conditions: {experiment['network_conditions']}\n"
             )
             if experiment["outcome"] != "success":
                 results_file.write(
-                    f":bangbang::warning: WARNING: the outcome of the experiment below was: `{experiment['outcome']}` \
+                    f":x: WARNING: the outcome of the experiment below was: `{experiment['outcome']}` \
                     and the results below (if any) might be inaccurate!\n\n"
                 )
             if experiment["client_metrics"] is None or experiment["server_metrics"] is None:
@@ -306,7 +353,7 @@ if __name__ == "__main__":
 
     # Create one file for each branch
 
-    md_files = glob.glob("*.md")
+    md_files = glob.glob("streaming_e2e_test_results_*.md")
     files_list = []
     merged_files = ""
     for filename in md_files:
@@ -317,12 +364,21 @@ if __name__ == "__main__":
 
     gist_url = create_github_gist_post(github_gist_token, title, files_list)
 
-    # Post updates to Slack channel if we are on branch `dev` and a slack webhook is set
-    if slack_webhook and current_branch_name == "dev":
+    test_outcome_verb = "succeeded :white_check_mark:"
+    for outcome in e2e_script_outcomes:
+        if outcome == "cancelled":
+            test_outcome_verb = "was cancelled :x:"
+        elif outcome == "skipped":
+            test_outcome_verb = "was skipped :x:"
+        elif outcome == "failure":
+            test_outcome_verb = "failed :x:"
+
+    # Post updates to Slack channel if desired
+    if slack_webhook and post_results_on_slack:
         slack_catchy_title = f":rocket::face_with_cowboy_hat::bar_chart: {title} :rocket::face_with_cowboy_hat::bar_chart:"
         slack_post(
             slack_webhook,
-            body=f"New E2E dev benchmark results available! Check them out here: {gist_url}\n",
+            body=f"New E2E `{current_branch_name}` test results available! The test {test_outcome_verb}. Check out the details here: {gist_url}\n",
             slack_username="Whist Bot",
             title=slack_catchy_title,
         )
