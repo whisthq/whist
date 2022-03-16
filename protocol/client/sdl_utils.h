@@ -90,7 +90,8 @@ void sdl_update_framebuffer_loading_screen(int idx);
  *                                 using the provided texture.
  *
  * @param data                     The data pointers to the image
- *                                 The image must be of the format WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT
+ *                                 The image must be of the format
+ * WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT
  * @param linesize                 The linesize data for the image
  * @param width                    The width of the image
  * @param height                   The height of the image

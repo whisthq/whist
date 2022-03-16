@@ -476,9 +476,9 @@ void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize
             LOG_INFO("Creating sws context to convert from %s to %s",
                      av_get_pix_fmt_name(input_format),
                      av_get_pix_fmt_name(WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT));
-            video_context->sws =
-                sws_getContext(width, height, input_format, width, height,
-                               WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+            video_context->sws = sws_getContext(width, height, input_format, width, height,
+                                                WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT,
+                                                SWS_FAST_BILINEAR, NULL, NULL, NULL);
             av_image_alloc(static_data, static_linesize, width, height,
                            WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT, 32);
         }
