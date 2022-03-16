@@ -19,10 +19,27 @@ Includes
 #include "client.h"
 #include "network.h"
 
-// Threads dependent on client being active
-static atomic_int threads_needing_active = ATOMIC_VAR_INIT(0);
-// Threads currently assuming client is active
-static atomic_int threads_holding_active = ATOMIC_VAR_INIT(0);
+/*
+============================
+Custom Types
+============================
+*/
+
+struct ClientPrivateData {
+    bool is_permanently_deactivated;  // Whether or not the client has permanently deactivated
+    // Mutex protecting the cond
+    WhistMutex cond_mutex;
+    // Cond that gets signaled on activation or permanent deactivation
+    WhistCondition cond;
+    // Read lock is held by anyone holding a client active lock
+    RWLock activation_rwlock;
+};
+
+// Represents an actively held activation lock on the client
+struct ClientLock {
+    // The Client that this ClientLock refers to
+    Client* client;
+};
 
 /*
 ============================
@@ -30,142 +47,144 @@ Public Functions
 ============================
 */
 
-int init_client(Client *client) {
-    /*
-        Initializes the client object.
-        Must be called before the client object can be used.
-
-        NOTE: Locks shouldn't matter. They are getting created.
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
+Client* init_client() {
+    Client* client = safe_malloc(sizeof(Client));
 
     client->is_active = false;
-    init_rw_lock(&client->tcp_rwlock);
+    client->is_deactivating = false;
 
-    return 0;
+    client->private_data = safe_malloc(sizeof(ClientPrivateData));
+    client->private_data->is_permanently_deactivated = false;
+    client->private_data->cond_mutex = whist_create_mutex();
+    client->private_data->cond = whist_create_cond();
+    init_rw_lock(&client->private_data->activation_rwlock);
+
+    return client;
 }
 
-int destroy_clients(Client *client) {
-    /*
-        De-initializes all clients objects in the client buffer.
-        Should be called after initClients() and before program exit.
-        Does not disconnect any connected clients.
-
-        NOTE: Locks shouldn't matter. They are getting trashed.
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
-    destroy_rw_lock(&client->tcp_rwlock);
-    return 0;
+void destroy_client(Client* client) {
+    // Destroy everything
+    destroy_rw_lock(&client->private_data->activation_rwlock);
+    whist_destroy_cond(client->private_data->cond);
+    whist_destroy_mutex(client->private_data->cond_mutex);
+    free(client->private_data);
+    free(client);
 }
 
-int start_quitting_client(Client *client) {
-    /*
-        Begins deactivating client, but does not clean up its
-        resources yet. Must be called before `quit_client`.
-    */
+void activate_client(Client* client) {
+    whist_lock_mutex(client->private_data->cond_mutex);
 
+    // Mark as active
+    LOG_INFO("Client Active");
+    client->is_active = true;
+    // Wake up everyone waiting on client activation
+    whist_broadcast_cond(client->private_data->cond);
+
+    whist_unlock_mutex(client->private_data->cond_mutex);
+}
+
+void start_deactivating_client(Client* client) {
+    whist_lock_mutex(client->private_data->cond_mutex);
+
+    // Verify that this is an active client
+    FATAL_ASSERT(client->is_active);
+
+    // Mark as deactivating, if not already marked as such
     client->is_deactivating = true;
-    return 0;
+
+    whist_unlock_mutex(client->private_data->cond_mutex);
 }
 
-int quit_client(Client *client) {
-    /*
-        Deactivates active client. Disconnects client. Updates count of active
-        clients. Only does anything on an active client. The associated client
-        object is not destroyed and may be made active in the future.
+void deactivate_client(Client* client) {
+    // Verify that this is a client being deactivated
+    FATAL_ASSERT(client->is_active);
+    FATAL_ASSERT(client->is_deactivating);
 
-        Arguments:
-            client (Client*): target client
-            id (int): Client ID of active client to deactivate
+    // Wait for no one to hold an activation lock anymore
+    // (No new locks will be held after this point, since is_deactivating == true)
+    write_lock(&client->private_data->activation_rwlock);
+    write_unlock(&client->private_data->activation_rwlock);
 
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
+    // Update the client state is inactive
+    whist_lock_mutex(client->private_data->cond_mutex);
 
-    // If client is not active, just return
-    if (!client->is_active) {
-        return 0;
-    }
-
-    // Client and server share file transfer indexes when sending files, so
-    //     when a client disconnects, we need to reset the transferring files
-    //     to make sure that if a client reconnects that the indices are fresh.
-    reset_all_transferring_files();
-
+    client->is_deactivating = false;
+    LOG_INFO("Client Inactive");
     client->is_active = false;
-    destroy_socket_context(&client->udp_context);
-    destroy_socket_context(&client->tcp_context);
-    client->is_deactivating = false;
-    return 0;
+
+    whist_unlock_mutex(client->private_data->cond_mutex);
 }
 
-void add_thread_to_client_active_dependents(void) {
-    /*
-        Add thread to count of those dependent on client being active
-    */
+void permanently_deactivate_client(Client* client) {
+    whist_lock_mutex(client->private_data->cond_mutex);
 
-    atomic_fetch_add(&threads_needing_active, 1);
+    // Verify that the client isn't active
+    FATAL_ASSERT(!client->is_active);
+
+    // Mark as permanently inactive
+    client->private_data->is_permanently_deactivated = true;
+    // Wake up everyone waiting on client activation, since the client will never activate
+    whist_broadcast_cond(client->private_data->cond);
+
+    whist_unlock_mutex(client->private_data->cond_mutex);
 }
 
-static void remove_thread_from_holding_active_count(void) {
-    /*
-        Remove thread from those currently assuming that client is active
-    */
+ClientLock* client_active_lock(Client* client) {
+    whist_lock_mutex(client->private_data->cond_mutex);
 
-    atomic_fetch_sub(&threads_holding_active, 1);
-}
+    ClientLock* client_lock = safe_malloc(sizeof(ClientLock));
+    client_lock->client = client;
 
-void reset_threads_holding_active_count(Client *client) {
-    /*
-        Set the thread count regarding a client as active to the full
-        dependent thread count again. This is needed when a new client
-        is made active after the previous one has been deactivated
-        and quit.
-
-        NOTE: Should only be called from `multithreaded_manage_client`
-    */
-
-    atomic_store(&threads_holding_active, atomic_load(&threads_needing_active));
-    client->is_deactivating = false;
-}
-
-void update_client_active_status(Client *client, bool *is_thread_assuming_active) {
-    /*
-        Allows a thread to update its status on whether it believes
-        the client is active or not. If a client is deactivating,
-        we want the thread to stop believing that the client is active,
-        but otherwise will leave the status as is.
-
-        Arguments:
-            is_thread_assuming_active (bool*): pointer to the boolean
-                that the thread is using to indicate whether it believes
-                the client is currently active.
-                >> If the client should change its belief, this pointer
-                is populated with the new value.
-    */
-
-    if (client->is_deactivating) {
-        if (*is_thread_assuming_active) {
-            *is_thread_assuming_active = false;
-            remove_thread_from_holding_active_count();
+    while (true) {
+        // If it's already active and we're not trying to deactivate, we're done
+        if (client->is_active && !client->is_deactivating) {
+            // Grab an activation lock
+            read_lock(&client->private_data->activation_rwlock);
+            break;
+        } else if (client->private_data->is_permanently_deactivated) {
+            // Note status as permanently deactivated and exit
+            free(client_lock);
+            client_lock = NULL;
+            break;
         }
-    } else if (client->is_active && !*is_thread_assuming_active) {
-        *is_thread_assuming_active = true;
+
+        // Otherwise, wait on the next new connection
+        // (Or, a permanently deactivated client)
+        whist_wait_cond(client->private_data->cond, client->private_data->cond_mutex);
     }
+
+    whist_unlock_mutex(client->private_data->cond_mutex);
+
+    return client_lock;
 }
 
-bool threads_still_holding_active(void) {
-    /*
-        Whether there remain any threads that are assuming that
-        the client is active.
+ClientLock* client_active_trylock(Client* client) {
+    whist_lock_mutex(client->private_data->cond_mutex);
 
-        Returns:
-            (bool): whether any threads need the client to still be active
-    */
+    ClientLock* client_lock = safe_malloc(sizeof(ClientLock));
+    client_lock->client = client;
 
-    return atomic_load(&threads_holding_active) > 0;
+    // If it's already active and we're not trying to deactivate, we're done
+    if (client->is_active && !client->is_deactivating) {
+        // Grab an activation lock
+        read_lock(&client->private_data->activation_rwlock);
+    } else {
+        // Could not grab the lock
+        free(client_lock);
+        client_lock = NULL;
+    }
+
+    whist_unlock_mutex(client->private_data->cond_mutex);
+
+    return client_lock;
+}
+
+void client_active_unlock(ClientLock* client_lock) {
+    // Verify the lock is valid, and that the client is active
+    FATAL_ASSERT(client_lock != NULL);
+    FATAL_ASSERT(client_lock->client->is_active);
+
+    // Let go of the activation lock
+    read_unlock(&client_lock->client->private_data->activation_rwlock);
+    free(client_lock);
 }

@@ -350,18 +350,21 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
     LOG_INFO("WhistNotification consists of: title=%s, message=%s", notif.title, notif.message);
 
     // Parse protocol client from void pointer
-    Client *server_state_client = (Client *)user_data;
+    Client *client = (Client *)user_data;
 
-    // Send notification over server
-    WhistServerMessage wsmsg_notif;
-    wsmsg_notif.type = SMESSAGE_NOTIFICATION;
-    wsmsg_notif.notif = notif;
-    if (server_state_client->is_active &&
-        broadcast_udp_packet(server_state_client, PACKET_MESSAGE, &wsmsg_notif,
-                             sizeof(WhistServerMessage), 1) >= 0) {
-        LOG_INFO("Notification packet sent");
-    } else {
-        LOG_ERROR("Notification packet send failed");
+    ClientLock *client_lock = client_active_trylock(client);
+    if (client_lock != NULL) {
+        // Send notification to client
+        WhistServerMessage wsmsg_notif;
+        wsmsg_notif.type = SMESSAGE_NOTIFICATION;
+        wsmsg_notif.notif = notif;
+        if (send_packet(&client->udp_context, PACKET_MESSAGE, &wsmsg_notif,
+                        sizeof(WhistServerMessage), 1, false) < 0) {
+            LOG_ERROR("Notification packet send failed");
+        } else {
+            LOG_INFO("Notification packet sent");
+        }
+        client_active_unlock(client_lock);
     }
 
     return DBUS_HANDLER_RESULT_HANDLED;

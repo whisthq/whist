@@ -72,13 +72,14 @@ struct _whist_server_state {
 
     whist_server_config* config;
 
+    // TODO: Move to client.h struct, and get out of global state
     volatile int connection_id;
     volatile WhistOSType client_os;
 
     volatile bool exiting;
     volatile bool stop_streaming;
     bool client_joined_after_window_name_broadcast;
-    Client client;
+    Client* client;
 
     // This `update_encoder` should be set to true,
     // when the above "requested" variables have changed

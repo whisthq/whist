@@ -78,14 +78,31 @@ int32_t multithreaded_send_audio(void* opaque) {
         return -1;
     }
 
-    add_thread_to_client_active_dependents();
+    // Wait for the client to lock
+    int previous_connection_id = -1;
+    ClientLock* client_lock = client_active_lock(state->client);
 
-    // setup
-    bool assuming_client_active = false;
-    while (!state->exiting) {
-        update_client_active_status(&state->client, &assuming_client_active);
+    // Audio Loop
+    while (client_lock != NULL) {
+        // Refresh the client activation lock, to let the client (re/de)activate if it's trying to
+        client_active_unlock(client_lock);
+        client_lock = client_active_lock(state->client);
+        if (client_lock == NULL) {
+            break;
+        }
 
-        // for each available packet
+        // If a new connection occured, restart the stream
+        if (previous_connection_id != state->client->connection_id) {
+            // Clear the audio buffer on a new connection
+            for (get_next_packet(audio_device); packet_available(audio_device);
+                 get_next_packet(audio_device)) {
+                get_buffer(audio_device);
+                release_buffer(audio_device);
+            }
+            previous_connection_id = state->client->connection_id;
+        }
+
+        // Process each available audio packet
         for (get_next_packet(audio_device); packet_available(audio_device);
              get_next_packet(audio_device)) {
             get_buffer(audio_device);
@@ -94,16 +111,15 @@ int32_t multithreaded_send_audio(void* opaque) {
                 LOG_WARNING("Audio buffer size too large!");
             } else if (audio_device->buffer_size > 0) {
 #if USING_AUDIO_ENCODE_DECODE
-
-                // add samples to encoder fifo
+                // Add samples to encoder fifo
 
                 audio_encoder_fifo_intake(audio_encoder, audio_device->buffer,
                                           audio_device->frames_available);
 
-                // while fifo has enough samples for an aac frame, handle it
+                // While fifo has enough samples for an aac frame, handle it
                 while (av_audio_fifo_size(audio_encoder->audio_fifo) >=
                        audio_encoder->context->frame_size) {
-                    // create and encode a frame
+                    // Create and encode a frame
 
                     WhistTimer t;
                     start_timer(&t);
@@ -121,7 +137,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                     log_double_statistic(AUDIO_ENCODE_TIME, get_timer(&t) * 1000);
                     if (audio_encoder->encoded_frame_size > (int)MAX_AUDIOFRAME_DATA_SIZE) {
                         LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
-                    } else if (assuming_client_active && state->client.is_active) {
+                    } else {
                         static char buf[LARGEST_AUDIOFRAME_SIZE];
                         AudioFrame* frame = (AudioFrame*)buf;
                         frame->audio_frequency = audio_device->sample_rate;
@@ -130,34 +146,29 @@ int32_t multithreaded_send_audio(void* opaque) {
                         write_avpackets_to_buffer(audio_encoder->num_packets,
                                                   audio_encoder->packets, (void*)frame->data);
 
-                        if (state->client.is_active) {
-                            send_packet(
-                                &state->client.udp_context, PACKET_AUDIO, frame,
-                                MAX_AUDIOFRAME_METADATA_SIZE + audio_encoder->encoded_frame_size,
-                                id, false);
-                            // Simulate nacks to trigger re-sending of previous frames.
-                            // TODO: Move into udp.c
-                            udp_reset_duplicate_packet_counter(&state->client.udp_context,
-                                                               PACKET_AUDIO);
-                            for (int i = 1; i <= NUM_PREV_AUDIO_FRAMES_RESEND && id - i > 0; i++) {
-                                // Audio is always only one UDP packet per audio frame.
-                                // Average bytes per audio frame = (Samples_per_frame * Bitrate) /
-                                //                                 (BITS_IN_BYTE * Sampling freq)
-                                //                               = (480 * 128000) / (8 * 48000)
-                                //                               = 160 bytes only
-                                udp_resend_packet(&state->client.udp_context, PACKET_AUDIO, id - i,
-                                                  0);
-                            }
-                            id++;
+                        send_packet(
+                            &state->client->udp_context, PACKET_AUDIO, frame,
+                            MAX_AUDIOFRAME_METADATA_SIZE + audio_encoder->encoded_frame_size, id,
+                            false);
+                        // Simulate nacks to trigger re-sending of previous frames.
+                        // TODO: Move into udp.c
+                        udp_reset_duplicate_packet_counter(&state->client->udp_context,
+                                                           PACKET_AUDIO);
+                        for (int i = 1; i <= NUM_PREV_AUDIO_FRAMES_RESEND && id - i > 0; i++) {
+                            // Audio is always only one UDP packet per audio frame.
+                            // Average bytes per audio frame = (Samples_per_frame * Bitrate) /
+                            //                                 (BITS_IN_BYTE * Sampling freq)
+                            //                               = (480 * 128000) / (8 * 48000)
+                            //                               = 160 bytes only
+                            udp_resend_packet(&state->client->udp_context, PACKET_AUDIO, id - i, 0);
                         }
+                        id++;
                     }
                 }
 #else
-                if (state->client.is_active) {
-                    send_packet(&state->client.udp_context, PACKET_AUDIO, audio_device->buffer,
-                                audio_device->buffer_size, id, false);
-                    id++;
-                }
+                send_packet(&state->client->udp_context, PACKET_AUDIO, audio_device->buffer,
+                            audio_device->buffer_size, id, false);
+                id++;
 #endif
             }
 
@@ -166,6 +177,12 @@ int32_t multithreaded_send_audio(void* opaque) {
         wait_timer(audio_device);
     }
 
+    // If we're holding a client lock, unlock it
+    if (client_lock != NULL) {
+        client_active_unlock(client_lock);
+    }
+
+    // TODO: Why are we no longer destroying this?
     // destroy_audio_encoder(audio_encoder);
     destroy_audio_device(audio_device);
     return 0;

@@ -5,9 +5,19 @@
  * @file client.h
  * @brief This file contains the code for interacting with the client buffer.
 
-See
-https://www.notion.so/whisthq/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=755123dad01244f3a0a3ced5139228a3
-for the specification for multi-client code
+Client is a wrapper around the client state, and the client connection information.
+
+All client functions in this header file must be called on a single thread (The "client management
+thread"). The only exception are functions explicitly marked as thread-safe.
+
+This information inside of the client struct can only be accessed on other threads if the client is
+_active_. The client is only guaranteed to be active, if a client activation lock is actively held.
+The client will not deactivate while a client activation lock is actively held.
+
+The client's data is guaranteed to be valid while the client is active, but should still only be
+used in a thread-safe way. Each unique activation, will be assigned its own connection_id. This to
+identify if a new connection has occured.
+
 */
 
 /*
@@ -26,16 +36,35 @@ Custom types
 ============================
 */
 
-typedef struct Client {
+typedef struct ClientPrivateData ClientPrivateData;
+
+typedef struct {
+    // PUBLIC
+
     /* ACTIVE */
-    bool is_active;        // "protected" by `is_deactivating`
-    bool is_deactivating;  // whether a client is in the process of deactivating
+    // This is public data for the client management thread
+    // This data should only be accessed on the client management thread
+    bool is_active;        // Whether or not a client is active
+    bool is_deactivating;  // Whether a client is in the process of deactivating
+
+    // The publc data below this line is only valid on other threads when a client activity lock is
+    // held Note that multiple threads may access the below data, so it must be thread-safe and/or
+    // locked appropriately
 
     /* NETWORK */
-    SocketContext udp_context;  // "protected" by global `is_deactivating`
-    SocketContext tcp_context;  // "protected" by global `is_deactivating`
-    RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
+    // Unique identifier for this connection
+    int connection_id;
+    // Network contexts for communication to/from the client
+    SocketContext udp_context;
+    SocketContext tcp_context;
+
+    // PRIVATE
+
+    // Private data, do not access
+    ClientPrivateData* private_data;
 } Client;
+
+typedef struct ClientLock ClientLock;
 
 /*
 ============================
@@ -46,99 +75,91 @@ Public Functions
 /**
  * @brief                          Initializes client object.
  *
- * @details                        Must be called before the client object
- *                                 can be used.
- *
- * @param client				   the client context to initialize
- *
- * @returns                        Returns -1 on failure, 0 on success
+ * @returns                        Returns the new client
  */
-int init_client(Client* client);
+Client* init_client(void);
 
 /**
- * @brief                          De-initializes all clients objects in the
- *                                 client buffer.
+ * @brief                          De-initializes all client data.
  *
- * @details                        Should be called after initClients() and
+ * @details                        Should be called after init_client() and
  *                                 before program exit. Does not disconnect any
  *                                 connected clients.
  *
- * @param client				   the client context to destroy
+ * @param client                   The client context to destroy
  *
- * @returns                        Returns -1 on failure, 0 on success
+ * @note                           This function is not thread-safe with any other function,
+ *                                 since it destroys the locks
  */
-int destroy_clients(Client* client);
+void destroy_client(Client* client);
 
 /**
- * @brief                          Begins deactivating client, but does not clean up
- *                                 its resources yet. Must be called before `quit_client`.
+ * @brief                          Marks the client as active
  *
- * @param client				   Target client
+ * @param client                   The client to activate
  */
-int start_quitting_client(Client* client);
+void activate_client(Client* client);
 
 /**
- * @brief                          Deactivates active client.
+ * @brief                          Marks a client for deactivation, but does not deactivate it yet.
  *
- * @details                        Disconnects client. Updates count of active
- *                                 clients. May only be called on an active
- *                                 client. The associated client object is
- *                                 not destroyed and may be made active in the
- *                                 future.
+ * @param client                   The client to mark for deactivation
  *
- * @param client				   Target client
+ * @note                           client->is_deactivating will show whether or not an active client
+ *                                 has been marked for deactivation.
  *
- * @returns                        Returns -1 on failure, 0 on success
+ * @note                           This function can be thread-safe relative to the other client
+ *                                 management functions, but it is only thread-safe if a client
+ *                                 activation lock is held in that thread.
  */
-int quit_client(Client* client);
+void start_deactivating_client(Client* client);
 
 /**
- * @brief                          Add thread to count of those dependent on
- *                                 client being active.
+ * @brief                          Deactivates an active client.
+ *                                 Blocks until all ClientLock's are unlocked.
  *
- * @details                        This function only needs to be called if the
- *                                 thread depends on any members of `Client`. For
- *                                 example, if a thread uses Client.udp_context,
- *                                 we don't want the resource to be destroyed while
- *                                 the thread continues to think that the client is
- *                                 active. This also means that the thread has to
- *                                 call `remove_thread_from_holding_active_count`
- *                                 eventually to release its hold on the active
- *                                 client. This is typically done through a call to
- *                                 `update_client_active_status` in the thread loop.
+ * @param client                   The client to deactivate
  */
-void add_thread_to_client_active_dependents(void);
+void deactivate_client(Client* client);
 
 /**
- * @brief                          Set the thread count regarding a client as
- *                                 active to the full dependent thread count
- *                                 again. This is needed when a new client is
- *                                 made active after the previous one has been
- *                                 deactivated and quit.
+ * @brief                          Marks a client as permanently deactivated.
+ *                                 This will cause all attempts to lock the client to return NULL.
+ *
+ * @param client                   The client to permanently deactivate
  */
-void reset_threads_holding_active_count(Client* client);
+void permanently_deactivate_client(Client* client);
 
 /**
- * @brief                          Allows a thread to update its status on
- *                                 whether it believes the client is active or
- *                                 not. If a client is deactivating, we want the
- *                                 thread to stop believing that the client is
- *                                 active, but otherwise will leave the status as is.
+ * @brief                          Gets a lock on an active client.
+ *                                 This will block until the client is both active
+ *                                 and not pending deactivation.
  *
- * @param client				    Target client
- * @param is_thread_assuming_active Pointer to the boolean that the thread is using
- *                                  to indicate whether it believes the client is
- *                                  currently active
+ * @param client                   The client to wait for activation on
+ *
+ * @returns                        The lock, or NULL if the client was permanently deactivated
+ *
+ * @note                           This function is thread-safe relative to
+ *                                 the other client management functions
+ *
+ * @note                           This lock should be released often,
+ *                                 or the client will never be able to re/deactivate.
  */
-void update_client_active_status(Client* client, bool* is_thread_assuming_active);
+ClientLock* client_active_lock(Client* client);
+
+// Same as client_active_lock,
+// but quickly returns NULL if the client is not active or is pending deactivation.
+// This function is guaranteed to return promptly.
+ClientLock* client_active_trylock(Client* client);
 
 /**
- * @brief                          Whether there remain any threads that are assuming
- *                                 that the client is active.
+ * @brief                          Releases the lock on an active client.
  *
- * @returns                        Whether any threads need the client to still be
- *                                 active
+ * @param client_lock              The lock to unlock
+ *
+ * @note                           This function is thread-safe relative to
+ *                                 the other client management functions
  */
-bool threads_still_holding_active(void);
+void client_active_unlock(ClientLock* client_lock);
 
 #endif  // SERVER_CLIENT_H

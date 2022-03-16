@@ -66,6 +66,7 @@ static WhistSemaphore producer;
 // send_populated_frames/send_empty_frame will populate one of the frame_buf's, and then wait
 // While multithreaded_send_video_packets is working to send the other frame_buf over the network
 static char encoded_frame_buf[2][LARGEST_VIDEOFRAME_SIZE];
+static bool run_multithreaded_send_video_packets;
 static int send_frame_id;
 static int currently_sending_index;
 static NetworkSettings network_settings;
@@ -439,55 +440,80 @@ static VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncode
 // bandwidth, without dropping frames.
 static int32_t multithreaded_send_video_packets(void* opaque) {
     whist_server_state* state = (whist_server_state*)opaque;
-    add_thread_to_client_active_dependents();
-    bool assuming_client_active = false;
-    WhistTimer statistics_timer;
-    while (!state->exiting) {
-        update_client_active_status(&state->client, &assuming_client_active);
-        if (!assuming_client_active) {
-            whist_sleep(1);
+    // Information to resend the previous frame
+    int last_id = -1;
+    int previous_connection_id = -1;
+    int index = 0;
+    while (true) {
+        // TODO: Move to UDP's update_socket, and remove the sleep-loop
+        // Till a new frame, send any nack or duplicate packets as required
+        if (whist_semaphore_value(producer) == 0 && last_id != -1) {
+            bool did_work = false;
+
+            ClientLock* client_lock = client_active_trylock(state->client);
+            if (client_lock != NULL) {
+                // If there are nack packets to send, then don't send duplicate packets
+                if (udp_handle_pending_nacks(state->client->udp_context.context)) {
+                    did_work = true;
+                } else if (network_settings.saturate_bandwidth &&
+                           state->client->connection_id == previous_connection_id) {
+                    // TODO: Make network saturation work, even when connection_id is new
+                    // If requested by the client, keep sending duplicate packets to saturate the
+                    // network bandwidth, till a new frame is available. Re-send all indices of this
+                    // video frame in a round-robin manner
+                    udp_resend_packet(&state->client->udp_context, PACKET_VIDEO, last_id, index);
+                    index++;
+                    int num_indices =
+                        udp_get_num_indices(&state->client->udp_context, PACKET_VIDEO, last_id);
+                    if (num_indices < 0) {
+                        // Something wrong happened
+                        LOG_ERROR("udp_get_num_indices returned %d", num_indices);
+                        index = 0;
+                    } else if (num_indices == index) {
+                        index = 0;
+                    }
+                    did_work = true;
+                }
+
+                client_active_unlock(client_lock);
+            }
+
+            if (!did_work) {
+                // Sleep for 0.1ms before checking again.
+                whist_usleep(100);
+            }
             continue;
         }
+
+        // Wait for us to receive a video frame
         whist_wait_semaphore(producer);
+        // Exit if this was an exit state
+        if (!run_multithreaded_send_video_packets) {
+            break;
+        }
+
+        // Consume the video frame
+        WhistTimer statistics_timer;
         start_timer(&statistics_timer);
         VideoFrame* frame = (VideoFrame*)encoded_frame_buf[currently_sending_index];
-        int id = send_frame_id;
-        if (state->client.is_active && !state->exiting) {
-            send_packet(&state->client.udp_context, PACKET_VIDEO, frame,
-                        get_total_frame_size(frame), id,
+        ClientLock* client_lock = client_active_trylock(state->client);
+        if (client_lock != NULL) {
+            send_packet(&state->client->udp_context, PACKET_VIDEO, frame,
+                        get_total_frame_size(frame), send_frame_id,
                         VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type));
+            previous_connection_id = state->client->connection_id;
+            client_active_unlock(client_lock);
         }
+        // Mark the video frame as sent
         whist_post_semaphore(consumer);
         log_double_statistic(VIDEO_SEND_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
-        int index = 0;
-        udp_reset_duplicate_packet_counter(&state->client.udp_context, PACKET_VIDEO);
-        // Till a new frame, send any nack or duplicate packets as required
-        while (state->client.is_active && !state->exiting && whist_semaphore_value(producer) == 0) {
-            update_client_active_status(&state->client, &assuming_client_active);
-            if (!assuming_client_active) {
-                break;
-            }
-            // If there are nack packets to send, then don't send duplicate packets
-            if (udp_handle_pending_nacks(state->client.udp_context.context)) {
-                continue;
-            } else if (network_settings.saturate_bandwidth) {
-                // If requested by the client, keep sending duplicate packets to saturate the
-                // network bandwidth, till a new frame is available. Re-send all indices of this
-                // video frame in a round-robin manner
-                udp_resend_packet(&state->client.udp_context, PACKET_VIDEO, id, index++);
-                int num_indices = udp_get_num_indices(&state->client.udp_context, PACKET_VIDEO, id);
-                if (num_indices < 0) {
-                    break;
-                } else if (num_indices == index) {
-                    index = 0;
-                }
-            } else {
-                whist_usleep(100);  // Sleep for 0.1ms before checking again.
-            }
-        }
+        udp_reset_duplicate_packet_counter(&state->client->udp_context, PACKET_VIDEO);
+        // Variables for network saturation resending
+        last_id = send_frame_id;
+        index = 0;
     }
 
-    // Post this to unblock `multithreaded_send_video()` semaphore waits
+    // Post this to unblock any `multithreaded_send_video()` semaphore waits
     whist_post_semaphore(consumer);
     return 0;
 }
@@ -545,40 +571,53 @@ int32_t multithreaded_send_video(void* opaque) {
     state->pending_encoder = false;
     state->encoder_finished = false;
 
-    add_thread_to_client_active_dependents();
-
     NetworkSettings last_network_settings = {0};
 
     // Create producer-consumer semaphore pair with queue size of 1
     producer = whist_create_semaphore(0);
     consumer = whist_create_semaphore(1);
+    run_multithreaded_send_video_packets = true;
     WhistThread video_send_packets = whist_create_thread(multithreaded_send_video_packets,
                                                          "multithreaded_send_video_packets", state);
 
     int consecutive_identical_frames = 0;
-    bool assuming_client_active = false;
 
-    // Wait till client dimensions are available, so that we know the capture resolution
-    while (!state->exiting &&
-           (state->client_width == -1 || state->client_height == -1 || state->client_dpi == -1)) {
-        whist_sleep(1);
-    }
+    // Wait for the client to lock
+    int previous_connection_id = -1;
+    bool initialized_network_settings = false;
+    ClientLock* client_lock = client_active_lock(state->client);
 
-    // If we're exiting, then no need to do anything
-    if (!state->exiting) {
-        udp_handle_network_settings(
-            state->client.udp_context.context,
-            get_default_network_settings(state->client_width, state->client_height,
-                                         state->client_dpi));
-    }
+    // The video loop
+    while (client_lock != NULL) {
+        // Refresh the client activation lock, to let the client (re/de)activate if it's trying to
+        client_active_unlock(client_lock);
+        client_lock = client_active_lock(state->client);
+        if (client_lock == NULL) {
+            break;
+        }
 
-    while (!state->exiting) {
-        update_client_active_status(&state->client, &assuming_client_active);
-
-        if (!assuming_client_active || !state->client.is_active) {
-            whist_sleep(1);
+        // If a new connection occured, restart the stream
+        if (previous_connection_id != state->client->connection_id) {
             state->stream_needs_restart = true;
-            continue;
+            initialized_network_settings = false;
+            previous_connection_id = state->client->connection_id;
+        }
+
+        // Wait till client dimensions are available, so that we know the capture resolution
+        // TODO: Make this information part of the init handshake, so we don't have to busy-loop for
+        // this information
+        if (!initialized_network_settings) {
+            if (state->client_width == -1 || state->client_height == -1 ||
+                state->client_dpi == -1) {
+                whist_sleep(1);
+                continue;
+            } else {
+                // Update the network settings based on the above information
+                udp_handle_network_settings(
+                    state->client->udp_context.context,
+                    get_default_network_settings(state->client_width, state->client_height,
+                                                 state->client_dpi));
+            }
         }
 
         // Update device with new parameters
@@ -606,7 +645,7 @@ int32_t multithreaded_send_video(void* opaque) {
             state->stream_needs_restart = true;
         }
 
-        network_settings = udp_get_network_settings(&state->client.udp_context);
+        network_settings = udp_get_network_settings(&state->client->udp_context);
 
         int video_bitrate =
             network_settings.video_bitrate * (1.0 - network_settings.video_fec_ratio);
@@ -647,13 +686,11 @@ int32_t multithreaded_send_video(void* opaque) {
         // To measure the full pre-capture to post-render E2E latency
         timestamp_us server_timestamp = current_time_us();
         timestamp_us client_input_timestamp =
-            state->client.is_active ? udp_get_client_input_timestamp(&state->client.udp_context)
-                                    : 0;
+            udp_get_client_input_timestamp(&state->client->udp_context);
 
         // Check if the udp connection's stream has been reset
         bool pending_stream_reset =
-            state->client.is_active &&
-            get_pending_stream_reset(&state->client.udp_context, PACKET_VIDEO);
+            get_pending_stream_reset(&state->client->udp_context, PACKET_VIDEO);
         if (pending_stream_reset) {
             state->stream_needs_recovery = true;
         }
@@ -715,8 +752,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
 
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
-        if (state->client.is_active &&
-            (accumulated_frames > 0 || state->stream_needs_restart ||
+        if ((accumulated_frames > 0 || state->stream_needs_restart ||
              (get_timer(&start_frame_timer) > (double)(id - start_frame_id) / min_fps &&
               get_timer(&last_frame_timer) > 1.0 / min_fps))) {
             // This loop only runs ~1/current_fps times per second, every 16-100ms
@@ -745,7 +781,7 @@ int32_t multithreaded_send_video(void* opaque) {
                 // only passing a GPU reference rather than copy to/from the CPU
                 start_timer(&statistics_timer);
                 if (transfer_capture(device, encoder) != 0) {
-                    // if there was a failure
+                    // If there was a failure, exit
                     LOG_ERROR("transfer_capture failed! Exiting!");
                     state->exiting = true;
                     break;
@@ -838,12 +874,18 @@ int32_t multithreaded_send_video(void* opaque) {
         }
     }
 
+    // If we're holding a client lock, unlock it
+    if (client_lock != NULL) {
+        client_active_unlock(client_lock);
+    }
+
     whist_cursor_capture_destroy();
 
 #if SAVE_VIDEO_OUTPUT
     fclose(fp);
 #endif
     // Post this to unblock `multithreaded_send_video_packets()` semaphore waits
+    run_multithreaded_send_video_packets = false;
     whist_post_semaphore(producer);
     whist_wait_thread(video_send_packets, NULL);
     whist_destroy_semaphore(consumer);
