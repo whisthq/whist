@@ -103,16 +103,16 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           # OS-independent matchers
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cppcheck_matcher.json"
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cmake_matcher.json"
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cppcheck_matcher.json"
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cmake_matcher.json"
 
           # OS-specific matchers
           if [ "$RUNNER_OS" == "Linux" ]; then
-              echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/gcc_matcher.json"
+              echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/gcc_matcher.json"
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_matcher.json"
+              echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_matcher.json"
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+              echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
           fi
 
       - name: Build and Test Protocol Client and Server on Windows
@@ -133,7 +133,7 @@ jobs:
         working-directory: protocol
         run: |
           REM Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
           REM Run clang-tidy
           cd build
@@ -175,7 +175,7 @@ jobs:
         working-directory: protocol
         run: |
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
           # Run clang-tidy
           cd build
@@ -205,7 +205,7 @@ jobs:
         working-directory: protocol
         run: |
           # Clang-matcher for clang-format, added after the main build sequence so that clang doesn't match gcc errors
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
           # Print clang-format version for local comparison
           clang-format --version
@@ -224,7 +224,7 @@ jobs:
         working-directory: protocol
         run: |
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
           # Run clang-tidy
           ./build_protocol_targets.sh clang-tidy
