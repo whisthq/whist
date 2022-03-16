@@ -29,11 +29,11 @@ TEST_F(ProtocolTest, ClientParseHelp) {
 
 ## The End-to-End Streaming test
 
-The End-to-End streaming test is an integration test which verifies that all components of the Whist stack (with the exception of the client-app layer) properly interact together to produce the desired overall behavior. In addition to checking that no fatal errors are present at the host-setup, host-service, mandelbox and protocol layers, the E2E test can also be used as a benchmarking suite.
+The End-to-End streaming test is an integration test which is used to test the performance of the Whist streaming protocol.
 
-Running the E2E script in this folder will allow to run the Whist server and client in a controlled and stable environment, thus it will produce (hopefully) reproducible results. The client and server will each live inside a mandelbox, and the two mandelbox will run on either the same or two separate AWS instances, depending on the user's settings.
+Running the E2E script in this folder will allow to run the Whist server and client in a controlled and stable environment, thus it will produce (hopefully) reproducible results. The client and server will each live inside a Docker container, and the two containers will run on either the same or two separate AWS EC2 instances, depending on the chosen test settings, performing a streaming test for a few minutes before reporting logs.
 
-The code in this folder will allow you to run the test on one/two AWS instances and download all the monitoring and benchmarking logs. The scripts can run either on a local machine, or within a CI workflow. The code for the `Protocol: End-to-End Streaming Testing` workflow is not in this folder, and can be found [here](../../.github/workflows/protocol-e2e-streaming-testing.yml). For more details on the workflow, check out the corresponding [section below](#the-protocol-end-to-end-streaming-testing-ci-workflow).
+The code in this folder will allow you to run the test on one/two AWS instances and download all the monitoring and benchmarking logs. The scripts can run either on a local machine, or within a CI workflow. The code for the `Protocol: End-to-End Streaming Testing` workflow is not in this folder, and can be found [here](https://github.com/whisthq/whist/blob/dev/.github/workflows/protocol-e2e-streaming-testing.yml). For more details on the workflow, check out the corresponding [section below](#the-protocol-end-to-end-streaming-testing-ci-workflow).
 
 ### Usage
 
@@ -128,7 +128,7 @@ python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </p
 
 ### The `Protocol: End-to-End Streaming Testing` CI workflow
 
-The `Protocol: End-to-End Streaming Testing` workflow defines a Github CI Action that automatically runs the End-To-End streaming test within a Github runner, retrieves and saves the logs to a S3 bucket, and post the results to Github Gist, as a comment on a PR body, and/or on Slack, depending on the settings.
+The `Protocol: End-to-End Streaming Testing` workflow defines a Github CI Action that automatically triggers the End-To-End streaming test from a GitHub runner, retrieves and saves the logs to a AWS S3 bucket once the test is completed, and post the results to GitHub Gist, as a comment on a PR body, and/or on Slack, depending on the settings.
 
 #### Triggers
 
@@ -171,4 +171,4 @@ After a run of the workflow, you can quickly download the logs from S3 by copyin
 
 #### Posting results
 
-Upon completion of the test, the `Protocol: End-to-End Streaming Testing` posts the results on a secret Github Gist, which is accessible by the link that is printed at the end of the `Parse & Display Test Results` step output on CI. For nightly runs on `dev`, we also post the result on Slack, in the `alerts-dev` channel. When the workflow is triggered by a commit to a branch with an open PR, we also post the results as a comment to that PR's body.
+Upon completion of the test, the `Protocol: End-to-End Streaming Testing` posts the results on a secret GitHub Gist, which is accessible by the link that is printed at the end of the `Parse & Display Test Results` step output on CI. For nightly runs on `dev`, we also post the result on Slack, in the `alerts-dev` channel. When the workflow is triggered by a commit to a branch with an open PR, we also post the results as a comment to that PR's body.
