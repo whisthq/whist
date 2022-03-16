@@ -79,7 +79,7 @@ static int sdl_queue_audio(WhistFrontend* frontend, const uint8_t* data, size_t 
     if (!sdl_audio_is_open(frontend)) {
         return -1;
     }
-    if (SDL_QueueAudio(context->audio_device, data, size) < 0) {
+    if (SDL_QueueAudio(context->audio_device, data, (int)size) < 0) {
         LOG_ERROR("Could not queue audio - %s", SDL_GetError());
         return -1;
     }
