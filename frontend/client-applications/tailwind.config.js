@@ -62,6 +62,7 @@ module.exports = {
         "fade-in-up": "fade-in-up 1s ease-out forwards",
         "fade-in": "fade-in 1s ease-out forwards",
         "translate-up": "translate-up 3s ease-out forwards",
+        "fade-in-slow": "fade-in 4s ease-out forwards",
       },
       transitionProperty: {
         width: "width",

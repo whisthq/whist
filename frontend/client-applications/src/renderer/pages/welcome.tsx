@@ -13,12 +13,12 @@ const Welcome = (props: { onSubmit: () => void }) => {
     <div
       onKeyDown={onKeyDown}
       tabIndex={0}
-      className="flex flex-col h-screen w-full font-body outline-none bg-blue"
+      className="flex flex-col h-screen w-full font-body outline-none bg-gradient-to-b from-blue-light to-blue"
     >
       <canvas
         id="gradient-canvas"
-        className="opacity-0 animate-fade-in"
-        style={{ animationDelay: "5500ms" }}
+        className="opacity-0 animate-fade-in-slow"
+        style={{ animationDelay: "6000ms" }}
       ></canvas>
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div className="absolute m-auto text-center mt-24 z-50 w-full h-full mix-blend-overlay">
