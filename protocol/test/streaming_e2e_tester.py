@@ -55,8 +55,10 @@ from e2e_helpers.whist_server_tools import (
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 DESCRIPTION = """
-This script will spin a g4dn.xlarge EC2 instance with two Docker containers
-and run a protocol streaming performance test between the two of them. 
+This script will spin one or two g4dn.xlarge EC2 instances (depending on the parameters you pass in), \
+start two Docker containers (one for the Whist client, one for the Whist server), and run a protocol \
+streaming performance test between the two of them. In case one EC2 instance is used, the two Docker \
+containers are started on the same instance.
 """
 
 parser = argparse.ArgumentParser(description=DESCRIPTION)
