@@ -2157,6 +2157,16 @@ TEST_F(ProtocolTest, ErrorCodes) {
     }
 }
 
+TEST_F(ProtocolTest, GitRevision) {
+    const char* rev = whist_git_revision();
+    size_t len = strlen(rev);
+
+    EXPECT_EQ(len, 15);
+    for (unsigned int i = 0; i < len; i++) {
+        EXPECT_TRUE(isxdigit(rev[i]));
+    }
+}
+
 /*
 ============================
 Run Tests
