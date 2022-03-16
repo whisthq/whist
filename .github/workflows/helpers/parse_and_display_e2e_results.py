@@ -208,7 +208,7 @@ if __name__ == "__main__":
                 else network_conditions[2]
             )
             network_conditions = (
-                f"Bandwidth: {bandwidth}, Delay: {delay} ms, Packet Drops: {packet_drops:.2f}"
+                f"Bandwidth: {bandwidth}, Delay: {delay} ms, Packet Drops: {packet_drops}"
             )
 
         client_metrics = None
