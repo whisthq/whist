@@ -43,6 +43,8 @@ Public Functions
  *                                 The audio system will receive audio packets,
  *                                 and render the audio out to a playback device
  *
+ * @param frontend                 The frontend for which to initialize audio
+ *
  * @returns                        The new audio context
  */
 AudioContext* init_audio(WhistFrontend* frontend);
