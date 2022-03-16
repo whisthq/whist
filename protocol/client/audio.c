@@ -282,7 +282,7 @@ static void destroy_audio_player(AudioContext* audio_context) {
     }
 }
 
-static int safe_get_audio_queue(AudioContext* audio_context) {
+static size_t safe_get_audio_queue(AudioContext* audio_context) {
     size_t audio_queue = 0;
     if (whist_frontend_audio_is_open(audio_context->target_frontend)) {
         audio_queue = whist_frontend_get_audio_buffer_size(audio_context->target_frontend);
@@ -294,12 +294,12 @@ static int safe_get_audio_queue(AudioContext* audio_context) {
 }
 
 bool is_overflowing_audio(AudioContext* audio_context) {
-    int audio_device_queue = safe_get_audio_queue(audio_context);
+    size_t audio_device_queue = safe_get_audio_queue(audio_context);
 
     // Check if we're overflowing the audio buffer
     if (!audio_context->is_flushing_audio && audio_device_queue > AUDIO_QUEUE_UPPER_LIMIT) {
         // Yes, we are! We should flush the audio buffer
-        LOG_INFO("Audio queue has overflowed, is now %d bytes!", audio_device_queue);
+        LOG_INFO("Audio queue has overflowed, is now %zu bytes!", audio_device_queue);
         audio_context->is_flushing_audio = true;
     } else if (audio_context->is_flushing_audio && audio_device_queue <= TARGET_AUDIO_QUEUE_LIMIT) {
         // Okay, we're done flushing the audio buffer
@@ -314,7 +314,7 @@ bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered)
     FATAL_ASSERT(0 <= num_frames_buffered);
 
     int buffered_bytes =
-        num_frames_buffered * DECODED_BYTES_PER_FRAME + safe_get_audio_queue(audio_context);
+        num_frames_buffered * DECODED_BYTES_PER_FRAME + (int)safe_get_audio_queue(audio_context);
     // Check if we're underflowing the audio buffer
     if (!audio_context->is_buffering_audio && buffered_bytes < AUDIO_QUEUE_LOWER_LIMIT) {
         // Yes, we are! We should buffer for some more audio then
