@@ -188,7 +188,7 @@ int multithreaded_manage_client(void *opaque) {
     start_timer(&first_client_timer);
 
     while (!state->exiting) {
-        if (true) {
+        {
             static timestamp_us last_log_time = 0;
             timestamp_us now = current_time_us();
             if (now - last_log_time > 5 * US_IN_SECOND) {
