@@ -1,89 +1,16 @@
-# Whist Protocol Development Tools
+# Debugging Tools
 
-This folder contains a variety of tools we use to develop the Whist `/protocol` project.
+This folder contains a variety of tools we use to debug and analyze the Whist `/protocol` project.
 
-## Profiling Tools
+## Debug Console
 
-This folder contains scripts we can use to profile protocol performance.
-
-### Flamegraphs
-
-Flamegraphs are a useful visualization of hierarchical data. They can be very useful for displaying folder sizes or filtering processes. In our case, we are using them to visualize CPU time spent in various function calls, using the stack to keep track of nested calls. The code for flamegraph generation here comes from Brendan Gregg's excellent scripts, which can be found at https://github.com/brendangregg/FlameGraph.
-
-#### DTrace Flamegraph
-
-To generate an interactive flamegraph svg from a snapshot of a protocol run, first launch an instance of the protocol and get the PID using something like:
-
-```bash
-pidof WhistClient
-```
-
-Next, run: `./dtrace-flamegraph.sh $PID`, which will use `dtrace` to profile the CPU time of the next 60 seconds of the protocol run and output to `graph.svg`.
-
-To inspect, open `graph.svg` in the browser! It is interactive, so try clicking on functions in the flamegraph to zoom in or using the search functionality in the top right.
-
-Note that in order for function symbols to properly be rendered, you may need to build the protocol in debug mode, using something like
-
-```bash
-cmake -S . -B build-debug -D CMAKE_BUILD_TYPE=Debug
-cd build-debug
-make -j
-```
-
-By default, `dtrace` is disabled on macOS -- mac users will need to disable system integrity protections for `dtrace` specifically. If you have trouble with the [online guide](https://poweruser.blog/using-dtrace-with-sip-enabled-3826a352e64bj) for doing this, then please reach out to `@rpadaki` who can help you to configure your system.
-
-#### Perf Flamegraph
-
-The `perf` flamegraph is especially useful on the server side, but some setup is needed. Since the server protocol runs inside a mandelbox, we must follow the [guidelines below](#mandelbox-considerations). In particular, you will need to profile the mandelbox from the EC2 host, rather than working directly inside the mandelbox.
-
-When `perf` generates profiling data, it expects to locate the binary at the command path associated with the process _inside the mandelbox_. Therefore, you will need to use symlinks to fake the mandelbox binary location from the host. To do this, simply run on the host:
-
-```bash
-mkdir -p /usr/share/whist/bin
-sudo ln -sf /home/ubuntu/whist/protocol/build-docker/server/build64 /usr/share/whist/bin
-```
-
-Note that for the client side of the end-to-end testing framework, the above command is modified to match the client protocol. If you have cloned the monorepo to a different location in your instance, please modify the above command appropriately.
-
-If you want more detailed profiling into some of our dependencies, make sure that the relevant packages are installed on the host. For example, for ALSA shared objects to be installed in the correct location, you may need to run `apt install libasound2-plugins` on the host.
-
-And remember that in order for function symbols to properly be recorded, build the protocol in debug mode (which is the default for mandelbox builds).
-
-Once the setup is complete, the execution is once again simple! Run `pidof WhistServer` to get the PID, followed by
-
-```bash
-sudo ./perf-flamegraph.sh $PID`
-```
-
-As with the DTrace flamegraph, an interactive `graph.svg` will be generated.
-
-#### Other Flamegraphs
-
-Flamegraphs are a very powerful tool and can be used with a number of other profilers. Feel free to add any more useful scripts you build! Again, see https://github.com/brendangregg/FlameGraph for utilities and inspiration.
-
-### Mandelbox Considerations
-
-Due to `seccomp` and `apparmor` filters, as well as namespace switching performed by Docker, directly using many profiling tools inside mandelboxes may be inadequate or impossible. In these cases, it may be desirable to profile _from the host_.
-
-For an example with `gdb`, one can run from the host:
-
-```bash
-sudo gdb -p $(pidof /usr/share/whist/WhistServer)
-```
-
-===
-
-## Debugging Tools
-
-### Debug Console
-
-#### Overview
+### Overview
 
 When enabled, the `Debug Console` provides a telnet style console on port 9090 at client side, allows you to send commands to the client while it is running. You can change parameters of the client interactively/dynamically (e.g. change `bitrate` `audio_fec_ratio` `video_fec_ratio`), or let the program run some commands for you (e.g. get report from `protocol_analyzer`).
 
 You can find images illustrating this process inside this [PR](https://github.com/whisthq/whist/pull/5352).
 
-#### How to enable
+### How to enable
 
 Debug Console can only be enabled with a `DEBUG` build.
 
@@ -101,7 +28,7 @@ Then the following command will run the client with debug console enable on port
 ./wclient 54.219.45.195 -p32262:30420.32263:35760.32273:4473 -k 1ef9aec50197a20aa35b68b85fb7ace0 --debug-console 9090
 ```
 
-#### How to access
+### How to access
 
 the easiest way to access debug console is to use the tool `netcat`:
 
@@ -119,9 +46,9 @@ rlwrap nc 127.0.0.1 9090 -u
 
 (you can get both `netcat` and `rlwrap` easily from `apt` or `brew`)
 
-#### Support Commands
+### Support Commands
 
-##### `report_XXX`
+#### `report_XXX`
 
 use `report_video` or `report_audio` to get a report of the last `report_num` (default:2000) of records of video or audio.
 
@@ -136,7 +63,7 @@ report_video_moreformat  video2.txt         #get a report of video, with more fo
 report_audio_moreformat  audio2.txt.cpp     #get a report of audio, save the file as cpp, so that you can cheat your editor to highlight it
 ```
 
-##### `set`
+#### `set`
 
 Set allows you to change parameters inside the client dynamically.
 Support parameters:
@@ -159,17 +86,17 @@ set bitrate 2000000                  #force bitrate to 2Mbps
 set report_num 5000                  #include 5000 records in following reports
 ```
 
-##### `info`
+#### `info`
 
 Take a peek of the values of parameters supported by set
 
-##### `insert_atexit_handler` or `insert`
+#### `insert_atexit_handler` or `insert`
 
 Insert a atexit handler that turns exit() to abort, so that we can get the stack calling exit(). It's helpful for debugging problems, when you don't know where in the code called exit(), especially the exit() is called in some lib.
 
-### Protocol Analyzer
+## Protocol Analyzer
 
-#### Overview
+### Overview
 
 This is a protocol analyzer in the side-way style, that you can talk to interactively via the debug console. Allows you to analyze the protocol dynamically, get advanced metrics.
 
@@ -184,15 +111,15 @@ Disadvantages:
 
 - when you make serious changes to the protocol, you need to update the protocol analyzer to track it correctly, increases maintain burden of codebase. But (1) this usually won't happen unless something essential is changed in protocol (2) when it happens it should be easy to update the analyzer
 
-#### How to run
+### How to run
 
 When debug console is enabled, the protocol analyzer is automatically enabled. You don't need to explicitly start it, all you need to do is talk to it via `debug_console`. To get report from it, or change some parameters (e.g `report_num`, `skip_last`)
 
-#### Report format
+### Report format
 
 The report of protocol analyzer consists two sections: (1) high level information/statistics (2) a breakdown of all frames inside the report
 
-##### High-level information/statistic
+#### High-level information/statistic
 
 This section is a list of information/statistic, consist of:
 
@@ -216,7 +143,7 @@ This section is a list of information/statistic, consist of:
 
 All time are the relative time since client start. This also applies to the sections below, in the whole report.
 
-##### Breakdown of frames
+#### Breakdown of frames
 
 This section is a list of frame infos, each one consist of:
 
@@ -245,7 +172,7 @@ Other attributes(onlys shows when there are something interesting happens):
 - `overwrite`, when this shows, it means when the current frame becomes "current rendering" inside ringbuffer, it overwrites a frame that never becomes pending
 - `queue full`, when this shows, it means when the current frame tries to become pending, it triggers an "Audio queue full". (Only for audio)
 
-###### Breakdown of segments
+##### Breakdown of segments
 
 The breakdown of segments is a list of items. Each items correspond of a segment of the frame, contains:
 
@@ -294,7 +221,7 @@ In the example, the frame consist of 6 segments:
 5. for the 4th segment, the non-retransmit packet got lost, and NACK was sent, the retransmit segment got lost, we sent and NACK again. And finally got the segment.
 6. the 5th segment arrives as normal.
 
-#### Implementation
+### Implementation
 
 This section talks about the implementation of protocol analyzer, hopefully you can get an idea on how to extend it.
 
@@ -305,7 +232,7 @@ The protocol analyzer mainly consist of:
 3. statistics generator, for the high-level info/stat in report
 4. pretty printer for the frame breakdown in report
 
-##### Data structures
+#### Data structures
 
 Below are the data structures used for protocol analyzer.
 
@@ -340,7 +267,7 @@ struct ProtocolAnalyzer {
 
 If you want to record new info, you will need to put it as an attribute of the data structures.
 
-##### Hooks
+#### Hooks
 
 Hooks are the public functions with name `whist_analyzer_record_XXXXX()`, they hook into the protocol and save info into the data structure, for example:
 
@@ -364,7 +291,7 @@ void ProtocolAnalyzer::record_segment()
 
 If you want to record new info, you might need to implement new hooks.
 
-##### Statistics generator
+#### Statistics generator
 
 The Statistics generator is just the function:
 
@@ -377,7 +304,7 @@ string ProtocolAnalyzer::get_stat(）
 
 If you want to implement new metric/stat, add code to this function
 
-##### Pretty printer for frame breakdown
+#### Pretty printer for frame breakdown
 
 The pretty printer for frame breakdown is just the function:
 
