@@ -1,29 +1,3 @@
-# ------------------------------ Policies for Chromium builds ------------------------------ #
-
-resource "aws_s3_bucket_public_access_block" "whist-chromium-macos-arm64" {
-  bucket                  = aws_s3_bucket.whist-chromium-macos-arm64.id
-  block_public_acls       = false
-  block_public_policy     = false
-  restrict_public_buckets = false
-  ignore_public_acls      = false
-}
-
-resource "aws_s3_bucket_public_access_block" "whist-chromium-macos-x64" {
-  bucket                  = aws_s3_bucket.whist-chromium-macos-x64.id
-  block_public_acls       = false
-  block_public_policy     = false
-  restrict_public_buckets = false
-  ignore_public_acls      = false
-}
-
-resource "aws_s3_bucket_public_access_block" "whist-chromium-windows" {
-  bucket                  = aws_s3_bucket.whist-chromium-windows.id
-  block_public_acls       = false
-  block_public_policy     = false
-  restrict_public_buckets = false
-  ignore_public_acls      = false
-}
-
 # ------------------------------ Policies for user app configs ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-user-app-configs" {
@@ -140,36 +114,6 @@ resource "aws_s3_bucket_public_access_block" "whist-terraform-state" {
 
 # ------------------------------ Configure server side encryption ------------------------------ #
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-macos-arm64-encryption" {
-  bucket = aws_s3_bucket.whist-chromium-macos-arm64.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-macos-x64-encryption" {
-  bucket = aws_s3_bucket.whist-chromium-macos-x64.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-windows-encryption" {
-  bucket = aws_s3_bucket.whist-chromium-windows.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-user-app-configs-encryption" {
   bucket = aws_s3_bucket.whist-user-app-configs.id
 
@@ -270,6 +214,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-terraform-s
 
 # ------------------------------ Configure bucket versioning ------------------------------ #
 
+# We version the user config buckets, so that we can "revert" to a previous state of a user's
+# browser session in case their session data somehow got wiped out.
 resource "aws_s3_bucket_versioning" "whist-user-app-configs-versioning" {
   bucket = aws_s3_bucket.whist-user-app-configs.id
   versioning_configuration {
@@ -277,6 +223,8 @@ resource "aws_s3_bucket_versioning" "whist-user-app-configs-versioning" {
   }
 }
 
+# We version the Terraform state bucket, so that we can "revert" to a previous state of our Terraform
+# infrastructure, in the case of a configuration or manual mistake.
 resource "aws_s3_bucket_versioning" "whist-terraform-state-versioning" {
   count  = var.env == "prod" ? 1 : 0
   bucket = aws_s3_bucket.whist-terraform-state[0].id
@@ -287,12 +235,14 @@ resource "aws_s3_bucket_versioning" "whist-terraform-state-versioning" {
 
 # ------------------------------ Lifecycle policies for bucket versioning ------------------------------ #
 
+# We only keep the last 3 versions of a user's browser session data, so that our buckets don't grow too
+# big (which affects storage costs and retrieval times).
 resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecycle" {
   bucket = aws_s3_bucket.whist-user-app-configs.id
 
-  # This rule keeps only the 3 most recent nonexpired objects
+  # This rule keeps only the 3 most recent non-expired objects
   # on the bucket. This applies to objects 5 days after becoming
-  # noncurrent. It is also necessary to provide a filter or AWS will
+  # non-current. It is also necessary to provide a filter or AWS will
   # return an error.
   rule {
     id     = "userConfigCleanRule"
@@ -304,7 +254,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecyc
       # Represented in bytes
       and {
         object_size_greater_than = 0
-        object_size_less_than    = 1000000000
+        object_size_less_than    = 1000000000 # 1Gb
       }
     }
 

@@ -1,5 +1,5 @@
 terraform {
-  # Use an S3 bucket to store state
+  # Use an AWS S3 bucket to store state
   # AWS credentials will be filled in by CI.
   backend "s3" {
     bucket = "whist-terraform-state"
@@ -30,7 +30,8 @@ module "s3" {
 }
 
 # Enable all AWS regions on Terraform. Doing this will create
-# all multi-region resources on each region declared below.
+# all multi-region resources on each region declared below. See 
+# `providers.tf` for the provider abbreviations used below.
 
 # ------------------------------ North America modules ------------------------------ #
 

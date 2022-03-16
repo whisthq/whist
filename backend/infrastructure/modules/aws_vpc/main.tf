@@ -1,4 +1,6 @@
+#
 # Create default VPCs
+#
 
 resource "aws_vpc" "MainVPC" {
   cidr_block           = var.cidr_block
@@ -12,7 +14,9 @@ resource "aws_vpc" "MainVPC" {
   }
 }
 
-# Create default subnets
+#
+# Create default Subnets
+#
 
 resource "aws_subnet" "DefaultSubnet" {
   vpc_id                  = aws_vpc.MainVPC.id
@@ -27,7 +31,9 @@ resource "aws_subnet" "DefaultSubnet" {
   }
 }
 
-# Security groups
+#
+# Create default Security groups
+#
 
 resource "aws_security_group" "MandelboxesSecurityGroup" {
   name        = "MandelboxesSecurityGroup"

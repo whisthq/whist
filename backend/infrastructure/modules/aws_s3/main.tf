@@ -1,41 +1,6 @@
-# ------------------------------ Buckets for Chromium builds ------------------------------ #
-
-# Bucket for storing Chromium builds for MacOS Arm64
-resource "aws_s3_bucket" "whist-chromium-macos-arm64" {
-  bucket = "whist-chromium-macos-arm64-${var.env}"
-
-  tags = {
-    Name        = "whist-chromium-macos-arm64-${var.env}"
-    Env         = var.env
-    Terraform   = true
-  }
-}
-
-# Bucket for storing Chromium builds for MacOS x64
-resource "aws_s3_bucket" "whist-chromium-macos-x64" {
-  bucket = "whist-chromium-macos-x64-${var.env}"
-
-  tags = {
-    Name        = "whist-chromium-macos-${var.env}"
-    Env         = var.env
-    Terraform   = true
-  }
-}
-
-# Bucket for storing Chromium builds for Windows
-resource "aws_s3_bucket" "whist-chromium-windows" {
-  bucket = "whist-chromium-windows-${var.env}"
-
-  tags = {
-    Name        = "whist-chromium-windows-${var.env}"
-    Env         = var.env
-    Terraform   = true
-  }
-}
-
 # ------------------------------ Buckets for user app configs ------------------------------ #
 
-# Bucket for storing user configurations
+# Buckets for storing user configurations, per environment
 resource "aws_s3_bucket" "whist-user-app-configs" {
   bucket = "whist-user-app-configs-${var.env}"
 
@@ -55,9 +20,9 @@ resource "aws_s3_bucket" "whist-user-app-configs" {
   }
 }
 
-# ------------------------------ Buckets for assets ------------------------------ #
+# ------------------------------ Buckets for Whist assets ------------------------------ #
 
-# Bucket for storing Whist brand assets
+# Bucket for storing general Whist brand assets
 resource "aws_s3_bucket" "whist-brand-assets" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-brand-assets"
@@ -107,7 +72,7 @@ resource "aws_s3_bucket" "whist-e2e-protocol-test-logs" {
   }
 }
 
-# Bucket for storing protocol dependency builds
+# Bucket for storing protocol build dependencies binaries (i.e. shared libraries)
 resource "aws_s3_bucket" "whist-protocol-dependencies" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-protocol-dependencies"
@@ -119,7 +84,7 @@ resource "aws_s3_bucket" "whist-protocol-dependencies" {
   }
 }
 
-# Bucket for storing client protocol shared library
+# Bucket for storing the client protocol shared library (for external bundling, like Chromium)
 resource "aws_s3_bucket" "whist-protocol-client-shared-lib" {
   count  = var.env == "dev" ? 1 : 0
   bucket = "whist-protocol-client-shared-lib"
@@ -133,9 +98,7 @@ resource "aws_s3_bucket" "whist-protocol-client-shared-lib" {
 
 # ------------------------------ Buckets for other data ------------------------------ #
 
-# Bucket for dev secrets
-
-# Bucket for storing Whist dev secrets
+# Bucket for storing Whist development secrets (Apple codesigning files, etc.)
 resource "aws_s3_bucket" "whist-dev-secrets" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-dev-secrets"
@@ -147,7 +110,7 @@ resource "aws_s3_bucket" "whist-dev-secrets" {
   }
 }
 
-# Bucket for storing Terraform state files.
+# Bucket for storing Terraform state files
 resource "aws_s3_bucket" "whist-terraform-state" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-terraform-state"
@@ -161,6 +124,7 @@ resource "aws_s3_bucket" "whist-terraform-state" {
 
 # ------------------------------ Bucket policy attachments ------------------------------ #
 
+# Attach our custom policy to our website assets bucket, for proper data retrieval
 resource "aws_s3_bucket_policy" "whist-website-assets-policy-attachment" {
   count  = var.env == "prod" ? 1 : 0
   bucket = aws_s3_bucket.whist-website-assets[0].id
