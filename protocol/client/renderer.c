@@ -13,7 +13,7 @@ Includes
 #include "renderer.h"
 #include "client_statistic.h"
 #include "sdl_event_handler.h"
-#include "whist/tools/debug_console.h"
+#include "whist/debug/debug_console.h"
 
 /*
 ============================

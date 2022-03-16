@@ -797,7 +797,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 # Set default whist-application to xeyes
 RUN ln -sf "$(which xeyes)" /usr/bin/whist-application \
     # Overwrite xdg-open with our URI handler
-    && ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open \
+    && ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open
 
 # Install protocol dependencies
 COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup-linux-build-environment.sh

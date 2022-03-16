@@ -1,21 +1,22 @@
 # See stage 0 of the base dockerfile for an explanation of this build stage.
 ARG BuildAssetPackage "protocol"
 FROM whist/build-assets:$BuildAssetPackage as build-assets
+
 FROM whisthq/base:current-build as whist-development-client
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
-# Install build utilities
+# Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    # Build utilities
     python3-dev \
     gcc \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install utility for sending input events via Python
-RUN pip install --no-cache-dir pynput
+    && rm -rf /tmp/* /var/tmp/* \
+    # Send input events via Python
+    && pip install --no-cache-dir pynput
 
 # Replace WhistServer startup scripts with WhistClient startup scripts
 RUN rm /usr/share/whist/run-whist-server.sh
@@ -26,7 +27,9 @@ COPY --chmod=555 run-whist-client.sh /usr/share/whist/run-whist-client.sh
 COPY mouse_events.py /usr/share/whist/mouse_events.py
 
 COPY --chown=root:root --chmod=600 whist-main.service /etc/systemd/system
+
 RUN systemctl enable whist-main
 
-# If needed, install WhistServer and helpers. Must be last step.
+# If needed, install WhistClient and helpers. Must be last step.
+# (We choose WhistClient for this image in ./build.sh by Dockerfile path).
 COPY --from=build-assets protocol/* /usr/share/whist/

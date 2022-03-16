@@ -26,7 +26,7 @@ Includes
 */
 
 #include "network_algorithm.h"
-#include "whist/tools/debug_console.h"
+#include "whist/debug/debug_console.h"
 #include "whist/core/features.h"
 
 /*
