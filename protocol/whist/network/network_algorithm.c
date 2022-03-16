@@ -395,6 +395,7 @@ NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
 // update the WCC.md file as well so that the documentation remains upto date.
 bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_group_stats,
                                  int incoming_bitrate, double packet_loss_ratio,
+                                 double short_term_latency, double long_term_latency,
                                  NetworkSettings *network_settings) {
 // Latest delay variation gets this weightage. Older value gets a weightage of (1 - EWMA_FACTOR)
 #define EWMA_FACTOR 0.3
@@ -404,6 +405,10 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
 #define LONG_OVERUSE_TIME_THRESHOLD_IN_SEC 0.1  // 100ms
 #define DECREASE_RATIO 0.95
 #define BANDWITH_USED_THRESHOLD 0.95
+// Higher value will mean increased latency. Lower value will increase false positives for
+// congestion. Right now set to 50ms based on tradeoff between acceptable E2E latency vs false
+// positives.
+#define MIN_LATENCY_THRESHOLD_SEC 0.05  // 50ms
     if (incoming_bitrate <= 0) {
         // Not enough data to take any decision. Let the bits start flowing.
         return false;
@@ -488,7 +493,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
             // state.
             overuse_detector_signal = NORMAL_SIGNAL;
         }
-
     } else if (-DELAY_VARIATION_THRESHOLD_IN_SEC > filtered_delay_variation) {
         overuse_detector_signal = UNDERUSE_SIGNAL;
         maybe_overuse = false;
@@ -522,6 +526,34 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         delay_controller_state = DELAY_CONTROLLER_HOLD;
     }
 
+    // If the latency suddenly increases, then it might mean congestion due to longer queue length.
+    // A latency based threshold check is added as delay_variation many times fails to detect this
+    // queue length increase.
+    double latency_threshold_decrease_state;
+    double latency_threshold_hold_state;
+#define LATENCY_MULTIPLIER_BURST_MODE 2.0
+#define LATENCY_MULTIPLIER_NORMAL_MODE 1.5
+#define LATENCY_MULTIPLIER_HOLD_STATE 1.1
+    // Using a higher latency threshold for burst mode, as sending packets in a burst can
+    // momentarily cause congestion that will get cleared up immediately.
+    if (burst_mode)
+        latency_threshold_decrease_state = long_term_latency * LATENCY_MULTIPLIER_BURST_MODE;
+    else
+        latency_threshold_decrease_state = long_term_latency * LATENCY_MULTIPLIER_NORMAL_MODE;
+    latency_threshold_hold_state = long_term_latency * LATENCY_MULTIPLIER_HOLD_STATE;
+    // For very low latency networks, jitter might be wrongly detected as congestion. Hence using
+    // this MIN_LATENCY_THRESHOLD_SEC absolute threshold.
+    latency_threshold_decrease_state =
+        max(latency_threshold_decrease_state, MIN_LATENCY_THRESHOLD_SEC);
+    latency_threshold_hold_state =
+        max(latency_threshold_hold_state, MIN_LATENCY_THRESHOLD_SEC);
+
+    if (short_term_latency > latency_threshold_decrease_state) {
+        delay_controller_state = DELAY_CONTROLLER_DECREASE;
+    } else if (short_term_latency > latency_threshold_hold_state) {
+        delay_controller_state = DELAY_CONTROLLER_HOLD;
+    }
+
     // Delay-based controller selects based on overuse signal
     // It is RECOMMENDED to send the REMB message as soon
     // as congestion is detected, and otherwise at least once every second.
@@ -546,8 +578,11 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         new_bitrate = network_settings->video_bitrate * (1.0 + increase_percentage / 100.0);
     } else if ((delay_controller_state == DELAY_CONTROLLER_DECREASE) &&
                get_timer(&last_decrease_timer) > NEW_BITRATE_DURATION_IN_SEC) {
-        LOG_INFO("Decrease bitrate filtered_delay_variation = %.3f packet_loss_ratio = %.2f",
-                 filtered_delay_variation, packet_loss_ratio);
+        LOG_INFO(
+            "Decrease bitrate filtered_delay_variation = %.3f packet_loss_ratio = %.2f, "
+            "short_term_latency = %0.3f, long_term_latency = %.3f",
+            filtered_delay_variation, packet_loss_ratio, short_term_latency * MS_IN_SECOND,
+            long_term_latency * MS_IN_SECOND);
         // Decrease the max_bitrate_available gradually, if congestion is detected at a lower
         // bitrate
         if (last_successful_bitrate < max_bitrate_available) {
@@ -557,7 +592,8 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         // Use incoming bitrate only when saturate_bandwidth is on OR if it is within the
         // convergence range
         if (network_settings->saturate_bandwidth ||
-            incoming_bitrate * DECREASE_RATIO > max_bitrate_available * CONVERGENCE_THRESHOLD_LOW) {
+            incoming_bitrate * DECREASE_RATIO > max_bitrate_available * CONVERGENCE_THRESHOLD_LOW ||
+            short_term_latency > latency_threshold_decrease_state) {
             new_bitrate = incoming_bitrate * DECREASE_RATIO;
             // If we are reaching convergence than reduce the increase percentage and switch off
             // saturate bandwidth
@@ -574,6 +610,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
                           min(DECREASE_RATIO, 1.0 - (0.5 * packet_loss_ratio));
             network_settings->saturate_bandwidth = true;
         }
+        network_settings->congestion_detected = true;
         start_timer(&last_decrease_timer);
     }
     if (new_bitrate != network_settings->video_bitrate) {
@@ -637,6 +674,8 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         }
         return true;
     }
+    if (!network_settings->saturate_bandwidth)
+        network_settings->congestion_detected = false;
 
     return false;
 }

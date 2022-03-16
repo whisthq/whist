@@ -112,7 +112,7 @@ typedef struct {
 // Size of the UDPPacket header, excluding the payload
 #define UDPNETWORKPACKET_HEADER_SIZE ((int)(offsetof(UDPNetworkPacket, payload)))
 // How often to ping
-#define UDP_PING_INTERVAL_SEC 0.1
+#define UDP_PING_INTERVAL_SEC 0.025
 // How long to go without a pong, before the connection is marked as lost
 #define UDP_PONG_TIMEOUT_SEC 5.0
 // How often to print ping logs
@@ -172,7 +172,8 @@ typedef struct {
     WhistTimer ping_timer[MAX_PINGS_IN_FLIGHT];
     WhistTimer last_pong_timer;
     bool connection_lost;
-    double latency;
+    double long_term_latency;
+    double short_term_latency;
 
     // Latency Calculation (Only used on server)
     WhistMutex timestamp_mutex;
@@ -225,7 +226,8 @@ typedef struct {
 
 // The amount to weigh a older pings' latency,
 // on the ewma latency value
-#define PING_LAMBDA 0.7
+#define PING_LAMBDA_SHORT_TERM 0.9
+#define PING_LAMBDA_LONG_TERM 0.995
 
 // How often should the client send connection attempts
 #define CONNECTION_ATTEMPT_INTERVAL_MS 5
@@ -531,7 +533,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                     &context->group_stats[context->prev_group_id % MAX_GROUP_STATS];
                 send_network_settings = whist_congestion_controller(
                     curr_group_stats, prev_group_stats, get_incoming_bitrate(context),
-                    get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO], context->latency),
+                    get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO], context->short_term_latency),
+                    context->short_term_latency, context->long_term_latency,
                     &context->network_settings);
             }
             context->prev_group_id = context->curr_group_id;
@@ -639,16 +642,16 @@ static bool udp_update(void* raw_context) {
     // *************
 
     if (context->ring_buffers[PACKET_VIDEO] != NULL) {
-        double estimated_latency = context->latency;
+        double estimated_latency = context->short_term_latency;
         double time_since_last_ping;
         // If there is/are ping(s) in flight for a long time, then update the estimated latency
         // accordingly.
         if (context->last_ping_id > context->last_pong_id &&
             (time_since_last_ping = get_timer(
                  &context->ping_timer[(context->last_pong_id + 1) % MAX_PINGS_IN_FLIGHT])) >
-                context->latency) {
-            estimated_latency =
-                PING_LAMBDA * context->latency + time_since_last_ping * (1.0 - PING_LAMBDA);
+                context->short_term_latency) {
+            estimated_latency = PING_LAMBDA_SHORT_TERM * context->short_term_latency +
+                                time_since_last_ping * (1.0 - PING_LAMBDA_SHORT_TERM);
         }
         try_recovering_missing_packets_or_frames(
             context->ring_buffers[PACKET_VIDEO], estimated_latency,
@@ -1946,7 +1949,7 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     double ping_time = (current_time_us() - ping_send_timestamp) / (double)US_IN_SECOND;
     // Initialize the latency
     if (context->last_pong_id == -1) {
-        context->latency = ping_time;
+        context->short_term_latency = context->long_term_latency = ping_time;
     }
     context->last_pong_id = id;
 
@@ -1954,13 +1957,19 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     // Comment logs once every second, or when latency spikes
     if (LOG_VIDEO || LOG_AUDIO || LOG_NETWORKING ||
         id % max((int)(UDP_PING_LOG_INTERVAL_SEC / (double)UDP_PING_INTERVAL_SEC), 1) == 0 ||
-        ping_time > 1.5 * context->latency) {
+        ping_time > 2.0 * context->long_term_latency) {
         LOG_INFO("Pong %d received: took %.2fms, latency %.2fms", id, ping_time * MS_IN_SECOND,
-                 context->latency * MS_IN_SECOND);
+                 context->long_term_latency * MS_IN_SECOND);
     }
 
     // Calculate latency
-    context->latency = PING_LAMBDA * context->latency + (1 - PING_LAMBDA) * ping_time;
+    context->short_term_latency = PING_LAMBDA_SHORT_TERM * context->short_term_latency +
+                                  (1 - PING_LAMBDA_SHORT_TERM) * ping_time;
+    // Don't update long term latency during congestion
+    if (!context->network_settings.congestion_detected) {
+        context->long_term_latency = PING_LAMBDA_LONG_TERM * context->long_term_latency +
+                                     (1 - PING_LAMBDA_LONG_TERM) * ping_time;
+    }
 }
 
 void udp_handle_network_settings(void* raw_context, NetworkSettings network_settings) {
