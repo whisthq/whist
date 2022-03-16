@@ -93,9 +93,7 @@ We create AMIs for deployment programmatically via our deploy pipeline in GitHub
 
 If you have created an AMI in a specific AWS region (i.e. `us-east-1`) which you would like to replicate in a different AWS region (i.e. `us-west-1`), you can copy over your AMI. For complete details on how to copy over AMIs, see our [Documentation on Notion](https://www.notion.so/whisthq/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=ca4fdec782894072a6dd63f32b494e1d).
 
-## Publishing
+## Deployment
 
 The Whist AMIs get automatically published to AWS EC2 through the `whist-build-and-deploy.yml` GitHub Actions workflow. Please refer to that workflow for the exact list of AWS regions supported and the AMI parameters.
 The workflow uses [Packer](https://www.packer.io/) to automatically build and provision AMIs, before copying to all active regions. Packer is run with a single command, a configuration file (`ami_config.json.pkr.hcl`), which is your source of truth for troubleshooting Packer issues.
-
-Enjoy!
