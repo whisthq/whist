@@ -70,16 +70,38 @@ func GetHasuraName() string {
 	}
 }
 
+// GetConfigHasuraName provides the Heroku app name for the Hasura server that
+// is connected to the configuration database.
+func GetConfigHasuraName() string {
+	return "whist-config-hasura"
+}
+
 // GetHasuraConfig returns the Heroku environment config for the hasura server returned by
 // GetHasuraName.
 func GetHasuraConfig() (map[string]string, error) {
 	return client.ConfigVarInfo(GetHasuraName())
 }
 
+// GetConfigHasuraVars returns the Heroku environment config for the hasura server returned by
+// GetConfigHasuraName.
+func GetConfigHasuraVars() (map[string]string, error) {
+	return client.ConfigVarInfo(GetConfigHasuraName())
+}
+
 // GetHasuraURL returns the Heroku web url for the hasura server returned by
 // GetHasuraName.
 func GetHasuraURL() (string, error) {
 	app, err := client.AppInfo(GetHasuraName())
+	if err != nil {
+		return "", err
+	}
+	return app.WebURL + "v1/graphql", nil
+}
+
+// GetConfigHasuraURL returns the Heroku web url for the hasura server returned by
+// GetHasuraName.
+func GetConfigHasuraURL() (string, error) {
+	app, err := client.AppInfo(GetConfigHasuraName())
 	if err != nil {
 		return "", err
 	}

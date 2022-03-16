@@ -36,8 +36,9 @@ func main() {
 	// Start database subscriptions
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 	subscriptionClient := &subscriptions.SubscriptionClient{}
+	configClient := &subscriptions.SubscriptionClient{}
 	dbclient := &dbclient.DBClient{}
-	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents, subscriptionClient)
+	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents, subscriptionClient, configClient)
 
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan algos.ScalingEvent, 100)
@@ -74,7 +75,7 @@ func main() {
 	})
 
 	// Start main event loop
-	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents, scheduledEvents, algorithmByRegionMap)
+	go eventLoop(globalCtx, globalCancel, subscriptionEvents, scheduledEvents, algorithmByRegionMap, configClient)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -91,14 +92,27 @@ func main() {
 }
 
 // StartDatabaseSubscriptions sets up the database subscriptions and starts the subscription client.
-func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent, subscriptionClient subscriptions.WhistSubscriptionClient) {
-	subscriptions.SetupScalingSubscriptions(subscriptionClient)
+func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent, subscriptionClient subscriptions.WhistSubscriptionClient, configClient subscriptions.WhistSubscriptionClient) {
+	// Setup and start subscriptions to main database
 
-	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents)
+	// The first client will subscribe to the dev/staging/prod database
+	useConfigDatabase := false
+
+	subscriptions.SetupScalingSubscriptions(subscriptionClient)
+	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents, useConfigDatabase)
 	if err != nil {
 		logger.Errorf("Failed to start database subscription client. Error: %s", err)
 	}
 
+	// The second client will subscribe to the config database
+	useConfigDatabase = true
+
+	// Setup and start subscriptions to config database
+	subscriptions.SetupConfigSubscriptions(configClient)
+	err = subscriptions.Start(configClient, globalCtx, goroutineTracker, subscriptionEvents, useConfigDatabase)
+	if err != nil {
+		logger.Errorf("Failed to start config database subscription client. Error: %s", err)
+	}
 }
 
 // StartSchedulerEvents starts the scheduler and its events without blocking the main thread.
@@ -126,28 +140,10 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 }
 
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
-	var regionImageMap map[string]interface{}
 
-	// Get current working directory to read images file.
-	currentWorkingDirectory, err := os.Getwd()
+	regionImageMap, err := getRegionImageMap()
 	if err != nil {
-		logger.Errorf("Failed to get working directory. Err: %v", err)
-		return
-	}
-
-	// Read file which contains the region to image on JSON format. This file will
-	// be read by the binary generated during deploy, located in the `bin` directory.
-	// The file is also generated during deploy and lives in the scaling service directory.
-	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "images.json"))
-	if err != nil {
-		logger.Errorf("Failed to read region to image map from file. Not performing image upgrade. Err: %v", err)
-		return
-	}
-
-	// Try to unmarshal contents of file into a map
-	err = json.Unmarshal(content, &regionImageMap)
-	if err != nil {
-		logger.Errorf("Failed to unmarshal region to image map. Not performing image upgrade. Err: %v", err)
+		logger.Errorf("Error while getting regionImageMap. Err: %v", err)
 		return
 	}
 
@@ -162,6 +158,32 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 		Type: "SCHEDULED_IMAGE_UPGRADE_EVENT",
 		Data: regionImageMap,
 	}
+}
+
+func getRegionImageMap() (map[string]interface{}, error) {
+	var regionImageMap map[string]interface{}
+
+	// Get current working directory to read images file.
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		return nil, utils.MakeError("Failed to get working directory. Err: %v", err)
+	}
+
+	// Read file which contains the region to image on JSON format. This file will
+	// be read by the binary generated during deploy, located in the `bin` directory.
+	// The file is also generated during deploy and lives in the scaling service directory.
+	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "images.json"))
+	if err != nil {
+		return nil, utils.MakeError("Failed to read region to image map from file. Not performing image upgrade. Err: %v", err)
+	}
+
+	// Try to unmarshal contents of file into a map
+	err = json.Unmarshal(content, &regionImageMap)
+	if err != nil {
+		return nil, utils.MakeError("Failed to unmarshal region to image map. Not performing image upgrade. Err: %v", err)
+	}
+
+	return regionImageMap, nil
 }
 
 // getScalingAlgorithm is a helper function that returns the scaling algorithm from the sync map.
@@ -181,8 +203,8 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 
 // eventLoop is the main loop of the scaling service which will receive events from different sources
 // and send them to the appropiate channels.
-func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup,
-	subscriptionEvents <-chan subscriptions.SubscriptionEvent, scheduledEvents <-chan algos.ScalingEvent, algorithmByRegion *sync.Map) {
+func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, subscriptionEvents <-chan subscriptions.SubscriptionEvent,
+	scheduledEvents <-chan algos.ScalingEvent, algorithmByRegion *sync.Map, configClient *subscriptions.SubscriptionClient) {
 
 	for {
 		select {
@@ -216,7 +238,60 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				case *algos.DefaultScalingAlgorithm:
 					algorithm.InstanceEventChan <- scalingEvent
 				}
+			case *subscriptions.ClientAppVersionEvent:
+				var (
+					scalingEvent algos.ScalingEvent
+					version      subscriptions.ClientAppVersion
+				)
+
+				// We set the event type to DATABASE_CLIENT_VERSION_EVENT
+				// here so that we have more information about the event.
+				// DATABASE means the source of the event is the database
+				// and CLIENT_VERSION means it will perform an action with
+				// the client version information received from the database.
+				scalingEvent.Type = "DATABASE_CLIENT_VERSION_EVENT"
+
+				// We only expect one version to come from the database subscription,
+				// anything more or less than it indicates an error in our backend.
+				if len(subscriptionEvent.ClientAppVersions) == 1 {
+					version = subscriptionEvent.ClientAppVersions[0]
+				} else {
+					logger.Errorf("Unexpected length of %v in version received from the config database.", len(subscriptionEvent.ClientAppVersions))
+				}
+
+				// TODO: once we keep track of client versions per region,
+				// get the region directly from the database. For now use
+				// the regionImageMap.
+				regionImageMap, err := getRegionImageMap()
+				if err != nil {
+					logger.Errorf("Error getting regionImageMap. Err: %v", err)
+					break
+				}
+
+				for region := range regionImageMap {
+					scalingEvent.Region = region
+					scalingEvent.Data = version
+
+					// Start scaling algorithm based on region
+					logger.Infof("Received database event.")
+					algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
+
+					switch algorithm := algorithm.(type) {
+					case *algos.DefaultScalingAlgorithm:
+						algorithm.ClientAppVersionChan <- scalingEvent
+					}
+				}
+
+				// Its necessary to close the config client since we only want to
+				// do the image swapover once, but Hasura will keep receiving
+				// the event after it has switched.
+				err = configClient.Close()
+				if err != nil {
+					// err is already wrapped here
+					logger.Error(err)
+				}
 			}
+
 		case scheduledEvent := <-scheduledEvents:
 			// Start scaling algorithm based on region
 			logger.Infof("Received scheduled event. %v", scheduledEvent)

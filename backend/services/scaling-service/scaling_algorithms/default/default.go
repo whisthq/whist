@@ -32,13 +32,17 @@ type ScalingEvent struct {
 // DefaultScalingAlgorithm abstracts the shared functionalities to be used
 // by all of the different, region-based scaling algorithms.
 type DefaultScalingAlgorithm struct {
-	Host               hosts.HostHandler
-	GraphQLClient      subscriptions.WhistGraphQLClient
-	DBClient           dbclient.WhistDBClient
-	Region             string
-	InstanceEventChan  chan ScalingEvent
-	ImageEventChan     chan ScalingEvent
-	ScheduledEventChan chan ScalingEvent
+	Host                   hosts.HostHandler
+	GraphQLClient          subscriptions.WhistGraphQLClient
+	DBClient               dbclient.WhistDBClient
+	Region                 string
+	InstanceEventChan      chan ScalingEvent
+	ImageEventChan         chan ScalingEvent
+	ClientAppVersionChan   chan ScalingEvent
+	ScheduledEventChan     chan ScalingEvent
+	SyncChan               chan bool                      // This channel is used to sync actions
+	protectedFromScaleDown map[string]subscriptions.Image // Use a map to keep track of images that should not be scaled down
+	protectedMapLock       sync.Mutex
 }
 
 // CreateEventChans creates the event channels if they don't alredy exist.
@@ -51,8 +55,14 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	if s.ImageEventChan == nil {
 		s.ImageEventChan = make(chan ScalingEvent, 100)
 	}
+	if s.ClientAppVersionChan == nil {
+		s.ClientAppVersionChan = make(chan ScalingEvent, 100)
+	}
 	if s.ScheduledEventChan == nil {
 		s.ScheduledEventChan = make(chan ScalingEvent, 100)
+	}
+	if s.SyncChan == nil {
+		s.SyncChan = make(chan bool)
 	}
 }
 
@@ -88,6 +98,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 	}
 
 	// Start algorithm main event loop
+	// Track this goroutine so we can wait for it to
+	// finish if the global context gets cancelled.
 	goroutineTracker.Add(1)
 	go func() {
 
@@ -101,6 +113,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 
 				if instance.Status == "DRAINING" {
 
+					// Track this goroutine so we can wait for it to
+					// finish if the global context gets cancelled.
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
@@ -117,6 +131,29 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						}
 					}()
 				}
+			case versionEvent := <-s.ClientAppVersionChan:
+				logger.Infof("Scaling algorithm received a client app version database event with value: %v", versionEvent)
+				version := versionEvent.Data.(subscriptions.ClientAppVersion)
+
+				// Track this goroutine so we can wait for it to
+				// finish if the global context gets cancelled.
+				goroutineTracker.Add(1)
+				go func() {
+					defer goroutineTracker.Done()
+
+					// Create context for scaling operation
+					scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+					err := s.SwapOverImages(scalingCtx, versionEvent, version)
+
+					// Cancel context once the operation is done
+					scalingCancel()
+
+					if err != nil {
+						logger.Errorf("Error verifying instance scale down. Error: %v", err)
+					}
+				}()
+
 			case scheduledEvent := <-s.ScheduledEventChan:
 				switch scheduledEvent.Type {
 				case "SCHEDULED_SCALE_DOWN_EVENT":
@@ -137,6 +174,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 				case "SCHEDULED_IMAGE_UPGRADE_EVENT":
 					logger.Infof("Scaling algorithm received an image upgrade event with value: %v", scheduledEvent)
 
+					// Track this goroutine so we can wait for it to
+					// finish if the global context gets cancelled.
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
@@ -163,6 +202,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 				}
 			case <-globalCtx.Done():
 				logger.Info("Global context has been cancelled. Exiting from default scaling algorithm event loop...")
+				goroutineTracker.Wait()
+				logger.Infof("Finished waiting for all goroutines to finish. Scaling algorithm from %v exited.", s.Region)
 				return
 			}
 		}

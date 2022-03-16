@@ -73,6 +73,39 @@ func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]int
 	return (mandelbox.InstanceID == instanceID) && (mandelbox.Status == status)
 }
 
+// ClientAppVersionHandler handles events from the hasura subscription which
+// detects changes on the config database client app version to the current.
+func ClientAppVersionHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
+	result := event.(ClientAppVersionEvent)
+
+	var (
+		version    ClientAppVersion
+		commitHash string
+	)
+
+	if len(result.ClientAppVersions) > 0 {
+		version = result.ClientAppVersions[0]
+	}
+
+	if version == (ClientAppVersion{}) {
+		return false
+	}
+
+	// get the commit hash of the environment we are running in
+	switch metadata.GetAppEnvironmentLowercase() {
+	case string(metadata.EnvDev):
+		commitHash = version.DevCommitHash
+	case string(metadata.EnvStaging):
+		commitHash = version.StagingCommitHash
+	case string(metadata.EnvProd):
+		commitHash = version.ProdCommitHash
+	default:
+		commitHash = version.DevCommitHash
+	}
+
+	return metadata.GetGitCommit() == commitHash
+}
+
 // SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This
 // function is specific for the subscriptions used on the host service.
 func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClient) {
@@ -115,10 +148,32 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 	whistClient.SetSubscriptions(scalingSubscriptions)
 }
 
+// SetupConfigSubscriptions creates a slice of HasuraSubscriptions to start the client. This
+// function is specific for the subscriptions used for the config database.
+func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
+	// The version ID is always set to 1 on the database, since there
+	// is only one row in the `desktop_client_app_version` which contains
+	// all of the dev/staging/prod commit hashes.
+	const versionID = 1
+
+	configSubscriptions := []HasuraSubscription{
+		{
+			Query: QueryClientAppVersionChange,
+			Variables: map[string]interface{}{
+				"id": graphql.Int(versionID),
+			},
+			Result:  ClientAppVersionEvent{ClientAppVersions: []ClientAppVersion{}},
+			Handler: ClientAppVersionHandler,
+		},
+	}
+	whistClient.SetSubscriptions(configSubscriptions)
+}
+
 // Start is the main function in the subscriptions package. It initializes a client, sets up the received subscriptions,
 // and starts a goroutine for the client. It also has a goroutine to close the client and subscriptions when the global
-// context gets cancelled.
-func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
+// context gets cancelled. It's possible to subscribe to the config database instead of the dev/staging/prod database by
+// setting the `useConfigDatabase` argument.
+func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent, useConfigDB bool) error {
 	if !Enabled {
 		logger.Infof("Running in app environment %s so not enabling Subscription client code.", metadata.GetAppEnvironment())
 		return nil
@@ -128,7 +183,7 @@ func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, gorou
 	var subscriptionIDs []string
 
 	// Initialize subscription client
-	whistClient.Initialize()
+	whistClient.Initialize(useConfigDB)
 
 	// Start goroutine that shuts down the client if the global context gets
 	// cancelled.
@@ -138,7 +193,7 @@ func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, gorou
 
 		// Listen for global context cancellation
 		<-globalCtx.Done()
-		whistClient.Close(whistClient.GetSubscriptionIDs())
+		whistClient.Close()
 	}()
 
 	// Send subscriptions to the client

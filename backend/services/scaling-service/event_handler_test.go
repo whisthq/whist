@@ -23,7 +23,7 @@ type mockSubscriptionClient struct {
 	SubscriptionIDs []string
 }
 
-func (mc *mockSubscriptionClient) Initialize() error {
+func (mc *mockSubscriptionClient) Initialize(useConfigDB bool) error {
 	mc.Initialized = true
 	return nil
 }
@@ -60,7 +60,7 @@ func (mc *mockSubscriptionClient) Run(*sync.WaitGroup) {
 	mc.Started = true
 }
 
-func (mc *mockSubscriptionClient) Close([]string) error {
+func (mc *mockSubscriptionClient) Close() error {
 	return nil
 }
 
@@ -73,12 +73,13 @@ func TestStartDatabaseSubscriptions(t *testing.T) {
 	goroutinetracker := &sync.WaitGroup{}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent)
 	mockClient := &mockSubscriptionClient{}
+	mockConfigClient := &mockSubscriptionClient{}
 
 	// Override enabled condition
 	subscriptions.Enabled = true
 
 	// Start database subscriptions with mock client
-	StartDatabaseSubscriptions(ctx, goroutinetracker, subscriptionEvents, mockClient)
+	StartDatabaseSubscriptions(ctx, goroutinetracker, subscriptionEvents, mockClient, mockConfigClient)
 
 	testScalingSubscriptions := []subscriptions.HasuraSubscription{
 		{
@@ -101,7 +102,7 @@ func TestStartDatabaseSubscriptions(t *testing.T) {
 	gotSubscription := mockClient.GetSubscriptions()[0]
 	ok := reflect.DeepEqual(gotSubscription.Query, testScalingSubscriptions[0].Query)
 	if !ok {
-		t.Errorf("Scaling service subscriptions query not set correctly. Got %v, want %v", gotSubscription.Query, testScalingSubscriptions[0].Query)
+		t.Errorf("Scaling service subscriptions query not set correctly. Got %T, want %T", gotSubscription.Query, testScalingSubscriptions[0].Query)
 	}
 	ok = reflect.DeepEqual(gotSubscription.Variables, testScalingSubscriptions[0].Variables)
 	if !ok {

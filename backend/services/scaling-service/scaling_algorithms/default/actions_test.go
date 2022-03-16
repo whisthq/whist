@@ -2,32 +2,52 @@ package scaling_algorithms
 
 import (
 	"context"
+	"os"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/hasura/go-graphql-client"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
-var testInstances subscriptions.WhistInstances
+var (
+	testInstances subscriptions.WhistInstances
+	testImages    subscriptions.WhistImages
+	testAlgorithm *DefaultScalingAlgorithm
+	testLock      sync.Mutex
+)
 
 // mockDBClient is used to test all database interactions
 type mockDBClient struct{}
 
 func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) (subscriptions.WhistInstances, error) {
+	testLock.Lock()
+	defer testLock.Unlock()
+
 	return testInstances, nil
 }
 
 func (db *mockDBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region string) (subscriptions.WhistInstances, error) {
+	testLock.Lock()
+	defer testLock.Unlock()
+
 	return testInstances, nil
 }
 
 func (db *mockDBClient) QueryInstancesByImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, imageID string) (subscriptions.WhistInstances, error) {
+	testLock.Lock()
+	defer testLock.Unlock()
+
 	return testInstances, nil
 }
 
 func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, insertParams []subscriptions.Instance) (int, error) {
+	testLock.Lock()
+	defer testLock.Unlock()
+
 	for _, instance := range insertParams {
 		testInstances = append(testInstances, struct {
 			ID                graphql.String                 `graphql:"id"`
@@ -56,6 +76,9 @@ func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 }
 
 func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams map[string]interface{}) (int, error) {
+	testLock.Lock()
+	defer testLock.Unlock()
+
 	for index, instance := range testInstances {
 		if instance.ID == updateParams["id"] {
 			updatedInstance := struct {
@@ -86,28 +109,66 @@ func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient
 }
 
 func (db *mockDBClient) DeleteInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) (int, error) {
+	testLock.Lock()
+	defer testLock.Unlock()
+
 	testInstances = subscriptions.WhistInstances{}
 	return 0, nil
 }
 
 func (db *mockDBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) (subscriptions.WhistImages, error) {
-	return subscriptions.WhistImages{
-		{
-			Provider:  "AWS",
-			Region:    "test-region",
-			ImageID:   "test-image-id",
-			ClientSHA: "test-sha",
-			UpdatedAt: time.Now(),
-		},
-	}, nil
+	testLock.Lock()
+	defer testLock.Unlock()
+
+	return testImages, nil
 }
 
 func (db *mockDBClient) InsertImages(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, insertParams []subscriptions.Image) (int, error) {
-	return 0, nil
+	testLock.Lock()
+	defer testLock.Unlock()
+
+	for _, image := range insertParams {
+		testImages = append(testImages, struct {
+			Provider  graphql.String `graphql:"provider"`
+			Region    graphql.String `graphql:"region"`
+			ImageID   graphql.String `graphql:"image_id"`
+			ClientSHA graphql.String `graphql:"client_sha"`
+			UpdatedAt time.Time      `graphql:"updated_at"`
+		}{
+			Provider:  graphql.String(image.Provider),
+			Region:    graphql.String(image.Region),
+			ImageID:   graphql.String(image.ImageID),
+			ClientSHA: graphql.String(image.ClientSHA),
+			UpdatedAt: image.UpdatedAt,
+		})
+	}
+	return len(testImages), nil
 }
 
 func (db *mockDBClient) UpdateImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, image subscriptions.Image) (int, error) {
-	return 0, nil
+	testLock.Lock()
+	defer testLock.Unlock()
+
+	for index, testImage := range testImages {
+		if (testImage.Region == graphql.String(image.Region)) &&
+			testImage.Provider == graphql.String(image.Provider) {
+			updatedImage := struct {
+				Provider  graphql.String `graphql:"provider"`
+				Region    graphql.String `graphql:"region"`
+				ImageID   graphql.String `graphql:"image_id"`
+				ClientSHA graphql.String `graphql:"client_sha"`
+				UpdatedAt time.Time      `graphql:"updated_at"`
+			}{
+				Provider:  graphql.String(image.Provider),
+				Region:    graphql.String(image.Region),
+				ImageID:   graphql.String(image.ImageID),
+				ClientSHA: graphql.String(image.ClientSHA),
+				UpdatedAt: image.UpdatedAt,
+			}
+			testImages[index] = updatedImage
+		}
+	}
+	return len(testImages), nil
 }
 
 // mockHostHandler is used to test all interactions with cloud providers
@@ -162,20 +223,28 @@ func (mg *mockGraphQLClient) Mutate(context.Context, subscriptions.GraphQLQuery,
 	return nil
 }
 
-func TestVerifyInstanceScaleDown(t *testing.T) {
-	context, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+func setup() {
 	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
+	testAlgorithm = &DefaultScalingAlgorithm{
 		Region: "test-region",
 		Host:   &mockHostHandler{},
 	}
 	testDBClient := &mockDBClient{}
 	testGraphQLClient := &mockGraphQLClient{}
-
+	testAlgorithm.CreateEventChans()
 	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
 	testAlgorithm.CreateDBClient(testDBClient)
+}
+
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	os.Exit(code)
+}
+
+func TestVerifyInstanceScaleDown(t *testing.T) {
+	context, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// Populate test instances that will be used when
 	// mocking database functions.
@@ -183,6 +252,23 @@ func TestVerifyInstanceScaleDown(t *testing.T) {
 		{
 			ID:       "test-verify-scale-down-instance",
 			Provider: "AWS",
+		},
+	}
+
+	// Set the current image for testing
+	testImages = subscriptions.WhistImages{
+		struct {
+			Provider  graphql.String `graphql:"provider"`
+			Region    graphql.String `graphql:"region"`
+			ImageID   graphql.String `graphql:"image_id"`
+			ClientSHA graphql.String `graphql:"client_sha"`
+			UpdatedAt time.Time      `graphql:"updated_at"`
+		}{
+			Provider:  "AWS",
+			Region:    "test-region",
+			ImageID:   "test-image-id",
+			ClientSHA: "test-sha-dev",
+			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
 		},
 	}
 
@@ -216,18 +302,24 @@ func TestVerifyCapacity(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
-		Region: "test-region",
-		Host:   &mockHostHandler{},
-	}
-	testDBClient := &mockDBClient{}
-	testGraphQLClient := &mockGraphQLClient{}
-
-	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
-	testAlgorithm.CreateDBClient(testDBClient)
-
 	testInstances = subscriptions.WhistInstances{}
+
+	// Set the current image for testing
+	testImages = subscriptions.WhistImages{
+		struct {
+			Provider  graphql.String `graphql:"provider"`
+			Region    graphql.String `graphql:"region"`
+			ImageID   graphql.String `graphql:"image_id"`
+			ClientSHA graphql.String `graphql:"client_sha"`
+			UpdatedAt time.Time      `graphql:"updated_at"`
+		}{
+			Provider:  "AWS",
+			Region:    "test-region",
+			ImageID:   "test-image-id",
+			ClientSHA: "test-sha-dev",
+			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
+		},
+	}
 
 	// For this test, we will start with no capacity to check if
 	// the function properly starts instances.
@@ -257,17 +349,6 @@ func TestScaleDownIfNecessary(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
-		Region: "test-region",
-		Host:   &mockHostHandler{},
-	}
-	testDBClient := &mockDBClient{}
-	testGraphQLClient := &mockGraphQLClient{}
-
-	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
-	testAlgorithm.CreateDBClient(testDBClient)
-
 	// Populate test instances that will be used when
 	// mocking database functions.
 	testInstances = subscriptions.WhistInstances{
@@ -294,6 +375,23 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
+		},
+	}
+
+	// Set the current image for testing
+	testImages = subscriptions.WhistImages{
+		struct {
+			Provider  graphql.String `graphql:"provider"`
+			Region    graphql.String `graphql:"region"`
+			ImageID   graphql.String `graphql:"image_id"`
+			ClientSHA graphql.String `graphql:"client_sha"`
+			UpdatedAt time.Time      `graphql:"updated_at"`
+		}{
+			Provider:  "AWS",
+			Region:    "test-region",
+			ImageID:   "test-image-id",
+			ClientSHA: "test-sha-dev",
+			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
 		},
 	}
 
@@ -341,19 +439,25 @@ func TestScaleUpIfNecessary(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
-		Region: "test-region",
-		Host:   &mockHostHandler{},
-	}
-	testDBClient := &mockDBClient{}
-	testGraphQLClient := &mockGraphQLClient{}
-
 	testInstances = subscriptions.WhistInstances{}
 	testInstancesToScale := 3
 
-	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
-	testAlgorithm.CreateDBClient(testDBClient)
+	// Set the current image for testing
+	testImages = subscriptions.WhistImages{
+		struct {
+			Provider  graphql.String `graphql:"provider"`
+			Region    graphql.String `graphql:"region"`
+			ImageID   graphql.String `graphql:"image_id"`
+			ClientSHA graphql.String `graphql:"client_sha"`
+			UpdatedAt time.Time      `graphql:"updated_at"`
+		}{
+			Provider:  "AWS",
+			Region:    "test-region",
+			ImageID:   "test-image-id",
+			ClientSHA: "test-sha-dev",
+			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
+		},
+	}
 
 	// For this test, try to scale up instances and check if they are
 	// successfully added to the database with the correct data.
@@ -395,20 +499,9 @@ func TestScaleUpIfNecessary(t *testing.T) {
 	}
 }
 
-func TestUpgradeImage(t *testing.T) {
+func TestDeploy(t *testing.T) {
 	context, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	// Create and initialize a test scaling algorithm
-	testAlgorithm := &DefaultScalingAlgorithm{
-		Region: "test-region",
-		Host:   &mockHostHandler{},
-	}
-	testDBClient := &mockDBClient{}
-	testGraphQLClient := &mockGraphQLClient{}
-
-	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
-	testAlgorithm.CreateDBClient(testDBClient)
 
 	// Populate test instances that will be used when
 	// mocking database functions.
@@ -423,12 +516,54 @@ func TestUpgradeImage(t *testing.T) {
 		},
 	}
 
-	// For this test, start an image upgrade, check that instances with the new image
-	// are created and that old instances are left untouched.
-	err := testAlgorithm.UpgradeImage(context, ScalingEvent{Region: "test-region"}, "test-image-id-new")
-	if err != nil {
-		t.Errorf("Failed while testing scale up action. Err: %v", err)
+	// Set the current image for testing
+	testImages = subscriptions.WhistImages{
+		struct {
+			Provider  graphql.String `graphql:"provider"`
+			Region    graphql.String `graphql:"region"`
+			ImageID   graphql.String `graphql:"image_id"`
+			ClientSHA graphql.String `graphql:"client_sha"`
+			UpdatedAt time.Time      `graphql:"updated_at"`
+		}{
+			Provider:  "AWS",
+			Region:    "test-region",
+			ImageID:   "test-image-id-old",
+			ClientSHA: graphql.String(metadata.GetGitCommit()),
+			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
+		},
 	}
+
+	testVersion := subscriptions.ClientAppVersion{
+		DevCommitHash:     metadata.GetGitCommit(),
+		StagingCommitHash: metadata.GetGitCommit(),
+		ProdCommitHash:    metadata.GetGitCommit(),
+	}
+
+	wg := &sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		// For this test, start an image upgrade, check that instances with the new image
+		// are created and that old instances are left untouched.
+		err := testAlgorithm.UpgradeImage(context, ScalingEvent{Region: "test-region"}, "test-image-id-new")
+		if err != nil {
+			t.Errorf("Failed while testing scale up action. Err: %v", err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		err := testAlgorithm.SwapOverImages(context, ScalingEvent{Region: "test-region"}, testVersion)
+		if err != nil {
+			t.Errorf("Failed to swapover images. Err: %v", err)
+		}
+	}()
+
+	wg.Wait()
 
 	// Check that an instance was scaled up after the test instance was removed
 	expectedInstances := subscriptions.WhistInstances{
@@ -453,4 +588,69 @@ func TestUpgradeImage(t *testing.T) {
 	if !ok {
 		t.Errorf("Did not scale up instances correctly while testing scale up action. Expected %v, got %v", expectedInstances, testInstances)
 	}
+
+	// Check that the new image was unprotected successfully
+	ok = compareProtectedMaps(testAlgorithm.protectedFromScaleDown, map[string]subscriptions.Image{})
+	if !ok {
+		t.Errorf("Expected protected from scale down map to be empty, got: %v", testAlgorithm.protectedFromScaleDown)
+	}
+
+	expectedImages := subscriptions.WhistImages{
+		struct {
+			Provider  graphql.String `graphql:"provider"`
+			Region    graphql.String `graphql:"region"`
+			ImageID   graphql.String `graphql:"image_id"`
+			ClientSHA graphql.String `graphql:"client_sha"`
+			UpdatedAt time.Time      `graphql:"updated_at"`
+		}{
+			Provider:  "AWS",
+			Region:    "test-region",
+			ImageID:   "test-image-id-new",
+			ClientSHA: graphql.String(metadata.GetGitCommit()),
+			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
+		},
+	}
+
+	ok = compareWhistImages(testImages, expectedImages)
+	if !ok {
+		t.Errorf("Swapover did not insert the correct images to database. Expected %v, got %v", expectedImages, testImages)
+	}
+}
+
+// Helper functions
+
+// We need to use a custom compare function to compare protectedFromScaleDown maps
+// because the `UpdatedAt` is a timestamp set with `time.Now`.
+func compareProtectedMaps(a map[string]subscriptions.Image, b map[string]subscriptions.Image) bool {
+	var equal bool
+
+	if (len(a) == 0) && (len(b) == 0) {
+		equal = true
+	}
+
+	for k, v := range a {
+		for s, i := range b {
+			if k != s {
+				break
+			}
+			i.UpdatedAt = v.UpdatedAt
+			equal = reflect.DeepEqual(v, i)
+		}
+	}
+
+	return equal
+}
+
+// We need to use a custom compare function to compare WhistImages objects
+// because the `UpdatedAt` is a timestamp set with `time.Now`.
+func compareWhistImages(a subscriptions.WhistImages, b subscriptions.WhistImages) bool {
+	var equal bool
+	for _, v := range a {
+		for _, i := range b {
+			i.UpdatedAt = v.UpdatedAt
+			equal = reflect.DeepEqual(v, i)
+		}
+	}
+
+	return equal
 }

@@ -21,7 +21,7 @@ var Enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 // WhistSubscriptionClient is an interface used to abstract the interactions with
 // the official Hasura client.
 type WhistSubscriptionClient interface {
-	Initialize() error
+	Initialize(bool) error
 	GetSubscriptions() []HasuraSubscription
 	SetSubscriptions([]HasuraSubscription)
 	GetSubscriptionIDs() []string
@@ -30,7 +30,7 @@ type WhistSubscriptionClient interface {
 	SetParams(HasuraParams)
 	Subscribe(GraphQLQuery, map[string]interface{}, SubscriptionEvent, Handlerfn, chan SubscriptionEvent) (string, error)
 	Run(*sync.WaitGroup)
-	Close([]string) error
+	Close() error
 }
 
 // SubscriptionClient implements WhistSubscriptionClient and is exposed to be used
@@ -44,13 +44,26 @@ type SubscriptionClient struct {
 
 // Initialize creates the client. This function is respinsible from fetching the server
 // information from Heroku.
-func (wc *SubscriptionClient) Initialize() error {
+func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 	logger.Infof("Setting up Subscription client...")
 
-	params, err := getWhistHasuraParams()
-	if err != nil {
-		// Error obtaining the connection parameters, we stop and don't setup the client
-		return utils.MakeError("error creating hasura client: %v", err)
+	var (
+		params HasuraParams
+		err    error
+	)
+
+	if useConfigDB {
+		params, err = getWhistConfigHasuraParams()
+		if err != nil {
+			// Error obtaining the connection parameters, we stop and don't setup the client
+			return utils.MakeError("error creating hasura client: %v", err)
+		}
+	} else {
+		params, err = getWhistHasuraParams()
+		if err != nil {
+			// Error obtaining the connection parameters, we stop and don't setup the client
+			return utils.MakeError("error creating hasura client: %v", err)
+		}
 	}
 
 	wc.SetParams(params)
@@ -113,23 +126,27 @@ func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string
 		switch result := result.(type) {
 		case InstanceEvent:
 			err = json.Unmarshal(*data, &result)
-
 			if err != nil {
 				return utils.MakeError("failed to unmarshal subscription event: %v", err)
 			}
-
 			if conditionFn(result, variables) {
 				// We notify via the subscriptionsEvent channel
 				subscriptionEvents <- &result
 			}
-
 		case MandelboxEvent:
 			err = json.Unmarshal(*data, &result)
-
 			if err != nil {
 				return utils.MakeError("failed to unmarshal subscription event: %v", err)
 			}
-
+			if conditionFn(result, variables) {
+				// We notify via the subscriptionsEvent channel
+				subscriptionEvents <- &result
+			}
+		case ClientAppVersionEvent:
+			err = json.Unmarshal(*data, &result)
+			if err != nil {
+				return utils.MakeError("failed to unmarshal subscription event: %v", err)
+			}
 			if conditionFn(result, variables) {
 				// We notify via the subscriptionsEvent channel
 				subscriptionEvents <- &result
@@ -159,11 +176,11 @@ func (wc *SubscriptionClient) Run(goroutineTracker *sync.WaitGroup) {
 
 // Close manages all the logic to unsubscribe to every subscription and close the connection
 // to the Hasura server correctly.
-func (wc *SubscriptionClient) Close(subscriptionIDs []string) error {
+func (wc *SubscriptionClient) Close() error {
 	// We have to ensure we unsubscribe to every subscription
 	// before closing the client, otherwise it will result in a deadlock!
 	logger.Infof("Closing Hasura subscriptions...")
-	for _, id := range subscriptionIDs {
+	for _, id := range wc.GetSubscriptionIDs() {
 		// This is safe to do because the Unsubscribe method
 		// acquires a lock when closing the connection.
 		err := wc.Hasura.Unsubscribe(id)

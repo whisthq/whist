@@ -171,6 +171,10 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// have support for more instance types. For now default to `g4dn.2xlarge`.
 	extraCapacity := DESIRED_FREE_MANDELBOXES + (DEFAULT_INSTANCE_BUFFER * instanceCapacity["g4dn.2xlarge"])
 
+	// Acquire lock on protected from scale down map
+	s.protectedMapLock.Lock()
+	defer s.protectedMapLock.Unlock()
+
 	// Create a list of instances that can be scaled down from the active instances list.
 	// For this, we have to consider the following conditions:
 	// 1. Does the instance have any running mandelboxes? If so, don't scale down.
@@ -186,6 +190,19 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", instance.ID, len(instance.Mandelboxes))
 			continue
 		}
+
+		_, protected := s.protectedFromScaleDown[string(instance.ImageID)]
+		if protected {
+			// Don't scale down instances with a protected image id. A protected
+			// image id refers to the image id that was built and passed by the
+			// `build-and-deploy` workflow, that is waiting for the config database
+			// to update commit hashes. For this reason, we don't scale down the
+			// instance buffer created for this image, instead we "protect" it until
+			// its ready to use, to avoid downtimes and to create the buffer only once.
+			logger.Infof("Not scaling down instance %v because it has an image id that is protected from scale down.", instance.ID)
+			continue
+		}
+
 		if instance.ImageID == graphql.String(latestImageID) {
 			// Current instances
 			// If we have more than one instance worth of extra mandelbox capacity, scale down
@@ -311,8 +328,6 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	logger.Infof("Starting upgrade image action for event: %v", event)
 	defer logger.Infof("Finished upgrade image action for event: %v", event)
 
-	var oldImageID string
-
 	// Check if we received a valid image before performing more
 	// expensive operations.
 
@@ -327,13 +342,6 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
-	}
-
-	if len(imageResult) == 0 {
-		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImageID)
-	} else {
-		// We now consider the "current" image as the "old" image
-		oldImageID = string(imageResult[0].ImageID)
 	}
 
 	// create instance buffer with new image
@@ -372,9 +380,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	logger.Infof("Inserted %v rows to database.", affectedRows)
 
-	// swapover active image on database
-	logger.Infof("Updating old %v image %v to new image %v on database.", event.Region, oldImageID, newImageID)
-	updateParams := subscriptions.Image{
+	newImage := subscriptions.Image{
 		Provider:  "AWS",
 		Region:    event.Region,
 		ImageID:   newImageID,
@@ -382,17 +388,142 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		UpdatedAt: time.Now(),
 	}
 
-	if oldImageID == "" {
+	// Acquire lock on protected from scale down map
+	s.protectedMapLock.Lock()
+	defer s.protectedMapLock.Unlock()
+
+	// Protect the new instance buffer from scale down. This is done to avoid any downtimes
+	// during deploy, as the active image will be switched until the client app has updated
+	// its version on the config database.
+	s.protectedFromScaleDown = make(map[string]subscriptions.Image)
+	s.protectedFromScaleDown[newImageID] = newImage
+
+	// If the region does not have an existing image, insert the new one to the database.
+	if len(imageResult) == 0 {
+		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImageID)
+
+		updateParams := subscriptions.Image{
+			Provider:  "AWS",
+			Region:    event.Region,
+			ImageID:   newImageID,
+			ClientSHA: metadata.GetGitCommit(),
+			UpdatedAt: time.Now(),
+		}
+
 		_, err = s.DBClient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{updateParams})
 		if err != nil {
 			return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
 		}
+	}
+
+	// Notify through the synchan that the image upgrade is done
+	// so that we can continue to swapover images when the config
+	// database updates. We time out here in case the frontend build
+	// failed to deploy, and if it does we rollback the new version.
+	select {
+	case s.SyncChan <- true:
+		logger.Infof("Finished upgrading image %v in region %v", newImageID, event.Region)
+	case <-time.After(1 * time.Hour):
+		// Clear protected map since the client app deploy didn't complete successfully.
+		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
+
+		return utils.MakeError("Timed out waiting for config database to swap versions. Rolling back deploy of new version.")
+	}
+
+	return nil
+}
+
+// SwapOverImages is a scaling action that will switch the current image on the given region.
+// To the latest one. This is done separately to avoid having downtimes during deploys, since
+// we have to wait until the frontend has updated its version on the config database.
+func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, event ScalingEvent, clientVersion interface{}) error {
+	// Block until the image upgrade has finished successfully.
+	// We time out here in case something went wrong with the
+	// upgrade image action, in which case we roll back the new version.
+	select {
+	case <-s.SyncChan:
+		logger.Infof("Got signal that image upgrade action finished correctly.")
+	case <-time.After(1 * time.Hour):
+		// Clear protected map since the image upgrade didn't complete successfully.
+		s.protectedMapLock.Lock()
+		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
+		s.protectedMapLock.Unlock()
+
+		return utils.MakeError("Timed out waiting for image upgrade to finish. Rolling back deploy of new version.")
+	}
+
+	logger.Infof("Starting image swapover action for event: %v", event)
+	defer logger.Infof("Finished image swapover action for event: %v", event)
+
+	// version is the entry we receive from the config database
+	version := clientVersion.(subscriptions.ClientAppVersion)
+
+	var (
+		commitHash string
+		newImage   subscriptions.Image
+		newImageID string
+		oldImageID string
+	)
+
+	// get the commit hash of the environment we are running in
+	switch metadata.GetAppEnvironmentLowercase() {
+	case string(metadata.EnvDev):
+		commitHash = version.DevCommitHash
+	case string(metadata.EnvStaging):
+		commitHash = version.StagingCommitHash
+	case string(metadata.EnvProd):
+		commitHash = version.ProdCommitHash
+	default:
+		commitHash = version.DevCommitHash
+	}
+
+	// Acquire lock on protected from scale down map
+	s.protectedMapLock.Lock()
+	defer s.protectedMapLock.Unlock()
+
+	// Find protected image that matches the config db commit hash
+	for _, image := range s.protectedFromScaleDown {
+		if image.ClientSHA == commitHash {
+			newImage = image
+			newImageID = image.ImageID
+			break
+		}
+	}
+
+	if newImage == (subscriptions.Image{}) {
+		return utils.MakeError("did not find protected image with commit hash %v. Not performing image swapover.", commitHash)
+	}
+
+	// Query for the current image id
+	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
+	if err != nil {
+		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
+	}
+
+	if len(imageResult) == 0 {
+		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImageID)
 	} else {
-		_, err = s.DBClient.UpdateImage(scalingCtx, s.GraphQLClient, updateParams)
+		// We now consider the "current" image as the "old" image
+		oldImageID = string(imageResult[0].ImageID)
+	}
+
+	// swapover active image on database
+	logger.Infof("Updating old %v image %v to new image %v on database.", event.Region, oldImageID, newImageID)
+
+	if oldImageID == "" {
+		_, err = s.DBClient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{newImage})
+		if err != nil {
+			return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
+		}
+	} else {
+		_, err = s.DBClient.UpdateImage(scalingCtx, s.GraphQLClient, newImage)
 		if err != nil {
 			return utils.MakeError("Failed to update image %v to image %v in database. Error: %v", oldImageID, newImageID, err)
 		}
 	}
+
+	// Unprotect the image until we have successfully swapped images in database
+	delete(s.protectedFromScaleDown, newImage.ImageID)
 
 	return nil
 }

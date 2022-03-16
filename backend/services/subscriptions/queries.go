@@ -53,6 +53,22 @@ type WhistImages []struct {
 	UpdatedAt time.Time      `graphql:"updated_at"`
 }
 
+// WhistClientAppVersions is the mapping of the `desktop_app_version` table on the config database.
+// This type interacts directly with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal.
+// Only use for GraphQL operations. For operations that do not interact with the client, use the
+// `ClientAppVersion` type instead.
+type WhistClientAppVersions []struct {
+	ID                graphql.Int    `graphql:"id"`
+	Major             graphql.Int    `graphql:"major"`
+	Minor             graphql.Int    `graphql:"minor"`
+	Micro             graphql.Int    `graphql:"micro"`
+	DevRC             graphql.Int    `graphql:"dev_rc"`
+	StagingRC         graphql.Int    `graphql:"staging_rc"`
+	DevCommitHash     graphql.String `graphql:"dev_commit_hash"`
+	StagingCommitHash graphql.String `graphql:"staging_commit_hash"`
+	ProdCommitHash    graphql.String `graphql:"prod_commit_hash"`
+}
+
 // QueryInstanceByIdWithStatus returns an instance that matches the given instance_name and status.
 var QueryInstanceByIdWithStatus struct {
 	WhistInstances `graphql:"whist_instances(where: {id: {_eq: $id}, _and: {status: {_eq: $status}}})"`
@@ -92,5 +108,10 @@ var QueryMandelboxByStatus struct {
 
 // QueryLatestImage returns the latest image from the database for the specified provider/region pair.
 var QueryLatestImage struct {
-	WhistImages `graphql:"  whist_images(where: {provider: {_eq: $provider}, _and: {region: {_eq: $region}}}, order_by: {updated_at: desc})"`
+	WhistImages `graphql:"whist_images(where: {provider: {_eq: $provider}, _and: {region: {_eq: $region}}}, order_by: {updated_at: desc})"`
+}
+
+// QueryClientAppVersionChange returns the most recent change on the `desktop_app_version` config database table.
+var QueryClientAppVersionChange struct {
+	WhistClientAppVersions `graphql:"desktop_app_version(where: {id: {_eq: $id}})"`
 }
