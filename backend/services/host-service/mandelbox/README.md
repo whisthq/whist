@@ -2,7 +2,7 @@
 
 This subfolder contains code for Whist's host service to start, configure, and shutdown mandelboxes.
 
-## Passing information from host service to mandelboxes
+## Passing information from the host-service to mandelboxes
 
 There are a few ways information is passed from host service to mandelboxes. Information can be passed via a file, environment variable, or both.
 

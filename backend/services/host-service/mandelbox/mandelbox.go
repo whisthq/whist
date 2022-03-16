@@ -43,7 +43,7 @@ import (
 )
 
 // Mandelbox represents a mandelbox as it is kept track of in this
-// package. Higher layers of the host service use this interface.
+// package. Higher layers of the host-service use this interface.
 type Mandelbox interface {
 	GetID() types.MandelboxID
 
@@ -79,7 +79,7 @@ type Mandelbox interface {
 	SetClientAppAccessToken(types.ClientAppAccessToken)
 
 	// AssignPortBindings is used to request port bindings on the host for
-	// mandelboxes. We allocate the host ports to be bound so the docker runtime
+	// mandelboxes. We allocate the host ports to be bound so the Docker runtime
 	// can actually bind them into the mandelbox.
 	AssignPortBindings([]portbindings.PortBinding) error
 	GetPortBindings() []portbindings.PortBinding
@@ -129,6 +129,7 @@ type Mandelbox interface {
 
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context
+
 	// Close cancels the mandelbox-specific context, triggering the cleanup of
 	// all associated resources.
 	Close()
@@ -243,7 +244,7 @@ type mandelboxData struct {
 	// TODO: re-evaluate whether we should still be doing this
 	// Note: while the Go language authors discourage storing a context in a
 	// struct, we need to do this to be able to call mandelbox methods from both
-	// the host service and ecsagent (NOTE: we no longer use the ECS agent, this
+	// the host-service and ecsagent (NOTE: we no longer use the ECS agent, this
 	// can probably be reworked).
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -393,7 +394,7 @@ func (mandelbox *mandelboxData) GetTTY() ttys.TTY {
 	return mandelbox.tty
 }
 
-// RegisterCreation registers a docker container ID to the mandelbox.
+// RegisterCreation registers a Docker container ID to the mandelbox.
 func (mandelbox *mandelboxData) RegisterCreation(d types.DockerID) error {
 	if len(d) == 0 {
 		return utils.MakeError("RegisterCreation: can't register mandelbox %s with empty docker ID", mandelbox.GetUserID())
@@ -419,7 +420,7 @@ func (mandelbox *mandelboxData) SetAppName(name types.AppName) error {
 	return nil
 }
 
-// GetDockerID returns the docker container ID for the mandelbox.
+// GetDockerID returns the Docker container ID for the mandelbox.
 func (mandelbox *mandelboxData) GetDockerID() types.DockerID {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
