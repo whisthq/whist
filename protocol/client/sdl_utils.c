@@ -212,6 +212,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     bool maximized = target_output_width == 0 && target_output_height == 0;
 
+    maximized=0;
+
     // Default output dimensions will be a quarter of the full screen if the window
     // starts maximized. Even if this isn't a multiple of 8, it's fine because
     // clicking the minimize button will trigger an SDL resize event
