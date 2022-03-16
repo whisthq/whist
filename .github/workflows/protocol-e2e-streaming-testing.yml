@@ -137,17 +137,18 @@ jobs:
       - name: Run End-to-End Streaming Test (low bandwidth + pkt drops + delay)
         id: e2e_streaming_test3
         working-directory: protocol/test
-        run: python3 streaming_e2e_tester.py \
-          --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
-          --ssh-key-path "/home/runner/.ssh/id_rsa" \
-          --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
-          --use-two-instances=true \
-          --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
-          --use-existing-server-instance "$SERVER_INSTANCE_ID" \
-          --leave-instances-on=false \
-          --skip-host-setup=true \
-          --skip-git-clone=true \
-          --network-conditions 1Mbit,100,0.1
+        run: |
+          python3 streaming_e2e_tester.py \
+            --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
+            --ssh-key-path "/home/runner/.ssh/id_rsa" \
+            --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
+            --use-two-instances=true \
+            --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
+            --use-existing-server-instance "$SERVER_INSTANCE_ID" \
+            --leave-instances-on=false \
+            --skip-host-setup=true \
+            --skip-git-clone=true \
+            --network-conditions 1Mbit,100,0.1
 
       # Steps below acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
       - name: Get branch name (merge)
@@ -183,10 +184,10 @@ jobs:
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
-        run:
+        run: |
           python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py \
-          --compared-branch-name "dev" "${{ env.BRANCH_NAME }}" \
-          --e2e-script-outcomes "${{ steps.e2e_streaming_test0.outcome }}" "${{ steps.e2e_streaming_test1.outcome }}" "${{ steps.e2e_streaming_test2.outcome }}" "${{ steps.e2e_streaming_test3.outcome }}" \
-          --post-results-on-slack="${{ github.event_name == 'schedule' }}"
+            --compared-branch-name "dev" "${{ env.BRANCH_NAME }}" \
+            --e2e-script-outcomes "${{ steps.e2e_streaming_test0.outcome }}" "${{ steps.e2e_streaming_test1.outcome }}" "${{ steps.e2e_streaming_test2.outcome }}" "${{ steps.e2e_streaming_test3.outcome }}" \
+            --post-results-on-slack="${{ github.event_name == 'schedule' }}"
 
   #######################################################################################
