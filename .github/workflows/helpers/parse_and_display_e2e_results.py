@@ -194,9 +194,19 @@ if __name__ == "__main__":
             network_conditions = experiment_metadata["network_conditions"]
         if network_conditions != "normal" and "," in network_conditions:
             network_conditions = network_conditions.split(",")
-            bandwidth = network_conditions[0] if network_conditions[0] != "none" else "full available"
-            delay = network_conditions[1] + " ms" if network_conditions[1] != "none" else network_conditions[1]
-            packet_drops = float(network_conditions[2]) * 100.0 if network_conditions[2] != "none" else network_conditions[2]
+            bandwidth = (
+                network_conditions[0] if network_conditions[0] != "none" else "full available"
+            )
+            delay = (
+                network_conditions[1] + " ms"
+                if network_conditions[1] != "none"
+                else network_conditions[1]
+            )
+            packet_drops = (
+                "{:.2f}".format(float(network_conditions[2]) * 100.0)
+                if network_conditions[2] != "none"
+                else network_conditions[2]
+            )
             network_conditions = (
                 f"Bandwidth: {bandwidth}, Delay: {delay} ms, Packet Drops: {packet_drops:.2f}"
             )
@@ -245,7 +255,7 @@ if __name__ == "__main__":
         summary_file.write("### Experiments summary:\n\n")
         for i, experiment in enumerate(experiments):
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
-            if experiment['dirname'] is not None:
+            if experiment["dirname"] is not None:
                 results_file.write(
                     f"* **Experiment {i+1}** - Network conditions: {experiment['network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}. Download logs (if they exist) with command: `aws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive`\n"
                 )
