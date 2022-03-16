@@ -187,9 +187,19 @@ if __name__ == "__main__":
         server_log_file = os.path.join(log_dir, "server", "server.log")
 
         experiment_metadata = parse_metadata(log_dir)
+
+        # Get network conditions, and format them in human-readable form
         network_conditions = "normal"
         if experiment_metadata and "network_conditions" in experiment_metadata:
             network_conditions = experiment_metadata["network_conditions"]
+        if network_conditions != "normal" and "," in network_conditions:
+            network_conditions = network_conditions.split(",")
+            bandwidth = network_conditions[0]
+            delay = network_conditions[1]
+            packet_drops = float(network_conditions[2]) * 100.0
+            network_conditions = (
+                f"Bandwidth: {bandwidth}, Delay: {delay} ms, Packet Drops: {packet_drops:.2f}"
+            )
 
         client_metrics = None
         server_metrics = None
@@ -209,6 +219,7 @@ if __name__ == "__main__":
             if (client_metrics is not None and server_metrics is not None)
             else "unknown",
             "outcome": e2e_script_outcomes[i],
+            "dirname": os.path.basename(log_dir),
         }
 
         experiments.append(experiment_entry)
@@ -225,30 +236,28 @@ if __name__ == "__main__":
             "server_metrics": None,
             "network_conditions": "unknown",
             "outcome": e2e_script_outcomes[i],
+            "dirname": None,
         }
         experiments.append(experiment_entry)
         print("\t+ Adding empty entry for failed/skipped experiment")
 
+    with open(f"streaming_e2e_test_results_0.md", "w") as summary_file:
+        summary_file.write("### Experiments summary:\n\n")
+        for i, experiment in enumerate(experiments):
+            outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
+            results_file.write(
+                f"* **Experiment {i+1}** - Network conditions: {experiment['network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}. Download logs (if they exist) with command: `aws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive`\n"
+            )
+        results_file.write("\n")
+
     for i, compared_branch_name in enumerate(compared_branch_names):
         print(f"Comparing to branch {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
-        results_file = open(f"streaming_e2e_test_results_{i}.md", "w")
+        results_file = open(f"streaming_e2e_test_results_{i+1}.md", "w")
         results_file.write(f"## Results compared to branch {compared_branch_name}\n")
         for j, experiment in enumerate(experiments):
-            human_readable_network_conditions = experiment["network_conditions"]
-            if (
-                human_readable_network_conditions != "unknown"
-                and human_readable_network_conditions != "normal"
-            ):
-                human_readable_network_conditions = human_readable_network_conditions.split(",")
-                bandwidth = human_readable_network_conditions[0]
-                delay = human_readable_network_conditions[1]
-                packet_drops = float(human_readable_network_conditions[2]) * 100.0
-                human_readable_network_conditions = (
-                    f"Bandwidth: {bandwidth}, Delay: {delay} ms, Packet Drops: {packet_drops:.2f}"
-                )
             results_file.write(
-                f"### Experiment {j+1} - Network conditions: {human_readable_network_conditions}\n"
+                f"### Experiment {j+1} - Network conditions: {experiment['network_conditions']}\n"
             )
             if experiment["outcome"] != "success":
                 results_file.write(
