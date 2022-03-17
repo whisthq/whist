@@ -27,7 +27,7 @@ Includes
 #include <whist/core/whist_frame.h>
 #include <whist/tools/protocol_analyzer.h>
 #include <whist/tools/debug_console.h>
-#include <whist/utils/audio_queue.h>
+#include "audio_queue.h"
 /*
 ============================
 Defines

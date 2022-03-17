@@ -28,6 +28,7 @@ Includes
 #include "sync_packets.h"
 #include "client_utils.h"
 #include "client_statistic.h"
+#include "audio_queue.h"
 
 // Updater variables
 extern SocketContext packet_udp_context;
@@ -69,6 +70,8 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     //   These buffers should be set to something extremely large (Several seconds)
     udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 256);
     udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 256);
+
+    udp_register_ring_buffer_ready_cb(udp_context, PACKET_AUDIO,push_to_audio_queue);
 
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 

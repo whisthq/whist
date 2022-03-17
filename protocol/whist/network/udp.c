@@ -1774,3 +1774,16 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 }
 
 size_t udp_packet_max_size(void) { return (sizeof(UDPNetworkPacket)); }
+
+void udp_register_ring_buffer_ready_cb(SocketContext* socket_context, WhistPacketType type,void * cb)
+{
+    FATAL_ASSERT(socket_context != NULL);
+    UDPContext* context = socket_context->context;
+    FATAL_ASSERT(context != NULL);
+
+    int type_index = (int)type;
+    FATAL_ASSERT(type_index < NUM_PACKET_TYPES);
+    FATAL_ASSERT(context->ring_buffers[type_index] != NULL);
+
+    ring_buffer_set_ready_cb (context->ring_buffers[type_index],cb);
+}

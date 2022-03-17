@@ -25,8 +25,4 @@ Public Functions
  */
 int32_t multithreaded_send_audio(void* opaque);
 
-
-// this has no use, just a hacky  way to suppress some complier error 
-int  my_get_audio_queue_len(void);
-
 #endif  // SERVER_AUDIO_H

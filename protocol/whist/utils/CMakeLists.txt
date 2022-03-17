@@ -17,7 +17,6 @@ add_library(whistUtils STATIC
         os_utils.c
         linked_list.c
         queue.c
-	audio_queue.cpp
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

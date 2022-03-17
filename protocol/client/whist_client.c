@@ -52,6 +52,7 @@ Includes
 #include "client_statistic.h"
 #include "renderer.h"
 #include <whist/tools/debug_console.h>
+#include "audio_queue.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -273,8 +274,6 @@ static void initiate_file_upload(void) {
     }
     upload_initiated = false;
 }
-
-#include <whist/utils/audio_queue.h>
 
 int whist_client_main(int argc, char* argv[]) {
     WhistSubsystemParams subsystem_params = {true};
