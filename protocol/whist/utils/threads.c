@@ -159,6 +159,8 @@ void whist_wait_cond(WhistCondition cond, WhistMutex mutex) {
 }
 
 void whist_broadcast_cond(WhistCondition cond) {
+    // A spurious wake, can cause a wait_cond thread to not actually be waiting, during this
+    // broadcast. Thus, the mutex must be locked in order to guarantee a wakeup
     if (SDL_CondBroadcast(cond) < 0) {
         LOG_FATAL("Failure broadcasting condition variable: %s", SDL_GetError());
     }
@@ -182,6 +184,17 @@ void whist_post_semaphore(WhistSemaphore semaphore) {
 
 void whist_wait_semaphore(WhistSemaphore semaphore) {
     if (SDL_SemWait(semaphore) < 0) {
+        LOG_FATAL("Failure waiting on semaphore: %s", SDL_GetError());
+    }
+}
+
+bool whist_wait_timeout_semaphore(WhistSemaphore semaphore, int timeout_ms) {
+    int ret = SDL_SemWaitTimeout(semaphore, timeout_ms);
+    if (ret == SDL_MUTEX_TIMEDOUT) {
+        return false;
+    } else if (ret == 0) {
+        return true;
+    } else {
         LOG_FATAL("Failure waiting on semaphore: %s", SDL_GetError());
     }
 }
