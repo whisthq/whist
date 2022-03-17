@@ -234,7 +234,9 @@ if __name__ == "__main__":
             "network_conditions": network_conditions
             if (client_metrics is not None and server_metrics is not None)
             else "unknown",
-            "human_readable_network_conditions": human_readable_network_conditions,
+            "human_readable_network_conditions": human_readable_network_conditions
+            if (client_metrics is not None and server_metrics is not None)
+            else "unknown",
             "outcome": e2e_script_outcomes[i],
             "dirname": os.path.basename(log_dir),
         }
@@ -252,6 +254,7 @@ if __name__ == "__main__":
             "client_metrics": None,
             "server_metrics": None,
             "network_conditions": "unknown",
+            "human_readable_network_conditions": "unknown",
             "outcome": e2e_script_outcomes[i],
             "dirname": None,
         }
@@ -363,7 +366,7 @@ if __name__ == "__main__":
     md_files = glob.glob("streaming_e2e_test_results_*.md")
     files_list = []
     merged_files = ""
-    for filename in md_files:
+    for filename in sorted(md_files):
         with open(filename, "r") as f:
             contents = f.read()
             files_list.append((filename, contents))

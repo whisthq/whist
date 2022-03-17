@@ -15,6 +15,8 @@ on:
       - "!protocol/**/README.md"
       - ".github/workflows/protocol-e2e-streaming-testing.yml"
       - "mandelboxes/helper_scripts/copy_protocol_build.sh"
+      - ".github/workflows/helpers/parse_and_display_e2e_results.py"
+      - ".github/workflows/helpers/protocol/e2e_streaming_test_display_helpers/**"
   workflow_dispatch:
 
 concurrency:
