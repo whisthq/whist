@@ -357,9 +357,8 @@ TEST_F(ProtocolTest, InitSDL) {
         //       to compute the screen size, so I opted to remove that function.
     }
 
-    destroy_sdl(new_window);
+    destroy_sdl(new_window, frontend);
     whist_destroy_mutex(window_resize_mutex);
-    whist_frontend_destroy(frontend);
 
     check_stdout_line(::testing::HasSubstr("Destroying SDL"));
 }
