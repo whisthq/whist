@@ -161,8 +161,8 @@ int network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t b
     double time = get_timer(&start);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY, time * MS_IN_SECOND);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_RATE, time * MS_IN_SECOND / (double)bytes);
-    atomic_fetch_add(&ctx->current_queue_id, 1);
     whist_lock_mutex(ctx->queue_lock);
+    atomic_fetch_add(&ctx->current_queue_id, 1);
     whist_broadcast_cond(ctx->queue_cond);
     whist_unlock_mutex(ctx->queue_lock);
     return ctx->group_id;
