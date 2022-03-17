@@ -1,6 +1,6 @@
 extern "C"
 {
-#include "audio_queue.h"
+#include "audio_path.h"
 #include <whist/utils/threads.h>
 #include <whist/utils/clock.h>
 extern int my_get_audio_queue_len(void);
@@ -46,7 +46,7 @@ int audio_queue_loop_thread(void *)
 
 }
 
-int audio_queue_init(void)
+int audio_path_init(void)
 {
     g_mutex = whist_create_mutex();
     int len=sizeof(empty_frame);
@@ -124,7 +124,7 @@ int skiped_cnt=0;
 int last_decoded_id=-1;
 
 
-int push_to_audio_queue(int id, unsigned char *buf, int size)
+int push_to_audio_path(int id, unsigned char *buf, int size)
 {
 
     int device_queue_byte=my_get_audio_queue_len();
@@ -317,7 +317,7 @@ bool decide_early_drop(int queue_len)
 
 }
 
-int pop_from_audio_queue( unsigned char *buf, int *size)
+int pop_from_audio_path( unsigned char *buf, int *size)
 {
     static int g_cnt=0;
     g_cnt++;

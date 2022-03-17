@@ -15,7 +15,7 @@ set(WHIST_CLIENT_DEPENDS
         sync_packets.c
         client_statistic.c
         renderer.c
-	audio_queue.cpp
+	audio_path.cpp
 )
 
 if(CLIENT_SHARED_LIB)

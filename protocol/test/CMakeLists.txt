@@ -29,7 +29,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
         # Files needed for Client unit tests
         ../client/audio.c
-        ../client/audio_queue.cpp
+        ../client/audio_path.cpp
         ../client/client_utils.c
         ../client/network.c
         ../client/sdl_event_handler.c
@@ -76,7 +76,7 @@ else()
 
         # Files needed for Client unit tests
         ../client/audio.c
-        ../client/audio_queue.cpp
+        ../client/audio_path.cpp
         ../client/client_utils.c
         ../client/network.c
         ../client/sdl_event_handler.c

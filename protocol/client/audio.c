@@ -27,7 +27,7 @@ Includes
 #include <whist/core/whist_frame.h>
 #include <whist/tools/protocol_analyzer.h>
 #include <whist/tools/debug_console.h>
-#include "audio_queue.h"
+#include "audio_path.h"
 /*
 ============================
 Defines
@@ -223,7 +223,7 @@ int render_audio(AudioContext* audio_context) {
     unsigned char audio_buffer[MAX_AUDIO_PACKETS * MAX_PACKET_SEGMENT_SIZE +100];
     int audio_buffer_size=-1;
 
-    if(pop_from_audio_queue(audio_buffer, &audio_buffer_size)==0)
+    if(pop_from_audio_path(audio_buffer, &audio_buffer_size)==0)
     {
     //if (audio_context->pending_render_context) {
         // Only do work, if the audio frequency is valid
