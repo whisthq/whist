@@ -98,7 +98,7 @@ def server_setup_process(args_dict):
             running_in_ci,
         )
 
-        # 2 - Fix DPKG issue in case it comes up
+        # 2- Fix DPKG issue in case it comes up
         apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
 
         # 3- run host-setup
@@ -114,8 +114,8 @@ def server_setup_process(args_dict):
     else:
         print("Skipping host setup on server instance.")
 
-    # 2- reboot and wait for it to come back up
-    print("Rebooting the server EC2 instance (required after running the host setup)...")
+    # Reboot and wait for it to come back up
+    print("Rebooting the server EC2 instance (required after running the host-setup)...")
     hs_process = reboot_instance(
         hs_process,
         server_cmd,
@@ -126,11 +126,10 @@ def server_setup_process(args_dict):
         running_in_ci,
     )
 
-    # 3- Build the protocol server
+    # Build the protocol server
     build_server_on_instance(hs_process, pexpect_prompt_server, cmake_build_type, running_in_ci)
 
     hs_process.kill(0)
-
     server_log.close()
 
 
@@ -173,13 +172,13 @@ def run_server_on_instance(pexpect_process):
 
     Args:
         pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                        interact with the remote machine
+                         interact with the remote machine
 
     Returns:
         server_docker_id: The Docker ID of the container running the Whist server
-                        (browsers/chrome mandelbox) on the remote machine
+                          (browsers/chrome mandelbox) on the remote machine
         json_data: A dictionary containing the IP, AES KEY, and port mappings that are needed by
-                        the client to successfully connect to the Whist server.
+                   the client to successfully connect to the Whist server.
     """
     command = "cd ~/whist/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
     pexpect_process.sendline(command)
@@ -217,7 +216,7 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
 
     Args:
         pexpect_process: Server pexpect process - MUST BE AFTER DOCKER COMMAND WAS RUN - otherwise
-                        behavior is undefined
+                         behavior is undefined
         exit_confirm_exp: Target expression to expect on a graceful server exit
 
     Returns:
@@ -225,6 +224,7 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
     """
     # Shut down Chrome
     pexpect_process.sendline("pkill chrome")
+
     # We set running_in_ci=True because the Docker bash does not print in color
     # (check wait_until_cmd_done docstring for more details about handling color bash stdout)
     wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
@@ -244,5 +244,4 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
 
     # Kill tail process
     pexpect_process.sendcontrol("c")
-
     return server_has_exited
