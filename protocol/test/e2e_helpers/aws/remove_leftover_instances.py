@@ -17,10 +17,10 @@ from e2e_helpers.aws.boto3_tools import terminate_or_stop_aws_instance
 # will follow the todolist and complete the cleanup.
 
 if __name__ == "__main__":
-    
+
     filepath = os.path.join("instances_to_remove.txt")
 
-    # If the `instances_to_clean.txt` todolist does not exist, streaming_e2e_tester.py has already 
+    # If the `instances_to_clean.txt` todolist does not exist, streaming_e2e_tester.py has already
     # completed the cleanup, and we are done.
     if not os.path.exists(filepath) or not os.path.isfile(filepath):
         print("No leftover instances need to be stopped or terminated")

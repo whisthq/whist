@@ -149,7 +149,7 @@ parser.add_argument(
 parser.add_argument(
     "--skip-git-clone",
     help="This option allows you to skip cloning the Whist repository on the instance(s) to be used for the test. \
-    The test will also not checkout the current branch or pull from Github, using the code from the whist folder \
+    The test will also not checkout the current branch or pull from Github, using the code from the /whist folder \
     on the existing instance(s) as is. This option is useful if you need to run several tests in succession \
     using code from the same commit.",
     type=str,
@@ -168,7 +168,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--testing-url",
-    help="The URL to visit during the test. The default is a 4K video stored on S3.",
+    help="The URL to visit during the test. The default is a 4K video stored on our AWS S3.",
     type=str,
     default="https://fractal-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4",
 )
@@ -176,8 +176,8 @@ parser.add_argument(
 parser.add_argument(
     "--testing-time",
     help="The time (in seconds) to wait at the URL from the `--testing-url` flag before shutting down the \
-    client/server and grabbing the logs and metrics. The default value is the duration of the 4K video \
-    from S3 mentioned above.",
+    client/server and grabbing the logs and metrics. The default value is the duration of the default 4K video \
+    from AWS S3.",
     type=int,
     default=126,  # Length of the video in link above is 2mins, 6seconds
 )
@@ -193,7 +193,7 @@ parser.add_argument(
 parser.add_argument(
     "--aws-credentials-filepath",
     help="The path (on the machine running this script) to the file containing the AWS credentials to use \
-    to access the Whist AWS console. The file should contain the access key id and the secret access key. \
+    to access the Whist AWS console. The file should contain the access key ID and the secret access key. \
     It is created/updated when running `aws configure`",
     type=str,
     default=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
@@ -211,7 +211,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--aws-timeout-seconds",
-    help="The timeout after which we give up on commands that have not finished on a remote AWS E2 instance. \
+    help="The timeout after which we give up on commands that have not finished on a remote AWS EC2 instance. \
     This value should not be set to less than 20mins (1200s)",
     type=int,
     default=1200,
@@ -405,7 +405,7 @@ if __name__ == "__main__":
         }
     )
 
-    # If using two instances, parallelize the host-setup and building of the docker containers to save time
+    # If using two instances, parallelize the host-setup and building of the Docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
     p2 = multiprocessing.Process(target=client_setup_process, args=[args_dict])
     if use_two_instances:
@@ -427,7 +427,7 @@ if __name__ == "__main__":
     server_log = open(os.path.join(perf_logs_folder_name, "server_monitoring.log"), "a")
     client_log = open(os.path.join(perf_logs_folder_name, "client_monitoring.log"), "a")
 
-    # 9 - Run the host service on the client and the server. We don't parallelize here for simplicity, given
+    # 9 - Run the host-service on the client and the server. We don't parallelize here for simplicity, given
     # that all operations below do not take too much time.
 
     # Start SSH connection(s) to the EC2 instance(s) to run the host-service commands
@@ -465,7 +465,8 @@ if __name__ == "__main__":
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
     # we need to pass the client for it to connect
     server_docker_id, server_configs_data = run_server_on_instance(server_pexpect_process)
-    # Augment the configs with the initial url we want to visit
+    
+    # Augment the configs with the initial URL we want to visit
     server_configs_data["initial_url"] = testing_url
 
     # 11 - Run the development/client client mandelbox on the client instance

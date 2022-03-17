@@ -8,6 +8,7 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 # Constants
 GITHUB_SHA_LEN = 40
 
+
 def get_whist_branch_name(running_in_ci):
     """
     Retrieve the whisthq/whist branch name currently checked out by the folder containing this script.
@@ -19,7 +20,7 @@ def get_whist_branch_name(running_in_ci):
         On success:
             branch_name: The name of the branch currently checked out (or the empty string)
         On failure:
-            empty string
+            Empty string
     """
     branch_name = ""
 
