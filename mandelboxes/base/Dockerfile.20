@@ -686,7 +686,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     gtk-chtheme \
     gtk2-engines-murrine \
     unzip \
-    p7zip-full \
     gtk2-engines-pixbuf \
     && apt-get autoremove -y \
     && apt-get clean \
@@ -702,19 +701,11 @@ RUN wget -qO font-sans.zip https://fonts.google.com/download?family=Inter \
     && unzip -nd /usr/local/share/fonts font-mono.zip \
     && rm font-*.zip
 
-# Install Apple fonts
-# TODO: Due to Apple licensing restrictions, we can only service those fonts to users
-# on the macOS Whist client. Once we bring back support for other client OSes, we'll need
-# to toggle the fonts to use based on client OS.
-RUN wget -qO SF-Pro.dmg https://devimages-cdn.apple.com/design/resources/download/SF-Pro.dmg \
-    && 7z x SF-Pro.dmg \
-    && cd SFProFonts/ \
-    && 7z x "SF Mono Fonts.pkg" \
-    && 7z x Payload~ \
-    && cd Library/Fonts && mv *.ttf ~/.local/share/fonts && mv *.otf ~/.local/share/fonts
-
 # Install fonts for full Unicode support (or as close as we can get)
+# Also install Microsoft Standard fonts, these are the fonts used by Chrome (even on macOS!)
+# https://granneman.com/webdev/coding/css/fonts-and-formatting/web-browser-font-defaults
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    ttf-mscorefonts-installer \
     fonts-noto \
     fonts-noto-core \
     fonts-noto-cjk \
