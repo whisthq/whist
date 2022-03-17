@@ -142,7 +142,15 @@ python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </p
 
 ### Setting Arbitrary Network Conditions
 
-The `Protocol: End-to-End Streaming Testing` workflow runs the E2E test a total of 4 times, one for each of the following network conditions on the client EC2 instance:
+
+
+
+The `Protocol: End-to-End Streaming Testing` workflow may run the E2E test many times, for different artificially-modified networking conditions. We set artificially 
+
+
+
+
+one for each of the following network conditions on the client EC2 instance:
 
 1. _Normal condition_: no artificial network condition degradation is applied
 2. _Reduced bandwidth_: the client bandwidth is artificially limited to a max transmit/receive rate of 1Mbit/s
