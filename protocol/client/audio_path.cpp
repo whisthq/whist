@@ -3,6 +3,7 @@ extern "C"
 #include "audio_path.h"
 #include <whist/utils/threads.h>
 #include <whist/utils/clock.h>
+#include "audio.h"
 extern int my_get_audio_queue_len(void);
 extern int my_render_audio();
 };
@@ -14,9 +15,9 @@ extern int my_render_audio();
 #include <string>
 using namespace std;
 
-const int verbose_log=1;
+static const int verbose_log=1;
 static WhistMutex g_mutex;
-
+static AudioContext *g_audio_context=0;
 
 /*copied from audio.c*/
 #define SAMPLES_PER_FRAME 480
@@ -30,6 +31,13 @@ unsigned char empty_frame[]={0x80,0xbb,0x00,0x00,0x92,0x00,0x00,0x00,0x01,0x00,0
 
 // the string to hold empty_frame[]
 string fill_gap;
+
+static int  get_audio_device_queue_len(void)
+{
+    if(g_audio_context==0) return -1;
+    if(g_audio_context->dev==0) return -2;
+    return safe_get_audio_queue(g_audio_context);
+}
 
 //use a dedicated thread for audio render
 //this is not necessary, just experimental
@@ -49,10 +57,11 @@ int audio_queue_loop_thread(void *)
 int audio_path_init(void)
 {
     g_mutex = whist_create_mutex();
+    g_audio_context = init_audio();
+
     int len=sizeof(empty_frame);
     fill_gap=string(empty_frame,empty_frame+len);
     //fill_gap=string(DECODED_BYTES_PER_FRAME,'\0');    
-
 
     whist_create_thread(audio_queue_loop_thread, "MultiThreadedDebugConsole", NULL);
 
@@ -127,7 +136,7 @@ int last_decoded_id=-1;
 int push_to_audio_path(int id, unsigned char *buf, int size)
 {
 
-    int device_queue_byte=my_get_audio_queue_len();
+    int device_queue_byte=get_audio_device_queue_len();
     int device_queue_len=(device_queue_byte + DECODED_BYTES_PER_FRAME-1)/DECODED_BYTES_PER_FRAME;
 
     string s(buf,buf+size);
@@ -323,7 +332,7 @@ int pop_from_audio_path( unsigned char *buf, int *size)
     g_cnt++;
 
     int ret=-1;
-    int queue_byte=my_get_audio_queue_len();
+    int queue_byte=get_audio_device_queue_len();
     int queue_len=(queue_byte + DECODED_BYTES_PER_FRAME-1)/DECODED_BYTES_PER_FRAME;
 
     if(queue_byte==0) if(verbose_log) 

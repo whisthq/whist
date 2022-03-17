@@ -91,6 +91,8 @@ Defines
 #define LOG_NETWORKING false
 #define LOG_LONG_TERM_REFERENCE_FRAMES false
 
+#define USE_AUDIO_PATH true
+
 #define WINAPI_INPUT_DRIVER 1
 #define XTEST_INPUT_DRIVER 2
 #define UINPUT_INPUT_DRIVER 3

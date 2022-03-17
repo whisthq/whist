@@ -380,14 +380,6 @@ static int safe_get_audio_queue(AudioContext* audio_context) {
     return audio_device_queue;
 }
 
-int  my_get_audio_queue_len(void)
-{
-    if(g_audio_context_ptr==0) return -1;
-    if(g_audio_context_ptr->dev==0) return -2;
-    return safe_get_audio_queue(g_audio_context_ptr);
-}
-
-
 bool is_overflowing_audio(AudioContext* audio_context) {
     int audio_device_queue = safe_get_audio_queue(audio_context);
 

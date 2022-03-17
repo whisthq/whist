@@ -112,6 +112,4 @@ void destroy_audio(AudioContext* audio_context);
  */
 bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered);
 
-int my_get_audio_queue_len(void);
-
 #endif  // CLIENT_AUDIO_H
