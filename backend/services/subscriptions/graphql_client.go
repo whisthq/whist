@@ -13,7 +13,7 @@ import (
 // WhistGraphQLClient is an interface used to abstract the interactions with
 // the official Hasura client.
 type WhistGraphQLClient interface {
-	Initialize() error
+	Initialize(bool) error
 	Query(context.Context, GraphQLQuery, map[string]interface{}) error
 	Mutate(context.Context, GraphQLQuery, map[string]interface{}) error
 }
@@ -41,7 +41,7 @@ func (t *withAdminSecretTransport) RoundTrip(req *http.Request) (*http.Response,
 
 // Initialize creates the client. This function is respinsible from fetching the server
 // information from Heroku.
-func (wc *GraphQLClient) Initialize() error {
+func (wc *GraphQLClient) Initialize(useConfigDB bool) error {
 	if !Enabled {
 		logger.Infof("Running in app environment %s so not enabling GraphQL client code.", metadata.GetAppEnvironment())
 		return nil
@@ -49,10 +49,23 @@ func (wc *GraphQLClient) Initialize() error {
 
 	logger.Infof("Setting up GraphQL client...")
 
-	params, err := getWhistHasuraParams()
-	if err != nil {
-		// Error obtaining the connection parameters, we stop and don't setup the client
-		return utils.MakeError("error creating hasura client: %v", err)
+	var (
+		params HasuraParams
+		err    error
+	)
+
+	if useConfigDB {
+		params, err = getWhistConfigHasuraParams()
+		if err != nil {
+			// Error obtaining the connection parameters, we stop and don't setup the client
+			return utils.MakeError("error creating hasura client: %v", err)
+		}
+	} else {
+		params, err = getWhistHasuraParams()
+		if err != nil {
+			// Error obtaining the connection parameters, we stop and don't setup the client
+			return utils.MakeError("error creating hasura client: %v", err)
+		}
 	}
 	wc.SetParams(params)
 

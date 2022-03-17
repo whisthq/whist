@@ -2,8 +2,10 @@ package scaling_algorithms
 
 import (
 	"context"
+	"strconv"
 	"sync"
 
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
 	aws "github.com/whisthq/whist/backend/services/scaling-service/hosts/aws"
@@ -18,6 +20,7 @@ type ScalingAlgorithm interface {
 	CreateEventChans()
 	CreateGraphQLClient(subscriptions.WhistGraphQLClient)
 	CreateDBClient(dbclient.WhistDBClient)
+	GetConfig(subscriptions.WhistGraphQLClient)
 }
 
 // ScalingEvent is an event that contains all the relevant information
@@ -78,6 +81,59 @@ func (s *DefaultScalingAlgorithm) CreateDBClient(dbClient dbclient.WhistDBClient
 	if s.DBClient == nil {
 		s.DBClient = dbClient
 	}
+}
+
+// GetConfig will query the configuration database and populate the configuration variables
+// according to the environment the scaling service is running in. It's necessary to perform
+// the query before starting to receive any scaling events.
+func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLClient) {
+	logger.Infof("Populating config variables from config database...")
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
+	var (
+		configs map[string]string
+		err     error
+	)
+
+	switch metadata.GetAppEnvironmentLowercase() {
+	case string(metadata.EnvDev):
+		configs, err = dbclient.GetDevConfigs(ctx, client)
+	case string(metadata.EnvStaging):
+		configs, err = dbclient.GetStagingConfigs(ctx, client)
+	case string(metadata.EnvProd):
+		configs, err = dbclient.GetProdConfigs(ctx, client)
+	default:
+		configs, err = dbclient.GetDevConfigs(ctx, client)
+	}
+
+	if err != nil {
+		// Err is already wrapped here
+		logger.Error(err)
+
+		// Something went wrong, use default configuration values
+		return
+	}
+
+	configMandelboxes, ok := configs["DESIRED_FREE_MANDELBOXES"]
+	if !ok {
+		logger.Errorf("Did not find the DESIRED_FREE_MANDELBOXES on config map.")
+
+		// Something went wrong, use default configuration values
+		return
+	}
+
+	// Parse as int
+	mandelboxInt, err := strconv.Atoi(configMandelboxes)
+	if err != nil {
+		logger.Errorf("Error parsing desired mandelboxes value. Err: %v", err)
+
+		// Something went wrong, use default configuration values
+		return
+	}
+
+	desiredFreeMandelboxes = mandelboxInt
+	logger.Infof("Desired free mandelboxes is now %v", desiredFreeMandelboxes)
 }
 
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing
