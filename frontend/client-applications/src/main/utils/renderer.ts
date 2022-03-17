@@ -114,7 +114,7 @@ const createWelcomeWindow = () =>
     ...height.lg,
     hash: WindowHashWelcome,
     options: {
-      trafficLightPosition: { x: 22, y: 22 },
+      titleBarStyle: "customButtonsOnHover",
     },
   })
 
@@ -142,6 +142,7 @@ const createOnboardingWindow = () =>
     hash: WindowHashOnboarding,
     options: {
       fullscreenable: false,
+      trafficLightPosition: { x: 12, y: 10 },
     },
   })
 
@@ -159,6 +160,8 @@ const createLaunchLoadingWindow = () =>
     hash: WindowHashLaunchLoading,
     options: {
       fullscreenable: false,
+      titleBarStyle: "customButtonsOnHover",
+      transparent: true,
     },
   })
 

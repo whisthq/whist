@@ -108,23 +108,23 @@ const Loading = (props: {
   }
 }) => {
   return (
-    <div className="flex flex-col h-screen bg-gray-900 w-full font-body">
+    <div className="flex flex-col h-screen w-full font-body bg-gray-900">
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div className="w-full text-center pt-16">
         <img
           src={Logo}
-          className="w-20 h-20 mx-auto opacity-0 animate-fade-in-up"
+          className="w-24 h-24 mx-auto opacity-0 animate-fade-in-up"
         />
         <div
           className="mt-12 text-xl text-gray-300 font-bold opacity-0 animate-fade-in-up"
-          style={{ animationDelay: "1200ms" }}
+          style={{ animationDelay: "800ms" }}
         >
           Whist is launching
         </div>
       </div>
       <div
         className="mt-4 w-full max-w-xs mx-auto opacity-0 animate-fade-in-up"
-        style={{ animationDelay: "1800ms" }}
+        style={{ animationDelay: "1200ms" }}
       >
         <Progress
           percent={0}
@@ -135,7 +135,7 @@ const Loading = (props: {
       </div>
       <div
         className="w-full text-center opacity-0 animate-fade-in-up"
-        style={{ animationDelay: "2600ms" }}
+        style={{ animationDelay: "1600ms" }}
       >
         <div className="flex justify-center pointer-events-none space-x-1 mt-2">
           <kbd className="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-gray-400 bg-gray-700">
@@ -149,7 +149,7 @@ const Loading = (props: {
       </div>
       <div
         className="absolute bottom-4 left-0 right-0 w-full bg-gray-800 bg-opacity-50 px-8 py-4 text-center text-gray-400 text-sm max-w-md rounded m-auto opacity-0 animate-fade-in-up"
-        style={{ animationDelay: "3200ms" }}
+        style={{ animationDelay: "2000ms" }}
       >
         <InternetNotification networkInfo={props.networkInfo} />
       </div>
