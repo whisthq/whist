@@ -60,9 +60,11 @@ const char* const warning_tag = "WARNING";
 const char* const error_tag = "ERROR";
 const char* const fatal_error_tag = "FATAL_ERROR";
 
-// a hacky way to disable logs after some limited are hit, so that we can look at audio logs more
-// clearly
-int g_log_cnt = 0;
+// disable logs after some limited are hit, helpful for debug
+// if SUPRESS_LOG_AFTER <=0, this feature is disabled
+#define SUPRESS_LOG_AFTER 200
+// num of logs printed so far, should be okay without mutex for a rough control
+static int g_log_cnt = 0;
 
 /**
  * Type for a single log item in the logger queue.
@@ -406,6 +408,22 @@ static void logger_queue_multiple_lines(const char* tag, char* message) {
 // Our vararg function that gets called from LOG_INFO, LOG_WARNING, etc macros
 void internal_logging_printf(const char* tag, const char* file_name, const char* function,
                              int line_number, const char* fmt_str, ...) {
+    // if enabled, supress log after some num of logs are printed
+    if (SUPRESS_LOG_AFTER > 0) {
+        // increase counter of current log printed
+        g_log_cnt++;
+
+        // empahse on the log has been supressed
+        if (g_log_cnt > SUPRESS_LOG_AFTER && g_log_cnt <= SUPRESS_LOG_AFTER + 5) {
+            fprintf(stderr, "non-audio logs are supressed from now on!!!\n");
+        }
+
+        // skip log when we have printed enough
+        if (g_log_cnt > SUPRESS_LOG_AFTER) {
+            return;
+        }
+    }
+
     char stack_buffer[512];
     char* heap_buffer = NULL;
     char* buffer = stack_buffer;
