@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
+import os, sys, time
 import pexpect
-import os
-import sys
-import time
 
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
@@ -19,13 +17,13 @@ def attempt_ssh_connection(
     Args:
         ssh_command: The shell command to use to establish a SSH connection to the remote machine.
         timeout_value: The amount of time to wait before timing out the attemps to gain a SSH connection
-                        to the remote machine.
+                       to the remote machine.
         log_file_handle: The file (already opened) to use for logging the terminal output from the
-                        remote machine
+                         remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready
                         to execute a command
         max_retries: The maximum number of attempts to use before giving up on establishing a SSH
-                    connection to the remote machine
+                     connection to the remote machine
 
     Returns:
         On success:
@@ -45,13 +43,12 @@ def attempt_ssh_connection(
             ]
         )
         if result_index == 0:
-            # If the connection  was refused, sleep for 30s and then retry
+            # If the connection was refused, sleep for 30s and then retry
             # (unless we exceeded the max number of retries)
             print(f"\tSSH connection refused by host (retry {retries + 1}/{max_retries})")
             child.kill(0)
             time.sleep(30)
         elif result_index == 1 or result_index == 2:
-            # SSH connection established successfully!
             print(f"SSH connection established with EC2 instance!")
             # Confirm that we want to connect, if asked
             if result_index == 1:

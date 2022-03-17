@@ -171,7 +171,7 @@ jobs:
       - name: Stop or terminate leftover AWS instances
         if: always()
         working-directory: protocol/test
-        run: python3 -m e2e_helpers.boto3.remove_leftover_instances
+        run: python3 -m e2e_helpers.aws.remove_leftover_instances
 
       # We parse the log files from the E2E performance tests above and display the results of the test.
       # We compare the performance to dev and the previous runs of the same branch, if available

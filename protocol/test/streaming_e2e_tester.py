@@ -1,23 +1,13 @@
 #!/usr/bin/env python3
 
-import sys
-import os
-import time
-import argparse
-import subprocess
-import pexpect
-import json
-import multiprocessing
+import os, sys, json, time, argparse, multiprocessing
 import boto3
 
-# Get tools to create, destroy and manage AWS instances
-from e2e_helpers.boto3.boto3_tools import (
+from e2e_helpers.aws.boto3_tools import (
     create_or_start_aws_instance,
     get_instance_ip,
-    terminate_or_stop_aws_instance,
 )
 
-# Get tools to handle git-related operations
 from e2e_helpers.common.git_tools import (
     get_whist_branch_name,
     get_whist_github_sha,
@@ -25,7 +15,6 @@ from e2e_helpers.common.git_tools import (
 
 from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,
-    wait_until_cmd_done,
 )
 
 from e2e_helpers.setup.instance_setup_tools import (
@@ -40,18 +29,16 @@ from e2e_helpers.setup.teardown_tools import complete_experiment_and_save_result
 
 from e2e_helpers.whist_client_tools import (
     client_setup_process,
-    build_client_on_instance,
     run_client_on_instance,
 )
 
 from e2e_helpers.whist_server_tools import (
     server_setup_process,
-    build_server_on_instance,
     run_server_on_instance,
 )
 
 
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 DESCRIPTION = """

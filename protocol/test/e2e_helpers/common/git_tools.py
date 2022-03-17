@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
-import os
-import sys
-import subprocess
+import os, sys, subprocess
 
-GITHUB_SHA_LEN = 40
-
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
+# Constants
+GITHUB_SHA_LEN = 40
 
 def get_whist_branch_name(running_in_ci):
     """
