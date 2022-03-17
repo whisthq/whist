@@ -9,12 +9,13 @@ cd /home/ubuntu
 
 # The first thing we want to do is to set up the ephemeral storage available on
 # our instance, if there is some.
-EPHEMERAL_DEVICE_PATH=$(sudo nvme list -o json | jq '.Devices | map(select(.ModelNumber == "Amazon EC2 NVMe Instance Storage")) | max_by(.PhysicalSize) | .DevicePath')
+EPHEMERAL_DEVICE_PATH=$(sudo nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == "Amazon EC2 NVMe Instance Storage")) | max_by(.PhysicalSize) | .DevicePath')
 EPHEMERAL_FS_PATH=/ephemeral
 
 if [ $EPHEMERAL_DEVICE_PATH != "null" ]
 then
     echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
+
     sudo mkfs -t ext4 "$EPHEMERAL_DEVICE_PATH"
     sudo mkdir -p "$EPHEMERAL_FS_PATH"
     sudo mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
@@ -22,17 +23,15 @@ then
 
     # Stop docker and copy the data directory that contains mandelbox images to the ephemeral storage
     sudo systemctl stop docker
-    sudo mkdir -p "$EPHEMERAL_FS_PATH"/docker
-    sudo mv /var/lib/docker "$EPHEMERAL_FS_PATH"/docker
+    sudo mv /var/lib/docker "$EPHEMERAL_FS_PATH"
 
     # Modify configuration to use the new data directory and persist in daemon config file
     # and start docker again
-    jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json &&
-    sudo mv tmp.json /etc/docker/daemon.json
+    jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && sudo mv tmp.json /etc/docker/daemon.json
     sudo systemctl start docker
 
-    # Export env vars so host service can read them
-    export "$EPHEMERAL_DEVICE_PATH" && export "$EPHEMERAL_FS_PATH"
+    # Write ephemeral path and device to a file so host service can read them
+    # TODO: write to file so host service can read them
 
 else
     echo "No ephemeral device path found. Warming up EBS volume with fio."
