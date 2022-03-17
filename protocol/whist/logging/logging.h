@@ -55,6 +55,7 @@ Defines
 #define LOG_FILE_NAME \
     ((sizeof(__ROOT_FILE__) < sizeof(__FILE__)) ? (&__FILE__[sizeof(__ROOT_FILE__)]) : "")
 #define NO_LOG 0x00
+#define FATAL_ERROR_LEVEL 0x00
 #define ERROR_LEVEL 0x01
 #define WARNING_LEVEL 0x02
 #define METRIC_LEVEL 0x03
@@ -74,35 +75,75 @@ Defines
 // We use do/while(0) to force the user to ";" the end of the LOG,
 // While still keeping the statement inside a contiguous single block,
 // so that `if(cond) LOG;` works as expected
-#define LOG_MESSAGE(tag, message, ...)                                                          \
-    do {                                                                                        \
-        internal_logging_printf(tag##_TAG, LOG_FILE_NAME, __FUNCTION__, __LINE__, message "\n", \
-                                ##__VA_ARGS__);                                                 \
+#define LOG_MESSAGE(tag, message, ...)                                                     \
+    do {                                                                                   \
+        whist_log_printf(tag##_LEVEL, LOG_FILE_NAME, __FUNCTION__, __LINE__, message "\n", \
+                         ##__VA_ARGS__);                                                   \
     } while (0)
 
-#define NEWLINE "\n"
-// Cast to const chars so that comparison against XYZ_TAG is defined
-extern const char *const debug_tag,
-    *const info_tag, *const metric_tag, *const warning_tag, *const error_tag,
-                                                                *const fatal_error_tag;
-#define DEBUG_TAG debug_tag
-#define INFO_TAG info_tag
-#define METRIC_TAG metric_tag
-#define WARNING_TAG warning_tag
-#define ERROR_TAG error_tag
-#define FATAL_ERROR_TAG fatal_error_tag
+/**
+ * Struct used with rate-limited messages.
+ */
+typedef struct {
+    /**
+     * Length of the measuring period, in seconds.
+     */
+    double period_in_seconds;
+    /**
+     * Number of messages allowed in each period.
+     *
+     * Additional messages beyond this number will be suppressed.
+     */
+    unsigned int max_messages_per_period;
+
+    /**
+     * Whether the timer has started.
+     */
+    bool started;
+    /**
+     * Current count of messages this period.
+     */
+    unsigned int message_count;
+    /**
+     * Timer marking when the current period started.
+     */
+    WhistTimer timer;
+} LogRateLimiter;
+
+// This is the same as LOG_MESSAGE(), except we include a static rate
+// limiter structure for the rate-limited logging to use.  This should
+// only be used with log lines called from a single thread.  Note that
+// rate-limiting does not make sense for errors (which you always want
+// to see) or metrics (which should always be counted), so the macros
+// below do not provide rate-limited versions for those tags.
+#define LOG_MESSAGE_RATE_LIMITED(period_in_seconds, max_messages_per_period, tag, message, ...) \
+    do {                                                                                        \
+        static LogRateLimiter log_message_rate_limiter_##__LINE__ = {                           \
+            period_in_seconds, max_messages_per_period, false, 0, {0, 0}};                      \
+        whist_log_printf_rate_limited(&log_message_rate_limiter_##__LINE__, tag##_LEVEL,        \
+                                      LOG_FILE_NAME, __FUNCTION__, __LINE__, message "\n",      \
+                                      ##__VA_ARGS__);                                           \
+    } while (0)
 
 #if LOG_LEVEL >= DEBUG_LEVEL
 #define LOG_DEBUG(message, ...) LOG_MESSAGE(DEBUG, message, ##__VA_ARGS__)
+#define LOG_DEBUG_RATE_LIMITED(period_in_seconds, max_messages_per_period, message, ...) \
+    LOG_MESSAGE_RATE_LIMITED(period_in_seconds, max_messages_per_period, DEBUG, message, \
+                             ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(message, ...)
+#define LOG_DEBUG_RATE_LIMITED(message, ...)
 #endif
 
 // LOG_INFO refers to something that can happen, and does not imply that anything went wrong
 #if LOG_LEVEL >= INFO_LEVEL
 #define LOG_INFO(message, ...) LOG_MESSAGE(INFO, message, ##__VA_ARGS__)
+#define LOG_INFO_RATE_LIMITED(period_in_seconds, max_messages_per_period, message, ...) \
+    LOG_MESSAGE_RATE_LIMITED(period_in_seconds, max_messages_per_period, INFO, message, \
+                             ##__VA_ARGS__)
 #else
 #define LOG_INFO(message, ...)
+#define LOG_INFO_RATE_LIMITED(message, ...)
 #endif
 
 // LOG_METRIC refers to one or more key-value pairs in JSON format. Useful for monitoring
@@ -121,8 +162,12 @@ extern const char *const debug_tag,
 // TLDR ~ Something dubious happened, but not sure if it's an issue or not though.
 #if LOG_LEVEL >= WARNING_LEVEL
 #define LOG_WARNING(message, ...) LOG_MESSAGE(WARNING, message, ##__VA_ARGS__)
+#define LOG_WARNING_RATE_LIMITED(period_in_seconds, max_messages_per_period, message, ...) \
+    LOG_MESSAGE_RATE_LIMITED(period_in_seconds, max_messages_per_period, WARNING, message, \
+                             ##__VA_ARGS__)
 #else
 #define LOG_WARNING(message, ...)
+#define LOG_WARNING_RATE_LIMITED(message, ...)
 #endif
 
 // LOG_ERROR *must* directly imply that something is fundamentally wrong with our code,
@@ -188,7 +233,7 @@ void whist_init_logger(void);
  *                                 This is an internal function that shouldn't be used,
  *                                 please use the macros LOG_INFO, LOG_WARNING, etc
  *
- * @param tag                      The tag-level to log with
+ * @param level                    The level to log with
  * @param file_name                Name of the file this is being called from.
  * @param function                 Name of the function this is being called from.
  * @param line_number              Line number this is being called from.
@@ -197,8 +242,30 @@ void whist_init_logger(void);
 #ifdef __GNUC__
 __attribute__((format(printf, 5, 6)))
 #endif
-void internal_logging_printf(const char* tag, const char *file_name, const char *function,
-                             int line_number, const char* fmt_str, ...);
+void whist_log_printf(unsigned int level, const char *file_name, const char *function,
+                      int line_number, const char* fmt_str, ...);
+
+/**
+ * @brief               Log with rate limiting.
+ *
+ *                      This is an internal function, see the macros
+ *                      LOG_INFO_RATE_LIMITED, LOG_WARNING_RATE_LIMITED,
+ *                      etc. above.
+ *
+ * @param rate_limiter  Rate limiter structure.  This should be static and
+ *                      local to the log line being limited.
+ * @param level         The level to log with
+ * @param file_name     Name of the file this is being called from.
+ * @param function      Name of the function this is being called from.
+ * @param line_number   Line number this is being called from.
+ * @param fmt_str       The format string to printf with
+ */
+#ifdef __GNUC__
+__attribute__((format(printf, 6, 7)))
+#endif
+void whist_log_printf_rate_limited(LogRateLimiter *rate_limiter, unsigned int level,
+                                   const char *file_name, const char *function,
+                                   int line_number, const char* fmt_str, ...);
 
 /**
  * @brief                          This function will immediately flush all of the logs,

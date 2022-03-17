@@ -54,19 +54,17 @@ format strings.
 static void init_backtrace_handler(void);
 
 // TAG Strings
-const char* const debug_tag = "DEBUG";
-const char* const info_tag = "INFO";
-const char* const metric_tag = "METRIC";
-const char* const warning_tag = "WARNING";
-const char* const error_tag = "ERROR";
-const char* const fatal_error_tag = "FATAL_ERROR";
+static const char* const tag_strings[] = {
+    [FATAL_ERROR_LEVEL] = "FATAL_ERROR", [ERROR_LEVEL] = "ERROR", [WARNING_LEVEL] = "WARNING",
+    [METRIC_LEVEL] = "METRIC",           [INFO_LEVEL] = "INFO",   [DEBUG_LEVEL] = "DEBUG",
+};
 
 /**
  * Type for a single log item in the logger queue.
  */
 typedef struct {
     LINKED_LIST_HEADER;
-    const char* tag;
+    unsigned int level;
     char buf[LOGGER_BUF_SIZE];
 } LoggerQueueItem;
 
@@ -128,14 +126,14 @@ static WhistThread logger_thread = NULL;
  */
 static WhistMutex crash_handler_mutex;
 
-static void log_single_line(const char* tag, const char* line) {
+static void log_single_line(unsigned int level, const char* line) {
     // Log to stdout.
     fputs(line, stdout);
 
     // Log to the error monitor.
-    if (tag == WARNING_TAG) {
-        whist_error_monitor_log_breadcrumb(tag, line);
-    } else if (tag == ERROR_TAG || tag == FATAL_ERROR_TAG) {
+    if (level == WARNING_LEVEL) {
+        whist_error_monitor_log_breadcrumb(tag_strings[level], line);
+    } else if (level <= ERROR_LEVEL) {
         whist_error_monitor_log_error(line);
     }
 }
@@ -161,7 +159,7 @@ static int logger_thread_function(void* ignored) {
         LoggerQueueItem* log = linked_list_extract_head(&logger_queue);
         whist_unlock_mutex(logger_queue_mutex);
 
-        log_single_line(log->tag, log->buf);
+        log_single_line(log->level, log->buf);
         if (queue_size > 1) {
             // We will be printing another line immediately, so don't
             // want an explicit flush.
@@ -217,7 +215,7 @@ void flush_logs(void) {
 
     LoggerQueueItem* log;
     while ((log = linked_list_extract_head(&logger_queue))) {
-        log_single_line(log->tag, log->buf);
+        log_single_line(log->level, log->buf);
         linked_list_add_head(&logger_freelist, log);
     }
 
@@ -262,7 +260,7 @@ static size_t copy_and_escape(char* dst, size_t dst_size, const char* src) {
     return d;
 }
 
-static void logger_queue_line(const char* tag, const char* prefix, const char* line) {
+static void logger_queue_line(unsigned int level, const char* prefix, const char* line) {
     LoggerQueueItem* log;
     bool overflow = false;
 
@@ -303,7 +301,9 @@ static void logger_queue_line(const char* tag, const char* prefix, const char* l
         int ret = snprintf(buf + pos, buf_size - pos, "\nLog buffer overflowing!");
         if (ret > 0) pos += ret;
         // Overflowing is always at least a warning.
-        if (tag != ERROR_TAG) tag = WARNING_TAG;
+        if (level > WARNING_LEVEL) {
+            level = WARNING_LEVEL;
+        }
     }
 
     // If we truncated, add ellipses to indicate that.
@@ -317,7 +317,7 @@ static void logger_queue_line(const char* tag, const char* prefix, const char* l
     buf[pos++] = '\n';
     buf[pos] = '\0';
 
-    log->tag = tag;
+    log->level = level;
 
     // Add the item to the back of the logger queue.
     whist_lock_mutex(logger_queue_mutex);
@@ -388,7 +388,7 @@ void destroy_logger(void) {
     }
 }
 
-static void logger_queue_multiple_lines(const char* tag, char* message) {
+static void logger_queue_multiple_lines(unsigned int level, char* message) {
     // use strtok_r over strtok due to thread safety
     char* strtok_context = NULL;  // strtok_r context var
 
@@ -396,19 +396,21 @@ static void logger_queue_multiple_lines(const char* tag, char* message) {
     // the full log formatting time | type | file | log_msg
     // subsequent lines start with | followed by 4 spaces
     char* current_line = strtok_r(message, "\n", &strtok_context);
-    logger_queue_line(tag, NULL, current_line);
+    logger_queue_line(level, NULL, current_line);
 
     // Now, log the rest of the lines with the indent of 4 spaces
     current_line = strtok_r(NULL, "\n", &strtok_context);
     while (current_line != NULL) {
-        logger_queue_line(tag, "|    ", current_line);
+        logger_queue_line(level, "|    ", current_line);
         current_line = strtok_r(NULL, "\n", &strtok_context);
     }
 }
 
-// Our vararg function that gets called from LOG_INFO, LOG_WARNING, etc macros
-void internal_logging_printf(const char* tag, const char* file_name, const char* function,
-                             int line_number, const char* fmt_str, ...) {
+// This is the common part of the normal and rate-limited logging
+// functions below.  The interface matches, so if there were any
+// external use for it then it could be made public as well.
+static void whist_log_vprintf(unsigned int level, const char* file_name, const char* function,
+                              int line_number, const char* fmt_str, va_list args) {
     char stack_buffer[512];
     char* heap_buffer = NULL;
     char* buffer = stack_buffer;
@@ -428,6 +430,13 @@ void internal_logging_printf(const char* tag, const char* file_name, const char*
         remaining_size -= ret;
     }
 
+    const char* tag;
+    if (level < (int)ARRAY_LENGTH(tag_strings)) {
+        tag = tag_strings[level];
+    } else {
+        tag = "INVALID";
+    }
+
     ret = snprintf(buffer + position, remaining_size, LOG_CONTEXT_FORMAT, tag, file_name, function,
                    line_number);
     if (ret > 0 && ret <= remaining_size) {
@@ -435,11 +444,10 @@ void internal_logging_printf(const char* tag, const char* file_name, const char*
         remaining_size -= ret;
     }
 
-    va_list args1, args2;
-    va_start(args1, fmt_str);
-    va_copy(args2, args1);
+    va_list args2;
+    va_copy(args2, args);
 
-    ret = vsnprintf(buffer + position, remaining_size, fmt_str, args1);
+    ret = vsnprintf(buffer + position, remaining_size, fmt_str, args);
     if (ret < 0) {
         // Message is invalid, but we can still try to print the context.
         buffer[position] = '\0';
@@ -462,7 +470,7 @@ void internal_logging_printf(const char* tag, const char* file_name, const char*
     atomic_fetch_add(&logger_thread_writers, 1);
 
     if (atomic_load(&logger_thread_active)) {
-        logger_queue_multiple_lines(tag, buffer);
+        logger_queue_multiple_lines(level, buffer);
     } else {
         // Logger is not running, just write to stdout.
         fputs(buffer, stdout);
@@ -471,11 +479,62 @@ void internal_logging_printf(const char* tag, const char* file_name, const char*
 
     atomic_fetch_sub(&logger_thread_writers, 1);
 
-    va_end(args1);
     va_end(args2);
 
     free(heap_buffer);
 }
+
+// This is the entry point for normal log messages.
+void whist_log_printf(unsigned int level, const char* file_name, const char* function,
+                      int line_number, const char* fmt_str, ...) {
+    va_list args;
+    va_start(args, fmt_str);
+
+    whist_log_vprintf(level, file_name, function, line_number, fmt_str, args);
+
+    va_end(args);
+}
+
+// This is the entry point for rate-limited log messages.
+void whist_log_printf_rate_limited(LogRateLimiter* rate_limiter, unsigned int level,
+                                   const char* file_name, const char* function, int line_number,
+                                   const char* fmt_str, ...) {
+    int suppressions = 0;
+    double seconds_since_start = 0.0;
+    if (rate_limiter->started) {
+        seconds_since_start = get_timer(&rate_limiter->timer);
+        if (seconds_since_start > rate_limiter->period_in_seconds) {
+            if (rate_limiter->message_count > rate_limiter->max_messages_per_period) {
+                suppressions = rate_limiter->message_count - rate_limiter->max_messages_per_period;
+            }
+            start_timer(&rate_limiter->timer);
+            rate_limiter->message_count = 1;
+        } else {
+            ++rate_limiter->message_count;
+            if (rate_limiter->message_count > rate_limiter->max_messages_per_period) {
+                return;
+            }
+        }
+    } else {
+        start_timer(&rate_limiter->timer);
+        rate_limiter->message_count = 1;
+        rate_limiter->started = true;
+    }
+
+    va_list args;
+    va_start(args, fmt_str);
+
+    whist_log_vprintf(level, file_name, function, line_number, fmt_str, args);
+
+    va_end(args);
+
+    if (suppressions > 0) {
+        whist_log_printf(level, file_name, function, line_number,
+                         "   (%u messages suppressed since %f seconds ago.)", suppressions,
+                         seconds_since_start);
+    }
+}
+
 void print_stacktrace(void) {
     /*
         Prints the stacktrace that led to the point at which this function was called.
