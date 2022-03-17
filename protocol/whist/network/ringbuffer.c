@@ -184,7 +184,7 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     ring_buffer->num_times_nacking_saturated = 0;
     start_timer(&ring_buffer->last_nack_statistics_timer);
 
-    ring_buffer->frame_ready_cb=0;
+    ring_buffer->frame_ready_cb = 0;
 
     return ring_buffer;
 }
@@ -376,12 +376,11 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
 
     if (is_ready_to_render(ring_buffer, segment_id) && !was_already_ready) {
         ring_buffer->frames_received++;
-        if(ring_buffer->frame_ready_cb!=0)
-        {
-            FrameData *frame=get_frame_at_id(ring_buffer,segment_id);
-            WhistPacket* whist_packet = (WhistPacket*) frame->frame_buffer;
+        if (ring_buffer->frame_ready_cb != 0) {
+            FrameData* frame = get_frame_at_id(ring_buffer, segment_id);
+            WhistPacket* whist_packet = (WhistPacket*)frame->frame_buffer;
 
-            ring_buffer->frame_ready_cb(segment_id,whist_packet->data, whist_packet->payload_size);
+            ring_buffer->frame_ready_cb(segment_id, whist_packet->data, whist_packet->payload_size);
         }
     }
 
@@ -1092,7 +1091,6 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
     return true;
 }
 
-void ring_buffer_set_ready_cb(RingBuffer* ring_buffer, FrameReadyCB cb)
-{
-    ring_buffer->frame_ready_cb=cb;
+void ring_buffer_set_ready_cb(RingBuffer* ring_buffer, FrameReadyCB cb) {
+    ring_buffer->frame_ready_cb = cb;
 }

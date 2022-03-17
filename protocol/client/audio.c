@@ -207,32 +207,25 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
 }
 
 int render_audio(AudioContext* audio_context) {
-
-    unsigned char audio_buffer[MAX_AUDIO_PACKETS * MAX_PACKET_SEGMENT_SIZE +100];
-    int audio_buffer_size=-1;
+    unsigned char audio_buffer[MAX_AUDIO_PACKETS * MAX_PACKET_SEGMENT_SIZE + 100];
+    int audio_buffer_size = -1;
 
     bool has_data_to_render;
-    if(USE_AUDIO_PATH)
-    {
-        has_data_to_render= pop_from_audio_path(audio_buffer, &audio_buffer_size)==0?1:0;
-    }
-    else
-    {
-        has_data_to_render= audio_context->pending_render_context;
+    if (USE_AUDIO_PATH) {
+        has_data_to_render = pop_from_audio_path(audio_buffer, &audio_buffer_size) == 0 ? 1 : 0;
+    } else {
+        has_data_to_render = audio_context->pending_render_context;
     }
 
-    if(has_data_to_render)
-    {
+    if (has_data_to_render) {
         AudioFrame* audio_frame;
-        if(USE_AUDIO_PATH)
-        {
+        if (USE_AUDIO_PATH) {
             audio_frame = (AudioFrame*)audio_buffer;
-        }
-        else
-        {
+        } else {
             // Only do work, if the audio frequency is valid
             FATAL_ASSERT(audio_context->render_context != NULL);
-            audio_frame = (AudioFrame*)audio_context->render_context;;
+            audio_frame = (AudioFrame*)audio_context->render_context;
+            ;
         }
 
         // Mark as pending refresh when the audio frequency is being updated
@@ -268,7 +261,7 @@ int render_audio(AudioContext* audio_context) {
                 int res = audio_decoder_get_frame(audio_context->audio_decoder);
                 if (res == 0) {
                     // Buffer to hold the decoded data
-                    static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];                    
+                    static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
                     // Get the decoded data
                     audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
 

@@ -71,7 +71,7 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 256);
     udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 256);
 
-    udp_register_ring_buffer_ready_cb(udp_context, PACKET_AUDIO,push_to_audio_path);
+    udp_register_ring_buffer_ready_cb(udp_context, PACKET_AUDIO, push_to_audio_path);
 
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 
@@ -119,8 +119,9 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         for (int i = 0; i < 2; i++) {
             WhistPacketType packet_type = video_audio_types[i];
 
-            if(USE_AUDIO_PATH&& packet_type==PACKET_AUDIO)
-            {
+            if (USE_AUDIO_PATH && packet_type == PACKET_AUDIO) {
+                // for this case we simply call get_packet() to let ringbuffer advance
+                // bypass all the original data feed logics
                 get_packet(udp_context, packet_type);
                 continue;
             }
@@ -137,7 +138,6 @@ static int multithreaded_sync_udp_packets(void* opaque) {
                 // Now, we try to get the packet from UDP,
                 // And pass it to the renderer if one exists
                 WhistPacket* whist_packet = (WhistPacket*)get_packet(udp_context, packet_type);
-
                 if (whist_packet) {
                     renderer_receive_frame(whist_renderer, packet_type, whist_packet->data);
                     // Store the pointer so we can free it later,
