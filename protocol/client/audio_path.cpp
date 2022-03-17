@@ -329,12 +329,13 @@ int pop_from_audio_path( unsigned char *buf, int *size)
     int queue_byte=safe_get_audio_queue(g_audio_context);
     int queue_len=(queue_byte + DECODED_BYTES_PER_FRAME-1)/DECODED_BYTES_PER_FRAME;
 
-    if(queue_byte==0) if(verbose_log) 
+    if(queue_byte==0&&verbose_log) 
     {
         static timestamp_us last_log_time=0;
         timestamp_us now= current_time_us ();
         if(now-last_log_time>200*1000) 
-        {   last_log_time=now;
+        {   
+            last_log_time=now;
             fprintf(stderr,"buffer becomes empty!!!!\n");
         }
     }

@@ -138,7 +138,6 @@ int32_t multithreaded_send_audio(void* opaque) {
                                 udp_resend_packet(&state->client.udp_context, PACKET_AUDIO, id - i,
                                                   0);
                             }
-
                             send_packet(
                                 &state->client.udp_context, PACKET_AUDIO, frame,
                                 MAX_AUDIOFRAME_METADATA_SIZE + audio_encoder->encoded_frame_size,

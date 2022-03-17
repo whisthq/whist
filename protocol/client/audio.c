@@ -225,7 +225,6 @@ int render_audio(AudioContext* audio_context) {
             // Only do work, if the audio frequency is valid
             FATAL_ASSERT(audio_context->render_context != NULL);
             audio_frame = (AudioFrame*)audio_context->render_context;
-            ;
         }
 
         // Mark as pending refresh when the audio frequency is being updated
