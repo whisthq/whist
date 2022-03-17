@@ -45,8 +45,7 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
       INITIAL_KEY_REPEAT=$( jq -rc '.initial_key_repeat' < $WHIST_JSON_FILE )
       KEY_REPEAT=$( jq -rc '.key_repeat' < $WHIST_JSON_FILE )
-
-      # Set the key repeat rates
+      # Set key repeat rate and repeat delay
       xset r rate "$INITIAL_KEY_REPEAT" "$KEY_REPEAT"
     fi
   fi
@@ -60,6 +59,14 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     KIOSK_MODE="$(jq -rc '.kiosk_mode' < $WHIST_JSON_FILE)"
   fi
 fi
+
+# Turn off key repeats for keys that do not repeat on Mac. This should be done only after setting the key repeat rates
+# Keycodes obtained from https://gist.github.com/rickyzhang82/8581a762c9f9fc6ddb8390872552c250#file-keycode-linux-L91
+keys_to_turn_off=(9 67 68 70 71 72 73 74 75 76 95 96 111 78 110 10 11 12 13 14 15 16 17 18 19 106 77 24 25 26 27 28 29 30 31 32 33 38 39 40 41 42 43 44 45 46 52 53 54 55 56 57 58 62 37 115 64 113 116 117 109)
+for keycode in "${keys_to_turn_off[@]}"
+do
+  xset -r "$keycode"
+done
 
 export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
