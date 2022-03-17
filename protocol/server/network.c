@@ -171,9 +171,6 @@ int multithreaded_manage_client(void *opaque) {
     whist_server_state *state = (whist_server_state *)opaque;
     whist_server_config *config = state->config;
 
-    WhistTimer last_update_timer;
-    start_timer(&last_update_timer);
-
     state->connection_id = rand();
 
     bool first_client_connected = false;  // set to true once the first client has connected
