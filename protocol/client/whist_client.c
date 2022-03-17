@@ -358,7 +358,7 @@ int whist_client_main(int argc, const char* argv[]) {
          try_amount++) {
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
-            // TODO: This was a sleep 1000, but I don't think we should ever show the user
+            // TODO: This is a sleep 1000, but I don't think we should ever show the user
             // a frozen window for 1 second if we're not connected to the server. Better to
             // show a "reconnecting" message within the main loop.
             whist_sleep(1000);
