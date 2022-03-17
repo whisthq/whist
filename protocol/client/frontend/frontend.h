@@ -2,24 +2,25 @@
 #define WHIST_CLIENT_FRONTEND_H
 
 #include <whist/core/whist.h>
+#include <whist/core/error_codes.h>
 
 typedef struct WhistFrontend WhistFrontend;
 typedef struct FrontendWindowInfo FrontendWindowInfo;
 typedef struct WhistFrontendFunctionTable {
     // Lifecycle
-    int (*init)(WhistFrontend* frontend);
+    WhistStatus (*init)(WhistFrontend* frontend);
     void (*destroy)(WhistFrontend* frontend);
 
     // Audio
     void (*open_audio)(WhistFrontend* frontend, unsigned int frequency, unsigned int channels);
     bool (*audio_is_open)(WhistFrontend* frontend);
     void (*close_audio)(WhistFrontend* frontend);
-    int (*queue_audio)(WhistFrontend* frontend, const uint8_t* data, size_t size);
+    WhistStatus (*queue_audio)(WhistFrontend* frontend, const uint8_t* data, size_t size);
     size_t (*get_audio_buffer_size)(WhistFrontend* frontend);
 
     // Display
     void (*temp_set_window)(WhistFrontend* frontend, void* window);
-    int (*get_window_info)(WhistFrontend* frontend, FrontendWindowInfo* info);
+    WhistStatus (*get_window_info)(WhistFrontend* frontend, FrontendWindowInfo* info);
 } WhistFrontendFunctionTable;
 
 typedef void WhistFrontendEvent;
@@ -42,8 +43,8 @@ void whist_frontend_destroy(WhistFrontend* frontend);
 // Audio
 void whist_frontend_open_audio(WhistFrontend* frontend, unsigned int frequency,
                                unsigned int channels);
-int whist_frontend_queue_audio(WhistFrontend* frontend, const uint8_t* audio_data,
-                               size_t audio_data_size);
+WhistStatus whist_frontend_queue_audio(WhistFrontend* frontend, const uint8_t* audio_data,
+                                       size_t audio_data_size);
 size_t whist_frontend_get_audio_buffer_size(WhistFrontend* frontend);
 bool whist_frontend_audio_is_open(WhistFrontend* frontend);
 void whist_frontend_close_audio(WhistFrontend* frontend);
@@ -69,7 +70,7 @@ struct FrontendWindowInfo {
 };
 
 void temp_frontend_set_window(WhistFrontend* frontend, void* window);
-int whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info);
+WhistStatus whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info);
 // int whist_get_display_info(int display_id, FrontendDisplayInfo* display_info);
 bool whist_frontend_window_changed_display(WhistFrontend* frontend);
 int whist_frontend_set_screensaver_enabled(WhistFrontend* frontend, bool enabled);

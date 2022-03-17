@@ -361,7 +361,7 @@ int whist_client_main(int argc, const char* argv[]) {
             // TODO: This was a sleep 1000, but I don't think we should ever show the user
             // a frozen window for 1 second if we're not connected to the server. Better to
             // show a "reconnecting" message within the main loop.
-            whist_sleep(300);
+            whist_sleep(1000);
         }
 
         // Initialize the SDL window (and only do this once!)

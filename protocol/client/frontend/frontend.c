@@ -5,11 +5,11 @@
 static atomic_int next_frontend_id = ATOMIC_VAR_INIT(0);
 
 static WhistFrontend* whist_frontend_create(const WhistFrontendFunctionTable* function_table) {
-    WhistFrontend* frontend = malloc(sizeof(WhistFrontend));
+    WhistFrontend* frontend = safe_malloc(sizeof(WhistFrontend));
     frontend->context = NULL;
     frontend->id = atomic_fetch_add(&next_frontend_id, 1);
     frontend->call = function_table;
-    if (frontend->call->init(frontend) != 0) {
+    if (frontend->call->init(frontend) != WHIST_SUCCESS) {
         free(frontend);
         return NULL;
     }
@@ -46,7 +46,7 @@ void whist_frontend_close_audio(WhistFrontend* frontend) {
     frontend->call->close_audio(frontend);
 }
 
-int whist_frontend_queue_audio(WhistFrontend* frontend, const uint8_t* data, size_t size) {
+WhistStatus whist_frontend_queue_audio(WhistFrontend* frontend, const uint8_t* data, size_t size) {
     FATAL_ASSERT(frontend != NULL);
     return frontend->call->queue_audio(frontend, data, size);
 }
@@ -61,7 +61,7 @@ void temp_frontend_set_window(WhistFrontend* frontend, void* window) {
     frontend->call->temp_set_window(frontend, window);
 }
 
-int whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info) {
+WhistStatus whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info) {
     FATAL_ASSERT(frontend != NULL);
     return frontend->call->get_window_info(frontend, info);
 }

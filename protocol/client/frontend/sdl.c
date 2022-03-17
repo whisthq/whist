@@ -7,25 +7,30 @@ typedef struct SDLFrontendContext {
     SDL_Window* window;
 } SDLFrontendContext;
 
-static atomic_int sdl_initialized = ATOMIC_VAR_INIT(0);
+static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 
-static int sdl_init_frontend(WhistFrontend* frontend) {
-    // We only need to initialize SDL once.
-    if (atomic_fetch_or(&sdl_initialized, 1) == 0) {
-        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-            LOG_FATAL("Could not initialize SDL - %s", SDL_GetError());
-        }
+static WhistStatus sdl_init_frontend(WhistFrontend* frontend) {
+    // Only the first init does anything; subsequent ones update an internal
+    // refcount.
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+        LOG_ERROR("Could not initialize SDL - %s", SDL_GetError());
+        return WHIST_ERROR_UNKNOWN;
+    }
+
+    // We only need to SDL_Quit once, regardless of the subsystem refcount.
+    // SDL_QuitSubSystem() would require us to register an atexit for each
+    // call.
+    if (atomic_fetch_or(&sdl_atexit_initialized, 1) == 0) {
         // If we have initialized SDL, then on exit we should clean up.
         atexit(SDL_Quit);
     }
-
     SDLFrontendContext* context = safe_malloc(sizeof(SDLFrontendContext));
 
     // Zero out fields that need to be zeroed.
     context->audio_device = 0;
 
     frontend->context = context;
-    return 0;
+    return WHIST_SUCCESS;
 }
 
 static void sdl_destroy_frontend(WhistFrontend* frontend) { free(frontend->context); }
@@ -74,16 +79,16 @@ static void sdl_close_audio(WhistFrontend* frontend) {
     }
 }
 
-static int sdl_queue_audio(WhistFrontend* frontend, const uint8_t* data, size_t size) {
+static WhistStatus sdl_queue_audio(WhistFrontend* frontend, const uint8_t* data, size_t size) {
     SDLFrontendContext* context = frontend->context;
     if (!sdl_audio_is_open(frontend)) {
-        return -1;
+        return WHIST_ERROR_NOT_FOUND;
     }
     if (SDL_QueueAudio(context->audio_device, data, (int)size) < 0) {
         LOG_ERROR("Could not queue audio - %s", SDL_GetError());
-        return -1;
+        return WHIST_ERROR_UNKNOWN;
     }
-    return 0;
+    return WHIST_SUCCESS;
 }
 
 static size_t sdl_get_audio_buffer_size(WhistFrontend* frontend) {
@@ -94,16 +99,16 @@ static size_t sdl_get_audio_buffer_size(WhistFrontend* frontend) {
     return SDL_GetQueuedAudioSize(context->audio_device);
 }
 
-static int sdl_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info) {
+static WhistStatus sdl_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info) {
     SDLFrontendContext* context = frontend->context;
     if (context->window == NULL) {
-        return -1;
+        return WHIST_ERROR_NOT_FOUND;
     }
     SDL_GL_GetDrawableSize(context->window, &info->pixel_size.width, &info->pixel_size.height);
     SDL_GetWindowSize(context->window, &info->virtual_size.width, &info->virtual_size.height);
     SDL_GetWindowPosition(context->window, &info->position.x, &info->position.y);
     info->display_index = SDL_GetWindowDisplayIndex(context->window);
-    return 0;
+    return WHIST_SUCCESS;
 }
 
 static void temp_sdl_set_window(WhistFrontend* frontend, void* window) {
