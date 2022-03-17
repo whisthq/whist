@@ -375,7 +375,6 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
     }
 
     if (is_ready_to_render(ring_buffer, segment_id) && !was_already_ready) {
-
         ring_buffer->frames_received++;
         if(ring_buffer->frame_ready_cb!=0)
         {

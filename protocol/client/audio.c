@@ -28,6 +28,7 @@ Includes
 #include <whist/tools/protocol_analyzer.h>
 #include <whist/tools/debug_console.h>
 #include "audio_path.h"
+
 /*
 ============================
 Defines
@@ -261,15 +262,13 @@ int render_audio(AudioContext* audio_context) {
                 LOG_FATAL("Failed to send packets to decoder!");
             }
 
-            
             // While there are frames to decode...
             while (true) {
                 // Decode the frame
                 int res = audio_decoder_get_frame(audio_context->audio_decoder);
                 if (res == 0) {
                     // Buffer to hold the decoded data
-                    static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
-                    
+                    static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];                    
                     // Get the decoded data
                     audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
 

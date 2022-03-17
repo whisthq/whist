@@ -173,6 +173,7 @@ Public Functions
 RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size,
                              SocketContext* socket_context, NackPacketFn nack_packet,
                              StreamResetFn request_stream_reset);
+
 /**
  * @brief Add a packet to the ring buffer, and initialize the corresponding frame if necessary. Also
  * nacks for missing packets or frames.
@@ -280,6 +281,5 @@ void destroy_ring_buffer(RingBuffer* ring_buffer);
 
 
 void ring_buffer_set_ready_cb(RingBuffer* ring_buffer, FrameReadyCB cb);
-
 
 #endif
