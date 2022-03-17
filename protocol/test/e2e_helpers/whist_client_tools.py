@@ -61,7 +61,6 @@ def client_setup_process(args_dict):
     ssh_connection_retries = args_dict["ssh_connection_retries"]
 
     client_log = open(client_log_filepath, "w")
-
     client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
 
     # If we are using the same instance for client and server, all the operations in this 
@@ -111,7 +110,7 @@ def client_setup_process(args_dict):
                 running_in_ci,
             )
 
-            # 2 - Fix DPKG issue in case it comes up
+            # 2- Fix DPKG issue in case it comes up
             apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client, running_in_ci)
 
             # 3- Run host-setup
@@ -127,7 +126,7 @@ def client_setup_process(args_dict):
         else:
             print("Skipping host-setup on server instance.")
 
-        # 2- Reboot and wait for it to come back up
+        # Reboot and wait for it to come back up
         print("Rebooting the client EC2 instance (required after running the host-setup)...")
         hs_process = reboot_instance(
             hs_process,
@@ -141,7 +140,7 @@ def client_setup_process(args_dict):
 
         hs_process.kill(0)
 
-    # 6- Build the dev client
+    # Build the dev client
     print("Initiating the BUILD ssh connection with the client AWS instance...")
     client_pexpect_process = attempt_ssh_connection(
         client_cmd,
@@ -155,7 +154,6 @@ def client_setup_process(args_dict):
         client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type, running_in_ci
     )
     client_pexpect_process.kill(0)
-
     client_log.close()
 
 
@@ -203,7 +201,7 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
 
     The function assumes that the pexpect_process process has already successfully established
     a SSH connection to the host, that the Whist repository has already been cloned, and that
-    the browsers/chrome mandelbox has already been built. Further, the host service must be
+    the browsers/chrome mandelbox has already been built. Further, the host-service must be
     already running on the remote machine.
 
     Args:
@@ -230,7 +228,7 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     print(f"Whist dev client started on EC2 instance, on Docker container {client_docker_id}!")
 
     if simulate_scrolling:
-        # Sleep for sometime so that the webpage can load.
+        # Sleep for some time so that the webpage can load.
         time.sleep(5)
         print("Simulating the mouse scroll events in the client")
         command = "python3 /usr/share/whist/mouse_events.py"

@@ -64,6 +64,7 @@ def setup_artificial_network_conditions(
         command = "sudo apt-get install -y net-tools"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
         # Get network interface names (excluding loopback)
         command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
         pexpect_process.sendline(command)
@@ -107,7 +108,7 @@ def setup_artificial_network_conditions(
 
         for device in network_devices:
             print(f"Applying network degradation to device {device}")
-            # add devices to delay incoming packets
+            # Add devices to delay incoming packets
             commands.append(f"sudo tc qdisc add dev {device} ingress")
             commands.append(
                 f"sudo tc filter add dev {device} parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0"
@@ -139,7 +140,7 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
 
     Args:
         pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                        interact with the remote machine
+                         interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
                         ready to execute a command
         running_in_ci: A boolean indicating whether this script is currently running in CI
@@ -180,7 +181,6 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
     ]
 
     commands = []
-
     for device in network_devices:
         print(f"Restoring normal network conditions on device {device}")
         # Inbound degradations
