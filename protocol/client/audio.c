@@ -207,13 +207,19 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
 }
 
 int render_audio(AudioContext* audio_context) {
-    unsigned char audio_buffer[MAX_AUDIO_PACKETS * MAX_PACKET_SEGMENT_SIZE + 100];
+    // a buffer that's large enough to hold an undecoded audio frame
+    unsigned char audio_buffer[MAX_AUDIO_PACKETS * (MAX_PACKET_SEGMENT_SIZE + 1)];
     int audio_buffer_size = -1;
 
+    // incidates if there is something to render
     bool has_data_to_render;
+
     if (USE_AUDIO_PATH) {
-        has_data_to_render = pop_from_audio_path(audio_buffer, &audio_buffer_size) == 0 ? 1 : 0;
+        // the new data path
+        has_data_to_render =
+            pop_from_audio_path(audio_buffer, &audio_buffer_size) == 0 ? true : false;
     } else {
+        // the original data path
         has_data_to_render = audio_context->pending_render_context;
     }
 
