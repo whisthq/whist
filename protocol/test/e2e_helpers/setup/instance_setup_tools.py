@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 import pexpect
-import os
-import sys
-import time
+import os, sys
 
 from e2e_helpers.common.git_tools import (
     get_whist_branch_name,
@@ -14,14 +12,13 @@ from e2e_helpers.common.ssh_tools import (
     reboot_instance,
 )
 
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def install_and_configure_aws(
     pexpect_process,
     pexpect_prompt,
-    aws_timeout_seconds,
     running_in_ci,
     aws_credentials_filepath=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
 ):

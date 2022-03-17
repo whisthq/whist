@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 
-import pexpect
-import time
-import sys
-import os
-import pexpect
-import json
+import os, sys, json, time
 
 from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,
@@ -22,7 +17,6 @@ from e2e_helpers.setup.instance_setup_tools import (
 )
 
 from e2e_helpers.setup.network_tools import (
-    setup_artificial_network_conditions,
     restore_network_conditions,
 )
 

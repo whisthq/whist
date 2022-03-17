@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 
-import pexpect
-import time
-import sys
-import os
+import os, sys
 
 from e2e_helpers.common.ssh_tools import (
-    attempt_ssh_connection,
     wait_until_cmd_done,
 )
 
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
@@ -20,14 +16,14 @@ def setup_artificial_network_conditions(
     """
     Set up the network degradation conditions on the client instance. We apply the network settings
     on the client side to simulate the condition where the user is using Whist on a machine that
-    is connected to the Internet through a unstable connection.
+    is connected to the Internet through an unstable connection.
 
     The function assumes that the pexpect_process process has already successfully established a
-    SSH connection to the host
+    SSH connection to the host.
 
     Args:
         pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                        interact with the remote machine
+                         interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
                         ready to execute a command
         network_conditions: The network conditions expressed as either 'normal' for no network
@@ -41,7 +37,6 @@ def setup_artificial_network_conditions(
     if network_conditions == "normal":
         print("Setting up client to run on a instance with no degradation on network conditions")
     else:
-
         # Apply conditions below only for values that are actually set
         if len(network_conditions.split(",")) != 3:
             print(

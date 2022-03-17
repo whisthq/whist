@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 
-import pexpect
-import time
-import sys
-import os
-import pexpect
+import os, sys
 
 from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,
@@ -20,7 +16,7 @@ from e2e_helpers.setup.instance_setup_tools import (
     prune_containers_if_needed,
 )
 
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
