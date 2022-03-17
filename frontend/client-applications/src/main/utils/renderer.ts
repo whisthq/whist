@@ -160,6 +160,8 @@ const createLaunchLoadingWindow = () =>
     hash: WindowHashLaunchLoading,
     options: {
       fullscreenable: false,
+      titleBarStyle: "customButtonsOnHover",
+      transparent: true,
     },
   })
 

@@ -48,7 +48,7 @@ module.exports = {
           "0%": {
             transform: "translateY(100px)",
           },
-          "60%": {
+          "30%": {
             opacity: "1.0",
             transform: "translateY(100px)",
           },
@@ -61,7 +61,7 @@ module.exports = {
       animation: {
         "fade-in-up": "fade-in-up 1s ease-out forwards",
         "fade-in": "fade-in 1s ease-out forwards",
-        "translate-up": "translate-up 3s ease-out forwards",
+        "translate-up": "translate-up 1.5s ease-out forwards",
         "fade-in-slow": "fade-in 4s ease-out forwards",
       },
       transitionProperty: {

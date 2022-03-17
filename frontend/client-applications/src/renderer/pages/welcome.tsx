@@ -1,41 +1,52 @@
 import React from "react"
 
-import { initGradient } from "@app/renderer/utils/gradient"
+import { WhistButton, WhistButtonState } from "@app/components/button"
+import Logo from "@app/components/icons/logo.svg"
 
 const Welcome = (props: { onSubmit: () => void }) => {
-  initGradient()
-
-  const onKeyDown = (evt: any) => {
-    if (evt.key === "Enter") props.onSubmit()
-  }
-
   return (
     <div
-      onKeyDown={onKeyDown}
       tabIndex={0}
-      className="flex flex-col h-screen w-full font-body outline-none bg-gradient-to-b from-blue-light to-blue"
+      className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
-      <canvas
-        id="gradient-canvas"
-        className="opacity-0 animate-fade-in-slow"
-        style={{ animationDelay: "6000ms" }}
-      ></canvas>
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-      <div className="absolute m-auto text-center mt-24 z-50 w-full h-full mix-blend-overlay">
+      <div className="m-auto text-center relative bottom-16">
+        <img
+          src={Logo}
+          className="w-24 h-24 m-auto animate-fade-in-up opacity-0"
+        />
         <div
-          className="text-gray-100 text-6xl mt-20 animate-fade-in opacity-0 font-bold max-w-lg mx-auto animate-translate-up"
-          style={{ animationDelay: "1000ms" }}
+          className="text-gray-100 text-4xl mt-8 animate-fade-in-up opacity-0 font-bold"
+          style={{ animationDelay: "400ms" }}
         >
-          Experience a browser without limits
+          Sign in to{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-light to-blue">
+            Whist
+          </span>
         </div>
-        <button
-          className="mt-32 text-gray-100 outline-none animate-fade-in opacity-0 bg-white bg-opacity-20 rounded px-8 py-4 tracking-widest"
-          onClick={props.onSubmit}
-          style={{ animationDelay: "4000ms" }}
-          autoFocus={true}
+        <div
+          className="text-gray-400 mt-4 animate-fade-in-up opacity-0"
+          style={{ animationDelay: "800ms" }}
         >
-          Login to Continue
-        </button>
+          A next-generation cloud browser
+        </div>
+        <div
+          className="h-px w-32 bg-gray-700 rounded m-auto mt-8 animate-fade-in-up opacity-0"
+          style={{ animationDelay: "1200ms" }}
+        ></div>
+      </div>
+      <div
+        className="absolute bottom-8 left-0 w-full animate-fade-in-up opacity-0"
+        style={{ animationDelay: "2000ms" }}
+      >
+        <div className="m-auto text-center">
+          <WhistButton
+            onClick={props.onSubmit}
+            state={WhistButtonState.DEFAULT}
+            contents="Continue"
+            className="mb-9 px-16"
+          />
+        </div>
       </div>
     </div>
   )
