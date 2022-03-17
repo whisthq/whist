@@ -143,7 +143,6 @@ AudioContext* init_audio(void) {
 
     // Allocate the audio context
     AudioContext* audio_context = safe_malloc(sizeof(*audio_context));
-    
     memset(audio_context, 0, sizeof(*audio_context));
 
     // Initialize everything
@@ -211,15 +210,29 @@ int render_audio(AudioContext* audio_context) {
     unsigned char audio_buffer[MAX_AUDIO_PACKETS * MAX_PACKET_SEGMENT_SIZE +100];
     int audio_buffer_size=-1;
 
-    if(pop_from_audio_path(audio_buffer, &audio_buffer_size)==0)
+    bool has_data_to_render;
+    if(USE_AUDIO_PATH)
     {
-    //if (audio_context->pending_render_context) {
-        // Only do work, if the audio frequency is valid
-        //FATAL_ASSERT(audio_context->render_context != NULL);
-        
-        AudioFrame* audio_frame = (AudioFrame*)audio_buffer;
+        has_data_to_render= pop_from_audio_path(audio_buffer, &audio_buffer_size)==0?1:0;
+    }
+    else
+    {
+        has_data_to_render= audio_context->pending_render_context;
+    }
 
-        //AudioFrame* audio_frame = (AudioFrame*)audio_context->render_context;
+    if(has_data_to_render)
+    {
+        AudioFrame* audio_frame;
+        if(USE_AUDIO_PATH)
+        {
+            audio_frame = (AudioFrame*)audio_buffer;
+        }
+        else
+        {
+            // Only do work, if the audio frequency is valid
+            FATAL_ASSERT(audio_context->render_context != NULL);
+            audio_frame = (AudioFrame*)audio_context->render_context;;
+        }
 
         // Mark as pending refresh when the audio frequency is being updated
         if (audio_context->audio_frequency != audio_frame->audio_frequency) {
@@ -248,14 +261,14 @@ int render_audio(AudioContext* audio_context) {
                 LOG_FATAL("Failed to send packets to decoder!");
             }
 
-            int cnt=0;
-            static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+            
             // While there are frames to decode...
             while (true) {
                 // Decode the frame
                 int res = audio_decoder_get_frame(audio_context->audio_decoder);
                 if (res == 0) {
                     // Buffer to hold the decoded data
+                    static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
                     
                     // Get the decoded data
                     audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
@@ -265,8 +278,6 @@ int render_audio(AudioContext* audio_context) {
                         audio_context->dev, decoded_data,
                         audio_decoder_get_frame_data_size(audio_context->audio_decoder));
 
-                    cnt++;
-
                     if (res < 0) {
                         LOG_WARNING("Could not play audio!");
                     }
@@ -274,7 +285,6 @@ int render_audio(AudioContext* audio_context) {
                     break;
                 }
             }
-
         }
 
         // No longer rendering audio
@@ -313,7 +323,7 @@ static void init_audio_device(AudioContext* audio_context) {
 
     audio_context->dev = SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &actual_spec, 0);
     if (audio_context->dev == 0) {
-        LOG_FATAL("Failed to open audio: %s", SDL_GetError());
+        LOG_ERROR("Failed to open audio: %s", SDL_GetError());
         return;
     }
 
