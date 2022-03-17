@@ -138,8 +138,6 @@ Public Function Implementations
 ============================
 */
 
-AudioContext * g_audio_context_ptr=0;
-
 AudioContext* init_audio(void) {
     LOG_INFO("Initializing audio system");
 
@@ -157,8 +155,6 @@ AudioContext* init_audio(void) {
     audio_context->is_flushing_audio = false;
     audio_context->is_buffering_audio = false;
     init_audio_device(audio_context);
-
-    g_audio_context_ptr=audio_context;
 
     // Return the audio context
     return audio_context;
