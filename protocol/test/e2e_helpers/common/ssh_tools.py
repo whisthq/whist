@@ -134,26 +134,27 @@ def reboot_instance(
 
     Args:
         pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact
-                        with the remote machine
+                         with the remote machine
         ssh_cmd: The shell command to use to establish a new SSH connection to the remote machine after
-                        the current connection is broken by the reboot.
+                 the current connection is broken by the reboot.
         timeout_value: The amount of time to wait before timing out the attemps to gain a SSH connection
-                        to the remote machine.
+                       to the remote machine.
         log_file_handle: The file (already opened) to use for logging the terminal output from the remote
-                        machine
+                         machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready to
                         execute a command
         retries: Maximum number of attempts before giving up on gaining a new SSH connection after
-                        rebooting the remote machine.
+                 rebooting the remote machine.
         running_in_ci: A boolean indicating whether this script is currently running in CI
 
     Returns:
         pexpect_process: The new Pexpect process created with pexpect.spawn(...) and to be used to interact
-                        with the remote machine after the reboot
+                         with the remote machine after the reboot
     """
     # Trigger the reboot
     pexpect_process.sendline("sudo reboot")
     pexpect_process.kill(0)
+
     # Connect again
     pexpect_process = attempt_ssh_connection(
         ssh_cmd, timeout_value, log_file_handle, pexpect_prompt, retries, running_in_ci
@@ -170,10 +171,11 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
 
     Args:
         pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used
-                            to interact with the remote machine
+                         to interact with the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when
-                            it is ready to execute a command
+                              it is ready to execute a command
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+    
     Returns:
         None
     """

@@ -2,6 +2,8 @@
 
 import os, sys, json, time
 
+from e2e_helpers.setup.network_tools import restore_network_conditions
+
 from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
@@ -16,11 +18,7 @@ from e2e_helpers.setup.instance_setup_tools import (
     prune_containers_if_needed,
 )
 
-from e2e_helpers.setup.network_tools import (
-    restore_network_conditions,
-)
-
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
@@ -41,7 +39,7 @@ def client_setup_process(args_dict):
 
     Args:
         args_dict: A dictionary containing the configs needed to access the remote machine
-                and get a Whist dev client ready for execution
+                   and get a Whist dev client ready for execution
 
     Returns:
         None
@@ -66,10 +64,11 @@ def client_setup_process(args_dict):
 
     client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
 
-    # If we are using the same instance for client and server, all the operations in this if-statement have already been done by server_setup_process
+    # If we are using the same instance for client and server, all the operations in this 
+    # if-statement have already been done by server_setup_process
     if use_two_instances:
         # Initiate the SSH connections with the client instance
-        print("Initiating the SETUP ssh connection with the client AWS instance...")
+        print("Initiating the SETUP SSH connection with the client AWS instance...")
         hs_process = attempt_ssh_connection(
             client_cmd,
             aws_timeout_seconds,
@@ -115,7 +114,7 @@ def client_setup_process(args_dict):
             # 2 - Fix DPKG issue in case it comes up
             apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client, running_in_ci)
 
-            # 3- run host-setup
+            # 3- Run host-setup
             hs_process = run_host_setup(
                 hs_process,
                 pexpect_prompt_client,
@@ -126,10 +125,10 @@ def client_setup_process(args_dict):
                 running_in_ci,
             )
         else:
-            print("Skipping host setup on server instance.")
+            print("Skipping host-setup on server instance.")
 
-        # 2- reboot and wait for it to come back up
-        print("Rebooting the client EC2 instance (required after running the host setup)...")
+        # 2- Reboot and wait for it to come back up
+        print("Rebooting the client EC2 instance (required after running the host-setup)...")
         hs_process = reboot_instance(
             hs_process,
             client_cmd,
@@ -172,13 +171,13 @@ def build_client_on_instance(
 
     Args:
         pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact
-                        with the remote machine
+                         with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready to
                         execute a command
         testing_time: The amount of time to leave the connection open between the client and the server
-                        (when the client is started) before shutting it down
+                      (when the client is started) before shutting it down
         cmake_build_type: A string identifying whether to build the protocol in release, debug, metrics,
-                        or any other Cmake build mode that will be introduced later.
+                          or any other Cmake build mode that will be introduced later.
         running_in_ci: A boolean indicating whether this script is currently running in CI
 
     Returns:
@@ -209,15 +208,15 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
 
     Args:
         pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used
-                            to interact with the remote machine
+                         to interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
-                            ready to execute a command
+                        ready to execute a command
         simulate_scrolling: A boolean controlling whether the client should simulate scrolling
                             as part of the test.
 
     Returns:
         client_docker_id: The Docker ID of the container running the Whist dev client
-                            (development/client mandelbox) on the remote machine
+                          (development/client mandelbox) on the remote machine
     """
     print("Running the dev client mandelbox, and connecting to the server!")
     command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{json.dumps(json_data)}'"
