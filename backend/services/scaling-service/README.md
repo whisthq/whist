@@ -43,4 +43,3 @@ The following scaling algorithms are fully implemented on the scaling-service:
 ## Deployment
 
 The Whist scaling-service gets deployed to Heroku pipeline `whist-server`. Note that our Hasura GraphQL servers are also hosted on Heroku on the Heroku pipeline `whist-hasura`. The logic for deploying can be found in the `deploy.sh` script, which is responsible of generating necessary files and pushing the new changes to Heroku. This logic gets triggered as part of our standard deployment process in the `whist-build-and-deploy.yml` file.
-
