@@ -210,14 +210,6 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     // ===========================
 }
 
-int my_render_audio()
-{
-    if(g_audio_context_ptr==0) return -2;
-    if(g_audio_context_ptr->dev==0) return -3;
-
-    return render_audio(g_audio_context_ptr);
-}
-
 int render_audio(AudioContext* audio_context) {
 
     unsigned char audio_buffer[MAX_AUDIO_PACKETS * MAX_PACKET_SEGMENT_SIZE +100];
@@ -287,23 +279,6 @@ int render_audio(AudioContext* audio_context) {
                 }
             }
 
-            //this doesn't work, try later
-            /*
-            int len=my_get_audio_queue_len()/DECODED_BYTES_PER_FRAME;
-            if(len<5) //if audio queue is running low, we feed last audio data twice
-            {
-                static timestamp_us last_fill_time=0;
-                timestamp_us now= current_time_us ();
-
-                if(now-last_fill_time>200*1000)
-                {
-                    fprintf(stderr,"aduio queue running low, dup last packet!!\n");
-                    SDL_QueueAudio(
-                            audio_context->dev, decoded_data,
-                            audio_decoder_get_frame_data_size(audio_context->audio_decoder));
-                    last_fill_time=now;
-                }
-            }*/
         }
 
         // No longer rendering audio
@@ -342,7 +317,7 @@ static void init_audio_device(AudioContext* audio_context) {
 
     audio_context->dev = SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &actual_spec, 0);
     if (audio_context->dev == 0) {
-        LOG_ERROR("Failed to open audio: %s", SDL_GetError());
+        LOG_FATAL("Failed to open audio: %s", SDL_GetError());
         return;
     }
 
@@ -365,19 +340,6 @@ static void destroy_audio_device(AudioContext* audio_context) {
         destroy_audio_decoder(audio_context->audio_decoder);
         audio_context->audio_decoder = NULL;
     }
-}
-
-
-static int safe_get_audio_queue(AudioContext* audio_context) {
-    int audio_device_queue = 0;
-    if (audio_context->dev) {
-        // If we have a device, get the queue size
-        audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context->dev);
-    }
-#if LOG_AUDIO
-    LOG_DEBUG("Audio Queue: %d", audio_device_queue);
-#endif
-    return audio_device_queue;
 }
 
 bool is_overflowing_audio(AudioContext* audio_context) {
@@ -426,4 +388,16 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     }
     return !audio_context->pending_render_context &&
            !is_underflowing_audio(audio_context, num_frames_buffered);
+}
+
+int safe_get_audio_queue(AudioContext* audio_context) {
+    int audio_device_queue = 0;
+    if (audio_context->dev) {
+        // If we have a device, get the queue size
+        audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context->dev);
+    }
+#if LOG_AUDIO
+    LOG_DEBUG("Audio Queue: %d", audio_device_queue);
+#endif
+    return audio_device_queue;
 }

@@ -156,7 +156,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     }
 #endif
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {
         LOG_ERROR("Could not initialize SDL - %s", SDL_GetError());
         return NULL;
     }

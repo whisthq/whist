@@ -117,7 +117,14 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         // Loop over both VIDEO and AUDIO
         static const WhistPacketType video_audio_types[2] = {PACKET_VIDEO, PACKET_AUDIO};
         for (int i = 0; i < 2; i++) {
+
             WhistPacketType packet_type = video_audio_types[i];
+
+            if(USE_AUDIO_PATH&& packet_type==PACKET_AUDIO)
+            {
+                get_packet(udp_context, packet_type);
+                continue;
+            }
             // If the renderer wants the frame of that type,
             // Knowing how many frames are pending a render...
             if (renderer_wants_frame(whist_renderer, packet_type,
@@ -133,8 +140,6 @@ static int multithreaded_sync_udp_packets(void* opaque) {
                 // And pass it to the renderer if one exists
                 WhistPacket* whist_packet = (WhistPacket*)get_packet(udp_context, packet_type);
                 /*we call get_packet for audio only bc: if we dont' ringbuffer will complain*/
-
-                if(packet_type ==PACKET_AUDIO) continue;
 
                 if (whist_packet) {
                     renderer_receive_frame(whist_renderer, packet_type, whist_packet->data);

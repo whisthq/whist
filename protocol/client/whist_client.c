@@ -296,7 +296,18 @@ int whist_client_main(int argc, char* argv[]) {
     // the logic inside guarantees debug console is only enabled for debug build
     init_debug_console();
 
-    audio_path_init();
+    {
+        int res;
+        if(res=SDL_Init(SDL_INIT_AUDIO)!=0)
+        {
+            LOG_FATAL("SDL aduio subsystem init failed %d\n",res);
+        }
+    }
+    
+    if(USE_AUDIO_PATH)
+    {
+        audio_path_init();
+    }
 
     init_client_statistics();
     whist_init_statistic_logger(CLIENT_NUM_METRICS, client_statistic_info,

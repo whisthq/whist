@@ -181,7 +181,11 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
     if (has_video_rendered_yet(whist_renderer->video_context)) {
         // Only render audio, if the video has rendered something
         // This is because it feels weird when audio is played to the loading screen
-        //render_audio(whist_renderer->audio_context);
+
+        if(!USE_AUDIO_PATH)
+        {
+            render_audio(whist_renderer->audio_context);
+        }
     }
 
     // Mark as recently rendered, and unlock
