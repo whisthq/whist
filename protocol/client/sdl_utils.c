@@ -299,7 +299,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     return sdl_window;
 }
 
-void destroy_sdl(SDL_Window* window_param) {
+void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend) {
     /*
         Destroy the SDL resources
 
@@ -333,7 +333,9 @@ void destroy_sdl(SDL_Window* window_param) {
 
     whist_destroy_mutex(renderer_mutex);
 
-    SDL_Quit();
+    if (frontend) {
+        whist_frontend_destroy(frontend);
+    }
 }
 
 WhistMutex window_resize_mutex;

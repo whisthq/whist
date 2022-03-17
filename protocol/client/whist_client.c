@@ -579,7 +579,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
     if (window) {
-        destroy_sdl((SDL_Window*)window);
+        destroy_sdl((SDL_Window*)window, frontend);
     }
     destroy_statistic_logger();
     destroy_logger();

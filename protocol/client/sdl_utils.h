@@ -66,8 +66,10 @@ SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon
  *                                 parameters
  *
  * @param window                   The SDL window to destroy
+ *
+ * @param frontend                 The frontend to be destroyed
  */
-void destroy_sdl(SDL_Window* window);
+void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend);
 
 /**
  * @brief                          When the window gets resized, call this function
