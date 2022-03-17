@@ -311,7 +311,7 @@ int push_clipboard_thread_function(void* opaque) {
     //     1) the current action has completed
     //     2) the current action has been aborted
     // This unlocks the mutex and blocks until signaled
-    if (!complete && !aborting) {
+    while (!complete && !aborting) {
         whist_wait_cond(current_clipboard_activity.continue_action_condvar,
                         current_clipboard_activity.clipboard_action_mutex);
     }
@@ -426,7 +426,7 @@ int pull_clipboard_thread_function(void* opaque) {
 
     // Between the clipboard get and the lock mutex, this action may have been cancelled,
     //     so we have to check before setting the buffer and blocking on the condvar
-    if (!complete && !aborting) {
+    while (!complete && !aborting) {
         current_clipboard_activity.clipboard_buffer_ptr = &clipboard_buffer;
 
         // When this condition is signaled, we can continue this thread.
