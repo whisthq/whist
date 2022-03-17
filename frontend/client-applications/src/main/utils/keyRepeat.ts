@@ -1,9 +1,6 @@
 import { execCommandByOS } from "@app/main/utils/execCommand"
 import {
-  KEY_REPEAT_DELAY_MIN_LINUX,
-  KEY_REPEAT_DELAY_MIN_MAC,
-  KEY_REPEAT_DELAY_RANGE_LINUX,
-  KEY_REPEAT_DELAY_RANGE_MAC,
+  INITIAL_KEY_REPEAT_MAC_TO_LINUX,
   KEY_REPEAT_RATE_MIN_MAC,
   KEY_REPEAT_RATE_RANGE_LINUX,
   KEY_REPEAT_RATE_RANGE_MAC,
@@ -35,10 +32,7 @@ const getInitialKeyRepeat = () => {
   } else if (process.platform === "darwin" && initialKeyRepeat !== "") {
     // Convert the key repetition delay from Mac scale (shortest=15, longest=120) to Linux scale (shortest=115, longest=2000)
     const initialKeyRepeatFloat =
-      ((parseInt(initialKeyRepeat) - KEY_REPEAT_DELAY_MIN_MAC) /
-        KEY_REPEAT_DELAY_RANGE_MAC) *
-        KEY_REPEAT_DELAY_RANGE_LINUX +
-      KEY_REPEAT_DELAY_MIN_LINUX
+      parseInt(initialKeyRepeat) * INITIAL_KEY_REPEAT_MAC_TO_LINUX
     initialKeyRepeat = initialKeyRepeatFloat.toFixed()
   }
 
