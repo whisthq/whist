@@ -22,9 +22,10 @@ static atomic_int cached_device_queue_len;
 static string last_packet_data;
 
 //how many frames allowed to queue inside the audio device/
-const int max_num_inside_device_queue=10;
+const int max_num_inside_device_queue=9;
 
-const int max_num_inside_user_queue=10;
+//how many frames allowed to  queue inside the user queue
+const int max_num_inside_user_queue=9;
 
 //how many frames allowed to queue intotal 
 //const int max_num_total=max_num_inside_device_queue + max_num_inside_user_queue; 
@@ -49,7 +50,6 @@ int audio_path_init(void)
     g_audio_context = init_audio();
 
     atomic_init(&cached_device_queue_len,max_num_inside_device_queue);
-
     whist_create_thread(multi_threaded_audio_renderer, "MultiThreadedAudioRenderer", NULL);
 
     return 0;
@@ -73,7 +73,8 @@ int detect_skip_num(int user_queue_len, int device_queue_len)
         num_device_queue_empty_slots=0;
     }
 
-    //when we hit the hard limit we remove 
+    //when we hit the hard limit we remove basiclly all inside user_queue
+    // to let the queue recover to normal
     if(user_queue_len>= max_num_inside_user_queue + num_device_queue_empty_slots)
     {
         return max_num_inside_user_queue;
@@ -112,7 +113,7 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
     }
 
     {
-        const int anti_replay_size=2000;
+        const int anti_replay_size=1000;
         anti_replay.insert(id);
         while(anti_replay.size()>anti_replay_size) anti_replay.erase(anti_replay.begin());
     }
@@ -138,7 +139,6 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
                     }
                     break;
             }
-            //assert((int)mp.size() >active_flush_cnt );
             assert(!mp.empty());
             mp.erase(mp.begin());
 
@@ -172,13 +172,9 @@ void pop_inner(unsigned char *buf, int *size)
 //when the device is running really low, dup last frame to make it higher
 //the finaly version might be random with a probility depending on the queue length
 //at the moment we use a simpler strategy
-bool decide_dup_frame(int device_queue_len)
+bool decide_early_dup(int device_queue_len)
 {
-    //disabled
-    //return 0;
-
     if(device_queue_len  > max_num_inside_device_queue/2 ) return 0;
-
     //else free_cap is larger than half
 
     static timestamp_us last_fill_time=0;
@@ -302,7 +298,7 @@ int pop_from_audio_path( unsigned char *buf, int *size)
         if(mp.size()==0)
         {
             
-            if(decide_dup_frame(device_queue_len)&& last_packet_data.length()) 
+            if(decide_early_dup(device_queue_len)&& last_packet_data.length()) 
             {
                 fprintf(stderr,"device_queue running low, len=%d, filled with last frame!!\n",device_queue_len);
                 memcpy(buf,last_packet_data.c_str(),last_packet_data.length());
@@ -342,4 +338,3 @@ int pop_from_audio_path( unsigned char *buf, int *size)
 
     return ret;
 }
-
