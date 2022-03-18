@@ -581,9 +581,6 @@ int32_t multithreaded_send_video(void* opaque) {
             continue;
         }
 
-        static WhistTimer send_video_loop_timer;
-        start_timer(&send_video_loop_timer);
-
         // Update device with new parameters
 
         // YUV pixel format requires the width to be a multiple of 4 and the height to be a

@@ -171,9 +171,6 @@ int multithreaded_manage_client(void *opaque) {
     whist_server_state *state = (whist_server_state *)opaque;
     whist_server_config *config = state->config;
 
-    WhistTimer last_update_timer;
-    start_timer(&last_update_timer);
-
     state->connection_id = rand();
 
     bool first_client_connected = false;  // set to true once the first client has connected
@@ -188,7 +185,8 @@ int multithreaded_manage_client(void *opaque) {
     start_timer(&first_client_timer);
 
     while (!state->exiting) {
-        LOG_INFO("Is a client connected? %s", state->client.is_active ? "yes" : "no");
+        LOG_INFO_RATE_LIMITED(5.0, 1, "Is a client connected? %s",
+                              state->client.is_active ? "yes" : "no");
 
         // If all threads have stopped using the active client, we can finally quit it
         if (state->client.is_deactivating && !threads_still_holding_active()) {
