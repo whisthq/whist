@@ -338,6 +338,18 @@ static void destroy_audio_device(AudioContext* audio_context) {
     }
 }
 
+int safe_get_audio_queue(AudioContext* audio_context) {
+    int audio_device_queue = 0;
+    if (audio_context->dev) {
+        // If we have a device, get the queue size
+        audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context->dev);
+    }
+#if LOG_AUDIO
+    LOG_DEBUG("Audio Queue: %d", audio_device_queue);
+#endif
+    return audio_device_queue;
+}
+
 bool is_overflowing_audio(AudioContext* audio_context) {
     int audio_device_queue = safe_get_audio_queue(audio_context);
 
@@ -386,14 +398,12 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
            !is_underflowing_audio(audio_context, num_frames_buffered);
 }
 
-int safe_get_audio_queue(AudioContext* audio_context) {
-    int audio_device_queue = 0;
-    if (audio_context->dev) {
-        // If we have a device, get the queue size
-        audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context->dev);
+
+int get_device_audio_queue_bytes(AudioContext* audio_context) {
+    if (audio_context->dev)
+    {
+        return -1;
     }
-#if LOG_AUDIO
-    LOG_DEBUG("Audio Queue: %d", audio_device_queue);
-#endif
-    return audio_device_queue;
+
+    return safe_get_audio_queue(audio_context);
 }

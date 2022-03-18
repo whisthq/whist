@@ -97,6 +97,11 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
 {
 
     int device_queue_len=atomic_load(&cached_device_queue_len);
+    if(device_queue_len<0)
+    {
+        return -1;
+    }
+
     string s(buf,buf+size);
 
     whist_lock_mutex(g_mutex);
@@ -222,8 +227,13 @@ int pop_from_audio_path( unsigned char *buf, int *size)
 {
     int ret=-1;
     
-    int device_queue_byte=safe_get_audio_queue(g_audio_context);
-    int device_queue_len=(device_queue_byte + DECODED_BYTES_PER_FRAME-1)/DECODED_BYTES_PER_FRAME;
+    int device_queue_byte=get_device_audio_queue_bytes(g_audio_context);
+    int device_queue_len=-1;
+    if(device_queue_byte>=0)
+    {
+        device_queue_len=(device_queue_byte + DECODED_BYTES_PER_FRAME-1)/DECODED_BYTES_PER_FRAME;
+    }
+
     atomic_store(&cached_device_queue_len,device_queue_len );
 
     if(device_queue_byte==0&&verbose_log) 
