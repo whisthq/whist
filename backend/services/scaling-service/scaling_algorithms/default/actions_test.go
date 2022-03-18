@@ -31,7 +31,7 @@ func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient 
 	return testInstances, nil
 }
 
-func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string, hash string) (subscriptions.WhistInstances, error) {
+func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) (subscriptions.WhistInstances, error) {
 	return testInstances, nil
 }
 

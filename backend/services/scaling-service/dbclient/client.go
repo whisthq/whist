@@ -12,7 +12,7 @@ import (
 // we can easily test and mock the scaling algorithm actions.
 type WhistDBClient interface {
 	QueryInstance(context.Context, subscriptions.WhistGraphQLClient, string) (subscriptions.WhistInstances, error)
-	QueryInstanceWithCapacity(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistInstances, error)
+	QueryInstanceWithCapacity(context.Context, subscriptions.WhistGraphQLClient, string) (subscriptions.WhistInstances, error)
 	QueryInstancesByStatusOnRegion(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistInstances, error)
 	QueryInstancesByImage(context.Context, subscriptions.WhistGraphQLClient, string) (subscriptions.WhistInstances, error)
 	InsertInstances(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Instance) (int, error)

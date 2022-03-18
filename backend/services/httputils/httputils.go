@@ -73,6 +73,7 @@ type MandelboxAssignRequest struct {
 type MandelboxAssignRequestResult struct {
 	IP          string            `json:"ip"`
 	MandelboxID types.MandelboxID `json:"mandelbox_id"`
+	Error       string            `json:"error"`
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -87,31 +88,6 @@ func (s *MandelboxAssignRequest) ReturnResult(result interface{}, err error) {
 // createResultChan is called to create the Go channel to pass the request
 // result back to the HTTP request handler via ReturnResult.
 func (s *MandelboxAssignRequest) CreateResultChan() {
-	if s.ResultChan == nil {
-		s.ResultChan = make(chan RequestResult)
-	}
-}
-
-// Mandelbox assign request
-type RemainingCapacityRequest struct {
-	ResultChan chan RequestResult // Channel to pass the request result between goroutines
-}
-
-type RemainingCapacityRequestResult struct {
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *RemainingCapacityRequest) ReturnResult(result interface{}, err error) {
-	s.ResultChan <- RequestResult{
-		Result: result,
-		Err:    err,
-	}
-}
-
-// createResultChan is called to create the Go channel to pass the request
-// result back to the HTTP request handler via ReturnResult.
-func (s *RemainingCapacityRequest) CreateResultChan() {
 	if s.ResultChan == nil {
 		s.ResultChan = make(chan RequestResult)
 	}

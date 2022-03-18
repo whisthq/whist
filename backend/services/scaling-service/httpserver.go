@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -40,8 +41,27 @@ func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 		Data:   reqdata,
 	}
 	res := <-reqdata.ResultChan
+	assignResult := res.Result.(httputils.MandelboxAssignRequestResult)
 
-	res.Send(w)
+	var (
+		buf    []byte
+		status int
+	)
+
+	if assignResult.Error != "" {
+		// Send a 503
+		status = http.StatusServiceUnavailable
+	} else {
+		// Send a 200 code
+		status = http.StatusOK
+	}
+
+	buf, err = json.Marshal(assignResult)
+	w.WriteHeader(status)
+	if err != nil {
+		logger.Errorf("Error marshalling a %v HTTP Response body: %s", status, err)
+	}
+	_, _ = w.Write(buf)
 }
 
 func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) error {

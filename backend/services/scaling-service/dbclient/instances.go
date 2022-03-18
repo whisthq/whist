@@ -8,15 +8,14 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
-func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string, commitHash string) (subscriptions.WhistInstances, error) {
+func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) (subscriptions.WhistInstances, error) {
 	// The status will always be active, because we want instances
 	// that are ready to accept mandelboxes (the host service is running)
 	const status = "ACTIVE"
-	instancesQuery := subscriptions.QueryInstanceByClientSHA
+	instancesQuery := subscriptions.QueryInstanceWithCapacity
 	queryParams := map[string]interface{}{
-		"region":     graphql.String(region),
-		"client_sha": graphql.String(commitHash),
-		"status":     graphql.String(status),
+		"region": graphql.String(region),
+		"status": graphql.String(status),
 	}
 	err := graphQLClient.Query(scalingCtx, &instancesQuery, queryParams)
 

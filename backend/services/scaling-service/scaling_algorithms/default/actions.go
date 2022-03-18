@@ -572,6 +572,14 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		}
 	}
 
+	if len(allowedRegions) == 0 {
+		err := utils.MakeError("could not assign mandelbox. Wanted regions are not valid or are not enabled.")
+		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+			Error: REGION_NOT_ENABLED,
+		}, err)
+		return err
+	}
+
 	// This condition is to accomodate the worflow for developers of client_apps
 	// to test their changes without needing to update the development database with
 	// commit_hashes on their local machines.
@@ -594,7 +602,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		logger.Infof("Trying to find instance for user %v in region %v, with commit hash %v. (client reported email %v, this value might not be accurate and is untrusted)",
 			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail)
 
-		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, region, mandelboxRequest.CommitHash)
+		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, region)
 		if err != nil {
 			return utils.MakeError("failed to query for instance with capacity. Err: %v", err)
 		}
@@ -617,12 +625,25 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			CreatedAt:         instanceResult[0].CreatedAt,
 			UpdatedAt:         instanceResult[0].UpdatedAt,
 		}
+
+		if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
+			err := utils.MakeError("found instance with capacity but it has a different commit hash %v that clientwith commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+			mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+				Error: COMMIT_HASH_MISMATCH,
+			}, err)
+			return err
+		}
+
 		logger.Infof("Found instance %v for user %v in %v", assignedInstance.ID, unsafeEmail, region)
 		break
 	}
 
 	if assignedInstance == (subscriptions.Instance{}) {
-		return utils.MakeError("failed to assign instance.")
+		err := utils.MakeError("did not find an instance with capacity for user %v and commit hash %v.", mandelboxRequest.UserEmail, mandelboxRequest.CommitHash)
+		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+			Error: NO_INSTANCE_AVAILABLE,
+		}, err)
+		return err
 	}
 
 	mandelboxID, err := uuid.NewRandom()
