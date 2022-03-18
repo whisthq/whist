@@ -373,11 +373,7 @@ jobs:
     name: "Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs"
     runs-on: ubuntu-20.04
     concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
-    needs:
-      [
-        whist-publish-build-config,
-        terraform-deploy,
-      ]
+    needs: [whist-publish-build-config, terraform-deploy]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
 
@@ -644,11 +640,7 @@ jobs:
     name: "Webserver: Deploy to Heroku"
     runs-on: ubuntu-20.04
     concurrency: webserver-deploy-heroku-${{ github.ref }}
-    needs:
-      [
-        whist-publish-build-config,
-        terraform-deploy,
-      ]
+    needs: [whist-publish-build-config, terraform-deploy]
 
     steps:
       - name: Checkout Git Repository

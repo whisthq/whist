@@ -60,10 +60,12 @@ jobs:
         working-directory: frontend/core-ts
         run: yarn install
 
+      # We pass a fake frontend configs JSON string for testing. The real configs
+      # get passed by the client-application scripts and contain more values.
       - name: Run core-ts test suite
         working-directory: frontend/core-ts
         env:
-          CONFIG: ${{ steps.config.outputs.config }}
+          CONFIG: '{"AUTH_API_IDENTIFIER": "https://randomurl.com, "AUTH_CLIENT_ID": "RANDOMSTRING"}'
         run: yarn run test:ci
 
       - name: Upload Codecov Report

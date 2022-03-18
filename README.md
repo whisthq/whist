@@ -36,7 +36,6 @@ The Whist monorepository contains many Whist subrepositories:
 | backend/services/host-service    | This service runs on EC2 instance hosts and orchestrates mandelbox management.          |
 | backend/services/scaling-service | This service is responsible for scaling up/down EC2 instances to run mandelboxes on.    |
 | backend/services/webserver       | This service is responsible for payments handling and assigning users to mandelboxes.   |
-| config                           | The common Whist configuration values that can be re-used across our monorepo           |
 | frontend/client-applications     | The client-side Electron-based application users download and use to launch Whist.      |
 | frontend/core-ts                 | The Whist internal TypeScript library of utilities and reusable components.             |
 | frontend/website                 | The website hosted at `whist.com`.                                                      |

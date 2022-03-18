@@ -1,7 +1,6 @@
 // This file contains helper functions for building, packaging, and publishing the client application.
 
 const { execCommand } = require("./execCommand")
-const { execSync } = require("child_process")
 const { sync: rimrafSync } = require("rimraf")
 const fs = require("fs")
 const fse = require("fs-extra")
@@ -83,33 +82,38 @@ const configOS = () => {
   return "linux"
 }
 
-const configImageTag = "whist/config"
-
 const gitRepoRoot = "../.."
-const configDirectory = path.join(gitRepoRoot, "config")
 const protocolSourceDir = path.join(gitRepoRoot, "protocol")
 const cmakeBuildDir = "build-clientapp"
 const protocolTargetDir = "WhistProtocolClient"
 const protocolTargetBuild = path.join(protocolTargetDir, "build")
 const protocolTargetDebug = path.join(protocolTargetDir, "debugSymbols")
 
-
-// This is the worst code ever, but I am trying to remove the whole monorepo config stuff 
+// This is the worst code ever, but I am trying to remove the whole monorepo config stuff
 // piece by piece. First, I realized that there are very few of the flags actually set, and they're
 // always almost the same. I'll just hardcode the outputs for the 4 environments here so I can
 // remove the whole docker pipeline without needing to worry about data formatting, and once that
 // works well we can clean this up.
 // macOS
-const LOCAL_MONOREPO_MACOS_CONFIG = "{\"AUTH_API_IDENTIFIER\": \"https://api.fractal.co\", \"AUTH_CLIENT_ID\": \"F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF\", \"AUTH_DOMAIN_URL\": \"fractal-dev.us.auth0.com\", \"CLIENT_CALLBACK_URL\": \"http://localhost/callback\", \"CLIENT_DOWNLOAD_URL\": \"https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg\", \"CLIENT_LOG_FILE_NAME\": \"client.log\", \"CLIENT_LOG_FOLDERNAME\": \"logs\", \"CLIENT_PERSISTENCE_FOLDER_NAME\": \"Electron\", \"ENV\": \"local\", \"EXECUTABLE_NAME\": \"Whist (local)\", \"ICON_FILE_NAME\": \"icon_local\", \"NODEJS\": \"local\", \"PROTOCOL_FILE_NAME\": \"WhistClient\", \"PROTOCOL_FOLDER_PATH\": \"../../MacOS\", \"PROTOCOL_LOG_FILE_NAME\": \"protocol.log\", \"WEBSERVER_URL\": \"https://dev-server.whist.com\"}"
-const DEV_MONOREPO_MACOS_CONFIG = "{\"AUTH_API_IDENTIFIER\": \"https://api.fractal.co\", \"AUTH_CLIENT_ID\": \"F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF\", \"AUTH_DOMAIN_URL\": \"fractal-dev.us.auth0.com\", \"CLIENT_CALLBACK_URL\": \"http://localhost/callback\", \"CLIENT_DOWNLOAD_URL\": \"https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg\", \"CLIENT_LOG_FILE_NAME\": \"client.log\", \"CLIENT_LOG_FOLDERNAME\": \"logs\", \"CLIENT_PERSISTENCE_FOLDER_NAME\": \"whist\", \"ENV\": \"dev\", \"EXECUTABLE_NAME\": \"Whist (development)\", \"ICON_FILE_NAME\": \"icon_dev\", \"NODEJS\": \"development\", \"PROTOCOL_FILE_NAME\": \"WhistClient\", \"PROTOCOL_FOLDER_PATH\": \"../../MacOS\", \"PROTOCOL_LOG_FILE_NAME\": \"protocol.log\", \"WEBSERVER_URL\": \"https://dev-server.whist.com\"}"
-const STAGING_MONOREPO_MACOS_CONFIG = "{\"AUTH_API_IDENTIFIER\": \"https://api.fractal.co\", \"AUTH_CLIENT_ID\": \"WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz\", \"AUTH_DOMAIN_URL\": \"fractal-staging.us.auth0.com\", \"CLIENT_CALLBACK_URL\": \"http://localhost/callback\", \"CLIENT_DOWNLOAD_URL\": \"https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg\", \"CLIENT_LOG_FILE_NAME\": \"client.log\", \"CLIENT_LOG_FOLDERNAME\": \"logs\", \"CLIENT_PERSISTENCE_FOLDER_NAME\": \"whist\", \"ENV\": \"staging\", \"EXECUTABLE_NAME\": \"Whist (staging)\", \"ICON_FILE_NAME\": \"icon_staging\", \"NODEJS\": \"staging\", \"PROTOCOL_FILE_NAME\": \"WhistClient\", \"PROTOCOL_FOLDER_PATH\": \"../../MacOS\", \"PROTOCOL_LOG_FILE_NAME\": \"protocol.log\", \"WEBSERVER_URL\": \"https://staging-server.whist.com\"}"
-const PROD_MONOREPO_MACOS_CONFIG = "{\"AUTH_API_IDENTIFIER\": \"https://api.fractal.co\", \"AUTH_CLIENT_ID\": \"Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD\", \"AUTH_DOMAIN_URL\": \"auth.whist.com\", \"CLIENT_CALLBACK_URL\": \"http://localhost/callback\", \"CLIENT_DOWNLOAD_URL\": \"https://fractal-chromium-macos-prod.s3.amazonaws.com/Whist.dmg\", \"CLIENT_LOG_FILE_NAME\": \"client.log\", \"CLIENT_LOG_FOLDERNAME\": \"logs\", \"CLIENT_PERSISTENCE_FOLDER_NAME\": \"whist\", \"ENV\": \"prod\", \"EXECUTABLE_NAME\": \"Whist\", \"ICON_FILE_NAME\": \"icon\", \"NODEJS\": \"prod\", \"PROTOCOL_FILE_NAME\": \"WhistClient\", \"PROTOCOL_FOLDER_PATH\": \"../../MacOS\", \"PROTOCOL_LOG_FILE_NAME\": \"protocol.log\", \"WEBSERVER_URL\": \"https://prod-server.whist.com\"}"
+
+const LOCAL_MONOREPO_MACOS_CONFIG =
+  '{"AUTH_API_IDENTIFIER": "https://api.fractal.co", "AUTH_CLIENT_ID": "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", "AUTH_DOMAIN_URL": "fractal-dev.us.auth0.com", "CLIENT_CALLBACK_URL": "http://localhost/callback", "CLIENT_DOWNLOAD_URL": "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg", "CLIENT_LOG_FILE_NAME": "client.log", "CLIENT_LOG_FOLDERNAME": "logs", "CLIENT_PERSISTENCE_FOLDER_NAME": "Electron", "ENV": "local", "EXECUTABLE_NAME": "Whist (local)", "ICON_FILE_NAME": "icon_local", "NODEJS": "local", "PROTOCOL_FILE_NAME": "WhistClient", "PROTOCOL_FOLDER_PATH": "../../MacOS", "PROTOCOL_LOG_FILE_NAME": "protocol.log", "WEBSERVER_URL": "https://dev-server.whist.com"}'
+const DEV_MONOREPO_MACOS_CONFIG =
+  '{"AUTH_API_IDENTIFIER": "https://api.fractal.co", "AUTH_CLIENT_ID": "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", "AUTH_DOMAIN_URL": "fractal-dev.us.auth0.com", "CLIENT_CALLBACK_URL": "http://localhost/callback", "CLIENT_DOWNLOAD_URL": "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg", "CLIENT_LOG_FILE_NAME": "client.log", "CLIENT_LOG_FOLDERNAME": "logs", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "dev", "EXECUTABLE_NAME": "Whist (development)", "ICON_FILE_NAME": "icon_dev", "NODEJS": "development", "PROTOCOL_FILE_NAME": "WhistClient", "PROTOCOL_FOLDER_PATH": "../../MacOS", "PROTOCOL_LOG_FILE_NAME": "protocol.log", "WEBSERVER_URL": "https://dev-server.whist.com"}'
+const STAGING_MONOREPO_MACOS_CONFIG =
+  '{"AUTH_API_IDENTIFIER": "https://api.fractal.co", "AUTH_CLIENT_ID": "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz", "AUTH_DOMAIN_URL": "fractal-staging.us.auth0.com", "CLIENT_CALLBACK_URL": "http://localhost/callback", "CLIENT_DOWNLOAD_URL": "https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg", "CLIENT_LOG_FILE_NAME": "client.log", "CLIENT_LOG_FOLDERNAME": "logs", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "staging", "EXECUTABLE_NAME": "Whist (staging)", "ICON_FILE_NAME": "icon_staging", "NODEJS": "staging", "PROTOCOL_FILE_NAME": "WhistClient", "PROTOCOL_FOLDER_PATH": "../../MacOS", "PROTOCOL_LOG_FILE_NAME": "protocol.log", "WEBSERVER_URL": "https://staging-server.whist.com"}'
+const PROD_MONOREPO_MACOS_CONFIG =
+  '{"AUTH_API_IDENTIFIER": "https://api.fractal.co", "AUTH_CLIENT_ID": "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD", "AUTH_DOMAIN_URL": "auth.whist.com", "CLIENT_CALLBACK_URL": "http://localhost/callback", "CLIENT_DOWNLOAD_URL": "https://fractal-chromium-macos-prod.s3.amazonaws.com/Whist.dmg", "CLIENT_LOG_FILE_NAME": "client.log", "CLIENT_LOG_FOLDERNAME": "logs", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "prod", "EXECUTABLE_NAME": "Whist", "ICON_FILE_NAME": "icon", "NODEJS": "prod", "PROTOCOL_FILE_NAME": "WhistClient", "PROTOCOL_FOLDER_PATH": "../../MacOS", "PROTOCOL_LOG_FILE_NAME": "protocol.log", "WEBSERVER_URL": "https://prod-server.whist.com"}'
 
 // Windows
-const LOCAL_MONOREPO_WINDOWS_CONFIG = "{\"AUTH_API_IDENTIFIER\": \"https://api.fractal.co\", \"AUTH_CLIENT_ID\": \"F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF\", \"AUTH_DOMAIN_URL\": \"fractal-dev.us.auth0.com\", \"CLIENT_CALLBACK_URL\": \"http://localhost/callback\", \"CLIENT_DOWNLOAD_URL\": \"https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.dmg\", \"CLIENT_LOG_FILE_NAME\": \"client.log\", \"CLIENT_LOG_FOLDERNAME\": \"logs\", \"CLIENT_PERSISTENCE_FOLDER_NAME\": \"Electron\", \"ENV\": \"local\", \"EXECUTABLE_NAME\": \"Whist (local)\", \"ICON_FILE_NAME\": \"icon_local\", \"NODEJS\": \"local\",  \"PROTOCOL_FILE_NAME\": \"Whist.exe\", \"PROTOCOL_FOLDER_PATH\": \"../../WhistProtocolClient\", \"PROTOCOL_LOG_FILE_NAME\": \"protocol.log\", \"WEBSERVER_URL\": \"https://dev-server.whist.com\"}"
-const DEV_MONOREPO_WINDOWS_CONFIG = "{\"AUTH_API_IDENTIFIER\": \"https://api.fractal.co\", \"AUTH_CLIENT_ID\": \"F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF\", \"AUTH_DOMAIN_URL\": \"fractal-dev.us.auth0.com\", \"CLIENT_CALLBACK_URL\": \"http://localhost/callback\", \"CLIENT_DOWNLOAD_URL\": \"https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.dmg\", \"CLIENT_LOG_FILE_NAME\": \"client.log\", \"CLIENT_LOG_FOLDERNAME\": \"logs\", \"CLIENT_PERSISTENCE_FOLDER_NAME\": \"whist\", \"ENV\": \"dev\", \"EXECUTABLE_NAME\": \"Whist (development)\", \"ICON_FILE_NAME\": \"icon_dev\", \"NODEJS\": \"development\", \"PROTOCOL_FILE_NAME\": \"Whist.exe\", \"PROTOCOL_FOLDER_PATH\": \"../../WhistProtocolClient\", \"PROTOCOL_LOG_FILE_NAME\": \"protocol.log\", \"WEBSERVER_URL\": \"https://dev-server.whist.com\"}"
-const STAGING_MONOREPO_WINDOWS_CONFIG = "{\"AUTH_API_IDENTIFIER\": \"https://api.fractal.co\", \"AUTH_CLIENT_ID\": \"WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz\", \"AUTH_DOMAIN_URL\": \"fractal-staging.us.auth0.com\", \"CLIENT_CALLBACK_URL\": \"http://localhost/callback\", \"CLIENT_DOWNLOAD_URL\": \"https://fractal-chromium-windows-staging.s3.amazonaws.com/Whist.dmg\", \"CLIENT_LOG_FILE_NAME\": \"client.log\", \"CLIENT_LOG_FOLDERNAME\": \"logs\", \"CLIENT_PERSISTENCE_FOLDER_NAME\": \"whist\", \"ENV\": \"staging\", \"EXECUTABLE_NAME\": \"Whist (staging)\", \"ICON_FILE_NAME\": \"icon_staging\", \"NODEJS\": \"staging\", \"PROTOCOL_FILE_NAME\": \"Whist.exe\", \"PROTOCOL_FOLDER_PATH\": \"../../WhistProtocolClient\", \"PROTOCOL_LOG_FILE_NAME\": \"protocol.log\", \"WEBSERVER_URL\": \"https://staging-server.whist.com\"}"
-const PROD_MONOREPO_WINDOWS_CONFIG = "{\"AUTH_API_IDENTIFIER\": \"https://api.fractal.co\", \"AUTH_CLIENT_ID\": \"Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD\", \"AUTH_DOMAIN_URL\": \"auth.whist.com\", \"CLIENT_CALLBACK_URL\": \"http://localhost/callback\", \"CLIENT_DOWNLOAD_URL\": \"https://fractal-chromium-windows-prod.s3.amazonaws.com/Whist.dmg\", \"CLIENT_LOG_FILE_NAME\": \"client.log\", \"CLIENT_LOG_FOLDERNAME\": \"logs\", \"CLIENT_PERSISTENCE_FOLDER_NAME\": \"whist\", \"ENV\": \"prod\", \"EXECUTABLE_NAME\": \"Whist\", \"ICON_FILE_NAME\": \"icon\", \"NODEJS\": \"prod\", \"PROTOCOL_FILE_NAME\": \"Whist.exe\", \"PROTOCOL_FOLDER_PATH\": \"../../WhistProtocolClient\", \"PROTOCOL_LOG_FILE_NAME\": \"protocol.log\", \"WEBSERVER_URL\": \"https://prod-server.whist.com\"}"
+const LOCAL_MONOREPO_WINDOWS_CONFIG =
+  '{"AUTH_API_IDENTIFIER": "https://api.fractal.co", "AUTH_CLIENT_ID": "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", "AUTH_DOMAIN_URL": "fractal-dev.us.auth0.com", "CLIENT_CALLBACK_URL": "http://localhost/callback", "CLIENT_DOWNLOAD_URL": "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.dmg", "CLIENT_LOG_FILE_NAME": "client.log", "CLIENT_LOG_FOLDERNAME": "logs", "CLIENT_PERSISTENCE_FOLDER_NAME": "Electron", "ENV": "local", "EXECUTABLE_NAME": "Whist (local)", "ICON_FILE_NAME": "icon_local", "NODEJS": "local",  "PROTOCOL_FILE_NAME": "Whist.exe", "PROTOCOL_FOLDER_PATH": "../../WhistProtocolClient", "PROTOCOL_LOG_FILE_NAME": "protocol.log", "WEBSERVER_URL": "https://dev-server.whist.com"}'
+const DEV_MONOREPO_WINDOWS_CONFIG =
+  '{"AUTH_API_IDENTIFIER": "https://api.fractal.co", "AUTH_CLIENT_ID": "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", "AUTH_DOMAIN_URL": "fractal-dev.us.auth0.com", "CLIENT_CALLBACK_URL": "http://localhost/callback", "CLIENT_DOWNLOAD_URL": "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.dmg", "CLIENT_LOG_FILE_NAME": "client.log", "CLIENT_LOG_FOLDERNAME": "logs", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "dev", "EXECUTABLE_NAME": "Whist (development)", "ICON_FILE_NAME": "icon_dev", "NODEJS": "development", "PROTOCOL_FILE_NAME": "Whist.exe", "PROTOCOL_FOLDER_PATH": "../../WhistProtocolClient", "PROTOCOL_LOG_FILE_NAME": "protocol.log", "WEBSERVER_URL": "https://dev-server.whist.com"}'
+const STAGING_MONOREPO_WINDOWS_CONFIG =
+  '{"AUTH_API_IDENTIFIER": "https://api.fractal.co", "AUTH_CLIENT_ID": "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz", "AUTH_DOMAIN_URL": "fractal-staging.us.auth0.com", "CLIENT_CALLBACK_URL": "http://localhost/callback", "CLIENT_DOWNLOAD_URL": "https://fractal-chromium-windows-staging.s3.amazonaws.com/Whist.dmg", "CLIENT_LOG_FILE_NAME": "client.log", "CLIENT_LOG_FOLDERNAME": "logs", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "staging", "EXECUTABLE_NAME": "Whist (staging)", "ICON_FILE_NAME": "icon_staging", "NODEJS": "staging", "PROTOCOL_FILE_NAME": "Whist.exe", "PROTOCOL_FOLDER_PATH": "../../WhistProtocolClient", "PROTOCOL_LOG_FILE_NAME": "protocol.log", "WEBSERVER_URL": "https://staging-server.whist.com"}'
+const PROD_MONOREPO_WINDOWS_CONFIG =
+  '{"AUTH_API_IDENTIFIER": "https://api.fractal.co", "AUTH_CLIENT_ID": "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD", "AUTH_DOMAIN_URL": "auth.whist.com", "CLIENT_CALLBACK_URL": "http://localhost/callback", "CLIENT_DOWNLOAD_URL": "https://fractal-chromium-windows-prod.s3.amazonaws.com/Whist.dmg", "CLIENT_LOG_FILE_NAME": "client.log", "CLIENT_LOG_FOLDERNAME": "logs", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "prod", "EXECUTABLE_NAME": "Whist", "ICON_FILE_NAME": "icon", "NODEJS": "prod", "PROTOCOL_FILE_NAME": "Whist.exe", "PROTOCOL_FOLDER_PATH": "../../WhistProtocolClient", "PROTOCOL_LOG_FILE_NAME": "protocol.log", "WEBSERVER_URL": "https://prod-server.whist.com"}'
 
 module.exports = {
   getConfig: (params = {}) => {
@@ -122,25 +126,25 @@ module.exports = {
     const deploy = params.deploy
       ? `--deploy ${JSON.stringify(params.deploy)}`
       : ""
-   
+
     console.log(`Parsing config with: ${secrets} ${os} ${deploy}`)
     if (configOS() === "macos") {
-      if (params.deploy == "prod") {
+      if (params.deploy === "prod") {
         return PROD_MONOREPO_MACOS_CONFIG
-      } else if (params.deploy == "staging") {
+      } else if (params.deploy === "staging") {
         return STAGING_MONOREPO_MACOS_CONFIG
-      } else if (params.deploy == "dev") {
+      } else if (params.deploy === "dev") {
         return DEV_MONOREPO_MACOS_CONFIG
       } else {
         // defaulting to local otherwise
         return LOCAL_MONOREPO_MACOS_CONFIG
       }
     } else if (configOS() === "win32") {
-      if (params.deploy == "prod") {
+      if (params.deploy === "prod") {
         return PROD_MONOREPO_WINDOWS_CONFIG
-      } else if (params.deploy == "staging") {
+      } else if (params.deploy === "staging") {
         return STAGING_MONOREPO_WINDOWS_CONFIG
-      } else if (params.deploy == "dev") {
+      } else if (params.deploy === "dev") {
         return DEV_MONOREPO_WINDOWS_CONFIG
       } else {
         // defaulting to local otherwise
