@@ -7,7 +7,6 @@ const packageLocal = (env, config) => {
   // If we're passed a --config CLI argument, we'll use that as the JSON
   // config value. If no --config argument, we'll build the config ourselves.
   if (!config) {
-    helpers.buildConfigContainer()
     config = helpers.getConfig({ deploy: "dev" })
   }
   helpers.buildAndCopyProtocol(true)

@@ -7,7 +7,9 @@ const yargs = require("yargs")
 const packageNotarize = (env, config, version, environment, commit) => {
   // If we're passed a --config CLI argument, we'll use that as the JSON
   // config value. If no --config argument, we'll build the config ourselves.
-  if (!config) config = helpers.buildConfigContainer({ deploy: environment })
+  if (!config) {
+    config = helpers.getConfig({ deploy: environment })
+  }
 
   helpers.reinitializeYarn()
   helpers.buildAndCopyProtocol(true)
