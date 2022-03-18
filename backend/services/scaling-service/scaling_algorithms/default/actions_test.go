@@ -211,7 +211,7 @@ func (mh *mockHostHandler) WaitForInstanceReady(scalingCtx context.Context, maxW
 
 type mockGraphQLClient struct{}
 
-func (mg *mockGraphQLClient) Initialize() error {
+func (mg *mockGraphQLClient) Initialize(bool) error {
 	return nil
 }
 

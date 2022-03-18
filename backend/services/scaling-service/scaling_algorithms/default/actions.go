@@ -110,15 +110,15 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 
 	// We consider the expected mandelbox capacity (active instances + starting instances)
 	// to account for warmup time and so that we don't scale up unnecesary instances.
-	if mandelboxCapacity < DESIRED_FREE_MANDELBOXES {
-		logger.Infof("Current mandelbox capacity of %v is less than desired %v. Scaling up %v instances to satisfy minimum desired capacity.", mandelboxCapacity, DESIRED_FREE_MANDELBOXES, DEFAULT_INSTANCE_BUFFER)
-		err = s.ScaleUpIfNecessary(DEFAULT_INSTANCE_BUFFER, scalingCtx, event, latestImageID)
+	if mandelboxCapacity < desiredFreeMandelboxesPerRegion {
+		logger.Infof("Current mandelbox capacity of %v is less than desired %v. Scaling up %v instances to satisfy minimum desired capacity.", mandelboxCapacity, desiredFreeMandelboxesPerRegion, defaultInstanceBuffer)
+		err = s.ScaleUpIfNecessary(defaultInstanceBuffer, scalingCtx, event, latestImageID)
 		if err != nil {
 			// err is already wrapped here
 			return err
 		}
 	} else {
-		logger.Infof("Mandelbox capacity %v in %v is enough to satisfy minimum desired capacity of %v.", mandelboxCapacity, event.Region, DESIRED_FREE_MANDELBOXES)
+		logger.Infof("Mandelbox capacity %v in %v is enough to satisfy minimum desired capacity of %v.", mandelboxCapacity, event.Region, desiredFreeMandelboxesPerRegion)
 	}
 
 	return nil
@@ -169,7 +169,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Extra capacity is considered once we have a full instance worth of capacity
 	// more than the desired free mandelboxes. TODO: Set the instance type once we
 	// have support for more instance types. For now default to `g4dn.2xlarge`.
-	extraCapacity := DESIRED_FREE_MANDELBOXES + (DEFAULT_INSTANCE_BUFFER * instanceCapacity["g4dn.2xlarge"])
+	extraCapacity := desiredFreeMandelboxesPerRegion + (defaultInstanceBuffer * instanceCapacity["g4dn.2xlarge"])
 
 	// Acquire lock on protected from scale down map
 	s.protectedMapLock.Lock()
@@ -346,7 +346,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	// create instance buffer with new image
 	logger.Infof("Creating new instance buffer for image %v", newImageID)
-	bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, DEFAULT_INSTANCE_BUFFER, maxWaitTimeReady, newImageID)
+	bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, int32(defaultInstanceBuffer), maxWaitTimeReady, newImageID)
 	if err != nil {
 		return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImageID, err)
 	}

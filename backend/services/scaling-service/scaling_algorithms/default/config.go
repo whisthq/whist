@@ -7,15 +7,18 @@ import (
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
-const (
-	// DEFAULT_INSTANCE_BUFFER is the number of instances with space to run
+// Default configuration values. These values should be pulled from
+// the config database, but we leave the default in case we fail to
+// query the database.
+var (
+	// defaultInstanceBuffer is the number of instances with space to run
 	// mandelboxes. This value is used when deciding how many instances to
 	// scale up if we don't have enough capacity.
-	DEFAULT_INSTANCE_BUFFER = 1
-	// DESIRED_FREE_MANDELBOXES is the number of free mandelboxes we always
-	// want available in a region. TODO: Once we can connect to the hasura config server
-	// fill in this value with the one in the database.
-	DESIRED_FREE_MANDELBOXES = 2
+	defaultInstanceBuffer = 1
+	// desiredFreeMandelboxesPerRegion is the number of free mandelboxes we always
+	// want available in a region. This value is the same across all regions, but
+	// represents the free mandelboxes we want on each.
+	desiredFreeMandelboxesPerRegion = 2
 )
 
 // VCPUsPerMandelbox indicates the number of vCPUs allocated per mandelbox.

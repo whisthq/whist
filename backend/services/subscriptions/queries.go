@@ -69,6 +69,14 @@ type WhistClientAppVersions []struct {
 	ProdCommitHash    graphql.String `graphql:"prod_commit_hash"`
 }
 
+// WhistClientAppVersions is the mapping of the `dev`, `staging` and `prod` tables on the config database.
+// This type interacts directly with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal.
+// Only use for GraphQL operations.
+type WhistConfigs []struct {
+	Key   graphql.String `graphql:"key"`
+	Value graphql.String `graphql:"value"`
+}
+
 // QueryInstanceByIdWithStatus returns an instance that matches the given instance_name and status.
 var QueryInstanceByIdWithStatus struct {
 	WhistInstances `graphql:"whist_instances(where: {id: {_eq: $id}, _and: {status: {_eq: $status}}})"`
@@ -114,4 +122,19 @@ var QueryLatestImage struct {
 // QueryClientAppVersionChange returns the most recent change on the `desktop_app_version` config database table.
 var QueryClientAppVersionChange struct {
 	WhistClientAppVersions `graphql:"desktop_app_version(where: {id: {_eq: $id}})"`
+}
+
+// QueryDevConfigurations will return all values in the `dev` table of the config database.
+var QueryDevConfigurations struct {
+	WhistConfigs `graphql:"dev"`
+}
+
+// QueryStagingConfigurations will return all values in the `staging` table of the config database.
+var QueryStagingConfigurations struct {
+	WhistConfigs `graphql:"staging"`
+}
+
+// QueryProdConfigurations will return all values in the `prod` table of the config database.
+var QueryProdConfigurations struct {
+	WhistConfigs `graphql:"prod"`
 }

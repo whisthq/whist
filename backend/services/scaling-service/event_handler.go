@@ -27,10 +27,19 @@ func main() {
 	logger.InitScalingLogging()
 
 	// Start GraphQL client for queries/mutations
+	useConfigDB := false
 	graphqlClient := &subscriptions.GraphQLClient{}
-	err := graphqlClient.Initialize()
+	err := graphqlClient.Initialize(useConfigDB)
 	if err != nil {
 		logger.Errorf("Failed to start GraphQL client. Error: %v", err)
+	}
+
+	// Start GraphQL client for getting configuration from the config db
+	useConfigDB = true
+	configGraphqlClient := &subscriptions.GraphQLClient{}
+	err = configGraphqlClient.Initialize(useConfigDB)
+	if err != nil {
+		logger.Errorf("Failed to start config GraphQL client. Error: %v", err)
 	}
 
 	// Start database subscriptions
@@ -70,6 +79,7 @@ func main() {
 		scalingAlgorithm.CreateGraphQLClient(graphqlClient)
 		scalingAlgorithm.CreateDBClient(dbclient)
 		scalingAlgorithm.ProcessEvents(globalCtx, goroutineTracker)
+		scalingAlgorithm.GetConfig(configGraphqlClient)
 
 		return true
 	})
