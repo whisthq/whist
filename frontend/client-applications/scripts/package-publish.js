@@ -57,7 +57,7 @@ if (require.main === module) {
       demandOption: true,
     })
     .option("commit", {
-      description: "Set the commit hash of the current branch",
+      description: "Set the commit hash of the current branch.",
       type: "string",
       requiresArg: true,
       demandOption: true,
