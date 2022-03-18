@@ -123,33 +123,32 @@ module.exports = {
       : ""
    
     console.log(`Parsing config with: ${secrets} ${os} ${deploy}`)
-    const configs_as_json_string = ""
     if (configOS() === "macos") {
       if (params.deploy == "prod") {
-        configs_as_json_string = PROD_MONOREPO_MACOS_CONFIG
+        return PROD_MONOREPO_MACOS_CONFIG
       } else if (params.deploy == "staging") {
-        configs_as_json_string = STAGING_MONOREPO_MACOS_CONFIG
+        return STAGING_MONOREPO_MACOS_CONFIG
       } else if (params.deploy == "dev") {
-        configs_as_json_string = DEV_MONOREPO_MACOS_CONFIG
+        return DEV_MONOREPO_MACOS_CONFIG
       } else {
         // defaulting to local otherwise
-        configs_as_json_string = LOCAL_MONOREPO_MACOS_CONFIG
+        return LOCAL_MONOREPO_MACOS_CONFIG
       }
     } else if (configOS() === "win32") {
       if (params.deploy == "prod") {
-        configs_as_json_string = PROD_MONOREPO_WINDOWS_CONFIG
+        return PROD_MONOREPO_WINDOWS_CONFIG
       } else if (params.deploy == "staging") {
-        configs_as_json_string = STAGING_MONOREPO_WINDOWS_CONFIG
+        return STAGING_MONOREPO_WINDOWS_CONFIG
       } else if (params.deploy == "dev") {
-        configs_as_json_string = DEV_MONOREPO_WINDOWS_CONFIG
+        return DEV_MONOREPO_WINDOWS_CONFIG
       } else {
         // defaulting to local otherwise
-        configs_as_json_string = LOCAL_MONOREPO_WINDOWS_CONFIG
+        return LOCAL_MONOREPO_WINDOWS_CONFIG
       }
     } else {
       console.log("I haven't done the configs for Linux, do we even do them?")
+      return ""
     }
-    return configs_as_json_string
   },
   // Build the protocol and copy it into the expected location
   buildAndCopyProtocol: (freshCmake) => {
