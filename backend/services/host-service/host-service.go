@@ -607,14 +607,19 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 // Create the directory used to store the mandelbox resource allocations
 // (e.g. TTYs) on disk
 func initializeFilesystem(globalCancel context.CancelFunc) {
-	// Check if the instance has ephemeral storage. If it does
-	// create the "/whist" directory in it so that reading/writing
-	// operations are fast.
-	ephemeralDevicePath := os.Getenv("EPHEMERAL_DEVICE_PATH")
-	ephemeralFSPath := os.Getenv("EPHEMERAL_FS_PATH")
+	// Check if the instance has ephemeral storage. If it does create the "/whist" directory
+	// in it so that reading/writing operations are fast. We use this command to check if the
+	// instance has an ephemeral device present.
+	// See: https://stackoverflow.com/questions/10781516/how-to-pipe-several-commands-in-go
+	ephemeralDeviceCmd := "nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == \"Amazon EC2 NVMe Instance Storage\")) | max_by(.PhysicalSize) | .DevicePath'"
+	out, err := exec.Command("bash", "-c", ephemeralDeviceCmd).CombinedOutput()
+	if err != nil {
+		logger.Errorf("Error while getting ephemeral device path, not using ephemeral storage.")
+	}
 
-	if ephemeralDevicePath != "null" {
-		utils.WhistDir = path.Join(ephemeralFSPath, utils.WhistDir)
+	ephemeralDevicePath := string(out)
+	if ephemeralDevicePath != "" && ephemeralDevicePath != "null" {
+		utils.WhistDir = path.Join(utils.WhistEphemeralFSPath, utils.WhistDir)
 	}
 
 	// check if "/whist" already exists --- if so, panic, since
@@ -631,7 +636,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// Create the whist directory and make it non-root user owned so that
 	// non-root users in mandelboxes can access files within (especially user
 	// configs).
-	err := os.MkdirAll(utils.WhistDir, 0777)
+	err = os.MkdirAll(utils.WhistDir, 0777)
 	if err != nil {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistDir, err)
 	}

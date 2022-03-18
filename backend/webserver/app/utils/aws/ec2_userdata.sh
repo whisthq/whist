@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Note: all commands here are run with the `root` user. It is not necessary to use sudo.
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html#user-data-shell-scripts
+
 # Exit on subcommand errors
 set -Eeuo pipefail
 
@@ -9,35 +12,32 @@ cd /home/ubuntu
 
 # The first thing we want to do is to set up the ephemeral storage available on
 # our instance, if there is some.
-EPHEMERAL_DEVICE_PATH=$(sudo nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == "Amazon EC2 NVMe Instance Storage")) | max_by(.PhysicalSize) | .DevicePath')
+EPHEMERAL_DEVICE_PATH=$(nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == "Amazon EC2 NVMe Instance Storage")) | max_by(.PhysicalSize) | .DevicePath')
 EPHEMERAL_FS_PATH=/ephemeral
 
 if [ $EPHEMERAL_DEVICE_PATH != "null" ]
 then
     echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
 
-    sudo mkfs -t ext4 "$EPHEMERAL_DEVICE_PATH"
-    sudo mkdir -p "$EPHEMERAL_FS_PATH"
-    sudo mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
+    mkfs -t ext4 "$EPHEMERAL_DEVICE_PATH"
+    mkdir -p "$EPHEMERAL_FS_PATH"
+    mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
     echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
 
     # Stop docker and copy the data directory that contains mandelbox images to the ephemeral storage
-    sudo systemctl stop docker
-    sudo mv /var/lib/docker "$EPHEMERAL_FS_PATH"
+    systemctl stop docker
+    mv /var/lib/docker "$EPHEMERAL_FS_PATH"
 
     # Modify configuration to use the new data directory and persist in daemon config file
     # and start docker again
-    jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && sudo mv tmp.json /etc/docker/daemon.json
-    sudo systemctl start docker
-
-    # Write ephemeral path and device to a file so host service can read them
-    # TODO: write to file so host service can read them
+    jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
+    systemctl start docker
 
 else
     echo "No ephemeral device path found. Warming up EBS volume with fio."
     # Warm Up EBS Volume
     # For more information, see: https://github.com/whisthq/whist/pull/5333
-    sudo fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
+    fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
 
 fi
 
@@ -72,10 +72,10 @@ EOF
 echo "Created systemd service for host-service"
 
 # Reload daemon files
-sudo /bin/systemctl daemon-reload
+/bin/systemctl daemon-reload
 
 # Enable Host Service
-sudo systemctl enable --now host-service.service
+systemctl enable --now host-service.service
 
 echo "Enabled host-service"
 
