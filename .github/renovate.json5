@@ -56,10 +56,6 @@
       groupName: ".github/actions/generate-auth0-token",
     },
     {
-      matchPaths: [".github/actions/monorepo-config"],
-      groupName: ".github/actions/monorepo-config",
-    },
-    {
       matchPaths: [".github/actions/set-environment"],
       groupName: ".github/actions/set-environment",
     },

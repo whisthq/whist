@@ -51,14 +51,6 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
 
-      - name: Build Monorepo Configuration
-        id: config
-        uses: ./.github/actions/monorepo-config
-        with:
-          secrets: ${{ toJSON(secrets) }}
-          os: linux
-          deploy: dev
-
       - name: Install Node.js 16
         uses: actions/setup-node@v3.0.0
         with:

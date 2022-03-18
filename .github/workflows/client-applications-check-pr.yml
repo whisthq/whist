@@ -17,66 +17,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # We use a separate job for building the monorepo configuration. The monorepo
-  # configuration is built in a Docker container, and Docker Actions can only be
-  # run on Linux environments on GitHub. As we need to build the client application
-  # in Mac and Windows environments, we need to run the configuration builder as a
-  # separate job. We set the JSON configuration data as "outputs" of this job step,
-  # so that it can be consumed by other jobs.
-  #
-  # Before we set the "outputs" of this job step, we need to perform a small trick
-  # to get around an implementation detail of GitHub Actions. The GitHub Actions runner
-  # will silently ignore any "outputs" that contain values inside the GitHub secrets
-  # store. This is for security purposes, but it's rather inconvenient when we're trying
-  # to pass around a configuration object that may contain secret values. To get around
-  # GitHub's limitation, we first double-encode the configuration string to base-64. (We
-  # need to double-encode since GitHub also checks for a base64 representation of each
-  # secret). Other jobs will need to double-decode the base-64 string to produce the JSON
-  # configuration object.
-  build-monorepo-config:
-    name: Building Monorepo Config
-    runs-on: ubuntu-20.04
-    outputs:
-      macos: ${{ steps.config-macos.outputs.config }}
-      win32: ${{ steps.config-win32.outputs.config }}
-
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3
-
-      - name: Set the workflow's environment parameters
-        id: set-environment
-        uses: ./.github/actions/set-environment
-        with:
-          ref: ${{ github.base_ref }} # The git ref of the target branch
-
-      - name: Build Monorepo Configuration for macOS
-        id: config-macos
-        uses: ./.github/actions/monorepo-config
-        with:
-          os: macos
-          deploy: ${{ steps.set-environment.outputs.environment }}
-
-      - name: Build Monorepo Configuration for Windows
-        id: config-win32
-        uses: ./.github/actions/monorepo-config
-        with:
-          os: win32
-          deploy: ${{ steps.set-environment.outputs.environment }}
-
-      - name: Log macOS Configuration
-        shell: python3 {0}
-        run: |
-          print(r"""${{ steps.config-macos.outputs.config }}""")
-
-      - name: Log Win32 Configuration
-        shell: python3 {0}
-        run: |
-          print(r"""${{ steps.config-win32.outputs.config }}""")
-
-  #######################################################################################
-  #######################################################################################
-
   # Linting
   # Check that the client-applications code is properly linted
   client-applications-check-pr-linting:
@@ -111,7 +51,6 @@ jobs:
   # Check that the macOS and Windows client applications build
   client-applications-check-pr-building-x64:
     name: Building on ${{ matrix.config.name }}
-    needs: [build-monorepo-config]
     runs-on: ${{ matrix.config.os }}
 
     strategy:
@@ -180,7 +119,6 @@ jobs:
         if: false && runner.os == 'Windows'
         working-directory: frontend/client-applications
         env:
-          CONFIG: ${{ needs.build-monorepo-config.outputs.win32 }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
         run: |
@@ -213,7 +151,6 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: frontend/client-applications
         env:
-          CONFIG: ${{ needs.build-monorepo-config.outputs.macos }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
           MACOS_ARCH: "${{ matrix.config.arch }}"
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
