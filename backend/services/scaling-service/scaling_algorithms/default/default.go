@@ -132,7 +132,7 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 		return
 	}
 
-	desiredFreeMandelboxes = mandelboxInt
+	desiredFreeMandelboxesPerRegion = mandelboxInt
 }
 
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing

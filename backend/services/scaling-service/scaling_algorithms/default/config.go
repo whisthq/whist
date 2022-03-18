@@ -15,9 +15,10 @@ var (
 	// mandelboxes. This value is used when deciding how many instances to
 	// scale up if we don't have enough capacity.
 	defaultInstanceBuffer = 1
-	// desiredFreeMandelboxes is the number of free mandelboxes we always
-	// want available in a region.
-	desiredFreeMandelboxes = 2
+	// desiredFreeMandelboxesPerRegion is the number of free mandelboxes we always
+	// want available in a region. This value is the same across all regions, but
+	// represents the free mandelboxes we want on each.
+	desiredFreeMandelboxesPerRegion = 2
 )
 
 // VCPUsPerMandelbox indicates the number of vCPUs allocated per mandelbox.
