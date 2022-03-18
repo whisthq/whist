@@ -38,7 +38,6 @@ typedef struct AudioContext AudioContext;
 #define NUM_CHANNELS 2
 #define DECODED_BYTES_PER_FRAME (SAMPLES_PER_FRAME * BYTES_PER_SAMPLE * NUM_CHANNELS)
 
-
 /*
 ============================
 Public Functions
