@@ -21,9 +21,12 @@ Includes
 
 /*
 ============================
-Custom Types
+Defines
 ============================
 */
+
+// The maximum amount of time for a lock to be held, in seconds
+#define MAX_DEACTIVATION_TIME_SEC 10.0
 
 struct ClientPrivateData {
     bool is_permanently_deactivated;  // Whether or not the client has permanently deactivated
@@ -95,15 +98,41 @@ void start_deactivating_client(Client* client) {
     whist_unlock_mutex(client->private_data->cond_mutex);
 }
 
+static int verify_deactivation(void* p_deactivation_finished_raw) {
+    WhistSemaphore verify_deactivation_semaphore = (WhistSemaphore)(p_deactivation_finished_raw);
+
+    // Wait for the semaphore, but die if too much time has passed
+    if (!whist_wait_timeout_semaphore(verify_deactivation_semaphore,
+                                      MAX_DEACTIVATION_TIME_SEC * MS_IN_SECOND)) {
+        // Forcefully exit Whist if the locks aren't being unlocked as they should
+        // This is for protection against thread crashes or lock misuse
+        LOG_FATAL("Failed to deactivate after %f seconds!", MAX_DEACTIVATION_TIME_SEC);
+    }
+
+    whist_destroy_semaphore(verify_deactivation_semaphore);
+
+    return 0;
+}
+
 void deactivate_client(Client* client) {
     // Verify that this is a client being deactivated
     FATAL_ASSERT(client->is_active);
     FATAL_ASSERT(client->is_deactivating);
 
+    // Allow this thread to cleanup a failed deactivation
+    // This to prevent lock starvation from causing the mandelbox to hang
+    WhistSemaphore verify_deactivation_semaphore = whist_create_semaphore(0);
+    WhistThread verify_deactivation_thread = whist_create_thread(
+        verify_deactivation, "Deactivation Thread", (void*)verify_deactivation_semaphore);
+
     // Wait for no one to hold an activation lock anymore
     // (No new locks will be held after this point, since is_deactivating == true)
     write_lock(&client->private_data->activation_rwlock);
     write_unlock(&client->private_data->activation_rwlock);
+
+    // Mark deactivation as finished
+    whist_post_semaphore(verify_deactivation_semaphore);
+    whist_wait_thread(verify_deactivation_thread, NULL);
 
     // Update the client state is inactive
     whist_lock_mutex(client->private_data->cond_mutex);

@@ -134,6 +134,7 @@ void permanently_deactivate_client(Client* client);
  * @brief                          Gets a lock on an active client.
  *                                 This will block until the client is both active
  *                                 and not pending deactivation.
+ *                                 This lock must be released often.
  *
  * @param client                   The client to wait for activation on
  *
@@ -142,8 +143,8 @@ void permanently_deactivate_client(Client* client);
  * @note                           This function is thread-safe relative to
  *                                 the other client management functions
  *
- * @note                           This lock should be released often,
- *                                 or the client will never be able to re/deactivate.
+ * @note                           Failing to release this lock promptly (Within 1 second),
+ *                                 may forcefully shutdown WhistServer.
  */
 ClientLock* client_active_lock(Client* client);
 
