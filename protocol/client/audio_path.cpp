@@ -91,7 +91,7 @@ bool doing_active_flush=0;
 int skiped_cnt=0;
 
 //last id pushed to decoder, used for track packet loss
-int last_decoded_id=-1;
+int last_popped_id=-1;
 
 int push_to_audio_path(int id, unsigned char *buf, int size)
 {
@@ -106,12 +106,12 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
 
     whist_lock_mutex(g_mutex);
 
-    const int max_reorder_allowed=5;
+    const int max_reorder_distant_allowed=4;
     //TODO better handling of reorder
     //when serious reoroder is detected, we can dely sending data to the device
     //so that the audio queue can put packets into correct order
 
-    if(id+max_reorder_allowed<last_decoded_id||anti_replay.find(id)!=anti_replay.end()) //already have this id
+    if(id+max_reorder_distant_allowed<last_popped_id||anti_replay.find(id)!=anti_replay.end()) //already have this id
     {
         whist_unlock_mutex(g_mutex);
         return -1;
@@ -162,12 +162,12 @@ void pop_inner(unsigned char *buf, int *size)
     auto it=mp.begin();
 
     
-    if(last_decoded_id +1 !=it->first)
+    if(last_popped_id +1 !=it->first)
     {
-        if(verbose_log) fprintf(stderr, "lost (or reordered) packet %d!!!\n", last_decoded_id+1);
+        if(verbose_log) fprintf(stderr, "lost (or reordered) packet %d!!!\n", last_popped_id+1);
     }
 
-    last_decoded_id=it->first;
+    last_popped_id=it->first;
     memcpy(buf,it->second.c_str(),it->second.length());
     *size=(int)it->second.length();
     last_packet_data=it->second;

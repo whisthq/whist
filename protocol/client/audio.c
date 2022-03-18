@@ -338,7 +338,7 @@ static void destroy_audio_device(AudioContext* audio_context) {
     }
 }
 
-int safe_get_audio_queue(AudioContext* audio_context) {
+static int safe_get_audio_queue(AudioContext* audio_context) {
     int audio_device_queue = 0;
     if (audio_context->dev) {
         // If we have a device, get the queue size
@@ -398,10 +398,8 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
            !is_underflowing_audio(audio_context, num_frames_buffered);
 }
 
-
 int get_device_audio_queue_bytes(AudioContext* audio_context) {
-    if (audio_context->dev)
-    {
+    if (audio_context->dev == NULL) {
         return -1;
     }
 
