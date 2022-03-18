@@ -22,6 +22,7 @@ Includes
 */
 
 #include <whist/core/whist.h>
+#include "frontend/frontend.h"
 #include "audio.h"
 #include "video.h"
 
@@ -46,7 +47,7 @@ Public Functions
  *
  * @returns                        The newly created whist renderer
  */
-WhistRenderer* init_renderer(int initial_width, int initial_height);
+WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int initial_height);
 
 /**
  * @brief                          Does any pending work the renderer

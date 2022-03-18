@@ -20,6 +20,7 @@ Includes
 #include "sdl_utils.h"
 #include <whist/utils/png.h>
 #include <whist/utils/lodepng.h>
+#include "frontend/frontend.h"
 #include "client_statistic.h"
 #include "whist/utils/command_line.h"
 
@@ -33,11 +34,6 @@ extern volatile bool insufficient_bandwidth;
 extern volatile SDL_Window* window;
 static bool skip_taskbar;
 
-#if defined(_WIN32)
-static HHOOK g_h_keyboard_hook;
-static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param);
-#endif
-
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* frame_buffer = NULL;
@@ -45,10 +41,6 @@ static WhistMutex renderer_mutex;
 
 // pending render Update
 static volatile bool pending_render = false;
-
-// Loading screen framebuffer update
-static volatile bool pending_loadingscreen = false;
-static int pending_loadingscreen_idx;
 
 static volatile bool prev_insufficient_bandwidth = false;
 
@@ -59,14 +51,8 @@ static int pending_nv12data_linesize[4];
 static int pending_nv12data_width;
 static int pending_nv12data_height;
 
-#define LOADING_SOLID_COLOR true
-
 // The background color for the loading screen
-#if LOADING_SOLID_COLOR
 static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
-#else
-static const WhistRGBColor background_color = {255, 255, 255};  // white
-#endif  // LOADING_SOLID_COLOR
 
 // Window Color Update
 static volatile WhistRGBColor* native_window_color = NULL;
@@ -128,11 +114,13 @@ static void sdl_free_png_file_rgb_surface(SDL_Surface* surface);
 static void sdl_present_pending_framebuffer(void);
 
 /**
- * @brief                          Renders out the loading screen
+ * @brief                          Renders out a solid color to the framebuffer
+ *
+ * @param color                    The color to render
  *
  * @note                           Must be called on the main thread
  */
-static void sdl_render_loading_screen(void);
+static void sdl_render_solid_color(WhistRGBColor color);
 
 /**
  * @brief                          Renders out the insufficient bandwidth error message
@@ -167,7 +155,7 @@ Public Function Implementations
 bool get_skip_taskbar(void) { return skip_taskbar; }
 
 SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
-                     char* icon_filename) {
+                     char* icon_filename, WhistFrontend** frontend) {
     /*
         Attaches the current thread to the specified current input client
 
@@ -188,17 +176,12 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 #endif
 
-#if defined(_WIN32)
-    if (CAPTURE_SPECIAL_WINDOWS_KEYS) {
-        // Hook onto windows keyboard to intercept windows special key combinations
-        g_h_keyboard_hook =
-            SetWindowsHookEx(WH_KEYBOARD_LL, low_level_keyboard_proc, GetModuleHandle(NULL), 0);
-    }
-#endif
-
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        LOG_ERROR("Could not initialize SDL - %s", SDL_GetError());
+    WhistFrontend* out_frontend = whist_frontend_create_sdl();
+    if (out_frontend == NULL) {
         return NULL;
+    }
+    if (frontend) {
+        *frontend = out_frontend;
     }
 
     renderer_mutex = whist_create_mutex();
@@ -206,21 +189,24 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // Allow the screensaver to activate
     SDL_EnableScreenSaver();
 
-    // TODO: make this a commandline argument based on client app settings!
-    int full_width = get_virtual_screen_width();
-    int full_height = get_virtual_screen_height();
-
     bool maximized = target_output_width == 0 && target_output_height == 0;
 
-    // Default output dimensions will be a quarter of the full screen if the window
-    // starts maximized. Even if this isn't a multiple of 8, it's fine because
-    // clicking the minimize button will trigger an SDL resize event
+    // Grab the default display dimensions -- if the window starts maximized and
+    // the user then unmaximizes (double click the titlebar on macOS), we will
+    // set the default size of the unmaximized window to be 50% of the display's
+    // width and height. Even if this isn't a multiple of 8, it's fine because
+    // clicking the minimize button will trigger an SDL resize event.
+    SDL_DisplayMode display_info;
+    if (SDL_GetDesktopDisplayMode(0, &display_info)) {
+        LOG_WARNING("SDL_GetCurrentDisplayMode failed: %s", SDL_GetError());
+    }
+
     if (target_output_width == 0) {
-        target_output_width = full_width / 2;
+        target_output_width = display_info.w / 2;
     }
 
     if (target_output_height == 0) {
-        target_output_height = full_height / 2;
+        target_output_height = display_info.h / 2;
     }
 
     SDL_Window* sdl_window;
@@ -238,10 +224,21 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, target_output_width, target_output_height,
                                   window_flags);
+    // temporary hook -- remove during refactor
+    temp_frontend_set_window(out_frontend, sdl_window);
     if (!sdl_window) {
         LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
         return NULL;
     }
+
+    // set the window minimum size
+    SDL_SetWindowMinimumSize(sdl_window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
+
+    // Make sure that ctrl+click is processed as a right click on Mac
+    SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
+
+    // Allow inactive protocol to trigger the screensaver
+    SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
 
     // Initialize the renderer
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
@@ -260,7 +257,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // Render a black screen before anything else,
     // To prevent being exposed to random colors
     pending_nv12data = false;
-    pending_loadingscreen = false;
     pending_render = true;
     sdl_present_pending_framebuffer();
 
@@ -293,13 +289,17 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
-    output_width = get_window_pixel_width((SDL_Window*)sdl_window);
-    output_height = get_window_pixel_height((SDL_Window*)sdl_window);
-
+    FrontendWindowInfo info;
+    if (whist_frontend_get_window_info(out_frontend, &info)) {
+        LOG_ERROR("Failed to get window info");
+    } else {
+        output_width = info.pixel_size.width;
+        output_height = info.pixel_size.height;
+    }
     return sdl_window;
 }
 
-void destroy_sdl(SDL_Window* window_param) {
+void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend) {
     /*
         Destroy the SDL resources
 
@@ -325,9 +325,7 @@ void destroy_sdl(SDL_Window* window_param) {
     }
 
     LOG_INFO("Destroying SDL");
-#if defined(_WIN32)
-    UnhookWindowsHookEx(g_h_keyboard_hook);
-#endif
+
     if (window_param) {
         SDL_DestroyWindow((SDL_Window*)window_param);
         window_param = NULL;
@@ -335,7 +333,9 @@ void destroy_sdl(SDL_Window* window_param) {
 
     whist_destroy_mutex(renderer_mutex);
 
-    SDL_Quit();
+    if (frontend) {
+        whist_frontend_destroy(frontend);
+    }
 }
 
 WhistMutex window_resize_mutex;
@@ -345,8 +345,8 @@ WhistTimer window_resize_timer;
 volatile bool pending_resize_message = false;
 void sdl_renderer_resize_window(int width, int height) {
     // Try to make pixel width and height conform to certain desirable dimensions
-    int current_width = get_window_pixel_width((SDL_Window*)window);
-    int current_height = get_window_pixel_height((SDL_Window*)window);
+    int current_width, current_height;
+    SDL_GL_GetDrawableSize((SDL_Window*)window, &current_width, &current_height);
 
     LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
              current_height);
@@ -363,7 +363,8 @@ void sdl_renderer_resize_window(int width, int height) {
     int desired_height = current_height - (current_height % 2);
     static int prev_desired_width = 0;
     static int prev_desired_height = 0;
-    static int tries = 0;  // number of attemps to force window size to be prev_desired_width/height
+    static int tries =
+        0;  // number of attempts to force window size to be prev_desired_width/height
     if (current_width != desired_width || current_height != desired_height) {
         // Avoid trying to force the window size forever, stop after 4 attempts
         if (!(prev_desired_width == desired_width && prev_desired_height == desired_height &&
@@ -382,8 +383,7 @@ void sdl_renderer_resize_window(int width, int height) {
                               desired_height * 96 / dpi);
             LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
                      desired_width, desired_height);
-            current_width = get_window_pixel_width((SDL_Window*)window);
-            current_height = get_window_pixel_height((SDL_Window*)window);
+            SDL_GL_GetDrawableSize((SDL_Window*)window, &current_width, &current_height);
 
             if (current_width != desired_width || current_height != desired_height) {
                 LOG_WARNING(
@@ -409,24 +409,6 @@ void sdl_renderer_resize_window(int width, int height) {
     LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, output_width, output_height);
 }
 
-void sdl_update_framebuffer_loading_screen(int idx) {
-    /*
-        Make the screen black and show the loading screen
-        Arguments:
-            idx (int): the index of the loading frame
-    */
-
-    whist_lock_mutex(renderer_mutex);
-
-    // Clear any other pending framebuffer
-    pending_nv12data = false;
-    // Mark the pending framebuffer as the loading screen
-    pending_loadingscreen_idx = idx;
-    pending_loadingscreen = true;
-
-    whist_unlock_mutex(renderer_mutex);
-}
-
 void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height) {
     whist_lock_mutex(renderer_mutex);
 
@@ -434,8 +416,6 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
     if (width < 0 || width > MAX_SCREEN_WIDTH || height < 0 || height > MAX_SCREEN_HEIGHT) {
         LOG_ERROR("Invalid Dimensions! %dx%d. nv12 update dropped", width, height);
     } else {
-        // Clear any other pending framebuffer
-        pending_loadingscreen = false;
         // Overwrite the pending framebuffer metadata,
         // And mark the nv12 framebuffer as pending
         memcpy(pending_nv12data_data, data, sizeof(pending_nv12data_data));
@@ -778,9 +758,7 @@ static void sdl_present_pending_framebuffer(void) {
     }
 
     // Wipes the renderer to background color before we present
-    SDL_SetRenderDrawColor(sdl_renderer, background_color.red, background_color.green,
-                           background_color.blue, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(sdl_renderer);
+    sdl_render_solid_color(background_color);
 
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
@@ -793,11 +771,6 @@ static void sdl_present_pending_framebuffer(void) {
     // Render the nv12data, if any exists
     if (pending_nv12data) {
         sdl_render_nv12data();
-    }
-
-    // Render the loading screen, if any exists
-    if (pending_loadingscreen) {
-        sdl_render_loading_screen();
     }
 
     if (insufficient_bandwidth) {
@@ -824,53 +797,9 @@ static void sdl_present_pending_framebuffer(void) {
     whist_unlock_mutex(renderer_mutex);
 }
 
-static void sdl_render_loading_screen(void) {
-    FATAL_ASSERT(pending_loadingscreen == true);
-
-#if LOADING_SOLID_COLOR
-    SDL_SetRenderDrawColor(sdl_renderer, background_color.red, background_color.green,
-                           background_color.blue, SDL_ALPHA_OPAQUE);
+static void sdl_render_solid_color(WhistRGBColor color) {
+    SDL_SetRenderDrawColor(sdl_renderer, color.red, color.green, color.blue, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(sdl_renderer);
-#else
-#define NUMBER_LOADING_FRAMES 50
-    int gif_frame_index = pending_loadingscreen_idx % NUMBER_LOADING_FRAMES;
-
-    char frame_filename[256];
-    snprintf(frame_filename, sizeof(frame_filename), "images/frame_%02d.png", gif_frame_index);
-
-    SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_filename);
-    if (loading_screen == NULL) {
-        LOG_ERROR("Loading screen image failed to load: %s", frame_filename);
-    } else {
-        SDL_Texture* loading_screen_texture =
-            SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
-
-        // The surface can now be freed
-        sdl_free_png_file_rgb_surface(loading_screen);
-
-        // Position the rectangle such that the texture will be centered
-        int w, h;
-        SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
-        SDL_Rect centered_rect = {
-            .x = output_width / 2 - w / 2,
-            .y = output_height / 2 - h / 2,
-            .w = w,
-            .h = h,
-        };
-
-        // The texture is semi-transparent, so we clear to white first
-        SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(sdl_renderer);
-        // Now, we write the texture out to the renderer
-        SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &centered_rect);
-
-        // The loading screen texture may now be destroyed
-        SDL_DestroyTexture(loading_screen_texture);
-    }
-#endif
-
-    // The loading screen render is no longer pending
-    pending_loadingscreen = false;
 }
 
 static void sdl_render_insufficient_bandwidth(void) {
@@ -994,102 +923,6 @@ static void sdl_free_png_file_rgb_surface(SDL_Surface* surface) {
     SDL_FreeSurface(surface);
     free(pixels);
 }
-
-#if defined(_WIN32)
-static void send_captured_key(SDL_Keycode key, int type, int time) {
-    /*
-        Send a key to SDL event queue, presumably one that is captured and wouldn't
-        naturally make it to the event queue by itself
-
-        Arguments:
-            key (SDL_Keycode): key that was captured
-            type (int): event type (press or release)
-            time (int): time that the key event was registered
-    */
-
-    SDL_Event e = {0};
-    e.type = type;
-    e.key.keysym.sym = key;
-    e.key.keysym.scancode = SDL_GetScancodeFromName(SDL_GetKeyName(key));
-    e.key.timestamp = time;
-    SDL_PushEvent(&e);
-}
-
-HHOOK mule;
-static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param) {
-    /*
-        Function to capture keyboard strokes and block them if they encode special
-        key combinations, with intent to redirect them to send_captured_key so that the
-        keys can still be streamed over to the host
-
-        Arguments:
-            n_code (INT): keyboard code
-            w_param (WPARAM): w_param to be passed to CallNextHookEx
-            l_param (LPARAM): l_param to be passed to CallNextHookEx
-
-        Return:
-            (LRESULT CALLBACK): CallNextHookEx return callback value
-    */
-
-    // By returning a non-zero value from the hook procedure, the
-    // message does not get passed to the target window
-    KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)l_param;
-    int flags = SDL_GetWindowFlags((SDL_Window*)window);
-    if ((flags & SDL_WINDOW_INPUT_FOCUS)) {
-        switch (n_code) {
-            case HC_ACTION: {
-                // Check to see if the CTRL key is pressed
-                BOOL b_control_key_down = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
-                BOOL b_alt_key_down = pkbhs->flags & LLKHF_ALTDOWN;
-
-                int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
-                int time = pkbhs->time;
-
-                // Disable LWIN
-                if (pkbhs->vkCode == VK_LWIN) {
-                    send_captured_key(SDLK_LGUI, type, time);
-                    return 1;
-                }
-
-                // Disable RWIN
-                if (pkbhs->vkCode == VK_RWIN) {
-                    send_captured_key(SDLK_RGUI, type, time);
-                    return 1;
-                }
-
-                // Disable CTRL+ESC
-                if (pkbhs->vkCode == VK_ESCAPE && b_control_key_down) {
-                    send_captured_key(SDLK_ESCAPE, type, time);
-                    return 1;
-                }
-
-                // Disable ALT+ESC
-                if (pkbhs->vkCode == VK_ESCAPE && b_alt_key_down) {
-                    send_captured_key(SDLK_ESCAPE, type, time);
-                    return 1;
-                }
-
-                // Disable ALT+TAB
-                if (pkbhs->vkCode == VK_TAB && b_alt_key_down) {
-                    send_captured_key(SDLK_TAB, type, time);
-                    return 1;
-                }
-
-                // Disable ALT+F4
-                if (pkbhs->vkCode == VK_F4 && b_alt_key_down) {
-                    send_captured_key(SDLK_F4, type, time);
-                    return 1;
-                }
-
-                break;
-            }
-            default:
-                break;
-        }
-    }
-    return CallNextHookEx(mule, n_code, w_param, l_param);
-}
-#endif
 
 // 20th of the window - usually close to file icon sizes + doesn't become disruptive if window is
 // small

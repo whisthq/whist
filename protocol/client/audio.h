@@ -21,6 +21,7 @@ Includes
 #include <whist/audio/audiodecode.h>
 #include <whist/core/whist.h>
 #include <whist/network/network.h>
+#include "frontend/frontend.h"
 #include "client_utils.h"
 
 /*
@@ -42,9 +43,11 @@ Public Functions
  *                                 The audio system will receive audio packets,
  *                                 and render the audio out to a playback device
  *
+ * @param frontend                 The frontend for which to initialize audio
+ *
  * @returns                        The new audio context
  */
-AudioContext* init_audio(void);
+AudioContext* init_audio(WhistFrontend* frontend);
 
 /**
  * @brief                          This will refresh the audio device

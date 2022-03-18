@@ -71,8 +71,9 @@ struct AudioContext {
     // True if the audio device is pending a refresh
     bool pending_refresh;
 
-    SDL_AudioDeviceID dev;
     AudioDecoder* audio_decoder;
+
+    WhistFrontend* target_frontend;
 
     // Audio render context
 
@@ -92,29 +93,18 @@ Private Functions
 ============================
 */
 
+static void init_audio_player(AudioContext* audio_context);
 /**
- * @brief                          Initialize the SDL audio device,
- *                                 and the ffmpeg audio decoder.
- *                                 They must not already exist.
- *
- * @param audio_context            The audio context to use
- *
- * @note                           On failure, audio_context->dev will remain 0,
- *                                 and audio_context->audio_decoder will remain NULL.
- */
-static void init_audio_device(AudioContext* audio_context);
-
-/**
- * @brief                          Destroy the SDL audio device,
+ * @brief                          Destroy frontend audio device
  *                                 and the ffmpeg audio decoder,
  *                                 if they exist.
  *
  * @param audio_context            The audio context to use
  *
- * @note                           If SDL audio device / ffmpeg have not been initialized,
+ * @note                           If frontend audio device / ffmpeg have not been initialized,
  *                                 this function will simply do nothing
  */
-static void destroy_audio_device(AudioContext* audio_context);
+static void destroy_audio_player(AudioContext* audio_context);
 
 /**
  * @brief                          Checks if the system queue is overflowing
@@ -138,8 +128,8 @@ Public Function Implementations
 ============================
 */
 
-AudioContext* init_audio(void) {
-    LOG_INFO("Initializing audio system");
+AudioContext* init_audio(WhistFrontend* frontend) {
+    LOG_INFO("Initializing audio system targeting frontend %u", whist_frontend_get_id(frontend));
 
     // Allocate the audio context
     AudioContext* audio_context = safe_malloc(sizeof(*audio_context));
@@ -149,21 +139,22 @@ AudioContext* init_audio(void) {
     audio_context->audio_frequency = AUDIO_FREQUENCY;
     audio_context->pending_refresh = false;
     audio_context->pending_render_context = false;
-    audio_context->dev = 0;
+    audio_context->target_frontend = frontend;
     audio_context->audio_decoder = NULL;
     audio_context->is_flushing_audio = false;
     audio_context->is_buffering_audio = false;
-    init_audio_device(audio_context);
+    init_audio_player(audio_context);
 
     // Return the audio context
     return audio_context;
 }
 
 void destroy_audio(AudioContext* audio_context) {
-    LOG_INFO("Destroying audio system");
+    LOG_INFO("Destroying audio system targeting frontend %u",
+             whist_frontend_get_id(audio_context->target_frontend));
 
     // Destroy the audio device
-    destroy_audio_device(audio_context);
+    destroy_audio_player(audio_context);
 
     // Free the audio struct
     free(audio_context);
@@ -219,18 +210,18 @@ void render_audio(AudioContext* audio_context) {
         }
 
         // Note that because sdl_event_handler.c also sets pending_refresh to true when changing
-        // audio devices, there is a minor race condition that can lead to reinit_audio_device()
+        // audio devices, there is a minor race condition that can lead to reinit_audio_player()
         // being called more times than expected.
         if (audio_context->pending_refresh) {
             // Consume the pending audio refresh
             audio_context->pending_refresh = false;
             // Update the audio device
-            destroy_audio_device(audio_context);
-            init_audio_device(audio_context);
+            destroy_audio_player(audio_context);
+            init_audio_player(audio_context);
         }
 
         // If we have a valid audio device to render with...
-        if (audio_context->dev != 0) {
+        if (whist_frontend_audio_is_open(audio_context->target_frontend)) {
             whist_analyzer_record_decode_audio();
             // Send the encoded frame to the decoder
             if (audio_decoder_send_packets(audio_context->audio_decoder, audio_frame->data,
@@ -239,25 +230,21 @@ void render_audio(AudioContext* audio_context) {
             }
 
             // While there are frames to decode...
-            while (true) {
-                // Decode the frame
-                int res = audio_decoder_get_frame(audio_context->audio_decoder);
-                if (res == 0) {
-                    // Buffer to hold the decoded data
-                    static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
-                    // Get the decoded data
-                    audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
+            while (audio_decoder_get_frame(audio_context->audio_decoder) == 0) {
+                // Buffer to hold the decoded data
+                uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+                size_t decoded_data_size;
 
-                    // Queue the decoded_data into the audio device
-                    res = SDL_QueueAudio(
-                        audio_context->dev, decoded_data,
-                        audio_decoder_get_frame_data_size(audio_context->audio_decoder));
+                // Get the decoded data
+                // TODO: Combine these functions into one by returning the decoded data size
+                // in the readout function.
+                audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
+                decoded_data_size = audio_decoder_get_frame_data_size(audio_context->audio_decoder);
 
-                    if (res < 0) {
-                        LOG_WARNING("Could not play audio!");
-                    }
-                } else {
-                    break;
+                // Queue the decoded_data into the frontend audio player
+                if (whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
+                                               decoded_data_size) < 0) {
+                    LOG_WARNING("Could not play audio!");
                 }
             }
         }
@@ -273,46 +260,20 @@ Private Function Implementations
 ============================
 */
 
-static void init_audio_device(AudioContext* audio_context) {
-    LOG_INFO("Initializing audio device");
+static void init_audio_player(AudioContext* audio_context) {
+    // Initialize the audio device for the frequency and 2 channels
+    whist_frontend_open_audio(audio_context->target_frontend, audio_context->audio_frequency, 2);
 
-    // Verify that the device doesn't already exist
-    FATAL_ASSERT(audio_context->dev == 0);
+    // Verify that the decoder doesn't already exist
     FATAL_ASSERT(audio_context->audio_decoder == NULL);
-
-    // Initialize the SDL audio device
-    SDL_AudioSpec wanted_spec = {0}, actual_spec = {0};
-
-    // See https://wiki.libsdl.org/SDL_OpenAudioDevice
-    SDL_zero(wanted_spec);
-    SDL_zero(actual_spec);
-    wanted_spec.freq = audio_context->audio_frequency;
-    wanted_spec.channels = 2;
-    wanted_spec.format = AUDIO_F32SYS;
-    wanted_spec.callback = NULL;
-    wanted_spec.userdata = NULL;
-    // Unknown Meaning, so we give it a power of 2 like the docs ask
-    wanted_spec.samples = 512;
-
-    audio_context->dev = SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &actual_spec, 0);
-    if (audio_context->dev == 0) {
-        LOG_ERROR("Failed to open audio: %s", SDL_GetError());
-        return;
-    }
-
-    // Unpause the audio device, to allow playing
-    SDL_PauseAudioDevice(audio_context->dev, 0);
 
     // Initialize the decoder
     audio_context->audio_decoder = create_audio_decoder(audio_context->audio_frequency);
 }
 
-static void destroy_audio_device(AudioContext* audio_context) {
+static void destroy_audio_player(AudioContext* audio_context) {
     // Destroy the SDL audio device, if any exists
-    if (audio_context->dev != 0) {
-        SDL_CloseAudioDevice(audio_context->dev);
-        audio_context->dev = 0;
-    }
+    whist_frontend_close_audio(audio_context->target_frontend);
 
     // Destroy the audio decoder, if any exists
     if (audio_context->audio_decoder != NULL) {
@@ -321,25 +282,24 @@ static void destroy_audio_device(AudioContext* audio_context) {
     }
 }
 
-static int safe_get_audio_queue(AudioContext* audio_context) {
-    int audio_device_queue = 0;
-    if (audio_context->dev) {
-        // If we have a device, get the queue size
-        audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context->dev);
+static size_t safe_get_audio_queue(AudioContext* audio_context) {
+    size_t audio_queue = 0;
+    if (whist_frontend_audio_is_open(audio_context->target_frontend)) {
+        audio_queue = whist_frontend_get_audio_buffer_size(audio_context->target_frontend);
     }
     if (LOG_AUDIO) {
-        LOG_DEBUG("Audio Queue: %d", audio_device_queue);
+        LOG_DEBUG("Audio Queue: %zu", audio_queue);
     }
-    return audio_device_queue;
+    return audio_queue;
 }
 
 bool is_overflowing_audio(AudioContext* audio_context) {
-    int audio_device_queue = safe_get_audio_queue(audio_context);
+    size_t audio_device_queue = safe_get_audio_queue(audio_context);
 
     // Check if we're overflowing the audio buffer
     if (!audio_context->is_flushing_audio && audio_device_queue > AUDIO_QUEUE_UPPER_LIMIT) {
         // Yes, we are! We should flush the audio buffer
-        LOG_INFO("Audio queue has overflowed, is now %d bytes!", audio_device_queue);
+        LOG_INFO("Audio queue has overflowed, is now %zu bytes!", audio_device_queue);
         audio_context->is_flushing_audio = true;
     } else if (audio_context->is_flushing_audio && audio_device_queue <= TARGET_AUDIO_QUEUE_LIMIT) {
         // Okay, we're done flushing the audio buffer
@@ -354,7 +314,7 @@ bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered)
     FATAL_ASSERT(0 <= num_frames_buffered);
 
     int buffered_bytes =
-        num_frames_buffered * DECODED_BYTES_PER_FRAME + safe_get_audio_queue(audio_context);
+        num_frames_buffered * DECODED_BYTES_PER_FRAME + (int)safe_get_audio_queue(audio_context);
     // Check if we're underflowing the audio buffer
     if (!audio_context->is_buffering_audio && buffered_bytes < AUDIO_QUEUE_LOWER_LIMIT) {
         // Yes, we are! We should buffer for some more audio then

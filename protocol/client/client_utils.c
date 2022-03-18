@@ -159,7 +159,7 @@ int client_parse_args(int argc, const char *argv[]) {
     return 0;
 }
 
-int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
+int read_piped_arguments(bool run_only_once) {
     if (!using_piped_arguments) {
         return 0;
     }
@@ -171,7 +171,6 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
     char read_char = 0;
     bool keep_reading = true;
     bool finished_line = false;
-    bool keep_iterating = true;
 
 #ifndef _WIN32
     int available_chars;
@@ -188,13 +187,14 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
     // Each argument will be passed via pipe from the client application
     //    with the argument name and value separated by a "?"
     //    and each argument/value pair on its own line
-    while (keep_reading && *keep_waiting && keep_iterating) {
+    do {
         if (!run_only_once) {
-            SDL_Delay(50);  // to keep the fan from freaking out
-                            // If stdin doesn't have any characters, continue the loop
-        } else {
-            keep_iterating = false;
+            // to keep the fan from freaking out
+            // If stdin doesn't have any characters, continue the loop
+            // TODO: Block/poll with a 50 ms timeout on the stdin fd instead
+            whist_sleep(50);
         }
+
 #ifndef _WIN32
         if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
             LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
@@ -304,17 +304,15 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
         }
     end_of_eval_loop:
         available_chars = 0;
-    }
+    } while (keep_reading && !run_only_once);
 
-    if (*keep_waiting) {
-        const char *server_ip = NULL;
-        if (whist_option_get_string_value("server-ip", &server_ip) != WHIST_SUCCESS ||
-            server_ip == NULL) {
-            LOG_ERROR(
-                "Need IP: if not passed in directly, IP must "
-                "be passed in via pipe with arg name `ip`");
-            return -1;
-        }
+    const char *server_ip = NULL;
+    if (whist_option_get_string_value("server-ip", &server_ip) != WHIST_SUCCESS ||
+        server_ip == NULL) {
+        LOG_ERROR(
+            "Need IP: if not passed in directly, IP must "
+            "be passed in via pipe with arg name `ip`");
+        return -1;
     }
 
     return 0;

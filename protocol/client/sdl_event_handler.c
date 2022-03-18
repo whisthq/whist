@@ -20,7 +20,6 @@ Includes
 #include "sdl_event_handler.h"
 
 #include <whist/logging/logging.h>
-#include "sdlscreeninfo.h"
 #include "sdl_utils.h"
 #include "audio.h"
 #include "client_utils.h"
@@ -134,11 +133,6 @@ static int handle_key_up_down(SDL_Event *event) {
     WhistKeycode keycode = (WhistKeycode)event->key.keysym.scancode;
     bool is_pressed = event->key.type == SDL_KEYDOWN;
 
-    // LOG_INFO("Scancode: %d", event->key.keysym.scancode);
-    // LOG_INFO("Keycode: %d %d", keycode, is_pressed);
-    // LOG_INFO("%s %s", (is_pressed ? "Pressed" : "Released"),
-    // SDL_GetKeyName(event->key.keysym.sym));
-
     // Keep memory of alt/ctrl/lgui/rgui status
     if (keycode == FK_LALT) {
         alt_pressed = is_pressed;
@@ -227,6 +221,8 @@ static int handle_mouse_button_up_down(SDL_Event *event) {
     wcmsg.mouseButton.button = event->button.button;
     wcmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
     if (wcmsg.mouseButton.button == MOUSE_L) {
+        // We capture the mouse so that we can continue to track the
+        // mouse even if the user starts to drag outside of the window
         SDL_CaptureMouse(wcmsg.mouseButton.pressed);
     }
     send_wcmsg(&wcmsg);

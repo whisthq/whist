@@ -20,8 +20,8 @@ Includes
 */
 
 #include <whist/core/whist.h>
-#include "sdlscreeninfo.h"
 #include "video.h"
+#include "frontend/frontend.h"
 
 /*
 ============================
@@ -52,18 +52,24 @@ bool get_skip_taskbar(void);
  * @param icon_filename            The filename of the window icon, pointing to a 64x64 png,
  *                                 or NULL to use the default icon.
  *
+ * @param frontend                 (Temporary) A pointer to the frontend to be initialized and
+ *                                 registered with the created SDL window.
+ *
  * @returns                        NULL if fails to create SDL window, else it
  *                                 returns the SDL window variable
  */
-SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename);
+SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename,
+                     WhistFrontend** frontend);
 
 /**
  * @brief                          Destroys an SDL window and associated
  *                                 parameters
  *
  * @param window                   The SDL window to destroy
+ *
+ * @param frontend                 The frontend to be destroyed
  */
-void destroy_sdl(SDL_Window* window);
+void destroy_sdl(SDL_Window* window, WhistFrontend* frontend);
 
 /**
  * @brief                          When the window gets resized, call this function
@@ -82,14 +88,15 @@ void sdl_renderer_resize_window(int width, int height);
 void sdl_update_framebuffer_loading_screen(int idx);
 
 // The pixel format required for the data/linesize passed into sdl_update_framebuffer
-#define SDL_FRAMEBUFFER_PIXEL_FORMAT AV_PIX_FMT_NV12
+#define WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT AV_PIX_FMT_NV12
 
 /**
  * @brief                          Update the renderer's framebuffer,
  *                                 using the provided texture.
  *
  * @param data                     The data pointers to the image
- *                                 The image must be of the format SDL_FRAMEBUFFER_PIXEL_FORMAT
+ *                                 The image must be of the format
+ * WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT
  * @param linesize                 The linesize data for the image
  * @param width                    The width of the image
  * @param height                   The height of the image

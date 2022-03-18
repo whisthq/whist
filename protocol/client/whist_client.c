@@ -36,7 +36,6 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
 #include <whist/file/file_upload.h>
-#include "sdlscreeninfo.h"
 #include "whist_client.h"
 #include "audio.h"
 #include "client_utils.h"
@@ -153,7 +152,7 @@ static int sync_keyboard_state(void) {
         }
     }
 
-    // Also send caps lock and num lock status for syncronization
+    // Also send caps lock and num lock status for synchronization
     wcmsg.keyboard_state.state[FK_LGUI] = lgui_pressed;
     wcmsg.keyboard_state.state[FK_RGUI] = rgui_pressed;
 
@@ -171,24 +170,6 @@ static int sync_keyboard_state(void) {
     send_wcmsg(&wcmsg);
 
     return 0;
-}
-
-static volatile bool continue_pumping = false;
-
-static int multithreaded_read_piped_arguments(void* keep_piping) {
-    /*
-        Thread function to read piped arguments from stdin
-
-        Arguments:
-            keep_piping (void*): whether to keep piping from stdin
-
-        Returns:
-            (int) 0 on success, -1 on failure
-    */
-
-    int ret = read_piped_arguments((bool*)keep_piping, /*run_only_once=*/false);
-    continue_pumping = false;
-    return ret;
 }
 
 static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
@@ -341,110 +322,59 @@ int whist_client_main(int argc, const char* argv[]) {
     client_exiting = false;
     WhistExitCode exit_code = WHIST_EXIT_SUCCESS;
 
-    // While showing the SDL loading screen, read in any piped arguments
-    //    If the arguments are bad, then skip to the destruction phase
-    continue_pumping = true;
-    bool keep_piping = true;
-    WhistThread pipe_arg_thread =
-        whist_create_thread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
-    if (pipe_arg_thread == NULL) {
-        exit_code = WHIST_EXIT_FAILURE;
-    } else {
-        SDL_Event event;
-        while (continue_pumping) {
-            // If we don't delay, your computer's CPU will freak out
-            SDL_Delay(50);
-            if (SDL_PollEvent(&event)) {
-                switch (event.type) {
-                    case SDL_QUIT: {
-                        client_exiting = true;
-                        keep_piping = false;
-                        break;
-                    }
-                    case SDL_WINDOWEVENT: {
-                        if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                            output_width = get_window_pixel_width((SDL_Window*)window);
-                            output_height = get_window_pixel_height((SDL_Window*)window);
-                        }
-                        break;
-                    }
-                    default: {
-                        break;
-                    }
-                }
-            }
+    // Read in any piped arguments. If the arguments are bad, then skip to the destruction phase
+    switch (read_piped_arguments(false)) {
+        case -2: {
+            // Fatal reading pipe or similar
+            LOG_ERROR("Failed to read piped arguments -- exiting");
+            exit_code = WHIST_EXIT_FAILURE;
+            break;
         }
-        int pipe_arg_ret;
-        whist_wait_thread(pipe_arg_thread, &pipe_arg_ret);
-        switch (pipe_arg_ret) {
-            case -2: {
-                // Fatal reading pipe or similar
-                LOG_ERROR("Failed to read piped arguments -- exiting");
-                exit_code = WHIST_EXIT_FAILURE;
-                break;
-            }
-            case -1: {
-                // Invalid arguments
-                LOG_ERROR("Invalid piped arguments -- exiting");
-                exit_code = WHIST_EXIT_CLI;
-                break;
-            }
-            case 1: {
-                // Arguments prompt graceful exit
-                LOG_INFO("Piped argument prompts graceful exit");
-                exit_code = WHIST_EXIT_SUCCESS;
-                client_exiting = true;
-                break;
-            }
-            default: {
-                // Success, so nothing to do
-                break;
-            }
+        case -1: {
+            // Invalid arguments
+            LOG_ERROR("Invalid piped arguments -- exiting");
+            exit_code = WHIST_EXIT_CLI;
+            break;
+        }
+        case 1: {
+            // Arguments prompt graceful exit
+            LOG_INFO("Piped argument prompts graceful exit");
+            exit_code = WHIST_EXIT_SUCCESS;
+            client_exiting = true;
+            break;
+        }
+        default: {
+            // Success, so nothing to do
+            break;
         }
     }
 
-    SDL_Event sdl_msg;
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
+    WhistFrontend* frontend = NULL;
     for (try_amount = 0;
          try_amount < max_connection_attempts && !client_exiting && exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
-        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
-            client_exiting = true;
-        }
-
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
-            SDL_Delay(1000);
+            // TODO: This is a sleep 1000, but I don't think we should ever show the user
+            // a frozen window for 1 second if we're not connected to the server. Better to
+            // show a "reconnecting" message within the main loop.
+            whist_sleep(1000);
         }
-
-        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
-            client_exiting = true;
-        }
-
-        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
-            client_exiting = true;
-        }
-
-        connected = true;
 
         // Initialize the SDL window (and only do this once!)
         if (!window) {
-            window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
+            window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename,
+                              &frontend);
             if (!window) {
                 LOG_FATAL("Failed to initialize SDL");
             }
         }
 
-        // set the window minimum size
-        SDL_SetWindowMinimumSize((SDL_Window*)window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
-        // Make sure that ctrl+click is processed as a right click on Mac
-        SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
-        SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
-
         // Initialize audio and video renderer system
-        WhistRenderer* whist_renderer = init_renderer(output_width, output_height);
+        WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
 
         // reset because now connected
         try_amount = 0;
@@ -484,6 +414,7 @@ int whist_client_main(int argc, const char* argv[]) {
             LOG_WARNING("Failed to connect to server.");
             continue;
         }
+        connected = true;
 
         // Log to METRIC for cross-session tracking and INFO for developer-facing logging
         double connect_to_server_time = get_timer(&handshake_time);
@@ -529,8 +460,7 @@ int whist_client_main(int argc, const char* argv[]) {
             }
 
             if (get_timer(&new_tab_url_timer) * MS_IN_SECOND > 50.0) {
-                bool keep_piping2 = true;
-                int piped_args_ret = read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
+                int piped_args_ret = read_piped_arguments(true);
                 switch (piped_args_ret) {
                     case -2: {
                         // Fatal reading pipe or similar
@@ -568,15 +498,18 @@ int whist_client_main(int argc, const char* argv[]) {
             }
 
             if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
-                static int current_display = -1;
-                int sdl_display = SDL_GetWindowDisplayIndex((SDL_Window*)window);
+                static int cached_display_index = -1;
+                FrontendWindowInfo window_info;
+                if (whist_frontend_get_window_info(frontend, &window_info) != 0) {
+                    LOG_FATAL("Failed to get window display index");
+                }
 
-                if (current_display != sdl_display) {
-                    if (current_display) {
+                if (cached_display_index != window_info.display_index) {
+                    if (cached_display_index) {
                         // Update DPI to new monitor
                         send_message_dimensions();
                     }
-                    current_display = sdl_display;
+                    cached_display_index = window_info.display_index;
                 }
 
                 start_timer(&monitor_change_timer);
@@ -646,7 +579,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
     if (window) {
-        destroy_sdl((SDL_Window*)window);
+        destroy_sdl((SDL_Window*)window, frontend);
     }
     destroy_statistic_logger();
     destroy_logger();

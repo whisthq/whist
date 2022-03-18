@@ -64,15 +64,14 @@ int client_parse_args(int argc, const char* argv[]);
  * @brief                          Read arguments from the stdin pipe if `using_piped_arguments`
  *                                 is set to `true`.
  *
- * @param keep_waiting             Pointer to a boolean indicating whether to continue waiting
  * @param run_only_once            A boolean controlling whether to keep polling for stdin updates
- * or read from stdin only one time. Must use 'true' if this function is being called in a while
- * loop.
+ *                                 or read from stdin only one time. Must use 'true' if this
+ *                                 function is being called in a while loop.
  *
  * @returns                        -2 on read pipe failure, -1 on invalid arguments, 0 on success,
  *                                 1 on args prompting graceful exit (kill, etc.)
  */
-int read_piped_arguments(bool* keep_waiting, bool run_only_once);
+int read_piped_arguments(bool run_only_once);
 
 /**
  * @brief                          Update mouse location if the mouse state has
