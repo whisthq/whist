@@ -528,8 +528,8 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
                                     frame_data->num_original_packets);
                         for (int j = 0; j < frame_data->num_original_packets; j++) {
                             if (!frame_data->received_indices[j]) {
-                                LOG_WARNING("Did not receive ID %d, Index %d. Nacked %d times.",
-                                            i, j, frame_data->num_times_index_nacked[j]);
+                                LOG_WARNING("Did not receive ID %d, Index %d. Nacked %d times.", i,
+                                            j, frame_data->num_times_index_nacked[j]);
                             }
                         }
                     }
