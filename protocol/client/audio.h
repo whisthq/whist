@@ -31,6 +31,14 @@ Defines
 
 typedef struct AudioContext AudioContext;
 
+// TODO: Automatically deduce this from (ms_per_frame / MS_IN_SECOND) * audio_frequency
+// TODO: Add ms_per_frame to AudioFrame*
+#define SAMPLES_PER_FRAME 480
+#define BYTES_PER_SAMPLE 4
+#define NUM_CHANNELS 2
+#define DECODED_BYTES_PER_FRAME (SAMPLES_PER_FRAME * BYTES_PER_SAMPLE * NUM_CHANNELS)
+
+
 /*
 ============================
 Public Functions
