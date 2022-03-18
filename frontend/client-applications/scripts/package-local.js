@@ -1,12 +1,11 @@
 // Package the app for local testing using snowpack and electron-builder
 
-const yargs = require("yargs")
 const helpers = require("./build-package-helpers")
 
 const packageLocal = (env) => {
   // Retrieve the config variables for the associated environment
   const config = helpers.getConfig({ deploy: "dev" })
-  
+
   helpers.buildAndCopyProtocol(true)
   helpers.buildTailwind()
   helpers.configureCodeSigning(false)
@@ -31,10 +30,5 @@ const packageLocal = (env) => {
 module.exports = packageLocal
 
 if (require.main === module) {
-  // We require the version argument for notarization-level testing so that at
-  // least some of our argument handling is covered by CI as well.
-  const argv = yargs(process.argv.slice(2))
-    .version(false) // necessary to prevent mis-parsing of the `--version` arg we pass in
-    .help().argv
   packageLocal({})
 }

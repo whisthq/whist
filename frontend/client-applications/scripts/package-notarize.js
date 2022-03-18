@@ -8,7 +8,7 @@ const yargs = require("yargs")
 const packageNotarize = (env, version, commit) => {
   // Retrieve the config variables for the associated environment
   const config = helpers.getConfig({ deploy: "dev" })
-  
+
   helpers.reinitializeYarn()
   helpers.buildAndCopyProtocol(true)
   helpers.buildTailwind()
