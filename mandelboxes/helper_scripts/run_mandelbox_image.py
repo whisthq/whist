@@ -73,7 +73,7 @@ args = parser.parse_args()
 
 # Define some helper functions and variables
 HOST_SERVICE_URL = f"https://{args.host_address}:{args.host_port}/"
-HOST_SERVICE_CERT_PATH = "/whist/cert.pem"
+HOST_SERVICE_CERT_PATH = "/whistprivate/cert.pem"
 local_host_service = args.host_address == "127.0.0.1"
 mandelbox_server_path = os.path.abspath("/usr/share/whist")
 

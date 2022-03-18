@@ -26,7 +26,8 @@ then
 
     # Stop docker and copy the data directory that contains mandelbox images to the ephemeral storage
     systemctl stop docker
-    mv /var/lib/docker "$EPHEMERAL_FS_PATH"
+    rsync -a /var/lib/docker "$EPHEMERAL_FS_PATH"
+    rm -rf /var/lib/docker
 
     # Modify configuration to use the new data directory and persist in daemon config file
     # and start docker again
