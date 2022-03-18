@@ -1,8 +1,8 @@
-import { config } from "../config"
+import { configs } from "../config"
 import { configGet } from "../"
 import { accessToken, subscriptionStatus } from "../types/data"
 
-const get = configGet({ server: config.WEBSERVER_URL })
+const get = configGet({ server: configs.url.WEBSERVER_URL })
 
 export const paymentPortalRequest = async ({ accessToken }: accessToken) => {
   /*

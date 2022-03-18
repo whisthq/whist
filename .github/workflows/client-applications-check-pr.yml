@@ -128,7 +128,7 @@ jobs:
           call yarn config set network-timeout 600000
           call yarn cache clean
           call yarn install
-          call yarn package:notarize --config=$CONFIG --version=1.0.0 --commit=${{ github.sha }}
+          call yarn package:notarize --version=1.0.0 --commit=${{ github.sha }}
 
       ###################################################################################
       ################################# MACOS STEPS START ###############################
@@ -162,4 +162,4 @@ jobs:
           yarn config set network-timeout 600000
           yarn cache clean
           yarn install
-          yarn package:notarize --config $CONFIG --version 1.0.0 --commit ${{ github.sha }}
+          yarn package:notarize --version 1.0.0 --commit ${{ github.sha }}
