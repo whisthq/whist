@@ -96,24 +96,16 @@ const protocolTargetDebug = path.join(protocolTargetDir, "debugSymbols")
 // works well we can clean this up.
 // macOS
 
-const LOCAL_MONOREPO_MACOS_CONFIG =
-  '{"AUTH_CLIENT_ID": "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", "AUTH_DOMAIN_URL": "fractal-dev.us.auth0.com", "CLIENT_PERSISTENCE_FOLDER_NAME": "Electron", "ENV": "local", "EXECUTABLE_NAME": "Whist (local)", "ICON_FILE_NAME": "icon_local", "NODEJS": "local", "WEBSERVER_URL": "https://dev-server.whist.com"}'
-const DEV_MONOREPO_MACOS_CONFIG =
-  '{"AUTH_CLIENT_ID": "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", "AUTH_DOMAIN_URL": "fractal-dev.us.auth0.com", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "dev", "EXECUTABLE_NAME": "Whist (development)", "ICON_FILE_NAME": "icon_dev", "NODEJS": "development", "WEBSERVER_URL": "https://dev-server.whist.com"}'
-const STAGING_MONOREPO_MACOS_CONFIG =
-  '{"AUTH_CLIENT_ID": "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz", "AUTH_DOMAIN_URL": "fractal-staging.us.auth0.com", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "staging", "EXECUTABLE_NAME": "Whist (staging)", "ICON_FILE_NAME": "icon_staging", "NODEJS": "staging", "WEBSERVER_URL": "https://staging-server.whist.com"}'
-const PROD_MONOREPO_MACOS_CONFIG =
-  '{"AUTH_CLIENT_ID": "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD", "AUTH_DOMAIN_URL": "auth.whist.com", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "prod", "EXECUTABLE_NAME": "Whist", "ICON_FILE_NAME": "icon", "NODEJS": "prod", "WEBSERVER_URL": "https://prod-server.whist.com"}'
+const LOCAL_MONOREPO_MACOS_CONFIG = '{}'
+const DEV_MONOREPO_MACOS_CONFIG = '{}'
+const STAGING_MONOREPO_MACOS_CONFIG = '{}'
+const PROD_MONOREPO_MACOS_CONFIG = '{}'
 
 // Windows
-const LOCAL_MONOREPO_WINDOWS_CONFIG =
-  '{"AUTH_CLIENT_ID": "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", "AUTH_DOMAIN_URL": "fractal-dev.us.auth0.com", "CLIENT_PERSISTENCE_FOLDER_NAME": "Electron", "ENV": "local", "EXECUTABLE_NAME": "Whist (local)", "ICON_FILE_NAME": "icon_local", "NODEJS": "local", "WEBSERVER_URL": "https://dev-server.whist.com"}'
-const DEV_MONOREPO_WINDOWS_CONFIG =
-  '{"AUTH_CLIENT_ID": "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", "AUTH_DOMAIN_URL": "fractal-dev.us.auth0.com", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "dev", "EXECUTABLE_NAME": "Whist (development)", "ICON_FILE_NAME": "icon_dev", "NODEJS": "development", "WEBSERVER_URL": "https://dev-server.whist.com"}'
-const STAGING_MONOREPO_WINDOWS_CONFIG =
-  '{"AUTH_CLIENT_ID": "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz", "AUTH_DOMAIN_URL": "fractal-staging.us.auth0.com", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "staging", "EXECUTABLE_NAME": "Whist (staging)", "ICON_FILE_NAME": "icon_staging", "NODEJS": "staging", "WEBSERVER_URL": "https://staging-server.whist.com"}'
-const PROD_MONOREPO_WINDOWS_CONFIG =
-  '{"AUTH_CLIENT_ID": "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD", "AUTH_DOMAIN_URL": "auth.whist.com", "CLIENT_PERSISTENCE_FOLDER_NAME": "whist", "ENV": "prod", "EXECUTABLE_NAME": "Whist", "ICON_FILE_NAME": "icon", "NODEJS": "prod", "WEBSERVER_URL": "https://prod-server.whist.com"}'
+const LOCAL_MONOREPO_WINDOWS_CONFIG = '{}'
+const DEV_MONOREPO_WINDOWS_CONFIG = '{}'
+const STAGING_MONOREPO_WINDOWS_CONFIG = '{}'
+const PROD_MONOREPO_WINDOWS_CONFIG = '{}'
 
 module.exports = {
   getConfig: (params = {}) => {
