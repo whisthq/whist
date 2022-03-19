@@ -28,4 +28,4 @@ const RootComponent = () => (
   </Sentry.ErrorBoundary>
 )
 
-ReactDOM.render(<RootComponent/>, document.getElementById("root"))
+ReactDOM.render(<RootComponent />, document.getElementById("root"))

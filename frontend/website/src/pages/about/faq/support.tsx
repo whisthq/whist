@@ -1,5 +1,3 @@
-import React from "react"
-
 import QuestionMan from "@app/assets/graphics/questionMan.svg"
 import URLs from "@app/shared/constants/urls"
 
@@ -28,7 +26,7 @@ const Support = () => {
               <p className="text-lg">
                 Please join our{" "}
                 <a
-                  href="https://discord.com/invite/HjPpDGvEeA"
+                  href={URLs.DISCORD}
                   target="_blank"
                   className="text-gray-300 hover:text-blue-light"
                   rel="noreferrer"
