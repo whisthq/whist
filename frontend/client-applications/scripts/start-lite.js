@@ -5,14 +5,9 @@ const yargs = require("yargs")
 
 const start = (env) => {
   helpers.removeEnvOverridesFile()
-
-  // Retrieve the config variables for the associated environment
-  const config = helpers.getConfig({ deploy: "local" })
-
   helpers.buildAndCopyProtocol(false)
   helpers.snowpackDev({
     ...env,
-    CONFIG: config,
     VERSION: helpers.getCurrentClientAppVersion(),
   })
 }

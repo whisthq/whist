@@ -89,54 +89,7 @@ const protocolTargetDir = "WhistProtocolClient"
 const protocolTargetBuild = path.join(protocolTargetDir, "build")
 const protocolTargetDebug = path.join(protocolTargetDir, "debugSymbols")
 
-// This is the worst code ever, but I am trying to remove the whole monorepo config stuff
-// piece by piece. First, I realized that there are very few of the flags actually set, and they're
-// always almost the same. I'll just hardcode the outputs for the 4 environments here so I can
-// remove the whole docker pipeline without needing to worry about data formatting, and once that
-// works well we can clean this up.
-// macOS
-
-const LOCAL_MONOREPO_MACOS_CONFIG = '{}'
-const DEV_MONOREPO_MACOS_CONFIG = '{}'
-const STAGING_MONOREPO_MACOS_CONFIG = '{}'
-const PROD_MONOREPO_MACOS_CONFIG = '{}'
-
-// Windows
-const LOCAL_MONOREPO_WINDOWS_CONFIG = '{}'
-const DEV_MONOREPO_WINDOWS_CONFIG = '{}'
-const STAGING_MONOREPO_WINDOWS_CONFIG = '{}'
-const PROD_MONOREPO_WINDOWS_CONFIG = '{}'
-
 module.exports = {
-  getConfig: (params = {}) => {
-    console.log(`Parsing config with:`)
-    if (configOS() === "macos") {
-      if (params.deploy === "prod") {
-        return PROD_MONOREPO_MACOS_CONFIG
-      } else if (params.deploy === "staging") {
-        return STAGING_MONOREPO_MACOS_CONFIG
-      } else if (params.deploy === "dev") {
-        return DEV_MONOREPO_MACOS_CONFIG
-      } else {
-        // defaulting to local otherwise
-        return LOCAL_MONOREPO_MACOS_CONFIG
-      }
-    } else if (configOS() === "win32") {
-      if (params.deploy === "prod") {
-        return PROD_MONOREPO_WINDOWS_CONFIG
-      } else if (params.deploy === "staging") {
-        return STAGING_MONOREPO_WINDOWS_CONFIG
-      } else if (params.deploy === "dev") {
-        return DEV_MONOREPO_WINDOWS_CONFIG
-      } else {
-        // defaulting to local otherwise
-        return LOCAL_MONOREPO_WINDOWS_CONFIG
-      }
-    } else {
-      console.log("I haven't done the configs for Linux, do we even do them?")
-      return ""
-    }
-  },
   // Build the protocol and copy it into the expected location
   buildAndCopyProtocol: (freshCmake) => {
     console.log("Building the protocol...")
@@ -333,9 +286,6 @@ module.exports = {
       process.exit(-1)
     }
   },
-
-  // Function to set add the CONFIG= environment variabled to the overrides.
-  setPackagedConfig: (config) => addEnvOverride({ CONFIG: config }),
 
   // Function to set the commit sha for the packaged app, which gets
   // hardcoded into the electron bundle via `env_overrides.json`.

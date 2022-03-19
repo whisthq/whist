@@ -6,9 +6,6 @@ const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
 
 const packageNotarize = (env, version, commit) => {
-  // Retrieve the config variables for the associated environment
-  const config = helpers.getConfig({ deploy: "dev" })
-  
   helpers.reinitializeYarn()
   helpers.buildAndCopyProtocol(true)
   helpers.buildTailwind()
@@ -18,9 +15,6 @@ const packageNotarize = (env, version, commit) => {
   // For testing, we just hardcode the environment to dev
   helpers.setPackagedEnv("dev")
 
-  // Add the config to env_overrides.json
-  helpers.setPackagedConfig(config)
-
   // We hardcode the commit sha to the current commit
   helpers.setPackagedCommitSha(commit)
 
@@ -29,7 +23,6 @@ const packageNotarize = (env, version, commit) => {
 
   helpers.snowpackBuild({
     ...env,
-    CONFIG: config,
     VERSION: version,
   })
   helpers.electronBuild()
