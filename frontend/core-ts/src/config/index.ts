@@ -2,18 +2,7 @@
     All environment variables.
 */
 const configs = {
-  LOCAL: {
-    urls: {
-      WEBSERVER_URL: "https://dev-server.whist.com",
-      CLIENT_CALLBACK_URL: "http://localhost/callback",
-    },
-    auth0: {
-      AUTH_DOMAIN_URL: "fractal-dev.us.auth0.com",
-      AUTH_CLIENT_ID: "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", // public; not a secret
-      AUTH_API_IDENTIFIER: "https://api.fractal.co",
-    },
-  },
-  DEVELOPMENT: {
+  DEVELOPMENT: { // LOCAL would be the same as DEVELOPMENT here
     urls: {
       WEBSERVER_URL: "https://dev-server.whist.com",
       CLIENT_CALLBACK_URL: "http://localhost/callback",
@@ -50,10 +39,8 @@ const configs = {
 
 export const config = (() => {
   // This should be local, dev, staging or prod
-  const devEnv = process.env.DEVELOPMENT_ENV as string ?? "local"
+  const devEnv = process.env.ENVIRONMENT as string ?? "dev"
   switch (devEnv) {
-    case "local":
-      return configs.LOCAL
     case "dev":
       return configs.DEVELOPMENT
     case "staging":
@@ -62,8 +49,8 @@ export const config = (() => {
       return configs.PRODUCTION
     default:
       console.warn(
-        `Got an unrecognized DEVELOPMENT_ENV: ${devEnv}. Defaulting to "local"}`
+        `Got an unrecognized ENVIRONMENT: ${devEnv}. Defaulting to "DEVELOPMENT"}`
       )
-      return configs.LOCAL
+      return configs.DEVELOPMENT
   }
 })()
