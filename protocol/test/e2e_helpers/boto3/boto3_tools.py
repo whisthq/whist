@@ -279,7 +279,7 @@ def create_or_start_aws_instance(
         instance_type=instance_type,
         instance_AMI=instance_AMI,
         key_name=ssh_key_name,
-        disk_size=48, # GB
+        disk_size=48,  # GB
         running_in_ci=running_in_ci,
     )
     if instance_id == "":
