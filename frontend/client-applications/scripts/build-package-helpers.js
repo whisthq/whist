@@ -76,12 +76,6 @@ const getPublishS3BucketName = (environment) => {
   }
 }
 
-const configOS = () => {
-  if (process.platform === "win32") return "win32"
-  if (process.platform === "darwin") return "macos"
-  return "linux"
-}
-
 const gitRepoRoot = "../.."
 const protocolSourceDir = path.join(gitRepoRoot, "protocol")
 const cmakeBuildDir = "build-clientapp"
