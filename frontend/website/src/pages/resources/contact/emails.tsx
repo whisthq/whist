@@ -1,5 +1,4 @@
 import React from "react"
-
 import { NewspaperIcon, PhoneIcon, SupportIcon } from "@heroicons/react/outline"
 
 import URLs from "@app/shared/constants/urls"
