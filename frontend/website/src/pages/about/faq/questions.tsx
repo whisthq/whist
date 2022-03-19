@@ -1,3 +1,5 @@
+import React from "react"
+
 import URLs from "@app/shared/constants/urls"
 
 /* This example requires Tailwind CSS v2.0+ */

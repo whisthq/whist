@@ -1,3 +1,5 @@
+import React from "react"
+
 import QuestionMan from "@app/assets/graphics/questionMan.svg"
 import URLs from "@app/shared/constants/urls"
 
