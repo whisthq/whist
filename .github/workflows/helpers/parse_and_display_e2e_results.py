@@ -267,11 +267,11 @@ if __name__ == "__main__":
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
             if experiment["dirname"] is not None:
                 summary_file.write(
-                    f"* **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}. Download logs (if they exist) with command: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - {e2e_script_outcomes[i]}. Download logs (if they exist) with command: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
                 )
             else:
                 summary_file.write(
-                    f"* **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}.`\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - {e2e_script_outcomes[i]}.`\n"
                 )
         summary_file.write("\n")
 
