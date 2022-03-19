@@ -117,9 +117,6 @@ const PROD_MONOREPO_WINDOWS_CONFIG =
 
 module.exports = {
   getConfig: (params = {}) => {
-
-
-
     console.log(`Parsing config with:`)
     if (configOS() === "macos") {
       if (params.deploy === "prod") {
@@ -147,10 +144,6 @@ module.exports = {
       console.log("I haven't done the configs for Linux, do we even do them?")
       return ""
     }
-
-
-
-
   },
   // Build the protocol and copy it into the expected location
   buildAndCopyProtocol: (freshCmake) => {
