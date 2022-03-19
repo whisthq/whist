@@ -56,7 +56,7 @@ func TestFreeReservedTTY(t *testing.T) {
 
 	mapSizeBeforeFree := len(ttymap)
 
-	// attempt to remove reserved tty
+	// Attempt to remove reserved tty
 	Free(testTTY)
 
 	// Free should not have removed tty
@@ -79,7 +79,7 @@ func TestFreeInUseTTY(t *testing.T) {
 
 	mapSizeBeforeFree := len(ttymap)
 
-	// attempt to remove inUse tty
+	// Attempt to remove inUse tty
 	Free(testTTY)
 
 	// Free should have removed only one tty

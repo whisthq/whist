@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Deploy the services project to Heroku.
+# Deploy the scaling-service project to Heroku.
 
 # Arguments
-# ${1}: REGION_IMAGE_MAP: map of instance image ids by region.
+# ${1}: REGION_IMAGE_MAP: map of instance image IDs by region.
 # ${2}: HEROKU_APP_NAME: name of the Heroku app we are deploying to.
 # ${3}: MONOREPO_COMMIT_HASH: commit SHA that triggered the deploy.
 
@@ -25,8 +25,7 @@ DEPLOY_DIR="$SCALING_SERVICE_DIR/deploy"
 IMAGE_FILE="$DEPLOY_DIR/images.json"
 PROCFILE="$DEPLOY_DIR/Procfile"
 
-
-# Copy the binary to the scaling service deploy directory. This is necessary because we will use as standalone repo.
+# Copy the binary to the scaling-service deploy directory. This is necessary because we will use it as standalone repo.
 mkdir -p "$DEPLOY_DIR" && cp ./backend/services/build/scaling-service "$DEPLOY_DIR"
 
 # Write region image map to var file so the Procfile can read it.
@@ -35,7 +34,7 @@ echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
 # Write Procfile
 echo -e "scaling: ./scaling-service" > "$PROCFILE"
 
-# populate the deploy/ directory
+# Populate the deploy/ directory
 mv "$DEPLOY_DIR" ..
 git switch --orphan deploy-branch
 git clean -dfx # remove any .gitignored files that might remain
@@ -43,11 +42,12 @@ mv ../deploy/* .
 git add .
 git commit -m "scaling-service deploy for $MONOREPO_COMMIT_HASH"
 
-# Create null buildpack, see: https://elements.heroku.com/buildpacks/ryandotsmith/null-buildpack
+# Create null buildpack, see: https://elements.heroku.com/buildpacks/ryandotsmith/null-buildpack, this is
+# necessary since Heroku requires a buildpack for every app
 heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP_NAME" || true
 
 # Push deploy directory to Heroku
-echo "Deploying scaling service..."
+echo "Deploying scaling-service..."
 git push -f heroku-whist-scaling-service deploy-branch:master
 
 # Scale Heroku dyno to start the scaling process

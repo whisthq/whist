@@ -26,7 +26,7 @@ type ttyStatus byte
 const (
 	// We need to allocate the first 10 for the system.
 	minAllowedTTY = 10 // inclusive
-	maxAllowedTTY = 64 //exclusive
+	maxAllowedTTY = 64 // exclusive
 
 	reserved ttyStatus = iota
 	inUse

@@ -1,5 +1,12 @@
 //go:build linux
 
+/*
+This package is responsible for handling GPU-related functions on Linux, like
+collecting metrics. Note that it assumes we are using an NVIDIA GPU, and that
+this package will not work on non-NVIDIA GPUs, since we use NVML for collecting
+metrics. The metrics get reported to our logging system the same way we report
+other metrics, using the `metrics.go` package.
+*/
 package metrics
 
 import (
@@ -9,6 +16,7 @@ import (
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
+// Initialize NVML for metrics collection.
 func initializeGPUMetricsCollector() error {
 	if nvmlRet := nvml.Init(); nvmlRet != nvml.SUCCESS {
 		return utils.MakeError("Unable to initialize NVML for metrics collection.")
@@ -16,12 +24,14 @@ func initializeGPUMetricsCollector() error {
 	return nil
 }
 
+// Terminate NVML to stop metrics collection.
 func shutdownGPUMetricsCollector() {
 	if nvmlRet := nvml.Shutdown(); nvmlRet != nvml.SUCCESS {
 		logger.Errorf("Error shutting down NVML library.")
 	}
 }
 
+// Calculate GPU utilization and memory usage.
 func (newMetrics *RuntimeMetrics) collectGPUMetrics() []error {
 	if numGPUs, nvmlRet := nvml.DeviceGetCount(); nvmlRet != nvml.SUCCESS {
 		newMetrics.NumberOfGPUs = -1

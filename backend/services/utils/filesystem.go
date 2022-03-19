@@ -29,7 +29,7 @@ import (
 // NOTE: Each invocation of this function creates an `inotify` instance and
 // holds onto it for the duration of this function call. By default, our
 // instances have a limit of 128 watchers per user. Therefore, we bump this
-// limit in host-setup to prevent it from being a limiting factor for our
+// limit in host-setup scripts to prevent it from being a limiting factor for our
 // mandelbox launches.
 func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Duration, watcher *fsnotify.Watcher) error {
 	if !path.IsAbs(absParentDirectory) {

@@ -23,7 +23,7 @@ import (
 // provide a "Get" method for the type. The bottom of the file contains any
 // necessary helper functions.
 
-// As soon as go has generics this file will look very different. ;)
+// As soon as Go has generics this file will look very different. ;)
 
 //===============
 
@@ -53,12 +53,12 @@ func GetInstanceID() (InstanceID, error) {
 
 //===============
 
-// An InstanceType represents an EC2 instance type (e.g. `g3s.xlarge`).
+// An InstanceType represents an EC2 instance type (e.g. `g4dn.xlarge`).
 type InstanceType string
 
 var getInstanceTypeStr = utils.MemoizeStringWithError(generateAWSMetadataRetriever("instance-type"))
 
-// GetInstanceType returns the type of the current EC2 instance (e.g. g3s.xlarge).
+// GetInstanceType returns the type of the current EC2 instance (e.g. g4dn.xlarge).
 func GetInstanceType() (InstanceType, error) {
 	str, err := getInstanceTypeStr()
 	return InstanceType(str), err
@@ -107,7 +107,7 @@ var getInstanceName = utils.MemoizeStringWithError(func() (string, error) {
 		return "", utils.MakeError("Unable to find region to create AWS SDK config!")
 	}
 
-	// Initialize general AWS config and ec2 client
+	// Initialize general AWS config and EC2 client
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(string(region)))
 	if err != nil {
 		return "", utils.MakeError("Unable to load AWS SDK config: %s", err)

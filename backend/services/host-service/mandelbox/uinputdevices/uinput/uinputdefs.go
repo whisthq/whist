@@ -20,7 +20,7 @@ const (
 	keyMax      = 0x2ff // highest key currently defined
 )
 
-// input event codes as specified in input-event-codes.h
+// Input event codes as specified in input-event-codes.h
 const (
 	evSyn            = 0x00
 	evKey            = 0x01
@@ -61,7 +61,7 @@ type inputID struct {
 	Version uint16
 }
 
-// translated to go from uinput.h
+// Translated to Go from uinput.h
 type uinputUserDev struct {
 	Name       [uinputMaxNameSize]byte
 	ID         inputID
@@ -72,7 +72,7 @@ type uinputUserDev struct {
 	Absflat    [absSize]int32
 }
 
-// translated to go from input.h
+// Translated to Go from input.h
 type inputEvent struct {
 	Time  syscall.Timeval
 	Type  uint16

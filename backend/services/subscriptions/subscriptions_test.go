@@ -221,4 +221,4 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 	}
 }
 
-// TODO: Add test to subscriptions start function once scaling service is done.
+// TODO: Add test to subscriptions start function.

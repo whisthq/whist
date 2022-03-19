@@ -1,17 +1,17 @@
-# Hasura Subscriptions
+# Whist Hasura Subscriptions
 
-This directory contains files relating to the pubsub implementation.
+This directory contains files relating to the Whist pubsub implementation, which we use for our various backend services to interact between each other via our database(s). If you're not familiar with a publish-subscribe (pubsub) architecture, you can read more about it [here](https://hasura.io/docs/1.0/graphql/manual/pubsub.html).
 
-For the go implementation, we use the official [Hasura client](https://github.com/hasura/go-graphql-client) which supports subscriptions out of the box.
+For the Go implementation, we use the official [Hasura client](https://github.com/hasura/go-graphql-client) which supports subscriptions out of the box. The code is structured as follows:
 
-The GraphQL queries are made on the `queries.go` file.
-The functions relating to starting and stopping the Hasura client are located on the `client.go` file.
-Heroku connection strings are set on the `connection.go` file
-Logic for running the client and subscriptions is located on the `subscriptions.go` file.
+- The GraphQL queries are made on the `queries.go` file.
+- The functions relating to starting and stopping the Hasura client(s) are located on the `client.go` file.
+- Heroku connection strings are set on the `connection.go` file.
+- Logic for running an Hasura client and subscriptions is located on the `subscriptions.go` file.
 
-### Adding a subscription to Hasura
+## Adding a subscription to Hasura
 
-For creating a new Hasura subscription follow the implementation:
+For creating a new Hasura subscription, refer to the following implementation:
 
 ```go
 // InstanceStatusSubscription defines the event when
@@ -25,6 +25,6 @@ var InstanceStatusSubscription struct {
 }
 ```
 
-Note the struct tags have to match the name of the database columns, and the outer struct tag which represents the full query in GraphQL syntax (Use the Hasura console to help you write the query).
+Note that the struct tags have to match the name of the database columns, and that of the outer struct tag which represents the full query in GraphQL syntax. You can use the Hasura console to help you write the query.
 
-Once you add the subscriptions to the `queries.go` file, create your subscription handlers and then add it to the `Run` function inside `subscriptions.go` file.
+Once you add the subscriptions to the `queries.go` file, create your subscription handlers and add it to the `Run` function inside `subscriptions_client.go` file. To see how subscriptions get started and run, refers to the `Start` function in the `subscriptions.go` file.

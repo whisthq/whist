@@ -1,5 +1,5 @@
 /*
-Package metadata exposes some metadata about the build and run environments of the host service.
+Package metadata exposes some metadata about the build and run environments of the host-service.
 */
 package metadata // import "github.com/whisthq/whist/backend/services/metadata"
 

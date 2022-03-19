@@ -1,6 +1,6 @@
 # Whist Public Cloud Infrastructure
 
-The directory contains the source code for Whist's infrastructure as defined by Terraform.
+The directory contains the source code for the Whist public cloud infrastructure as defined by Terraform.
 
 The Whist Terraform infrastructure defines all configuration required to enable a specific public cloud region for both development and running users, except from the actual EC2 instances powering users' cloud browsers. This is handled specifically by the Whist backend system, which is responsible for handling compute and scaling for users. The Whist backend
 is specifically designed for responsiveness and scalability, and handles cloud resources which change dynamically (i.e. scaling EC2 instances up and down based on demand), while the Terraform configuration is designed for static and security-related configuration, and handles cloud resources which must remain constant (and consistant) across cloud regions.

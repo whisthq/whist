@@ -30,7 +30,7 @@ func (wh *WhistWebsocketHandler) ReadJSON(v interface{}) error {
 
 	// This error always fires when shutting down the Hasura client because we close
 	// the websocket concurrently. As it is not a harmful error we supress it here to
-	// avoid clogging sentry with it.
+	// avoid clogging Sentry with it.
 	// See: https://github.com/gorilla/websocket/issues/439
 	if (err != nil) && (strings.Contains(err.Error(), "use of closed network connection")) {
 		return nil
@@ -45,7 +45,7 @@ func (wh *WhistWebsocketHandler) Close() error {
 	return wh.Conn.Close()
 }
 
-// WhistWebsocketConn creates a websocket handler and passes it to the graphql
+// WhistWebsocketConn creates a websocket handler and passes it to the GraphQL
 // subscription client.
 func WhistWebsocketConn(sc *graphql.SubscriptionClient) (graphql.WebsocketConn, error) {
 	parsedURL, err := url.Parse(sc.GetURL())

@@ -1,6 +1,6 @@
 /*
 Package metrics is responsible for computing metrics about the instance during
-host service runtime. This includes metrics about total load, CPU usage, etc.
+host-service runtime. This includes metrics about total load, CPU usage, etc.
 */
 package metrics // import "github.com/whisthq/whist/backend/services/host-service/metrics"
 

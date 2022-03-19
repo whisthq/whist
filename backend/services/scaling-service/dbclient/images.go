@@ -7,7 +7,7 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
-// QueryImage queries the database for an instance image that matches the given id.
+// QueryImage queries the database for an instance image (AMI) that matches the given id.
 func (client *DBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) (subscriptions.WhistImages, error) {
 	latestImageQuery := subscriptions.QueryLatestImage
 	queryParams := map[string]interface{}{

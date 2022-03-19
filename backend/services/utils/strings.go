@@ -47,7 +47,7 @@ func ColorRed(s string) string {
 // The following two functions exist so that we don't have to import `fmt` into
 // any other packages (so we don't accidentally log something using `fmt`
 // functions instead of using the `whistlogger` equivalents that send
-// information to logz.io and Sentry).
+// information to Logz.io and Sentry).
 
 // Sprintf creates a string from format string and args.
 func Sprintf(format string, v ...interface{}) string {

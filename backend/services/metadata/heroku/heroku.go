@@ -20,7 +20,7 @@ var appNameOverride string
 var client heroku.Client = heroku.Client{Username: email, Password: apiKey}
 
 // GetAppName provides the Heroku app name to use based on the app environment
-// the host service is running on, or the override if provided during build
+// the host-service is running on, or the override if provided during build
 // time. In a local environment, it defaults to the dev server.
 func GetAppName() string {
 	// Respect the override if set.

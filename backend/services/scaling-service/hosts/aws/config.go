@@ -13,7 +13,7 @@ const (
 // Configuration for instances
 
 const (
-	// The minimum of instances to launch. Necessary for the AWS sdk.
+	// The minimum of instances to launch. Necessary for the AWS SDK.
 	MIN_INSTANCE_COUNT = 1
 
 	// The type of instances we want to launch. TODO: change data structure when

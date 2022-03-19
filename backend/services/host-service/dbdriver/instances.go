@@ -32,7 +32,8 @@ const (
 
 // RegisterInstance registers the instance in the database. If the expected row
 // is not found, then it returns an error. This function also starts the
-// heartbeat goroutine.
+// heartbeat goroutine. We use host-service heartbeats to keep track of whether
+// the instance is alive or not.
 func RegisterInstance() error {
 	if !enabled {
 		return nil
@@ -164,8 +165,8 @@ func RegisterInstance() error {
 	return nil
 }
 
-// MarkDraining marks this instance as draining, causing the webserver
-// to stop assigning new mandelboxes here.
+// MarkDraining marks this instance as draining, causing the backend (i.e. scaling-service)
+// to stop assigning new mandelboxes to this instance.
 func markDraining() error {
 	if !enabled {
 		return nil

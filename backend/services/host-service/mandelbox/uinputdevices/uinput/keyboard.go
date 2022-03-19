@@ -113,7 +113,7 @@ func createVKeyboardDevice(path string, name []byte) (fd *os.File, err error) {
 		return nil, fmt.Errorf("failed to register virtual keyboard device: %v", err)
 	}
 
-	// register key events
+	// Register key events
 	for i := 0; i < keyMax; i++ {
 		err = ioctl(deviceFile, uiSetKeyBit, uintptr(i))
 		if err != nil {

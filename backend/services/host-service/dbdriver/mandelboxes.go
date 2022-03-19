@@ -18,7 +18,7 @@ import (
 
 // This file is concerned with database interactions at the mandelbox-level.
 // Note that we don't explicitly use transactions for any database interactions
-// in this file, since the instance's singular host service should be the only
+// in this file, since the instance's singular host-service should be the only
 // agent interacting with the database rows for the mandelboxes once the
 // webserver creates them in the "ALLOCATED" state.
 
@@ -33,7 +33,7 @@ const (
 	MandelboxStatusDying      MandelboxStatus = "DYING"
 )
 
-// VerifyAllocatedMandelbox verifies that this host service is indeed expecting
+// VerifyAllocatedMandelbox verifies that this host-service is indeed expecting
 // the provided mandelbox for the given user, and if found marks it as
 // connecting.
 func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID) error {
@@ -75,7 +75,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found an allocated mandelbox row in the database, but it has the wrong instanceName. Expected "%s", got "%s".`, mandelboxID, userID, rows[0].InstanceID.String, instanceID)
 	}
 
-	// Mark the container as connecting. We can't just use WriteMandelboxStatus
+	// Mark the mandelbox as connecting. We can't just use WriteMandelboxStatus
 	// since we want to do it in a single transaction.
 	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
 		String: string(MandelboxStatusConnecting),

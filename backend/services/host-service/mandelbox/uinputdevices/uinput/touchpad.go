@@ -132,7 +132,7 @@ func createTouchPad(path string, name []byte, minX int32, maxX int32, minY int32
 		return nil, fmt.Errorf("failed to register absolute axis input device: %v", err)
 	}
 
-	// register x and y axis events
+	// Register x and y axis events
 	for _, event := range []int{absX, absY} {
 		err = ioctl(deviceFile, uiSetAbsBit, uintptr(event))
 		if err != nil {
