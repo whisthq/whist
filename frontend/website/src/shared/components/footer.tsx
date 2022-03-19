@@ -17,7 +17,7 @@ const navigation = {
     { name: "FAQ", href: "/faq" },
   ],
   resources: [
-    { name: "Join our Discord", href: {URLs.DISCORD} },
+    { name: "Join our Discord", href: URLs.DISCORD },
     { name: "Blog", href: "https://whisthq.medium.com" },
     { name: "Support", href: "/contact" },
     {
@@ -32,17 +32,17 @@ const navigation = {
   social: [
     {
       name: "Discord",
-      href: {URLs.DISCORD},
+      href: URLs.DISCORD,
       icon: FaDiscord,
     },
     {
       name: "Twitter",
-      href: {URLs.TWITTER},
+      href: URLs.TWITTER,
       icon: FaTwitter,
     },
     {
       name: "LinkedIn",
-      href: {URLs.LINKEDIN},
+      href: URLs.LINKEDIN,
       icon: FaLinkedinIn,
     },
   ],

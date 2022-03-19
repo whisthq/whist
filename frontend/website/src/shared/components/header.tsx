@@ -54,12 +54,12 @@ const resources = [
     name: "Release Log",
     description:
       "See what features are coming next and what we've released so far.",
-    href: {URLs.NOTION_CHANGELOG},
+    href: URLs.NOTION_CHANGELOG,
     target: "_blank",
   },
   {
     name: "Join Our Discord",
-    href: {URLs.DISCORD},
+    href: URLs.DISCORD,
     target: "_blank",
   },
 ]

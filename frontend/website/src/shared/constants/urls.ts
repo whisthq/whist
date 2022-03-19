@@ -8,4 +8,3 @@ export const URLs = {
 }
 
 export default URLs
-  

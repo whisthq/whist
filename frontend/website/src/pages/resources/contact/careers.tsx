@@ -35,7 +35,7 @@ const Careers = () => (
               with us!
             </p>
             <a
-              href={URLs.NOTION_CAREERS}
+              href=URLs.NOTION_CAREERS
               target="_blank"
               rel="noreferrer"
             >

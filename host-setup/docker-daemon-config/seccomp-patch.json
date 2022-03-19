@@ -18,13 +18,3 @@
     }
   ]
 }
-
-
-/dev/null
-/dev/tty
-/dev/uinput
-/dev/dri
-/dev/sda
-/dev/fuse
-/dev/input
-/dev/nvme0n1
