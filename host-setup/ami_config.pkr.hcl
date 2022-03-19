@@ -114,7 +114,6 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
     most_recent = true
   }
   associate_public_ip_address = true # Make new instances with this AMI get assigned a public IP address (necessary for SSH communication)
-  ebs_optimized               = true # Optimize for EBS volumes
 
   # We manually loop over all availabilitiy zones for the given region in CI, so that we can try all AZes
   # in case there is no capacity in a given AZ.
@@ -155,10 +154,12 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   launch_block_device_mappings {
     device_name           = "/dev/sda1"
-    volume_size           = 64
+    volume_size           = 48    # GB, assumes we use g4dn.2xlarge (3 mandelboxes maximum) - as small as possible to save on cost/warmup time, but large-enough to run Ubuntu + the mandelboxes 
     volume_type           = "gp3" # Options are gp2 and gp3. gp3 is the newer, more performant and cheaper AWS block volume
     delete_on_termination = true  # This ensures that the EBS volume of the EC2 instance(s) using the AMI Packer creates get deleted when the instance gets deleted
+    encrpyted             = true  # This ensures that the EBS volumes are encrypted with the default KMS key (We can use only the default key since we copy between AWS regions)
   }
+  ebs_optimized = true # Optimize for EBS volumes
 
   /* Comunicator configuration */
 
