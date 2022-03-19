@@ -60,10 +60,80 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
 fi
 
-# Turn off key repeats for keys that do not repeat on Mac. This should be done only after setting the key repeat rates
-# Keycodes obtained from https://gist.github.com/rickyzhang82/8581a762c9f9fc6ddb8390872552c250#file-keycode-linux-L91
-keys_to_turn_off=(9 67 68 70 71 72 73 74 75 76 95 96 111 78 110 10 11 12 13 14 15 16 17 18 19 106 77 24 25 26 27 28 29 30 31 32 33 38 39 40 41 42 43 44 45 46 52 53 54 55 56 57 58 62 37 115 64 113 116 117 109)
-for keycode in "${keys_to_turn_off[@]}"
+
+
+
+
+# Most keys on macOS do not repeat, but all keys repeat on Linux. We turn off key repeat on Linux to match
+# the macOS behavior. This needs to be done *after* setting the key repeat rate above.
+# Keycodes obtianed from: https://gist.github.com/rickyzhang82/8581a762c9f9fc6ddb8390872552c250#file-keycode-linux-L91
+keys_to_turn_off_repeat=(
+  9   # ESC
+  67  # F1
+  68  # F2
+  69  # F3
+  70  # F4
+  71  # F5
+  72  # F6
+  73  # F7
+  74  # F8
+  75  # F9
+  76  # F10
+  95  # F11
+  96  # F12
+  111 # PrintScrn
+  78  # Scroll Lock
+  110 # Pause
+  10  # 1
+  11  # 2
+  12  # 3
+  13  # 4
+  14  # 5
+  15  # 6
+  16  # 7
+  17  # 8
+  18  # 9
+  19  # 0
+  106 # Insert
+  77  # Num Lock
+  24  # Q
+  25  # W
+  26  # E
+  27  # R
+  28  # T
+  29  # Y
+  30  # U
+  31  # I
+  32  # O
+  33  # P
+  66  # Caps Lock
+  38  # A
+  39  # S
+  40  # D
+  41  # F
+  42  # G
+  43  # H
+  44  # J
+  45  # K
+  46  # L
+  52  # Z
+  53  # X
+  54  # C
+  55  # V
+  56  # B
+  57  # N
+  58  # M
+  62  # Shift Right
+  37  # Ctrl Left
+  115 # Logo Left (-> Option)
+  64  # Alt Left (-> Command)
+  113 # Alt Right (-> Command)
+  116 # Logo Right (-> Option)
+  117 # Menu (-> International)
+  109 # Ctrl Right
+)
+
+for keycode in "${keys_to_turn_off_repeat[@]}"
 do
   xset -r "$keycode"
 done
