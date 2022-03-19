@@ -1,12 +1,12 @@
 //go:build linux
 
 /*
- * This package is responsible for handling GPU-related functions on Linux, like
- * collecting metrics. Note that it assumes we are using an NVIDIA GPU, and that
- * this package will not work on non-NVIDIA GPUs, since we use NVML for collecting
- * metrics. The metrics get reported to our logging system the same way we report
- * other metrics, using the `metrics.go` package.
- */
+This package is responsible for handling GPU-related functions on Linux, like
+collecting metrics. Note that it assumes we are using an NVIDIA GPU, and that
+this package will not work on non-NVIDIA GPUs, since we use NVML for collecting
+metrics. The metrics get reported to our logging system the same way we report
+other metrics, using the `metrics.go` package.
+*/
 package metrics
 
 import (

@@ -1,8 +1,8 @@
 /*
- * Package uinputdevices abstracts away the allocation and assignment of uinput
- * devices for mandelboxes. Much of its functionality is provided by the nested
- * `uinput` package.
- */
+Package uinputdevices abstracts away the allocation and assignment of uinput
+devices for mandelboxes. Much of its functionality is provided by the nested
+`uinput` package.
+*/
 package uinputdevices // import "github.com/whisthq/whist/backend/services/host-service/mandelbox/uinputdevices"
 
 import (

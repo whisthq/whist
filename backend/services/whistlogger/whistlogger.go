@@ -1,6 +1,6 @@
 /*
- * Package whistlogger contains the logic for our custom logging system, including sending events to Logz.io and Sentry.
- */
+Package whistlogger contains the logic for our custom logging system, including sending events to Logz.io and Sentry.
+*/
 package whistlogger // import "github.com/whisthq/whist/backend/services/whistlogger"
 
 import (

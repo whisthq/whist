@@ -1,6 +1,6 @@
 /*
- * Package heroku contains code to pull configuration variables from Heroku at runtime.
- */
+Package heroku contains code to pull configuration variables from Heroku at runtime.
+*/
 package heroku // import "github.com/whisthq/whist/backend/services/metadata/heroku"
 
 import (

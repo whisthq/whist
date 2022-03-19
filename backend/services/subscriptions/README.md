@@ -1,6 +1,6 @@
 # Whist Hasura Subscriptions
 
-This directory contains files relating to the Whist pubsub implementation, which we use for our various backend services to interact between each other via our database(s). If you're not familir with a publish-subscribe (pubsub) architecture, you can read more about it [here](https://hasura.io/docs/1.0/graphql/manual/pubsub.html).
+This directory contains files relating to the Whist pubsub implementation, which we use for our various backend services to interact between each other via our database(s). If you're not familiar with a publish-subscribe (pubsub) architecture, you can read more about it [here](https://hasura.io/docs/1.0/graphql/manual/pubsub.html).
 
 For the Go implementation, we use the official [Hasura client](https://github.com/hasura/go-graphql-client) which supports subscriptions out of the box. The code is structured as follows:
 
@@ -11,7 +11,7 @@ For the Go implementation, we use the official [Hasura client](https://github.co
 
 ## Adding a subscription to Hasura
 
-For creating a new Hasura subscription, follow the following implementation:
+For creating a new Hasura subscription, refer to the following implementation:
 
 ```go
 // InstanceStatusSubscription defines the event when
@@ -27,4 +27,4 @@ var InstanceStatusSubscription struct {
 
 Note that the struct tags have to match the name of the database columns, and that of the outer struct tag which represents the full query in GraphQL syntax. You can use the Hasura console to help you write the query.
 
-Once you add the subscriptions to the `queries.go` file, create your subscription handlers and add it to the `Run` function inside `subscriptions.go` file. TODO: @MauAraujo please add some more detail about what happens next (i.e. where the subscrition is run, how to retrieve the data, etc.)
+Once you add the subscriptions to the `queries.go` file, create your subscription handlers and add it to the `Run` function inside `subscriptions_client.go` file. To see how subscriptions get started and run, refers to the `Start` function in the `subscriptions.go` file.

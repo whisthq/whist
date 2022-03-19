@@ -16,7 +16,7 @@ The backend services are exclusively written in Go and all additions to this pro
 
 Before building the services, make sure you've configured (and logged into) the Heroku and AWS CLIs on your personal development AWS EC2 instance.
 
-To build the services, install Go via `sudo snap install --classic --channel=1.17/stable go`, and run `make build`. Note that we require Go versions >= 1.17, and the that services are only meant to be run on Linux Ubuntu. After installing Go, be sure to add `~/go/bin` to your `$PATH` variable as follows:
+To build the services, install Go via `sudo snap install --classic --channel=1.17/stable go`, and run `make build`. Note that we require Go versions >= 1.17, and that the services are only meant to be run on Linux Ubuntu. After installing Go, be sure to add `~/go/bin` to your `$PATH` variable as follows:
 
 ```bash
 PATH=$PATH:~/go/bin
@@ -38,8 +38,8 @@ The best way to learn about the codebase without worrying about implementation d
 
 ## Host-Service Specifics
 
-See the `/host-service` folder for the specifics of this service.
+See the (`/host-service` README)[https://github.com/whisthq/whist/blob/dev/backend/services/host-service/README.md] for the specifics of this service.
 
 ## Scaling Service Specifics
 
-See the `/scaling-service` folder for the specifics of this service.
+See the (`/scaling-service` README)[https://github.com/whisthq/whist/blob/dev/backend/services/scaling-service/README.md] for the specifics of this service.

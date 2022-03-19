@@ -1,6 +1,6 @@
 /*
- * Package ttys abstracts away allocation and assignment of TTY devices for mandelboxes.
- */
+Package ttys abstracts away allocation and assignment of TTY devices for mandelboxes.
+*/
 package ttys // import "github.com/whisthq/whist/backend/services/host-service/mandelbox/ttys"
 
 import (

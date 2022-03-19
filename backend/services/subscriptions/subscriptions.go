@@ -1,8 +1,8 @@
 /*
- * Package subscriptions is responsible for implementing a pubsub architecture
- * on the Whist backend services. This is achieved using Hasura live subscriptions, so that
- * the host-service  and scaling-service can be notified instantly of any change in the database.
- */
+Package subscriptions is responsible for implementing a pubsub architecture
+on the Whist backend services. This is achieved using Hasura live subscriptions, so that
+the host-service  and scaling-service can be notified instantly of any change in the database.
+*/
 package subscriptions // import "github.com/whisthq/whist/backend/services/subscriptions"
 
 import (
