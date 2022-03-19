@@ -12,6 +12,7 @@ Usage
 */
 
 #include "client.h"
+
 /*
 ============================
 Constants
@@ -25,21 +26,6 @@ Constants
 Public Functions
 ============================
 */
-
-/**
- * @brief                          Sends a WhistPacket and accompanying
- *                                 WhistPacketType to all active clients,
- *                                 over UDP.
- * @param client				   The destination client
- * @param type                     The WhistPacketType, either VIDEO, AUDIO,
- *                                 or MESSAGE
- * @param data                     A pointer to the data to be sent
- * @param len                      The number of bytes to send
- * @param packet_id                       An ID for the UDP data.
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len, int packet_id);
 
 /**
  * @brief                          Sends a WhistPacket and accompanying
@@ -105,13 +91,14 @@ int try_get_next_message_udp(Client *client, WhistClientMessage *wsmsg, size_t *
  */
 bool get_using_stun(void);
 
+// TODO: Move to client.h
 /**
- * @brief                          Should be run in its own thread. Loops
- *                                 and manages connecting to/maintaining client
- *                                 connection and recovery.
+ * @brief                          Attempts to connect the client
  *
- * @returns                        Returns 0 on completion.
+ * @param state                    The server state
+ *
+ * @returns                        Returns true if successfully connected
  */
-int multithreaded_manage_client(void *opaque);
+bool connect_client(void *state);
 
 #endif  // SERVER_NETWORK_H

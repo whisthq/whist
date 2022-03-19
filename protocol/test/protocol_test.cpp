@@ -41,6 +41,7 @@ extern "C" {
 #ifndef __APPLE__
 #include "server/state.h"
 #include "server/parse_args.h"
+#include "server/client.h"
 #endif
 
 #include <whist/file/file_synchronizer.h>
@@ -1426,6 +1427,93 @@ TEST_F(ProtocolTest, Atomics) {
     EXPECT_EQ(atomic_load(&atomic_test_cmpswap), 64);
     EXPECT_EQ(atomic_load(&atomic_test_xor), 0);
 }
+
+#ifndef __APPLE__
+int client_test_thread(void* raw_client) {
+    Client* client = (Client*)raw_client;
+
+    for (int i = 0; i < 10000; i++) {
+        // May block
+        ClientLock* client_lock = client_active_lock(client);
+        if (client_lock == NULL) {
+            // Exit when done
+            break;
+        }
+        EXPECT_TRUE(client->is_active);
+        if (i % 1700 == 0) {
+            // Sometimes start deactivating it
+            start_deactivating_client(client);
+            EXPECT_TRUE(client->is_deactivating);
+        }
+        client_active_unlock(client_lock);
+
+        // Should happen quickly
+        client_lock = client_active_trylock(client);
+        if (client_lock != NULL) {
+            EXPECT_TRUE(client->is_active);
+            if (i % 2300 == 0) {
+                // Sometimes start deactivating it
+                start_deactivating_client(client);
+                EXPECT_TRUE(client->is_deactivating);
+            }
+            client_active_unlock(client_lock);
+        }
+    }
+
+    return 0;
+}
+
+TEST_F(ProtocolTest, ClientStruct) {
+    // Client has assertions inside,
+    // in order to ensure everything is happening correctly
+
+    Client* client = init_client();
+
+    const int num_threads = 4;
+    WhistThread threads[num_threads];
+    for (int i = 0; i < num_threads; i++) {
+        threads[i] = whist_create_thread(&client_test_thread, "Client Test Thread", (void*)client);
+        EXPECT_FALSE(threads[i] == NULL);
+    }
+
+    // Run for 100ms
+    for (int i = 0; i < 1000; i++) {
+        if (!client->is_active) {
+            // Activate the client, if it's not active
+            activate_client(client);
+            continue;
+        }
+
+        if (client->is_deactivating) {
+            // Wait for the client to deactivate (Which waits for every clientlock to be unlocked)
+            EXPECT_TRUE(client->is_active);
+            deactivate_client(client);
+            EXPECT_FALSE(client->is_active);
+            continue;
+        }
+
+        // If nothing interesting happened, check again in 0.1ms
+        whist_usleep(0.1 * US_IN_MS);
+    }
+
+    if (client->is_active) {
+        start_deactivating_client(client);
+        deactivate_client(client);
+        EXPECT_FALSE(client->is_active);
+    }
+
+    permanently_deactivate_client(client);
+
+    // The threads should exit since the client was permanently deactivated
+    for (int i = 0; i < num_threads; i++) {
+        int ret;
+        whist_wait_thread(threads[i], &ret);
+        EXPECT_EQ(ret, 0);
+    }
+
+    destroy_client(client);
+}
+#endif
 
 // Dummy nack and stream reset functions
 

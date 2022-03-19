@@ -16,6 +16,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_thread.h>
+#include <stdbool.h>
 
 /**
  * @defgroup threading Threading
@@ -286,11 +287,9 @@ WhistCondition whist_create_cond(void);
 void whist_wait_cond(WhistCondition cond, WhistMutex mutex);
 
 /**
- * Signal to all waiters that a condition may have changed.
- *
- * To avoid race conditions the caller should hold the mutex associated
- * with the condition while calling this function, though in some cases
- * it may not be necessary if ordering is guaranteed elsewhere.
+ * @brief Signal to all waiters that a condition may have changed.
+ * The cond's mutex must be locked when either changing the predicate of any waiting conds, or
+ * during this broadcast. Not doing so can cause a broadcast to fail to wakeup its cond.
  *
  * @param cond  Condition variable to signal waiters for.
  */
@@ -331,6 +330,21 @@ void whist_post_semaphore(WhistSemaphore semaphore);
  * @param semaphore  Semaphore to wait for.
  */
 void whist_wait_semaphore(WhistSemaphore semaphore);
+
+/**
+ * Wait for a semaphore.
+ *
+ * If the semaphore value is greater than zero then decrement it and
+ * return immediately.  Otherwise, wait until another thread posts the
+ * semaphore to increase its value and then decrement it and return.
+ *
+ * @param semaphore  Semaphore to wait for.
+ * @param timeout_ms The number of ms to wait for.
+ *
+ * @returns True if the semaphore was woken up by a signal,
+ *          False if the timeout was simply exceeded
+ */
+bool whist_wait_timeout_semaphore(WhistSemaphore semaphore, int timeout_ms);
 
 /**
  * Value of a semaphore.

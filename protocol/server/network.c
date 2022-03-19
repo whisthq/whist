@@ -46,7 +46,7 @@ Private Function Declarations
 /**
  * @brief                          Establishes UDP and TCP connection to client.
  *
- * details                         If no UDP message is available, *wsmsg is
+ * @details                        If no UDP message is available, *wsmsg is
  *                                 set to NULL and *wsmsg_size is set to 0.
  *                                 Otherwise, *wsmsg is populated with a pointer
  *                                 to the next available UDP message and
@@ -62,7 +62,8 @@ Private Function Declarations
  * @returns                        Returns -1 if either UDP or TCP connection
  *                                 fails or another error occurs, 0 on success.
  */
-static int connect_client(whist_server_state *state, Client *client, char *binary_aes_private_key);
+static int client_connect_socket(whist_server_state *state, Client *client,
+                                 char *binary_aes_private_key);
 
 /*
 ============================
@@ -70,29 +71,10 @@ Public Function Implementations
 ============================
 */
 
-int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len, int packet_id) {
-    if (packet_id <= 0) {
-        LOG_WARNING("Packet IDs must be positive!");
-        return -1;
-    }
-
-    if (client->is_active) {
-        if (send_packet(&(client->udp_context), type, data, len, packet_id, false) < 0) {
-            LOG_WARNING("Failed to send UDP packet to client");
-            return -1;
-        }
-    }
-    return 0;
-}
-
 int broadcast_tcp_packet(Client *client, WhistPacketType type, void *data, int len) {
-    if (client->is_active) {
-        read_lock(&client->tcp_rwlock);
-        if (send_packet(&(client->tcp_context), type, (uint8_t *)data, len, -1, false) < 0) {
-            LOG_WARNING("Failed to send TCP packet to client");
-            return -1;
-        }
-        read_unlock(&client->tcp_rwlock);
+    if (send_packet(&client->tcp_context, type, (uint8_t *)data, len, -1, false) < 0) {
+        LOG_WARNING("Failed to send TCP packet to client");
+        return -1;
     }
     return 0;
 }
@@ -101,12 +83,10 @@ int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
     *p_tcp_packet = NULL;
 
     if (!socket_update(&client->tcp_context)) {
-        if (client->is_active && !client->is_deactivating) {
-            if (start_quitting_client(client) != 0) {
-                LOG_ERROR("Failed to reap timed out clients.");
-            }
-        }
+        // If TCP has disconnected, start deactivating the client
+        start_deactivating_client(client);
     }
+
     WhistPacket *tcp_packet = get_packet(&client->tcp_context, PACKET_MESSAGE);
     if (tcp_packet) {
         LOG_INFO("Received TCP Packet: Size %d", tcp_packet->payload_size);
@@ -121,12 +101,10 @@ int try_get_next_message_udp(Client *client, WhistClientMessage *wcmsg, size_t *
     memset(wcmsg, 0, sizeof(*wcmsg));
 
     if (!socket_update(&client->udp_context)) {
-        if (client->is_active && !client->is_deactivating) {
-            if (start_quitting_client(client) != 0) {
-                LOG_ERROR("Failed to reap timed out clients.");
-            }
-        }
+        // If UDP has disconnected, start deactivating the client
+        start_deactivating_client(client);
     }
+
     WhistPacket *packet = get_packet(&client->udp_context, PACKET_MESSAGE);
     if (packet) {
         if (packet->payload_size < 0 || (int)sizeof(WhistClientMessage) < packet->payload_size) {
@@ -167,92 +145,38 @@ bool get_using_stun(void) {
     return false;
 }
 
-int multithreaded_manage_client(void *opaque) {
-    whist_server_state *state = (whist_server_state *)opaque;
-    whist_server_config *config = state->config;
+bool connect_client(void *state_raw) {
+    whist_server_state *state = (whist_server_state *)state_raw;
+    Client *client = state->client;
+
+    FATAL_ASSERT(!client->is_active);
 
     state->connection_id = rand();
+    client->connection_id = state->connection_id;
 
-    bool first_client_connected = false;  // set to true once the first client has connected
-    bool disable_timeout = false;
-    if (config->begin_time_to_exit == -1) {
-        // client has `begin_time_to_exit` seconds to connect when the server first goes up.
-        // If the variable is -1, disable auto-exit.
-        disable_timeout = true;
-    }
-    WhistTimer first_client_timer;
-    // start this now and then discard when first client has connected
-    start_timer(&first_client_timer);
-
-    while (!state->exiting) {
-        LOG_INFO_RATE_LIMITED(5.0, 1, "Is a client connected? %s",
-                              state->client.is_active ? "yes" : "no");
-
-        // If all threads have stopped using the active client, we can finally quit it
-        if (state->client.is_deactivating && !threads_still_holding_active()) {
-            if (quit_client(&state->client) != 0) {
-                LOG_ERROR("Failed to quit client.");
-            } else {
-                state->client.is_deactivating = false;
-                LOG_INFO("Successfully quit client.");
-            }
-        }
-
-        if (!state->client.is_active) {
-            state->connection_id = rand();
-
-            // container exit logic -
-            //  * client has connected before but now none are connected
-            //  * client has not connected in `begin_time_to_exit` secs of server being up
-            // We don't place this in a lock because:
-            //  * if the first client connects right on the threshold of begin_time_to_exit, it
-            //  doesn't matter if we disconnect
-            if (!disable_timeout && (first_client_connected || (get_timer(&first_client_timer) >
-                                                                config->begin_time_to_exit))) {
-                state->exiting = true;
-            }
-        }
-
-        // If a client is already connected, nothing to do here
-        // TODO: Simply call this on startup and disconnect, instead of looping
-        if (state->client.is_active) {
-            whist_sleep(20);
-            continue;
-        }
-
-        // Client is not in use so we don't need to worry about anyone else
-        // touching it
-        if (connect_client(state, &state->client, config->binary_aes_private_key) != 0) {
-            LOG_WARNING("Failed to establish connection with client.");
-            continue;
-        }
-
-        LOG_INFO("Client connected.");
-
-        if (!state->client.is_active) {
-            // we have went from 0 clients to 1 client, so we have got our first client
-            // this variable should never be set back to false after this
-            first_client_connected = true;
-        }
-        state->client_joined_after_window_name_broadcast = true;
-
-        // We reset the input tracker when a new client connects
-        reset_input(state->client_os);
-
-        // When a new client has been connected, we want all threads to hold client active again
-        reset_threads_holding_active_count(&state->client);
-
-        // Fill the network settings with default value, if we have a valid width and height
-        if (state->client_width > 0 && state->client_height > 0 && state->client_dpi > 0) {
-            udp_handle_network_settings(
-                state->client.udp_context.context,
-                get_default_network_settings(state->client_width, state->client_height,
-                                             state->client_dpi));
-        }
-        state->client.is_active = true;
+    // Client is not in use so we don't need to worry about anyone else
+    // touching it
+    if (client_connect_socket(state, state->client, state->config->binary_aes_private_key) != 0) {
+        LOG_WARNING("Failed to establish connection with client.");
+        return false;
     }
 
-    return 0;
+    LOG_INFO("Client successfully connected.");
+
+    state->client_joined_after_window_name_broadcast = true;
+
+    // We reset the input tracker when a new client connects
+    reset_input(state->client_os);
+
+    // Fill the network settings with default value, if we have a valid width and height
+    if (state->client_width > 0 && state->client_height > 0 && state->client_dpi > 0) {
+        udp_handle_network_settings(
+            state->client->udp_context.context,
+            get_default_network_settings(state->client_width, state->client_height,
+                                         state->client_dpi));
+    }
+
+    return true;
 }
 
 /*
@@ -261,7 +185,8 @@ Private Function Implementations
 ============================
 */
 
-int connect_client(whist_server_state *state, Client *client, char *binary_aes_private_key_input) {
+int client_connect_socket(whist_server_state *state, Client *client,
+                          char *binary_aes_private_key_input) {
     if (!create_udp_socket_context(&client->udp_context, NULL, BASE_UDP_PORT, 1,
                                    UDP_CONNECTION_WAIT, false, binary_aes_private_key_input)) {
         LOG_ERROR("Failed UDP connection with client");

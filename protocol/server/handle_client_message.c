@@ -272,11 +272,8 @@ static int handle_quit_message(whist_server_state *state, WhistClientMessage *wc
     */
 
     UNUSED(wcmsg);
-    if (start_quitting_client(&state->client) != 0) {
-        LOG_ERROR("Failed to start quitting client.");
-        return -1;
-    }
-    LOG_INFO("Client successfully started quitting.");
+    start_deactivating_client(state->client);
+    LOG_INFO("Client QUIT message received...");
     return 0;
 }
 

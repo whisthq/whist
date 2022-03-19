@@ -32,6 +32,12 @@ Defines
 #define LOG_CPU_USAGE 0
 #endif
 
+#ifdef _WIN32
+#define INPUT_TYPE WHIST_INPUT_DEVICE_WIN32
+#else
+#define INPUT_TYPE WHIST_INPUT_DEVICE_UINPUT
+#endif
+
 /*
 ============================
 Globals
@@ -68,27 +74,22 @@ void graceful_exit(whist_server_state* state) {
         Quit clients gracefully and allow server to exit.
     */
 
+    // Mark server as an exiting state
     state->exiting = true;
 
-    //  Quit all clients. This means that there is a possibility
-    //  of the quitClients() pipeline happening more than once
-    //  because this error handler can be called multiple times.
-
-    // POSSIBLY below locks are not necessary if we're quitting everything and dying anyway?
-
-    // Broadcast client quit message
-    WhistServerMessage wsmsg_response = {0};
-    wsmsg_response.type = SMESSAGE_QUIT;
-    if (state->client.is_active) {
-        if (broadcast_udp_packet(&state->client, PACKET_MESSAGE, (uint8_t*)&wsmsg_response,
-                                 sizeof(WhistServerMessage), 1) != 0) {
-            LOG_WARNING("Could not send Quit Message");
+    // If the client happens to be active, send a quit message
+    ClientLock* client_lock = client_active_trylock(state->client);
+    if (client_lock != NULL) {
+        // Broadcast client quit message
+        WhistServerMessage wsmsg_quit = {0};
+        wsmsg_quit.type = SMESSAGE_QUIT;
+        if (send_packet(&state->client->udp_context, PACKET_MESSAGE, &wsmsg_quit,
+                        sizeof(WhistServerMessage), 1, false) < 0) {
+            LOG_ERROR("Failed to send QUIT message");
+        } else {
+            LOG_INFO("Send QUIT message");
         }
-    }
-
-    // Kick all clients
-    if (start_quitting_client(&state->client) != 0) {
-        LOG_ERROR("Failed to start quitting client.");
+        client_active_unlock(client_lock);
     }
 }
 
@@ -122,56 +123,32 @@ void sig_handler(int sig_num) {
 }
 #endif
 
-static void handle_whist_client_message(whist_server_state* state, WhistClientMessage* wcmsg) {
-    /*
-        Handles a Whist client message
-
-        Arguments:
-            wcmsg (WhistClientMessage*): the client message being handled
-            id (int): the client ID
-    */
-
-    if (handle_client_message(state, wcmsg) != 0) {
-        LOG_ERROR("Failed to handle message from client.");
-    }
-}
-
 // Gets all pending Whist UDP messages
 static void get_whist_udp_client_messages(whist_server_state* state) {
-    if (!state->client.is_active) {
-        return;
-    }
-
     WhistClientMessage wcmsg;
     size_t wcmsg_size;
 
     // If received a UDP message
-    if (try_get_next_message_udp(&state->client, &wcmsg, &wcmsg_size) == 0 && wcmsg_size != 0) {
-        handle_whist_client_message(state, &wcmsg);
+    if (try_get_next_message_udp(state->client, &wcmsg, &wcmsg_size) == 0 && wcmsg_size != 0) {
+        handle_client_message(state, &wcmsg);
     }
 }
 
 // Gets all pending Whist TCP messages
 static bool get_whist_tcp_client_messages(whist_server_state* state) {
     bool ret = false;
-    if (!state->client.is_active) {
-        return ret;
-    }
-
-    read_lock(&state->client.tcp_rwlock);
 
     WhistPacket* tcp_packet = NULL;
-    try_get_next_message_tcp(&state->client, &tcp_packet);
+    try_get_next_message_tcp(state->client, &tcp_packet);
     // If we get a TCP client message, handle it
     if (tcp_packet) {
         WhistClientMessage* wcmsg = (WhistClientMessage*)tcp_packet->data;
         LOG_INFO("TCP Packet type: %d", wcmsg->type);
-        handle_whist_client_message(state, wcmsg);
-        free_packet(&state->client.tcp_context, tcp_packet);
+        handle_client_message(state, wcmsg);
+        free_packet(&state->client->tcp_context, tcp_packet);
         ret = true;
     }
 
-    read_unlock(&state->client.tcp_rwlock);
     return ret;
 }
 
@@ -241,7 +218,7 @@ static void create_and_send_tcp_wmsg(WhistServerMessageType message_type, char* 
     wmsg_tcp->type = message_type;
     memcpy(copy_location, payload, type_size + data_size);
     // Send wmsg
-    if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)wmsg_tcp,
+    if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wmsg_tcp,
                              sizeof(WhistServerMessage) + data_size) < 0) {
         LOG_WARNING("Failed to broadcast server message of type %d.", message_type);
     }
@@ -266,10 +243,17 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
     init_clipboard_synchronizer(false);
     init_file_synchronizer((FILE_TRANSFER_SERVER_DROP | FILE_TRANSFER_SERVER_UPLOAD));
 
-    add_thread_to_client_active_dependents();
-    bool assuming_client_active = false;
-    while (!state->exiting) {
-        update_client_active_status(&state->client, &assuming_client_active);
+    // Hold a client active lock
+    ClientLock* client_lock = client_active_lock(state->client);
+
+    // TCP Message handler loop
+    while (client_lock != NULL) {
+        // Refresh the client activation lock, to let the client (re/de)activate if it's trying to
+        client_active_unlock(client_lock);
+        client_lock = client_active_lock(state->client);
+        if (client_lock == NULL) {
+            break;
+        }
 
         // RECEIVE TCP PACKET HANDLER
         bool data_transferred = get_whist_tcp_client_messages(state);
@@ -281,11 +265,9 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         // client
         ClipboardData* clipboard_chunk = pull_clipboard_chunk();
         if (clipboard_chunk) {
-            if (assuming_client_active) {
-                LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
-                create_and_send_tcp_wmsg(SMESSAGE_CLIPBOARD, (char*)clipboard_chunk);
-                data_transferred = true;
-            }
+            LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
+            create_and_send_tcp_wmsg(SMESSAGE_CLIPBOARD, (char*)clipboard_chunk);
+            data_transferred = true;
             // Free clipboard chunk
             deallocate_region(clipboard_chunk);
         }
@@ -325,6 +307,10 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         if (!data_transferred) whist_usleep(100);
     }
 
+    // If we're holding a client lock, unlock it
+    if (client_lock != NULL) {
+        client_active_unlock(client_lock);
+    }
     destroy_clipboard_synchronizer();
     destroy_file_synchronizer();
 
@@ -347,16 +333,19 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
 
     // Mark initial update encoder
     state->update_encoder = true;
+
+    srand((unsigned int)time(NULL));
+    server_state.connection_id = rand();
+
+    server_state.input_device = create_input_device(INPUT_TYPE, NULL);
+    if (!server_state.input_device) {
+        LOG_FATAL("Failed to create input device.");
+    }
+
+    server_state.client = init_client();
 }
 
-#ifdef _WIN32
-#define INPUT_TYPE WHIST_INPUT_DEVICE_WIN32
-#else
-#define INPUT_TYPE WHIST_INPUT_DEVICE_UINPUT
-#endif
-
 int main(int argc, char* argv[]) {
-    InputDeviceType input_type = INPUT_TYPE;
     whist_server_config config = {0};
 
     int ret = server_parse_args(&config, argc, argv);
@@ -376,29 +365,16 @@ int main(int argc, char* argv[]) {
 
     whist_server_state_init(&server_state, &config);
 
-    LOG_INFO("Server protocol started.");
-
     // Initialize the error monitor, and tell it we are the server.
     whist_error_monitor_initialize(false);
+
+    LOG_INFO("Whist server revision %s", whist_git_revision());
+    LOG_INFO("Server protocol started.");
 
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 #endif
-
-    srand((unsigned int)time(NULL));
-    server_state.connection_id = rand();
-
-    LOG_INFO("Whist server revision %s", whist_git_revision());
-
-    server_state.input_device = create_input_device(input_type, NULL);
-    if (!server_state.input_device) {
-        LOG_FATAL("Failed to create input device.");
-    }
-
-    if (init_client(&server_state.client) != 0) {
-        LOG_FATAL("Failed to initialize client object.");
-    }
 
 #ifdef __linux__
     struct sigaction sa = {0};
@@ -428,9 +404,6 @@ int main(int argc, char* argv[]) {
         whist_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
 
     NotificationsHandler* notifications_handler = init_notifications_handler(&server_state);
-
-    WhistThread manage_clients_thread = whist_create_thread(
-        multithreaded_manage_client, "multithreaded_manage_client", &server_state);
 
     WhistThread sync_tcp_packets_thread = whist_create_thread(
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &server_state);
@@ -463,16 +436,54 @@ int main(int argc, char* argv[]) {
     start_timer(&uploaded_file_timer);
 #endif  // ! _WIN32
 
-    add_thread_to_client_active_dependents();
-    bool assuming_client_active = false;
-    while (!server_state.exiting) {
-        update_client_active_status(&server_state.client, &assuming_client_active);
+    // Tracking how long we're willing to attempt to connect
+    WhistTimer connection_attempt_timer;
+    start_timer(&connection_attempt_timer);
 
-        if (!assuming_client_active) {
-            // We must sleep here to avoid a busy loop holding the CPU
-            whist_sleep(10);
+    while (!server_state.exiting) {
+        // Client management code
+
+        // If the client isn't active, activate the client
+        if (!server_state.client->is_active) {
+            // If begin_time_to_exit seconds pass, and no connection has succeeded,
+            if (config.begin_time_to_exit != -1 &&
+                get_timer(&connection_attempt_timer) > config.begin_time_to_exit) {
+                // Just exit
+                server_state.exiting = true;
+                break;
+            }
+            // Otherwise, try to connect
+            if (connect_client(&server_state)) {
+                // Mark the client as activated
+                activate_client(server_state.client);
+            } else {
+                LOG_INFO("No client found.");
+            }
             continue;
         }
+
+        // If the client is deactivating for any reason,
+        if (server_state.client->is_deactivating) {
+            // Wait for the client to deactivate (Which waits for every clientlock to be unlocked)
+            deactivate_client(server_state.client);
+            // Disconnect the client
+            // TODO: Make this a function
+
+            // Client and server share file transfer indexes when sending files, so
+            //     when a client disconnects, we need to reset the transferring files
+            //     to make sure that if a client reconnects that the indices are fresh.
+            reset_all_transferring_files();
+
+            // Destroy the udp/tcp socket contexts
+            destroy_socket_context(&server_state.client->udp_context);
+            destroy_socket_context(&server_state.client->tcp_context);
+
+            // Restart the timer for the next connection attempt
+            start_timer(&connection_attempt_timer);
+            continue;
+        }
+
+        // UDP client messages, and various periodic updates
 
         // Get UDP messages
         get_whist_udp_client_messages(&server_state);
@@ -488,6 +499,7 @@ int main(int argc, char* argv[]) {
         if (get_timer(&window_fullscreen_timer) > 50.0 / MS_IN_SECOND) {
             // This is the cached fullscreen state. We only send state change events
             // to the client if the fullscreen value has changed.
+            // TODO: Move static variable into client variable, so that it can clear on reactivation
             static bool cur_fullscreen = false;
             bool fullscreen = is_focused_window_fullscreen();
             if (fullscreen != cur_fullscreen) {
@@ -499,7 +511,7 @@ int main(int argc, char* argv[]) {
                 WhistServerMessage wsmsg = {0};
                 wsmsg.type = SMESSAGE_FULLSCREEN;
                 wsmsg.fullscreen = (int)fullscreen;
-                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, &wsmsg,
+                if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, &wsmsg,
                                          sizeof(WhistServerMessage)) == 0) {
                     LOG_INFO("Sent fullscreen message!");
                     cur_fullscreen = fullscreen;
@@ -513,15 +525,15 @@ int main(int argc, char* argv[]) {
         if (get_timer(&window_name_timer) > 50.0 / MS_IN_SECOND) {
             char* name = NULL;
             bool new_window_name = get_focused_window_name(&name);
-            if (name != NULL && (server_state.client_joined_after_window_name_broadcast ||
-                                 (assuming_client_active && new_window_name))) {
+            if (name != NULL &&
+                (server_state.client_joined_after_window_name_broadcast || new_window_name)) {
                 LOG_INFO("%sBroadcasting window title message.",
                          new_window_name ? "Window title changed. " : "");
                 static char wsmsg_buf[sizeof(WhistServerMessage) + WINDOW_NAME_MAXLEN + 1];
                 WhistServerMessage* wsmsg = (void*)wsmsg_buf;
                 wsmsg->type = SMESSAGE_WINDOW_TITLE;
                 strncpy(wsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
-                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
+                if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
                                          (int)(sizeof(WhistServerMessage) + strlen(name) + 1)) ==
                     0) {
                     LOG_INFO("Sent window title message!");
@@ -548,7 +560,7 @@ int main(int argc, char* argv[]) {
                     memset(wsmsg, 0, sizeof(*wsmsg));
                     wsmsg->type = SMESSAGE_OPEN_URI;
                     memcpy(&wsmsg->requested_uri, handled_uri, bytes + 1);
-                    if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
+                    if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
                                              (int)wsmsg_size) < 0) {
                         LOG_WARNING("Failed to broadcast open URI message.");
                     } else {
@@ -602,7 +614,7 @@ int main(int argc, char* argv[]) {
                 // If trigger file exists, request upload from client then delete the file
                 WhistServerMessage wsmsg = {0};
                 wsmsg.type = SMESSAGE_INITIATE_UPLOAD;
-                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, &wsmsg,
+                if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, &wsmsg,
                                          sizeof(WhistServerMessage)) == 0) {
                     LOG_INFO("Sent initiate upload message!");
                 } else {
@@ -616,6 +628,17 @@ int main(int argc, char* argv[]) {
 #endif  // ! _WIN32
     }
 
+    // If the client is still active,
+    if (server_state.client->is_active) {
+        // Begin deactivating the client, if not done already
+        start_deactivating_client(server_state.client);
+        // Wait for the client to deactivate (Which waits for every clientlock to be unlocked)
+        deactivate_client(server_state.client);
+    }
+
+    // Mark the client as permanently deactivated, which lets the threads reap
+    permanently_deactivate_client(server_state.client);
+
     destroy_input_device(server_state.input_device);
     server_state.input_device = NULL;
 
@@ -624,22 +647,18 @@ int main(int argc, char* argv[]) {
     whist_wait_thread(send_video_thread, NULL);
     whist_wait_thread(send_audio_thread, NULL);
     whist_wait_thread(sync_tcp_packets_thread, NULL);
-    whist_wait_thread(manage_clients_thread, NULL);
     destroy_notifications_handler(notifications_handler);
 
     ltr_destroy(server_state.ltr_context);
-
-    // This is safe to call here because all other threads have been waited and destroyed
-    if (quit_client(&server_state.client) != 0) {
-        LOG_ERROR("Failed to quit clients.");
-    }
 
     LOG_INFO("Protocol has shutdown gracefully");
 
     destroy_statistic_logger();
     destroy_logger();
     whist_error_monitor_shutdown();
-    destroy_clients(&server_state.client);
+
+    // This is safe to call here because all other threads have been waited and destroyed
+    destroy_client(server_state.client);
 
     return 0;
 }
