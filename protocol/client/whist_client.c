@@ -373,6 +373,9 @@ int whist_client_main(int argc, const char* argv[]) {
             }
         }
 
+        // The lines below may be called multiple times,
+        // Please ensure they get destroyed properly
+
         // Initialize audio and video renderer system
         WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
 
@@ -411,7 +414,11 @@ int whist_client_main(int argc, const char* argv[]) {
         LOG_INFO("Begin measuring handshake");
 
         if (connect_to_server(server_ip, using_stun, user_email) != 0) {
+            // This must destroy everything initialized above this line
             LOG_WARNING("Failed to connect to server.");
+            destroy_file_synchronizer();
+            destroy_clipboard_synchronizer();
+            destroy_renderer(whist_renderer);
             continue;
         }
         connected = true;
@@ -539,8 +546,8 @@ int whist_client_main(int argc, const char* argv[]) {
 
         // Destroy the network system
         destroy_packet_synchronizers();
-        destroy_clipboard_synchronizer();
         destroy_file_synchronizer();
+        destroy_clipboard_synchronizer();
         close_connections();
 
         // Destroy the renderer
