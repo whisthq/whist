@@ -1,5 +1,5 @@
 {
-  "extends": "@tsconfig/recommended/tsconfigs.json",
+  "extends": "@tsconfig/recommended/tsconfig.json",
   "include": ["src/**/*"],
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,

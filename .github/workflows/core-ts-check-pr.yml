@@ -65,7 +65,7 @@ jobs:
       - name: Run core-ts test suite
         working-directory: frontend/core-ts
         env:
-          CONFIG: '{"AUTH_API_IDENTIFIER": "https://randomurl.com", "AUTH_CLIENT_ID": "RANDOMSTRING", "AUTH_DOMAIN_URL": "https://randomurl.com", "CLIENT_CALLBACK_URL": "http://localhost/callback", "WEBSERVER_URL": "https://randomurl.com"}'
+          environment: "DEVELOPMENT"
         run: yarn run test:ci
 
       - name: Upload Codecov Report

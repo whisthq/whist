@@ -1,7 +1,7 @@
 /*
     All environment variables.
 */
-export const configs = {
+const configs = {
   LOCAL: {
     url: {
       WEBSERVER_URL: "https://dev-server.whist.com",
@@ -48,3 +48,8 @@ export const configs = {
   },
 }
 
+export const config = (() => {
+  // This should be LOCAL, DEVELOPMENT, STAGING, PRODUCTION
+  const environment = JSON.parse(process.env.environmment ?? "{\"env\": \"LOCAL\"}")
+  return configs[environment]
+})()
