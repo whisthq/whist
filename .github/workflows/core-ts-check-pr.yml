@@ -65,7 +65,7 @@ jobs:
       - name: Run core-ts test suite
         working-directory: frontend/core-ts
         env:
-          environment: "DEVELOPMENT"
+          environment: "dev" # We hardcode to `dev` for testing
         run: yarn run test:ci
 
       - name: Upload Codecov Report

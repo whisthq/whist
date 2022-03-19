@@ -120,6 +120,7 @@ jobs:
         working-directory: frontend/client-applications
         env:
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+          ENVIRONMENT: ${{ env.DEPLOY_ENVIRONMENT }}
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
         run: |
           REM Build the Whist protocol and package the Electron application, using a hardcoded test version
@@ -152,6 +153,7 @@ jobs:
         working-directory: frontend/client-applications
         env:
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+          ENVIRONMENT: ${{ env.DEPLOY_ENVIRONMENT }}
           MACOS_ARCH: "${{ matrix.config.arch }}"
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}

@@ -985,6 +985,7 @@ jobs:
         working-directory: frontend/client-applications
         env:
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+          ENVIRONMENT: ${{ needs.whist-publish-build-config.outputs.branch }}
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
         run: |
           REM We use "call" before since ancient DOS versions don't support recursively executing batch files
@@ -1003,6 +1004,7 @@ jobs:
         working-directory: frontend/client-applications
         env:
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+          ENVIRONMENT: ${{ needs.whist-publish-build-config.outputs.branch }}
           MACOS_ARCH: "x86_64"
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
@@ -1118,6 +1120,7 @@ jobs:
         working-directory: frontend/client-applications
         env:
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+          ENVIRONMENT: ${{ needs.whist-publish-build-config.outputs.branch }}
           MACOS_ARCH: "arm64"
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}

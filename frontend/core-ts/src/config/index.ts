@@ -2,8 +2,8 @@
     All environment variables.
 */
 const configs = {
-  LOCAL: {
-    url: {
+  local: {
+    urls: {
       WEBSERVER_URL: "https://dev-server.whist.com",
       CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
@@ -13,8 +13,8 @@ const configs = {
       apiIdentifier: "https://api.fractal.co",
     },
   },
-  DEVELOPMENT: {
-    url: {
+  dev: {
+    urls: {
       WEBSERVER_URL: "https://dev-server.whist.com",
       CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
@@ -24,8 +24,8 @@ const configs = {
       apiIdentifier: "https://api.fractal.co",
     },
   },
-  STAGING: {
-    url: {
+  staging: {
+    urls: {
       WEBSERVER_URL: "https://staging-server.whist.com",
       CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
@@ -35,8 +35,8 @@ const configs = {
       apiIdentifier: "https://api.fractal.co",
     },
   },
-  PRODUCTION: {
-    url: {
+  prod: {
+    urls: {
       WEBSERVER_URL: "https://prod-server.whist.com",
       CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
@@ -49,7 +49,7 @@ const configs = {
 }
 
 export const config = (() => {
-  // This should be LOCAL, DEVELOPMENT, STAGING, PRODUCTION
-  const environment = JSON.parse(process.env.environmment ?? "{\"env\": \"LOCAL\"}")
+  // This should be local, dev, staging or prod
+  const environment = process.env.ENVIRONMENT ?? "local"
   return configs[environment]
 })()
