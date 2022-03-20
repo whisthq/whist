@@ -122,6 +122,13 @@ optional arguments:
                         The number of times to retry if a SSH connection is refused or if the connection attempt times out
 ```
 
+
+
+
+
+
+
+
 #### Sample usage 1 (default): create a fresh new instance on us-east-1 and terminate it upon completion
 
 ```
