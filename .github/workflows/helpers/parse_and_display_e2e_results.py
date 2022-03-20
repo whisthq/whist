@@ -262,16 +262,16 @@ if __name__ == "__main__":
         print("\t+ Adding empty entry for failed/skipped experiment")
 
     with open(f"streaming_e2e_test_results_0.md", "w") as summary_file:
-        summary_file.write("### Experiments summary:\n\n")
+        summary_file.write("### Experiments Summary:\n\n")
         for i, experiment in enumerate(experiments):
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
             if experiment["dirname"] is not None:
                 summary_file.write(
-                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - {e2e_script_outcomes[i]}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
                 )
             else:
                 summary_file.write(
-                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - {e2e_script_outcomes[i]}.`\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']}.`\n"
                 )
         summary_file.write("\n")
 
@@ -282,7 +282,7 @@ if __name__ == "__main__":
         results_file.write(f"## Results compared to branch `{compared_branch_name}`\n")
         for j, experiment in enumerate(experiments):
             results_file.write(
-                f"### Experiment {j+1} - Network conditions: {experiment['human_readable_network_conditions']}\n"
+                f"### Experiment {j+1} - Network Conditions: {experiment['human_readable_network_conditions']}\n"
             )
             if experiment["outcome"] != "success":
                 results_file.write(
@@ -376,24 +376,18 @@ if __name__ == "__main__":
 
     test_outcome_verb = "succeeded :white_check_mark:"
     for outcome in e2e_script_outcomes:
-        if outcome == "cancelled":
-            test_outcome_verb = "was cancelled :x:"
-        elif outcome == "skipped":
-            test_outcome_verb = "was skipped :x:"
-        elif outcome == "failure":
-            test_outcome_verb = "failed :x:"
+        test_outcome_verb = ":x: " + str(outcome)
 
     # Post updates to Slack channel if desired
     if slack_webhook and post_results_on_slack:
-        slack_catchy_title = f":rocket::face_with_cowboy_hat::bar_chart: {title} :rocket::face_with_cowboy_hat::bar_chart:"
         slack_post(
             slack_webhook,
-            body=f"New E2E `{current_branch_name}` test results available! The test {test_outcome_verb}. Check out the details here: {gist_url}\n",
+            body=f"Whist daily E2E test results available for branch: `{current_branch_name}`! The test {test_outcome_verb}. Check out the details here: {gist_url}\n",
             slack_username="Whist Bot",
-            title=slack_catchy_title,
+            title=f":rocket::bar_chart: {title} :rocket::bar_chart:",
         )
 
-    # Otherwise post on Github if the branch is tied to a open PR
+    # Otherwise post on GitHub if the branch is tied to a open PR
     else:
         pr_number = associate_branch_to_open_pr(current_branch_name)
         if pr_number != -1:
