@@ -39,7 +39,7 @@ You can run the E2E streaming test by launching the script `streaming_e2e_tester
 
 The script's arguments are summarized below. Three of them are required (`--ssh-key-name SSH_KEY_NAME`, `--ssh-key-path SSH_KEY_PATH` `--github-token GITHUB_TOKEN `). The remaining ones can be omitted if you want to use the default values.
 
-```
+```bash
 usage: streaming_e2e_tester.py [-h] --ssh-key-name SSH_KEY_NAME --ssh-key-path SSH_KEY_PATH --github-token GITHUB_TOKEN
                                [--region-name {us-east-1,us-east-2,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,ap-northeast-2,ap-southeast-1,ap-southeast-2,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}]
                                [--use-existing-server-instance USE_EXISTING_SERVER_INSTANCE] [--use-existing-client-instance USE_EXISTING_CLIENT_INSTANCE] [--use-two-instances {false,true}]
@@ -122,79 +122,49 @@ optional arguments:
                         The number of times to retry if a SSH connection is refused or if the connection attempt times out
 ```
 
+#### Sample Usage
 
+Here are a few examples of how to use the test framework.
 
+**Run on 1 new instance on `us-east-1`, terminated upon completion**
 
-
-
-
-
-#### Sample usage 1 (default): create a fresh new instance on us-east-1 and terminate it upon completion
-
-```
+```bash
 python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here>
 ```
 
-#### Sample usage 2: create 2 new instances on ap-south-2 (Mumbai), simulate scrolling during the test, and leave instances on upon completion
+**Run on 2 new instances on `ap-south-2`, simulate scrolling during test, and leave instances on upon completion**
 
-```
+```bash
 python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here --region-name ap-south-2 --simulate-scrolling=true --leave-instances-on=true>
 ```
 
-#### Sample usage 3: test on your dev instance on us-west-1, skipping the host-setup. Leave the instance on upon completion. Simulate a degraded network with a bandwidth of 1Mbit/s, 100ms delay and 10% probability of packet drop
+**Run on your development instance on `us-west-` with degraded network (1Mbit/s, 100ms delay, 10% packet drop), and leave instance on upon completion**
 
-```
+```bash
 python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here --region-name us-west-1 --use-existing-client-instance <your-dev-instance-id> --leave-instances-on=true --skip-host-setup=true --network-conditions 1Mbit,100,0.1
 ```
 
-### Setting Arbitrary Network Conditions
+#### Creating New Experiments & Network Conditions
 
+The E2E test framework can run arbitrarily many experiments for any given set of network conditions. To do this, you can pass the `--network-conditions` flag with a comma-separated list of Bandwidth (in Mbps),Delay (in ms),PacketDrop (in percetange, between 0 and 1).
 
+You can see the list of all the experiments we run, and their network conditions, in the `protocol-e2e-streaming-testing.yml`, and you can add your new experiments there if you believe they are representative of a network condition we are not currently testing in CI.
 
+### Development
 
-The `Protocol: End-to-End Streaming Testing` workflow may run the E2E test many times, for different artificially-modified networking conditions. We set artificially 
+The code for the E2E test framework is shared between this folder (general components) and the `.github/workflows/helpers/protocol` folders (CI-specific components). When contributing to this project, please keep your work scoped to the right folders and keep the code simple and abstracted. Note that we sometimes modify protocol logs and modify/add network experiments, so please try to keep your work as abstracted as possible to keep the documentation and code in sync.
 
+As of writing, our CI E2E tests can only run sequentially. To achieve this, we use (Turnstyle)[(https://github.com/rpadaki/turnstyle)]. You can of course run tests on your own development instance irrespective of our CI instances.
 
+#### CI Test Instances
 
-
-one for each of the following network conditions on the client EC2 instance:
-
-1. _Normal condition_: no artificial network condition degradation is applied
-2. _Reduced bandwidth_: the client bandwidth is artificially limited to a max transmit/receive rate of 1Mbit/s
-3. _Reduced bandwidth and packet drops_: the client bandwidth is artificially limited to a max transmit/receive rate of 1Mbit/s, and incoming/outgoing packets are dropped with a probability of 10%
-4. _Reduced bandwidth, packet drops, and delay_: the client bandwidth is artificially limited to a max transmit/receive rate of 1Mbit/s, and incoming/outgoing packets are dropped with a probability of 10%, and an additional delay of 100ms is applied to all traffic.
-
-#### Instances used
-
-Running the test on fresh instances is relatively time-consuming, mainly due to the time that it takes to build the `mandelbox/base` Docker container, upon which both the server (`browsers/chrome`) and the client (`development/client`) mandelbox are based. More specifically, each E2E run on a fresh instance currently takes about 40mins, so testing under 4 different network conditions would take a total of 160mins.
-We can significantly reduce the test time by reusing instances, which speeds up the build phase thanks to caching. To do so, we created the following two instances on `us-east-1`:
+To speed up the testing process in CI, we reuse two AWS EC2 instances dedicated to the E2E tests:
 
 1. `protocol-integration-tester-client` with instance ID: `i-061d322780ae41d19`
 2. `protocol-integration-tester-server` with instance ID: `i-0ceaa243ec8cfc667`
 
-These instances are started every time a `Protocol: End-to-End Streaming Testing` workflow is run, and stopped once the workflow completes.
+If you need to access the two machines above (i.e. to debug something), you can do so by using the key name `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR` and the corresponding certificate `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR.pem`, which is stored on AWS S3 in the `fractal-dev-secrets/E2E_test_secrets/` folder.
 
-If you need to access the two machines above, you can do so by using the key name `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR` and the corresponding certificate `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR.pem`, which is stored on S3 in the `fractal-dev-secrets/E2E_test_secrets/` folder.
+### Deployment
 
-#### Turnstyle
-
-Because multiple instances of the `Protocol: End-to-End Streaming Testing` can run at once, and we can only run one test at a time on the two instances above, we need a mechanism for the workflow instances to coordinate, so that no two of them run concurrently. We can do this through the Turnstyle Github Action, using [this version](https://github.com/rpadaki/turnstyle) from @rpadaki.
-
-#### Posting logs to S3
-
-Upon completion of the test (no matter if the steps succeeded, failed, were cancelled, or were skipped), we upload all protocol logs to S3. The logs are available at the path `s3://whist-e2e-protocol-test-logs/<branch_name>/datetime`.
-
-After a run of the workflow, you can quickly download the logs from S3 by copying the commands that are printed at the end of the `Upload logs to S3 for debugging purposes` step output on CI and running them in your terminal.
-
-#### Posting results
-
-Upon completion of the test, the `Protocol: End-to-End Streaming Testing` posts the results on a secret GitHub Gist, which is accessible by the link that is printed at the end of the `Parse & Display Test Results` step output on CI. For nightly runs on `dev`, we also post the result on Slack, in the `alerts-dev` channel. When the workflow is triggered by a commit to a branch with an open PR, we also post the results as a comment to that PR's body.
-
-
-
-### The `Protocol: End-to-End Streaming Testing` CI workflow
-
-The `Protocol: End-to-End Streaming Testing` workflow defines a GitHub Action workflow that automatically triggers the End-To-End streaming test from a GitHub runner, retrieves and saves the logs to a AWS S3 bucket once the test is completed, and post the results to GitHub Gist, as a comment on a PR body, and/or on Slack.
-
-This workflows runs nightly on `dev` and on all PRs to `dev`.
-
+The test gets run automatically via the GitHub Actions workflow `protocol-e2e-streaming-testing.yml` nightly at midnight UTC for the `dev` branch, and for all PRs to `dev`, for the originating branch. The results are published as a comment to the originating PR, or to Slack in the case of the nightly runs.

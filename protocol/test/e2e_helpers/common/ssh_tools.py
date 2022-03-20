@@ -175,7 +175,7 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when
                               it is ready to execute a command
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
-    
+
     Returns:
         None
     """

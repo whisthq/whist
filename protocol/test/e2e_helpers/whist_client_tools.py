@@ -63,7 +63,7 @@ def client_setup_process(args_dict):
     client_log = open(client_log_filepath, "w")
     client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
 
-    # If we are using the same instance for client and server, all the operations in this 
+    # If we are using the same instance for client and server, all the operations in this
     # if-statement have already been done by server_setup_process
     if use_two_instances:
         # Initiate the SSH connections with the client instance
