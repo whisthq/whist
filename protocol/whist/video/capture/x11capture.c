@@ -259,6 +259,7 @@ int x11_capture_screen(X11CaptureDevice* device) {
         }
     }
 
+    /*
     // check if the focused window has changed; if so, change damage
     static bool first = true;
     static Window curr_active;
@@ -266,7 +267,7 @@ int x11_capture_screen(X11CaptureDevice* device) {
         curr_active = device->active;
         first = false;
     }
-    Window active_window = get_active_window(device);
+    Window active_window = x11_get_active_window();
     if (active_window != curr_active) {
         LOG_INFO("Focused window changed");
         log_tree(device, active_window);
@@ -274,7 +275,6 @@ int x11_capture_screen(X11CaptureDevice* device) {
         XGetWindowAttributes(device->display, active_window, &attr);
         LOG_INFO("Active width/height: %d %d", attr.width, attr.height);
         curr_active = active_window;
-        /*
         device->root = focus;
         device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
 
@@ -286,8 +286,8 @@ int x11_capture_screen(X11CaptureDevice* device) {
         LOG_INFO("Focus width/height: %d %d", attr.width, attr.height);
         XUnlockDisplay(device->display);
         return 0;
-        */
     }
+    */
 
     // Don't Lock and UnLock Display unneccesarily, if there are no frames to capture
     if (accumulated_frames == 0) return 0;

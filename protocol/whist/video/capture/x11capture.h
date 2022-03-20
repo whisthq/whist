@@ -91,6 +91,6 @@ int x11_capture_screen(X11CaptureDevice* device);
  */
 void destroy_x11_capture_device(X11CaptureDevice* device);
 
-Window x11_get_active_window();
+Window x11_get_active_window(void);
 
 #endif  // CAPTURE_X11CAPTURE_H

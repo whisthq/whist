@@ -71,11 +71,11 @@ static int send_frame_id;
 static int currently_sending_index;
 static NetworkSettings network_settings;
 
-struct DeviceEncoder {
+typedef struct DeviceEncoder {
     CaptureDevice rdevice;
     CaptureDevice* device;
     VideoEncoder* encoder;
-};
+} DeviceEncoder;
 /*
 ============================
 Private Functions
@@ -124,13 +124,17 @@ static int32_t multithreaded_destroy_encoder(void* opaque) {
  * @param true_height       True height of client screen
  * @return                  On success, 0. On failure, -1.
  */
+// this will also take a window
+// device->active_window will be set to that window
+// by calling create_capture_device
 static int32_t create_new_device(WhistServerState* state, WhistTimer* statistics_timer,
                                  CaptureDevice** device, CaptureDevice* rdevice,
-                                 VideoEncoder** encoder, uint32_t true_width,
+                                 VideoEncoder** encoder, WhistWindow window, uint32_t true_width,
                                  uint32_t true_height) {
     start_timer(statistics_timer);
     *device = rdevice;
-    if (create_capture_device(*device, true_width, true_height, state->client_dpi) < 0) {
+    // TODO: dimension mismatch?
+    if (create_capture_device(*device, window, true_width, true_height, state->client_dpi) < 0) {
         LOG_WARNING("Failed to create capture device");
         *device = NULL;
         state->update_device = true;
@@ -579,6 +583,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
     WhistTimer statistics_timer;
 
+    int window_id = 1;
     int id = 1;
     state->update_device = true;
 
@@ -650,6 +655,7 @@ int32_t multithreaded_send_video(void* opaque) {
         int true_width = state->client_width + 7 - ((state->client_width + 7) % 8);
         int true_height = state->client_height + 1 - ((state->client_height + 1) % 2);
 
+        // TODO: handle other client window changes?
         // If we got an update device request, we should update the device
         if (state->update_device) {
             update_current_device(state, &statistics_timer, current_device.device, current_device.encoder, true_width,
@@ -667,18 +673,24 @@ int32_t multithreaded_send_video(void* opaque) {
             }
         }
         if (!has_device) {
+            if (devices[last_created_device_index].device) {
+                LOG_INFO("Destroying device at index %d", last_created_device_index);
+            // TODO: send a message to the client to close the window associated to this device (if needed)
             // destroy the last capture device and encoder if needed
             destroy_capture_device(devices[last_created_device_index].device);
             destroy_video_encoder(devices[last_created_device_index].encoder);
+            }
             last_created_device_index = (last_created_device_index + 1) % MAX_WINDOWS;
 
             if (create_new_device(state, &statistics_timer, &devices[last_created_device_index].device,
             &devices[last_created_device_index].rdevice,
-            &devices[last_created_device_index].encoder, true_width,
+            &devices[last_created_device_index].encoder, active_window, true_width,
                                   true_height) < 0) {
                 continue;
             }
+            LOG_INFO("Created device for window %lu", active_window.window);
             current_device = devices[last_created_device_index];
+            // TODO: send a message to the client to open a new window and possibly close the window we yeeted
             state->stream_needs_restart = true;
         }
 
@@ -878,16 +890,16 @@ int32_t multithreaded_send_video(void* opaque) {
                     // Ensure that the encoder actually generated the
                     // frame type we expected.  If it didn't then
                     // something has gone horribly wrong.
-                    FATAL_ASSERT(encoder->frame_type == frame_type);
+                    FATAL_ASSERT(current_device.encoder->frame_type == frame_type);
                 }
                 log_double_statistic(VIDEO_ENCODE_TIME,
                                      get_timer(&statistics_timer) * MS_IN_SECOND);
 
-                if (encoder->encoded_frame_size != 0) {
-                    if (encoder->encoded_frame_size > MAX_VIDEOFRAME_DATA_SIZE) {
+                if (current_device.encoder->encoded_frame_size != 0) {
+                    if (current_device.encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
                         // Please make MAX_VIDEOFRAME_DATA_SIZE larger if this error happens
-                        LOG_ERROR("Frame of size %zu bytes is too large! Dropping Frame.",
-                                  encoder->encoded_frame_size);
+                        LOG_ERROR("Frame of size %d bytes is too large! Dropping Frame.",
+                                  current_device.encoder->encoded_frame_size);
                         continue;
                     } else {
                         if (SAVE_VIDEO_OUTPUT) {
@@ -896,18 +908,12 @@ int32_t multithreaded_send_video(void* opaque) {
                             }
                             fflush(fp);
                         }
-<<<<<<< HEAD
-                        send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
-                                              encoder, id, client_input_timestamp,
-=======
-#endif
                         send_populated_frames(state, &statistics_timer, &server_frame_timer, current_device.device,
                                               current_device.encoder, id, client_input_timestamp,
->>>>>>> e4f6d29ec (Multiple devices and encoders in multithreaded_send_video)
                                               server_timestamp);
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
-                        log_double_statistic(VIDEO_FRAME_SIZE, encoder->encoded_frame_size);
+                        log_double_statistic(VIDEO_FRAME_SIZE, current_device.encoder->encoded_frame_size);
                         log_double_statistic(VIDEO_FRAME_PROCESSING_TIME,
                                              get_timer(&server_frame_timer) * 1000);
                         if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(encoder->frame_type))

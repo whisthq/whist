@@ -212,6 +212,7 @@ int create_capture_device(CaptureDevice* device, WhistWindow window, uint32_t wi
         Returns:
             (int): 0 on success, -1 on failure
     */
+    static int id = 1;
     // make sure we can create the device
     if (device == NULL) {
         LOG_ERROR("NULL device was passed into create_capture_device");
@@ -284,11 +285,14 @@ int create_capture_device(CaptureDevice* device, WhistWindow window, uint32_t wi
                                                      "multithreaded_nvidia_manager", device);
         whist_post_semaphore(device->nvidia_device_semaphore);
     }
+    device->active_window = window;
+    device->id = id;
+    id++;
 
     // Create the X11 capture device; when the nvidia manager thread finishes creation, active
     // capture device will change
     device->active_capture_device = X11_DEVICE;
-    device->x11_capture_device = create_x11_capture_device(window.active_window, width, height, dpi);
+    device->x11_capture_device = create_x11_capture_device(window.window, width, height, dpi);
     if (device->x11_capture_device) {
         return 0;
     } else {
@@ -476,7 +480,7 @@ int transfer_screen(CaptureDevice* device) {
 WhistWindow get_active_window() {
     Window w = x11_get_active_window();
     WhistWindow a = {0};
-    a.active_window = w;
+    a.window = w;
     // do whatever other setup we'd need
     return a;
 }

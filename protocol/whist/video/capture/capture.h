@@ -32,6 +32,7 @@ Custom Types
 ============================
 */
 
+// TODO: more members needed?
 typedef struct WhistWindow {
 #ifdef __linux__
     Window window;
@@ -39,6 +40,7 @@ typedef struct WhistWindow {
 } WhistWindow;
 
 typedef struct CaptureDevice {
+    int id;
     int width;
     int height;
     int pitch;
@@ -144,7 +146,7 @@ void file_capture_set_input_filename(const char* filename);
  * 
  * @returns A WhistWindow struct with the current window
  */
-WhistWindow get_active_window();
+WhistWindow get_active_window(void);
 
 bool device_has_window(CaptureDevice* device, WhistWindow window);
 
