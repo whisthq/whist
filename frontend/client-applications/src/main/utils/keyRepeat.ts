@@ -32,7 +32,8 @@ const getInitialKeyRepeat = () => {
   } else if (process.platform === "darwin" && initialKeyRepeat !== "") {
     // Convert the key repetition delay from Mac scale (shortest=15, longest=120) to Linux scale (shortest=115, longest=INFINITY)
     const initialKeyRepeatFloat =
-      parseInt(initialKeyRepeat) * INITIAL_KEY_REPEAT_MAC_TO_LINUX_CONVERSION_FACTOR
+      parseInt(initialKeyRepeat) *
+      INITIAL_KEY_REPEAT_MAC_TO_LINUX_CONVERSION_FACTOR
     initialKeyRepeat = initialKeyRepeatFloat.toFixed()
   }
 
