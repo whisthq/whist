@@ -60,12 +60,8 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
 fi
 
-
-
-
-
-# Most keys on macOS do not repeat, but all keys repeat on Linux. We turn off key repeat on Linux to match
-# the macOS behavior. This needs to be done *after* setting the key repeat rate above.
+# Most keys on macOS do not repeat, but all keys repeat on Linux. We turn off key repeat on certain Linux keys
+# to match the macOS behavior. This needs to be done *after* setting the key repeat rate above.
 # Keycodes obtianed from: https://gist.github.com/rickyzhang82/8581a762c9f9fc6ddb8390872552c250#file-keycode-linux-L91
 keys_to_turn_off_repeat=(
   9   # ESC
@@ -132,15 +128,17 @@ keys_to_turn_off_repeat=(
   117 # Menu (-> International)
   109 # Ctrl Right
 )
-
 for keycode in "${keys_to_turn_off_repeat[@]}"
 do
   xset -r "$keycode"
 done
 
+# Set all JSON transport-related settings
+# We set the TZ environment variable (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
+# in order to automatically adjust the timezone at the lower layers
+export TZ=$DESIRED_TIMEZONE
 export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
-export TZ=$DESIRED_TIMEZONE # Setting the TZ environment variable (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html) in order to automatically adjust the timezone at the lower layers
 export INITIAL_URL=$INITIAL_URL
 export USER_AGENT="$USER_AGENT"
 export KIOSK_MODE=$KIOSK_MODE
