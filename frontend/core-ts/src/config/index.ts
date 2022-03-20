@@ -2,7 +2,7 @@
     All environment variables.
 */
 const configs = {
-  DEVELOPMENT: { // LOCAL would be the same as DEVELOPMENT here
+  DEVELOPMENT: { // LOCAL would be the same as DEVELOPMENT here, so we omit it
     urls: {
       WEBSERVER_URL: "https://dev-server.whist.com",
       CLIENT_CALLBACK_URL: "http://localhost/callback",
@@ -38,9 +38,12 @@ const configs = {
 }
 
 export const config = (() => {
-  // This should be local, dev, staging or prod
-  const devEnv = process.env.ENVIRONMENT as string ?? "dev"
-  switch (devEnv) {
+  // This value gets set by the client application at build time.
+  // Acceptable values: local|dev|staging|prod
+  const appEnvironment = process.env.CORE_TS_ENVIRONMENT as string
+  switch (appEnvironment) {
+    case "local":
+      return configs.DEVELOPMENT
     case "dev":
       return configs.DEVELOPMENT
     case "staging":
@@ -49,7 +52,7 @@ export const config = (() => {
       return configs.PRODUCTION
     default:
       console.warn(
-        `Got an unrecognized ENVIRONMENT: ${devEnv}. Defaulting to "DEVELOPMENT"}`
+        `Got an unrecognized ENVIRONMENT: ${appEnvironment}. Defaulting to "DEVELOPMENT"}`
       )
       return configs.DEVELOPMENT
   }

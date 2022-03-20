@@ -9,7 +9,7 @@ import {
 } from "../../config/configs"
 
 const getDevelopmentConfig = () => {
-  const devEnv = process.env.DEVELOPMENT_ENV as string
+  const devEnv = process.env.DEVELOPMENT_ENV as string // SPAGHETTI TODO
   switch (devEnv) {
     case WhistEnvironments.LOCAL:
       return configs.LOCAL
@@ -47,7 +47,7 @@ const getProductionConfig = () => {
 }
 
 export const config =
-  process.env.NODE_ENV === WhistNodeEnvironments.DEVELOPMENT
+  process.env.NODE_ENV === WhistNodeEnvironments.DEVELOPMENT // SPAGHETTI TODO
     ? getDevelopmentConfig()
     : getProductionConfig()
 

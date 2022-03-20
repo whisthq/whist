@@ -52,5 +52,5 @@ if (require.main === module) {
     })
     .help().argv
 
-  packageNotarize({}, argv.config, argv.version, argv.commit)
+  packageNotarize({}, argv.version, argv.commit)
 }
