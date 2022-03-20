@@ -279,7 +279,7 @@ if __name__ == "__main__":
         print(f"Comparing to branch {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
         results_file = open(f"streaming_e2e_test_results_{i+1}.md", "w")
-        results_file.write(f"## Results compared to branch `{compared_branch_name}`\n")
+        results_file.write(f"## Results compared to branch: `{compared_branch_name}`\n")
         for j, experiment in enumerate(experiments):
             results_file.write(
                 f"### Experiment {j+1} - Network Conditions: {experiment['human_readable_network_conditions']}\n"
@@ -374,15 +374,25 @@ if __name__ == "__main__":
 
     gist_url = create_github_gist_post(github_gist_token, title, files_list)
 
-    test_outcome_verb = "succeeded :white_check_mark:"
+    test_outcome = ":white_check_mark: All experiments succeeded!"
     for outcome in e2e_script_outcomes:
-        test_outcome_verb = ":x: " + str(outcome)
+        if outcome != "success":
+            test_outcome = ":x: " + str(outcome)
 
     # Post updates to Slack channel if desired
     if slack_webhook and post_results_on_slack:
+        if test_outcome == ":white_check_mark: All experiments succeeded!":
+            body = (
+                f":white_check_mark: Whist daily E2E test results available for branch: `{current_branch_name}`: {gist_url}",
+            )
+        else:
+            body = (
+                f"@releases :rotating_light: Whist daily E2E test failed! {test_outcome} - investigate immediately: {gist_url}",
+            )
+
         slack_post(
             slack_webhook,
-            body=f"Whist daily E2E test results available for branch: `{current_branch_name}`! The test {test_outcome_verb}. Check out the details here: {gist_url}\n",
+            body=body,
             slack_username="Whist Bot",
             title=f":rocket::bar_chart: {title} :rocket::bar_chart:",
         )

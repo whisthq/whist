@@ -465,7 +465,7 @@ if __name__ == "__main__":
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
     # we need to pass the client for it to connect
     server_docker_id, server_configs_data = run_server_on_instance(server_pexpect_process)
-    
+
     # Augment the configs with the initial URL we want to visit
     server_configs_data["initial_url"] = testing_url
 

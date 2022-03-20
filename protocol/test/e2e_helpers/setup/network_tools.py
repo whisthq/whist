@@ -9,6 +9,7 @@ from e2e_helpers.common.ssh_tools import (
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
+
 def setup_artificial_network_conditions(
     pexpect_process, pexpect_prompt, network_conditions, running_in_ci
 ):

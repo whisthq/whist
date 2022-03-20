@@ -15,6 +15,7 @@ from e2e_helpers.common.ssh_tools import (
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
+
 def install_and_configure_aws(
     pexpect_process,
     pexpect_prompt,
@@ -34,7 +35,7 @@ def install_and_configure_aws(
         running_in_ci: A boolean indicating whether this script is currently running in CI
         aws_credentials_filepath: The path to the file where AWS stores the credentials on
                                   the machine where this script is run
-    
+
     Returns:
         True if the AWS installation and configuration succeeded, False otherwise.
     """
@@ -53,7 +54,7 @@ def install_and_configure_aws(
             print(f"Could not find local AWS credential file at path {aws_credentials_filepath}!")
             sys.exit(-1)
         aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
-        
+
         # Read the AWS configuration file
         for line in aws_credentials_file.readlines():
             if "aws_access_key_id" in line:
@@ -271,7 +272,7 @@ def start_host_service(pexpect_process, pexpect_prompt):
     Args:
         pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact with
                          the remote machine
-    
+
     Returns:
         None
     """
