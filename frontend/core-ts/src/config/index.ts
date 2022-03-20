@@ -43,7 +43,6 @@ export const config = (() => {
   const appEnvironment = process.env.CORE_TS_ENVIRONMENT as string
   switch (appEnvironment) {
     case "local":
-      return configs.DEVELOPMENT
     case "dev":
       return configs.DEVELOPMENT
     case "staging":
