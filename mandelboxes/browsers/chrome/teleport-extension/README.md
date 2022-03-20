@@ -1,6 +1,6 @@
 # Whist Teleport Extension
 
-This project contains the server-side Whist Chromium extension, known as Whist Teleport. It is a browser extension that we install on all server-side browsers (Chrome, Brave) we run, to allow Whist to correlate the state of the server-side browser with the state of the client-side browser (for instance, for file upload and tab switching).
+This project contains the server-side Whist Chromium extension, known as Whist Teleport. It is a browser extension that we install on all server-side browsers (Chrome, Brave) we run, to allow Whist to correlate the state of the server-side browser with the state of the client-side browser (for instance, for file upload and tab switching, but also for some minor QoL improvements to the server-side Chromium experience, like a welcome page).
 
 ## Development
 
