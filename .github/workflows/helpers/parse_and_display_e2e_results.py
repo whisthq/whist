@@ -267,7 +267,7 @@ if __name__ == "__main__":
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
             if experiment["dirname"] is not None:
                 summary_file.write(
-                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - {e2e_script_outcomes[i]}. Download logs (if they exist) with command: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - {e2e_script_outcomes[i]}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
                 )
             else:
                 summary_file.write(
@@ -279,7 +279,7 @@ if __name__ == "__main__":
         print(f"Comparing to branch {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
         results_file = open(f"streaming_e2e_test_results_{i+1}.md", "w")
-        results_file.write(f"## Results compared to branch {compared_branch_name}\n")
+        results_file.write(f"## Results compared to branch `{compared_branch_name}`\n")
         for j, experiment in enumerate(experiments):
             results_file.write(
                 f"### Experiment {j+1} - Network conditions: {experiment['human_readable_network_conditions']}\n"
