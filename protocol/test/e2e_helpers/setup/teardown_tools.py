@@ -276,6 +276,8 @@ def complete_experiment_and_save_results(
         role="client",
     )
 
+    sys.exit(-1)
+
     # 4- Clean up the instance(s) by stopping all docker containers and quitting the host-service.
     # Exit the server/client mandelboxes
     server_mandelbox_pexpect_process.sendline("exit")
