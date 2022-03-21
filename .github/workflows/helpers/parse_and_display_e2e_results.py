@@ -113,12 +113,17 @@ if __name__ == "__main__":
     if not os.environ.get("GITHUB_GIST_TOKEN") or not os.environ.get("GITHUB_TOKEN"):
         print("GITHUB_GIST_TOKEN and GITHUB_TOKEN not set. Cannot post results to Gist/GitHub!")
         sys.exit(-1)
-    if not os.environ.get("SLACK_WEBHOOK"):
-        print("SLACK_WEBHOOK is not set. This means we won't be able to post the results on Slack.")
+    if not os.environ.get("GITHUB_RUN_ID"):
+        print("Not running in CI, so we won't post the results on Slack!")
+        if not os.environ.get("SLACK_WEBHOOK"):
+            print(
+                "SLACK_WEBHOOK is not set. This means we won't be able to post the results on Slack."
+            )
 
     github_ref_name = os.environ["GITHUB_REF_NAME"]
     github_gist_token = os.environ["GITHUB_GIST_TOKEN"]
     github_token = os.environ["GITHUB_TOKEN"]
+    github_run_id = os.environ.get("GITHUB_RUN_ID")
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
 
     current_branch_name = ""
@@ -381,14 +386,15 @@ if __name__ == "__main__":
             test_outcome = ":x: " + str(outcome)
 
     # Post updates to Slack channel if desired
-    if slack_webhook and post_results_on_slack:
+    if slack_webhook and post_results_on_slack and github_run_id:
+        link_to_runner_logs = f"https://github.com/whisthq/whist/actions/runs/{github_run_id}"
         if test_outcome == ":white_check_mark: All experiments succeeded!":
             body = (
-                f":white_check_mark: Whist daily E2E test results available for branch: `{current_branch_name}`: {gist_url}",
+                f":white_check_mark: All E2E experiments succeeded <{link_to_runner_logs}|(see logs)>! Whist daily E2E test results available for branch: `{current_branch_name}`: {gist_url}",
             )
         else:
             body = (
-                f"@releases :rotating_light: Whist daily E2E test failed! {test_outcome} - investigate immediately: {gist_url}",
+                f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {gist_url}",
             )
 
         slack_post(
