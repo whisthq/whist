@@ -126,6 +126,7 @@ typedef struct {
 
 // Newer out-of-order values will get this weightage in EWMA filter
 #define OUT_OF_ORDER_EWMA_FACTOR 0.01
+// Number of pings currently in-between the client and server
 // Let's choose a nearest power of two, greater than (UDP_PONG_TIMEOUT / UDP_PING_INTERVAL)
 #define MAX_PINGS_IN_FLIGHT 64
 
