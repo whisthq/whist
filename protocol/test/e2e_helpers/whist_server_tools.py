@@ -71,7 +71,6 @@ def server_setup_process(args_dict):
     result = install_and_configure_aws(
         hs_process,
         pexpect_prompt_server,
-        aws_timeout_seconds,
         running_in_ci,
         aws_credentials_filepath,
     )
