@@ -79,8 +79,8 @@ const Onboarding = (props: { onSubmit: () => void }) => {
         <FeaturesUnderDevelopment key={7} />,
         <TurnOffVPN key={8} />,
         <LiveChatSupport key={9} />,
-        <Pricing key={10} />,
-        <FollowUsOnTwitter key={11} />,
+        <FollowUsOnTwitter key={10} />,
+        <Pricing key={11} />,
         <NetworkTest key={12} />,
       ]}
       onSubmit={props.onSubmit}
