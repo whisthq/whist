@@ -81,7 +81,6 @@ const Onboarding = (props: { onSubmit: () => void }) => {
         <LiveChatSupport key={9} />,
         <FollowUsOnTwitter key={10} />,
         <Pricing key={11} />,
-        <NetworkTest key={12} />,
       ]}
       onSubmit={props.onSubmit}
     />
