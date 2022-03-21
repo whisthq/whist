@@ -27,7 +27,6 @@ Includes
 #include "whist/core/features.h"
 #include "network.h"
 #include "client_utils.h"
-#include "client_statistic.h"
 #include "audio.h"
 
 // Data

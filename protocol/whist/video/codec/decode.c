@@ -23,7 +23,6 @@ Includes
 */
 #include "decode.h"
 #include <whist/logging/log_statistic.h>
-#include <client/client_statistic.h>
 
 #include <stdio.h>
 #include <stdlib.h>

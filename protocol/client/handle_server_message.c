@@ -31,7 +31,6 @@ Includes
 #include "audio.h"
 #include "network.h"
 #include "sdl_utils.h"
-#include "client_statistic.h"
 
 #include <stddef.h>
 

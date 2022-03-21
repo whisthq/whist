@@ -641,44 +641,36 @@ TEST_F(ProtocolTest, LoggerOverflowTest) {
  * logging/log_statistic.c
  **/
 TEST_F(ProtocolTest, LogStatistic) {
-    StatisticInfo statistic_info[] = {
-        {"TEST1", true, true, false},
-        {"TEST2", false, false,
-         true},  // Turn on averaging over time, so the count will measure time elapsed.
-        {"TEST3", true, true, false},  // Don't log this. Want to check for "count == 0" condition
-    };
     whist_init_logger();
-    whist_init_statistic_logger(3, NULL, 2);
     flush_logs();
     expect_thread_logs("Logger Thread");
     check_stdout_line(::testing::HasSubstr("Logging initialized!"));
-    check_stdout_line(::testing::HasSubstr("StatisticInfo is NULL"));
 
-    log_double_statistic(0, 10.0);
+    log_double_statistic(VIDEO_E2E_LATENCY, 10.0);
     flush_logs();
     check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
 
-    whist_init_statistic_logger(3, statistic_info, 2);
-    log_double_statistic(3, 10.0);
+    whist_init_statistic_logger(2);
+    log_double_statistic(NUM_METRICS, 10.0);
     flush_logs();
     check_stdout_line(::testing::HasSubstr("index is out of bounds"));
-    log_double_statistic(4, 10.0);
+    log_double_statistic(NUM_METRICS + 1, 10.0);
     flush_logs();
     check_stdout_line(::testing::HasSubstr("index is out of bounds"));
-    log_double_statistic(0, 10.0);
-    log_double_statistic(0, 21.5);
-    log_double_statistic(1, 30.0);
-    log_double_statistic(1, 20.0);
+    log_double_statistic(VIDEO_E2E_LATENCY, 10.0);
+    log_double_statistic(VIDEO_E2E_LATENCY, 21.5);
+    log_double_statistic(VIDEO_FPS_SENT, 30.0);
+    log_double_statistic(VIDEO_FPS_SENT, 20.0);
     whist_sleep(2010);
-    log_double_statistic(1, 60.0);
+    log_double_statistic(VIDEO_FPS_SENT, 60.0);
     flush_logs();
     // Log format is: "NAME": count,sum,sum_of_squares,sum_with_offset where the offset is the first
     // value, sum_with_offset is just the sum of differences between each value and the offset, and
     // the sum of squares is the sum of all the squares: (val - offset)^2
-    check_stdout_line(::testing::HasSubstr("\"TEST1\" : 15.8, \"COUNT\": 2"));
-    check_stdout_line(::testing::HasSubstr("\"MAX_TEST1\" : 21.50"));
-    check_stdout_line(::testing::HasSubstr("\"MIN_TEST1\" : 10.00"));
-    check_stdout_line(::testing::HasSubstr("\"TEST2\" : 55.0, \"COUNT\": 2"));
+    check_stdout_line(::testing::HasSubstr("\"VIDEO_FPS_SENT\" : 55.0, \"COUNT\": 2"));
+    check_stdout_line(::testing::HasSubstr("\"VIDEO_END_TO_END_LATENCY\" : 15.8, \"COUNT\": 2"));
+    check_stdout_line(::testing::HasSubstr("\"MAX_VIDEO_END_TO_END_LATENCY\" : 21.50"));
+    check_stdout_line(::testing::HasSubstr("\"MIN_VIDEO_END_TO_END_LATENCY\" : 10.00"));
 
     destroy_statistic_logger();
     destroy_logger();

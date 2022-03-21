@@ -4,7 +4,6 @@
 #include <whist/utils/threads.h>
 #include <whist/logging/log_statistic.h>
 #include "throttle.h"
-#include <server/server_statistic.h>
 #include <whist/network/network_algorithm.h>
 
 // Set this to something very low. Throttler will work as expected only if

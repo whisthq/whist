@@ -27,7 +27,6 @@ Includes
 #include "video.h"
 #include "sync_packets.h"
 #include "client_utils.h"
-#include "client_statistic.h"
 
 // Updater variables
 extern SocketContext packet_udp_context;

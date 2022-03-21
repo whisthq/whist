@@ -1,7 +1,6 @@
 #include "nvidia_encode.h"
 #include "../cudacontext.h"
 #include <whist/logging/log_statistic.h>
-#include <server/server_statistic.h>
 #include "whist/core/features.h"
 
 #include <dlfcn.h>

@@ -20,7 +20,6 @@ Includes
 #include "state.h"
 #include "parse_args.h"
 #include "handle_client_message.h"
-#include "server_statistic.h"
 #include "notifications.h"
 
 /*
@@ -359,9 +358,7 @@ int main(int argc, char* argv[]) {
 
     whist_init_subsystems();
 
-    whist_init_server_statistics();
-    whist_init_statistic_logger(SERVER_NUM_METRICS, server_statistic_info,
-                                STATISTICS_FREQUENCY_IN_SEC);
+    whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
     whist_server_state_init(&server_state, &config);
 

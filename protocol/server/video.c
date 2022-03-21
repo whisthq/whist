@@ -44,7 +44,6 @@ Includes
 #include "network.h"
 #include "video.h"
 #include "state.h"
-#include "server_statistic.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")

@@ -48,7 +48,6 @@ Includes
 #include <SDL2/SDL_syswm.h>
 #include <whist/utils/color.h>
 #include "native_window_utils.h"
-#include "client_statistic.h"
 #include "renderer.h"
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
@@ -300,9 +299,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // the logic inside guarantees debug console is only enabled for debug build
     init_debug_console();
 
-    init_client_statistics();
-    whist_init_statistic_logger(CLIENT_NUM_METRICS, client_statistic_info,
-                                STATISTICS_FREQUENCY_IN_SEC);
+    whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
     handle_single_icon_launch_client_app(argc, argv);
 

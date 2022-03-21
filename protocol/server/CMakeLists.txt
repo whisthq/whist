@@ -10,7 +10,6 @@ add_executable(WhistServer
         main.c
         handle_client_message.c
         network.c
-        server_statistic.c
         notifications.c
         )
 

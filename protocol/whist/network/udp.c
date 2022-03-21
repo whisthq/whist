@@ -1831,9 +1831,8 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     start_timer(&context->last_pong_timer);
 
     double ping_time = (current_time_us() - ping_send_timestamp) / (double)US_IN_SECOND;
-    // TODO: Make this work for client and server
-    // log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
 
+    log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
     LOG_INFO("Pong %d received: took %f milliseconds", id, ping_time * MS_IN_SECOND);
 
     // Calculate latency
