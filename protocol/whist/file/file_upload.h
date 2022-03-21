@@ -9,4 +9,7 @@
  */
 const char *whist_file_upload_get_picked_file(void);
 
+// TODO: Add docstring
+const char *whist_multi_file_upload_get_picked_file(void);
+
 #endif  // WHIST_FILE_UPLOAD_H

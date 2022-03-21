@@ -99,6 +99,7 @@ static char* new_tab_url;
 
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
+extern bool upload_multi;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
@@ -248,18 +249,32 @@ static void initiate_file_upload(void) {
         Pull up system file dialog and set selection as transfering file
     */
 
-    const char* ns_picked_file_path = whist_file_upload_get_picked_file();
-    if (ns_picked_file_path) {
-        file_synchronizer_set_file_reading_basic_metadata(ns_picked_file_path,
-                                                          FILE_TRANSFER_SERVER_UPLOAD, NULL);
-        LOG_INFO("Upload has been initiated");
+    // Handle uploads differently FIXME: WAY better way to handle this logic (should only be one
+    // objective c method with flags etc etc
+    if (upload_multi) {
+        const char* last_picked_file_path = whist_multi_file_upload_get_picked_file();
+        if (last_picked_file_path == NULL) {
+            LOG_INFO("No multi file selected");
+            WhistClientMessage wcmsg = {0};
+            wcmsg.type = MESSAGE_FILE_UPLOAD_CANCEL;
+            send_wcmsg(&wcmsg);
+        }
     } else {
-        LOG_INFO("No file selected");
-        WhistClientMessage wcmsg = {0};
-        wcmsg.type = MESSAGE_FILE_UPLOAD_CANCEL;
-        send_wcmsg(&wcmsg);
+        const char* ns_picked_file_path = whist_file_upload_get_picked_file();
+        if (ns_picked_file_path) {
+            file_synchronizer_set_file_reading_basic_metadata(ns_picked_file_path,
+                                                              FILE_TRANSFER_SERVER_UPLOAD, NULL);
+            LOG_INFO("Upload has been initiated");
+        } else {
+            LOG_INFO("No file selected");
+            WhistClientMessage wcmsg = {0};
+            wcmsg.type = MESSAGE_FILE_UPLOAD_CANCEL;
+            send_wcmsg(&wcmsg);
+        }
     }
+
     upload_initiated = false;
+    upload_multi = false;
 }
 
 static void send_new_tab_url_if_needed(void) {

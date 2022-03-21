@@ -37,6 +37,7 @@ Includes
 
 bool client_exiting = false;
 bool upload_initiated = false;
+bool upload_multi = false;
 extern int audio_frequency;
 
 /*
@@ -53,7 +54,7 @@ static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
 static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
-static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size, bool multi);
 
 /*
 ============================
@@ -94,7 +95,9 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
         case SMESSAGE_NOTIFICATION:
             return handle_notification_message(wsmsg, wsmsg_size);
         case SMESSAGE_INITIATE_UPLOAD:
-            return handle_upload_message(wsmsg, wsmsg_size);
+            return handle_upload_message(wsmsg, wsmsg_size, false);
+        case SMESSAGE_INITIATE_MULTI_UPLOAD:
+            return handle_upload_message(wsmsg, wsmsg_size, true);
         default:
             LOG_WARNING("Unknown WhistServerMessage Received (type: %d)", wsmsg->type);
             return -1;
@@ -271,7 +274,7 @@ static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_s
     return 0;
 }
 
-static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size, bool multi) {
     /*
         Handle initiate upload trigger message from server.
         The macOS filepicker must be called from the main thread and this function does
@@ -289,6 +292,7 @@ static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     */
 
     upload_initiated = true;
+    upload_multi = multi;
     LOG_INFO("Received upload trigger from server");
     return 0;
 }

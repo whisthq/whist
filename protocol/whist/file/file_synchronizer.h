@@ -83,6 +83,7 @@ typedef union FileEventInfo {
         int32_t x;  // x-coordinate of file drop
         int32_t y;  // y-coordinate of file drop
     } server_drop;
+    int group_size;
 } FileEventInfo;
 
 /**
