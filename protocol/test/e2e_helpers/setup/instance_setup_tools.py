@@ -31,7 +31,6 @@ def install_and_configure_aws(
                          to interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
                         is ready to execute a command
-        aws_timeout_seconds: Timeout to be used for the Pexpect process.
         running_in_ci: A boolean indicating whether this script is currently running in CI
         aws_credentials_filepath: The path to the file where AWS stores the credentials on
                                   the machine where this script is run
