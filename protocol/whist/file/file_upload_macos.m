@@ -46,7 +46,7 @@ const char* whist_multi_file_upload_get_picked_file(void) {
     [open_panel setCanChooseFiles:YES];
     [open_panel setCanChooseDirectories:NO];
     [open_panel setCanCreateDirectories:NO];
-    [open_panel setMessage:@"Upload File to Whist"];
+    [open_panel setMessage:@"Upload Files to Whist"];
     [open_panel setPrompt:@"Upload"];
     FileEventInfo upload_event_info;
 
