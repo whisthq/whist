@@ -5,7 +5,6 @@ import sys
 import time
 import json
 import boto3
-import numpy as np
 from datetime import datetime, timedelta
 
 # add the current directory to the path no matter where this is called from

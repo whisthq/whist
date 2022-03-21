@@ -2,12 +2,7 @@
 
 import os
 import sys
-import time
-import boto3
-import json
-import subprocess
 import argparse
-import numpy as np
 import glob
 from datetime import datetime, timedelta
 
@@ -16,6 +11,7 @@ from notifications.slack_bot import slack_post
 from notifications.github_bot import github_comment_update
 
 from protocol.e2e_streaming_test_display_helpers.table_tools import (
+    network_conditions_to_readable_form,
     generate_results_table,
     generate_comparison_table,
 )
@@ -96,15 +92,22 @@ parser.add_argument(
 
 
 if __name__ == "__main__":
+    # Get script arguments
     args = parser.parse_args()
-
-    # Check if the E2E run was skipped or cancelled, in which case we skip this
+    post_results_on_slack = args.post_results_on_slack == "true"
     e2e_script_outcomes = args.e2e_script_outcomes
+    network_conditions_matching_way = args.network_conditions_matching_way
+    logs_root_dir = args.perf_logs_path
+    compared_branch_names = list(
+        dict.fromkeys(args.compared_branch_names)
+    )  # Remove duplicates but maintain order
+
+    # Check if the E2E run was skipped or cancelled, in which case we don't have any data to display
     if "success" not in e2e_script_outcomes and "failure" not in e2e_script_outcomes:
         print(f"E2E run was {e2e_script_outcomes[0]}! No results to parse/display.")
         sys.exit(-1)
 
-    # Grab environmental variables of interest
+    # Grab environment variables of interest, and check that required ones are set
     if not os.environ.get("GITHUB_REF_NAME"):
         print(
             "GITHUB_REF_NAME is not set! If running locally, set GITHUB_REF_NAME to the name of the current git branch."
@@ -119,7 +122,6 @@ if __name__ == "__main__":
             print(
                 "SLACK_WEBHOOK is not set. This means we won't be able to post the results on Slack."
             )
-
     github_ref_name = os.environ["GITHUB_REF_NAME"]
     github_gist_token = os.environ["GITHUB_GIST_TOKEN"]
     github_token = os.environ["GITHUB_TOKEN"]
@@ -135,8 +137,6 @@ if __name__ == "__main__":
     else:
         current_branch_name = os.getenv("GITHUB_HEAD_REF")
 
-    post_results_on_slack = args.post_results_on_slack == "true"
-
     # A list of metrics to display (if found) in main table
     most_interesting_metrics = {
         "VIDEO_FPS_RENDERED",
@@ -150,10 +150,7 @@ if __name__ == "__main__":
         "MAX_AUDIO_FPS_SKIPPED",
     }
 
-    network_conditions_matching_way = args.network_conditions_matching_way
-
     # Find the path to the folder with the most recent E2E protocol logs
-    logs_root_dir = args.perf_logs_path
     test_start_time = ""
     if not os.path.isdir(logs_root_dir):
         print(f"Error, logs folder {logs_root_dir} does not exist!")
@@ -163,26 +160,19 @@ if __name__ == "__main__":
     current_time = datetime.now()
     last_hour = current_time - timedelta(hours=1)
 
-    # Convert to list
-    logs_root_dirs = [logs_root_dir]
-
-    for folder_name in sorted(os.listdir(logs_root_dirs[0])):
+    # Create list of logs dirs with logs
+    logs_root_dirs = []
+    for folder_name in sorted(os.listdir(logs_root_dir)):
         if (
             current_time.strftime("%Y_%m_%d@") in folder_name
             or last_hour.strftime("%Y_%m_%d@") in folder_name
         ):
-            logs_root_dirs.append(os.path.join(logs_root_dirs[0], folder_name))
+            logs_root_dirs.append(os.path.join(logs_root_dir, folder_name))
             if test_start_time == "":
                 test_start_time = folder_name
-    if len(logs_root_dirs) == 1:
+    if len(logs_root_dirs) == 0:
         print("Error: protocol logs not found!")
         sys.exit(-1)
-
-    # Remove duplicates but maintain order
-    compared_branch_names = list(dict.fromkeys(args.compared_branch_names))
-
-    # Remove first element
-    logs_root_dirs = logs_root_dirs[1:]
 
     print("Found logs for the following experiments: ")
     experiments = []
@@ -194,34 +184,10 @@ if __name__ == "__main__":
         experiment_metadata = parse_metadata(log_dir)
 
         # Get network conditions, and format them in human-readable form
-        network_conditions = "normal"
+        network_conditions = "unknown"
         if experiment_metadata and "network_conditions" in experiment_metadata:
             network_conditions = experiment_metadata["network_conditions"]
-        human_readable_network_conditions = network_conditions
-        if len(human_readable_network_conditions.split(",")) == 3:
-            human_readable_network_conditions = human_readable_network_conditions.split(",")
-            bandwidth = (
-                human_readable_network_conditions[0]
-                if human_readable_network_conditions[0] != "none"
-                else "full available"
-            )
-            delay = (
-                human_readable_network_conditions[1] + " ms"
-                if human_readable_network_conditions[1] != "none"
-                else human_readable_network_conditions[1]
-            )
-            packet_drops = (
-                "{:.2f}%".format(float(human_readable_network_conditions[2]) * 100.0)
-                if human_readable_network_conditions[2] != "none"
-                else human_readable_network_conditions[2]
-            )
-            human_readable_network_conditions = (
-                f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}"
-            )
-        elif human_readable_network_conditions == "normal":
-            human_readable_network_conditions = (
-                f"Bandwidth: maximum available, Delay: none, Packet Drops: none"
-            )
+        human_readable_network_conditions = network_conditions_to_readable_form(network_conditions)
 
         client_metrics = None
         server_metrics = None
@@ -237,15 +203,17 @@ if __name__ == "__main__":
             "experiment_metadata": experiment_metadata,
             "client_metrics": client_metrics,
             "server_metrics": server_metrics,
-            "network_conditions": network_conditions
-            if (client_metrics is not None and server_metrics is not None)
-            else "unknown",
-            "human_readable_network_conditions": human_readable_network_conditions
-            if (client_metrics is not None and server_metrics is not None)
-            else "unknown",
+            "network_conditions": "unknown",
+            "human_readable_network_conditions": "unknown",
             "outcome": e2e_script_outcomes[i],
             "dirname": os.path.basename(log_dir),
         }
+
+        if client_metrics is not None and server_metrics is not None:
+            experiment_entry["network_conditions"] = network_conditions
+            experiment_entry[
+                "human_readable_network_conditions"
+            ] = human_readable_network_conditions
 
         experiments.append(experiment_entry)
         found_error = client_metrics is None or server_metrics is None

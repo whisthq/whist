@@ -3,13 +3,7 @@
 import os
 import sys
 import subprocess
-from pytablewriter import MarkdownTableWriter
-from contextlib import redirect_stdout
-from datetime import datetime, timedelta
-
 from github import Github, InputFileContent
-from notifications.slack_bot import slack_post
-from notifications.github_bot import github_comment_update
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))

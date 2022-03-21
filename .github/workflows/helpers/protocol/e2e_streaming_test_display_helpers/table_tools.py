@@ -4,7 +4,6 @@ import os
 import sys
 from pytablewriter import MarkdownTableWriter
 from contextlib import redirect_stdout
-from datetime import datetime, timedelta
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -12,6 +11,50 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
     compute_deltas,
 )
+
+
+def network_conditions_to_readable_form(network_conditions):
+    """
+    Creates a human-readable string to describe the network conditions used in the E2E test.
+
+    Args:
+        network_conditions (str):   the network conditions in a standardized, succinct format. The string is set
+                                    to 'normal' if no artificial network degradations are applied, or 'unknown'
+                                    if the experiment failed and/or if the network conditions are not known. Otherwise,
+                                    network_conditions consists of three comma-separated values: the max bandwidth allowed,
+                                    the delay, and the percentage of packet drops. A value of `none` indicates no degradation.
+
+    Returns:
+        human_readable_network_conditions (str):    the network conditions containing the same information as network_conditions
+                                                    but in a human-readable format.
+    """
+    if len(network_conditions.split(",")) == 3:
+        human_readable_network_conditions = network_conditions.split(",")
+        bandwidth = (
+            human_readable_network_conditions[0]
+            if human_readable_network_conditions[0] != "none"
+            else "full available"
+        )
+        delay = (
+            human_readable_network_conditions[1] + " ms"
+            if human_readable_network_conditions[1] != "none"
+            else human_readable_network_conditions[1]
+        )
+        packet_drops = (
+            "{:.2f}%".format(float(human_readable_network_conditions[2]) * 100.0)
+            if human_readable_network_conditions[2] != "none"
+            else human_readable_network_conditions[2]
+        )
+        human_readable_network_conditions = (
+            f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}"
+        )
+    elif human_readable_network_conditions == "normal":
+        human_readable_network_conditions = (
+            f"Bandwidth: maximum available, Delay: none, Packet Drops: none"
+        )
+    else:
+        human_readable_network_conditions = network_conditions
+    return human_readable_network_conditions
 
 
 def generate_results_table(
