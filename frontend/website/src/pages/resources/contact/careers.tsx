@@ -1,5 +1,7 @@
 import React from "react"
 
+import URLs from "@app/shared/constants/urls"
+
 const Careers = () => (
   <>
     <div
@@ -32,11 +34,7 @@ const Careers = () => (
               virtualization, or browser OSes excites you, you can apply to work
               with us!
             </p>
-            <a
-              href="https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href={URLs.NOTION_CAREERS} target="_blank" rel="noreferrer">
               <button className="mt-8 block w-full py-3 px-5 text-center rounded text-gray-900 sm:inline-block sm:w-auto bg-blue-light">
                 Explore open positions
               </button>

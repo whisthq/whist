@@ -1,6 +1,8 @@
 import React from "react"
 import { FaLinkedinIn, FaTwitter, FaDiscord } from "react-icons/fa"
 
+import URLs from "@app/shared/constants/urls"
+
 /* eslint-disable react/display-name */
 
 const navigation = {
@@ -15,7 +17,7 @@ const navigation = {
     { name: "FAQ", href: "/faq" },
   ],
   resources: [
-    { name: "Join our Discord", href: "https://discord.com/invite/HjPpDGvEeA" },
+    { name: "Join our Discord", href: URLs.DISCORD },
     { name: "Blog", href: "https://whisthq.medium.com" },
     { name: "Support", href: "/contact" },
     {
@@ -30,17 +32,17 @@ const navigation = {
   social: [
     {
       name: "Discord",
-      href: "https://discord.com/invite/HjPpDGvEeA",
+      href: URLs.DISCORD,
       icon: FaDiscord,
     },
     {
       name: "Twitter",
-      href: "https://twitter.com/whisthq",
+      href: URLs.TWITTER,
       icon: FaTwitter,
     },
     {
       name: "LinkedIn",
-      href: "https://www.linkedin.com/company/whist/",
+      href: URLs.LINKEDIN,
       icon: FaLinkedinIn,
     },
   ],
@@ -165,7 +167,7 @@ const Footer = () => {
         </div>
         <div className="mt-12 border-t border-gray-600 pt-8">
           <p className="text-base text-gray-400 xl:text-center">
-            &copy; 2022 Whist Technologies, Inc.. All rights reserved.
+            &copy; 2022 Whist Technologies, Inc. All rights reserved.
           </p>
         </div>
       </div>

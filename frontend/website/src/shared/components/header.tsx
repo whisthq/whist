@@ -11,6 +11,8 @@ import {
   ChevronDownIcon,
 } from "@heroicons/react/outline"
 
+import URLs from "@app/shared/constants/urls"
+
 const about = [
   {
     name: "Company",
@@ -52,12 +54,12 @@ const resources = [
     name: "Release Log",
     description:
       "See what features are coming next and what we've released so far.",
-    href: "https://whisthq.notion.site/Whist-Release-Log-c7ea1639eb734d90bd48c34924d72f0a",
+    href: URLs.NOTION_CHANGELOG,
     target: "_blank",
   },
   {
     name: "Join Our Discord",
-    href: "https://discord.com/invite/HjPpDGvEeA",
+    href: URLs.DISCORD,
     target: "_blank",
   },
 ]

@@ -1,5 +1,7 @@
 import React from "react"
 
+import URLs from "@app/shared/constants/urls"
+
 /* This example requires Tailwind CSS v2.0+ */
 const faqs = [
   {
@@ -72,7 +74,7 @@ const faqs = [
       <div>
         Yes! You can see our job postings{" "}
         <a
-          href="https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9"
+          href={URLs.NOTION_CAREERS}
           className="text-gray-300 hover:text-blue-light"
           target="_blank"
           rel="noreferrer"
