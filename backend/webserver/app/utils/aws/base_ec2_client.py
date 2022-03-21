@@ -90,8 +90,6 @@ class EC2Client(CloudClient):
                 "Arn": "arn:aws:iam::747391415460:instance-profile/TestDeploymentRole"
             },
             "InstanceInitiatedShutdownBehavior": "terminate",
-            # This has to be set at launch time, otherwise AWS will disable the optimization
-            "EbsOptimized": True,
         }
         resp = self.ec2_client.run_instances(**kwargs)
         instance_ids = [instance["InstanceId"] for instance in resp["Instances"]]
