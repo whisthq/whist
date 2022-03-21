@@ -1,3 +1,11 @@
+# See stage 0 of the base Dockerfile for an explanation of this build stage.
+ARG BuildAssetPackage "protocol"
+FROM whist/build-assets:$BuildAssetPackage as build-assets
+
+#########################################################
+# Brave Build Stage
+#########################################################
+
 FROM whisthq/chromium-base:current-build as whist-browsers-brave
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -68,4 +76,4 @@ COPY start-brave.sh /usr/bin/start-brave
 RUN chmod +x /usr/bin/start-brave && ln -sf /usr/bin/start-brave /usr/bin/whist-application
 
 # If needed, install WhistServer and helpers. Must be last step.
-COPY --from=chromium-base protocol/* /usr/share/whist/
+COPY --from=build-assets protocol/* /usr/share/whist/

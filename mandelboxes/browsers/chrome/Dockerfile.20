@@ -1,3 +1,10 @@
+# See stage 0 of the base Dockerfile for an explanation of this build stage.
+ARG BuildAssetPackage "protocol"
+FROM whist/build-assets:$BuildAssetPackage as build-assets
+
+#########################################################
+# Chrome Build Stage
+#########################################################
 
 FROM whisthq/chromium-base:current-build as whist-browsers-chrome
 
@@ -85,4 +92,4 @@ COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whist-application
 
 # If needed, install WhistServer and helpers. Must be last step.
-COPY --from=chromium-base protocol/* /usr/share/whist/
+COPY --from=build-assets protocol/* /usr/share/whist/
