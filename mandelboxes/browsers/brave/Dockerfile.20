@@ -68,4 +68,4 @@ COPY start-brave.sh /usr/bin/start-brave
 RUN chmod +x /usr/bin/start-brave && ln -sf /usr/bin/start-brave /usr/bin/whist-application
 
 # If needed, install WhistServer and helpers. Must be last step.
-COPY --from=build-assets protocol/* /usr/share/whist/
+COPY --from=chromium-base protocol/* /usr/share/whist/
