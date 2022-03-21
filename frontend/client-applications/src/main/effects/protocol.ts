@@ -28,7 +28,7 @@ import {
 } from "@app/main/utils/protocol"
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated, emitOnSignal } from "@app/main/utils/observables"
-import { logToAmplitude, logToLogzio } from "@app/main/utils/logging"
+import { logToAmplitude } from "@app/main/utils/logging"
 import { persistGet } from "../utils/persist"
 import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 
@@ -76,30 +76,6 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
       ? launchProtocol(args.info).catch((err) => Sentry.captureException(err))
       : pipeNetworkInfo(args.protocol, args.info)
   })
-
-// Also send protocol logs to logz.io
-const stdoutBuffer = {
-  buffer: "",
-}
-
-fromTrigger(WhistTrigger.protocolStdoutData).subscribe((data: string) => {
-  // Combine the previous line with the current msg
-  const newmsg = `${stdoutBuffer.buffer}${data}`
-  // Split on newline
-  const lines = newmsg.split(/\r?\n/)
-  // Leave the last line in the buffer to be appended to later
-  stdoutBuffer.buffer = lines.length === 0 ? "" : (lines.pop() as string)
-  // Print the rest of the lines
-  lines.forEach((line: string) => logToLogzio(line, "protocol"))
-})
-
-fromTrigger(WhistTrigger.protocolStdoutEnd).subscribe(() => {
-  // Send the last line, so long as it's not empty
-  if (stdoutBuffer.buffer !== "") {
-    logToLogzio(stdoutBuffer.buffer, "protocol")
-    stdoutBuffer.buffer = ""
-  }
-})
 
 threeProtocolFailures.subscribe(([, info]: [any, any]) => {
   launchProtocol(info).catch((err) => Sentry.captureException(err))

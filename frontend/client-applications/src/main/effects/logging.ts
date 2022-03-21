@@ -7,24 +7,33 @@ import fs from "fs"
 
 import {
   electronLogPath,
-  openLogFile,
+  openElectronLogFile,
   formatLogs,
   filterLogData,
   logToLogzio,
+  openProtocolLogFile,
 } from "@app/main/utils/logging"
 import { loggingBaseFilePath, loggingFiles } from "@app/config/environment"
 import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 import { userEmail } from "@app/main/utils/state"
 import { sessionID } from "@app/constants/app"
+import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 
-let logFile: fs.WriteStream | undefined
+let electronLogFile: fs.WriteStream | undefined
 
 app.setPath("userData", loggingBaseFilePath)
 
 // Initialize Electron log rotation
 logRotate(
   path.join(electronLogPath, loggingFiles.client),
+  { count: 6 },
+  (err: any) => console.error(err)
+)
+
+// Initialize protocol log rotation
+logRotate(
+  path.join(electronLogPath, loggingFiles.protocol),
   { count: 6 },
   (err: any) => console.error(err)
 )
@@ -50,7 +59,11 @@ fromTrigger(WhistTrigger.logging)
   .pipe(withLatestFrom(merge(shouldLog, shouldNotLog), userEmail))
   .subscribe(([logs, shouldLog, email]: [any, boolean, string]) => {
     if (shouldLog) {
-      if (logFile === undefined) logFile = openLogFile()
+      if (electronLogFile === undefined) {
+        if (!fs.existsSync(electronLogPath))
+          fs.mkdirSync(electronLogPath, { recursive: true })
+        electronLogFile = openElectronLogFile()
+      }
 
       const filtered = filterLogData(logs.data)
       const formatted = formatLogs(
@@ -62,8 +75,48 @@ fromTrigger(WhistTrigger.logging)
         filtered
       )
 
-      logFile?.write(formatted)
+      electronLogFile?.write(formatted)
       if (app.isPackaged) logToLogzio(formatted, "electron")
       if (!app.isPackaged) console.log(formatted)
+    }
+  })
+
+// Also send protocol logs to logz.io
+const stdoutBuffer = {
+  buffer: "",
+}
+
+fromTrigger(WhistTrigger.protocolStdoutData).subscribe((data: string) => {
+  // Combine the previous line with the current msg
+  const newmsg = `${stdoutBuffer.buffer}${data}`
+  // Split on newline
+  const lines = newmsg.split(/\r?\n/)
+  // Leave the last line in the buffer to be appended to later
+  stdoutBuffer.buffer = lines.length === 0 ? "" : (lines.pop() as string)
+  // Print the rest of the lines
+  lines.forEach((line: string) => {
+    logToLogzio(line, "protocol")
+    const shouldLogProtocol =
+      (process.env.SHOW_PROTOCOL_LOGS ?? "false") === "true"
+    if (shouldLogProtocol) console.log(line)
+  })
+})
+
+/* eslint-disable @typescript-eslint/no-misused-promises */
+// In non-production environments, pipe protocol logs to a local .log file
+fromTrigger(WhistTrigger.protocol)
+  .pipe(filter((p) => p !== undefined))
+  .subscribe(async (p) => {
+    if (appEnvironment !== WhistEnvironments.PRODUCTION) {
+      if (!fs.existsSync(electronLogPath))
+        fs.mkdirSync(electronLogPath, { recursive: true })
+
+      const protocolLogFile = openProtocolLogFile()
+
+      await new Promise<void>((resolve) => {
+        protocolLogFile.on("open", () => resolve())
+      })
+
+      p?.stdout?.pipe(protocolLogFile)
     }
   })
