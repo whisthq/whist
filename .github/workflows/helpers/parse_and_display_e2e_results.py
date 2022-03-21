@@ -193,10 +193,7 @@ if __name__ == "__main__":
         if experiment_metadata and "network_conditions" in experiment_metadata:
             network_conditions = experiment_metadata["network_conditions"]
         human_readable_network_conditions = network_conditions
-        if (
-            human_readable_network_conditions != "normal"
-            and "," in human_readable_network_conditions
-        ):
+        if len(human_readable_network_conditions.split(",")) == 3:
             human_readable_network_conditions = human_readable_network_conditions.split(",")
             bandwidth = (
                 human_readable_network_conditions[0]
@@ -215,6 +212,10 @@ if __name__ == "__main__":
             )
             human_readable_network_conditions = (
                 f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}"
+            )
+        elif human_readable_network_conditions == "normal":
+            human_readable_network_conditions = (
+                f"Bandwidth: maximum available, Delay: none, Packet Drops: none"
             )
 
         client_metrics = None
