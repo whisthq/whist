@@ -17,11 +17,11 @@ def parse_metadata(folder_name):
     Obtain the metadata for the E2E streaming test from the experiment_metadata.json file in the logs folder
 
     Args:
-        folder_name: The path to the folder containing the logs and the experiment_metadata.json file
+        folder_name (str): The path to the folder containing the logs and the experiment_metadata.json file
 
     Returns:
         On success:
-            experiment_metadata: A dictionary with the key:value metadata pairs retrieved from the json file
+            experiment_metadata (dict): A dictionary with the key:value metadata pairs retrieved from the json file
         On failure:
             None
     """
@@ -40,7 +40,7 @@ def logs_contain_errors(logs_root_dir, verbose=False):
     Perform a coarse-grained sanity check on the logs from a E2E streaming test run
 
     Args:
-        logs_root_dir: The path to the folder containing the logs
+        logs_root_dir (str): The path to the folder containing the logs
 
     Returns:
         False if the logs appear not to contain errors, True otherwise
@@ -81,11 +81,11 @@ def download_latest_logs(
     then do not filter out logs based on network conditions
 
     Args:
-        branch_name: The name of the Whist branch whose logs we will download
-        before_timestamp: The earliest timestamp such that if a run started at that time,
+        branch_name (str): The name of the Whist branch whose logs we will download
+        before_timestamp (datetime): The earliest timestamp such that if a run started at that time,
                                         we don't want to consider its logs
-        network_conditions: The network conditions of the run that we just completed.
-        network_conditions_matching_way: A parameter that controls what kind of matching we
+        network_conditions (str): The network conditions of the run that we just completed.
+        network_conditions_matching_way (str): A parameter that controls what kind of matching we
                                         need to do on the S3 logs wrt network conditions
     Returns:
         None
