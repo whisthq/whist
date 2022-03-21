@@ -16,7 +16,7 @@ frontend/client-applications/release
 frontend/client-applications/*.css
 
 # Teleport Chrome Extension files
-mandelboxes/browsers/chrome/teleport-extension/build
+mandelboxes/browsers/teleport-extension/build
 
 # Protocol files
 protocol/sentry-native/**
