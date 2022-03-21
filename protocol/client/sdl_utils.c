@@ -244,6 +244,13 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
 
+#ifdef _WIN32
+    // Ensure that Windows uses the D3D11 driver rather than D3D9.
+    // (The D3D9 driver does work, but it does not support the NV12
+    // textures that we use, so performance with it is terrible.)
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");
+#endif
+
     Uint32 flags = SDL_RENDERER_ACCELERATED;
 #if VSYNC_ON
     flags |= SDL_RENDERER_PRESENTVSYNC;
