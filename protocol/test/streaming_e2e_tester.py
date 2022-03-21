@@ -489,6 +489,9 @@ if __name__ == "__main__":
     # 12 - Sit down and wait Wait <testing_time> seconds to let the test run to completion
     time.sleep(testing_time)
 
+    # test
+    sys.exit(-1)
+
     # 13 - Grab the logs, check for errors, restore default network conditions, cleanup, shut down the instances, and save the results
     complete_experiment_and_save_results(
         server_hostname,
@@ -527,3 +530,4 @@ if __name__ == "__main__":
 
     # 23 - Success!
     print("Done")
+    sys.exit(0)
