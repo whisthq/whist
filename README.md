@@ -65,7 +65,7 @@ To avoid pushing code that does not follow our coding guidelines, we recommend y
 
 - `prod` -- This branch is for Releases only, do not push to it.
 - `staging` -- This branch is for Beta only, do not push to it. It gets promoted to `prod` periodically.
-- `dev` -- This is our main development branch, PRs should be made to this branch. It gets promoted to `staging` periodically.
+- `dev` -- This is our main development branch, PRs should be made to this branch. It gets promoted periodically.
 - All other branches are considered feature branches. They should be forked off of `dev` and PR-ed into `dev`.
 
 **Feature branches are named as follows:**
