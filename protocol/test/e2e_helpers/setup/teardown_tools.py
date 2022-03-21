@@ -225,7 +225,7 @@ def complete_experiment_and_save_results(
     else:
         print("Server has not exited gracefully!")
         server_hang_detected = True
-
+    sys.exit(-1)
     # 3- Extract the client/server protocol logs from the two Docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
 
