@@ -329,7 +329,7 @@ def complete_experiment_and_save_results(
                 instances_file.write(f"{client_instance_id}\n")
 
     print("Instance successfully stopped/terminated, goodbye")
-
+    sys.exit(-1)
     # 7- Delete the cleanup todo-list, because we already completed it.
     os.remove("instances_to_remove.txt")
 
