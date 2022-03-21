@@ -308,7 +308,7 @@ def complete_experiment_and_save_results(
     # 5- Close all the log files
     server_log.close()
     client_log.close()
-
+    sys.exit(-1)
     # 6- Stop or terminate the AWS EC2 instance(s)
     if leave_instances_on == "false":
         # Terminate or stop AWS instance(s)
