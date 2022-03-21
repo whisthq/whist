@@ -28,7 +28,57 @@ static WhistMutex log_statistic_mutex;
 
 static WhistTimer print_statistic_clock;
 
-static StatisticInfo statistic_info[NUM_METRICS];
+static StatisticInfo statistic_info[NUM_METRICS] = {
+    // {"key", is_max_needed, is_min_needed, average_over_time};
+    // Common metrics
+    [NETWORK_RTT_UDP] = {"NETWORK_RTT_UDP", true, true, false},
+
+    // Server side metrics
+    [AUDIO_ENCODE_TIME] = {"AUDIO_ENCODE_TIME", true, false, false},
+    [CLIENT_HANDLE_USERINPUT_TIME] = {"HANDLE_USERINPUT_TIME", true, false, false},
+    [NETWORK_THROTTLED_PACKET_DELAY] = {"THROTTLED_PACKET_DELAY", true, false, false},
+    [NETWORK_THROTTLED_PACKET_DELAY_RATE] = {"THROTTLED_PACKET_DELAY_RATE", true, false, false},
+    [NETWORK_THROTTLED_PACKET_DELAY_LOOPS] = {"THROTTLED_PACKET_DELAY_LOOPS", true, false, false},
+    [VIDEO_CAPTURE_CREATE_TIME] = {"VIDEO_CAPTURE_CREATE_TIME", true, false, false},
+    [VIDEO_CAPTURE_UPDATE_TIME] = {"VIDEO_CAPTURE_UPDATE_TIME", true, false, false},
+    [VIDEO_CAPTURE_SCREEN_TIME] = {"VIDEO_CAPTURE_SCREEN_TIME", true, false, false},
+    [VIDEO_CAPTURE_TRANSFER_TIME] = {"VIDEO_CAPTURE_TRANSFER_TIME", true, false, false},
+    [VIDEO_ENCODER_UPDATE_TIME] = {"VIDEO_ENCODER_UPDATE_TIME", true, false, false},
+    [VIDEO_ENCODE_TIME] = {"VIDEO_ENCODE_TIME", true, false, false},
+    [VIDEO_FPS_SENT] = {"VIDEO_FPS_SENT", false, false, true},
+    [VIDEO_FPS_SKIPPED_IN_CAPTURE] = {"VIDEO_FPS_SKIPPED_IN_CAPTURE", false, false, true},
+    [VIDEO_FRAME_SIZE] = {"VIDEO_FRAME_SIZE", true, false, false},
+    [VIDEO_FRAME_PROCESSING_TIME] = {"VIDEO_FRAME_PROCESSING_TIME", true, false, false},
+    [VIDEO_GET_CURSOR_TIME] = {"GET_CURSOR_TIME", true, false, false},
+    [VIDEO_INTER_FRAME_QP] = {"VIDEO_INTER_FRAME_QP", true, false, false},
+    [VIDEO_INTRA_FRAME_QP] = {"VIDEO_INTRA_FRAME_QP", true, false, false},
+    [VIDEO_SEND_TIME] = {"VIDEO_SEND_TIME", true, false, false},
+    [DBUS_MSGS_RECEIVED] = {"DBUS_MSGS_RECEIVED", false, false, true},
+    [SERVER_CPU_USAGE] = {"SERVER_CPU_USAGE", false, false, false},
+
+    // Client side metrics
+    [AUDIO_RECEIVE_TIME] = {"AUDIO_RECEIVE_TIME", true, false, false},
+    [AUDIO_UPDATE_TIME] = {"AUDIO_UPDATE_TIME", true, false, false},
+    [AUDIO_FPS_SKIPPED] = {"AUDIO_FPS_SKIPPED", false, false, true},
+    [NETWORK_READ_PACKET_TCP] = {"READ_PACKET_TIME_TCP", true, false, false},
+    [NETWORK_READ_PACKET_UDP] = {"READ_PACKET_TIME_UDP", true, false, false},
+    [SERVER_HANDLE_MESSAGE_TCP] = {"HANDLE_SERVER_MESSAGE_TIME_TCP", true, false, false},
+    [SERVER_HANDLE_MESSAGE_UDP] = {"HANDLE_SERVER_MESSAGE_TIME_UDP", true, false, false},
+    [VIDEO_AVCODEC_RECEIVE_TIME] = {"AVCODEC_RECEIVE_TIME", true, false, false},
+    [VIDEO_AV_HWFRAME_TRANSFER_TIME] = {"AV_HWFRAME_TRANSFER_TIME", true, false, false},
+    [VIDEO_CURSOR_UPDATE_TIME] = {"CURSOR_UPDATE_TIME", true, false, false},
+    [VIDEO_DECODE_SEND_PACKET_TIME] = {"VIDEO_DECODE_SEND_PACKET_TIME", true, false, false},
+    [VIDEO_DECODE_GET_FRAME_TIME] = {"VIDEO_DECODE_GET_FRAME_TIME", true, false, false},
+    [VIDEO_FPS_RENDERED] = {"VIDEO_FPS_RENDERED", false, false, true},
+    [VIDEO_E2E_LATENCY] = {"VIDEO_END_TO_END_LATENCY", true, true, false},
+    [VIDEO_RECEIVE_TIME] = {"VIDEO_RECEIVE_TIME", true, false, false},
+    [VIDEO_RENDER_TIME] = {"VIDEO_RENDER_TIME", true, false, false},
+    [VIDEO_TIME_BETWEEN_FRAMES] = {"VIDEO_TIME_BETWEEN_FRAMES", true, false, false},
+    [VIDEO_UPDATE_TIME] = {"VIDEO_UPDATE_TIME", true, false, false},
+    [NOTIFICATIONS_RECEIVED] = {"NOTIFICATIONS_RECEIVED", false, false, true},
+    [CLIENT_CPU_USAGE] = {"CLIENT_CPU_USAGE", false, false, false},
+
+};
 
 /*
 ============================
@@ -96,81 +146,6 @@ static void unsafe_print_statistics(void) {
 #endif
 }
 
-static void init_statistics_info(void) {
-    // (StatisticInfo){"key", is_max_needed, is_min_needed, average_over_time};
-    // Common metrics
-    statistic_info[NETWORK_RTT_UDP] = (StatisticInfo){"NETWORK_RTT_UDP", true, true, false};
-
-    // Server side metrics
-    statistic_info[AUDIO_ENCODE_TIME] = (StatisticInfo){"AUDIO_ENCODE_TIME", true, false, false};
-    statistic_info[CLIENT_HANDLE_USERINPUT_TIME] =
-        (StatisticInfo){"HANDLE_USERINPUT_TIME", true, false, false};
-    statistic_info[NETWORK_THROTTLED_PACKET_DELAY] =
-        (StatisticInfo){"THROTTLED_PACKET_DELAY", true, false, false};
-    statistic_info[NETWORK_THROTTLED_PACKET_DELAY_RATE] =
-        (StatisticInfo){"THROTTLED_PACKET_DELAY_RATE", true, false, false};
-    statistic_info[NETWORK_THROTTLED_PACKET_DELAY_LOOPS] =
-        (StatisticInfo){"THROTTLED_PACKET_DELAY_LOOPS", true, false, false};
-    statistic_info[VIDEO_CAPTURE_CREATE_TIME] =
-        (StatisticInfo){"VIDEO_CAPTURE_CREATE_TIME", true, false, false};
-    statistic_info[VIDEO_CAPTURE_UPDATE_TIME] =
-        (StatisticInfo){"VIDEO_CAPTURE_UPDATE_TIME", true, false, false};
-    statistic_info[VIDEO_CAPTURE_SCREEN_TIME] =
-        (StatisticInfo){"VIDEO_CAPTURE_SCREEN_TIME", true, false, false};
-    statistic_info[VIDEO_CAPTURE_TRANSFER_TIME] =
-        (StatisticInfo){"VIDEO_CAPTURE_TRANSFER_TIME", true, false, false};
-    statistic_info[VIDEO_ENCODER_UPDATE_TIME] =
-        (StatisticInfo){"VIDEO_ENCODER_UPDATE_TIME", true, false, false};
-    statistic_info[VIDEO_ENCODE_TIME] = (StatisticInfo){"VIDEO_ENCODE_TIME", true, false, false};
-    statistic_info[VIDEO_FPS_SENT] = (StatisticInfo){"VIDEO_FPS_SENT", false, false, true};
-    statistic_info[VIDEO_FPS_SKIPPED_IN_CAPTURE] =
-        (StatisticInfo){"VIDEO_FPS_SKIPPED_IN_CAPTURE", false, false, true};
-    statistic_info[VIDEO_FRAME_SIZE] = (StatisticInfo){"VIDEO_FRAME_SIZE", true, false, false};
-    statistic_info[VIDEO_FRAME_PROCESSING_TIME] =
-        (StatisticInfo){"VIDEO_FRAME_PROCESSING_TIME", true, false, false};
-    statistic_info[VIDEO_GET_CURSOR_TIME] = (StatisticInfo){"GET_CURSOR_TIME", true, false, false};
-    statistic_info[VIDEO_INTER_FRAME_QP] =
-        (StatisticInfo){"VIDEO_INTER_FRAME_QP", true, false, false};
-    statistic_info[VIDEO_INTRA_FRAME_QP] =
-        (StatisticInfo){"VIDEO_INTRA_FRAME_QP", true, false, false};
-    statistic_info[VIDEO_SEND_TIME] = (StatisticInfo){"VIDEO_SEND_TIME", true, false, false};
-    statistic_info[DBUS_MSGS_RECEIVED] = (StatisticInfo){"DBUS_MSGS_RECEIVED", false, false, true};
-    statistic_info[SERVER_CPU_USAGE] = (StatisticInfo){"SERVER_CPU_USAGE", false, false, false};
-
-    // Client side metrics
-    statistic_info[AUDIO_RECEIVE_TIME] = (StatisticInfo){"AUDIO_RECEIVE_TIME", true, false, false};
-    statistic_info[AUDIO_UPDATE_TIME] = (StatisticInfo){"AUDIO_UPDATE_TIME", true, false, false};
-    statistic_info[AUDIO_FPS_SKIPPED] = (StatisticInfo){"AUDIO_FPS_SKIPPED", false, false, true};
-    statistic_info[NETWORK_READ_PACKET_TCP] =
-        (StatisticInfo){"READ_PACKET_TIME_TCP", true, false, false};
-    statistic_info[NETWORK_READ_PACKET_UDP] =
-        (StatisticInfo){"READ_PACKET_TIME_UDP", true, false, false};
-    statistic_info[SERVER_HANDLE_MESSAGE_TCP] =
-        (StatisticInfo){"HANDLE_SERVER_MESSAGE_TIME_TCP", true, false, false};
-    statistic_info[SERVER_HANDLE_MESSAGE_UDP] =
-        (StatisticInfo){"HANDLE_SERVER_MESSAGE_TIME_UDP", true, false, false};
-    statistic_info[VIDEO_AVCODEC_RECEIVE_TIME] =
-        (StatisticInfo){"AVCODEC_RECEIVE_TIME", true, false, false};
-    statistic_info[VIDEO_AV_HWFRAME_TRANSFER_TIME] =
-        (StatisticInfo){"AV_HWFRAME_TRANSFER_TIME", true, false, false};
-    statistic_info[VIDEO_CURSOR_UPDATE_TIME] =
-        (StatisticInfo){"CURSOR_UPDATE_TIME", true, false, false};
-    statistic_info[VIDEO_DECODE_SEND_PACKET_TIME] =
-        (StatisticInfo){"VIDEO_DECODE_SEND_PACKET_TIME", true, false, false};
-    statistic_info[VIDEO_DECODE_GET_FRAME_TIME] =
-        (StatisticInfo){"VIDEO_DECODE_GET_FRAME_TIME", true, false, false};
-    statistic_info[VIDEO_FPS_RENDERED] = (StatisticInfo){"VIDEO_FPS_RENDERED", false, false, true};
-    statistic_info[VIDEO_E2E_LATENCY] =
-        (StatisticInfo){"VIDEO_END_TO_END_LATENCY", true, true, false};
-    statistic_info[VIDEO_RECEIVE_TIME] = (StatisticInfo){"VIDEO_RECEIVE_TIME", true, false, false};
-    statistic_info[VIDEO_RENDER_TIME] = (StatisticInfo){"VIDEO_RENDER_TIME", true, false, false};
-    statistic_info[VIDEO_TIME_BETWEEN_FRAMES] =
-        (StatisticInfo){"VIDEO_TIME_BETWEEN_FRAMES", true, false, false};
-    statistic_info[VIDEO_UPDATE_TIME] = (StatisticInfo){"VIDEO_UPDATE_TIME", true, false, false};
-    statistic_info[NOTIFICATIONS_RECEIVED] =
-        (StatisticInfo){"NOTIFICATIONS_RECEIVED", false, false, true};
-    statistic_info[CLIENT_CPU_USAGE] = (StatisticInfo){"CLIENT_CPU_USAGE", false, false, false};
-}
 /*
 ============================
 Public Function Implementations
@@ -178,7 +153,6 @@ Public Function Implementations
 */
 
 void whist_init_statistic_logger(int interval) {
-    init_statistics_info();
     log_statistic_mutex = whist_create_mutex();
     statistic_context.interval = interval;
     statistic_context.all_statistics =
