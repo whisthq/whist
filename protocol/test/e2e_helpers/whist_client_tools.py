@@ -39,7 +39,7 @@ def client_setup_process(args_dict):
 
     Args:
         args_dict (multiprocessing.managers.DictProxy): A dictionary containing the configs needed to access the remote machine
-                   and get a Whist dev client ready for execution
+                                                        and get a Whist dev client ready for execution
 
     Returns:
         None
@@ -167,14 +167,14 @@ def build_client_on_instance(
     SSH connection to the host, and that the Whist repository has already been cloned.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
-                        be used to interact with the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
-                        execute a command
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
+                                                    be used to interact with the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
+                                execute a command
         testing_time (int): The amount of time to leave the connection open between the client and the server
-                      (when the client is started) before shutting it down
+                            (when the client is started) before shutting it down
         cmake_build_type (str): A string identifying whether to build the protocol in release, debug, metrics,
-                          or any other Cmake build mode that will be introduced later.
+                                or any other Cmake build mode that will be introduced later.
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
@@ -204,12 +204,12 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     already running on the remote machine.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
-                        be used to interact with the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is
-                        ready to execute a command
-        simulate_scrolling (bool): A boolean controlling whether the client should simulate scrolling
-                            as part of the test.
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
+                                                    be used to interact with the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
+                                ready to execute a command
+        simulate_scrolling (bool):  A boolean controlling whether the client should simulate scrolling
+                                    as part of the test.
 
     Returns:
         client_docker_id (str): The Docker ID of the container running the Whist dev client

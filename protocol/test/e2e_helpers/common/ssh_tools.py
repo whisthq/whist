@@ -135,23 +135,23 @@ def reboot_instance(
     Reboot a remote machine and establish a new SSH connection after the machine comes back up.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
-                        be used to interact with the remote machine
-        ssh_cmd (str): The shell command to use to establish a new SSH connection to the remote machine after
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
+                                                    be used to interact with the remote machine
+        ssh_cmd (str):  The shell command to use to establish a new SSH connection to the remote machine after
                         the current connection is broken by the reboot.
-        timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection
-                       to the remote machine.
+        timeout_value (int):    The amount of time to wait before timing out the attemps to gain a SSH connection
+                                to the remote machine.
         log_file_handle (file): The file (already opened) to use for logging the terminal output from the remote
-                         machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
-                        execute a command
-        retries (int): Maximum number of attempts before giving up on gaining a new SSH connection after
+                                machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
+                                execute a command
+        retries (int):  Maximum number of attempts before giving up on gaining a new SSH connection after
                         rebooting the remote machine.
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
-        pexpect_process (pexpect.pty_spawn.spawn): The new Pexpect process created with pexpect.spawn(...) and to
-                        be used to interact with the remote machine after the reboot
+        pexpect_process (pexpect.pty_spawn.spawn):  The new Pexpect process created with pexpect.spawn(...) and to
+                                                    be used to interact with the remote machine after the reboot
     """
     # Trigger the reboot
     pexpect_process.sendline("sudo reboot")
@@ -172,11 +172,11 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
     - E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used
-                         to interact with the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when
-                              it is ready to execute a command
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used
+                                                    to interact with the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when
+                                it is ready to execute a command
+        running_in_ci (bool):   A boolean indicating whether this script is currently running in CI
 
     Returns:
         None

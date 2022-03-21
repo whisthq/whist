@@ -23,11 +23,11 @@ def generate_results_table(
     metrics. Do not include comparisons with other runs.
 
     Args:
-        results_file (file): The open file where we want to save the markdown table
+        results_file (file):    The open file where we want to save the markdown table
         experiment_metadata (dict): The metadata key-value pairs for the current run
         most_interesting_metrics (set): set of metrics that we want to display at the top (if found)
-        client_metrics (dict): the client key-value pairs with metrics from the current run
-        server_metrics (dict): the server key-value pairs with metrics from the current run
+        client_metrics (dict):  the client key-value pairs with metrics from the current run
+        server_metrics (dict):  the server key-value pairs with metrics from the current run
 
     Returns:
         None
@@ -122,13 +122,14 @@ def generate_comparison_table(
     and a table with the most interesting metrics.
 
     Args:
-        results_file (file): The open file where we want to save the markdown table
+        results_file (file):    The open file where we want to save the markdown table
         experiment_metadata (dict): The metadata key-value pairs for the current run
-        compared_experiment_metadata (dict): he metadata key-value pairs for the run we are comparing against
+        compared_experiment_metadata (dict):    the metadata key-value pairs for the run we are
+                                                comparing against
         compared_branch_name (str): The name of the branch that we are comparing against
         most_interesting_metrics (set): list of metrics that we want to display at the top (if found)
-        client_metrics (dict): the client key-value pairs with metrics from the current run
-        server_metrics (dict): the server key-value pairs with metrics from the current run
+        client_metrics (dict):  the client key-value pairs with metrics from the current run
+        server_metrics (dict):  the server key-value pairs with metrics from the current run
         compared_client_metrics (dict): the client key-value pairs with metrics from the compared run
         compared_server_metrics (dict): the server key-value pairs with metrics from the compared run
 
