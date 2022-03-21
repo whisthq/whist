@@ -75,7 +75,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 			Arn: aws.String("arn:aws:iam::747391415460:instance-profile/TestDeploymentRole"),
 		},
 		UserData:     aws.String(userData),
-		EbsOptimized: aws.Bool(true),
+		EbsOptimized: aws.Bool(true), // This has to be set at launch time, otherwise AWS will disable the optimization
 	}
 
 	var (
