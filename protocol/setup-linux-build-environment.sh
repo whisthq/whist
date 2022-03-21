@@ -20,6 +20,7 @@ sudo apt-get install --no-install-recommends -y \
 
 # Install Whist dependencies
 sudo apt-get install --no-install-recommends -y \
+  libc++1 \
   dbus-x11 \
   libevent-dev \
   libevent-pthreads-2.1-7 \

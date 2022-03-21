@@ -194,8 +194,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Retrieve nvidia driver installer
 COPY --from=build-assets --chmod=550 nvidia-driver/nvidia-driver-installer.run /nvidia-driver-installer.run
 
-# Unpack the installer
-RUN sh nvidia-driver-installer.run -x
+# Unpack the installer & create necessary symbolic link(s)
+RUN sh nvidia-driver-installer.run -x \
+    && ln -sf /dist/usr/lib/libGL.so.1 /usr/lib/libGL.so.1
 
 # Install the driver to a folder
 # Note: We don't install `--install-compat32-libs` because it's not needed/supported
@@ -225,11 +226,11 @@ RUN mkdir /dist /ignore && \
 RUN mkdir /dist/etc && \
     cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
 
-################ STAGE 4: whist-teleport-drag-drop################
+################ STAGE 4: whist-teleport-drag-drop ################
 # - Copy and build the FUSE service to handle teleport drag-drop
 #   events
 # EXPOSES the teleport fuse service
-##################################################################
+###################################################################
 FROM ubuntu:20.04 as whist-teleport-drag-drop
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -263,8 +264,8 @@ COPY teleport/drag-drop /whist-teleport-drag-drop/src
 
 # hadolint ignore=SC2046
 RUN cd /whist-teleport-drag-drop/src \
-    && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
-    && gcc -Wall unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
+    && gcc -Wall -Werror -D _GNU_SOURCE unshare.c -o unshare.o -c \
+    && gcc -Wall -Werror unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
 
 ################ STAGE 5: hydraulic-press #####################
 # - Copy, set permissions for, and install all base mandelbox
@@ -430,7 +431,10 @@ SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
 ENV container docker
 ENV LC_ALL C
+
+# These two resolve pedantic warnings with dkpg and invoke-rc
 ENV DEBIAN_FRONTEND noninteractive
+ENV RUN_LEVEL=1
 
 # Update apt source list
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
@@ -486,13 +490,15 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/systemd-update-utmp*
 
 # Disable some extra systemd services
+# Note: sshd does not exist by default, so we don't need to explicirlt disable it
+# hadolint ignore=DL3059
 RUN systemctl mask plymouth \
                    systemd-hostnamed \
                    acpid \
-                   NetworkManager-wait-online \
-    && systemctl disable sshd
+                   NetworkManager-wait-online
 
 # Remove ProtectHostname=yes lines from logind and timedate systemd services
+# hadolint ignore=DL3059
 RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-{login,time{sync,date}}d.service
 
 # Enable proper usage of resolvconf in containers. Based on:
@@ -575,6 +581,9 @@ RUN apt-get update \
     sudo \
     jq \
     inotify-tools \
+    # general utility tool needed by other packages (gets installed by
+    # update-alternatives if not explicitly specified)
+    liblzma5 \
     # utilities for debugging/testing
     less \
     vim \
@@ -651,7 +660,7 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
     && dpkg -i ./playerctl-2.3.1_amd64.deb \
     && rm ./playerctl-2.3.1_amd64.deb
 
-# I-Bus support
+# I-Bus support (for handling input)
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ibus ibus-pinyin ibus-anthy ibus-hangul ibus-unikey \
     ibus-gtk ibus-gtk3 \

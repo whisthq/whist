@@ -90,8 +90,8 @@ common_steps () {
 
   # Install latest Docker runtime and dependencies
   sudo apt-get install -y apt-transport-https ca-certificates curl wget gnupg-agent software-properties-common
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  sudo apt-key fingerprint 0EBFCD88
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key add -
+  APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key fingerprint 0EBFCD88
   sudo add-apt-repository -y \
     "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
        $(lsb_release -cs) \
@@ -153,7 +153,7 @@ EOF
   # pinning 20.04 as the nvidia-docker distribution, since it works with unofficially-supported versions
   # of Ubuntu, like 20.04, which don't have an official nvidia-docker package
   distribution="ubuntu20.04"
-  curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+  curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key add -
   curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 
   # Install nvidia-docker via apt
@@ -216,7 +216,7 @@ EOF
   # For localdev (i.e. a Whist engineer's machine), we want you to take a call on sending the logs to
   # Logz.io (if that workflow is going to be easier for you).
 
-  wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+  wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key add -
   echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
 
   # The command above will add a duplicate package source link to the /etc/apt/sources.list.d/elastic-7.x.list

@@ -30,8 +30,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 \ 
-    wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
+RUN wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
     
 RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
 
