@@ -22,14 +22,14 @@ def setup_artificial_network_conditions(
     SSH connection to the host.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                         interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
+                        be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is
                         ready to execute a command
-        network_conditions: The network conditions expressed as either 'normal' for no network
+        network_conditions (str): The network conditions expressed as either 'normal' for no network
                         degradation or max_bandwidth, delay, packet drop percentage, with the
                         three values separated by commas and no space.
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
@@ -40,7 +40,8 @@ def setup_artificial_network_conditions(
         # Apply conditions below only for values that are actually set
         if len(network_conditions.split(",")) != 3:
             print(
-                "Network conditions passed in incorrect format. Setting up client to run on a instance with no degradation on network conditions"
+                "Network conditions passed in incorrect format. Setting up client to run on a instance with no degradation \
+                on network conditions"
             )
             return
 
@@ -140,11 +141,11 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
     SSH connection to the host
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to
                          interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is
                         ready to execute a command
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None

@@ -15,19 +15,20 @@ def attempt_ssh_connection(
     need several attempts before successfully opening a SSH connection to the remote machine.
 
     Args:
-        ssh_command: The shell command to use to establish a SSH connection to the remote machine.
-        timeout_value: The amount of time to wait before timing out the attemps to gain a SSH connection
+        ssh_command (str): The shell command to use to establish a SSH connection to the remote machine.
+        timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection
                        to the remote machine.
-        log_file_handle: The file (already opened) to use for logging the terminal output from the
+        log_file_handle (file): The file (already opened) to use for logging the terminal output from the
                          remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready
+        pexpect_prompt (file): The bash prompt printed by the shell on the remote machine when it is ready
                         to execute a command
-        max_retries: The maximum number of attempts to use before giving up on establishing a SSH
+        max_retries (int): The maximum number of attempts to use before giving up on establishing a SSH
                      connection to the remote machine
 
     Returns:
         On success:
-            pexpect_process: The Pexpect process to be used from now on to interact with the remote machine.
+            pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process to be used from now on to interact
+                        with the remote machine.
         On failure:
             None and exit with exitcode -1
     """
@@ -82,16 +83,17 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
     This function also has the option to return the shell stdout in a list of strings format.
 
     Args:
-        pexpect_process: The Pexpect process monitoring the execution of the process on the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready to
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process
+                        on the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
                         execute a new command
-        running_in_ci: A boolean indicating whether this script is currently running in CI
-        return_output: A boolean controlling whether to return the stdout output in a list of strings format
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        return_output (bool): A boolean controlling whether to return the stdout output in a list of strings format
 
     Returns:
         On Success:
-            pexpect_output: the stdout output of the command, with one entry for each line of the original
-                            output. If return_output=False, pexpect_output is set to None
+            pexpect_output (list): the stdout output of the command, with one entry for each line of the original
+                        output. If return_output=False, pexpect_output is set to None
         On Failure:
             None and exit with exitcode -1
     """
@@ -133,23 +135,23 @@ def reboot_instance(
     Reboot a remote machine and establish a new SSH connection after the machine comes back up.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact
-                         with the remote machine
-        ssh_cmd: The shell command to use to establish a new SSH connection to the remote machine after
-                 the current connection is broken by the reboot.
-        timeout_value: The amount of time to wait before timing out the attemps to gain a SSH connection
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
+                        be used to interact with the remote machine
+        ssh_cmd (str): The shell command to use to establish a new SSH connection to the remote machine after
+                        the current connection is broken by the reboot.
+        timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection
                        to the remote machine.
-        log_file_handle: The file (already opened) to use for logging the terminal output from the remote
+        log_file_handle (file): The file (already opened) to use for logging the terminal output from the remote
                          machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready to
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
                         execute a command
-        retries: Maximum number of attempts before giving up on gaining a new SSH connection after
-                 rebooting the remote machine.
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        retries (int): Maximum number of attempts before giving up on gaining a new SSH connection after
+                        rebooting the remote machine.
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
-        pexpect_process: The new Pexpect process created with pexpect.spawn(...) and to be used to interact
-                         with the remote machine after the reboot
+        pexpect_process (pexpect.pty_spawn.spawn): The new Pexpect process created with pexpect.spawn(...) and to
+                        be used to interact with the remote machine after the reboot
     """
     # Trigger the reboot
     pexpect_process.sendline("sudo reboot")
@@ -170,7 +172,7 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
     - E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used
                          to interact with the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when
                               it is ready to execute a command

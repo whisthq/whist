@@ -41,25 +41,25 @@ def extract_logs_from_mandelbox(
     but before the server/client container is stopped/destroyed.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                         interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
+                        be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is
                         ready to execute a command
-        docker_id: The Docker ID of the container running the Whist server/client
+        docker_id (str): The Docker ID of the container running the Whist server/client
                    (browsers/chrome or development/client mandelbox)
                    on the remote machine
-        ssh_key_path: The path (on the machine where this script is run) to the file storing
+        ssh_key_path (str): The path (on the machine where this script is run) to the file storing
                       the public RSA key used for SSH connections
-        username: The username to be used on the remote machine (default is 'ubuntu')
-        hostname: The host name of the remote machine where the server/client was running on
-        timeout_value: The amount of time (in seconds) to wait before timing out the attemps to
+        username (str): The username to be used on the remote machine (default is 'ubuntu')
+        hostname (str): The host name of the remote machine where the server/client was running on
+        timeout_value (int): The amount of time (in seconds) to wait before timing out the attemps to
                        gain a SSH connection to the remote machine.
-        perf_logs_folder_name: The path to the folder (on the machine where this script is run)
+        perf_logs_folder_name (str): The path to the folder (on the machine where this script is run)
                                where to store the logs
-        log_grabber_log: The file (already opened) to use for logging the terminal output from
+        log_grabber_log (file): The file (already opened) to use for logging the terminal output from
                          the shell process used to download the logs
-        running_in_ci: A boolean indicating whether this script is currently running in CI
-        role: Controls whether to extract the `server` logs or the `client` logs
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        role (str): Controls whether to extract the `server` logs or the `client` logs
 
     Returns:
         None
@@ -146,54 +146,54 @@ def complete_experiment_and_save_results(
     - determining whether the E2E test succeeded or failed
 
     Args:
-        server_hostname: The host name of the remote machine where the server was running on
-        server_instance_id: The ID of the AWS EC2 instance running the server
-        server_docker_id: The ID of the Docker container running the server (browsers/chrome) mandelbox
-        server_ssh_cmd: The string containing the command to be used to open a SSH connection to the server EC2 instance
-        server_log: The file to be used to dump the server-side monitoring logs
-        server_metrics_file: The filepath to the file (that we expect to see) containing the server metrics.
-                             We will use this filepath to check that the file exists.
-        use_existing_server_instance: the ID of the pre-existing AWS EC2 instance that was used to run the test.
+        server_hostname (str): The host name of the remote machine where the server was running on
+        server_instance_id (str): The ID of the AWS EC2 instance running the server
+        server_docker_id (str): The ID of the Docker container running the server (browsers/chrome) mandelbox
+        server_ssh_cmd (str): The string containing the command to be used to open a SSH connection to the server EC2 instance
+        server_log (file): The file to be used to dump the server-side monitoring logs
+        server_metrics_file (file): The filepath to the file (that we expect to see) containing the server metrics.
+                            We will use this filepath to check that the file exists.
+        use_existing_server_instance (str): the ID of the pre-existing AWS EC2 instance that was used to run the test.
+                            This parameter is an empty string if we are not reusing existing instances
+        server_mandelbox_pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
+                            be used tovinteract with the server mandelbox on the server instance.
+        server_hs_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to
+                            interact with the host-service on the server instance.
+        pexpect_prompt_server (str): The bash prompt printed by the shell on the remote server machine when it is ready
+                            to execute a command
+        client_hostname (str): The host name of the remote machine where the client was running on
+        client_instance_id (str): The ID of the AWS EC2 instance running the client
+        client_docker_id (str): The ID of the Docker container running the client (development/client) mandelbox
+        client_ssh_cmd (str): The string containing the command to be used to open a SSH connection to the client EC2 instance
+        client_log (file): The file to be used to dump the client-side monitoring logs
+        client_metrics_file (file): The filepath to the file (that we expect to see) containing the client metrics.
+                            We will use this filepath to check that the file exists.
+        use_existing_client_instance (str): the ID of the pre-existing AWS EC2 instance that was used to run the test.
                                       This parameter is an empty string if we are not reusing existing instances
-        server_mandelbox_pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                                          interact with the server mandelbox on the server instance.
-        server_hs_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact with the
-                           host-service on the server instance.
-        pexpect_prompt_server: The bash prompt printed by the shell on the remote server machine when it is ready
-                               to execute a command
-        client_hostname: The host name of the remote machine where the client was running on
-        client_instance_id: The ID of the AWS EC2 instance running the client
-        client_docker_id: The ID of the Docker container running the client (development/client) mandelbox
-        client_ssh_cmd: The string containing the command to be used to open a SSH connection to the client EC2 instance
-        client_log: The file to be used to dump the client-side monitoring logs
-        client_metrics_file: The filepath to the file (that we expect to see) containing the client metrics.
-                             We will use this filepath to check that the file exists.
-        use_existing_client_instance: the ID of the pre-existing AWS EC2 instance that was used to run the test.
-                                      This parameter is an empty string if we are not reusing existing instances
-        client_mandelbox_pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                                          interact with the client mandelbox on the client instance.
-        client_hs_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact with the
-                           host-service on the client instance.
-        pexpect_prompt_client: The bash prompt printed by the shell on the remote client machine when it is ready
-                               to execute a command
-        aws_timeout_seconds: The amount of time (in seconds) to wait before timing out the attemps to
+        client_mandelbox_pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
+                            be used to interact with the client mandelbox on the client instance.
+        client_hs_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to
+                            interact with the host-service on the client instance.
+        pexpect_prompt_client (str): The bash prompt printed by the shell on the remote client machine when it is ready
+                            to execute a command
+        aws_timeout_seconds (int): The amount of time (in seconds) to wait before timing out the attemps to
                              gain a SSH connection to the remote machine.
-        ssh_connection_retries: The number of times to retry if a SSH connection cannot be immediately established
-        username: The username to use when opening a SSH connection to a remote AWS EC2 machine
-        ssh_key_path: The path (on the machine where this script is run) to the file storing
+        ssh_connection_retries (int): The number of times to retry if a SSH connection cannot be immediately established
+        username (str): The username to use when opening a SSH connection to a remote AWS EC2 machine
+        ssh_key_path (str): The path (on the machine where this script is run) to the file storing
                       the public RSA key used for SSH connections
-        boto3client:
-        running_in_ci: A boolean indicating whether this script is currently running in CI
-        use_two_instances: Whether the server and the client are running on two separate AWS instances
+        boto3client (botocore.client): The Boto3 client to use to talk to the AWS console
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        use_two_instances (bool): Whether the server and the client are running on two separate AWS instances
                            (as opposed to the same instance)
-        leave_instances_on: Whether to leave the instance(s) running after the experiment is complete.
-        network_conditions: The network conditions used on the client instanceduring the experiment.
+        leave_instances_on (bool): Whether to leave the instance(s) running after the experiment is complete.
+        network_conditions (str): The network conditions used on the client instanceduring the experiment.
                             This string is set to 'none' if no artificial degradations were applied
                             to the network on the client instance.
-        perf_logs_folder_name: The path to the folder (on the machine where this script is run)
+        perf_logs_folder_name (str): The path to the folder (on the machine where this script is run)
                                where to store the logs
-        experiment_metadata: The dictionary containing the experiment metadata
-        metadata_filename: The name of the file to save the updated experiment metadata in json format
+        experiment_metadata (dict): The dictionary containing the experiment metadata
+        metadata_filename (str): The name of the file to save the updated experiment metadata in json format
 
     Returns:
         On success: 0

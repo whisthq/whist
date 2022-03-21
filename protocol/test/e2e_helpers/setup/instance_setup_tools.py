@@ -27,7 +27,7 @@ def install_and_configure_aws(
     from the ones configured on the machine where this script is being run.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used
                          to interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
                         is ready to execute a command
@@ -173,7 +173,7 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, runnin
 
     Args:
         github_token: The secret token to use to access the Whist private repository on GitHub
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to
                         interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
                         ready to execute a command
@@ -217,20 +217,21 @@ def run_host_setup(
     connection to the host, and that the Whist repository has already been cloned.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact
-                         with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready to
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
+                        be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
                         execute a command
-        ssh_cmd: The shell command to use to establish a SSH connection to the remote machine.
-                 This is used if we need to reboot the machine.
-        timeout_value: The amount of time to wait before timing out the attemps to gain a SSH connection
+        ssh_cmd (str): The shell command to use to establish a SSH connection to the remote machine.
+                        This is used if we need to reboot the machine.
+        timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection
                        to the remote machine.
-        logfile: The file (already opened) to use for logging the terminal output from the remote machine
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        logfile (file): The file (already opened) to use for logging the terminal output from the remote machine
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
-        pexpect_process: The Pexpect process to be used from now on to interact with the remote machine.
-                         This is equal to the first argument if a reboot of the remote machine was not needed.
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process to be used from now on to interact with
+                        the remote machine. This is equal to the first argument if a reboot of the remote
+                        machine was not needed.
     """
     print("Running the host setup on the instance ...")
     command = "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
@@ -270,8 +271,8 @@ def start_host_service(pexpect_process, pexpect_prompt):
     to the host, and that the Whist repository has already been cloned.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact with
-                         the remote machine
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to
+                         interact with the remote machine
 
     Returns:
         None
@@ -301,11 +302,11 @@ def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
     by pruning old Docker containers by running the command `docker system prune -af`
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used
                          to interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is
                         ready to execute a command
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
