@@ -26,6 +26,64 @@ Public Constants
 
 /*
 ============================
+Public enums
+============================
+*/
+
+typedef enum {
+    // Common metrics
+    NETWORK_RTT_UDP,
+
+    // Server side metrics
+    AUDIO_ENCODE_TIME,
+    CLIENT_HANDLE_USERINPUT_TIME,
+    NETWORK_THROTTLED_PACKET_DELAY,
+    NETWORK_THROTTLED_PACKET_DELAY_RATE,
+    NETWORK_THROTTLED_PACKET_DELAY_LOOPS,
+    VIDEO_CAPTURE_CREATE_TIME,
+    VIDEO_CAPTURE_UPDATE_TIME,
+    VIDEO_CAPTURE_SCREEN_TIME,
+    VIDEO_CAPTURE_TRANSFER_TIME,
+    VIDEO_ENCODER_UPDATE_TIME,
+    VIDEO_ENCODE_TIME,
+    VIDEO_FPS_SENT,
+    VIDEO_FPS_SKIPPED_IN_CAPTURE,
+    VIDEO_FRAME_SIZE,
+    VIDEO_FRAME_PROCESSING_TIME,
+    VIDEO_GET_CURSOR_TIME,
+    VIDEO_INTER_FRAME_QP,
+    VIDEO_INTRA_FRAME_QP,
+    VIDEO_SEND_TIME,
+    DBUS_MSGS_RECEIVED,
+    SERVER_CPU_USAGE,
+
+    // Client side metrics
+    AUDIO_RECEIVE_TIME,
+    AUDIO_UPDATE_TIME,
+    AUDIO_FPS_SKIPPED,
+    NETWORK_READ_PACKET_TCP,
+    NETWORK_READ_PACKET_UDP,
+    SERVER_HANDLE_MESSAGE_TCP,
+    SERVER_HANDLE_MESSAGE_UDP,
+    VIDEO_AVCODEC_RECEIVE_TIME,
+    VIDEO_AV_HWFRAME_TRANSFER_TIME,
+    VIDEO_CURSOR_UPDATE_TIME,
+    VIDEO_DECODE_SEND_PACKET_TIME,
+    VIDEO_DECODE_GET_FRAME_TIME,
+    VIDEO_FPS_RENDERED,
+    VIDEO_E2E_LATENCY,
+    VIDEO_RECEIVE_TIME,
+    VIDEO_RENDER_TIME,
+    VIDEO_TIME_BETWEEN_FRAMES,
+    VIDEO_UPDATE_TIME,
+    NOTIFICATIONS_RECEIVED,
+    CLIENT_CPU_USAGE,
+
+    NUM_METRICS,
+} Metrics;
+
+/*
+============================
 Public Structures
 ============================
 */
@@ -61,7 +119,7 @@ Public Functions
 /**
  * @brief                          Initialize the statistic logger.
  */
-void whist_init_statistic_logger(uint32_t num_metrics, StatisticInfo *statistic_info, int interval);
+void whist_init_statistic_logger(int interval);
 
 /**
  * @brief                          Note a specific stat value associated with a key. If enough time

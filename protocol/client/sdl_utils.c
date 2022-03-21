@@ -21,8 +21,8 @@ Includes
 #include <whist/utils/png.h>
 #include <whist/utils/lodepng.h>
 #include "frontend/frontend.h"
-#include "client_statistic.h"
 #include "whist/utils/command_line.h"
+#include <whist/logging/log_statistic.h>
 
 #include <whist/utils/color.h>
 #include "native_window_utils.h"

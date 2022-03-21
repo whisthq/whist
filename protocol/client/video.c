@@ -36,7 +36,6 @@ Includes
 #include "native_window_utils.h"
 #include "network.h"
 #include "client_utils.h"
-#include "client_statistic.h"
 #include <whist/debug/protocol_analyzer.h>
 
 #define USE_HARDWARE true

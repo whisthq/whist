@@ -52,7 +52,6 @@ Includes
 #include <whist/utils/threads.h>
 #include "whist/utils/command_line.h"
 #include "client.h"
-#include "server_statistic.h"
 #include "network.h"
 
 /*

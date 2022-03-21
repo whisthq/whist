@@ -53,7 +53,6 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 ├── client
 │   ├── audio.c <- Handle and play audio packets
 │   ├── bitrate.c <- Protocols for calculating adaptive bitrate
-│   ├── client_statistic.c <- Client-side metrics
 │   ├── client_utils.c <- cmdline options, among others
 │   ├── handle_server_message.c <- Handle server fcmsg's
 │   ├── main.c <- SDL Event loop, receive and categorize packets as fcmsg/audio/video

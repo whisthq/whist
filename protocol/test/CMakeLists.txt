@@ -31,7 +31,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/audio.c
         ../client/client_utils.c
         ../client/whist_client.c
-        ../client/client_statistic.c
         ../client/network.c
         ../client/sdl_event_handler.c
         ../client/sdl_utils.c
@@ -83,7 +82,6 @@ else()
         ../client/audio.c
         ../client/client_utils.c
         ../client/whist_client.c
-        ../client/client_statistic.c
         ../client/network.c
         ../client/sdl_event_handler.c
         ../client/sdl_utils.c

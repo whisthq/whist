@@ -20,7 +20,6 @@ Includes
 
 #include "audio.h"
 #include "network.h"
-#include "client_statistic.h"
 #include <whist/logging/log_statistic.h>
 #include <whist/network/network.h>
 #include <whist/network/ringbuffer.h>

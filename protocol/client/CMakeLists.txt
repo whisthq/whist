@@ -12,7 +12,6 @@ set(WHIST_CLIENT_DEPENDS
         handle_server_message.c
         video.c
         sync_packets.c
-        client_statistic.c
         renderer.c
         frontend/frontend.c
         frontend/sdl.c
