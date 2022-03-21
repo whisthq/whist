@@ -158,78 +158,6 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # We use a separate job for building the monorepo configuration. The monorepo
-  # configuration is built in a Docker container, and Docker Actions can only be
-  # run on Linux environments on GitHub. As we need to build the client application
-  # in Mac and Windows environments, we need to run the configuration builder as a
-  # separate job. We set the JSON configuration data as "outputs" of this job step,
-  # so that it can be consumed by other jobs.
-  #
-  # Before we set the "outputs" of this job step, we need to perform a small trick
-  # to get around a implementation detail of GitHub Actions. The GitHub Actions runner
-  # will silently ignore any "outputs" that contain values inside the GitHub secrets
-  # store. This is for security purposes, but it's rather inconvenient when we're trying
-  # to pass around a configuration object that may contain secret values. To get around
-  # GitHub's limitation, we first encode the configuration string to base-85. Other jobs
-  # will need to decode the base-85 string to produce the JSON configuration object.
-  whist-build-monorepo-config:
-    name: "Building Monorepo Config"
-    runs-on: ubuntu-20.04
-    needs: [whist-publish-build-config]
-    outputs:
-      macos: ${{ steps.config-macos.outputs.config }}
-      win32: ${{ steps.config-win32.outputs.config }}
-
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3
-
-      - name: Build Monorepo Configuration for macOS
-        id: config-macos
-        uses: ./.github/actions/monorepo-config
-        with:
-          os: macos
-          deploy: ${{ needs.whist-publish-build-config.outputs.branch }}
-
-      - name: Build Monorepo Configuration for Windows
-        id: config-win32
-        uses: ./.github/actions/monorepo-config
-        with:
-          os: win32
-          deploy: ${{ needs.whist-publish-build-config.outputs.branch }}
-
-      - name: Log macOS Configuration
-        shell: python3 {0}
-        run: print(r"""${{ steps.config-macos.outputs.config }}""")
-
-      - name: Log Win32 Configuration
-        shell: python3 {0}
-        run: print(r"""${{ steps.config-win32.outputs.config }}""")
-
-      - name: Setup Python-based notifications
-        if: failure()
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
-
-      - name: Notify Slack on Job Error
-        if: failure()
-        shell: python3 {0}
-        run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
-          from notifications.slack_bot import slack_post
-          BODY = "@releases :rotating_light: Failed to build Whist monorepo config in `whist-build-monorepo-config`, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
-
-  #######################################################################################
-  #######################################################################################
-
   # Website: Build & Deploy to Netlify
   # This job builds and deploys the website to netlify.
   website-deploy-netlify:
@@ -287,7 +215,7 @@ jobs:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
           from notifications.slack_bot import slack_post
-          BODY = "@releases :rotating_light: Failed to build Whist monorepo config in `whist-build-monorepo-config`, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Failed to deploy Whist website to Netlify in `whist-deploy-netlify`, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
@@ -301,7 +229,7 @@ jobs:
     name: "Deploy Auth0 Rules"
     runs-on: ubuntu-20.04
     concurrency: auth0-deploy-rules-${{ github.ref }}
-    needs: [whist-publish-build-config, whist-build-monorepo-config]
+    needs: [whist-publish-build-config]
 
     steps:
       - name: Checkout Git Repository
@@ -370,7 +298,7 @@ jobs:
   terraform-deploy:
     name: Deploy Terraform
     runs-on: ubuntu-20.04
-    needs: [whist-publish-build-config, whist-build-monorepo-config]
+    needs: [whist-publish-build-config]
     env:
       # Set AWS credentials for Terraform
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
@@ -445,12 +373,7 @@ jobs:
     name: "Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs"
     runs-on: ubuntu-20.04
     concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
-    needs:
-      [
-        whist-publish-build-config,
-        whist-build-monorepo-config,
-        terraform-deploy,
-      ]
+    needs: [whist-publish-build-config, terraform-deploy]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
 
@@ -717,12 +640,7 @@ jobs:
     name: "Webserver: Deploy to Heroku"
     runs-on: ubuntu-20.04
     concurrency: webserver-deploy-heroku-${{ github.ref }}
-    needs:
-      [
-        whist-publish-build-config,
-        whist-build-monorepo-config,
-        terraform-deploy,
-      ]
+    needs: [whist-publish-build-config, terraform-deploy]
 
     steps:
       - name: Checkout Git Repository
@@ -853,7 +771,6 @@ jobs:
     needs:
       [
         whist-publish-build-config,
-        whist-build-monorepo-config,
         scaling-service-deploy,
         auth0-deploy-rules,
         terraform-deploy,
@@ -981,7 +898,6 @@ jobs:
     needs:
       [
         whist-publish-build-config,
-        whist-build-monorepo-config,
         client-applications-retrieve-version-number,
         terraform-deploy,
       ]
@@ -1077,7 +993,6 @@ jobs:
           call yarn cache clean
           call yarn install
           call yarn package:publish \
-          --config='${{ needs.whist-build-monorepo-config.outputs.win32 }}' \
           --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
           --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
@@ -1099,7 +1014,6 @@ jobs:
           yarn cache clean
           yarn install
           yarn package:publish \
-          --config='${{ needs.whist-build-monorepo-config.outputs.macos }}' \
           --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
           --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
@@ -1135,7 +1049,6 @@ jobs:
     needs:
       [
         whist-publish-build-config,
-        whist-build-monorepo-config,
         client-applications-retrieve-version-number,
         terraform-deploy,
       ]
@@ -1216,7 +1129,6 @@ jobs:
           yarn cache clean
           yarn install
           yarn package:publish \
-          --config='${{ needs.whist-build-monorepo-config.outputs.macos }}' \
           --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
           --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
@@ -1246,7 +1158,6 @@ jobs:
     needs:
       [
         whist-publish-build-config,
-        whist-build-monorepo-config,
         client-applications-retrieve-version-number,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
@@ -1341,7 +1252,6 @@ jobs:
     needs:
       [
         whist-publish-build-config,
-        whist-build-monorepo-config,
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-deploy-heroku,
         auth0-deploy-rules,
@@ -1472,7 +1382,6 @@ jobs:
     needs:
       [
         whist-publish-build-config,
-        whist-build-monorepo-config,
         auth0-deploy-rules,
         terraform-deploy,
         mandelboxes-and-amis-publish-ghcr-and-aws,

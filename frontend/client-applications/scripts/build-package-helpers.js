@@ -1,7 +1,6 @@
 // This file contains helper functions for building, packaging, and publishing the client application.
 
 const { execCommand } = require("./execCommand")
-const { execSync } = require("child_process")
 const { sync: rimrafSync } = require("rimraf")
 const fs = require("fs")
 const fse = require("fs-extra")
@@ -77,16 +76,7 @@ const getPublishS3BucketName = (environment) => {
   }
 }
 
-const configOS = () => {
-  if (process.platform === "win32") return "win32"
-  if (process.platform === "darwin") return "macos"
-  return "linux"
-}
-
-const configImageTag = "whist/config"
-
 const gitRepoRoot = "../.."
-const configDirectory = path.join(gitRepoRoot, "config")
 const protocolSourceDir = path.join(gitRepoRoot, "protocol")
 const cmakeBuildDir = "build-clientapp"
 const protocolTargetDir = "WhistProtocolClient"
@@ -94,32 +84,6 @@ const protocolTargetBuild = path.join(protocolTargetDir, "build")
 const protocolTargetDebug = path.join(protocolTargetDir, "debugSymbols")
 
 module.exports = {
-  buildConfigContainer: () => {
-    // Build the docker image from whist/config/Dockerfile
-    // When the --quiet flag is used, then the stdout of docker build
-    // will be the sha256 hash of the image.
-    console.log(`Building ${configImageTag} Docker image`)
-    const build = `docker build --tag ${configImageTag} ${configDirectory}`
-    execSync(build, { encoding: "utf-8", stdio: "pipe" }).trim()
-  },
-  getConfig: (params = {}) => {
-    // Using the params argument, we'll build some strings that pass options
-    // to the config CLI. Everything should be coerced to JSON strings first.
-    const os = `--os ${JSON.stringify(params.os ?? configOS())}`
-    const secrets = params.secrets
-      ? `--secrets ${JSON.stringify(params.secrets)}`
-      : ""
-    const deploy = params.deploy
-      ? `--deploy ${JSON.stringify(params.deploy)}`
-      : ""
-    console.log(`Parsing config with: ${secrets} ${os} ${deploy}`)
-
-    // Pass the sha256 hash of the image to docker run, removing the created
-    // container afterwards. The output of these will be a JSON string
-    // of the config object.
-    const run = `docker run --rm ${configImageTag} ${secrets} ${os} ${deploy}`
-    return execSync(run, { encoding: "utf-8", stdio: "pipe" })
-  },
   // Build the protocol and copy it into the expected location
   buildAndCopyProtocol: (freshCmake) => {
     console.log("Building the protocol...")
@@ -316,9 +280,6 @@ module.exports = {
       process.exit(-1)
     }
   },
-
-  // Function to set add the CONFIG= environment variabled to the overrides.
-  setPackagedConfig: (config) => addEnvOverride({ CONFIG: config }),
 
   // Function to set the commit sha for the packaged app, which gets
   // hardcoded into the electron bundle via `env_overrides.json`.

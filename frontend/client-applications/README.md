@@ -24,7 +24,7 @@ This repository has two main functions. The first is that it's the home for all 
 
 We use `yarn` as the package manager for this project. All of the commands required for development are aliased in `package.json`, and can be called with `yarn`. For example, `yarn start` will boot up the development environment. We don't write commands out directly in the `scripts` section of `package.json`. Instead, each command has a corresponding file in the `/scripts` folder. This allows us to more carefully comment our `yarn` commands, and it makes diffs more visible in PRs. You shouldn't `cd scripts` to run anything in the scripts folder.
 
-1. Go to the `/protocol/` and `/config/` README to install all the necessary prerequisites.
+1. Go to the `/protocol/` README to install all the necessary prerequisites.
 
 2. Make sure you have `yarn` installed on your computer. You can install it [here](https://classic.yarnpkg.com/en/docs/install/#mac-stable).
 
