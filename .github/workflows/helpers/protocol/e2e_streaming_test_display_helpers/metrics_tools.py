@@ -129,19 +129,18 @@ def compute_deltas(
     for the markdown comparison table
 
     Args:
-        client_dictionary (dict): The dictionary containing the metrics key-value pairs for the
+        client_dictionary (dict):   The dictionary containing the metrics key-value pairs for the
                                     client from the current run
-        server_dictionary (dict): The dictionary containing the metrics key-value pairs for the
+        server_dictionary (dict):   The dictionary containing the metrics key-value pairs for the
                                     server from the current run
-        compared_client_dictionary (dict): The dictionary containing the metrics key-value pairs
-                                    for the client from the compared run
-        compared_server_dictionary (dict): The dictionary containing the metrics key-value pairs
-                                    for the server from the compared run
+        compared_client_dictionary (dict):  The dictionary containing the metrics key-value pairs
+                                            for the client from the compared run
+        compared_server_dictionary (dict):  The dictionary containing the metrics key-value pairs
+                                            for the server from the compared run
     Returns:
-        table_entries (list): A list with two sublists. The two sublists contain the entries for
-                                    the markdown comparison tables for the client and server,
-                                    respectively. Each item in the sublists corresponds to one row
-                                    in the table.
+        table_entries (list):   A list with two sublists. The two sublists contain the entries for
+                                the markdown comparison tables for the client and server, respectively.
+                                Each item in the sublists corresponds to one row in the table.
     """
     metrics_dictionaries = [client_dictionary, server_dictionary]
     compared_dictionaries = [compared_client_dictionary, compared_server_dictionary]
