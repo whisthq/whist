@@ -24,7 +24,10 @@ const tryRestoreTabLocation = async (
 }
 
 // Switch focused tab to match the requested URL
-const createNewTab = async (tabId: number, newtabUrl: string) => {
+const createNewTab = async (
+  tabId: number,
+  newtabUrl: string
+) => {
   try {
     await chrome.tabs.create({
       openerTabId: tabId,
@@ -47,7 +50,10 @@ const createNewTab = async (tabId: number, newtabUrl: string) => {
 }
 
 // Switch currently-active tab to match the requested tab
-const switchActiveTab = async (tabId: number, tabToFocusUrl: string) => {
+const switchActiveTab = async (
+  tabId: number,
+  tabToFocusUrl: string
+) => {
   try {
     var found: boolean = false
     var desiredTabId: number = -1
