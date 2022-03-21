@@ -77,7 +77,7 @@ dbus_config_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
 # shellcheck source=/dev/null
 . "$dbus_config_file"
 export DBUS_SESSION_BUS_ADDRESS
-echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS"
+echo "loaded d-bus address in start-brave.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Start Brave with the KDE desktop environment
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround brave://flags features
