@@ -27,10 +27,12 @@ const logzio = createLogger({
 })
 // Open a file handle to append to the logs file.
 // Create the loggingBaseFilePath directory if it does not exist.
-const openLogFile = () => {
-  fs.mkdirSync(electronLogPath, { recursive: true })
-  const logPath = path.join(electronLogPath, loggingFiles.client)
-  return fs.createWriteStream(logPath)
+const openElectronLogFile = () => {
+  return fs.createWriteStream(path.join(electronLogPath, loggingFiles.client))
+}
+
+const openProtocolLogFile = () => {
+  return fs.createWriteStream(path.join(electronLogPath, loggingFiles.protocol))
 }
 
 const formatLogs = (title: string, data: object) => {
@@ -118,7 +120,8 @@ const logToLogzio = (line: string, subComponent: string) => {
 
 export {
   electronLogPath,
-  openLogFile,
+  openElectronLogFile,
+  openProtocolLogFile,
   formatLogs,
   filterLogData,
   logToAmplitude,
