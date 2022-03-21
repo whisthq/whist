@@ -27,7 +27,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | b
 # Brave Build Stage
 #########################################################
 
-FROM ubuntu:20.04 as whist-teleport-chrome-extension
+FROM whisthq/base:current-build as whist-browsers-brave
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
