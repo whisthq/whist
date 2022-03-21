@@ -224,11 +224,11 @@ RUN mkdir /dist /ignore && \
 RUN mkdir /dist/etc && \
     cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
 
-################ STAGE 4: whist-teleport-drag-drop################
+################ STAGE 4: whist-teleport-drag-drop ################
 # - Copy and build the FUSE service to handle teleport drag-drop
 #   events
 # EXPOSES the teleport fuse service
-##################################################################
+###################################################################
 FROM ubuntu:20.04 as whist-teleport-drag-drop
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -262,8 +262,8 @@ COPY teleport/drag-drop /whist-teleport-drag-drop/src
 
 # hadolint ignore=SC2046
 RUN cd /whist-teleport-drag-drop/src \
-    && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
-    && gcc -Wall unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
+    && gcc -Wall -Werror -D _GNU_SOURCE unshare.c -o unshare.o -c \
+    && gcc -Wall -Werror  unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
 
 ################ STAGE 5: hydraulic-press #####################
 # - Copy, set permissions for, and install all base mandelbox

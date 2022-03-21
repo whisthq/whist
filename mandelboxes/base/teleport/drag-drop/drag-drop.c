@@ -146,7 +146,8 @@ DirectoryTreeResult emulate_directory_tree(const char *path) {
     }
 
     char id_buf[256];
-    snprintf(id_buf, sizeof(id_buf), "%s", path);
+    int len = snprintf(id_buf, sizeof(id_buf), "%s", path);
+    if (len >= sizeof(id_buf) || len < 0) printf("Warning: Truncation or error in `snprintf`: \"%s\"\n", id_buf);
 
     char *p = NULL;
     for (p = id_buf + 1; *p; ++p) {
@@ -276,8 +277,9 @@ static int teleport_fuse_open(const char *path, struct fuse_file_info *fi) {
             }
             char download_path[NAME_MAX + 1] = {0};
             int idx = dt_res.transfer_context_idx;
-            snprintf(download_path, NAME_MAX + 1, "%s/%s", transfer_status[idx].id_path,
-                     transfer_status[idx].filename);
+            int len = snprintf(download_path, NAME_MAX + 1, "%s/%s", transfer_status[idx].id_path,
+                               transfer_status[idx].filename);
+            if (len >= NAME_MAX + 1 || len < 0) printf("Warning: Truncation or error in `snprintf`: \"%s\"\n", download_path);
             wait_for_transfer_context_ready(idx);
             fi->fh = open(download_path, fi->flags);
             break;
@@ -300,6 +302,7 @@ static int teleport_fuse_release(const char *path, struct fuse_file_info *fi) {
         default:
             return -ENOENT;
     }
+    return 0;
 }
 
 // For a given file path, size, and offset, return read bytes.
@@ -345,6 +348,7 @@ void mkpath(char *dir, mode_t mode) {
     size_t len;
 
     len = snprintf(tmp, sizeof(tmp), "%s", dir);
+    if (len >= sizeof(tmp) || len < 0) printf("Warning: Truncation or error in `snprintf`: \"%s\"\n", tmp);
 
     if (tmp[len - 1] == '/') {
         tmp[len - 1] = 0;
@@ -436,14 +440,17 @@ void inotify_handle_new_id(const char *id) {
         transfer_status[current_idx].data_ready = false;
 
         char file_info_path[NAME_MAX + 1] = {0};
-        snprintf(file_info_path, NAME_MAX + 1, WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/file_info/%s",
-                 id);
+        int len = snprintf(file_info_path, NAME_MAX + 1, WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/file_info/%s",
+                           id);
+        if (len >= NAME_MAX + 1 || len < 0) printf("Warning: Truncation or error in `snprintf`: \"%s\"\n", file_info_path);
 
         // Record file size here - assume that the file has been created in the
         // "/file_info/" directory.
         //     If not, set to -1
         char file_size_path[NAME_MAX + 1] = {0};
-        snprintf(file_size_path, NAME_MAX + 1, "%s/file_size", file_info_path);
+        len = snprintf(file_size_path, NAME_MAX + 1, "%s/file_size", file_info_path);
+        if (len >= NAME_MAX + 1 || len < 0) printf("Warning: Truncation or error in `snprintf`: \"%s\"\n", file_size_path);
+
         FILE *file_size_file = fopen(file_size_path, "r");
         if (file_size_file) {
             fscanf(file_size_file, "%d", &transfer_status[current_idx].file_size);
@@ -453,8 +460,10 @@ void inotify_handle_new_id(const char *id) {
         }
 
         strcpy(transfer_status[current_idx].id, id);
-        snprintf(transfer_status[current_idx].id_path, NAME_MAX + 1,
+        len = snprintf(transfer_status[current_idx].id_path, NAME_MAX + 1,
                  WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/downloads/%s", id);
+        if (len >= NAME_MAX + 1 || len < 0) printf("Warning: Truncation or error in `snprintf`: \"%s\"\n", transfer_status[current_idx].id_path);
+
         transfer_status[current_idx].create_wd =
             inotify_add_watch(inotify_fd, transfer_status[current_idx].id_path, IN_CREATE);
 
@@ -464,7 +473,7 @@ void inotify_handle_new_id(const char *id) {
 
         // Check for the first file child of /downloads/[ID] and handle it
         struct dirent *dp;
-        while (dp = readdir(dirp)) {
+        while ((dp = readdir(dirp))) {
             if (dp->d_type != DT_DIR) {
                 inotify_handle_file_create(transfer_status[current_idx].create_wd, dp->d_name);
                 break;
@@ -475,8 +484,10 @@ void inotify_handle_new_id(const char *id) {
         // Create an ID file in the `fuse_ready` directory to indicate to other
         // processes that the FUSE path is ready
         char fuse_ready_file_path[NAME_MAX + 1] = {0};
-        snprintf(fuse_ready_file_path, NAME_MAX + 1,
+        len = snprintf(fuse_ready_file_path, NAME_MAX + 1,
                  WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/fuse_ready/%s", id);
+        if (len >= NAME_MAX + 1 || len < 0) printf("Warning: Truncation or error in `snprintf`: \"%s\"\n", fuse_ready_file_path);
+
         FILE *fuse_ready_file = fopen(fuse_ready_file_path, "w");
         fclose(fuse_ready_file);
     } else {
@@ -532,7 +543,7 @@ void *multithreaded_download_watcher(void *opaque) {
 
     // Check for any directory children of /downloads and handle them
     struct dirent *dp;
-    while (dp = readdir(dirp)) {
+    while ((dp = readdir(dirp))) {
         if (dp->d_type == DT_DIR &&
             // ignore the . and .. folders
             strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
@@ -546,7 +557,7 @@ void *multithreaded_download_watcher(void *opaque) {
     dirp = opendir(WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/ready");
 
     // Check for any file children of /ready and handle them
-    while (dp = readdir(dirp)) {
+    while ((dp = readdir(dirp))) {
         if (dp->d_type != DT_DIR) {
             inotify_handle_file_close(dp->d_name);
         }
@@ -608,8 +619,10 @@ int main(int argc, char *argv[]) {
     // `/proc/[PID]/root/home/whist/.teleport/drag-drop/fuse` to directory
     // `/home/whist/drag-drop`
     char proc_directory[NAME_MAX + 1] = {0};
-    snprintf(proc_directory, NAME_MAX + 1, "/proc/%d/root%s/%s", getpid(),
-             WHIST_TELEPORT_DRAG_DROP_DIRECTORY, "fuse");
+    int len = snprintf(proc_directory, NAME_MAX + 1, "/proc/%d/root%s/%s", getpid(),
+                       WHIST_TELEPORT_DRAG_DROP_DIRECTORY, "fuse");
+    if (len >= NAME_MAX || len < 0) printf("Warning: Truncation or error in `snprintf`: \"%s\"\n", proc_directory);
+
     if (symlink(proc_directory, "/home/whist/drag-drop") != 0) {
         printf("Could not symlink %s and /home/whist/drag-drop\n", proc_directory);
         return -1;
