@@ -171,8 +171,8 @@ X11CaptureDevice* create_x11_capture_device(Window active_window, uint32_t width
     LOG_INFO("Active window width/height: %d %d", attr.width, attr.height);
     log_tree(device, device->active);
     // set remaining device parameters
-    device->width = width;
-    device->height = height;
+    device->width = attr.width;
+    device->height = attr.height;
     int damage_event, damage_error;
     XDamageQueryExtension(device->display, &damage_event, &damage_error);
     device->damage = XDamageCreate(device->display, device->active, XDamageReportRawRectangles);

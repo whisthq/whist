@@ -66,6 +66,7 @@ Includes
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
 #include <whist/utils/os_utils.h>
+#include <whist/video/capture/capture.h>
 
 /*
 ============================
@@ -775,7 +776,7 @@ typedef enum WhistServerMessageType {
     SMESSAGE_INIT_REPLY = 3,
     SMESSAGE_CLIPBOARD = 4,
     SMESSAGE_WINDOW_TITLE = 5,
-    SMESSAGE_CAPTURE_CREATED = 6,
+    SMESSAGE_WINDOW = 6,
     SMESSAGE_OPEN_URI = 7,
     SMESSAGE_FULLSCREEN = 8,
     SMESSAGE_FILE_METADATA = 9,
@@ -806,6 +807,7 @@ typedef struct WhistServerMessage {
         char window_title[0];
         char requested_uri[0];
         WhistNotification notif;
+        WindowMessage window_data;
     };
 } WhistServerMessage;
 

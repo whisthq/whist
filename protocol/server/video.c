@@ -647,6 +647,7 @@ int32_t multithreaded_send_video(void* opaque) {
         }
 
         // Update device with new parameters
+        // TODO: use information from client window messages
 
         // YUV pixel format requires the width to be a multiple of 4 and the height to be a
         // multiple of 2 (see `bRoundFrameSize` in NvFBC.h). By default, the dimensions will be
@@ -655,11 +656,10 @@ int32_t multithreaded_send_video(void* opaque) {
         int true_width = state->client_width + 7 - ((state->client_width + 7) % 8);
         int true_height = state->client_height + 1 - ((state->client_height + 1) % 2);
 
-        // TODO: handle other client window changes?
         // If we got an update device request, we should update the device
         if (state->update_device) {
-            update_current_device(state, &statistics_timer, current_device.device, current_device.encoder, true_width,
-                                  true_height);
+            update_current_device(state, &statistics_timer, current_device.device,
+                                  current_device.encoder, true_width, true_height);
             state->stream_needs_restart = true;
         }
 
@@ -675,22 +675,36 @@ int32_t multithreaded_send_video(void* opaque) {
         if (!has_device) {
             if (devices[last_created_device_index].device) {
                 LOG_INFO("Destroying device at index %d", last_created_device_index);
-            // TODO: send a message to the client to close the window associated to this device (if needed)
-            // destroy the last capture device and encoder if needed
-            destroy_capture_device(devices[last_created_device_index].device);
-            destroy_video_encoder(devices[last_created_device_index].encoder);
+                // TODO: send a message to the client to close the window associated to this device
+                // (if needed)
+                WhistServerMessage wsmsg = {0};
+                wsmsg.type = SMESSAGE_WINDOW;
+                wsmsg.window_data.type = WINDOW_DELETE;
+                wsmsg.window_data.id = devices[last_created_device_index].device->id;
+                wsmsg.window_data.width = -1;
+                wsmsg.window_data.height = -1;
+                // destroy the last capture device and encoder if needed
+                destroy_capture_device(devices[last_created_device_index].device);
+                destroy_video_encoder(devices[last_created_device_index].encoder);
             }
             last_created_device_index = (last_created_device_index + 1) % MAX_WINDOWS;
 
-            if (create_new_device(state, &statistics_timer, &devices[last_created_device_index].device,
-            &devices[last_created_device_index].rdevice,
-            &devices[last_created_device_index].encoder, active_window, true_width,
-                                  true_height) < 0) {
+            if (create_new_device(state, &statistics_timer,
+                                  &devices[last_created_device_index].device,
+                                  &devices[last_created_device_index].rdevice,
+                                  &devices[last_created_device_index].encoder, active_window,
+                                  true_width, true_height) < 0) {
                 continue;
             }
             LOG_INFO("Created device for window %lu", active_window.window);
             current_device = devices[last_created_device_index];
-            // TODO: send a message to the client to open a new window and possibly close the window we yeeted
+            // TODO: send this msg to the client and handle
+            WhistServerMessage wsmsg = {0};
+            wsmsg.type = SMESSAGE_WINDOW;
+            wsmsg.window_data.type = WINDOW_CREATE;
+            wsmsg.window_data.id = current_device.device->id;
+            wsmsg.window_data.width = current_device.device->width;
+            wsmsg.window_data.height = current_device.device->height;
             state->stream_needs_restart = true;
         }
 
@@ -716,8 +730,9 @@ int32_t multithreaded_send_video(void* opaque) {
                 (double)network_settings.burst_bitrate / network_settings.video_bitrate;
             int vbv_size =
                 (VBV_IN_SEC_BY_BURST_BITRATE_RATIO * video_bitrate * burst_bitrate_ratio);
-            current_device.encoder = update_video_encoder(state, current_device.encoder, current_device.device, video_bitrate, video_codec,
-                                           video_fps, vbv_size);
+            current_device.encoder =
+                update_video_encoder(state, current_device.encoder, current_device.device,
+                                     video_bitrate, video_codec, video_fps, vbv_size);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
         }
@@ -896,24 +911,27 @@ int32_t multithreaded_send_video(void* opaque) {
                                      get_timer(&statistics_timer) * MS_IN_SECOND);
 
                 if (current_device.encoder->encoded_frame_size != 0) {
-                    if (current_device.encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
+                    if (current_device.encoder->encoded_frame_size >
+                        (int)MAX_VIDEOFRAME_DATA_SIZE) {
                         // Please make MAX_VIDEOFRAME_DATA_SIZE larger if this error happens
                         LOG_ERROR("Frame of size %d bytes is too large! Dropping Frame.",
                                   current_device.encoder->encoded_frame_size);
                         continue;
                     } else {
                         if (SAVE_VIDEO_OUTPUT) {
-                            for (int i = 0; i < encoder->num_packets; i++) {
-                                fwrite(encoder->packets[i]->data, encoder->packets[i]->size, 1, fp);
+                            for (int i = 0; i < current_device.encoder->num_packets; i++) {
+                                fwrite(current_device.encoder->packets[i].data,
+                                       current_device.encoder->packets[i].size, 1, fp);
                             }
                             fflush(fp);
                         }
-                        send_populated_frames(state, &statistics_timer, &server_frame_timer, current_device.device,
-                                              current_device.encoder, id, client_input_timestamp,
-                                              server_timestamp);
+                        send_populated_frames(state, &statistics_timer, &server_frame_timer,
+                                              current_device.device, current_device.encoder, id,
+                                              client_input_timestamp, server_timestamp);
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
-                        log_double_statistic(VIDEO_FRAME_SIZE, current_device.encoder->encoded_frame_size);
+                        log_double_statistic(VIDEO_FRAME_SIZE,
+                                             current_device.encoder->encoded_frame_size);
                         log_double_statistic(VIDEO_FRAME_PROCESSING_TIME,
                                              get_timer(&server_frame_timer) * 1000);
                         if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(encoder->frame_type))
@@ -945,15 +963,14 @@ int32_t multithreaded_send_video(void* opaque) {
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device,
     // So we destroy the encoder first
     for (int i = 0; i < MAX_WINDOWS; i++) {
-    if (devices[i].encoder) {
-        multithreaded_destroy_encoder(devices[i].encoder);
-        devices[i].encoder = NULL;
-    }
-    if (devices[i].device) {
-        destroy_capture_device(devices[i].device);
-        devices[i].device = NULL;
-    }
-
+        if (devices[i].encoder) {
+            multithreaded_destroy_encoder(devices[i].encoder);
+            devices[i].encoder = NULL;
+        }
+        if (devices[i].device) {
+            destroy_capture_device(devices[i].device);
+            devices[i].device = NULL;
+        }
     }
     return 0;
 }

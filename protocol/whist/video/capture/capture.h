@@ -39,6 +39,20 @@ typedef struct WhistWindow {
 #endif
 } WhistWindow;
 
+// TODO: this should go in a separate file 
+typedef enum WindowMessageType {
+    WINDOW_CREATE;
+    WINDOW_DELETE;
+    WINDOW_RESIZE;
+}
+
+typedef struct WindowMessage {
+    WindowMessageType type;
+    int id;
+    int width;
+    int height;
+} WindowMessage;
+
 typedef struct CaptureDevice {
     int id;
     int width;
