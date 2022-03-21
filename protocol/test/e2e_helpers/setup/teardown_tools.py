@@ -355,7 +355,7 @@ def complete_experiment_and_save_results(
     # 9- Update metadata file with any new metadata that we added
     with open(metadata_filename, "w") as metadata_file:
         json.dump(experiment_metadata, metadata_file)
-
+    sys.exit(-1)
     # 10- Print error message and exit with error if needed
     for cause, message in {
         "server_failure": "Failed to run WhistServer",
