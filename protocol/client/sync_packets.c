@@ -79,8 +79,9 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         // Update the UDP socket
         start_timer(&statistics_timer);
         double last_recv = get_timer(&last_recv_timer);
-        if (LOG_NETWORKING && connected && last_recv * MS_IN_SECOND > 0.2) {
-            LOG_WARNING("Time between recv() calls is too long: %fms", last_recv * MS_IN_SECOND);
+        if (connected && last_recv * MS_IN_SECOND > 0.5) {
+            LOG_WARNING_RATE_LIMITED(60, 4, "Time between recv() calls is too long: %fms",
+                                     last_recv * MS_IN_SECOND);
         }
         // Disconnect if the UDP connection was lost
         if (!socket_update(udp_context)) {

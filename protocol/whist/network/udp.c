@@ -231,6 +231,16 @@ typedef struct {
 
 #define get_bucket_id(time) ((time) / US_IN_MS) / DURATION_PER_BUCKET;
 
+// UDP recv buffer size, when a ringbuffer is being used (1MB)
+// This is 450ms-800ms in the 10mbps-18mbps
+// This should withstand the highest variance, while still being very small in RAM usage
+#define UDP_RECV_BUFFER_SIZE (1 << 20)
+
+// UDP send buffer size, when a network throttler is being used (128KB)
+// This is 50ms-100ms in the 10mbps-18mbps range,
+// we can safely drop packets if we're truly oversaturating our send bandwidth
+#define UDP_SEND_BUFFER_SIZE (1 << 17)
+
 /*
 ============================
 Globals
@@ -972,14 +982,6 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     // STUN isn't implemented
     FATAL_ASSERT(using_stun == false);
 
-    // Populate function pointer table
-    network_context->get_packet = udp_get_packet;
-    network_context->socket_update = udp_update;
-    network_context->free_packet = udp_free_packet;
-    network_context->send_packet = udp_send_packet;
-    network_context->get_pending_stream_reset = udp_get_pending_stream_reset;
-    network_context->destroy_socket_context = udp_destroy_socket_context;
-
     // Create the UDPContext, and set to zero
     UDPContext* context = safe_malloc(sizeof(UDPContext));
     memset(context, 0, sizeof(UDPContext));
@@ -993,8 +995,6 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     context->connection_lost = false;
     context->unordered_packet_info.max_unordered_packets = 0.0;
     start_timer(&context->last_network_settings_time);
-
-    network_context->context = context;
 
     // Map Port
     if ((int)((unsigned short)port) != port) {
@@ -1013,12 +1013,21 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
 
     int ret;
     if (destination == NULL) {
-        // On the server, we create a network throttler to limit the
-        // outgoing bitrate.
-        context->network_throttler =
-            network_throttler_create(UDP_NETWORK_THROTTLER_BUCKET_MS, true);
         // Create the server context
         ret = create_udp_server_context(context, port, connection_timeout_ms);
+        if (ret == 0) {
+            // On the server, we create a network throttler to limit the
+            // outgoing bitrate.
+            context->network_throttler =
+                network_throttler_create(UDP_NETWORK_THROTTLER_BUCKET_MS, true);
+            // When creating a network throttler to throttle high-bandwidth,
+            // we also want to ensure the send buffer size is large enough
+            int a = UDP_SEND_BUFFER_SIZE;
+            if (setsockopt(context->socket, SOL_SOCKET, SO_SNDBUF, (const char*)&a, sizeof(int)) ==
+                -1) {
+                LOG_ERROR("Error setting socket opt: %d", get_last_network_error());
+            }
+        }
     } else {
         // The client doesn't use a network throttler
         context->network_throttler = NULL;
@@ -1027,12 +1036,22 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     }
 
     if (ret == 0) {
+        // Populate function pointer table
+        network_context->context = context;
+        network_context->get_packet = udp_get_packet;
+        network_context->socket_update = udp_update;
+        network_context->free_packet = udp_free_packet;
+        network_context->send_packet = udp_send_packet;
+        network_context->get_pending_stream_reset = udp_get_pending_stream_reset;
+        network_context->destroy_socket_context = udp_destroy_socket_context;
         // Mark as connected
         context->connected = true;
         // Restore the socket's timeout
         set_timeout(context->socket, context->timeout);
         return true;
     } else {
+        memset(network_context, 0, sizeof(*network_context));
+        free(context);
         return false;
     }
 }
@@ -1158,6 +1177,13 @@ void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType typ
     context->ring_buffers[type_index] =
         init_ring_buffer(type, max_frame_size, num_buffers, socket_context, udp_nack_packet,
                          udp_request_stream_reset);
+
+    // We'll want to increase the UDP buffer size,
+    // when we know we may be accepting high-volume packets
+    int a = UDP_RECV_BUFFER_SIZE;
+    if (setsockopt(context->socket, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof(int)) == -1) {
+        LOG_ERROR("Error setting socket opt: %d", get_last_network_error());
+    }
 }
 
 NetworkSettings udp_get_network_settings(SocketContext* socket_context) {
