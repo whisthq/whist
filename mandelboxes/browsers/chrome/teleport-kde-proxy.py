@@ -65,11 +65,14 @@ def handle_open_file(multi = False):
             os.remove(FILE_UPLOAD_CANCEL_PATH)
         else:
             os.remove(FILE_UPLOAD_CONFIRM_PATH)
+            # Output all files in upload directory (proto should handle correct number)
+            for file_name in os.listdir(FILE_UPLOAD_DIRECTORY):
+                print(os.path.join(FILE_UPLOAD_DIRECTORY, file_name))
             # Should only be one file but get latest file in case
-            file_glob = glob.glob(f"{FILE_UPLOAD_DIRECTORY}/*")
-            target_file = max(file_glob, key=os.path.getmtime)
+            #file_glob = glob.glob(f"{FILE_UPLOAD_DIRECTORY}/*")
+            #target_file = max(file_glob, key=os.path.getmtime)
             # Output file path to stdout and chrome will handle the rest
-            print(target_file)
+            #print(target_file)
 
 
 def handle_kdialog():

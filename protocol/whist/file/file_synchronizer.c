@@ -54,6 +54,7 @@ Defines
 */
 
 unsigned long global_file_id = 0;
+int current_group_files_completed = 0;
 static LinkedList transferring_files;
 static WhistMutex file_synchrony_update_mutex;  // used to protect the global file synchrony
 static bool is_initialized = false;
@@ -103,6 +104,7 @@ static void confirm_user_file_upload(void) {
     FILE* fptr = fopen("/home/whist/.teleport/uploaded-file-confirm", "w");
     fprintf(fptr, "confirm-trigger");
     fclose(fptr);
+    current_group_files_completed = 0;
 }
 
 static TransferringFile* get_write_file_with_global_id(int global_id) {
@@ -323,7 +325,9 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
                     break;
                 }
                 case FILE_TRANSFER_SERVER_UPLOAD: {
-                    confirm_user_file_upload();
+                    if (++current_group_files_completed >= active_file->event_info.group_size) {
+                        confirm_user_file_upload();
+                    }
                     break;
                 }
                 default: {
@@ -536,6 +540,7 @@ void file_synchronizer_cancel_user_file_upload(void) {
     FILE* fptr = fopen("/home/whist/.teleport/uploaded-file-cancel", "w");
     fprintf(fptr, "cancel-trigger");
     fclose(fptr);
+    current_group_files_completed = 0;
 }
 
 void destroy_file_synchronizer(void) {
