@@ -261,7 +261,7 @@ static void initiate_file_upload(void) {
     upload_initiated = false;
 }
 
-static void send_new_tab_url_if_needed(void) {
+static void send_new_tab_url_if_needed(WhistFrontend* frontend) {
     // Send any new URL to the server
     if (new_tab_url) {
         LOG_INFO("Sending message to open URL in new tab");
@@ -277,8 +277,12 @@ static void send_new_tab_url_if_needed(void) {
         free((void*)new_tab_url);
         new_tab_url = NULL;
 
+        FrontendWindowInfo info;
+        if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
+            LOG_FATAL("Failed to get window info");
+        }
         // Unmimimize the window if needed
-        if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_MINIMIZED) {
+        if (info.minimized) {
             SDL_RestoreWindow((SDL_Window*)window);
         }
     }
@@ -436,10 +440,10 @@ int whist_client_main(int argc, const char* argv[]) {
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
             // This should be called BEFORE the call to read_piped_arguments,
             // otherwise one URL may get lost.
-            send_new_tab_url_if_needed();
+            send_new_tab_url_if_needed(frontend);
 
             // Update any pending SDL tasks
-            sdl_update_pending_tasks();
+            sdl_update_pending_tasks(frontend);
 
             // Try rendering anything out, if there's something to render out
             renderer_try_render(whist_renderer);
@@ -502,7 +506,7 @@ int whist_client_main(int argc, const char* argv[]) {
             if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
                 static int cached_display_index = -1;
                 FrontendWindowInfo window_info;
-                if (whist_frontend_get_window_info(frontend, &window_info) != 0) {
+                if (whist_frontend_get_window_info(frontend, &window_info) != WHIST_SUCCESS) {
                     LOG_FATAL("Failed to get window display index");
                 }
 
@@ -518,7 +522,11 @@ int whist_client_main(int argc, const char* argv[]) {
             }
 
             // Check if the window is minimized or occluded.
-            if (!sdl_is_window_visible()) {
+            FrontendWindowInfo info;
+            if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
+                LOG_FATAL("Failed to get window info");
+            }
+            if (info.minimized || info.occluded) {
                 // If it is, we can sleep for a good while to keep CPU usage very low.
                 whist_sleep(10);
             } else {

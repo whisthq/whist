@@ -231,26 +231,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         return NULL;
     }
 
-    // set the window minimum size
-    SDL_SetWindowMinimumSize(sdl_window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
-
-    // Make sure that ctrl+click is processed as a right click on Mac
-    SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
-
-    // Allow inactive protocol to trigger the screensaver
-    SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
-
-    // Initialize the renderer
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
-    SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
-
-#ifdef _WIN32
-    // Ensure that Windows uses the D3D11 driver rather than D3D9.
-    // (The D3D9 driver does work, but it does not support the NV12
-    // textures that we use, so performance with it is terrible.)
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");
-#endif
-
     Uint32 flags = SDL_RENDERER_ACCELERATED;
 #if VSYNC_ON
     flags |= SDL_RENDERER_PRESENTVSYNC;
@@ -297,7 +277,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
     FrontendWindowInfo info;
-    if (whist_frontend_get_window_info(out_frontend, &info)) {
+    if (whist_frontend_get_window_info(out_frontend, &info) != WHIST_SUCCESS) {
         LOG_ERROR("Failed to get window info");
     } else {
         output_width = info.pixel_size.width;
@@ -334,7 +314,6 @@ void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend) {
     LOG_INFO("Destroying SDL");
 
     if (window_param) {
-        SDL_DestroyWindow((SDL_Window*)window_param);
         window_param = NULL;
     }
 
@@ -594,12 +573,12 @@ bool sdl_is_window_visible(void) {
              (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED));
 }
 
-void sdl_update_pending_tasks(void) {
+void sdl_update_pending_tasks(WhistFrontend* frontend) {
     // Handle any pending window title updates
     if (should_update_window_title) {
         if (window_title) {
-            SDL_SetWindowTitle((SDL_Window*)window, (char*)window_title);
-            free((char*)window_title);
+            whist_frontend_set_title(frontend, (const char*)window_title);
+            free((void*)window_title);
             window_title = NULL;
         } else {
             LOG_ERROR("Window Title should not be null!");

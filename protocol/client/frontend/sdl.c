@@ -17,6 +17,26 @@ static WhistStatus sdl_init_frontend(WhistFrontend* frontend) {
         return WHIST_ERROR_UNKNOWN;
     }
 
+    // set the window minimum size
+    SDL_SetWindowMinimumSize(sdl_window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
+
+    // Make sure that ctrl+click is processed as a right click on Mac
+    SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
+
+    // Allow inactive protocol to trigger the screensaver
+    SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
+
+    // Initialize the renderer
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+    SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
+
+#ifdef _WIN32
+    // Ensure that Windows uses the D3D11 driver rather than D3D9.
+    // (The D3D9 driver does work, but it does not support the NV12
+    // textures that we use, so performance with it is terrible.)
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");
+#endif
+
     // We only need to SDL_Quit once, regardless of the subsystem refcount.
     // SDL_QuitSubSystem() would require us to register an atexit for each
     // call.
@@ -33,7 +53,11 @@ static WhistStatus sdl_init_frontend(WhistFrontend* frontend) {
     return WHIST_SUCCESS;
 }
 
-static void sdl_destroy_frontend(WhistFrontend* frontend) { free(frontend->context); }
+static void sdl_destroy_frontend(WhistFrontend* frontend) {
+    SDLFrontendContext* context = frontend->context;
+    SDL_DestroyWindow(context->window);
+    free(context);
+}
 
 static void sdl_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigned int channels) {
     SDLFrontendContext* context = frontend->context;
@@ -43,8 +67,9 @@ static void sdl_open_audio(WhistFrontend* frontend, unsigned int frequency, unsi
         .freq = frequency,
         .format = AUDIO_F32SYS,
         .channels = channels,
-        // The docs require a power of 2 here; the value should not
-        // matter since we don't use the callback for audio ingress.
+        // Must be a power of two. The value doesn't matter since
+        // it only affects the size of the callback buffer, which
+        // we don't use.
         .samples = 1024,
         .callback = NULL,
         .userdata = NULL,
@@ -108,12 +133,24 @@ static WhistStatus sdl_get_window_info(WhistFrontend* frontend, FrontendWindowIn
     SDL_GetWindowSize(context->window, &info->virtual_size.width, &info->virtual_size.height);
     SDL_GetWindowPosition(context->window, &info->position.x, &info->position.y);
     info->display_index = SDL_GetWindowDisplayIndex(context->window);
+    int window_flags = SDL_GetWindowFlags(context->window);
+    info->minimized = (window_flags & SDL_WINDOW_MINIMIZED) != 0;
+    info->occluded = (window_flags & SDL_WINDOW_OCCLUDED) != 0;
     return WHIST_SUCCESS;
 }
 
 static void temp_sdl_set_window(WhistFrontend* frontend, void* window) {
     SDLFrontendContext* context = frontend->context;
     context->window = (SDL_Window*)window;
+}
+
+static WhistStatus sdl_set_title(WhistFrontend* frontend, const char* title) {
+    SDLFrontendContext* context = frontend->context;
+    if (context->window == NULL) {
+        return WHIST_ERROR_NOT_FOUND;
+    }
+    SDL_SetWindowTitle(context->window, title);
+    return WHIST_SUCCESS;
 }
 
 static const WhistFrontendFunctionTable sdl_function_table = {
@@ -126,6 +163,7 @@ static const WhistFrontendFunctionTable sdl_function_table = {
     .get_audio_buffer_size = sdl_get_audio_buffer_size,
     .get_window_info = sdl_get_window_info,
     .temp_set_window = temp_sdl_set_window,
+    .set_title = sdl_set_title,
 };
 
 const WhistFrontendFunctionTable* sdl_get_function_table(void) { return &sdl_function_table; }

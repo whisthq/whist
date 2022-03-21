@@ -21,6 +21,7 @@ typedef struct WhistFrontendFunctionTable {
     // Display
     void (*temp_set_window)(WhistFrontend* frontend, void* window);
     WhistStatus (*get_window_info)(WhistFrontend* frontend, FrontendWindowInfo* info);
+    WhistStatus (*set_title)(WhistFrontend* frontend, const char* title);
 } WhistFrontendFunctionTable;
 
 typedef void WhistFrontendEvent;
@@ -65,7 +66,7 @@ struct FrontendWindowInfo {
     } position;
     bool fullscreen;
     bool minimized;
-    bool visible;
+    bool occluded;
     int display_index;
 };
 
@@ -80,7 +81,7 @@ int whist_frontend_set_window_fullscreen(WhistFrontend* frontend, bool fullscree
 int whist_frontend_set_window_accent_color(WhistFrontend* frontend, WhistRGBColor color);
 
 // Title
-int whist_frontend_set_title(WhistFrontend* frontend, const char* title);
+WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title);
 
 // Events
 bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event);

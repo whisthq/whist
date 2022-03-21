@@ -65,3 +65,8 @@ WhistStatus whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWind
     FATAL_ASSERT(frontend != NULL);
     return frontend->call->get_window_info(frontend, info);
 }
+
+WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title) {
+    FATAL_ASSERT(frontend != NULL);
+    return frontend->call->set_title(frontend, title);
+}
