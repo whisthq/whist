@@ -13,7 +13,7 @@ ENV PGUSER="postgres"
 
 # Configure the postgresql repository
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
-RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
 
 # It's important to match the version of postgres locally to the version
 # of the database server. As of writing, the server is on postgres 12.

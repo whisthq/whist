@@ -194,8 +194,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Retrieve nvidia driver installer
 COPY --from=build-assets --chmod=550 nvidia-driver/nvidia-driver-installer.run /nvidia-driver-installer.run
 
-# Unpack the installer
-RUN sh nvidia-driver-installer.run -x
+# Unpack the installer & create necessary symbolic link(s)
+RUN sh nvidia-driver-installer.run -x \
+    && ln -sf /dist/usr/lib/libGL.so.1 /usr/lib/libGL.so.1
 
 # Install the driver to a folder
 RUN mkdir /dist /ignore && \
@@ -428,7 +429,10 @@ SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
 ENV container docker
 ENV LC_ALL C
+
+# These two resolve pedantic warnings with dkpg and invoke-rc
 ENV DEBIAN_FRONTEND noninteractive
+ENV RUN_LEVEL=1
 
 # Update apt source list
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
@@ -484,13 +488,15 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/systemd-update-utmp*
 
 # Disable some extra systemd services
+# Note: sshd does not exist by default, so we don't need to explicirlt disable it
+# hadolint ignore=DL3059
 RUN systemctl mask plymouth \
                    systemd-hostnamed \
                    acpid \
-                   NetworkManager-wait-online \
-    && systemctl disable sshd
+                   NetworkManager-wait-online
 
 # Remove ProtectHostname=yes lines from logind and timedate systemd services
+# hadolint ignore=DL3059
 RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-{login,time{sync,date}}d.service
 
 ENV init /sbin/init
@@ -569,6 +575,9 @@ RUN apt-get update \
     sudo \
     jq \
     inotify-tools \
+    # general utility tool needed by other packages (gets installed by
+    # update-alternatives if not explicitly specified)
+    liblzma5 \
     # utilities for debugging/testing
     less \
     vim \
@@ -645,7 +654,7 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
     && dpkg -i ./playerctl-2.3.1_amd64.deb \
     && rm ./playerctl-2.3.1_amd64.deb
 
-# I-Bus support
+# I-Bus support (for handling input)
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ibus ibus-pinyin ibus-anthy ibus-hangul ibus-unikey \
     ibus-gtk ibus-gtk3 \
