@@ -1,4 +1,4 @@
-# Whist Browser
+# Whist Browser & Cloud Tabs
 
 This repository contains the bulk of the code for the Whist Browser, previously known as Whist Application Streaming, following a [monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
 
