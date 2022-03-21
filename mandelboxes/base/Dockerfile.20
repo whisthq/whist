@@ -263,7 +263,7 @@ COPY teleport/drag-drop /whist-teleport-drag-drop/src
 # hadolint ignore=SC2046
 RUN cd /whist-teleport-drag-drop/src \
     && gcc -Wall -Werror -D _GNU_SOURCE unshare.c -o unshare.o -c \
-    && gcc -Wall -Werror  unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
+    && gcc -Wall -Werror unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
 
 ################ STAGE 5: hydraulic-press #####################
 # - Copy, set permissions for, and install all base mandelbox
