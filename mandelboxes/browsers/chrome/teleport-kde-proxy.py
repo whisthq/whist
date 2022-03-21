@@ -25,7 +25,7 @@ def handle_version_request():
     print("kdialog 19.12.3")
 
 
-def handle_open_single_file():
+def handle_open_file(multi = False):
     """
     Handle a single file upload.
 
@@ -49,7 +49,11 @@ def handle_open_single_file():
 
         # Trigger protocol to initiate file transfer
         with open(FILE_UPLOAD_TRIGGER_PATH, "w") as file:
-            file.write("upload-trigger")
+            if (multi):
+                file.write("multiple-upload-trigger")
+            else:
+                file.write("upload-trigger")
+
 
         # Wait until upload confirmation or cancellation
         while not (
@@ -74,8 +78,8 @@ def handle_kdialog():
     if "--version" in sys.argv:
         handle_version_request()
     elif "--getopenfilename" in sys.argv:
-        # Currently we only do single file - multiple file will require more robust arg handling
-        handle_open_single_file()
+        multi_upload = "--multiple" in sys.argv
+        handle_open_file(multi_upload)
 
 
 try:

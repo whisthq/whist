@@ -612,8 +612,17 @@ int main(int argc, char* argv[]) {
         if (get_timer(&uploaded_file_timer) > 50.0 / MS_IN_SECOND) {
             if (!access(FILE_UPLOAD_TRIGGER_FILE, R_OK)) {
                 // If trigger file exists, request upload from client then delete the file
+                FILE *trigger_file_fp = fopen(FILE_UPLOAD_TRIGGER_FILE, "r");
+                char *trigger_file_line = NULL;
+                size_t trigger_file_line_len;
+                trigger_file_line_len = getline(&trigger_file_line, &trigger_file_line_len, trigger_file_fp);
+                bool multi_upload = strstr(trigger_file_line, "multiple") != NULL;
                 WhistServerMessage wsmsg = {0};
-                wsmsg.type = SMESSAGE_INITIATE_UPLOAD;
+                if (multi_upload) {
+                    wsmsg.type = SMESSAGE_INITIATE_MULTI_UPLOAD;
+                } else {
+                    wsmsg.type = SMESSAGE_INITIATE_UPLOAD;
+                }
                 if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, &wsmsg,
                                          sizeof(WhistServerMessage)) == 0) {
                     LOG_INFO("Sent initiate upload message!");
