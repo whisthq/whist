@@ -41,6 +41,7 @@ volatile char client_binary_aes_private_key[16];
 volatile char client_hex_aes_private_key[33];
 extern int output_width;
 extern int output_height;
+extern int override_bitrate;
 extern SocketContext packet_udp_context;
 volatile SDL_Window *window;
 
@@ -109,6 +110,8 @@ COMMAND_LINE_INT_OPTION(output_width, 'w', "width", MIN_SCREEN_WIDTH, MAX_SCREEN
 COMMAND_LINE_INT_OPTION(output_height, 'h', "height", MIN_SCREEN_HEIGHT, MAX_SCREEN_HEIGHT,
                         "Set the height for the windowed-mode window, "
                         "if both width and height are specified.")
+COMMAND_LINE_INT_OPTION(override_bitrate, 'o', "override-bitrate", 1, INT_MAX,
+                        "Override the video bitrate with the provided value")
 
 COMMAND_LINE_CALLBACK_OPTION(set_private_key, 'k', "private-key", WHIST_OPTION_REQUIRED_ARGUMENT,
                              "Pass in the RSA Private Key as a hexadecimal string.")
