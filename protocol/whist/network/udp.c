@@ -255,6 +255,7 @@ Globals
 
 // TODO: Remove bad globals
 extern unsigned short port_mappings[USHRT_MAX + 1];
+int override_bitrate;
 
 /*
 ============================
@@ -471,6 +472,10 @@ UDP Implementation of Network.h Interface
 */
 
 static void send_desired_network_settings(UDPContext* context) {
+    if (override_bitrate) {
+        context->network_settings.video_bitrate = context->network_settings.burst_bitrate =
+            override_bitrate;
+    }
     UDPPacket network_settings_packet;
     network_settings_packet.type = UDP_NETWORK_SETTINGS;
     network_settings_packet.udp_network_settings_data.network_settings = context->network_settings;
