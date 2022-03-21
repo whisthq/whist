@@ -57,6 +57,63 @@ def network_conditions_to_readable_form(network_conditions):
     return human_readable_network_conditions
 
 
+def generate_metadata_table(results_file, experiment_metadata, compared_experiment_metadata=None):
+    """
+    Create a Markdown table to display the metadata of a run of the E2E test. Optionally, if the
+    compared_experiment_metadata argument is defined, we also display the metadata of a compared run.
+
+    Args:
+        results_file (file):    The open file where we want to save the markdown table
+        experiment_metadata (dict): The metadata key-value pairs for the run in question
+        compared_experiment_metadata (dict): The metadata key-value pairs for a compared run
+
+    Returns:
+        None
+    """
+    with redirect_stdout(results_file):
+        print("<details>")
+        print("<summary>Experiment metadata - Expand here</summary>")
+        print("\n")
+
+        print("###### Experiment metadata: ######\n")
+
+        if compared_experiment_metadata:
+            # Generate metadata table with comparison
+            writer = MarkdownTableWriter(
+                headers=["Key (this run)", "Value (this run)", "Value (compared run)"],
+                value_matrix=[
+                    [
+                        k,
+                        experiment_metadata[k],
+                        "not found"
+                        if not compared_experiment_metadata or k not in compared_experiment_metadata
+                        else compared_experiment_metadata[k],
+                    ]
+                    for k in experiment_metadata
+                ],
+                margin=1,  # add a whitespace for both sides of each cell
+            )
+            writer.write_table()
+        else:
+            # Generate metadata table without comparison
+            writer = MarkdownTableWriter(
+                headers=["Key (this run)", "Value (this run)"],
+                value_matrix=[
+                    [
+                        k,
+                        experiment_metadata[k],
+                    ]
+                    for k in experiment_metadata
+                ],
+                margin=1,  # add a whitespace for both sides of each cell
+            )
+            writer.write_table()
+
+        print("\n")
+        print("</details>")
+        print("\n")
+
+
 def generate_results_table(
     results_file, experiment_metadata, most_interesting_metrics, client_metrics, server_metrics
 ):
@@ -79,31 +136,11 @@ def generate_results_table(
         {"name": "CLIENT", "metrics": client_metrics},
         {"name": "SERVER", "metrics": server_metrics},
     ]
+
+    # Generate metadata table
+    generate_metadata_table(results_file, experiment_metadata, compared_experiment_metadata=None)
+
     with redirect_stdout(results_file):
-        # Generate metadata table
-        print("<details>")
-        print("<summary>Experiment metadata - Expand here</summary>")
-        print("\n")
-
-        print("###### Experiment metadata: ######\n")
-        writer = MarkdownTableWriter(
-            # table_name="Interesting metrics",
-            headers=["Key (this run)", "Value (this run)", "Value (compared run)"],
-            value_matrix=[
-                [
-                    k,
-                    experiment_metadata[k],
-                    "N/A",
-                ]
-                for k in experiment_metadata
-            ],
-            margin=1,  # add a whitespace for both sides of each cell
-        )
-        writer.write_table()
-        print("\n")
-        print("</details>")
-        print("\n")
-
         print("<details>")
         print("<summary>Experiment results - Expand here</summary>")
         print("\n")
@@ -189,32 +226,10 @@ def generate_comparison_table(
         {"name": "SERVER", "metrics": server_table_entries},
     ]
 
-    with redirect_stdout(results_file):
-        # Generate metadata table
-        print("<details>")
-        print("<summary>Experiment metadata - Expand here</summary>")
-        print("\n")
+    # Generate metadata table
+    generate_metadata_table(results_file, experiment_metadata, compared_experiment_metadata)
 
-        print("###### Experiment metadata: ######\n")
-        writer = MarkdownTableWriter(
-            # table_name="Interesting metrics",
-            headers=["Key (this run)", "Value (this run)", "Value (compared run)"],
-            value_matrix=[
-                [
-                    k,
-                    experiment_metadata[k],
-                    "not found"
-                    if not compared_experiment_metadata or k not in compared_experiment_metadata
-                    else compared_experiment_metadata[k],
-                ]
-                for k in experiment_metadata
-            ],
-            margin=1,  # add a whitespace for both sides of each cell
-        )
-        writer.write_table()
-        print("\n")
-        print("</details>")
-        print("\n")
+    with redirect_stdout(results_file):
 
         print("<details>")
         print("<summary>Experiment results - Expand here</summary>")
