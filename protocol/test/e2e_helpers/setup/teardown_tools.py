@@ -290,7 +290,7 @@ def complete_experiment_and_save_results(
     if use_two_instances:
         client_mandelbox_pexpect_process.sendline(command)
         wait_until_cmd_done(client_mandelbox_pexpect_process, pexpect_prompt_client, running_in_ci)
-
+    sys.exit(-1)
     # Terminate the host-service
     server_hs_process.sendcontrol("c")
     server_hs_process.kill(0)
