@@ -71,7 +71,7 @@ fi
 # on the user settings.
 flags+=("$INITIAL_URL")
 
-# Load D-Bus configurations; necessary for Chrome
+# Load D-Bus configurations; necessary for Brave
 # The -10 comes from the display ID
 dbus_config_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
 # shellcheck source=/dev/null
