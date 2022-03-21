@@ -214,7 +214,7 @@ def complete_experiment_and_save_results(
         )
         restore_network_conditions(client_restore_net_process, pexpect_prompt_client, running_in_ci)
         client_restore_net_process.kill(0)
-
+    sys.exit(-1)
     # 2- Quit the server and check whether it shuts down gracefully or whether it hangs
     server_hang_detected = False
     server_shutdown_desired_message = "Both whist-application and WhistServer have exited."
