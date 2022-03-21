@@ -29,10 +29,10 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | b
     && yarn build
 
 #########################################################
-# Chromium-Base Build Stage (Common to all Chromium browsers)
+# Base-Chromium Build Stage (Common to all Chromium browsers)
 #########################################################
 
-FROM whisthq/base:current-build as whist-chromium-base
+FROM whisthq/base:current-build as whist-base-chromium
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]

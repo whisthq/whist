@@ -6,7 +6,7 @@ FROM whist/build-assets:$BuildAssetPackage as build-assets
 # Brave Build Stage
 #########################################################
 
-FROM whisthq/browsers/chromium-base:current-build as whist-browsers-brave
+FROM whisthq/browsers/base-chromium:current-build as whist-browsers-brave
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
