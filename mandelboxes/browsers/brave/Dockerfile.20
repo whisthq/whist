@@ -70,6 +70,9 @@ RUN mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser \
     && touch /home/whist/.config/BraveSoftware/Brave-Browser/'First Run' \
     && chown whist:whist /home/whist/.config/BraveSoftware/Brave-Browser{,/'First Run'}
 
+# Script to install Chrome extensions
+COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh
+
 # Install Whist wrapper script to run Brave Browser into /usr/bin
 ENV WHIST_DEST_BROWSER="brave"
 COPY start-brave.sh /usr/bin/start-brave

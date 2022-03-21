@@ -41,9 +41,6 @@ SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 COPY --from=whist-teleport-chrome-extension /teleport-extension/build /opt/teleport/chrome-extension
 COPY --chmod=555 teleport-extension-host.py /opt/teleport/chrome-extension-host
 
-# Script to install Chrome extensions
-COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh
-
 # Install and configure our KDE proxy (for handlers used in file upload/download, etc.)
 COPY --chmod=555 teleport-kde-proxy.py /opt/teleport/teleport-kde-proxy.py
 RUN apt-get update && apt-get install -y --no-install-recommends kdialog \
