@@ -66,10 +66,10 @@ typedef struct FrameData {
     bool successful_fec_recovery;
 
     // Nack logic
-    unsigned char num_entire_frame_nacked;
+    uint8_t num_entire_frame_nacked;
     int entire_frame_nacked_id;
     WhistTimer last_frame_nack_timer;
-    unsigned char* num_times_index_nacked;
+    uint8_t* num_times_index_nacked;
     WhistTimer last_nonnack_packet_timer;
     WhistTimer frame_creation_timer;
 } FrameData;

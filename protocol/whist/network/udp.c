@@ -60,7 +60,7 @@ typedef struct {
         struct {
             WhistPacketType whist_type;
             int id;
-            unsigned short index;
+            short index;
         } udp_nack_data;
 
         // UDP_BITARRAY_NACK
@@ -496,6 +496,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                 get_network_statistics(context->ring_buffers[PACKET_VIDEO]);
             NetworkSettings network_settings = get_desired_network_settings(network_statistics);
             // If we have new desired network settings for the other socket,
+            // TODO : It's not valid to compare with memcmp() if you use structure assignment, since
+            // structure assignment need not copy padding information (where memcpy() does).
             if (memcmp(&context->network_settings, &network_settings, sizeof(NetworkSettings)) !=
                 0) {
                 context->network_settings = network_settings;

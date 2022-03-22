@@ -758,7 +758,7 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
     frame_data->num_fec_packets = num_fec_indices;
     frame_data->prev_frame_num_duplicate_packets = prev_frame_num_duplicates;
     frame_data->received_indices = safe_zalloc(MAX_PACKETS * sizeof(bool));
-    frame_data->num_times_index_nacked = safe_zalloc(MAX_PACKETS * sizeof(unsigned char));
+    frame_data->num_times_index_nacked = safe_zalloc(MAX_PACKETS * sizeof(uint8_t));
     frame_data->last_nacked_timer =
         safe_zalloc(MAX_PACKETS * sizeof(*frame_data->last_nacked_timer));
     // If the entire frame was nacked already, then set the packet nack counters and timers
