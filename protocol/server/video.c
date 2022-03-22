@@ -617,6 +617,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     state->client->udp_context.context,
                     get_default_network_settings(state->client_width, state->client_height,
                                                  state->client_dpi));
+                initialized_network_settings = true;
             }
         }
 
