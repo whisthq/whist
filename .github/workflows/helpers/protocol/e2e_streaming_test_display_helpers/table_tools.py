@@ -28,6 +28,8 @@ def network_conditions_to_readable_form(network_conditions):
         human_readable_network_conditions (str):    the network conditions containing the same information as network_conditions
                                                     but in a human-readable format.
     """
+    human_readable_network_conditions = network_conditions
+
     if len(network_conditions.split(",")) == 3:
         human_readable_network_conditions = network_conditions.split(",")
         bandwidth = (
@@ -48,12 +50,11 @@ def network_conditions_to_readable_form(network_conditions):
         human_readable_network_conditions = (
             f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}"
         )
-    elif human_readable_network_conditions == "normal":
+    elif network_conditions == "normal":
         human_readable_network_conditions = (
             f"Bandwidth: maximum available, Delay: none, Packet Drops: none"
         )
-    else:
-        human_readable_network_conditions = network_conditions
+
     return human_readable_network_conditions
 
 

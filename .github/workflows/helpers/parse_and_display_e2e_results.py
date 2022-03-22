@@ -250,7 +250,7 @@ if __name__ == "__main__":
                 )
             else:
                 summary_file.write(
-                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']}.`\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']}. Logs not available.\n"
                 )
 
         print("\n")
