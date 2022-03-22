@@ -23,15 +23,18 @@ static atomic_int cached_device_queue_len;
 static string last_packet_data;
 
 //how many frames allowed to queue inside the audio device/
-const int max_num_inside_device_queue=9;
+const int max_num_inside_device_queue=10;
 
 //how many frames allowed to  queue inside the user queue
-const int max_num_inside_user_queue=9;
+const int max_num_inside_user_queue=7;
 
 const int max_total_queued=max_num_inside_device_queue + max_num_inside_user_queue;
-const int target_total_queued=max_num_inside_device_queue;
+
+const int target_total_queued=max_num_inside_user_queue;
 
 const double queue_len_management_sensitivity=1.5;
+
+const int max_reorder_distant_allowed_to_play=4;
 
 enum ManangeOperation
 {
@@ -69,9 +72,19 @@ int audio_path_init(void)
 }
 
 
+struct PacketInfo
+{
+    string data;
+    timestamp_us receive_time;
+    PacketInfo(unsigned char *buf, int size, timestamp_us & t):data(buf,buf+size)
+    {
+        receive_time=t;
+    }
+};
+
 //the core data struct of the audio queue is an ordered map (rb tree)
 //it's used as a queue to allow insert at any position, but pop must be in order
-static map<int,string> mp;
+static map<int,PacketInfo> mp;
 
 //a larger buffer used for anit-replay purpose
 static set<int> anti_replay;
@@ -103,11 +116,8 @@ int detect_skip_num(int user_queue_len, int device_queue_len)
 }
 
 // how many packets needs to be actively flushed
-int active_flush_cnt=0;
-bool doing_active_flush=0;
-
-// how many packets are skiped by catch_up_skip
-int skiped_cnt=0;
+int buffered_for_flush_cnt=0;
+bool flushing_buffered_packets=0;
 
 //last id pushed to decoder, used for track packet loss
 int last_popped_id=-1;
@@ -121,16 +131,16 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
         return -1;
     }
 
-    string s(buf,buf+size);
-
+    timestamp_us now= current_time_us();
+    PacketInfo packet_info(buf,size,now);
+    
     whist_lock_mutex(g_mutex);
 
-    const int max_reorder_distant_allowed=4;
     //TODO better handling of reorder
     //when serious reoroder is detected, we can dely sending data to the device
     //so that the audio queue can put packets into correct order
 
-    if(id+max_reorder_distant_allowed<last_popped_id||anti_replay.find(id)!=anti_replay.end()) //already have this id
+    if(id+max_reorder_distant_allowed_to_play<last_popped_id||anti_replay.find(id)!=anti_replay.end()) //already have this id
     {
         whist_unlock_mutex(g_mutex);
         return -1;
@@ -142,7 +152,7 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
         while(anti_replay.size()>anti_replay_size) anti_replay.erase(anti_replay.begin());
     }
 
-    mp[id]=s;
+    mp.emplace(id, packet_info);
     
     int user_queue_len=(int)mp.size();
     int total_queue_len=user_queue_len+device_queue_len;
@@ -159,11 +169,11 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
 
         for(int i=0;i<expected_skip;i++)
         {
-            if((int)mp.size() <=active_flush_cnt)
+            if((int)mp.size() <=buffered_for_flush_cnt)
             {
                     if(verbose_log)
                     {
-                        fprintf(stderr,"this usually shouldn't happen %d %d %d %d\n",(int)mp.size(),active_flush_cnt, i,expected_skip);
+                        fprintf(stderr,"this usually shouldn't happen %d %d %d %d\n",(int)mp.size(),buffered_for_flush_cnt, i,expected_skip);
                     }
                     break;
             }
@@ -190,14 +200,14 @@ void pop_inner(unsigned char *buf, int *size)
     }
 
     last_popped_id=it->first;
-    memcpy(buf,it->second.c_str(),it->second.length());
-    *size=(int)it->second.length();
-    last_packet_data=it->second;
+    memcpy(buf,it->second.data.c_str(),it->second.data.length());
+    *size=(int)it->second.data.length();
+    last_packet_data=it->second.data;
     mp.erase(it);
 }
 
 
-ManangeOperation decide_queue_len_manage_operation(int user_queue_len,int device_queue_len)
+ManangeOperation decide_queue_len_manage_operation(int user_queue_len,int device_queue_len, timestamp_us now)
 {
     const int target_sample_times=10;
     const int sample_period=100*1000;
@@ -210,14 +220,13 @@ ManangeOperation decide_queue_len_manage_operation(int user_queue_len,int device
     //when calling this function, device_queue_len should never be <=zero,
     //guarenteed by upper level logic
 
-    if(active_flush_cnt>0)
+    if(buffered_for_flush_cnt>0)
     {
         current_sample_cnt=0;
         return NoOp;
     }
 
     int total_len=user_queue_len+device_queue_len;
-    timestamp_us now=current_time_us();
 
     if(now >= last_sample_time + sample_period)
     {
@@ -258,7 +267,7 @@ ManangeOperation decide_queue_len_manage_operation(int user_queue_len,int device
     {
         if(verbose_log)
         {
-            fprintf(stderr,"aduio_queue low high, len=%.2f %d %d %d, fill with last frame!! ",avg_len, total_len, user_queue_len, device_queue_len);
+            fprintf(stderr,"aduio_queue running low, len=%.2f %d %d %d, fill with last frame!! ",avg_len, total_len, user_queue_len, device_queue_len);
         }
         op= EarlyDup;
     }
@@ -276,6 +285,13 @@ ManangeOperation decide_queue_len_manage_operation(int user_queue_len,int device
     return op;
 }
 
+bool ready_to_pop_inner()
+{
+    if(mp.size()>0) return true;
+
+    return false;
+}
+
 int pop_from_audio_path( unsigned char *buf, int *size)
 {
     int ret=-1;
@@ -287,12 +303,13 @@ int pop_from_audio_path( unsigned char *buf, int *size)
         device_queue_len=(device_queue_byte + DECODED_BYTES_PER_FRAME-1)/DECODED_BYTES_PER_FRAME;
     }
 
+    timestamp_us now= current_time_us ();
+
     atomic_store(&cached_device_queue_len,device_queue_len );
 
     if(verbose_log && device_queue_byte==0) 
     {
         static timestamp_us last_log_time=0;
-        timestamp_us now= current_time_us ();
         if(now-last_log_time>200*1000) 
         {   
             last_log_time=now;
@@ -303,7 +320,6 @@ int pop_from_audio_path( unsigned char *buf, int *size)
     if(verbose_log) 
     {
         static timestamp_us last_log_time=0;
-        timestamp_us now= current_time_us ();
         if(now-last_log_time>100*1000) 
         {
             last_log_time=now;
@@ -318,20 +334,20 @@ int pop_from_audio_path( unsigned char *buf, int *size)
     if(device_queue_byte<0)
     {
         mp.clear(); //if audio device is not ready drop all packets
-        active_flush_cnt=0;
-        doing_active_flush=0;
+        buffered_for_flush_cnt=0;
+        flushing_buffered_packets=0;
         whist_unlock_mutex(g_mutex);
         return -1;
     }
 
     //unconditionally flush packets
-    if(doing_active_flush)
+    if(flushing_buffered_packets)
     {
-        assert((int)mp.size()>=active_flush_cnt);
+        assert((int)mp.size()>=buffered_for_flush_cnt);
         pop_inner(buf,size);
-        active_flush_cnt--;
-        if(active_flush_cnt==0)
-            doing_active_flush=false;
+        buffered_for_flush_cnt--;
+        if(buffered_for_flush_cnt==0)
+            flushing_buffered_packets=false;
         whist_unlock_mutex(g_mutex);
         return 0;
     }
@@ -342,7 +358,7 @@ int pop_from_audio_path( unsigned char *buf, int *size)
     {
         if(mp.size()< max_num_inside_device_queue) 
         {
-            active_flush_cnt=  (int)mp.size() ;
+            buffered_for_flush_cnt=  (int)mp.size() ;
             whist_unlock_mutex(g_mutex); // wait for more packets
             return -2;
         }
@@ -350,9 +366,8 @@ int pop_from_audio_path( unsigned char *buf, int *size)
         {
             pop_inner(buf,size);
             
-            active_flush_cnt=max_num_inside_device_queue-1;
-            doing_active_flush=true;
-            skiped_cnt=0;//reset this, since we are starting another round
+            buffered_for_flush_cnt=max_num_inside_device_queue-1;
+            flushing_buffered_packets=true;
 
             whist_unlock_mutex(g_mutex);
             return 0;
@@ -360,7 +375,7 @@ int pop_from_audio_path( unsigned char *buf, int *size)
     }
     else 
     {
-        auto op= decide_queue_len_manage_operation(user_queue_len,device_queue_len);
+        auto op= decide_queue_len_manage_operation(user_queue_len,device_queue_len,now);
 
         if(op==EarlyDup)
         {
@@ -383,27 +398,23 @@ int pop_from_audio_path( unsigned char *buf, int *size)
             //don't return after early drop, continue to run as normal
         }
 
-        //there is no packet in audio queue
-        if(mp.size()==0)
+        //if the device's buffer is  not avaliable for another packet
+        if(device_queue_len>=max_num_inside_device_queue)
         {
             whist_unlock_mutex(g_mutex);
-            return -4;
+            return -3;
         }
-        
-        //if the device's buffer is avaliable for another packet
-        //we feed imediately
-        if(device_queue_len<max_num_inside_device_queue) 
+
+        //the user queue is ready to pop
+        if(ready_to_pop_inner())
         {
             pop_inner(buf,size);
             whist_unlock_mutex(g_mutex);
             return 0;
         }
-        else
-        {
-            whist_unlock_mutex(g_mutex);
-            return -3;
-        }
-        assert(0==1);//should not reach
+
+        whist_unlock_mutex(g_mutex);
+        return -4;
     }
     assert(0==1);//should not reach
 
