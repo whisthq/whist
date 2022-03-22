@@ -22,7 +22,7 @@ export const INITIAL_KEY_REPEAT_MAC_TO_LINUX_CONVERSION_FACTOR =
 
 // Obtained experimentally by @philippemnoel & @gabrieleoliaro
 //
-// The max allowed key repeat rate on Linux is 255. However, values higher than 55 do not work well in practice.
+// The max allowed key repeat rate on Linux is 255. However, values higher than 30 do not work well in practice.
 // This is a subjective value, and we could modify it up to 255.
 export const KEY_REPEAT_RATE_MIN_LINUX = 1
 export const KEY_REPEAT_RATE_MAX_LINUX = 30
