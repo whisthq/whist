@@ -116,7 +116,6 @@ fromTrigger(WhistTrigger.emitIPC)
   .pipe(withLatestFrom(finalState))
   .subscribe(
     ([, [subs, state]]: [any, [Partial<StateIPC>, Partial<StateIPC>]]) => {
-      console.log("broadcasting", { ...state, ...subs })
       ipcBroadcastState(
         { ...state, ...subs } as Partial<StateIPC>,
         BrowserWindow.getAllWindows()
