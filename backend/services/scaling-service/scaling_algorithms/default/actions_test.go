@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hasura/go-graphql-client"
+	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
@@ -32,7 +34,34 @@ func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient 
 }
 
 func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) (subscriptions.WhistInstances, error) {
-	return testInstances, nil
+	var instancesWithCapacity subscriptions.WhistInstances
+	for _, instance := range testInstances {
+		if string(instance.Region) == region && instance.RemainingCapacity > 0 {
+			instancesWithCapacity = append(instancesWithCapacity, struct {
+				ID                graphql.String                 `graphql:"id"`
+				Provider          graphql.String                 `graphql:"provider"`
+				Region            graphql.String                 `graphql:"region"`
+				ImageID           graphql.String                 `graphql:"image_id"`
+				ClientSHA         graphql.String                 `graphql:"client_sha"`
+				IPAddress         string                         `graphql:"ip_addr"`
+				Type              graphql.String                 `graphql:"instance_type"`
+				RemainingCapacity graphql.Int                    `graphql:"remaining_capacity"`
+				Status            graphql.String                 `graphql:"status"`
+				CreatedAt         time.Time                      `graphql:"created_at"`
+				UpdatedAt         time.Time                      `graphql:"updated_at"`
+				Mandelboxes       subscriptions.WhistMandelboxes `graphql:"mandelboxes"`
+			}{
+				ID:                graphql.String(instance.ID),
+				Provider:          graphql.String(instance.Provider),
+				ImageID:           graphql.String(instance.ImageID),
+				ClientSHA:         graphql.String(instance.ClientSHA),
+				Type:              graphql.String(instance.Type),
+				RemainingCapacity: graphql.Int(instance.RemainingCapacity),
+				Status:            graphql.String(instance.Status),
+			})
+		}
+	}
+	return instancesWithCapacity, nil
 }
 
 func (db *mockDBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region string) (subscriptions.WhistInstances, error) {
@@ -71,19 +100,21 @@ func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 			ID:                graphql.String(instance.ID),
 			Provider:          graphql.String(instance.Provider),
 			ImageID:           graphql.String(instance.ImageID),
+			ClientSHA:         graphql.String(instance.ClientSHA),
 			Type:              graphql.String(instance.Type),
 			RemainingCapacity: graphql.Int(instance.RemainingCapacity),
 			Status:            graphql.String(instance.Status),
 		})
 	}
 
-	return len(testInstances), nil
+	return len(insertParams), nil
 }
 
 func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams subscriptions.Instance) (int, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
+	var updated int
 	for index, instance := range testInstances {
 		if string(instance.ID) == updateParams.ID {
 			updatedInstance := struct {
@@ -103,14 +134,16 @@ func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient
 				ID:                graphql.String(updateParams.ID),
 				Provider:          instance.Provider,
 				ImageID:           instance.ImageID,
+				ClientSHA:         graphql.String(instance.ClientSHA),
 				Type:              instance.Type,
 				Status:            graphql.String(updateParams.Status),
 				RemainingCapacity: instance.RemainingCapacity,
 			}
 			testInstances[index] = updatedInstance
+			updated++
 		}
 	}
-	return len(testInstances), nil
+	return updated, nil
 }
 
 func (db *mockDBClient) DeleteInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) (int, error) {
@@ -646,6 +679,96 @@ func TestDeploy(t *testing.T) {
 	if !ok {
 		t.Errorf("Swapover did not insert the correct images to database. Expected %v, got %v", expectedImages, testImages)
 	}
+}
+
+// TestMandelboxAssign test the happy path of assigning a mandelbox to a user.
+func TestMandelboxAssign(t *testing.T) {
+	context, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var tests = []struct {
+		name            string
+		capacity        int
+		clientSHA, want string
+	}{
+		{"happy path", instanceCapacity["g4dn.2xlarge"], "test-sha", ""},                                   // Happy path, sufficient capacity and matching commit hash
+		{"commit hash mismatch", instanceCapacity["g4dn.2xlarge"], "outdated-sha", "COMMIT_HASH_MISMATCH"}, // Commit mismatch, sufficient capacity but different commit hashes
+		{"no capacity", 0, "test-sha", "NO_INSTANCE_AVAILABLE"},                                            // No capacity, but matching commit hash
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Populate test instances that will be used when
+			// mocking database functions.
+			testInstances = subscriptions.WhistInstances{
+				{
+					ID:                "test-assign-instance-1",
+					Provider:          "AWS",
+					ImageID:           "test-image-id",
+					Status:            "ACTIVE",
+					Type:              "g4dn.2xlarge",
+					Region:            "us-east-1",
+					ClientSHA:         graphql.String("test-sha"),
+					RemainingCapacity: graphql.Int(tt.capacity),
+				},
+				{
+					ID:                "test-assign-instance-2",
+					Provider:          "AWS",
+					ImageID:           "test-image-id",
+					Status:            "ACTIVE",
+					Type:              "g4dn.2xlarge",
+					Region:            "us-west-1",
+					ClientSHA:         graphql.String("test-sha"),
+					RemainingCapacity: graphql.Int(tt.capacity),
+				},
+			}
+			t.Logf("testInstances set to: %v", testInstances)
+			testAssignRequest := &httputils.MandelboxAssignRequest{
+				Regions:    []string{"us-east-1", "us-west-1"},
+				CommitHash: tt.clientSHA,
+				SessionID:  1234567890,
+				UserEmail:  "user@whist.com",
+			}
+			testAssignRequest.CreateResultChan()
+
+			wg := &sync.WaitGroup{}
+			errorChan := make(chan error, 1)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+
+				err := testAlgorithm.MandelboxAssign(context, ScalingEvent{Data: testAssignRequest})
+				errorChan <- err
+			}()
+
+			var assignResult httputils.MandelboxAssignRequestResult
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+
+				res := <-testAssignRequest.ResultChan
+				assignResult = res.Result.(httputils.MandelboxAssignRequestResult)
+			}()
+
+			wg.Wait()
+
+			// Print the errors from the assign action to verify the
+			// behavior is the expected one.
+			err := <-errorChan
+			t.Logf("Error while testing mandelbox assign. Err: %v", err)
+
+			if assignResult.Error != tt.want {
+				t.Errorf("Expected mandelbox assign request Error field to be %v, got %v", tt.want, assignResult.Error)
+			}
+
+			id, err := uuid.Parse(assignResult.MandelboxID.String())
+			if err != nil {
+				t.Errorf("Got an invalid Mandelbox ID from the assign request %v. Err: %v", id, err)
+			}
+		})
+	}
+
 }
 
 // Helper functions

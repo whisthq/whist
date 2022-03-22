@@ -568,7 +568,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		}
 	}()
 
-	mandelboxRequest := event.Data.(httputils.MandelboxAssignRequest)
+	mandelboxRequest := event.Data.(*httputils.MandelboxAssignRequest)
 
 	// Note: we receive the email from the client, so its value should
 	// not be trusted for anything else other than logging since
