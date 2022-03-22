@@ -30,7 +30,7 @@ const getInitialKeyRepeat = () => {
     const endIndex = initialKeyRepeat.indexOf("repeat rate:") - 4
     initialKeyRepeat = initialKeyRepeat.substring(startIndex, endIndex)
   } else if (process.platform === "darwin" && initialKeyRepeat !== "") {
-    // Convert the key repetition delay from Mac scale (shortest=15, longest=120) to Linux scale (shortest=115, longest=INFINITY)
+    // Convert the key repetition delay from macOS scale to Linux scale, see src/constants/keyRepeat.ts
     const initialKeyRepeatFloat =
       parseInt(initialKeyRepeat) *
       INITIAL_KEY_REPEAT_MAC_TO_LINUX_CONVERSION_FACTOR
@@ -63,7 +63,7 @@ const getKeyRepeat = () => {
     const endIndex = keyRepeat.length
     keyRepeat = keyRepeat.substring(startIndex, endIndex)
   } else if (process.platform === "darwin" && keyRepeat !== "") {
-    // Convert the key repetition delay from Mac scale (slowest=120, fastest=2) to Linux scale (slowest=9, fastest=1000). NB: the units on Mac and Linux are multiplicative inverse.
+    // Convert the key repetition delay from macOS scale to Linux scale, see see src/constants/keyRepeat.ts
     const keyRepeatFloat =
       (1.0 -
         (parseInt(keyRepeat) - KEY_REPEAT_RATE_MIN_MAC) /
