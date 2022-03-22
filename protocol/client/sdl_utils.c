@@ -155,7 +155,7 @@ Public Function Implementations
 bool get_skip_taskbar(void) { return skip_taskbar; }
 
 SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
-                     char* icon_filename, WhistFrontend** frontend) {
+                     char* icon_filename, WhistFrontend* frontend) {
     /*
         Attaches the current thread to the specified current input client
 
@@ -175,14 +175,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 #endif
-
-    WhistFrontend* out_frontend = whist_frontend_create_sdl();
-    if (out_frontend == NULL) {
-        return NULL;
-    }
-    if (frontend) {
-        *frontend = out_frontend;
-    }
 
     renderer_mutex = whist_create_mutex();
 
@@ -225,7 +217,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
                                   SDL_WINDOWPOS_CENTERED, target_output_width, target_output_height,
                                   window_flags);
     // temporary hook -- remove during refactor
-    temp_frontend_set_window(out_frontend, sdl_window);
+    temp_frontend_set_window(frontend, sdl_window);
     if (!sdl_window) {
         LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
         return NULL;
@@ -297,7 +289,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
     FrontendWindowInfo info;
-    if (whist_frontend_get_window_info(out_frontend, &info)) {
+    if (whist_frontend_get_window_info(frontend, &info)) {
         LOG_ERROR("Failed to get window info");
     } else {
         output_width = info.pixel_size.width;

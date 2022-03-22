@@ -1,6 +1,6 @@
 #pragma once
 
-int audio_path_init(void);
+int audio_path_init(void *frontend);
 
 int push_to_audio_path(int id, unsigned char *buf, int size);
 

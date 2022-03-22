@@ -131,15 +131,13 @@ Public Function Implementations
 ============================
 */
 
-int audio_path_init(void) {
+int audio_path_init(void *frontend) {
     // init the timer for get_timestamp_ms()
     start_timer(&g_timer);
 
     // more initilization
     g_mutex = whist_create_mutex();
-    
-    // TODO: FIX
-    //g_audio_context = init_audio();
+    g_audio_context = init_audio((WhistFrontend*)frontend);
     atomic_init(&cached_device_queue_len, 0);
 
     // create the dedicated thread for audio rendering

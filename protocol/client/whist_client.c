@@ -309,8 +309,15 @@ int whist_client_main(int argc, const char* argv[]) {
         }
     }
 
+    WhistFrontend* frontend = whist_frontend_create_sdl();
+
+    if(!frontend)
+    {
+        LOG_FATAL("Failed whist_frontend_create_sdl()!");
+    }
+
     if (USE_AUDIO_PATH) {
-        audio_path_init();
+        audio_path_init(frontend);
     }
 
     handle_single_icon_launch_client_app(argc, argv);
@@ -361,7 +368,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
-    WhistFrontend* frontend = NULL;
+
     for (try_amount = 0;
          try_amount < max_connection_attempts && !client_exiting && exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
@@ -373,10 +380,11 @@ int whist_client_main(int argc, const char* argv[]) {
             whist_sleep(1000);
         }
 
+
         // Initialize the SDL window (and only do this once!)
         if (!window) {
             window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename,
-                              &frontend);
+                              frontend);
             if (!window) {
                 LOG_FATAL("Failed to initialize SDL");
             }

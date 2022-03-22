@@ -59,7 +59,7 @@ bool get_skip_taskbar(void);
  *                                 returns the SDL window variable
  */
 SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename,
-                     WhistFrontend** frontend);
+                     WhistFrontend* frontend);
 
 /**
  * @brief                          Destroys an SDL window and associated
