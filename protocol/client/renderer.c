@@ -66,7 +66,7 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
 
     // Initialize audio and video systems
     if (!USE_AUDIO_PATH) {
-         whist_renderer->audio_context = init_audio(frontend);
+        whist_renderer->audio_context = init_audio(frontend);
     }
 
     whist_renderer->video_context = init_video(initial_width, initial_height);

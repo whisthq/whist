@@ -302,17 +302,9 @@ int whist_client_main(int argc, const char* argv[]) {
 
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
-    {
-        int res;
-        if (res = SDL_Init(SDL_INIT_AUDIO) != 0) {
-            LOG_FATAL("SDL aduio subsystem init failed %d\n", res);
-        }
-    }
-
     WhistFrontend* frontend = whist_frontend_create_sdl();
 
-    if(!frontend)
-    {
+    if (!frontend) {
         LOG_FATAL("Failed whist_frontend_create_sdl()!");
     }
 
@@ -379,7 +371,6 @@ int whist_client_main(int argc, const char* argv[]) {
             // show a "reconnecting" message within the main loop.
             whist_sleep(1000);
         }
-
 
         // Initialize the SDL window (and only do this once!)
         if (!window) {

@@ -176,6 +176,10 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 #endif
 
+    if (frontend == NULL) {
+        return NULL;
+    }
+
     renderer_mutex = whist_create_mutex();
 
     // Allow the screensaver to activate

@@ -1914,5 +1914,5 @@ size_t udp_packet_max_size(void) { return (sizeof(UDPNetworkPacket)); }
 
 void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type, void* cb) {
     UDPContext* context = (UDPContext*)raw_context;
-    context->packet_receive_cbs[type] = cb;
+    context->packet_receive_cbs[type] = (PacketReceiveCB)cb;
 }

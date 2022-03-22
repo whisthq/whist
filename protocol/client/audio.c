@@ -362,5 +362,5 @@ int get_device_audio_queue_bytes(AudioContext* audio_context) {
         return -1;
     }
 
-    return safe_get_audio_queue(audio_context);
+    return (int)safe_get_audio_queue(audio_context);
 }

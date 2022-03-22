@@ -21,7 +21,7 @@ Defines
 ============================
 */
 
-typedef double timestamp_ms;
+typedef double timestamp_ms; //NOLINT
 
 // the interval of sending audio packet, keep it same as sender side
 // TODO: calculate from SAMPLES_PER_FRAME
@@ -53,7 +53,7 @@ struct PacketInfo {
 };
 
 // the operations for dynamic queue len management
-enum ManangeOperation { EarlyDrop = 0, EarlyDup = 1, NoOp = 2 };
+enum ManangeOperation { EARLY_DROP = 0, EARLY_DUP = 1, NO_OP = 2 };
 
 /*
 ============================
@@ -325,7 +325,7 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
         auto op = decide_queue_len_manage_operation(user_queue_len, device_queue_len, now);
 
         // if it's early drop, drop one packet inside user queue
-        if (op == EarlyDrop) {
+        if (op == EARLY_DROP) {
             if (user_queue_len > 0) {
                 int fake_size;
                 // drop this packet by a dummy pop
@@ -334,8 +334,8 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
             }
             // don't return after early drop, continue to run as normal
         }
-        // if it's EarlyDup, dup the last saved packet
-        else if (op == EarlyDup) {
+        // if it's EARLY_DUP, dup the last saved packet
+        else if (op == EARLY_DUP) {
             // make sure we have a last packet saved
             if (last_popped_packet_data.length()) {
                 memcpy(buf, last_popped_packet_data.c_str(), last_popped_packet_data.length());
@@ -362,7 +362,6 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
         whist_unlock_mutex(g_mutex);
         return -4;
     }
-    FATAL_ASSERT(false);  // should not reach
 }
 
 /*
@@ -513,7 +512,7 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
     // disable queue len management
     if (buffered_for_flush_cnt > 0) {
         current_sample_cnt = 0;
-        return NoOp;
+        return NO_OP;
     }
 
     // the total len of queue
@@ -530,7 +529,7 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
 
     // in the middling of sampling for `target_sample_times` packets
     if (current_sample_cnt < target_sample_times) {
-        return NoOp;
+        return NO_OP;
     }
     // otherwise we have  current_sample_cnt =target_sample_times;
 
@@ -541,25 +540,25 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
     }
     double avg_len = sum / target_sample_times;
 
-    ManangeOperation op = NoOp;
+    ManangeOperation op = NO_OP;
     // if the queue is running high, do early drop to make it lower
     if (avg_len >= target_total_queue_len + queue_len_management_sensitivity) {
         if (verbose_log) {
             fprintf(stderr, "aduio_queue running high, len=%.2f %d %d %d, drop one frame!! ",
                     avg_len, total_len, user_queue_len, device_queue_len);
         }
-        op = EarlyDrop;
+        op = EARLY_DROP;
     }  // if the queue is running low, do early dup to make it higher
     else if (avg_len <= target_total_queue_len - queue_len_management_sensitivity) {
         if (verbose_log) {
             fprintf(stderr, "aduio_queue running low, len=%.2f %d %d %d, fill with last frame!! ",
                     avg_len, total_len, user_queue_len, device_queue_len);
         }
-        op = EarlyDup;
+        op = EARLY_DUP;
     }
 
     // print out the sampled queue len for easy debugging
-    if (verbose_log && op != NoOp) {
+    if (verbose_log && op != NO_OP) {
         fprintf(stderr, "last %d sampled length=[", target_sample_times);
         for (int i = 0; i < target_sample_times; i++) {
             fprintf(stderr, "%d,", sampled_queue_lens[i]);
