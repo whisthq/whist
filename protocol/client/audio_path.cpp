@@ -32,7 +32,7 @@ const int audio_packets_interval_ms = 10;
 // environment
 const int max_num_inside_device_queue = 8;
 // how many frames/packets allowed to queue inside the user queue (when device queue is full)
-const int max_num_inside_user_queue = 20;
+const int max_num_inside_user_queue = 12;
 // how many frames/packets allowed to queue in total
 const int max_total_queue_len = max_num_inside_user_queue + max_num_inside_device_queue;
 // the target total_queue_len used by queue len managing
