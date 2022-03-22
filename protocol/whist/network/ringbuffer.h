@@ -193,12 +193,9 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
  *
  * @param segment The segment of an audio or video WhistPacket
  *
- * @returns 0 on success, -1 on failure
- *
- * TODO: Remove returning 1 when overwriting a valid frame
- * (int): 1 if we overwrote a valid frame, 0 on success, -1 on failure
+ * @returns True on success, False on failure. False implies that the ringbuffer overflowed.
  */
-int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment);
+bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment);
 
 /**
  * @brief Retrives the frame at the given ID in the ring buffer.

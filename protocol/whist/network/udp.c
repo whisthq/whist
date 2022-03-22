@@ -607,8 +607,14 @@ static bool udp_update(void* raw_context) {
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
             if (context->ring_buffers[packet_type] != NULL) {
-                ring_buffer_receive_segment(context->ring_buffers[packet_type],
-                                            &udp_packet.udp_whist_segment_data);
+                if (!ring_buffer_receive_segment(context->ring_buffers[packet_type],
+                                                 &udp_packet.udp_whist_segment_data)) {
+                    // If stream resets are failing to recover, the connection is lost
+                    LOG_WARNING(
+                        "Ringbuffer fell too far behind, and stream resets are failing to recover. "
+                        "Connection marked as lost.");
+                    context->connection_lost = true;
+                }
             } else {
                 FATAL_ASSERT(udp_packet.udp_whist_segment_data.num_indices == 1);
                 FATAL_ASSERT(udp_packet.udp_whist_segment_data.num_fec_indices == 0);

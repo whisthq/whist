@@ -196,7 +196,7 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     return ring_buffer;
 }
 
-int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) {
+bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) {
     whist_analyzer_record_segment(segment);
     // Sanity check the packet's metadata
     WhistPacketType type = segment->whist_type;
@@ -214,6 +214,9 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
 
     ring_buffer->num_packets_received++;
 
+    // Whether or not the ringbuffer overflowed, which controls the return value
+    bool ringbuffer_overflowed = false;
+
     // If segment_id != frame_data->id, handle the situation
     if (segment_id < frame_data->id) {
         // This packet must be from a very stale frame,
@@ -221,12 +224,12 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
         LOG_WARNING("Very stale packet (ID %d) received, current ringbuffer occupant's ID %d",
                     segment_id, frame_data->id);
         ring_buffer->num_unnecessary_original_packets_received++;
-        return -1;
+        return !ringbuffer_overflowed;
     } else if (segment_id <= ring_buffer->currently_rendering_id) {
         // This packet won't help us render any new packets,
         // So we can safely just ignore it
         ring_buffer->num_unnecessary_original_packets_received++;
-        return 0;
+        return !ringbuffer_overflowed;
     } else if (segment_id > frame_data->id) {
         // This packet is newer than the resident,
         // so it's time to overwrite the resident if such a resident exists
@@ -246,8 +249,8 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
                     "Resetting the entire ringbuffer...",
                     type == PACKET_VIDEO ? "video" : "audio", segment_id, frame_data->id,
                     ring_buffer->currently_rendering_id);
-                // TODO: log a FPS skip
                 reset_ring_buffer(ring_buffer);
+                ringbuffer_overflowed = true;
             } else {
                 // Here, the frame is older than where our renderer is,
                 // So we can just reset the undesired frame
@@ -324,9 +327,9 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
                 "We received a video packet (ID %d / index %d) twice, but we had never nacked for "
                 "it?",
                 segment_id, segment_index);
-            return -1;
+            return !ringbuffer_overflowed;
         }
-        return 0;
+        return !ringbuffer_overflowed;
     }
 
     // Remember whether or not this frame was ready to render
@@ -346,7 +349,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
     int buffer_offset = segment_index * MAX_PACKET_SEGMENT_SIZE;
     if (buffer_offset + segment_size >= ring_buffer->largest_frame_size) {
         LOG_ERROR("Packet payload too large for frame buffer! Dropping the packet...");
-        return -1;
+        return !ringbuffer_overflowed;
     }
     memcpy(frame_data->packet_buffer + buffer_offset, segment->segment_data, segment_size);
 
@@ -385,7 +388,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
         ring_buffer->frames_received++;
     }
 
-    return 0;
+    return !ringbuffer_overflowed;
 }
 
 FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
