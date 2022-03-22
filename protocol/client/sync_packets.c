@@ -65,7 +65,10 @@ static int multithreaded_sync_udp_packets(void* opaque) {
 
     // For now, manually make ring buffers for audio and video
     // TODO: Make udp.c do this automatically
-    //   These buffers should be set to something extremely large (Several seconds)
+    // This represents 4 seconds worth of 60FPS video,
+    // Or 2.5 seconds worth of 128kbps audio.
+    // If stream resets fail to recover the stream in that time interval,
+    // the connection is considered lost.
     udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 256);
     udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 256);
 
