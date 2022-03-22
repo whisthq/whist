@@ -110,7 +110,7 @@ jobs:
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 1Mbit,none,none
+            --network-conditions 1Mbit,None,None
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
@@ -129,7 +129,7 @@ jobs:
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 1Mbit,none,0.1
+            --network-conditions 1Mbit,None,0.1
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
