@@ -238,9 +238,8 @@ if __name__ == "__main__":
     with open(f"streaming_e2e_test_results_0.md", "w") as summary_file:
         summary_file.write("### Experiments Summary:\n\n")
 
-        print("<details>")
-        print("<summary>Summary here</summary>")
-        print("\n")
+        summary_file.write("<details>\n")
+        summary_file.write("<summary>Summary here</summary>\n\n")
 
         for i, experiment in enumerate(experiments):
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
@@ -253,11 +252,7 @@ if __name__ == "__main__":
                     f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']}. Logs not available.\n"
                 )
 
-        print("\n")
-        print("</details>")
-        print("\n")
-
-        summary_file.write("\n")
+        summary_file.write("\n\n</details>\n\n")
 
     for i, compared_branch_name in enumerate(compared_branch_names):
         print(f"Comparing to branch {compared_branch_name}")
@@ -265,9 +260,8 @@ if __name__ == "__main__":
         results_file = open(f"streaming_e2e_test_results_{i+1}.md", "w")
         results_file.write(f"## Results compared to branch: `{compared_branch_name}`\n")
 
-        print("<details>")
-        print("<summary>Results here</summary>")
-        print("\n")
+        results_file.write("<details>\n")
+        results_file.write("<summary>Results here</summary>\n")
 
         for j, experiment in enumerate(experiments):
             results_file.write(
@@ -334,11 +328,8 @@ if __name__ == "__main__":
                     experiment["client_metrics"],
                     experiment["server_metrics"],
                 )
-        results_file.write("\n")
 
-        print("\n")
-        print("</details>")
-        print("\n")
+        results_file.write("\n\n</details>\n\n")
 
         results_file.close()
 
