@@ -45,8 +45,7 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
       INITIAL_KEY_REPEAT=$( jq -rc '.initial_key_repeat' < $WHIST_JSON_FILE )
       KEY_REPEAT=$( jq -rc '.key_repeat' < $WHIST_JSON_FILE )
-
-      # Set the key repeat rates
+      # Set key repeat rate and repeat delay
       xset r rate "$INITIAL_KEY_REPEAT" "$KEY_REPEAT"
     fi
   fi
@@ -61,9 +60,85 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
 fi
 
+# Most keys on macOS do not repeat, but all keys repeat on Linux. We turn off key repeat on certain Linux keys
+# to match the macOS behavior. This needs to be done *after* setting the key repeat rate above.
+# Keycodes obtianed from: https://gist.github.com/rickyzhang82/8581a762c9f9fc6ddb8390872552c250#file-keycode-linux-L91
+keys_to_turn_off_repeat=(
+  9   # ESC
+  67  # F1
+  68  # F2
+  69  # F3
+  70  # F4
+  71  # F5
+  72  # F6
+  73  # F7
+  74  # F8
+  75  # F9
+  76  # F10
+  95  # F11
+  96  # F12
+  111 # PrintScrn
+  78  # Scroll Lock
+  110 # Pause
+  10  # 1
+  11  # 2
+  12  # 3
+  13  # 4
+  14  # 5
+  15  # 6
+  16  # 7
+  17  # 8
+  18  # 9
+  19  # 0
+  106 # Insert
+  77  # Num Lock
+  24  # Q
+  25  # W
+  26  # E
+  27  # R
+  28  # T
+  29  # Y
+  30  # U
+  31  # I
+  32  # O
+  33  # P
+  66  # Caps Lock
+  38  # A
+  39  # S
+  40  # D
+  41  # F
+  42  # G
+  43  # H
+  44  # J
+  45  # K
+  46  # L
+  52  # Z
+  53  # X
+  54  # C
+  55  # V
+  56  # B
+  57  # N
+  58  # M
+  62  # Shift Right
+  37  # Ctrl Left
+  115 # Logo Left (-> Option)
+  64  # Alt Left (-> Command)
+  113 # Alt Right (-> Command)
+  116 # Logo Right (-> Option)
+  117 # Menu (-> International)
+  109 # Ctrl Right
+)
+for keycode in "${keys_to_turn_off_repeat[@]}"
+do
+  xset -r "$keycode"
+done
+
+# Set all JSON transport-related settings
+# We set the TZ environment variable (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
+# in order to automatically adjust the timezone at the lower layers
+export TZ=$DESIRED_TIMEZONE
 export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
-export TZ=$DESIRED_TIMEZONE # Setting the TZ environment variable (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html) in order to automatically adjust the timezone at the lower layers
 export INITIAL_URL=$INITIAL_URL
 export USER_AGENT="$USER_AGENT"
 export KIOSK_MODE=$KIOSK_MODE
