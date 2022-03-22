@@ -71,7 +71,8 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 256);
     udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 256);
 
-    udp_register_ring_buffer_ready_cb(udp_context, PACKET_AUDIO, push_to_audio_path);
+    //udp_register_ring_buffer_ready_cb(udp_context, PACKET_AUDIO, push_to_audio_path);
+    udp_register_packet_receive_cb(udp_context->context, PACKET_AUDIO, push_to_audio_path);
 
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 

@@ -134,6 +134,9 @@ typedef struct NackID {
     int packet_index;
 } NackID;
 
+
+typedef void (*PacketReceiveCB)(int id, unsigned char* buf, int size);
+
 // An instance of the UDP Context
 typedef struct {
     int timeout;
@@ -194,6 +197,9 @@ typedef struct {
     int curr_group_id;
     IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS];
     void* nack_queue;
+
+    PacketReceiveCB packet_receive_cbs[NUM_PACKET_TYPES];
+    
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -519,8 +525,14 @@ static bool udp_update(void* raw_context) {
                 udp_congestion_control(context, udp_packet.udp_whist_segment_data.departure_time,
                                        arrival_time, udp_packet.group_id);
             }
+            if(context->packet_receive_cbs[packet_type]!= NULL)
+            {
+                WhistPacket* whist_packet = (WhistPacket*)udp_packet.udp_whist_segment_data.segment_data;
+
+                context->packet_receive_cbs[packet_type](udp_packet.udp_whist_segment_data.id,(unsigned char *)whist_packet->data,whist_packet->payload_size);
+            }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
-            if (context->ring_buffers[packet_type] != NULL) {
+            else if (context->ring_buffers[packet_type] != NULL) {
                 ring_buffer_receive_segment(context->ring_buffers[packet_type],
                                             &udp_packet.udp_whist_segment_data);
             } else {
@@ -1786,4 +1798,11 @@ void udp_register_ring_buffer_ready_cb(SocketContext* socket_context, WhistPacke
     FATAL_ASSERT(context->ring_buffers[type_index] != NULL);
 
     ring_buffer_set_ready_cb(context->ring_buffers[type_index], cb);
+}
+
+void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type,
+                                       void* cb)
+{
+    UDPContext* context = (UDPContext*)raw_context;
+    context->packet_receive_cbs[type]=cb;
 }
