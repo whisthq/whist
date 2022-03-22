@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
-import os
-import sys
-import subprocess
+import os, sys, subprocess
 
-GITHUB_SHA_LEN = 40
-
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
+
+# Constants
+GITHUB_SHA_LEN = 40
 
 
 def get_whist_branch_name(running_in_ci):
@@ -15,13 +14,13 @@ def get_whist_branch_name(running_in_ci):
     Retrieve the whisthq/whist branch name currently checked out by the folder containing this script.
 
     Args:
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         On success:
-            branch_name: The name of the branch currently checked out (or the empty string)
+            branch_name (str): The name of the branch currently checked out (or the empty string)
         On failure:
-            empty string
+            Empty string (str)
     """
     branch_name = ""
 
@@ -53,13 +52,13 @@ def get_whist_github_sha(running_in_ci):
     Retrieve the commit hash of the latest commit in the local repository.
 
     Args:
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        running_in_ci (bol): A boolean indicating whether this script is currently running in CI
 
     Returns:
         On success:
-            github_sha: The SHA commit hash
+            github_sha (str): The SHA commit hash
         On failure:
-            empty string
+            empty string (str)
     """
     github_sha = ""
 

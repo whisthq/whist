@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-import pexpect
-import time
-import sys
-import os
-import pexpect
-import json
+import os, sys, json, time
+
+from e2e_helpers.setup.network_tools import restore_network_conditions
 
 from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,
@@ -21,12 +18,7 @@ from e2e_helpers.setup.instance_setup_tools import (
     prune_containers_if_needed,
 )
 
-from e2e_helpers.setup.network_tools import (
-    setup_artificial_network_conditions,
-    restore_network_conditions,
-)
-
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
@@ -46,8 +38,8 @@ def client_setup_process(args_dict):
     In case of error, this function makes the process running it exit with exitcode -1.
 
     Args:
-        args_dict: A dictionary containing the configs needed to access the remote machine
-                and get a Whist dev client ready for execution
+        args_dict (multiprocessing.managers.DictProxy): A dictionary containing the configs needed to access the remote machine
+                                                        and get a Whist dev client ready for execution
 
     Returns:
         None
@@ -69,13 +61,13 @@ def client_setup_process(args_dict):
     ssh_connection_retries = args_dict["ssh_connection_retries"]
 
     client_log = open(client_log_filepath, "w")
-
     client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
 
-    # If we are using the same instance for client and server, all the operations in this if-statement have already been done by server_setup_process
+    # If we are using the same instance for client and server, all the operations in this
+    # if-statement have already been done by server_setup_process
     if use_two_instances:
         # Initiate the SSH connections with the client instance
-        print("Initiating the SETUP ssh connection with the client AWS instance...")
+        print("Initiating the SETUP SSH connection with the client AWS instance...")
         hs_process = attempt_ssh_connection(
             client_cmd,
             aws_timeout_seconds,
@@ -92,7 +84,6 @@ def client_setup_process(args_dict):
         result = install_and_configure_aws(
             hs_process,
             pexpect_prompt_client,
-            aws_timeout_seconds,
             running_in_ci,
             aws_credentials_filepath,
         )
@@ -118,10 +109,10 @@ def client_setup_process(args_dict):
                 running_in_ci,
             )
 
-            # 2 - Fix DPKG issue in case it comes up
+            # 2- Fix DPKG issue in case it comes up
             apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client, running_in_ci)
 
-            # 3- run host-setup
+            # 3- Run host-setup
             hs_process = run_host_setup(
                 hs_process,
                 pexpect_prompt_client,
@@ -132,10 +123,10 @@ def client_setup_process(args_dict):
                 running_in_ci,
             )
         else:
-            print("Skipping host setup on server instance.")
+            print("Skipping host-setup on server instance.")
 
-        # 2- reboot and wait for it to come back up
-        print("Rebooting the client EC2 instance (required after running the host setup)...")
+        # Reboot and wait for it to come back up
+        print("Rebooting the client EC2 instance (required after running the host-setup)...")
         hs_process = reboot_instance(
             hs_process,
             client_cmd,
@@ -148,7 +139,7 @@ def client_setup_process(args_dict):
 
         hs_process.kill(0)
 
-    # 6- Build the dev client
+    # Build the dev client
     print("Initiating the BUILD ssh connection with the client AWS instance...")
     client_pexpect_process = attempt_ssh_connection(
         client_cmd,
@@ -162,7 +153,6 @@ def client_setup_process(args_dict):
         client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type, running_in_ci
     )
     client_pexpect_process.kill(0)
-
     client_log.close()
 
 
@@ -177,15 +167,15 @@ def build_client_on_instance(
     SSH connection to the host, and that the Whist repository has already been cloned.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact
-                        with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready to
-                        execute a command
-        testing_time: The amount of time to leave the connection open between the client and the server
-                        (when the client is started) before shutting it down
-        cmake_build_type: A string identifying whether to build the protocol in release, debug, metrics,
-                        or any other Cmake build mode that will be introduced later.
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
+                                                    be used to interact with the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
+                                execute a command
+        testing_time (int): The amount of time to leave the connection open between the client and the server
+                            (when the client is started) before shutting it down
+        cmake_build_type (str): A string identifying whether to build the protocol in release, debug, metrics,
+                                or any other Cmake build mode that will be introduced later.
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
@@ -210,20 +200,20 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
 
     The function assumes that the pexpect_process process has already successfully established
     a SSH connection to the host, that the Whist repository has already been cloned, and that
-    the browsers/chrome mandelbox has already been built. Further, the host service must be
+    the browsers/chrome mandelbox has already been built. Further, the host-service must be
     already running on the remote machine.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used
-                            to interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
-                            ready to execute a command
-        simulate_scrolling: A boolean controlling whether the client should simulate scrolling
-                            as part of the test.
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
+                                                    be used to interact with the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
+                                ready to execute a command
+        simulate_scrolling (bool):  A boolean controlling whether the client should simulate scrolling
+                                    as part of the test.
 
     Returns:
-        client_docker_id: The Docker ID of the container running the Whist dev client
-                            (development/client mandelbox) on the remote machine
+        client_docker_id (str): The Docker ID of the container running the Whist dev client
+                          (development/client mandelbox) on the remote machine
     """
     print("Running the dev client mandelbox, and connecting to the server!")
     command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{json.dumps(json_data)}'"
@@ -237,7 +227,7 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     print(f"Whist dev client started on EC2 instance, on Docker container {client_docker_id}!")
 
     if simulate_scrolling:
-        # Sleep for sometime so that the webpage can load.
+        # Sleep for some time so that the webpage can load.
         time.sleep(5)
         print("Simulating the mouse scroll events in the client")
         command = "python3 /usr/share/whist/mouse_events.py"

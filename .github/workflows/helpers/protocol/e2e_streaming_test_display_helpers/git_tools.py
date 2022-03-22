@@ -3,13 +3,7 @@
 import os
 import sys
 import subprocess
-from pytablewriter import MarkdownTableWriter
-from contextlib import redirect_stdout
-from datetime import datetime, timedelta
-
 from github import Github, InputFileContent
-from notifications.slack_bot import slack_post
-from notifications.github_bot import github_comment_update
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -21,10 +15,10 @@ def create_github_gist_post(github_gist_token, title, files_list):
     in the files_list parameter. Print the html url of the secret Gist.
 
     Args:
-        github_gist_token: The Github Gist token to use for authentication
-        title: The title to give to the Gist
-        files_list: A list of tuples, where each tuple contains the name of a file
-                    to add to the Gist and the desired contents of the file
+        github_gist_token (str):    The Github Gist token to use for authentication
+        title (str):    The title to give to the Gist
+        files_list (list):  A list of tuples, where each tuple contains the name of a file
+                            to add to the Gist and the desired contents of the file
     Returns:
         None
     """

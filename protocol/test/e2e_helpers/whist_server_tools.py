@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 
-import pexpect
-import time
-import sys
-import os
-import pexpect
+import os, sys
 
 from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,
@@ -20,7 +16,7 @@ from e2e_helpers.setup.instance_setup_tools import (
     prune_containers_if_needed,
 )
 
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
@@ -37,8 +33,8 @@ def server_setup_process(args_dict):
     In case of error, this function makes the process running it exit with exitcode -1.
 
     Args:
-        args_dict: A dictionary containing the configs needed to access the remote
-                    machine and get a Whist server ready for execution
+        args_dict (multiprocessing.managers.DictProxy): A dictionary containing the configs needed to access the remote
+                                                        machine and get a Whist server ready for execution
 
     Returns:
         None
@@ -75,7 +71,6 @@ def server_setup_process(args_dict):
     result = install_and_configure_aws(
         hs_process,
         pexpect_prompt_server,
-        aws_timeout_seconds,
         running_in_ci,
         aws_credentials_filepath,
     )
@@ -102,7 +97,7 @@ def server_setup_process(args_dict):
             running_in_ci,
         )
 
-        # 2 - Fix DPKG issue in case it comes up
+        # 2- Fix DPKG issue in case it comes up
         apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
 
         # 3- run host-setup
@@ -118,8 +113,8 @@ def server_setup_process(args_dict):
     else:
         print("Skipping host setup on server instance.")
 
-    # 2- reboot and wait for it to come back up
-    print("Rebooting the server EC2 instance (required after running the host setup)...")
+    # Reboot and wait for it to come back up
+    print("Rebooting the server EC2 instance (required after running the host-setup)...")
     hs_process = reboot_instance(
         hs_process,
         server_cmd,
@@ -130,11 +125,10 @@ def server_setup_process(args_dict):
         running_in_ci,
     )
 
-    # 3- Build the protocol server
+    # Build the protocol server
     build_server_on_instance(hs_process, pexpect_prompt_server, cmake_build_type, running_in_ci)
 
     hs_process.kill(0)
-
     server_log.close()
 
 
@@ -147,12 +141,12 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type, 
     SSH connection to the host, and that the Whist repository has already been cloned.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                        interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when
-                        it is ready to execute a command
-        cmake_build_type: A string identifying whether to build the protocol in release,
-                        debug, metrics, or any other Cmake build mode that will be introduced later.
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used to
+                                                    interact with the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when
+                                it is ready to execute a command
+        cmake_build_type (str): A string identifying whether to build the protocol in release,
+                                debug, metrics, or any other Cmake build mode that will be introduced later.
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
@@ -176,14 +170,14 @@ def run_server_on_instance(pexpect_process):
     already running on the remote machine.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                        interact with the remote machine
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used to
+                                                    interact with the remote machine
 
     Returns:
-        server_docker_id: The Docker ID of the container running the Whist server
-                        (browsers/chrome mandelbox) on the remote machine
-        json_data: A dictionary containing the IP, AES KEY, and port mappings that are needed by
-                        the client to successfully connect to the Whist server.
+        server_docker_id (str): The Docker ID of the container running the Whist server
+                                (browsers/chrome mandelbox) on the remote machine
+        json_data (str):    A dictionary containing the IP, AES KEY, and port mappings that are needed by
+                            the client to successfully connect to the Whist server.
     """
     command = "cd ~/whist/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
     pexpect_process.sendline(command)
@@ -220,15 +214,16 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
     Initiate shutdown and wait for server exit to see if the server hangs or exits gracefully
 
     Args:
-        pexpect_process: Server pexpect process - MUST BE AFTER DOCKER COMMAND WAS RUN - otherwise
-                        behavior is undefined
-        exit_confirm_exp: Target expression to expect on a graceful server exit
+        pexpect_process (pexpect.pty_spawn.spawn):  Server pexpect process - MUST BE AFTER DOCKER COMMAND WAS RUN - otherwise
+                                                    behavior is undefined
+        exit_confirm_exp (str): Target expression to expect on a graceful server exit
 
     Returns:
-        server_has_exited: A boolean set to True if server has exited gracefully, false otherwise
+        server_has_exited (bool): A boolean set to True if server has exited gracefully, false otherwise
     """
     # Shut down Chrome
     pexpect_process.sendline("pkill chrome")
+
     # We set running_in_ci=True because the Docker bash does not print in color
     # (check wait_until_cmd_done docstring for more details about handling color bash stdout)
     wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
@@ -248,5 +243,4 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
 
     # Kill tail process
     pexpect_process.sendcontrol("c")
-
     return server_has_exited

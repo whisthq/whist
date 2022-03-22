@@ -2,12 +2,7 @@
 
 import os
 import sys
-import time
-import boto3
-import json
-import subprocess
 import argparse
-import numpy as np
 import glob
 from datetime import datetime, timedelta
 
@@ -16,6 +11,7 @@ from notifications.slack_bot import slack_post
 from notifications.github_bot import github_comment_update
 
 from protocol.e2e_streaming_test_display_helpers.table_tools import (
+    network_conditions_to_readable_form,
     generate_results_table,
     generate_comparison_table,
 )
@@ -96,15 +92,22 @@ parser.add_argument(
 
 
 if __name__ == "__main__":
+    # Get script arguments
     args = parser.parse_args()
-
-    # Check if the E2E run was skipped or cancelled, in which case we skip this
+    post_results_on_slack = args.post_results_on_slack == "true"
     e2e_script_outcomes = args.e2e_script_outcomes
+    network_conditions_matching_way = args.network_conditions_matching_way
+    logs_root_dir = args.perf_logs_path
+    compared_branch_names = list(
+        dict.fromkeys(args.compared_branch_names)
+    )  # Remove duplicates but maintain order
+
+    # Check if the E2E run was skipped or cancelled, in which case we don't have any data to display
     if "success" not in e2e_script_outcomes and "failure" not in e2e_script_outcomes:
         print(f"E2E run was {e2e_script_outcomes[0]}! No results to parse/display.")
         sys.exit(-1)
 
-    # Grab environmental variables of interest
+    # Grab environment variables of interest, and check that required ones are set
     if not os.environ.get("GITHUB_REF_NAME"):
         print(
             "GITHUB_REF_NAME is not set! If running locally, set GITHUB_REF_NAME to the name of the current git branch."
@@ -113,12 +116,16 @@ if __name__ == "__main__":
     if not os.environ.get("GITHUB_GIST_TOKEN") or not os.environ.get("GITHUB_TOKEN"):
         print("GITHUB_GIST_TOKEN and GITHUB_TOKEN not set. Cannot post results to Gist/GitHub!")
         sys.exit(-1)
-    if not os.environ.get("SLACK_WEBHOOK"):
-        print("SLACK_WEBHOOK is not set. This means we won't be able to post the results on Slack.")
-
+    if not os.environ.get("GITHUB_RUN_ID"):
+        print("Not running in CI, so we won't post the results on Slack!")
+        if not os.environ.get("SLACK_WEBHOOK"):
+            print(
+                "SLACK_WEBHOOK is not set. This means we won't be able to post the results on Slack."
+            )
     github_ref_name = os.environ["GITHUB_REF_NAME"]
     github_gist_token = os.environ["GITHUB_GIST_TOKEN"]
     github_token = os.environ["GITHUB_TOKEN"]
+    github_run_id = os.environ.get("GITHUB_RUN_ID")
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
 
     current_branch_name = ""
@@ -129,8 +136,6 @@ if __name__ == "__main__":
         current_branch_name = github_ref_name
     else:
         current_branch_name = os.getenv("GITHUB_HEAD_REF")
-
-    post_results_on_slack = args.post_results_on_slack == "true"
 
     # A list of metrics to display (if found) in main table
     most_interesting_metrics = {
@@ -145,10 +150,7 @@ if __name__ == "__main__":
         "MAX_AUDIO_FPS_SKIPPED",
     }
 
-    network_conditions_matching_way = args.network_conditions_matching_way
-
     # Find the path to the folder with the most recent E2E protocol logs
-    logs_root_dir = args.perf_logs_path
     test_start_time = ""
     if not os.path.isdir(logs_root_dir):
         print(f"Error, logs folder {logs_root_dir} does not exist!")
@@ -158,26 +160,19 @@ if __name__ == "__main__":
     current_time = datetime.now()
     last_hour = current_time - timedelta(hours=1)
 
-    # Convert to list
-    logs_root_dirs = [logs_root_dir]
-
-    for folder_name in sorted(os.listdir(logs_root_dirs[0])):
+    # Create list of logs dirs with logs
+    logs_root_dirs = []
+    for folder_name in sorted(os.listdir(logs_root_dir)):
         if (
             current_time.strftime("%Y_%m_%d@") in folder_name
             or last_hour.strftime("%Y_%m_%d@") in folder_name
         ):
-            logs_root_dirs.append(os.path.join(logs_root_dirs[0], folder_name))
+            logs_root_dirs.append(os.path.join(logs_root_dir, folder_name))
             if test_start_time == "":
                 test_start_time = folder_name
-    if len(logs_root_dirs) == 1:
+    if len(logs_root_dirs) == 0:
         print("Error: protocol logs not found!")
         sys.exit(-1)
-
-    # Remove duplicates but maintain order
-    compared_branch_names = list(dict.fromkeys(args.compared_branch_names))
-
-    # Remove first element
-    logs_root_dirs = logs_root_dirs[1:]
 
     print("Found logs for the following experiments: ")
     experiments = []
@@ -189,33 +184,10 @@ if __name__ == "__main__":
         experiment_metadata = parse_metadata(log_dir)
 
         # Get network conditions, and format them in human-readable form
-        network_conditions = "normal"
+        network_conditions = "unknown"
         if experiment_metadata and "network_conditions" in experiment_metadata:
             network_conditions = experiment_metadata["network_conditions"]
-        human_readable_network_conditions = network_conditions
-        if (
-            human_readable_network_conditions != "normal"
-            and "," in human_readable_network_conditions
-        ):
-            human_readable_network_conditions = human_readable_network_conditions.split(",")
-            bandwidth = (
-                human_readable_network_conditions[0]
-                if human_readable_network_conditions[0] != "none"
-                else "full available"
-            )
-            delay = (
-                human_readable_network_conditions[1] + " ms"
-                if human_readable_network_conditions[1] != "none"
-                else human_readable_network_conditions[1]
-            )
-            packet_drops = (
-                "{:.2f}%".format(float(human_readable_network_conditions[2]) * 100.0)
-                if human_readable_network_conditions[2] != "none"
-                else human_readable_network_conditions[2]
-            )
-            human_readable_network_conditions = (
-                f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}"
-            )
+        human_readable_network_conditions = network_conditions_to_readable_form(network_conditions)
 
         client_metrics = None
         server_metrics = None
@@ -231,15 +203,17 @@ if __name__ == "__main__":
             "experiment_metadata": experiment_metadata,
             "client_metrics": client_metrics,
             "server_metrics": server_metrics,
-            "network_conditions": network_conditions
-            if (client_metrics is not None and server_metrics is not None)
-            else "unknown",
-            "human_readable_network_conditions": human_readable_network_conditions
-            if (client_metrics is not None and server_metrics is not None)
-            else "unknown",
+            "network_conditions": "unknown",
+            "human_readable_network_conditions": "unknown",
             "outcome": e2e_script_outcomes[i],
             "dirname": os.path.basename(log_dir),
         }
+
+        if client_metrics is not None and server_metrics is not None:
+            experiment_entry["network_conditions"] = network_conditions
+            experiment_entry[
+                "human_readable_network_conditions"
+            ] = human_readable_network_conditions
 
         experiments.append(experiment_entry)
         found_error = client_metrics is None or server_metrics is None
@@ -262,27 +236,36 @@ if __name__ == "__main__":
         print("\t+ Adding empty entry for failed/skipped experiment")
 
     with open(f"streaming_e2e_test_results_0.md", "w") as summary_file:
-        summary_file.write("### Experiments summary:\n\n")
+        summary_file.write("### Experiments Summary\n\n")
+
+        summary_file.write("<details>\n")
+        summary_file.write("<summary>Expand Summary</summary>\n\n\n")
+
         for i, experiment in enumerate(experiments):
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
             if experiment["dirname"] is not None:
                 summary_file.write(
-                    f"* **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}. Download logs (if they exist) with command: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
                 )
             else:
                 summary_file.write(
-                    f"* **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']} - CI result: {e2e_script_outcomes[i]} {outcome_emoji}.`\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Logs not available.\n"
                 )
-        summary_file.write("\n")
+
+        summary_file.write("\n\n</details>\n\n")
 
     for i, compared_branch_name in enumerate(compared_branch_names):
         print(f"Comparing to branch {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
         results_file = open(f"streaming_e2e_test_results_{i+1}.md", "w")
-        results_file.write(f"## Results compared to branch {compared_branch_name}\n")
+        results_file.write(f"## Results compared to branch: `{compared_branch_name}`\n")
+
+        results_file.write("<details>\n")
+        results_file.write("<summary>Expand Results</summary>\n\n")
+
         for j, experiment in enumerate(experiments):
             results_file.write(
-                f"### Experiment {j+1} - Network conditions: {experiment['human_readable_network_conditions']}\n"
+                f"### Experiment {j+1} - {experiment['human_readable_network_conditions']}\n"
             )
             if experiment["outcome"] != "success":
                 results_file.write(
@@ -345,7 +328,9 @@ if __name__ == "__main__":
                     experiment["client_metrics"],
                     experiment["server_metrics"],
                 )
-        results_file.write("\n\n")
+
+        results_file.write("\n\n</details>\n\n")
+
         results_file.close()
 
     #######################################################################################
@@ -374,26 +359,31 @@ if __name__ == "__main__":
 
     gist_url = create_github_gist_post(github_gist_token, title, files_list)
 
-    test_outcome_verb = "succeeded :white_check_mark:"
+    test_outcome = ":white_check_mark: All experiments succeeded!"
     for outcome in e2e_script_outcomes:
-        if outcome == "cancelled":
-            test_outcome_verb = "was cancelled :x:"
-        elif outcome == "skipped":
-            test_outcome_verb = "was skipped :x:"
-        elif outcome == "failure":
-            test_outcome_verb = "failed :x:"
+        if outcome != "success":
+            test_outcome = ":x: " + str(outcome)
 
     # Post updates to Slack channel if desired
-    if slack_webhook and post_results_on_slack:
-        slack_catchy_title = f":rocket::face_with_cowboy_hat::bar_chart: {title} :rocket::face_with_cowboy_hat::bar_chart:"
+    if slack_webhook and post_results_on_slack and github_run_id:
+        link_to_runner_logs = f"https://github.com/whisthq/whist/actions/runs/{github_run_id}"
+        if test_outcome == ":white_check_mark: All experiments succeeded!":
+            body = (
+                f":white_check_mark: All E2E experiments succeeded <{link_to_runner_logs}|(see logs)>! Whist daily E2E test results available for branch: `{current_branch_name}`: {gist_url}",
+            )
+        else:
+            body = (
+                f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {gist_url}",
+            )
+
         slack_post(
             slack_webhook,
-            body=f"New E2E `{current_branch_name}` test results available! The test {test_outcome_verb}. Check out the details here: {gist_url}\n",
+            body=body,
             slack_username="Whist Bot",
-            title=slack_catchy_title,
+            title=f":rocket::bar_chart: {title} :rocket::bar_chart:",
         )
 
-    # Otherwise post on Github if the branch is tied to a open PR
+    # Otherwise post on GitHub if the branch is tied to a open PR
     else:
         pr_number = associate_branch_to_open_pr(current_branch_name)
         if pr_number != -1:

@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 
-import pexpect
-import time
-import sys
-import os
+import os, sys
 
 from e2e_helpers.common.ssh_tools import (
-    attempt_ssh_connection,
     wait_until_cmd_done,
 )
 
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
@@ -20,20 +16,20 @@ def setup_artificial_network_conditions(
     """
     Set up the network degradation conditions on the client instance. We apply the network settings
     on the client side to simulate the condition where the user is using Whist on a machine that
-    is connected to the Internet through a unstable connection.
+    is connected to the Internet through an unstable connection.
 
     The function assumes that the pexpect_process process has already successfully established a
-    SSH connection to the host
+    SSH connection to the host.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                        interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
-                        ready to execute a command
-        network_conditions: The network conditions expressed as either 'normal' for no network
-                        degradation or max_bandwidth, delay, packet drop percentage, with the
-                        three values separated by commas and no space.
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
+                                                    be used to interact with the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
+                                ready to execute a command
+        network_conditions (str):   The network conditions expressed as either 'normal' for no network
+                                    degradation or max_bandwidth, delay, packet drop percentage, with the
+                                    three values separated by commas and no space.
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
@@ -41,16 +37,16 @@ def setup_artificial_network_conditions(
     if network_conditions == "normal":
         print("Setting up client to run on a instance with no degradation on network conditions")
     else:
-
         # Apply conditions below only for values that are actually set
         if len(network_conditions.split(",")) != 3:
             print(
-                "Network conditions passed in incorrect format. Setting up client to run on a instance with no degradation on network conditions"
+                "Network conditions passed in incorrect format. Setting up client to run on a instance with no degradation \
+                on network conditions"
             )
             return
 
         max_bandwidth, net_delay, pkt_drop_pctg = network_conditions.split(",")
-        if max_bandwidth == "none" and net_delay == "none" and pkt_drop_pctg == "none":
+        if max_bandwidth == "None" and net_delay == "None" and pkt_drop_pctg == "None":
             print(
                 "Setting up client to run on a instance with no degradation on network conditions"
             )
@@ -59,17 +55,18 @@ def setup_artificial_network_conditions(
             print(
                 "Setting up client to run on a instance with the following networking conditions:"
             )
-            if max_bandwidth != "none":
+            if max_bandwidth != "None":
                 print(f"\t* Max bandwidth: {max_bandwidth}")
-            if net_delay != "none":
+            if net_delay != "None":
                 print(f"\t* Delay: {net_delay}ms")
-            if pkt_drop_pctg != "none":
+            if pkt_drop_pctg != "None":
                 print(f"\t* Packet drop rate: {pkt_drop_pctg}")
 
         # Install ifconfig
         command = "sudo apt-get install -y net-tools"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
         # Get network interface names (excluding loopback)
         command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
         pexpect_process.sendline(command)
@@ -104,16 +101,16 @@ def setup_artificial_network_conditions(
         commands.append("sudo ip link set dev ifb0 up")
 
         degradation_command = ""
-        if net_delay != "none":
+        if net_delay != "None":
             degradation_command += f"delay {net_delay}ms "
-        if pkt_drop_pctg != "none":
+        if pkt_drop_pctg != "None":
             degradation_command += f"loss {pkt_drop_pctg}% "
-        if max_bandwidth != "none":
+        if max_bandwidth != "None":
             degradation_command += f"rate {max_bandwidth}"
 
         for device in network_devices:
             print(f"Applying network degradation to device {device}")
-            # add devices to delay incoming packets
+            # Add devices to delay incoming packets
             commands.append(f"sudo tc qdisc add dev {device} ingress")
             commands.append(
                 f"sudo tc filter add dev {device} parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0"
@@ -144,11 +141,11 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
     SSH connection to the host
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                        interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
-                        ready to execute a command
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used to
+                                                    interact with the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
+                                ready to execute a command
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
@@ -186,7 +183,6 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
     ]
 
     commands = []
-
     for device in network_devices:
         print(f"Restoring normal network conditions on device {device}")
         # Inbound degradations

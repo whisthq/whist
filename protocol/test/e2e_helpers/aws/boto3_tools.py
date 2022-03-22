@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 
-import sys
-import os
-import time
-import boto3, botocore
-import paramiko
-import subprocess
+import os, sys, time
+import botocore
 from operator import itemgetter
 
-from e2e_helpers.common.git_tools import (
-    get_whist_branch_name,
-)
+from e2e_helpers.common.git_tools import get_whist_branch_name
 
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
+
+# Constants
+# We will need to change the owner ID/AMI once AWS' target version of Linux Ubuntu changes
+AMAZON_OWNER_ID = "099720109477"
+AWS_UBUNTU_2004_AMI = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
+INSTANCE_TYPE = "g4dn.xlarge"
 
 
 def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
@@ -27,14 +27,12 @@ def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
     Returns:
         target_ami (str): The AMI of the target image or an empty string if no image was found.
     """
-    amazon_owner_id = "099720109477"
-    # We will need to change the name filter once the target version of Linux Ubuntu changes
     response = boto3client.describe_images(
-        Owners=[amazon_owner_id],
+        Owners=[AMAZON_OWNER_ID],
         Filters=[
             {
                 "Name": "name",
-                "Values": ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"],
+                "Values": [AWS_UBUNTU_2004_AMI],
             },
             {
                 "Name": "architecture",
@@ -49,6 +47,7 @@ def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
 
     # Sort the Images in reverse order of creation
     images_list = sorted(response["Images"], key=itemgetter("CreationDate"), reverse=True)
+
     # Get the AMI of the most recent Image
     target_ami = images_list[0]["ImageId"]
 
@@ -105,7 +104,7 @@ def create_ec2_instance(
             "container-tester",
         ],
         "InstanceInitiatedShutdownBehavior": "terminate",
-        "KeyName": key_name,  # the pre-created SSH key to associate this instance with, needs to be the same that's loaded on the client calling this function
+        "KeyName": key_name,  # needs to be the same that's loaded on the client calling this function
     }
 
     # Create the EC2 instance
@@ -121,7 +120,6 @@ def create_ec2_instance(
     print(
         f"Created EC2 instance with id: {instance_id}, type={instance_type}, ami={instance_AMI}, key_name={key_name}, disk_size={disk_size}"
     )
-
     return instance_id
 
 
@@ -188,7 +186,7 @@ def wait_for_instance_to_start_or_stop(
         boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
         instance_id (str): The ID of the instance to wait for
         stopping (bool): Whether or not the instance is being stopped, if not provided
-            it will wait for the instance to start
+                         it will wait for the instance to start
 
     Returns:
         None
@@ -209,15 +207,15 @@ def wait_for_instance_to_start_or_stop(
 
 def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
     """
-    Get the public and private IP addresses of an existing E2 instance.
+    Get the public and private IP addresses of an existing EC2 instance.
 
     Args:
-        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon EC2 service
         instance_id (str): The ID of the instance of interest
 
     Returns:
         retval (list): A list of dictionaries with the public and private IPs of every instance
-                        with instance id equal to the parameter.
+                       with instance id equal to the parameter.
     """
     retval = []
 
@@ -252,8 +250,8 @@ def create_or_start_aws_instance(
 
     Returns:
         instance_id (str): the ID of the started instance. This can be the existing instance
-                            (if we passed a existing_instance_id) or the new instance
-                            (if we passed an empty string to existing_instance_id)
+                           (if we passed a existing_instance_id) or the new instance
+                           (if we passed an empty string to existing_instance_id)
     """
     # Attempt to start existing instance
     if existing_instance_id != "":
@@ -268,7 +266,7 @@ def create_or_start_aws_instance(
 
     # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
     instance_AMI = get_current_AMI(boto3client, region_name)
-    instance_type = "g4dn.xlarge"  # The type of instance we want to create
+    instance_type = INSTANCE_TYPE  # The type of instance we want to create
 
     print(f"Creating AWS EC2 instance of size: {instance_type} and with AMI: {instance_AMI}...")
 
@@ -279,7 +277,7 @@ def create_or_start_aws_instance(
         instance_type=instance_type,
         instance_AMI=instance_AMI,
         key_name=ssh_key_name,
-        disk_size=48,  # GB
+        disk_size=64,  # GB
         running_in_ci=running_in_ci,
     )
     if instance_id == "":
@@ -316,7 +314,7 @@ def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
         print(f"Testing complete, stopping EC2 instance")
         result = stop_instance(boto3client, instance_id)
         if result is False:
-            printf("Error while stopping the EC2 instance!")
+            print("Error while stopping the EC2 instance!")
             return
 
     # Wait for the instance to be terminated

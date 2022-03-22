@@ -2,10 +2,7 @@
 
 import os
 import sys
-import time
 import numpy as np
-import math
-from datetime import datetime, timedelta
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -19,12 +16,12 @@ def extract_metrics(client_log_file, server_log_file):
     entries for that metric and the mean (or max/min).
 
     Args:
-        client_log_file: The path to the file (usually client.log) containing
+        client_log_file (str): The path to the file (usually client.log) containing
                         the client-side logs with the metrics
-        server_log_file: The path to the file (usually server.log) containing
+        server_log_file (str): The path to the file (usually server.log) containing
                         the server-side logs with the metrics
     Returns:
-        experiment_metrics: A list containing two dictionaries with the client
+        experiment_metrics (list): A list containing two dictionaries with the client
                             and server metrics, respectively.
     """
 
@@ -129,19 +126,18 @@ def compute_deltas(
     for the markdown comparison table
 
     Args:
-        client_dictionary: The dictionary containing the metrics key-value pairs for the
+        client_dictionary (dict):   The dictionary containing the metrics key-value pairs for the
                                     client from the current run
-        server_dictionary: The dictionary containing the metrics key-value pairs for the
+        server_dictionary (dict):   The dictionary containing the metrics key-value pairs for the
                                     server from the current run
-        compared_client_dictionary: The dictionary containing the metrics key-value pairs
-                                    for the client from the compared run
-        compared_server_dictionary: The dictionary containing the metrics key-value pairs
-                                    for the server from the compared run
+        compared_client_dictionary (dict):  The dictionary containing the metrics key-value pairs
+                                            for the client from the compared run
+        compared_server_dictionary (dict):  The dictionary containing the metrics key-value pairs
+                                            for the server from the compared run
     Returns:
-        table_entries: A list with two sublists. The two sublists contain the entries for
-                                    the markdown comparison tables for the client and server,
-                                    respectively. Each item in the sublists corresponds to one row
-                                    in the table.
+        table_entries (list):   A list with two sublists. The two sublists contain the entries for
+                                the markdown comparison tables for the client and server, respectively.
+                                Each item in the sublists corresponds to one row in the table.
     """
     metrics_dictionaries = [client_dictionary, server_dictionary]
     compared_dictionaries = [compared_client_dictionary, compared_server_dictionary]

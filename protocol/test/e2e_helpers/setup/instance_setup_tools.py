@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 import pexpect
-import os
-import sys
-import time
+import os, sys
 
 from e2e_helpers.common.git_tools import (
     get_whist_branch_name,
@@ -14,14 +12,13 @@ from e2e_helpers.common.ssh_tools import (
     reboot_instance,
 )
 
-# add the current directory to the path no matter where this is called from
+# Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def install_and_configure_aws(
     pexpect_process,
     pexpect_prompt,
-    aws_timeout_seconds,
     running_in_ci,
     aws_credentials_filepath=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
 ):
@@ -30,14 +27,14 @@ def install_and_configure_aws(
     from the ones configured on the machine where this script is being run.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used
-                                to interact with the remote machine
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used
+                                                    to interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
-                                is ready to execute a command
-        aws_timeout_seconds: Timeout to be used for the Pexpect process.
+                        is ready to execute a command
         running_in_ci: A boolean indicating whether this script is currently running in CI
-        aws_credentials_filepath: The path to the file where AWS stores the credentials on
-                                the machine where this script is run
+        aws_credentials_filepath:   The path to the file where AWS stores the credentials on
+                                    the machine where this script is run
+
     Returns:
         True if the AWS installation and configuration succeeded, False otherwise.
     """
@@ -45,7 +42,7 @@ def install_and_configure_aws(
     aws_access_key_id = ""
     aws_secret_access_key = ""
     if running_in_ci:
-        # In CI, the aws credentials are stored in the following env variables
+        # In CI, the AWS credentials are stored in the following env variables
         print("Getting the AWS credentials from environment variables...")
         aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
         aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
@@ -56,6 +53,8 @@ def install_and_configure_aws(
             print(f"Could not find local AWS credential file at path {aws_credentials_filepath}!")
             sys.exit(-1)
         aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
+
+        # Read the AWS configuration file
         for line in aws_credentials_file.readlines():
             if "aws_access_key_id" in line:
                 aws_access_key_id = line.strip().split()[2]
@@ -64,6 +63,7 @@ def install_and_configure_aws(
                 break
         aws_credentials_file.close()
 
+    # Sanity check
     if (
         aws_access_key_id == None
         or aws_secret_access_key == None
@@ -91,9 +91,7 @@ def install_and_configure_aws(
     aws_not_installed = any(error_msg in item for item in stdout if isinstance(item, str))
 
     # Attempt installation using apt-get
-
     if aws_not_installed:
-        # Attempt to install using apt-get
         print("Installing AWS-CLI using apt-get")
 
         pexpect_process.sendline("sudo apt-get install -y awscli")
@@ -151,9 +149,9 @@ def install_and_configure_aws(
             for command in install_commands:
                 pexpect_process.sendline(command)
                 wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-            print("AWS-CLI installed manually")
+            print("AWS CLI installed manually")
     else:
-        print("AWS-CLI is already installed")
+        print("AWS CLI is already installed")
 
     # Step 3: Set the AWS credentials
     access_key_cmd = f"aws configure set aws_access_key_id {aws_access_key_id}"
@@ -173,9 +171,9 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, runnin
     on the machine where this script is run.
 
     Args:
-        github_token: The secret token to use to access the Whist private repository on GitHub
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to
-                        interact with the remote machine
+        github_token:   The secret token to use to access the Whist private repository on GitHub
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used to
+                                                    interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
                         ready to execute a command
         running_in_ci: A boolean indicating whether this script is currently running in CI
@@ -218,20 +216,21 @@ def run_host_setup(
     connection to the host, and that the Whist repository has already been cloned.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact
-                        with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is ready to
-                        execute a command
-        ssh_cmd: The shell command to use to establish a SSH connection to the remote machine.
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
+                                                    be used to interact with the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
+                                execute a command
+        ssh_cmd (str):  The shell command to use to establish a SSH connection to the remote machine.
                         This is used if we need to reboot the machine.
-        timeout_value: The amount of time to wait before timing out the attemps to gain a SSH connection
-                        to the remote machine.
-        logfile: The file (already opened) to use for logging the terminal output from the remote machine
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        timeout_value (int):    The amount of time to wait before timing out the attemps to gain a SSH connection
+                                to the remote machine.
+        logfile (file): The file (already opened) to use for logging the terminal output from the remote machine
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
-        pexpect_process: The Pexpect process to be used from now on to interact with the remote machine.
-                        This is equal to the first argument if a reboot of the remote machine was not needed.
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process to be used from now on to interact with
+                                                    the remote machine. This is equal to the first argument if a
+                                                    reboot of the remote machine was not needed.
     """
     print("Running the host setup on the instance ...")
     command = "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
@@ -271,8 +270,9 @@ def start_host_service(pexpect_process, pexpect_prompt):
     to the host, and that the Whist repository has already been cloned.
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used to interact with
-                        the remote machine
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used to
+                                                    interact with the remote machine
+
     Returns:
         None
     """
@@ -301,11 +301,11 @@ def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
     by pruning old Docker containers by running the command `docker system prune -af`
 
     Args:
-        pexpect_process: The Pexpect process created with pexpect.spawn(...) and to be used
-                            to interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
-                            ready to execute a command
-        running_in_ci: A boolean indicating whether this script is currently running in CI
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used
+                                                    to interact with the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
+                                ready to execute a command
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
