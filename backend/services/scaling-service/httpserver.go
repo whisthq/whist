@@ -43,7 +43,7 @@ func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	events <- algos.ScalingEvent{
 		ID:   uuid.NewString(),
 		Type: "SERVER_MANDELBOX_ASSIGN_EVENT",
-		Data: reqdata,
+		Data: &reqdata,
 	}
 	res := <-reqdata.ResultChan
 	assignResult := res.Result.(httputils.MandelboxAssignRequestResult)
