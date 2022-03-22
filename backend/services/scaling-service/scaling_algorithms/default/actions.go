@@ -697,7 +697,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	if assignedInstance.RemainingCapacity <= 0 {
 		// This should never happen, but we should consider
 		// possible edge cases before updating the database.
-		return utils.MakeError("instance with id %v has a remaning capacity less than or equal to 0.")
+		return utils.MakeError("instance with id %v has a remaning capacity less than or equal to 0.", assignedInstance.ID)
 	}
 
 	// Subtract 1 from the current instance capacity because we allocated a mandelbox
