@@ -60,7 +60,7 @@ function has_updated {
 
 # If the include/SDL2 directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-LIB="fractal-sdl2-headers.tar.gz"
+LIB="whist-sdl2-headers.tar.gz"
 SDL_DIR="$DEST_DIR/include/SDL2"
 if has_updated "$LIB" || [[ ! -d "$SDL_DIR" ]]; then
   rm -rf "$SDL_DIR"
@@ -86,15 +86,15 @@ else
 fi
 
 if [[ "$OS" =~ "Windows" ]]; then
-  SDL_LIB="fractal-windows-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
+  SDL_LIB="whist-windows-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
   if [[ "$MACOS_ARCH" == "arm64" ]]; then
-    SDL_LIB="fractal-macos-arm64-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
+    SDL_LIB="whist-macos-arm64-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
   else
-    SDL_LIB="fractal-macos-x64-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
+    SDL_LIB="whist-macos-x64-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
   fi
 elif [[ "$OS" == "Linux" ]]; then
-  SDL_LIB="fractal-linux-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
+  SDL_LIB="whist-linux-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
 fi
 
 # Check if SDL_LIB has updated, and if so, create the dir and copy the libs/headers into the source dir
@@ -116,7 +116,7 @@ fi
 
 # If the include/sentry directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-LIB="fractal-sentry-headers.tar.gz"
+LIB="whist-sentry-headers.tar.gz"
 SENTRY_DIR="$DEST_DIR/include/sentry"
 if has_updated "$LIB" || [[ ! -d "$SENTRY_DIR" ]]; then
   rm -rf "$SENTRY_DIR"
@@ -135,15 +135,15 @@ fi
 # Select Sentry lib dir and Sentry lib targz name based on OS and hardware architecture (macOS)
 SENTRY_LIB_DIR="$DEST_DIR/lib/64/sentry/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
-  SENTRY_LIB="fractal-windows-sentry-shared-lib.tar.gz"
+  SENTRY_LIB="whist-windows-sentry-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
   if [[ "$MACOS_ARCH" == "arm64" ]]; then
-    SENTRY_LIB="fractal-macos-arm64-sentry-shared-lib.tar.gz"
+    SENTRY_LIB="whist-macos-arm64-sentry-shared-lib.tar.gz"
   else
-    SENTRY_LIB="fractal-macos-x64-sentry-shared-lib.tar.gz"
+    SENTRY_LIB="whist-macos-x64-sentry-shared-lib.tar.gz"
   fi
 elif [[ "$OS" == "Linux" ]]; then
-  SENTRY_LIB="fractal-linux-sentry-shared-lib.tar.gz"
+  SENTRY_LIB="whist-linux-sentry-shared-lib.tar.gz"
 fi
 
 # Check if SENTRY_LIB has updated, and if so, create the dir and copy the libs into the source dir
@@ -159,7 +159,7 @@ fi
 
 # If the include/openssl directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-LIB="fractal-libcrypto-headers.tar.gz"
+LIB="whist-libcrypto-headers.tar.gz"
 OPENSSL_DIR="$DEST_DIR/include/openssl"
 if has_updated "$LIB" || [[ ! -d "$OPENSSL_DIR" ]]; then
   rm -rf "$OPENSSL_DIR"
@@ -178,15 +178,15 @@ fi
 # Select OpenSSL lib dir and OpenSSL lib targz name based on OS and hardware architecture (macOS)
 OPENSSL_LIB_DIR="$DEST_DIR/lib/64/openssl/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
-  OPENSSL_LIB="fractal-windows-libcrypto-static-lib.tar.gz"
+  OPENSSL_LIB="whist-windows-libcrypto-static-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
   if [[ "$MACOS_ARCH" == "arm64" ]]; then
-    OPENSSL_LIB="fractal-macos-arm64-libcrypto-static-lib.tar.gz"
+    OPENSSL_LIB="whist-macos-arm64-libcrypto-static-lib.tar.gz"
   else
-    OPENSSL_LIB="fractal-macos-x64-libcrypto-static-lib.tar.gz"
+    OPENSSL_LIB="whist-macos-x64-libcrypto-static-lib.tar.gz"
   fi
 elif [[ "$OS" == "Linux" ]]; then
-  OPENSSL_LIB="fractal-linux-libcrypto-static-lib.tar.gz"
+  OPENSSL_LIB="whist-linux-libcrypto-static-lib.tar.gz"
 fi
 
 # Check if OPENSSL_LIB has updated, and if so, create the dir and copy the libs into the source dir
