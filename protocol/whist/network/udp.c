@@ -134,7 +134,6 @@ typedef struct NackID {
     int packet_index;
 } NackID;
 
-
 typedef void (*PacketReceiveCB)(int id, unsigned char* buf, int size);
 
 // An instance of the UDP Context
@@ -199,7 +198,7 @@ typedef struct {
     void* nack_queue;
 
     PacketReceiveCB packet_receive_cbs[NUM_PACKET_TYPES];
-    
+
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -525,11 +524,13 @@ static bool udp_update(void* raw_context) {
                 udp_congestion_control(context, udp_packet.udp_whist_segment_data.departure_time,
                                        arrival_time, udp_packet.group_id);
             }
-            if(context->packet_receive_cbs[packet_type]!= NULL)
-            {
-                WhistPacket* whist_packet = (WhistPacket*)udp_packet.udp_whist_segment_data.segment_data;
-
-                context->packet_receive_cbs[packet_type](udp_packet.udp_whist_segment_data.id,(unsigned char *)whist_packet->data,whist_packet->payload_size);
+            if (context->packet_receive_cbs[packet_type] != NULL) {
+                FATAL_ASSERT(udp_packet.udp_whist_segment_data.num_indices == 1);
+                WhistPacket* whist_packet =
+                    (WhistPacket*)udp_packet.udp_whist_segment_data.segment_data;
+                context->packet_receive_cbs[packet_type](udp_packet.udp_whist_segment_data.id,
+                                                         (unsigned char*)whist_packet->data,
+                                                         whist_packet->payload_size);
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
             else if (context->ring_buffers[packet_type] != NULL) {
@@ -1787,22 +1788,7 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
 size_t udp_packet_max_size(void) { return (sizeof(UDPNetworkPacket)); }
 
-void udp_register_ring_buffer_ready_cb(SocketContext* socket_context, WhistPacketType type,
-                                       void* cb) {
-    FATAL_ASSERT(socket_context != NULL);
-    UDPContext* context = socket_context->context;
-    FATAL_ASSERT(context != NULL);
-
-    int type_index = (int)type;
-    FATAL_ASSERT(type_index < NUM_PACKET_TYPES);
-    FATAL_ASSERT(context->ring_buffers[type_index] != NULL);
-
-    ring_buffer_set_ready_cb(context->ring_buffers[type_index], cb);
-}
-
-void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type,
-                                       void* cb)
-{
+void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type, void* cb) {
     UDPContext* context = (UDPContext*)raw_context;
-    context->packet_receive_cbs[type]=cb;
+    context->packet_receive_cbs[type] = cb;
 }

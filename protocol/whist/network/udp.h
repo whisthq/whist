@@ -212,9 +212,5 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
 size_t udp_packet_max_size(void);
 
-void udp_register_ring_buffer_ready_cb(SocketContext* socket_context, WhistPacketType type,
-                                       void* cb);
-
-void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type,
-                                       void* cb);
+void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type, void* cb);
 #endif  // WHIST_UDP_H

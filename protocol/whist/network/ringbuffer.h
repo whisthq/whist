@@ -77,8 +77,6 @@ typedef void (*NackPacketFn)(SocketContext* socket_context, WhistPacketType fram
 typedef void (*StreamResetFn)(SocketContext* socket_context, WhistPacketType frame_type,
                               int last_failed_id);
 
-typedef void (*FrameReadyCB)(int id, unsigned char* buf, int size);
-
 /**
  * @brief	RingBuffer struct for abstracting away frame reconstruction and frame retrieval.
  * @details This is used by client/audio.c and client/video.c to keep track of frames as the client
@@ -95,8 +93,6 @@ typedef struct RingBuffer {
     SocketContext* socket_context;
     NackPacketFn nack_packet;
     StreamResetFn request_stream_reset;
-
-    FrameReadyCB frame_ready_cb;
 
     BlockAllocator* packet_buffer_allocator;  // unused if audio
 
@@ -278,7 +274,4 @@ NetworkStatistics get_network_statistics(RingBuffer* ring_buffer);
  * @param ring_buffer Ring buffer to destroy
  */
 void destroy_ring_buffer(RingBuffer* ring_buffer);
-
-void ring_buffer_set_ready_cb(RingBuffer* ring_buffer, FrameReadyCB cb);
-
 #endif
