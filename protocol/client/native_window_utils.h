@@ -70,8 +70,15 @@ int get_native_window_dpi(SDL_Window* window);
 /**
  * @brief                          Set up callbacks for out of window drag events
  *
+ * @note                           This must be called after init_sdl
  */
-void initiate_out_of_window_drag_handlers(void);
+void initialize_out_of_window_drag_handlers(void);
+
+/**
+ * @brief                          Destroy callbacks for out of window drag events
+ *
+ */
+void destroy_out_of_window_drag_handlers(void);
 
 /**
  * @brief                          Declares that UserActivity has occured,
