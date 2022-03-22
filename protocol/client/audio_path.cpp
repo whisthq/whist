@@ -28,7 +28,8 @@ typedef double timestamp_ms;
 const int audio_packets_interval_ms = 10;
 
 // how many frames/packets allowed to queue inside the audio device queue
-// TODO: make this adaptive to reduce latency for good environment and reduce pop for though environment
+// TODO: make this adaptive to reduce latency for good environment and reduce pop for though
+// environment
 const int max_num_inside_device_queue = 8;
 // how many frames/packets allowed to queue inside the user queue (when device queue is full)
 const int max_num_inside_user_queue = 20;
@@ -48,10 +49,7 @@ struct PacketInfo {
         receive_time = t;
     }
 
-    PacketInfo(PacketInfo && other): data(move(other.data))
-    {
-        receive_time=other.receive_time;
-    }
+    PacketInfo(PacketInfo &&other) : data(move(other.data)) { receive_time = other.receive_time; }
 };
 
 // the operations for dynamic queue len management
@@ -134,23 +132,21 @@ Public Function Implementations
 */
 
 int audio_path_init(void) {
-
-    //init the timer for get_timestamp_ms()
+    // init the timer for get_timestamp_ms()
     start_timer(&g_timer);
 
-    //more initilization
+    // more initilization
     g_mutex = whist_create_mutex();
     g_audio_context = init_audio();
     atomic_init(&cached_device_queue_len, 0);
 
-    //create the dedicated thread for audio rendering
+    // create the dedicated thread for audio rendering
     whist_create_thread(multi_threaded_audio_renderer, "MultiThreadedAudioRenderer", NULL);
 
     return 0;
 }
 
 int push_to_audio_path(int id, unsigned char *buf, int size) {
-    
     // if a packet comes with an id  <= the max id has been sent to deive by 5
     // then we consider this packet as too old to play, and drop it directly
     const int distant_too_old_to_play = 5;
@@ -193,7 +189,7 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
 
     // alias of the max popped id from recent_popped_ids
     int max_popped_id = recent_popped_ids.empty() ? -1 : *recent_popped_ids.rbegin();
-    
+
     // detect if a packet is too old to play
     if (id + distant_too_old_to_play <= max_popped_id) {
         whist_unlock_mutex(g_mutex);
@@ -201,7 +197,7 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
     }
 
     // save the data and info inside user queue
-    user_queue.emplace(id, move(packet_info) );
+    user_queue.emplace(id, move(packet_info));
 
     // convenient alias
     int user_queue_len = (int)user_queue.size();
@@ -221,8 +217,8 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
             // make sure we never erase buffered packets
             if ((int)user_queue.size() <= buffered_for_flush_cnt) {
                 if (verbose_log) {
-                    fprintf(stderr, "this usually shouldn't happen %d %d %d %d\n", (int)user_queue.size(),
-                            buffered_for_flush_cnt, i, expected_skip);
+                    fprintf(stderr, "this usually shouldn't happen %d %d %d %d\n",
+                            (int)user_queue.size(), buffered_for_flush_cnt, i, expected_skip);
                 }
                 break;
             }
@@ -238,7 +234,6 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
 }
 
 int pop_from_audio_path(unsigned char *buf, int *size) {
-
     // get num of queue bytes inside device
     int device_queue_byte = get_device_audio_queue_bytes(g_audio_context);
     // calculate the num of queued frames/packets inside device
@@ -267,7 +262,8 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
         static timestamp_ms last_log_time = 0;
         if (now - last_log_time > 100) {
             last_log_time = now;
-            fprintf(stderr, "%d %d %d\n", (int)user_queue.size(), device_queue_len, device_queue_byte);
+            fprintf(stderr, "%d %d %d\n", (int)user_queue.size(), device_queue_len,
+                    device_queue_byte);
         }
     }
 
@@ -279,7 +275,7 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
 
     // for robustness, if audio device is for some reason not ready drop all packets
     if (device_queue_byte < 0) {
-        user_queue.clear(); 
+        user_queue.clear();
         buffered_for_flush_cnt = 0;
         flushing_buffered_packets = 0;
         whist_unlock_mutex(g_mutex);
@@ -291,8 +287,7 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
         FATAL_ASSERT((int)user_queue.size() >= buffered_for_flush_cnt);
         pop_inner(buf, size);
         buffered_for_flush_cnt--;
-        if (buffered_for_flush_cnt == 0) 
-        {
+        if (buffered_for_flush_cnt == 0) {
             flushing_buffered_packets = false;
         }
         whist_unlock_mutex(g_mutex);
@@ -303,21 +298,19 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
     // the best thing to do is to stop playing and start to queue packets imediately
     // we start to queue packet for anti-jitter and flush the queued packet activately later
     if (device_queue_byte == 0) {
-       
         // the status of start buffering or on the way of buffering
         if (user_queue.size() < max_num_inside_device_queue) {
             buffered_for_flush_cnt = (int)user_queue.size();
             whist_unlock_mutex(g_mutex);  // wait for more packets
             return -2;
-        } 
-        else  // we have queued enough
+        } else  // we have queued enough
         {
             // indicdate the start of flushing
             buffered_for_flush_cnt = max_num_inside_device_queue;
             flushing_buffered_packets = true;
-            
+
             // robustness check
-            FATAL_ASSERT(max_num_inside_device_queue >1);
+            FATAL_ASSERT(max_num_inside_device_queue > 1);
 
             // flush one packet for current iteration
             pop_inner(buf, size);
@@ -326,8 +319,7 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
             whist_unlock_mutex(g_mutex);
             return 0;
         }
-    } 
-    else { // otherwise the audio path is in a normal state
+    } else {  // otherwise the audio path is in a normal state
 
         // detect operation for dynamic queue len management
         auto op = decide_queue_len_manage_operation(user_queue_len, device_queue_len, now);
@@ -339,13 +331,11 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
                 // drop this packet by a dummy pop
                 // upper level will not feel this pop
                 pop_inner(buf, &fake_size);
-
             }
             // don't return after early drop, continue to run as normal
         }
         // if it's EarlyDup, dup the last saved packet
         else if (op == EarlyDup) {
-            
             // make sure we have a last packet saved
             if (last_popped_packet_data.length()) {
                 memcpy(buf, last_popped_packet_data.c_str(), last_popped_packet_data.length());
@@ -381,14 +371,10 @@ Private Function Implementations
 ============================
 */
 
-static double get_timestamp_ms()
-{
-    return get_timer(&g_timer)*MS_IN_SECOND;
-}
+static double get_timestamp_ms() { return get_timer(&g_timer) * MS_IN_SECOND; }
 
 static int multi_threaded_audio_renderer(void *) {
     while (1) {
-
         // if nothing is rendered in the attemp sleep for 2ms
         // otherwise keep trying
         if (render_audio(g_audio_context) != 0) {
@@ -429,15 +415,19 @@ static void pop_inner(unsigned char *buf, int *size) {
     assert(!user_queue.empty());
 
     auto it = user_queue.begin();
-    
+
     // log non-consecutive packets
     if (last_popped_id + 1 != it->first) {
-        if (verbose_log) fprintf(stderr, "non-consecutive packet %d!!! last_popped= %d, (might be caused by loss or reorder)\n", it->first, last_popped_id);
+        if (verbose_log)
+            fprintf(stderr,
+                    "non-consecutive packet %d!!! last_popped= %d, (might be caused by loss or "
+                    "reorder)\n",
+                    it->first, last_popped_id);
     }
 
     // keep track of last popped id
     last_popped_id = it->first;
-    
+
     // keep track of a set of recently poped ids
     recent_popped_ids.insert(last_popped_id);
     // keep the size of recent_popped_ids <= recent_popped_ids_capcity
@@ -455,7 +445,6 @@ static void pop_inner(unsigned char *buf, int *size) {
 }
 
 static bool ready_to_pop(timestamp_ms now) {
-
     // max "time" to wait for an empty slot,
     // so that an empty slot is considered lost
     // TODO: make this adaptive, it's going to be a decent improvement
@@ -474,8 +463,10 @@ static bool ready_to_pop(timestamp_ms now) {
     }
     // otherwise the current packet is blocked by an empty slot before that
 
-    // if a packet has been stale for long, then we believe the packets of the empty slots blocking the current packet has been lost.
-    if (now - current_packet_receive_time >= (anti_reorder_strength+0.5) * audio_packets_interval_ms) {
+    // if a packet has been stale for long, then we believe the packets of the empty slots blocking
+    // the current packet has been lost.
+    if (now - current_packet_receive_time >=
+        (anti_reorder_strength + 0.5) * audio_packets_interval_ms) {
         if (verbose_log) {
             fprintf(stderr, "[popped %d by time staleness]\n", user_queue.begin()->first);
         }
@@ -483,8 +474,9 @@ static bool ready_to_pop(timestamp_ms now) {
     }
 
     // if a packet with id + anti_reorder_strength has been seen, then we believe the packets
-    // of the empty slots blocking the current packet has been lost. 
-    // note: the above stragety works better when there are too many packet losses, this strategy works better when packets are queued and squeezed together. so it's better to have both.
+    // of the empty slots blocking the current packet has been lost.
+    // note: the above stragety works better when there are too many packet losses, this strategy
+    // works better when packets are queued and squeezed together. so it's better to have both.
     if (current_packet_id + anti_reorder_strength <= max_seen_id) {
         if (verbose_log) {
             fprintf(stderr, "[popped %d by id staleness]\n", user_queue.begin()->first);
@@ -557,7 +549,7 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
                     avg_len, total_len, user_queue_len, device_queue_len);
         }
         op = EarlyDrop;
-    } // if the queue is running low, do early dup to make it higher 
+    }  // if the queue is running low, do early dup to make it higher
     else if (avg_len <= target_total_queue_len - queue_len_management_sensitivity) {
         if (verbose_log) {
             fprintf(stderr, "aduio_queue running low, len=%.2f %d %d %d, fill with last frame!! ",
