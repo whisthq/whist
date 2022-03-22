@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
@@ -143,7 +142,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}()
 
 	var (
-		freeInstances, lingeringInstances subscriptions.WhistInstances
+		freeInstances, lingeringInstances []subscriptions.Instance
 		lingeringIDs                      []string
 		err                               error
 	)
@@ -186,15 +185,29 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// to the list that will be scaled down.
 	// 3. If the instance does not have the latest image, and is not running any mandelboxes, add to the
 	// list that will be scaled down.
-	for _, instance := range allActive {
-		if len(instance.Mandelboxes) > 0 {
+	for _, dbInstance := range allActive {
+		if len(dbInstance.Mandelboxes) > 0 {
 			// Don't scale down any instance that has running
 			// mandelboxes, regardless of the image it uses
-			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", instance.ID, len(instance.Mandelboxes))
+			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", dbInstance.ID, len(dbInstance.Mandelboxes))
 			continue
 		}
 
-		_, protected := s.protectedFromScaleDown[string(instance.ImageID)]
+		instance := subscriptions.Instance{
+			ID:                string(dbInstance.ID),
+			Provider:          string(dbInstance.Provider),
+			Region:            string(dbInstance.Region),
+			ImageID:           string(dbInstance.ImageID),
+			ClientSHA:         string(dbInstance.ClientSHA),
+			IPAddress:         dbInstance.IPAddress,
+			Type:              string(dbInstance.Type),
+			RemainingCapacity: int64(dbInstance.RemainingCapacity),
+			Status:            string(dbInstance.Status),
+			CreatedAt:         dbInstance.CreatedAt,
+			UpdatedAt:         dbInstance.UpdatedAt,
+		}
+
+		_, protected := s.protectedFromScaleDown[instance.ImageID]
 		if protected {
 			// Don't scale down instances with a protected image id. A protected
 			// image id refers to the image id that was built and passed by the
@@ -206,7 +219,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			continue
 		}
 
-		if instance.ImageID == graphql.String(latestImageID) {
+		if instance.ImageID == latestImageID {
 			// Current instances
 			// If we have more than one instance worth of extra mandelbox capacity, scale down
 			if mandelboxCapacity >= extraCapacity {
@@ -227,14 +240,27 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return utils.MakeError("failed to query database for lingering instances. Err: %v", err)
 	}
 
-	for _, instance := range drainingInstances {
+	for _, dbInstance := range drainingInstances {
+		instance := subscriptions.Instance{
+			ID:                string(dbInstance.ID),
+			Provider:          string(dbInstance.Provider),
+			Region:            string(dbInstance.Region),
+			ImageID:           string(dbInstance.ImageID),
+			ClientSHA:         string(dbInstance.ClientSHA),
+			IPAddress:         dbInstance.IPAddress,
+			Type:              string(dbInstance.Type),
+			RemainingCapacity: int64(dbInstance.RemainingCapacity),
+			Status:            string(dbInstance.Status),
+			CreatedAt:         dbInstance.CreatedAt,
+			UpdatedAt:         dbInstance.UpdatedAt,
+		}
 		// Check if lingering instance is free from mandelboxes
-		if len(instance.Mandelboxes) == 0 {
+		if len(dbInstance.Mandelboxes) == 0 {
 			lingeringInstances = append(lingeringInstances, instance)
 			lingeringIDs = append(lingeringIDs, string(instance.ID))
 		} else {
 			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
-			logger.Warningf("Instance %v has %v associated mandelboxes and is marked as Draining.", instance.ID, len(instance.Mandelboxes))
+			logger.Warningf("Instance %v has %v associated mandelboxes and is marked as Draining.", instance.ID, len(dbInstance.Mandelboxes))
 		}
 	}
 
@@ -256,12 +282,9 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 	for _, instance := range freeInstances {
 		logger.Infof("Scaling down instance %v.", instance.ID)
-		updateParams := map[string]interface{}{
-			"id":     instance.ID,
-			"status": graphql.String("DRAINING"),
-		}
 
-		_, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, updateParams)
+		instance.Status = "DRAINING"
+		_, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, instance)
 		if err != nil {
 			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
 		}
@@ -627,7 +650,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		}
 
 		if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
-			err := utils.MakeError("found instance with capacity but it has a different commit hash %v that clientwith commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+			err := utils.MakeError("found instance with capacity but it has a different commit hash %v that frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
 			mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 				Error: COMMIT_HASH_MISMATCH,
 			}, err)
@@ -671,13 +694,17 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	logger.Infof("Inserted %v rows to database.", affectedRows)
 
-	// Subtract 1 from the current instance capacity because we allocated a mandelbox
-	updatedCapacity := assignedInstance.RemainingCapacity - 1
-	instanceUpdateParams := map[string]interface{}{
-		"remainingCapacity": updatedCapacity,
+	if assignedInstance.RemainingCapacity <= 0 {
+		// This should never happen, but we should consider
+		// possible edge cases before updating the database.
+		return utils.MakeError("instance with id %v has a remaning capacity less than or equal to 0.")
 	}
 
-	affectedRows, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, instanceUpdateParams)
+	// Subtract 1 from the current instance capacity because we allocated a mandelbox
+	updatedCapacity := assignedInstance.RemainingCapacity - 1
+	assignedInstance.RemainingCapacity = updatedCapacity
+
+	affectedRows, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, assignedInstance)
 	if err != nil {
 		return utils.MakeError("error while updating instance capacity on database. Err: %v", err)
 	}

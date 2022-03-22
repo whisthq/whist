@@ -80,12 +80,12 @@ func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 	return len(testInstances), nil
 }
 
-func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams map[string]interface{}) (int, error) {
+func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams subscriptions.Instance) (int, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
 	for index, instance := range testInstances {
-		if instance.ID == updateParams["id"] {
+		if string(instance.ID) == updateParams.ID {
 			updatedInstance := struct {
 				ID                graphql.String                 `graphql:"id"`
 				Provider          graphql.String                 `graphql:"provider"`
@@ -100,11 +100,11 @@ func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient
 				UpdatedAt         time.Time                      `graphql:"updated_at"`
 				Mandelboxes       subscriptions.WhistMandelboxes `graphql:"mandelboxes"`
 			}{
-				ID:                updateParams["id"].(graphql.String),
+				ID:                graphql.String(updateParams.ID),
 				Provider:          instance.Provider,
 				ImageID:           instance.ImageID,
 				Type:              instance.Type,
-				Status:            updateParams["status"].(graphql.String),
+				Status:            graphql.String(updateParams.Status),
 				RemainingCapacity: instance.RemainingCapacity,
 			}
 			testInstances[index] = updatedInstance

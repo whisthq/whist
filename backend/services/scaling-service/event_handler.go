@@ -203,8 +203,23 @@ func getRegionImageMap() (map[string]interface{}, error) {
 // getScalingAlgorithm is a helper function that returns the scaling algorithm from the sync map.
 func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.ScalingEvent) algos.ScalingAlgorithm {
 	// Try to get the scaling algorithm on the region the scaling event was requested.
+	// If no region is specified, use the default region.
 	// TODO: figure out how to get non-default scaling algorihtms.
-	name := utils.Sprintf("default-sa-%s", scalingEvent.Region)
+	var (
+		name   string
+		region string
+	)
+	const defaultRegion = "us-east-1"
+
+	region = scalingEvent.Region
+
+	if region == "" {
+		logger.Infof("No region found on scaling event. Getting scaling algorithm on default region %v.", defaultRegion)
+		name = utils.Sprintf("default-sa-%s", defaultRegion)
+	} else {
+		name = utils.Sprintf("default-sa-%s", scalingEvent.Region)
+	}
+
 	algorithm, ok := algorithmByRegion.Load(name)
 	if ok {
 		return algorithm.(algos.ScalingAlgorithm)

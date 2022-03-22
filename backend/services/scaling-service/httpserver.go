@@ -39,13 +39,11 @@ func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 
 	// Once we have authenticated and validated the
 	// request send it to the scaling algorithm for
-	// processing. Since this event does not deal with
-	// AWS directly, send to the default us-east-1 scaling algorithm.
+	// processing.
 	events <- algos.ScalingEvent{
-		ID:     uuid.NewString(),
-		Type:   "SERVER_MANDELBOX_ASSIGN_EVENT",
-		Region: "us-east-1",
-		Data:   reqdata,
+		ID:   uuid.NewString(),
+		Type: "SERVER_MANDELBOX_ASSIGN_EVENT",
+		Data: reqdata,
 	}
 	res := <-reqdata.ResultChan
 	assignResult := res.Result.(httputils.MandelboxAssignRequestResult)

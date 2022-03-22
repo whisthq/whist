@@ -88,10 +88,31 @@ func (client *DBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 	return int(insertMutation.MutationResponse.AffectedRows), err
 }
 
-// UpdateInstance updates the received fields on the database. Use a map[string]interface{} because the fields to update are dynamic and not known beforehand.
-func (client *DBClient) UpdateInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams map[string]interface{}) (int, error) {
-	updateMutation := subscriptions.UpdateInstanceStatus
-	err := graphQLClient.Mutate(scalingCtx, &updateMutation, updateParams)
+// UpdateInstance updates the received fields on the database.
+func (client *DBClient) UpdateInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams subscriptions.Instance) (int, error) {
+	updateMutation := subscriptions.UpdateInstance
+
+	// Due to some quirks with the Hasura client, we have to convert the
+	// instance to `whist_instances_set_input`.
+	instancesForDb := whist_instances_set_input{
+		ID:                graphql.String(updateParams.ID),
+		Provider:          graphql.String(updateParams.Provider),
+		Region:            graphql.String(updateParams.Region),
+		ImageID:           graphql.String(updateParams.ImageID),
+		ClientSHA:         graphql.String(metadata.GetGitCommit()),
+		IPAddress:         updateParams.IPAddress,
+		Type:              graphql.String(updateParams.Type),
+		RemainingCapacity: graphql.Int(updateParams.RemainingCapacity),
+		Status:            graphql.String(updateParams.Status),
+		CreatedAt:         updateParams.CreatedAt,
+		UpdatedAt:         updateParams.UpdatedAt,
+	}
+
+	mutationParams := map[string]interface{}{
+		"id":      graphql.String(updateParams.ID),
+		"changes": instancesForDb,
+	}
+	err := graphQLClient.Mutate(scalingCtx, &updateMutation, mutationParams)
 	return int(updateMutation.MutationResponse.AffectedRows), err
 }
 

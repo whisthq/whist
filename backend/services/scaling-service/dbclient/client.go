@@ -16,7 +16,7 @@ type WhistDBClient interface {
 	QueryInstancesByStatusOnRegion(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistInstances, error)
 	QueryInstancesByImage(context.Context, subscriptions.WhistGraphQLClient, string) (subscriptions.WhistInstances, error)
 	InsertInstances(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Instance) (int, error)
-	UpdateInstance(context.Context, subscriptions.WhistGraphQLClient, map[string]interface{}) (int, error)
+	UpdateInstance(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Instance) (int, error)
 	DeleteInstance(context.Context, subscriptions.WhistGraphQLClient, string) (int, error)
 	QueryImage(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistImages, error)
 	InsertImages(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Image) (int, error)

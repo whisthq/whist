@@ -25,6 +25,22 @@ type whist_instances_insert_input struct {
 	UpdatedAt         time.Time      `json:"updated_at"`
 }
 
+// whist_instances_set_input is a type for used for the GraphQL mutations
+// that update the `whist.instances` database table.
+type whist_instances_set_input struct {
+	ID                graphql.String `json:"id"`
+	Provider          graphql.String `json:"provider"`
+	Region            graphql.String `json:"region"`
+	ImageID           graphql.String `json:"image_id"`
+	ClientSHA         graphql.String `json:"client_sha"`
+	IPAddress         string         `json:"ip_addr"`
+	Type              graphql.String `json:"instance_type"`
+	RemainingCapacity graphql.Int    `json:"remaining_capacity"`
+	Status            graphql.String `json:"status"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
+}
+
 // whist_mandelboxes_insert_input is a type for used for the GraphQL mutations
 // that insert to the `whist.mandelboxes` database table.
 type whist_mandelboxes_insert_input struct {

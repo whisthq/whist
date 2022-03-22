@@ -22,7 +22,7 @@ var (
 )
 
 const (
-	CLIENT_COMMIT_HASH_DEV_OVERRIDE = "local-dev"
+	CLIENT_COMMIT_HASH_DEV_OVERRIDE = "local_dev"
 
 	// These are all the possible reasons we would fail to find an instance for a user
 	// and return a 503 error
@@ -38,9 +38,6 @@ const (
 
 	// User is already connected to a mandelbox, possibly on another device
 	USER_ALREADY_ACTIVE = "USER_ALREADY_ACTIVE"
-
-	// We should not have reached this point, there is a logic error
-	UNDEFINED = "UNDEFINED"
 )
 
 // VCPUsPerMandelbox indicates the number of vCPUs allocated per mandelbox.

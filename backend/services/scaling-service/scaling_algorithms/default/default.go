@@ -267,6 +267,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
+						serverEvent.Region = s.Region
 
 						// Create context for scaling operation
 						scalingCtx, scalingCancel := context.WithCancel(context.Background())
