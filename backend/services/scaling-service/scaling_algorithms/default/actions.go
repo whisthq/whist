@@ -654,7 +654,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	mandelboxesForDb := []subscriptions.Mandelbox{
 		{
 			ID:         types.MandelboxID(mandelboxID),
-			App:        "CHROME", // TODO: set to other apps once we receive it on the assign request
+			App:        "CHROME",
 			InstanceID: assignedInstance.ID,
 			UserID:     mandelboxRequest.UserID,
 			SessionID:  utils.Sprintf("%v", mandelboxRequest.SessionID),

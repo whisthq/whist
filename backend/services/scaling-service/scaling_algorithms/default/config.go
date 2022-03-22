@@ -36,7 +36,7 @@ const (
 	// The requested region(s) have not been enabled
 	REGION_NOT_ENABLED = "REGION_NOT_ENABLED"
 
-	// User is already conneceted to a mandelbox, possibly on another device
+	// User is already connected to a mandelbox, possibly on another device
 	USER_ALREADY_ACTIVE = "USER_ALREADY_ACTIVE"
 
 	// We should not have reached this point, there is a logic error

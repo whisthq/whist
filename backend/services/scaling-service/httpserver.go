@@ -17,6 +17,13 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// Constants for use in setting up the HTTPS server
+const (
+	PortToListen   uint16 = 7730
+	certPath       string = "cert.pem"
+	privatekeyPath string = "key.pem"
+)
+
 func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
 	err := verifyRequestType(w, req, http.MethodPost)
@@ -85,7 +92,7 @@ func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.Ser
 	return nil
 }
 
-// throttleMiddleware will limit requests on the endpoint using the  provided rate limiter.
+// throttleMiddleware will limit requests on the endpoint using the provided rate limiter.
 // It uses a token bucket algorithm, so that every interval of time the "bucket" will refill
 // and continue to serve tokens up to a maximum defined by the burst capacity. In case the
 // limit is exceeded, return a http 429 error (too many requests).
@@ -146,10 +153,10 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 func StartHTTPServer(events chan algos.ScalingEvent) {
 	logger.Infof("Starting HTTP server...")
 
-	// err := initializeTLS()
-	// if err != nil {
-	// 	logger.Errorf("Error starting HTTP Server: %v", err)
-	// }
+	err := httputils.InitializeTLS(certPath, privatekeyPath)
+	if err != nil {
+		logger.Errorf("Error starting HTTP Server: %v", err)
+	}
 
 	createHandler := func(f func(http.ResponseWriter, *http.Request, chan<- algos.ScalingEvent)) func(http.ResponseWriter, *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +183,7 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	// Set read/write timeouts to help mitigate potential rogue clients
 	// or DDOS attacks.
 	srv := &http.Server{
-		Addr:         "0.0.0.0:7730",
+		Addr:         utils.Sprintf("0.0.0.0:%v", PortToListen),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 		IdleTimeout:  120 * time.Second,
