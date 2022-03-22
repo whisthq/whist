@@ -58,8 +58,6 @@ const RootComponent = () => {
   const [show, setShow] = useState(window.location.search.split("show=")[1])
   const [mainState, setMainState] = useMainState()
 
-  console.log("the main state is", mainState)
-
   const relaunch = () =>
     setMainState({
       trigger: { name: WhistTrigger.relaunchAction, payload: undefined },
