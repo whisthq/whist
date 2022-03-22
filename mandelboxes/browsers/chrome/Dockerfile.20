@@ -97,5 +97,13 @@ RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whis
 # Install handle to browser program to be able to open a new tab from the protocol
 RUN ln -sf /usr/bin/google-chrome /usr/bin/whist-open-new-tab
 
+# Copy the Whist fonts to the mandelbox
+COPY --from=build-assets fonts/* /usr/share/fonts/
+
+# TODO: edit (or create if not present) the JSON file: ~/.config/google-chrome/Default/Preferences
+# and set the file_contents["webkit"]["webprefs"]["fonts"] value to: 
+# {'fixed': {'Zyyy': 'Courier'}, 'sansserif': {'Zyyy': 'Helvetica'}, 'serif': {'Zyyy': 'Times'}, 'standard': {'Zyyy': 'Times'}}
+
+
 # If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/
