@@ -34,17 +34,17 @@ def network_conditions_to_readable_form(network_conditions):
         human_readable_network_conditions = network_conditions.split(",")
         bandwidth = (
             human_readable_network_conditions[0]
-            if human_readable_network_conditions[0] != "none"
+            if human_readable_network_conditions[0] != "None"
             else "full available"
         )
         delay = (
             human_readable_network_conditions[1] + " ms"
-            if human_readable_network_conditions[1] != "none"
+            if human_readable_network_conditions[1] != "None"
             else human_readable_network_conditions[1]
         )
         packet_drops = (
             "{:.2f}%".format(float(human_readable_network_conditions[2]) * 100.0)
-            if human_readable_network_conditions[2] != "none"
+            if human_readable_network_conditions[2] != "None"
             else human_readable_network_conditions[2]
         )
         human_readable_network_conditions = (
@@ -52,7 +52,7 @@ def network_conditions_to_readable_form(network_conditions):
         )
     elif network_conditions == "normal":
         human_readable_network_conditions = (
-            f"Bandwidth: maximum available, Delay: none, Packet Drops: none"
+            f"Bandwidth: Unbounded, Delay: None, Packet Drops: None"
         )
 
     return human_readable_network_conditions

@@ -46,7 +46,7 @@ def setup_artificial_network_conditions(
             return
 
         max_bandwidth, net_delay, pkt_drop_pctg = network_conditions.split(",")
-        if max_bandwidth == "none" and net_delay == "none" and pkt_drop_pctg == "none":
+        if max_bandwidth == "None" and net_delay == "None" and pkt_drop_pctg == "None":
             print(
                 "Setting up client to run on a instance with no degradation on network conditions"
             )
@@ -55,11 +55,11 @@ def setup_artificial_network_conditions(
             print(
                 "Setting up client to run on a instance with the following networking conditions:"
             )
-            if max_bandwidth != "none":
+            if max_bandwidth != "None":
                 print(f"\t* Max bandwidth: {max_bandwidth}")
-            if net_delay != "none":
+            if net_delay != "None":
                 print(f"\t* Delay: {net_delay}ms")
-            if pkt_drop_pctg != "none":
+            if pkt_drop_pctg != "None":
                 print(f"\t* Packet drop rate: {pkt_drop_pctg}")
 
         # Install ifconfig
@@ -101,11 +101,11 @@ def setup_artificial_network_conditions(
         commands.append("sudo ip link set dev ifb0 up")
 
         degradation_command = ""
-        if net_delay != "none":
+        if net_delay != "None":
             degradation_command += f"delay {net_delay}ms "
-        if pkt_drop_pctg != "none":
+        if pkt_drop_pctg != "None":
             degradation_command += f"loss {pkt_drop_pctg}% "
-        if max_bandwidth != "none":
+        if max_bandwidth != "None":
             degradation_command += f"rate {max_bandwidth}"
 
         for device in network_devices:

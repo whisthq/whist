@@ -236,20 +236,20 @@ if __name__ == "__main__":
         print("\t+ Adding empty entry for failed/skipped experiment")
 
     with open(f"streaming_e2e_test_results_0.md", "w") as summary_file:
-        summary_file.write("### Experiments Summary:\n\n")
+        summary_file.write("### Experiments Summary\n\n")
 
         summary_file.write("<details>\n")
-        summary_file.write("<summary>Summary here</summary>\n\n")
+        summary_file.write("<summary>Expand Summary</summary>\n\n\n")
 
         for i, experiment in enumerate(experiments):
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
             if experiment["dirname"] is not None:
                 summary_file.write(
-                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
                 )
             else:
                 summary_file.write(
-                    f"{outcome_emoji} **Experiment {i+1}** - Network conditions: {experiment['human_readable_network_conditions']}. Logs not available.\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Logs not available.\n"
                 )
 
         summary_file.write("\n\n</details>\n\n")
@@ -261,11 +261,11 @@ if __name__ == "__main__":
         results_file.write(f"## Results compared to branch: `{compared_branch_name}`\n")
 
         results_file.write("<details>\n")
-        results_file.write("<summary>Results here</summary>\n\n")
+        results_file.write("<summary>Expand Results</summary>\n\n")
 
         for j, experiment in enumerate(experiments):
             results_file.write(
-                f"### Experiment {j+1} - Network Conditions: {experiment['human_readable_network_conditions']}\n"
+                f"### Experiment {j+1} - {experiment['human_readable_network_conditions']}\n"
             )
             if experiment["outcome"] != "success":
                 results_file.write(
