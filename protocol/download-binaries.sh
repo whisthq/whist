@@ -55,24 +55,6 @@ function has_updated {
 }
 
 ###############################
-# Download SDL2 headers (deprecated)
-###############################
-
-# If the include/SDL2 directory doesn't exist, make it and fill it
-# Or, if the lib has updated, refill the directory
-LIB="whist-sdl2-headers.tar.gz"
-SDL_DIR="$DEST_DIR/include/SDL2"
-if has_updated "$LIB" || [[ ! -d "$SDL_DIR" ]]; then
-  rm -rf "$SDL_DIR"
-  mkdir -p "$SDL_DIR"
-  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$SDL_DIR"
-
-  # Pull all SDL2 include files up a level and delete encapsulating folder
-  mv "$SDL_DIR/include"/* "$SDL_DIR"
-  rmdir "$SDL_DIR/include"
-fi
-
-###############################
 # Download SDL2 libraries/headers
 ###############################
 
