@@ -58,6 +58,8 @@ const RootComponent = () => {
   const [show, setShow] = useState(window.location.search.split("show=")[1])
   const [mainState, setMainState] = useMainState()
 
+  console.log("the main state is", mainState)
+
   const relaunch = () =>
     setMainState({
       trigger: { name: WhistTrigger.relaunchAction, payload: undefined },
@@ -167,7 +169,7 @@ const RootComponent = () => {
   if (show === WindowHashImport)
     return (
       <Importer
-        browsers={mainState.browsers ?? []}
+        browsers={mainState.browsers}
         onSubmit={(browser: string | undefined) =>
           handleImporterSubmit(browser)
         }
@@ -177,7 +179,7 @@ const RootComponent = () => {
   if (show === WindowHashImportOnboarding)
     return (
       <Importer
-        browsers={mainState.browsers ?? []}
+        browsers={mainState.browsers}
         onSubmit={(browser: string | undefined) =>
           handleImporterSubmit(browser)
         }
@@ -187,8 +189,8 @@ const RootComponent = () => {
   if (show === WindowHashRestoreTabs)
     return (
       <RestoreTabs
-        windows={mainState.otherBrowserWindows ?? undefined}
-        browsers={mainState.browsers ?? []}
+        windows={mainState.otherBrowserWindows}
+        browsers={mainState.browsers}
         onSubmitBrowser={(browser: string) => {
           getOtherBrowserWindows(browser)
         }}

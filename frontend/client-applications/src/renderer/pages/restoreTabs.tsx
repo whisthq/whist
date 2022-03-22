@@ -18,12 +18,12 @@ const BrowserInput = (props: {
         <div className="bg-gray-800 px-4 py-2 rounded w-96 m-auto">
           <select
             className="bg-gray-800 font-bold text-gray-300 outline-none mt-1 block w-full py-2 text-base border-gray-300 sm:text-sm"
-            defaultValue={props.browsers[0]}
+            defaultValue={props.browsers?.[0]}
             onChange={(evt: any) => {
               props.onSelect(evt.target.value)
             }}
           >
-            {props.browsers.map((browser: string, index: number) => (
+            {props.browsers?.map((browser: string, index: number) => (
               <option key={index} value={browser}>
                 {browser}
               </option>

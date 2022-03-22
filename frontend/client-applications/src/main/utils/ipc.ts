@@ -40,7 +40,7 @@ export const ipcBroadcastUIEvent = (
   // we wait for it to finish before sending the update.
   contents.forEach((c) => {
     c.isLoading()
-      ? c.on("did-finish-load", () => c.send(StateChannel, event))
+      ? c.on("did-finish-load", () => c.send(UIEventChannel, event))
       : c.send(UIEventChannel, event)
   })
 }

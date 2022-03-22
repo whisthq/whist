@@ -9,6 +9,8 @@ const Importer = (props: {
   onSubmit: (browser: string | undefined) => void
   allowSkip: boolean
 }) => {
+  console.log("browsers are", props.browsers)
+
   const [browser, setBrowser] = useState("")
   const [processing, setProcessing] = useState(false)
 
