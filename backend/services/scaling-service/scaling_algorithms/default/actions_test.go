@@ -57,6 +57,7 @@ func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, gr
 				ClientSHA:         graphql.String(instance.ClientSHA),
 				Type:              graphql.String(instance.Type),
 				RemainingCapacity: graphql.Int(instance.RemainingCapacity),
+				IPAddress:         instance.IPAddress,
 				Status:            graphql.String(instance.Status),
 			})
 		}
@@ -102,6 +103,7 @@ func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 			ImageID:           graphql.String(instance.ImageID),
 			ClientSHA:         graphql.String(instance.ClientSHA),
 			Type:              graphql.String(instance.Type),
+			IPAddress:         instance.IPAddress,
 			RemainingCapacity: graphql.Int(instance.RemainingCapacity),
 			Status:            graphql.String(instance.Status),
 		})
@@ -136,6 +138,7 @@ func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient
 				ImageID:           instance.ImageID,
 				ClientSHA:         graphql.String(instance.ClientSHA),
 				Type:              instance.Type,
+				IPAddress:         instance.IPAddress,
 				Status:            graphql.String(updateParams.Status),
 				RemainingCapacity: instance.RemainingCapacity,
 			}
@@ -687,13 +690,14 @@ func TestMandelboxAssign(t *testing.T) {
 	defer cancel()
 
 	var tests = []struct {
-		name            string
-		capacity        int
-		clientSHA, want string
+		name             string
+		capacity         int
+		clientSHA, want  string
+		shouldBeAssigned bool
 	}{
-		{"happy path", instanceCapacity["g4dn.2xlarge"], "test-sha", ""},                                   // Happy path, sufficient capacity and matching commit hash
-		{"commit hash mismatch", instanceCapacity["g4dn.2xlarge"], "outdated-sha", "COMMIT_HASH_MISMATCH"}, // Commit mismatch, sufficient capacity but different commit hashes
-		{"no capacity", 0, "test-sha", "NO_INSTANCE_AVAILABLE"},                                            // No capacity, but matching commit hash
+		{"happy path", instanceCapacity["g4dn.2xlarge"], "test-sha", "", true},                                    // Happy path, sufficient capacity and matching commit hash
+		{"commit hash mismatch", instanceCapacity["g4dn.2xlarge"], "outdated-sha", "COMMIT_HASH_MISMATCH", false}, // Commit mismatch, sufficient capacity but different commit hashes
+		{"no capacity", 0, "test-sha", "NO_INSTANCE_AVAILABLE", false},                                            // No capacity, but matching commit hash
 	}
 
 	for _, tt := range tests {
@@ -708,6 +712,7 @@ func TestMandelboxAssign(t *testing.T) {
 					Status:            "ACTIVE",
 					Type:              "g4dn.2xlarge",
 					Region:            "us-east-1",
+					IPAddress:         "1.1.1.1",
 					ClientSHA:         graphql.String("test-sha"),
 					RemainingCapacity: graphql.Int(tt.capacity),
 				},
@@ -718,6 +723,7 @@ func TestMandelboxAssign(t *testing.T) {
 					Status:            "ACTIVE",
 					Type:              "g4dn.2xlarge",
 					Region:            "us-west-1",
+					IPAddress:         "1.1.1.1",
 					ClientSHA:         graphql.String("test-sha"),
 					RemainingCapacity: graphql.Int(tt.capacity),
 				},
@@ -765,6 +771,10 @@ func TestMandelboxAssign(t *testing.T) {
 			id, err := uuid.Parse(assignResult.MandelboxID.String())
 			if err != nil {
 				t.Errorf("Got an invalid Mandelbox ID from the assign request %v. Err: %v", id, err)
+			}
+
+			if tt.shouldBeAssigned && assignResult.IP != "1.1.1.1" {
+				t.Errorf("None of the test instances were assigned correctly.")
 			}
 		})
 	}
