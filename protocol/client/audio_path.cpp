@@ -21,14 +21,17 @@ Defines
 ============================
 */
 
+typedef double timestamp_ms;
+
 // the interval of sending audio packet, keep it same as sender side
 // TODO: calculate from SAMPLES_PER_FRAME
-const int audio_packets_interval_us = 10 * US_IN_MS;
+const int audio_packets_interval_ms = 10;
 
 // how many frames/packets allowed to queue inside the audio device queue
+// TODO: make this adaptive to reduce latency for good environment and reduce pop for though environment
 const int max_num_inside_device_queue = 8;
 // how many frames/packets allowed to queue inside the user queue (when device queue is full)
-const int max_num_inside_user_queue = 10;
+const int max_num_inside_user_queue = 20;
 // how many frames/packets allowed to queue in total
 const int max_total_queue_len = max_num_inside_user_queue + max_num_inside_device_queue;
 // the target total_queue_len used by queue len managing
@@ -40,8 +43,8 @@ const int verbose_log = 1;
 // frame/packet with data and receive time
 struct PacketInfo {
     string data;
-    timestamp_us receive_time;
-    PacketInfo(unsigned char *buf, int size, timestamp_us &t) : data(buf, buf + size) {
+    timestamp_ms receive_time;
+    PacketInfo(unsigned char *buf, int size, timestamp_ms &t) : data(buf, buf + size) {
         receive_time = t;
     }
 };
@@ -59,6 +62,7 @@ Private Globals
 static AudioContext *g_audio_context = 0;
 // the mutex to protect accessing the data structures
 static WhistMutex g_mutex;
+static WhistTimer g_timer;
 
 // the cache value of device_queue_len
 // the value is cached so that we don't need to use lock while re-init audio device
@@ -103,6 +107,10 @@ Private Function Declarations
 ============================
 */
 
+static double get_timestamp_ms();
+
+static int multi_threaded_audio_renderer(void *);
+
 // a dedicated thread for audio render
 static int multi_threaded_audio_renderer(void *);
 
@@ -110,10 +118,10 @@ static int detect_skip_num(int user_queue_len, int device_queue_len);
 
 static void pop_inner(unsigned char *buf, int *size);
 
-static bool ready_to_pop(timestamp_us now);
+static bool ready_to_pop(timestamp_ms now);
 
 static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, int device_queue_len,
-                                                          timestamp_us now);
+                                                          timestamp_ms now);
 
 /*
 ============================
@@ -122,6 +130,8 @@ Public Function Implementations
 */
 
 int audio_path_init(void) {
+    start_timer(&g_timer);
+
     g_mutex = whist_create_mutex();
     g_audio_context = init_audio();
 
@@ -143,7 +153,7 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
         return -1;
     }
 
-    timestamp_us now = current_time_us();
+    timestamp_ms now = get_timestamp_ms();
     PacketInfo packet_info(buf, size, now);
 
     whist_lock_mutex(g_mutex);
@@ -216,21 +226,21 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
             (device_queue_byte + DECODED_BYTES_PER_FRAME - 1) / DECODED_BYTES_PER_FRAME;
     }
 
-    timestamp_us now = current_time_us();
+    timestamp_ms now = get_timestamp_ms();
 
     atomic_store(&cached_device_queue_len, device_queue_len);
 
     if (verbose_log && device_queue_byte == 0) {
-        static timestamp_us last_log_time = 0;
-        if (now - last_log_time > 200 * 1000) {
+        static timestamp_ms last_log_time = 0;
+        if (now - last_log_time > 500) {
             last_log_time = now;
             fprintf(stderr, "buffer becomes empty!!!!\n");
         }
     }
 
     if (verbose_log) {
-        static timestamp_us last_log_time = 0;
-        if (now - last_log_time > 100 * 1000) {
+        static timestamp_ms last_log_time = 0;
+        if (now - last_log_time > 100) {
             last_log_time = now;
             fprintf(stderr, "%d %d %d\n", (int)user_queue.size(), device_queue_len, device_queue_byte);
         }
@@ -321,6 +331,11 @@ Private Function Implementations
 ============================
 */
 
+static double get_timestamp_ms()
+{
+    return get_timer(&g_timer)*MS_IN_SECOND;
+}
+
 static int multi_threaded_audio_renderer(void *) {
     while (1) {
         if (render_audio(g_audio_context) != 0) {
@@ -375,13 +390,13 @@ static void pop_inner(unsigned char *buf, int *size) {
     user_queue.erase(it);
 }
 
-static bool ready_to_pop(timestamp_us now) {
+static bool ready_to_pop(timestamp_ms now) {
     const int anti_reorder_strength = 3;
 
     if (user_queue.empty()) return false;
 
     int current_packet_id = user_queue.begin()->first;
-    timestamp_us current_packet_receive_time = user_queue.begin()->second.receive_time;
+    timestamp_ms current_packet_receive_time = user_queue.begin()->second.receive_time;
 
     // if it's a consecutive packet
     if (recent_popped_ids.find(current_packet_id - 1) != recent_popped_ids.end()) {
@@ -389,8 +404,7 @@ static bool ready_to_pop(timestamp_us now) {
     }
 
     // if a packet has been stale for long, pop regardlessly
-    if (now - current_packet_receive_time >= anti_reorder_strength * audio_packets_interval_us +
-                                                 (int)(0.5 * audio_packets_interval_us)) {
+    if (now - current_packet_receive_time >= (anti_reorder_strength+0.5) * audio_packets_interval_ms) {
         if (verbose_log) {
             fprintf(stderr, "[popped %d by time staleness]\n", user_queue.begin()->first);
         }
@@ -411,14 +425,14 @@ static bool ready_to_pop(timestamp_us now) {
 }
 
 static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, int device_queue_len,
-                                                          timestamp_us now) {
+                                                          timestamp_ms now) {
     const double queue_len_management_sensitivity = 1.5;
     const int target_sample_times = 10;
-    const int sample_period = 100 * 1000;
+    const int sample_period = 100;
     // keep each value instead of running sum for easy debugging
     static int sampled_queue_lens[target_sample_times + 1];
     static int current_sample_cnt = 0;
-    static timestamp_us last_sample_time = 0;
+    static timestamp_ms last_sample_time = 0;
 
     FATAL_ASSERT(device_queue_len > 0);
     // when calling this function, device_queue_len should never be <=zero,
@@ -457,7 +471,7 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
     ManangeOperation op = NoOp;
     if (avg_len >= target_total_queue_len + queue_len_management_sensitivity) {
         if (verbose_log) {
-            fprintf(stderr, "aduio_queue running high, len=%.2f %d %d %d, drop one frame!!; ",
+            fprintf(stderr, "aduio_queue running high, len=%.2f %d %d %d, drop one frame!! ",
                     avg_len, total_len, user_queue_len, device_queue_len);
         }
         op = EarlyDrop;
@@ -470,7 +484,7 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
     }
 
     if (verbose_log && op != NoOp) {
-        fprintf(stderr, "last 10 sampled length=[");
+        fprintf(stderr, "last %d sampled length=[", target_sample_times);
         for (int i = 0; i < target_sample_times; i++) {
             fprintf(stderr, "%d,", sampled_queue_lens[i]);
         }
