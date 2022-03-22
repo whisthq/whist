@@ -261,7 +261,7 @@ if __name__ == "__main__":
         results_file.write(f"## Results compared to branch: `{compared_branch_name}`\n")
 
         results_file.write("<details>\n")
-        results_file.write("<summary>Results here</summary>\n")
+        results_file.write("<summary>Results here</summary>\n\n")
 
         for j, experiment in enumerate(experiments):
             results_file.write(
