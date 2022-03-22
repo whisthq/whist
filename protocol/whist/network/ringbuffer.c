@@ -498,6 +498,7 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
     return &ring_buffer->currently_rendering_frame;
 }
 
+// This is in the hotpath! Ensure that this function has well-bounded loops.
 void reset_stream(RingBuffer* ring_buffer, int id) {
     /*
         "Skip" to the frame at ID id by setting last_rendered_id = id - 1 (if the skip is valid).
@@ -518,10 +519,9 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
                      ring_buffer->type == PACKET_VIDEO ? "video" : "audio",
                      ring_buffer->last_rendered_id, id);
             whist_analyzer_record_skip(ring_buffer->type, ring_buffer->last_rendered_id, id);
-            // Drop frames up until id
-            // We also use id - frames_received, to prevent printing a jump from 0 to 50,000
-            for (int i =
-                     max(ring_buffer->last_rendered_id + 1, id - ring_buffer->frames_received + 1);
+            // Log from the frame we were supposed to render, up until id-1
+            // [id-bufsize, id-1], covers all possible moduli that could be in the ringbuffer
+            for (int i = max(ring_buffer->last_rendered_id + 1, id - ring_buffer->ring_buffer_size);
                  i < id; i++) {
                 FrameData* frame_data = get_frame_at_id(ring_buffer, i);
                 if (frame_data->id == i) {
@@ -537,20 +537,20 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
                             }
                         }
                     }
-                    reset_frame(ring_buffer, frame_data);
                 } else if (frame_data->id != -1) {
                     LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
-                    reset_frame(ring_buffer, frame_data);
                 }
             }
         } else {
-            LOG_INFO("Restarting %s stream at frame %d",
+            // If we haven't rendered yet, this is just a stream-start
+            LOG_INFO("Starting %s stream at frame %d",
                      ring_buffer->type == PACKET_VIDEO ? "video" : "audio", id);
-            for (int i = max(1, id - ring_buffer->ring_buffer_size); i < id; i++) {
-                FrameData* frame_data = get_frame_at_id(ring_buffer, i);
-                if (frame_data->id == i) {
-                    reset_frame(ring_buffer, frame_data);
-                }
+        }
+        // Reset all frames with a lower ID
+        for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
+            FrameData* frame_data = get_frame_at_id(ring_buffer, i);
+            if (frame_data->id != -1 && frame_data->id < id) {
+                reset_frame(ring_buffer, frame_data);
             }
         }
         ring_buffer->last_rendered_id = id - 1;
