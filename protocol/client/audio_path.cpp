@@ -62,7 +62,7 @@ int audio_path_init(void)
     g_mutex = whist_create_mutex();
     g_audio_context = init_audio();
 
-    atomic_init(&cached_device_queue_len,max_num_inside_device_queue);
+    atomic_init(&cached_device_queue_len,0);
     whist_create_thread(multi_threaded_audio_renderer, "MultiThreadedAudioRenderer", NULL);
 
     return 0;
@@ -79,18 +79,24 @@ static set<int> anti_replay;
 
 int detect_skip_num(int user_queue_len, int device_queue_len)
 {
-    int num_device_queue_empty_slots= max_num_inside_device_queue- device_queue_len;
-
-    if(num_device_queue_empty_slots<0)
+    if(device_queue_len<0)
     {
-        num_device_queue_empty_slots=0;
+        //drop everything if audio device is not initilized
+        return user_queue_len;
     }
 
-    //when we hit the hard limit we remove basiclly all inside user_queue
-    // to let the queue recover to normal
-    if(user_queue_len>= max_num_inside_user_queue + num_device_queue_empty_slots)
+    int total_len=user_queue_len+device_queue_len;
+
+    if(total_len>= max_total_queued)
     {
-        return max_num_inside_user_queue;
+        //when we hit the hard limit we remove everything in excess,
+        //to let the queue len go back to normal
+        int skip_num = total_len- target_total_queued;
+        if( skip_num>user_queue_len )
+        {
+            skip_num=user_queue_len;
+        }
+        return skip_num;
     }
 
     return 0;
@@ -139,13 +145,17 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
     mp[id]=s;
     
     int user_queue_len=(int)mp.size();
+    int total_queue_len=user_queue_len+device_queue_len;
+
     int expected_skip=detect_skip_num(user_queue_len, device_queue_len);
 
     if(expected_skip >0)
     {
 
         if(verbose_log)
-            fprintf(stderr,"queue size=%d, has to skip!!\n",(int)mp.size());
+        {
+            fprintf(stderr,"queue size=%d %d %d, has to skip %d!!\n",total_queue_len,user_queue_len, device_queue_len, expected_skip);
+        }
 
         for(int i=0;i<expected_skip;i++)
         {
@@ -159,7 +169,6 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
             }
             assert(!mp.empty());
             mp.erase(mp.begin());
-
         }
     }
 
