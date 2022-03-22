@@ -82,7 +82,6 @@ Defines
 #define BASE_TCP_PORT 32273
 
 // Various control flags
-#define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false
 // Toggle verbose logs
 #define LOG_VIDEO false

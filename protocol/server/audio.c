@@ -109,9 +109,7 @@ int32_t multithreaded_send_audio(void* opaque) {
             if (audio_device->buffer_size > 10000) {
                 LOG_WARNING("Audio buffer size too large!");
             } else if (audio_device->buffer_size > 0) {
-#if USING_AUDIO_ENCODE_DECODE
                 // Add samples to encoder fifo
-
                 audio_encoder_fifo_intake(audio_encoder, audio_device->buffer,
                                           audio_device->frames_available);
 
@@ -164,11 +162,6 @@ int32_t multithreaded_send_audio(void* opaque) {
                         id++;
                     }
                 }
-#else
-                send_packet(&state->client->udp_context, PACKET_AUDIO, audio_device->buffer,
-                            audio_device->buffer_size, id, false);
-                id++;
-#endif
             }
 
             release_buffer(audio_device);
