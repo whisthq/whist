@@ -24,8 +24,8 @@ Includes
 #include <whist/network/network.h>
 #include <whist/network/ringbuffer.h>
 #include <whist/core/whist_frame.h>
-#include <whist/tools/protocol_analyzer.h>
-#include <whist/tools/debug_console.h>
+#include <whist/debug/protocol_analyzer.h>
+#include <whist/debug/debug_console.h>
 #include "audio_path.h"
 
 /*
@@ -358,7 +358,7 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
 }
 
 int get_device_audio_queue_bytes(AudioContext* audio_context) {
-    if (!audio_context->dev) {
+    if (!whist_frontend_audio_is_open(audio_context->target_frontend)) {
         return -1;
     }
 

@@ -137,7 +137,9 @@ int audio_path_init(void) {
 
     // more initilization
     g_mutex = whist_create_mutex();
-    g_audio_context = init_audio();
+    
+    // TODO: FIX
+    //g_audio_context = init_audio();
     atomic_init(&cached_device_queue_len, 0);
 
     // create the dedicated thread for audio rendering
