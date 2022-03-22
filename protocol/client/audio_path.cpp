@@ -34,11 +34,15 @@ const int target_total_queued=max_num_inside_user_queue;
 
 const double queue_len_management_sensitivity=1.5;
 
-const int max_reorder_distant_allowed_to_play=5;
+const int anti_replay_window_size=20;
 
-const int anti_reorder_strength_max=5;
+
+const int max_reordered_allowed_to_play=5;
+
 const int anti_reorder_strength=3;
 const int packets_interval=10*MS_IN_SECOND;
+
+
 
 enum ManangeOperation
 {
@@ -125,9 +129,6 @@ bool flushing_buffered_packets=0;
 
 //last id pushed to decoder, used for track packet loss
 int last_popped_id=-1;
-int max_popped_id=-1;
-int max_seen_id=-1;
-
 set<int> recent_popped_ids;
 const int recent_popped_ids_capcity=10;
 
@@ -149,18 +150,26 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
     //when serious reoroder is detected, we can dely sending data to the device
     //so that the audio queue can put packets into correct order
 
-    max_seen_id=max(max_seen_id,id);
+    int anti_replay_window_lower_bound= anti_replay.empty()? -1: *anti_replay.begin() - anti_replay_window_size;
 
-    if(id+max_reorder_distant_allowed_to_play<last_popped_id||anti_replay.find(id)!=anti_replay.end()) //already have this id
+    if(id <= anti_replay_window_lower_bound ||  anti_replay.find(id)!=anti_replay.end()  ) //id too stale or already have this id
     {
         whist_unlock_mutex(g_mutex);
         return -1;
     }
 
+    int max_poped_id= recent_popped_ids.empty()? -1 : *recent_popped_ids.rbegin();
+
+    if(id + max_reordered_allowed_to_play <= max_poped_id)
     {
-        const int anti_replay_size=1000;
-        anti_replay.insert(id);
-        while(anti_replay.size()>anti_replay_size) anti_replay.erase(anti_replay.begin());
+        whist_unlock_mutex(g_mutex);
+        return -1;
+    }
+
+    anti_replay.insert(id);
+    while(anti_replay.size()> anti_replay_window_size )
+    { 
+        anti_replay.erase(anti_replay.begin());
     }
 
     mp.emplace(id, packet_info);
@@ -209,7 +218,6 @@ void pop_inner(unsigned char *buf, int *size)
     }
     
     last_popped_id=it->first;
-    max_popped_id=max(last_popped_id,max_popped_id);
     recent_popped_ids.insert(last_popped_id);
     while((int)recent_popped_ids.size()>recent_popped_ids_capcity)
     {
@@ -307,15 +315,19 @@ bool ready_to_pop_inner(timestamp_us now)
 {
     if(mp.empty()) return false;
 
+    int max_seen_id= anti_replay.empty()? -1: *anti_replay.rbegin();
+
+    int current_packet_id= mp.begin()->first;
+    timestamp_us current_packet_receive_time=mp.begin()->second.receive_time;
     
     // if it's a consecutive packet
-    if( recent_popped_ids.find( mp.begin()->first -1)!= recent_popped_ids.end())
+    if( recent_popped_ids.find( current_packet_id -1)!= recent_popped_ids.end())
     {
         return true;
     }
 
     //if a packet has been stale for long, pop regardlessly
-    if(now - mp.begin()->second.receive_time>= anti_reorder_strength * packets_interval  + (int)(0.5 * packets_interval) )
+    if(now - current_packet_receive_time >= anti_reorder_strength * packets_interval  + (int)(0.5 * packets_interval) )
     {
 
         if(verbose_log)
@@ -327,7 +339,7 @@ bool ready_to_pop_inner(timestamp_us now)
 
 
     //if a packet with id + anti_reorder_strength has been seen, then we believe the packets blocking the current packet has been lost
-    if(mp.begin()->first  +  anti_reorder_strength  <= max_seen_id )
+    if(current_packet_id  +  anti_reorder_strength  <= max_seen_id )
     {
         if(verbose_log)
         {
@@ -336,8 +348,6 @@ bool ready_to_pop_inner(timestamp_us now)
 
         return true;
     }
-
-
 
     return false;
 }
