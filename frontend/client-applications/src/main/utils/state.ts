@@ -13,6 +13,7 @@ import {
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated } from "@app/main/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
+import { getInstalledBrowsers } from "@app/main/utils/importer"
 
 const sleep = of(process.argv.includes("--sleep"))
 
@@ -46,6 +47,9 @@ const timezone = of(Intl.DateTimeFormat().resolvedOptions().timeZone)
 const keyRepeat = of(getKeyRepeat())
 const initialKeyRepeat = of(getInitialKeyRepeat())
 
+// Keep track of what browsers are installed
+const browsers = of(getInstalledBrowsers())
+
 export {
   sleep,
   accessToken,
@@ -57,4 +61,5 @@ export {
   timezone,
   keyRepeat,
   initialKeyRepeat,
+  browsers,
 }

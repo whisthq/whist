@@ -21,7 +21,6 @@ import mapValues from "lodash.mapvalues"
 
 import { fromTrigger } from "@app/main/utils/flows"
 import { appEnvironment } from "../../../config/configs"
-import { getInstalledBrowsers } from "@app/main/utils/importer"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   ALLOW_NON_US_SERVERS,
@@ -30,6 +29,7 @@ import {
 } from "@app/constants/store"
 import { persistGet } from "@app/main/utils/persist"
 import { getOtherBrowserWindows } from "@app/main/utils/applescript"
+import { browsers } from "@app/main/utils/state"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -60,7 +60,7 @@ const subscribed = combineLatest(
       updateInfo: fromTrigger(WhistTrigger.downloadProgress).pipe(
         map((obj) => JSON.stringify(obj))
       ),
-      browsers: of(getInstalledBrowsers()),
+      browsers: browsers,
       networkInfo: combineLatest([
         fromTrigger(WhistTrigger.networkAnalysisEvent),
         fromTrigger(WhistTrigger.awsPingRefresh),
