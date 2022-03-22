@@ -51,20 +51,17 @@ void initialize_out_of_window_drag_handlers(void) {
     */
 
     // Monitor change count and mouse press as state variables
-    static int current_change_count = -1;
-    static bool file_drag_mouse_down = false;
-
     global_left_mouse_drag_listener = NULL;
     global_left_mouse_up_listener = NULL;
     global_swipe_listener = NULL;
+    static bool file_drag_mouse_down;
+    static int current_change_count;
 
     // Initialize change count since global drag board change count starts incrementing at system
     // start
-    if (current_change_count == -1) {
-        NSPasteboard *pb = [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
-        current_change_count = (int)[pb changeCount];
-    }
-
+    NSPasteboard *change_count_pb = [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
+    current_change_count = (int)[change_count_pb changeCount];
+    file_drag_mouse_down = false;
 
     // Set event handler for detecting when a new file is being dragged
     global_left_mouse_drag_listener = [NSEvent

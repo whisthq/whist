@@ -588,7 +588,6 @@ int whist_client_main(int argc, const char* argv[]) {
         destroy_sdl((SDL_Window*)window, frontend);
     }
 
-
     destroy_statistic_logger();
     destroy_logger();
 
