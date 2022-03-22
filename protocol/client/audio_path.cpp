@@ -36,6 +36,9 @@ const double queue_len_management_sensitivity=1.5;
 
 const int max_reorder_distant_allowed_to_play=4;
 
+const int anti_reorder_strength=3;
+const int packets_interval=10*MS_IN_SECOND;
+
 enum ManangeOperation
 {
     EarlyDrop=0,
@@ -121,6 +124,8 @@ bool flushing_buffered_packets=0;
 
 //last id pushed to decoder, used for track packet loss
 int last_popped_id=-1;
+int max_popped_id=-1;
+int max_seen_id=-1;
 
 int push_to_audio_path(int id, unsigned char *buf, int size)
 {
@@ -139,6 +144,8 @@ int push_to_audio_path(int id, unsigned char *buf, int size)
     //TODO better handling of reorder
     //when serious reoroder is detected, we can dely sending data to the device
     //so that the audio queue can put packets into correct order
+
+    max_seen_id=max(max_seen_id,id);
 
     if(id+max_reorder_distant_allowed_to_play<last_popped_id||anti_replay.find(id)!=anti_replay.end()) //already have this id
     {
@@ -193,13 +200,13 @@ void pop_inner(unsigned char *buf, int *size)
     assert(!mp.empty());
     auto it=mp.begin();
 
-    
     if(last_popped_id +1 !=it->first)
     {
         if(verbose_log) fprintf(stderr, "lost (or reordered) packet %d!!!\n", last_popped_id+1);
     }
 
     last_popped_id=it->first;
+    max_popped_id=max(last_popped_id, max_popped_id);
     memcpy(buf,it->second.data.c_str(),it->second.data.length());
     *size=(int)it->second.data.length();
     last_packet_data=it->second.data;
@@ -285,9 +292,31 @@ ManangeOperation decide_queue_len_manage_operation(int user_queue_len,int device
     return op;
 }
 
-bool ready_to_pop_inner()
+bool ready_to_pop_inner(timestamp_us now)
 {
-    if(mp.size()>0) return true;
+    if(mp.empty()) return false;
+
+    
+    // if it's a consecutive packet
+    if(mp.begin()->first == last_popped_id +1)
+    {
+        return true;
+    }
+
+    //if a packet has been stale for long, pop regardlessly
+    if(now - mp.begin()->second.receive_time> anti_reorder_strength * packets_interval  + (int)(0.5 * packets_interval) )
+    {
+        return true;
+    }
+
+
+    //if a packet with id + anti_reorder_strength has been seen, then we believe the packets blocking the current packet has been lost
+    if(mp.begin()->first  +  anti_reorder_strength  <= max_seen_id )
+    {
+        return true;
+    }
+
+
 
     return false;
 }
@@ -406,7 +435,7 @@ int pop_from_audio_path( unsigned char *buf, int *size)
         }
 
         //the user queue is ready to pop
-        if(ready_to_pop_inner())
+        if(ready_to_pop_inner(now))
         {
             pop_inner(buf,size);
             whist_unlock_mutex(g_mutex);
