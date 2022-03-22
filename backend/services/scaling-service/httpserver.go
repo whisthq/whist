@@ -17,12 +17,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// Constants for use in setting up the HTTPS server
-const (
-	PortToListen   uint16 = 7730
-	certPath       string = "cert.pem"
-	privatekeyPath string = "key.pem"
-)
+const PortToListen uint16 = 7730
 
 func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
@@ -150,11 +145,6 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 
 func StartHTTPServer(events chan algos.ScalingEvent) {
 	logger.Infof("Starting HTTP server...")
-
-	err := httputils.InitializeTLS(certPath, privatekeyPath)
-	if err != nil {
-		logger.Errorf("Error starting HTTP Server: %v", err)
-	}
 
 	createHandler := func(f func(http.ResponseWriter, *http.Request, chan<- algos.ScalingEvent)) func(http.ResponseWriter, *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
