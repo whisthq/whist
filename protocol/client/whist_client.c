@@ -493,7 +493,7 @@ int whist_client_main(int argc, const char* argv[]) {
                 start_timer(&new_tab_url_timer);
             }
 
-            if (get_timer(&keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
+            if (get_timer(&keyboard_sync_timer) * MS_IN_SECOND > 20.0) {
                 if (sync_keyboard_state() != 0) {
                     exit_code = WHIST_EXIT_FAILURE;
                     break;
