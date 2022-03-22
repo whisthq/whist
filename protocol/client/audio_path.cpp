@@ -9,6 +9,7 @@ extern "C"
 #include "audio_path.h"
 #include <whist/utils/threads.h>
 #include <whist/utils/clock.h>
+#include <whist/logging/logging.h>
 };
 
 #include "whist/utils/atomic.h"
@@ -26,6 +27,18 @@ const int max_num_inside_device_queue=9;
 
 //how many frames allowed to  queue inside the user queue
 const int max_num_inside_user_queue=9;
+
+const int max_total_queued=max_num_inside_device_queue + max_num_inside_user_queue;
+const int target_total_queued=max_num_inside_device_queue;
+
+const double queue_len_management_sensitivity=1.5;
+
+enum ManangeOperation
+{
+    EarlyDrop=0,
+    EarlyDup=1,
+    NoOp=2
+};
 
 //how many frames allowed to queue intotal 
 //const int max_num_total=max_num_inside_device_queue + max_num_inside_user_queue; 
@@ -174,53 +187,84 @@ void pop_inner(unsigned char *buf, int *size)
     mp.erase(it);
 }
 
-//when the device is running really low, dup last frame to make it higher
-//the finaly version might be random with a probility depending on the queue length
-//at the moment we use a simpler strategy
-bool decide_early_dup(int device_queue_len)
+
+ManangeOperation decide_queue_len_manage_operation(int user_queue_len,int device_queue_len)
 {
-    if(device_queue_len  > max_num_inside_device_queue/2 ) return 0;
-    //else free_cap is larger than half
+    const int target_sample_times=10;
+    const int sample_period=100*1000;
+    //keep each value instead of running sum for easy debugging
+    static int sampled_queue_lens[target_sample_times +1];
+    static int current_sample_cnt=0;
+    static timestamp_us last_sample_time=0;
 
-    static timestamp_us last_fill_time=0;
-    timestamp_us now= current_time_us ();
+    FATAL_ASSERT(device_queue_len>0);
+    //when calling this function, device_queue_len should never be <=zero,
+    //guarenteed by upper level logic
 
-    //only dup every 1000ms
-    if(now-last_fill_time>1000*1000) 
-    {   
-        last_fill_time=now;
-        
-        return 1;
-    }
-    return 0;
-
-}
-
-//when the audio queue is running high, drop some packets from the queue
-//the finaly version might be random with a probility depending on the queue length
-//at the moment we use a simpler strategy
-bool decide_early_drop(int queue_len)
-{
-    int free_cap= max_num_inside_user_queue -queue_len;
-    if(free_cap<0) free_cap=0;
-
-    if(free_cap > max_num_inside_user_queue/2)
+    if(active_flush_cnt>0)
     {
-        return 0;
+        current_sample_cnt=0;
+        return NoOp;
     }
 
-    static timestamp_us last_drop_time=0;
-    timestamp_us now= current_time_us ();
+    int total_len=user_queue_len+device_queue_len;
+    timestamp_us now=current_time_us();
 
-    //only dup every 1000ms
-    if(now-last_drop_time>1000*1000) 
-    {   
-        last_drop_time=now;
-        
-        return 1;
+    if(now >= last_sample_time + sample_period)
+    {
+        sampled_queue_lens[current_sample_cnt]= total_len;
+        current_sample_cnt++;
+        last_sample_time=now;
     }
-    return 0;
 
+    FATAL_ASSERT(current_sample_cnt<=target_sample_times);
+
+    if(current_sample_cnt<target_sample_times)
+    {
+        return NoOp;
+    }
+
+    //otherwise we have  current_sample_cnt =target_sample_times;
+
+    double sum=0;
+    for(int i=0;i<target_sample_times;i++)
+    {
+        sum+= sampled_queue_lens[i];  
+    }
+    double avg_len=sum/target_sample_times;
+
+    //no matter which case, begin next sample period
+    current_sample_cnt=0;
+
+    ManangeOperation op=NoOp;
+    if(avg_len >= target_total_queued + queue_len_management_sensitivity)
+    {
+        if(verbose_log)
+        {
+            fprintf(stderr,"aduio_queue running high, len=%.2f %d %d %d, drop one frame!!; ",avg_len, total_len, user_queue_len, device_queue_len);
+        }
+        op= EarlyDrop;
+    }
+    else if(avg_len <= target_total_queued - queue_len_management_sensitivity)
+    {
+        if(verbose_log)
+        {
+            fprintf(stderr,"aduio_queue low high, len=%.2f %d %d %d, fill with last frame!! ",avg_len, total_len, user_queue_len, device_queue_len);
+        }
+        op= EarlyDup;
+    }
+
+    if(verbose_log && op!=NoOp)
+    {
+        fprintf(stderr,"last 10 sampled length=[");
+        for(int i=0;i<target_sample_times;i++)
+        {
+            fprintf(stderr,"%d,",sampled_queue_lens[i]);
+        }
+        fprintf(stderr,"]\n");
+    }
+
+    return op;
 }
 
 int pop_from_audio_path( unsigned char *buf, int *size)
@@ -236,7 +280,7 @@ int pop_from_audio_path( unsigned char *buf, int *size)
 
     atomic_store(&cached_device_queue_len,device_queue_len );
 
-    if(device_queue_byte==0&&verbose_log) 
+    if(verbose_log && device_queue_byte==0) 
     {
         static timestamp_us last_log_time=0;
         timestamp_us now= current_time_us ();
@@ -259,6 +303,9 @@ int pop_from_audio_path( unsigned char *buf, int *size)
     }
 
     whist_lock_mutex(g_mutex);
+
+    int user_queue_len=(int)mp.size();
+
     if(device_queue_byte<0)
     {
         mp.clear(); //if audio device is not ready drop all packets
@@ -304,23 +351,36 @@ int pop_from_audio_path( unsigned char *buf, int *size)
     }
     else 
     {
-        //there is no packet in audio queue
-        if(mp.size()==0)
+        auto op= decide_queue_len_manage_operation(user_queue_len,device_queue_len);
+
+        if(op==EarlyDup)
         {
-            
-            if(decide_early_dup(device_queue_len)&& last_packet_data.length()) 
+            if(last_packet_data.length())
             {
-                fprintf(stderr,"device_queue running low, len=%d, filled with last frame!!\n",device_queue_len);
                 memcpy(buf,last_packet_data.c_str(),last_packet_data.length());
                 *size=(int)last_packet_data.length();
                 whist_unlock_mutex(g_mutex);
                 return 0;
             }
+            //otherwise don't return continue running as normal
+        }
+        else if(op==EarlyDrop)
+        {
+            if(user_queue_len>0)
+            {
+                int fake_size=0;
+                pop_inner(buf,&fake_size); //drop this packet
+            }
+            //don't return after early drop, continue to run as normal
+        }
 
+        //there is no packet in audio queue
+        if(mp.size()==0)
+        {
             whist_unlock_mutex(g_mutex);
             return -4;
         }
-
+        
         //if the device's buffer is avaliable for another packet
         //we feed imediately
         if(device_queue_len<max_num_inside_device_queue) 
@@ -329,20 +389,12 @@ int pop_from_audio_path( unsigned char *buf, int *size)
             whist_unlock_mutex(g_mutex);
             return 0;
         }
-        //then we have device_queue is full
-        else if(decide_early_drop(mp.size()))
-        {
-            int fake_size=0;
-            fprintf(stderr,"aduio_queue running high, len=%d, dropped one frame!!\n",(int)mp.size());
-            pop_inner(buf,&fake_size); //drop this packet
-            whist_unlock_mutex(g_mutex);
-            return -5;
-        }
         else
         {
             whist_unlock_mutex(g_mutex);
             return -3;
         }
+        assert(0==1);//should not reach
     }
     assert(0==1);//should not reach
 
