@@ -201,7 +201,7 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
 
 int render_audio(AudioContext* audio_context) {
     // a buffer that's large enough to hold an undecoded audio frame
-    unsigned char audio_buffer[MAX_AUDIO_PACKETS * (MAX_PACKET_SEGMENT_SIZE + 1)];
+    unsigned char audio_buffer[(MAX_AUDIO_PACKETS + 1) * MAX_PACKET_SEGMENT_SIZE];
     int audio_buffer_size = -1;
 
     // incidates if there is something to render
