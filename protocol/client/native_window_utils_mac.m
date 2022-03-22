@@ -33,7 +33,11 @@ Public Function Implementations
 ============================
 */
 
-void initiate_out_of_window_drag_handlers(void) {
+static id global_left_mouse_drag_listener;
+static id global_left_mouse_up_listener;
+static id global_swipe_listener;
+
+void initialize_out_of_window_drag_handlers(void) {
     /*
         Initializes global event handlers for left mouse down dragged
         and left mouse up events. The drag board change count changes
@@ -47,48 +51,71 @@ void initiate_out_of_window_drag_handlers(void) {
     */
 
     // Monitor change count and mouse press as state variables
-    static int current_change_count = -1;
-    static bool file_drag_mouse_down = false;
+    global_left_mouse_drag_listener = NULL;
+    global_left_mouse_up_listener = NULL;
+    global_swipe_listener = NULL;
+    static bool file_drag_mouse_down;
+    static int current_change_count;
 
     // Initialize change count since global drag board change count starts incrementing at system
     // start
-    if (current_change_count == -1) {
-        NSPasteboard *pb = [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
-        current_change_count = (int)[pb changeCount];
-    }
+    NSPasteboard *change_count_pb = [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
+    current_change_count = (int)[change_count_pb changeCount];
+    file_drag_mouse_down = false;
 
     // Set event handler for detecting when a new file is being dragged
-    [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDragged
-                                           handler:^(NSEvent *event) {
-                                             NSPasteboard *pb = [NSPasteboard
-                                                 pasteboardWithName:NSPasteboardNameDrag];
-                                             int change_count = (int)[pb changeCount];
-                                             if (change_count > current_change_count) {
-                                                 // If a new file has been loaded, mark as mouse
-                                                 // down and update changecount
-                                                 current_change_count = change_count;
-                                                 file_drag_mouse_down = true;
-                                             } else if (file_drag_mouse_down) {
-                                                 // We are continuing to drag our file from its
-                                                 // original mousedown selection - turn over to sdl
-                                                 // handler
-                                                 sdl_handle_drag_event();
-                                             }
-                                           }];
+    global_left_mouse_drag_listener = [NSEvent
+        addGlobalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDragged
+                                      handler:^(NSEvent *event) {
+                                        NSPasteboard *pb =
+                                            [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
+                                        int change_count = (int)[pb changeCount];
+                                        if (change_count > current_change_count) {
+                                            // If a new file has been loaded, mark as mouse
+                                            // down and update changecount
+                                            current_change_count = change_count;
+                                            file_drag_mouse_down = true;
+                                        } else if (file_drag_mouse_down) {
+                                            // We are continuing to drag our file from its
+                                            // original mousedown selection - turn over to sdl
+                                            // handler
+                                            sdl_handle_drag_event();
+                                        }
+                                      }];
 
     // Mouse up event indicates that file is no longer being dragged
-    [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskLeftMouseUp
-                                           handler:^(NSEvent *event) {
-                                             file_drag_mouse_down = false;
-                                             sdl_end_drag_event();
-                                           }];
+    global_left_mouse_up_listener =
+        [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskLeftMouseUp
+                                               handler:^(NSEvent *event) {
+                                                 file_drag_mouse_down = false;
+                                                 sdl_end_drag_event();
+                                               }];
 
-    // Swip gesture event indicates that file is no longer being dragged
-    [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskSwipe
-                                           handler:^(NSEvent *event) {
-                                             file_drag_mouse_down = false;
-                                             sdl_end_drag_event();
-                                           }];
+    // Swipe gesture event indicates that file is no longer being dragged
+    global_swipe_listener = [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskSwipe
+                                                                   handler:^(NSEvent *event) {
+                                                                     file_drag_mouse_down = false;
+                                                                     sdl_end_drag_event();
+                                                                   }];
+}
+
+void destroy_out_of_window_drag_handlers(void) {
+    /*
+        NSEvent event listeners are removed by passing in their ids
+        to the removeMonitor call
+    */
+
+    if (global_left_mouse_drag_listener != NULL) {
+        [NSEvent removeMonitor:global_left_mouse_drag_listener];
+    }
+
+    if (global_left_mouse_drag_listener != NULL) {
+        [NSEvent removeMonitor:global_left_mouse_up_listener];
+    }
+
+    if (global_swipe_listener != NULL) {
+        [NSEvent removeMonitor:global_swipe_listener];
+    }
 }
 
 void hide_native_window_taskbar(void) {
