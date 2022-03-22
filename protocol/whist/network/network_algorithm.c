@@ -58,12 +58,6 @@ static NetworkSettings default_network_settings = {
 
 #define EWMA_STATS_SECONDS 5
 
-// Confirmed visually that these values produce reasonable output quality for DPI of 192. For other
-// DPIs they need to scaled accordingly.
-#define MINIMUM_BITRATE_PER_PIXEL 0.75
-#define MAXIMUM_BITRATE_PER_PIXEL 4.0
-#define STARTING_BITRATE_PER_PIXEL 3.0
-
 // This value directly impacts the time to transmit big frames. Also this value indirectly impacts
 // the video quality as the VBV buffer size is based on this ratio. Also if this value is set too
 // high then we will observe packet loss. So it is tradeoff between packet loss vs latency/quality
@@ -402,15 +396,12 @@ NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
 bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_group_stats,
                                  int incoming_bitrate, double packet_loss_ratio,
                                  NetworkSettings *network_settings) {
-#define MAX_INCREASE_PERCENTAGE 4.0
-#define MIN_INCREASE_PERCENTAGE 0.1
 // Latest delay variation gets this weightage. Older value gets a weightage of (1 - EWMA_FACTOR)
 #define EWMA_FACTOR 0.3
+// Latest max bitrate gets this weightage.
+#define MAX_BITRATE_EWMA_FACTOR 0.1
 #define DELAY_VARIATION_THRESHOLD_IN_SEC 0.01   // 10ms
-#define OVERUSE_TIME_THRESHOLD_IN_SEC 0.01      // 10ms
 #define LONG_OVERUSE_TIME_THRESHOLD_IN_SEC 0.1  // 100ms
-#define NEW_BITRATE_DURATION_IN_SEC 1.0
-#define CONVERGENCE_THRESHOLD_LOW 0.75
 #define DECREASE_RATIO 0.95
 #define BANDWITH_USED_THRESHOLD 0.95
     if (incoming_bitrate <= 0) {
@@ -426,7 +417,8 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
     static double filtered_delay_variation;
     static double increase_percentage = MAX_INCREASE_PERCENTAGE;
     static bool burst_mode = false;
-    static int max_bitrate_in_session = 0;
+    static int max_bitrate_available = 0;
+    static int last_successful_bitrate = 0;
 
     if (!delay_controller_initialized) {
         start_timer(&overuse_timer);
@@ -538,10 +530,16 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
     if (delay_controller_state == DELAY_CONTROLLER_INCREASE &&
         get_timer(&last_update_timer) > NEW_BITRATE_DURATION_IN_SEC &&
         incoming_bitrate > (network_settings->video_bitrate * BANDWITH_USED_THRESHOLD)) {
+        last_successful_bitrate = network_settings->video_bitrate;
         // Looks like the network has found a new max bitrate. Let find the new max bandwidth.
-        if (network_settings->video_bitrate > max_bitrate_in_session) {
-            max_bitrate_in_session = network_settings->video_bitrate;
+        if (last_successful_bitrate > max_bitrate_available) {
+            max_bitrate_available = last_successful_bitrate;
             network_settings->saturate_bandwidth = true;
+            increase_percentage = MAX_INCREASE_PERCENTAGE;
+        }
+        // If in saturate bandwidth mode and no congestion is detected, then increase percentage
+        // should be made higher to quickly find the new max bitrate
+        if (network_settings->saturate_bandwidth == true) {
             increase_percentage = MAX_INCREASE_PERCENTAGE;
         }
         LOG_INFO("Increase bitrate by %.3f percent", increase_percentage);
@@ -550,20 +548,39 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
                get_timer(&last_decrease_timer) > NEW_BITRATE_DURATION_IN_SEC) {
         LOG_INFO("Decrease bitrate filtered_delay_variation = %.3f packet_loss_ratio = %.2f",
                  filtered_delay_variation, packet_loss_ratio);
-        new_bitrate = incoming_bitrate * DECREASE_RATIO;
-        start_timer(&last_decrease_timer);
-        // If we are reaching convergence than reduce the increase percentage and switch off
-        // saturate bandwidth
-        if (new_bitrate >= max_bitrate_in_session * CONVERGENCE_THRESHOLD_LOW) {
-            network_settings->saturate_bandwidth = false;
-            increase_percentage = max(increase_percentage / 2.0, MIN_INCREASE_PERCENTAGE);
+        // Decrease the max_bitrate_available gradually, if congestion is detected at a lower
+        // bitrate
+        if (last_successful_bitrate < max_bitrate_available) {
+            max_bitrate_available = max_bitrate_available * (1.0 - MAX_BITRATE_EWMA_FACTOR) +
+                                    last_successful_bitrate * MAX_BITRATE_EWMA_FACTOR;
         }
+        // Use incoming bitrate only when saturate_bandwidth is on OR if it is within the
+        // convergence range
+        if (network_settings->saturate_bandwidth ||
+            incoming_bitrate * DECREASE_RATIO > max_bitrate_available * CONVERGENCE_THRESHOLD_LOW) {
+            new_bitrate = incoming_bitrate * DECREASE_RATIO;
+            // If we are reaching convergence than reduce the increase percentage and switch off
+            // saturate bandwidth
+            if (new_bitrate >= max_bitrate_available * CONVERGENCE_THRESHOLD_LOW) {
+                network_settings->saturate_bandwidth = false;
+                increase_percentage = max(increase_percentage / 2.0, MIN_INCREASE_PERCENTAGE);
+            }
+        } else {
+            // When saturate bandwidth is OFF, then incoming_bitrate is not reliable. So just reduce
+            // the bitrate based on current bitrate and turn on saturate bandwidth so that new
+            // bandwidth limit can be found
+            // (0.5 * packet_loss_ratio) factor is used as suggested by Google Congestion control
+            new_bitrate = network_settings->video_bitrate *
+                          min(DECREASE_RATIO, 1.0 - (0.5 * packet_loss_ratio));
+            network_settings->saturate_bandwidth = true;
+        }
+        start_timer(&last_decrease_timer);
     }
     if (new_bitrate != network_settings->video_bitrate) {
         // Till we reach CONVERGENCE_THRESHOLD_LOW of max bitrate in session, bitrate
         // increases will be aggressive
-        if (new_bitrate < max_bitrate_in_session * CONVERGENCE_THRESHOLD_LOW ||
-            max_bitrate_in_session == 0) {
+        if (new_bitrate < max_bitrate_available * CONVERGENCE_THRESHOLD_LOW ||
+            max_bitrate_available == 0) {
             network_settings->saturate_bandwidth = true;
             increase_percentage = MAX_INCREASE_PERCENTAGE;
         }
@@ -600,14 +617,14 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         network_settings->video_bitrate = new_bitrate;
         LOG_INFO(
             "New bitrate = %d, burst_bitrate = %d, saturate bandwidth = %d, "
-            "max_bitrate_in_session = %d",
+            "max_bitrate_available = %d",
             network_settings->video_bitrate, network_settings->burst_bitrate,
-            network_settings->saturate_bandwidth, max_bitrate_in_session);
+            network_settings->saturate_bandwidth, max_bitrate_available);
         return true;
     } else if (network_settings->saturate_bandwidth && get_timer(&last_update_timer) > 5.0) {
         // Prevent being stuck in saturate_bandwidth loop, without any bitrate update. This can
         // happen when the network bandwidth on this session worsens lesser than
-        // (max_bitrate_in_session  * CONVERGENCE_THRESHOLD_LOW) for a long period of time. In such
+        // (max_bitrate_available  * CONVERGENCE_THRESHOLD_LOW) for a long period of time. In such
         // cases we don't want to be in an infinite quest to reach the maximum bitrate found
         // earlier.
         LOG_INFO("Switch off saturate bandwidth");

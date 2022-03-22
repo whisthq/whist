@@ -31,9 +31,6 @@ Defines
 */
 
 #define PACKET_LOSS_DURATION 1
-// Using the twice the required size to account for any minor variations in FPS. Also we are
-// using video fps since we don't care about audio's packet loss.
-#define PACKET_COUNT_SIZE (PACKET_LOSS_DURATION * MAX_FPS * 2)
 
 /**
  * @brief FrameData struct containing content and metadata of encoded frames.
@@ -51,8 +48,10 @@ typedef struct FrameData {
     int original_packets_received;
     int fec_packets_received;
     int duplicate_packets_received;
-    bool* received_indices;
-    WhistTimer* last_nacked_timer;
+    int nack_packets_received;
+    int unnecessary_nack_packets_received;
+    bool received_indices[MAX_PACKETS];
+    WhistTimer last_nacked_timer[MAX_PACKETS];
     char* packet_buffer;
 
     // When the FrameData is being rendered,
@@ -69,21 +68,10 @@ typedef struct FrameData {
     uint8_t num_entire_frame_nacked;
     int entire_frame_nacked_id;
     WhistTimer last_frame_nack_timer;
-    uint8_t* num_times_index_nacked;
+    uint8_t num_times_index_nacked[MAX_PACKETS];
     WhistTimer last_nonnack_packet_timer;
     WhistTimer frame_creation_timer;
 } FrameData;
-
-/**
- * Type for storing total packets sent and received in previously reset frames.
- * Used to calculate packet loss over a time duration.
- */
-typedef struct {
-    LINKED_LIST_HEADER;
-    int num_packets_sent;
-    int num_packets_received;
-    WhistTimer frame_creation_timer;
-} PacketCountInfo;
 
 // Handler that gets called when the ring buffer wants to nack for a packet
 typedef void (*NackPacketFn)(SocketContext* socket_context, WhistPacketType frame_type, int id,
@@ -118,9 +106,6 @@ typedef struct RingBuffer {
     int num_packets_nacked;
     int num_packets_received;
     int num_frames_rendered;
-    PacketCountInfo packet_count_items[PACKET_COUNT_SIZE];
-    LinkedList packet_count_list;
-    WhistMutex packet_count_mutex;
     // *** END OF BITRATE STAT CALCULATIONS ***
 
     // Data ranges for frames
@@ -213,9 +198,11 @@ FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id);
  *
  * @param ring_buffer Ring buffer to access
  *
+ * @param latency UDP round trip time
+ *
  * @returns Packet loss ratio of non-rendered frames in the last 250ms.
  */
-double get_packet_loss_ratio(RingBuffer* ring_buffer);
+double get_packet_loss_ratio(RingBuffer* ring_buffer, double latency);
 
 /**
  * @brief       Indicate that the frame with ID id is currently rendering, and free the frame buffer

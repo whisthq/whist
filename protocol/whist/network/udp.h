@@ -40,6 +40,8 @@ Defines
 // We should be able to fix a normal-sized WhistPacket,
 // in just a single segment
 #define MAX_PACKET_SEGMENT_SIZE ((int)sizeof(WhistPacket))
+// Burst interval of the network throttler
+#define UDP_NETWORK_THROTTLER_BUCKET_MS 5.0
 
 // Represents a WhistSegment, which will be managed by the ringbuffer
 typedef struct {

@@ -1582,7 +1582,10 @@ TEST_F(ProtocolTest, RingBufferTest) {
     EXPECT_EQ(video_buffer->currently_rendering_id, render_id);
     EXPECT_EQ(frame_to_render->id, render_id);
     // check that the old frame has been reset
-    EXPECT_EQ(get_frame_at_id(video_buffer, render_id)->id, -1);
+    EXPECT_EQ(get_frame_at_id(video_buffer, render_id)->packet_buffer, (char*)NULL);
+    // Check that the id and other info is not cleared up.
+    EXPECT_EQ(get_frame_at_id(video_buffer, render_id)->id, render_id);
+    EXPECT_NE(get_frame_at_id(video_buffer, render_id)->original_packets_received, 0);
 
     // reset a stream
     reset_stream(video_buffer, max_id + 1);
@@ -1803,6 +1806,112 @@ TEST_F(ProtocolTest, QueueTest) {
     fifo_queue_destroy(fifo_queue);
     EXPECT_EQ(fifo_queue_dequeue_item(NULL, &item), -1);
     EXPECT_EQ(fifo_queue_enqueue_item(NULL, &item), -1);
+}
+
+TEST_F(ProtocolTest, WCCTest) {
+    output_width = 1920;
+    output_height = 1080;
+    network_algo_set_dpi(192);
+    whist_set_feature(WHIST_FEATURE_WHIST_CONGESTION_CONTROL, true);
+    NetworkSettings network_settings = get_starting_network_settings();
+    int expected_video_bitrate = output_width * output_height * STARTING_BITRATE_PER_PIXEL;
+    EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
+    GroupStats curr_group_stats = {0, 0, 0};
+    GroupStats prev_group_stats = {0, 0, 0};
+    int incoming_bitrate = expected_video_bitrate * 0.97;
+    double packet_loss_ratio = 0.0;
+
+    EXPECT_EQ(network_settings.saturate_bandwidth, true);
+    whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
+                                packet_loss_ratio, &network_settings);
+    // No change in bitrates as timers would have just initialized in the first call.
+    EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
+    EXPECT_EQ(network_settings.saturate_bandwidth, true);
+
+    // Wait for little more than NEW_BITRATE_DURATION_IN_SEC, for WCC to react
+    whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 1.1 * MS_IN_SECOND));
+    whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
+                                packet_loss_ratio, &network_settings);
+    expected_video_bitrate *= (1.0 + MAX_INCREASE_PERCENTAGE / 100.0);
+    EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
+    EXPECT_EQ(network_settings.burst_bitrate, network_settings.video_bitrate);
+    EXPECT_EQ(network_settings.saturate_bandwidth, true);
+
+    // Cause congestion to see if WCC reacts.
+    incoming_bitrate = 4000000;
+    packet_loss_ratio = 0.11;
+    whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
+                                packet_loss_ratio, &network_settings);
+    // No change in bitrate as congestion should be present for atleast
+    // OVERUSE_TIME_THRESHOLD_IN_SEC
+    EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
+    whist_sleep(OVERUSE_TIME_THRESHOLD_IN_SEC * 1.1 * MS_IN_SECOND);
+    whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
+                                packet_loss_ratio, &network_settings);
+    // Now bitrate should have dropped to something lesser than incoming_bitrate
+    EXPECT_LT(network_settings.video_bitrate, incoming_bitrate);
+    EXPECT_EQ(network_settings.saturate_bandwidth, true);
+
+    // Once bitrate is decreased due to congestion, next bitrate decrease will happen only after
+    // NEW_BITRATE_DURATION_IN_SEC
+    incoming_bitrate = 2000000;
+    packet_loss_ratio = 0.11;
+    expected_video_bitrate = network_settings.video_bitrate;
+    whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
+                                packet_loss_ratio, &network_settings);
+    whist_sleep(OVERUSE_TIME_THRESHOLD_IN_SEC * 1.1 * MS_IN_SECOND);
+    whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
+                                packet_loss_ratio, &network_settings);
+    EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
+    whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 1.1 * MS_IN_SECOND));
+    whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
+                                packet_loss_ratio, &network_settings);
+    EXPECT_LT(network_settings.video_bitrate, incoming_bitrate);
+    EXPECT_EQ(network_settings.saturate_bandwidth, true);
+
+    // Make sure min bitrate is capped
+    incoming_bitrate = 1000000;
+    packet_loss_ratio = 0.11;
+    expected_video_bitrate = output_width * output_height * MINIMUM_BITRATE_PER_PIXEL;
+    whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 1.1 * MS_IN_SECOND));
+    whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
+                                packet_loss_ratio, &network_settings);
+    EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
+    EXPECT_EQ(network_settings.burst_bitrate, network_settings.video_bitrate);
+    EXPECT_EQ(network_settings.saturate_bandwidth, true);
+
+    // Once congestion clears up WCC should reach max bitrate quickly
+    for (int i = 0; i < 13; i++) {
+        incoming_bitrate = network_settings.video_bitrate;
+        packet_loss_ratio = 0.0;
+        expected_video_bitrate = output_width * output_height * MINIMUM_BITRATE_PER_PIXEL;
+        whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 1.1 * MS_IN_SECOND));
+        whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
+                                    packet_loss_ratio, &network_settings);
+    }
+    expected_video_bitrate = output_width * output_height * MAXIMUM_BITRATE_PER_PIXEL;
+    EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
+    // Make sure the burst bitrate is higher than video bitrate
+    EXPECT_GT(network_settings.burst_bitrate, network_settings.video_bitrate);
+    EXPECT_EQ(network_settings.saturate_bandwidth, false);
+
+    // Now there is prolonged congestion and WCC should converge to the available bandwidth quickly
+    int available_bandwidth = 3000000;
+    for (int i = 0; i < 80; i++) {
+        if (network_settings.video_bitrate > available_bandwidth) {
+            incoming_bitrate = available_bandwidth;
+            packet_loss_ratio = 0.11;
+        } else {
+            incoming_bitrate = network_settings.video_bitrate;
+            packet_loss_ratio = 0.0;
+        }
+        whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 0.51 * MS_IN_SECOND));
+        whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
+                                    packet_loss_ratio, &network_settings);
+    }
+    EXPECT_LT(network_settings.video_bitrate, available_bandwidth);
+    EXPECT_GT(network_settings.video_bitrate, available_bandwidth * CONVERGENCE_THRESHOLD_LOW);
+    EXPECT_EQ(network_settings.saturate_bandwidth, false);
 }
 
 TEST_F(ProtocolTest, UnOrderedPacketTest) {

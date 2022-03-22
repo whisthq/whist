@@ -33,6 +33,29 @@ Defines
 #define AUDIO_FEC_RATIO 0.0
 #define VIDEO_FEC_RATIO 0.0
 
+/*
+============================
+Private Defines. Made public only for unit testing
+============================
+*/
+// Confirmed visually that these values produce reasonable output quality for DPI of 192. For other
+// DPIs they need to scaled accordingly.
+#define MINIMUM_BITRATE_PER_PIXEL 0.75
+#define MAXIMUM_BITRATE_PER_PIXEL 4.0
+#define STARTING_BITRATE_PER_PIXEL 3.0
+
+// WCC's internal constants. Meaning for these constants documented in WCC.md
+#define MAX_INCREASE_PERCENTAGE 16.0
+#define MIN_INCREASE_PERCENTAGE 0.5
+#define NEW_BITRATE_DURATION_IN_SEC 1.0
+#define OVERUSE_TIME_THRESHOLD_IN_SEC 0.01  // 10ms
+#define CONVERGENCE_THRESHOLD_LOW 0.75
+
+/*
+============================
+Structures
+============================
+*/
 typedef struct {
     int num_nacks_per_second;
     int num_received_packets_per_second;

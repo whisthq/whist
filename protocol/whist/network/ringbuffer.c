@@ -7,6 +7,7 @@ Includes
 #include "ringbuffer.h"
 #include <assert.h>
 #include <whist/fec/fec.h>
+#include <whist/logging/log_statistic.h>
 #include <whist/debug/protocol_analyzer.h>
 #include <whist/debug/debug_console.h>
 
@@ -17,8 +18,6 @@ Defines
 */
 
 #define MAX_RING_BUFFER_SIZE 500
-#define MAX_VIDEO_PACKETS 500
-#define MAX_AUDIO_PACKETS 3
 #define MAX_UNORDERED_PACKETS 10
 
 // If a frame is totally missing, this is how many packets we'll NACK for
@@ -26,7 +25,6 @@ Defines
 // Frames of size <= NACK_PACKETS_MISSING_FRAME, will be able to recover in a single RTT
 #define NACK_PACKETS_MISSING_FRAME 20
 
-#define MAX_PACKETS (get_num_fec_packets(max(MAX_VIDEO_PACKETS, MAX_AUDIO_PACKETS), MAX_FEC_RATIO))
 // Estimated ratio of network jitter to latency
 // TODO: Use actual recorded jitter here
 #define ESTIMATED_JITTER_LATENCY_RATIO 0.3
@@ -117,7 +115,10 @@ static bool try_nacking(RingBuffer* ring_buffer, double latency, int max_unorder
 char* get_framebuffer(RingBuffer* ring_buffer, FrameData* current_frame);
 
 static double latency_plus_jitter(double latency) {
-    return (1.0 + ESTIMATED_JITTER_LATENCY_RATIO) * latency;
+    // In addition to network latency and jitter, throttler could also add a latency of
+    // UDP_NETWORK_THROTTLER_BUCKET_MS
+    return ((1.0 + ESTIMATED_JITTER_LATENCY_RATIO) * latency) +
+           (UDP_NETWORK_THROTTLER_BUCKET_MS / MS_IN_SECOND);
 }
 
 /*
@@ -154,7 +155,8 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     // Mark all the frames as uninitialized
     for (int i = 0; i < ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
-        frame_data->id = -1;
+        frame_data->id = frame_data->entire_frame_nacked_id = -1;
+        frame_data->packet_buffer = NULL;
     }
 
     // determine largest frame size, including the WhistPacket header
@@ -172,8 +174,6 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     ring_buffer->num_frames_rendered = 0;
 
     start_timer(&ring_buffer->network_statistics_timer);
-    linked_list_init(&ring_buffer->packet_count_list);
-    ring_buffer->packet_count_mutex = whist_create_mutex();
 
     // Nack bandwidth tracking
     ring_buffer->burst_counter = 0;
@@ -225,15 +225,10 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
                     segment_id, frame_data->id);
         ring_buffer->num_unnecessary_original_packets_received++;
         return !ringbuffer_overflowed;
-    } else if (segment_id <= ring_buffer->currently_rendering_id) {
-        // This packet won't help us render any new packets,
-        // So we can safely just ignore it
-        ring_buffer->num_unnecessary_original_packets_received++;
-        return !ringbuffer_overflowed;
     } else if (segment_id > frame_data->id) {
         // This packet is newer than the resident,
         // so it's time to overwrite the resident if such a resident exists
-        if (frame_data->id != -1) {
+        if (frame_data->packet_buffer != NULL) {
             if (frame_data->id > ring_buffer->currently_rendering_id) {
                 whist_analyzer_record_reset_ringbuffer(
                     ring_buffer->type, ring_buffer->currently_rendering_id, segment_id);
@@ -292,9 +287,9 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
                 // Here, the frame is older than where our renderer is,
                 // So we can just reset the undesired frame
                 LOG_ERROR(
-                    "Trying to allocate Frame ID %d, but Frame ID %d has not been destroyed yet! "
-                    "Destroying it now...",
-                    segment_id, frame_data->id);
+                    "Trying to allocate %s Frame ID %d, but Frame ID %d has not been destroyed "
+                    "yet! Destroying it now...",
+                    type == PACKET_VIDEO ? "video" : "audio", segment_id, frame_data->id);
                 reset_frame(ring_buffer, frame_data);
             }
         }
@@ -324,6 +319,7 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
 
     // LOG the the nacking situation
     if (segment->is_a_nack) {
+        frame_data->nack_packets_received++;
         ring_buffer->num_nacks_received++;
         // Server simulates a nack for audio all the time. Hence log only for video.
         if (type == PACKET_VIDEO) {
@@ -332,6 +328,7 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
                     LOG_INFO("NACK for video ID %d, Index %d received!", segment_id, segment_index);
                 }
             } else {
+                frame_data->unnecessary_nack_packets_received++;
                 ring_buffer->num_unnecessary_nacks_received++;
                 if (LOG_NACKING) {
                     LOG_INFO("NACK for video ID %d, Index %d received, but didn't need it.",
@@ -380,6 +377,13 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
         FATAL_ASSERT(frame_data->original_packets_received <= frame_data->num_original_packets);
     } else {
         frame_data->fec_packets_received++;
+    }
+
+    if (segment_id <= ring_buffer->currently_rendering_id) {
+        // This packet won't help us render any new packets,
+        // So don't proceed further
+        ring_buffer->num_unnecessary_original_packets_received++;
+        return !ringbuffer_overflowed;
     }
 
     // Copy the packet's payload into the correct location in frame_data's frame buffer
@@ -432,35 +436,40 @@ FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
     return &ring_buffer->receiving_frames[id % ring_buffer->ring_buffer_size];
 }
 
-double get_packet_loss_ratio(RingBuffer* ring_buffer) {
+double get_packet_loss_ratio(RingBuffer* ring_buffer, double latency) {
     int num_packets_received = 0;
     int num_packets_sent = 0;
-    // Count the packets for the frames reset already(due to rendering, I-frame etc.,)
-    whist_lock_mutex(ring_buffer->packet_count_mutex);
-    linked_list_for_each(&ring_buffer->packet_count_list, const PacketCountInfo, item) {
-        num_packets_received += item->num_packets_received;
-        num_packets_sent += item->num_packets_sent;
-    }
-    whist_unlock_mutex(ring_buffer->packet_count_mutex);
-    // Now count the packets for frames in ringbuffer.
     // Don't include max_id frame for computing packet loss as it could be in progress
-    for (int id = ring_buffer->last_rendered_id + 1; id < ring_buffer->max_id; id++) {
+    for (int id = max(ring_buffer->max_id - MAX_FPS, ring_buffer->min_id); id < ring_buffer->max_id;
+         id++) {
         FrameData* frame = get_frame_at_id(ring_buffer, id);
-        if (id != frame->id) {
+        if (id != frame->id ||
+            get_timer(&frame->frame_creation_timer) > (double)PACKET_LOSS_DURATION) {
             continue;
         }
-        // Nack packets sent and received are not considered in packet loss calcuation, as the nack
-        // requests are sent from client, there is inherent ambiguity on when the nack request be
-        // considered as lost. Hence not considering them nack packets will provide a more accurate
-        // value for packet loss than trying to deal with the nack ambiguity.
         num_packets_sent += frame->num_original_packets;
         num_packets_sent += frame->num_fec_packets;
         num_packets_received += frame->original_packets_received;
         num_packets_received += frame->fec_packets_received;
+        int nacks_sent = 0;
+        for (int i = 0; i < frame->num_original_packets + frame->num_fec_packets; i++) {
+            if (frame->num_times_index_nacked[i]) {
+                nacks_sent += frame->num_times_index_nacked[i];
+                // Don't consider the NACKs in flight
+                if (get_timer(&frame->last_nacked_timer[i]) < latency_plus_jitter(latency)) {
+                    nacks_sent--;
+                }
+            }
+        }
+        // Whatever we considered as "NACKs in flight" could have arrived earlier
+        nacks_sent = max(nacks_sent, frame->nack_packets_received);
+        num_packets_sent += nacks_sent;
+        num_packets_received += frame->unnecessary_nack_packets_received;
+
         FrameData* next_frame = get_frame_at_id(ring_buffer, id + 1);
         if (id + 1 == next_frame->id) {
-            num_packets_received += frame->duplicate_packets_received;
             num_packets_sent += next_frame->prev_frame_num_duplicate_packets;
+            num_packets_received += frame->duplicate_packets_received;
         }
     }
     double packet_loss_ratio = 0.0;
@@ -524,8 +533,8 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
 
     // Invalidate the current_frame, without deallocating its data with reset_frame,
     // Since currently_rendering_frame now owns that data
-    memset(current_frame, 0, sizeof(*current_frame));
-    current_frame->id = -1;
+    current_frame->packet_buffer = current_frame->fec_frame_buffer = NULL;
+    current_frame->fec_decoder = NULL;
 
     // Set the framebuffer pointer of the currently rendering frame
     ring_buffer->currently_rendering_frame.frame_buffer =
@@ -572,12 +581,12 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
                                     frame_data->num_original_packets);
                         for (int j = 0; j < frame_data->num_original_packets; j++) {
                             if (!frame_data->received_indices[j]) {
-                                LOG_WARNING("Did not receive ID %d, Index %d. Nacked %d times.", i,
-                                            j, frame_data->num_times_index_nacked[j]);
+                                LOG_INFO("Did not receive ID %d, Index %d. Nacked %d times.", i, j,
+                                         frame_data->num_times_index_nacked[j]);
                             }
                         }
                     }
-                } else if (frame_data->id != -1) {
+                } else if (frame_data->packet_buffer != NULL) {
                     LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
                 }
             }
@@ -589,7 +598,7 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
         // Reset all frames with a lower ID
         for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
             FrameData* frame_data = get_frame_at_id(ring_buffer, i);
-            if (frame_data->id != -1 && frame_data->id < id) {
+            if (frame_data->packet_buffer != NULL && frame_data->id < id) {
                 reset_frame(ring_buffer, frame_data);
             }
         }
@@ -770,7 +779,6 @@ void destroy_ring_buffer(RingBuffer* ring_buffer) {
     free(ring_buffer->receiving_frames);
     // destroy the block allocator
     destroy_block_allocator(ring_buffer->packet_buffer_allocator);
-    whist_destroy_mutex(ring_buffer->packet_count_mutex);
     // free the ring_buffer
     free(ring_buffer);
 }
@@ -786,7 +794,7 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
     FrameData* frame_data = get_frame_at_id(ring_buffer, id);
 
     // Confirm that the frame is uninitialized
-    FATAL_ASSERT(frame_data->id == -1);
+    FATAL_ASSERT(frame_data->packet_buffer == NULL);
     unsigned char num_entire_frame_nacked = 0;
     if (frame_data->entire_frame_nacked_id == id)
         num_entire_frame_nacked = frame_data->num_entire_frame_nacked;
@@ -797,14 +805,11 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
     frame_data->num_original_packets = num_original_indices;
     frame_data->num_fec_packets = num_fec_indices;
     frame_data->prev_frame_num_duplicate_packets = prev_frame_num_duplicates;
-    frame_data->received_indices = safe_zalloc(MAX_PACKETS * sizeof(bool));
-    frame_data->num_times_index_nacked = safe_zalloc(MAX_PACKETS * sizeof(uint8_t));
-    frame_data->last_nacked_timer =
-        safe_zalloc(MAX_PACKETS * sizeof(*frame_data->last_nacked_timer));
     // If the entire frame was nacked already, then set the packet nack counters and timers
     // appropriately
     if (num_entire_frame_nacked) {
-        memset(frame_data->num_times_index_nacked, num_entire_frame_nacked, MAX_PACKETS);
+        memset(frame_data->num_times_index_nacked, num_entire_frame_nacked,
+               num_original_indices + num_fec_indices);
         for (int i = 0; i < num_original_indices + num_fec_indices; i++) {
             frame_data->last_nacked_timer[i] = frame_data->last_frame_nack_timer;
         }
@@ -821,40 +826,19 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
 }
 
 void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
-    FATAL_ASSERT(frame_data->id != -1);
-    // Save the Packet count information before reset, as this information is required for packet
-    // loss calculation.
-    whist_lock_mutex(ring_buffer->packet_count_mutex);
-    PacketCountInfo* head;
-    // Remove the items older than PACKET_LOSS_DURATION from the head of the list
-    while ((head = (PacketCountInfo*)linked_list_head(&ring_buffer->packet_count_list)) != NULL &&
-           get_timer(&head->frame_creation_timer) > PACKET_LOSS_DURATION) {
-        linked_list_remove(&ring_buffer->packet_count_list, head);
-    }
-    // Add this frame to the tail of the list
-    PacketCountInfo* tail = &ring_buffer->packet_count_items[frame_data->id % PACKET_COUNT_SIZE];
-    tail->num_packets_sent = frame_data->num_original_packets + frame_data->num_fec_packets;
-    tail->num_packets_received =
-        frame_data->original_packets_received + frame_data->fec_packets_received;
-    tail->frame_creation_timer = frame_data->frame_creation_timer;
-    linked_list_add_tail(&ring_buffer->packet_count_list, tail);
-    whist_unlock_mutex(ring_buffer->packet_count_mutex);
-
+    FATAL_ASSERT(frame_data->packet_buffer != NULL);
     // Free the frame's data
     free_block(ring_buffer->packet_buffer_allocator, frame_data->packet_buffer);
-    free(frame_data->received_indices);
-    free(frame_data->num_times_index_nacked);
-    free(frame_data->last_nacked_timer);
-
+    frame_data->packet_buffer = NULL;
     // Free FEC-related data, if any exists
-    if (frame_data->num_fec_packets > 0) {
+    if (frame_data->fec_decoder) {
         destroy_fec_decoder(frame_data->fec_decoder);
-        free_block(ring_buffer->packet_buffer_allocator, frame_data->fec_frame_buffer);
+        frame_data->fec_decoder = NULL;
     }
-
-    // Mark as uninitialized
-    memset(frame_data, 0, sizeof(*frame_data));
-    frame_data->id = -1;
+    if (frame_data->fec_frame_buffer) {
+        free_block(ring_buffer->packet_buffer_allocator, frame_data->fec_frame_buffer);
+        frame_data->fec_frame_buffer = NULL;
+    }
 }
 
 void reset_ring_buffer(RingBuffer* ring_buffer) {
@@ -862,7 +846,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     // since someone else might still be using it
     for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
-        if (frame_data->id != -1) {
+        if (frame_data->packet_buffer != NULL) {
             reset_frame(ring_buffer, frame_data);
         }
     }
