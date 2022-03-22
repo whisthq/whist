@@ -37,9 +37,9 @@ func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 		logger.Errorf("Failed while authenticating request. Err: %v", err)
 	}
 
-	// Once we have authenticated and validated the
-	// request send it to the scaling algorithm for
-	// processing.
+	// Once we have authenticated and validated the request send it to the scaling
+	// algorithm for processing. Mandelbox assign is region-agnostic so we don't need
+	// to specify a region on the event. The event handler will select the default region automatically.
 	events <- algos.ScalingEvent{
 		ID:   uuid.NewString(),
 		Type: "SERVER_MANDELBOX_ASSIGN_EVENT",
