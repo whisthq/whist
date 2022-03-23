@@ -90,7 +90,8 @@ Defines
 #define LOG_NETWORKING false
 #define LOG_LONG_TERM_REFERENCE_FRAMES false
 
-#define USE_AUDIO_PATH true
+// use the (new) audio path implementation in audio_path.cpp
+#define USE_NEW_AUDIO_PATH true
 
 #define WINAPI_INPUT_DRIVER 1
 #define XTEST_INPUT_DRIVER 2

@@ -65,7 +65,7 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
     memset(whist_renderer, 0, sizeof(WhistRenderer));
 
     // Initialize audio and video systems
-    if (!USE_AUDIO_PATH) {
+    if (!USE_NEW_AUDIO_PATH) {
         whist_renderer->audio_context = init_audio(frontend);
     }
 
@@ -184,7 +184,7 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
         // Only render audio, if the video has rendered something
         // This is because it feels weird when audio is played to the loading screen
 
-        if (!USE_AUDIO_PATH) {
+        if (!USE_NEW_AUDIO_PATH) {
             render_audio(whist_renderer->audio_context);
         }
     }
@@ -201,7 +201,7 @@ void destroy_renderer(WhistRenderer* whist_renderer) {
     whist_wait_thread(whist_renderer->renderer_thread, NULL);
 
     // Destroy the audio/video context
-    if (!USE_AUDIO_PATH) {
+    if (!USE_NEW_AUDIO_PATH) {
         destroy_audio(whist_renderer->audio_context);
     }
     destroy_video(whist_renderer->video_context);

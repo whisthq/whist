@@ -204,7 +204,7 @@ int render_audio(AudioContext* audio_context) {
     // incidates if there is something to render
     bool has_data_to_render;
 
-    if (USE_AUDIO_PATH) {
+    if (USE_NEW_AUDIO_PATH) {
         // the new data path
         has_data_to_render =
             pop_from_audio_path(audio_buffer, &audio_buffer_size) == 0 ? true : false;
@@ -215,7 +215,7 @@ int render_audio(AudioContext* audio_context) {
 
     if (has_data_to_render) {
         AudioFrame* audio_frame;
-        if (USE_AUDIO_PATH) {
+        if (USE_NEW_AUDIO_PATH) {
             audio_frame = (AudioFrame*)audio_buffer;
         } else {
             // Only do work, if the audio frequency is valid
@@ -368,7 +368,6 @@ int get_audio_device_queue_bytes(AudioContext* audio_context) {
     if (!whist_frontend_audio_is_open(audio_context->target_frontend)) {
         return -1;
     }
-
     return (int)safe_get_audio_queue(audio_context);
 }
 

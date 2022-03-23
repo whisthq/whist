@@ -308,7 +308,7 @@ int whist_client_main(int argc, const char* argv[]) {
         LOG_FATAL("Failed whist_frontend_create_sdl()!");
     }
 
-    if (USE_AUDIO_PATH) {
+    if (USE_NEW_AUDIO_PATH) {
         audio_path_init(frontend);
     }
 

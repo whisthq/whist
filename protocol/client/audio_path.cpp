@@ -154,7 +154,7 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
     static set<int> anti_replay;
 
     // size of the anti_replay buffer
-    const int anti_replay_window_size = 20;
+    const int anti_replay_window_size = 100;
 
     // get the cached device queue length
     int device_queue_len = atomic_load(&cached_device_queue_len);
@@ -415,7 +415,7 @@ static int detect_skip_num(int user_queue_len, int device_queue_len) {
 static void pop_inner(unsigned char *buf, int *size) {
     // how many recently popped ids we keep track
     // the capcity of recent_popped_ids below
-    const int recent_popped_ids_capcity = 10;
+    const int recent_popped_ids_capcity = 100;
 
     // it's guarentteed by upper level, when pop_inner is called, there must be something inside
     // user queue to pop
@@ -452,8 +452,8 @@ static void pop_inner(unsigned char *buf, int *size) {
 }
 
 static bool ready_to_pop(timestamp_ms now) {
-    // max "time" to wait for an empty slot,
-    // so that an empty slot is considered lost
+    // max "time" to wait for an empty slot in num of frames,
+    // so that an empty slot is considered lost.
     // TODO: make this adaptive, it's going to be a decent improvement
     const int anti_reorder_strength = 3;
 
@@ -473,7 +473,7 @@ static bool ready_to_pop(timestamp_ms now) {
     // if a packet has been stale for long, then we believe the packets of the empty slots blocking
     // the current packet has been lost.
     if (now - current_packet_receive_time >=
-        (anti_reorder_strength + 0.5) * audio_packets_interval_ms) {
+        (anti_reorder_strength -1 + 0.5) * audio_packets_interval_ms) {
         if (verbose_log) {
             fprintf(stderr, "[popped %d by time staleness]\n", user_queue.begin()->first);
         }
@@ -484,7 +484,7 @@ static bool ready_to_pop(timestamp_ms now) {
     // of the empty slots blocking the current packet has been lost.
     // note: the above stragety works better when there are too many packet losses, this strategy
     // works better when packets are queued and squeezed together. so it's better to have both.
-    if (current_packet_id + anti_reorder_strength <= max_seen_id) {
+    if (current_packet_id + anti_reorder_strength -1 <= max_seen_id) {
         if (verbose_log) {
             fprintf(stderr, "[popped %d by id staleness]\n", user_queue.begin()->first);
         }

@@ -113,7 +113,6 @@ TEST_F(ProtocolTest, InitSDL) {
     EXPECT_GE(height, MIN_SCREEN_HEIGHT);
 
     WhistFrontend* frontend = whist_frontend_create_sdl();
-
     SDL_Window* new_window = init_sdl(width, height, very_long_title, icon_filepath, frontend);
 
     if (new_window == NULL) {
