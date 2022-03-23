@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file audio_path.c
+ * @brief This file contains an implement of data path from network to audio device
+ */
+
 #include <map>
 #include <set>
 #include <string>
@@ -22,7 +28,7 @@ Defines
 ============================
 */
 
-typedef double timestamp_ms; //NOLINT
+typedef double timestamp_ms;  // NOLINT
 
 // the interval of sending audio packet, keep it same as sender side
 // TODO: calculate from SAMPLES_PER_FRAME
@@ -110,20 +116,63 @@ Private Function Declarations
 ============================
 */
 
+/**
+ * @brief                          internal monotonic timestamp function for audio path
+ *
+ * @returns                        monotonic timestamp in ms
+ */
 static double get_timestamp_ms();
 
-// a dedicated thread for audio render
-static int multi_threaded_audio_renderer(void *);
+/**
+ * @brief                          a dedicated thread for audio render
+ */
+static void multi_threaded_audio_renderer(void *);
 
+/**
+ * @brief                          this is the decision logic for audio frame skip
+ *
+ * @param user_queue_len           num of frames queued inside user queue
+ * @param device_queue_len         num of frames queued inside device queue
+ * @returns                        the num of frames that need to be skipped
+ */
 static int detect_skip_num(int user_queue_len, int device_queue_len);
 
+/**
+ * @brief                          a helper function to pop a frame from the user queue
+ *
+ * @param buf                      a pointer to store the popped frame, should be allocated by
+ *                                 called
+ * @param size                     store the size of popped frame
+ */
 static void pop_inner(unsigned char *buf, int *size);
 
+/**
+ * @brief                          this is the decision logic of whehter the user queue is ready to
+ * pop
+ *
+ * @param now                      the timestamps of the time calling
+ * @returns                        true if ready
+ *
+ * @note                           the return value might be false even if user queue is not empty,
+ *                                 for anti-reordering
+ */
 static bool ready_to_pop(timestamp_ms now);
 
+/**
+ * @brief                          this is the decision logic dynamic queue len management
+ *
+ * @param user_queue_len           num of frames queued inside user queue
+ * @param device_queue_len         num of frames queued inside device queue
+ * @param now                      the timestamps of the time calling
+ * @returns                        the operation that needs to be peformed, might be drop, dup or
+ *                                 no_op.
+ *
+ * @note                           the goal of dynamic queue len management is to avoid user_queue
+ *                                 full or device_queue empty, to avoid serious bad effect in sound
+ *                                 in advance
+ */
 static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, int device_queue_len,
                                                           timestamp_ms now);
-
 /*
 ============================
 Public Function Implementations
@@ -136,9 +185,9 @@ int audio_path_init(void *frontend) {
 
     // more initilization
     g_mutex = whist_create_mutex();
-    g_audio_context = init_audio((WhistFrontend*)frontend);
-    
-    FATAL_ASSERT(g_audio_context!=NULL);
+    g_audio_context = init_audio((WhistFrontend *)frontend);
+
+    FATAL_ASSERT(g_audio_context != NULL);
 
     atomic_init(&cached_device_queue_len, 0);
 
@@ -213,7 +262,10 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
                     user_queue_len, device_queue_len, expected_skip);
         }
 
-        LOG_INFO_RATE_LIMITED(5.0,3,"too many auido frames queued, has to skip %d. total_len=%d, user_queue_len=%d, device_queue_len=%d",expected_skip,total_queue_len, user_queue_len,device_queue_len );
+        LOG_INFO_RATE_LIMITED(5.0, 3,
+                              "too many auido frames queued, has to skip %d. total_len=%d, "
+                              "user_queue_len=%d, device_queue_len=%d",
+                              expected_skip, total_queue_len, user_queue_len, device_queue_len);
 
         for (int i = 0; i < expected_skip; i++) {
             // make sure we never erase buffered packets
@@ -236,13 +288,12 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
 }
 
 int pop_from_audio_path(unsigned char *buf, int *size) {
-
     // a flag only for log purpose
-    static bool device_queue_empty_log_printed=true;
+    static bool device_queue_empty_log_printed = true;
 
     // get num of queue bytes inside device
     int device_queue_byte = get_audio_device_queue_bytes(g_audio_context);
-    
+
     // calculate the num of queued frames/packets inside device
     int decoded_bytes_per_frame = get_decoded_bytes_per_frame();
     int device_queue_len = -1;
@@ -303,11 +354,11 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
     // the best thing to do is to stop playing and start to queue packets imediately
     // we start to queue packet for anti-jitter and flush the queued packet activately later
     if (device_queue_byte == 0) {
-        
-        if(!device_queue_empty_log_printed )
-        {
-            LOG_INFO("audio device queue becomes empty, begin buffering frames. user_queue_len=%d\n", (int)user_queue.size());
-            device_queue_empty_log_printed=true;
+        if (!device_queue_empty_log_printed) {
+            LOG_INFO(
+                "audio device queue becomes empty, begin buffering frames. user_queue_len=%d\n",
+                (int)user_queue.size());
+            device_queue_empty_log_printed = true;
         }
         // the status of start buffering or on the way of buffering
         if (user_queue.size() < max_num_inside_device_queue) {
@@ -316,15 +367,14 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
             return -2;
         } else  // we have queued enough
         {
-
             LOG_INFO("bufferred enough frames for audio, buffered %d.\n", (int)user_queue.size());
 
             // indicdate the start of flushing
             buffered_for_flush_cnt = max_num_inside_device_queue;
             flushing_buffered_packets = true;
-            
+
             // enter next logging cycle
-            device_queue_empty_log_printed =false;
+            device_queue_empty_log_printed = false;
 
             // robustness check
             FATAL_ASSERT(max_num_inside_device_queue > 1);
@@ -389,7 +439,7 @@ Private Function Implementations
 
 static double get_timestamp_ms() { return get_timer(&g_timer) * MS_IN_SECOND; }
 
-static int multi_threaded_audio_renderer(void *) {
+static void multi_threaded_audio_renderer(void *) {
     while (1) {
         // if nothing is rendered in the attemp sleep for 2ms
         // otherwise keep trying
@@ -397,7 +447,6 @@ static int multi_threaded_audio_renderer(void *) {
             whist_sleep(2);
         }
     }
-    return 0;
 }
 
 static int detect_skip_num(int user_queue_len, int device_queue_len) {
@@ -435,9 +484,8 @@ static void pop_inner(unsigned char *buf, int *size) {
     // log non-consecutive packets
     if (last_popped_id + 1 != it->first) {
         if (verbose_log)
-            fprintf(stderr,
-                    "non-consecutive packet %d!!! last_popped_id=%d\n",
-                    it->first, last_popped_id);
+            fprintf(stderr, "non-consecutive packet %d!!! last_popped_id=%d\n", it->first,
+                    last_popped_id);
     }
 
     // keep track of last popped id
@@ -482,7 +530,7 @@ static bool ready_to_pop(timestamp_ms now) {
     // if a packet has been stale for long, then we believe the packets of the empty slots blocking
     // the current packet has been lost.
     if (now - current_packet_receive_time >=
-        (anti_reorder_strength -1 + 0.5) * audio_packets_interval_ms) {
+        (anti_reorder_strength - 1 + 0.5) * audio_packets_interval_ms) {
         if (verbose_log) {
             fprintf(stderr, "[popped %d by time staleness]\n", user_queue.begin()->first);
         }
@@ -493,7 +541,7 @@ static bool ready_to_pop(timestamp_ms now) {
     // of the empty slots blocking the current packet has been lost.
     // note: the above stragety works better when there are too many packet losses, this strategy
     // works better when packets are queued and squeezed together. so it's better to have both.
-    if (current_packet_id + anti_reorder_strength -1 <= max_seen_id) {
+    if (current_packet_id + anti_reorder_strength - 1 <= max_seen_id) {
         if (verbose_log) {
             fprintf(stderr, "[popped %d by id staleness]\n", user_queue.begin()->first);
         }

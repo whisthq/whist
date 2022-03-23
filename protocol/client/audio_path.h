@@ -12,7 +12,7 @@ call push_to_audio_path() to push a frame into the audio path
 call pop_from_audio_path() to pop a frame from the audio path
 
 Note: frame pushed into audio path might be reordered, delay, droped or duplicated by the controling
-logic inside, to hide network jitter
+logic inside, to hide network jitter or avoid audio device queue empty
 
 */
 
@@ -46,6 +46,5 @@ int push_to_audio_path(int id, unsigned char *buf, int size);
  * @param buf                      data of the frame
  * @param size                     size of the frame
  * @returns                        zero on success, otherwise fail
- * or avoid audio device queue empty
  */
 int pop_from_audio_path(unsigned char *buf, int *size);
