@@ -125,8 +125,9 @@ static double get_timestamp_ms();
 
 /**
  * @brief                          a dedicated thread for audio render
+ * @returns                        always 0
  */
-static void multi_threaded_audio_renderer(void *);
+static int multi_threaded_audio_renderer(void *);
 
 /**
  * @brief                          this is the decision logic for audio frame skip
@@ -439,7 +440,7 @@ Private Function Implementations
 
 static double get_timestamp_ms() { return get_timer(&g_timer) * MS_IN_SECOND; }
 
-static void multi_threaded_audio_renderer(void *) {
+static int multi_threaded_audio_renderer(void *) {
     while (1) {
         // if nothing is rendered in the attemp sleep for 2ms
         // otherwise keep trying

@@ -231,7 +231,7 @@ size_t udp_packet_max_size(void);
  * @param type                     type of packet
  * @param cb                       the callback function
  */
-void udp_register_segment_receive_cb(void* raw_context, WhistPacketType type, PacketReceiveCB cb);
+void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type, PacketReceiveCB cb);
 
 /*
 ============================
