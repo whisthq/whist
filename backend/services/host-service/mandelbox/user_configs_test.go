@@ -168,13 +168,13 @@ func TestUserConfigChecksum(t *testing.T) {
 		t.Fatalf("failed to create s3 client: %v", err)
 	}
 
-	_, err = configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, "user_config_test_user/checksum_test", testFile1)
+	_, err = configutils.UploadFileToBucket(s3Client, configutils.GetConfigBucket(), "user_config_test_user/checksum_test", testFile1)
 	if err != nil {
 		t.Fatalf("failed to upload test file: %v", err)
 	}
 
 	// Check that checksum is present and correct
-	head, err := configutils.GetHeadObject(s3Client, UserConfigS3Bucket, "user_config_test_user/checksum_test")
+	head, err := configutils.GetHeadObject(s3Client, configutils.GetConfigBucket(), "user_config_test_user/checksum_test")
 	if err != nil {
 		t.Fatalf("failed to get head object: %v", err)
 	}

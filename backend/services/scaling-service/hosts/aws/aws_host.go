@@ -20,9 +20,12 @@ import (
 
 // AWSHost implements the HostHandler interface using the AWS sdk.
 type AWSHost struct {
-	Region string
-	Config aws.Config
-	EC2    *ec2.Client
+	Region          string
+	Config          aws.Config
+	EC2             *ec2.Client
+	MainSubnet      ec2Types.Subnet
+	InstanceProfile string
+	SecurityGroup   ec2Types.SecurityGroup
 }
 
 //go:embed ec2_userdata.sh
@@ -40,6 +43,28 @@ func (host *AWSHost) Initialize(region string) error {
 	host.Region = region
 	host.Config = cfg
 	host.EC2 = ec2.NewFromConfig(cfg)
+
+	// Get main subnet for the current region and env
+	mainSubnet, err := host.getMainSubnet()
+	if err != nil {
+		return utils.MakeError("Failed to get main subnet. Err: %v", err)
+	}
+
+	// Get security group for the current region and env
+	securityGroup, err := host.getSecurityGroup()
+	if err != nil {
+		return utils.MakeError("Failed to get security group. Err: %v", err)
+	}
+
+	// Get instance profile for current env
+	profile := host.getInstanceProfile()
+	if profile == "" {
+		return utils.MakeError("Error: instance profile is empty.")
+	}
+
+	host.MainSubnet = mainSubnet
+	host.SecurityGroup = securityGroup
+	host.InstanceProfile = profile
 
 	return nil
 }
@@ -65,15 +90,6 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		return nil, utils.MakeError("failed to encode userdata for launching instances. Err: %v", err)
 	}
 
-	// Get main subnet for the current region and env
-	main, err := host.GetMainSubnet(scalingCtx)
-	if err != nil {
-		return nil, utils.MakeError("failed to get main subnet. Err: %v", err)
-	}
-
-	// Get the main subnet of the region
-	profile := getInstanceProfile()
-
 	// Set run input
 	input := &ec2.RunInstancesInput{
 		MinCount:                          aws.Int32(MIN_INSTANCE_COUNT),
@@ -82,9 +98,12 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		InstanceInitiatedShutdownBehavior: ec2Types.ShutdownBehaviorTerminate,
 		InstanceType:                      INSTANCE_TYPE,
 		IamInstanceProfile: &ec2Types.IamInstanceProfileSpecification{
-			Arn: aws.String(profile),
+			Arn: aws.String(host.InstanceProfile),
 		},
-		SubnetId:     main.SubnetId,
+		SubnetId: host.MainSubnet.SubnetId,
+		SecurityGroupIds: []string{
+			aws.ToString(host.SecurityGroup.GroupId),
+		},
 		UserData:     aws.String(userData),
 		EbsOptimized: aws.Bool(true), // This has to be set at launch time, otherwise AWS will disable the optimization
 	}
@@ -267,9 +286,9 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, maxWaitTim
 	return nil
 }
 
-// GetMainSubnet returns the main subnet of the region for the current environment.
-func (host *AWSHost) GetMainSubnet(scalingCtx context.Context) (ec2Types.Subnet, error) {
-	ctx, cancel := context.WithCancel(scalingCtx)
+// getMainSubnet returns the main subnet of the region for the current environment.
+func (host *AWSHost) getMainSubnet() (ec2Types.Subnet, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	env := metadata.GetAppEnvironmentLowercase()
@@ -297,27 +316,53 @@ func (host *AWSHost) GetMainSubnet(scalingCtx context.Context) (ec2Types.Subnet,
 	return output.Subnets[0], nil
 }
 
+// getSecurityGroup returns the security group of the Whist VPC.
+func (host *AWSHost) getSecurityGroup() (ec2Types.SecurityGroup, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	env := metadata.GetAppEnvironmentLowercase()
+	// find the main subnet for the current environment using tags.
+	input := &ec2.DescribeSecurityGroupsInput{
+		Filters: []ec2Types.Filter{
+			{
+				Name: aws.String("tag:Name"),
+				Values: []string{
+					utils.Sprintf("MandelboxesSecurityGroup%s", env),
+				},
+			},
+		},
+	}
+	output, err := host.EC2.DescribeSecurityGroups(ctx, input)
+	if err != nil {
+		return ec2Types.SecurityGroup{}, utils.MakeError("failed to get security group for env %v. Err: %v", env, err)
+	}
+
+	if len(output.SecurityGroups) == 0 {
+		return ec2Types.SecurityGroup{}, utils.MakeError("Couldn't find security group for env %v", env)
+	}
+	return output.SecurityGroups[0], nil
+}
+
+// getInstanceProfile returns the arn of the instance profile to use.
+func (host *AWSHost) getInstanceProfile() string {
+	switch metadata.GetAppEnvironmentLowercase() {
+	case string(metadata.EnvDev):
+		return os.Getenv("INSTANCE_PROFILE_DEV")
+	case string(metadata.EnvStaging):
+		return os.Getenv("INSTANCE_PROFILE_STAGING")
+	case string(metadata.EnvProd):
+		return os.Getenv("INSTANCE_PROFILE_PROD")
+	default:
+		return os.Getenv("INSTANCE_PROFILE_DEV")
+	}
+}
+
 // GenerateName is a helper function for generating an instance
 // name using a random UUID.
 func (host *AWSHost) GenerateName() string {
 	return utils.Sprintf("ec2-%v-%v-%v-%v", host.Region, metadata.GetAppEnvironmentLowercase(),
 		metadata.GetGitCommit()[0:7], shortuuid.New())
-}
-
-// getInstanceProfile returns the arn of the instance profile to use.
-func getInstanceProfile() string {
-	// TODO: fill out the cases with all environments
-	// once we promote Terraform.
-	switch metadata.GetAppEnvironmentLowercase() {
-	case "dev":
-		return os.Getenv("INSTANCE_PROFILE_DEV")
-	case "staging":
-		return os.Getenv("INSTANCE_PROFILE_STAGING")
-	case "prod":
-		return os.Getenv("INSTANCE_PROFILE_PROD")
-	default:
-		return os.Getenv("INSTANCE_PROFILE_DEV")
-	}
 }
 
 // getUserData returns the base64 encoded userdata file to pass to instances.

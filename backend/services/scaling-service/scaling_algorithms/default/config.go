@@ -64,10 +64,22 @@ var instanceTypeToVCPUNum = map[string]int{
 // instanceCapacity is a mapping of the mandelbox capacity each type of instance has.
 var instanceCapacity = generateInstanceCapacityMap(instanceTypeToGPUNum, instanceTypeToVCPUNum)
 
-// bundledRegions is a list of the enabled regions on the cloud providers.
-// TODO: when adding multi-cloud support, figure out how to bundle regions
-// for different cloud providers.
-var BundledRegions = []string{"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"}
+// EnabledRegions is a list of the enabled regions, where the backend resources required
+// to run Whist exist.
+var EnabledRegions = []string{
+	"us-east-1",
+	"us-east-2",
+	"us-west-1",
+	"us-west-2",
+	"ca-central-1",
+	"eu-central-1",
+	"eu-west-1",
+	"eu-west-2",
+	"eu-south-1",
+	"eu-west-3",
+	"eu-north-1",
+	"ap-south-1",
+}
 
 var (
 	// maxWaitTimeReady is the max time we whould wait for instances to be ready.
