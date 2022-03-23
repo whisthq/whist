@@ -479,7 +479,7 @@ const Pricing = () => {
         Payment and Subscription
       </div>
       <div className="mt-2 text-gray-500">
-        Whist is free for the next two weeks. Afterward, a subscription is $25
+        Whist is free for the next two weeks. Afterward, a subscription is $9
         <span className="text-sm">/mo</span>.
       </div>
       <dl className="grid grid-cols-3 gap-x-4 mt-8">
