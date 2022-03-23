@@ -206,7 +206,7 @@ TEST_F(ProtocolTest, InitSDL) {
                                      NULL);
         EXPECT_FALSE(pending_resize_message);
 
-        sdl_renderer_resize_window(width, height);
+        sdl_renderer_resize_window(frontend, width, height);
 
         char buffer[1000];
         memset(buffer, 0, 1000);
@@ -232,7 +232,7 @@ TEST_F(ProtocolTest, InitSDL) {
         sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL);
         EXPECT_TRUE(pending_resize_message);
-        sdl_update_pending_tasks();
+        sdl_update_pending_tasks(frontend);
 
         sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL);
@@ -282,7 +282,7 @@ TEST_F(ProtocolTest, InitSDL) {
         check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
 #endif
 
-        sdl_update_pending_tasks();
+        sdl_update_pending_tasks(frontend);
 
         sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL,
                                      NULL, NULL);
@@ -311,7 +311,7 @@ TEST_F(ProtocolTest, InitSDL) {
         const char* old_title = SDL_GetWindowTitle(new_window);
         EXPECT_FALSE(strcmp(old_title, changed_title) == 0);
 
-        sdl_update_pending_tasks();
+        sdl_update_pending_tasks(frontend);
         sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
                                      NULL, NULL);
 
@@ -346,7 +346,7 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_EQ(fullscreen_info.pixel_size.width, width);
         EXPECT_EQ(fullscreen_info.pixel_size.height, height);
 
-        sdl_update_pending_tasks();
+        sdl_update_pending_tasks(frontend);
 
         sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, NULL, &fullscreen_trigger,
                                      &fullscreen_value);
