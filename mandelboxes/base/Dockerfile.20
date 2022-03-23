@@ -722,6 +722,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Install the fonts used in Whist, including the Apple Color Emoji
 COPY --from=build-assets fonts/* /usr/local/share/fonts/
 
+# Retrieve the Whist fonts
+COPY --from=build-assets fonts/* /usr/local/share/fonts/
+
 # Install WhiteSur cursor and icons, for macOS-like theming
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
