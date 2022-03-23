@@ -176,7 +176,7 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
         anti_replay.find(id) != anti_replay.end())  // id too stale or already have this id
     {
         whist_unlock_mutex(g_mutex);
-        return -1;
+        return -2;
     }
     // insert the id into anti-replay
     anti_replay.insert(id);
@@ -190,7 +190,7 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
     // detect if a packet is too old to play
     if (id + distant_too_old_to_play <= max_popped_id) {
         whist_unlock_mutex(g_mutex);
-        return -1;
+        return -3;
     }
 
     // save the data and info inside user queue
@@ -210,7 +210,7 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
                     user_queue_len, device_queue_len, expected_skip);
         }
 
-        LOG_INFO("too many auido frames queued, has to skip %d. total_len=%d, user_queue_len=%d, device_queue_len=%d",expected_skip,total_queue_len, user_queue_len,device_queue_len );
+        LOG_INFO_RATE_LIMITED(5.0,3,"too many auido frames queued, has to skip %d. total_len=%d, user_queue_len=%d, device_queue_len=%d",expected_skip,total_queue_len, user_queue_len,device_queue_len );
 
         for (int i = 0; i < expected_skip; i++) {
             // make sure we never erase buffered packets
