@@ -437,6 +437,9 @@ int main(int argc, char* argv[]) {
     WhistTimer connection_attempt_timer;
     start_timer(&connection_attempt_timer);
 
+    // Whether or not the client connected at least once
+    bool client_connected_once = false;
+
     while (!server_state.exiting) {
         // Client management code
 
@@ -453,6 +456,7 @@ int main(int argc, char* argv[]) {
             if (connect_client(&server_state)) {
                 // Mark the client as activated
                 activate_client(server_state.client);
+                client_connected_once = true;
             } else {
                 LOG_INFO("No client found.");
             }
@@ -623,6 +627,11 @@ int main(int argc, char* argv[]) {
         }
 
 #endif  // ! _WIN32
+    }
+
+    if (!client_connected_once) {
+        // Log to sentry that the client never ended up connecting
+        LOG_ERROR("Client did not connect!");
     }
 
     // If the client is still active,
