@@ -2,22 +2,11 @@
 ARG BuildAssetPackage "protocol"
 FROM whist/build-assets:$BuildAssetPackage as build-assets
 
-FROM ubuntu:20.04 as whist-teleport-chrome-extension
-SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
-COPY teleport-extension /teleport-extension
+#########################################################
+# Chrome Build Stage
+#########################################################
 
-RUN apt-get update && apt-get install -y --allow-downgrades --no-install-recommends curl ca-certificates
-
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash \
-    &&  . /root/.nvm/nvm.sh \
-    && echo "yarn" > /root/.nvm/default-packages \
-    && nvm install 16 \
-    && nvm use 16 \
-    && cd /teleport-extension \
-    && yarn \
-    && yarn build
-
-FROM whisthq/base:current-build as whist-browsers-chrome
+FROM whisthq/browsers/base-chromium:current-build as whist-browsers-chrome
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -80,25 +69,16 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
     > /etc/opt/chrome/policies/managed/WhistPolicies.json
 
 # Configure teleport extension and native messaging
-
-# Install teleport chrome extension
-COPY --from=whist-teleport-chrome-extension /teleport-extension/build /opt/teleport/chrome-extension
-
 RUN mkdir -p /etc/opt/chrome/native-messaging-hosts \
     && echo {} \
     | jq '.name="whist_teleport_extension_host"' \
-    | jq '.description="Whist Teleport Chrome Extension Host"' \
+    | jq '.description="Whist Teleport Chromium Extension Host"' \
     | jq '.path="/opt/teleport/chrome-extension-host"' \
     | jq '.type="stdio"' \
-    # This ID is a hash of the path to the teleport chrome extension.
+    # This ID is a hash of the path to the Teleport Chrome extension.
     # It will need to be updated if the path ever changes.
     | jq '.allowed_origins[0]="chrome-extension://gilacbinnkddlokepdofmojhijgileoj/"' \
     > /etc/opt/chrome/native-messaging-hosts/whist_teleport_extension_host.json
-
-COPY --chmod=555 teleport-extension-host.py /opt/teleport/chrome-extension-host
-
-# Script to Install Google Chrome extensions
-COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh
 
 # Create default config paths
 # Don't show first run popup
@@ -106,17 +86,13 @@ RUN mkdir -p /home/whist/.config/google-chrome \
     && touch /home/whist/.config/google-chrome/'First Run' \
     && chown whist:whist /home/whist/.config/google-chrome{,/'First Run'}
 
+# Script to install Chrome extensions
+COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh
+
 # Install Whist wrapper script to run Google Chrome into /usr/bin
 ENV WHIST_DEST_BROWSER="chrome"
 COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whist-application
-
-# Install and configure our kde proxy
-COPY --chmod=555 teleport-kde-proxy.py /opt/teleport/teleport-kde-proxy.py
-RUN apt-get update && apt-get install -y --no-install-recommends kdialog \
-    && rm usr/bin/kdialog \
-    && ln -s /opt/teleport/teleport-kde-proxy.py /usr/bin/kdialog \
-    && rm -rf /var/lib/apt/lists/*
 
 # If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/

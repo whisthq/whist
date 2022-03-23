@@ -39,6 +39,7 @@ flags=(
   "--force-color-profile=display-p3-d65"
   "--disable-gpu-process-crash-limit"
   "--no-default-browser-check"
+  "--load-extension=/opt/teleport/chrome-extension"
 )
 
 if [[ "$DARK_MODE" == true ]]; then
@@ -70,6 +71,14 @@ fi
 # on the user settings.
 flags+=("$INITIAL_URL")
 
-# Start Brave
+# Load D-Bus configurations; necessary for Brave
+# The -10 comes from the display ID
+dbus_config_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
+# shellcheck source=/dev/null
+. "$dbus_config_file"
+export DBUS_SESSION_BUS_ADDRESS
+echo "loaded d-bus address in start-brave.sh: $DBUS_SESSION_BUS_ADDRESS"
+
+# Start Brave with the KDE desktop environment
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround brave://flags features
-exec brave-browser "${flags[@]}"
+exec env XDG_CURRENT_DESKTOP=KDE brave-browser "${flags[@]}"

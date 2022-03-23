@@ -1,0 +1,49 @@
+# See stage 0 of the base Dockerfile for an explanation of this build stage.
+ARG BuildAssetPackage "protocol"
+FROM whist/build-assets:$BuildAssetPackage as build-assets
+
+#########################################################
+# Whist Chromium Extension Build Stage
+#########################################################
+
+FROM ubuntu:20.04 as whist-teleport-chrome-extension
+
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+COPY teleport-extension /teleport-extension
+
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    curl \
+    ca-certificates \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash \
+    &&  . /root/.nvm/nvm.sh \
+    && echo "yarn" > /root/.nvm/default-packages \
+    && nvm install 16 \
+    && nvm use 16 \
+    && cd /teleport-extension \
+    && yarn \
+    && yarn build
+
+#########################################################
+# Base-Chromium Build Stage (Common to all Chromium browsers)
+#########################################################
+
+FROM whisthq/base:current-build as whist-base-chromium
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+# Install Teleport Chrome extension
+COPY --from=whist-teleport-chrome-extension /teleport-extension/build /opt/teleport/chrome-extension
+COPY --chmod=555 teleport-extension-host.py /opt/teleport/chrome-extension-host
+
+# Install and configure our KDE proxy (for handlers used in file upload/download, etc.)
+COPY --chmod=555 teleport-kde-proxy.py /opt/teleport/teleport-kde-proxy.py
+RUN apt-get update && apt-get install -y --no-install-recommends kdialog \
+    && rm usr/bin/kdialog \
+    && ln -s /opt/teleport/teleport-kde-proxy.py /usr/bin/kdialog \
+    && rm -rf /var/lib/apt/lists/*

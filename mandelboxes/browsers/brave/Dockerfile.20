@@ -1,7 +1,12 @@
 # See stage 0 of the base Dockerfile for an explanation of this build stage.
 ARG BuildAssetPackage "protocol"
 FROM whist/build-assets:$BuildAssetPackage as build-assets
-FROM whisthq/base:current-build as whist-browsers-brave
+
+#########################################################
+# Brave Build Stage
+#########################################################
+
+FROM whisthq/browsers/base-chromium:current-build as whist-browsers-brave
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -32,6 +37,9 @@ RUN su - whist -c \
     && xdg-mime default brave-browser.desktop x-scheme-handler/https \
     && xdg-mime default brave-browser.desktop x-scheme-handler/about"
 
+# Configure Brave Policies
+# For details regarding the options, see:
+# https://gist.github.com/meets2tarun/2161e544f4c458c2f07641cafbdd186d
 RUN mkdir -p /etc/opt/brave/policies/managed \
     && echo {} \
     # Whitelist streamed URI protocols (zoommtg,slack,spotify,discord)
@@ -44,14 +52,26 @@ RUN mkdir -p /etc/opt/brave/policies/managed \
     | jq '.BackgroundModeEnabled=false' \
     > /etc/opt/brave/policies/managed/WhistPolicies.json
 
-# Script to Install Brave Browser extension
-COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh
+# Configure teleport extension and native messaging
+RUN mkdir -p /etc/opt/brave/native-messaging-hosts \
+    && echo {} \
+    | jq '.name="whist_teleport_extension_host"' \
+    | jq '.description="Whist Teleport Chromium Extension Host"' \
+    | jq '.path="/opt/teleport/chrome-extension-host"' \
+    | jq '.type="stdio"' \
+    # This ID is a hash of the path to the Teleport Chrome extension.
+    # It will need to be updated if the path ever changes.
+    | jq '.allowed_origins[0]="chrome-extension://gilacbinnkddlokepdofmojhijgileoj/"' \
+    > /etc/opt/brave/native-messaging-hosts/whist_teleport_extension_host.json
 
 # Create default config paths
 # Don't show first run popup
 RUN mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser \
     && touch /home/whist/.config/BraveSoftware/Brave-Browser/'First Run' \
     && chown whist:whist /home/whist/.config/BraveSoftware/Brave-Browser{,/'First Run'}
+
+# Script to install Chrome extensions
+COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh
 
 # Install Whist wrapper script to run Brave Browser into /usr/bin
 ENV WHIST_DEST_BROWSER="brave"
