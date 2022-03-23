@@ -9,6 +9,7 @@ extern "C" {
 #include <whist/utils/threads.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
+#include <whist/network/udp.h>
 };
 
 #include "whist/utils/atomic.h"
@@ -110,8 +111,6 @@ Private Function Declarations
 */
 
 static double get_timestamp_ms();
-
-static int multi_threaded_audio_renderer(void *);
 
 // a dedicated thread for audio render
 static int multi_threaded_audio_renderer(void *);
@@ -366,6 +365,13 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
     }
 }
 
+void push_to_audio_path_udp_cb(void * data)
+{
+    WhistSegment * segment = (WhistSegment *) data;
+    FATAL_ASSERT(segment->num_indices == 1);
+    WhistPacket* whist_packet = (WhistPacket*) segment->segment_data;
+    push_to_audio_path(segment->id, (unsigned char*)whist_packet->data, whist_packet->payload_size);
+}
 /*
 ============================
 Private Function Implementations

@@ -142,8 +142,6 @@ typedef struct NackID {
     int packet_index;
 } NackID;
 
-typedef void (*PacketReceiveCB)(int id, unsigned char* buf, int size);
-
 // An instance of the UDP Context
 typedef struct {
     int timeout;
@@ -601,12 +599,7 @@ static bool udp_update(void* raw_context) {
                 }
             }
             if (context->packet_receive_cbs[packet_type] != NULL) {
-                FATAL_ASSERT(udp_packet.udp_whist_segment_data.num_indices == 1);
-                WhistPacket* whist_packet =
-                    (WhistPacket*)udp_packet.udp_whist_segment_data.segment_data;
-                context->packet_receive_cbs[packet_type](udp_packet.udp_whist_segment_data.id,
-                                                         (unsigned char*)whist_packet->data,
-                                                         whist_packet->payload_size);
+                context->packet_receive_cbs[packet_type](&udp_packet.udp_whist_segment_data);
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
             else if (context->ring_buffers[packet_type] != NULL) {
@@ -1912,7 +1905,9 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
 size_t udp_packet_max_size(void) { return (sizeof(UDPNetworkPacket)); }
 
-void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type, void* cb) {
+void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type, PacketReceiveCB cb) {
+    FATAL_ASSERT(type >= 0 && type < NUM_PACKET_TYPES);
     UDPContext* context = (UDPContext*)raw_context;
+    FATAL_ASSERT(context->packet_receive_cbs[type] == NULL);
     context->packet_receive_cbs[type] = (PacketReceiveCB)cb;
 }
