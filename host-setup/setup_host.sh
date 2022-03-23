@@ -272,18 +272,6 @@ EOF
   sudo systemctl enable --now nvidia-persistenced.service
   echo "Enabled NVIDIA Persistence Daemon"
 
-  echo "================================================"
-  echo "Installing Whist Fonts..."
-  echo "================================================"
-
-  # Download fonts from S3
-  sudo aws s3 cp s3://whist-fonts/Courier.ttf /usr/share/fonts/Courier.ttf
-  sudo aws s3 cp s3://whist-fonts/Helvetica.ttc /usr/share/fonts/Helvetica.ttc
-  sudo aws s3 cp s3://whist-fonts/Times.ttc /usr/share/fonts/Times.ttc
-
-  # Refresh system fonts
-  fc-cache -f -v
-
 }
 
 ####################################################
