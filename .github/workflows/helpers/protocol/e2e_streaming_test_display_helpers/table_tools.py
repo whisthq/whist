@@ -51,9 +51,7 @@ def network_conditions_to_readable_form(network_conditions):
             f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}"
         )
     elif network_conditions == "normal":
-        human_readable_network_conditions = (
-            f"Bandwidth: Unbounded, Delay: None, Packet Drops: None"
-        )
+        human_readable_network_conditions = f"Bandwidth: Unbounded, Delay: None, Packet Drops: None"
 
     return human_readable_network_conditions
 
