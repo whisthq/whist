@@ -231,6 +231,9 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         return NULL;
     }
 
+    // set the window minimum size
+    SDL_SetWindowMinimumSize(sdl_window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
+
     Uint32 flags = SDL_RENDERER_ACCELERATED;
 #if VSYNC_ON
     flags |= SDL_RENDERER_PRESENTVSYNC;

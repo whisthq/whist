@@ -17,9 +17,6 @@ static WhistStatus sdl_init_frontend(WhistFrontend* frontend) {
         return WHIST_ERROR_UNKNOWN;
     }
 
-    // set the window minimum size
-    SDL_SetWindowMinimumSize(sdl_window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
-
     // Make sure that ctrl+click is processed as a right click on Mac
     SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
 
@@ -153,6 +150,135 @@ static WhistStatus sdl_set_title(WhistFrontend* frontend, const char* title) {
     return WHIST_SUCCESS;
 }
 
+static bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
+    if (!event) {
+        return SDL_PollEvent(NULL) != 0;
+    }
+
+    SDL_Event sdl_event;
+    if (!SDL_PollEvent(&sdl_event)) {
+        return false;
+    }
+
+    switch (sdl_event.type) {
+        case SDL_WINDOWEVENT: {
+            switch (sdl_event.window.event) {
+                case SDL_WINDOWEVENT_SIZE_CHANGED: {
+                    event->type = FRONTEND_EVENT_RESIZE;
+                    event->resize.width = sdl_event.window.data1;
+                    event->resize.height = sdl_event.window.data2;
+                    break;
+                }
+                case SDL_WINDOWEVENT_LEAVE: {
+                    event->type = FRONTEND_EVENT_MOUSE_LEAVE;
+                    break;
+                }
+#ifdef __APPLE__
+                case SDL_WINDOWEVENT_OCCLUDED:
+                case SDL_WINDOWEVENT_UNOCCLUDED:
+#else
+                case SDL_WINDOWEVENT_MINIMIZED:
+                case SDL_WINDOWEVENT_RESTORED:
+#endif  // defined(__APPLE__)
+                {
+                    event->type = FRONTEND_EVENT_VISIBILITY;
+                    event->visibility.visible =
+                        (sdl_event.window.event == SDL_WINDOWEVENT_UNOCCLUDED ||
+                         sdl_event.window.event == SDL_WINDOWEVENT_RESTORED);
+                    break;
+                }
+            }
+            break;
+        }
+        case SDL_AUDIODEVICEADDED:
+        case SDL_AUDIODEVICEREMOVED: {
+            event->type = FRONTEND_EVENT_AUDIO_UPDATE;
+            break;
+        }
+        case SDL_KEYUP:
+        case SDL_KEYDOWN: {
+            event->type = FRONTEND_EVENT_KEYPRESS;
+            event->keypress.code = (WhistKeycode)sdl_event.key.keysym.scancode;
+            event->keypress.pressed = (sdl_event.type == SDL_KEYDOWN);
+            event->keypress.mod = sdl_event.key.keysym.mod;
+            break;
+        }
+        case SDL_MOUSEMOTION: {
+            event->type = FRONTEND_EVENT_MOUSE_MOTION;
+            event->mouse_motion.absolute.x = sdl_event.motion.x;
+            event->mouse_motion.absolute.y = sdl_event.motion.y;
+            event->mouse_motion.relative.x = sdl_event.motion.xrel;
+            event->mouse_motion.relative.y = sdl_event.motion.yrel;
+            event->mouse_motion.relative_mode = SDL_GetRelativeMouseMode();
+            break;
+        }
+        case SDL_MOUSEBUTTONUP:
+        case SDL_MOUSEBUTTONDOWN: {
+            event->type = FRONTEND_EVENT_MOUSE_BUTTON;
+            event->mouse_button.button = sdl_event.button.button;
+            event->mouse_button.pressed = (sdl_event.type == SDL_MOUSEBUTTONDOWN);
+            if (event->mouse_button.button == MOUSE_L) {
+                // Capture the mouse while the left mouse button is pressed.
+                // This lets SDL track the mouse position even when the drag
+                // extends outside the window.
+                SDL_CaptureMouse(event->mouse_button.pressed);
+            }
+            break;
+        }
+        case SDL_MOUSEWHEEL: {
+            event->type = FRONTEND_EVENT_MOUSE_WHEEL;
+            event->mouse_wheel.momentum_phase =
+                (WhistMouseWheelMomentumType)sdl_event.wheel.momentum_phase;
+            event->mouse_wheel.delta.x = sdl_event.wheel.x;
+            event->mouse_wheel.delta.y = sdl_event.wheel.y;
+            event->mouse_wheel.precise_delta.x = sdl_event.wheel.preciseX;
+            event->mouse_wheel.precise_delta.y = sdl_event.wheel.preciseY;
+            break;
+        }
+        case SDL_MULTIGESTURE: {
+            event->type = FRONTEND_EVENT_GESTURE;
+            event->gesture.num_fingers = sdl_event.mgesture.numFingers;
+            event->gesture.delta.theta = sdl_event.mgesture.dTheta;
+            event->gesture.delta.dist = sdl_event.mgesture.dDist;
+            event->gesture.center.x = sdl_event.mgesture.x;
+            event->gesture.center.y = sdl_event.mgesture.y;
+            event->gesture.type = MULTIGESTURE_NONE;
+            break;
+        }
+        case SDL_PINCH: {
+            event->type = FRONTEND_EVENT_GESTURE;
+            event->gesture.num_fingers = 2;
+            event->gesture.delta.theta = 0;
+            event->gesture.delta.dist = sdl_event.pinch.scroll_amount;
+            event->gesture.center.x = 0;
+            event->gesture.center.y = 0;
+            event->gesture.type = MULTIGESTURE_NONE;
+            if (sdl_event.pinch.magnification < 0) {
+                event->gesture.type = MULTIGESTURE_PINCH_CLOSE;
+            } else if (sdl_event.pinch.magnification > 0) {
+                event->gesture.type = MULTIGESTURE_PINCH_OPEN;
+            }
+            break;
+        }
+        case SDL_DROPFILE: {
+            event->type = FRONTEND_EVENT_FILE_DROP;
+            event->file_drop.filename = sdl_event.drop.file;
+            // Get the global mouse position of the drop event.
+            SDL_CaptureMouse(true);
+            SDL_GetMouseState(&event->file_drop.position.x, &event->file_drop.position.y);
+            SDL_CaptureMouse(false);
+            break;
+        }
+        case SDL_QUIT: {
+            event->type = FRONTEND_EVENT_QUIT;
+            event->quit.quit_application = sdl_event.quit.quit_app;
+            break;
+        }
+    }
+
+    return true;
+}
+
 static const WhistFrontendFunctionTable sdl_function_table = {
     .init = sdl_init_frontend,
     .destroy = sdl_destroy_frontend,
@@ -164,6 +290,7 @@ static const WhistFrontendFunctionTable sdl_function_table = {
     .get_window_info = sdl_get_window_info,
     .temp_set_window = temp_sdl_set_window,
     .set_title = sdl_set_title,
+    .poll_event = sdl_poll_event,
 };
 
 const WhistFrontendFunctionTable* sdl_get_function_table(void) { return &sdl_function_table; }

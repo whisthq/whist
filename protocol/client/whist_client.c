@@ -459,7 +459,7 @@ int whist_client_main(int argc, const char* argv[]) {
             // We _must_ keep make calling this function as much as we can,
             // or else the user will get beachball / "Whist Not Responding"
             // Note, that the OS will sometimes hang this function for an arbitrarily long time
-            if (!sdl_handle_events()) {
+            if (!sdl_handle_events(frontend)) {
                 // unable to handle event
                 exit_code = WHIST_EXIT_FAILURE;
                 break;

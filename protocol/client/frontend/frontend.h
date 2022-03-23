@@ -6,6 +6,106 @@
 
 typedef struct WhistFrontend WhistFrontend;
 typedef struct FrontendWindowInfo FrontendWindowInfo;
+
+typedef enum FrontendEventType {
+    FRONTEND_EVENT_RESIZE,
+    FRONTEND_EVENT_VISIBILITY,
+    FRONTEND_EVENT_AUDIO_UPDATE,
+    FRONTEND_EVENT_KEYPRESS,
+    FRONTEND_EVENT_MOUSE_MOTION,
+    FRONTEND_EVENT_MOUSE_BUTTON,
+    FRONTEND_EVENT_MOUSE_WHEEL,
+    FRONTEND_EVENT_MOUSE_LEAVE,
+    FRONTEND_EVENT_GESTURE,
+    FRONTEND_EVENT_FILE_DROP,
+    FRONTEND_EVENT_QUIT,
+} FrontendEventType;
+
+typedef struct FrontendKeypressEvent {
+    WhistKeycode code;
+    WhistKeymod mod;
+    bool pressed;
+} FrontendKeypressEvent;
+
+typedef struct FrontendResizeEvent {
+    int width;
+    int height;
+} FrontendResizeEvent;
+
+typedef struct FrontendVisibilityEvent {
+    bool visible;
+} FrontendVisibilityEvent;
+
+typedef struct FrontendMouseMotionEvent {
+    struct {
+        int x;
+        int y;
+    } absolute;
+    struct {
+        int x;
+        int y;
+    } relative;
+    bool relative_mode;
+} FrontendMouseMotionEvent;
+
+typedef struct FrontendMouseButtonEvent {
+    WhistMouseButton button;
+    bool pressed;
+} FrontendMouseButtonEvent;
+
+typedef struct FrontendMouseWheelEvent {
+    WhistMouseWheelMomentumType momentum_phase;
+    struct {
+        int x;
+        int y;
+    } delta;
+    struct {
+        float x;
+        float y;
+    } precise_delta;
+} FrontendMouseWheelEvent;
+
+typedef struct FrontendGestureEvent {
+    struct {
+        float theta;
+        float dist;
+    } delta;
+    struct {
+        float x;
+        float y;
+    } center;
+    unsigned int num_fingers;
+    WhistMultigestureType type;
+} FrontendGestureEvent;
+
+typedef struct FrontendFileDropEvent {
+    struct {
+        int x;
+        int y;
+    } position;
+    char* filename;  // must be freed by handler
+} FrontendFileDropEvent;
+
+typedef struct FrontendQuitEvent {
+    bool quit_application;
+} FrontendQuitEvent;
+
+typedef struct WhistFrontendEvent {
+    WhistFrontend* frontend;
+    FrontendEventType type;
+    union {
+        FrontendKeypressEvent keypress;
+        FrontendMouseMotionEvent mouse_motion;
+        FrontendMouseButtonEvent mouse_button;
+        FrontendMouseWheelEvent mouse_wheel;
+        FrontendGestureEvent gesture;
+        FrontendFileDropEvent file_drop;
+        FrontendQuitEvent quit;
+        FrontendResizeEvent resize;
+        FrontendVisibilityEvent visibility;
+    };
+} WhistFrontendEvent;
+
 typedef struct WhistFrontendFunctionTable {
     // Lifecycle
     WhistStatus (*init)(WhistFrontend* frontend);
@@ -22,10 +122,10 @@ typedef struct WhistFrontendFunctionTable {
     void (*temp_set_window)(WhistFrontend* frontend, void* window);
     WhistStatus (*get_window_info)(WhistFrontend* frontend, FrontendWindowInfo* info);
     WhistStatus (*set_title)(WhistFrontend* frontend, const char* title);
-} WhistFrontendFunctionTable;
 
-typedef void WhistFrontendEvent;
-typedef void WhistAudioFormat;
+    // Events
+    bool (*poll_event)(WhistFrontend* frontend, WhistFrontendEvent* event);
+} WhistFrontendFunctionTable;
 
 struct WhistFrontend {
     void* context;
@@ -85,7 +185,6 @@ WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title)
 
 // Events
 bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event);
-bool whist_frontend_submit_event(WhistFrontend* frontend, WhistFrontendEvent* event);
 
 // Keyboard
 int whist_frontend_send_key_event(WhistFrontend* frontend, WhistKeycode keycode, bool pressed);

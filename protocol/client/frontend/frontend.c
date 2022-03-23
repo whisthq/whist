@@ -70,3 +70,12 @@ WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title)
     FATAL_ASSERT(frontend != NULL);
     return frontend->call->set_title(frontend, title);
 }
+
+bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
+    FATAL_ASSERT(frontend != NULL);
+    bool ret = frontend->call->poll_event(frontend, event);
+    if (ret && event != NULL) {
+        event->frontend = frontend;
+    }
+    return ret;
+}

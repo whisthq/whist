@@ -29,15 +29,13 @@ Includes
 #include <whist/debug/debug_console.h>
 
 // Keyboard state variables
-static bool alt_pressed = false;
-static bool ctrl_pressed = false;
 bool lgui_pressed = false;
 bool rgui_pressed = false;
 
 // Main state variables
 extern bool client_exiting;
 
-extern volatile SDL_Window *window;
+extern volatile SDL_Window* window;
 
 extern MouseMotionAccumulation mouse_state;
 
@@ -58,7 +56,7 @@ Private Globals
 ============================
 */
 
-atomic_int g_num_pending_audio_device_updates = ATOMIC_VAR_INIT(0);
+atomic_int g_pending_audio_device_update = ATOMIC_VAR_INIT(0);
 
 /*
 ============================
@@ -66,14 +64,7 @@ Private Functions Declarations
 ============================
 */
 
-static int handle_sdl_event(SDL_Event *event);
-static int handle_key_up_down(SDL_Event *event);
-static int handle_mouse_motion(SDL_Event *event);
-static int handle_mouse_wheel(SDL_Event *event);
-static int handle_mouse_button_up_down(SDL_Event *event);
-static int handle_multi_gesture(SDL_Event *event);
-static int handle_pinch(SDL_Event *event);
-static void handle_quit_message(SDL_Event *event);
+static int handle_frontend_event(WhistFrontendEvent* event);
 
 /*
 ============================
@@ -81,12 +72,12 @@ Public Function Implementations
 ============================
 */
 
-bool sdl_handle_events(void) {
+bool sdl_handle_events(WhistFrontend* frontend) {
     // We cannot use SDL_WaitEventTimeout here, because
     // Linux seems to treat a 1ms timeout as an infinite timeout
-    SDL_Event sdl_event;
-    while (SDL_PollEvent(&sdl_event)) {
-        if (handle_sdl_event(&sdl_event) != 0) {
+    WhistFrontendEvent event;
+    while (whist_frontend_poll_event(frontend, &event)) {
+        if (handle_frontend_event(&event) != 0) {
             return false;
         }
     }
@@ -109,8 +100,8 @@ bool sdl_handle_events(void) {
 bool sdl_pending_audio_device_update(void) {
     // Mark as no longer pending "0",
     // and return whether or not it was pending since the last time we called this function
-    int num_pending_audio_device_updates = atomic_exchange(&g_num_pending_audio_device_updates, 0);
-    return num_pending_audio_device_updates > 0;
+    int pending_audio_device_update = atomic_exchange(&g_pending_audio_device_update, 0);
+    return pending_audio_device_update > 0;
 }
 
 /*
@@ -119,136 +110,45 @@ Private Function Implementations
 ============================
 */
 
-static int handle_key_up_down(SDL_Event *event) {
-    /*
-        Handle the SDL key press or release event
-
-        Arguments:
-            event (SDL_event*): SDL event for key press/release
-
-        Return:
-            (int): 0 on success
-    */
-
-    WhistKeycode keycode = (WhistKeycode)event->key.keysym.scancode;
-    bool is_pressed = event->key.type == SDL_KEYDOWN;
-
-    // Keep memory of alt/ctrl/lgui/rgui status
-    if (keycode == FK_LALT) {
-        alt_pressed = is_pressed;
-    }
-    if (keycode == FK_LCTRL) {
-        ctrl_pressed = is_pressed;
-    }
-    if (keycode == FK_RCTRL) {
-        ctrl_pressed = is_pressed;
-    }
-    if (keycode == FK_LGUI) {
-        lgui_pressed = is_pressed;
-    }
-    if (keycode == FK_RGUI) {
-        rgui_pressed = is_pressed;
+static void handle_keypress_event(FrontendKeypressEvent* event) {
+    if (event->code == FK_LGUI) {
+        lgui_pressed = event->pressed;
+    } else if (event->code == FK_RGUI) {
+        rgui_pressed = event->pressed;
     }
 
-    if (ctrl_pressed && alt_pressed && keycode == FK_F4) {
-        LOG_INFO("Quitting...");
-        client_exiting = true;
-    }
-
-    WhistClientMessage wcmsg = {0};
-    wcmsg.type = MESSAGE_KEYBOARD;
-    wcmsg.keyboard.code = keycode;
-    wcmsg.keyboard.pressed = is_pressed;
-    wcmsg.keyboard.mod = event->key.keysym.mod;
-    send_wcmsg(&wcmsg);
-
-    return 0;
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_KEYBOARD;
+    msg.keyboard.code = event->code;
+    msg.keyboard.pressed = event->pressed;
+    msg.keyboard.mod = event->mod;
+    send_wcmsg(&msg);
 }
 
-static int handle_mouse_motion(SDL_Event *event) {
-    /*
-        Handle the SDL mouse motion event
-
-        Arguments:
-            event (SDL_Event*): SDL event for mouse motion
-
-        Result:
-            (int): 0 on success, -1 on failure
-    */
-
-    // Relative motion is the delta x and delta y from last
-    // mouse position Absolute mouse position is where it is
-    // on the screen We multiply by scaling factor so that
-    // integer division doesn't destroy accuracy
-    bool is_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
-
-    if (is_relative && !mouse_state.is_relative) {
-        // old datum was absolute, new is relative
-        // Hence, we flush out the old datum
-        if (update_mouse_motion() != 0) {
-            return -1;
-        }
-    }
-
-    mouse_state.x_nonrel = event->motion.x;
-    mouse_state.y_nonrel = event->motion.y;
-    mouse_state.is_relative = is_relative;
-
-    if (is_relative) {
-        mouse_state.x_rel += event->motion.xrel;
-        mouse_state.y_rel += event->motion.yrel;
-    }
-
+static void handle_mouse_motion_event(FrontendMouseMotionEvent* event) {
+    mouse_state.x_nonrel = event->absolute.x;
+    mouse_state.y_nonrel = event->absolute.y;
+    mouse_state.x_rel += event->relative.x;
+    mouse_state.y_rel += event->relative.y;
+    mouse_state.is_relative = event->relative_mode;
     mouse_state.update = true;
-
-    return 0;
 }
 
-static int handle_mouse_button_up_down(SDL_Event *event) {
-    /*
-        Handle the SDL mouse button press/release event
-
-        Arguments:
-            event (SDL_Event*): SDL event for mouse button press/release event
-
-        Result:
-            (int): 0 on success
-    */
-
-    WhistClientMessage wcmsg = {0};
-    wcmsg.type = MESSAGE_MOUSE_BUTTON;
-    // Record if left / right / middle button
-    wcmsg.mouseButton.button = event->button.button;
-    wcmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
-    if (wcmsg.mouseButton.button == MOUSE_L) {
-        // We capture the mouse so that we can continue to track the
-        // mouse even if the user starts to drag outside of the window
-        SDL_CaptureMouse(wcmsg.mouseButton.pressed);
-    }
-    send_wcmsg(&wcmsg);
-
-    return 0;
+static void handle_mouse_button_event(FrontendMouseButtonEvent* event) {
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_MOUSE_BUTTON;
+    msg.mouseButton.button = event->button;
+    msg.mouseButton.pressed = event->pressed;
+    send_wcmsg(&msg);
 }
 
-static int handle_mouse_wheel(SDL_Event *event) {
-    /*
-        Handle the SDL mouse wheel event
-
-        Arguments:
-            event (SDL_Event*): SDL event for mouse wheel event
-
-        Result:
-            (int): 0 on success
-    */
-
-    // If a pinch is active, don't send a scroll event
+static void handle_mouse_wheel_event(FrontendMouseWheelEvent* event) {
     if (active_pinch) {
-        return 0;
+        // Suppress scroll events during a pinch gesture
+        return;
     }
 
-    WhistMouseWheelMomentumType momentum_phase =
-        (WhistMouseWheelMomentumType)event->wheel.momentum_phase;
-
+    WhistMouseWheelMomentumType momentum_phase = event->momentum_phase;
     if (momentum_phase == MOUSEWHEEL_MOMENTUM_BEGIN) {
         active_momentum_scroll = true;
     } else if (momentum_phase == MOUSEWHEEL_MOMENTUM_END ||
@@ -256,93 +156,55 @@ static int handle_mouse_wheel(SDL_Event *event) {
         active_momentum_scroll = false;
     }
 
-    // The active momentum scroll has been interrupted and aborted
-    if (momentum_phase == MOUSEWHEEL_MOMENTUM_ACTIVE && !active_momentum_scroll) {
-        return 0;
+    // We received another event while momentum was active, so cancel the
+    // momentum scroll by ignoring the event
+    if (!active_momentum_scroll && momentum_phase == MOUSEWHEEL_MOMENTUM_ACTIVE) {
+        return;
     }
 
-    WhistClientMessage wcmsg = {0};
-    wcmsg.type = MESSAGE_MOUSE_WHEEL;
-    wcmsg.mouseWheel.x = event->wheel.x;
-    wcmsg.mouseWheel.y = event->wheel.y;
-    wcmsg.mouseWheel.precise_x = event->wheel.preciseX;
-    wcmsg.mouseWheel.precise_y = event->wheel.preciseY;
-    send_wcmsg(&wcmsg);
-
-    return 0;
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_MOUSE_WHEEL;
+    msg.mouseWheel.x = event->delta.x;
+    msg.mouseWheel.y = event->delta.y;
+    msg.mouseWheel.precise_x = event->precise_delta.x;
+    msg.mouseWheel.precise_y = event->precise_delta.y;
+    send_wcmsg(&msg);
 }
 
-static int handle_pinch(SDL_Event *event) {
-    /*
-        Handle the SDL pinch event
+static void handle_gesture_event(FrontendGestureEvent* event) {
+    WhistClientMessage msg = {0};
+    msg.multigesture = (WhistMultigestureMessage){
+        .d_theta = event->delta.theta,
+        .d_dist = event->delta.dist,
+        .x = event->center.x,
+        .y = event->center.y,
+        .num_fingers = event->num_fingers,
+        .active_gesture = active_pinch,
+    };
 
-        Arguments:
-            event (SDL_Event*): SDL event for touchpad pinch event
-
-        Result:
-            (int): 0 on success
-    */
-
-    WhistClientMessage wcmsg = {0};
-    wcmsg.type = MESSAGE_MULTIGESTURE;
-    wcmsg.multigesture = (WhistMultigestureMessage){.d_theta = 0,
-                                                    .d_dist = event->pinch.scroll_amount,
-                                                    .x = 0,
-                                                    .y = 0,
-                                                    .num_fingers = 2,
-                                                    .active_gesture = active_pinch};
-
-    wcmsg.multigesture.gesture_type = MULTIGESTURE_NONE;
-    if (event->pinch.magnification < 0) {
-        wcmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_CLOSE;
-        active_pinch = true;
-    } else if (event->pinch.magnification > 0) {
-        wcmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_OPEN;
+    if (event->type == MULTIGESTURE_PINCH_OPEN || event->type == MULTIGESTURE_PINCH_CLOSE) {
         active_pinch = true;
     } else if (active_pinch) {
-        // 0 magnification means that the pinch gesture is complete
-        wcmsg.multigesture.gesture_type = MULTIGESTURE_CANCEL;
         active_pinch = false;
+        msg.multigesture.gesture_type = MULTIGESTURE_CANCEL;
     }
-
-    send_wcmsg(&wcmsg);
-
-    return 0;
+    send_wcmsg(&msg);
 }
 
-static int handle_multi_gesture(SDL_Event *event) {
-    WhistClientMessage wcmsg = {0};
-    wcmsg.type = MESSAGE_MULTIGESTURE;
-    wcmsg.multigesture = (WhistMultigestureMessage){.d_theta = event->mgesture.dTheta,
-                                                    .d_dist = event->mgesture.dDist,
-                                                    .x = event->mgesture.x,
-                                                    .y = event->mgesture.y,
-                                                    .num_fingers = event->mgesture.numFingers,
-                                                    .gesture_type = MULTIGESTURE_NONE};
-    send_wcmsg(&wcmsg);
-
-    return 0;
-}
-
-static int handle_file_drop(SDL_Event *event) {
-    int mouse_x, mouse_y;
-    SDL_CaptureMouse(true);
-    SDL_GetMouseState(&mouse_x, &mouse_y);
-    SDL_CaptureMouse(false);
-    FileEventInfo drop_event_info;
-    // Scale the mouse position for server-side compatibility
-    drop_event_info.server_drop.x = mouse_x * get_native_window_dpi((SDL_Window *)window) / 96;
-    drop_event_info.server_drop.y = mouse_y * get_native_window_dpi((SDL_Window *)window) / 96;
+static void handle_file_drop_event(FrontendFileDropEvent* event) {
+    FileEventInfo drop_info;
+    // Scale the drop coordinates for server-side compatibility
+    drop_info.server_drop.x = event->position.x * get_native_window_dpi((SDL_Window*)window) / 96;
+    drop_info.server_drop.y = event->position.y * get_native_window_dpi((SDL_Window*)window) / 96;
     sdl_end_drag_event();
-    file_synchronizer_set_file_reading_basic_metadata(event->drop.file, FILE_TRANSFER_SERVER_DROP,
-                                                      &drop_event_info);
-
-    return 0;
+    file_synchronizer_set_file_reading_basic_metadata(event->filename, FILE_TRANSFER_SERVER_DROP,
+                                                      &drop_info);
+    free(event->filename);
 }
 
-static void handle_quit_message(SDL_Event *event) {
-    if (event->quit.quit_app) {
-        const char *quit_client_app_notification = "QUIT_APPLICATION";
+static void handl_quit_event(FrontendQuitEvent* event) {
+    if (event->quit_application) {
+        const char* quit_client_app_notification = "QUIT_APPLICATION";
         LOG_INFO("%s", quit_client_app_notification);
     }
 
@@ -350,114 +212,68 @@ static void handle_quit_message(SDL_Event *event) {
     client_exiting = true;
 }
 
-static int handle_sdl_event(SDL_Event *event) {
-    /*
-        Handle SDL event based on type
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    // Allow non-scroll events to interrupt momentum scrolls
-    if (event->type != SDL_MOUSEWHEEL && active_momentum_scroll) {
+static int handle_frontend_event(WhistFrontendEvent* event) {
+    if (event->type != FRONTEND_EVENT_MOUSE_WHEEL && active_momentum_scroll) {
+        // Cancel momentum scrolls on non-wheel events
         active_momentum_scroll = false;
     }
 
     switch (event->type) {
-        case SDL_WINDOWEVENT: {
-            if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                sdl_renderer_resize_window(event->window.data1, event->window.data2);
-            } else if (event->window.event == SDL_WINDOWEVENT_LEAVE) {
-                sdl_end_drag_event();
-            }
-#ifdef __APPLE__
-            else if (event->window.event == SDL_WINDOWEVENT_OCCLUDED) {
-                LOG_INFO("SDL_WINDOWEVENT_OCCLUDED - Stop Streaming");
-                sdl_end_drag_event();
-                WhistClientMessage wcmsg = {0};
-                wcmsg.type = MESSAGE_STOP_STREAMING;
-                whist_sleep(100);
-                if (get_debug_console_override_values()->no_minimize) {
-                    break;
-                }
-                send_wcmsg(&wcmsg);
-            } else if (event->window.event == SDL_WINDOWEVENT_UNOCCLUDED) {
-                LOG_INFO("SDL_WINDOWEVENT_UNOCCLUDED - Start Streaming");
+        case FRONTEND_EVENT_RESIZE: {
+            sdl_renderer_resize_window(event->resize.width, event->resize.height);
+            break;
+        }
+        case FRONTEND_EVENT_VISIBILITY: {
+            if (event->visibility.visible) {
+                LOG_INFO("Window now visible -- start streaming");
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_START_STREAMING;
                 send_wcmsg(&wcmsg);
-            }
-#else
-            else if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
-                LOG_INFO("SDL_WINDOWEVENT_MINIMIZED - Stop Streaming");
+            } else {
+                LOG_INFO("Window now hidden -- stop streaming");
+                // End any active drag event
                 sdl_end_drag_event();
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_STOP_STREAMING;
-                if (get_debug_console_override_values()->no_minimize) {
-                    break;
-                }
-                send_wcmsg(&wcmsg);
-            } else if (event->window.event == SDL_WINDOWEVENT_RESTORED) {
-                LOG_INFO("SDL_WINDOWEVENT_RESTORED - Start Streaming");
-                WhistClientMessage wcmsg = {0};
-                wcmsg.type = MESSAGE_START_STREAMING;
                 send_wcmsg(&wcmsg);
             }
-#endif
             break;
         }
-        case SDL_AUDIODEVICEADDED:
-        case SDL_AUDIODEVICEREMOVED: {
-            // Mark the audio device as pending an update "1"
-            atomic_fetch_add(&g_num_pending_audio_device_updates, 1);
+        case FRONTEND_EVENT_AUDIO_UPDATE: {
+            // Mark the audio device as pending an update
+            atomic_fetch_or(&g_pending_audio_device_update, 1);
             break;
         }
-        case SDL_KEYDOWN:
-        case SDL_KEYUP: {
-            if (handle_key_up_down(event) != 0) {
-                return -1;
-            }
+        case FRONTEND_EVENT_KEYPRESS: {
+            handle_keypress_event(&event->keypress);
             break;
         }
-        case SDL_MOUSEMOTION: {
-            if (handle_mouse_motion(event) != 0) {
-                return -1;
-            }
+        case FRONTEND_EVENT_MOUSE_MOTION: {
+            handle_mouse_motion_event(&event->mouse_motion);
             break;
         }
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP: {
-            if (handle_mouse_button_up_down(event) != 0) {
-                return -1;
-            }
+        case FRONTEND_EVENT_MOUSE_BUTTON: {
+            handle_mouse_button_event(&event->mouse_button);
             break;
         }
-        case SDL_MOUSEWHEEL: {
-            if (handle_mouse_wheel(event) != 0) {
-                return -1;
-            }
+        case FRONTEND_EVENT_MOUSE_WHEEL: {
+            handle_mouse_wheel_event(&event->mouse_wheel);
             break;
         }
-        case SDL_MULTIGESTURE: {
-            if (handle_multi_gesture(event) != 0) {
-                return -1;
-            }
+        case FRONTEND_EVENT_MOUSE_LEAVE: {
+            sdl_end_drag_event();
             break;
         }
-        case SDL_PINCH: {
-            if (handle_pinch(event) != 0) {
-                return -1;
-            }
+        case FRONTEND_EVENT_GESTURE: {
+            handle_gesture_event(&event->gesture);
             break;
         }
-        case SDL_DROPFILE: {
-            if (handle_file_drop(event) != 0) {
-                return -1;
-            }
+        case FRONTEND_EVENT_FILE_DROP: {
+            handle_file_drop_event(&event->file_drop);
             break;
         }
-        case SDL_QUIT: {
-            handle_quit_message(event);
+        case FRONTEND_EVENT_QUIT: {
+            handl_quit_event(&event->quit);
             break;
         }
     }

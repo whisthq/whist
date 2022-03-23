@@ -21,6 +21,7 @@ Includes
 ============================
 */
 #include <whist/core/whist.h>
+#include "frontend/frontend.h"
 
 /*
 ============================
@@ -44,7 +45,7 @@ Public Functions
  *                                 To see more information on this issue, and my related rant,
  *                                 go to https://github.com/libsdl-org/SDL/issues/1059
  */
-bool sdl_handle_events(void);
+bool sdl_handle_events(WhistFrontend* frontend);
 
 /**
  * @brief                          The function will let you know if an audio device has
