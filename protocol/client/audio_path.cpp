@@ -212,6 +212,8 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
                     user_queue_len, device_queue_len, expected_skip);
         }
 
+        LOG_INFO("too many auido frames queued, has to skip %d. total_len=%d, user_queue_len=%d, device_queue_len=%d",expected_skip,total_queue_len, user_queue_len,device_queue_len );
+
         for (int i = 0; i < expected_skip; i++) {
             // make sure we never erase buffered packets
             if ((int)user_queue.size() <= buffered_for_flush_cnt) {
@@ -233,6 +235,10 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
 }
 
 int pop_from_audio_path(unsigned char *buf, int *size) {
+
+    // a flag only for log purpose
+    static bool device_queue_empty_log_printed=true;
+
     // get num of queue bytes inside device
     int device_queue_byte = get_audio_device_queue_bytes(g_audio_context);
     
@@ -271,9 +277,6 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
     // enter the protected section
     whist_lock_mutex(g_mutex);
 
-    // convenient alias
-    int user_queue_len = (int)user_queue.size();
-
     // for robustness, if audio device is for some reason not ready drop all packets
     if (device_queue_byte < 0) {
         user_queue.clear();
@@ -299,6 +302,12 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
     // the best thing to do is to stop playing and start to queue packets imediately
     // we start to queue packet for anti-jitter and flush the queued packet activately later
     if (device_queue_byte == 0) {
+        
+        if(!device_queue_empty_log_printed )
+        {
+            LOG_INFO("audio device queue becomes empty, begin buffering frames. user_queue_len=%d\n", (int)user_queue.size());
+            device_queue_empty_log_printed=true;
+        }
         // the status of start buffering or on the way of buffering
         if (user_queue.size() < max_num_inside_device_queue) {
             buffered_for_flush_cnt = (int)user_queue.size();
@@ -306,6 +315,9 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
             return -2;
         } else  // we have queued enough
         {
+
+            LOG_INFO("bufferred enough frames for audio, buffered %d.\n", (int)user_queue.size());
+
             // indicdate the start of flushing
             buffered_for_flush_cnt = max_num_inside_device_queue;
             flushing_buffered_packets = true;
@@ -323,11 +335,11 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
     } else {  // otherwise the audio path is in a normal state
 
         // detect operation for dynamic queue len management
-        auto op = decide_queue_len_manage_operation(user_queue_len, device_queue_len, now);
+        auto op = decide_queue_len_manage_operation((int)user_queue.size(), device_queue_len, now);
 
         // if it's early drop, drop one packet inside user queue
         if (op == EARLY_DROP) {
-            if (user_queue_len > 0) {
+            if ((int)user_queue.size() > 0) {
                 int fake_size;
                 // drop this packet by a dummy pop
                 // upper level will not feel this pop
