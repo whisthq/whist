@@ -64,7 +64,9 @@ typedef struct {
     timestamp_us arrival_time;    // This time is measured in client's clock
 } GroupStats;
 
-typedef void (*PacketReceiveCB)(void*);
+// callback function on packet receive
+typedef void (*PacketReceiveCB)(WhistSegment*);
+
 /*
 ============================
 Public Functions
@@ -222,7 +224,14 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
 size_t udp_packet_max_size(void);
 
-void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type, PacketReceiveCB cb);
+/**
+ * @brief                          register a callback function to handle that type of packet
+ *
+ * @param context                  The UDP SocketContext
+ * @param type                     type of packet
+ * @param cb                       the callback function
+ */
+void udp_register_segment_receive_cb(void* raw_context, WhistPacketType type, PacketReceiveCB cb);
 
 /*
 ============================

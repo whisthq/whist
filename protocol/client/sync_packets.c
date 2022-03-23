@@ -42,6 +42,21 @@ static bool run_sync_packets_threads;
 
 /*
 ============================
+Private Function Declarations
+============================
+*/
+
+/**
+ * @brief                          a very light wrapper of pop_from_audio_path(), so that it can be
+ * registered as a udp segment receive callback
+ * @param segment                  pointer to the WhistSegment structure
+ *
+ * @note                           it's
+ */
+void push_to_audio_path_udp_cb(WhistSegment* segment);
+
+/*
+============================
 Public Function Implementations
 ============================
 */
@@ -340,4 +355,16 @@ void destroy_packet_synchronizers(void) {
     run_sync_packets_threads = false;
     whist_wait_thread(sync_tcp_packets_thread, NULL);
     whist_wait_thread(sync_udp_packets_thread, NULL);
+}
+
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+void push_to_audio_path_udp_cb(WhistSegment* segment) {
+    FATAL_ASSERT(segment->num_indices == 1);
+    WhistPacket* whist_packet = (WhistPacket*)segment->segment_data;
+    push_to_audio_path(segment->id, (unsigned char*)whist_packet->data, whist_packet->payload_size);
 }

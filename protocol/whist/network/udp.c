@@ -206,6 +206,7 @@ typedef struct {
     IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS];
     void* nack_queue;
 
+    // the callback functions for specific packet types
     PacketReceiveCB packet_receive_cbs[NUM_PACKET_TYPES];
 
 } UDPContext;
@@ -1909,5 +1910,6 @@ void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type, Pac
     FATAL_ASSERT(type >= 0 && type < NUM_PACKET_TYPES);
     UDPContext* context = (UDPContext*)raw_context;
     FATAL_ASSERT(context->packet_receive_cbs[type] == NULL);
+    // save the callback
     context->packet_receive_cbs[type] = (PacketReceiveCB)cb;
 }
