@@ -74,7 +74,7 @@ resource "aws_iam_role" "EC2DeploymentRole" {
   assume_role_policy = data.aws_iam_policy_document.EC2AssumeRolePolicy.json
 
   inline_policy {
-    name = "WhistEC2DeploymentRolePolicy"
+    name   = "WhistEC2DeploymentRolePolicy"
     policy = data.aws_iam_policy_document.WhistEC2DeploymentRolePolicy.json
   }
 
@@ -89,8 +89,8 @@ resource "aws_iam_role" "EC2DeploymentRole" {
 # Terraform doesn't create it by default. We use a different instance
 # profile for each environment.
 resource "aws_iam_instance_profile" "EC2DeploymentRoleInstanceProfile" {
-   name = "EC2DeploymentRoleInstanceProfile${var.env}"
-   role = aws_iam_role.EC2DeploymentRole.name
+  name = "EC2DeploymentRoleInstanceProfile${var.env}"
+  role = aws_iam_role.EC2DeploymentRole.name
 }
 
 #

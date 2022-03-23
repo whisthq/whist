@@ -76,10 +76,61 @@ data "aws_iam_policy_document" "WhistEC2DeploymentRolePolicy" {
     for_each = var.env != "prod" ? [1] : []
     content {
       actions = [
-        "ssm:DescribeSessions",
-        "ssm:StartSession",
-        "ssm:TerminateSession",
-        "ssm:ResumeSession",
+        "ssm:DescribeAssociation",
+        "ssm:GetDeployablePatchSnapshotForInstance",
+        "ssm:GetDocument",
+        "ssm:DescribeDocument",
+        "ssm:GetManifest",
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:ListAssociations",
+        "ssm:ListInstanceAssociations",
+        "ssm:PutInventory",
+        "ssm:PutComplianceItems",
+        "ssm:PutConfigurePackageResult",
+        "ssm:UpdateAssociationStatus",
+        "ssm:UpdateInstanceAssociationStatus",
+        "ssm:UpdateInstanceInformation"
+      ]
+      effect = "Allow"
+      resources = [
+        "*",
+      ]
+    }
+  }
+
+  # This statement will only evaluate if the environment is not `prod`.
+  # It enables SSM to access instances (for debugging), but does not allow
+  # it in `prod` (for user privacy/security).
+  dynamic "statement" {
+    for_each = var.env != "prod" ? [1] : []
+    content {
+      actions = [
+        "ssmmessages:CreateControlChannel",
+        "ssmmessages:CreateDataChannel",
+        "ssmmessages:OpenControlChannel",
+        "ssmmessages:OpenDataChannel"
+      ]
+      effect = "Allow"
+      resources = [
+        "*",
+      ]
+    }
+  }
+
+  # This statement will only evaluate if the environment is not `prod`.
+  # It enables SSM to access instances (for debugging), but does not allow
+  # it in `prod` (for user privacy/security).
+  dynamic "statement" {
+    for_each = var.env != "prod" ? [1] : []
+    content {
+      actions = [
+        "ec2messages:AcknowledgeMessage",
+        "ec2messages:DeleteMessage",
+        "ec2messages:FailMessage",
+        "ec2messages:GetEndpoint",
+        "ec2messages:GetMessages",
+        "ec2messages:SendReply"
       ]
       effect = "Allow"
       resources = [
@@ -255,7 +306,7 @@ data "aws_iam_policy_document" "MFAPolicy" {
     effect    = "Allow"
     resources = ["arn:aws:iam::*:user/$${aws:username}"]
   }
-  
+
   statement {
     sid = "AllowManageOwnSSHPublicKeys"
     actions = [
