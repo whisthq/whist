@@ -27,8 +27,6 @@ struct WhistRenderer {
     VideoContext* video_context;
     AudioContext* audio_context;
 
-    NetworkSettings last_network_settings;
-
     bool run_renderer_threads;
 #if SINGLE_THREAD_MODEL
     WhistThread renderer_thread;
@@ -109,6 +107,11 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
         whist_create_thread(multithreaded_renderer, "multithreaded_renderer", whist_renderer);
 
 #else
+    // Create sems
+    whist_renderer->has_video_rendered_yet = false;
+    whist_renderer->video_semaphore = whist_create_semaphore(0);
+    whist_renderer->audio_semaphore = whist_create_semaphore(0);
+
     // Mark threads as running,
     whist_renderer->run_renderer_threads = true;
     whist_renderer->video_thread = whist_create_thread(
@@ -291,19 +294,35 @@ int32_t multithreaded_renderer(void* opaque) {
 int32_t multithreaded_video_renderer(void* opaque) {
     WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
 
+    // Whether or not video is still waiting to render
+    bool pending_video = false;
+
     while (true) {
         // Wait until we're told to render on this thread
-        whist_wait_semaphore(whist_renderer->video_semaphore);
+        if (pending_video) {
+            whist_wait_timeout_semaphore(whist_renderer->video_semaphore, 1);
+        } else {
+            whist_wait_semaphore(whist_renderer->video_semaphore);
+        }
 
         // If this thread should no longer exist, exit accordingly
         if (!whist_renderer->run_renderer_threads) {
             break;
         }
 
-        // Otherwise, try to render
-        render_video(whist_renderer->video_context);
-        if (has_video_rendered_yet(whist_renderer->video_context)) {
-            whist_renderer->has_video_rendered_yet = true;
+        // Otherwise, try to render, but note that 1 means the renderer is still pending
+        // TODO: Make render_video internally semaphore on render, so we don't have to check
+        if (render_video(whist_renderer->video_context) == 1) {
+            pending_video = true;
+        } else {
+            pending_video = false;
+            if (has_video_rendered_yet(whist_renderer->video_context)) {
+                if (!whist_renderer->has_video_rendered_yet) {
+                    // Notify audio that video has rendered
+                    whist_renderer->has_video_rendered_yet = true;
+                    whist_post_semaphore(whist_renderer->audio_semaphore);
+                }
+            }
         }
     }
 
@@ -322,11 +341,19 @@ int32_t multithreaded_audio_renderer(void* opaque) {
             break;
         }
 
-        // Otherwise, try to render, but only if video has rendered
+        // Don't render if video hasn't rendered yet
         // This is because it feels weird when audio is played to the loading screen
-        if (whist_renderer->has_video_rendered_yet) {
-            render_audio(whist_renderer->audio_context);
+        if (!whist_renderer->has_video_rendered_yet) {
+            continue;
         }
+
+        // Refresh the audio device, if a new audio device update is pending
+        if (sdl_pending_audio_device_update()) {
+            refresh_audio_device(whist_renderer->audio_context);
+        }
+
+        // Render the audio
+        render_audio(whist_renderer->audio_context);
     }
 
     return 0;
