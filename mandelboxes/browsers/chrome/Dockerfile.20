@@ -97,9 +97,15 @@ RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whis
 # Install handle to browser program to be able to open a new tab from the protocol
 RUN ln -sf /usr/bin/google-chrome /usr/bin/whist-open-new-tab
 
-# TODO: edit (or create if not present) the JSON file: ~/.config/google-chrome/Default/Preferences
-# and set the file_contents["webkit"]["webprefs"]["fonts"] value to: 
+# Edit the Chrome Preferences Config file: ~/.config/google-chrome/Default/Preferences to set the Whist fonts as default
+# and set the ["webkit"]["webprefs"]["fonts"] value to: 
 # {'fixed': {'Zyyy': 'Courier'}, 'sansserif': {'Zyyy': 'Helvetica'}, 'serif': {'Zyyy': 'Times'}, 'standard': {'Zyyy': 'Times'}}
+RUN mkdir -p /home/whist/.config/google-chrome/Default \
+    && touch /home/whist/.config/google-chrome/Default/Preferences \
+    && chown whist:whist /home/whist/.config/google-chrome/Default/Preferences \
+    && echo {} \
+    | jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
+    > /home/whist/.config/google-chrome/Default/Preferences
 
 
 # If needed, install WhistServer and helpers. Must be last step.
