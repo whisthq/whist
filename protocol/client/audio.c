@@ -372,7 +372,4 @@ int get_audio_device_queue_bytes(AudioContext* audio_context) {
     return (int)safe_get_audio_queue(audio_context);
 }
 
-int get_decoded_bytes_per_frame(void)
-{
-    return DECODED_BYTES_PER_FRAME;
-}
+int get_decoded_bytes_per_frame(void) { return DECODED_BYTES_PER_FRAME; }
