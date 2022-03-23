@@ -18,6 +18,7 @@ else() # GCC and Clang base flags
     "-Wno-unused-variable" # Maybe we should bring this back?
     "-Wno-parentheses"
     "-Wno-missing-field-initializers"
+    "-fexceptions" # Lets C++ exceptions pass through C code cleanly. MSVC already works (/EHc would turn it off).
     "-Wno-implicit-fallthrough" # We use switch/case fallthrough intentionally a lot, it should be allowed
     "-fno-common" # Error when two global variables have the same name, which would overlap them
     "-Wshadow" # Warn when a variable gets shadowed
