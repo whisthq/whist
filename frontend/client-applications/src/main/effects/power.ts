@@ -14,10 +14,9 @@ import { fromTrigger } from "@app/main/utils/flows"
 import { relaunch } from "@app/main/utils/app"
 import { WhistTrigger } from "@app/constants/triggers"
 import { logToAmplitude } from "@app/main/utils/logging"
-import { persistClear } from "@app/main/utils/persist"
+import { persistClear, persistGet } from "@app/main/utils/persist"
 import { destroyProtocol } from "@app/main/utils/protocol"
 import { emitOnSignal } from "@app/main/utils/observables"
-import { persistGet } from "@app/main/utils/persist"
 import { ONBOARDED } from "@app/constants/store"
 
 // Handles the application quit logic

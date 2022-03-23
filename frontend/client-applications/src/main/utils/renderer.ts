@@ -17,6 +17,7 @@ import {
   WindowHashWelcome,
   WindowHashSupport,
   WindowHashRestoreTabs,
+  WindowHashImportOnboarding,
 } from "@app/constants/windows"
 import {
   authPortalURL,
@@ -179,6 +180,13 @@ const createImportWindow = () =>
     hash: WindowHashImport,
   })
 
+const createImportOnboardingWindow = () =>
+  createElectronWindow({
+    ...width.md,
+    ...height.lg,
+    hash: WindowHashImportOnboarding,
+  })
+
 const createSupportWindow = () =>
   createElectronWindow({
     ...width.xs,
@@ -229,4 +237,5 @@ export {
   createSupportWindow,
   createRestoreTabsWindow,
   createOmnibar,
+  createImportOnboardingWindow,
 }

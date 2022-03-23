@@ -21,11 +21,11 @@ import {
   WindowHashWelcome,
   WindowHashSupport,
   WindowHashRestoreTabs,
+  WindowHashImportOnboarding,
 } from "@app/constants/windows"
 import {
   createAuthWindow,
   createLaunchLoadingWindow,
-  createImportLoadingWindow,
   createSignoutWindow,
   createSpeedtestWindow,
   createPaymentWindow,
@@ -36,6 +36,7 @@ import {
   createOmnibar,
   createSupportWindow,
   createRestoreTabsWindow,
+  createImportOnboardingWindow,
 } from "@app/main/utils/renderer"
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -90,27 +91,20 @@ untilUpdateAvailable(
     )
   )
 ).subscribe((args: { import: boolean }) => {
-  networkAnalyze()
+  if (!args.import) networkAnalyze()
 
-  if (args.import) {
-    createImportLoadingWindow()
-  } else {
-    createLaunchLoadingWindow()
-  }
+  createLaunchLoadingWindow()
 
   destroyElectronWindow(WindowHashPayment)
   destroyElectronWindow(WindowHashImport)
+  destroyElectronWindow(WindowHashImportOnboarding)
   destroyElectronWindow(WindowHashOnboarding)
 })
 
-withAppActivated(
-  fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
-    withLatestFrom(fromTrigger(WhistTrigger.protocolConnection))
-  )
-).subscribe(([, connected]: [any, boolean]) => {
+withAppActivated(fromTrigger(WhistTrigger.stripeAuthRefresh)).subscribe(() => {
   const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
-  if (!onboarded) createImportWindow()
-  if (connected) destroyElectronWindow(WindowHashPayment)
+  if (!onboarded) createImportOnboardingWindow()
+  destroyElectronWindow(WindowHashPayment)
 })
 
 withAppActivated(

@@ -459,6 +459,10 @@ const NetworkTest = () => {
 const Pricing = () => {
   const features = [
     {
+      name: "2-week free trial",
+      description: "Your card will not be charged until after your trial ends.",
+    },
+    {
       name: "Cancel at any time",
       description:
         "You can cancel via Cmd + J which can be launched after onboarding.",
@@ -467,20 +471,16 @@ const Pricing = () => {
       name: "Fully refundable",
       description: "If you forget to cancel, we will refund you fully.",
     },
-    {
-      name: "No hidden fees",
-      description: "Your card will not be charged until after your trial ends.",
-    },
   ]
 
   const contents = (
     <div className="m-auto text-center mt-24 max-w-lg m-auto">
       <div className="text-gray-300 text-3xl font-bold leading-10">
-        Your <span className="text-blue-light">2-week free trial</span> starts
-        now
+        Payment and Subscription
       </div>
       <div className="mt-2 text-gray-500">
-        Afterward, a subscription is $25<span className="text-sm">/mo</span>.
+        Whist is free for the next two weeks. Afterward, a subscription is $25
+        <span className="text-sm">/mo</span>.
       </div>
       <dl className="grid grid-cols-3 gap-x-4 mt-8">
         {features.map((feature) => (

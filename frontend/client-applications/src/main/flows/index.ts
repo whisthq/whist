@@ -7,6 +7,7 @@ import {
   share,
   mapTo,
   pluck,
+  withLatestFrom,
 } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -82,7 +83,15 @@ waitForSignal(
 )
 
 // Unpack the access token to see if their payment is valid
-const checkPayment = checkPaymentFlow(fromTrigger(WhistTrigger.authFlowSuccess))
+const checkPayment = checkPaymentFlow(
+  merge(
+    fromTrigger(WhistTrigger.authFlowSuccess),
+    fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
+      withLatestFrom(fromTrigger(WhistTrigger.authFlowSuccess)),
+      map(([, x]) => x)
+    )
+  )
+)
 
 const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
   take(1),
@@ -136,7 +145,12 @@ const launchTrigger = emitOnSignal(
     ), // On a normal launch
     importedData // On onboarding or import
   )
-).pipe(share())
+).pipe(
+  withLatestFrom(fromTrigger(WhistTrigger.protocolConnection)),
+  filter(([, connected]: [any, boolean]) => !connected),
+  map(([x]) => x),
+  share()
+)
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))

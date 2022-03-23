@@ -23,6 +23,7 @@ import { useMainState } from "@app/renderer/utils/ipc"
 const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
   const maxPageIndex = props.pages.length - 1
   const [pageToShow, setPageToShow] = useState(0)
+  const [mainState] = useMainState()
 
   useEffect(() => {
     if (pageToShow > maxPageIndex) props.onSubmit()
@@ -33,14 +34,23 @@ const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
       tabIndex={0}
       className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
-      {props.pages[pageToShow]}
+      {pageToShow <= maxPageIndex && props.pages[pageToShow]}
       <div className="absolute bottom-4 w-full">
         <div className="m-auto text-center">
           <WhistButton
             onClick={() => setPageToShow(pageToShow + 1)}
-            state={WhistButtonState.DEFAULT}
-            contents={"Continue"}
-            className="mb-8 px-16"
+            state={
+              pageToShow > maxPageIndex
+                ? WhistButtonState.PROCESSING
+                : WhistButtonState.DEFAULT
+            }
+            contents={
+              pageToShow === maxPageIndex &&
+              mainState.subscriptionStatus !== "active"
+                ? "Start Free Trial"
+                : "Continue"
+            }
+            className="mb-8 px-16 w-60"
           />
           <div className="relative">
             <Steps

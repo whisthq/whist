@@ -95,6 +95,7 @@ const RootComponent = () => {
     })
 
   const handleImporterSubmit = (browser: string | undefined) => {
+    console.log("beginning import for", browser)
     setMainState({
       trigger: {
         name: WhistTrigger.beginImport,
