@@ -108,6 +108,8 @@ withAppActivated(
     withLatestFrom(fromTrigger(WhistTrigger.protocolConnection))
   )
 ).subscribe(([, connected]: [any, boolean]) => {
+  const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
+  if (!onboarded) createImportWindow()
   if (connected) destroyElectronWindow(WindowHashPayment)
 })
 
@@ -157,12 +159,15 @@ withAppActivated(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
   createPaymentWindow({
     accessToken,
   })
-    .then(() => destroyElectronWindow(NO_PAYMENT_ERROR))
+    .then(() => {
+      destroyElectronWindow(NO_PAYMENT_ERROR)
+      destroyElectronWindow(WindowHashOnboarding)
+    })
     .catch((err) => Sentry.captureException(err))
 })
 
 untilUpdateAvailable(
-  withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowSuccess))
+  withAppActivated(fromTrigger(WhistTrigger.authFlowSuccess))
 ).subscribe(() => {
   const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
   if (!onboarded) {
