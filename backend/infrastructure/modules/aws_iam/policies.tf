@@ -23,7 +23,7 @@ data "aws_iam_policy_document" "EC2AssumeRolePolicy" {
 # This policy is meant to have S3 read only access, EC2 read access
 # and permissions to start and terminate instances (on-demand and spot). 
 # It is used by our backend for scaling instances up and down.
-data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
+data "aws_iam_policy_document" "WhistEC2DeploymentRolePolicy" {
   statement {
     # This statement represents the EC2ReadOnlyAccess permissions
     actions = [
@@ -87,7 +87,12 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
       ]
     }
   }
+}
 
+# This policy allows an IAM user to pass the DeploymentRole to 
+# AWS services. It is used for passing the necessary permissions
+# to instances.
+data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
   statement {
     actions = [
       "iam:PassRole"

@@ -68,10 +68,15 @@ resource "aws_iam_role" "PackerAMIBuilder" {
   }
 }
 
-# This role is used by the scaling service and webserver to manage instances. It gets its permissions from the WhistEC2PassRoleUser.
+# This role is used by the scaling service and webserver to manage instances.
 resource "aws_iam_role" "EC2DeploymentRole" {
   name               = "EC2DeploymentRole${var.env}"
   assume_role_policy = data.aws_iam_policy_document.EC2AssumeRolePolicy.json
+
+  inline_policy {
+    name = "WhistEC2DeploymentRolePolicy"
+    policy = data.aws_iam_policy_document.WhistEC2DeploymentRolePolicy.json
+  }
 
   tags = {
     Name      = "EC2DeploymentRole${var.env}"
@@ -200,7 +205,7 @@ resource "aws_iam_group_policy_attachment" "EngineeringPolicy" {
 
 resource "aws_iam_policy" "WhistEC2PassRoleUserPolicy" {
   name        = "WhistEC2PassRoleUserPolicy${var.env}"
-  description = "This policy gives the necessary permissions to start, stop and terminate on-demand and spot instances. It is meant to be used by the WhistEC2PassRoleUser."
+  description = "This policy grants the PassRoleUser the permissions to pass the DeploymentRole to instances."
   policy      = data.aws_iam_policy_document.WhistEC2PassRoleUserPolicy.json
 }
 
