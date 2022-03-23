@@ -72,7 +72,7 @@ static int multithreaded_sync_udp_packets(void* opaque) {
 
     if (USE_AUDIO_PATH) {
         udp_register_packet_receive_cb(udp_context->context, PACKET_AUDIO,
-                                       (void*)push_to_audio_path);
+                                       push_to_audio_path_udp_cb);
     }
 
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
