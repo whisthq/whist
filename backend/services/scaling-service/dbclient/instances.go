@@ -8,6 +8,20 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
+func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) (subscriptions.WhistInstances, error) {
+	// The status will always be active, because we want instances
+	// that are ready to accept mandelboxes (the host service is running)
+	const status = "ACTIVE"
+	instancesQuery := subscriptions.QueryInstanceWithCapacity
+	queryParams := map[string]interface{}{
+		"region": graphql.String(region),
+		"status": graphql.String(status),
+	}
+	err := graphQLClient.Query(scalingCtx, &instancesQuery, queryParams)
+
+	return instancesQuery.WhistInstances, err
+}
+
 // QueryInstance queries the database for an instance with the received id.
 func (client *DBClient) QueryInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) (subscriptions.WhistInstances, error) {
 	instancesQuery := subscriptions.QueryInstanceById
@@ -75,9 +89,30 @@ func (client *DBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 }
 
 // UpdateInstance updates the received fields on the database.
-func (client *DBClient) UpdateInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams map[string]interface{}) (int, error) {
-	updateMutation := subscriptions.UpdateInstanceStatus
-	err := graphQLClient.Mutate(scalingCtx, &updateMutation, updateParams)
+func (client *DBClient) UpdateInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams subscriptions.Instance) (int, error) {
+	updateMutation := subscriptions.UpdateInstance
+
+	// Due to some quirks with the Hasura client, we have to convert the
+	// instance to `whist_instances_set_input`.
+	instancesForDb := whist_instances_set_input{
+		ID:                graphql.String(updateParams.ID),
+		Provider:          graphql.String(updateParams.Provider),
+		Region:            graphql.String(updateParams.Region),
+		ImageID:           graphql.String(updateParams.ImageID),
+		ClientSHA:         graphql.String(metadata.GetGitCommit()),
+		IPAddress:         updateParams.IPAddress,
+		Type:              graphql.String(updateParams.Type),
+		RemainingCapacity: graphql.Int(updateParams.RemainingCapacity),
+		Status:            graphql.String(updateParams.Status),
+		CreatedAt:         updateParams.CreatedAt,
+		UpdatedAt:         updateParams.UpdatedAt,
+	}
+
+	mutationParams := map[string]interface{}{
+		"id":      graphql.String(updateParams.ID),
+		"changes": instancesForDb,
+	}
+	err := graphQLClient.Mutate(scalingCtx, &updateMutation, mutationParams)
 	return int(updateMutation.MutationResponse.AffectedRows), err
 }
 

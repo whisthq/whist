@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os/exec"
 
-	"github.com/whisthq/whist/backend/services/host-service/metrics"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -54,9 +54,45 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 	w.WriteHeader(status)
 	if err != nil {
 		logger.Errorf("Error marshalling a %v HTTP Response body: %s", status, err)
-		metrics.Increment("ErrorRate")
 	}
 	_, _ = w.Write(buf)
+}
+
+// Request types
+
+// Mandelbox assign request
+type MandelboxAssignRequest struct {
+	Regions    []string           `json:"regions"`
+	CommitHash string             `json:"client_commit_hash"`
+	SessionID  int64              `json:"session_id"`
+	UserEmail  string             `json:"user_email"`
+	UserID     types.UserID       // The userID is obtained from the access token
+	ResultChan chan RequestResult // Channel to pass the request result between goroutines
+}
+
+type MandelboxAssignRequestResult struct {
+	IP          string            `json:"ip"`
+	MandelboxID types.MandelboxID `json:"mandelbox_id"`
+	Error       string            `json:"error"`
+}
+
+// ReturnResult is called to pass the result of a request back to the HTTP
+// request handler.
+func (s *MandelboxAssignRequest) ReturnResult(result interface{}, err error) {
+	logger.Infof("Sending result to chan %v", s.ResultChan)
+	s.ResultChan <- RequestResult{
+		Result: result,
+		Err:    err,
+	}
+	logger.Infof("Sent to chan %v", s.ResultChan)
+}
+
+// createResultChan is called to create the Go channel to pass the request
+// result back to the HTTP request handler via ReturnResult.
+func (s *MandelboxAssignRequest) CreateResultChan() {
+	if s.ResultChan == nil {
+		s.ResultChan = make(chan RequestResult)
+	}
 }
 
 // Helper functions

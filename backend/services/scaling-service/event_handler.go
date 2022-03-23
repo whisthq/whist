@@ -42,6 +42,10 @@ func main() {
 		logger.Errorf("Failed to start config GraphQL client. Error: %v", err)
 	}
 
+	// Start HTTP Server for assigning mandelboxes
+	serverEvents := make(chan algos.ScalingEvent, 100)
+	StartHTTPServer(serverEvents)
+
 	// Start database subscriptions
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 	subscriptionClient := &subscriptions.SubscriptionClient{}
@@ -85,7 +89,7 @@ func main() {
 	})
 
 	// Start main event loop
-	go eventLoop(globalCtx, globalCancel, subscriptionEvents, scheduledEvents, algorithmByRegionMap, configClient)
+	go eventLoop(globalCtx, globalCancel, serverEvents, subscriptionEvents, scheduledEvents, algorithmByRegionMap, configClient)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -199,8 +203,23 @@ func getRegionImageMap() (map[string]interface{}, error) {
 // getScalingAlgorithm is a helper function that returns the scaling algorithm from the sync map.
 func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.ScalingEvent) algos.ScalingAlgorithm {
 	// Try to get the scaling algorithm on the region the scaling event was requested.
+	// If no region is specified, use the default region.
 	// TODO: figure out how to get non-default scaling algorihtms.
-	name := utils.Sprintf("default-sa-%s", scalingEvent.Region)
+	var (
+		name   string
+		region string
+	)
+	const defaultRegion = "us-east-1"
+
+	region = scalingEvent.Region
+
+	if region == "" {
+		logger.Infof("No region found on scaling event. Getting scaling algorithm on default region %v.", defaultRegion)
+		name = utils.Sprintf("default-sa-%s", defaultRegion)
+	} else {
+		name = utils.Sprintf("default-sa-%s", scalingEvent.Region)
+	}
+
 	algorithm, ok := algorithmByRegion.Load(name)
 	if ok {
 		return algorithm.(algos.ScalingAlgorithm)
@@ -213,7 +232,7 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 
 // eventLoop is the main loop of the scaling service which will receive events from different sources
 // and send them to the appropiate channels.
-func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, subscriptionEvents <-chan subscriptions.SubscriptionEvent,
+func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serverEvents <-chan algos.ScalingEvent, subscriptionEvents <-chan subscriptions.SubscriptionEvent,
 	scheduledEvents <-chan algos.ScalingEvent, algorithmByRegion *sync.Map, configClient *subscriptions.SubscriptionClient) {
 
 	for {
@@ -314,6 +333,15 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, subsc
 					algorithm.ScheduledEventChan <- scheduledEvent
 				}
 			}
+		case serverEvent := <-serverEvents:
+			logger.Infof("Received server event. %v", serverEvent)
+
+			algorithm := getScalingAlgorithm(algorithmByRegion, serverEvent)
+			switch algorithm := algorithm.(type) {
+			case *algos.DefaultScalingAlgorithm:
+				algorithm.ServerEventChan <- serverEvent
+			}
+
 		case <-globalCtx.Done():
 			logger.Infof("Gloal context has been cancelled, exiting event loop...")
 			return

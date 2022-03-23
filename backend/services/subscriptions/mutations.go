@@ -16,11 +16,11 @@ var InsertOneInstance struct {
 	} `graphql:"insert_whist_instances_one(objects: $objects)"`
 }
 
-// UpdateInstanceStatus updates the status of an instance to the given status.
-var UpdateInstanceStatus struct {
+// UpdateInstance updates the fields of an instance.
+var UpdateInstance struct {
 	MutationResponse struct {
 		AffectedRows graphql.Int `graphql:"affected_rows"`
-	} `graphql:"update_whist_instances(where: {id: {_eq: $id}}, _set: {status: $status})"`
+	} `graphql:"update_whist_instances(where: {id: {_eq: $id}}, _set: $changes)"`
 }
 
 // DeleteInstanceStatusById deletes an instance that matches the given instance_name.
@@ -30,11 +30,18 @@ var DeleteInstanceById struct {
 	} `graphql:"delete_whist_instances(where: {id: {_eq: $id}})"`
 }
 
-// InsertOneImage inserts multiple images to the database.
+// InsertImages inserts multiple images to the database.
 var InsertImages struct {
 	MutationResponse struct {
 		AffectedRows graphql.Int `graphql:"affected_rows"`
 	} `graphql:"insert_whist_images(objects: $objects)"`
+}
+
+// InsertMandelboxes inserts multiple mandelboxes to the database.
+var InsertMandelboxes struct {
+	MutationResponse struct {
+		AffectedRows graphql.Int `graphql:"affected_rows"`
+	} `graphql:"insert_whist_mandelboxes(objects: $objects)"`
 }
 
 // UpdateImage updates the row of an image to the given values.

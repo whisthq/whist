@@ -92,6 +92,12 @@ var QueryInstancesByStatus struct {
 	WhistInstances `graphql:"whist_instances(where: {status: {_eq: $status}})"`
 }
 
+// QueryInstanceWithCapacity returns an instance that has free space to run a mandelbox.
+// Return results ordered by capacity, so we efficiently allocate mandelboxes.
+var QueryInstanceWithCapacity struct {
+	WhistInstances `graphql:"whist_instances(where: {region: {_eq: $region}, _and: {status: {_eq: $status}, _and: {remaining_capacity: {_gt: 0}}}}, order_by: {remaining_capacity: asc})"`
+}
+
 // QueryInstancesByImageID returns any instance with the given image id.
 var QueryInstancesByImageID struct {
 	WhistInstances `graphql:"whist_instances(where: {image_id: {_eq: $image_id}})"`

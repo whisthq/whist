@@ -4,10 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/hasura/go-graphql-client"
+	"github.com/google/uuid"
+	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -140,7 +142,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}()
 
 	var (
-		freeInstances, lingeringInstances subscriptions.WhistInstances
+		freeInstances, lingeringInstances []subscriptions.Instance
 		lingeringIDs                      []string
 		err                               error
 	)
@@ -183,15 +185,29 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// to the list that will be scaled down.
 	// 3. If the instance does not have the latest image, and is not running any mandelboxes, add to the
 	// list that will be scaled down.
-	for _, instance := range allActive {
-		if len(instance.Mandelboxes) > 0 {
+	for _, dbInstance := range allActive {
+		if len(dbInstance.Mandelboxes) > 0 {
 			// Don't scale down any instance that has running
 			// mandelboxes, regardless of the image it uses
-			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", instance.ID, len(instance.Mandelboxes))
+			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", dbInstance.ID, len(dbInstance.Mandelboxes))
 			continue
 		}
 
-		_, protected := s.protectedFromScaleDown[string(instance.ImageID)]
+		instance := subscriptions.Instance{
+			ID:                string(dbInstance.ID),
+			Provider:          string(dbInstance.Provider),
+			Region:            string(dbInstance.Region),
+			ImageID:           string(dbInstance.ImageID),
+			ClientSHA:         string(dbInstance.ClientSHA),
+			IPAddress:         dbInstance.IPAddress,
+			Type:              string(dbInstance.Type),
+			RemainingCapacity: int64(dbInstance.RemainingCapacity),
+			Status:            string(dbInstance.Status),
+			CreatedAt:         dbInstance.CreatedAt,
+			UpdatedAt:         dbInstance.UpdatedAt,
+		}
+
+		_, protected := s.protectedFromScaleDown[instance.ImageID]
 		if protected {
 			// Don't scale down instances with a protected image id. A protected
 			// image id refers to the image id that was built and passed by the
@@ -203,7 +219,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			continue
 		}
 
-		if instance.ImageID == graphql.String(latestImageID) {
+		if instance.ImageID == latestImageID {
 			// Current instances
 			// If we have more than one instance worth of extra mandelbox capacity, scale down
 			if mandelboxCapacity >= extraCapacity {
@@ -224,14 +240,27 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return utils.MakeError("failed to query database for lingering instances. Err: %v", err)
 	}
 
-	for _, instance := range drainingInstances {
+	for _, dbInstance := range drainingInstances {
+		instance := subscriptions.Instance{
+			ID:                string(dbInstance.ID),
+			Provider:          string(dbInstance.Provider),
+			Region:            string(dbInstance.Region),
+			ImageID:           string(dbInstance.ImageID),
+			ClientSHA:         string(dbInstance.ClientSHA),
+			IPAddress:         dbInstance.IPAddress,
+			Type:              string(dbInstance.Type),
+			RemainingCapacity: int64(dbInstance.RemainingCapacity),
+			Status:            string(dbInstance.Status),
+			CreatedAt:         dbInstance.CreatedAt,
+			UpdatedAt:         dbInstance.UpdatedAt,
+		}
 		// Check if lingering instance is free from mandelboxes
-		if len(instance.Mandelboxes) == 0 {
+		if len(dbInstance.Mandelboxes) == 0 {
 			lingeringInstances = append(lingeringInstances, instance)
 			lingeringIDs = append(lingeringIDs, string(instance.ID))
 		} else {
 			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
-			logger.Warningf("Instance %v has %v associated mandelboxes and is marked as Draining.", instance.ID, len(instance.Mandelboxes))
+			logger.Warningf("Instance %v has %v associated mandelboxes and is marked as Draining.", instance.ID, len(dbInstance.Mandelboxes))
 		}
 	}
 
@@ -253,12 +282,9 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 	for _, instance := range freeInstances {
 		logger.Infof("Scaling down instance %v.", instance.ID)
-		updateParams := map[string]interface{}{
-			"id":     instance.ID,
-			"status": graphql.String("DRAINING"),
-		}
 
-		_, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, updateParams)
+		instance.Status = "DRAINING"
+		_, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, instance)
 		if err != nil {
 			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
 		}
@@ -524,6 +550,172 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 
 	// Unprotect the image until we have successfully swapped images in database
 	delete(s.protectedFromScaleDown, newImage.ImageID)
+
+	return nil
+}
+
+// MandelboxAssign is the action responsible for assigning an instance to a user,
+// and scaling as necessary to satisfy demand.
+func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, event ScalingEvent) error {
+	logger.Infof("Starting mandelbox assign action for event: %v", event)
+	defer logger.Infof("Finished mandelbox assign action for event: %v", event)
+
+	// We want to verify if we have the desired capacity after assigning a mandelbox
+	defer func() {
+		err := s.VerifyCapacity(scalingCtx, event)
+		if err != nil {
+			logger.Errorf("Error verifying capacity on %v. Err: %v", event.Region, err)
+		}
+	}()
+
+	mandelboxRequest := event.Data.(*httputils.MandelboxAssignRequest)
+
+	// Note: we receive the email from the client, so its value should
+	// not be trusted for anything else other than logging since
+	// it can be spoofed. We sanitize the email before using to help mitigate
+	// potential attacks.
+	unsafeEmail, err := helpers.SanitizeEmail(mandelboxRequest.UserEmail)
+	if err != nil {
+		// err is already wrapped here
+		return err
+	}
+
+	var (
+		requestedRegions = mandelboxRequest.Regions
+		allowedRegions   []string
+		assignedInstance subscriptions.Instance
+	)
+
+	// Populate allowedRegions
+	for _, bundledRegion := range BundledRegions {
+		for _, requestedRegion := range requestedRegions {
+			if bundledRegion == requestedRegion {
+				allowedRegions = append(allowedRegions, requestedRegion)
+			}
+		}
+	}
+
+	if len(allowedRegions) == 0 {
+		err := utils.MakeError("could not assign mandelbox. Wanted regions are not valid or are not enabled.")
+		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+			Error: REGION_NOT_ENABLED,
+		}, err)
+		return err
+	}
+
+	// This condition is to accomodate the worflow for developers of client_apps
+	// to test their changes without needing to update the development database with
+	// commit_hashes on their local machines.
+	if metadata.IsLocalEnv() && mandelboxRequest.CommitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {
+		// Query for the latest image id
+		imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
+		if err != nil {
+			return utils.MakeError("failed to query database for current image. Err: %v", err)
+		}
+
+		if len(imageResult) == 0 {
+			return utils.MakeError("Image not found on %v.", event.Region)
+		}
+
+		mandelboxRequest.CommitHash = string(imageResult[0].ClientSHA)
+	}
+
+	// Start looking for instances
+	for _, region := range allowedRegions {
+		logger.Infof("Trying to find instance for user %v in region %v, with commit hash %v. (client reported email %v, this value might not be accurate and is untrusted)",
+			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail)
+
+		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, region)
+		if err != nil {
+			return utils.MakeError("failed to query for instance with capacity. Err: %v", err)
+		}
+
+		if len(instanceResult) == 0 {
+			logger.Warningf("Failed to find an instance in %v for commit hash %v. Trying on next region.", region, mandelboxRequest.CommitHash)
+			continue
+		}
+
+		assignedInstance = subscriptions.Instance{
+			ID:                string(instanceResult[0].ID),
+			IPAddress:         string(instanceResult[0].IPAddress),
+			Provider:          string(instanceResult[0].Provider),
+			Region:            string(instanceResult[0].Region),
+			ImageID:           string(instanceResult[0].ImageID),
+			ClientSHA:         string(instanceResult[0].ClientSHA),
+			Type:              string(instanceResult[0].Type),
+			RemainingCapacity: int64(instanceCapacity[string(instanceResult[0].Type)]),
+			Status:            string(instanceResult[0].Status),
+			CreatedAt:         instanceResult[0].CreatedAt,
+			UpdatedAt:         instanceResult[0].UpdatedAt,
+		}
+
+		if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
+			err := utils.MakeError("found instance with capacity but it has a different commit hash %v that frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+			mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+				Error: COMMIT_HASH_MISMATCH,
+			}, err)
+			return err
+		}
+
+		logger.Infof("Found instance %v for user %v in %v", assignedInstance.ID, unsafeEmail, region)
+		break
+	}
+
+	if assignedInstance == (subscriptions.Instance{}) {
+		err := utils.MakeError("did not find an instance with capacity for user %v and commit hash %v.", mandelboxRequest.UserEmail, mandelboxRequest.CommitHash)
+		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+			Error: NO_INSTANCE_AVAILABLE,
+		}, err)
+		return err
+	}
+
+	mandelboxID, err := uuid.NewRandom()
+	if err != nil {
+		return utils.MakeError("failed to create a mandelbox id. Err: %v", err)
+	}
+
+	mandelboxesForDb := []subscriptions.Mandelbox{
+		{
+			ID:         types.MandelboxID(mandelboxID),
+			App:        "CHROME",
+			InstanceID: assignedInstance.ID,
+			UserID:     mandelboxRequest.UserID,
+			SessionID:  utils.Sprintf("%v", mandelboxRequest.SessionID),
+			Status:     "ALLOCATED",
+			CreatedAt:  time.Now(),
+		},
+	}
+
+	// Allocate mandelbox on database, this will start the mandelbox inside the assigned instance
+	affectedRows, err := s.DBClient.InsertMandelboxes(scalingCtx, s.GraphQLClient, mandelboxesForDb)
+	if err != nil {
+		return utils.MakeError("error while inserting mandelbox to database. Err: %v", err)
+	}
+
+	logger.Infof("Inserted %v rows to database.", affectedRows)
+
+	if assignedInstance.RemainingCapacity <= 0 {
+		// This should never happen, but we should consider
+		// possible edge cases before updating the database.
+		return utils.MakeError("instance with id %v has a remaning capacity less than or equal to 0.", assignedInstance.ID)
+	}
+
+	// Subtract 1 from the current instance capacity because we allocated a mandelbox
+	updatedCapacity := assignedInstance.RemainingCapacity - 1
+	assignedInstance.RemainingCapacity = updatedCapacity
+
+	affectedRows, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, assignedInstance)
+	if err != nil {
+		return utils.MakeError("error while updating instance capacity on database. Err: %v", err)
+	}
+
+	logger.Infof("Updated %v rows in database.", affectedRows)
+
+	// Return result to assign request
+	mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+		IP:          assignedInstance.IPAddress,
+		MandelboxID: types.MandelboxID(mandelboxID),
+	}, nil)
 
 	return nil
 }

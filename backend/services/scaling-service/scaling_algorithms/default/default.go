@@ -43,6 +43,7 @@ type DefaultScalingAlgorithm struct {
 	ImageEventChan         chan ScalingEvent
 	ClientAppVersionChan   chan ScalingEvent
 	ScheduledEventChan     chan ScalingEvent
+	ServerEventChan        chan ScalingEvent
 	SyncChan               chan bool                      // This channel is used to sync actions
 	protectedFromScaleDown map[string]subscriptions.Image // Use a map to keep track of images that should not be scaled down
 	protectedMapLock       sync.Mutex
@@ -63,6 +64,9 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	}
 	if s.ScheduledEventChan == nil {
 		s.ScheduledEventChan = make(chan ScalingEvent, 100)
+	}
+	if s.ServerEventChan == nil {
+		s.ServerEventChan = make(chan ScalingEvent, 100)
 	}
 	if s.SyncChan == nil {
 		s.SyncChan = make(chan bool)
@@ -252,6 +256,27 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 							logger.Errorf("Error running image upgrade on region %v. Err: %v", scheduledEvent.Region, err)
 						}
 
+						scalingCancel()
+					}()
+				}
+			case serverEvent := <-s.ServerEventChan:
+				switch serverEvent.Type {
+				case "SERVER_MANDELBOX_ASSIGN_EVENT":
+					logger.Infof("Scaling algorithm received a mandelbox assign request with value: %v", serverEvent)
+
+					goroutineTracker.Add(1)
+					go func() {
+						defer goroutineTracker.Done()
+						serverEvent.Region = s.Region
+
+						// Create context for scaling operation
+						scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+						err := s.MandelboxAssign(scalingCtx, serverEvent)
+						if err != nil {
+							logger.Errorf("Error running mandelbox assign action. Err: %v", err)
+						}
+						// Cancel context once the operation is done
 						scalingCancel()
 					}()
 				}

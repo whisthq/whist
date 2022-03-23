@@ -44,6 +44,11 @@ type WhistClaims struct {
 	// that the string of space-separated words is deserialized into a string
 	// slice.
 	Scopes Scopes `json:"scope"`
+
+	// Stripe customer data. We use these values to verify payment status,
+	// they are added to the access token via Auth0 rules.
+	CustomerID         string `json:"https://api.fractal.co/stripe_customer_id"`
+	SubscriptionStatus string `json:"https://api.fractal.co/subscription_status"`
 }
 
 var config authConfig = getAuthConfig(metadata.GetAppEnvironment())
