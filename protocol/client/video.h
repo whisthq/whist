@@ -87,7 +87,10 @@ void receive_video(VideoContext* video_context, VideoFrame* video_frame);
  * @param video_context            The video context that wants to render a frame
  *
  * @note                           This function is thread-safe, and may be called in a way
- *                                 that overlaps other functions that use the vide context.
+ *                                 that overlaps other functions that use the video context.
+ *
+ * @returns                        Returns 1 if a frame is still pending to be rendered,
+ *                                 0 if the most-recently received frame has been rendered
  */
 int render_video(VideoContext* video_context);
 

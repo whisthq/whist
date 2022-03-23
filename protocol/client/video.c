@@ -286,22 +286,23 @@ int render_video(VideoContext* video_context) {
         }
     }
 
-    if (sdl_render_pending()) {
-        // We cannot call `video_decoder_free_decoded_frame`,
-        // until the renderer is done rendering the previously decoded frame data.
-        // So, we skip renders until after the previous render is done.
-
-        // However, We only skip a render after setting `pending_render_context = false`,
-        // To make sure we can keep consuming frames and keep up-to-date.
-
-        // And, We only skip a render after calling `video_decoder_decode_frame`, because the
-        // internal decoder buffer overflow errors if we don't actively decode frames fast enough.
-
-        return 0;
-    }
-
     // Render any frame we got from the decoder
     if (got_frame_from_decoder) {
+        if (sdl_render_pending()) {
+            // We cannot call `video_decoder_free_decoded_frame`,
+            // until the renderer is done rendering the previously decoded frame data.
+            // So, we skip renders until after the previous render is done.
+
+            // However, We only skip a render after setting `pending_render_context = false`,
+            // To make sure we can keep consuming frames and keep up-to-date.
+
+            // And, We only skip a render after calling `video_decoder_decode_frame`, because the
+            // internal decoder buffer overflow errors if we don't actively decode frames fast
+            // enough.
+
+            return 1;
+        }
+
         // Mark frame as consumed
         got_frame_from_decoder = false;
 
