@@ -279,7 +279,7 @@ static void send_new_tab_url_if_needed(WhistFrontend* frontend) {
 
         FrontendWindowInfo info;
         if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
-            LOG_FATAL("Failed to get window info");
+            LOG_ERROR("Failed to get window info");
         }
         // Unmimimize the window if needed
         if (info.minimized) {
@@ -385,7 +385,7 @@ int whist_client_main(int argc, const char* argv[]) {
         init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
 
         // Add listeners for global file drag events
-        initialize_out_of_window_drag_handlers();
+        initialize_out_of_window_drag_handlers(frontend);
 
         start_timer(&window_resize_timer);
         window_resize_mutex = whist_create_mutex();
@@ -433,7 +433,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
         // Send our initial width/height/codec to the server,
         // so it can synchronize with us
-        send_message_dimensions();
+        send_message_dimensions(frontend);
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
@@ -507,15 +507,15 @@ int whist_client_main(int argc, const char* argv[]) {
                 static int cached_display_index = -1;
                 FrontendWindowInfo window_info;
                 if (whist_frontend_get_window_info(frontend, &window_info) != WHIST_SUCCESS) {
-                    LOG_FATAL("Failed to get window display index");
+                    LOG_ERROR("Failed to get window display index");
                 }
 
-                if (cached_display_index != window_info.display_index) {
+                if (cached_display_index != window_info.display.index) {
                     if (cached_display_index) {
                         // Update DPI to new monitor
-                        send_message_dimensions();
+                        send_message_dimensions(frontend);
                     }
-                    cached_display_index = window_info.display_index;
+                    cached_display_index = window_info.display.index;
                 }
 
                 start_timer(&monitor_change_timer);
@@ -524,7 +524,7 @@ int whist_client_main(int argc, const char* argv[]) {
             // Check if the window is minimized or occluded.
             FrontendWindowInfo info;
             if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
-                LOG_FATAL("Failed to get window info");
+                LOG_ERROR("Failed to get window info");
             }
             if (info.minimized || info.occluded) {
                 // If it is, we can sleep for a good while to keep CPU usage very low.

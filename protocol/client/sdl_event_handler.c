@@ -87,7 +87,7 @@ bool sdl_handle_events(WhistFrontend* frontend) {
     static WhistTimer mouse_motion_timer;
     static bool first_mouse_motion = true;
     if (first_mouse_motion || get_timer(&mouse_motion_timer) * MS_IN_SECOND > 0.5) {
-        if (update_mouse_motion() != 0) {
+        if (update_mouse_motion(frontend) != 0) {
             return false;
         }
         start_timer(&mouse_motion_timer);
@@ -191,18 +191,25 @@ static void handle_gesture_event(FrontendGestureEvent* event) {
     send_wcmsg(&msg);
 }
 
-static void handle_file_drop_event(FrontendFileDropEvent* event) {
+static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEvent* event) {
     FileEventInfo drop_info;
+    FrontendWindowInfo window_info;
+    if (whist_frontend_get_window_info(frontend, &window_info) != WHIST_SUCCESS) {
+        LOG_ERROR("Failed to get window DPI for file drop event");
+        free(event->filename);
+        return;
+    }
+
     // Scale the drop coordinates for server-side compatibility
-    drop_info.server_drop.x = event->position.x * get_native_window_dpi((SDL_Window*)window) / 96;
-    drop_info.server_drop.y = event->position.y * get_native_window_dpi((SDL_Window*)window) / 96;
+    drop_info.server_drop.x = event->position.x * window_info.display.dpi / 96;
+    drop_info.server_drop.y = event->position.y * window_info.display.dpi / 96;
     sdl_end_drag_event();
     file_synchronizer_set_file_reading_basic_metadata(event->filename, FILE_TRANSFER_SERVER_DROP,
                                                       &drop_info);
     free(event->filename);
 }
 
-static void handl_quit_event(FrontendQuitEvent* event) {
+static void handle_quit_event(FrontendQuitEvent* event) {
     if (event->quit_application) {
         const char* quit_client_app_notification = "QUIT_APPLICATION";
         LOG_INFO("%s", quit_client_app_notification);
@@ -220,7 +227,7 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
 
     switch (event->type) {
         case FRONTEND_EVENT_RESIZE: {
-            sdl_renderer_resize_window(event->resize.width, event->resize.height);
+            sdl_renderer_resize_window(event->frontend, event->resize.width, event->resize.height);
             break;
         }
         case FRONTEND_EVENT_VISIBILITY: {
@@ -269,11 +276,11 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
             break;
         }
         case FRONTEND_EVENT_FILE_DROP: {
-            handle_file_drop_event(&event->file_drop);
+            handle_file_drop_event(event->frontend, &event->file_drop);
             break;
         }
         case FRONTEND_EVENT_QUIT: {
-            handl_quit_event(&event->quit);
+            handle_quit_event(&event->quit);
             break;
         }
     }

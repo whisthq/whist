@@ -125,6 +125,9 @@ typedef struct WhistFrontendFunctionTable {
 
     // Events
     bool (*poll_event)(WhistFrontend* frontend, WhistFrontendEvent* event);
+
+    // Mouse
+    WhistStatus (*get_global_mouse_position)(WhistFrontend* frontend, int* x, int* y);
 } WhistFrontendFunctionTable;
 
 struct WhistFrontend {
@@ -167,13 +170,15 @@ struct FrontendWindowInfo {
     bool fullscreen;
     bool minimized;
     bool occluded;
-    int display_index;
+    struct {
+        int index;
+        int dpi;
+    } display;
 };
 
 void temp_frontend_set_window(WhistFrontend* frontend, void* window);
 WhistStatus whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info);
-// int whist_get_display_info(int display_id, FrontendDisplayInfo* display_info);
-bool whist_frontend_window_changed_display(WhistFrontend* frontend);
+
 int whist_frontend_set_screensaver_enabled(WhistFrontend* frontend, bool enabled);
 int whist_frontend_resize_window(WhistFrontend* frontend, int width, int height);
 int whist_frontend_set_window_minimized(WhistFrontend* frontend, bool minimized);
@@ -191,11 +196,7 @@ int whist_frontend_send_key_event(WhistFrontend* frontend, WhistKeycode keycode,
 int whist_frontend_get_keyboard_state(WhistFrontend* frontend, WhistKeyboardState* state);
 
 // Mouse
-bool whist_frontend_get_relative_mouse_mode(WhistFrontend* frontend);
-bool whist_frontend_capture_mouse(WhistFrontend* frontend, bool capture);
-bool whist_frontend_get_mouse_position(WhistFrontend* frontend, int* x, int* y);
-int whist_frontend_update_mouse_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor);
-int whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y);
+WhistStatus whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y);
 
 // Video
 int whist_frontend_render_solid(WhistFrontend* frontend, WhistRGBColor color);

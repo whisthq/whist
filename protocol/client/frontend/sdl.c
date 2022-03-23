@@ -2,6 +2,9 @@
 #include <whist/core/whist.h>
 #include <whist/utils/atomic.h>
 
+// TODO: Refactor filesystem to remove upwards include.
+#include "../native_window_utils.h"
+
 typedef struct SDLFrontendContext {
     SDL_AudioDeviceID audio_device;
     SDL_Window* window;
@@ -129,7 +132,8 @@ static WhistStatus sdl_get_window_info(WhistFrontend* frontend, FrontendWindowIn
     SDL_GL_GetDrawableSize(context->window, &info->pixel_size.width, &info->pixel_size.height);
     SDL_GetWindowSize(context->window, &info->virtual_size.width, &info->virtual_size.height);
     SDL_GetWindowPosition(context->window, &info->position.x, &info->position.y);
-    info->display_index = SDL_GetWindowDisplayIndex(context->window);
+    info->display.index = SDL_GetWindowDisplayIndex(context->window);
+    info->display.dpi = get_native_window_dpi(context->window);
     int window_flags = SDL_GetWindowFlags(context->window);
     info->minimized = (window_flags & SDL_WINDOW_MINIMIZED) != 0;
     info->occluded = (window_flags & SDL_WINDOW_OCCLUDED) != 0;
@@ -279,6 +283,11 @@ static bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
     return true;
 }
 
+static WhistStatus sdl_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y) {
+    SDL_GetGlobalMouseState(x, y);
+    return WHIST_SUCCESS;
+}
+
 static const WhistFrontendFunctionTable sdl_function_table = {
     .init = sdl_init_frontend,
     .destroy = sdl_destroy_frontend,
@@ -291,6 +300,7 @@ static const WhistFrontendFunctionTable sdl_function_table = {
     .temp_set_window = temp_sdl_set_window,
     .set_title = sdl_set_title,
     .poll_event = sdl_poll_event,
+    .get_global_mouse_position = sdl_get_global_mouse_position,
 };
 
 const WhistFrontendFunctionTable* sdl_get_function_table(void) { return &sdl_function_table; }

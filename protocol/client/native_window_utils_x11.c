@@ -57,6 +57,8 @@ void declare_user_activity(void) {
     SDL_DisableScreenSaver();
 }
 
-void initialize_out_of_window_drag_handlers(void) { LOG_INFO("Not implemented on X11"); }
-
+void initialize_out_of_window_drag_handlers(WhistFrontend* frontend) {
+    UNUSED(frontend);
+    LOG_INFO("Not implemented on X11.");
+}
 void destroy_out_of_window_drag_handlers(void) { LOG_INFO("Not implemented on X11"); }

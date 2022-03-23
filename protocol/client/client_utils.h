@@ -22,6 +22,7 @@ Includes
 #include <whist/network/network.h>
 #include <whist/network/ringbuffer.h>
 #include <whist/core/whist.h>
+#include "frontend/frontend.h"
 
 #define MAX_INIT_CONNECTION_ATTEMPTS (6)
 #define MAX_RECONNECTION_ATTEMPTS (10)
@@ -77,13 +78,17 @@ int read_piped_arguments(bool run_only_once);
  * @brief                          Update mouse location if the mouse state has
  *                                 updated since the last call to this function.
  *
+ * @param frontend                 The frontend to target for the mouse update
+ *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int update_mouse_motion(void);
+int update_mouse_motion(WhistFrontend* frontend);
 
 /**
  * @brief                          Sends message to server with output dimensions and DPI.
+ *
+ * @param frontend                 The frontend to target for the message
  */
-void send_message_dimensions(void);
+void send_message_dimensions(WhistFrontend* frontend);
 
 #endif  // CLIENT_UTILS_H

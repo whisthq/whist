@@ -42,7 +42,6 @@ volatile char client_hex_aes_private_key[33];
 extern int output_width;
 extern int output_height;
 extern SocketContext packet_udp_context;
-volatile SDL_Window *window;
 
 // From main.c
 volatile bool update_bitrate = false;
@@ -318,7 +317,7 @@ int read_piped_arguments(bool run_only_once) {
     return 0;
 }
 
-int update_mouse_motion(void) {
+int update_mouse_motion(WhistFrontend *frontend) {
     /*
         Update mouse location if the mouse state has updated since the last call
         to this function.
@@ -328,12 +327,15 @@ int update_mouse_motion(void) {
     */
 
     if (mouse_state.update) {
-        int window_width, window_height;
-        SDL_GetWindowSize((SDL_Window *)window, &window_width, &window_height);
+        FrontendWindowInfo info;
+        if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
+            LOG_ERROR("Failed to get window info");
+            return -1;
+        }
         int x, y, x_nonrel, y_nonrel;
 
         // Calculate x location of mouse cursor
-        x_nonrel = mouse_state.x_nonrel * MOUSE_SCALING_FACTOR / window_width;
+        x_nonrel = mouse_state.x_nonrel * MOUSE_SCALING_FACTOR / info.virtual_size.width;
         if (x_nonrel < 0) {
             x_nonrel = 0;
         } else if (x_nonrel >= MOUSE_SCALING_FACTOR) {
@@ -341,7 +343,7 @@ int update_mouse_motion(void) {
         }
 
         // Calculate y location of mouse cursor
-        y_nonrel = mouse_state.y_nonrel * MOUSE_SCALING_FACTOR / window_height;
+        y_nonrel = mouse_state.y_nonrel * MOUSE_SCALING_FACTOR / info.virtual_size.height;
         if (y_nonrel < 0) {
             y_nonrel = 0;
         } else if (y_nonrel >= MOUSE_SCALING_FACTOR) {
@@ -376,14 +378,21 @@ int update_mouse_motion(void) {
     return 0;
 }
 
-void send_message_dimensions(void) {
+void send_message_dimensions(WhistFrontend *frontend) {
+    FrontendWindowInfo info;
+    if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
+        LOG_ERROR("Failed to get window info");
+        return;
+    }
+
     // Let the server know the new dimensions so that it
     // can change native dimensions for monitor
     WhistClientMessage wcmsg = {0};
     wcmsg.type = MESSAGE_DIMENSIONS;
     wcmsg.dimensions.width = output_width;
     wcmsg.dimensions.height = output_height;
-    wcmsg.dimensions.dpi = get_native_window_dpi((SDL_Window *)window);
+    wcmsg.dimensions.dpi = info.display.dpi;
+
     LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d", wcmsg.dimensions.width,
              wcmsg.dimensions.height, wcmsg.dimensions.dpi);
     send_wcmsg(&wcmsg);

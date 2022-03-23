@@ -79,3 +79,8 @@ bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* even
     }
     return ret;
 }
+
+WhistStatus whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y) {
+    FATAL_ASSERT(frontend != NULL);
+    return frontend->call->get_global_mouse_position(frontend, x, y);
+}

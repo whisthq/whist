@@ -31,7 +31,7 @@ Includes
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile bool insufficient_bandwidth;
-extern volatile SDL_Window* window;
+volatile SDL_Window* window;
 static bool skip_taskbar;
 
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
@@ -332,16 +332,22 @@ WhistTimer window_resize_timer;
 // pending_resize_message should be set to true if sdl event handler was not able to process resize
 // event due to throttling, so the main loop should process it
 volatile bool pending_resize_message = false;
-void sdl_renderer_resize_window(int width, int height) {
+void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) {
     // Try to make pixel width and height conform to certain desirable dimensions
     int current_width, current_height;
-    SDL_GL_GetDrawableSize((SDL_Window*)window, &current_width, &current_height);
+    FrontendWindowInfo info;
+    if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
+        LOG_ERROR("Failed to get window info");
+        return;
+    }
+    current_width = info.pixel_size.width;
+    current_height = info.pixel_size.height;
 
     LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
              current_height);
 
 #ifndef __linux__
-    int dpi = get_native_window_dpi((SDL_Window*)window);
+    int dpi = info.display.dpi;
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
     // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
@@ -372,7 +378,12 @@ void sdl_renderer_resize_window(int width, int height) {
                               desired_height * 96 / dpi);
             LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
                      desired_width, desired_height);
-            SDL_GL_GetDrawableSize((SDL_Window*)window, &current_width, &current_height);
+            if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
+                LOG_ERROR("Failed to get window info");
+                return;
+            }
+            current_width = info.pixel_size.width;
+            current_height = info.pixel_size.height;
 
             if (current_width != desired_width || current_height != desired_height) {
                 LOG_WARNING(
@@ -610,7 +621,7 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
     if (pending_resize_message &&
         get_timer(&window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
         pending_resize_message = false;
-        send_message_dimensions();
+        send_message_dimensions(frontend);
         start_timer(&window_resize_timer);
     }
     whist_unlock_mutex(window_resize_mutex);
@@ -680,7 +691,7 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
     }
 }
 
-void sdl_handle_drag_event() {
+void sdl_handle_drag_event(WhistFrontend* frontend) {
     /*
       Initiates the rendering of the drag icon by checking if the drag is occuring within
       the sdl window and then setting the correct state variables for pending_file_drag_update
@@ -692,14 +703,25 @@ void sdl_handle_drag_event() {
       native_window_color global pointer is NULL.
      */
 
-    int x_window, y_window;
-    int w_window, h_window;
+    FrontendWindowInfo info;
+
+    if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
+        LOG_ERROR("Failed to get window info!");
+        return;
+    }
+
+    int x_window = info.position.x;
+    int y_window = info.position.y;
+    int w_window = info.virtual_size.width;
+    int h_window = info.virtual_size.height;
     int x_mouse_global, y_mouse_global;
 
-    SDL_GetWindowPosition((SDL_Window*)window, &x_window, &y_window);
-    SDL_GetWindowSize((SDL_Window*)window, &w_window, &h_window);
     // Mouse is not active within window - so we must use the global mouse and manually transform
-    SDL_GetGlobalMouseState(&x_mouse_global, &y_mouse_global);
+    if (whist_frontend_get_global_mouse_position(frontend, &x_mouse_global, &y_mouse_global) !=
+        WHIST_SUCCESS) {
+        LOG_ERROR("Failed to get global mouse position!");
+        return;
+    }
 
     if (x_window < x_mouse_global && x_mouse_global < x_window + w_window &&
         y_window < y_mouse_global && y_mouse_global < y_window + h_window) {

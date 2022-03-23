@@ -37,7 +37,7 @@ static id global_left_mouse_drag_listener;
 static id global_left_mouse_up_listener;
 static id global_swipe_listener;
 
-void initialize_out_of_window_drag_handlers(void) {
+void initialize_out_of_window_drag_handlers(WhistFrontend *frontend) {
     /*
         Initializes global event handlers for left mouse down dragged
         and left mouse up events. The drag board change count changes
@@ -79,7 +79,7 @@ void initialize_out_of_window_drag_handlers(void) {
                                             // We are continuing to drag our file from its
                                             // original mousedown selection - turn over to sdl
                                             // handler
-                                            sdl_handle_drag_event();
+                                            sdl_handle_drag_event(frontend);
                                         }
                                       }];
 
@@ -99,6 +99,7 @@ void initialize_out_of_window_drag_handlers(void) {
                                                                    }];
 }
 
+// TODO: Destroy these event handlers per WhistFrontend, similar to initialization.
 void destroy_out_of_window_drag_handlers(void) {
     /*
         NSEvent event listeners are removed by passing in their ids
