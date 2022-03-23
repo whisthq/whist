@@ -249,6 +249,8 @@ void destroy_renderer(WhistRenderer* whist_renderer) {
         whist_post_semaphore(whist_renderer->audio_semaphore);
         whist_wait_thread(whist_renderer->video_thread, NULL);
         whist_wait_thread(whist_renderer->audio_thread, NULL);
+        whist_destroy_semaphore(whist_renderer->video_semaphore);
+        whist_destroy_semaphore(whist_renderer->audio_semaphore);
     }
 
     // Destroy the audio/video context

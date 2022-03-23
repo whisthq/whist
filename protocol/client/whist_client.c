@@ -586,6 +586,9 @@ int whist_client_main(int argc, const char* argv[]) {
     }
 
     destroy_statistic_logger();
+
+    LOG_INFO("Protocol has shutdown gracefully");
+
     destroy_logger();
 
     // We must call this after destroying the logger so that all
@@ -593,7 +596,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // before we close the error monitor.
     whist_error_monitor_shutdown();
 
-    LOG_INFO("Protocol has shutdown gracefully");
+    LOG_INFO("Logger has shutdown gracefully");
 
     if (try_amount >= 3) {
         // We failed to connect, so return a failure error code
