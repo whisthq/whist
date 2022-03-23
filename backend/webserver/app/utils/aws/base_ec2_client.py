@@ -37,6 +37,10 @@ class EC2Client(CloudClient):
         access_key (Optional[str]): the AWS access key going with that key_id
     """
 
+    main_subnet = ""
+    security_group = ""
+    instance_profile = ""
+
     def __init__(
         self,
         region_name: str,
@@ -52,6 +56,10 @@ class EC2Client(CloudClient):
             aws_secret_access_key=access_key,
             region_name=region_name,
         )
+
+        self.get_main_subnet()
+        self.get_security_group()
+        self.get_instance_profile()
 
     def start_instances(
         self,
@@ -76,12 +84,6 @@ class EC2Client(CloudClient):
         # Note that the IamInstanceProfile is set to one created in the
         # Console to allows read-only EC2 access and full S3 access.
 
-        # Get instance profile to launch instances.
-        profile = get_instance_profile()
-
-        # Get main subnet
-        subnet = self.get_main_subnet()
-
         kwargs = {
             "ImageId": image_id,
             "InstanceType": instance_type,
@@ -96,9 +98,10 @@ class EC2Client(CloudClient):
                 },
             ],
             "UserData": userdata_template,
-            "SubnetID": subnet,
+            "SubnetId": self.main_subnet,
+            "SecurityGroupIds": [self.security_group],
             "IamInstanceProfile": {
-                "Arn": profile,
+                "Arn": self.instance_profile,
             },
             "InstanceInitiatedShutdownBehavior": "terminate",
         }
@@ -228,10 +231,10 @@ class EC2Client(CloudClient):
             resdict[instance["InstanceId"]] = instance["PublicIpAddress"]
         return resdict
 
-    def get_main_subnet(self) -> str:
+    def get_main_subnet(self) -> None:
         """
         Gets the ID of the main subnet on the current region.
-        Returns: a string representing the subnet id.
+        Returns: None
 
         """
         resp = self.ec2_client.describe_subnets(
@@ -242,22 +245,40 @@ class EC2Client(CloudClient):
         )
 
         subnet_ids = [subnet["SubnetId"] for subnet in resp["Subnets"]]
-
-        main_subnet = ""
         if subnet_ids:
-            main_subnet = subnet_ids[0]
-        return main_subnet
+            self.main_subnet = subnet_ids[0]
 
+    def get_security_group(self) -> None:
+        """
+        Gets the ID of the security group on the current region and environment.
+        Returns: None
 
-def get_instance_profile() -> str:
-    # TODO all all environment instance profiles
-    # once we promote Terraform to staging and prod.
-    if current_app.config["ENVIRONMENT"] == DEVELOPMENT:
-        return os.environ["INSTANCE_PROFILE_DEV"]
-    elif current_app.config["ENVIRONMENT"] == STAGING:
-        return os.environ["INSTANCE_PROFILE_STAGING"]
-    elif current_app.config["ENVIRONMENT"] == PRODUCTION:
-        return os.environ["INSTANCE_PROFILE_PROD"]
-    else:
-        # Default to dev
-        return os.environ["INSTANCE_PROFILE_DEV"]
+        """
+        resp = self.ec2_client.describe_security_groups(
+            Filters=[
+                {
+                    "Name": "tag:Name",
+                    "Values": ["MandelboxesSecurityGroup" + current_app.config["ENVIRONMENT"]],
+                },
+            ]
+        )
+
+        security_group_ids = [sg["GroupId"] for sg in resp["SecurityGroups"]]
+        if security_group_ids:
+            self.security_group = security_group_ids[0]
+
+    def get_instance_profile(self) -> None:
+        """
+        Gets the ARN of the instance profile used to launch instances.
+        Returns: None
+
+        """
+        if current_app.config["ENVIRONMENT"] == DEVELOPMENT:
+            self.instance_profile = os.environ["INSTANCE_PROFILE_DEV"]
+        elif current_app.config["ENVIRONMENT"] == STAGING:
+            self.instance_profile = os.environ["INSTANCE_PROFILE_STAGING"]
+        elif current_app.config["ENVIRONMENT"] == PRODUCTION:
+            self.instance_profile = os.environ["INSTANCE_PROFILE_PROD"]
+        else:
+            # Default to dev
+            self.instance_profile = os.environ["INSTANCE_PROFILE_DEV"]
