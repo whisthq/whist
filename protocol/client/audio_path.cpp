@@ -149,10 +149,8 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
     // if a packet comes with an id  <= the max id has been sent to deive by 5
     // then we consider this packet as too old to play, and drop it directly
     const int distant_too_old_to_play = 5;
-
     // a buffer to filter out duplicated frames/packets
     static set<int> anti_replay;
-
     // size of the anti_replay buffer
     const int anti_replay_window_size = 100;
 
@@ -264,6 +262,9 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
         }
     }
 
+    // enter the protected section
+    whist_lock_mutex(g_mutex);
+
     // for debug
     if (verbose_log) {
         static timestamp_ms last_log_time = 0;
@@ -273,9 +274,6 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
                     device_queue_byte);
         }
     }
-
-    // enter the protected section
-    whist_lock_mutex(g_mutex);
 
     // for robustness, if audio device is for some reason not ready drop all packets
     if (device_queue_byte < 0) {
@@ -321,6 +319,9 @@ int pop_from_audio_path(unsigned char *buf, int *size) {
             // indicdate the start of flushing
             buffered_for_flush_cnt = max_num_inside_device_queue;
             flushing_buffered_packets = true;
+            
+            // enter next logging cycle
+            device_queue_empty_log_printed =false;
 
             // robustness check
             FATAL_ASSERT(max_num_inside_device_queue > 1);
@@ -439,8 +440,7 @@ static void pop_inner(unsigned char *buf, int *size) {
     if (last_popped_id + 1 != it->first) {
         if (verbose_log)
             fprintf(stderr,
-                    "non-consecutive packet %d!!! last_popped= %d, (might be caused by loss or "
-                    "reorder)\n",
+                    "non-consecutive packet %d!!! last_popped_id=%d\n",
                     it->first, last_popped_id);
     }
 
@@ -467,6 +467,7 @@ static bool ready_to_pop(timestamp_ms now) {
     // max "time" to wait for an empty slot in num of frames,
     // so that an empty slot is considered lost.
     // TODO: make this adaptive, it's going to be a decent improvement
+    // TODO: after this is adaptive, consider making device queue len longer for large value here
     const int anti_reorder_strength = 3;
 
     // if nothing is inside user queue
@@ -515,7 +516,7 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
     const double queue_len_management_sensitivity = 1.2;
     // how many samples need to be sampled to calculate average queue len
     const int target_sample_times = 10;
-    // period between sampling
+    // period between sampling, in ms
     const int sample_period = 100;
     // keep each sample value instead of running sum for easy debugging
     static int sampled_queue_lens[target_sample_times + 1];
@@ -564,14 +565,14 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
     // if the queue is running high, do early drop to make it lower
     if (avg_len >= target_total_queue_len + queue_len_management_sensitivity) {
         if (verbose_log) {
-            fprintf(stderr, "aduio_queue running high, len=%.2f %d %d %d, drop one frame!! ",
+            fprintf(stderr, "aduio_queue running high, len=%.2f, %d %d %d, drop one frame!! ",
                     avg_len, total_len, user_queue_len, device_queue_len);
         }
         op = EARLY_DROP;
     }  // if the queue is running low, do early dup to make it higher
     else if (avg_len <= target_total_queue_len - queue_len_management_sensitivity) {
         if (verbose_log) {
-            fprintf(stderr, "aduio_queue running low, len=%.2f %d %d %d, fill with last frame!! ",
+            fprintf(stderr, "aduio_queue running low, len=%.2f, %d %d %d, fill with last frame!! ",
                     avg_len, total_len, user_queue_len, device_queue_len);
         }
         op = EARLY_DUP;

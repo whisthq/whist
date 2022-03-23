@@ -61,7 +61,7 @@ static const char* const tag_strings[] = {
 
 // disable logs after some limited are hit, helpful for debug
 // if SUPRESS_LOG_AFTER <=0, this feature is disabled
-#define SUPRESS_LOG_AFTER 0
+#define SUPRESS_LOG_AFTER 200
 // num of logs printed so far, should be okay without mutex only for debug
 static int g_log_cnt = 0;
 
