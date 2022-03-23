@@ -32,13 +32,6 @@ Defines
 
 typedef struct AudioContext AudioContext;
 
-// TODO: Automatically deduce this from (ms_per_frame / MS_IN_SECOND) * audio_frequency
-// TODO: Add ms_per_frame to AudioFrame*
-#define SAMPLES_PER_FRAME 480
-#define BYTES_PER_SAMPLE 4
-#define NUM_CHANNELS 2
-#define DECODED_BYTES_PER_FRAME (SAMPLES_PER_FRAME * BYTES_PER_SAMPLE * NUM_CHANNELS)
-
 /*
 ============================
 Public Functions
@@ -124,5 +117,8 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
 
 // get the lenght of the device audio queue inside audio_context
 // unit: bytes
-int get_device_audio_queue_bytes(AudioContext* audio_context);
+int get_audio_device_queue_bytes(AudioContext* audio_context);
+
+int get_decoded_bytes_per_frame(void);
+
 #endif  // CLIENT_AUDIO_H

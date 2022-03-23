@@ -235,12 +235,14 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
 
 int pop_from_audio_path(unsigned char *buf, int *size) {
     // get num of queue bytes inside device
-    int device_queue_byte = get_device_audio_queue_bytes(g_audio_context);
+    int device_queue_byte = get_audio_device_queue_bytes(g_audio_context);
+    
     // calculate the num of queued frames/packets inside device
+    int decoded_bytes_per_frame = get_decoded_bytes_per_frame();
     int device_queue_len = -1;
     if (device_queue_byte >= 0) {
         device_queue_len =
-            (device_queue_byte + DECODED_BYTES_PER_FRAME - 1) / DECODED_BYTES_PER_FRAME;
+            (device_queue_byte + decoded_bytes_per_frame - 1) / decoded_bytes_per_frame;
     }
     // cache the value of device_queue_len
     atomic_store(&cached_device_queue_len, device_queue_len);

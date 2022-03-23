@@ -37,6 +37,13 @@ Defines
 // Verbose audio logs
 #define LOG_AUDIO false
 
+// TODO: Automatically deduce this from (ms_per_frame / MS_IN_SECOND) * audio_frequency
+// TODO: Add ms_per_frame to AudioFrame*
+#define SAMPLES_PER_FRAME 480
+#define BYTES_PER_SAMPLE 4
+#define NUM_CHANNELS 2
+#define DECODED_BYTES_PER_FRAME (SAMPLES_PER_FRAME * BYTES_PER_SAMPLE * NUM_CHANNELS)
+
 // Number of audio frames that must pass before we skip ahead
 // NOTE: Catching up logic is in udp.c, but has to be moved out in a future PR
 //       See udp.c's MAX_NUM_AUDIO_FRAMES when changing the value
@@ -357,10 +364,15 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
            !is_underflowing_audio(audio_context, num_frames_buffered);
 }
 
-int get_device_audio_queue_bytes(AudioContext* audio_context) {
+int get_audio_device_queue_bytes(AudioContext* audio_context) {
     if (!whist_frontend_audio_is_open(audio_context->target_frontend)) {
         return -1;
     }
 
     return (int)safe_get_audio_queue(audio_context);
+}
+
+int get_decoded_bytes_per_frame(void)
+{
+    return DECODED_BYTES_PER_FRAME;
 }
