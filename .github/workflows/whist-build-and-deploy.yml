@@ -524,7 +524,20 @@ jobs:
           # all regions we support, defined as a string of comma-separated values (no spaces) as required by Packer
           if data["git_branch"] == "prod":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}"
-            data["destination_regions"] = ["us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"]
+            data["destination_regions"] = [
+              "us-east-1", 
+              "us-east-2", 
+              "us-west-1", 
+              "us-west-2", 
+              "ca-central-1",
+              "eu-north-1",
+              "eu-south-1",
+              "eu-west-1",
+              "eu-west-2",
+              "eu-west-3",
+              "eu-central-1",
+              "ap-south-1",
+            ]
           elif data["git_branch"] == "staging":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_STAGING }}"
             data["destination_regions"] = ["us-east-1"]
