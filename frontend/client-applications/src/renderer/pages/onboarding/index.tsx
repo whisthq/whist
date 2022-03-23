@@ -13,11 +13,12 @@ import {
   LiveChatSupport,
   FollowUsOnTwitter,
   TurnOffVPN,
-  NetworkTest,
   Pricing,
   HowDidYouHearAboutWhist,
+  NetworkTest,
 } from "@app/renderer/pages/onboarding/pages"
 import { WhistButton, WhistButtonState } from "@app/components/button"
+import { useMainState } from "@app/renderer/utils/ipc"
 
 const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
   const maxPageIndex = props.pages.length - 1
@@ -56,6 +57,7 @@ const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
 
 const Onboarding = (props: { onSubmit: () => void }) => {
   const [showIntro, setShowIntro] = useState(true)
+  const [mainState] = useMainState()
 
   if (showIntro)
     return (
@@ -80,7 +82,10 @@ const Onboarding = (props: { onSubmit: () => void }) => {
         <TurnOffVPN key={8} />,
         <LiveChatSupport key={9} />,
         <FollowUsOnTwitter key={10} />,
-        <Pricing key={11} />,
+        <NetworkTest key={11} />,
+        ...(mainState.subscriptionStatus === "active"
+          ? []
+          : [<Pricing key={12} />]),
       ]}
       onSubmit={props.onSubmit}
     />

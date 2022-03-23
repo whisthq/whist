@@ -128,12 +128,16 @@ const RootComponent = () => {
     })
 
   const handleOnboardingSubmit = () => {
-    setMainState({
-      trigger: {
-        name: WhistTrigger.showPaymentWindow,
-        payload: undefined,
-      },
-    })
+    if (mainState.subscriptionStatus !== "active") {
+      setMainState({
+        trigger: {
+          name: WhistTrigger.showPaymentWindow,
+          payload: undefined,
+        },
+      })
+    } else {
+      setShow(WindowHashImportOnboarding)
+    }
   }
 
   useEffect(() => {

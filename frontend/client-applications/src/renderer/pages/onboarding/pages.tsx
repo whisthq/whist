@@ -241,7 +241,7 @@ const FeaturesUnderDevelopment = () => {
   ]
 
   const icons = (
-    <dl className="grid grid-cols-3 space-x-4">
+    <dl className="grid grid-cols-3 gap-x-4">
       {features.map((feature) => (
         <div
           key={feature.name}
@@ -283,7 +283,7 @@ const TurnOffVPN = () => {
         If you use a VPN, please whitelist{" "}
         <span className="text-blue-light">Whist</span>
       </div>
-      <div className="mt-2 text-md text-gray-500">
+      <div className="mt-4 text-md text-gray-500">
         VPNs significantly degrade Whist&apos;s performance. From a privacy
         perspective, Whist already acts as a VPN by sending all web requests
         from a secure server instead of your computer.
@@ -330,7 +330,7 @@ const FollowUsOnTwitter = () => {
   const contents = (
     <div className="m-auto text-center mt-44">
       <div className="mt-20 text-gray-300 text-xl font-bold leading-10 max-w-md m-auto">
-        Please follow us on Twitter&nbsp;
+        Follow us on Twitter&nbsp;
         <div onClick={openTwitterURL} className="inline-block">
           <kbd className="px-2 py-1 rounded cursor-pointer bg-blue hover:bg-blue-dark duration-75">
             @whisthq
@@ -465,10 +465,10 @@ const Pricing = () => {
     },
     {
       name: "Fully refundable",
-      description: "If you forget to cancel, we will fully refund you.",
+      description: "If you forget to cancel, we will refund you fully.",
     },
     {
-      name: "No hidden charges",
+      name: "No hidden fees",
       description: "Your card will not be charged until after your trial ends.",
     },
   ]
