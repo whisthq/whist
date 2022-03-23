@@ -21,11 +21,16 @@ Defines
 ============================
 */
 
+#define SINGLE_THREAD_MODEL false
+
 struct WhistRenderer {
     VideoContext* video_context;
     AudioContext* audio_context;
 
-    bool run_renderer_thread;
+    NetworkSettings last_network_settings;
+
+    bool run_renderer_threads;
+#if SINGLE_THREAD_MODEL
     WhistThread renderer_thread;
     WhistMutex renderer_mutex;
     WhistSemaphore renderer_semaphore;
@@ -33,8 +38,14 @@ struct WhistRenderer {
     // Used to log renderer thread usage
     bool using_renderer_thread;
     bool render_is_on_renderer_thread;
+#else
+    bool has_video_rendered_yet;
+    WhistSemaphore video_semaphore;
+    WhistSemaphore audio_semaphore;
 
-    NetworkSettings last_network_settings;
+    WhistThread video_thread;
+    WhistThread audio_thread;
+#endif
 };
 
 #define LOG_RENDERER_THREAD_USAGE false
@@ -54,6 +65,20 @@ Private Function Declarations
  */
 int32_t multithreaded_renderer(void* opaque);
 
+/**
+ * @brief                          Renders video whenever video_semaphore is posted
+ *
+ * @param opaque                   The WhistRenderer, as a WhistRenderer*
+ */
+int32_t multithreaded_video_renderer(void* opaque);
+
+/**
+ * @brief                          Renders audio whenever audio_semaphore is posted
+ *
+ * @param opaque                   The WhistRenderer, as a WhistRenderer*
+ */
+int32_t multithreaded_audio_renderer(void* opaque);
+
 /*
 ============================
 Public Function Implementations
@@ -68,6 +93,7 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
     whist_renderer->audio_context = init_audio(frontend);
     whist_renderer->video_context = init_video(initial_width, initial_height);
 
+#if SINGLE_THREAD_MODEL
     // These mutex/sem/timer pass work to the renderer thread when necessary
     start_timer(&whist_renderer->last_try_render_timer);
     whist_renderer->renderer_mutex = whist_create_mutex();
@@ -78,9 +104,18 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
 
     // We use the renderer thread to do work,
     // If someone else hasn't called try_render recently
-    whist_renderer->run_renderer_thread = true;
+    whist_renderer->run_renderer_threads = true;
     whist_renderer->renderer_thread =
         whist_create_thread(multithreaded_renderer, "multithreaded_renderer", whist_renderer);
+
+#else
+    // Mark threads as running,
+    whist_renderer->run_renderer_threads = true;
+    whist_renderer->video_thread = whist_create_thread(
+        multithreaded_video_renderer, "multithreaded_video_renderer", whist_renderer);
+    whist_renderer->audio_thread = whist_create_thread(
+        multithreaded_audio_renderer, "multithreaded_audio_renderer", whist_renderer);
+#endif
 
     // Return the struct
     return whist_renderer;
@@ -110,11 +145,17 @@ void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packe
         case PACKET_VIDEO: {
             TIME_RUN(receive_video(whist_renderer->video_context, (VideoFrame*)frame),
                      VIDEO_RECEIVE_TIME, statistics_timer);
+#if !SINGLE_THREAD_MODEL
+            whist_post_semaphore(whist_renderer->video_semaphore);
+#endif
             break;
         }
         case PACKET_AUDIO: {
             TIME_RUN(receive_audio(whist_renderer->audio_context, (AudioFrame*)frame),
                      AUDIO_RECEIVE_TIME, statistics_timer);
+#if !SINGLE_THREAD_MODEL
+            whist_post_semaphore(whist_renderer->audio_semaphore);
+#endif
             break;
         }
         default: {
@@ -124,6 +165,7 @@ void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packe
 }
 
 void renderer_update(WhistRenderer* whist_renderer) {
+#if SINGLE_THREAD_MODEL
     // If it's been 2 ms since the last time someone else called try_render,
     // let's ping our renderer thread to do the work instead
 
@@ -141,9 +183,11 @@ void renderer_update(WhistRenderer* whist_renderer) {
         // Unlock the mutex
         whist_unlock_mutex(whist_renderer->renderer_mutex);
     }
+#endif
 }
 
 void renderer_try_render(WhistRenderer* whist_renderer) {
+#if SINGLE_THREAD_MODEL
     // Use a mutex to prevent multiple threads from rendering at once
     whist_lock_mutex(whist_renderer->renderer_mutex);
 
@@ -186,21 +230,31 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
     // Mark as recently rendered, and unlock
     start_timer(&whist_renderer->last_try_render_timer);
     whist_unlock_mutex(whist_renderer->renderer_mutex);
+#endif
 }
 
 void destroy_renderer(WhistRenderer* whist_renderer) {
     // Wait to close the renderer thread
-    whist_renderer->run_renderer_thread = false;
+    whist_renderer->run_renderer_threads = false;
+#if SINGLE_THREAD_MODEL
     whist_post_semaphore(whist_renderer->renderer_semaphore);
     whist_wait_thread(whist_renderer->renderer_thread, NULL);
+#else
+    whist_post_semaphore(whist_renderer->video_semaphore);
+    whist_post_semaphore(whist_renderer->audio_semaphore);
+    whist_wait_thread(whist_renderer->video_thread, NULL);
+    whist_wait_thread(whist_renderer->audio_thread, NULL);
+#endif
 
     // Destroy the audio/video context
     destroy_audio(whist_renderer->audio_context);
     destroy_video(whist_renderer->video_context);
 
     // Free the whist renderer struct
+#if SINGLE_THREAD_MODEL
     whist_destroy_semaphore(whist_renderer->renderer_semaphore);
     whist_destroy_mutex(whist_renderer->renderer_mutex);
+#endif
     free(whist_renderer);
 }
 
@@ -210,6 +264,8 @@ Private Function Implementations
 ============================
 */
 
+#if SINGLE_THREAD_MODEL
+
 int32_t multithreaded_renderer(void* opaque) {
     WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
 
@@ -218,7 +274,7 @@ int32_t multithreaded_renderer(void* opaque) {
         whist_wait_semaphore(whist_renderer->renderer_semaphore);
 
         // If this thread should no longer exist, exit accordingly
-        if (!whist_renderer->run_renderer_thread) {
+        if (!whist_renderer->run_renderer_threads) {
             break;
         }
 
@@ -227,6 +283,53 @@ int32_t multithreaded_renderer(void* opaque) {
         renderer_try_render(whist_renderer);
         whist_renderer->render_is_on_renderer_thread = false;
     }
+    return 0;
+}
+
+#else
+
+int32_t multithreaded_video_renderer(void* opaque) {
+    WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
+
+    while (true) {
+        // Wait until we're told to render on this thread
+        whist_wait_semaphore(whist_renderer->video_semaphore);
+
+        // If this thread should no longer exist, exit accordingly
+        if (!whist_renderer->run_renderer_threads) {
+            break;
+        }
+
+        // Otherwise, try to render
+        render_video(whist_renderer->video_context);
+        if (has_video_rendered_yet(whist_renderer->video_context)) {
+            whist_renderer->has_video_rendered_yet = true;
+        }
+    }
 
     return 0;
 }
+
+int32_t multithreaded_audio_renderer(void* opaque) {
+    WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
+
+    while (true) {
+        // Wait until we're told to render on this thread
+        whist_wait_semaphore(whist_renderer->audio_semaphore);
+
+        // If this thread should no longer exist, exit accordingly
+        if (!whist_renderer->run_renderer_threads) {
+            break;
+        }
+
+        // Otherwise, try to render, but only if video has rendered
+        // This is because it feels weird when audio is played to the loading screen
+        if (whist_renderer->has_video_rendered_yet) {
+            render_audio(whist_renderer->audio_context);
+        }
+    }
+
+    return 0;
+}
+
+#endif
