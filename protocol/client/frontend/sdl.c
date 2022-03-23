@@ -159,6 +159,8 @@ static bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
         return SDL_PollEvent(NULL) != 0;
     }
 
+    // We cannot use SDL_WaitEventTimeout here, because
+    // Linux seems to treat a 1ms timeout as an infinite timeout
     SDL_Event sdl_event;
     if (!SDL_PollEvent(&sdl_event)) {
         return false;

@@ -73,8 +73,6 @@ Public Function Implementations
 */
 
 bool sdl_handle_events(WhistFrontend* frontend) {
-    // We cannot use SDL_WaitEventTimeout here, because
-    // Linux seems to treat a 1ms timeout as an infinite timeout
     WhistFrontendEvent event;
     while (whist_frontend_poll_event(frontend, &event)) {
         if (handle_frontend_event(&event) != 0) {
