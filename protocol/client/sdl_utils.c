@@ -880,8 +880,8 @@ static void sdl_render_nv12data(void) {
         SDL_Rect output_rect = {
             .x = 0,
             .y = 0,
-            .w = output_width,
-            .h = output_height,
+            .w = min(output_width, texture_rect.w),
+            .h = min(output_height, texture_rect.h),
         };
         SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
     }
