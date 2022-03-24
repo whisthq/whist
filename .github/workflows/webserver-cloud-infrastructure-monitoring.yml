@@ -11,6 +11,12 @@ on:
     - cron: "12 22 * * 1-5" # runs at 17:18 +/- a few minutes (EST/New York) each weekday
   workflow_dispatch:
 
+# This guarantees that if you push many commits to the same PR, only the latest
+# commit will get run (others get cancelled)
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   # Find the number of AWS EC2 instances we have across all instance states (running, stopped)
   # running in each region, and notify Slack

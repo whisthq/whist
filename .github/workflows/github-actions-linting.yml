@@ -15,6 +15,12 @@ on:
       - ".github/workflows/github-actions-linting.yml"
   workflow_dispatch:
 
+# This guarantees that if you push many commits to the same PR, only the latest
+# commit will get run (others get cancelled)
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   github-actions-linting-main:
     name: Lint GitHub Actions Workflows & Actions
