@@ -189,7 +189,7 @@ int client_connect_socket(whist_server_state *state, Client *client,
                           char *binary_aes_private_key_input) {
     if (!create_udp_socket_context(&client->udp_context, NULL, BASE_UDP_PORT, 1,
                                    UDP_CONNECTION_WAIT, false, binary_aes_private_key_input)) {
-        LOG_ERROR("Failed UDP connection with client");
+        LOG_WARNING("Failed UDP connection with client");
         return -1;
     }
     udp_register_nack_buffer(&client->udp_context, PACKET_VIDEO,
