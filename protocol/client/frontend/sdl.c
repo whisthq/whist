@@ -126,7 +126,7 @@ static size_t sdl_get_audio_buffer_size(WhistFrontend* frontend) {
 
 static void sdl_get_window_pixel_size(WhistFrontend* frontend, int* width, int* height) {
     SDLFrontendContext* context = frontend->context;
-    SDL_GetWindowSize(context->window, width, height);
+    SDL_GL_GetDrawableSize(context->window, width, height);
 }
 
 static void sdl_get_window_virtual_size(WhistFrontend* frontend, int* width, int* height) {

@@ -1,5 +1,5 @@
-#ifndef WHIST_SDL_EVENT_HANDLER_H
-#define WHIST_SDL_EVENT_HANDLER_H
+#ifndef WHIST_EVENT_HANDLER_H
+#define WHIST_EVENT_HANDLER_H
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file sdl_event_handler.h
@@ -60,4 +60,4 @@ bool sdl_handle_events(WhistFrontend* frontend);
  */
 bool sdl_pending_audio_device_update(void);
 
-#endif  // WHIST_SDL_EVENT_HANDLER_H
+#endif  // WHIST_EVENT_HANDLER_H
