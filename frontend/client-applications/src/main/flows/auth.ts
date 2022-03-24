@@ -1,5 +1,5 @@
 import { from, merge, zip } from "rxjs"
-import { switchMap, map, filter } from "rxjs/operators"
+import { switchMap, map, filter, tap } from "rxjs/operators"
 import has from "lodash.has"
 
 import { fork, flow } from "@app/main/utils/flows"
@@ -17,6 +17,7 @@ export const authRefreshFlow = flow<refreshToken>(
   (trigger) => {
     const refreshed = fork(
       trigger.pipe(
+        tap((x) => console.log("refresh flow", x)),
         switchMap((tokens: refreshToken) =>
           from(authInfoRefreshRequest(tokens))
         ),

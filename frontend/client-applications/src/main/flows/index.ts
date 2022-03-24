@@ -157,9 +157,12 @@ const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))
 
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
-const refreshAtEnd = authRefreshFlow(
-  emitOnSignal(combineLatest({ refreshToken }), mandelbox.success)
+const authRefresh = authRefreshFlow(
+  merge(fromTrigger(WhistTrigger.authFlowSuccess))
 )
+
+// Subscribe to failure so it can be logged
+authRefresh.failure.subscribe()
 
 createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
 createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
@@ -182,7 +185,7 @@ createTrigger(
 createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
 createTrigger(WhistTrigger.downloadProgress, update.progress)
 
-createTrigger(WhistTrigger.authRefreshSuccess, refreshAtEnd.success)
+createTrigger(WhistTrigger.authRefreshSuccess, authRefresh.success)
 
 createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)
