@@ -97,10 +97,17 @@ fromTrigger(WhistTrigger.protocolStdoutData).subscribe((data: string) => {
   lines.forEach((line: string) => {
     if (!line.includes("VERBOSE")) {
       logToLogzio(line, "protocol")
-      if ((process.env.SHOW_PROTOCOL_LOGS ?? "false") === "true")
-        console.log(line)
+      if (process.env.SHOW_PROTOCOL_LOGS === "true") console.log(line)
     }
   })
+})
+
+fromTrigger(WhistTrigger.protocolStdoutEnd).subscribe(() => {
+  const { buffer } = stdoutBuffer
+  if (!buffer.includes("VERBOSE")) {
+    logToLogzio(buffer, "protocol")
+    if (process.env.SHOW_PROTOCOL_LOGS === "true") console.log(buffer)
+  }
 })
 
 /* eslint-disable @typescript-eslint/no-misused-promises */
