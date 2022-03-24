@@ -877,11 +877,18 @@ static void sdl_render_nv12data(void) {
     } else {
         // Take the subsection of texture that should be rendered to screen,
         // And draw it on the renderer
+
+#ifdef __APPLE__
+#define CLIPPED_PIXELS 1
+#else
+#define CLIPPED_PIXELS 0
+#endif
+
         SDL_Rect output_rect = {
             .x = 0,
             .y = 0,
-            .w = min(output_width, texture_rect.w),
-            .h = min(output_height, texture_rect.h),
+            .w = min(output_width, texture_rect.w) - CLIPPED_PIXELS,
+            .h = min(output_height, texture_rect.h) - CLIPPED_PIXELS,
         };
         SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
     }
