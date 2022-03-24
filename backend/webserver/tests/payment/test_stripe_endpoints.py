@@ -13,7 +13,10 @@ from tests.patches import function, Object
 from tests.client import WhistAPITestClient
 
 
-@pytest.mark.parametrize("subscription_status", (None, "canceled", "incomplete_expired", "unpaid"))
+@pytest.mark.parametrize(
+    "subscription_status",
+    (None, "canceled", "incomplete_expired", "unpaid", "past_due", "incomplete", "trialing"),
+)
 def test_create_checkout_session(
     client: WhistAPITestClient,
     make_user: Callable[[], str],
@@ -55,7 +58,7 @@ def test_create_checkout_session(
     assert response.json == {"url": url}
 
 
-@pytest.mark.parametrize("subscription_status", ("active", "past_due", "incomplete", "trialing"))
+@pytest.mark.parametrize("subscription_status", ("active",))
 def test_create_billing_portal_session(
     client: WhistAPITestClient,
     make_user: Callable[..., str],
