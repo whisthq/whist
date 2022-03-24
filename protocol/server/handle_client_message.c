@@ -339,8 +339,8 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
 
     // split urls
     for (size_t i=0; i<strlen(command); i++) {
-        if (command[i] == "^") {
-            command[i] = " ";
+        if (command[i] == '^') {
+            command[i] = ' ';
         }
     }
 
