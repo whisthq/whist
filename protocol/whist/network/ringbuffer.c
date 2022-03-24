@@ -237,18 +237,55 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
             if (frame_data->id > ring_buffer->currently_rendering_id) {
                 whist_analyzer_record_reset_ringbuffer(
                     ring_buffer->type, ring_buffer->currently_rendering_id, segment_id);
-                // We have received a packet which will overwrite a frame that needs to be rendered
-                // in the future. In other words, the ring buffer is full, so we should wipe the
-                // whole ring buffer.
+                // We have received a packet, which will overwrite a frame that needs to be rendered
+                // in the future. This means that stream-reset failed to recover within the
+                // size of the ringbuffer, and this failure will be logged accordingly.
                 LOG_WARNING(
-                    "We received a packet with %s Frame ID %d, that is trying to overwrite Frame "
-                    "ID "
-                    "%d!\n"
-                    "But we can't overwrite that frame, since our renderer has only gotten to ID "
-                    "%d!\n"
+                    "We received a %s packet with Frame ID %d, that is trying to overwrite Frame "
+                    "ID %d.\n"
+                    "But we can't overwrite that frame, since our renderer has only rendered up to "
+                    "ID %d.\n"
                     "Resetting the entire ringbuffer...",
                     type == PACKET_VIDEO ? "video" : "audio", segment_id, frame_data->id,
                     ring_buffer->currently_rendering_id);
+                // Log out the contents of the entire ringbuffer
+                for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
+                    FrameData* dropped_frame_data = get_frame_at_id(ring_buffer, i);
+                    if (dropped_frame_data->id != -1) {
+                        // Get whether or not the stream could have recovered at that point
+                        bool is_recovery_point = false;
+                        if (is_ready_to_render(ring_buffer, dropped_frame_data->id)) {
+                            if (type == PACKET_VIDEO) {
+                                // Grab whether or not the video is a recovery point
+                                WhistPacket* whist_packet =
+                                    (WhistPacket*)dropped_frame_data->frame_buffer;
+                                VideoFrame* video_frame = (VideoFrame*)whist_packet->data;
+                                if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(video_frame->frame_type)) {
+                                    is_recovery_point = true;
+                                }
+                            } else {
+                                // All audio frames are valid recovery points
+                                is_recovery_point = true;
+                            }
+                        }
+                        // Log the dropped frame, along with missing indices and NACKing info on
+                        // those indices
+                        LOG_WARNING("Frame[%d] dropped with ID %d: %d/%d %s", i,
+                                    dropped_frame_data->id,
+                                    dropped_frame_data->original_packets_received,
+                                    dropped_frame_data->num_original_packets,
+                                    is_recovery_point ? "(Recovery Frame)" : "");
+                        for (int j = 0; j < dropped_frame_data->num_original_packets; j++) {
+                            if (!dropped_frame_data->received_indices[j]) {
+                                LOG_WARNING("Did not receive ID %d, Index %d. Nacked %d times.", i,
+                                            j, dropped_frame_data->num_times_index_nacked[j]);
+                            }
+                        }
+                    } else {
+                        LOG_WARNING("Frame[%d] is empty", i);
+                    }
+                }
+                // Wipe the ringbuffer, and mark as overflowed
                 reset_ring_buffer(ring_buffer);
                 ringbuffer_overflowed = true;
             } else {
@@ -530,7 +567,7 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
                 if (frame_data->id == i) {
                     // Only verbosely log reset_stream for VIDEO frames
                     if (ring_buffer->type == PACKET_VIDEO) {
-                        LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
+                        LOG_WARNING("Frame dropped with ID %d: %d/%d", frame_data->id,
                                     frame_data->original_packets_received,
                                     frame_data->num_original_packets);
                         for (int j = 0; j < frame_data->num_original_packets; j++) {
