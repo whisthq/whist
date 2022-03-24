@@ -340,16 +340,23 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     // Step 3: Execute the command created in step 2 (which consists of a call to the
     // run-as-whist-user.sh script with the appropriate parameter) in the mandelbox, and save the
     // resulting stdout in the open_url_result string.
-    char *open_url_result;
-    int ret = runcmd(command, &open_url_result);
+    // char *open_url_result;
+    // int ret = runcmd(command, &open_url_result);
+    // if (ret == -1) {
+    //     LOG_ERROR("Error opening URL in new tab: %s", open_url_result);
+    //     free(command);
+    //     free(open_url_result);
+    //     return -1;
+    // }
+
+    int ret = runcmd(command, NULL);
     if (ret == -1) {
-        LOG_ERROR("Error opening URL in new tab: %s", open_url_result);
+        LOG_ERROR("Error opening URL in new tab!");
         free(command);
-        free(open_url_result);
         return -1;
     }
 
-    free(open_url_result);
+    // free(open_url_result);
     free(command);
 
     return 0;
