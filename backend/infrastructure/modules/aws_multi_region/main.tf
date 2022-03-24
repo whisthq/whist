@@ -1,3 +1,7 @@
+# All non-global resources should be declared as modules inside this file.
+# We use the multi-region module to "inject" the resources into the regions
+# we want, instead of manually enabling them one by one on each.
+
 terraform {
   required_providers {
     aws = {

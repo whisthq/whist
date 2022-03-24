@@ -6,6 +6,7 @@
 resource "aws_iam_service_linked_role" "ServiceRoleForSSM" {
   count            = var.env == "prod" ? 1 : 0
   aws_service_name = "ssm.amazonaws.com"
+  description      = "Provides access to AWS Resources managed or used by Amazon SSM"
   tags = {
     Name      = "ServiceRoleForSSM"
     Env       = var.env
@@ -17,6 +18,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForSSM" {
 resource "aws_iam_service_linked_role" "ServiceRoleForComputeOptimizer" {
   count            = var.env == "prod" ? 1 : 0
   aws_service_name = "compute-optimizer.amazonaws.com"
+  description      = "Allows ComputeOptimizer to call AWS services and collect workload details on your behalf"
   tags = {
     Name      = "ServiceRoleForComputeOptimizer"
     Env       = var.env
@@ -28,6 +30,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForComputeOptimizer" {
 resource "aws_iam_service_linked_role" "ServiceRoleForEC2Spot" {
   count            = var.env == "prod" ? 1 : 0
   aws_service_name = "spot.amazonaws.com"
+  description      = "Default EC2 Spot Service Linked Role"
   tags = {
     Name      = "ServiceRoleForEC2Spot"
     Env       = var.env
@@ -39,6 +42,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForEC2Spot" {
 resource "aws_iam_service_linked_role" "ServiceRoleForServiceQuotas" {
   count            = var.env == "prod" ? 1 : 0
   aws_service_name = "servicequotas.amazonaws.com"
+  description      = "A service-linked role is required for Service Quotas to access your service limits"
   tags = {
     Name      = "ServiceRoleForServiceQuotas"
     Env       = var.env
@@ -54,6 +58,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForServiceQuotas" {
 resource "aws_iam_role" "PackerAMIBuilder" {
   count              = var.env == "dev" ? 1 : 0
   name               = "PackerAMIBuilder"
+  description        = "This role is used by Packer to build AMIs, its policy has the minimum amount of permissions to operate"
   assume_role_policy = data.aws_iam_policy_document.EC2AssumeRolePolicy.json
 
   inline_policy {
@@ -71,6 +76,7 @@ resource "aws_iam_role" "PackerAMIBuilder" {
 # This role is used by the scaling service and webserver to manage instances.
 resource "aws_iam_role" "EC2DeploymentRole" {
   name               = "EC2DeploymentRole${var.env}"
+  description        = "This role is used by the scaling service and webserver to manage instances"
   assume_role_policy = data.aws_iam_policy_document.EC2AssumeRolePolicy.json
 
   inline_policy {
