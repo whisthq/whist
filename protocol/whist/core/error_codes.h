@@ -178,6 +178,21 @@ typedef enum WhistStatus {
      * Corresponds to ENOBUFS, WSAENOBUFS.
      */
     WHIST_ERROR_NO_BUFFERS = -18,
+    /**
+     * End-of-file.
+     *
+     * Corresponds to EOF or zero return from some read functions.
+     */
+    WHIST_ERROR_END_OF_FILE = -19,
+    /**
+     * Error in external library.
+     *
+     * An unspecified error from an external library.  Error codes from
+     * external libraries should be mapped to Whist error codes where
+     * possible, but when not possible this code can be used to indicate
+     * the source of the error without any more detail.
+     */
+    WHIST_ERROR_EXTERNAL = -20,
 } WhistStatus;
 
 /**
