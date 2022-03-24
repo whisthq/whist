@@ -95,7 +95,7 @@ fromTrigger(WhistTrigger.protocolStdoutData).subscribe((data: string) => {
   stdoutBuffer.buffer = lines.length === 0 ? "" : (lines.pop() as string)
   // Print the rest of the lines
   lines.forEach((line: string) => {
-    logToLogzio(line, "protocol")
+    if (!line.includes("VERBOSE")) logToLogzio(line, "protocol")
     const shouldLogProtocol =
       (process.env.SHOW_PROTOCOL_LOGS ?? "false") === "true"
     if (shouldLogProtocol) console.log(line)
