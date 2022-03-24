@@ -28,14 +28,14 @@ This repository contains the bulk of the code for the Whist Browser, previously 
 
 ## Repository Structure
 
-The Whist monorepository contains many Whist subrepositories:
+The Whist monorepository contains many subprojects:
 
 | Subrepository                    | Description                                                                             |
 | -------------------------------- | --------------------------------------------------------------------------------------- |
 | backend/auth0                    | Auth0 is a third-party service which manages authentication and user accounts for us.   |
 | backend/services/host-service    | This service runs on EC2 instance hosts and orchestrates mandelbox management.          |
 | backend/services/scaling-service | This service is responsible for scaling up/down EC2 instances to run mandelboxes on.    |
-| backend/services/webserver       | This service is responsible for payments handling and assigning users to mandelboxes.   |
+| backend/webserver                | This service is responsible for payments handling and assigning users to mandelboxes.   |
 | frontend/client-applications     | The client-side Electron-based application users download and use to launch Whist.      |
 | frontend/core-ts                 | The Whist internal TypeScript library of utilities and reusable components.             |
 | frontend/website                 | The website hosted at `whist.com`.                                                      |
