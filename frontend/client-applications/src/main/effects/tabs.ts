@@ -8,5 +8,7 @@ import { pipeURLToProtocol } from "@app/main/utils/protocol"
 fromTrigger(WhistTrigger.importTabs)
   .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
   .subscribe(([payload, p]: [{ urls: string[] }, ChildProcess]) => {
-    pipeURLToProtocol(p, payload.urls.join("|"))
+    const imported_urls = payload.urls.join("|")
+    console.log(imported_urls)
+    pipeURLToProtocol(p, imported_urls)
   })
