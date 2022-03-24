@@ -18,6 +18,12 @@ on:
       - pylintrc
   workflow_dispatch:
 
+# This guarantees that if you push many commits to the same PR, only the latest
+# commit will get run (others get cancelled)
+concurrency:
+  group: webserver-check-pr-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   # Static analysis
   # Check for errors using Pylint. Perform static type analysis with Mypy

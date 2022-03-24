@@ -23,6 +23,12 @@ on:
       - ".github/workflows/protocol-deploy-client-lib.yml"
   workflow_dispatch:
 
+# This guarantees that if you push many commits to the same PR, only the latest
+# commit will get run (others get cancelled)
+concurrency:
+  group: protocol-deploy-client-lib-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   # Build and deploy the protocol client library
   protocol-deploy-client-lib-main:

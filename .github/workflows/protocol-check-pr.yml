@@ -23,6 +23,12 @@ on:
       - "mandelboxes/helper_scripts/copy_protocol_build.sh"
   workflow_dispatch:
 
+# This guarantees that if you push many commits to the same PR, only the latest
+# commit will get run (others get cancelled)
+concurrency:
+  group: protocol-check-pr-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   # Check Protocol PR on Intel x86_64 systems (via GHA runners)
   protocol-check-pr-x64:

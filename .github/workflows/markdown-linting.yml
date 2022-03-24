@@ -1,29 +1,28 @@
-# workflows/github-actions-linting.yml
+# workflows/markdown-linting.yml
 #
-# GitHub Actions: Linting
-# Lint GitHub Actions YAML workflows/actions using Prettier.
+# Markdown: Linting
+# Lint Markdown files using Prettier.
 
-name: "GitHub Actions: Linting"
+name: "Markdown: Linting"
 
 on:
   pull_request:
     paths:
-      - ".github/workflows/**"
-      - ".github/actions/**"
-      - "!.github/workflows/README.md"
-      - "!.github/actions/README.md"
-      - ".github/workflows/github-actions-linting.yml"
+      - "**.md"
+      - "**/**.md"
+      - ".github/**/**.md"
+      - ".github/workflows/markdown-linting.yml"
   workflow_dispatch:
 
 # This guarantees that if you push many commits to the same PR, only the latest
 # commit will get run (others get cancelled)
 concurrency:
-  group: github-actions-linting-${{ github.head_ref || github.run_id }}
+  group: markdown-linting-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
-  github-actions-linting-main:
-    name: Lint GitHub Actions Workflows & Actions
+  markdown-linting-main:
+    name: Lint Markdown Files
     runs-on: ubuntu-20.04
 
     steps:
@@ -41,6 +40,5 @@ jobs:
       - name: Install Prettier
         run: npm install -g prettier
 
-      - name: Check Workflow and Action formatting
-        working-directory: .github
-        run: prettier --check "**/*.{yml,yaml}"
+      - name: Check if Markdown files are Formatted
+        run: prettier --check '**/**.md' # Prettier glob syntax hits all .md files with this
