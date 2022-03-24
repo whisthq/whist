@@ -260,3 +260,5 @@ if(UPLOAD_COVERAGE)
 endif()
 
 add_custom_target(test DEPENDS RunProtocolTests)
+
+add_subdirectory(programs)
