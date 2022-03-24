@@ -34,9 +34,6 @@ bool rgui_pressed = false;
 
 // Main state variables
 extern bool client_exiting;
-
-extern volatile SDL_Window* window;
-
 extern MouseMotionAccumulation mouse_state;
 
 // This variable represents whether there is an active pinch gesture
@@ -191,16 +188,11 @@ static void handle_gesture_event(FrontendGestureEvent* event) {
 
 static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEvent* event) {
     FileEventInfo drop_info;
-    FrontendWindowInfo window_info;
-    if (whist_frontend_get_window_info(frontend, &window_info) != WHIST_SUCCESS) {
-        LOG_ERROR("Failed to get window DPI for file drop event");
-        free(event->filename);
-        return;
-    }
+    int dpi = whist_frontend_get_window_dpi(frontend);
 
     // Scale the drop coordinates for server-side compatibility
-    drop_info.server_drop.x = event->position.x * window_info.display.dpi / 96;
-    drop_info.server_drop.y = event->position.y * window_info.display.dpi / 96;
+    drop_info.server_drop.x = event->position.x * dpi / 96;
+    drop_info.server_drop.y = event->position.y * dpi / 96;
     sdl_end_drag_event();
     file_synchronizer_set_file_reading_basic_metadata(event->filename, FILE_TRANSFER_SERVER_DROP,
                                                       &drop_info);

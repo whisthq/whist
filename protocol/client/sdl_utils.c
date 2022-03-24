@@ -279,13 +279,10 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
-    FrontendWindowInfo info;
-    if (whist_frontend_get_window_info(out_frontend, &info) != WHIST_SUCCESS) {
-        LOG_ERROR("Failed to get window info");
-    } else {
-        output_width = info.pixel_size.width;
-        output_height = info.pixel_size.height;
-    }
+    int w, h;
+    whist_frontend_get_window_pixel_size(out_frontend, &w, &h);
+    output_width = w;
+    output_height = h;
     return sdl_window;
 }
 
@@ -335,19 +332,13 @@ volatile bool pending_resize_message = false;
 void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) {
     // Try to make pixel width and height conform to certain desirable dimensions
     int current_width, current_height;
-    FrontendWindowInfo info;
-    if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
-        LOG_ERROR("Failed to get window info");
-        return;
-    }
-    current_width = info.pixel_size.width;
-    current_height = info.pixel_size.height;
+    whist_frontend_get_window_pixel_size(frontend, &current_width, &current_height);
 
     LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
              current_height);
 
 #ifndef __linux__
-    int dpi = info.display.dpi;
+    int dpi = whist_frontend_get_window_dpi(frontend);
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
     // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
@@ -378,12 +369,7 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
                               desired_height * 96 / dpi);
             LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
                      desired_width, desired_height);
-            if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
-                LOG_ERROR("Failed to get window info");
-                return;
-            }
-            current_width = info.pixel_size.width;
-            current_height = info.pixel_size.height;
+            whist_frontend_get_window_pixel_size(frontend, &current_width, &current_height);
 
             if (current_width != desired_width || current_height != desired_height) {
                 LOG_WARNING(
@@ -703,25 +689,11 @@ void sdl_handle_drag_event(WhistFrontend* frontend) {
       native_window_color global pointer is NULL.
      */
 
-    FrontendWindowInfo info;
-
-    if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
-        LOG_ERROR("Failed to get window info!");
-        return;
-    }
-
-    int x_window = info.position.x;
-    int y_window = info.position.y;
-    int w_window = info.virtual_size.width;
-    int h_window = info.virtual_size.height;
-    int x_mouse_global, y_mouse_global;
-
+    int x_window, y_window, w_window, h_window, x_mouse_global, y_mouse_global;
+    whist_frontend_get_window_position(frontend, &x_window, &y_window);
+    whist_frontend_get_window_virtual_size(frontend, &w_window, &h_window);
     // Mouse is not active within window - so we must use the global mouse and manually transform
-    if (whist_frontend_get_global_mouse_position(frontend, &x_mouse_global, &y_mouse_global) !=
-        WHIST_SUCCESS) {
-        LOG_ERROR("Failed to get global mouse position!");
-        return;
-    }
+    whist_frontend_get_global_mouse_position(frontend, &x_mouse_global, &y_mouse_global);
 
     if (x_window < x_mouse_global && x_mouse_global < x_window + w_window &&
         y_window < y_mouse_global && y_mouse_global < y_window + h_window) {

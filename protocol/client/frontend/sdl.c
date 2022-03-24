@@ -124,20 +124,42 @@ static size_t sdl_get_audio_buffer_size(WhistFrontend* frontend) {
     return SDL_GetQueuedAudioSize(context->audio_device);
 }
 
-static WhistStatus sdl_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info) {
+static void sdl_get_window_pixel_size(WhistFrontend* frontend, int* width, int* height) {
     SDLFrontendContext* context = frontend->context;
-    if (context->window == NULL) {
-        return WHIST_ERROR_NOT_FOUND;
+    SDL_GetWindowSize(context->window, width, height);
+}
+
+static void sdl_get_window_virtual_size(WhistFrontend* frontend, int* width, int* height) {
+    SDLFrontendContext* context = frontend->context;
+    SDL_GetWindowSize(context->window, width, height);
+}
+
+static void sdl_get_window_position(WhistFrontend* frontend, int* x, int* y) {
+    SDLFrontendContext* context = frontend->context;
+    SDL_GetWindowPosition(context->window, x, y);
+}
+
+static WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int* index) {
+    SDLFrontendContext* context = frontend->context;
+    int ret = SDL_GetWindowDisplayIndex(context->window);
+    if (ret < 0) {
+        LOG_ERROR("Could not get window display index - %s", SDL_GetError());
+        return WHIST_ERROR_UNKNOWN;
     }
-    SDL_GL_GetDrawableSize(context->window, &info->pixel_size.width, &info->pixel_size.height);
-    SDL_GetWindowSize(context->window, &info->virtual_size.width, &info->virtual_size.height);
-    SDL_GetWindowPosition(context->window, &info->position.x, &info->position.y);
-    info->display.index = SDL_GetWindowDisplayIndex(context->window);
-    info->display.dpi = get_native_window_dpi(context->window);
-    int window_flags = SDL_GetWindowFlags(context->window);
-    info->minimized = (window_flags & SDL_WINDOW_MINIMIZED) != 0;
-    info->occluded = (window_flags & SDL_WINDOW_OCCLUDED) != 0;
+    if (index != NULL) {
+        *index = ret;
+    }
     return WHIST_SUCCESS;
+}
+
+static int sdl_get_window_dpi(WhistFrontend* frontend) {
+    SDLFrontendContext* context = frontend->context;
+    return get_native_window_dpi(context->window);
+}
+
+static bool sdl_is_window_visible(WhistFrontend* frontend) {
+    SDLFrontendContext* context = frontend->context;
+    return !(SDL_GetWindowFlags(context->window) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_OCCLUDED));
 }
 
 static void temp_sdl_set_window(WhistFrontend* frontend, void* window) {
@@ -285,9 +307,8 @@ static bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
     return true;
 }
 
-static WhistStatus sdl_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y) {
+static void sdl_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y) {
     SDL_GetGlobalMouseState(x, y);
-    return WHIST_SUCCESS;
 }
 
 static const WhistFrontendFunctionTable sdl_function_table = {
@@ -298,7 +319,12 @@ static const WhistFrontendFunctionTable sdl_function_table = {
     .close_audio = sdl_close_audio,
     .queue_audio = sdl_queue_audio,
     .get_audio_buffer_size = sdl_get_audio_buffer_size,
-    .get_window_info = sdl_get_window_info,
+    .get_window_pixel_size = sdl_get_window_pixel_size,
+    .get_window_virtual_size = sdl_get_window_virtual_size,
+    .get_window_position = sdl_get_window_position,
+    .get_window_display_index = sdl_get_window_display_index,
+    .get_window_dpi = sdl_get_window_dpi,
+    .is_window_visible = sdl_is_window_visible,
     .temp_set_window = temp_sdl_set_window,
     .set_title = sdl_set_title,
     .poll_event = sdl_poll_event,

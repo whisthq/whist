@@ -5,7 +5,6 @@
 #include <whist/core/error_codes.h>
 
 typedef struct WhistFrontend WhistFrontend;
-typedef struct FrontendWindowInfo FrontendWindowInfo;
 
 typedef enum FrontendEventType {
     FRONTEND_EVENT_RESIZE,
@@ -120,14 +119,19 @@ typedef struct WhistFrontendFunctionTable {
 
     // Display
     void (*temp_set_window)(WhistFrontend* frontend, void* window);
-    WhistStatus (*get_window_info)(WhistFrontend* frontend, FrontendWindowInfo* info);
+    void (*get_window_pixel_size)(WhistFrontend* frontend, int* width, int* height);
+    void (*get_window_virtual_size)(WhistFrontend* frontend, int* width, int* height);
+    void (*get_window_position)(WhistFrontend* frontend, int* x, int* y);
+    WhistStatus (*get_window_display_index)(WhistFrontend* frontend, int* index);
+    int (*get_window_dpi)(WhistFrontend* frontend);
+    bool (*is_window_visible)(WhistFrontend* frontend);
     WhistStatus (*set_title)(WhistFrontend* frontend, const char* title);
 
     // Events
     bool (*poll_event)(WhistFrontend* frontend, WhistFrontendEvent* event);
 
     // Mouse
-    WhistStatus (*get_global_mouse_position)(WhistFrontend* frontend, int* x, int* y);
+    void (*get_global_mouse_position)(WhistFrontend* frontend, int* x, int* y);
 } WhistFrontendFunctionTable;
 
 struct WhistFrontend {
@@ -154,31 +158,14 @@ bool whist_frontend_audio_is_open(WhistFrontend* frontend);
 void whist_frontend_close_audio(WhistFrontend* frontend);
 
 // Display
-struct FrontendWindowInfo {
-    struct {
-        int width;
-        int height;
-    } pixel_size;
-    struct {
-        int width;
-        int height;
-    } virtual_size;
-    struct {
-        int x;
-        int y;
-    } position;
-    bool fullscreen;
-    bool minimized;
-    bool occluded;
-    struct {
-        int index;
-        int dpi;
-    } display;
-};
-
 void temp_frontend_set_window(WhistFrontend* frontend, void* window);
-WhistStatus whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info);
-
+void whist_frontend_get_window_pixel_size(WhistFrontend* frontend, int* width, int* height);
+void whist_frontend_get_window_virtual_size(WhistFrontend* frontend, int* width, int* height);
+void whist_frontend_get_window_position(WhistFrontend* frontend, int* x, int* y);
+WhistStatus whist_frontend_get_window_display_index(WhistFrontend* frontend, int* index);
+int whist_frontend_get_window_dpi(WhistFrontend* frontend);
+bool whist_frontend_is_window_visible(WhistFrontend* frontend);
+bool whist_frontend_is_window_occluded(WhistFrontend* frontend);
 int whist_frontend_set_screensaver_enabled(WhistFrontend* frontend, bool enabled);
 int whist_frontend_resize_window(WhistFrontend* frontend, int width, int height);
 int whist_frontend_set_window_minimized(WhistFrontend* frontend, bool minimized);
@@ -196,7 +183,7 @@ int whist_frontend_send_key_event(WhistFrontend* frontend, WhistKeycode keycode,
 int whist_frontend_get_keyboard_state(WhistFrontend* frontend, WhistKeyboardState* state);
 
 // Mouse
-WhistStatus whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y);
+void whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y);
 
 // Video
 int whist_frontend_render_solid(WhistFrontend* frontend, WhistRGBColor color);

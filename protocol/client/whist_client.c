@@ -277,12 +277,8 @@ static void send_new_tab_url_if_needed(WhistFrontend* frontend) {
         free((void*)new_tab_url);
         new_tab_url = NULL;
 
-        FrontendWindowInfo info;
-        if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
-            LOG_ERROR("Failed to get window info");
-        }
         // Unmimimize the window if needed
-        if (info.minimized) {
+        if (!whist_frontend_is_window_visible(frontend)) {
             SDL_RestoreWindow((SDL_Window*)window);
         }
     }
@@ -505,28 +501,25 @@ int whist_client_main(int argc, const char* argv[]) {
 
             if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
                 static int cached_display_index = -1;
-                FrontendWindowInfo window_info;
-                if (whist_frontend_get_window_info(frontend, &window_info) != WHIST_SUCCESS) {
-                    LOG_ERROR("Failed to get window display index");
-                }
-
-                if (cached_display_index != window_info.display.index) {
-                    if (cached_display_index) {
-                        // Update DPI to new monitor
-                        send_message_dimensions(frontend);
+                int current_display_index;
+                if (whist_frontend_get_window_display_index(frontend, &current_display_index) ==
+                    WHIST_SUCCESS) {
+                    if (cached_display_index != current_display_index) {
+                        if (cached_display_index) {
+                            // Update DPI to new monitor
+                            send_message_dimensions(frontend);
+                        }
+                        cached_display_index = current_display_index;
                     }
-                    cached_display_index = window_info.display.index;
+                } else {
+                    LOG_ERROR("Failed to get display index");
                 }
 
                 start_timer(&monitor_change_timer);
             }
 
             // Check if the window is minimized or occluded.
-            FrontendWindowInfo info;
-            if (whist_frontend_get_window_info(frontend, &info) != WHIST_SUCCESS) {
-                LOG_ERROR("Failed to get window info");
-            }
-            if (info.minimized || info.occluded) {
+            if (!whist_frontend_is_window_visible(frontend)) {
                 // If it is, we can sleep for a good while to keep CPU usage very low.
                 whist_sleep(10);
             } else {
