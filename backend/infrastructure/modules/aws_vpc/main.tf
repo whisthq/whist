@@ -52,11 +52,6 @@ resource "aws_internet_gateway" "MainInternetGateway" {
 resource "aws_default_route_table" "MainRouteTable" {
   default_route_table_id = aws_vpc.MainVPC.default_route_table_id
 
-  # Local VPC route
-  route {
-    cidr_block = aws_vpc.MainVPC.cidr_block
-  }
-
   # Allow route to the internet gateway
   route {
     cidr_block = "0.0.0.0/0"
