@@ -32,7 +32,8 @@ Includes
 Private Functions
 ============================
 */
-static void set_opt(VideoDecoder* decoder, char* option, char* value);
+
+static MAYBE_UNUSED void set_opt(VideoDecoder* decoder, char* option, char* value);
 static void set_decoder_opts(VideoDecoder* decoder);
 static int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type);
 static enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts,
@@ -90,7 +91,8 @@ static void set_decoder_opts(VideoDecoder* decoder) {
     */
     // decoder->context->flags |= AV_CODEC_FLAG_LOW_DELAY;
     // decoder->context->flags2 |= AV_CODEC_FLAG2_FAST;
-    set_opt(decoder, "async_depth", "1");
+    // Flag for async decode
+    // set_opt(decoder, "async_depth", "1");
 }
 
 static int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
