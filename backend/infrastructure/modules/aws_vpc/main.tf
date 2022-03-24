@@ -46,7 +46,7 @@ resource "aws_internet_gateway" "MainInternetGateway" {
 }
 
 #
-# Create Routing Tables
+# Create Route Tables
 #
 
 resource "aws_route_table" "MainRouteTable" {
