@@ -359,7 +359,7 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
         wsmsg_notif.notif = notif;
         if (send_packet(&client->udp_context, PACKET_MESSAGE, &wsmsg_notif,
                         sizeof(WhistServerMessage), 1, false) < 0) {
-            LOG_ERROR("Notification packet send failed");
+            LOG_WARNING("Notification packet send failed");
         } else {
             LOG_INFO("Notification packet sent");
         }
