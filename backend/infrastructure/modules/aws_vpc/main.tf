@@ -46,6 +46,25 @@ resource "aws_internet_gateway" "MainInternetGateway" {
 }
 
 #
+# Create Routing Tables
+#
+
+resource "aws_route_table" "MainRouteTable" {
+  vpc_id = aws_vpc.MainVPC.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.MainInternetGateway.id
+  }
+
+  tags = {
+    Name      = "MainRouteTable${var.env}"
+    Env       = var.env
+    Terraform = true
+  }
+}
+
+#
 # Create default Security groups
 #
 
@@ -72,9 +91,9 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
   }
 
   # Allow inbound traffic on port 443 so the instance
-  # can reach SSM
+  # can use SSM
   dynamic "ingress" {
-    for_each    = var.env != "prod" ? [1] : []
+    for_each = var.env != "prod" ? [1] : []
     content {
       description = "whist-tcp-rule"
       protocol    = "tcp"
@@ -86,11 +105,11 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
 
   # We allow all outgoing traffic
   egress {
-    description = "whist-ipv4-rule"
-    protocol    = "-1"
-    to_port     = 0
-    from_port   = 0
-    cidr_blocks = ["0.0.0.0/0"]
+    description      = "whist-ipv4-rule"
+    protocol         = "-1"
+    to_port          = 0
+    from_port        = 0
+    cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
 
