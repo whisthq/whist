@@ -111,8 +111,12 @@ typedef struct {
 
 // Size of the UDPPacket header, excluding the payload
 #define UDPNETWORKPACKET_HEADER_SIZE ((int)(offsetof(UDPNetworkPacket, payload)))
+// How often to ping
 #define UDP_PING_INTERVAL_SEC 0.1
+// How long to go without a pong, before the connection is marked as lost
 #define UDP_PONG_TIMEOUT_SEC 5.0
+// How often to print ping logs
+#define UDP_PING_LOG_INTERVAL_SEC 1.0
 #define MAX_GROUP_STATS 8
 // Incoming bitrate related constants. Choose power-of-two only for an efficient computations
 #define INCOMING_BITRATE_WINDOW_MS 1024
@@ -1845,7 +1849,7 @@ void udp_update_ping(UDPContext* context) {
         }
         // Progress to to the next ping after UDP_PING_INTERVAL_SEC
         else if (get_timer(&context->ping_timer[context->last_ping_id % MAX_PINGS_IN_FLIGHT]) >
-            UDP_PING_INTERVAL_SEC) {
+                 UDP_PING_INTERVAL_SEC) {
             // Mark that we want to send the next ping ID
             send_ping_id = context->last_ping_id + 1;
         }
@@ -1900,8 +1904,11 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
 
     log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
     // Comment logs once every second, or when latency spikes
-    if (LOG_VIDEO || LOG_AUDIO || LOG_NETWORKING || id % max((int)(1 / UDP_PING_INTERVAL_SEC), 1) == 0 || ping_time > 1.5 * context->latency) {
-        LOG_INFO("Pong %d received: took %.2fms, latency %.2fms", id, ping_time * MS_IN_SECOND, context->latency * MS_IN_SECOND);
+    if (LOG_VIDEO || LOG_AUDIO || LOG_NETWORKING ||
+        id % max((int)(UDP_PING_LOG_INTERVAL_SEC / (double)UDP_PING_INTERVAL_SEC), 1) == 0 ||
+        ping_time > 1.5 * context->latency) {
+        LOG_INFO("Pong %d received: took %.2fms, latency %.2fms", id, ping_time * MS_IN_SECOND,
+                 context->latency * MS_IN_SECOND);
     }
 
     // Calculate latency
