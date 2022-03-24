@@ -35,6 +35,8 @@ jobs:
   webserver-trigger-heroku-ci:
     name: Trigger Test Run
     runs-on: ubuntu-20.04
+    env:
+      INSTANCE_PROFILE_DEV: "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfiledev"
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
