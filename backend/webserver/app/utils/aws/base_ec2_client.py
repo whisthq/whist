@@ -237,13 +237,19 @@ class EC2Client(CloudClient):
         Returns: None
 
         """
+        env = ""
+        if not current_app.config["ENVIRONMENT"] in {DEVELOPMENT, STAGING, PRODUCTION}:
+            env = DEVELOPMENT
+        else:
+            env = current_app.config["ENVIRONMENT"]
+
         resp = self.ec2_client.describe_subnets(
             Filters=[
-                {"Name": "tag:Env", "Values": [current_app.config["ENVIRONMENT"]]},
+                {"Name": "tag:Env", "Values": [env]},
                 {"Name": "tag:Terraform", "Values": ["true"]},
             ]
         )
-
+        
         subnet_ids = [subnet["SubnetId"] for subnet in resp["Subnets"]]
         if subnet_ids:
             self.main_subnet = subnet_ids[0]
@@ -254,11 +260,17 @@ class EC2Client(CloudClient):
         Returns: None
 
         """
+        env = ""
+        if not current_app.config["ENVIRONMENT"] in {DEVELOPMENT, STAGING, PRODUCTION}:
+            env = DEVELOPMENT
+        else:
+            env = current_app.config["ENVIRONMENT"]
+
         resp = self.ec2_client.describe_security_groups(
             Filters=[
                 {
                     "Name": "tag:Name",
-                    "Values": ["MandelboxesSecurityGroup" + current_app.config["ENVIRONMENT"]],
+                    "Values": ["MandelboxesSecurityGroup" + env],
                 },
             ]
         )
