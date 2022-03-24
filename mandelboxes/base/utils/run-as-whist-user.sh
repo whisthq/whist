@@ -62,6 +62,8 @@ fi
 
 # Most keys on macOS do not repeat, but all keys repeat on Linux. We turn off key repeat on certain Linux keys
 # to match the macOS behavior. This needs to be done *after* setting the key repeat rate above.
+# We have decided to allow numbers to repeat because, even though Macs don't repeat numbers,
+# they do repeat things like exclamation marks.
 # Keycodes obtianed from: https://gist.github.com/rickyzhang82/8581a762c9f9fc6ddb8390872552c250#file-keycode-linux-L91
 keys_to_turn_off_repeat=(
   9   # ESC
@@ -80,16 +82,6 @@ keys_to_turn_off_repeat=(
   111 # PrintScrn
   78  # Scroll Lock
   110 # Pause
-  10  # 1
-  11  # 2
-  12  # 3
-  13  # 4
-  14  # 5
-  15  # 6
-  16  # 7
-  17  # 8
-  18  # 9
-  19  # 0
   106 # Insert
   77  # Num Lock
   24  # Q
