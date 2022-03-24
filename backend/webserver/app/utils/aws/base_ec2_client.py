@@ -249,7 +249,7 @@ class EC2Client(CloudClient):
                 {"Name": "tag:Terraform", "Values": ["true"]},
             ]
         )
-        
+
         subnet_ids = [subnet["SubnetId"] for subnet in resp["Subnets"]]
         if subnet_ids:
             self.main_subnet = subnet_ids[0]
