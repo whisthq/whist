@@ -111,7 +111,7 @@ COMMAND_LINE_STRING_OPTION(user_email, 'u', "user", WHIST_ARGS_MAXLEN,
                            "Tell Whist the user's email.  Default: None.")
 COMMAND_LINE_STRING_OPTION(icon_png_filename, 'i', "icon", WHIST_ARGS_MAXLEN,
                            "Set the protocol window icon from a 64x64 pixel png file.")
-COMMAND_LINE_STRING_OPTION(new_tab_url, 'x', "new-tab-url", MAX_URL_LENGTH,
+COMMAND_LINE_STRING_OPTION(new_tab_url, 'x', "new-tab-url", MAX_URL_LENGTH*MAX_NEW_TAB_URLS,
                            "URL to open in new tab.")
 COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
                            "Set the window title.  Default: Whist.")

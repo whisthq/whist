@@ -312,11 +312,11 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     // long.
     char *received_url = (char *)&fcmsg->url_to_open;
     size_t url_length = strlen(received_url);
-    if (url_length > MAX_URL_LENGTH) {
+    if (url_length > MAX_URL_LENGTH*MAX_NEW_TAB_URLS) {
         LOG_WARNING(
-            "Attempted to open url of length %zu, which exceeds the max allowed length (%d "
+            "Attempted to open url(s) of length %zu, which exceeds the max allowed length (%d "
             "characters)\n",
-            url_length, MAX_URL_LENGTH);
+            url_length, MAX_URL_LENGTH*MAX_NEW_TAB_URLS);
         return -1;
     }
     LOG_INFO("Received URL to open in new tab");
@@ -336,6 +336,13 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     char *command = (char *)calloc(url_length + len_cmd_before_url + 1, sizeof(char));
     sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
             received_url);
+
+    // split urls
+    for (size_t i=0; i<strlen(command); i++) {
+        if (command[i] == "^") {
+            command[i] = " ";
+        }
+    }
 
     // Step 3: Execute the command created in step 2 (which consists of a call to the
     // run-as-whist-user.sh script with the appropriate parameter) in the mandelbox, and save the
