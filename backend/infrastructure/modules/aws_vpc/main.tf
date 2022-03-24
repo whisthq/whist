@@ -90,7 +90,8 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
     protocol    = "-1"
     to_port     = 0
     from_port   = 0
-    cidr_blocks = [aws_vpc.MainVPC.cidr_block]
+    cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 
   tags = {
