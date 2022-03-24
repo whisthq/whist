@@ -58,7 +58,10 @@ def test_create_checkout_session(
     assert response.json == {"url": url}
 
 
-@pytest.mark.parametrize("subscription_status", ("active"))
+@pytest.mark.parametrize(
+    "subscription_status",
+    ("active"),
+)
 def test_create_billing_portal_session(
     client: WhistAPITestClient,
     make_user: Callable[..., str],
