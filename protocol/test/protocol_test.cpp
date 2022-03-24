@@ -1176,29 +1176,42 @@ TEST_F(ProtocolTest, PacketsToBuffer) {
 
     const char* data1 = "testing...testing";
 
-    AVPacket avpkt1;
-    avpkt1.buf = NULL;
-    avpkt1.pts = AV_NOPTS_VALUE;
-    avpkt1.dts = AV_NOPTS_VALUE;
-    avpkt1.data = (uint8_t*)data1;
-    avpkt1.size = (int)strlen(data1);
-    avpkt1.stream_index = 0;
-    avpkt1.side_data = NULL;
-    avpkt1.side_data_elems = 0;
-    avpkt1.duration = 0;
-    avpkt1.pos = -1;
+    // Create a few avpackets
+    AVPacket* avpkt1 = av_packet_alloc();
+    avpkt1->data = (uint8_t*)data1;
+    avpkt1->size = (int)strlen(data1);
+    AVPacket* avpkt2 = av_packet_alloc();
+    avpkt1->data = (uint8_t*)(data1 + 5);
+    avpkt1->size = (int)strlen(data1 + 5);
 
     // add them to AVPacket array
-    AVPacket* packets = &avpkt1;
+    const int num_test_packets = 2;
+    AVPacket send_packets[num_test_packets];
+    send_packets[0] = *avpkt1;
+    send_packets[1] = *avpkt2;
 
-    // create buffer and add them to a buffer
-    int buffer[28];
-    write_avpackets_to_buffer(1, packets, buffer);
+    // Encode the AVPackets into the buffer
+    int buffer[128];
+    int encoded_size =
+        write_avpackets_to_buffer(buffer, sizeof(buffer), send_packets, num_test_packets);
 
-    // Confirm buffer creation was successful
-    EXPECT_EQ(*buffer, 1);
-    EXPECT_EQ(*(buffer + 1), (int)strlen(data1));
-    EXPECT_EQ(strncmp((char*)(buffer + 2), data1, strlen(data1)), 0);
+    // Retrieve new AVPackets from the buffer
+    AVPacket* receive_packets[num_test_packets];
+    int num_packets =
+        extract_avpackets_from_buffer(receive_packets, num_test_packets, buffer, encoded_size);
+
+    // Confirm extraction was successful
+    EXPECT_EQ(num_packets, num_test_packets);
+    for (int i = 0; i < num_test_packets; i++) {
+        EXPECT_EQ(receive_packets[i]->size, send_packets[i].size);
+        EXPECT_EQ(memcmp(receive_packets[i]->data, send_packets[i].data, receive_packets[i]->size),
+                  0);
+        av_packet_free(&receive_packets[i]);
+    }
+
+    // Free the packets
+    av_packet_free(&avpkt1);
+    av_packet_free(&avpkt2);
 }
 
 TEST_F(ProtocolTest, BitArrayMemCpyTest) {
