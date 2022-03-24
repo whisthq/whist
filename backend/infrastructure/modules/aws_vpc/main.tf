@@ -49,9 +49,15 @@ resource "aws_internet_gateway" "MainInternetGateway" {
 # Create Route Tables
 #
 
-resource "aws_route_table" "MainRouteTable" {
-  vpc_id = aws_vpc.MainVPC.id
+resource "aws_default_route_table" "MainRouteTable" {
+  default_route_table_id = aws_vpc.MainVPC.default_route_table_id
 
+  # Local VPC route
+  route {
+    cidr_block = aws_vpc.MainVPC.cidr_block
+  }
+
+  # Allow route to the internet gateway
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.MainInternetGateway.id
@@ -79,7 +85,7 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
     protocol    = "udp"
     from_port   = 1025
     to_port     = 49150
-    cidr_blocks = [aws_vpc.MainVPC.cidr_block]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -87,7 +93,7 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
     protocol    = "tcp"
     from_port   = 1025
     to_port     = 49150
-    cidr_blocks = [aws_vpc.MainVPC.cidr_block]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Allow inbound traffic on port 443 so the instance
@@ -99,7 +105,7 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
       protocol    = "tcp"
       from_port   = 443
       to_port     = 443
-      cidr_blocks = [aws_vpc.MainVPC.cidr_block]
+      cidr_blocks = ["0.0.0.0/0"]
     }
   }
 
