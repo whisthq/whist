@@ -33,9 +33,6 @@ Defines
 ============================
 */
 
-// Verbose audio logs
-#define LOG_AUDIO false
-
 // TODO: Automatically deduce this from (ms_per_frame / MS_IN_SECOND) * audio_frequency
 // TODO: Add ms_per_frame to AudioFrame*
 #define SAMPLES_PER_FRAME 480

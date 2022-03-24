@@ -85,6 +85,7 @@ Defines
 #define USING_FFMPEG_IFRAME_FLAG false
 // Toggle verbose logs
 #define LOG_VIDEO false
+#define LOG_AUDIO false
 #define LOG_NACKING false
 #define LOG_NETWORKING false
 #define LOG_LONG_TERM_REFERENCE_FRAMES false

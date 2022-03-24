@@ -111,8 +111,12 @@ typedef struct {
 
 // Size of the UDPPacket header, excluding the payload
 #define UDPNETWORKPACKET_HEADER_SIZE ((int)(offsetof(UDPNetworkPacket, payload)))
-#define UDP_PING_INTERVAL 0.1  // In seconds
-#define UDP_PONG_TIMEOUT 5.0   // In seconds
+// How often to ping
+#define UDP_PING_INTERVAL_SEC 0.1
+// How long to go without a pong, before the connection is marked as lost
+#define UDP_PONG_TIMEOUT_SEC 5.0
+// How often to print ping logs
+#define UDP_PING_LOG_INTERVAL_SEC 1.0
 #define MAX_GROUP_STATS 8
 // Incoming bitrate related constants. Choose power-of-two only for an efficient computations
 #define INCOMING_BITRATE_WINDOW_MS 1024
@@ -127,7 +131,7 @@ typedef struct {
 // Newer out-of-order values will get this weightage in EWMA filter
 #define OUT_OF_ORDER_EWMA_FACTOR 0.01
 // Number of pings currently in-between the client and server
-// Let's choose a nearest power of two, greater than (UDP_PONG_TIMEOUT / UDP_PING_INTERVAL)
+// Let's choose a nearest power of two, greater than (UDP_PONG_TIMEOUT_SEC / UDP_PING_INTERVAL_SEC)
 #define MAX_PINGS_IN_FLIGHT 64
 
 typedef struct {
@@ -1837,18 +1841,17 @@ void udp_update_ping(UDPContext* context) {
         // If we've pinged before,
         // we should check for pongs or repings
 
-        // Progress to to the next ping after UDP_PING_INTERVAL
-        if (get_timer(&context->ping_timer[context->last_ping_id % MAX_PINGS_IN_FLIGHT]) >
-            UDP_PING_INTERVAL) {
+        // If it's been too long since the last pong, give up and mark the connection as lost
+        if (get_timer(&context->last_pong_timer) > UDP_PONG_TIMEOUT_SEC) {
+            LOG_WARNING("Server disconnected: No pong response received for %.2f seconds",
+                        get_timer(&context->last_pong_timer));
+            context->connection_lost = true;
+        }
+        // Progress to to the next ping after UDP_PING_INTERVAL_SEC
+        else if (get_timer(&context->ping_timer[context->last_ping_id % MAX_PINGS_IN_FLIGHT]) >
+                 UDP_PING_INTERVAL_SEC) {
             // Mark that we want to send the next ping ID
             send_ping_id = context->last_ping_id + 1;
-        }
-
-        // If it's been too long since the last pong, give up and mark the failure
-        if (get_timer(&context->last_pong_timer) > UDP_PONG_TIMEOUT) {
-            LOG_WARNING("Server disconnected: No pong response received for %.2f seconds",
-                        UDP_PONG_TIMEOUT);
-            context->connection_lost = true;
         }
     }
 
@@ -1864,15 +1867,18 @@ void udp_update_ping(UDPContext* context) {
         }
         // Reset the last ping timer, because we sent a ping
         start_timer(&context->ping_timer[send_ping_id % MAX_PINGS_IN_FLIGHT]);
+#if LOG_VIDEO || LOG_AUDIO || LOG_NETWORKING
         LOG_INFO("Ping! %d", send_ping_id);
+#endif
         // Update the last ping ID,
         context->last_ping_id = send_ping_id;
     }
 }
 
 void udp_handle_ping(UDPContext* context, int id, timestamp_us timestamp) {
-    // for the server to respond to client pings
+#if LOG_VIDEO || LOG_AUDIO || LOG_NETWORKING
     LOG_INFO("Ping Received - Ping ID %d", id);
+#endif
 
     // Reply to the ping, with a pong
     UDPPacket pong_packet = {0};
@@ -1890,14 +1896,19 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     start_timer(&context->last_pong_timer);
 
     double ping_time = (current_time_us() - ping_send_timestamp) / (double)US_IN_SECOND;
+    // Initialize the latency
+    if (context->last_pong_id == -1) {
+        context->latency = ping_time;
+    }
     context->last_pong_id = id;
 
     log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
-    LOG_INFO("Pong %d received: took %f milliseconds", id, ping_time * MS_IN_SECOND);
-
-    // Initialize the latency
-    if (context->latency == 0) {
-        context->latency = ping_time;
+    // Comment logs once every second, or when latency spikes
+    if (LOG_VIDEO || LOG_AUDIO || LOG_NETWORKING ||
+        id % max((int)(UDP_PING_LOG_INTERVAL_SEC / (double)UDP_PING_INTERVAL_SEC), 1) == 0 ||
+        ping_time > 1.5 * context->latency) {
+        LOG_INFO("Pong %d received: took %.2fms, latency %.2fms", id, ping_time * MS_IN_SECOND,
+                 context->latency * MS_IN_SECOND);
     }
 
     // Calculate latency
