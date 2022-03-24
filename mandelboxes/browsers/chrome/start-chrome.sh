@@ -36,7 +36,7 @@ flags=(
   "--double-buffer-compositing"
   "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
   "--disable-font-subpixel-positioning"
-  "--force-color-profile=display-p3-d65"
+  "--force-color-profile=srgb" # Not exactly macOS, but the closest match we could find
   "--disable-gpu-process-crash-limit"
   "--no-default-browser-check"
   "--load-extension=/opt/teleport/chrome-extension"
