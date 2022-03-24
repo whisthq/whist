@@ -333,6 +333,14 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     // The maximum possible command length is equal to the (constant) length of the part of the
     // command that needs to go before the url plus the length of the url itself, which may be up to
     // MAX_URL_LENGTH.
+
+    size_t characters_to_escape = 0;
+    for (size_t i=0; i<strlen(received_url); i++) {
+        if (received_url[i] == '&') {
+            characters_to_escape += 1;
+        }
+    }
+
     char *command = (char *)calloc(url_length + len_cmd_before_url + 1, sizeof(char));
     sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
             received_url);
@@ -343,6 +351,20 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
             command[i] = ' ';
         }
     }
+
+    size_t index = 0;
+    char *cleaned_command = (char *)calloc(url_length + characters_to_escape + len_cmd_before_url + 1, sizeof(char));
+    for (size_t i=0; i<strlen(command); i++) {
+        if (command[i] == '&') {
+            cleaned_command[index] = '\\';
+            index+=1;
+        }
+        cleaned_command[index] = command[i];
+        index += 1;
+    }
+    free(command);
+    command = cleaned_command;
+
     printf("Command after transformation: %s\n", command);
 
     // Step 3: Execute the command created in step 2 (which consists of a call to the
