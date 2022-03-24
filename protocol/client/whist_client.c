@@ -348,10 +348,9 @@ int whist_client_main(int argc, const char* argv[]) {
 
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
-    int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
     WhistFrontend* frontend = NULL;
-    for (try_amount = 0;
-         try_amount < max_connection_attempts && !client_exiting && exit_code == WHIST_EXIT_SUCCESS;
+    for (try_amount = 0; try_amount < MAX_INIT_CONNECTION_ATTEMPTS && !client_exiting &&
+                         exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
@@ -375,10 +374,6 @@ int whist_client_main(int argc, const char* argv[]) {
 
         // Initialize audio and video renderer system
         WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
-
-        // reset because now connected
-        try_amount = 0;
-        max_connection_attempts = MAX_RECONNECTION_ATTEMPTS;
 
         // Initialize the clipboard and file synchronizers. This must happen before we start
         // the udp/tcp threads
@@ -419,6 +414,8 @@ int whist_client_main(int argc, const char* argv[]) {
             destroy_renderer(whist_renderer);
             continue;
         }
+        // Reset try counter, because connection succeeded
+        try_amount = 0;
         connected = true;
 
         // Log to METRIC for cross-session tracking and INFO for developer-facing logging
@@ -538,7 +535,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
         LOG_INFO("Disconnecting...");
         if (client_exiting || exit_code != WHIST_EXIT_SUCCESS ||
-            try_amount + 1 == max_connection_attempts) {
+            try_amount + 1 == MAX_INIT_CONNECTION_ATTEMPTS) {
             send_server_quit_messages(3);
         }
 
@@ -589,6 +586,9 @@ int whist_client_main(int argc, const char* argv[]) {
     }
 
     destroy_statistic_logger();
+
+    LOG_INFO("Protocol has shutdown gracefully");
+
     destroy_logger();
 
     // We must call this after destroying the logger so that all
@@ -596,7 +596,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // before we close the error monitor.
     whist_error_monitor_shutdown();
 
-    LOG_INFO("Protocol has shutdown gracefully");
+    LOG_INFO("Logger has shutdown gracefully");
 
     if (try_amount >= 3) {
         // We failed to connect, so return a failure error code

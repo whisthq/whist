@@ -125,6 +125,10 @@ static WhistThread logger_thread = NULL;
  * Mutex protecting crash handling code.
  */
 static WhistMutex crash_handler_mutex;
+/**
+ * True if crash_handler_mutex is initialized
+ */
+static bool crash_handler_mutex_active;
 
 static void log_single_line(unsigned int level, const char* line) {
     // Log to stdout.
@@ -364,9 +368,7 @@ void destroy_logger(void) {
     whist_wait_thread(logger_thread, NULL);
 
     // Ensure that all outstanding writers have completed.
-    while (atomic_load(&logger_thread_writers) > 0) {
-        whist_sleep(1);
-    }
+    FATAL_ASSERT(atomic_load(&logger_thread_writers) == 0);
 
     // Flush any outstanding logs from the queue.
     flush_logs();
@@ -375,8 +377,7 @@ void destroy_logger(void) {
     whist_destroy_mutex(logger_queue_mutex);
     whist_destroy_cond(logger_queue_cond);
 
-    // Once this mutext is destroyed it is no longer safe to crash (ha).
-    // Hopefully Sentry will be able to pick this up anyway.
+    crash_handler_mutex_active = false;
     whist_destroy_mutex(crash_handler_mutex);
 
     // Debug check: if we get here and the logger queue is not empty
@@ -544,10 +545,13 @@ void print_stacktrace(void) {
         `malloc` can cause `malloc`s called by this function to hang.
     */
 
-    whist_lock_mutex(crash_handler_mutex);
-
-    // Flush out all of the logs that occured prior to the stacktrace
-    flush_logs();
+    if (crash_handler_mutex_active) {
+        whist_lock_mutex(crash_handler_mutex);
+        // Flush out all of the logs that occured prior to the stacktrace
+        flush_logs();
+    } else {
+        fprintf(stdout, "ERROR: No crash handler mutex...\n");
+    }
 
 #ifdef _WIN32
     unsigned int i;
@@ -610,7 +614,13 @@ void print_stacktrace(void) {
     // Print out the final newlines and flush
     fprintf(stdout, "\n\n");
     fflush(stdout);
-    whist_unlock_mutex(crash_handler_mutex);
+
+    if (crash_handler_mutex_active) {
+        whist_unlock_mutex(crash_handler_mutex);
+    } else {
+        // Exit after printing stacktrace, if a crash happens without a crash handler mutex
+        exit(-1);
+    }
 }
 
 #ifdef _WIN32
@@ -715,6 +725,7 @@ static void unix_crash_handler(int sig) {
 
 static void init_backtrace_handler(void) {
     crash_handler_mutex = whist_create_mutex();
+    crash_handler_mutex_active = true;
 #ifdef _WIN32
     SetUnhandledExceptionFilter(windows_exception_handler);
 #else
