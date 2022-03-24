@@ -264,7 +264,7 @@ static void initiate_file_upload(void) {
 static void send_new_tab_url_if_needed(WhistFrontend* frontend) {
     // Send any new URL to the server
     if (new_tab_url) {
-        LOG_INFO("Sending message to open URL in new tab");
+        LOG_INFO("Sending message to open URL in new tab %s", new_tab_url);
         const size_t url_length = strlen((const char*)new_tab_url);
         const size_t wcmsg_size = sizeof(WhistClientMessage) + url_length + 1;
         WhistClientMessage* wcmsg = safe_malloc(wcmsg_size);
