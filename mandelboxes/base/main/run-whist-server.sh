@@ -167,6 +167,10 @@ if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ];
   rm $USER_DEST_BROWSER_FILENAME
 fi
 
+# Wait for user data to be populated before starting application
+block-until-file-exists.sh $USER_CONFIGS_DIR/.importComplete
+rm $USER_CONFIGS_DIR/.importComplete
+
 # Start the application that this mandelbox runs.
 /usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &
 whist_application_runuser_pid=$!

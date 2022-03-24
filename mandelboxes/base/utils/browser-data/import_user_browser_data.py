@@ -6,6 +6,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+from pathlib import Path
 
 import browser_cookie3
 import pyaes
@@ -318,7 +319,9 @@ def create_preferences_file(target_browser_name, preferences, custom_preferences
         browser_preferences_file.write(preferences)
 
 
-def create_local_storage_files(target_browser_name, local_storage_json, custom_local_storage_file_path=None):
+def create_local_storage_files(
+    target_browser_name, local_storage_json, custom_local_storage_file_path=None
+):
     """
     Create localstorage files for target browser
     Args:
@@ -334,9 +337,10 @@ def create_local_storage_files(target_browser_name, local_storage_json, custom_l
         local_storage_paths.append(custom_local_storage_file_path)
     else:
         local_storage_paths = [
-            os.path.join(directory, "Local Storage", "leveldb") for directory in get_browser_default_dir(target_browser_name)
+            os.path.join(directory, "Local Storage", "leveldb")
+            for directory in get_browser_default_dir(target_browser_name)
         ]
-        
+
     path = os.path.expanduser(local_storage_paths[0])
 
     # Remove existing leveldb directory if it exists and create new one
@@ -397,3 +401,11 @@ if __name__ == "__main__":
                     browser_data_file
                 )
             )
+
+    # Regardless of import success, once this script finishes running, write an empty file
+    # to indicate that the import is done
+
+    # Put this file in the base user config directory
+    import_complete_file = os.path.join(USER_CONFIG_PATH, ".importComplete")
+    with open(import_complete_file, "w"):
+        pass
