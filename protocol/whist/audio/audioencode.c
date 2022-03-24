@@ -231,11 +231,9 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
     // get encoded packet
     // because this always calls av_packet_unref before doing anything,
     // our previous calls to av_packet_unref are unnecessary.
-    encoder->encoded_frame_size = sizeof(int);
     encoder->num_packets = 0;
     while ((res = audio_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) ==
            0) {
-        encoder->encoded_frame_size += sizeof(int) + encoder->packets[encoder->num_packets].size;
         encoder->num_packets++;
         if (encoder->num_packets == MAX_NUM_AUDIO_PACKETS) {
             LOG_ERROR("Audio encoder encoded into too many packets: reached %d",

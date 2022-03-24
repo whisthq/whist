@@ -221,11 +221,6 @@ void destroy_audio_decoder(AudioDecoder *decoder) {
     // free the frame
     av_frame_free(&decoder->frame);
 
-    // free the packets
-    for (int i = 0; i < MAX_ENCODED_AUDIO_PACKETS; i++) {
-        av_packet_unref(&decoder->packets[i]);
-    }
-
     // free swr
     swr_free(&decoder->swr_context);
 
@@ -247,15 +242,22 @@ int audio_decoder_send_packets(AudioDecoder *decoder, void *buffer, int buffer_s
             (int): 0 on success, negative error on failure
             */
 
-    int num_packets = extract_avpackets_from_buffer(buffer, buffer_size, decoder->packets);
+    AVPacket *packets[MAX_ENCODED_AUDIO_PACKETS];
+    int num_packets =
+        extract_avpackets_from_buffer(packets, MAX_ENCODED_AUDIO_PACKETS, buffer, buffer_size);
 
     int res;
     for (int i = 0; i < num_packets; i++) {
-        if ((res = avcodec_send_packet(decoder->context, &decoder->packets[i])) < 0) {
+        if ((res = avcodec_send_packet(decoder->context, packets[i])) < 0) {
             LOG_WARNING("Failed to avcodec_send_packet!, error %d: %s", res, av_err2str(res));
             return -1;
         }
     }
+
+    for (int i = 0; i < MAX_ENCODED_AUDIO_PACKETS; i++) {
+        av_packet_free(&packets[i]);
+    }
+
     return 0;
 }
 

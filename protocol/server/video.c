@@ -215,16 +215,21 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
 
     frame->frame_id = id;
 
-    frame->videodata_length = encoder->encoded_frame_size;
-
-    write_avpackets_to_buffer(encoder->num_packets, encoder->packets,
-                              (void*)get_frame_videodata(frame));
+    frame->videodata_length =
+        write_avpackets_to_buffer((void*)get_frame_videodata(frame), MAX_VIDEOFRAME_DATA_SIZE,
+                                  encoder->packets, encoder->num_packets);
+    if (frame->videodata_length == -1) {
+        // Just drop the frame, since it's too large to send
+        LOG_ERROR("Video Frame is larger than %d! Failed to send frame over the network.",
+                  MAX_VIDEOFRAME_DATA_SIZE);
+        return;
+    }
     whist_wait_semaphore(consumer);
     send_frame_id = id;
     currently_sending_index = 1 - currently_sending_index;
 
     if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type) || LOG_VIDEO) {
-        LOG_INFO("Sent video packet %d (Size: %d) %s", id, encoder->encoded_frame_size,
+        LOG_INFO("Sending video packet %d (Size: %d) %s", id, frame->videodata_length,
                  video_frame_type_string(frame->frame_type));
     }
 
@@ -847,26 +852,18 @@ int32_t multithreaded_send_video(void* opaque) {
                                      get_timer(&statistics_timer) * MS_IN_SECOND);
 
                 if (encoder->encoded_frame_size != 0) {
-                    if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
-                        // Please make MAX_VIDEOFRAME_DATA_SIZE larger if this error happens
-                        LOG_ERROR("Frame of size %d bytes is too large! Dropping Frame.",
-                                  encoder->encoded_frame_size);
-                        continue;
-                    } else {
 #if SAVE_VIDEO_OUTPUT
-                        for (int i = 0; i < encoder->num_packets; i++) {
-                            fwrite(encoder->packets[i].data, encoder->packets[i].size, 1, fp);
-                        }
-#endif
-                        send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
-                                              encoder, id, client_input_timestamp,
-                                              server_timestamp);
-
-                        log_double_statistic(VIDEO_FPS_SENT, 1.0);
-                        log_double_statistic(VIDEO_FRAME_SIZE, encoder->encoded_frame_size);
-                        log_double_statistic(VIDEO_FRAME_PROCESSING_TIME,
-                                             get_timer(&server_frame_timer) * 1000);
+                    for (int i = 0; i < encoder->num_packets; i++) {
+                        fwrite(encoder->packets[i].data, encoder->packets[i].size, 1, fp);
                     }
+#endif
+                    send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
+                                          encoder, id, client_input_timestamp, server_timestamp);
+
+                    log_double_statistic(VIDEO_FPS_SENT, 1.0);
+                    log_double_statistic(VIDEO_FRAME_SIZE, encoder->encoded_frame_size);
+                    log_double_statistic(VIDEO_FRAME_PROCESSING_TIME,
+                                         get_timer(&server_frame_timer) * 1000);
                 }
             }
         } else {

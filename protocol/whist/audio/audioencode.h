@@ -55,7 +55,6 @@ typedef struct AudioEncoder {
 
     SwrContext* swr_context;
     int frame_count;
-    int encoded_frame_size;
 } AudioEncoder;
 
 /**

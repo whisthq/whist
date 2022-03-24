@@ -1,86 +1,103 @@
 #include "avpacket_buffer.h"
 
-void write_avpackets_to_buffer(int num_packets, AVPacket* packets, int* buf) {
+int write_avpackets_to_buffer(void* raw_buffer, int buffer_size, AVPacket* packets,
+                              int num_packets) {
     /*
-        Store the first num_packets AVPackets contained in packets into buf. buf will contain
-        the following data: (number of packets)(size of each packet)(data of each packet).
-
-        Arguments:
-            num_packets (int): the number of packets to store in buf
-            packets (AVPacket*): array of packets to read packets from
-            buf (int*): memory buffer for storing the packets
+        Store the first num_packets AVPackets contained in packets into buf.
+        Buf will contain the following data: (number of packets)(sizes of each packet)(data of each
+       packet)
     */
-    *buf = num_packets;
-    buf++;
+
+    // Peg to a value to ensure that client/server agree
+    FATAL_ASSERT(AV_INPUT_BUFFER_PADDING_SIZE == 64);
+
+    // As char*
+    char* char_buffer = (void*)raw_buffer;
+
+    // The final size of the buffer
+    int result_size = 0;
+
+    // First, the number of packets (4 bytes)
+    result_size += sizeof(int);
+    FATAL_ASSERT(buffer_size >= result_size);
+    *(int*)(char_buffer) = num_packets;
+
+    // Then, we copy each packet's size (4 bytes each)
+    result_size += num_packets * sizeof(int);
+    FATAL_ASSERT(buffer_size >= result_size);
     for (int i = 0; i < num_packets; i++) {
-        *buf = packets[i].size;
-        buf++;
+        *(int*)(char_buffer + (i + 1) * sizeof(int)) = packets[i].size;
     }
-    char* char_buf = (void*)buf;
+
+    // Now, we write the packet data
     for (int i = 0; i < num_packets; i++) {
-        memcpy(char_buf, packets[i].data, packets[i].size);
-        char_buf += packets[i].size;
+        // Copy the data into the charbuf
+        if (buffer_size < result_size + packets[i].size) {
+            return -1;
+        }
+        memcpy(char_buffer + result_size, packets[i].data, packets[i].size);
+        result_size += packets[i].size;
+        // Give enough zero-padding so that it can be a valid avpkt->data
+        if (buffer_size < result_size + AV_INPUT_BUFFER_PADDING_SIZE) {
+            return -1;
+        }
+        memset(char_buffer + result_size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
+        result_size += AV_INPUT_BUFFER_PADDING_SIZE;
     }
+
+    // Return the result size
+    return result_size;
 }
 
-int extract_avpackets_from_buffer(void* buffer, int buffer_size, AVPacket* packets) {
+int extract_avpackets_from_buffer(AVPacket** packets, int max_num_packets, void* buffer,
+                                  int buffer_size) {
     /*
-        Read the encoded packets stored in buffer into packets. The buffer should have been filled
-        using read_packets_into_buffer.
-
-        Arguments:
-            buffer (void*): Buffer containing encoded packets. Format: (number of packets)(size of
-                each packet)(data of each packet)
-
-            buffer_size (int): Provided size of the buffer. This will be compared against the size
-                implied by the buffer's metadata; no data will be copied if there is a mismatch.
-
-            packets (AVPacket*): array of encoded packets. Packets will be unreferenced before being
-                filled with new data.
-
-        Returns:
-            (int): 0 on success, -1 on failure
+        Read the encoded packets stored in buffer into packets.
+        The buffer should have been filled using read_packets_into_buffer.
     */
 
-    if (buffer == NULL) {
-        LOG_FATAL("Received a NULL buffer!");
-    }
-    if (buffer_size < 4) {
-        LOG_FATAL("Received a buffer size of %d, too small!", buffer_size);
+    // Peg to a value to ensure that client/server agree
+    FATAL_ASSERT(AV_INPUT_BUFFER_PADDING_SIZE == 64);
+
+    FATAL_ASSERT(buffer != NULL);
+    // Init all the packets to NULL
+    for (int i = 0; i < max_num_packets; i++) {
+        packets[i] = NULL;
     }
 
-    // first entry: number of packets
+    // First entry: number of packets
+    FATAL_ASSERT(buffer_size >= (int)sizeof(int));
     int* int_buffer = buffer;
     int num_packets = *int_buffer;
+    FATAL_ASSERT(num_packets <= max_num_packets);
+
+    // We compute the size of metadata (Later +packet sizes),
+    // and ensure it agrees with the total buffer_size
+    int total_size = (int)sizeof(int) + num_packets * (int)sizeof(int);
+    // Ensure enough size for the metadata
+    FATAL_ASSERT(buffer_size >= total_size);
+
+    // Find buffer sizes from metadata
     int_buffer++;
-
-    // we compute the size of metadata + packets and ensure it agrees with buffer_size
-    int computed_size = sizeof(int);
-
-    // find buffer sizes
     for (int i = 0; i < num_packets; i++) {
-        // make sure to clear the packet data
-        av_packet_unref(&packets[i]);
-        // next entry in buffer is packet size
-        packets[i].size = *int_buffer;
-        computed_size += sizeof(int) + packets[i].size;
+        packets[i] = av_packet_alloc();
+        // Set the packet size
+        packets[i]->size = *int_buffer;
         int_buffer++;
+        // Track total size
+        total_size += packets[i]->size + AV_INPUT_BUFFER_PADDING_SIZE;
     }
 
-    if (buffer_size != computed_size) {
-        LOG_ERROR(
-            "Given Buffer Size did not match computed buffer size: given %d vs "
-            "computed %d",
-            buffer_size, computed_size);
-        return -1;
-    }
+    // Confirm the buffer has the correct amount of data
+    FATAL_ASSERT(buffer_size == total_size);
 
-    // the rest of the buffer is each packet's data
-    char* char_buffer = (void*)int_buffer;
+    // The rest of the buffer is each packet's data
+    char* char_buffer = (char*)int_buffer;
     for (int i = 0; i < num_packets; i++) {
-        // set packet data
-        packets[i].data = (void*)char_buffer;
-        char_buffer += packets[i].size;
+        // Set packet data
+        packets[i]->data = (uint8_t*)char_buffer;
+        // Track buffer location
+        char_buffer += packets[i]->size + AV_INPUT_BUFFER_PADDING_SIZE;
     }
 
     // return number of packets

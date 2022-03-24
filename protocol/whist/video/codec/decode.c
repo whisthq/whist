@@ -447,9 +447,6 @@ static void destroy_video_decoder_members(VideoDecoder* decoder) {
     av_frame_free(&decoder->decoded_frame);
 
     // free the packets
-    for (int i = 0; i < MAX_ENCODED_VIDEO_PACKETS; i++) {
-        av_packet_unref(&decoder->packets[i]);
-    }
     av_buffer_unref(&decoder->ref);
 }
 
@@ -523,22 +520,25 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, int buffer_s
 
         Returns:
             (int): 0 on success, -1 on failure
-            */
+    */
 
-    int num_packets = extract_avpackets_from_buffer(buffer, buffer_size, decoder->packets);
+    AVPacket* packets[MAX_ENCODED_VIDEO_PACKETS];
+    int num_packets =
+        extract_avpackets_from_buffer(packets, MAX_ENCODED_VIDEO_PACKETS, buffer, buffer_size);
 
     int res;
     for (int i = 0; i < num_packets; i++) {
-        while ((res = avcodec_send_packet(decoder->context, &decoder->packets[i])) < 0) {
+        while ((res = avcodec_send_packet(decoder->context, packets[i])) < 0) {
             LOG_WARNING("Failed to avcodec_send_packet! Error %d: %s", res, av_err2str(res));
             if (!try_next_decoder(decoder)) {
-                for (int j = 0; j < num_packets; j++) {
-                    av_packet_unref(&decoder->packets[j]);
-                }
                 destroy_video_decoder(decoder);
             }
             return -1;
         }
+    }
+
+    for (int i = 0; i < MAX_ENCODED_VIDEO_PACKETS; i++) {
+        av_packet_free(&packets[i]);
     }
 
     decoder->received_a_frame = true;

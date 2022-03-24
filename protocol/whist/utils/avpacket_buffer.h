@@ -27,32 +27,40 @@ Public Functions
 */
 
 /**
- * @brief                       Read out the packets stored in buffer into the
- *                              AVPacket array packets.
- *
- * @param buffer                Buffer containing encoded packets. Format: (number of packets)(size
- *                              of each packet)(data of each packet)
- *
- * @param buffer_size           Size of the buffer. Must agree with the metadata given
- *                              in buffer.
- *
- * @param packets               AVPacket array to store encoded packets
- *
- * @returns                     0 on success, -1 on failure
- */
-int extract_avpackets_from_buffer(void* buffer, int buffer_size, AVPacket* packets);
-
-/**
  * @brief                       Store num_packets AVPackets, found in packets, into
  *                              a pre-allocated buffer.
  *
- * @param num_packets           Number of packets to store from packets
+ * @param buffer                Buffer to store packet data in
  *
- * @param packets               Array of packets to store
+ * @param buffer_size           The size of the buffer
  *
- * @param buf                   Buffer to store packets in. Format: (number of packets)(size
- * 								of each packet)(data of each packet)
+ * @param packets               Array of AVPackets to store
+ *
+ * @param num_packets           Size of the packets array
+ *
+ * @return                      The size of the resultant buffer. (Bytes written to)
+ *                              Or -1, if the buffer was not big enough
  */
-void write_avpackets_to_buffer(int num_packets, AVPacket* packets, int* buf);
+int write_avpackets_to_buffer(void* buffer, int buffer_size, AVPacket* packets, int num_packets);
+
+/**
+ * @brief                       Read out the packets stored in buffer into the
+ *                              AVPacket array packets.
+ *
+ * @param packets               AVPacket array to store encoded packets.
+ *                              Each element will be set to NULL or a valid AVPacket pointer.
+ *                              It is the caller's responsibility to `av_packet_free` them.
+ *
+ * @param max_num_packets       The max size of the AVPacket array
+ *
+ * @param buffer                Buffer containing encoded packets.
+ *
+ * @param buffer_size           Size of the buffer.
+ *                              Must agree with return value of `write_avpackets_to_buffer`.
+ *
+ * @returns                     The number of extracted packets
+ */
+int extract_avpackets_from_buffer(AVPacket** packets, int max_num_packets, void* buffer,
+                                  int buffer_size);
 
 #endif  // DECODE_H

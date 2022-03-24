@@ -77,7 +77,6 @@ typedef struct VideoDecoder {
     AVCodecContext* context;
     AVFrame* decoded_frame;
     AVBufferRef* ref;
-    AVPacket packets[MAX_ENCODED_VIDEO_PACKETS];
     enum AVPixelFormat match_fmt;
     DecodeType type;
     CodecType codec_type;

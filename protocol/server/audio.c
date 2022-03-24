@@ -107,7 +107,7 @@ int32_t multithreaded_send_audio(void* opaque) {
             get_buffer(audio_device);
 
             if (audio_device->buffer_size > 10000) {
-                LOG_WARNING("Audio buffer size too large!");
+                LOG_ERROR("Audio buffer size too large!");
             } else if (audio_device->buffer_size > 0) {
                 // Add samples to encoder fifo
                 audio_encoder_fifo_intake(audio_encoder, audio_device->buffer,
@@ -132,21 +132,20 @@ int32_t multithreaded_send_audio(void* opaque) {
                     }
 
                     log_double_statistic(AUDIO_ENCODE_TIME, get_timer(&t) * 1000);
-                    if (audio_encoder->encoded_frame_size > (int)MAX_AUDIOFRAME_DATA_SIZE) {
-                        LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
+                    static char buf[LARGEST_AUDIOFRAME_SIZE];
+                    AudioFrame* frame = (AudioFrame*)buf;
+                    frame->audio_frequency = audio_device->sample_rate;
+
+                    int data_len = write_avpackets_to_buffer(
+                        (void*)frame->data, MAX_AUDIOFRAME_DATA_SIZE, audio_encoder->packets,
+                        audio_encoder->num_packets);
+                    if (data_len == -1) {
+                        LOG_ERROR("Audio data too large for: %d", MAX_AUDIOFRAME_DATA_SIZE);
                     } else {
-                        static char buf[LARGEST_AUDIOFRAME_SIZE];
-                        AudioFrame* frame = (AudioFrame*)buf;
-                        frame->audio_frequency = audio_device->sample_rate;
-                        frame->data_length = audio_encoder->encoded_frame_size;
+                        frame->data_length = data_len;
 
-                        write_avpackets_to_buffer(audio_encoder->num_packets,
-                                                  audio_encoder->packets, (void*)frame->data);
-
-                        send_packet(
-                            &state->client->udp_context, PACKET_AUDIO, frame,
-                            MAX_AUDIOFRAME_METADATA_SIZE + audio_encoder->encoded_frame_size, id,
-                            false);
+                        send_packet(&state->client->udp_context, PACKET_AUDIO, frame,
+                                    MAX_AUDIOFRAME_METADATA_SIZE + data_len, id, false);
                         // Simulate nacks to trigger re-sending of previous frames.
                         // TODO: Move into udp.c
                         udp_reset_duplicate_packet_counter(&state->client->udp_context,
