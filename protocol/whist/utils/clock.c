@@ -82,16 +82,15 @@ int current_time_str(char* buffer, size_t size) {
                     time_now.wMonth, time_now.wDay, time_now.wHour, time_now.wMinute,
                     time_now.wSecond, (long)time_now.wMilliseconds * US_IN_MS);
 #else
-    struct tm* time_str_tm;
     struct timespec time_now;
     // CLOCK_REALTIME gives time since Unix epoch
     clock_gettime(CLOCK_REALTIME, &time_now);
-    time_str_tm = gmtime(&time_now.tv_sec);
+    struct tm *time_str_tm, tm_buffer;
+    time_str_tm = gmtime_r(&time_now.tv_sec, &tm_buffer);
     return snprintf(buffer, size, "%04i-%02i-%02iT%02i:%02i:%02i.%06li",
                     time_str_tm->tm_year + 1900, time_str_tm->tm_mon + 1, time_str_tm->tm_mday,
                     time_str_tm->tm_hour, time_str_tm->tm_min, time_str_tm->tm_sec,
                     (long)time_now.tv_nsec / NS_IN_US);
-
 #endif
 }
 
