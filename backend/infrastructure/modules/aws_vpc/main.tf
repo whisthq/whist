@@ -112,11 +112,13 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
   # Allow incoming SSH traffic on dev and staging
   dynamic "ingress" {
     for_each = var.env != "prod" ? [1] : []
-    description = "whist-ssh-rule"
-    protocol    = "tcp"
-    from_port   = 22
-    to_port     = 22
-    cidr_blocks = ["0.0.0.0/0"]
+    content {
+      description = "whist-ssh-rule"
+      protocol    = "tcp"
+      from_port   = 22
+      to_port     = 22
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 
   # Allow all outgoing IPv4 traffic
