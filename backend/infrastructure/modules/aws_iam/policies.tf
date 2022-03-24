@@ -90,41 +90,11 @@ data "aws_iam_policy_document" "WhistEC2DeploymentRolePolicy" {
         "ssm:PutConfigurePackageResult",
         "ssm:UpdateAssociationStatus",
         "ssm:UpdateInstanceAssociationStatus",
-        "ssm:UpdateInstanceInformation"
-      ]
-      effect = "Allow"
-      resources = [
-        "*",
-      ]
-    }
-  }
-
-  # This statement will only evaluate if the environment is not `prod`.
-  # It enables SSM to access instances (for debugging), but does not allow
-  # it in `prod` (for user privacy/security).
-  dynamic "statement" {
-    for_each = var.env != "prod" ? [1] : []
-    content {
-      actions = [
+        "ssm:UpdateInstanceInformation",
         "ssmmessages:CreateControlChannel",
         "ssmmessages:CreateDataChannel",
         "ssmmessages:OpenControlChannel",
-        "ssmmessages:OpenDataChannel"
-      ]
-      effect = "Allow"
-      resources = [
-        "*",
-      ]
-    }
-  }
-
-  # This statement will only evaluate if the environment is not `prod`.
-  # It enables SSM to access instances (for debugging), but does not allow
-  # it in `prod` (for user privacy/security).
-  dynamic "statement" {
-    for_each = var.env != "prod" ? [1] : []
-    content {
-      actions = [
+        "ssmmessages:OpenDataChannel",
         "ec2messages:AcknowledgeMessage",
         "ec2messages:DeleteMessage",
         "ec2messages:FailMessage",
