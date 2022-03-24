@@ -58,6 +58,18 @@ resource "aws_s3_bucket" "whist-test-assets" {
   }
 }
 
+# Bucket for storing fonts used in Whist
+resource "aws_s3_bucket" "whist-fonts" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = "whist-fonts"
+
+  tags = {
+    Name      = "whist-fonts"
+    Env       = var.env
+    Terraform = true
+  }
+}
+
 # ------------------------------ Buckets for protocol ------------------------------ #
 
 # Bucket for storing protocol E2E test logs

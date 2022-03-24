@@ -37,6 +37,15 @@ resource "aws_s3_bucket_public_access_block" "whist-test-assets" {
   ignore_public_acls      = false
 }
 
+resource "aws_s3_bucket_public_access_block" "whist-fonts" {
+  count                   = var.env == "prod" ? 1 : 0
+  bucket                  = aws_s3_bucket.whist-fonts[0].id
+  block_public_acls       = true
+  block_public_policy     = true
+  restrict_public_buckets = true
+  ignore_public_acls      = true
+}
+
 # This policy will allow all objects in the whist-website-assets to
 # be accessible by anyone on the internet.
 data "aws_iam_policy_document" "whist-website-assets-policy" {
