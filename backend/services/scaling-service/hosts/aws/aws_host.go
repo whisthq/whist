@@ -291,8 +291,15 @@ func (host *AWSHost) getMainSubnet() (ec2Types.Subnet, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	env := metadata.GetAppEnvironmentLowercase()
-	// find the main subnet for the current environment using tags.
+	var env string
+
+	if metadata.IsLocalEnv() {
+		env = string(metadata.EnvDev)
+	} else {
+		env = metadata.GetAppEnvironmentLowercase()
+	}
+
+	// Find the main subnet for the current environment using tags.
 	input := &ec2.DescribeSubnetsInput{
 		Filters: []ec2Types.Filter{
 			{
@@ -321,7 +328,14 @@ func (host *AWSHost) getSecurityGroup() (ec2Types.SecurityGroup, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	env := metadata.GetAppEnvironmentLowercase()
+	var env string
+
+	if metadata.IsLocalEnv() {
+		env = string(metadata.EnvDev)
+	} else {
+		env = metadata.GetAppEnvironmentLowercase()
+	}
+
 	// find the main subnet for the current environment using tags.
 	input := &ec2.DescribeSecurityGroupsInput{
 		Filters: []ec2Types.Filter{
