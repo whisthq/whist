@@ -23,7 +23,7 @@ data "aws_iam_policy_document" "EC2AssumeRolePolicy" {
 # This policy is meant to have S3 read only access, EC2 read access
 # and permissions to start and terminate instances (on-demand and spot). 
 # It is used by our backend for scaling instances up and down.
-data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
+data "aws_iam_policy_document" "WhistEC2DeploymentRolePolicy" {
   statement {
     # This statement represents the EC2ReadOnlyAccess permissions
     actions = [
@@ -76,10 +76,31 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
     for_each = var.env != "prod" ? [1] : []
     content {
       actions = [
-        "ssm:DescribeSessions",
-        "ssm:StartSession",
-        "ssm:TerminateSession",
-        "ssm:ResumeSession",
+        "ssm:DescribeAssociation",
+        "ssm:GetDeployablePatchSnapshotForInstance",
+        "ssm:GetDocument",
+        "ssm:DescribeDocument",
+        "ssm:GetManifest",
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:ListAssociations",
+        "ssm:ListInstanceAssociations",
+        "ssm:PutInventory",
+        "ssm:PutComplianceItems",
+        "ssm:PutConfigurePackageResult",
+        "ssm:UpdateAssociationStatus",
+        "ssm:UpdateInstanceAssociationStatus",
+        "ssm:UpdateInstanceInformation",
+        "ssmmessages:CreateControlChannel",
+        "ssmmessages:CreateDataChannel",
+        "ssmmessages:OpenControlChannel",
+        "ssmmessages:OpenDataChannel",
+        "ec2messages:AcknowledgeMessage",
+        "ec2messages:DeleteMessage",
+        "ec2messages:FailMessage",
+        "ec2messages:GetEndpoint",
+        "ec2messages:GetMessages",
+        "ec2messages:SendReply"
       ]
       effect = "Allow"
       resources = [
@@ -87,7 +108,12 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
       ]
     }
   }
+}
 
+# This policy allows an IAM user to pass the DeploymentRole to 
+# AWS services. It is used for passing the necessary permissions
+# to instances.
+data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
   statement {
     actions = [
       "iam:PassRole"
@@ -250,7 +276,7 @@ data "aws_iam_policy_document" "MFAPolicy" {
     effect    = "Allow"
     resources = ["arn:aws:iam::*:user/$${aws:username}"]
   }
-  
+
   statement {
     sid = "AllowManageOwnSSHPublicKeys"
     actions = [

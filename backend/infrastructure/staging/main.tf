@@ -3,7 +3,7 @@ terraform {
   # AWS credentials will be filled in by CI.
   backend "s3" {
     bucket = "whist-terraform-state"
-    key = "staging/terraform.tfstate"
+    key    = "staging/terraform.tfstate"
     region = "us-east-1"
   }
 
