@@ -75,11 +75,13 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
   # can reach SSM
   dynamic "ingress" {
     for_each    = var.env != "prod" ? [1] : []
-    description = "whist-tcp-rule"
-    protocol    = "tcp"
-    from_port   = 443
-    to_port     = 443
-    cidr_blocks = [aws_vpc.MainVPC.cidr_block]
+    content {
+      description = "whist-tcp-rule"
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      cidr_blocks = [aws_vpc.MainVPC.cidr_block]
+    }
   }
 
   # We allow all outgoing traffic
