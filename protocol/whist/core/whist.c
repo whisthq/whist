@@ -322,7 +322,7 @@ int get_wcmsg_size(WhistClientMessage *wcmsg) {
     } else if (wcmsg->type == CMESSAGE_FILE_DATA) {
         return (int)(sizeof(*wcmsg) + wcmsg->file.size);
     } else if (wcmsg->type == MESSAGE_OPEN_URL) {
-        return (int)(sizeof(*wcmsg) + strlen((const char *)&wcmsg->url_to_open) + 1);
+        return (int)(sizeof(*wcmsg) + strlen((const char *)&wcmsg->urls_to_open) + 1);
     } else {
         // Send small wcmsg's when we don't need unnecessarily large ones
         // TODO : Remove this hardcoded value.

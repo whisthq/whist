@@ -94,7 +94,7 @@ extern volatile bool connected;
 extern volatile bool client_exiting;
 static int try_amount;
 
-static char* new_tab_url;
+static char* new_tab_urls;
 
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
@@ -111,7 +111,7 @@ COMMAND_LINE_STRING_OPTION(user_email, 'u', "user", WHIST_ARGS_MAXLEN,
                            "Tell Whist the user's email.  Default: None.")
 COMMAND_LINE_STRING_OPTION(icon_png_filename, 'i', "icon", WHIST_ARGS_MAXLEN,
                            "Set the protocol window icon from a 64x64 pixel png file.")
-COMMAND_LINE_STRING_OPTION(new_tab_url, 'x', "new-tab-url", MAX_URL_LENGTH*MAX_NEW_TAB_URLS,
+COMMAND_LINE_STRING_OPTION(new_tab_urls, 'x', "new-tab-url", MAX_URL_LENGTH*MAX_NEW_TAB_URLS,
                            "URL to open in new tab.")
 COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
                            "Set the window title.  Default: Whist.")
@@ -261,21 +261,21 @@ static void initiate_file_upload(void) {
     upload_initiated = false;
 }
 
-static void send_new_tab_url_if_needed(WhistFrontend* frontend) {
+static void send_new_tab_urls_if_needed(void) {
     // Send any new URL to the server
-    if (new_tab_url) {
-        LOG_INFO("Sending message to open URL in new tab %s", new_tab_url);
-        const size_t url_length = strlen((const char*)new_tab_url);
-        const size_t wcmsg_size = sizeof(WhistClientMessage) + url_length + 1;
+    if (new_tab_urls) {
+        LOG_INFO("Sending message to open URL in new tab %s", new_tab_urls);
+        const size_t urls_length = strlen((const char*)new_tab_urls);
+        const size_t wcmsg_size = sizeof(WhistClientMessage) + urls_length + 1;
         WhistClientMessage* wcmsg = safe_malloc(wcmsg_size);
         memset(wcmsg, 0, sizeof(*wcmsg));
         wcmsg->type = MESSAGE_OPEN_URL;
-        memcpy(&wcmsg->url_to_open, (const char*)new_tab_url, url_length + 1);
+        memcpy(&wcmsg->urls_to_open, (const char*)new_tab_urls, urls_length + 1);
         send_wcmsg(wcmsg);
         free(wcmsg);
 
-        free((void*)new_tab_url);
-        new_tab_url = NULL;
+        free((void*)new_tab_urls);
+        new_tab_urls = NULL;
 
         // Unmimimize the window if needed
         if (!whist_frontend_is_window_visible(frontend)) {
@@ -392,8 +392,8 @@ int whist_client_main(int argc, const char* argv[]) {
 
         // Timer ensures we check piped args for potential URLs to open no more than once every
         // 50ms. This prevents CPU overload.
-        WhistTimer new_tab_url_timer;
-        start_timer(&new_tab_url_timer);
+        WhistTimer new_tab_urls_timer;
+        start_timer(&new_tab_urls_timer);
 
         WhistTimer window_fade_timer;
         start_timer(&window_fade_timer);
@@ -436,7 +436,7 @@ int whist_client_main(int argc, const char* argv[]) {
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
             // This should be called BEFORE the call to read_piped_arguments,
             // otherwise one URL may get lost.
-            send_new_tab_url_if_needed(frontend);
+            send_new_tab_urls_if_needed();
 
             // Update any pending SDL tasks
             sdl_update_pending_tasks(frontend);
@@ -461,7 +461,7 @@ int whist_client_main(int argc, const char* argv[]) {
                 break;
             }
 
-            if (get_timer(&new_tab_url_timer) * MS_IN_SECOND > 50.0) {
+            if (get_timer(&new_tab_urls_timer) * MS_IN_SECOND > 50.0) {
                 int piped_args_ret = read_piped_arguments(true);
                 switch (piped_args_ret) {
                     case -2: {
@@ -488,7 +488,7 @@ int whist_client_main(int argc, const char* argv[]) {
                         break;
                     }
                 }
-                start_timer(&new_tab_url_timer);
+                start_timer(&new_tab_urls_timer);
             }
 
             if (get_timer(&keyboard_sync_timer) * MS_IN_SECOND > 50.0) {

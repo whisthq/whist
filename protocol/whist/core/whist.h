@@ -723,7 +723,7 @@ typedef struct WhistClientMessage {
         ClipboardData clipboard;     // CMESSAGE_CLIPBOARD
         FileMetadata file_metadata;  // CMESSAGE_FILE_METADATA
         FileData file;               // CMESSAGE_FILE_DATA
-        char url_to_open[0];         // MESSAGE_OPEN_URL
+        char urls_to_open[0];         // MESSAGE_OPEN_URL
     };
 } WhistClientMessage;
 
