@@ -16,6 +16,7 @@ const clientIDs = {
 const getConfig = (env) => {
   // List of environment variables that must be defined in order for deploy to succeed.
   const REQUIRED_ENV_VARS = [
+    "AUTH0_CLIENT_SECRET",
     "GOOGLE_OAUTH_SECRET",
     "APPLE_OAUTH_SECRET",
   ]
