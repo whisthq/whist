@@ -17,7 +17,7 @@ deploy({
   config: getConfig(env),
 })
   .then(() => console.log(`Successfully deployed to Auth0 ${env} tenant!`))
-  .catch((err) =>
-    console.error(`Failed to deploy to Auth0 ${env} tenant. ${err}`),
-    setTimeout(() => process.exit(1), 1000) // Exit with failure, for CI
-  )
+  .catch((err) => {
+    console.error(`Failed to deploy to Auth0 ${env} tenant. ${err}`)
+    process.exit(1)
+  })
