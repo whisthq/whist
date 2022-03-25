@@ -37,6 +37,9 @@
       ],
       "scripts": {
         "test": "cd tests && bash run_tests.sh"
+      },
+      "env": {
+        "INSTANCE_PROFILE_DEV": "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfiledev"
       }
     }
   }
