@@ -237,7 +237,9 @@ extern void gf256_addset_mem(void* GF256_RESTRICT vz, const void* GF256_RESTRICT
                              const void* GF256_RESTRICT vy, int bytes);
 
 /// Performs "z[] = x[] * y" bulk memory operation
-extern void gf256_mul_mem(void* GF256_RESTRICT vz, const void* GF256_RESTRICT vx, uint8_t y,
+// CHANGE: removed restrict
+// extern void gf256_mul_mem(void* GF256_RESTRICT vz, const void* GF256_RESTRICT vx, uint8_t y,
+extern void gf256_mul_mem(void* vz, const void* vx, uint8_t y,
                           int bytes);
 
 /// Performs "z[] += x[] * y" bulk memory operation
@@ -245,7 +247,9 @@ extern void gf256_muladd_mem(void* GF256_RESTRICT vz, uint8_t y, const void* GF2
                              int bytes);
 
 /// Performs "x[] /= y" bulk memory operation
-static GF256_FORCE_INLINE void gf256_div_mem(void* GF256_RESTRICT vz, const void* GF256_RESTRICT vx,
+// CHANGE: removed restrict
+// static GF256_FORCE_INLINE void gf256_div_mem(void* GF256_RESTRICT vz, const void* GF256_RESTRICT vx,
+static GF256_FORCE_INLINE void gf256_div_mem(void* vz, const void* vx,
                                              uint8_t y, int bytes) {
     // Multiply by inverse
     gf256_mul_mem(vz, vx, y == 1 ? (uint8_t)1 : GF256Ctx.GF256_INV_TABLE[y], bytes);
