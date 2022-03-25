@@ -125,6 +125,7 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
                             "quantity": 1,
                         },
                     ],
+                    subscription_data={"trial_period_days": 14},
                     payment_method_types=("card",),
                     success_url="http://localhost/callback/payment?success=true",
                     cancel_url="http://localhost/callback/payment?success=false",
