@@ -22,8 +22,8 @@ export const OFFLINE_ERROR = "error&type=OFFLINE_ERROR"
 
 export const whistError = {
   [NO_PAYMENT_ERROR]: {
-    title: "Your free trial has expired!",
-    text: "To continue receiving access to Whist, please sign up for a paid plan.",
+    title: "There was an issue with your payment",
+    text: "To continue receiving access to Whist, please re-enter your payment info.",
   },
   [UNAUTHORIZED_ERROR]: {
     title: "There was an error authenticating you with Whist.",
