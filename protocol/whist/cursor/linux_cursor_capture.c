@@ -21,8 +21,10 @@ Includes
 #include <X11/extensions/Xfixes.h>
 #include <whist/logging/logging.h>
 #include <whist/utils/aes.h>
+#include <string.h>
+#include <fcntl.h>
+
 #include "cursor_internal.h"
-#include "string.h"
 
 /*
         These are the cursor hashes of corresponding Whist Cursors
@@ -187,6 +189,38 @@ static WhistCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
     return id;
 }
 
+static WhistCursorState get_latest_cursor_state(void) {
+#define POINTER_LOCK_UPDATE_TRIGGER_FILE "/home/whist/.teleport/pointer-lock-update"
+    static WhistCursorState state = CURSOR_STATE_VISIBLE;
+    static WhistTimer timer;
+    static bool first_run = true;
+    if (first_run) {
+        start_timer(&timer);
+        first_run = false;
+    }
+
+    // TODO: Is it too costly to do this in the video capture loop?
+    if (get_timer(&timer) > 20.0 / MS_IN_SECOND) {
+        if (!access(POINTER_LOCK_UPDATE_TRIGGER_FILE, R_OK)) {
+            int fd = open(POINTER_LOCK_UPDATE_TRIGGER_FILE, O_RDONLY);
+            char pointer_locked[2] = {0};
+            read(fd, pointer_locked, 1);
+            close(fd);
+            if (pointer_locked[0] == '1') {
+                state = CURSOR_STATE_HIDDEN;
+            } else if (pointer_locked[0] == '0') {
+                state = CURSOR_STATE_VISIBLE;
+            } else {
+                LOG_ERROR("Invalid pointer lock state");
+            }
+            remove(POINTER_LOCK_UPDATE_TRIGGER_FILE);
+        }
+        start_timer(&timer);
+    }
+
+    return state;
+}
+
 WhistCursorInfo* whist_cursor_capture(void) {
     WhistCursorInfo* image = NULL;
     if (disp) {
@@ -199,6 +233,8 @@ WhistCursorInfo* whist_cursor_capture(void) {
             return NULL;
         }
 
+        WhistCursorState state = get_latest_cursor_state();
+
         WhistCursorID whist_id = get_cursor_id(cursor_image);
         if (whist_id == INVALID) {
             // Use PNG cursor
@@ -210,11 +246,10 @@ WhistCursorInfo* whist_cursor_capture(void) {
                 rgba[i] = argb_pix << 8 | argb_pix >> 24;
             }
             image = whist_cursor_info_from_rgba(rgba, cursor_image->width, cursor_image->height,
-                                                cursor_image->xhot, cursor_image->yhot,
-                                                CURSOR_STATE_VISIBLE);
+                                                cursor_image->xhot, cursor_image->yhot, state);
         } else {
             // Use system cursor from WhistCursorID
-            image = whist_cursor_info_from_id(whist_id, CURSOR_STATE_VISIBLE);
+            image = whist_cursor_info_from_id(whist_id, state);
         }
         XFree(cursor_image);
     } else {
