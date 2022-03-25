@@ -22,7 +22,7 @@ export const OFFLINE_ERROR = "error&type=OFFLINE_ERROR"
 
 export const whistError = {
   [NO_PAYMENT_ERROR]: {
-    title: "There was an issue with your payment",
+    title: "There was an issue with your payment :(",
     text: "To continue receiving access to Whist, please re-enter your payment info.",
   },
   [UNAUTHORIZED_ERROR]: {

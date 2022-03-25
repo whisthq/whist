@@ -131,8 +131,8 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
                     mode="subscription",
                 )
             else:
-                # The user has an incomplete subscription.
-                # Create a customer portal session so the user can update their billing
+                # The user has a subscription in a non-terminal state (e.g. "active", "trialing", or
+                # "incomplete"). Create a customer portal session so the user can update their billing
                 # and subscription information.
                 session = stripe.billing_portal.Session.create(
                     customer=customer,
