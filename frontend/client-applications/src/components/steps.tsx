@@ -10,7 +10,8 @@ const Steps = (props: {
   return (
     <nav className="flex items-center justify-center" aria-label="Progress">
       <p className="text-sm text-gray-400 font-medium">
-        Step {props.current + 1} of {props.total}
+        Step {Math.min(props.current + 1, props.total).toString()} of{" "}
+        {props.total}
       </p>
       <ol role="list" className="ml-8 flex items-center space-x-5">
         {_range.map((x) => (

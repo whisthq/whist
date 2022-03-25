@@ -27,7 +27,6 @@ import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   sleep,
-  refreshToken,
   isNewConfigToken,
   darkMode,
   timezone,
@@ -145,12 +144,7 @@ const launchTrigger = emitOnSignal(
     ), // On a normal launch
     importedData // On onboarding or import
   )
-).pipe(
-  withLatestFrom(fromTrigger(WhistTrigger.protocolConnection)),
-  filter(([, connected]: [any, boolean]) => !connected),
-  map(([x]) => x),
-  share()
-)
+).pipe(share())
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))

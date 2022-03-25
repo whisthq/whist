@@ -17,7 +17,7 @@ const Landing = (props: {
       <div className="m-auto text-center relative bottom-16">
         {props.logo}
         <div
-          className="text-gray-100 text-4xl mt-8 animate-fade-in-up opacity-0 font-bold"
+          className="text-gray-100 text-4xl mt-8 animate-fade-in-up opacity-0 font-bold mx-auto max-w-md"
           style={{ animationDelay: "400ms" }}
         >
           {props.title}

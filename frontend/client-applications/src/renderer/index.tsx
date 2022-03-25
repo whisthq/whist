@@ -182,6 +182,7 @@ const RootComponent = () => {
           handleImporterSubmit(browser)
         }
         allowSkip={false}
+        mode="importing"
       />
     )
   if (show === WindowHashImportOnboarding)
@@ -192,6 +193,7 @@ const RootComponent = () => {
           handleImporterSubmit(browser)
         }
         allowSkip={true}
+        mode="onboarding"
       />
     )
   if (show === WindowHashRestoreTabs)

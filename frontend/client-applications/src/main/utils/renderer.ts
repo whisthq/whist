@@ -162,7 +162,6 @@ const createLaunchLoadingWindow = () =>
     options: {
       fullscreenable: false,
       titleBarStyle: "customButtonsOnHover",
-      transparent: true,
     },
   })
 
@@ -171,6 +170,10 @@ const createImportLoadingWindow = () =>
     ...width.md,
     ...height.sm,
     hash: WindowHashImportLoading,
+    options: {
+      fullscreenable: false,
+      titleBarStyle: "customButtonsOnHover",
+    },
   })
 
 const createImportWindow = () =>
@@ -178,6 +181,10 @@ const createImportWindow = () =>
     ...width.md,
     ...height.md,
     hash: WindowHashImport,
+    options: {
+      fullscreenable: false,
+      titleBarStyle: "customButtonsOnHover",
+    },
   })
 
 const createImportOnboardingWindow = () =>
@@ -185,6 +192,10 @@ const createImportOnboardingWindow = () =>
     ...width.md,
     ...height.lg,
     hash: WindowHashImportOnboarding,
+    options: {
+      fullscreenable: false,
+      titleBarStyle: "customButtonsOnHover",
+    },
   })
 
 const createSupportWindow = () =>

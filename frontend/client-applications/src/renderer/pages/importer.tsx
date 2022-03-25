@@ -10,8 +10,9 @@ const Importer = (props: {
   browsers: string[] | undefined
   onSubmit: (browser: string | undefined) => void
   allowSkip: boolean
+  mode: string
 }) => {
-  const [showWelcome, setShowWelcome] = useState(true)
+  const [showWelcome, setShowWelcome] = useState(props.mode === "onboarding")
   const [browser, setBrowser] = useState("")
   const [processing, setProcessing] = useState(false)
 

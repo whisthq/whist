@@ -45,7 +45,7 @@ const configs = {
       clientId: "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", // public; not a secret
       apiIdentifier: "https://api.fractal.co",
     },
-    deployEnv: "dev",
+    deployEnv: "local",
     clientDownloadURLs: {
       MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
       Windows:

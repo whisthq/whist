@@ -13,6 +13,9 @@ const clearAppData = (_env, ...args) => {
   let folderToDelete
 
   switch (args[0]) {
+    case "--local":
+      folderToDelete = "local"
+      break
     case "--dev":
       folderToDelete = "dev"
       break
@@ -28,7 +31,7 @@ const clearAppData = (_env, ...args) => {
   }
 
   if (!folderToDelete) {
-    console.log("Must specify a flag: --[dev|staging|prod|all]")
+    console.log("Must specify a flag: --[local|dev|staging|prod|all]")
     app.exit()
   }
 

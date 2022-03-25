@@ -37,6 +37,7 @@ import {
   createSupportWindow,
   createRestoreTabsWindow,
   createImportOnboardingWindow,
+  createImportLoadingWindow,
 } from "@app/main/utils/renderer"
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -85,15 +86,18 @@ untilUpdateAvailable(
         fromTrigger(WhistTrigger.beginImport).pipe(
           mapTo(true),
           startWith(false)
-        )
+        ),
+        fromTrigger(WhistTrigger.protocolConnection)
       ),
-      map((x) => ({ import: x[1] }))
+      map((x) => ({ import: x[1], connected: x[2] }))
     )
   )
-).subscribe((args: { import: boolean }) => {
+).subscribe((args: { import: boolean; connected: boolean }) => {
   if (!args.import) networkAnalyze()
 
-  createLaunchLoadingWindow()
+  console.log("PROTOCOL CONNECTION IS", args.connected)
+
+  args.connected ? createImportLoadingWindow() : createLaunchLoadingWindow()
 
   destroyElectronWindow(WindowHashPayment)
   destroyElectronWindow(WindowHashImport)
