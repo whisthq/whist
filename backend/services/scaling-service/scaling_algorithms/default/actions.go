@@ -587,7 +587,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	)
 
 	// Populate allowedRegions
-	for _, enabledRegion := range EnabledRegions {
+	for _, enabledRegion := range GetEnabledRegions() {
 		for _, requestedRegion := range requestedRegions {
 			if enabledRegion == requestedRegion {
 				allowedRegions = append(allowedRegions, requestedRegion)

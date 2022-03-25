@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/whisthq/whist/backend/services/constants"
+	"github.com/whisthq/whist/backend/services/metadata"
 )
 
 // TestGenerateInstanceCapacityMap tests that the generateInstanceCapacityMap
@@ -68,4 +69,45 @@ func TestGenerateInstanceCapacityMap(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestEnabledRegionsMap tests the GetEnabledRegions function that
+// returns a list of regions according to the environment.
+func TestEnabledRegionsMap(t *testing.T) {
+	var tests = []struct {
+		env  string
+		want []string
+	}{
+		{"dev", []string{"us-east-1"}},
+		{"staging", []string{"us-east-1"}},
+		{"prod", []string{
+			"us-east-1",
+			"us-east-2",
+			"us-west-1",
+			"us-west-2",
+			"ca-central-1",
+			"eu-west-2",
+			"eu-central-1",
+			"ap-south-1",
+		}},
+		{"localdev", []string{"us-east-1"}},
+		{"unknown", []string{"us-east-1"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.env, func(t *testing.T) {
+
+			// Mock the GetAppEnvironment function to return the tested environment
+			metadata.GetAppEnvironment = func() metadata.AppEnvironment {
+				return metadata.AppEnvironment(tt.env)
+			}
+
+			got := GetEnabledRegions()
+			ok := reflect.DeepEqual(got, tt.want)
+			if !ok {
+				t.Errorf("Enabled regions map is incorrect, got %v, expected %v", got, tt.want)
+			}
+		})
+	}
+
 }
