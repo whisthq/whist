@@ -51,12 +51,38 @@ const switchActiveTab = async (tabId: number, tabToFocusUrl: string) => {
   try {
     var found: boolean = false
     var desiredTabId: number = -1
+
     // Loop over all tabs to find the one we want to switch to
     chrome.tabs.query({}, function (tabs: chrome.tabs.Tab[]) {
+
+
+
+//       const urls = tabs.
+
+//         urls.filter
+
+
+
+//       const words = ['spray', 'limit', 'elite', 'exuberant', 'destruction', 'present'];
+
+// const result = words.filter(word => word.length > 6);
+
+// console.log(result);
+// // expected output: Array ["exuberant", "destruction", "present"]
+
+
+
+//       const urls = tabs.map(() => // create a list of urls)
+//       const url = find(urls, tabToFocusUrl)
+
+
+
+
+
       for (var i = 0; i < tabs.length; i++) {
         if (tabs[i].url.search(tabToFocusUrl) > -1) {
           found = true
-          desiredTabId = tabs[i].id
+          desiredTabId = tabs[i].id as number // cast to number (won't be be undefined)
         }
       }
       if (found) {
