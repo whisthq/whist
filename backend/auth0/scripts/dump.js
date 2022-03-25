@@ -65,6 +65,6 @@ dump({
     console.log(`Successfully dumped from Auth0 ${env} tenant!`)
   })
   .catch((err) =>
-    console.log(`Failed to dump from Auth0 ${env} tenant. ${err}`),
-    process.exit(1) // Exit with failure, for CI
+    console.error(`Failed to dump from Auth0 ${env} tenant. ${err}`),
+    setTimeout(() => process.exit(1), 1000) // Exit with failure, for CI
   )
