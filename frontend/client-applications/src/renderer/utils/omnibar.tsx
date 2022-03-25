@@ -50,7 +50,7 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
     },
     {
       icon: Duplicate,
-      text: "Import Tabs from Another Browser",
+      text: "Import Tabs from Another Browser (250 max)",
       keywords: ["Import", "Google Chrome", "Recover"],
       onClick: () =>
         setMainState({
