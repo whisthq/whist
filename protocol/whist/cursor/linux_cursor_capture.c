@@ -199,7 +199,7 @@ static WhistCursorState get_latest_cursor_state(void) {
         first_run = false;
     }
 
-    // TODO: Is it too costly to do this in the video capture loop?
+    // This happens in the video capture loop, but takes negligible time
     if (get_timer(&timer) > 20.0 / MS_IN_SECOND) {
         if (!access(POINTER_LOCK_UPDATE_TRIGGER_FILE, R_OK)) {
             int fd = open(POINTER_LOCK_UPDATE_TRIGGER_FILE, O_RDONLY);
