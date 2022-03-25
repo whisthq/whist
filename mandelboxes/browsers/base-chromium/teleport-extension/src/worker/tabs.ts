@@ -1,3 +1,5 @@
+import { NativeHostMessage, NativeHostMessageType } from "@app/constants/ipc"
+
 // Try to cancel or undo a tab drag-out
 const tryRestoreTabLocation = async (
   tabId: number,
@@ -24,63 +26,16 @@ const tryRestoreTabLocation = async (
 }
 
 // Switch focused tab to match the requested URL
-const createNewTab = async (
-  tabId: number,
-  newtabUrl: string
-) => {
-  try {
-    await chrome.tabs.create({
-      openerTabId: tabId,
-      active: true, // Switch to the new tab
-      url: newtabUrl,
-    })
-  } catch (err) {
-    if (
-      err ==
-      "Error: TODO."
-    ) {
-      await new Promise<void>((resolve) =>
-        setTimeout(() => {
-          createNewTab(tabId, newtabUrl)
-          resolve()
-        }, 50)
-      )
-    }
-  }
+const createTab = async (url: string) => {
+  chrome.tabs.create({
+    url,
+    active: true,
+  })
 }
 
 // Switch currently-active tab to match the requested tab
-const switchActiveTab = async (
-  tabId: number,
-  tabToFocusUrl: string
-) => {
-  try {
-
-    var 
-    await chrome.tabs.query({ url: tabToFocusUrl }, function(tabToFocus)) {
-      await chrome.tabs.update(tabToFocus.id, { active: true })
-    }
-
-      
-      
-      
-      
-      {
-      active: true
-    })
-  } catch (err) {
-    if (
-      err ==
-      "Error: TODO."
-    ) {
-      await new Promise<void>((resolve) =>
-        setTimeout(() => {
-          switchActiveTab(tabId, tabToFocusUrl)
-          resolve()
-        }, 50)
-      )
-    }
-  }
+const activateTab = async (tabId: number) => {
+  chrome.tabs.update(tabId, { active: true })
 }
 
 // Listen for tab drag-out detach events and instantly
@@ -89,20 +44,28 @@ const initTabDetachSuppressor = () => {
   chrome.tabs.onDetached.addListener(tryRestoreTabLocation)
 }
 
-// Listen for tab creation events, create a new tab to
-// the requested URL, and switch focus to it
-const initTabCreationHandler = () => {
-  chrome.tabs.onCreated.addListener(createNewTab)
+const initCreateNewTabHandler = (nativeHostPort: chrome.runtime.Port) => {
+  nativeHostPort.onMessage.addListener((msg: NativeHostMessage) => {
+    if (
+      msg.type === NativeHostMessageType.CREATE_NEW_TAB &&
+      msg.value?.url !== undefined
+    )
+      createTab(msg.value.url)
+  })
 }
 
-// Listen for tab switching events and switch the focused
-// tab to the requested URL
-const initTabSwitchingHandler = () => {
-  chrome.tabs.onUpdated.addListener(switchActiveTab)
+const initActivateTabHandler = (nativeHostPort: chrome.runtime.Port) => {
+  nativeHostPort.onMessage.addListener((msg: NativeHostMessage) => {
+    if (
+      msg.type === NativeHostMessageType.ACTIVATE_TAB &&
+      msg.value?.id !== undefined
+    )
+      activateTab(msg.value.id)
+  })
 }
 
 export {
   initTabDetachSuppressor,
-  initTabCreationHandler,
-  initTabSwitchingHandler,
+  initCreateNewTabHandler,
+  initActivateTabHandler,
 }
