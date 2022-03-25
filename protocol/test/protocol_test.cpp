@@ -154,7 +154,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
     // Check that the dimensions are the desired ones
     int measured_width, measured_height;
-    whist_frontend_get_window_virtual_size(frontend, &width, &height);
+    whist_frontend_get_window_virtual_size(frontend, &measured_width, &measured_height);
     EXPECT_EQ(measured_width, width);
     EXPECT_EQ(measured_height, height);
 
