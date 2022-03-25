@@ -1,21 +1,9 @@
-// Message format for native application communication
-interface HostMessage {
-  action: string
-}
+import { NativeHostMessage, NativeHostMessageType } from "@app/constants/ipc"
 
 // Listen for file state changes and propagate to the filesystem.
-const initFileSyncHandler = () => {
+const initFileSyncHandler = (nativeHostPort: chrome.runtime.Port) => {
   // Disable the downloads shelf at the bottom.
   chrome.downloads.setShelfEnabled(false)
-
-  const hostPort = chrome.runtime.connectNative("whist_teleport_extension_host")
-
-  // Listen for exit indication from host application
-  hostPort.onMessage.addListener((msg: HostMessage) => {
-    if (msg.action == "exit") {
-      hostPort.disconnect()
-    }
-  })
 
   // Listen for chrome downloads to notify teleport host about
   chrome.downloads.onChanged.addListener(
@@ -34,7 +22,10 @@ const initFileSyncHandler = () => {
           // Since we query by unique `id`, this is the only array element.
           const downloadItem = downloadItems[0]
           const filename = downloadItem.filename
-          hostPort.postMessage({ downloadStatus: "complete", filename })
+          nativeHostPort.postMessage(<NativeHostMessage>{
+            type: NativeHostMessageType.DOWNLOAD_COMPLETE,
+            value: filename,
+          })
         }
       )
     }

@@ -3,10 +3,16 @@
   "version": "1.0.0",
   "manifest_version": 3,
   "description": "__MSG_extDesc__",
-  "icons": {},
   "background": {
     "service_worker": "js/worker.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/content.js"],
+      "run_at": "document_start"
+    }
+  ],
   "default_locale": "en",
   "permissions": [
     "downloads",
