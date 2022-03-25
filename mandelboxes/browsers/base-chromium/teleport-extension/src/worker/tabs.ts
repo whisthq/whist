@@ -34,7 +34,7 @@ const createNewTab = async (tabId: number, newtabUrl: string) => {
   } catch (err) {
     if (
       err ==
-      "Error: Failed to create and switch to the new tab for the provided URL."
+      "Error: TODO."
     ) {
       await new Promise<void>((resolve) =>
         setTimeout(() => {
@@ -47,52 +47,19 @@ const createNewTab = async (tabId: number, newtabUrl: string) => {
 }
 
 // Switch currently-active tab to match the requested tab
-const switchActiveTab = async (tabId: number, tabToFocusUrl: string) => {
+const switchActiveTab = async (
+  tabId: number,
+  tabToFocusUrl: string
+) => {
   try {
-    var found: boolean = false
-    var desiredTabId: number = -1
-
-    // Loop over all tabs to find the one we want to switch to
-    chrome.tabs.query({}, function (tabs: chrome.tabs.Tab[]) {
-
-
-
-//       const urls = tabs.
-
-//         urls.filter
-
-
-
-//       const words = ['spray', 'limit', 'elite', 'exuberant', 'destruction', 'present'];
-
-// const result = words.filter(word => word.length > 6);
-
-// console.log(result);
-// // expected output: Array ["exuberant", "destruction", "present"]
-
-
-
-//       const urls = tabs.map(() => // create a list of urls)
-//       const url = find(urls, tabToFocusUrl)
-
-
-
-
-
-      for (var i = 0; i < tabs.length; i++) {
-        if (tabs[i].url.search(tabToFocusUrl) > -1) {
-          found = true
-          desiredTabId = tabs[i].id as number // cast to number (won't be be undefined)
-        }
-      }
-      if (found) {
-        chrome.tabs.update(desiredTabId, { active: true })
-      } else {
-        throw "Error: Could not find tab to switch to."
-      }
+    await chrome.tabs.update((chrome.tabs.query({url: tabToFocusUrl })).id, {
+      active: true
     })
   } catch (err) {
-    if (err == "Error: Failed to switch to the tab for the provided URL.") {
+    if (
+      err ==
+      "Error: TODO."
+    ) {
       await new Promise<void>((resolve) =>
         setTimeout(() => {
           switchActiveTab(tabId, tabToFocusUrl)
