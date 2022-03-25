@@ -38,6 +38,10 @@ const createAuthWindow = () => {
     ...height.lg,
     hash: WindowHashAuth,
     customURL: `${authPortalURL()}&connection=google-oauth2`,
+    options: {
+      fullscreenable: false,
+      titleBarStyle: "customButtonsOnHover",
+    },
   })
 
   /* eslint-disable @typescript-eslint/no-misused-promises */
