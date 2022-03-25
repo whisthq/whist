@@ -14,6 +14,7 @@ cd /home/ubuntu
 # our instance, if there is some.
 EPHEMERAL_DEVICE_PATH=$(nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == "Amazon EC2 NVMe Instance Storage")) | max_by(.PhysicalSize) | .DevicePath')
 EPHEMERAL_FS_PATH=/ephemeral
+USERDATA_ENV=/usr/share/whist/userdata.env
 
 if [ $EPHEMERAL_DEVICE_PATH != "null" ]
 then
@@ -24,15 +25,38 @@ then
     mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
     echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
 
-    # Stop docker and copy the data directory that contains mandelbox images to the ephemeral storage
+    # Stop docker and copy the data directory to the ephemeral storage
     systemctl stop docker
-    rsync -a /var/lib/docker "$EPHEMERAL_FS_PATH"
-    rm -rf /var/lib/docker
+    mv /var/lib/docker "$EPHEMERAL_FS_PATH"
+    echo "Moved /var/lib/docker to ephemeral volume"
 
     # Modify configuration to use the new data directory and persist in daemon config file
     # and start docker again
     jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
     systemctl start docker
+
+    # Populate env vars
+    eval $(cat "$USERDATA_ENV")
+
+    # Login wit docker
+    echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
+
+    # Pull Docker images for Chrome and Brave directly to the ephemeral volume
+    ghcr_uri=ghcr.io
+
+    pull_image_base_chrome="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/chrome"
+    pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
+
+    pull_image_base_brave="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/brave"
+    pull_image_brave="$pull_image_base_brave:$GIT_HASH"
+
+    docker pull "$pull_image_chrome"
+    docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
+
+    docker pull "$pull_image_chrome"
+    docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
+
+    echo "Finished pulling images"
 
 else
     echo "No ephemeral device path found. Warming up EBS volume with fio."

@@ -211,6 +211,10 @@ build {
     inline = ["sudo mkdir -p /usr/share/whist", "sudo mv /home/ubuntu/host-setup/app_env.env /usr/share/whist/app_env.env"]
   }
 
+  provisioner "shell" {
+    inline = ["sudo mkdir -p /usr/share/whist", "sudo mv /home/ubuntu/host-setup/userdata.env /usr/share/whist/userdata.env"]
+  }
+
   provisioner "file" {
     destination = "/home/ubuntu/host-service"
     source      = "../backend/services/build/host-service"
