@@ -113,10 +113,9 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
         subscription_status = get_stripe_subscription_status(customer)
 
         try:
-            if not subscription_status == "active":
-                # Any subscriptions that the user might have had are now in terminal states (e.g.
-                # "canceled", "unpaid", or "incomplete_expired") and cannot be renewed. Create a
-                # checkout session so the user can enroll in a new subscription.
+            if not subscription_status in ["active", "trialing"]:
+                # Any subscriptions that is not active or in the free trial period means that the user
+                # should re-enter their payment info for a brand-new subscription
                 session = stripe.checkout.Session.create(
                     customer=customer,
                     line_items=[
