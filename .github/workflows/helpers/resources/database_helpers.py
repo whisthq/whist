@@ -4,7 +4,7 @@ import sys
 import os
 import psycopg2
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # add the current directory to the path no matter where this is called from
@@ -70,7 +70,7 @@ def get_lingering_instances(database_url, region):
     lingering_instances = []
 
     for instance in instances:
-        curr_time = datetime.now()
+        curr_time = datetime.now(timezone.utc)
         last_updated_time = instance[1]
 
         # Get difference in minutes
