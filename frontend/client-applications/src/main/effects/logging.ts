@@ -86,6 +86,13 @@ const stdoutBuffer = {
   buffer: "",
 }
 
+const _logToLogz = (line: string) => {
+  if (!line.includes("VERBOSE")) {
+    logToLogzio(line, "protocol")
+    if (process.env.SHOW_PROTOCOL_LOGS === "true") console.log(line)
+  }
+}
+
 fromTrigger(WhistTrigger.protocolStdoutData).subscribe((data: string) => {
   // Combine the previous line with the current msg
   const newmsg = `${stdoutBuffer.buffer}${data}`
@@ -94,20 +101,11 @@ fromTrigger(WhistTrigger.protocolStdoutData).subscribe((data: string) => {
   // Leave the last line in the buffer to be appended to later
   stdoutBuffer.buffer = lines.length === 0 ? "" : (lines.pop() as string)
   // Print the rest of the lines
-  lines.forEach((line: string) => {
-    if (!line.includes("VERBOSE")) {
-      logToLogzio(line, "protocol")
-      if (process.env.SHOW_PROTOCOL_LOGS === "true") console.log(line)
-    }
-  })
+  lines.forEach(_logToLogz)
 })
 
 fromTrigger(WhistTrigger.protocolStdoutEnd).subscribe(() => {
-  const { buffer } = stdoutBuffer
-  if (!buffer.includes("VERBOSE")) {
-    logToLogzio(buffer, "protocol")
-    if (process.env.SHOW_PROTOCOL_LOGS === "true") console.log(buffer)
-  }
+  _logToLogz(stdoutBuffer.buffer)
 })
 
 /* eslint-disable @typescript-eslint/no-misused-promises */
