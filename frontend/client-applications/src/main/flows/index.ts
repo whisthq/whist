@@ -26,6 +26,7 @@ import {
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
+  refreshToken,
   sleep,
   isNewConfigToken,
   darkMode,
@@ -152,9 +153,8 @@ const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
 const authRefresh = authRefreshFlow(
-  merge(fromTrigger(WhistTrigger.authFlowSuccess))
+  emitOnSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
-
 // Subscribe to failure so it can be logged
 authRefresh.failure.subscribe()
 
