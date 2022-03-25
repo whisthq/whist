@@ -159,8 +159,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         native_window_utils_windows.c
     )
 
-    target_link_libraries(WhistClient whistInput ${LIBMFX})
-
     set_property(TARGET WhistClient PROPERTY
             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 

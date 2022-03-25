@@ -194,7 +194,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/native_window_utils_windows.c
     )
-    target_link_libraries(${PROTOCOL_TEST_BINARY} whistInput ${LIBMFX})
 
     set_property(TARGET ${PROTOCOL_TEST_BINARY} PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"

@@ -307,18 +307,6 @@ if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
-find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/
-        NO_DEFAULT_PATH
-        NO_CMAKE_ENVIRONMENT_PATH
-        NO_CMAKE_PATH
-        NO_SYSTEM_ENVIRONMENT_PATH
-        NO_CMAKE_SYSTEM_PATH
-        NO_CMAKE_FIND_ROOT_PATH)
-
-if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
-    message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}")
-endif()
-
 function(copy_runtime_libs TARGET)
     foreach(DIR ${RUNTIME_DIR_PATHS})
         add_custom_command(TARGET ${TARGET} POST_BUILD
@@ -470,7 +458,6 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile 
         whistFEC
         ${STATIC_SDL2}
         ${LIB_SENTRY}
-        ${LIBMFX}
     )
     # Server Specific windows libs go here
     set(WINDOWS_SPECIFIC_SERVER_LIBS

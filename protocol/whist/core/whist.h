@@ -55,7 +55,6 @@ Includes
 #include <libavfilter/buffersrc.h>
 #include <libavutil/avutil.h>
 #include <libavutil/hwcontext.h>
-#include <libavutil/hwcontext_qsv.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 
