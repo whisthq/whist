@@ -17,7 +17,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         add_compile_options("-mavx2")
         # the below line fails mac ci, can't reproduce locally
         # TODO fix this
-        # add_compile_options("-O2")
+        add_compile_options("-O2")
     else()
         message(FATAL "unknown Darwin architecture: ${MACOS_ARCHITECTURE} ")
     endif()
