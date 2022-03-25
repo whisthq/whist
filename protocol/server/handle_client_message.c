@@ -310,62 +310,52 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
 
     // Step 1: Obtain a pointer to the URL string, and measure the length to ensure it is not too
     // long.
-    char *received_url = (char *)&fcmsg->url_to_open;
-    size_t url_length = strlen(received_url);
-    if (url_length > MAX_URL_LENGTH*MAX_NEW_TAB_URLS) {
+    char *received_urls = (char *)&fcmsg->urls_to_open;
+    size_t urls_length = strlen(received_urls);
+    if (urls_length > MAX_URL_LENGTH*MAX_NEW_TAB_URLS) {
         LOG_WARNING(
             "Attempted to open url(s) of length %zu, which exceeds the max allowed length (%d "
             "characters)\n",
-            url_length, MAX_URL_LENGTH*MAX_NEW_TAB_URLS);
+            urls_length, MAX_URL_LENGTH*MAX_NEW_TAB_URLS);
         return -1;
     }
     LOG_INFO("Received URL to open in new tab");
 
     // Step 2: Create the command to run on the Mandelbox's terminal to open the received URL in a
     // new tab. To open a new tab with a given url, we can just use the terminal command: `exec
-    // google-chrome <insert url here>`. This command, however, needs to be run after by the same
+    // google-chrome <insert url(s) here>`. This command, however, needs to be run after by the same
     // user that ran the initial google-chrome command, responsible for starting the browser on the
     // back end. In our case, the user is 'whist', and we can use the run-as-whist-user.sh script to
     // do just that. We pass the `exec google-chrome <received url here>` command as a parameter to
     // the run-as-whist-user.sh script, and the script will take care of the rest.
     const size_t len_cmd_before_url =
-        strlen("/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \"");
+        strlen("/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \\\"");
     // The maximum possible command length is equal to the (constant) length of the part of the
     // command that needs to go before the url plus the length of the url itself, which may be up to
     // MAX_URL_LENGTH.
 
-    size_t characters_to_escape = 0;
-    for (size_t i=0; i<strlen(received_url); i++) {
-        if (received_url[i] == '&') {
-            characters_to_escape += 1;
+    // TODO: adjust size
+    char *command = (char *)calloc(len_cmd_before_url + MAX_URL_LENGTH*MAX_NEW_TAB_URLS + 1, sizeof(char));
+    sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \\\"");
+    
+    // Split URLs and wrap them in double quotes
+    size_t index = len_cmd_before_url;
+    for (size_t i=0; i<urls_length; i++) {
+        if (received_urls[i] == '|') {
+            command[index] = '\\';
+            command[index+1] = '"';
+            command[index+2] = ' ';
+            command[index+3] = '\\';
+            command[index+4] = '"';
+            index += 5;
+        }
+        else {
+            command[index] = received_urls[i];
+            index +=1;
         }
     }
-
-    char *command = (char *)calloc(url_length + len_cmd_before_url + 1, sizeof(char));
-    sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
-            received_url);
-    printf("Command before transformation: %s\n", command);
-    // split urls
-    for (size_t i=0; i<strlen(command); i++) {
-        if (command[i] == '|') {
-            command[i] = ' ';
-        }
-    }
-
-    size_t index = 0;
-    char *cleaned_command = (char *)calloc(url_length + characters_to_escape + len_cmd_before_url + 1, sizeof(char));
-    for (size_t i=0; i<strlen(command); i++) {
-        if (command[i] == '&') {
-            cleaned_command[index] = '\\';
-            index+=1;
-        }
-        cleaned_command[index] = command[i];
-        index += 1;
-    }
-    free(command);
-    command = cleaned_command;
-
-    printf("Command after transformation: %s\n", command);
+    sprintf(command+index, "\\\"\"");
+    printf("Command to open URLs: %s\n", command);
 
     // Step 3: Execute the command created in step 2 (which consists of a call to the
     // run-as-whist-user.sh script with the appropriate parameter) in the mandelbox, and save the
