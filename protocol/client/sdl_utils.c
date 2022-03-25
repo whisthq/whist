@@ -467,6 +467,11 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
 #define CURSORIMAGE_A 0x000000ff
 
     static WhistCursorState last_cursor_state = CURSOR_STATE_VISIBLE;
+    static struct {
+        int x;
+        int y;
+    } last_visible_cursor_position = {0, 0};
+
     static uint32_t last_cursor_hash = 0;
     static SDL_Cursor* cleanup_cursor = NULL;
 
@@ -534,11 +539,21 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
     }
 
     if (cursor->cursor_state != last_cursor_state) {
-        bool hide_cursor = false;
         if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
-            hide_cursor = true;
+            // Capture the coordinates of the cursor so we can restore it when it becomes visible
+            // again
+            SDL_GetGlobalMouseState(&last_visible_cursor_position.x,
+                                    &last_visible_cursor_position.y);
+            SDL_SetRelativeMouseMode(true);
+            LOG_INFO("CURSOR GOING HIDDEN AT %d %d", last_visible_cursor_position.x,
+                     last_visible_cursor_position.y);
+        } else {
+            // The cursor became visible, so move it to where it was captured.
+            SDL_SetRelativeMouseMode(false);
+            SDL_WarpMouseGlobal(last_visible_cursor_position.x, last_visible_cursor_position.y);
+            LOG_INFO("CURSOR GOING VISIBLE AT %d %d", last_visible_cursor_position.x,
+                     last_visible_cursor_position.y);
         }
-        SDL_SetRelativeMouseMode(hide_cursor);
         last_cursor_state = cursor->cursor_state;
     }
 }
