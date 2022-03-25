@@ -24,6 +24,7 @@ Includes
 
 #include <SDL2/SDL.h>
 #include <whist/utils/color.h>
+#include "frontend/frontend.h"
 
 /*
 ============================
@@ -72,7 +73,7 @@ int get_native_window_dpi(SDL_Window* window);
  *
  * @note                           This must be called after init_sdl
  */
-void initialize_out_of_window_drag_handlers(void);
+void initialize_out_of_window_drag_handlers(WhistFrontend* frontend);
 
 /**
  * @brief                          Destroy callbacks for out of window drag events

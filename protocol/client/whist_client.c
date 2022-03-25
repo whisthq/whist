@@ -261,7 +261,7 @@ static void initiate_file_upload(void) {
     upload_initiated = false;
 }
 
-static void send_new_tab_url_if_needed(void) {
+static void send_new_tab_url_if_needed(WhistFrontend* frontend) {
     // Send any new URL to the server
     if (new_tab_url) {
         LOG_INFO("Sending message to open URL in new tab");
@@ -278,7 +278,7 @@ static void send_new_tab_url_if_needed(void) {
         new_tab_url = NULL;
 
         // Unmimimize the window if needed
-        if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_MINIMIZED) {
+        if (!whist_frontend_is_window_visible(frontend)) {
             SDL_RestoreWindow((SDL_Window*)window);
         }
     }
@@ -381,7 +381,7 @@ int whist_client_main(int argc, const char* argv[]) {
         init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
 
         // Add listeners for global file drag events
-        initialize_out_of_window_drag_handlers();
+        initialize_out_of_window_drag_handlers(frontend);
 
         start_timer(&window_resize_timer);
         window_resize_mutex = whist_create_mutex();
@@ -429,17 +429,17 @@ int whist_client_main(int argc, const char* argv[]) {
 
         // Send our initial width/height/codec to the server,
         // so it can synchronize with us
-        send_message_dimensions();
+        send_message_dimensions(frontend);
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
             // This should be called BEFORE the call to read_piped_arguments,
             // otherwise one URL may get lost.
-            send_new_tab_url_if_needed();
+            send_new_tab_url_if_needed(frontend);
 
             // Update any pending SDL tasks
-            sdl_update_pending_tasks();
+            sdl_update_pending_tasks(frontend);
 
             // Try rendering anything out, if there's something to render out
             renderer_try_render(whist_renderer);
@@ -455,7 +455,7 @@ int whist_client_main(int argc, const char* argv[]) {
             // We _must_ keep make calling this function as much as we can,
             // or else the user will get beachball / "Whist Not Responding"
             // Note, that the OS will sometimes hang this function for an arbitrarily long time
-            if (!sdl_handle_events()) {
+            if (!sdl_handle_events(frontend)) {
                 // unable to handle event
                 exit_code = WHIST_EXIT_FAILURE;
                 break;
@@ -501,24 +501,25 @@ int whist_client_main(int argc, const char* argv[]) {
 
             if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
                 static int cached_display_index = -1;
-                FrontendWindowInfo window_info;
-                if (whist_frontend_get_window_info(frontend, &window_info) != 0) {
-                    LOG_FATAL("Failed to get window display index");
-                }
-
-                if (cached_display_index != window_info.display_index) {
-                    if (cached_display_index) {
-                        // Update DPI to new monitor
-                        send_message_dimensions();
+                int current_display_index;
+                if (whist_frontend_get_window_display_index(frontend, &current_display_index) ==
+                    WHIST_SUCCESS) {
+                    if (cached_display_index != current_display_index) {
+                        if (cached_display_index) {
+                            // Update DPI to new monitor
+                            send_message_dimensions(frontend);
+                        }
+                        cached_display_index = current_display_index;
                     }
-                    cached_display_index = window_info.display_index;
+                } else {
+                    LOG_ERROR("Failed to get display index");
                 }
 
                 start_timer(&monitor_change_timer);
             }
 
             // Check if the window is minimized or occluded.
-            if (!sdl_is_window_visible()) {
+            if (!whist_frontend_is_window_visible(frontend)) {
                 // If it is, we can sleep for a good while to keep CPU usage very low.
                 whist_sleep(10);
             } else {

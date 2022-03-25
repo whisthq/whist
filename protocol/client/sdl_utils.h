@@ -76,7 +76,7 @@ void destroy_sdl(SDL_Window* window, WhistFrontend* frontend);
  *                                 to update the internal rendering dimensions.
  *                                 This function will also sync the server to those dimensions.
  */
-void sdl_renderer_resize_window(int width, int height);
+void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height);
 
 /**
  * @brief                          Updates the framebuffer to a loading screen image.
@@ -178,12 +178,14 @@ bool sdl_is_window_visible(void);
  *                                 have to be queued up. This function executes all of the
  *                                 currently internally queued actions.
  *
+ * @param frontend                 The WhistFrontend to use for the actions
+ *
  * @note                           This function must be called by the
  *                                 same thread that originally called init_sdl.
  *                                 This will also render out any pending framebuffer,
  *                                 thereby setting `sdl_render_pending` to false.
  */
-void sdl_update_pending_tasks(void);
+void sdl_update_pending_tasks(WhistFrontend* frontend);
 
 /**
  * @brief                          Copies private variable values to the variables pointed by the
@@ -227,7 +229,7 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
  *                                 indication or emulation.
  *
  */
-void sdl_handle_drag_event(void);
+void sdl_handle_drag_event(WhistFrontend* frontend);
 
 /**
  * @brief                          Cancel or terminate drag indications/emulations

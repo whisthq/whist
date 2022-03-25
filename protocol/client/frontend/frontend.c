@@ -61,7 +61,51 @@ void temp_frontend_set_window(WhistFrontend* frontend, void* window) {
     frontend->call->temp_set_window(frontend, window);
 }
 
-WhistStatus whist_frontend_get_window_info(WhistFrontend* frontend, FrontendWindowInfo* info) {
+void whist_frontend_get_window_pixel_size(WhistFrontend* frontend, int* width, int* height) {
     FATAL_ASSERT(frontend != NULL);
-    return frontend->call->get_window_info(frontend, info);
+    frontend->call->get_window_pixel_size(frontend, width, height);
+}
+
+void whist_frontend_get_window_virtual_size(WhistFrontend* frontend, int* width, int* height) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->get_window_virtual_size(frontend, width, height);
+}
+
+void whist_frontend_get_window_position(WhistFrontend* frontend, int* x, int* y) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->get_window_position(frontend, x, y);
+}
+
+WhistStatus whist_frontend_get_window_display_index(WhistFrontend* frontend, int* index) {
+    FATAL_ASSERT(frontend != NULL);
+    return frontend->call->get_window_display_index(frontend, index);
+}
+
+int whist_frontend_get_window_dpi(WhistFrontend* frontend) {
+    FATAL_ASSERT(frontend != NULL);
+    return frontend->call->get_window_dpi(frontend);
+}
+
+bool whist_frontend_is_window_visible(WhistFrontend* frontend) {
+    FATAL_ASSERT(frontend != NULL);
+    return frontend->call->is_window_visible(frontend);
+}
+
+WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title) {
+    FATAL_ASSERT(frontend != NULL);
+    return frontend->call->set_title(frontend, title);
+}
+
+bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
+    FATAL_ASSERT(frontend != NULL);
+    bool ret = frontend->call->poll_event(frontend, event);
+    if (ret && event != NULL) {
+        event->frontend = frontend;
+    }
+    return ret;
+}
+
+void whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->get_global_mouse_position(frontend, x, y);
 }

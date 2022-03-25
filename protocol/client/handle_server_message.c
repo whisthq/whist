@@ -153,7 +153,7 @@ static int handle_window_title_message(WhistServerMessage *wsmsg, size_t wsmsg_s
     /*
         Handle server window title message
         Since only the main thread is allowed to perform UI functionality on MacOS, instead of
-        calling SDL_SetWindowTitle directly, this function updates a global variable window_title.
+        setting the title directly, this function updates a global variable window_title.
         The main thread periodically polls this variable to determine if it needs to update the
         window title.
 

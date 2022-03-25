@@ -153,10 +153,10 @@ TEST_F(ProtocolTest, InitSDL) {
     EXPECT_EQ(actual_sdl_flags, desired_sdl_flags);
 
     // Check that the dimensions are the desired ones
-    FrontendWindowInfo info;
-    whist_frontend_get_window_info(frontend, &info);
-    EXPECT_EQ(info.virtual_size.width, width);
-    EXPECT_EQ(info.virtual_size.height, height);
+    int measured_width, measured_height;
+    whist_frontend_get_window_virtual_size(frontend, &measured_width, &measured_height);
+    EXPECT_EQ(measured_width, width);
+    EXPECT_EQ(measured_height, height);
 
     char* very_short_title = generate_random_string(1);
     title_len = strlen(very_short_title);
@@ -183,14 +183,12 @@ TEST_F(ProtocolTest, InitSDL) {
         // Apply window dimension change to SDL window
         SDL_SetWindowSize(new_window, width, height);
 
-        FrontendWindowInfo resized_info;
-        whist_frontend_get_window_info(frontend, &resized_info);
+        whist_frontend_get_window_virtual_size(frontend, &measured_width, &measured_height);
 
-        EXPECT_EQ(resized_info.virtual_size.width, width);
-        EXPECT_EQ(resized_info.virtual_size.height, height);
+        EXPECT_EQ(measured_width, width);
+        EXPECT_EQ(measured_height, height);
 
-        width = resized_info.pixel_size.width;
-        height = resized_info.pixel_size.height;
+        whist_frontend_get_window_pixel_size(frontend, &width, &height);
 
 #ifndef __linux__
         int adjusted_width = width - (width % 8);
@@ -206,7 +204,7 @@ TEST_F(ProtocolTest, InitSDL) {
                                      NULL);
         EXPECT_FALSE(pending_resize_message);
 
-        sdl_renderer_resize_window(width, height);
+        sdl_renderer_resize_window(frontend, width, height);
 
         char buffer[1000];
         memset(buffer, 0, 1000);
@@ -232,16 +230,16 @@ TEST_F(ProtocolTest, InitSDL) {
         sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL);
         EXPECT_TRUE(pending_resize_message);
-        sdl_update_pending_tasks();
+        sdl_update_pending_tasks(frontend);
 
         sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL);
         EXPECT_FALSE(pending_resize_message);
 
         // New dimensions should ensure width is a multiple of 8 and height is a even number
-        whist_frontend_get_window_info(frontend, &resized_info);
-        EXPECT_EQ(resized_info.pixel_size.width, adjusted_width);
-        EXPECT_EQ(resized_info.pixel_size.height, adjusted_height);
+        whist_frontend_get_window_pixel_size(frontend, &measured_width, &measured_height);
+        EXPECT_EQ(measured_width, adjusted_width);
+        EXPECT_EQ(measured_height, adjusted_height);
     }
 
     //  Titlebar color change
@@ -282,7 +280,7 @@ TEST_F(ProtocolTest, InitSDL) {
         check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
 #endif
 
-        sdl_update_pending_tasks();
+        sdl_update_pending_tasks(frontend);
 
         sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL,
                                      NULL, NULL);
@@ -311,7 +309,7 @@ TEST_F(ProtocolTest, InitSDL) {
         const char* old_title = SDL_GetWindowTitle(new_window);
         EXPECT_FALSE(strcmp(old_title, changed_title) == 0);
 
-        sdl_update_pending_tasks();
+        sdl_update_pending_tasks(frontend);
         sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
                                      NULL, NULL);
 
@@ -324,10 +322,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
     // Set fullscreen
     {
-        FrontendWindowInfo fullscreen_info;
-        whist_frontend_get_window_info(frontend, &fullscreen_info);
-        width = fullscreen_info.pixel_size.width;
-        height = fullscreen_info.pixel_size.height;
+        whist_frontend_get_window_pixel_size(frontend, &width, &height);
 
         bool fullscreen_trigger, fullscreen_value;
         sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, NULL, &fullscreen_trigger,
@@ -342,11 +337,11 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_TRUE(fullscreen_trigger);
 
         // nothing changed yet
-        whist_frontend_get_window_info(frontend, &fullscreen_info);
-        EXPECT_EQ(fullscreen_info.pixel_size.width, width);
-        EXPECT_EQ(fullscreen_info.pixel_size.height, height);
+        whist_frontend_get_window_pixel_size(frontend, &measured_width, &measured_height);
+        EXPECT_EQ(measured_width, width);
+        EXPECT_EQ(measured_height, height);
 
-        sdl_update_pending_tasks();
+        sdl_update_pending_tasks(frontend);
 
         sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, NULL, &fullscreen_trigger,
                                      &fullscreen_value);
