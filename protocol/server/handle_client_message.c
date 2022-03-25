@@ -45,7 +45,7 @@ static int handle_quit_message(whist_server_state *state, WhistClientMessage *wc
 static int handle_init_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_file_metadata_message(WhistClientMessage *wcmsg);
 static int handle_file_chunk_message(WhistClientMessage *wcmsg);
-static int handle_open_url_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_open_urls_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_frame_ack_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_file_upload_cancel_message(whist_server_state *, WhistClientMessage *wcmsg);
 
@@ -96,7 +96,7 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
         case CMESSAGE_INIT:
             return handle_init_message(state, wcmsg);
         case MESSAGE_OPEN_URL:
-            return handle_open_url_message(state, wcmsg);
+            return handle_open_urls_message(state, wcmsg);
         case MESSAGE_FRAME_ACK:
             return handle_frame_ack_message(state, wcmsg);
         case MESSAGE_FILE_UPLOAD_CANCEL:
@@ -297,7 +297,7 @@ static int handle_init_message(whist_server_state *state, WhistClientMessage *cw
     return 0;
 }
 
-static int handle_open_url_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+static int handle_open_urls_message(whist_server_state *state, WhistClientMessage *fcmsg) {
     /*
         Handle a open URL message
 
@@ -312,64 +312,59 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     // long.
     char *received_urls = (char *)&fcmsg->urls_to_open;
     size_t urls_length = strlen(received_urls);
-    if (urls_length > MAX_URL_LENGTH*MAX_NEW_TAB_URLS) {
+    if (urls_length > MAX_URL_LENGTH * MAX_NEW_TAB_URLS) {
         LOG_WARNING(
-            "Attempted to open url(s) of length %zu, which exceeds the max allowed length (%d "
+            "Attempted to open url(s) of length %zu, which exceed the max allowed length (%d "
             "characters)\n",
-            urls_length, MAX_URL_LENGTH*MAX_NEW_TAB_URLS);
+            urls_length, MAX_URL_LENGTH * MAX_NEW_TAB_URLS);
         return -1;
     }
     LOG_INFO("Received URL to open in new tab");
 
-    // Step 2: Create the command to run on the Mandelbox's terminal to open the received URL in a
-    // new tab. To open a new tab with a given url, we can just use the terminal command: `exec
-    // google-chrome <insert url(s) here>`. This command, however, needs to be run after by the same
-    // user that ran the initial google-chrome command, responsible for starting the browser on the
-    // back end. In our case, the user is 'whist', and we can use the run-as-whist-user.sh script to
-    // do just that. We pass the `exec google-chrome <received url here>` command as a parameter to
-    // the run-as-whist-user.sh script, and the script will take care of the rest.
-    const size_t len_cmd_before_url =
-        strlen("/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \\\"");
-    // The maximum possible command length is equal to the (constant) length of the part of the
-    // command that needs to go before the url plus the length of the url itself, which may be up to
-    // MAX_URL_LENGTH.
-
-    // TODO: adjust size
-    char *command = (char *)calloc(len_cmd_before_url + MAX_URL_LENGTH*MAX_NEW_TAB_URLS + 1, sizeof(char));
-    sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \\\"");
-    
-    // Split URLs and wrap them in double quotes
-    size_t index = len_cmd_before_url;
-    for (size_t i=0; i<urls_length; i++) {
+    // Step 2: Split the URLs using the separator '|' character, and wrap the urls in double quotes
+    // (escaped twice)
+    char *wrapped_urls = (char *)calloc(
+        (MAX_URL_LENGTH + 2 * strlen("\\\"") + strlen(" ")) * MAX_NEW_TAB_URLS, sizeof(char));
+    sprintf(wrapped_urls, "\\\"");
+    size_t index = strlen("\\\"");
+    for (size_t i = 0; i < urls_length; i++) {
         if (received_urls[i] == '|') {
-            command[index] = '\\';
-            command[index+1] = '"';
-            command[index+2] = ' ';
-            command[index+3] = '\\';
-            command[index+4] = '"';
-            index += 5;
-        }
-        else {
-            command[index] = received_urls[i];
-            index +=1;
+            sprintf(wrapped_urls + index, "\\\" \\\"");
+            index += strlen("\\\" \\\"");
+        } else {
+            wrapped_urls[index] = received_urls[i];
+            index += 1;
         }
     }
-    sprintf(command+index, "\\\"\"");
-    printf("Command to open URLs: %s\n", command);
+    sprintf(wrapped_urls + index, "\\\"");
+    // Recompute size of string containing urls to take into account the wrapping and splitting
+    urls_length = strlen(wrapped_urls);
 
-    // Step 3: Execute the command created in step 2 (which consists of a call to the
-    // run-as-whist-user.sh script with the appropriate parameter) in the mandelbox, and save the
-    // resulting stdout in the open_url_result string.
-    char *open_url_result;
-    int ret = runcmd(command, &open_url_result);
+    // Step 3: Create the command to run on the Mandelbox's terminal to open the received URL in a
+    // new tab. To open a new tab with a given url, we can just use the terminal command: `exec
+    // google-chrome <insert url(s) here>`. This command, however, needs to be run by the `whist`
+    // user, so we run it through the run-as-whist-user.sh script.
+    const size_t len_cmd_before_urls =
+        strlen("/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \"");
+    // The maximum possible command length is equal to the (constant) length of the part of the
+    // command that needs to go before the urls plus the length of the wrapped urls
+    char *command = (char *)calloc(len_cmd_before_urls + urls_length + 1, sizeof(char));
+    sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
+            wrapped_urls);
+    free(wrapped_urls);
+
+    // Step 4: Execute the command created in step 3 in the mandelbox, and save the
+    // resulting stdout in the open_urls_result string.
+    char *open_urls_result;
+    int ret = runcmd(command, &open_urls_result);
     if (ret == -1) {
-        LOG_ERROR("Error opening URL in new tab: %s", open_url_result);
+        LOG_ERROR("Error opening URL in new tab: %s", open_urls_result);
         free(command);
-        free(open_url_result);
+        free(open_urls_result);
         return -1;
     }
 
-    free(open_url_result);
+    free(open_urls_result);
     free(command);
 
     return 0;
