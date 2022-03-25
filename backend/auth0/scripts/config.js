@@ -16,6 +16,7 @@ const clientIDs = {
 const getConfig = (env) => {
   // List of environment variables that must be defined in order for deploy to succeed.
   const REQUIRED_ENV_VARS = [
+    "AUTH0_CLIENT_SECRET",
     "GOOGLE_OAUTH_SECRET",
     "APPLE_OAUTH_SECRET",
   ]
@@ -30,6 +31,7 @@ const getConfig = (env) => {
   return {
     AUTH0_DOMAIN: `fractal-${env}.us.auth0.com`,
     AUTH0_CLIENT_ID: clientIDs[env],
+    AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET,
     AUTH0_BASE_PATH: "src",
     // Only auto-delete resources on dev
     AUTH0_ALLOW_DELETE: env === "dev",

@@ -64,6 +64,7 @@ dump({
     fs.writeFileSync("tenant.yaml", output)
     console.log(`Successfully dumped from Auth0 ${env} tenant!`)
   })
-  .catch((err) =>
-    console.error(`Failed to dump from Auth0 ${env} tenant. Error: ${err}`)
-  )
+  .catch((err) => {
+    console.error(`Failed to dump from Auth0 ${env} tenant. ${err}`)
+    process.exit(1)
+  })
