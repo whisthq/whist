@@ -18,6 +18,6 @@ deploy({
 })
   .then(() => console.log(`Successfully deployed to Auth0 ${env} tenant!`))
   .catch((err) =>
-    console.error(`Failed to deploy to Auth0 ${env} tenant. ${err}`),
+    console.log(`Failed to deploy to Auth0 ${env} tenant. ${err}`),
     process.exit(1) // Exit with failure, for CI
   )
