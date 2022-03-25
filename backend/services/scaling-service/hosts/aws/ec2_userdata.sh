@@ -16,11 +16,11 @@ EPHEMERAL_DEVICE_PATH=$(nvme list -o json | jq -r '.Devices | map(select(.ModelN
 EPHEMERAL_FS_PATH=/ephemeral
 USERDATA_ENV=/usr/share/whist/userdata.env
 
-# We use ephemeral storage if it exists on our host instances to avoid needing to warm up the filesystem, 
+# We use ephemeral storage if it exists on our host instances to avoid needing to warm up the filesystem,
 # speeding up instance launch time. We move the docker data directory to the ephemeral volume, and then
 # pull the Whist docker images.
 
-if [ $EPHEMERAL_DEVICE_PATH != "null" ]
+if [ "$EPHEMERAL_DEVICE_PATH" != "null" ]
 then
     echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
 
@@ -40,7 +40,7 @@ then
     systemctl start docker
 
     # Populate env vars
-    eval $(cat "$USERDATA_ENV")
+    eval "$(cat $USERDATA_ENV)"
 
     # Login wit docker
     echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
