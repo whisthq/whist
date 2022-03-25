@@ -1,7 +1,7 @@
 {
   "name": "whist-extension",
   "version": "1.0.0",
-  "description": "Whist Helper is a chromium extension that allows the seamless transfer of files to and from streamed browsers.",
+  "description": "Whist Helper is a Chromium extension that allows seamless communication between client-side Whist and server-side Whist.",
   "repository": "https://github.com/whisthq/whist",
   "author": "Whist Technologies, Inc.",
   "license": "UNLICENSED",
