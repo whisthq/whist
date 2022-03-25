@@ -31,6 +31,7 @@ const getConfig = (env) => {
   return {
     AUTH0_DOMAIN: `fractal-${env}.us.auth0.com`,
     AUTH0_CLIENT_ID: clientIDs[env],
+    AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET,
     AUTH0_BASE_PATH: "src",
     // Only auto-delete resources on dev
     AUTH0_ALLOW_DELETE: env === "dev",
