@@ -717,7 +717,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Use Apple Color Emoji font
-RUN wget -qO /usr/local/share/fonts/AppleColorEmoji.ttf https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf
+RUN wget -qO /usr/local/share/fonts/AppleColorEmoji.ttf https://whist-fonts.s3.amazonaws.com/AppleColorEmoji.ttf
 
 # Install WhiteSur cursor and icons, for macOS-like theming
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
