@@ -127,7 +127,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 
 // loadUserConfigs does the "real work" of LoadUserConfigs. For each
 // deviation from the happy path in this function, we need to decide whether it
-// is a warning or an error — warnings get logged here, and errors get sent
+// is a warning or an error — warnings get logged here, and errors get sent
 // back.
 func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptionInfo, errorChan chan<- error) {
 	// We don't want to close errorChan (which indicates to the consumer that

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/whisthq/whist/backend/services/constants"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -64,11 +65,6 @@ var instanceTypeToVCPUNum = map[string]int{
 // instanceCapacity is a mapping of the mandelbox capacity each type of instance has.
 var instanceCapacity = generateInstanceCapacityMap(instanceTypeToGPUNum, instanceTypeToVCPUNum)
 
-// bundledRegions is a list of the enabled regions on the cloud providers.
-// TODO: when adding multi-cloud support, figure out how to bundle regions
-// for different cloud providers.
-var BundledRegions = []string{"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"}
-
 var (
 	// maxWaitTimeReady is the max time we whould wait for instances to be ready.
 	maxWaitTimeReady = 5 * time.Minute
@@ -91,4 +87,37 @@ func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]
 		capacityMap[instanceType] = utils.Min(gpuNum*constants.MaxMandelboxesPerGPU, vcpuNum/VCPUsPerMandelbox)
 	}
 	return capacityMap
+}
+
+// GetEnabledRegions returns a list of regions where the backend resources required
+// to run Whist exist, according to the current environment.
+func GetEnabledRegions() []string {
+	var enabledRedions []string
+	switch metadata.GetAppEnvironmentLowercase() {
+	case string(metadata.EnvDev):
+		enabledRedions = []string{
+			"us-east-1",
+		}
+	case string(metadata.EnvStaging):
+		enabledRedions = []string{
+			"us-east-1",
+		}
+	case string(metadata.EnvProd):
+		enabledRedions = []string{
+			"us-east-1",
+			"us-east-2",
+			"us-west-1",
+			"us-west-2",
+			"ca-central-1",
+			"eu-west-2",
+			"eu-central-1",
+			"ap-south-1",
+		}
+	default:
+		enabledRedions = []string{
+			"us-east-1",
+		}
+	}
+
+	return enabledRedions
 }

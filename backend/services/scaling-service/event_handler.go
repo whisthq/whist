@@ -69,7 +69,7 @@ func main() {
 	algorithmByRegionMap := &sync.Map{}
 
 	// Load default scaling algorithm for all enabled regions.
-	for _, region := range algos.BundledRegions {
+	for _, region := range algos.GetEnabledRegions() {
 		name := utils.Sprintf("default-sa-%s", region)
 		algorithmByRegionMap.Store(name, &algos.DefaultScalingAlgorithm{
 			Region: region,
@@ -325,7 +325,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 			// Start scaling algorithm based on region
 			logger.Infof("Received scheduled event. %v", scheduledEvent)
 
-			for _, region := range algos.BundledRegions {
+			for _, region := range algos.GetEnabledRegions() {
 				scheduledEvent.Region = region
 				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
 				switch algorithm := algorithm.(type) {

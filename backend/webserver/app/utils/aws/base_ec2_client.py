@@ -10,9 +10,12 @@ import itertools
 import time
 
 from typing import Any, Dict, List, Optional
+import os
 import boto3
 
+from flask import current_app
 from app.constants.ec2_instance_states import EC2InstanceState
+from app.constants.env_names import PRODUCTION, STAGING, DEVELOPMENT
 from app.utils.aws.ec2_userdata import userdata_template
 from app.utils.cloud_interface.base_cloud_interface import CloudClient
 from app.utils.general.logs import whist_logger
@@ -34,6 +37,10 @@ class EC2Client(CloudClient):
         access_key (Optional[str]): the AWS access key going with that key_id
     """
 
+    main_subnet = ""
+    security_group = ""
+    instance_profile = ""
+
     def __init__(
         self,
         region_name: str,
@@ -49,6 +56,10 @@ class EC2Client(CloudClient):
             aws_secret_access_key=access_key,
             region_name=region_name,
         )
+
+        self.get_main_subnet()
+        self.get_security_group()
+        self.get_instance_profile()
 
     def start_instances(
         self,
@@ -72,6 +83,7 @@ class EC2Client(CloudClient):
         # instance parameters here, at call time.
         # Note that the IamInstanceProfile is set to one created in the
         # Console to allows read-only EC2 access and full S3 access.
+
         kwargs = {
             "ImageId": image_id,
             "InstanceType": instance_type,
@@ -86,8 +98,10 @@ class EC2Client(CloudClient):
                 },
             ],
             "UserData": userdata_template,
+            "SubnetId": self.main_subnet,
+            "SecurityGroupIds": [self.security_group],
             "IamInstanceProfile": {
-                "Arn": "arn:aws:iam::747391415460:instance-profile/TestDeploymentRole"
+                "Arn": self.instance_profile,
             },
             "InstanceInitiatedShutdownBehavior": "terminate",
         }
@@ -216,3 +230,67 @@ class EC2Client(CloudClient):
         for instance in instance_info:
             resdict[instance["InstanceId"]] = instance["PublicIpAddress"]
         return resdict
+
+    def get_main_subnet(self) -> None:
+        """
+        Gets the ID of the main subnet on the current region.
+        Returns: None
+
+        """
+        env = ""
+        if not current_app.config["ENVIRONMENT"] in {DEVELOPMENT, STAGING, PRODUCTION}:
+            env = DEVELOPMENT
+        else:
+            env = current_app.config["ENVIRONMENT"]
+
+        resp = self.ec2_client.describe_subnets(
+            Filters=[
+                {"Name": "tag:Env", "Values": [env]},
+                {"Name": "tag:Terraform", "Values": ["true"]},
+            ]
+        )
+
+        subnet_ids = [subnet["SubnetId"] for subnet in resp["Subnets"]]
+        if subnet_ids:
+            self.main_subnet = subnet_ids[0]
+
+    def get_security_group(self) -> None:
+        """
+        Gets the ID of the security group on the current region and environment.
+        Returns: None
+
+        """
+        env = ""
+        if not current_app.config["ENVIRONMENT"] in {DEVELOPMENT, STAGING, PRODUCTION}:
+            env = DEVELOPMENT
+        else:
+            env = current_app.config["ENVIRONMENT"]
+
+        resp = self.ec2_client.describe_security_groups(
+            Filters=[
+                {
+                    "Name": "tag:Name",
+                    "Values": ["MandelboxesSecurityGroup" + env],
+                },
+            ]
+        )
+
+        security_group_ids = [sg["GroupId"] for sg in resp["SecurityGroups"]]
+        if security_group_ids:
+            self.security_group = security_group_ids[0]
+
+    def get_instance_profile(self) -> None:
+        """
+        Gets the ARN of the instance profile used to launch instances.
+        Returns: None
+
+        """
+        if current_app.config["ENVIRONMENT"] == DEVELOPMENT:
+            self.instance_profile = os.environ["INSTANCE_PROFILE_DEV"]
+        elif current_app.config["ENVIRONMENT"] == STAGING:
+            self.instance_profile = os.environ["INSTANCE_PROFILE_STAGING"]
+        elif current_app.config["ENVIRONMENT"] == PRODUCTION:
+            self.instance_profile = os.environ["INSTANCE_PROFILE_PROD"]
+        else:
+            # Default to dev
+            self.instance_profile = os.environ["INSTANCE_PROFILE_DEV"]
