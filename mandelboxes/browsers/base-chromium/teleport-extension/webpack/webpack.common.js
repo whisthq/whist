@@ -38,6 +38,9 @@ module.exports = {
       "@app": srcDir,
     },
   },
+  performance: {
+    maxAssetSize: 512000,
+  },
   plugins: [
     new CopyPlugin({
       patterns: [{ from: ".", to: "../", context: "public" }],
