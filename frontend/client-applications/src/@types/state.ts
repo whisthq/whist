@@ -6,7 +6,7 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
 
 export interface StateIPC {
   userEmail: string // User email returned by Auth0
-  trigger: Trigger // Renderer triggers like button clicks
+  subscriptionStatus: string
   appEnvironment: string // dev, staging, prod
   updateInfo: string // emitted by autoUpdater
   browsers: string[]
@@ -21,4 +21,5 @@ export interface StateIPC {
   otherBrowserWindows: string[][]
   allowNonUSServers: boolean
   regions: AWSRegion[]
+  trigger: Trigger // Renderer triggers like button clicks
 }

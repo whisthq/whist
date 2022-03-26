@@ -6,9 +6,7 @@
 
 import { BrowserWindow } from "electron"
 
-import { combineLatest, concat, of, merge, from } from "rxjs"
-import { ipcBroadcastState } from "@app/main/utils/ipc"
-import { StateIPC } from "@app/@types/state"
+import { combineLatest, concat, of, merge, from, pluck } from "rxjs"
 import {
   map,
   mapTo,
@@ -19,6 +17,8 @@ import {
 } from "rxjs/operators"
 import mapValues from "lodash.mapvalues"
 
+import { ipcBroadcastState } from "@app/main/utils/ipc"
+import { StateIPC } from "@app/@types/state"
 import { fromTrigger } from "@app/main/utils/flows"
 import { appEnvironment } from "../../../config/configs"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -56,6 +56,9 @@ const subscribed = combineLatest(
         filter((args: { userEmail?: string }) => args.userEmail !== undefined),
         map((args: { userEmail?: string }) => args.userEmail as string)
       ),
+      subscriptionStatus: fromTrigger(
+        WhistTrigger.checkPaymentFlowSuccess
+      ).pipe(pluck("subscriptionStatus"), startWith(undefined)),
       appEnvironment: of(appEnvironment),
       updateInfo: fromTrigger(WhistTrigger.downloadProgress).pipe(
         map((obj) => JSON.stringify(obj))

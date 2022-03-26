@@ -8,7 +8,7 @@ const Importing = () => {
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div className="w-full max-w-xs m-auto font-body">
         <div className="font-body text-2xl font-bold text-gray-300 mt-5">
-          Setting up your browser
+          Importing your bookmarks and settings
         </div>
         <div className="text-sm text-gray-400 mt-1">
           This could take up to 20 seconds

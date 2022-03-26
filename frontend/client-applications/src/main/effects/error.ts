@@ -38,6 +38,8 @@ import {
 } from "@app/main/utils/observables"
 import { WhistTrigger } from "@app/constants/triggers"
 import { closestRegionHasChanged } from "@app/main/utils/region"
+import { persistGet } from "@app/main/utils/persist"
+import { ONBOARDED } from "@app/constants/store"
 
 // For any failure, close all windows and display error window
 untilUpdateAvailable(
@@ -113,8 +115,12 @@ waitForSignal(
 
 withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
   () => {
-    createErrorWindow(NO_PAYMENT_ERROR)
-    destroyElectronWindow(WindowHashAuth)
+    const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
+
+    if (onboarded) {
+      createErrorWindow(NO_PAYMENT_ERROR)
+      destroyElectronWindow(WindowHashAuth)
+    }
   }
 )
 

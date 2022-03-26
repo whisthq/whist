@@ -7,6 +7,7 @@ import {
   share,
   mapTo,
   pluck,
+  withLatestFrom,
 } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -25,8 +26,8 @@ import {
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
-  sleep,
   refreshToken,
+  sleep,
   isNewConfigToken,
   darkMode,
   timezone,
@@ -82,7 +83,15 @@ waitForSignal(
 )
 
 // Unpack the access token to see if their payment is valid
-const checkPayment = checkPaymentFlow(fromTrigger(WhistTrigger.authFlowSuccess))
+const checkPayment = checkPaymentFlow(
+  merge(
+    fromTrigger(WhistTrigger.authFlowSuccess),
+    fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
+      withLatestFrom(fromTrigger(WhistTrigger.authFlowSuccess)),
+      map(([, x]) => x)
+    )
+  )
+)
 
 const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
   take(1),
@@ -143,9 +152,11 @@ const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))
 
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
-const refreshAtEnd = authRefreshFlow(
+const authRefresh = authRefreshFlow(
   emitOnSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
+// Subscribe to failure so it can be logged
+authRefresh.failure.subscribe()
 
 createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
 createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
@@ -168,7 +179,7 @@ createTrigger(
 createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
 createTrigger(WhistTrigger.downloadProgress, update.progress)
 
-createTrigger(WhistTrigger.authRefreshSuccess, refreshAtEnd.success)
+createTrigger(WhistTrigger.authRefreshSuccess, authRefresh.success)
 
 createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)

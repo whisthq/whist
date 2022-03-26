@@ -95,6 +95,7 @@ const RootComponent = () => {
     })
 
   const handleImporterSubmit = (browser: string | undefined) => {
+    console.log("beginning import for", browser)
     setMainState({
       trigger: {
         name: WhistTrigger.beginImport,
@@ -128,7 +129,16 @@ const RootComponent = () => {
     })
 
   const handleOnboardingSubmit = () => {
-    setShow(WindowHashImportOnboarding)
+    if (mainState.subscriptionStatus !== "active") {
+      setMainState({
+        trigger: {
+          name: WhistTrigger.showPaymentWindow,
+          payload: undefined,
+        },
+      })
+    } else {
+      setShow(WindowHashImportOnboarding)
+    }
   }
 
   useEffect(() => {
@@ -172,6 +182,7 @@ const RootComponent = () => {
           handleImporterSubmit(browser)
         }
         allowSkip={false}
+        mode="importing"
       />
     )
   if (show === WindowHashImportOnboarding)
@@ -182,6 +193,7 @@ const RootComponent = () => {
           handleImporterSubmit(browser)
         }
         allowSkip={true}
+        mode="onboarding"
       />
     )
   if (show === WindowHashRestoreTabs)

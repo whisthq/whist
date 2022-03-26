@@ -21,11 +21,11 @@ import {
   WindowHashWelcome,
   WindowHashSupport,
   WindowHashRestoreTabs,
+  WindowHashImportOnboarding,
 } from "@app/constants/windows"
 import {
   createAuthWindow,
   createLaunchLoadingWindow,
-  createImportLoadingWindow,
   createSignoutWindow,
   createSpeedtestWindow,
   createPaymentWindow,
@@ -36,6 +36,8 @@ import {
   createOmnibar,
   createSupportWindow,
   createRestoreTabsWindow,
+  createImportOnboardingWindow,
+  createImportLoadingWindow,
 } from "@app/main/utils/renderer"
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -84,31 +86,29 @@ untilUpdateAvailable(
         fromTrigger(WhistTrigger.beginImport).pipe(
           mapTo(true),
           startWith(false)
-        )
+        ),
+        fromTrigger(WhistTrigger.protocolConnection)
       ),
-      map((x) => ({ import: x[1] }))
+      map((x) => ({ import: x[1], connected: x[2] }))
     )
   )
-).subscribe((args: { import: boolean }) => {
-  networkAnalyze()
+).subscribe((args: { import: boolean; connected: boolean }) => {
+  if (!args.import) networkAnalyze()
 
-  if (args.import) {
-    createImportLoadingWindow()
-  } else {
-    createLaunchLoadingWindow()
-  }
+  console.log("PROTOCOL CONNECTION IS", args.connected)
+
+  args.connected ? createImportLoadingWindow() : createLaunchLoadingWindow()
 
   destroyElectronWindow(WindowHashPayment)
   destroyElectronWindow(WindowHashImport)
+  destroyElectronWindow(WindowHashImportOnboarding)
   destroyElectronWindow(WindowHashOnboarding)
 })
 
-withAppActivated(
-  fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
-    withLatestFrom(fromTrigger(WhistTrigger.protocolConnection))
-  )
-).subscribe(([, connected]: [any, boolean]) => {
-  if (connected) destroyElectronWindow(WindowHashPayment)
+withAppActivated(fromTrigger(WhistTrigger.stripeAuthRefresh)).subscribe(() => {
+  const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
+  if (!onboarded) createImportOnboardingWindow()
+  destroyElectronWindow(WindowHashPayment)
 })
 
 withAppActivated(
@@ -157,12 +157,15 @@ withAppActivated(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
   createPaymentWindow({
     accessToken,
   })
-    .then(() => destroyElectronWindow(NO_PAYMENT_ERROR))
+    .then(() => {
+      destroyElectronWindow(NO_PAYMENT_ERROR)
+      destroyElectronWindow(WindowHashOnboarding)
+    })
     .catch((err) => Sentry.captureException(err))
 })
 
 untilUpdateAvailable(
-  withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowSuccess))
+  withAppActivated(fromTrigger(WhistTrigger.authFlowSuccess))
 ).subscribe(() => {
   const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
   if (!onboarded) {

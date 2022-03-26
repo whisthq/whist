@@ -14,9 +14,10 @@ import { fromTrigger } from "@app/main/utils/flows"
 import { relaunch } from "@app/main/utils/app"
 import { WhistTrigger } from "@app/constants/triggers"
 import { logToAmplitude } from "@app/main/utils/logging"
-import { persistClear } from "@app/main/utils/persist"
+import { persistClear, persistGet } from "@app/main/utils/persist"
 import { destroyProtocol } from "@app/main/utils/protocol"
 import { emitOnSignal } from "@app/main/utils/observables"
+import { ONBOARDED } from "@app/constants/store"
 
 // Handles the application quit logic
 // When we detect that all windows have been closed, we put the application to sleep
@@ -93,7 +94,9 @@ fromTrigger(WhistTrigger.stripeAuthRefresh)
     filter(([, connected]: [any, boolean]) => !connected)
   )
   .subscribe(() => {
-    relaunch({ sleep: false })
+    const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
+
+    if (onboarded) relaunch({ sleep: false })
   })
 
 /* eslint-disable @typescript-eslint/no-misused-promises */

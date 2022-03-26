@@ -3,12 +3,16 @@ import classNames from "classnames"
 
 import Dropdown from "@app/components/dropdown"
 import { WhistButton, WhistButtonState } from "@app/components/button"
+import Landing from "@app/components/templates/landing"
+import Payment from "@app/components/icons/payment"
 
 const Importer = (props: {
   browsers: string[] | undefined
   onSubmit: (browser: string | undefined) => void
   allowSkip: boolean
+  mode: string
 }) => {
+  const [showWelcome, setShowWelcome] = useState(props.mode === "onboarding")
   const [browser, setBrowser] = useState("")
   const [processing, setProcessing] = useState(false)
 
@@ -28,6 +32,22 @@ const Importer = (props: {
       setBrowser(props.browsers[0])
     }
   }, [props.browsers])
+
+  if (showWelcome)
+    return (
+      <Landing
+        logo={
+          <div className="w-24 h-24 m-auto animate-fade-in-up opacity-0">
+            <Payment />
+          </div>
+        }
+        title="Payment Successful"
+        subtitle="Now let's finish setting up Whist"
+        onSubmit={() => {
+          setShowWelcome(false)
+        }}
+      />
+    )
 
   return (
     <div
@@ -79,6 +99,7 @@ const Importer = (props: {
             <button
               className="text-blue-light font-bold outline-none bg-none"
               onClick={() => onSubmit(false)}
+              disabled={processing}
             >
               Skip for now
             </button>

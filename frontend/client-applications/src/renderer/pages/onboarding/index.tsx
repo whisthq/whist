@@ -13,15 +13,17 @@ import {
   LiveChatSupport,
   FollowUsOnTwitter,
   TurnOffVPN,
-  NetworkTest,
   Pricing,
   HowDidYouHearAboutWhist,
+  NetworkTest,
 } from "@app/renderer/pages/onboarding/pages"
 import { WhistButton, WhistButtonState } from "@app/components/button"
+import { useMainState } from "@app/renderer/utils/ipc"
 
 const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
   const maxPageIndex = props.pages.length - 1
   const [pageToShow, setPageToShow] = useState(0)
+  const [mainState] = useMainState()
 
   useEffect(() => {
     if (pageToShow > maxPageIndex) props.onSubmit()
@@ -32,14 +34,23 @@ const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
       tabIndex={0}
       className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
-      {props.pages[pageToShow]}
+      {pageToShow <= maxPageIndex && props.pages[pageToShow]}
       <div className="absolute bottom-4 w-full">
         <div className="m-auto text-center">
           <WhistButton
             onClick={() => setPageToShow(pageToShow + 1)}
-            state={WhistButtonState.DEFAULT}
-            contents={"Continue"}
-            className="mb-8 px-16"
+            state={
+              pageToShow > maxPageIndex
+                ? WhistButtonState.PROCESSING
+                : WhistButtonState.DEFAULT
+            }
+            contents={
+              pageToShow === maxPageIndex &&
+              mainState.subscriptionStatus !== "active"
+                ? "Start Free Trial"
+                : "Continue"
+            }
+            className="mb-8 px-16 w-60"
           />
           <div className="relative">
             <Steps
@@ -56,6 +67,7 @@ const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
 
 const Onboarding = (props: { onSubmit: () => void }) => {
   const [showIntro, setShowIntro] = useState(true)
+  const [mainState] = useMainState()
 
   if (showIntro)
     return (
@@ -79,9 +91,11 @@ const Onboarding = (props: { onSubmit: () => void }) => {
         <FeaturesUnderDevelopment key={7} />,
         <TurnOffVPN key={8} />,
         <LiveChatSupport key={9} />,
-        <Pricing key={10} />,
-        <FollowUsOnTwitter key={11} />,
-        <NetworkTest key={12} />,
+        <FollowUsOnTwitter key={10} />,
+        <NetworkTest key={11} />,
+        ...(mainState.subscriptionStatus === "active"
+          ? []
+          : [<Pricing key={12} />]),
       ]}
       onSubmit={props.onSubmit}
     />

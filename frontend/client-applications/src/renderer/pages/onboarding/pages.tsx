@@ -13,6 +13,7 @@ import Play from "@app/components/icons/play"
 import Lock from "@app/components/icons/lock"
 import Camera from "@app/components/icons/camera"
 import Server from "@app/components/icons/server"
+import Check from "@app/components/icons/check"
 
 import { useMainState } from "@app/renderer/utils/ipc"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -109,7 +110,7 @@ const WhoIsWhistFor = () => {
   ]
 
   const icons = (
-    <dl className="grid grid-cols-3 space-x-4">
+    <dl className="grid grid-cols-3 gap-x-4">
       {features.map((feature) => (
         <div
           key={feature.name}
@@ -189,7 +190,7 @@ const Privacy = () => {
   ]
 
   const icons = (
-    <dl className="grid grid-cols-3 space-x-4">
+    <dl className="grid grid-cols-3 gap-x-4">
       {features.map((feature) => (
         <div
           key={feature.name}
@@ -240,7 +241,7 @@ const FeaturesUnderDevelopment = () => {
   ]
 
   const icons = (
-    <dl className="grid grid-cols-3 space-x-4">
+    <dl className="grid grid-cols-3 gap-x-4">
       {features.map((feature) => (
         <div
           key={feature.name}
@@ -282,7 +283,7 @@ const TurnOffVPN = () => {
         If you use a VPN, please whitelist{" "}
         <span className="text-blue-light">Whist</span>
       </div>
-      <div className="mt-2 text-md text-gray-500">
+      <div className="mt-4 text-md text-gray-500">
         VPNs significantly degrade Whist&apos;s performance. From a privacy
         perspective, Whist already acts as a VPN by sending all web requests
         from a secure server instead of your computer.
@@ -329,7 +330,7 @@ const FollowUsOnTwitter = () => {
   const contents = (
     <div className="m-auto text-center mt-44">
       <div className="mt-20 text-gray-300 text-xl font-bold leading-10 max-w-md m-auto">
-        Please follow us on Twitter&nbsp;
+        Follow us on Twitter&nbsp;
         <div onClick={openTwitterURL} className="inline-block">
           <kbd className="px-2 py-1 rounded cursor-pointer bg-blue hover:bg-blue-dark duration-75">
             @whisthq
@@ -456,21 +457,51 @@ const NetworkTest = () => {
 }
 
 const Pricing = () => {
+  const features = [
+    {
+      name: "2-week free trial",
+      description: "Your card will not be charged until after your trial ends.",
+    },
+    {
+      name: "Cancel at any time",
+      description:
+        "You can cancel via Cmd + J which can be launched after onboarding.",
+    },
+    {
+      name: "Fully refundable",
+      description: "If you forget to cancel, we will refund you fully.",
+    },
+  ]
+
   const contents = (
-    <div className="m-auto text-center mt-44 max-w-md m-auto">
-      <div className="text-gray-300 text-2xl font-bold leading-10">
-        For the next two weeks,{" "}
-        <span className="text-blue-light">Whist is free</span>. Afterward, Whist
-        is <span className="text-xs relative bottom-2">$</span>9
-        <span className="text-xs">/mo</span>
+    <div className="m-auto text-center mt-24 max-w-lg m-auto">
+      <div className="text-gray-300 text-3xl font-bold leading-10">
+        Payment and Subscription
       </div>
-      <div className="mt-4 text-md text-gray-500">
-        You can cancel at any time and we will refund you if you forget. After
-        this onboarding,{" "}
-        <kbd className="bg-gray-700 px-2 py-1 mx-1 rounded text-xs">Cmd</kbd>
-        <kbd className="bg-gray-700 px-2 py-1 mx-1 rounded text-xs">J</kbd> also
-        gives you access to billing info.
+      <div className="mt-2 text-gray-500">
+        Whist is free for the next two weeks. Afterward, a subscription is $9
+        <span className="text-sm">/mo</span>.
       </div>
+      <dl className="grid grid-cols-3 gap-x-4 mt-8">
+        {features.map((feature) => (
+          <div
+            key={feature.name}
+            className="text-left bg-gray-800 p-5 rounded-md"
+          >
+            <dt>
+              <div className="text-blue-light">
+                <Check />
+              </div>
+              <p className="mt-5 text-md text-gray-300 font-bold">
+                {feature.name}
+              </p>
+              <p className="mt-3 text-sm text-gray-400">
+                {feature.description}
+              </p>
+            </dt>
+          </div>
+        ))}
+      </dl>
     </div>
   )
 

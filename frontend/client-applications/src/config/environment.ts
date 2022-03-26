@@ -21,16 +21,14 @@ const getDevelopmentConfig = () => {
       return configs.PRODUCTION
     default:
       console.warn(
-        `Got an unrecognized DEVELOPMENT_ENV: ${devEnv}. Defaulting to ${WhistEnvironments.DEVELOPMENT}`
+        `Got an unrecognized DEVELOPMENT_ENV: ${devEnv}. Defaulting to ${WhistEnvironments.LOCAL}`
       )
-      return configs.DEVELOPMENT
+      return configs.LOCAL
   }
 }
 
 const getProductionConfig = () => {
-  if (!app.isPackaged) {
-    return configs.LOCAL
-  }
+  if (!app.isPackaged) return configs.LOCAL
 
   switch (appEnvironment) {
     case WhistEnvironments.LOCAL:
