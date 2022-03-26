@@ -28,7 +28,7 @@ const tryRestoreTabLocation = async (
 // Switch focused tab to match the requested URL
 const createTab = (url: string) => {
   chrome.tabs.create({
-    url,
+    url: url,
     active: true,
   })
 }

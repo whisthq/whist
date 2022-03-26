@@ -14,7 +14,10 @@ const nativeHostPort = initNativeHostIpc()
 // Disconnects the host native port on command
 initNativeHostDisconnectHandler(nativeHostPort)
 
+// If this is a new mandelbox, refresh the extension to get the latest version.
 refreshExtension(nativeHostPort)
+
+// Initialize the file upload/download handler
 initFileSyncHandler(nativeHostPort)
 
 // Enables relative mouse mode
