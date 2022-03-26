@@ -395,7 +395,7 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
         // if it's EARLY_DUP, dup the last saved packet
         else if (op == EARLY_DUP) {
             // make sure we have a last packet saved
-            if (last_popped_packet_data.length()) {
+            if (last_popped_packet_data.length() && device_queue_len < max_num_inside_device_queue) {
                 memcpy(buf, last_popped_packet_data.c_str(), last_popped_packet_data.length());
                 *size = (int)last_popped_packet_data.length();
                 whist_unlock_mutex(g_mutex);
