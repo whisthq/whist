@@ -231,9 +231,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         return NULL;
     }
 
-    // set the window minimum size
-    SDL_SetWindowMinimumSize(sdl_window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
-
     Uint32 flags = SDL_RENDERER_ACCELERATED;
 #if VSYNC_ON
     flags |= SDL_RENDERER_PRESENTVSYNC;
@@ -276,6 +273,9 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     // Only after the window finishes loading is it safe to initialize native options.
     init_native_window_options(sdl_window);
+
+    // Only after the window finishes loading may we set the window minimum size
+    SDL_SetWindowMinimumSize(sdl_window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
