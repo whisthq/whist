@@ -7,9 +7,7 @@ import {
 
 const initCursorLockHandler = (nativeHostPort: chrome.runtime.Port) => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
-    if (msg.type !== ContentScriptMessageType.POINTER_LOCK) {
-      return
-    }
+    if (msg.type !== ContentScriptMessageType.POINTER_LOCK) return
 
     // Forward the message to the native host
     nativeHostPort.postMessage(<NativeHostMessage>{

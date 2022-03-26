@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "Whist",
+    "message": "Whist Helper",
     "description": "Extension name"
   },
   "extDesc": {
-    "message": "",
-    "description": "The Whist Helper extension allows you to seamlessly upload and download files to your streamed browser."
+    "message": "Whist Helper",
+    "description": "Whist Helper is a Chromium extension that allows seamless communication between client-side Whist and server-side Whist."
   }
 }

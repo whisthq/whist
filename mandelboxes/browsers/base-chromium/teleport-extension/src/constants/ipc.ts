@@ -7,6 +7,8 @@ export enum NativeHostMessageType {
   NATIVE_HOST_UPDATE = "NATIVE_HOST_UPDATE",
   NATIVE_HOST_EXIT = "NATIVE_HOST_EXIT",
   POINTER_LOCK = "POINTER_LOCK",
+  CREATE_NEW_TAB = "CREATE_NEW_TAB",
+  ACTIVATE_TAB = "ACTIVATE_TAB",
 }
 
 export interface ContentScriptMessage {
