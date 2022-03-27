@@ -29,7 +29,8 @@
 #ifndef CM256_H
 #define CM256_H
 
-#include "gf256.h"
+//WHIST_CHANGE: remove
+//#include "gf256.h"
 
 #include <assert.h>
 

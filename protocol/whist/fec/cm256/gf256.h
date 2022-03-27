@@ -45,7 +45,7 @@
 */
 
 #include <stdint.h> // uint32_t etc
-#include <cstring> // memcpy, memset
+#include <string.h> // memcpy, memset
 
 /// Library header version
 #define GF256_VERSION 2
@@ -53,13 +53,19 @@
 //------------------------------------------------------------------------------
 // Platform/Architecture
 
+// WHIST_CHANGE
 #if defined(__ARM_ARCH) || defined(__ARM_NEON) || defined(__ARM_NEON__)
     #if !defined IOS
-        #define LINUX_ARM
+        #if defined(__APPLE__)
+            #define MACOS_ARM
+        #else
+            #define LINUX_ARM
+        #endif
     #endif
 #endif
 
-#if defined(ANDROID) || defined(IOS) || defined(LINUX_ARM) || defined(__powerpc__) || defined(__s390__)
+// WHIST_CHANGE
+#if defined(ANDROID) || defined(IOS) || defined(LINUX_ARM) || defined(__powerpc__) || defined(__s390__) || defined(MACOS_ARM)
     #define GF256_TARGET_MOBILE
 #endif // ANDROID
 
@@ -251,16 +257,22 @@ extern void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RESTRI
                              const void * GF256_RESTRICT vy, int bytes);
 
 /// Performs "z[] = x[] * y" bulk memory operation
-extern void gf256_mul_mem(void * GF256_RESTRICT vz,
-                          const void * GF256_RESTRICT vx, uint8_t y, int bytes);
+// WHIST_CHANGE: remove restrict
+//extern void gf256_mul_mem(void * GF256_RESTRICT vz,
+//                          const void * GF256_RESTRICT vx, uint8_t y, int bytes);
+extern void gf256_mul_mem(void * vz,
+                          const void * vx, uint8_t y, int bytes);
 
 /// Performs "z[] += x[] * y" bulk memory operation
 extern void gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y,
                              const void * GF256_RESTRICT vx, int bytes);
 
 /// Performs "x[] /= y" bulk memory operation
-static GF256_FORCE_INLINE void gf256_div_mem(void * GF256_RESTRICT vz,
-                                             const void * GF256_RESTRICT vx, uint8_t y, int bytes)
+// WHIST_CHANGE: remove restrict
+//static GF256_FORCE_INLINE void gf256_div_mem(void * GF256_RESTRICT vz,
+//                                             const void * GF256_RESTRICT vx, uint8_t y, int bytes)
+static GF256_FORCE_INLINE void gf256_div_mem(void * vz,
+                                             const void * vx, uint8_t y, int bytes)
 {
     // Multiply by inverse
     gf256_mul_mem(vz, vx, y == 1 ? (uint8_t)1 : GF256Ctx.GF256_INV_TABLE[y], bytes);

@@ -26,6 +26,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+// WHIST_CHANGE: add
+#include "gf256.h"
+
 #include "cm256.h"
 
 

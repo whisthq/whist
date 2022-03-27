@@ -1229,7 +1229,11 @@ extern "C" void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTR
         word |= (uint64_t)table[x1[6]] << 48;
         word |= (uint64_t)table[x1[7]] << 56;
 #endif
-        *z8 = word;
+
+        //*z8 = word;
+        // WHIST_CHANGE: supress UBSan
+        memcpy(z8, &word, sizeof(word));
+
 
         bytes -= 8, x1 += 8, z1 += 8;
     }
@@ -1250,7 +1254,9 @@ extern "C" void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTR
         word |= (uint32_t)table[x1[2]] << 16;
         word |= (uint32_t)table[x1[3]] << 24;
 #endif
-        *z4 = word;
+        //*z4 = word;
+        // WHIST_CHANGE: supress UBSan
+        memcpy(z4, &word, sizeof(word));
     }
 
     // Handle single bytes
