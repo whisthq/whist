@@ -1,33 +1,33 @@
 /*
-    Copyright (c) 2015 Christopher A. Taylor.  All rights reserved.
+	Copyright (c) 2015 Christopher A. Taylor.  All rights reserved.
 
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions are met:
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
-    * Neither the name of CM256 nor the names of its contributors may be
-      used to endorse or promote products derived from this software without
-      specific prior written permission.
+	* Redistributions of source code must retain the above copyright notice,
+	  this list of conditions and the following disclaimer.
+	* Redistributions in binary form must reproduce the above copyright notice,
+	  this list of conditions and the following disclaimer in the documentation
+	  and/or other materials provided with the distribution.
+	* Neither the name of CM256 nor the names of its contributors may be
+	  used to endorse or promote products derived from this software without
+	  specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-    ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+	ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+	LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+	CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "gf256.h"
 #include "cm256.h"
+
 
 /*
     GF(256) Cauchy Matrix Overview
@@ -71,11 +71,14 @@
         have a limited size in GF(256), rows+cols <= 256.  (7)
 */
 
+
 //-----------------------------------------------------------------------------
 // Initialization
 
-extern "C" int cm256_init_(int version) {
-    if (version != CM256_VERSION) {
+extern "C" int cm256_init_(int version)
+{
+    if (version != CM256_VERSION)
+    {
         // User's header does not match library version
         return -10;
     }
@@ -83,6 +86,7 @@ extern "C" int cm256_init_(int version) {
     // Return error code from GF(256) init if required
     return gf256_init();
 }
+
 
 /*
     Selected Cauchy Matrix Form
@@ -119,22 +123,24 @@ extern "C" int cm256_init_(int version) {
 
 // This function generates each matrix element based on x_i, x_0, y_j
 // Note that for x_i == x_0, this will return 1, so it is better to unroll out the first row.
-static GF256_FORCE_INLINE unsigned char GetMatrixElement(unsigned char x_i, unsigned char x_0,
-                                                         unsigned char y_j) {
+static GF256_FORCE_INLINE unsigned char GetMatrixElement(unsigned char x_i, unsigned char x_0, unsigned char y_j)
+{
     return gf256_div(gf256_add(y_j, x_0), gf256_add(x_i, y_j));
 }
+
 
 //-----------------------------------------------------------------------------
 // Encoding
 
 extern "C" void cm256_encode_block(
-    cm256_encoder_params params,  // Encoder parameters
-    cm256_block* originals,       // Array of pointers to original blocks
-    int recoveryBlockIndex,       // Return value from cm256_get_recovery_block_index()
-    void* recoveryBlock)          // Output recovery block
+    cm256_encoder_params params, // Encoder parameters
+    cm256_block* originals,      // Array of pointers to original blocks
+    int recoveryBlockIndex,      // Return value from cm256_get_recovery_block_index()
+    void* recoveryBlock)         // Output recovery block
 {
     // If only one block of input data,
-    if (params.OriginalCount == 1) {
+    if (params.OriginalCount == 1)
+    {
         // No meaningful operation here, degenerate to outputting the same data each time.
 
         memcpy(recoveryBlock, originals[0].Block, params.BlockBytes);
@@ -145,9 +151,11 @@ extern "C" void cm256_encode_block(
     // Unroll first row of recovery matrix:
     // The matrix we generate for the first row is all ones,
     // so it is merely a parity of the original data.
-    if (recoveryBlockIndex == params.OriginalCount) {
+    if (recoveryBlockIndex == params.OriginalCount)
+    {
         gf256_addset_mem(recoveryBlock, originals[0].Block, originals[1].Block, params.BlockBytes);
-        for (int j = 2; j < params.OriginalCount; ++j) {
+        for (int j = 2; j < params.OriginalCount; ++j)
+        {
             gf256_add_mem(recoveryBlock, originals[j].Block, params.BlockBytes);
         }
         return;
@@ -171,7 +179,8 @@ extern "C" void cm256_encode_block(
         }
 
         // For each original data column,
-        for (int j = 1; j < params.OriginalCount; ++j) {
+        for (int j = 1; j < params.OriginalCount; ++j)
+        {
             const uint8_t y_j = static_cast<uint8_t>(j);
             const uint8_t matrixElement = GetMatrixElement(x_i, x_0, y_j);
 
@@ -180,34 +189,43 @@ extern "C" void cm256_encode_block(
     }
 }
 
-extern "C" int cm256_encode(cm256_encoder_params params,  // Encoder params
-                            cm256_block* originals,       // Array of pointers to original blocks
-                            void* recoveryBlocks)         // Output recovery blocks end-to-end
+extern "C" int cm256_encode(
+    cm256_encoder_params params, // Encoder params
+    cm256_block* originals,      // Array of pointers to original blocks
+    void* recoveryBlocks)        // Output recovery blocks end-to-end
 {
     // Validate input:
-    if (params.OriginalCount <= 0 || params.RecoveryCount <= 0 || params.BlockBytes <= 0) {
+    if (params.OriginalCount <= 0 ||
+        params.RecoveryCount <= 0 ||
+        params.BlockBytes <= 0)
+    {
         return -1;
     }
-    if (params.OriginalCount + params.RecoveryCount > 256) {
+    if (params.OriginalCount + params.RecoveryCount > 256)
+    {
         return -2;
     }
-    if (!originals || !recoveryBlocks) {
+    if (!originals || !recoveryBlocks)
+    {
         return -3;
     }
 
     uint8_t* recoveryBlock = static_cast<uint8_t*>(recoveryBlocks);
 
-    for (int block = 0; block < params.RecoveryCount; ++block, recoveryBlock += params.BlockBytes) {
+    for (int block = 0; block < params.RecoveryCount; ++block, recoveryBlock += params.BlockBytes)
+    {
         cm256_encode_block(params, originals, (params.OriginalCount + block), recoveryBlock);
     }
 
     return 0;
 }
 
+
 //-----------------------------------------------------------------------------
 // Decoding
 
-struct CM256Decoder {
+struct CM256Decoder
+{
     // Encode parameters
     cm256_encoder_params Params;
 
@@ -235,7 +253,8 @@ struct CM256Decoder {
     void GenerateLDUDecomposition(uint8_t* matrix_L, uint8_t* diag_D, uint8_t* matrix_U);
 };
 
-bool CM256Decoder::Initialize(cm256_encoder_params& params, cm256_block* blocks) {
+bool CM256Decoder::Initialize(cm256_encoder_params& params, cm256_block* blocks)
+{
     Params = params;
 
     cm256_block* block = blocks;
@@ -243,35 +262,44 @@ bool CM256Decoder::Initialize(cm256_encoder_params& params, cm256_block* blocks)
     RecoveryCount = 0;
 
     // Initialize erasures to zeros
-    for (int ii = 0; ii < params.OriginalCount; ++ii) {
+    for (int ii = 0; ii < params.OriginalCount; ++ii)
+    {
         ErasuresIndices[ii] = 0;
     }
 
     // For each input block,
-    for (int ii = 0; ii < params.OriginalCount; ++ii, ++block) {
+    for (int ii = 0; ii < params.OriginalCount; ++ii, ++block)
+    {
         int row = block->Index;
 
         // If it is an original block,
-        if (row < params.OriginalCount) {
+        if (row < params.OriginalCount)
+        {
             Original[OriginalCount++] = block;
 
-            if (ErasuresIndices[row] != 0) {
+            if (ErasuresIndices[row] != 0)
+            {
                 // Error out if two row indices repeat
                 return false;
             }
 
             ErasuresIndices[row] = 1;
-        } else {
+        }
+        else
+        {
             Recovery[RecoveryCount++] = block;
         }
     }
 
     // Identify erasures
-    for (int ii = 0, indexCount = 0; ii < 256; ++ii) {
-        if (!ErasuresIndices[ii]) {
-            ErasuresIndices[indexCount] = static_cast<uint8_t>(ii);
+    for (int ii = 0, indexCount = 0; ii < 256; ++ii)
+    {
+        if (!ErasuresIndices[ii])
+        {
+            ErasuresIndices[indexCount] = static_cast<uint8_t>( ii );
 
-            if (++indexCount >= RecoveryCount) {
+            if (++indexCount >= RecoveryCount)
+            {
                 break;
             }
         }
@@ -280,18 +308,23 @@ bool CM256Decoder::Initialize(cm256_encoder_params& params, cm256_block* blocks)
     return true;
 }
 
-void CM256Decoder::DecodeM1() {
+void CM256Decoder::DecodeM1()
+{
     // XOR all other blocks into the recovery block
     uint8_t* outBlock = static_cast<uint8_t*>(Recovery[0]->Block);
     const uint8_t* inBlock = nullptr;
 
     // For each block,
-    for (int ii = 0; ii < OriginalCount; ++ii) {
+    for (int ii = 0; ii < OriginalCount; ++ii)
+    {
         const uint8_t* inBlock2 = static_cast<const uint8_t*>(Original[ii]->Block);
 
-        if (!inBlock) {
+        if (!inBlock)
+        {
             inBlock = inBlock2;
-        } else {
+        }
+        else
+        {
             // outBlock ^= inBlock ^ inBlock2
             gf256_add2_mem(outBlock, inBlock, inBlock2, Params.BlockBytes);
             inBlock = nullptr;
@@ -299,7 +332,8 @@ void CM256Decoder::DecodeM1() {
     }
 
     // Complete XORs
-    if (inBlock) {
+    if (inBlock)
+    {
         gf256_add_mem(outBlock, inBlock, Params.BlockBytes);
     }
 
@@ -308,7 +342,8 @@ void CM256Decoder::DecodeM1() {
 }
 
 // Generate the LU decomposition of the matrix
-void CM256Decoder::GenerateLDUDecomposition(uint8_t* matrix_L, uint8_t* diag_D, uint8_t* matrix_U) {
+void CM256Decoder::GenerateLDUDecomposition(uint8_t* matrix_L, uint8_t* diag_D, uint8_t* matrix_U)
+{
     // Schur-type-direct-Cauchy algorithm 2.5 from
     // "Pivoting and Backward Stability of Fast Algorithms for Solving Cauchy Linear Equations"
     // T. Boros, T. Kailath, V. Olshevsky
@@ -321,7 +356,8 @@ void CM256Decoder::GenerateLDUDecomposition(uint8_t* matrix_L, uint8_t* diag_D, 
 
     // Generators
     uint8_t g[256], b[256];
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N; ++i)
+    {
         g[i] = 1;
         b[i] = 1;
     }
@@ -336,7 +372,8 @@ void CM256Decoder::GenerateLDUDecomposition(uint8_t* matrix_L, uint8_t* diag_D, 
     const uint8_t x_0 = static_cast<uint8_t>(Params.OriginalCount);
 
     // Unrolling k = 0 just makes it slower for some reason.
-    for (int k = 0; k < N - 1; ++k) {
+    for (int k = 0; k < N - 1; ++k)
+    {
         const uint8_t x_k = Recovery[k]->Index;
         const uint8_t y_k = ErasuresIndices[k];
 
@@ -353,7 +390,8 @@ void CM256Decoder::GenerateLDUDecomposition(uint8_t* matrix_L, uint8_t* diag_D, 
         // Computing the k-th row of L and U
         uint8_t* row_L = matrix_L;
         uint8_t* row_U = rotated_row_U;
-        for (int j = k + 1; j < N; ++j) {
+        for (int j = k + 1; j < N; ++j)
+        {
             const uint8_t x_j = Recovery[j]->Index;
             const uint8_t y_j = ErasuresIndices[j];
 
@@ -381,7 +419,8 @@ void CM256Decoder::GenerateLDUDecomposition(uint8_t* matrix_L, uint8_t* diag_D, 
         // Copy U matrix row into place in memory.
         uint8_t* output_U = last_U + firstOffset_U;
         row_U = rotated_row_U;
-        for (int j = k + 1; j < N; ++j) {
+        for (int j = k + 1; j < N; ++j)
+        {
             *output_U = *row_U++;
             output_U -= j;
         }
@@ -390,7 +429,8 @@ void CM256Decoder::GenerateLDUDecomposition(uint8_t* matrix_L, uint8_t* diag_D, 
 
     // Multiply diagonal matrix into U
     uint8_t* row_U = matrix_U;
-    for (int j = N - 1; j > 0; --j) {
+    for (int j = N - 1; j > 0; --j)
+    {
         const uint8_t y_j = ErasuresIndices[j];
         const int count = j;
 
@@ -411,7 +451,8 @@ void CM256Decoder::GenerateLDUDecomposition(uint8_t* matrix_L, uint8_t* diag_D, 
     diag_D[N - 1] = gf256_div(gf256_mul(L_nn, U_nn), gf256_add(x_n, y_n));
 }
 
-void CM256Decoder::Decode() {
+void CM256Decoder::Decode()
+{
     // Matrix size is NxN, where N is the number of recovery blocks used.
     const int N = RecoveryCount;
 
@@ -419,11 +460,13 @@ void CM256Decoder::Decode() {
     const uint8_t x_0 = static_cast<uint8_t>(Params.OriginalCount);
 
     // Eliminate original data from the the recovery rows
-    for (int originalIndex = 0; originalIndex < OriginalCount; ++originalIndex) {
+    for (int originalIndex = 0; originalIndex < OriginalCount; ++originalIndex)
+    {
         const uint8_t* inBlock = static_cast<const uint8_t*>(Original[originalIndex]->Block);
         const uint8_t inRow = Original[originalIndex]->Index;
 
-        for (int recoveryIndex = 0; recoveryIndex < N; ++recoveryIndex) {
+        for (int recoveryIndex = 0; recoveryIndex < N; ++recoveryIndex)
+        {
             uint8_t* outBlock = static_cast<uint8_t*>(Recovery[recoveryIndex]->Block);
             const uint8_t x_i = Recovery[recoveryIndex]->Index;
             const uint8_t y_j = inRow;
@@ -439,7 +482,8 @@ void CM256Decoder::Decode() {
     uint8_t* dynamicMatrix = nullptr;
     uint8_t* matrix = stackMatrix;
     const int requiredSpace = N * N;
-    if (requiredSpace > StackAllocSize) {
+    if (requiredSpace > StackAllocSize)
+    {
         dynamicMatrix = new uint8_t[requiredSpace];
         matrix = dynamicMatrix;
     }
@@ -462,13 +506,15 @@ void CM256Decoder::Decode() {
         Eliminate lower left triangle.
     */
     // For each column,
-    for (int j = 0; j < N - 1; ++j) {
+    for (int j = 0; j < N - 1; ++j)
+    {
         const void* block_j = Recovery[j]->Block;
 
         // For each row,
-        for (int i = j + 1; i < N; ++i) {
+        for (int i = j + 1; i < N; ++i)
+        {
             void* block_i = Recovery[i]->Block;
-            const uint8_t c_ij = *matrix_L++;  // Matrix elements are stored column-first, top-down.
+            const uint8_t c_ij = *matrix_L++; // Matrix elements are stored column-first, top-down.
 
             gf256_muladd_mem(block_i, c_ij, block_j, Params.BlockBytes);
         }
@@ -477,7 +523,8 @@ void CM256Decoder::Decode() {
     /*
         Eliminate diagonal.
     */
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N; ++i)
+    {
         void* block = Recovery[i]->Block;
 
         Recovery[i]->Index = ErasuresIndices[i];
@@ -488,13 +535,14 @@ void CM256Decoder::Decode() {
     /*
         Eliminate upper right triangle.
     */
-    for (int j = N - 1; j >= 1; --j) {
+    for (int j = N - 1; j >= 1; --j)
+    {
         const void* block_j = Recovery[j]->Block;
 
-        for (int i = j - 1; i >= 0; --i) {
+        for (int i = j - 1; i >= 0; --i)
+        {
             void* block_i = Recovery[i]->Block;
-            const uint8_t c_ij =
-                *matrix_U++;  // Matrix elements are stored column-first, bottom-up.
+            const uint8_t c_ij = *matrix_U++; // Matrix elements are stored column-first, bottom-up.
 
             gf256_muladd_mem(block_i, c_ij, block_j, Params.BlockBytes);
         }
@@ -504,38 +552,47 @@ void CM256Decoder::Decode() {
 }
 
 extern "C" int cm256_decode(
-    cm256_encoder_params params,  // Encoder params
-    cm256_block* blocks)          // Array of 'originalCount' blocks as described above
+    cm256_encoder_params params, // Encoder params
+    cm256_block* blocks)         // Array of 'originalCount' blocks as described above
 {
-    if (params.OriginalCount <= 0 || params.RecoveryCount <= 0 || params.BlockBytes <= 0) {
+    if (params.OriginalCount <= 0 ||
+        params.RecoveryCount <= 0 ||
+        params.BlockBytes <= 0)
+    {
         return -1;
     }
-    if (params.OriginalCount + params.RecoveryCount > 256) {
+    if (params.OriginalCount + params.RecoveryCount > 256)
+    {
         return -2;
     }
-    if (!blocks) {
+    if (!blocks)
+    {
         return -3;
     }
 
     // If there is only one block,
-    if (params.OriginalCount == 1) {
+    if (params.OriginalCount == 1)
+    {
         // It is the same block repeated
         blocks[0].Index = 0;
         return 0;
     }
 
     CM256Decoder state;
-    if (!state.Initialize(params, blocks)) {
+    if (!state.Initialize(params, blocks))
+    {
         return -5;
     }
 
     // If nothing is erased,
-    if (state.RecoveryCount <= 0) {
+    if (state.RecoveryCount <= 0)
+    {
         return 0;
     }
 
     // If m=1,
-    if (params.RecoveryCount == 1) {
+    if (params.RecoveryCount == 1)
+    {
         state.DecodeM1();
         return 0;
     }
