@@ -148,9 +148,9 @@ int video_decoder_decode_frame(VideoDecoder* decoder);
  *
  * @returns                         The last decoded frame data.
  *
- * @note                            Once this is called once, the decoder loses its reference
- *                                  to the framedata. So, it cannot be called again
- *                                  unless `video_decoder_decode_frame` returns 0 again.
+ * @note                            This returns a new reference to the decoded frame, so it may be
+ *                                  called multiple times and the caller can do whatever they like
+ *                                  with the returned frame.
  */
 DecodedFrameData video_decoder_get_last_decoded_frame(VideoDecoder* decoder);
 
