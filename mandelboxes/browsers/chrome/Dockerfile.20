@@ -93,6 +93,7 @@ COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh
 ENV WHIST_DEST_BROWSER="chrome"
 COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whist-application
+
 # Install handle to browser program to be able to open a new tab from the protocol
 RUN ln -sf /usr/bin/google-chrome /usr/bin/whist-open-new-tab
 

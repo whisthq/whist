@@ -323,8 +323,8 @@ static int handle_open_urls_message(whist_server_state *state, WhistClientMessag
 
     // Step 2: Split the URLs using the separator '|' character, and wrap the urls in double quotes
     // (escaped twice)
-    char *wrapped_urls = (char *)calloc(
-        (MAX_URL_LENGTH + 2 * strlen("\\\"") + strlen(" ")) * MAX_NEW_TAB_URLS, sizeof(char));
+    char *wrapped_urls = (char *)safe_zalloc(
+        (MAX_URL_LENGTH + 2 * strlen("\\\"") + strlen(" ")) * MAX_NEW_TAB_URLS * sizeof(char));
     sprintf(wrapped_urls, "\\\"");
     size_t index = strlen("\\\"");
     for (size_t i = 0; i < urls_length; i++) {
@@ -348,7 +348,7 @@ static int handle_open_urls_message(whist_server_state *state, WhistClientMessag
         strlen("/usr/share/whist/run-as-whist-user.sh \"exec /usr/bin/whist-open-new-tab \"");
     // The maximum possible command length is equal to the (constant) length of the part of the
     // command that needs to go before the urls plus the length of the wrapped urls
-    char *command = (char *)calloc(len_cmd_before_urls + urls_length + 1, sizeof(char));
+    char *command = (char *)safe_zalloc((len_cmd_before_urls + urls_length + 1) * sizeof(char));
     sprintf(command,
             "/usr/share/whist/run-as-whist-user.sh \"exec /usr/bin/whist-open-new-tab %s\"",
             wrapped_urls);
@@ -358,16 +358,13 @@ static int handle_open_urls_message(whist_server_state *state, WhistClientMessag
     // resulting stdout in the open_urls_result string.
     char *open_urls_result;
     int ret = runcmd(command, &open_urls_result);
+    free(command);
     if (ret == -1) {
         LOG_ERROR("Error opening URL in new tab: %s", open_urls_result);
-        free(command);
-        free(open_urls_result);
+        // No need to free open_urls_result, because the pointer is NULL when ret == -1
         return -1;
     }
-
     free(open_urls_result);
-    free(command);
-
     return 0;
 }
 

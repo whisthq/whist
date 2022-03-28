@@ -77,6 +77,7 @@ COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh
 ENV WHIST_DEST_BROWSER="brave"
 COPY start-brave.sh /usr/bin/start-brave
 RUN chmod +x /usr/bin/start-brave && ln -sf /usr/bin/start-brave /usr/bin/whist-application
+
 # Install handle to browser program to be able to open a new tab from the protocol
 RUN ln -sf /usr/bin/brave-browser /usr/bin/whist-open-new-tab
 
