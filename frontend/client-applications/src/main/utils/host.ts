@@ -32,7 +32,7 @@ export const hostSpinUp = async ({
   mandelbox_id: string
   json_data: string
   importedData:
-    | { cookies: string; bookmarks: string; extensions: string }
+    | { cookies?: string; bookmarks?: string; extensions?: string }
     | undefined
 }) =>
   hostPut(`https://${ip}:${HostServicePort}`)({

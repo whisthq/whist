@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import classNames from "classnames"
 
 import Dropdown from "@app/components/dropdown"
-import { WhistButton, WhistButtonState } from "@app/components/button"
 import Landing from "@app/components/templates/landing"
 import Payment from "@app/components/icons/payment"
 
@@ -13,25 +12,12 @@ const Importer = (props: {
   mode: string
 }) => {
   const [showWelcome, setShowWelcome] = useState(props.mode === "onboarding")
-  const [browser, setBrowser] = useState("")
   const [processing, setProcessing] = useState(false)
 
-  const onSelect = (b: string) => {
-    setBrowser(b)
-  }
-
-  const onSubmit = (shouldImport: boolean) => {
+  const onSubmit = (browser: string) => {
     setProcessing(true)
-    setTimeout(() => {
-      props.onSubmit(shouldImport ? browser : "")
-    }, 2000)
+    props.onSubmit(browser)
   }
-
-  useEffect(() => {
-    if (props.browsers !== undefined && props.browsers.length > 0) {
-      setBrowser(props.browsers[0])
-    }
-  }, [props.browsers])
 
   if (showWelcome)
     return (
@@ -67,38 +53,27 @@ const Importer = (props: {
           Chrome, Brave, and Opera.
         </div>
         <div className="mt-8 max-w-sm m-auto">
-          {props.browsers === undefined || props.browsers.length === 0 ? (
-            <>
-              <Dropdown
-                options={["No supported browsers found :("]}
-                onSelect={() => {}}
-              />
-            </>
-          ) : (
-            <>
-              <Dropdown options={props.browsers ?? []} onSelect={onSelect} />
-            </>
-          )}
-        </div>
-        <div>
-          <WhistButton
-            contents="Continue"
-            className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light"
-            state={
+          <Dropdown
+            options={props.browsers ?? []}
+            onSubmit={
               props.browsers === undefined || props.browsers.length === 0
-                ? WhistButtonState.DISABLED
-                : processing
-                ? WhistButtonState.PROCESSING
-                : WhistButtonState.DEFAULT
+                ? () => onSubmit("")
+                : (value) => onSubmit(value)
             }
-            onClick={() => onSubmit(true)}
+            submitButton={
+              <input
+                type="submit"
+                value="Continue"
+                className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light rounded cursor-pointer py-4 font-bold"
+              />
+            }
           />
         </div>
         {props.allowSkip && (
           <div className="relative top-12">
             <button
               className="text-blue-light font-bold outline-none bg-none"
-              onClick={() => onSubmit(false)}
+              onClick={() => onSubmit("")}
               disabled={processing}
             >
               Skip for now
