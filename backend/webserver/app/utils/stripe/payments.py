@@ -244,7 +244,7 @@ def get_subscription_status() -> Optional[str]:
     )
 
 
-def create_price(amount: int) -> Dict[str, any]:
+def create_price(amount: int, name="Whist (Monthly)", interval="month") -> Dict[str, any]:
     """Creates a new Stripe Price with the desired monthly recurring amount
 
     Returns:
@@ -253,8 +253,8 @@ def create_price(amount: int) -> Dict[str, any]:
     return stripe.Price.create(
         unit_amount=amount * 100,
         currency="usd",
-        recurring={"interval": "month"},
-        product_data={"name": "Whist (Monthly)"},
+        recurring={"interval": interval},
+        product_data={"name": name},
     )
 
 
