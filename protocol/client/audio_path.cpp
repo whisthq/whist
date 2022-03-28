@@ -172,20 +172,7 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
  * @param id                       the id that is going to be insert into the set
  *
  */
-static void maintain_recent_popped_ids(int id)
-{
-    // how many recently popped ids we keep track
-    // no need to tune this value, just use a conservative large value
-    const int recent_popped_ids_capcity = 100;
-
-    // keep track of a set of recently poped ids, insert the id
-    recent_popped_ids->insert(id);
-    // keep the size of recent_popped_ids <= recent_popped_ids_capcity
-    while ((int)recent_popped_ids->size() > recent_popped_ids_capcity) {
-        recent_popped_ids->erase(recent_popped_ids->begin());
-    }
-
-}
+static void maintain_recent_popped_ids(int id);
 /*
 ============================
 Public Function Implementations
@@ -641,4 +628,19 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
     current_sample_cnt = 0;
 
     return op;
+}
+
+static void maintain_recent_popped_ids(int id)
+{
+    // how many recently popped ids we keep track
+    // no need to tune this value, just use a conservative large value
+    const int recent_popped_ids_capcity = 100;
+
+    // keep track of a set of recently poped ids, insert the id
+    recent_popped_ids->insert(id);
+    // keep the size of recent_popped_ids <= recent_popped_ids_capcity
+    while ((int)recent_popped_ids->size() > recent_popped_ids_capcity) {
+        recent_popped_ids->erase(recent_popped_ids->begin());
+    }
+
 }
