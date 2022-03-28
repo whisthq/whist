@@ -10,7 +10,7 @@ const Importing = () => {
         <div className="font-body text-2xl font-bold text-gray-300 mt-5">
           Importing your bookmarks and settings
         </div>
-        <div className="text-sm text-gray-400 mt-1">
+        <div className="text-sm text-gray-400 mt-2">
           This could take up to 20 seconds
         </div>
         <div className="mt-6">
