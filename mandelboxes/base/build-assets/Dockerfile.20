@@ -7,6 +7,7 @@ FROM ubuntu:20.04 as default
 # to set the tag name ":default" versus ":protocol"!
 
 COPY build-temp/nvidia-driver /nvidia-driver
+COPY build-temp/fonts /fonts
 COPY build-temp/setup-linux-build-environment.sh /setup-linux-build-environment.sh
 RUN mkdir protocol
 
