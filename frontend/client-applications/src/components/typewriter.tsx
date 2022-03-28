@@ -53,11 +53,11 @@ export const TypeWriter = (props: {
 }) => {
   const {
     words,
-    startTick: start = 500,
+    startTick: start = 200,
     endTick: end = 1500,
     forwardTick: forw = 20,
     backwardTick: back = 50,
-    startDelay = 100,
+    startDelay = 20,
     startAt = 0,
     repeat = false,
   } = props
