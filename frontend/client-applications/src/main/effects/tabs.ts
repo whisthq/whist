@@ -19,8 +19,8 @@ fromTrigger(WhistTrigger.importTabs)
           url.startsWith("https://") ||
           url.startsWith("ftp://"))
       ) {
-        // Pass only the valid urls to the protocol
-        validUrls.push(url)
+        // Pass only the valid urls to the protocol, and ensure that any `|` is encoded as `%7C`
+        validUrls.push(url.replace("|", "%7C"))
       }
     }
     pipeURLToProtocol(p, validUrls.join("|"))
