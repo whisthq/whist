@@ -2,6 +2,10 @@
 
 # Note: all commands here are run with the `root` user. It is not necessary to use sudo.
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html#user-data-shell-scripts
+if (( $EUID != 0 )); then
+    echo "Command should be run as root."
+    exit
+fi
 
 # Exit on subcommand errors
 set -Eeuo pipefail
@@ -14,7 +18,8 @@ cd /home/ubuntu
 # our instance, if there is some.
 EPHEMERAL_DEVICE_PATH=$(nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == "Amazon EC2 NVMe Instance Storage")) | max_by(.PhysicalSize) | .DevicePath')
 EPHEMERAL_FS_PATH=/ephemeral
-USERDATA_ENV=/usr/share/whist/userdata.env
+USERDATA_ENV=/usr/share/whist/app_env.env
+MAX_CONCURRENT_DOWNLOADS=8
 
 # We use ephemeral storage if it exists on our host instances to avoid needing to warm up the filesystem,
 # speeding up instance launch time. We move the docker data directory to the ephemeral volume, and then
@@ -54,10 +59,10 @@ then
   pull_image_base_brave="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/brave"
   pull_image_brave="$pull_image_base_brave:$GIT_HASH"
 
-  docker pull "$pull_image_chrome"
+  docker pull "$pull_image_chrome" --max-concurrent-downloads "$MAX_CONCURRENT_DOWNLOADS"
   docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
 
-  docker pull "$pull_image_chrome"
+  docker pull "$pull_image_brave" --max-concurrent-downloads "$MAX_CONCURRENT_DOWNLOADS"
   docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
 
   echo "Finished pulling images"
@@ -98,7 +103,7 @@ ExecStart=/home/ubuntu/host-service
 WantedBy=multi-user.target
 EOF
 
-echo "Created systemd service for Host-Service"
+echo "Created systemd service for host-service"
 
 # Reload daemon files
 /bin/systemctl daemon-reload
@@ -106,6 +111,6 @@ echo "Created systemd service for Host-Service"
 # Enable Host Service
 systemctl enable --now host-service.service
 
-echo "Enabled Host-Service"
+echo "Enabled host-service"
 
 echo "Whist EC2 userdata finished"
