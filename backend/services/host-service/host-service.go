@@ -607,9 +607,9 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 // Create the directory used to store the mandelbox resource allocations
 // (e.g. TTYs) on disk
 func initializeFilesystem(globalCancel context.CancelFunc) {
-	// Check if the instance has ephemeral storage. If it does create the "/whist" directory
-	// in it so that reading/writing operations are fast. We use this command to check if the
-	// instance has an ephemeral device present.
+	// Check if the instance has ephemeral storage. If it does, set the WhistDir path to the
+	// ephemeral volume, which should already be mounted by the userdata script. We use the
+	// command below to check if the instance has an ephemeral device present.
 	// See: https://stackoverflow.com/questions/10781516/how-to-pipe-several-commands-in-go
 	ephemeralDeviceCmd := "nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == \"Amazon EC2 NVMe Instance Storage\")) | max_by(.PhysicalSize) | .DevicePath'"
 	out, err := exec.Command("bash", "-c", ephemeralDeviceCmd).CombinedOutput()
