@@ -116,10 +116,12 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
             if not subscription_status in ["active", "trialing"]:
                 # Fetch the Stripe Price that matches our currently desired price, or create
                 # a new Price if no Price matches
+                CENTS_IN_DOLLAR = 100
+
                 price_id = next(
                     filter(
                         lambda price: int(price["unit_amount"])
-                        == get_monthly_price_in_dollars() * 100,
+                        == get_monthly_price_in_dollars() * CENTS_IN_DOLLAR,
                         list_all_stripe_prices(),
                     ),
                     create_price(get_monthly_price_in_dollars())["id"],
@@ -197,12 +199,14 @@ def list_all_stripe_prices() -> Iterable[Dict[str, Any]]:
         # The Stripe API returns a maximum of 10 results at a time, so we need to loop in case
         # there are more than 10 active prices
         should_fetch_more_results = True
+        starting_after = None
         prices = []
 
         while should_fetch_more_results:
-            price = stripe.Price.list()
-            prices += price.data
-            should_fetch_more_results = price.has_more
+            stripe_output = stripe.Price.list(starting_after=starting_after)
+            prices += stripe_output.data
+            should_fetch_more_results = stripe_output.has_more
+            starting_after = stripe_output.data[-1].id
 
         return prices
     except stripe.error.InvalidRequestError as e:
