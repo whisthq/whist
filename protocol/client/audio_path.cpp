@@ -178,7 +178,7 @@ int audio_path_init(int in_decoded_bytes_per_frame) {
     start_timer(&g_timer);
     // more initilization
     g_mutex = whist_create_mutex();
-    atomic_init(&cached_device_queue_len, 0);
+    atomic_init(&cached_device_queue_len, -1);
 
     // save the passed in decoded_bytes_per_frame
     decoded_bytes_per_frame = in_decoded_bytes_per_frame;
