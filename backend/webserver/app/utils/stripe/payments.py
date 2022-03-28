@@ -206,7 +206,7 @@ def list_all_stripe_prices() -> Iterable[Dict[str, Any]]:
             stripe_output = stripe.Price.list(starting_after=starting_after)
             prices += stripe_output["data"]
             should_fetch_more_results = stripe_output["has_more"]
-            starting_after = stripe_output.data[-1]["id"]
+            starting_after = stripe_output["data"][-1]["id"]
 
         return prices
     except stripe.error.InvalidRequestError as e:
