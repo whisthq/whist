@@ -78,7 +78,7 @@ const Header = () => {
               <a href="/">
                 <img
                   className="h-14 w-14 relative rounded"
-                  src="https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png"
+                  src="https://whist-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png"
                   alt=""
                 />
               </a>
