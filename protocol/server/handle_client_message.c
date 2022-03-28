@@ -342,14 +342,15 @@ static int handle_open_urls_message(whist_server_state *state, WhistClientMessag
 
     // Step 3: Create the command to run on the Mandelbox's terminal to open the received URL in a
     // new tab. To open a new tab with a given url, we can just use the terminal command: `exec
-    // /usr/bin/whist-open-new-tab <insert url(s) here>`. This command needs to be run by the `whist`
-    // user, so we run it through the run-as-whist-user.sh script.
+    // /usr/bin/whist-open-new-tab <insert url(s) here>`. This command needs to be run by the
+    // `whist` user, so we run it through the run-as-whist-user.sh script.
     const size_t len_cmd_before_urls =
         strlen("/usr/share/whist/run-as-whist-user.sh \"exec /usr/bin/whist-open-new-tab \"");
     // The maximum possible command length is equal to the (constant) length of the part of the
     // command that needs to go before the urls plus the length of the wrapped urls
     char *command = (char *)calloc(len_cmd_before_urls + urls_length + 1, sizeof(char));
-    sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec /usr/bin/whist-open-new-tab %s\"",
+    sprintf(command,
+            "/usr/share/whist/run-as-whist-user.sh \"exec /usr/bin/whist-open-new-tab %s\"",
             wrapped_urls);
     free(wrapped_urls);
 
