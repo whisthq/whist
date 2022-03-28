@@ -1,4 +1,4 @@
-pylint==2.12.2
+pylint==2.13.2
 docker==5.0.3
 psutil==5.9.0
 requests==2.27.1
