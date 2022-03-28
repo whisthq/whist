@@ -6,6 +6,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_compile_options("-mavx2")
     #add_compile_options("-Wno-restrict")
     add_compile_options("-O2")
+    add_compile_options("-fno-tree-vectorize")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -18,6 +19,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         # the below line fails mac ci, can't reproduce locally
         # TODO fix this
         add_compile_options("-O2")
+        add_compile_options("-fno-tree-vectorize")
     else()
         message(FATAL "unknown Darwin architecture: ${MACOS_ARCHITECTURE} ")
     endif()
