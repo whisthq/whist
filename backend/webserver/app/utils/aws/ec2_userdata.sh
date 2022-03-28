@@ -27,56 +27,55 @@ MAX_CONCURRENT_DOWNLOADS=8
 
 if [ "$EPHEMERAL_DEVICE_PATH" != "null" ]
 then
-  echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
+    echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
 
-  mkfs -t ext4 "$EPHEMERAL_DEVICE_PATH"
-  mkdir -p "$EPHEMERAL_FS_PATH"
-  mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
-  echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
+    mkfs -t ext4 "$EPHEMERAL_DEVICE_PATH"
+    mkdir -p "$EPHEMERAL_FS_PATH"
+    mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
+    echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
 
-  # Stop docker and copy the data directory to the ephemeral storage
-  systemctl stop docker
-  mv /var/lib/docker "$EPHEMERAL_FS_PATH"
-  echo "Moved /var/lib/docker to ephemeral volume"
+    # Stop docker and copy the data directory to the ephemeral storage
+    systemctl stop docker
+    mv /var/lib/docker "$EPHEMERAL_FS_PATH"
+    echo "Moved /var/lib/docker to ephemeral volume"
 
-  # Modify configuration to use the new data directory and persist in daemon config file
-  # and start docker again
-  jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
-  systemctl start docker
+    # Modify configuration to use the new data directory and persist in daemon config file
+    # and start docker again. Set a higher concurrent download count to speed up the pull.
+    jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
+    jq '. + {"max-concurrent-downloads": '"$MAX_CONCURRENT_DOWNLOADS"'}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
 
-  # Populate env vars
-  eval "$(cat $USERDATA_ENV)"
+    systemctl start docker
 
-  # Login wit docker
-  echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
+    # Populate env vars
+    eval "$(cat $USERDATA_ENV)"
 
-  # Pull Docker images for Chrome and Brave directly to the ephemeral volume
-  ghcr_uri=ghcr.io
+    # Login wit docker
+    echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
 
-  pull_image_base_chrome="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/chrome"
-  pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
+    # Pull Docker images for Chrome and Brave directly to the ephemeral volume
+    ghcr_uri=ghcr.io
 
-  pull_image_base_brave="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/brave"
-  pull_image_brave="$pull_image_base_brave:$GIT_HASH"
+    pull_image_base_chrome="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/chrome"
+    pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
 
-  docker pull "$pull_image_chrome" --max-concurrent-downloads "$MAX_CONCURRENT_DOWNLOADS"
-  docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
+    pull_image_base_brave="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/brave"
+    pull_image_brave="$pull_image_base_brave:$GIT_HASH"
 
-  docker pull "$pull_image_brave" --max-concurrent-downloads "$MAX_CONCURRENT_DOWNLOADS"
-  docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
+    docker pull "$pull_image_chrome"
+    docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
 
-  echo "Finished pulling images"
+    docker pull "$pull_image_brave"
+    docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
+
+    echo "Finished pulling images"
 
 else
-  echo "No ephemeral device path found. Warming up EBS volume with fio."
-  # Warm Up EBS Volume
-  # For more information, see: https://github.com/whisthq/whist/pull/5333
-  fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
+    echo "No ephemeral device path found. Warming up EBS volume with fio."
+    # Warm Up EBS Volume
+    # For more information, see: https://github.com/whisthq/whist/pull/5333
+    fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
 
 fi
-
-
-
 
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
