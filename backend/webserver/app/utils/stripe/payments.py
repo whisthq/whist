@@ -114,13 +114,15 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
 
         try:
             if not subscription_status in ["active", "trialing"]:
+                # TODO: Fetch price using Stripe API
+                price_id = ""
                 # Any subscriptions that is not active or in the free trial period means that the user
                 # should re-enter their payment info for a brand-new subscription
                 session = stripe.checkout.Session.create(
                     customer=customer,
                     line_items=[
                         {
-                            "price": current_app.config["STRIPE_PRICE_ID"],
+                            "price":  price_id,
                             "quantity": 1,
                         },
                     ],
