@@ -12,7 +12,6 @@ The following configuration variables affect the Webserver's ability to
 integrate with Stripe correctly:
 
 * :attr:`~app.config.DeploymentConfig.STRIPE_CUSTOMER_ID_CLAIM`
-* :attr:`~app.config.DeploymentConfig.STRIPE_PRICE_ID`
 * :attr:`~app.config.DeploymentConfig.STRIPE_SECRET`
 * :attr:`~app.config.DeploymentConfig.STRIPE_SUBSCRIPTION_STATUS_CLAIM`
 

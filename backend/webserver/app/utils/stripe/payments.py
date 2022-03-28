@@ -35,7 +35,7 @@ Example usage::
 import functools
 import logging
 from http import HTTPStatus
-from typing import Any, Callable, cast, Optional
+from typing import Any, Callable, cast, Optional, Dict, List
 from time import time
 
 import stripe
@@ -114,15 +114,27 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
 
         try:
             if not subscription_status in ["active", "trialing"]:
-                # TODO: Fetch price using Stripe API
-                price_id = ""
+                # Fetch the Stripe Price that matches our currently desired price, or create
+                # a new Price if no Price matches
+                desired_price = int(current_app.config["MONTHLY_PRICE_IN_DOLLARS"])
+                price_id = next(
+                    (
+                        [
+                            price["id"]
+                            for price in list_all_stripe_prices()
+                            if price["unit_amount"] == desired_price
+                        ]
+                    ),
+                    create_price(desired_price)["id"],
+                )
+
                 # Any subscriptions that is not active or in the free trial period means that the user
                 # should re-enter their payment info for a brand-new subscription
                 session = stripe.checkout.Session.create(
                     customer=customer,
                     line_items=[
                         {
-                            "price":  price_id,
+                            "price": price_id,
                             "quantity": 1,
                         },
                     ],
@@ -167,6 +179,30 @@ def get_customer_id() -> Optional[str]:
     )
 
 
+def list_all_stripe_prices() -> List[Dict[str, any]]:
+    """Returns all available Stripe Prices
+
+    Returns:
+        A list of Stripe Prices
+    """
+
+    try:
+        # The Stripe API returns a maximum of 10 results at a time, so we need to loop in case
+        # there are more than 10 active prices
+        should_fetch_more_results = True
+        prices = []
+
+        while should_fetch_more_results:
+            prices += stripe.Price.list().data
+            should_fetch_more_results = prices.has_more
+
+        return prices
+    except stripe.error.InvalidRequestError as e:
+        logger.error(e)
+    except IndexError:
+        logger.warning("There are no prices active in Stripe")
+
+
 def get_stripe_subscription_status(customer_id: str) -> Optional[str]:
     """Attempt to get subscription status from stripe but fallback to access token
 
@@ -205,6 +241,20 @@ def get_subscription_status() -> Optional[str]:
 
     return get_jwt().get(  # type: ignore[no-any-return]
         current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]
+    )
+
+
+def create_price(amount: int) -> Dict[str, any]:
+    """Creates a new Stripe Price with the desired monthly recurring amount
+
+    Returns:
+        The newly-created Stripe Price
+    """
+    return stripe.Price.create(
+        unit_amount=amount * 100,
+        currency="usd",
+        recurring={"interval": "month"},
+        product_data={"name": "Whist (Monthly)"},
     )
 
 
