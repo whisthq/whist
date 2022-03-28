@@ -95,16 +95,9 @@ static void sync_decoder_parameters(VideoContext* video_context, VideoFrame* fra
  *
  * @param video_context            The video context being used
  *
- * @param data                     The pointers to the texture pointers that sws will write to.
- *                                 This function will write into this array.
- * @param linesize                 The pointers to the linesize array that sws will write to
- *                                 This function will write into this array.
- * @param input_width              The width of the capture image.
- * @param input_height             The height of the capture image.
- * @param input_format             The format of the capture image.
+ * @param frame                    Current input frame to determine necessary scaling for.
  */
-static void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize, int width,
-                               int height, enum AVPixelFormat input_format);
+static void update_sws_context(VideoContext* video_context, const AVFrame* frame);
 
 /**
  * @brief                          Destroys an ffmpeg decoder on another thread
@@ -306,38 +299,37 @@ int render_video(VideoContext* video_context) {
         // Mark frame as consumed
         got_frame_from_decoder = false;
 
-        // The final data/linesize that we will render
-        Uint8* data[4] = {0};
-        int linesize[4] = {0};
-
-        static DecodedFrameData decoded_frame_data = {0};
-
-        // Free the previous frame, if there was any
-        video_decoder_free_decoded_frame(&decoded_frame_data);
-
         // Get the last decoded frame
-        decoded_frame_data = video_decoder_get_last_decoded_frame(video_context->decoder);
+        DecodedFrameData decoded_frame_data =
+            video_decoder_get_last_decoded_frame(video_context->decoder);
 
-        // Pull the most recently decoded data/linesize from the decoder
+        // Make a new frame to give to the renderer.
+        AVFrame* frame = av_frame_alloc();
+        FATAL_ASSERT(frame);
+
+        // Fill our local frame with the correct data, which will be a
+        // reference to the decoded frame if formats make that possible
+        // or a new frame made with swscale if not.
         if (decoded_frame_data.using_hw) {
-            data[0] = data[1] = decoded_frame_data.decoded_frame->data[3];
-            linesize[0] = linesize[1] = decoded_frame_data.width;
+            av_frame_ref(frame, decoded_frame_data.decoded_frame);
         } else {
-            // This will allocate the sws target frame into data/linesize,
-            // using the provided pixel_format
-            update_sws_context(video_context, data, linesize, video_context->decoder->width,
-                               video_context->decoder->height, decoded_frame_data.pixel_format);
+            // Update the scaler context with the properties of the next
+            // frame, or destroy the scaler context if no scale will be
+            // needed.
+            update_sws_context(video_context, decoded_frame_data.decoded_frame);
+
             if (video_context->sws) {
-                // Scale from the swframe into the sws target frame.
-                sws_scale(video_context->sws,
-                          (uint8_t const* const*)decoded_frame_data.decoded_frame->data,
-                          decoded_frame_data.decoded_frame->linesize, 0, decoded_frame_data.height,
-                          data, linesize);
+                // Convert from the decoded frame into our target frame.
+                sws_scale_frame(video_context->sws, frame, decoded_frame_data.decoded_frame);
             } else {
-                memcpy(data, decoded_frame_data.decoded_frame->data, sizeof(data));
-                memcpy(linesize, decoded_frame_data.decoded_frame->linesize, sizeof(linesize));
+                // No conversion required.
+                av_frame_ref(frame, decoded_frame_data.decoded_frame);
             }
         }
+
+        // Free the decoded frame.  We have either copied the data to
+        // our own frame or made another reference to it.
+        video_decoder_free_decoded_frame(&decoded_frame_data);
 
         // Render out the cursor image
         if (cursor_image) {
@@ -351,8 +343,7 @@ int render_video(VideoContext* video_context) {
         sdl_render_window_titlebar_color(window_color);
 
         // Render the decoded frame
-        sdl_update_framebuffer(data, linesize, video_context->decoder->width,
-                               video_context->decoder->height);
+        sdl_update_framebuffer(frame);
 
         // Mark the framebuffer out to render
         sdl_render_framebuffer();
@@ -442,52 +433,37 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
     video_context->last_frame_codec = frame->codec_type;
 }
 
-void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize, int width,
-                        int height, enum AVPixelFormat input_format) {
+void update_sws_context(VideoContext* video_context, const AVFrame* frame) {
     static enum AVPixelFormat cached_format = AV_PIX_FMT_NONE;
     static int cached_width = -1;
     static int cached_height = -1;
 
-    static Uint8* static_data[4] = {0};
-    static int static_linesize[4] = {0};
-
     // If the cache missed, reconstruct the sws and static avimage
-    if (input_format != cached_format || width != cached_width || height != cached_height) {
-        cached_format = input_format;
-        cached_width = width;
-        cached_height = height;
+    if (frame->format != cached_format || frame->width != cached_width ||
+        frame->height != cached_height) {
+        cached_format = frame->format;
+        cached_width = frame->width;
+        cached_height = frame->height;
 
         // No matter what, we now should destroy the old context if it exists
-        if (static_data[0] != NULL) {
-            av_freep(&static_data[0]);
-            static_data[0] = NULL;
-        }
         if (video_context->sws) {
             sws_freeContext(video_context->sws);
             video_context->sws = NULL;
         }
 
-        if (input_format == WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT) {
+        if (frame->format == WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT) {
             // If the pixel format already matches, we require no pixel format conversion,
             // we can just pass directly to the renderer!
             LOG_INFO("The input format is already correct, no sws needed!");
         } else {
             // We need to create a new context to handle the pixel fmt conversion
             LOG_INFO("Creating sws context to convert from %s to %s",
-                     av_get_pix_fmt_name(input_format),
+                     av_get_pix_fmt_name(frame->format),
                      av_get_pix_fmt_name(WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT));
-            video_context->sws = sws_getContext(width, height, input_format, width, height,
-                                                WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT,
-                                                SWS_FAST_BILINEAR, NULL, NULL, NULL);
-            av_image_alloc(static_data, static_linesize, width, height,
-                           WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT, 32);
+            video_context->sws = sws_getContext(
+                frame->width, frame->height, frame->format, frame->width, frame->height,
+                WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT, SWS_FAST_BILINEAR, NULL, NULL, NULL);
         }
-    }
-
-    // Copy the static avimage into the provided data/linesize buffers.
-    if (video_context->sws) {
-        memcpy(data, static_data, sizeof(static_data));
-        memcpy(linesize, static_linesize, sizeof(static_linesize));
     }
 }
 

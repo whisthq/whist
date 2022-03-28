@@ -593,20 +593,24 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
         }
 
         // Free the old captured frame, if there was any
-        av_frame_free(&decoder->decoded_frame);
+        if (decoder->decoded_frame) {
+            av_frame_unref(decoder->decoded_frame);
+        } else {
+            decoder->decoded_frame = safe_av_frame_alloc();
+        }
 
 #ifdef __APPLE__
         // On Mac, we'll use the hw frame directly
-        decoder->decoded_frame = frame;
+        av_frame_ref(decoder->decoded_frame, frame);
         decoder->using_hw = true;
+        av_frame_free(&frame);
 #else
         // Otherwise, copy the hw data into a software frame
         start_timer(&latency_clock);
-        decoder->decoded_frame = safe_av_frame_alloc();
         res = av_hwframe_transfer_data(decoder->decoded_frame, frame, 0);
         av_frame_free(&frame);
         if (res < 0) {
-            av_frame_free(&decoder->decoded_frame);
+            av_frame_unref(decoder->decoded_frame);
             LOG_WARNING("Failed to av_hwframe_transfer_data, error: %s", av_err2str(res));
             destroy_video_decoder(decoder);
             return -1;
@@ -632,27 +636,35 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
         }
 
         // Free the old captured frame, if there was any
-        av_frame_free(&decoder->decoded_frame);
+        if (decoder->decoded_frame) {
+            av_frame_unref(decoder->decoded_frame);
+        } else {
+            decoder->decoded_frame = safe_av_frame_alloc();
+        }
+
         // Move the captured frame into the decoder struct
-        decoder->decoded_frame = frame;
+        av_frame_ref(decoder->decoded_frame, frame);
         decoder->using_hw = false;
+
+        // Free the intermediate frame.
+        av_frame_free(&frame);
     }
 
     return 0;
 }
 
 DecodedFrameData video_decoder_get_last_decoded_frame(VideoDecoder* decoder) {
-    DecodedFrameData decoded_frame_data;
-
-    if (decoder->decoded_frame == NULL) {
+    if (decoder->decoded_frame == NULL || decoder->decoded_frame->buf[0] == NULL) {
         LOG_FATAL("No decoded frame available!");
     }
 
-    // Move the frame into decoded_frame_data,
-    // And then clear it from the decoder
+    DecodedFrameData decoded_frame_data = {0};
 
-    decoded_frame_data.decoded_frame = decoder->decoded_frame;
-    decoder->decoded_frame = NULL;
+    // Make a new reference for the caller in decoded_frame_data.  The
+    // decoder's reference to the same frame is not changed.
+
+    decoded_frame_data.decoded_frame = safe_av_frame_alloc();
+    av_frame_ref(decoded_frame_data.decoded_frame, decoder->decoded_frame);
 
     // Copy the data into the struct
     decoded_frame_data.using_hw = decoder->using_hw;

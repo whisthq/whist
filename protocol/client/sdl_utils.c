@@ -45,11 +45,8 @@ static volatile bool pending_render = false;
 static volatile bool prev_insufficient_bandwidth = false;
 
 // NV12 framebuffer update
-static volatile bool pending_nv12data = false;
-static Uint8* pending_nv12data_data[4];
-static int pending_nv12data_linesize[4];
-static int pending_nv12data_width;
-static int pending_nv12data_height;
+static bool pending_nv12data = false;
+static AVFrame* pending_nv12_frame;
 
 // The background color for the loading screen
 static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
@@ -395,22 +392,23 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
     LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, output_width, output_height);
 }
 
-void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height) {
+void sdl_update_framebuffer(AVFrame* frame) {
     whist_lock_mutex(renderer_mutex);
 
     // Check dimensions as a fail-safe
-    if (width < 0 || width > MAX_SCREEN_WIDTH || height < 0 || height > MAX_SCREEN_HEIGHT) {
-        LOG_ERROR("Invalid Dimensions! %dx%d. nv12 update dropped", width, height);
+    if ((frame->width < 0 || frame->width > MAX_SCREEN_WIDTH) ||
+        (frame->height < 0 || frame->height > MAX_SCREEN_HEIGHT)) {
+        LOG_ERROR("Invalid Dimensions! %dx%d. nv12 update dropped", frame->width, frame->height);
+    } else if (frame->format != AV_PIX_FMT_VIDEOTOOLBOX &&
+               frame->format != WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT) {
+        LOG_ERROR("Invalid format %s for NV12 update.", av_get_pix_fmt_name(frame->format));
     } else {
-        // Overwrite the pending framebuffer metadata,
-        // And mark the nv12 framebuffer as pending
-        memcpy(pending_nv12data_data, data, sizeof(pending_nv12data_data));
-        memcpy(pending_nv12data_linesize, linesize, sizeof(pending_nv12data_linesize));
-        pending_nv12data_width = width;
-        pending_nv12data_height = height;
+        // Free the previous frame, if there was one.
+        if (pending_nv12_frame) {
+            av_frame_free(&pending_nv12_frame);
+        }
+        pending_nv12_frame = frame;
         pending_nv12data = true;
-        // NOTE: The Uint8*'s that data[] points to, CANNOT be invalidated
-        // until AFTER pending_nv12data is set back to false.
     }
 
     whist_unlock_mutex(renderer_mutex);
@@ -850,19 +848,36 @@ static void sdl_render_insufficient_bandwidth(void) {
 static void sdl_render_nv12data(void) {
     FATAL_ASSERT(pending_nv12data == true);
 
+    AVFrame* frame = pending_nv12_frame;
+    if (!frame) {
+        // We are attempting to render before any frame has been decoded.
+        // TODO: can we do something else here?
+        return;
+    }
+
     // The texture object we allocate is larger than the frame,
     // so we only copy the valid section of the frame into the texture.
     SDL_Rect texture_rect = {
         .x = 0,
         .y = 0,
-        .w = pending_nv12data_width,
-        .h = pending_nv12data_height,
+        .w = frame->width,
+        .h = frame->height,
     };
 
     // Update the SDLTexture with the given nvdata
-    int res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, pending_nv12data_data[0],
-                                  pending_nv12data_linesize[0], pending_nv12data_data[1],
-                                  pending_nv12data_linesize[1]);
+    int res;
+    if (frame->format == AV_PIX_FMT_NV12) {
+        // A normal NV12 frame in CPU memory.
+        res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, frame->data[0], frame->linesize[0],
+                                  frame->data[1], frame->linesize[1]);
+    } else if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
+        // A CVPixelBufferRef containing both planes in GPU memory.
+        res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, frame->data[3], frame->width,
+                                  frame->data[3], frame->width);
+    } else {
+        LOG_FATAL("Attempting to update NV12 texture from frame with invalid format %s.",
+                  av_get_pix_fmt_name(frame->format));
+    }
     if (res < 0) {
         LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
     } else {

@@ -92,20 +92,17 @@ void sdl_update_framebuffer_loading_screen(int idx);
 
 /**
  * @brief                          Update the renderer's framebuffer,
- *                                 using the provided texture.
+ *                                 using the provided frame.
  *
- * @param data                     The data pointers to the image
- *                                 The image must be of the format
- * WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT
- * @param linesize                 The linesize data for the image
- * @param width                    The width of the image
- * @param height                   The height of the image
+ * @param frame                    Decoded frame to update the framebuffer texture with.
+ *                                 The format of this frame must match
+ *                                 WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT.
  *
- * @note                           The Uint8*'s pointed to by data[] MUST be kept alive,
- *                                 until after BOTH `sdl_render_framebuffer` is called,
- *                                 AND `sdl_render_pending` subsequently returns false.
+ * @note                           The renderer takes ownership of the frame after this
+ *                                 call.  If that is not desirable, a copy must be made
+ *                                 beforehand.
  */
-void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height);
+void sdl_update_framebuffer(AVFrame* frame);
 
 /**
  * @brief                          This will mark the framebuffer as ready-to-render,
