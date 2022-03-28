@@ -2751,10 +2751,10 @@ electron-updater@4.6.5:
     lodash.isequal "^4.5.0"
     semver "^7.3.5"
 
-electron@14.2.5:
-  version "14.2.5"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-14.2.5.tgz#3303283f582535a09f079bbeb25fc7ce127cccbd"
-  integrity sha512-L5Y0s3LOAKtHYFQanxULZxfZzxkldNvCyfsFiiNwo7rMi1M+THKfSHCgDarHluSIGc4NvOEomV7P1RL97qpr6A==
+electron@14.2.8:
+  version "14.2.8"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-14.2.8.tgz#acc687b0218b591c072d3a0fdda4ee426aeac160"
+  integrity sha512-K22hI0NVkC7sU5sMDXwW1lxAjhNsFXL2wuJF7Ij9CyWqW/j6AtIMfDkUoM5mXaTg0FGUlmlNr9Rh7cp8bBn6Sg==
   dependencies:
     "@electron/get" "^1.0.1"
     "@types/node" "^14.6.2"
