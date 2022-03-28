@@ -118,10 +118,11 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
                 # a new Price if no Price matches
                 price_id = next(
                     filter(
-                        lambda price: int(price["unit_amount"]) == get_monthly_price(),
+                        lambda price: int(price["unit_amount"])
+                        == get_monthly_price_in_dollars() * 100,
                         list_all_stripe_prices(),
                     ),
-                    create_price(get_monthly_price())["id"],
+                    create_price(get_monthly_price_in_dollars())["id"],
                 )
 
                 # Any subscriptions that is not active or in the free trial period means that the user
@@ -175,7 +176,7 @@ def get_customer_id() -> Optional[str]:
     )
 
 
-def get_monthly_price() -> int:
+def get_monthly_price_in_dollars() -> int:
     """Retrieves the current price per month of a Whist subscription.
 
     Returns:
