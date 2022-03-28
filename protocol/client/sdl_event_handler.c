@@ -168,6 +168,7 @@ static void handle_mouse_wheel_event(FrontendMouseWheelEvent* event) {
 
 static void handle_gesture_event(FrontendGestureEvent* event) {
     WhistClientMessage msg = {0};
+    msg.type = MESSAGE_MULTIGESTURE;
     msg.multigesture = (WhistMultigestureMessage){
         .d_theta = event->delta.theta,
         .d_dist = event->delta.dist,
@@ -175,6 +176,7 @@ static void handle_gesture_event(FrontendGestureEvent* event) {
         .y = event->center.y,
         .num_fingers = event->num_fingers,
         .active_gesture = active_pinch,
+        .gesture_type = event->type,
     };
 
     if (event->type == MULTIGESTURE_PINCH_OPEN || event->type == MULTIGESTURE_PINCH_CLOSE) {
