@@ -172,14 +172,18 @@ def compute_deltas(
             new_entry = [
                 k,
                 dictionary[k]["entries"],
-                f"{dictionary[k]['avg']:.3f}",
             ]
 
+            # Add the average value for the compared run
             if dictionary[k]["compared_avg"] == "N/A":
                 new_entry.append("N/A")
             else:
                 new_entry.append(f"{dictionary[k]['compared_avg']:.3f}")
 
+            # Add the average value for the current run
+            new_entry.append(f"{dictionary[k]['avg']:.3f}")
+
+            # Add the difference
             delta_formatted = dictionary[k]["delta"]
             if dictionary[k]["delta"] != "-" and dictionary[k]["delta"] != "N/A":
                 delta_formatted = f"{delta_formatted:.3f}"

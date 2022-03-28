@@ -257,8 +257,8 @@ def generate_comparison_table(
                     headers=[
                         "Metric",
                         "Entries (this branch)",
-                        "Average (this branch)",
                         f"Average ({compared_branch_name})",
+                        "Average (this branch)",
                         "Delta",
                         "",
                     ],
