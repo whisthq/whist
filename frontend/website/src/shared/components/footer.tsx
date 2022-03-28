@@ -59,7 +59,7 @@ const Footer = () => {
           <div className="space-y-8 xl:col-span-1">
             <img
               className="h-12 w-12 rounded relative right-3"
-              src="https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png"
+              src="https://whist-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png"
               alt=""
             />
             <p className="text-gray-500 text-base">

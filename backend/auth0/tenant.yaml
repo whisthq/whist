@@ -86,7 +86,7 @@ clients:
       alg: RS256
       lifetime_in_seconds: 36000
       secret_encoded: false
-    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+    logo_uri: https://whist-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
     native_social_login:
       apple:
         enabled: false
@@ -120,7 +120,7 @@ clients:
       alg: RS256
       lifetime_in_seconds: 36000
       secret_encoded: false
-    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+    logo_uri: https://whist-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
     native_social_login:
       apple:
         enabled: false
@@ -243,7 +243,7 @@ tenant:
     revoke_refresh_token_grant: false
     disable_clickjack_protection_headers: false
   friendly_name: Whist Technologies, Inc.
-  picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+  picture_url: https://whist-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
   support_email: support@whist.com
   support_url: https://whist.com/contact
   universal_login:
@@ -265,7 +265,7 @@ branding:
   colors:
     page_background: "#ffffff"
     primary: "#4f35de"
-  logo_url: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+  logo_url: https://whist-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
 prompts:
   universal_login_experience: new
   identifier_first: true

@@ -163,7 +163,7 @@ To speed up the testing process in CI, we reuse two AWS EC2 instances dedicated 
 1. `protocol-integration-tester-client` with instance ID: `i-061d322780ae41d19`
 2. `protocol-integration-tester-server` with instance ID: `i-0ceaa243ec8cfc667`
 
-If you need to access the two machines above (i.e. to debug something), you can do so by using the key name `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR` and the corresponding certificate `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR.pem`, which is stored on AWS S3 in the `fractal-dev-secrets/E2E_test_secrets/` folder.
+If you need to access the two machines above (i.e. to debug something), you can do so by using the key name `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR` and the corresponding certificate `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR.pem`, which is stored on AWS S3 in the `whist-dev-secrets/E2E_test_secrets/` folder.
 
 ### Deployment
 

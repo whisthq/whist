@@ -170,7 +170,7 @@ parser.add_argument(
     "--testing-url",
     help="The URL to visit during the test. The default is a 4K video stored on our AWS S3.",
     type=str,
-    default="https://fractal-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4",
+    default="https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4",
 )
 
 parser.add_argument(

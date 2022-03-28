@@ -242,7 +242,7 @@ endif()
 set(PROTOCOL_TEST_ASSETS_VERSION 2)
 message(STATUS "Downloading test assets from AWS S3")
 execute_process(
-    COMMAND aws s3 cp s3://fractal-test-assets/protocol-test-assets-v${PROTOCOL_TEST_ASSETS_VERSION}.tar.gz -
+    COMMAND aws s3 cp s3://whist-test-assets/protocol-test-assets-v${PROTOCOL_TEST_ASSETS_VERSION}.tar.gz -
     COMMAND tar -C ${CMAKE_BINARY_DIR}/test -xzf -)
 message(STATUS "Downloading test assets from AWS S3 - Completed")
 

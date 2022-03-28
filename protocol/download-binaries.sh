@@ -34,7 +34,7 @@ touch "$CACHE_FILE"
 function has_updated {
   # Memoize AWS_LIST, which includes filenames and timestamps
   if [[ -z "${AWS_LIST+x}" ]]; then
-    AWS_LIST="$(aws s3 ls s3://fractal-protocol-shared-libs)"
+    AWS_LIST="$(aws s3 ls s3://whist-protocol-dependencies)"
     export AWS_LIST
   fi
   TIMESTAMP_LINE=$(echo "$AWS_LIST" | grep " $1" | awk '{print $4, $1, $2}')
@@ -83,7 +83,7 @@ fi
 if has_updated "$SDL_LIB"; then
   rm -rf "$SDL_LIB_DIR"
   mkdir -p "$SDL_LIB_DIR"
-  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$SDL_LIB" - | tar -xz -C "$SDL_LIB_DIR"
+  aws s3 cp --only-show-errors "s3://whist-protocol-dependencies/$SDL_LIB" - | tar -xz -C "$SDL_LIB_DIR"
   if [[ -d "$SDL_LIB_DIR/include" ]]; then
     rm -rf "$SDL_HEADERS_DIR"
     mkdir -p "$SDL_HEADERS_DIR"
@@ -103,7 +103,7 @@ SENTRY_DIR="$DEST_DIR/include/sentry"
 if has_updated "$LIB" || [[ ! -d "$SENTRY_DIR" ]]; then
   rm -rf "$SENTRY_DIR"
   mkdir -p "$SENTRY_DIR"
-  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$SENTRY_DIR"
+  aws s3 cp --only-show-errors "s3://whist-protocol-dependencies/$LIB" - | tar -xz -C "$SENTRY_DIR"
 
   # Pull all SDL2 include files up a level and delete encapsulating folder
   mv "$SENTRY_DIR/include"/* "$SENTRY_DIR"
@@ -132,7 +132,7 @@ fi
 if has_updated "$SENTRY_LIB"; then
   rm -rf "$SENTRY_LIB_DIR"
   mkdir -p "$SENTRY_LIB_DIR"
-  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$SENTRY_LIB" - | tar -xz -C "$SENTRY_LIB_DIR"
+  aws s3 cp --only-show-errors "s3://whist-protocol-dependencies/$SENTRY_LIB" - | tar -xz -C "$SENTRY_LIB_DIR"
 fi
 
 ###############################
@@ -146,7 +146,7 @@ OPENSSL_DIR="$DEST_DIR/include/openssl"
 if has_updated "$LIB" || [[ ! -d "$OPENSSL_DIR" ]]; then
   rm -rf "$OPENSSL_DIR"
   mkdir -p "$OPENSSL_DIR"
-  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$OPENSSL_DIR"
+  aws s3 cp --only-show-errors "s3://whist-protocol-dependencies/$LIB" - | tar -xz -C "$OPENSSL_DIR"
 
   # Pull all OpenSSL include files up a level and delete encapsulating folder
   mv "$OPENSSL_DIR/include"/* "$OPENSSL_DIR"
@@ -175,7 +175,7 @@ fi
 if has_updated "$OPENSSL_LIB"; then
   rm -rf "$OPENSSL_LIB_DIR"
   mkdir -p "$OPENSSL_LIB_DIR"
-  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$OPENSSL_LIB" - | tar -xz -C "$OPENSSL_LIB_DIR"
+  aws s3 cp --only-show-errors "s3://whist-protocol-dependencies/$OPENSSL_LIB" - | tar -xz -C "$OPENSSL_LIB_DIR"
 fi
 
 ###############################
@@ -189,7 +189,7 @@ FFMPEG_DIR="$DEST_DIR/include/ffmpeg"
 if has_updated "$LIB" || [[ ! -d "$FFMPEG_DIR" ]]; then
   rm -rf "$FFMPEG_DIR"
   mkdir -p "$FFMPEG_DIR"
-  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$FFMPEG_DIR"
+  aws s3 cp --only-show-errors "s3://whist-protocol-dependencies/$LIB" - | tar -xz -C "$FFMPEG_DIR"
 
   mv "$FFMPEG_DIR/include/"/* "$FFMPEG_DIR"
   rmdir "$FFMPEG_DIR/include"
@@ -217,7 +217,7 @@ fi
 if has_updated "$FFMPEG_LIB"; then
   rm -rf "$FFMPEG_LIB_DIR"
   mkdir -p "$FFMPEG_LIB_DIR"
-  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$FFMPEG_LIB" - | tar -xz -C "$FFMPEG_LIB_DIR"
+  aws s3 cp --only-show-errors "s3://whist-protocol-dependencies/$FFMPEG_LIB" - | tar -xz -C "$FFMPEG_LIB_DIR"
 fi
 
 ###############################

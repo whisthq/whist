@@ -151,7 +151,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           mkdir -p ~/private_keys
-          aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
+          aws s3 cp s3://whist-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
 
       - name: Build the macOS Electron Application
         if: runner.os == 'macOS'

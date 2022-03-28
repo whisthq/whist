@@ -990,7 +990,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           mkdir -p ~/private_keys
-          aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
+          aws s3 cp s3://whist-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
 
       #############################################################################################
       #################################### Publish Steps START ####################################
@@ -1122,7 +1122,7 @@ jobs:
       - name: Install macOS Notarization API Key
         run: |
           mkdir -p ~/private_keys
-          aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
+          aws s3 cp s3://whist-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
 
       # If you get the "unable to find utility "altool", not a developer tool or in PATH" error, VNC into the
       # M1 runner and run `sudo xcode-select -r` and provide the password
