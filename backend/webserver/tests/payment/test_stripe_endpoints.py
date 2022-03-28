@@ -12,6 +12,8 @@ from pytest import MonkeyPatch
 from tests.patches import function, Object
 from tests.client import WhistAPITestClient
 
+from tests.constants import DUMMY_STRIPE_PRICE_ID
+
 
 @pytest.mark.parametrize(
     "subscription_status",
@@ -118,7 +120,12 @@ def test_create_price(
     monkeypatch.setattr(
         stripe.Price,
         "list",
-        function(returns={"has_more": False, "data": [{"unit_amount": 50 * 100}]}),
+        function(
+            returns={
+                "has_more": False,
+                "data": [{"id": DUMMY_STRIPE_PRICE_ID, "unit_amount": 50 * 100}],
+            }
+        ),
     )
     monkeypatch.setattr(
         stripe.Price,
