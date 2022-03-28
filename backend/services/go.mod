@@ -5,24 +5,24 @@ go 1.17
 require (
 	github.com/MicahParks/keyfunc v1.0.1
 	github.com/NVIDIA/go-nvml v0.11.1-0
-	github.com/aws/aws-sdk-go-v2 v1.15.0
-	github.com/aws/aws-sdk-go-v2/config v1.15.0
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.0
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.31.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.0
-	github.com/aws/smithy-go v1.11.1
+	github.com/aws/aws-sdk-go-v2 v1.16.1
+	github.com/aws/aws-sdk-go-v2/config v1.15.2
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.2
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.33.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.2
+	github.com/aws/smithy-go v1.11.2
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
 	github.com/fsnotify/fsnotify v1.5.1
-	github.com/getsentry/sentry-go v0.12.0
+	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-co-op/gocron v1.13.0
-	github.com/golang-jwt/jwt/v4 v4.3.0
+	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/google/go-cmp v0.5.7
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/hasura/go-graphql-client v0.6.3
+	github.com/hasura/go-graphql-client v0.6.5
 	github.com/jackc/pgconn v1.11.0
 	github.com/jackc/pgtype v1.10.0
 	github.com/jackc/pgx/v4 v4.15.0
@@ -30,10 +30,10 @@ require (
 	github.com/logzio/logzio-go v1.0.3
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pierrec/lz4/v4 v4.1.14
-	github.com/shirou/gopsutil v3.21.11+incompatible
-	golang.org/x/crypto v0.0.0-20220307211146-efcb8507fb70
+	github.com/shirou/gopsutil v3.22.2+incompatible
+	golang.org/x/crypto 2c7772ba3064
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
+	golang.org/x/time 0e9765cccd65
 )
 
 require (
