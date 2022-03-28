@@ -2,7 +2,7 @@
 
 # Note: all commands here are run with the `root` user. It is not necessary to use sudo.
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html#user-data-shell-scripts
-if (( $EUID != 0 )); then
+if [ "$EUID" -ne 0 ]; then
   echo "Command should be run as root."
   exit
 fi
