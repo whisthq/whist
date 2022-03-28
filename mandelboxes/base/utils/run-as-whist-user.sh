@@ -79,7 +79,6 @@ keys_to_turn_off_repeat=(
   76  # F10
   95  # F11
   96  # F12
-  111 # PrintScrn
   78  # Scroll Lock
   110 # Pause
   106 # Insert
@@ -115,10 +114,10 @@ keys_to_turn_off_repeat=(
   37  # Ctrl Left
   115 # Logo Left (-> Option)
   64  # Alt Left (-> Command)
-  113 # Alt Right (-> Command)
-  116 # Logo Right (-> Option)
+  110 # Alt Right
   117 # Menu (-> International)
   109 # Ctrl Right
+  50 # Shift Left
 )
 for keycode in "${keys_to_turn_off_repeat[@]}"
 do
