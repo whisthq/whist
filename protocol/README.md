@@ -198,7 +198,7 @@ After doing this all this, you might have to restart your terminal or IDE, after
 
 ### Building the Protocol
 
-In order to save time recompiling dependencies repeatedly (and use CI to update them), we store some precompiled libraries in [AWS S3](https://s3.console.aws.amazon.com/s3/buckets/fractal-protocol-shared-libs?region=us-east-1&tab=objects). Downloading them will require the AWS CLI to be installed and set up on your machine. Instructions for installing and configuring awscli can be found above.
+In order to save time recompiling dependencies repeatedly (and use CI to update them), we store some precompiled libraries in [AWS S3](https://s3.console.aws.amazon.com/s3/buckets/whist-protocol-dependencies?region=us-east-1&tab=objects). Downloading them will require the AWS CLI to be installed and set up on your machine. Instructions for installing and configuring awscli can be found above.
 
 If you want to manually retrieve the binaries yourself (Not Recommended), download the files from S3 into the proper locations (see `download-binaries.sh`), and _then_ run `cmake` with the `-D DOWNLOAD_BINARIES=OFF` option. The order of these operations is important.
 

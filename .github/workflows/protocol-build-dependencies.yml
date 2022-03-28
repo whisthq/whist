@@ -57,7 +57,7 @@ jobs:
       macos-arm64-tar-name: whist-macos-arm64-libcrypto-static-lib.tar.gz
       linux-tar-name: whist-linux-libcrypto-static-lib.tar.gz
       headers-tar-name: whist-libcrypto-headers.tar.gz
-      s3-bucket-uri: s3://fractal-protocol-shared-libs
+      s3-bucket-uri: s3://whist-protocol-dependencies
       s3-bucket-region: us-east-1
 
     steps:
@@ -227,7 +227,7 @@ jobs:
       macos-arm64-tar-name: whist-macos-arm64-sentry-shared-lib.tar.gz
       linux-tar-name: whist-linux-sentry-shared-lib.tar.gz
       headers-tar-name: whist-sentry-headers.tar.gz
-      s3-bucket-uri: s3://fractal-protocol-shared-libs
+      s3-bucket-uri: s3://whist-protocol-dependencies
       s3-bucket-region: us-east-1
 
     steps:
