@@ -11,7 +11,7 @@ export const SENTRY_DSN =
   "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323"
 
 export const MAX_URL_LENGTH = 2048
-export const MAX_NEW_TAB_URLS = 100
+export const MAX_NEW_TAB_URLS = 250
 
 // Last updated: Jan 20, 2022
 export const DEFAULT_LINUX_USER_AGENT =

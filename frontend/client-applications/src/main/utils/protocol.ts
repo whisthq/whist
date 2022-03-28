@@ -12,7 +12,7 @@ import events from "events"
 import { spawn, ChildProcess } from "child_process"
 
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"
-import { sessionID, MAX_URL_LENGTH, MAX_NEW_TAB_URLS } from "@app/constants/app"
+import { sessionID } from "@app/constants/app"
 import config from "@app/config/environment"
 
 const { protocolName, protocolFolder } = config
@@ -121,13 +121,7 @@ const destroyProtocol = (childProcess: ChildProcess) => {
 }
 
 const pipeURLToProtocol = (childProcess: ChildProcess, message: string) => {
-  if (
-    message === undefined ||
-    message === "" ||
-    message.length > MAX_URL_LENGTH * MAX_NEW_TAB_URLS ||
-    !(message.startsWith("http://") || message.startsWith("https://"))
-  )
-    return
+  if (message === undefined || message === "") return
   pipeToProtocol(childProcess, `new-tab-url?${message}\n`)
 }
 
