@@ -92,9 +92,7 @@ static bool flushing_buffered_packets = 0;
 for tracking recent packets
 ----------------------------------
 */
-// last id popped to decoder
-static int last_popped_id = -1;
-// a set of recent popped id
+// a set of recent popped ids, skipped frames are considered as popped as well
 static set<int> *recent_popped_ids;
 // the max id we have ever seen
 static int max_seen_id = -1;
@@ -167,6 +165,27 @@ static bool ready_to_pop(timestamp_ms now);
  */
 static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, int device_queue_len,
                                                           timestamp_ms now);
+
+/**
+ * @brief                          maintains a set of recent popped ids
+ *
+ * @param id                       the id that is going to be insert into the set
+ *
+ */
+static void maintain_recent_popped_ids(int id)
+{
+    // how many recently popped ids we keep track
+    // no need to tune this value, just use a conservative large value
+    const int recent_popped_ids_capcity = 100;
+
+    // keep track of a set of recently poped ids, insert the id
+    recent_popped_ids->insert(id);
+    // keep the size of recent_popped_ids <= recent_popped_ids_capcity
+    while ((int)recent_popped_ids->size() > recent_popped_ids_capcity) {
+        recent_popped_ids->erase(recent_popped_ids->begin());
+    }
+
+}
 /*
 ============================
 Public Function Implementations
@@ -270,6 +289,10 @@ int push_to_audio_path(int id, unsigned char *buf, int size) {
                 break;
             }
             FATAL_ASSERT(!user_queue->empty());
+            // packets kicked out are consider as popped,
+            // so that it won't cause head-of-line locking inside
+            // anti-reordering
+            maintain_recent_popped_ids(user_queue->begin()->first);
             user_queue->erase(user_queue->begin());
         }
     }
@@ -459,10 +482,8 @@ static int detect_skip_num(int user_queue_len, int device_queue_len) {
 }
 
 static void pop_inner(unsigned char *buf, int *size) {
-    // how many recently popped ids we keep track
-    // the capcity of recent_popped_ids below
-    // no need to tune this value, just use a conservative large value
-    const int recent_popped_ids_capcity = 100;
+    // last id popped, only for debugging
+    static int last_popped_id = -1;
 
     // it's guarentteed by upper level, when pop_inner is called, there must be something inside
     // user queue to pop
@@ -470,22 +491,18 @@ static void pop_inner(unsigned char *buf, int *size) {
 
     auto it = user_queue->begin();
 
-    // log non-consecutive packets
+    // log non-consecutive packets popped
     if (last_popped_id + 1 != it->first) {
         if (verbose_log)
             fprintf(stderr, "non-consecutive packet %d!!! last_popped_id=%d\n", it->first,
                     last_popped_id);
     }
 
-    // keep track of last popped id
+    // keep track of the last popped id
     last_popped_id = it->first;
 
-    // keep track of a set of recently poped ids
-    recent_popped_ids->insert(last_popped_id);
-    // keep the size of recent_popped_ids <= recent_popped_ids_capcity
-    while ((int)recent_popped_ids->size() > recent_popped_ids_capcity) {
-        recent_popped_ids->erase(recent_popped_ids->begin());
-    }
+    // keep track of recent popped ids
+    maintain_recent_popped_ids(user_queue->begin()->first);
 
     // copy packet to output buffer
     memcpy(buf, it->second.data.c_str(), it->second.data.length());
