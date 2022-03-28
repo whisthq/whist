@@ -9,19 +9,22 @@ import { MAX_URL_LENGTH, MAX_NEW_TAB_URLS } from "@app/constants/app"
 fromTrigger(WhistTrigger.importTabs)
   .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
   .subscribe(([payload, p]: [{ urls: string[] }, ChildProcess]) => {
-    const validUrls: string[] = []
-    for (const url of payload.urls) {
-      if (validUrls.length === MAX_NEW_TAB_URLS) {
-        break
-      } else if (
+    const validUrls: string[] = payload.urls.reduce(function (
+      filtered: string[],
+      url: string
+    ) {
+      if (
         url.length <= MAX_URL_LENGTH &&
+        filtered.length < MAX_NEW_TAB_URLS &&
         (url.startsWith("http://") ||
           url.startsWith("https://") ||
           url.startsWith("ftp://"))
       ) {
-        // Pass only the valid urls to the protocol, and ensure that any `|` is encoded as `%7C`
-        validUrls.push(url.replace("|", "%7C"))
+        // Escape double quotes two times
+        filtered.push('\\"' + url + '\\"')
       }
-    }
-    pipeURLToProtocol(p, validUrls.join("|"))
+      return filtered
+    },
+    [])
+    pipeURLToProtocol(p, validUrls.join(" "))
   })

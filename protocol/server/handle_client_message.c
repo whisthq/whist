@@ -321,40 +321,20 @@ static int handle_open_urls_message(whist_server_state *state, WhistClientMessag
     }
     LOG_INFO("Received URL to open in new tab");
 
-    // Step 2: Split the URLs using the separator '|' character, and wrap the urls in double quotes
-    // (escaped twice)
-    char *wrapped_urls = (char *)safe_zalloc((MAX_URL_LENGTH + 2 * strlen("\\\"") + strlen(" ")) *
-                                             MAX_NEW_TAB_URLS * sizeof(char));
-    sprintf(wrapped_urls, "\\\"");
-    size_t index = strlen("\\\"");
-    for (size_t i = 0; i < urls_length; i++) {
-        if (received_urls[i] == '|') {
-            sprintf(wrapped_urls + index, "\\\" \\\"");
-            index += strlen("\\\" \\\"");
-        } else {
-            wrapped_urls[index] = received_urls[i];
-            index += 1;
-        }
-    }
-    sprintf(wrapped_urls + index, "\\\"");
-    // Recompute size of string containing urls to take into account the wrapping and splitting
-    urls_length = strlen(wrapped_urls);
-
-    // Step 3: Create the command to run on the Mandelbox's terminal to open the received URL in a
+    // Step 2: Create the command to run on the Mandelbox's terminal to open the received URL in a
     // new tab. To open a new tab with a given url, we can just use the terminal command: `exec
     // /usr/bin/whist-open-new-tab <insert url(s) here>`. This command needs to be run by the
     // `whist` user, so we run it through the run-as-whist-user.sh script.
     const size_t len_cmd_before_urls =
         strlen("/usr/share/whist/run-as-whist-user.sh \"exec /usr/bin/whist-open-new-tab \"");
     // The maximum possible command length is equal to the (constant) length of the part of the
-    // command that needs to go before the urls plus the length of the wrapped urls
+    // command that needs to go before the urls plus the length of the list of urls
     char *command = (char *)safe_zalloc((len_cmd_before_urls + urls_length + 1) * sizeof(char));
     sprintf(command,
             "/usr/share/whist/run-as-whist-user.sh \"exec /usr/bin/whist-open-new-tab %s\"",
-            wrapped_urls);
-    free(wrapped_urls);
+            received_urls);
 
-    // Step 4: Execute the command created in step 3 in the mandelbox, and save the
+    // Step 3: Execute the command created in step 3 in the mandelbox, and save the
     // resulting stdout in the open_urls_result string.
     char *open_urls_result;
     int ret = runcmd(command, &open_urls_result);
