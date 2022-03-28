@@ -102,6 +102,43 @@ def test_create_billing_portal_session(
     assert response.json == {"url": url}
 
 
+def test_create_price(
+    client: WhistAPITestClient,
+    make_user: Callable[[], str],
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Ensure that no new Stripe Price is created if one already exists that matches our desired amount"""
+
+    checkout_session = Object()
+    url = f"http://localhost/{os.urandom(8).hex()}"
+    user = make_user()
+
+    monkeypatch.setattr(checkout_session, "url", url)
+    monkeypatch.setattr(stripe.Subscription, "list", function(returns={"data": [{"status": None}]}))
+    monkeypatch.setattr(
+        stripe.Price, "list", function(returns={"data": [{"unit_amount": 50 * 100}]})
+    )
+    monkeypatch.setattr(
+        stripe.Price,
+        "create",
+        function(raises=Exception("Price already exists, new price should not have been created")),
+    )
+    monkeypatch.setattr(stripe.checkout.Session, "create", function(returns=checkout_session))
+    client.login(
+        user,
+        admin=False,
+        **{
+            current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]: "cus_test",
+            current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]: None,
+        },
+    )
+
+    response = client.get("/payment_portal_url")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json == {"url": url}
+
+
 def test_missing_customer_record(client, make_user, monkeypatch):  # type: ignore[no-untyped-def]
     """Ensure that the server returns a descriptive error when it can't find a customer record."""
 

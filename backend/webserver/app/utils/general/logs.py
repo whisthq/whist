@@ -1,7 +1,7 @@
 import logging
 
 
-class _ExtraHandler(logging.StreamHandler):  # type: ignore[type-arg]
+class _ExtraHandler(logging.StreamHandler):
     """
     Handles the "extra" parameter that can be passed to logging invocations. Formats any log to
     be printed as: "{function} | {label} | {message}"

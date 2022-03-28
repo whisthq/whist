@@ -36,6 +36,7 @@ def app() -> Flask:
     _app.config["JWT_SECRET_KEY"] = "secret"
     _app.config["STRIPE_CUSTOMER_ID_CLAIM"] = "https://api.fractal.co/stripe_customer_id"
     _app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"] = "https://api.fractal.co/subscription_status"
+    _app.config["MONTHLY_PRICE_IN_DOLLARS"] = 50
     _app.config["ENVIRONMENT"] = "TESTING"
 
     @_app.errorhandler(PaymentRequired)

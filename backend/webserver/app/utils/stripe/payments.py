@@ -35,7 +35,7 @@ Example usage::
 import functools
 import logging
 from http import HTTPStatus
-from typing import Any, Callable, cast, Optional, Dict, List
+from typing import Any, Callable, cast, Optional, Dict, Iterable
 from time import time
 
 import stripe
@@ -116,16 +116,12 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
             if not subscription_status in ["active", "trialing"]:
                 # Fetch the Stripe Price that matches our currently desired price, or create
                 # a new Price if no Price matches
-                desired_price = int(current_app.config["MONTHLY_PRICE_IN_DOLLARS"])
                 price_id = next(
-                    (
-                        [
-                            price["id"]
-                            for price in list_all_stripe_prices()
-                            if price["unit_amount"] == desired_price
-                        ]
+                    filter(
+                        lambda price: int(price["unit_amount"]) == get_monthly_price(),
+                        list_all_stripe_prices(),
                     ),
-                    create_price(desired_price)["id"],
+                    create_price(get_monthly_price())["id"],
                 )
 
                 # Any subscriptions that is not active or in the free trial period means that the user
@@ -179,7 +175,17 @@ def get_customer_id() -> Optional[str]:
     )
 
 
-def list_all_stripe_prices() -> List[Dict[str, any]]:
+def get_monthly_price() -> int:
+    """Retrieves the current price per month of a Whist subscription.
+
+    Returns:
+        Price (in dollars) of a monthly Whist subscription.
+    """
+
+    return int(current_app.config["MONTHLY_PRICE_IN_DOLLARS"])
+
+
+def list_all_stripe_prices() -> Iterable[Dict[str, Any]]:
     """Returns all available Stripe Prices
 
     Returns:
@@ -193,14 +199,17 @@ def list_all_stripe_prices() -> List[Dict[str, any]]:
         prices = []
 
         while should_fetch_more_results:
-            prices += stripe.Price.list().data
-            should_fetch_more_results = prices.has_more
+            price = stripe.Price.list()
+            prices += price.data
+            should_fetch_more_results = price.has_more
 
         return prices
     except stripe.error.InvalidRequestError as e:
         logger.error(e)
+        return []
     except IndexError:
         logger.warning("There are no prices active in Stripe")
+        return []
 
 
 def get_stripe_subscription_status(customer_id: str) -> Optional[str]:
@@ -244,17 +253,22 @@ def get_subscription_status() -> Optional[str]:
     )
 
 
-def create_price(amount: int, name="Whist (Monthly)", interval="month") -> Dict[str, any]:
+def create_price(
+    amount: int, name: str = "Whist (Monthly)", interval: str = "month"
+) -> Dict[str, Any]:
     """Creates a new Stripe Price with the desired monthly recurring amount
 
     Returns:
         The newly-created Stripe Price
     """
-    return stripe.Price.create(
-        unit_amount=amount * 100,
-        currency="usd",
-        recurring={"interval": interval},
-        product_data={"name": name},
+    return cast(
+        Dict[str, Any],
+        stripe.Price.create(
+            unit_amount=amount * 100,
+            currency="usd",
+            recurring={"interval": interval},
+            product_data={"name": name},
+        ),
     )
 
 
