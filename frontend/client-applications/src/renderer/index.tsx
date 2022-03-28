@@ -129,7 +129,7 @@ const RootComponent = () => {
     })
 
   const handleOnboardingSubmit = () => {
-    if (mainState.subscriptionStatus !== "active") {
+    if (!["active", "trialing"].includes(mainState.subscriptionStatus)) {
       setMainState({
         trigger: {
           name: WhistTrigger.showPaymentWindow,

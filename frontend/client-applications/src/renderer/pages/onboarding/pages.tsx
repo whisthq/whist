@@ -42,7 +42,7 @@ const Template = (props: { contents: JSX.Element; word: string }) => {
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div
         className="animate-fade-in-up opacity-0"
-        style={{ animationDelay: `${props.word.length * 40}ms` }}
+        style={{ animationDelay: `${props.word.length * 25}ms` }}
       >
         {props.contents}
       </div>
