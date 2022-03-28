@@ -116,7 +116,9 @@ def test_create_price(
     monkeypatch.setattr(checkout_session, "url", url)
     monkeypatch.setattr(stripe.Subscription, "list", function(returns={"data": [{"status": None}]}))
     monkeypatch.setattr(
-        stripe.Price, "list", function(returns={"data": [{"unit_amount": 50 * 100}]})
+        stripe.Price,
+        "list",
+        function(returns={"has_more": False, "data": [{"unit_amount": 50 * 100}]}),
     )
     monkeypatch.setattr(
         stripe.Price,
