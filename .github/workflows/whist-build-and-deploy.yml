@@ -422,18 +422,15 @@ jobs:
       # In deploys, we only build the Docker images used in production
       # Note that they will build the images they depend on automatically (i.e. base)
       - name: Build Mandelboxes
-        working-directory: mandelboxes
-        run: ./build.sh browsers/chrome browsers/brave --prod
         env:
           DOCKER_BUILDKIT: 1
+        working-directory: mandelboxes
+        run: ./build.sh browsers/chrome browsers/brave --prod
 
-      # On failure, print the logs of browsers/chrome build
-      - name: Print logs of browsers/chrome on failure
+      - name: Print logs of failed mandelbox(es)  on failure
         if: failure()
         working-directory: mandelboxes
-        run: |
-          echo "browsers/chrome build logs:"
-          cat browsers/chrome/build.log
+        run: find mandelboxes/ -name "build.log" -type f -exec cat {} +
 
       # We only deploy the browsers mandelboxes, other mandelboxes are for internal use only
       - name: Push mandelboxes
