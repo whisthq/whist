@@ -212,15 +212,18 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         hide_native_window_taskbar();
     }
 
+    // We start the window hidden to avoid glitchy-looking titlebar-content combinations while
+    // the window is loading, and to prevent glitches caused by early user interaction.
     const uint32_t window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL |
                                   SDL_WINDOW_RESIZABLE | (maximized ? SDL_WINDOW_MAXIMIZED : 0) |
-                                  (skip_taskbar ? SDL_WINDOW_SKIP_TASKBAR : 0);
+                                  (skip_taskbar ? SDL_WINDOW_SKIP_TASKBAR : 0) | SDL_WINDOW_HIDDEN;
 
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
     sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, target_output_width, target_output_height,
                                   window_flags);
+
     // temporary hook -- remove during refactor
     temp_frontend_set_window(out_frontend, sdl_window);
     if (!sdl_window) {
@@ -259,14 +262,12 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         sdl_free_png_file_rgb_surface(icon_surface);
     }
 
+    SDL_Event event;
+    // Pump the event loop until the window is actually initialized (for macOS mainly).
+    while (SDL_PollEvent(&event))
+        ;
     // Initialize the window color to the loading background color
     set_native_window_color(sdl_window, background_color);
-
-    SDL_Event cur_event;
-    while (SDL_PollEvent(&cur_event)) {
-        // spin to clear SDL event queue
-        // this effectively waits for window load on Mac
-    }
 
     // Only after the window finishes loading is it safe to initialize native options.
     init_native_window_options(sdl_window);
@@ -280,6 +281,15 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     whist_frontend_get_window_pixel_size(out_frontend, &w, &h);
     output_width = w;
     output_height = h;
+
+    // Pump the event loop until the window fully finishes loading (prevents bugs where the window
+    // is permanently unfocused).
+    while (SDL_PollEvent(&event))
+        ;
+
+    // Now that everything has been configured, we can show the window.
+    SDL_ShowWindow(sdl_window);
+
     return sdl_window;
 }
 
