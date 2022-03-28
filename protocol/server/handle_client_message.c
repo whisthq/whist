@@ -323,8 +323,8 @@ static int handle_open_urls_message(whist_server_state *state, WhistClientMessag
 
     // Step 2: Split the URLs using the separator '|' character, and wrap the urls in double quotes
     // (escaped twice)
-    char *wrapped_urls = (char *)safe_zalloc(
-        (MAX_URL_LENGTH + 2 * strlen("\\\"") + strlen(" ")) * MAX_NEW_TAB_URLS * sizeof(char));
+    char *wrapped_urls = (char *)safe_zalloc((MAX_URL_LENGTH + 2 * strlen("\\\"") + strlen(" ")) *
+                                             MAX_NEW_TAB_URLS * sizeof(char));
     sprintf(wrapped_urls, "\\\"");
     size_t index = strlen("\\\"");
     for (size_t i = 0; i < urls_length; i++) {
