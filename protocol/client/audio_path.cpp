@@ -431,6 +431,10 @@ Private Function Implementations
 static double get_timestamp_ms() { return get_timer(&g_timer) * MS_IN_SECOND; }
 
 static int detect_skip_num(int user_queue_len, int device_queue_len) {
+
+    // a flag to toggle between smooth skip and bunch skip
+    const bool smooth_skip = true;
+
     if (device_queue_len < 0) {
         // drop everything if audio device is not initilized
         return user_queue_len;
@@ -444,6 +448,9 @@ static int detect_skip_num(int user_queue_len, int device_queue_len) {
         int skip_num = total_len - target_total_queue_len;
         if (skip_num > user_queue_len) {
             skip_num = user_queue_len;
+        }
+        if(smooth_skip && skip_num>0){
+            return 1;
         }
         return skip_num;
     }
