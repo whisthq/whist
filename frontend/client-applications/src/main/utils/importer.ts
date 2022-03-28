@@ -451,7 +451,6 @@ const getDecryptedCookies = async (
 const getBookmarks = async (
   browser: InstalledBrowser
 ): Promise<string | undefined> => {
-  console.log("getting bookmarks for", browser)
   if (browser === undefined) return undefined
 
   const bookmarks = getBookmarksFromFile(browser)
