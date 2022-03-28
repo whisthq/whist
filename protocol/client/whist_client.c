@@ -261,7 +261,7 @@ static void initiate_file_upload(void) {
     upload_initiated = false;
 }
 
-static void send_new_tab_urls_if_needed(void) {
+static void send_new_tab_urls_if_needed(WhistFrontend* frontend) {
     // Send any new URL to the server
     if (new_tab_urls) {
         LOG_INFO("Sending message to open URL in new tab %s", new_tab_urls);
@@ -436,7 +436,7 @@ int whist_client_main(int argc, const char* argv[]) {
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
             // This should be called BEFORE the call to read_piped_arguments,
             // otherwise one URL may get lost.
-            send_new_tab_urls_if_needed();
+            send_new_tab_urls_if_needed(frontend);
 
             // Update any pending SDL tasks
             sdl_update_pending_tasks(frontend);
