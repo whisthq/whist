@@ -116,15 +116,12 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
             if not subscription_status in ["active", "trialing"]:
                 # Fetch the Stripe Price that matches our currently desired price, or create
                 # a new Price if no Price matches
-                CENTS_IN_DOLLAR = 100
-
                 price_id = next(
                     filter(
-                        lambda price: int(price["unit_amount"])
-                        == get_monthly_price_in_dollars() * CENTS_IN_DOLLAR,
+                        lambda price: int(price["unit_amount"]) == get_monthly_price_in_cents(),
                         list_all_stripe_prices(),
                     ),
-                    create_price(get_monthly_price_in_dollars())["id"],
+                    create_price(get_monthly_price_in_cents())["id"],
                 )
 
                 # Any subscriptions that is not active or in the free trial period means that the user
@@ -178,14 +175,14 @@ def get_customer_id() -> Optional[str]:
     )
 
 
-def get_monthly_price_in_dollars() -> int:
+def get_monthly_price_in_cents() -> int:
     """Retrieves the current price per month of a Whist subscription.
 
     Returns:
-        Price (in dollars) of a monthly Whist subscription.
+        Price (in cents) of a monthly Whist subscription.
     """
 
-    return int(current_app.config["MONTHLY_PRICE_IN_DOLLARS"])
+    return int(current_app.config["MONTHLY_PRICE_IN_CENTS"])
 
 
 def list_all_stripe_prices() -> Iterable[Dict[str, Any]]:
@@ -259,7 +256,7 @@ def get_subscription_status() -> Optional[str]:
 
 
 def create_price(
-    amount: int, name: str = "Whist (Monthly)", interval: str = "month"
+    cents: int, name: str = "Whist (Monthly)", interval: str = "month"
 ) -> Dict[str, Any]:
     """Creates a new Stripe Price with the desired monthly recurring amount
 
@@ -269,7 +266,7 @@ def create_price(
     return cast(
         Dict[str, Any],
         stripe.Price.create(
-            unit_amount=amount * 100,
+            unit_amount=cents,
             currency="usd",
             recurring={"interval": interval},
             product_data={"name": name},

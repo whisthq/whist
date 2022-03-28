@@ -104,7 +104,7 @@ def test_create_billing_portal_session(
     assert response.json == {"url": url}
 
 
-def test_create_price(
+def test_set_price_correctly(
     client: WhistAPITestClient,
     make_user: Callable[[], str],
     monkeypatch: MonkeyPatch,
@@ -115,6 +115,8 @@ def test_create_price(
     url = f"http://localhost/{os.urandom(8).hex()}"
     user = make_user()
 
+    whist_subscription_price_in_cents = 50 * 100
+
     monkeypatch.setattr(checkout_session, "url", url)
     monkeypatch.setattr(stripe.Subscription, "list", function(returns={"data": [{"status": None}]}))
     monkeypatch.setattr(
@@ -123,14 +125,20 @@ def test_create_price(
         function(
             returns={
                 "has_more": False,
-                "data": [{"id": DUMMY_STRIPE_PRICE_ID, "unit_amount": 50 * 100}],
+                "data": [
+                    {"id": DUMMY_STRIPE_PRICE_ID, "unit_amount": whist_subscription_price_in_cents}
+                ],
             }
         ),
     )
     monkeypatch.setattr(
         stripe.Price,
         "create",
-        function(raises=Exception("Price already exists, new price should not have been created")),
+        function(raises=Exception(f"Price already exists, new price should not have been created")),
+    )
+    monkeypatch.setattr(
+        "app.utils.stripe.payments.get_monthly_price_in_cents",
+        function(returns=whist_subscription_price_in_cents),
     )
     monkeypatch.setattr(stripe.checkout.Session, "create", function(returns=checkout_session))
     client.login(

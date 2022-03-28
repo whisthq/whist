@@ -213,7 +213,7 @@ class DeploymentConfig:
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
 
     #: str: How much we want Whist to cost per month
-    MONTHLY_PRICE_IN_DOLLARS = property(getter("MONTHLY_PRICE_IN_DOLLARS"))
+    MONTHLY_PRICE_IN_CENTS = property(getter("MONTHLY_PRICE_IN_CENTS"))
 
     #: str: The name of the access token claim containing the user's stripe subscription status.
     #: See https://stripe.com/docs/api/subscriptions/object#subscription_object-status for a list
