@@ -15,7 +15,9 @@ fromTrigger(WhistTrigger.importTabs)
         break
       } else if (
         url.length <= MAX_URL_LENGTH &&
-        (url.startsWith("http://") || url.startsWith("https://"))
+        (url.startsWith("http://") ||
+          url.startsWith("https://") ||
+          url.startsWith("ftp://"))
       ) {
         // Pass only the valid urls to the protocol
         validUrls.push(url)

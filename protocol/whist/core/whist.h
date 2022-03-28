@@ -192,7 +192,7 @@ Defines
 // Most browsers allow URLs of length up to 2048 characters
 #define MAX_URL_LENGTH 2048
 // Arbitrary max number of tabs to import from other browsers
-#define MAX_NEW_TAB_URLS 250
+#define MAX_NEW_TAB_URLS 1000
 
 #define AUDIO_FREQUENCY 48000
 
