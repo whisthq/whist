@@ -375,24 +375,6 @@ deployment_setup_steps() {
   # uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
   # It gets enabled in ec2_userdata.sh
 
-  # Here we pre-pull the desired mandelboxes onto the AMI to speed up mandelbox startup.
-  ghcr_uri=ghcr.io
-  echo "$GH_PAT" | sudo docker login --username "$GH_USERNAME" --password-stdin "$ghcr_uri"
-
-  # Pull the Chrome mandelbox
-  pull_image_base_chrome="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/chrome"
-  pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
-  echo "pulling image: $pull_image_chrome"
-  sudo docker pull "$pull_image_chrome"
-  sudo docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
-
-  # Pull the Brave mandelbox
-  pull_image_base_brave="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/brave"
-  pull_image_brave="$pull_image_base_brave:$GIT_HASH"
-  echo "pulling image: $pull_image_brave"
-  sudo docker pull "$pull_image_brave"
-  sudo docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
-
   # Replace the dummy token in Filebeat config with the correct token.
   # This will be done in GHA when the AMI for {dev,staging,prod} is being built through CI
   sudo sed -i "s/DUMMY_TOKEN_REPLACE_ME/$LOGZ_TOKEN/g" /etc/filebeat/filebeat.yml
