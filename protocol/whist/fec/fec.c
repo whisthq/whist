@@ -4,9 +4,6 @@
 #include "whist/core/whist.h"
 #include "whist/fec/rs_wrapper.h"
 
-// temp solution to pass the CPU check out
-#include "cm256/gf256.h"
-
 // lugi's original library, Vandermonde Maxtrix, O(N^3+ N*X*L) decode
 // N is number of original packets, X is num of lost packets, L is max packet length
 
@@ -94,15 +91,7 @@ Public Function Implementations
 ============================
 */
 
-int init_fec(void) {
-    int r = avx2_check();
-    if (r != 0) {
-        LOG_ERROR("Platform is x86/x64 but AVX2 is not supported!");
-        return WHIST_ERROR_AVX2_NOT_SUPPORTED;
-    }
-    init_rs_wrapper();
-    return 0;
-}
+int init_fec(void) { return init_rs_wrapper(); }
 
 // num_fec_packets / (num_fec_packets + num_indices) = context->fec_packet_ratio
 // a / (a + b) = c

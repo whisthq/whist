@@ -209,14 +209,19 @@ Public Function Implementations
 ============================
 */
 
-void init_rs_wrapper(void) {
+int init_rs_wrapper(void) {
     static int initialized = 0;
     if (initialized == 0) {
         lugi_rs_extra_init();
+        int r = avx2_check();
+        if (r != 0) {
+            LOG_ERROR("Platform is x86/x64 but AVX2 is not supported!");
+            return WHIST_FEC_ERROR_AVX2_NOT_SUPPORTED;
+        }
         FATAL_ASSERT(cm256_init() == 0);
-        // TODO: produce a warning log if cm256 fails to use AVX2
         initialized = 1;
     }
+    return 0;
 }
 
 RSWrapper *rs_wrapper_create(int num_real_buffers, int num_total_buffers) {

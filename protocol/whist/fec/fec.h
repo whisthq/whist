@@ -6,7 +6,7 @@
  * @brief This file contains the FEC API Interface
  * @note See protocol_test.cpp for usage
  */
-
+#include "rs_common.h"
 /*
 ============================
 Defines
@@ -19,9 +19,6 @@ Defines
 typedef struct FECEncoder FECEncoder;
 typedef struct FECDecoder FECDecoder;
 
-// temp workaround of for cm256 lib's CPU dispatching
-// TODO: fix cm256
-#define WHIST_ERROR_AVX2_NOT_SUPPORTED -100
 /*
 ============================
 Public Functions

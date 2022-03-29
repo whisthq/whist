@@ -27,8 +27,10 @@ Public Functions
  *
  * @note                           this fuction calls the initialization of underlying rs lib,
  *                                 no need and shouldn't call the underlying functions again
+ *
+ * @returns                        zero on success
  */
-void init_rs_wrapper(void);
+int init_rs_wrapper(void);
 
 /*
 the below 4 functions are wrappers of the original rs_lib, with a very similiar interface
