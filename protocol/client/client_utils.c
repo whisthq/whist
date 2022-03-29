@@ -55,8 +55,7 @@ extern unsigned short port_mappings[USHRT_MAX + 1];
 
 static bool using_piped_arguments;
 
-#define INCOMING_MAXLEN 127
-
+#define INCOMING_MAXLEN (MAX_URL_LENGTH * MAX_NEW_TAB_URLS)
 /*
 ============================
 Command-line options

@@ -76,7 +76,9 @@ int runcmd(const char *cmdline, char **response) {
 
         Arguments:
             cmdline (const char*): String of the system command to run
-            response (char**): Terminal output from the cmdline
+            response (char**):  Pointer to a buffer that will be filled with the terminal output
+                                from the cmdline on two conditions: the passed pointer is non-NULL
+                                and reading the piped output from the command succeeds.
 
         Returns:
             (int): 0 or value of pipe if success, else -1
@@ -322,7 +324,7 @@ int get_wcmsg_size(WhistClientMessage *wcmsg) {
     } else if (wcmsg->type == CMESSAGE_FILE_DATA) {
         return (int)(sizeof(*wcmsg) + wcmsg->file.size);
     } else if (wcmsg->type == MESSAGE_OPEN_URL) {
-        return (int)(sizeof(*wcmsg) + strlen((const char *)&wcmsg->url_to_open) + 1);
+        return (int)(sizeof(*wcmsg) + strlen((const char *)&wcmsg->urls_to_open) + 1);
     } else {
         // Send small wcmsg's when we don't need unnecessarily large ones
         // TODO : Remove this hardcoded value.

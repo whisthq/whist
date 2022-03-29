@@ -189,8 +189,10 @@ Defines
 // this maxlen is the determined Whist environment max length (the upper bound on all flags passed
 // into the protocol)
 #define WHIST_ARGS_MAXLEN 255
-
+// Most browsers allow URLs of length up to 2048 characters
 #define MAX_URL_LENGTH 2048
+// Arbitrary max number of tabs to import from other browsers
+#define MAX_NEW_TAB_URLS 1000
 
 #define AUDIO_FREQUENCY 48000
 
@@ -722,7 +724,7 @@ typedef struct WhistClientMessage {
         ClipboardData clipboard;     // CMESSAGE_CLIPBOARD
         FileMetadata file_metadata;  // CMESSAGE_FILE_METADATA
         FileData file;               // CMESSAGE_FILE_DATA
-        char url_to_open[0];         // MESSAGE_OPEN_URL
+        char urls_to_open[0];        // MESSAGE_OPEN_URL
     };
 } WhistClientMessage;
 
