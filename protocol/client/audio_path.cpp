@@ -33,7 +33,7 @@ typedef double timestamp_ms;  // NOLINT
 const int audio_packets_interval_ms = 10;
 
 // how many frames/packets allowed to queue inside the audio device queue
-// TODO: make this adaptive to reduce latency for good environment and reduce pop for though
+// TODO: make this adaptive to reduce latency for good environment and reduce pop for tough
 // environment
 const int max_num_inside_device_queue = 8;
 // how many frames/packets allowed to queue inside the user queue (when device queue is full)
@@ -53,7 +53,6 @@ struct PacketInfo {
     PacketInfo(unsigned char *buf, int size, timestamp_ms &t) : data(buf, buf + size) {
         receive_time = t;
     }
-
     PacketInfo(PacketInfo &&other) : data(move(other.data)) { receive_time = other.receive_time; }
 };
 
@@ -325,9 +324,11 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
 
     // for robustness, if audio device is for some reason not ready drop all packets
     if (device_queue_bytes < 0) {
+        // clear all data and states
         user_queue->clear();
         buffered_for_flush_cnt = 0;
         flushing_buffered_packets = false;
+        device_queue_empty_log_printed = false;
         pending_op = NO_OP;
         whist_unlock_mutex(g_mutex);
         return -1;
@@ -343,7 +344,9 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
         pop_inner(buf, size);
         buffered_for_flush_cnt--;
         if (buffered_for_flush_cnt == 0) {
+            // enter next life cycle of "normal" state
             flushing_buffered_packets = false;
+            device_queue_empty_log_printed = false;
             pending_op = NO_OP;
         }
         whist_unlock_mutex(g_mutex);
@@ -354,7 +357,6 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
     // the best thing to do is to stop playing and start to queue packets imediately
     // we start to queue packet for anti-jitter and flush the queued packet activately later
     if (device_queue_bytes == 0) {
-
         if (!device_queue_empty_log_printed) {
             LOG_INFO(
                 "audio device queue becomes empty, begin buffering frames. user_queue_len=%d\n",
@@ -366,16 +368,13 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
             buffered_for_flush_cnt = (int)user_queue->size();
             whist_unlock_mutex(g_mutex);  // wait for more packets
             return -2;
-        } else  // we have queued enough
+        } else  // we have buffered enough
         {
             LOG_INFO("bufferred enough frames for audio, buffered %d.\n", (int)user_queue->size());
 
             // indicdate the start of flushing
             buffered_for_flush_cnt = max_num_inside_device_queue;
             flushing_buffered_packets = true;
-
-            // enter next logging cycle
-            device_queue_empty_log_printed = false;
 
             // robustness check
             FATAL_ASSERT(max_num_inside_device_queue > 1);
@@ -388,6 +387,8 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
             return 0;
         }
     } else {  // otherwise the audio path is in a normal state
+
+        FATAL_ASSERT(buffered_for_flush_cnt == 0);
 
         // if there is no operation pending
         if(pending_op == NO_OP) {
@@ -577,12 +578,9 @@ static ManangeOperation decide_queue_len_manage_operation(int user_queue_len, in
     // guarenteed by upper level logic
     FATAL_ASSERT(device_queue_len > 0);
 
-    // when we are buffering packet or flushing the buffered packets
-    // disable queue len management
-    if (buffered_for_flush_cnt > 0) {
-        current_sample_cnt = 0;
-        return NO_OP;
-    }
+    // when calling this function, buffered_for_flush_cnt should always be 0,
+    // guarenteed by upper level logic
+    FATAL_ASSERT(buffered_for_flush_cnt ==0 );
 
     // the total len of queue
     int total_len = user_queue_len + device_queue_len;
