@@ -6,7 +6,7 @@ import Landing from "@app/components/templates/landing"
 import Payment from "@app/components/icons/payment"
 
 const Importer = (props: {
-  browsers: string[] | undefined
+  browsers: string[]
   onSubmit: (browser: string | undefined) => void
   allowSkip: boolean
   mode: string
@@ -54,17 +54,26 @@ const Importer = (props: {
         </div>
         <div className="mt-8 max-w-sm m-auto">
           <Dropdown
-            options={props.browsers ?? []}
+            options={
+              props.browsers.length === 0
+                ? ["No supported browsers found :("]
+                : props.browsers
+            }
             onSubmit={
-              props.browsers === undefined || props.browsers.length === 0
-                ? () => onSubmit("")
+              props.browsers.length === 0
+                ? undefined
                 : (value) => onSubmit(value)
             }
             submitButton={
               <input
                 type="submit"
                 value="Continue"
-                className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light rounded cursor-pointer py-4 font-bold"
+                className={classNames(
+                  "mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light rounded py-4 font-bold",
+                  props.browsers.length === 0
+                    ? "bg-opacity-50"
+                    : "cursor-pointer"
+                )}
               />
             }
           />

@@ -95,8 +95,6 @@ untilUpdateAvailable(
 ).subscribe((args: { import: boolean; connected: boolean }) => {
   if (!args.import) networkAnalyze()
 
-  console.log("PROTOCOL CONNECTION IS", args.connected)
-
   args.connected ? createImportLoadingWindow() : createLaunchLoadingWindow()
 
   destroyElectronWindow(WindowHashPayment)
