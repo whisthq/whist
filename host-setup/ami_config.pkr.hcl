@@ -43,6 +43,11 @@ variable "git_branch" {
   default = ""
 }
 
+variable "git_hash" {
+  type    = string
+  default = ""
+}
+
 variable "pr_number" {
   type    = string
   default = ""
