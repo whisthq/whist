@@ -29,18 +29,19 @@ if [ "$EPHEMERAL_DEVICE_PATH" != "null" ]
 then
   echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
 
-  mkfs -t ext4 "$EPHEMERAL_DEVICE_PATH"
+  # We enable case-insensitivity (needed for certain Chrome themes)
+  mkfs -O casefold -t ext4 "$EPHEMERAL_DEVICE_PATH"
   mkdir -p "$EPHEMERAL_FS_PATH"
   mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
   echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
 
-  # Stop docker and copy the data directory to the ephemeral storage
+  # Stop Docker and copy the data directory to the ephemeral storage
   systemctl stop docker
   mv /var/lib/docker "$EPHEMERAL_FS_PATH"
   echo "Moved /var/lib/docker to ephemeral volume"
 
   # Modify configuration to use the new data directory and persist in daemon config file
-  # and start docker again. Set a higher concurrent download count to speed up the pull.
+  # and start Docker again. Set a higher concurrent download count to speed up the pull.
   jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
   jq '. + {"max-concurrent-downloads": '"$MAX_CONCURRENT_DOWNLOADS"'}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
 
