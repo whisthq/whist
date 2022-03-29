@@ -338,7 +338,7 @@ local_development_steps () {
 # `deployment_setup_steps` contains the commands that are specific to setting
 # up an environment for deploys (i.e. building an AMI).
 #
-# Args: GH_USERNAME, GH_PAT, GIT_BRANCH, GIT_HASH, LOGZ_TOKEN
+# Args: GIT_BRANCH, LOGZ_TOKEN
 deployment_setup_steps() {
   cd "$DIR"
 
