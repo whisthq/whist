@@ -177,7 +177,7 @@ const RootComponent = () => {
   if (show === WindowHashImport)
     return (
       <Importer
-        browsers={mainState.browsers}
+        browsers={mainState.browsers ?? []}
         onSubmit={(browser: string | undefined) =>
           handleImporterSubmit(browser)
         }
@@ -188,7 +188,7 @@ const RootComponent = () => {
   if (show === WindowHashImportOnboarding)
     return (
       <Importer
-        browsers={mainState.browsers}
+        browsers={mainState.browsers ?? []}
         onSubmit={(browser: string | undefined) =>
           handleImporterSubmit(browser)
         }

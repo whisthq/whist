@@ -5,7 +5,7 @@ const Dropdown = (props: {
   onSubmit: (value: string) => void
   submitButton: JSX.Element
 }) => {
-  const [value, setValue] = useState(props.options?.[0] ?? undefined)
+  const [value, setValue] = useState(props.options?.[0])
 
   const onSubmit = (evt: any) => {
     props.onSubmit(value)
