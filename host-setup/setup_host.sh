@@ -338,16 +338,13 @@ local_development_steps () {
 # `deployment_setup_steps` contains the commands that are specific to setting
 # up an environment for deploys (i.e. building an AMI).
 #
-# Args: GH_USERNAME, GH_PAT, GIT_BRANCH, GIT_HASH, LOGZ_TOKEN
+# Args: GIT_BRANCH, LOGZ_TOKEN
 deployment_setup_steps() {
   cd "$DIR"
 
   # Parse input variables, these NEED to be set.
-  GH_USERNAME=${1}
-  GH_PAT=${2}
-  GIT_BRANCH=${3}
-  GIT_HASH=${4}
-  LOGZ_TOKEN=${5}
+  GIT_BRANCH=${1}
+  LOGZ_TOKEN=${2}
 
   # Set IP tables for routing networking from host to mandelboxes
   idempotent_backup "/etc/sysctl.conf" "sudo"
@@ -374,24 +371,6 @@ deployment_setup_steps() {
   # The Host-Service gets built in the `whist-build-and-deploy.yml` workflow and
   # uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
   # It gets enabled in ec2_userdata.sh
-
-  # Here we pre-pull the desired mandelboxes onto the AMI to speed up mandelbox startup.
-  ghcr_uri=ghcr.io
-  echo "$GH_PAT" | sudo docker login --username "$GH_USERNAME" --password-stdin "$ghcr_uri"
-
-  # Pull the Chrome mandelbox
-  pull_image_base_chrome="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/chrome"
-  pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
-  echo "pulling image: $pull_image_chrome"
-  sudo docker pull "$pull_image_chrome"
-  sudo docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
-
-  # Pull the Brave mandelbox
-  pull_image_base_brave="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/brave"
-  pull_image_brave="$pull_image_base_brave:$GIT_HASH"
-  echo "pulling image: $pull_image_brave"
-  sudo docker pull "$pull_image_brave"
-  sudo docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
 
   # Replace the dummy token in Filebeat config with the correct token.
   # This will be done in GHA when the AMI for {dev,staging,prod} is being built through CI

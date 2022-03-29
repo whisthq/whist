@@ -84,8 +84,6 @@ jobs:
           # GHCR to be able to test AMIs without needing to build and deploy new mandelboxes
 
           data = {}
-          data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
-          data["github_username"] = "${{ secrets.GHA_USERNAME }}"
           data["git_branch"] = "dev"
           data["git_hash"] = "88c656033c927e10337cf1c00bb0e73359929ecd"
           data["pr_number"] = "${{ github.event.number }}" # Used to identify the Packer test instance we create
