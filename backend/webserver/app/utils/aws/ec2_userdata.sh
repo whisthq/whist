@@ -10,6 +10,32 @@ fi
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+# Authenticate to ghcr.io and pull Chrome and Brave images.
+pull_docker_images() {
+  USERDATA_ENV=/usr/share/whist/app_env.env
+
+  # Populate env vars
+  eval "$(cat $USERDATA_ENV)"
+
+  # Login wit docker
+  echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
+
+  # Pull Docker images for Chrome and Brave directly to the ephemeral volume
+  pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/chrome"
+  pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
+
+  pull_image_base_brave="ghcr.io/whisthq/$GIT_BRANCH/browsers/brave"
+  pull_image_brave="$pull_image_base_brave:$GIT_HASH"
+
+  docker pull "$pull_image_chrome"
+  docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
+
+  docker pull "$pull_image_brave"
+  docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
+
+  echo "Finished pulling images"
+}
+
 echo "Whist EC2 userdata started"
 
 cd /home/ubuntu
@@ -18,7 +44,6 @@ cd /home/ubuntu
 # our instance, if there is some.
 EPHEMERAL_DEVICE_PATH=$(nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == "Amazon EC2 NVMe Instance Storage")) | max_by(.PhysicalSize) | .DevicePath')
 EPHEMERAL_FS_PATH=/ephemeral
-USERDATA_ENV=/usr/share/whist/app_env.env
 MAX_CONCURRENT_DOWNLOADS=8
 
 # We use ephemeral storage if it exists on our host instances to avoid needing to warm up the filesystem,
@@ -45,32 +70,13 @@ then
   jq '. + {"max-concurrent-downloads": '"$MAX_CONCURRENT_DOWNLOADS"'}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
 
   systemctl start docker
-
-  # Populate env vars
-  eval "$(cat $USERDATA_ENV)"
-
-  # Login wit docker
-  echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
-
-  # Pull Docker images for Chrome and Brave directly to the ephemeral volume
-  pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/chrome"
-  pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
-
-  pull_image_base_brave="ghcr.io/whisthq/$GIT_BRANCH/browsers/brave"
-  pull_image_brave="$pull_image_base_brave:$GIT_HASH"
-
-  docker pull "$pull_image_chrome"
-  docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
-
-  docker pull "$pull_image_brave"
-  docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
-
-  echo "Finished pulling images"
+  pull_docker_images
 else
   echo "No ephemeral device path found. Warming up EBS volume with fio."
   # Warm Up EBS Volume
   # For more information, see: https://github.com/whisthq/whist/pull/5333
   fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
+  pull_docker_images
 fi
 
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
