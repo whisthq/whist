@@ -2,6 +2,7 @@
 #include <SDL2/SDL_thread.h>
 
 #include <whist/core/whist.h>
+#include "cm256/gf256.h"
 #include "cm256/cm256.h"
 #include "rs_common.h"
 #include "lugi_rs_extra.h"

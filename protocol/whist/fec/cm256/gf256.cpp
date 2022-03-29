@@ -1572,3 +1572,17 @@ extern "C" void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy
         break;
     }
 }
+
+// WHIST_CHANGE: ADD
+extern "C" int avx2_check(void)
+{
+#if defined(GF256_TRY_AVX2)
+    unsigned int cpu_info[4];
+    _cpuid(cpu_info, 7);
+    if ((cpu_info[1] & CPUID_EBX_AVX2) == 0)
+    {
+        return -1;
+    }
+#endif // GF256_TRY_AVX2
+    return 0;
+}

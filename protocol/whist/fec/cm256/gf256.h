@@ -142,7 +142,7 @@ extern void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy, in
 #endif // _MSC_VER
 
 /// The context object stores tables required to perform library calculations
-struct gf256_ctx
+typedef struct
 {
     /// We require memory to be aligned since the SIMD instructions benefit from
     /// or require aligned accesses to the table data.
@@ -171,7 +171,7 @@ struct gf256_ctx
 
     /// Polynomial used
     unsigned Polynomial;
-};
+} gf256_ctx;
 
 #ifdef _MSC_VER
     #pragma warning(pop)
@@ -281,6 +281,9 @@ static GF256_FORCE_INLINE void gf256_div_mem(void * vz,
 
 //------------------------------------------------------------------------------
 // Misc Operations
+
+// WHIST_CHANGE: ADD
+extern int avx2_check(void);
 
 #ifdef __cplusplus
 }

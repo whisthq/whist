@@ -29,9 +29,7 @@
 #ifndef CM256_H
 #define CM256_H
 
-//WHIST_CHANGE: remove
-//#include "gf256.h"
-
+#include "gf256.h"
 #include <assert.h>
 
 // Library version

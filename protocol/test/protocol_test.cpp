@@ -1614,7 +1614,9 @@ TEST_F(ProtocolTest, FECTest) {
     std::vector<int> more_remaining_indices = {7, 6};  // makes a sufficient subset with above
 
     // Initialize FEC
-    init_fec();
+    if (init_fec() == WHIST_ERROR_AVX2_NOT_SUPPORTED) {
+        return;
+    }
 
     // Initialize a buffer that's NUM_ORIGINAL_PACKETS packets large
     char original_buffer[BUFFER_SIZE] = {0};
@@ -1682,7 +1684,9 @@ TEST_F(ProtocolTest, FECTest2) {
     WhistTimer timer;
     WhistTimer timer2;
     const int verbose_print = 0;
-    init_fec();
+    if (init_fec() == WHIST_ERROR_AVX2_NOT_SUPPORTED) {
+        return;
+    }
 
     // better random generator than rand()
     std::random_device rd;

@@ -19,6 +19,9 @@ Defines
 typedef struct FECEncoder FECEncoder;
 typedef struct FECDecoder FECDecoder;
 
+// temp workaround of for cm256 lib's CPU dispatching
+// TODO: fix cm256
+#define WHIST_ERROR_AVX2_NOT_SUPPORTED -100
 /*
 ============================
 Public Functions
@@ -28,8 +31,9 @@ Public Functions
 /**
  * @brief                          A global initialization function that should
  *                                 be called before calling anything else in fec.h
+ * @returns                        zero on success
  */
-void init_fec(void);
+int init_fec(void);
 
 /**
  * @brief                          Converts an fec packet ratio,
