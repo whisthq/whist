@@ -492,6 +492,14 @@ jobs:
           echo 'USE_PROD_LOGGING=true' >> app_env.env
           cat app_env.env
 
+      - name: Set Github account, PAT and commit hash (File gets read by userdata script)
+        working-directory: host-setup
+        run: |
+          echo 'GH_USERNAME=${{ secrets.GHA_USERNAME }}' >> app_env.env
+          echo 'GH_PAT=${{ secrets.GHCR_PACKAGES_READ_ONLY_PAT }}' >> app_env.env
+          echo 'GIT_BRANCH=${{ needs.whist-publish-build-config.outputs.branch }}' >> app_env.env
+          echo 'GIT_HASH=${{ github.sha }}' >> app_env.env
+
       # This spins up an AWS EC2 instance to create the AMI, and then deletes it
       # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
       - name: Generate Packer Configuration, Create New AMI, Update Region, and Update Appropriate Database

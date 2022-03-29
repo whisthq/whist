@@ -29,6 +29,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -606,6 +607,26 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 // Create the directory used to store the mandelbox resource allocations
 // (e.g. TTYs) on disk
 func initializeFilesystem(globalCancel context.CancelFunc) {
+	// Check if the instance has ephemeral storage. If it does, set the WhistDir path to the
+	// ephemeral volume, which should already be mounted by the userdata script. We use the
+	// command below to check if the instance has an ephemeral device present.
+	// See: https://stackoverflow.com/questions/10781516/how-to-pipe-several-commands-in-go
+	ephemeralDeviceCmd := "nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == \"Amazon EC2 NVMe Instance Storage\")) | max_by(.PhysicalSize) | .DevicePath'"
+	out, err := exec.Command("bash", "-c", ephemeralDeviceCmd).CombinedOutput()
+	if err != nil {
+		logger.Errorf("Error while getting ephemeral device path, not using ephemeral storage.")
+	}
+
+	ephemeralDevicePath := string(out)
+
+	// We check if the command exited successfully, and if the ephemeral device exists.
+	// The string will contain "bash" if something went wrong. Also take into account
+	// if the WhistDir already contains the ephemeral path.
+	if ephemeralDevicePath != "" && !strings.Contains(ephemeralDevicePath, "bash") &&
+		ephemeralDevicePath != "null" && !strings.Contains(utils.WhistDir, utils.WhistEphemeralFSPath) {
+		utils.WhistDir = path.Join(utils.WhistEphemeralFSPath, utils.WhistDir)
+	}
+
 	// check if "/whist" already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid. The host-service shutting down
 	// from this panic will clean up the directory and the next run will work properly.
@@ -620,7 +641,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// Create the whist directory and make it non-root user owned so that
 	// non-root users in mandelboxes can access files within (especially user
 	// configs).
-	err := os.MkdirAll(utils.WhistDir, 0777)
+	err = os.MkdirAll(utils.WhistDir, 0777)
 	if err != nil {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistDir, err)
 	}

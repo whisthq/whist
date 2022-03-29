@@ -5,10 +5,24 @@ import "github.com/google/uuid"
 // This block contains some constants for directories we use in the host
 // service. They're used in a lot of packages, so we put them in the least
 // common denominator --- this package.
+
+// Path to the "/whist" directory. Set as a variable instead of a constant
+// because its value might change if we are using ephemeral storage.
+var (
+	WhistDir string = "/whist/"
+	TempDir  string = WhistDir + "temp/"
+)
+
 const (
-	WhistDir        string = "/whist/"
-	TempDir         string = WhistDir + "temp/"
-	WhistPrivateDir string = "/whist/"
+	// WhistPrivateDir gets its own root path so that we avoid leaking our TLS
+	// certificates to users even if they escape container access and can read
+	// the entire `/whist/` directory.
+	WhistPrivateDir string = "/whistprivate/"
+
+	// WhistEphemeralFSPath is the path where the ephemeral storage device will
+	// be mounted if it exists. If it does, all whist directories will be created
+	// on this path.
+	WhistEphemeralFSPath = "/ephemeral/"
 )
 
 // Note: We use these values as placeholder UUIDs because they are obvious and immediate
