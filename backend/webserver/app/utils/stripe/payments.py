@@ -121,7 +121,11 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
                         lambda price: int(price["unit_amount"]) == get_monthly_price_in_cents(),
                         list_all_stripe_prices(),
                     ),
-                    create_price(get_monthly_price_in_cents())["id"],
+                    None,
+                )
+
+                price_id = (
+                    price_id if price_id else create_price(get_monthly_price_in_cents())["id"]
                 )
 
                 # Any subscriptions that is not active or in the free trial period means that the user
