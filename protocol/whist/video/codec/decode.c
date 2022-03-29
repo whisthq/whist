@@ -38,15 +38,6 @@ static WhistStatus try_setup_video_decoder(VideoDecoder* decoder);
 static WhistStatus try_next_decoder(VideoDecoder* decoder);
 static void destroy_video_decoder_members(VideoDecoder* decoder);
 
-#define SHOW_DECODER_LOGS false
-
-static void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
-    UNUSED(t);
-    UNUSED(t2);
-    LOG_INFO("Error found");
-    vprintf(fmt, vargs);
-}
-
 /*
 ============================
 Private Function Implementations
@@ -306,11 +297,6 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
         Returns:
             (VideoDecoder*): decoder with the specified parameters, or NULL on failure.
     */
-    if (SHOW_DECODER_LOGS) {
-        // av_log_set_level( AV_LOG_ERROR );
-        av_log_set_callback(swap_decoder);
-    }
-
     VideoDecoder* decoder = (VideoDecoder*)safe_malloc(sizeof(VideoDecoder));
     memset(decoder, 0, sizeof(VideoDecoder));
 

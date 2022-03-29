@@ -336,6 +336,11 @@ static bool do_not_catch_segfaults;
 COMMAND_LINE_BOOL_OPTION(do_not_catch_segfaults, 'D', "developer-mode",
                          "Run the server in developer mode (don't catch segfaults).")
 
+static void ffmpeg_log_callback(void* av_class, int av_level, const char* fmt, va_list vl);
+static int ffmpeg_log_level = AV_LOG_WARNING;
+COMMAND_LINE_INT_OPTION(ffmpeg_log_level, 0, "ffmpeg-log", AV_LOG_QUIET, AV_LOG_TRACE,
+                        "Include FFmpeg log output of the given level in logs.")
+
 void whist_init_logger(void) {
     if (!do_not_catch_segfaults) init_backtrace_handler();
 
@@ -355,6 +360,8 @@ void whist_init_logger(void) {
 
     // Create the logger thread to handle log messages.
     logger_thread = whist_create_thread(&logger_thread_function, "Logger Thread", NULL);
+
+    av_log_set_callback(ffmpeg_log_callback);
 
     LOG_INFO("Logging initialized!");
 }
@@ -534,6 +541,39 @@ void whist_log_printf_rate_limited(LogRateLimiter* rate_limiter, unsigned int le
                          "   (%u messages suppressed since %f seconds ago.)", suppressions,
                          seconds_since_start);
     }
+}
+
+static void ffmpeg_log_callback(void* class, int av_level, const char* fmt, va_list vl) {
+    if (av_level > ffmpeg_log_level) {
+        return;
+    }
+
+    // Map the AV_LOG_* level to our log levels.
+    unsigned int level;
+    if (av_level <= AV_LOG_WARNING) {
+        level = WARNING_LEVEL;
+    } else if (av_level <= AV_LOG_INFO) {
+        level = INFO_LEVEL;
+    } else {
+        level = DEBUG_LEVEL;
+    }
+    // We don't have the same details as a log line at a known location,
+    // but we do have other context information to fill these fields.
+    // File name -> "FFmpeg" + instance type (e.g. "AVCodecContext").
+    // Function name -> instance name (e.g. "h264") + instance pointer.
+    // Line number -> FFmpeg log level.
+    AVClass* av_class = class ? *(AVClass**)class : NULL;
+    char code_context[36];
+    char instance_context[32];
+    if (av_class) {
+        snprintf(code_context, sizeof(code_context), "FFmpeg_%s", av_class->class_name);
+        snprintf(instance_context, sizeof(instance_context), "%s_%#x", av_class->item_name(class),
+                 (unsigned int)(intptr_t) class);
+    } else {
+        snprintf(code_context, sizeof(code_context), "FFmpeg");
+        snprintf(instance_context, sizeof(instance_context), "%p", class);
+    }
+    whist_log_vprintf(level, code_context, instance_context, av_level, fmt, vl);
 }
 
 void print_stacktrace(void) {
