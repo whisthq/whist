@@ -18,7 +18,6 @@ import (
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
-	"github.com/whisthq/whist/backend/services/metadata"
 	types "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -286,15 +285,15 @@ func (mandelbox *mandelboxData) predictConfigToDownload(s3Client *s3.Client) (*s
 
 // getS3ConfigKeyPrefix returns the name of the S3 key to the encrypted user
 // config file, up to the app name. This does not include the suffix
-// (`EncryptedArchiveFileName`) or the token hash that comes before it.
-func (mandelbox *mandelboxData) getS3ConfigKeyPrefix() string {
-	return path.Join(string(mandelbox.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(mandelbox.GetAppName()))
+// (`EncryptedArchiveFileName`).
+func (mandelbox *mandelboxData) getS3ConfigKeyPrefix(tokenHash string) string {
+	return path.Join(tokenHash, string(mandelbox.GetUserID()), string(mandelbox.GetAppName()))
 }
 
 // getS3ConfigPath returns the full key name of the S3 key to encrypted user
 // config file. Note that this includes the hash of the user config.
 func (mandelbox *mandelboxData) getS3ConfigKey(tokenHash string) string {
-	return path.Join(mandelbox.getS3ConfigKeyPrefix(), "/", tokenHash, "/", EncryptedArchiveFilename)
+	return path.Join(mandelbox.getS3ConfigKeyPrefix(tokenHash), "/", EncryptedArchiveFilename)
 }
 
 // downloadUserConfig downloads a given user config from S3 into an in-memory
