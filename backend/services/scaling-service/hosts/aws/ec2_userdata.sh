@@ -58,7 +58,7 @@ fi
 # Populate env vars
 eval "$(cat $USERDATA_ENV)"
 
-# Login wit docker
+# Login with docker
 echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
 
 # Pull Docker images for Chrome and Brave directly to the ephemeral volume
