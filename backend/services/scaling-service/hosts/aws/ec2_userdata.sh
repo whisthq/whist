@@ -53,12 +53,10 @@ then
   echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
 
   # Pull Docker images for Chrome and Brave directly to the ephemeral volume
-  ghcr_uri=ghcr.io
-
-  pull_image_base_chrome="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/chrome"
+  pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/chrome"
   pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
 
-  pull_image_base_brave="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/brave"
+  pull_image_base_brave="ghcr.io/whisthq/$GIT_BRANCH/browsers/brave"
   pull_image_brave="$pull_image_base_brave:$GIT_HASH"
 
   docker pull "$pull_image_chrome"
@@ -68,13 +66,11 @@ then
   docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
 
   echo "Finished pulling images"
-
 else
   echo "No ephemeral device path found. Warming up EBS volume with fio."
   # Warm Up EBS Volume
   # For more information, see: https://github.com/whisthq/whist/pull/5333
   fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
-
 fi
 
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
