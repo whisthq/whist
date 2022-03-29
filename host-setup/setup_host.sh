@@ -343,10 +343,7 @@ deployment_setup_steps() {
   cd "$DIR"
 
   # Parse input variables, these NEED to be set.
-  GH_USERNAME=${1}
-  GH_PAT=${2}
   GIT_BRANCH=${3}
-  GIT_HASH=${4}
   LOGZ_TOKEN=${5}
 
   # Set IP tables for routing networking from host to mandelboxes
