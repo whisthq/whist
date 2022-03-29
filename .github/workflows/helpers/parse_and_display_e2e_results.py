@@ -368,7 +368,7 @@ if __name__ == "__main__":
     if slack_webhook and post_results_on_slack and github_run_id:
         link_to_runner_logs = f"https://github.com/whisthq/whist/actions/runs/{github_run_id}"
         if test_outcome == ":white_check_mark: All experiments succeeded!":
-            body = f"Whist daily E2E test for branch `{current_branch_name}` completed successfully. See results: {gist_url} <{link_to_runner_logs}|(see logs)>"            
+            body = f"Whist daily E2E test for branch `{current_branch_name}` completed successfully. See results: {gist_url} <{link_to_runner_logs}|(see logs)>"
         else:
             body = f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {gist_url}"
 
