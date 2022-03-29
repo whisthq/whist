@@ -66,6 +66,15 @@ static GF256_FORCE_INLINE uint8x16_t vqtbl1q_u8(uint8x16_t a, uint8x16_t b)
 #endif
 #endif
 
+// WHIST_CHANGE: ADD
+// ensure extra safety to let compiler not optimize some codes
+// supported by gcc and clang
+#if !defined(GF256_TARGET_MOBILE) && !defined (_MSC_VER)
+#define FMV_MODIFIER __attribute__((optimize("O0")))
+#else
+#define FMV_MODIFIER
+#endif
+
 //------------------------------------------------------------------------------
 // Self-Test
 //
@@ -230,7 +239,7 @@ static bool CpuHasSSSE3 = false;
 #define CPUID_EBX_AVX2    0x00000020
 #define CPUID_ECX_SSSE3   0x00000200
 
-static void _cpuid(unsigned int cpu_info[4U], const unsigned int cpu_info_type)
+FMV_MODIFIER static void _cpuid(unsigned int cpu_info[4U], const unsigned int cpu_info_type)
 {
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_AMD64) || defined(_M_IX86))
     __cpuid((int *) cpu_info, cpu_info_type);
@@ -1574,7 +1583,7 @@ extern "C" void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy
 }
 
 // WHIST_CHANGE: ADD
-extern "C" bool gf256_has_hardware_support(void)
+extern "C" FMV_MODIFIER bool gf256_has_hardware_support(void)
 {
 #if defined(GF256_TRY_AVX2)
     unsigned int cpu_info[4];
