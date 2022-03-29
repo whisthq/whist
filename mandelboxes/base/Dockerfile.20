@@ -702,10 +702,7 @@ RUN wget -qO font-sans.zip https://fonts.google.com/download?family=Inter \
     && rm font-*.zip
 
 # Install fonts for full Unicode support (or as close as we can get)
-# Also install Microsoft Standard fonts, these are the fonts used by Chrome (even on macOS!)
-# https://granneman.com/webdev/coding/css/fonts-and-formatting/web-browser-font-defaults
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    ttf-mscorefonts-installer \
     fonts-noto \
     fonts-noto-core \
     fonts-noto-cjk \
