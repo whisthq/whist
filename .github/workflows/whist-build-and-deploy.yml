@@ -516,6 +516,7 @@ jobs:
           # Generate the Packer configuration variables
           data = {}
           data["git_branch"] = "${{ needs.whist-publish-build-config.outputs.branch }}"
+          data["git_hash"] = "${{ github.sha }}"
           data["access_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}"
           data["secret_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}"
           data["ami_name"] = f"whist-ami-${{ needs.whist-publish-build-config.outputs.branch }}-${{ github.sha }}-{date_str}"
