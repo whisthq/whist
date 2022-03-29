@@ -337,10 +337,15 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
     // if we are in the status of flushing_buffered_packets, unconditionally flush packets
     if (flushing_buffered_packets) {
         FATAL_ASSERT((int)user_queue->size() >= buffered_for_flush_cnt);
+
+        // we have reasons for respect ready_to_pop() or not, it's worth considering
+        // for simplicity, at the moment, we ignore ready_to_pop() status.
+        /*
         if(!ready_to_pop(now)){
             whist_unlock_mutex(g_mutex);
             return -5;
-        }
+        }*/
+
         pop_inner(buf, size);
         buffered_for_flush_cnt--;
         if (buffered_for_flush_cnt == 0) {
