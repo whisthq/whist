@@ -1614,7 +1614,9 @@ TEST_F(ProtocolTest, FECTest) {
     std::vector<int> more_remaining_indices = {7, 6};  // makes a sufficient subset with above
 
     // Initialize FEC
-    if (init_fec() == WHIST_FEC_ERROR_AVX2_NOT_SUPPORTED) {
+    // Bypass the test, if it's the case hardware not support
+    // which happened on Mac CI
+    if (init_fec() == WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT) {
         return;
     }
 
@@ -1684,7 +1686,11 @@ TEST_F(ProtocolTest, FECTest2) {
     WhistTimer timer;
     WhistTimer timer2;
     const int verbose_print = 0;
-    if (init_fec() == WHIST_FEC_ERROR_AVX2_NOT_SUPPORTED) {
+
+    // Initialize FEC
+    // Bypass the test, if it's the case hardware not support
+    // which happened on Mac CI
+    if (init_fec() == WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT) {
         return;
     }
 

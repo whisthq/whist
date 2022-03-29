@@ -12,4 +12,4 @@
 
 // temp workaround of for cm256 lib's CPU dispatching
 // TODO: fix cm256
-#define WHIST_FEC_ERROR_HARDWARD_NO_SUPPORT -100
+#define WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT -100
