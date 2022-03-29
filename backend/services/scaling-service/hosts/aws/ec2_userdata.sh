@@ -3,8 +3,8 @@
 # Note: all commands here are run with the `root` user. It is not necessary to use sudo.
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html#user-data-shell-scripts
 if [ "$EUID" -ne 0 ]; then
-    echo "Command should be run as root."
-    exit
+  echo "Command should be run as root."
+  exit
 fi
 
 # Exit on subcommand errors
@@ -27,29 +27,29 @@ USERDATA_ENV=/usr/share/whist/app_env.env
 
 if [ "$EPHEMERAL_DEVICE_PATH" != "null" ]
 then
-    echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
+  echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
 
-    mkfs -t ext4 "$EPHEMERAL_DEVICE_PATH"
-    mkdir -p "$EPHEMERAL_FS_PATH"
-    mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
-    echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
+  mkfs -t ext4 "$EPHEMERAL_DEVICE_PATH"
+  mkdir -p "$EPHEMERAL_FS_PATH"
+  mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
+  echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
 
-    # Stop docker and copy the data directory to the ephemeral storage
-    systemctl stop docker
-    mv /var/lib/docker "$EPHEMERAL_FS_PATH"
-    echo "Moved /var/lib/docker to ephemeral volume"
+  # Stop docker and copy the data directory to the ephemeral storage
+  systemctl stop docker
+  mv /var/lib/docker "$EPHEMERAL_FS_PATH"
+  echo "Moved /var/lib/docker to ephemeral volume"
 
-    # Modify configuration to use the new data directory and persist in daemon config file
-    # and start docker again. Set a higher concurrent download count to speed up the pull.
-    jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
-    jq '. + {"max-concurrent-downloads": '"$MAX_CONCURRENT_DOWNLOADS"'}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
+  # Modify configuration to use the new data directory and persist in daemon config file
+  # and start docker again. Set a higher concurrent download count to speed up the pull.
+  jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
+  jq '. + {"max-concurrent-downloads": '"$MAX_CONCURRENT_DOWNLOADS"'}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
 
-    systemctl start docker
+  systemctl start docker
 else
-    echo "No ephemeral device path found. Warming up EBS volume with fio."
-    # Warm Up EBS Volume
-    # For more information, see: https://github.com/whisthq/whist/pull/5333
-    fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
+  echo "No ephemeral device path found. Warming up EBS volume with fio."
+  # Warm Up EBS Volume
+  # For more information, see: https://github.com/whisthq/whist/pull/5333
+  fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
 fi
 
 # Pull the images regardless if the instance has ephemeral storage or not.
