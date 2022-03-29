@@ -198,10 +198,9 @@ int init_rs_wrapper(void) {
     static int initialized = 0;
     if (initialized == 0) {
         lugi_rs_extra_init();
-        int r = avx2_check();
-        if (r != 0) {
+        if (gf256_has_hardware_support()) {
             LOG_ERROR("Platform is x86/x64 but AVX2 is not supported!");
-            return WHIST_FEC_ERROR_AVX2_NOT_SUPPORTED;
+            return WHIST_FEC_ERROR_HARDWARD_NO_SUPPORT;
         }
         FATAL_ASSERT(cm256_init() == 0);
         initialized = 1;

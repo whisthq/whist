@@ -284,8 +284,8 @@ static GF256_FORCE_INLINE void gf256_div_mem(void * vz,
 
 // WHIST_CHANGE: ADD
 // temp solution to expose the CPU check out function to upper level
-// the final solution will be clearer after we fixed the sse support for cm256 lib
-extern int avx2_check(void);
+// the final solution will be clearer after we fixed the sse2 support for cm256 lib
+extern bool gf256_has_hardware_support(void);
 
 #ifdef __cplusplus
 }
