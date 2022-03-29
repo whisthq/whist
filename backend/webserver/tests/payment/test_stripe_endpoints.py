@@ -104,7 +104,7 @@ def test_create_billing_portal_session(
     assert response.json == {"url": url}
 
 
-def test_set_price_correctly(
+def test_use_existing_stripe_price(
     client: WhistAPITestClient,
     make_user: Callable[[], str],
     monkeypatch: MonkeyPatch,
