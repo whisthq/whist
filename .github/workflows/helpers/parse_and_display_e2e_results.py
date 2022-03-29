@@ -368,7 +368,7 @@ if __name__ == "__main__":
     if slack_webhook and post_results_on_slack and github_run_id:
         link_to_runner_logs = f"https://github.com/whisthq/whist/actions/runs/{github_run_id}"
         if test_outcome == ":white_check_mark: All experiments succeeded!":
-            body = f":white_check_mark: All E2E experiments succeeded <{link_to_runner_logs}|(see logs)>! Whist daily E2E test results available for branch: `{current_branch_name}`: {gist_url}"
+            body = f"Whist daily E2E test for branch `{current_branch_name}` completed successfully. See results: {gist_url} <{link_to_runner_logs}|(see logs)>"            
         else:
             body = f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {gist_url}"
 
@@ -376,7 +376,7 @@ if __name__ == "__main__":
             slack_webhook,
             body=body,
             slack_username="Whist Bot",
-            title=f":rocket::bar_chart: {title} :rocket::bar_chart:",
+            title=f":bar_chart: {title} :bar_chart:",
         )
 
     # Otherwise post on GitHub if the branch is tied to a open PR
