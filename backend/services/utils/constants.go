@@ -22,7 +22,7 @@ const (
 	// WhistEphemeralFSPath is the path where the ephemeral storage device will
 	// be mounted if it exists. If it does, all whist directories will be created
 	// on this path.
-	WhistEphemeralFSPath = "/ephemeral"
+	WhistEphemeralFSPath = "/ephemeral/"
 )
 
 // Note: We use these values as placeholder UUIDs because they are obvious and immediate

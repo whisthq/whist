@@ -618,7 +618,11 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	}
 
 	ephemeralDevicePath := string(out)
-	if ephemeralDevicePath != "" && ephemeralDevicePath != "null" {
+
+	// We check if the command exited successfully, and if the ephemeral device exists.
+	// Also take into account if the WhistDir already contains the ephemeral path.
+	if ephemeralDevicePath != "" && !strings.Contains(ephemeralDevicePath, "bash") &&
+		ephemeralDevicePath != "null" && !strings.Contains(utils.WhistDir, utils.WhistEphemeralFSPath) {
 		utils.WhistDir = path.Join(utils.WhistEphemeralFSPath, utils.WhistDir)
 	}
 
