@@ -103,7 +103,7 @@ int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
     double ratio = fec_packet_ratio / (1.0 - fec_packet_ratio);
 
     // return the num of fec packets, round to next integer
-    return ceil(num_real_packets);
+    return ceil(num_real_packets * ratio);
 }
 
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
