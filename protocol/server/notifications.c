@@ -237,7 +237,7 @@ DbusCtx *dbus_init(struct event_base *eb, whist_server_state *server_state) {
         goto fail;
     }
 
-    if (dbus_connection_add_filter(conn, notification_handler, &server_state->client, NULL) ==
+    if (dbus_connection_add_filter(conn, notification_handler, server_state->client, NULL) ==
         FALSE) {
         LOG_ERROR("dbus_connection_add_filter() failed");
         goto fail;
@@ -292,7 +292,12 @@ void dbus_close(DbusCtx *ctx) {
  * @param user_data             Any data the user would like to provide to this function.
  *                              We pass the Whist protocol client here.
  *
- * @return DBusHandlerResult    Always returns DBUS_HANDLER_RESULT_HANDLED.
+ * @return DBusHandlerResult    DBUS_HANDLER_RESULT_HANDLED if the message was handled,
+ *                              and DBUS_HANDLER_RESULT_NOT_YET_HANDLED if the message
+ *                              should fall through to some other handler.
+ *
+ * TODO: We should split out separate DBus message handlers for disconnect, notifications,
+ *       and any other message we wish to support.
  */
 DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *message,
                                        void *user_data) {
@@ -301,13 +306,13 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
         LOG_ERROR("D-Bus unexpectedly disconnected");
         return DBUS_HANDLER_RESULT_HANDLED;
     }
+
     const char *msg_str = dbus_message_get_member(message);
     LOG_INFO("D-Bus signal received: %s", msg_str);
     log_double_statistic(DBUS_MSGS_RECEIVED, 1.);
 
     if (msg_str == NULL || strcmp(msg_str, "Notify") != 0) {
-        LOG_INFO("Did not detect notification body; skipping current D-Bus signal");
-        return DBUS_HANDLER_RESULT_HANDLED;
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
 
     // If there is a notification, parse it out
@@ -346,7 +351,6 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
     // Create notification. Careful not to access OOB memory!
     WhistNotification notif;
     package_notification(&notif, title, n_message);
-    LOG_INFO("WhistNotification consists of: title=%s, message=%s", notif.title, notif.message);
 
     // Parse protocol client from void pointer
     Client *client = (Client *)user_data;
