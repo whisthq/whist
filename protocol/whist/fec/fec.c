@@ -107,7 +107,6 @@ int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
 }
 
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
-    // FATAL_ASSERT(num_real_buffers + num_fec_buffers <= MAX_RS_BUFFERS);
     FATAL_ASSERT(max_buffer_size <= MAX_BUFFER_SIZE);
     FATAL_ASSERT(max_buffer_size >= FEC_HEADER_SIZE);
 
