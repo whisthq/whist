@@ -12,15 +12,13 @@ The following configuration variables affect the Webserver's ability to
 integrate with Stripe correctly:
 
 * :attr:`~app.config.DeploymentConfig.STRIPE_CUSTOMER_ID_CLAIM`
-* :attr:`~app.config.DeploymentConfig.STRIPE_PRICE_ID`
 * :attr:`~app.config.DeploymentConfig.STRIPE_SECRET`
 * :attr:`~app.config.DeploymentConfig.STRIPE_SUBSCRIPTION_STATUS_CLAIM`
 
 It is also important that the same
-:attr:`~app.config.DeploymentConfig.STRIPE_PRICE_ID` and
-:attr:`~app.config.DeploymentConfig.STRIPE_SECRET` values that the Webserver
+:attr:`~app.config.DeploymentConfig.STRIPE_SECRET` value that the Webserver
 uses are stored in the appropriate Auth0 tenant's `Rules configuration`_ as
-``STRIPE_PRICE_ID`` and ``STRIPE_API_KEY`` respectively.
+``STRIPE_API_KEY`` respectively.
 
 .. image:: /images/rules.png
 

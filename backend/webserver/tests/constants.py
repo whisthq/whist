@@ -13,3 +13,5 @@ REGION_NAMES = [
     "eu-west-1",
     "ca-central-1",
 ]
+
+DUMMY_STRIPE_PRICE_ID = "price_1KiQ7nIOnFXg3A2jdKQnjtuQ"

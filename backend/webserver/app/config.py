@@ -209,11 +209,11 @@ class DeploymentConfig:
     #: associated with an authenticated user's Whist account.
     STRIPE_CUSTOMER_ID_CLAIM = "https://api.fractal.co/stripe_customer_id"
 
-    #: str: The ID of the Stripe Price object
-    STRIPE_PRICE_ID = property(getter("STRIPE_PRICE_ID"))
-
     #: str: The API key that the Webserver should use to authenticate itself with the Stripe API.
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
+
+    #: str: How much we want Whist to cost per month
+    MONTHLY_PRICE_IN_CENTS = property(getter("MONTHLY_PRICE_IN_CENTS"))
 
     #: str: The name of the access token claim containing the user's stripe subscription status.
     #: See https://stripe.com/docs/api/subscriptions/object#subscription_object-status for a list

@@ -12,6 +12,8 @@ from pytest import MonkeyPatch
 from tests.patches import function, Object
 from tests.client import WhistAPITestClient
 
+from tests.constants import DUMMY_STRIPE_PRICE_ID
+
 
 @pytest.mark.parametrize(
     "subscription_status",
@@ -93,6 +95,58 @@ def test_create_billing_portal_session(
         **{
             current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]: "cus_test",
             current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]: subscription_status,
+        },
+    )
+
+    response = client.get("/payment_portal_url")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json == {"url": url}
+
+
+def test_use_existing_stripe_price(
+    client: WhistAPITestClient,
+    make_user: Callable[[], str],
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Ensure that no new Stripe Price is created if one already exists that matches our desired amount"""
+
+    checkout_session = Object()
+    url = f"http://localhost/{os.urandom(8).hex()}"
+    user = make_user()
+
+    whist_subscription_price_in_cents = 50 * 100
+
+    monkeypatch.setattr(checkout_session, "url", url)
+    monkeypatch.setattr(stripe.Subscription, "list", function(returns={"data": [{"status": None}]}))
+    monkeypatch.setattr(
+        stripe.Price,
+        "list",
+        function(
+            returns={
+                "has_more": False,
+                "data": [
+                    {"id": DUMMY_STRIPE_PRICE_ID, "unit_amount": whist_subscription_price_in_cents}
+                ],
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        stripe.Price,
+        "create",
+        function(raises=Exception(f"Price already exists, new price should not have been created")),
+    )
+    monkeypatch.setattr(
+        "app.utils.stripe.payments.get_monthly_price_in_cents",
+        function(returns=whist_subscription_price_in_cents),
+    )
+    monkeypatch.setattr(stripe.checkout.Session, "create", function(returns=checkout_session))
+    client.login(
+        user,
+        admin=False,
+        **{
+            current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]: "cus_test",
+            current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]: None,
         },
     )
 
