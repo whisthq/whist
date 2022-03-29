@@ -78,10 +78,9 @@ ENV WHIST_DEST_BROWSER="brave"
 COPY start-brave.sh /usr/bin/start-brave
 RUN chmod +x /usr/bin/start-brave && ln -sf /usr/bin/start-brave /usr/bin/whist-application
 
-<<<<<<< HEAD
 # Install handle to browser program to be able to open a new tab from the protocol
 RUN ln -sf /usr/bin/brave-browser /usr/bin/whist-open-new-tab
-=======
+
 # Edit the Chrome Preferences Config file to set the Whist fonts as default
 RUN mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser/Default \
     && touch /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences \
@@ -89,7 +88,6 @@ RUN mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser/Default \
     && echo {} \
     | jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
     > /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
->>>>>>> c886a9bb8... restored installation of additional unicode fonts, cleanup, setting fonts in brave dockerfile
 
 # If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/
