@@ -61,6 +61,7 @@ static const char* const tag_strings[] = {
 
 // disable logs after some limits are hit, helpful for debug
 // if SUPRESS_LOG_AFTER <=0, this feature is disabled
+// if this code cause real trouble in future, feel free to remove.
 #define SUPRESS_LOG_AFTER 0
 // num of logs printed so far, should be okay without mutex only for debug
 static int g_log_cnt = 0;
@@ -425,7 +426,7 @@ static void whist_log_vprintf(unsigned int level, const char* file_name, const c
 
         // empahse on the log has been supressed
         if (g_log_cnt > SUPRESS_LOG_AFTER && g_log_cnt <= SUPRESS_LOG_AFTER + 5) {
-            fprintf(stderr, "non-audio logs are supressed from now on!!!\n");
+            fprintf(stderr, "normal logs are supressed from now on!!!\n");
         }
 
         // skip log when we have printed enough
