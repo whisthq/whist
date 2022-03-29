@@ -1,4 +1,10 @@
 #pragma once
+/**
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file lugi_rs_extra.h
+ * @brief This file contains helper functions to make the lugi rs easier to use
+ */
+
 #include "whist/fec/lugi_rs.h"
 
 /**

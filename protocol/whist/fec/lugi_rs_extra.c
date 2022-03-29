@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file lugi_rs_extra.c
+ * @brief This file contains helper functions to make the lugi rs easier to use
+ */
 
 #include <string.h>
 #include <SDL2/SDL_thread.h>

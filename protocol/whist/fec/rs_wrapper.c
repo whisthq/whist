@@ -95,21 +95,6 @@ static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int sz);
  *
  * @param k                        num of original buffers
  * @param n                        num of total buffers (original+redundant)
- * @param pkt                      an array of input buffers, may contain orginal buffer and
- *                                 redundant buffer in any order
- * @param index                    an array of index of buffers
- * @param dst                      an arrary of output buffers, the memeroy should be already
- *                                 allocated before passing here
- *
- * @param sz                       size of buffers
- * @returns                        zero on success
- */
-
-/**
- * @brief                          do RS decode with the RS wrapper
- *
- * @param k                        num of original buffers
- * @param n                        num of total buffers (original+redundant)
  * @param rs_wrapper               RSwrapper object created by rs_wrapper_create()
  * @param pkt                      an array of input buffers, may contain orginal buffer and
  *                                 redundant buffer in any order. used as output as well
@@ -319,6 +304,9 @@ int rs_wrapper_decode(RSWrapper *rs_wrapper, void **pkt, int *index, int num_pkt
 
     // helper buffers to map offsets into corresponding groups
     // "offsets" means the position in index
+    // possible optimizations: move all malloc into rs_wrapper create.
+    // those arrays only contain meta info, won't be a bottleneck,
+    // so for simplicity, we just allocation in decode call.
     int **subgroup_offsets = safe_malloc(sizeof(int *) * rs_wrapper->num_groups);
     int *subgroup_offsets_cnt = safe_malloc(sizeof(int) * rs_wrapper->num_groups);
 
