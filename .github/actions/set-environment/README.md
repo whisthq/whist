@@ -31,7 +31,7 @@ jobs:
       # The repository must be checked out before the custom Action may be used
       # in the Workflow.
       - name: Checkout git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Aggegrate environment-specific configuration data
         id: environment
         uses: ./.github/actions/set-environment

@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.ref }} # Use this input to specify the exact ref to checkout
 
@@ -33,7 +33,7 @@ In GitHub terminology, [Actions](https://docs.github.com/en/actions/creating-act
 
 **Workflows** are multi-step processes made up of jobs and steps. Often, a Workflow will employ an Action as one of these jobs. A well-formed Workflow is mostly a composition of Actions, with the purpose of wiring up inputs and outputs between them. Workflows have access to GitHub context, like repository information and secrets, and can pass data from that context to jobs, steps, and Actions.
 
-Actions and Workflows are both defined as YAML files stored in `.github/actions` and `.github/workflows`, respectively. The YAML example above shows how a workflow can call Actions with the `uses:` syntax, giving both the example of a offcial GitHub Action (`actions/checkout@v2`) as well as a custom, local action.
+Actions and Workflows are both defined as YAML files stored in `.github/actions` and `.github/workflows`, respectively. The YAML example above shows how a workflow can call Actions with the `uses:` syntax, giving both the example of a offcial GitHub Action (`actions/checkout@v3`) as well as a custom, local action.
 
 Workflows are very hard to run and test locally. They're parsed and evaluated based on a complex domain-specific language using names of nested YAML keys, string templating, and a GitHub-flavored subset of JavaScript. To supply data to their jobs, they rely on the GitHub-specific context that's only available in the GitHub Actions runner. If you've worked with them before, you've probably gone through the clunky commit-push-deploy-wait loop that's necessary to test your work. The awkwardness of this process has led many of us to write complex Bash or Python scripts directly inside the Workflow YAML, so at least some part of it can be tested locally.
 
