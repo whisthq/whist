@@ -343,8 +343,8 @@ deployment_setup_steps() {
   cd "$DIR"
 
   # Parse input variables, these NEED to be set.
-  GIT_BRANCH=${3}
-  LOGZ_TOKEN=${5}
+  GIT_BRANCH=${1}
+  LOGZ_TOKEN=${2}
 
   # Set IP tables for routing networking from host to mandelboxes
   idempotent_backup "/etc/sysctl.conf" "sudo"
