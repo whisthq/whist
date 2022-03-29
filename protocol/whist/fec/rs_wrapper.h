@@ -84,7 +84,7 @@ int rs_wrapper_decode(RSWrapper *rs_wrapper, void **pkt, int *index, int num_pkt
  *
  * @param  rs_wrapper              RSwrapper object created by rs_wrapper_create()
  */
-void rs_wrapper_destory(RSWrapper *rs_wrapper);
+void rs_wrapper_destroy(RSWrapper *rs_wrapper);
 
 /*
 the below 3 functions are used for help detect if decode can happen, in O(1) time

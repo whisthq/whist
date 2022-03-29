@@ -1,4 +1,5 @@
 #include <string.h>
+#include <math.h>
 
 #include "fec.h"
 #include "whist/core/whist.h"
@@ -102,7 +103,7 @@ int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
     double ratio = fec_packet_ratio / (1.0 - fec_packet_ratio);
 
     // return the num of fec packets, round to next integer
-    return num_real_packets * ratio + 0.999;
+    return ceil(num_real_packets);
 }
 
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
@@ -232,7 +233,7 @@ void destroy_fec_encoder(FECEncoder* fec_encoder) {
     }
     free(fec_encoder->buffers);
     free(fec_encoder->buffer_sizes);
-    rs_wrapper_destory(fec_encoder->rs_code);
+    rs_wrapper_destroy(fec_encoder->rs_code);
     free(fec_encoder);
 }
 
@@ -353,7 +354,7 @@ void destroy_fec_decoder(FECDecoder* fec_decoder) {
     }
     free(fec_decoder->buffers);
     free(fec_decoder->buffer_sizes);
-    rs_wrapper_destory(fec_decoder->rs_code);
+    rs_wrapper_destroy(fec_decoder->rs_code);
     free(fec_decoder);
 }
 

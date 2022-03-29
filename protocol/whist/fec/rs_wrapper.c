@@ -275,8 +275,8 @@ void rs_wrapper_encode(RSWrapper *rs_wrapper, void **src, void **dst, int sz) {
     }
 
     // buffers to store a subset of src and dst
-    void **src_sub = malloc(sizeof(void *) * rs_wrapper->group_max_num_real_buffers);
-    void **dst_sub = malloc(sizeof(void *) * rs_wrapper->group_max_num_fec_buffers);
+    void **src_sub = safe_malloc(sizeof(void *) * rs_wrapper->group_max_num_real_buffers);
+    void **dst_sub = safe_malloc(sizeof(void *) * rs_wrapper->group_max_num_fec_buffers);
 
     // perform the encoding group-wise
     for (int i = 0; i < rs_wrapper->num_groups; i++) {
@@ -319,17 +319,18 @@ int rs_wrapper_decode(RSWrapper *rs_wrapper, void **pkt, int *index, int num_pkt
 
     // helper buffers to map offsets into corresponding groups
     // "offsets" means the position in index
-    int **subgroup_offsets = malloc(sizeof(int *) * rs_wrapper->num_groups);
-    int *subgroup_offsets_cnt = malloc(sizeof(int) * rs_wrapper->num_groups);
+    int **subgroup_offsets = safe_malloc(sizeof(int *) * rs_wrapper->num_groups);
+    int *subgroup_offsets_cnt = safe_malloc(sizeof(int) * rs_wrapper->num_groups);
 
     // more allocation and init of the help buffers
     for (int i = 0; i < rs_wrapper->num_groups; i++) {
-        subgroup_offsets[i] = malloc(sizeof(int) * rs_wrapper->group_infos[i].num_real_buffers);
+        subgroup_offsets[i] =
+            safe_malloc(sizeof(int) * rs_wrapper->group_infos[i].num_real_buffers);
         subgroup_offsets_cnt[i] = 0;
     }
 
     // make a copy of the pkt array, since the underlying rs lib will reorder the input
-    void **pkt_copy = malloc(sizeof(void *) * num_pkt);
+    void **pkt_copy = safe_malloc(sizeof(void *) * num_pkt);
     memcpy(pkt_copy, pkt, sizeof(void *) * num_pkt);
 
     int unused_cnt = 0;
@@ -351,8 +352,8 @@ int rs_wrapper_decode(RSWrapper *rs_wrapper, void **pkt, int *index, int num_pkt
     }
 
     // two helper buffers to store subsets of pkt and index
-    void **pkt_sub = malloc(sizeof(void *) * rs_wrapper->group_max_num_real_buffers);
-    int *index_sub = malloc(sizeof(int) * rs_wrapper->group_max_num_real_buffers);
+    void **pkt_sub = safe_malloc(sizeof(void *) * rs_wrapper->group_max_num_real_buffers);
+    int *index_sub = safe_malloc(sizeof(int) * rs_wrapper->group_max_num_real_buffers);
 
     // perform the decoding group-wise
     for (int i = 0; i < rs_wrapper->num_groups; i++) {
@@ -391,7 +392,7 @@ int rs_wrapper_decode(RSWrapper *rs_wrapper, void **pkt, int *index, int num_pkt
     return 0;
 }
 
-void rs_wrapper_destory(RSWrapper *rs_wrapper) {
+void rs_wrapper_destroy(RSWrapper *rs_wrapper) {
     free(rs_wrapper->group_infos);
     free(rs_wrapper);
 }
@@ -476,7 +477,7 @@ static void rs_encode_or_dup(int k, int n, void *src[], void *dst[], int sz) {
             params.RecoveryCount = n - k;
             params.BlockBytes = sz;
 
-            cm256_block *blocks = malloc(params.OriginalCount * sizeof(cm256_block));
+            cm256_block *blocks = safe_malloc(params.OriginalCount * sizeof(cm256_block));
 
             // TODO inefficient code
             for (int i = 0; i < params.OriginalCount; i++) {
@@ -523,7 +524,7 @@ static int rs_decode_or_dedup(int k, int n, void *pkt[], int index[], int sz) {
             params.RecoveryCount = n - k;
             params.BlockBytes = sz;
 
-            cm256_block *blocks = malloc(params.OriginalCount * sizeof(cm256_block));
+            cm256_block *blocks = safe_malloc(params.OriginalCount * sizeof(cm256_block));
 
             for (int i = 0; i < params.OriginalCount; i++) {
                 blocks[i].Index = index[i];
@@ -614,7 +615,7 @@ static RSWrapper *rs_wrapper_create_inner(int num_real_buffers, int num_total_bu
     rs_wrapper->num_groups = num_groups;
     rs_wrapper->num_real_buffers = num_real_buffers;
     rs_wrapper->num_fec_buffers = num_fec_buffers;
-    rs_wrapper->group_infos = malloc(sizeof(GroupInfo) * num_groups);
+    rs_wrapper->group_infos = safe_malloc(sizeof(GroupInfo) * num_groups);
 
     // get the partition plan, based on the elementary data
     fill_partition_plan(rs_wrapper);
