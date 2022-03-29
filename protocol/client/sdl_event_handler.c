@@ -275,6 +275,9 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
             handle_quit_event(&event->quit);
             break;
         }
+        case FRONTEND_EVENT_UNHANDLED: {
+            break;
+        }
     }
     return 0;
 }

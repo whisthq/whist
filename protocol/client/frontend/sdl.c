@@ -188,6 +188,8 @@ static bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
         return false;
     }
 
+    memset(event, 0, sizeof(WhistFrontendEvent));
+
     switch (sdl_event.type) {
         case SDL_WINDOWEVENT: {
             switch (sdl_event.window.event) {
@@ -290,7 +292,8 @@ static bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
         }
         case SDL_DROPFILE: {
             event->type = FRONTEND_EVENT_FILE_DROP;
-            event->file_drop.filename = sdl_event.drop.file;
+            event->file_drop.filename = strdup(sdl_event.drop.file);
+            SDL_free(sdl_event.drop.file);
             // Get the global mouse position of the drop event.
             SDL_CaptureMouse(true);
             SDL_GetMouseState(&event->file_drop.position.x, &event->file_drop.position.y);
@@ -300,6 +303,10 @@ static bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
         case SDL_QUIT: {
             event->type = FRONTEND_EVENT_QUIT;
             event->quit.quit_application = sdl_event.quit.quit_app;
+            break;
+        }
+        default: {
+            event->type = FRONTEND_EVENT_UNHANDLED;
             break;
         }
     }
