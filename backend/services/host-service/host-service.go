@@ -625,6 +625,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	if !metadata.IsLocalEnv() &&
 		ephemeralDevicePath != "" && ephemeralDevicePath != "null" &&
 		!strings.Contains(ephemeralDevicePath, "bash") && !strings.Contains(utils.WhistDir, utils.WhistEphemeralFSPath) {
+		logger.Infof("Creating Whist directory on ephemeral device.")
 		utils.WhistDir = path.Join(utils.WhistEphemeralFSPath, utils.WhistDir)
 	}
 
