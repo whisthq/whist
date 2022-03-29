@@ -70,7 +70,7 @@ static GF256_FORCE_INLINE uint8x16_t vqtbl1q_u8(uint8x16_t a, uint8x16_t b)
 // ensure extra safety to let compiler not optimize some codes to unwanted instructions
 // supported by gcc and clang
 #if !defined(GF256_TARGET_MOBILE) && !defined (_MSC_VER)
-#define FMV_MODIFIER __attribute__(target("no-avx2"),target("no-ssse3")))
+#define FMV_MODIFIER __attribute__((target("no-avx2"),target("no-ssse3")))
 #else
 #define FMV_MODIFIER
 #endif
