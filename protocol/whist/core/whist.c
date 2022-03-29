@@ -76,7 +76,9 @@ int runcmd(const char *cmdline, char **response) {
 
         Arguments:
             cmdline (const char*): String of the system command to run
-            response (char**): Terminal output from the cmdline
+            response (char**):  Pointer to a buffer that will be filled with the terminal output 
+                                from the cmdline on two conditions: the passed pointer is non-NULL
+                                and reading the piped output from the command succeeds.
 
         Returns:
             (int): 0 or value of pipe if success, else -1
