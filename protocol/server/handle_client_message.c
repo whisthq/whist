@@ -339,11 +339,11 @@ static int handle_open_urls_message(whist_server_state *state, WhistClientMessag
     char *open_urls_result;
     int ret = runcmd(command, &open_urls_result);
     free(command);
-    if (ret != -1 ) {
+    if (ret != -1) {
         LOG_INFO("Opening URL in new tab command result: %s", open_urls_result);
         free(open_urls_result);
     }
-    
+
     return 0;
 }
 
