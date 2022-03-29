@@ -382,8 +382,6 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
     active_file->transfer_type = transfer_type;
     if (event_info) {
         active_file->event_info = *event_info;
-        LOG_INFO("mouse: %d %d", active_file->event_info.server_drop.x,
-                 active_file->event_info.server_drop.y);
     } else {
         memset(&active_file->event_info, 0, sizeof(FileEventInfo));
     }

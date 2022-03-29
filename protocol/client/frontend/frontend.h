@@ -18,6 +18,7 @@ typedef enum FrontendEventType {
     FRONTEND_EVENT_GESTURE,
     FRONTEND_EVENT_FILE_DROP,
     FRONTEND_EVENT_QUIT,
+    FRONTEND_EVENT_UNHANDLED,
 } FrontendEventType;
 
 typedef struct FrontendKeypressEvent {
