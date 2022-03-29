@@ -1,8 +1,9 @@
 #include <string.h>
+#include <math.h>
 
 #include "fec.h"
 #include "whist/core/whist.h"
-#include "lugi_rs.h"
+#include "whist/fec/rs_wrapper.h"
 
 // lugi's original library, Vandermonde Maxtrix, O(N^3+ N*X*L) decode
 // N is number of original packets, X is num of lost packets, L is max packet length
@@ -36,16 +37,9 @@ Defines
 
 #define MAX_NUM_BUFFERS 1024
 
-// The most amount of buffers that RS accepts
-#define MAX_RS_BUFFERS 0xff
 // We only use 2 bytes to store the buffer size,
 // so we need to cap the buffer size as such
 #define MAX_BUFFER_SIZE ((1 << (8 * FEC_HEADER_SIZE)) - 1)
-
-#define RS_TABLE_SIZE 256  // size of row and column
-
-// This is the type for the rs_table we use for caching
-typedef RSCode* RSTable[RS_TABLE_SIZE][RS_TABLE_SIZE];
 
 struct FECEncoder {
     int num_accepted_buffers;
@@ -56,7 +50,7 @@ struct FECEncoder {
     void** buffers;
     int max_packet_size;  // max (original) buffer size fed into encoder so far.
                           // TODO: rename into max_accepted_buffer_size
-    RSCode* rs_code;
+    RSWrapper* rs_code;
     bool encode_performed;
 };
 
@@ -70,7 +64,7 @@ struct FECDecoder {
     void** buffers;
     int max_packet_size;  // max buffer size fed into decoder so far.
                           // TODO: rename into max_accepted_buffer_size
-    RSCode* rs_code;
+    RSWrapper* rs_code;
     bool recovery_performed;
 };
 
@@ -80,31 +74,11 @@ Globals
 ============================
 */
 
-// Holds the RSTable for each thread
-static WhistThreadLocalStorageKey rs_table_tls_key;
-
 /*
 ============================
 Private Function Declarations
 ============================
 */
-
-/**
- * @brief                          Gets an rs_code
- *
- * @param k                        The number of original packets
- * @param n                        The total number of packets
- *
- * @returns                        The RSCode for that (n, k) tuple
- */
-static RSCode* get_rs_code(int k, int n);
-
-/**
- * @brief                          Frees an RSTable
- *
- * @param opaque                   The RSTable* to free
- */
-static void free_rs_code_table(void* opaque);
 
 // write a 16bit uint into buffer
 void write_u16_to_buffer(char* p, uint16_t w);
@@ -118,10 +92,7 @@ Public Function Implementations
 ============================
 */
 
-void init_fec(void) {
-    rs_table_tls_key = whist_create_thread_local_storage();
-    init_rs();
-}
+int init_fec(void) { return init_rs_wrapper(); }
 
 // num_fec_packets / (num_fec_packets + num_indices) = context->fec_packet_ratio
 // a / (a + b) = c
@@ -130,11 +101,12 @@ void init_fec(void) {
 // a = bc/(1-c)
 int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
     double ratio = fec_packet_ratio / (1.0 - fec_packet_ratio);
-    return num_real_packets * ratio;
+
+    // return the num of fec packets, round to next integer
+    return ceil(num_real_packets * ratio);
 }
 
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
-    FATAL_ASSERT(num_real_buffers + num_fec_buffers <= MAX_RS_BUFFERS);
     FATAL_ASSERT(max_buffer_size <= MAX_BUFFER_SIZE);
     FATAL_ASSERT(max_buffer_size >= FEC_HEADER_SIZE);
 
@@ -151,7 +123,7 @@ FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int ma
     fec_encoder->max_packet_size = -1;
     fec_encoder->encode_performed = false;
 
-    fec_encoder->rs_code = get_rs_code(num_real_buffers, num_real_buffers + num_fec_buffers);
+    fec_encoder->rs_code = rs_wrapper_create(num_real_buffers, num_real_buffers + num_fec_buffers);
 
     return fec_encoder;
 }
@@ -235,11 +207,10 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffe
         // call rs encoder to generate new packets
         for (int i = fec_encoder->num_real_buffers; i < fec_encoder->num_buffers; i++) {
             fec_encoder->buffers[i] = safe_malloc(fec_payload_size);
-            rs_encode(fec_encoder->rs_code, (void**)fec_encoder->buffers, fec_encoder->buffers[i],
-                      i, fec_payload_size);
             fec_encoder->buffer_sizes[i] = fec_payload_size;
         }
-
+        rs_wrapper_encode(fec_encoder->rs_code, (void**)fec_encoder->buffers,
+                          fec_encoder->buffers + fec_encoder->num_real_buffers, fec_payload_size);
         fec_encoder->encode_performed = true;
 
     }  // currently we allow fec_get_encoded_buffers to be called multiple times,
@@ -261,6 +232,7 @@ void destroy_fec_encoder(FECEncoder* fec_encoder) {
     }
     free(fec_encoder->buffers);
     free(fec_encoder->buffer_sizes);
+    rs_wrapper_destroy(fec_encoder->rs_code);
     free(fec_encoder);
 }
 
@@ -282,7 +254,7 @@ FECDecoder* create_fec_decoder(int num_real_buffers, int num_fec_buffers, int ma
     fec_decoder->num_accepted_buffers = 0;
     fec_decoder->num_accepted_real_buffers = 0;
     fec_decoder->max_packet_size = -1;
-    fec_decoder->rs_code = get_rs_code(num_real_buffers, num_real_buffers + num_fec_buffers);
+    fec_decoder->rs_code = rs_wrapper_create(num_real_buffers, num_real_buffers + num_fec_buffers);
     fec_decoder->recovery_performed = false;
     return fec_decoder;
 }
@@ -294,6 +266,9 @@ void fec_decoder_register_buffer(FECDecoder* fec_decoder, int index, void* buffe
 
     FATAL_ASSERT(fec_decoder->buffer_sizes[index] == -1);
 
+    // no need to store new buffers anymore if recovery is already done
+    if (fec_decoder->recovery_performed) return;
+
     fec_decoder->buffers[index] = buffer;
     fec_decoder->buffer_sizes[index] = buffer_size;
     fec_decoder->num_accepted_buffers++;
@@ -302,13 +277,13 @@ void fec_decoder_register_buffer(FECDecoder* fec_decoder, int index, void* buffe
     }
 
     fec_decoder->max_packet_size = max(fec_decoder->max_packet_size, buffer_size);
+    rs_wrapper_decode_helper_register_index(fec_decoder->rs_code, index);
 }
 
 int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
-    if (fec_decoder->num_accepted_buffers < fec_decoder->num_real_buffers) {
+    if (rs_wrapper_decode_helper_can_decode(fec_decoder->rs_code) == false) {
         return -1;
     }
-
     bool need_recovery = false;
     // For optimization, we only need recovery, if we need to reconstruct a real packet
     if (fec_decoder->num_accepted_real_buffers != fec_decoder->num_real_buffers) {
@@ -317,9 +292,9 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
 
     if (need_recovery && !fec_decoder->recovery_performed) {
         int cnt = 0;
-        int* index = safe_malloc(fec_decoder->num_real_buffers * sizeof(int));
+        int* index = safe_malloc(fec_decoder->num_accepted_buffers * sizeof(int));
 
-        for (int i = 0; i < fec_decoder->num_buffers && cnt < fec_decoder->num_real_buffers; i++) {
+        for (int i = 0; i < fec_decoder->num_buffers; i++) {
             if (fec_decoder->buffer_sizes[i] == -1) continue;
             index[cnt] = i;  // and array required by rs decoder, stores the index of input packets
             FATAL_ASSERT(cnt <= i);
@@ -334,14 +309,22 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
             // TODO, protential optimization, similiar to the one in encoder
             cnt++;
         }
-        FATAL_ASSERT(cnt == fec_decoder->num_real_buffers);
+
+        FATAL_ASSERT(cnt >= fec_decoder->num_real_buffers);
+        FATAL_ASSERT(cnt == fec_decoder->num_accepted_buffers);
+
+        for (int i = cnt; i < fec_decoder->num_buffers; i++) {
+            fec_decoder->buffers[i] = 0;
+        }
 
         // decode
-        int res = rs_decode(fec_decoder->rs_code, (void**)fec_decoder->buffers, index,
-                            fec_decoder->max_packet_size);
+        int res =
+            rs_wrapper_decode(fec_decoder->rs_code, (void**)fec_decoder->buffers, index,
+                              fec_decoder->num_accepted_buffers, fec_decoder->max_packet_size);
         FATAL_ASSERT(
             res == 0);  // should always success if called correcly,  except malloc fail inside lib
         free(index);
+
         fec_decoder->recovery_performed = true;
 
     }  // currently we allow fec_get_decoded_buffer to be called again after succesfully recovered
@@ -364,12 +347,13 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
 
 void destroy_fec_decoder(FECDecoder* fec_decoder) {
     if (fec_decoder->recovery_performed) {
-        for (int i = 0; i < fec_decoder->num_real_buffers; i++) {
+        for (int i = 0; i < fec_decoder->num_buffers; i++) {
             free(fec_decoder->buffers[i]);
         }
     }
     free(fec_decoder->buffers);
     free(fec_decoder->buffer_sizes);
+    rs_wrapper_destroy(fec_decoder->rs_code);
     free(fec_decoder);
 }
 
@@ -378,48 +362,6 @@ void destroy_fec_decoder(FECDecoder* fec_decoder) {
 Private Function Implementations
 ============================
 */
-
-static RSCode* get_rs_code(int k, int n) {
-    FATAL_ASSERT(k <= n);
-
-    // Get the rs code table for this thread
-    RSTable* rs_code_table = whist_get_thread_local_storage(rs_table_tls_key);
-
-    // If the table for this thread doesn't exist, initialize it
-    if (rs_code_table == NULL) {
-        rs_code_table = (RSTable*)safe_malloc(sizeof(RSTable));
-        memset(rs_code_table, 0, sizeof(RSTable));
-        whist_set_thread_local_storage(rs_table_tls_key, rs_code_table, free_rs_code_table);
-    }
-
-    // If (n, k)'s rs_code hasn't been create yet, create it
-    if ((*rs_code_table)[k][n] == NULL) {
-        (*rs_code_table)[k][n] = rs_new(k, n);
-    }
-
-    // Now return the rs_code for (n, k)
-    return (RSCode*)((*rs_code_table)[k][n]);
-    // We make a redundant (RSCode*) because cppcheck parses the type wrong
-}
-
-static void free_rs_code_table(void* raw_rs_code_table) {
-    RSTable* rs_code_table = (RSTable*)raw_rs_code_table;
-
-    // If the table was never created, we have nothing to free
-    if (rs_code_table == NULL) return;
-
-    // Find any rs_code entries, and free them
-    for (int i = 0; i < RS_TABLE_SIZE; i++) {
-        for (int j = i; j < RS_TABLE_SIZE; j++) {
-            if ((*rs_code_table)[i][j] != NULL) {
-                rs_free((*rs_code_table)[i][j]);
-            }
-        }
-    }
-
-    // Now free the entire table
-    free(rs_code_table);
-}
 
 // the below two functions works based on the fact that all our supported platforms are little
 // endian, and unaligned memory access are supported

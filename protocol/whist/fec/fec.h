@@ -6,7 +6,7 @@
  * @brief This file contains the FEC API Interface
  * @note See protocol_test.cpp for usage
  */
-
+#include "rs_common.h"
 /*
 ============================
 Defines
@@ -28,8 +28,9 @@ Public Functions
 /**
  * @brief                          A global initialization function that should
  *                                 be called before calling anything else in fec.h
+ * @returns                        zero on success
  */
-void init_fec(void);
+int init_fec(void);
 
 /**
  * @brief                          Converts an fec packet ratio,

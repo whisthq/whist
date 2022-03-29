@@ -56,7 +56,7 @@ void whist_init_subsystems(void) {
     whist_init_multithreading();
     whist_init_logger();
     whist_init_features();
-    init_fec();
+    FATAL_ASSERT(init_fec() == 0);
     whist_init_networking();
 }
 

@@ -402,16 +402,23 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
         fec_decoder_register_buffer(frame_data->fec_decoder, segment_index,
                                     frame_data->packet_buffer + buffer_offset, segment_size);
 
+        WhistTimer decode_timer;
+        start_timer(&decode_timer);
         // Using the newly registered packet, try to decode the frame using FEC
         int frame_size =
             fec_get_decoded_buffer(frame_data->fec_decoder, frame_data->fec_frame_buffer);
+        double decode_time = get_timer(&decode_timer) * MS_IN_SECOND;
 
         // If we were able to successfully decode the frame, mark it as such!
         if (frame_size >= 0) {
             if (frame_data->original_packets_received < frame_data->num_original_packets) {
-                LOG_INFO("Successfully recovered %d/%d Packet %d, using %d FEC packets",
-                         frame_data->original_packets_received, frame_data->num_original_packets,
-                         frame_data->id, frame_data->fec_packets_received);
+                if (LOG_FEC_DECODE) {
+                    LOG_INFO(
+                        "[FEC] Successfully recovered %d/%d Packet %d, using %d FEC packets, in "
+                        "%fms",
+                        frame_data->original_packets_received, frame_data->num_original_packets,
+                        frame_data->id, frame_data->fec_packets_received, decode_time);
+                }
                 whist_analyzer_record_fec_used(type, segment_id);
             }
             // Save the frame buffer size of the fec frame,
