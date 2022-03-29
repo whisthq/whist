@@ -1,16 +1,22 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 
 const Dropdown = (props: {
   options: string[]
-  onSubmit: (value: string) => void
   submitButton: JSX.Element
+  onSubmit?: (value: string) => void
 }) => {
-  const [value, setValue] = useState(props.options?.[0])
+  const [value, setValue] = useState(props.options[0])
 
   const onSubmit = (evt: any) => {
-    props.onSubmit(value)
-    evt.preventDefault()
+    if (props.onSubmit !== undefined) {
+      props.onSubmit(value)
+      evt.preventDefault()
+    }
   }
+
+  useEffect(() => {
+    setValue(props.options[0])
+  }, [props.options])
 
   return (
     <form onSubmit={onSubmit}>
