@@ -286,6 +286,9 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
     // a flag only for log purpose
     static bool device_queue_empty_log_printed = true;
 
+    // the pedning queue len manage operation
+    static ManangeOperation pending_op = NO_OP;
+
     // calculate device_queue_len based on devices_queue_bytes
     int device_queue_len = -1;
     if (device_queue_bytes >= 0) {
@@ -324,7 +327,8 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
     if (device_queue_bytes < 0) {
         user_queue->clear();
         buffered_for_flush_cnt = 0;
-        flushing_buffered_packets = 0;
+        flushing_buffered_packets = false;
+        pending_op = NO_OP;
         whist_unlock_mutex(g_mutex);
         return -1;
     }
@@ -336,6 +340,7 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
         buffered_for_flush_cnt--;
         if (buffered_for_flush_cnt == 0) {
             flushing_buffered_packets = false;
+            pending_op = NO_OP;
         }
         whist_unlock_mutex(g_mutex);
         return 0;
@@ -345,6 +350,7 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
     // the best thing to do is to stop playing and start to queue packets imediately
     // we start to queue packet for anti-jitter and flush the queued packet activately later
     if (device_queue_bytes == 0) {
+
         if (!device_queue_empty_log_printed) {
             LOG_INFO(
                 "audio device queue becomes empty, begin buffering frames. user_queue_len=%d\n",
@@ -379,25 +385,30 @@ int pop_from_audio_path(unsigned char *buf, int *size, int device_queue_bytes) {
         }
     } else {  // otherwise the audio path is in a normal state
 
-        // detect operation for dynamic queue len management
-        auto op = decide_queue_len_manage_operation((int)user_queue->size(), device_queue_len, now);
+        // if there is no operation pending
+        if(pending_op == NO_OP) {
+            // detect operation for dynamic queue len management
+            pending_op = decide_queue_len_manage_operation((int)user_queue->size(), device_queue_len, now);
+        }
 
         // if it's early drop, drop one packet inside user queue
-        if (op == EARLY_DROP) {
-            if ((int)user_queue->size() > 0) {
+        if (pending_op == EARLY_DROP) {
+            if (ready_to_pop(now)) {
                 int fake_size;
                 // drop this packet by a dummy pop
                 // upper level will not feel this pop
                 pop_inner(buf, &fake_size);
+                pending_op = NO_OP;
             }
             // don't return after early drop, continue to run as normal
         }
         // if it's EARLY_DUP, dup the last saved packet
-        else if (op == EARLY_DUP) {
+        else if (pending_op == EARLY_DUP) {
             // make sure we have a last packet saved
             if (last_popped_packet_data.length() && device_queue_len < max_num_inside_device_queue) {
                 memcpy(buf, last_popped_packet_data.c_str(), last_popped_packet_data.length());
                 *size = (int)last_popped_packet_data.length();
+                pending_op = NO_OP;
                 whist_unlock_mutex(g_mutex);
                 return 0;
             }
