@@ -33,7 +33,7 @@ const Streaming = () => (
       </div>
       <div className="relative z-10 text-base max-w-prose lg:max-w-5xl lg:mx-0 lg:pr-72">
         <p className="text-lg text-gray-500">
-          Whist works by running Google Chrome in a powerful computer in the
+          Whist works by running Google Chrome on a powerful computer in the
           cloud and streaming a video of Chrome to your computer. It&lsquo;s
           like remote desktop, if remote desktop felt like using a native
           application.

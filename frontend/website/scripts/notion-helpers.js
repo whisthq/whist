@@ -3,10 +3,10 @@ const fs = require("fs")
 const path = require("path/posix")
 const request = require("request-promise")
 
-const NOTION_API_KEY = "secret_IWKwfhedzKrvbiWtCF7XcbxuX9emMwyfWNoAXfnQXNZ" // This is read-only, don't worry
+const NOTION_API_KEY = "secret_IWKwfhedzKrvbiWtCF7XcbxuX9emMwyfWNoAXfnQXNZ" // This is read-only
 const NOTION_TEAM_DATABASE_ID = "f023b39bd511459d822fadbe2cf5b605" // ID of our Team Directory Notion database
 const NOTION_INVESTOR_DATABASE_ID = "76ab133fe155432e9b1c7868b5d9d08a" // ID of our Investor Directory Notion database
-const NOTION_DATA_DIRECTORY = "assets/company" // Where to save .json file containing database info e.g. team member names
+const NOTION_DATA_DIRECTORY = "assets/company" // Where to save .json file containing database info (e.g. team member names)
 
 // Initialize Notion SDK
 const notion = new Client({ auth: NOTION_API_KEY })
@@ -86,7 +86,7 @@ const fetchInvestorData = async () => {
 
           return {
             name: pageContents?.properties?.Name?.title?.[0]?.plain_text ?? "", // e.g. Sam Lessin
-            website: pageContents?.properties?.Website?.url ?? "", // e.g. http://slow.co
+            website: pageContents?.properties?.Website?.url ?? "", // e.g. https://slow.co
             description:
               pageContents?.properties?.Description?.rich_text?.[0]
                 ?.plain_text ?? "", // e.g. "Great Investor"
