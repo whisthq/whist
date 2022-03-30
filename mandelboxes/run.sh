@@ -19,4 +19,4 @@ cd "$DIR"
 # provided.
 app_path=${1%/}
 image=whisthq/$app_path:current-build
-./helper_scripts/run_mandelbox_image.sh "$image" "${@:2}"
+./scripts/run_mandelbox_image.sh "$image" "${@:2}"

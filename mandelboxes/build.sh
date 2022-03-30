@@ -69,11 +69,11 @@ fi
 if [[ "${python_args[0]}" == "development/client" ]]; then
   echo "Building $cmake_build_type WhistClient..."
   ../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type WhistClient
-  ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp WhistClient
+  ./scripts/copy_protocol_build.sh base/build-assets/build-temp WhistClient
 else
   echo "Building $cmake_build_type WhistServer..."
   ../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type WhistServer
-  ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp WhistServer
+  ./scripts/copy_protocol_build.sh base/build-assets/build-temp WhistServer
 fi
 
 # Copy the Nvidia driver installer
@@ -97,4 +97,4 @@ docker build -t whist/build-assets:protocol -f base/build-assets/Dockerfile.20 -
 # and whist/build-assets:protocol when they determine that
 # they want to copy the protocol based on the mode.
 
-python3 ./helper_scripts/build_mandelbox_image.py "${python_args[@]}" --mode="$mode"
+python3 ./scripts/build_mandelbox_image.py "${python_args[@]}" --mode="$mode"

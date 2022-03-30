@@ -10,26 +10,26 @@ coverage:
       default:
         target: auto # Overall monorepo code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
-      backend-webserver:
-        target: auto # /backend/webserver code coverage
-        threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
-        flags:
-          - backend-webserver
       backend-services:
         target: auto # /backend/services code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - backend-services
-      protocol:
-        target: auto # /protocol code coverage
+      backend-webserver:
+        target: auto # /backend/webserver code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
-          - protocol
+          - backend-webserver
       frontend-core-ts:
         target: auto # /frontend/core-ts code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - frontend-core-ts
+      protocol:
+        target: auto # /protocol code coverage
+        threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
+        flags:
+          - protocol
   precision: 2 # Number of decimal places on code coverage, between 0 and 5
   round: down # Up, down, or nearest
   range: "50...90" # First number represents red, and second represents green (default is 70..100)
@@ -72,11 +72,11 @@ flags:
     paths:
       - backend/services/
     carryforward: true
-  protocol:
-    paths:
-      - protocol/
-    carryforward: true
   frontend-core-ts:
     paths:
       - frontend/core-ts/
+    carryforward: true
+  protocol:
+    paths:
+      - protocol/
     carryforward: true

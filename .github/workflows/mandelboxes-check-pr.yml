@@ -11,7 +11,7 @@ on:
       - "mandelboxes/**"
       - "!mandelboxes/README.md"
       - ".github/workflows/mandelboxes-check-pr.yml"
-      - "!mandelboxes/helper_scripts/run_mandelbox_image.sh"
+      - "!mandelboxes/scripts/run_mandelbox_image.sh"
       - "!mandelboxes/run.sh"
       - "pyproject.toml"
       - "pylintrc"
@@ -65,13 +65,13 @@ jobs:
 
       - name: Install requirements
         working-directory: mandelboxes
-        run: pip install -r helper_scripts/requirements.txt -r testing_scripts/requirements.txt
+        run: pip install -r scripts/requirements.txt -r scripts/testing/requirements.txt
 
       - name: Add pylint-wrapper to the PATH
         run: echo "$GITHUB_WORKSPACE/.github/workflows/helpers" >> "$GITHUB_PATH"
 
       - name: Check if Code Matches Pylint Standards
-        run: pylint-wrapper mandelboxes/helper_scripts mandelboxes/testing_scripts
+        run: pylint-wrapper mandelboxes/scripts mandelboxes/scripts/testing
 
   # Running pytest for Python Scripts in mandelboxes
   mandelboxes-python-scripts-pytest:

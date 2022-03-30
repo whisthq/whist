@@ -51,7 +51,7 @@ target_image_paths = image_paths.copy()
 # If --all is passed, generate image_paths procedurally
 if build_all:
     with subprocess.Popen(
-        "./helper_scripts/find_mandelbox_dockerfiles_in_subtree.sh",
+        "./scripts/find_mandelbox_dockerfiles_in_subtree.sh",
         shell=True,
         stdout=subprocess.PIPE,
     ) as files_process:

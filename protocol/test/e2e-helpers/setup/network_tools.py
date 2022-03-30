@@ -2,7 +2,7 @@
 
 import os, sys
 
-from e2e_helpers.common.ssh_tools import (
+from e2e-helpers.common.ssh_tools import (
     wait_until_cmd_done,
 )
 

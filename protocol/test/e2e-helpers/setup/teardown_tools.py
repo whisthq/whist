@@ -3,18 +3,18 @@
 import os, sys, json
 import pexpect
 
-from e2e_helpers.whist_server_tools import shutdown_and_wait_server_exit
+from e2e-helpers.whist_server_tools import shutdown_and_wait_server_exit
 
-from e2e_helpers.common.ssh_tools import (
+from e2e-helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
 )
 
-from e2e_helpers.aws.boto3_tools import (
+from e2e-helpers.aws.boto3_tools import (
     terminate_or_stop_aws_instance,
 )
 
-from e2e_helpers.setup.network_tools import (
+from e2e-helpers.setup.network_tools import (
     restore_network_conditions,
 )
 
