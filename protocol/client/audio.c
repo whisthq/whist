@@ -61,11 +61,13 @@ Custom Types
 ============================
 */
 
+// Whether or not we're buffering, or playing
 typedef enum {
-    InitialBuffering,
-    Normal,
+    Buffering,
+    Playing,
 } AudioState;
 
+// Whether we should dup a frame, or drop a frame
 typedef enum {
     None,
     DropFrame,
@@ -84,19 +86,15 @@ struct AudioContext {
     // True if the audio device is pending a refresh
     bool pending_refresh;
 
+    // The audio decoder
     AudioDecoder* audio_decoder;
-
+    // The frontend to play audio with
     WhistFrontend* target_frontend;
 
-    // Audio render context
-
-    // holds the current audio frame pending to render
+    // The audio render context data
     AudioRenderContext render_context;
-    // true if and only if the audio packet in render_context should be played
+    // Whether or not the render context is populated and ready-to-be-played
     bool pending_render_context;
-
-    // Audio state
-    AudioState audio_state;
 
     // Sample sizes for average size tracking
     // Samples are measured in frames (Not necessarily whole numbers)
@@ -106,6 +104,12 @@ struct AudioContext {
     // The adjust as recommended by size sample analysis
     // This will get set to None once it's acted upon
     AdjustCommand adjust_command;
+
+    // Audio state (Buffering, or Playing)
+    AudioState audio_state;
+    // Buffer for the audio buffering state
+    int audio_buffering_buffer_size;
+    uint8_t audio_buffering_buffer[DECODED_BYTES_PER_FRAME * (AUDIO_QUEUE_TARGET_SIZE + 1)];
 };
 
 /*
@@ -164,15 +168,13 @@ AudioContext* init_audio(WhistFrontend* frontend) {
     audio_context->pending_render_context = false;
     audio_context->target_frontend = frontend;
     audio_context->audio_decoder = NULL;
-    audio_context->audio_state = InitialBuffering;
+    audio_context->audio_state = Buffering;
+    audio_context->audio_buffering_buffer_size = 0;
     init_audio_player(audio_context);
 
-    // Init size samples
+    // Init sample size info
     start_timer(&audio_context->size_sample_timer);
     audio_context->sample_index = 0;
-    for (int i = 0; i < AUDIO_NUM_SAMPLES; i++) {
-        audio_context->samples[i] = AUDIO_QUEUE_TARGET_SIZE;
-    }
 
     // Return the audio context
     return audio_context;
@@ -203,30 +205,37 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     int audio_device_size = (int)safe_get_audio_queue(audio_context);
     int audio_size = audio_device_size + num_frames_buffered * DECODED_BYTES_PER_FRAME;
 
-    // Every frequency ms, record an audio sample
-    if (get_timer(&audio_context->size_sample_timer) * MS_IN_SECOND > AUDIO_SAMPLE_FREQUENCY_MS) {
-        // Record the sample and reset the timer
-        audio_context->samples[audio_context->sample_index] = audio_size / DECODED_BYTES_PER_FRAME;
-        audio_context->sample_index++;
-        start_timer(&audio_context->size_sample_timer);
-        // If we've sampled numsamples time, act on the average size
-        if (audio_context->sample_index == AUDIO_NUM_SAMPLES) {
-            audio_context->sample_index = 0;
-            // Calculate the new average, in fractional frames
-            double avg_sample = 0.0;
-            for (int i = 0; i < AUDIO_NUM_SAMPLES; i++) {
-                avg_sample += audio_context->samples[i];
-            }
-            avg_sample /= AUDIO_NUM_SAMPLES;
-            // Check for size-target discrepancy
-            audio_context->adjust_command = None;
-            if (avg_sample < AUDIO_QUEUE_TARGET_SIZE - AUDIO_ACCEPTABLE_DELTA) {
-                audio_context->adjust_command = DupFrame;
-            }
-            if (avg_sample > AUDIO_QUEUE_TARGET_SIZE + AUDIO_ACCEPTABLE_DELTA) {
-                audio_context->adjust_command = DropFrame;
+    // Every sample freq ms of playtime, record an audio sample
+    if (audio_context->audio_state == Playing) {
+        if (get_timer(&audio_context->size_sample_timer) * MS_IN_SECOND >
+            AUDIO_SAMPLE_FREQUENCY_MS) {
+            // Record the sample and reset the timer
+            audio_context->samples[audio_context->sample_index] =
+                audio_size / DECODED_BYTES_PER_FRAME;
+            audio_context->sample_index++;
+            start_timer(&audio_context->size_sample_timer);
+
+            // If we've sampled numsamples time, act on the average size
+            if (audio_context->sample_index == AUDIO_NUM_SAMPLES) {
+                audio_context->sample_index = 0;
+                // Calculate the new average, in fractional frames
+                double avg_sample = 0.0;
+                for (int i = 0; i < AUDIO_NUM_SAMPLES; i++) {
+                    avg_sample += audio_context->samples[i];
+                }
+                avg_sample /= AUDIO_NUM_SAMPLES;
+                // Check for size-target discrepancy
+                if (avg_sample < AUDIO_QUEUE_TARGET_SIZE - AUDIO_ACCEPTABLE_DELTA) {
+                    audio_context->adjust_command = DupFrame;
+                }
+                if (avg_sample > AUDIO_QUEUE_TARGET_SIZE + AUDIO_ACCEPTABLE_DELTA) {
+                    audio_context->adjust_command = DropFrame;
+                }
             }
         }
+    } else {
+        // Clear sample-tracking if we're buffering
+        audio_context->sample_index = 0;
     }
 
     // Consume a new frame, if the renderer has room to queue 8 frames, or if an overflow happened,
@@ -246,6 +255,7 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     // otherwise, push the audio frame to the render context
     if (!audio_context->pending_render_context) {
         // If we have space, render it out. Otherwise, drop it because we're overflowing.
+        // When playing, it depends on whether we have space and/or should drop
         int num_frames_to_render = audio_context->adjust_command == DupFrame ? 2 : 1;
         bool has_space = (int)safe_get_audio_queue(audio_context) <=
                          (AUDIO_QUEUE_TARGET_SIZE - num_frames_to_render) * DECODED_BYTES_PER_FRAME;
@@ -312,16 +322,38 @@ void render_audio(AudioContext* audio_context) {
                 audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
                 decoded_data_size = audio_decoder_get_frame_data_size(audio_context->audio_decoder);
 
-                // Queue the decoded_data into the frontend audio player
-                if (whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
-                                               decoded_data_size) < 0) {
-                    LOG_WARNING("Could not play audio!");
+                // If the audio device runs dry, begin buffering
+                if (safe_get_audio_queue(audio_context) == 0) {
+                    audio_context->audio_state = Buffering;
                 }
-                // If we should dup the frame, queue it out again
-                if (audio_context->render_context.adjust_command == DupFrame) {
-                    if (whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
-                                                   decoded_data_size) < 0) {
-                        LOG_WARNING("Could not play audio!");
+
+                // If we're buffering, then buffer
+                if (audio_context->audio_state == Buffering) {
+                    // If it's large enough to hit the target, start playing it all
+                    if (audio_context->audio_buffering_buffer_size + (int)decoded_data_size >
+                        (AUDIO_QUEUE_TARGET_SIZE - 1) * DECODED_BYTES_PER_FRAME) {
+                        whist_frontend_queue_audio(
+                            audio_context->target_frontend, audio_context->audio_buffering_buffer,
+                            (size_t)audio_context->audio_buffering_buffer_size);
+                        audio_context->audio_buffering_buffer_size = 0;
+                        whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
+                                                   decoded_data_size);
+                        audio_context->audio_state = Playing;
+                    } else {
+                        // Otherwise, keep buffering
+                        memcpy(audio_context->audio_buffering_buffer +
+                                   audio_context->audio_buffering_buffer_size,
+                               decoded_data, decoded_data_size);
+                        audio_context->audio_buffering_buffer_size += (int)decoded_data_size;
+                    }
+                } else {
+                    // If we're playing, then play the audio
+                    whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
+                                               decoded_data_size);
+                    // If we should dup the frame, queue it out again
+                    if (audio_context->render_context.adjust_command == DupFrame) {
+                        whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
+                                                   decoded_data_size);
                     }
                 }
             }
