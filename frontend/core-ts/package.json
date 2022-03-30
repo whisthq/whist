@@ -1,14 +1,14 @@
 {
   "name": "@whist/core-ts",
   "version": "1.0.0",
+  "license": "UNLICENSED",
+  "repository": "https://github.com/whisthq/whist",
   "description": "Whist Internal Library for all Whist React components, Typescript functions, CSS modules, etc.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "*"
   ],
-  "license": "UNLICENSED",
-  "repository": "https://github.com/whisthq/whist",
   "devDependencies": {
     "@babel/cli": "^7.16.0",
     "@babel/core": "^7.16.0",
@@ -55,12 +55,12 @@
     "clean": "rimraf dist",
     "copy-package": "mkdir -p dist && cp package.json dist/package.json",
     "build": "yarn run clean && yarn run compile",
-    "dev": "CONFIG=$(yarn config:parse) nodemon -r tsconfig-paths/register --watch src",
+    "dev": "nodemon -r tsconfig-paths/register --watch src",
     "lint:check": "eslint src/** --no-error-on-unmatched-pattern",
     "lint:fix": "eslint --fix src/** --no-error-on-unmatched-pattern",
-    "tsc:watch": "CONFIG=$(yarn config:parse) yarn run clean && yarn run compile -- --watch",
-    "test": "CONFIG=$(yarn config:parse) yarn run compile && jest",
-    "test:watch": "CONFIG=$(yarn config:parse) jest --watch",
+    "tsc:watch": "yarn run clean && yarn run compile -- --watch",
+    "test": "yarn run compile && jest",
+    "test:watch": "jest --watch",
     "test:ci": "yarn run compile && jest --coverage"
   },
   "engines": {
