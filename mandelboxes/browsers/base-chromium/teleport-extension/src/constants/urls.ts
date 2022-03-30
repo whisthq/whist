@@ -8,8 +8,4 @@ export const LINUX_PLATFORM = "Linux x86_64"
 
 // We want websites that make use of the Cmd + [Key] Mac keyboard shortcut to have Linux user agents in order
 // for those shortcuts to work correctly, since the protocol maps Cmd to Ctrl
-export const URLS_TO_MODIFY_USER_AGENT = [
-  "figma.com",
-  "mail.superhuman.com",
-  "stripe.com",
-]
+export const URLS_TO_MODIFY_USER_AGENT = ["figma.com"]
