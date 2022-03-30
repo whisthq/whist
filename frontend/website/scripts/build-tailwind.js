@@ -10,4 +10,4 @@
 
 const { execCommand } = require("./execCommand")
 
-execCommand("npx tailwindcss build -o public/css/tailwind.css")
+execCommand("npx tailwindcss build -o public/css/tailwind.css", ".")
