@@ -47,6 +47,7 @@ static volatile bool prev_insufficient_bandwidth = false;
 // NV12 framebuffer update
 static bool pending_nv12data = false;
 static AVFrame* pending_nv12_frame = NULL;
+static AVFrame* last_rendered_nv12_frame = NULL;
 
 // The background color for the loading screen
 static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
@@ -129,9 +130,11 @@ static void sdl_render_insufficient_bandwidth(void);
 /**
  * @brief                          Renders out any pending nv12 data
  *
+ * @param frame                    The AVFrame to render
+ *
  * @note                           Must be called on the main thread
  */
-static void sdl_render_nv12data(void);
+static void sdl_render_nv12data(AVFrame* frame);
 
 /**
  * @brief                          Render a file drag indication icon
@@ -301,6 +304,10 @@ void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend) {
         Arguments:
             window_param (SDL_Window*): SDL window to be destroyed
     */
+
+    // Destroy the AVFrames
+    av_frame_free(&last_rendered_nv12_frame);
+    av_frame_free(&pending_nv12_frame);
 
     // Destroy the framebuffer
     if (frame_buffer) {
@@ -770,14 +777,27 @@ static void sdl_present_pending_framebuffer(void) {
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
 
-    // If any overlays need to be updated make sure a background is rendered
-    if (insufficient_bandwidth || pending_file_drag_update || pending_overlay_removal) {
-        pending_nv12data = true;
+    bool should_render_nv12 = false;
+
+    // If there's pending nv12data, update last_rendered_nv12_frame
+    if (pending_nv12data) {
+        // Move to last_rendered_nv12_frame
+        av_frame_free(&last_rendered_nv12_frame);
+        last_rendered_nv12_frame = pending_nv12_frame;
+        pending_nv12_frame = NULL;
+        pending_nv12data = false;
+        should_render_nv12 = true;
+    }
+
+    // If any overlays need to be updated, then we should render nv12
+    if (last_rendered_nv12_frame != NULL &&
+        (insufficient_bandwidth || pending_file_drag_update || pending_overlay_removal)) {
+        should_render_nv12 = true;
     }
 
     // Render the nv12data, if any exists
-    if (pending_nv12data) {
-        sdl_render_nv12data();
+    if (should_render_nv12) {
+        sdl_render_nv12data(last_rendered_nv12_frame);
     }
 
     if (insufficient_bandwidth) {
@@ -789,12 +809,14 @@ static void sdl_present_pending_framebuffer(void) {
     if (pending_file_drag_update) {
         sdl_render_file_drag_icon(file_drag_update_x, file_drag_update_y);
     }
+    whist_unlock_mutex(renderer_mutex);
 
     // Present the frame
     SDL_RenderPresent(sdl_renderer);
 
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
 
+    whist_lock_mutex(renderer_mutex);
     pending_render = false;
     pending_overlay_removal = false;
     whist_unlock_mutex(renderer_mutex);
@@ -852,16 +874,7 @@ static void sdl_render_insufficient_bandwidth(void) {
     }
 }
 
-static void sdl_render_nv12data(void) {
-    FATAL_ASSERT(pending_nv12data == true);
-
-    AVFrame* frame = pending_nv12_frame;
-    if (!frame) {
-        // We are attempting to render before any frame has been decoded.
-        // Just continue to show the background color
-        return;
-    }
-
+static void sdl_render_nv12data(AVFrame* frame) {
     // The texture object we allocate is larger than the frame,
     // so we only copy the valid section of the frame into the texture.
     SDL_Rect texture_rect = {
@@ -905,9 +918,6 @@ static void sdl_render_nv12data(void) {
         };
         SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
     }
-
-    // No longer pending nv12 data
-    pending_nv12data = false;
 }
 
 static SDL_Surface* sdl_surface_from_png_file(char* filename) {
