@@ -14,7 +14,7 @@ import (
 
 // This contains the path and file names related to browser data
 var (
-	UserInitialBrowserDirInMbox string = utils.WhistDir + "userConfigs/"
+	UserInitialBrowserDirInMbox string = path.Join(utils.WhistDir, "userConfigs/")
 	UserInitialBrowserFile      string = "user-initial-file"
 )
 

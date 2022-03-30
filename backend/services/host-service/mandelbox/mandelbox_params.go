@@ -2,6 +2,7 @@ package mandelbox // import "github.com/whisthq/whist/backend/services/host-serv
 
 import (
 	"os"
+	"path"
 
 	types "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -68,7 +69,7 @@ func (mandelbox *mandelboxData) MarkConfigReady() error {
 }
 
 func (mandelbox *mandelboxData) getResourceMappingDir() string {
-	return utils.Sprintf("%s%s/mandelboxResourceMappings/", utils.WhistDir, mandelbox.GetID())
+	return path.Join(utils.WhistDir, mandelbox.GetID().String(), "/mandelboxResourceMappings/")
 }
 
 func (mandelbox *mandelboxData) createResourceMappingDir() error {
