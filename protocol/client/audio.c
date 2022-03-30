@@ -63,15 +63,15 @@ Custom Types
 
 // Whether or not we're buffering, or playing
 typedef enum {
-    Buffering,
-    Playing,
+    BUFFERING,
+    PLAYING,
 } AudioState;
 
 // Whether we should dup a frame, or drop a frame
 typedef enum {
-    None,
-    DropFrame,
-    DupFrame,
+    NOOP_FRAME,
+    DROP_FRAME,
+    DUP_FRAME,
 } AdjustCommand;
 
 typedef struct {
@@ -168,11 +168,12 @@ AudioContext* init_audio(WhistFrontend* frontend) {
     audio_context->pending_render_context = false;
     audio_context->target_frontend = frontend;
     audio_context->audio_decoder = NULL;
-    audio_context->audio_state = Buffering;
+    audio_context->audio_state = BUFFERING;
     audio_context->audio_buffering_buffer_size = 0;
     init_audio_player(audio_context);
 
     // Init sample size info
+    audio_context->adjust_command = NOOP_FRAME;
     start_timer(&audio_context->size_sample_timer);
     audio_context->sample_index = 0;
 
@@ -196,6 +197,9 @@ void refresh_audio_device(AudioContext* audio_context) {
     audio_context->pending_refresh = true;
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered) {
     if (get_debug_console_override_values()->verbose_log_audio) {
         LOG_INFO("[audio]pending_render_context= %d", (int)audio_context->pending_render_context);
@@ -206,12 +210,12 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     int audio_size = audio_device_size + num_frames_buffered * DECODED_BYTES_PER_FRAME;
 
     // Every sample freq ms of playtime, record an audio sample
-    if (audio_context->audio_state == Playing) {
+    if (audio_context->audio_state == PLAYING) {
         if (get_timer(&audio_context->size_sample_timer) * MS_IN_SECOND >
             AUDIO_SAMPLE_FREQUENCY_MS) {
             // Record the sample and reset the timer
             audio_context->samples[audio_context->sample_index] =
-                audio_size / DECODED_BYTES_PER_FRAME;
+                audio_size / (double)DECODED_BYTES_PER_FRAME;
             audio_context->sample_index++;
             start_timer(&audio_context->size_sample_timer);
 
@@ -226,10 +230,10 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
                 avg_sample /= AUDIO_NUM_SAMPLES;
                 // Check for size-target discrepancy
                 if (avg_sample < AUDIO_QUEUE_TARGET_SIZE - AUDIO_ACCEPTABLE_DELTA) {
-                    audio_context->adjust_command = DupFrame;
+                    audio_context->adjust_command = DUP_FRAME;
                 }
                 if (avg_sample > AUDIO_QUEUE_TARGET_SIZE + AUDIO_ACCEPTABLE_DELTA) {
-                    audio_context->adjust_command = DropFrame;
+                    audio_context->adjust_command = DROP_FRAME;
                 }
             }
         }
@@ -238,43 +242,43 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
         audio_context->sample_index = 0;
     }
 
-    // Consume a new frame, if the renderer has room to queue 8 frames, or if an overflow happened,
-    // or if we need to adjust
-    int num_frames_to_render = audio_context->adjust_command == DupFrame ? 2 : 1;
+    // Always drop if we're overflowing
+    if (audio_size > AUDIO_BUFFER_OVERFLOW_SIZE * DECODED_BYTES_PER_FRAME) {
+        audio_context->adjust_command = DROP_FRAME;
+    }
+
+    // Consume a new frame, if the renderer has room to queue 8 frames,
+    // or if we need to drop a frame
+    int num_frames_to_render = audio_context->adjust_command == DUP_FRAME ? 2 : 1;
     bool wants_new_frame = !audio_context->pending_render_context &&
                            audio_device_size <= (AUDIO_QUEUE_TARGET_SIZE - num_frames_to_render) *
                                                     DECODED_BYTES_PER_FRAME;
-    bool frames_overflowing = audio_size > AUDIO_BUFFER_OVERFLOW_SIZE * DECODED_BYTES_PER_FRAME;
-    return wants_new_frame || frames_overflowing || audio_context->adjust_command == DropFrame;
+    return wants_new_frame || audio_context->adjust_command == DROP_FRAME;
 }
 
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
-    // otherwise, push the audio frame to the render context
-    if (!audio_context->pending_render_context) {
-        // If we have space, render it out. Otherwise, drop it because we're overflowing.
-        // When playing, it depends on whether we have space and/or should drop
-        int num_frames_to_render = audio_context->adjust_command == DupFrame ? 2 : 1;
-        bool has_space = (int)safe_get_audio_queue(audio_context) <=
-                         (AUDIO_QUEUE_TARGET_SIZE - num_frames_to_render) * DECODED_BYTES_PER_FRAME;
-        bool should_drop = !has_space || audio_context->adjust_command == DropFrame;
-        if (!should_drop) {
+    // If we're supposed to drop it, drop it.
+    if (audio_context->adjust_command != DROP_FRAME) {
+        // If we shouldn't drop it, push the audio frame to the render context
+        if (!audio_context->pending_render_context) {
             // Mark out the audio frame to the render context
-            audio_context->render_context.adjust_command = audio_context->adjust_command;
             audio_context->render_context.audio_frame = audio_frame;
+            audio_context->render_context.adjust_command = audio_context->adjust_command;
 
             // LOG_DEBUG("received packet with ID %d, audio last played %d", packet->id,
             // audio_context->last_played_id); signal to the renderer that we're ready
 
             whist_analyzer_record_pending_rendering(PACKET_AUDIO);
             audio_context->pending_render_context = true;
+        } else {
+            LOG_ERROR("We tried to render audio, but the renderer wasn't ready!");
         }
-        audio_context->adjust_command = None;
-    } else {
-        LOG_ERROR("We tried to send the audio context a frame when it wasn't ready!");
     }
+    // Mark the command as consumed
+    audio_context->adjust_command = NOOP_FRAME;
 }
 
 void render_audio(AudioContext* audio_context) {
@@ -324,11 +328,11 @@ void render_audio(AudioContext* audio_context) {
 
                 // If the audio device runs dry, begin buffering
                 if (safe_get_audio_queue(audio_context) == 0) {
-                    audio_context->audio_state = Buffering;
+                    audio_context->audio_state = BUFFERING;
                 }
 
                 // If we're buffering, then buffer
-                if (audio_context->audio_state == Buffering) {
+                if (audio_context->audio_state == BUFFERING) {
                     // If it's large enough to hit the target, start playing it all
                     if (audio_context->audio_buffering_buffer_size + (int)decoded_data_size >
                         (AUDIO_QUEUE_TARGET_SIZE - 1) * DECODED_BYTES_PER_FRAME) {
@@ -338,7 +342,7 @@ void render_audio(AudioContext* audio_context) {
                         audio_context->audio_buffering_buffer_size = 0;
                         whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
                                                    decoded_data_size);
-                        audio_context->audio_state = Playing;
+                        audio_context->audio_state = PLAYING;
                     } else {
                         // Otherwise, keep buffering
                         memcpy(audio_context->audio_buffering_buffer +
@@ -351,7 +355,7 @@ void render_audio(AudioContext* audio_context) {
                     whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
                                                decoded_data_size);
                     // If we should dup the frame, queue it out again
-                    if (audio_context->render_context.adjust_command == DupFrame) {
+                    if (audio_context->render_context.adjust_command == DUP_FRAME) {
                         whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
                                                    decoded_data_size);
                     }
@@ -373,7 +377,6 @@ Private Function Implementations
 static void init_audio_player(AudioContext* audio_context) {
     // Initialize the audio device for the frequency and 2 channels
     whist_frontend_open_audio(audio_context->target_frontend, audio_context->audio_frequency, 2);
-    // NOTE: Pause audio here
 
     // Verify that the decoder doesn't already exist
     FATAL_ASSERT(audio_context->audio_decoder == NULL);

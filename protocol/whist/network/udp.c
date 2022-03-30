@@ -873,9 +873,13 @@ static void* udp_get_packet(void* raw_context, WhistPacketType type) {
         }
         case PACKET_AUDIO: {
             if (ring_buffer->last_rendered_id == -1) {
+                // INITIAL_FRAMES is the maximum number of frames
+                // that the ringbuffer will start with
+#define INITIAL_FRAMES 6
                 // If the max_id is too large, just skip to closely behind it
-                if (ring_buffer->max_id > 9) {
-                    reset_stream(ring_buffer, ring_buffer->max_id - 8);
+                if (ring_buffer->max_id > INITIAL_FRAMES) {
+                    // Will start off the stream with INITIAL_FRAMES in the buffer
+                    reset_stream(ring_buffer, ring_buffer->max_id - INITIAL_FRAMES + 1);
                 }
             } else {
                 int next_to_render_id = ring_buffer->last_rendered_id + 1;
