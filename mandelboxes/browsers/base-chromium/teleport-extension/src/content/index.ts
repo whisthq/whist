@@ -6,6 +6,7 @@
 
 import { initCursorLockDetection } from "./cursor"
 import { initUserAgentSpoofer } from "./userAgent"
+import { initFeatureWarnings } from "./warning"
 
 // Enable relative mouse mode
 initCursorLockDetection()
@@ -13,14 +14,6 @@ initCursorLockDetection()
 // Enable Linux user agent spoofing on certain predetermined websites
 initUserAgentSpoofer()
 
-var div = document.createElement("div")
-div.style.width = "100px"
-div.style.height = "100px"
-div.style.background = "red"
-div.style.color = "white"
-div.style.position = "fixed"
-div.style.top = "10px"
-div.style.left = "10px"
-div.innerHTML = "Hello"
-
-document.body.appendChild(div)
+// If the user tries to go to a website that uses your camera/mic, show them a warning
+// that this feature is missing
+initFeatureWarnings()
