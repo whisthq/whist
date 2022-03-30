@@ -34,5 +34,11 @@
     "16": "/icons/whist_logo_16.png",
     "48": "/icons/whist_logo_48.png",
     "128": "/icons/whist_logo_128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["js/userAgent.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
