@@ -500,7 +500,7 @@ func (mandelbox *mandelboxData) cleanUserConfigDir() {
 // is exported for testing reasons and is not defined in the mandelbox
 // interface.
 func (mandelbox *mandelboxData) GetUserConfigDir() string {
-	return utils.Sprintf("%s%v/%s", utils.WhistDir, mandelbox.GetID(), "userConfigs")
+	return path.Join(utils.WhistDir, mandelbox.GetID().String(), "userConfigs")
 }
 
 // hash returns a human-readable hash of the given token.

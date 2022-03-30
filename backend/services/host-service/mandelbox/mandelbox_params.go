@@ -2,6 +2,7 @@ package mandelbox // import "github.com/whisthq/whist/backend/services/host-serv
 
 import (
 	"os"
+	"path"
 
 	types "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -68,7 +69,7 @@ func (mandelbox *mandelboxData) MarkConfigReady() error {
 }
 
 func (mandelbox *mandelboxData) getResourceMappingDir() string {
-	return utils.Sprintf("%s%s/mandelboxResourceMappings/", utils.WhistDir, mandelbox.GetID())
+	return path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings")
 }
 
 func (mandelbox *mandelboxData) createResourceMappingDir() error {
@@ -87,7 +88,7 @@ func (mandelbox *mandelboxData) cleanResourceMappingDir() {
 }
 
 func (mandelbox *mandelboxData) writeResourceMappingToFile(filename, data string) (err error) {
-	file, err := os.OpenFile(mandelbox.getResourceMappingDir()+filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
+	file, err := os.OpenFile(path.Join(mandelbox.getResourceMappingDir(), filename), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
 	if err != nil {
 		return utils.MakeError("Unable to create file %s to store resource assignment. Error: %v", filename, err)
 	}

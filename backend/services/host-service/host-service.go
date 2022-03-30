@@ -303,11 +303,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
-			utils.Sprintf("/whist/%s/mandelboxResourceMappings:/whist/resourceMappings", mandelbox.GetID()),
-			utils.Sprintf("%s%s/sockets:/tmp/sockets", utils.TempDir, mandelbox.GetID()),
-			utils.Sprintf("%slogs/%s/%s:/var/log/whist", utils.TempDir, mandelbox.GetID(), mandelboxSubscription.SessionID),
+			path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings", ":", "/whist", "resourceMappings"),
+			path.Join(utils.TempDir, mandelbox.GetID().String(), "sockets", ":", "tmp", "sockets"),
+			path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), mandelboxSubscription.SessionID, ":", "var", "log", "whist"),
 			"/run/udev/data:/run/udev/data:ro",
-			utils.Sprintf("/whist/%s/userConfigs/unpacked_configs:/whist/userConfigs:rshared", mandelbox.GetID()),
+			path.Join(utils.WhistDir, mandelbox.GetID().String(), "userConfigs", "unpacked_configs", ":", "/whist", "userConfigs", ":rshared"),
 		},
 		PortBindings: natPortBindings,
 		CapDrop:      strslice.StrSlice{"ALL"},
@@ -627,6 +627,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 		!strings.Contains(ephemeralDevicePath, "bash") && !strings.Contains(utils.WhistDir, utils.WhistEphemeralFSPath) {
 		logger.Infof("Creating Whist directory on ephemeral device.")
 		utils.WhistDir = path.Join(utils.WhistEphemeralFSPath, utils.WhistDir)
+		utils.TempDir = path.Join(utils.WhistDir, "temp/")
 	}
 
 	// check if "/whist" already exists --- if so, panic, since

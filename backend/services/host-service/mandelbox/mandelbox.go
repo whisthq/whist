@@ -24,6 +24,7 @@ package mandelbox // import "github.com/whisthq/whist/backend/services/host-serv
 
 import (
 	"context"
+	"path"
 	"strings"
 	"sync"
 
@@ -477,8 +478,8 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
-
-		err := uinputdevices.SendDeviceFDsOverSocket(mandelbox.ctx, goroutineTracker, devices, utils.TempDir+mandelbox.GetID().String()+"/sockets/uinput.sock")
+		socketPath := path.Join(utils.TempDir, mandelbox.GetID().String(), "/sockets/uinput.sock")
+		err := uinputdevices.SendDeviceFDsOverSocket(mandelbox.ctx, goroutineTracker, devices, socketPath)
 		if err != nil {
 			placeholderUUID := types.MandelboxID(utils.PlaceholderWarmupUUID())
 			if mandelbox.GetID() == placeholderUUID && strings.Contains(err.Error(), "use of closed network connection") {
