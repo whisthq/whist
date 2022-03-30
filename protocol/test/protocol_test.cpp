@@ -133,7 +133,6 @@ TEST_F(ProtocolTest, InitSDL) {
 
     check_stdout_line(::testing::HasSubstr("SDL: Using renderer: "));
     check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
-    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
 
 #ifdef _WIN32
     check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));

@@ -46,7 +46,7 @@ static volatile bool prev_insufficient_bandwidth = false;
 
 // NV12 framebuffer update
 static bool pending_nv12data = false;
-static AVFrame* pending_nv12_frame;
+static AVFrame* pending_nv12_frame = NULL;
 
 // The background color for the loading screen
 static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
@@ -790,15 +790,11 @@ static void sdl_present_pending_framebuffer(void) {
         sdl_render_file_drag_icon(file_drag_update_x, file_drag_update_y);
     }
 
+    // Present the frame
+    SDL_RenderPresent(sdl_renderer);
+
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
-    whist_unlock_mutex(renderer_mutex);
 
-    // RenderPresent outside of the mutex, since RenderCopy made a copy anyway
-    // and this will take ~8ms if VSYNC is on.
-    // (If this causes a bug, feel free to pull back to inside of the mutex)
-    TIME_RUN(SDL_RenderPresent(sdl_renderer), VIDEO_RENDER_TIME, statistics_timer);
-
-    whist_lock_mutex(renderer_mutex);
     pending_render = false;
     pending_overlay_removal = false;
     whist_unlock_mutex(renderer_mutex);
@@ -862,7 +858,7 @@ static void sdl_render_nv12data(void) {
     AVFrame* frame = pending_nv12_frame;
     if (!frame) {
         // We are attempting to render before any frame has been decoded.
-        // TODO: can we do something else here?
+        // Just continue to show the background color
         return;
     }
 
