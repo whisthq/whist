@@ -217,6 +217,10 @@ static bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
                          sdl_event.window.event == SDL_WINDOWEVENT_RESTORED);
                     break;
                 }
+                default: {
+                    event->type = FRONTEND_EVENT_UNHANDLED;
+                    break;
+                }
             }
             break;
         }

@@ -7,6 +7,7 @@
 typedef struct WhistFrontend WhistFrontend;
 
 typedef enum FrontendEventType {
+    FRONTEND_EVENT_UNHANDLED = 0,
     FRONTEND_EVENT_RESIZE,
     FRONTEND_EVENT_VISIBILITY,
     FRONTEND_EVENT_AUDIO_UPDATE,
@@ -18,7 +19,6 @@ typedef enum FrontendEventType {
     FRONTEND_EVENT_GESTURE,
     FRONTEND_EVENT_FILE_DROP,
     FRONTEND_EVENT_QUIT,
-    FRONTEND_EVENT_UNHANDLED,
 } FrontendEventType;
 
 typedef struct FrontendKeypressEvent {
