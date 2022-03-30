@@ -50,7 +50,6 @@ then
   echo "$WHIST_DEST_BROWSER" > $WHIST_PRIVATE_DIR/user_dest_browser
 fi
 
-
 unset WHIST_INITIAL_USER_DATA_FILE
 unset WHIST_DEST_BROWSER
 
