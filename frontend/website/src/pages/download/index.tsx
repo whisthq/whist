@@ -9,7 +9,7 @@ const Download = () => {
         Colorful box component with Get Started prompt
 
         Arguments:
-            none
+            None
     */
   return (
     <>
