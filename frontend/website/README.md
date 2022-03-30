@@ -1,21 +1,17 @@
 # Whist Website
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
+The directory contains the source code for the Whist website, hosted on Netlify.
 
-This repository contains the code for the Whist website.
+## Development
 
-## Setting Up for Development
-
-Note: Steps 1, 2, and 3 only need to be done once.
+### Setting Up for Development
 
 1. Download the AWS CLI and run `aws configure`. You'll be prompted to enter your AWS Access Key
-   and Secret Key, which you received in an onboarding email titled "AWS Credentials."
+   and Secret Key, which you should have received during your onboarding.
 
-2. `cd` into the `scripts` folder and run `python3 retrieve.py` to download the necessary environment variables. Depending on your computer, you may need to replace `python3` with `py`, `py3`, `python`, etc.
+2. Run `yarn -i` to install package dependencies and launch localhost via `yarn start`.
 
-3. Run `yarn` to install package dependencies and launch localhost via `yarn start`.
-
-## How to Contribute
+### How to Contribute
 
 Before making a pull request, ensure that the following steps are taken:
 
@@ -31,45 +27,20 @@ Before making a pull request, ensure that the following steps are taken:
 
 Finally, you can open PR to `dev`.
 
-## Publishing the Website
+### Styling
 
-The website auto-deploys from GitHub directly to Netlify, which is our web hosting provider. For every `push` to our main branches (dev/staging/prod), the code in that branch will be automatically built and deployed on Netlify. The Netlify dashboard is managed by the code owners.
+To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on the Whist monorepository, which you can initialize by first installing pre-commit via `pip install pre-commit` from the root level, and then running `pre-commit install` to instantiate the hooks for Prettier.
+
+Additional specific checks are done by ESLint. Please run `yarn lint:check` or `yarn lint:fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to `.eslintrc` and either demote to warnings or mute entirely.
+
+## Deployment
+
+The website auto-deploys from GitHub directly to Netlify, which is our web hosting provider. For every `push` to our main branches (dev/staging/prod), the code in that branch will be automatically built and deployed on Netlify. The Netlify dashboard is managed by the codeowners.
+
+On all PRs to `dev`, basic linting and building checks will be performed, and a deploy preview from Netlify will be generated.
 
 - The branch `dev` deploys to https://dev.whist.com.
 - The branch `staging` deploys to https://staging.whist.com.
 - The branch `prod` deploys to https://whist.com.
 
-For `staging` the password is `><mc?@,>YF?v&p,e`. For `dev` the password is `Mandelbox2021!`.
-
-Basic continuous integration is set up for this project. For every PR, basic Node.js tests will be compiled and run within GitHub Actions, including linting. Your code needs to pass all linting and tests to be approved for merge. If you create new functions, make sure to create tests for them and add them to the continuous integration, when relevant.
-
-## Google Analytics, A/B Testing, and Tracking
-
-To view our Google Analytics dashboard, follow the tutorial on the [Notion Engineering Wiki](https://www.notion.so/whisthq/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615).
-
-## Styling
-
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
-
-Additional specific checks are done by ESLint. Please run `yarn lint:check` or `yarn lint:fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
-
-You can always run Prettier directly within your IDE by via the following instructions:
-
-### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-
-Launch VS Code Quick Open (Ctrl+P), paste the following command, and press enter.
-
-```bash
-ext install esbenp.prettier-vscode
-```
-
-To ensure that this extension is used over other extensions you may have installed, be sure to set it as the default formatter in your VS Code settings. This setting can be set for all languages or by a specific language.
-
-```json
-{
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
-}
-```
+For `staging` the password is `><mc?@,>YF?v&p,e`. For `dev` and all deploy previews to `dev`, the password is `Mandelbox2021!`.
