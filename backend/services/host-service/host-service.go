@@ -519,7 +519,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// starting up properly.
 	if !metadata.IsLocalEnv() {
 		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s whist-application to start up...", mandelboxSubscription.ID)
-		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20, nil); err != nil {
+		err = utils.WaitForFileCreation(path.Join(utils.WhistDir, mandelboxSubscription.ID.String(), "mandelboxResourceMappings"), "done_sleeping_until_X_clients", time.Second*20, nil)
+		if err != nil {
 			logAndReturnError("Error waiting for mandelbox %s whist-application to start: %s", mandelboxSubscription.ID, err)
 			return
 		}
