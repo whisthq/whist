@@ -15,10 +15,6 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-# Make Google Chrome config folder case-insensitive, since some Chrome Themes
-# fail to install on Linux otherwise
-chattr +F /home/whist/.config/google-chrome
-
 # Under certain (bad) circumstances, SingletonLock might be saved into the user's config. This is an issue,
 # as this prevents Chrome from running forevermore! Hence, we should remove this file when we launch the
 # browser for the first time each session. You can think of this as effectively moving the locking mechansim
