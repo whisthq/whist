@@ -67,7 +67,7 @@ export default flow(
             ...(appEnvironment === WhistEnvironments.LOCAL && {
               local_client: true,
             }),
-            user_agent: getUserAgent(), // This spoofs user agent on server-side Chrome to match Mac's
+            user_agent: getUserAgent(), // This spoofs user agent on server-side Chrome to match the current OS
           }), // Data to send through the JSON transport
         }))
       )
