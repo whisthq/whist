@@ -7,7 +7,7 @@
     "start": "snowpack dev",
     "build": "snowpack build",
     "tailwind": "node ./scripts/build-tailwind.js",
-    "postinstall": "node ./scripts/postinstall.js",
+    "postinstall": "node ./scripts/postInstall.js",
     "lint:check": "node ./scripts/lint.js",
     "lint:fix": "node ./scripts/lint.js --fix",
     "assets:pull": "node ./scripts/pull-assets.mjs"
