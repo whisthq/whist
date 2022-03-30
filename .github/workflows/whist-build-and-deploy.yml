@@ -430,7 +430,7 @@ jobs:
       - name: Print logs of failed mandelbox(es)  on failure
         if: failure()
         working-directory: mandelboxes
-        run: find mandelboxes/ -name "build.log" -type f -exec cat {} +
+        run: find . -name "build.log" -type f -exec cat {} +
 
       # We only deploy the browsers mandelboxes, other mandelboxes are for internal use only
       - name: Push mandelboxes
