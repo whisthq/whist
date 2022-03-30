@@ -1,7 +1,7 @@
-import { injectScriptIntoDOM } from "@app/utils/dom"
+import { injectResourceIntoDOM } from "@app/utils/dom"
 
 const initFeatureWarnings = () => {
-  injectScriptIntoDOM(document, "js/warning.js")
+  injectResourceIntoDOM(document, "js/warning.js")
 }
 
 export { initFeatureWarnings }

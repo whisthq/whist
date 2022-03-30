@@ -1,4 +1,4 @@
-const injectScriptIntoDOM = (document: any, filePath: string) => {
+const injectResourceIntoDOM = (document: Document, filePath: string) => {
   var s = document.createElement("script")
   s.src = chrome.runtime.getURL(filePath)
   s.onload = () => {
@@ -7,4 +7,4 @@ const injectScriptIntoDOM = (document: any, filePath: string) => {
   ;(document.head || document.documentElement).appendChild(s)
 }
 
-export { injectScriptIntoDOM }
+export { injectResourceIntoDOM }

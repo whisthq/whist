@@ -1,7 +1,7 @@
-import { injectScriptIntoDOM } from "@app/utils/dom"
+import { injectResourceIntoDOM } from "@app/utils/dom"
 
 const initUserAgentSpoofer = () => {
-  injectScriptIntoDOM(document, "js/userAgent.js")
+  injectResourceIntoDOM(document, "js/userAgent.js")
 }
 
 export { initUserAgentSpoofer }
