@@ -1,5 +1,15 @@
 #!/bin/bash
 
+## Sample usage:
+
+# ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000
+
+# The command above will change the network conditions each 100 to 1000 ms and apply the following settings to device ens55:
+# Bandwidth limited to a random value in the 10-20 Mbit/s range
+# 5% - 10% of packets, chosen at random, are dropped
+# Queue length is fixed at 50ms to 100ms
+
+
 # Input arguments: [bandwidth range], [packet drop range], [queue length range], [changing range]
 while getopts d:b:p:q:i: flag
 do
@@ -8,7 +18,7 @@ do
         b) bandwidth_range=${OPTARG};;
         p) packet_drop_range=${OPTARG};;
         q) queue_length_range=${OPTARG};;
-        q) interval_range=${OPTARG};;
+        i) interval_range=${OPTARG};;
     esac
 done
 
@@ -104,30 +114,30 @@ echo "Min packet drop: [ $min_packet_drop to $max_packet_drop ]"
 echo "Min queue length: [ $min_queue_length to $max_queue_length ]"
 echo "Min interval duration: [ $min_interval to $max_interval ]"
 
-# Initial Setup
-sudo modprobe ifb
-sudo ip link set dev ifb0 up
-sudo tc qdisc add dev "$device" ingress
-sudo tc filter add dev "$device" parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0
-sudo tc qdisc add dev "$device" root netem delay "$max_queue_length"ms loss "$max_packet_drop"% rate "$min_bandwidth"
-sudo tc qdisc add dev ifb0 root netem delay "$max_queue_length"ms loss "$max_packet_drop"% rate "$min_bandwidth"
+# # Initial Setup
+# sudo modprobe ifb
+# sudo ip link set dev ifb0 up
+# sudo tc qdisc add dev "$device" ingress
+# sudo tc filter add dev "$device" parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0
+# sudo tc qdisc add dev "$device" root netem delay "$max_queue_length"ms loss "$max_packet_drop"% rate "$min_bandwidth"
+# sudo tc qdisc add dev ifb0 root netem delay "$max_queue_length"ms loss "$max_packet_drop"% rate "$min_bandwidth"
 
-# Recurrent net conditions variation
-while true
-do
-   # Multiply min and max by 1000; Generate random int in the range; divide by 100
-    bandwidth=$(($min_bandwidth + $RANDOM % $max_bandwidth))
-    packet_drop=$(($min_packet_drop + $RANDOM % $max_packet_drop))
-    delay=$(($min_queue_length + $RANDOM % $max_queue_length))
-    interval=$(($min_interval + $RANDOM % $max_interval))
+# # Recurrent net conditions variation
+# while true
+# do
+#    # Multiply min and max by 1000; Generate random int in the range; divide by 100
+#     bandwidth=$(($min_bandwidth + $RANDOM % $max_bandwidth))
+#     packet_drop=$(($min_packet_drop + $RANDOM % $max_packet_drop))
+#     delay=$(($min_queue_length + $RANDOM % $max_queue_length))
+#     interval=$(($min_interval + $RANDOM % $max_interval))
 
-    sudo tc qdisc change dev "$device" root netem delay "$delay"ms loss "$packet_drop"% rate "$bandwidth"
-    sudo tc qdisc change dev ifb0 root netem delay "$delay"ms loss "$packet_drop"% rate "$bandwidth"
+#     sudo tc qdisc change dev "$device" root netem delay "$delay"ms loss "$packet_drop"% rate "$bandwidth"
+#     sudo tc qdisc change dev ifb0 root netem delay "$delay"ms loss "$packet_drop"% rate "$bandwidth"
 
-    interval_seconds=$(($interval / 1000))
-    interval_milliseconds=$(($interval - $interval_seconds))
+#     interval_seconds=$(($interval / 1000))
+#     interval_milliseconds=$(($interval - $interval_seconds))
     
-    # Sleep takes seconds as the smallest value
-    sleep "${interval_seconds}.${interval_milliseconds}"
+#     # Sleep takes seconds as the smallest value
+#     sleep "${interval_seconds}.${interval_milliseconds}"
 
-done
+# done
