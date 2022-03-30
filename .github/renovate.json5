@@ -65,6 +65,6 @@
     {
       matchPaths: ["protocol/"],
       groupName: "protocol",
-    },    
+    },
   ],
 }
