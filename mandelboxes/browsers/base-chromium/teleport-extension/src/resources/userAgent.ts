@@ -3,7 +3,7 @@
 */
 
 import {
-  URLS_TO_MODIFY_USER_AGENT,
+  URLS_THAT_NEED_LINUX_USERAGENT,
   LINUX_APP_VERSION,
   LINUX_USER_AGENT,
   LINUX_PLATFORM,
@@ -12,7 +12,7 @@ import {
 var navigator = window.navigator
 const currentURL = document.URL
 
-if (URLS_TO_MODIFY_USER_AGENT.some((url) => currentURL.includes(url))) {
+if (URLS_THAT_NEED_LINUX_USERAGENT.some((url) => currentURL.includes(url))) {
   Object.defineProperty(navigator, "userAgent", {
     get: () => {
       return LINUX_USER_AGENT
