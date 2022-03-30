@@ -4,7 +4,6 @@ const createNotification = (document: Document, text: string) => {
 
   div.style.width = "400px"
   div.style.background = "rgba(0, 0, 0, 0.8)"
-  div.style.color = "white"
   div.style.position = "fixed"
   div.style.top = "10px"
   div.style.right = "10px"
