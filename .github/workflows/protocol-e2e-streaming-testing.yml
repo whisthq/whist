@@ -14,7 +14,7 @@ on:
       - "protocol/**"
       - "!protocol/**/README.md"
       - ".github/workflows/protocol-e2e-streaming-testing.yml"
-      - "mandelboxes/helper_scripts/copy_protocol_build.sh"
+      - "mandelboxes/scripts/copy_protocol_build.sh"
       - ".github/workflows/helpers/parse_and_display_e2e_results.py"
       - ".github/workflows/helpers/protocol/e2e_streaming_test_display_helpers/**"
   workflow_dispatch:
@@ -173,7 +173,7 @@ jobs:
       - name: Stop or terminate leftover AWS instances
         if: always()
         working-directory: protocol/test
-        run: python3 -m e2e_helpers.aws.remove_leftover_instances
+        run: python3 -m helpers.aws.remove_leftover_instances
 
       # We parse the log files from the E2E performance tests above and display the results of the test.
       # We compare the performance to dev and the previous runs of the same branch, if available

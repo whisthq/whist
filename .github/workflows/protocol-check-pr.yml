@@ -14,13 +14,13 @@ on:
       - "protocol/**"
       - "!protocol/**/README.md"
       - ".github/workflows/protocol-check-pr.yml"
-      - "mandelboxes/helper_scripts/copy_protocol_build.sh"
+      - "mandelboxes/scripts/copy_protocol_build.sh"
   pull_request:
     paths:
       - "protocol/**"
       - "!protocol/**/README.md"
       - ".github/workflows/protocol-check-pr.yml"
-      - "mandelboxes/helper_scripts/copy_protocol_build.sh"
+      - "mandelboxes/scripts/copy_protocol_build.sh"
   workflow_dispatch:
 
 # This guarantees that if you push many commits to the same PR, only the latest
@@ -245,7 +245,7 @@ jobs:
       - name: Ensure that all protocol build files are present
         if: runner.os == 'Linux'
         working-directory: mandelboxes
-        run: ./helper_scripts/copy_protocol_build.sh
+        run: ./scripts/copy_protocol_build.sh
 
       - name: Lint CMake Files
         if: runner.os == 'Linux'

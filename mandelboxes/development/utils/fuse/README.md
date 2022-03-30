@@ -21,5 +21,5 @@ to build the image (in this folder; not using the `mandelboxes/build.sh`).
 The best way to run this image is from the `mandelboxes` project in https://github.com/whisthq/whist. Simply run:
 
 ```bash
-./run.sh mandelboxes/dev-utils/fuse
+./run.sh mandelboxes/development/utils/fuse
 ```

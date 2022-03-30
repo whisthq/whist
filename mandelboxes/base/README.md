@@ -38,7 +38,7 @@ You can run `systemctl status` to see all the running services in the mandelbox.
 
 `/usr/share/whist/server.log` contains the Whist protocol logs. They can also be found in the systemd logs with `journalctl | grep WhistServer`.
 
-`/testing_scripts` contains some little test scripts that can help debug problems on the host machine.
+`/scripts/testing` contains some little test scripts that can help debug problems on the host machine.
 
 ## Running
 

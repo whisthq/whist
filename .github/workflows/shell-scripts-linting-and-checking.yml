@@ -33,7 +33,7 @@ jobs:
           python-version: "3.10.0"
 
       - name: Install beautysh
-        working-directory: mandelboxes/helper_scripts
+        working-directory: mandelboxes/scripts
         run: pip install -r requirements.txt
 
       - name: Run Beautysh to Check Scripts Formatting

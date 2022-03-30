@@ -11,39 +11,6 @@
   // We target various path prefixes to group those PRs together
   packageRules: [
     {
-      matchPaths: ["backend/services/"],
-      groupName: "backend/services",
-    },
-    {
-      matchPaths: ["backend/webserver/"],
-      groupName: "backend/webserver",
-    },
-    {
-      matchPaths: ["backend/auth0/"],
-      groupName: "backend/auth0",
-    },
-    {
-      matchPaths: ["mandelboxes/"],
-      groupName: "mandelboxes",
-    },
-    {
-      matchPaths: ["frontend/client-applications/"],
-      groupName: "frontend/client-applications",
-    },
-    {
-      matchPaths: ["frontend/core-ts/"],
-      groupName: "frontend/core-ts",
-    },
-    {
-      matchPaths: ["frontend/website/"],
-      groupName: "frontend/website",
-    },
-    {
-      // smh my head we must nuke this someday
-      matchPaths: ["config/"],
-      groupName: "config",
-    },
-    {
       matchPaths: [".github/workflows"],
       groupName: ".github/workflows",
     },
@@ -58,6 +25,46 @@
     {
       matchPaths: [".github/actions/set-environment"],
       groupName: ".github/actions/set-environment",
+    },
+    {
+      matchPaths: ["backend/auth0/"],
+      groupName: "backend/auth0",
+    },
+    {
+      matchPaths: ["backend/infrastructure/"],
+      groupName: "backend/infrastructure",
+    },    
+    {
+      matchPaths: ["backend/services/"],
+      groupName: "backend/services",
+    },
+    {
+      matchPaths: ["backend/webserver/"],
+      groupName: "backend/webserver",
+    },
+    {
+      matchPaths: ["frontend/client-applications/"],
+      groupName: "frontend/client-applications",
+    },
+    {
+      matchPaths: ["frontend/core-ts/"],
+      groupName: "frontend/core-ts",
+    },
+    {
+      matchPaths: ["frontend/website/"],
+      groupName: "frontend/website",
+    },
+    {
+      matchPaths: ["mandelboxes/"],
+      groupName: "mandelboxes",
+    },
+    {
+      matchPaths: ["host-setup/"],
+      groupName: "host-setup",
+    },
+    {
+      matchPaths: ["protocol/"],
+      groupName: "protocol",
     },
   ],
 }
