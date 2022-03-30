@@ -130,7 +130,8 @@ if [ "$ENV_NAME" != "localdev" ]; then
   #
   # Note: We only do this for non-localdev environments, since localdev does not
   # have the ephemeral filesystem activated, and EBS volumes are case-sensitive
-  chattr +F /home/whist/.config
+  # Allow failure with ||:, in case this attempts to run on non-ephemeral storage filesystem
+  chattr +F /home/whist/.config ||:
 
   # Make sure `cleanup` gets called on script exit in all environments except localdev.
   trap cleanup EXIT ERR
