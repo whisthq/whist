@@ -1,4 +1,4 @@
-const createNotification = (document: any, text: string) => {
+const createNotification = (document: Document, text: string) => {
   // Create the notification HTMLElement
   let div = document.createElement("p")
 
