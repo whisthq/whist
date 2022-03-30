@@ -17,7 +17,7 @@ import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
 import { appEnvironment } from "config/build"
 import { WhistEnvironments } from "config/constants"
-import { DEFAULT_MAC_USER_AGENT } from "@app/constants/app"
+import { getUserAgent } from "@app/main/utils/userAgent"
 
 export default flow(
   "mandelboxFlow",
@@ -67,7 +67,7 @@ export default flow(
             ...(appEnvironment === WhistEnvironments.LOCAL && {
               local_client: true,
             }),
-            user_agent: DEFAULT_MAC_USER_AGENT, // This spoofs user agent on server-side Chrome to match Mac's
+            user_agent: getUserAgent(), // This spoofs user agent on server-side Chrome to match Mac's
           }), // Data to send through the JSON transport
         }))
       )
