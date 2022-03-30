@@ -167,6 +167,7 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.Handle("/mandelbox/assign", assignHandler)
+	mux.Handle("/create-checkout-session", assignHandler)
 
 	// Set read/write timeouts to help mitigate potential rogue clients
 	// or DDOS attacks.

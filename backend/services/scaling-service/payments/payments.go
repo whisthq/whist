@@ -1,9 +1,16 @@
 package payments
 
 import (
+	"net/http"
+
 	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/utils"
 )
+
+type PaymentsHandler interface {
+	Initialize() error
+	createCheckoutSession(w http.ResponseWriter, r *http.Request)
+}
 
 // VerifyPayment takes an access token and extracts the claims within it.
 // Once it has obtained the claims, it checks if the customer has an active
