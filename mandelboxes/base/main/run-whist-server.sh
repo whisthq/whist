@@ -127,7 +127,7 @@ export ENV_NAME
 if [ "$ENV_NAME" != "localdev" ]; then
   # Make whist-application (i.e. Chrome or Brave) .config foler case insensitive,
   # since certain Chrome Themes fail to install on Linux otherwise
-  # 
+  #
   # Note: We only do this for non-local dev environments, since localdev does not
   # have the ephemeral filesystem activated, and EBS volumes are case-sensitive
   chattr +F /home/whist/.config
