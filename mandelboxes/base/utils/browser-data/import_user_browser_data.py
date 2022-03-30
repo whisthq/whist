@@ -287,6 +287,34 @@ def create_extension_files(extensions, custom_script=None):
         subprocess.run([extension_install_script, extension])
 
 
+def create_preferences_file(target_browser_name, preferences, custom_preferences_file_path=None):
+    """
+    Create preferences file for target browser
+    Args:
+        target_browser_name (str): the name of the browser we will import cookies to
+        preferences (str): preferences in json (string) format
+        custom_preferences_file_path (str): [optional] path to target browser preferences file
+    """
+    preferences_paths = []
+    if custom_preferences_file_path:
+        preferences_paths.append(custom_preferences_file_path)
+    else:
+        preferences_paths = [
+            directory + "Preferences" for directory in get_browser_default_dir(target_browser_name)
+        ]
+
+    path = os.path.expanduser(preferences_paths[0])
+
+    # Create directories if it does not exist
+    directory = os.path.dirname(path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        os.chmod(directory, 0o777)
+
+    with open(path, "w") as browser_preferences_file:
+        browser_preferences_file.write(preferences)
+
+
 if __name__ == "__main__":
     """
     The expected use of this function is:
@@ -311,6 +339,9 @@ if __name__ == "__main__":
 
                 if "extensions" in browser_data and len(browser_data["extensions"]) > 0:
                     create_extension_files(browser_data["extensions"])
+
+                if "preferences" in browser_data and len(browser_data["preferences"]) > 0:
+                    create_preferences_file(browser, browser_data["preferences"])
         else:
             print(
                 "Can't import user browser data because browser data file {} does not exist or it is empty".format(

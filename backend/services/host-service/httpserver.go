@@ -45,6 +45,7 @@ type JSONTransportRequest struct {
 	CookiesJSON           mandelboxtypes.Cookies               `json:"cookies,omitempty"`              // The cookies provided by the client-app as JSON string
 	BookmarksJSON         mandelboxtypes.Bookmarks             `json:"bookmarks,omitempty"`            // The bookmarks provided by the client-app as JSON string
 	Extensions            mandelboxtypes.Extensions            `json:"extensions,omitempty"`           // Extensions provided by the client-app
+	Preferences           mandelboxtypes.Preferences           `json:"preferences,omitempty"`          // Preferences provided by the client-app as JSON string
 	resultChan            chan httputils.RequestResult         // Channel to pass the request result between goroutines
 }
 
