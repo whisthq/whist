@@ -165,8 +165,9 @@ int read_piped_arguments(bool run_only_once) {
         return 0;
     }
 
-    // Arguments will arrive from the client application via pipe to stdin
-    char incoming[INCOMING_MAXLEN + 1];
+    // Arguments will arrive from the client application via pipe to stdin.
+    // This array is too large to be made on the stack.
+    char *incoming = safe_malloc(INCOMING_MAXLEN + 1);
 
     int total_stored_chars = 0;
     char read_char = 0;
@@ -182,9 +183,11 @@ int read_piped_arguments(bool run_only_once) {
     DWORD stdin_filetype = GetFileType(h_stdin);
     if (stdin_filetype != FILE_TYPE_PIPE) {
         LOG_ERROR("Stdin must be piped in on Windows");
+        free(incoming);
         return -2;
     }
 #endif
+
     // Each argument will be passed via pipe from the client application
     //    with the argument name and value separated by a "?"
     //    and each argument/value pair on its own line
@@ -199,6 +202,7 @@ int read_piped_arguments(bool run_only_once) {
 #ifndef _WIN32
         if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
             LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
+            free(incoming);
             return -2;
         } else if (available_chars == 0) {
             continue;
@@ -281,6 +285,7 @@ int read_piped_arguments(bool run_only_once) {
             } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
                 // If arg_name is `kill`, then return indication for graceful exit
                 LOG_INFO("Killing client app");
+                free(incoming);
                 return 1;
             } else if (strlen(arg_name) == 8 && !strncmp(arg_name, "finished", strlen(arg_name))) {
                 // If arg_name is `finished`, then stop reading args from pipe
@@ -306,6 +311,8 @@ int read_piped_arguments(bool run_only_once) {
     end_of_eval_loop:
         available_chars = 0;
     } while (keep_reading && !run_only_once);
+
+    free(incoming);
 
     const char *server_ip = NULL;
     if (whist_option_get_string_value("server-ip", &server_ip) != WHIST_SUCCESS ||
