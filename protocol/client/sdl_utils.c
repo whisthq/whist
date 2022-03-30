@@ -241,6 +241,10 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     }
     SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
 
+    SDL_RendererInfo info;
+    SDL_GetRendererInfo(sdl_renderer, &info);
+    LOG_INFO("SDL: Using renderer: %s", info.name);
+
     // Render a black screen before anything else,
     // To prevent being exposed to random colors
     pending_nv12data = false;
