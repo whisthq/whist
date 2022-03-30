@@ -449,6 +449,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
             // if only show window after video has rendered
             if (!window_has_shown && renderer_has_video_rendered_yet(whist_renderer)) {
+                FATAL_ASSERT(window != NULL);
                 SDL_ShowWindow((SDL_Window*)window);
                 window_has_shown = 1;
             }
