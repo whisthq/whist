@@ -1,3 +1,7 @@
+/*
+  This entire file is injected as a script into the current window's DOM.
+*/
+
 import {
   URLS_TO_MODIFY_USER_AGENT,
   LINUX_APP_VERSION,
