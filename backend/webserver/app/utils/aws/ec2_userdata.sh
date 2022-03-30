@@ -30,9 +30,8 @@ then
   echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
 
   # We enable case-insensitivity (needed for certain Chrome themes)
-  mkfs -O casefold -t ext4 "$EPHEMERAL_DEVICE_PATH"
   mkdir -p "$EPHEMERAL_FS_PATH"
-  mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
+  zpool create -f zpool-whist -O casesensitivity=insensitive -m "$EPHEMERAL_FS_PATH" "$EPHEMERAL_DEVICE_PATH"
   echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
 
   # Stop Docker and copy the data directory to the ephemeral storage
@@ -44,6 +43,7 @@ then
   # and start Docker again. Set a higher concurrent download count to speed up the pull.
   jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
   jq '. + {"max-concurrent-downloads": '"$MAX_CONCURRENT_DOWNLOADS"'}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
+  jq '. + {"storage-driver": "zfs"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
 
   systemctl start docker
 else
