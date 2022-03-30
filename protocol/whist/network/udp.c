@@ -872,11 +872,33 @@ static void* udp_get_packet(void* raw_context, WhistPacketType type) {
             break;
         }
         case PACKET_AUDIO: {
-            // First, catch up audio if we're behind
-            if ((ring_buffer->last_rendered_id == -1 && ring_buffer->max_id > 0) ||
-                (ring_buffer->last_rendered_id != -1 &&
-                 ring_buffer->max_id - ring_buffer->last_rendered_id > MAX_NUM_AUDIO_FRAMES)) {
-                reset_stream(ring_buffer, ring_buffer->max_id);
+            if (ring_buffer->last_rendered_id == -1) {
+                // If the max_id is too large, just skip to closely behind it
+                if (ring_buffer->max_id > 9) {
+                    reset_stream(ring_buffer, ring_buffer->max_id - 8);
+                }
+            } else {
+                int next_to_render_id = ring_buffer->last_rendered_id + 1;
+                // If we're head-of-line blocking,
+                if (!is_ready_to_render(ring_buffer, next_to_render_id)) {
+                    // Find the first renderable frame between [next-to-render-id+1, and max-id]
+                    int start_checking =
+                        max(next_to_render_id + 1,
+                            ring_buffer->max_id - ring_buffer->ring_buffer_size + 1);
+                    for (int id = start_checking; id <= ring_buffer->max_id; id++) {
+                        // And skip to that renderable frame, if max_id >= X+2, or it's 25ms old
+                        if (is_ready_to_render(ring_buffer, id)) {
+                            FrameData* frame_data = get_frame_at_id(ring_buffer, id);
+                            if (ring_buffer->max_id >= id + 2 ||
+                                get_timer(&frame_data->frame_creation_timer) * MS_IN_SECOND >
+                                    25.0) {
+                                reset_stream(ring_buffer, id);
+                            }
+                            // We only care about the first renderable frame
+                            break;
+                        }
+                    }
+                }
             }
             break;
         }
