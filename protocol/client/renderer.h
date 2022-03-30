@@ -127,4 +127,6 @@ void renderer_try_render(WhistRenderer* renderer);
  */
 void destroy_renderer(WhistRenderer* renderer);
 
+bool renderer_has_video_rendered_yet(WhistRenderer * renderer);
+
 #endif

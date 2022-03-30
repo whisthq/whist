@@ -287,9 +287,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     while (SDL_PollEvent(&event))
         ;
 
-    // Now that everything has been configured, we can show the window.
-    SDL_ShowWindow(sdl_window);
-
     return sdl_window;
 }
 
