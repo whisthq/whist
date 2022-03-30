@@ -31,7 +31,7 @@ int display_notification(WhistNotification notif) {
     NSUserNotification *n = [[NSUserNotification alloc] init];
 
     char *title = notif.title, *msg = notif.message;
-    LOG_INFO("Trying to display notif on OSX: %s | %s", title, msg);
+    LOG_INFO("Trying to display macOS notification.");
 
     n.title = [NSString stringWithUTF8String:title];
     n.informativeText = [NSString stringWithUTF8String:msg];
