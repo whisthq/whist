@@ -17,6 +17,7 @@ import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
 import { appEnvironment } from "config/build"
 import { WhistEnvironments } from "config/constants"
+import { DEFAULT_MAC_USER_AGENT } from "@app/constants/app"
 
 export default flow(
   "mandelboxFlow",
@@ -60,12 +61,13 @@ export default flow(
             desired_timezone: t.timezone,
             client_dpi: screen.getPrimaryDisplay()?.scaleFactor * 96,
             restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
-            kiosk_mode: false, // We only want the server-side Chromium to be in Kiosk mode if the client is running within a Chromium browser, not within Electron
+            kiosk_mode: false, // Kiosk mode fullscreens server-side Chrome which we don't want
             initial_key_repeat: t.initialKeyRepeat,
             key_repeat: t.keyRepeat,
             ...(appEnvironment === WhistEnvironments.LOCAL && {
               local_client: true,
             }),
+            user_agent: DEFAULT_MAC_USER_AGENT, // This spoofs user agent on server-side Chrome to match Mac's
           }), // Data to send through the JSON transport
         }))
       )
