@@ -3,36 +3,36 @@
 import os, sys, json, time, argparse, multiprocessing
 import boto3
 
-from e2e-helpers.aws.boto3_tools import (
+from helpers.aws.boto3_tools import (
     create_or_start_aws_instance,
     get_instance_ip,
 )
 
-from e2e-helpers.common.git_tools import (
+from helpers.common.git_tools import (
     get_whist_branch_name,
     get_whist_github_sha,
 )
 
-from e2e-helpers.common.ssh_tools import (
+from helpers.common.ssh_tools import (
     attempt_ssh_connection,
 )
 
-from e2e-helpers.setup.instance_setup_tools import (
+from helpers.setup.instance_setup_tools import (
     start_host_service,
 )
 
-from e2e-helpers.setup.network_tools import (
+from helpers.setup.network_tools import (
     setup_artificial_network_conditions,
 )
 
-from e2e-helpers.setup.teardown_tools import complete_experiment_and_save_results
+from helpers.setup.teardown_tools import complete_experiment_and_save_results
 
-from e2e-helpers.whist_client_tools import (
+from helpers.whist_client_tools import (
     client_setup_process,
     run_client_on_instance,
 )
 
-from e2e-helpers.whist_server_tools import (
+from helpers.whist_server_tools import (
     server_setup_process,
     run_server_on_instance,
 )

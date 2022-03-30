@@ -2,16 +2,16 @@
 
 import os, sys, json, time
 
-from e2e-helpers.setup.network_tools import restore_network_conditions
+from helpers.setup.network_tools import restore_network_conditions
 
-from e2e-helpers.common.ssh_tools import (
+from helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
     reboot_instance,
     apply_dpkg_locking_fixup,
 )
 
-from e2e-helpers.setup.instance_setup_tools import (
+from helpers.setup.instance_setup_tools import (
     install_and_configure_aws,
     clone_whist_repository,
     run_host_setup,

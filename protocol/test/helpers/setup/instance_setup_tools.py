@@ -3,11 +3,11 @@
 import pexpect
 import os, sys
 
-from e2e-helpers.common.git_tools import (
+from helpers.common.git_tools import (
     get_whist_branch_name,
 )
 
-from e2e-helpers.common.ssh_tools import (
+from helpers.common.ssh_tools import (
     wait_until_cmd_done,
     reboot_instance,
 )
