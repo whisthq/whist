@@ -46,12 +46,7 @@ set_target_properties(WhistClient PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch}
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch})
 
-# copy the Sentry shared library and crashpad handler to the build folder after the build
-add_custom_command(
-        TARGET WhistClient POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
-        $<TARGET_FILE_DIR:WhistClient>)
+copy_runtime_libs(WhistClient)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_custom_command(
@@ -67,23 +62,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/client/wclient.bat
             ${CMAKE_BINARY_DIR})
-endif()
-
-# Copy over FFmpeg shared libs (on all OSes) into the WhistClient dir
-add_custom_command(
-    TARGET WhistClient POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
-    $<TARGET_FILE_DIR:WhistClient>)
-
-# OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
-# location to prevent a crash.
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    add_custom_command(
-            TARGET WhistClient POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_BINARY_DIR}/lib/64/openssl/Windows/libcrypto-1_1-x64.dll
-            $<TARGET_FILE_DIR:WhistClient>)
 endif()
 
 # move necessary files into the build directory

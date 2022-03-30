@@ -104,32 +104,6 @@ endif()
 target_link_libraries(${PROTOCOL_TEST_BINARY} gtest)
 target_link_libraries(${PROTOCOL_TEST_BINARY} gmock)
 
-# Copy the Sentry library to the build folder
-add_custom_command(
-    TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
-    $<TARGET_FILE_DIR:${PROTOCOL_TEST_BINARY}>
-)
-
-# Copy the FFmpeg library to the build folder
-add_custom_command(
-    TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
-    $<TARGET_FILE_DIR:${PROTOCOL_TEST_BINARY}>
-)
-
-# Copy the OpenSSL/libcrypto libraries if we are on Windows
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    add_custom_command(
-        TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_BINARY_DIR}/lib/64/openssl/Windows/libcrypto-1_1-x64.dll
-        $<TARGET_FILE_DIR:${PROTOCOL_TEST_BINARY}>
-    )
-endif()
-
 # Link the FFmpeg libraries
 foreach(LIB ${FFMPEG_LIBS_PATHS})
     message(VERBOSE "linking lib for ${PROTOCOL_TEST_BINARY}: ${LIB}")
@@ -233,6 +207,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # Link to system libs
     target_link_libraries(${PROTOCOL_TEST_BINARY} ${WINDOWS_SPECIFIC_CLIENT_LIBS})
 endif()
+
+copy_runtime_libs(${PROTOCOL_TEST_BINARY})
 
 # Copy over test-related assets from s3
 # To change anything in the test assets, make a new tar file with the
