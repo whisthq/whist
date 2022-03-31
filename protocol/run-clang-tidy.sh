@@ -51,7 +51,7 @@ fixesFile="$yamlFolder/$fixesFilename"
 # run clang-tidy and output suggested fixes to clang-tidy-fixes.yaml
 echo "Running clang-tidy into $fixesFile"
 
-FILES_EXCLUDE="include|lib|docs|sentry-native|share|nvidia-linux|whistgetopt\.[ch]|lodepng\.[ch]|lodepng_test\.cpp|cm256|gf256"
+FILES_EXCLUDE="include|lib|docs|sentry-native|share|nvidia-linux|whistgetopt\.[ch]|lodepng\.[ch]|lodepng_test\.cpp|cm256.*|gf256.*"
 
 # Generate list of files to pass into clang-tidy
 # We parse compile_commands ourselves, instead of just listing all of our .c files,
