@@ -104,44 +104,44 @@ echo "Min interval duration: [ $min_interval to $max_interval ]"
 # Initial Setup for each device
 sudo modprobe ifb
 for i in "${!devices[@]}"; do
-    device="${devices[i]}"
-    echo "Setting network conditions on device $device to max bandwidth: $min_bandwidth, packet drop rate: $max_packet_drop%, queue length: $max_queue_length ms"
-    sudo ip link set dev "ifb${i}" up
-    sudo tc qdisc add dev "$device" ingress
-    sudo tc filter add dev "$device" parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev "ifb${i}"
-    sudo tc qdisc add dev "$device" root netem delay "$max_queue_length"ms loss "$max_packet_drop"% rate "$min_bandwidth"
-    sudo tc qdisc add dev "ifb${i}" root netem delay "$max_queue_length"ms loss "$max_packet_drop"% rate "$min_bandwidth"
+  device="${devices[i]}"
+  echo "Setting network conditions on device $device to max bandwidth: $min_bandwidth, packet drop rate: $max_packet_drop%, queue length: $max_queue_length ms"
+  sudo ip link set dev "ifb${i}" up
+  sudo tc qdisc add dev "$device" ingress
+  sudo tc filter add dev "$device" parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev "ifb${i}"
+  sudo tc qdisc add dev "$device" root netem delay "$max_queue_length"ms loss "$max_packet_drop"% rate "$min_bandwidth"
+  sudo tc qdisc add dev "ifb${i}" root netem delay "$max_queue_length"ms loss "$max_packet_drop"% rate "$min_bandwidth"
 done
 
 if [[ ( $min_bandwidth != $max_bandwidth ) || ( $min_packet_drop != $max_packet_drop ) || ( $min_queue_length != $max_queue_length ) ]]; then
-    # Seed the random number generator to always get the same results
-    RANDOM=34587
-    
-    # Recurrent net conditions variation
-    while true
-    do
-        bandwidth=$(( $RANDOM % (${max_bandwidth%????} - ${min_bandwidth%????} + 1) + ${min_bandwidth%????} ))
-        bandwidth_unit=${min_bandwidth:(-4)}
-        packet_drop=$(( $RANDOM % (${max_packet_drop} - ${min_packet_drop} + 1) + ${min_packet_drop} )) 
-        delay=$(( $RANDOM % (${max_queue_length} - ${min_queue_length} + 1) + ${min_queue_length} ))
-        interval=$(( $RANDOM % (${max_interval} - ${min_interval} + 1) + ${min_interval} ))
+  # Seed the random number generator to always get the same results
+  RANDOM=34587
 
-        # Change the network conditions for each network device
-        for i in "${!devices[@]}"; do
-            device="${devices[i]}"
-            echo "Setting network conditions on device $device to max bandwidth: ${bandwidth}${bandwidth_unit}, packet drop rate: $packet_drop%, queue length: $delay ms"
-            sudo tc qdisc change dev "$device" root netem delay "$delay"ms loss "$packet_drop"% rate "$bandwidth""$bandwidth_unit"
-            sudo tc qdisc change dev "ifb${i}" root netem delay "$delay"ms loss "$packet_drop"% rate "$bandwidth""$bandwidth_unit"
-        done
+  # Recurrent net conditions variation
+  while true
+  do
+    bandwidth=$(( $RANDOM % (${max_bandwidth%????} - ${min_bandwidth%????} + 1) + ${min_bandwidth%????} ))
+    bandwidth_unit=${min_bandwidth:(-4)}
+    packet_drop=$(( $RANDOM % (${max_packet_drop} - ${min_packet_drop} + 1) + ${min_packet_drop} ))
+    delay=$(( $RANDOM % (${max_queue_length} - ${min_queue_length} + 1) + ${min_queue_length} ))
+    interval=$(( $RANDOM % (${max_interval} - ${min_interval} + 1) + ${min_interval} ))
 
-        interval_seconds=$(($interval / 1000))
-        interval_milliseconds=$(($interval - $interval_seconds))
-
-        echo "Sleeping for ${interval_seconds}.${interval_milliseconds} seconds"
-
-        # Sleep takes seconds as the smallest value, so we need to convert the randomly-generated interval number from ms to s
-        sleep "${interval_seconds}.${interval_milliseconds}"
+    # Change the network conditions for each network device
+    for i in "${!devices[@]}"; do
+      device="${devices[i]}"
+      echo "Setting network conditions on device $device to max bandwidth: ${bandwidth}${bandwidth_unit}, packet drop rate: $packet_drop%, queue length: $delay ms"
+      sudo tc qdisc change dev "$device" root netem delay "$delay"ms loss "$packet_drop"% rate "$bandwidth""$bandwidth_unit"
+      sudo tc qdisc change dev "ifb${i}" root netem delay "$delay"ms loss "$packet_drop"% rate "$bandwidth""$bandwidth_unit"
     done
+
+    interval_seconds=$(($interval / 1000))
+    interval_milliseconds=$(($interval - $interval_seconds))
+
+    echo "Sleeping for ${interval_seconds}.${interval_milliseconds} seconds"
+
+    # Sleep takes seconds as the smallest value, so we need to convert the randomly-generated interval number from ms to s
+    sleep "${interval_seconds}.${interval_milliseconds}"
+  done
 fi
 
 
