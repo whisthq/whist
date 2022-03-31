@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"path"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -107,4 +109,26 @@ func GetMostRecentMatchingKey(client *s3.Client, bucket, prefix, suffix string) 
 func GetMD5Hash(data []byte) string {
 	hash := md5.Sum(data)
 	return hex.EncodeToString(hash[:])
+}
+
+// UpdateMostRecentToken updates the user's most recently used config token
+// file in S3 with the provided token.
+func UpdateMostRecentToken(client *s3.Client, user types.UserID, token string) error {
+	recentTokenPath := path.Join("last-used-tokens", string(user))
+	_, err := UploadFileToBucket(client, GetConfigBucket(), recentTokenPath, []byte(token))
+	if err != nil {
+		return utils.MakeError("failed to update most recent token: %v", err)
+	}
+	return nil
+}
+
+// GetMostRecentToken returns the most recently used token for the given user.
+func GetMostRecentToken(client *s3.Client, user types.UserID) (string, error) {
+	recentTokenPath := path.Join("last-used-tokens", string(user))
+	dataBuffer := manager.NewWriteAtBuffer([]byte{})
+	_, err := DownloadObjectToBuffer(client, GetConfigBucket(), recentTokenPath, dataBuffer)
+	if err != nil {
+		return "", utils.MakeError("failed to get most recent token: %v", err)
+	}
+	return string(dataBuffer.Bytes()), nil
 }

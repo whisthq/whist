@@ -293,7 +293,7 @@ func (mandelbox *mandelboxData) getS3ConfigKeyPrefix(tokenHash string) string {
 // getS3ConfigPath returns the full key name of the S3 key to encrypted user
 // config file. Note that this includes the hash of the user config.
 func (mandelbox *mandelboxData) getS3ConfigKey(tokenHash string) string {
-	return path.Join(mandelbox.getS3ConfigKeyPrefix(tokenHash), "/", EncryptedArchiveFilename)
+	return path.Join(mandelbox.getS3ConfigKeyPrefix(tokenHash), EncryptedArchiveFilename)
 }
 
 // downloadUserConfig downloads a given user config from S3 into an in-memory
@@ -515,26 +515,4 @@ func (mandelbox *mandelboxData) GetSavedExtensions() []string {
 func (mandelbox *mandelboxData) WriteSavedExtensions(extensions []string) error {
 	savedConfigsDir := path.Join(mandelbox.GetUserConfigDir(), UnpackedConfigsDirectoryName)
 	return configutils.SaveImportedExtensions(savedConfigsDir, extensions)
-}
-
-// UpdateMostRecentToken updates the user's most recently used config token
-// file in S3 with the provided token.
-func UpdateMostRecentToken(client *s3.Client, user types.UserID, token string) error {
-	recentTokenPath := path.Join("last-used-tokens", string(user))
-	_, err := configutils.UploadFileToBucket(client, configutils.GetConfigBucket(), recentTokenPath, []byte(token))
-	if err != nil {
-		return utils.MakeError("failed to update most recent token: %v", err)
-	}
-	return nil
-}
-
-// GetMostRecentToken returns the most recently used token for the given user.
-func GetMostRecentToken(client *s3.Client, user types.UserID) (string, error) {
-	recentTokenPath := path.Join("last-used-tokens", string(user))
-	dataBuffer := manager.NewWriteAtBuffer([]byte{})
-	_, err := configutils.DownloadObjectToBuffer(client, configutils.GetConfigBucket(), recentTokenPath, dataBuffer)
-	if err != nil {
-		return "", utils.MakeError("failed to get most recent token: %v", err)
-	}
-	return string(dataBuffer.Bytes()), nil
 }
