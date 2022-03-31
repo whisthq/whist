@@ -1,3 +1,9 @@
+/*
+    The entry point to our service worker.
+    A service worker is Javascript that runs in the background of Chrome.
+    For more info, see https://developer.chrome.com/docs/workbox/service-worker-overview/
+*/
+
 import { initFileSyncHandler } from "./downloads"
 import { initChromeWelcomeRedirect } from "./navigation"
 import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"

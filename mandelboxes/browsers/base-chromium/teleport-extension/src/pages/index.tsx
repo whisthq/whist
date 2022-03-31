@@ -1,3 +1,7 @@
+/*
+    The entry point to our React code which runs inside custom pages.
+*/
+
 import React from "react"
 import ReactDOM from "react-dom"
 import { Helmet } from "react-helmet"
