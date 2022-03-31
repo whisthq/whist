@@ -13,7 +13,7 @@ set(CM256_IS_X86 TRUE)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if(${MACOS_ARCHITECTURE} MATCHES "arm")
         #message(WARNING "Current ARCH is macos arm!!!")
-        set(CM256_IS_ARM FALSE)
+        set(CM256_IS_X86 FALSE)
     endif()
 endif()
 
