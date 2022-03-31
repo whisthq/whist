@@ -449,9 +449,12 @@ jobs:
     steps:
       ################################# CONFIG STEPS START ##############################
 
-      - name: On macOS and Ubuntu Linux, Checkout this Git Repository Directly
+      - name: On macOS and Ubuntu Linux, Checkout FFmpeg Git Repository
         if: runner.os == 'macOS' || runner.os == 'Linux'
         uses: actions/checkout@v3
+        with:
+          repository: FFmpeg/FFmpeg
+          ref: release/5.0 # GitHub Branch of latest stable FFmpeg release
 
       # media-autobuild_suite needs to be directly in the C:\ drive, as it is very finicky with paths
       - name: On Windows, Git Clone whisthq/FFmpeg and whisthq/media-autobuild_suite (FFmpeg Windows Compilation Helper Tools) to C:\
