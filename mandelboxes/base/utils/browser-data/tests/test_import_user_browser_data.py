@@ -281,7 +281,8 @@ def test_extension_file():
 
 
 browser_preferences = [
-    ["chrome", "~/.config/temp/google-chrome/Default/Preferences"],
+    ["chrome", "/whist/userConfigs/google-chrome/Default/Preferences"],
+    ["brave", "/whist/userConfigs/BraveSoftware/Brave-Browser/Default/Preferences"],
 ]
 
 
@@ -290,7 +291,7 @@ def test_create_preferences_file(browser, browser_preferences_path):
     preferences_str = '{"key1":"value1","key2":"value2","key3":"value3"}'
 
     # Create preferences file at custom path
-    create_preferences_file(browser, preferences_str, browser_preferences_path)
+    create_preferences_file(browser, preferences_str)
 
     # Check preferences file
     expanded_path = os.path.expanduser(browser_preferences_path)
