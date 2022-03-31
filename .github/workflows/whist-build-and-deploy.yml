@@ -926,7 +926,7 @@ jobs:
   client-applications-publish-build-s3:
     name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
     runs-on: ${{ matrix.config.os }}
-    concurrency: client-applications-publish-build-x64-s3-${{ matrix.config.os }}-${{ github.ref }}
+    concurrency: client-applications-publish-build-${{ matrix.config.arch }}-s3-${{ matrix.config.os }}${{ github.ref }}
     needs:
       [
         whist-publish-build-config,
@@ -1077,13 +1077,12 @@ jobs:
   client-applications-update-version-number:
     name: "Client Applications: Set New Version Number in Config Database"
     runs-on: ubuntu-20.04
-    concurrency: client-applications-publish-build-x64-s3-${{ github.ref }}
+    concurrency: client-applications-update-version-number-${{ github.ref }}
     needs:
       [
         whist-publish-build-config,
         client-applications-retrieve-version-number,
-        client-applications-publish-build-x64-s3,
-        client-applications-publish-build-arm64-s3,
+        client-applications-publish-build-s3,
       ]
 
     # Only run client-apps deployment if none of the previous steps failed
@@ -1128,7 +1127,7 @@ jobs:
 
       - name: Notify Slack on Publishing Client Applications Success
         shell: python3 {0}
-        if: needs.client-applications-publish-build-x64-s3.result == 'success' && needs.client-applications-publish-build-arm64-s3.result == 'success'
+        if: needs.client-applications-publish-build-s3.result == 'success'
         run: |
           # Retrieve Slack webhook
           if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
@@ -1147,7 +1146,7 @@ jobs:
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Publishing Client Applications Error
-        if: needs.client-applications-publish-build-x64-s3.result == 'failure' || needs.client-applications-publish-build-arm64-s3.result == 'failure'
+        if: needs.client-applications-publish-build-s3.result == 'failure'
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
@@ -1159,7 +1158,7 @@ jobs:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
           from notifications.slack_bot import slack_post
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-[x64/arm64]-s3` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-s3` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
@@ -1311,8 +1310,7 @@ jobs:
         webserver-deploy-heroku,
         scaling-service-deploy,
         client-applications-retrieve-version-number,
-        client-applications-publish-build-x64-s3,
-        client-applications-publish-build-arm64-s3,
+        client-applications-publish-build-s3,
         client-applications-update-version-number,
         website-deploy-netlify,
       ]
