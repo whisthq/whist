@@ -52,20 +52,22 @@ jobs:
     steps:
       ################################# CONFIG STEPS START ##############################
 
-      - name: On macOS and Ubuntu Linux, Checkout FFmpeg Git Repository
+      - name: On macOS and Ubuntu Linux, Checkout this Git Repository Directly
+        if: runner.os == 'macOS' || runner.os == 'Linux'
         uses: actions/checkout@v3
-        with:
-          repository: FFmpeg/FFmpeg
-          ref: release/5.0 # GitHub Tag of latest stable FFmpeg release
 
       # media-autobuild_suite needs to be directly in the C:\ drive, as it is very finicky with paths
-      - name: On Windows, Checkout media-autobuild_suite (FFmpeg Windows Compilation Helper Tools) to C:\
+      - name: On Windows, Git Clone whisthq/FFmpeg and whisthq/media-autobuild_suite (FFmpeg Windows Compilation Helper Tools) to C:\
         if: runner.os == 'Windows'
-        uses: actions/checkout@v3
-        with:
-          repository: m-ab-s/media-autobuild_suite
-          ref: master # GitHub Tag of latest stable media-autobuild_suite release
-          path: C:\media-autobuild_suite
+        shell: cmd
+        run: |
+          REM first, clone m-ab-s/media-autobuild_suite to C:\media-autobuild_suite
+          REM note that this will use upstream FFmpeg, which is not the same as the Whist FFmpeg (this is only for Windows, we need to
+          REM move macOS and Linux to also use upstream FFmpeg eventually, for consistency)
+          git clone https://github.com/m-ab-s/media-autobuild_suite C:\media-autobuild_suite
+
+          REM then, clone whisthq/FFmpeg to C:\media-autobuild_suite\build\ffmpeg
+          git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/whisthq/ffmpeg.git" C:\media-autobuild_suite\build\ffmpeg
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -77,7 +79,33 @@ jobs:
       ###################################################################################
       ################################ WINDOWS STEPS START ##############################
 
-      # TODO PHIL: Need to figure out the best way to do this
+      - name: On Windows, Install CUDA
+        if: runner.os == 'Windows'
+        working-directory: C:\media-autobuild_suite
+        shell: powershell
+        env:
+          visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
+          cuda: "11.3.1" # Imported from env in the .ps1 script
+        run: |
+          & "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          .\build\ffmpeg\.github\workflows\helpers\install_cuda_windows.ps1
+            if ($?) {
+              # Set paths for subsequent steps, using $env:CUDA_PATH
+              echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
+              echo "CUDA_PATH=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              echo "$env:CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+            }
+
+      - name: On Windows, Verify that NVCC is Installed
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          nvcc -V
+          ls $env:CUDA_PATH
+          ls $env:CUDA_PATH\bin
+          ls $env:CUDA_PATH\include
+
       - name: On Windows, Move Preconfigured media-autobuild_suite Config Files Over to C:\media-autobuild_suite/build
         if: runner.os == 'Windows'
         working-directory: C:\media-autobuild_suite
@@ -121,18 +149,22 @@ jobs:
         run: |
           # Install dependencies needed for both x64 and arm64 builds
           brew install automake git libtool shtool wget nasm dylibbundler
+
           # Install opus for x64 and arm64
           if [[ "${{ matrix.config.name }}" == "macOS (x64)" ]]; then
             brew install opus
           elif [[ "${{ matrix.config.name }}" == "macOS (arm64)" ]]; then
             echo "Starting cross-compiling libopus for arm64 on macOS..."
+
             # Download libopus
             VERSION="1.3.1"
             echo "Downloading opus-${VERSION}.tar.gz"
             curl -L "http://downloads.xiph.org/releases/opus/opus-${VERSION}.tar.gz" | tar xz
             cd "opus-${VERSION}"
+
             # Configure, build, and install libopus
             FLAGS="-arch arm64 -O2 -mmacosx-version-min=11.0 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+
             ./configure \
               --disable-dependency-tracking \
               --disable-doc \
@@ -141,6 +173,7 @@ jobs:
               LDFLAGS="${FLAGS}" \
               CPPFLAGS="${FLAGS}" \
             && make -j install
+
             echo "Successfully cross-compiled libopus for arm64 on macOS..."
           fi
 
@@ -194,7 +227,6 @@ jobs:
       ###################################################################################
       ############################# Ubuntu Linux STEPS START ############################
 
-      # TODO PHIL: Need to figure out how to do this
       - name: On Linux, Build FFmpeg through Docker
         if: runner.os == 'Linux'
         run: ./docker-build.sh 20
@@ -211,14 +243,17 @@ jobs:
             # create protocol-compliant lib folder and move libs over
             mkdir ${{ env.linux-build-folder }}
             mv docker-builds/* ${{ env.linux-build-folder }}/
+
             # change the linking of our own FFmpeg libs to make them work within the Whist Protocol folder structure
             patchelf --set-rpath '$ORIGIN' ${{ env.linux-build-folder }}/*
+
             # tar and upload
             tar -zcvf ${{ env.linux-tar-name }} ${{ env.linux-build-folder }}
             aws s3 cp ${{ env.linux-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.linux-tar-name }}
           elif [ "$RUNNER_OS" == "Windows" ]; then
             # cd to the right directory
             cd /c/media-autobuild_suite
+
             # create protocol-compliant lib folder and rename & move libs over
             mkdir ${{ env.windows-build-folder }}
             mv local64/bin-video/avcodec-59.dll ${{ env.windows-build-folder }}/avcodec-59.dll
@@ -235,6 +270,7 @@ jobs:
             mv local64/bin-video/avutil.lib ${{ env.windows-build-folder }}/avutil.lib
             mv local64/bin-video/swresample.lib ${{ env.windows-build-folder }}/swresample.lib
             mv local64/bin-video/swscale.lib ${{ env.windows-build-folder }}/swscale.lib
+
             # tar and upload
             tar -zcvf ${{ env.windows-tar-name }} ${{ env.windows-build-folder }}
             aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
@@ -242,10 +278,13 @@ jobs:
             # create staging folder for our dylib bundler to use
             # (important since the bundler expects to resolve between these binaries)
             mkdir dylib-bundle-staging
+
             # remember to move the versioned libavcodec.58.dylib, for example, not the libavcodec.dylib
             mv lib{av{codec,device,filter,format,util},sw{resample,scale}}/*.*.dylib dylib-bundle-staging
+
             # create protocol-compliant lib folder to put patched binaries in
             mkdir ${{ env.macos-build-folder }}
+
             # mark FFmpeg dependencies (fdk-aac, x264, x265, etc.) as executable and change their linking to work with
             # our own FFmpeg libs within the Whist Protocol folder structure
             # note that printf on bash is /usr/bin/printf, which handles the -x poorly by default
@@ -256,10 +295,12 @@ jobs:
               -b
             mv dylib-bundle-staging/*.dylib ${{ env.macos-build-folder }}
             chmod +x ${{ env.macos-build-folder }}/*.dylib
+
             # Apple requires all executables to be signed starting with M1 arm64, and the dylibbundler invalidates the
             # existing Homebrew signature for the FFmpeg dependencies, so we re-sign everything. This is not an issue for
             # clientapp deployment, where we re-sign everything, but is necessary for protocol development on M1 macOS.
             codesign -f -v -s "Whist Technologies, Inc." ${{ env.macos-build-folder }}/*.dylib
+
             if [[ "${{ matrix.config.name }}" == "macOS (x64)" ]]; then
               # tar and upload
               tar -zcvf ${{ env.macos-x64-tar-name }} ${{ env.macos-build-folder }}
@@ -280,6 +321,7 @@ jobs:
         run: |
           # create protocol-compliant headers folder and subfolders
           mkdir -p ${{ env.headers-build-folder }}/{libavcodec,libavdevice,libavfilter,libavformat,libavutil,libswresample,libswscale}
+
           # move select header files over to tar, only the ones needed
           # libavcodec
           mv \
@@ -311,11 +353,13 @@ jobs:
           libavcodec/xvmc.h \
           libavcodec/defs.h \
           ${{ env.headers-build-folder }}/libavcodec/
+
           # libavdevice
           mv \
           libavdevice/avdevice.h \
           libavdevice/version.h \
           ${{ env.headers-build-folder }}/libavdevice/
+
           # libavfilter
           mv \
           libavfilter/avfilter.h \
@@ -324,12 +368,14 @@ jobs:
           libavfilter/vaapi_vpp.h \
           libavfilter/version.h \
           ${{ env.headers-build-folder }}/libavfilter/
+
           # libavformat
           mv \
           libavformat/avformat.h \
           libavformat/avio.h \
           libavformat/version.h \
           ${{ env.headers-build-folder }}/libavformat/
+
           # libavutil
           mv \
           libavutil/adler32.h \
@@ -414,16 +460,19 @@ jobs:
           libavutil/version.h \
           libavutil/xtea.h \
           ${{ env.headers-build-folder }}/libavutil/
+
           # libswresample
           mv \
           libswresample/swresample.h \
           libswresample/version.h \
           ${{ env.headers-build-folder }}/libswresample/
+
           # libswscale
           mv \
           libswscale/swscale.h \
           libswscale/version.h \
           ${{ env.headers-build-folder }}/libswscale/
+
           # tar and upload
           tar -zcvf ${{ env.headers-tar-name }} include
           aws s3 cp ${{ env.headers-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.headers-tar-name }}
@@ -435,6 +484,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: whisthq/whist
+          ref: "dev"
           token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
       - name: Setup Python-based Notifications
@@ -450,7 +500,7 @@ jobs:
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
           SLACK_CHANNEL = "#alerts-prod"
           BODY = f"@releases :rotating_light: Failed to deploy Whist `FFmpeg ${{ matrix.config.name }}` Shared Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/FFmpeg/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
   #######################################################################################
@@ -466,6 +516,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: whisthq/whist
+          ref: "dev"
           token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
       - name: Setup Python-based Notifications
