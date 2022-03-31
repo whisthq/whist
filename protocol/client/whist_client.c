@@ -431,6 +431,9 @@ int whist_client_main(int argc, const char* argv[]) {
         // so it can synchronize with us
         send_message_dimensions(frontend);
 
+        // Indicated if window as been shown
+        bool window_has_shown = false;
+
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
@@ -443,6 +446,13 @@ int whist_client_main(int argc, const char* argv[]) {
 
             // Try rendering anything out, if there's something to render out
             renderer_try_render(whist_renderer);
+
+            // if only show window after video has rendered
+            if (!window_has_shown && renderer_has_video_rendered_yet(whist_renderer)) {
+                FATAL_ASSERT(window != NULL);
+                SDL_ShowWindow((SDL_Window*)window);
+                window_has_shown = 1;
+            }
 
             // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set
             // because getting cpu usage statistics is expensive.

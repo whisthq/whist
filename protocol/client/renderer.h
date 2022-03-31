@@ -127,4 +127,13 @@ void renderer_try_render(WhistRenderer* renderer);
  */
 void destroy_renderer(WhistRenderer* renderer);
 
+/**
+ * @brief                          Query if video has been rendered yet with this whist render.
+ *
+ * @param renderer                 The whist renderer.
+ *
+ * @returns                        true if rendered.
+ */
+bool renderer_has_video_rendered_yet(WhistRenderer* renderer);
+
 #endif
