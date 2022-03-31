@@ -293,7 +293,8 @@ def test_create_preferences_file(browser, browser_preferences_path):
     create_preferences_file(browser, preferences_str, browser_preferences_path)
 
     # Check preferences file
-    with open(browser_preferences_path) as preferences_file:
+    expanded_path = os.path.expanduser(browser_preferences_path)
+    with open(expanded_path) as preferences_file:
         preferences = json.load(preferences_file)
 
         assert len(preferences) == 3
@@ -301,4 +302,4 @@ def test_create_preferences_file(browser, browser_preferences_path):
         assert preferences["key2"] == "value2"
         assert preferences["key3"] == "value3"
 
-    os.remove(browser_preferences_path)
+    os.remove(expanded_path)
