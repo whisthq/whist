@@ -281,8 +281,8 @@ def test_extension_file():
 
 
 browser_preferences = [
-    ["chrome", "/whist/userConfigs/google-chrome/Default/Preferences"],
-    ["brave", "/whist/userConfigs/BraveSoftware/Brave-Browser/Default/Preferences"],
+    ["chrome", "~/.config/temp/google-chrome/Default/Preferences"],
+    ["brave", "~/.config/temp/BraveSoftware/Brave-Browser/Default/Preferences"],
 ]
 
 
