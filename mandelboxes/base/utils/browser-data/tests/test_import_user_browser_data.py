@@ -278,3 +278,29 @@ def test_extension_file():
     assert os.path.isfile(f"./{extension}.json")
 
     os.remove(f"./{extension}.json")
+
+
+browser_preferences = [
+    ["chrome", "~/.config/temp/google-chrome/Default/Preferences"],
+    ["brave", "~/.config/temp/BraveSoftware/Brave-Browser/Default/Preferences"],
+]
+
+
+@pytest.mark.parametrize("browser,browser_preferences_path", browser_preferences)
+def test_create_preferences_file(browser, browser_preferences_path):
+    preferences_str = '{"key1":"value1","key2":"value2","key3":"value3"}'
+
+    # Create preferences file at custom path
+    create_preferences_file(browser, preferences_str, browser_preferences_path)
+
+    # Check preferences file
+    expanded_path = os.path.expanduser(browser_preferences_path)
+    with open(expanded_path) as preferences_file:
+        preferences = json.load(preferences_file)
+
+        assert len(preferences) == 3
+        assert preferences["key1"] == "value1"
+        assert preferences["key2"] == "value2"
+        assert preferences["key3"] == "value3"
+
+    os.remove(expanded_path)

@@ -17,7 +17,12 @@ export default flow<
     mandelboxID: string
     isNewConfigToken: boolean
     importedData:
-      | { cookies: string; bookmarks: string; extensions: string }
+      | {
+          cookies: string
+          bookmarks: string
+          extensions: string
+          preferences: string
+        }
       | undefined
   } & accessToken &
     configToken

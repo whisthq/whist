@@ -27,7 +27,12 @@ export default flow(
       configToken: string
       isNewConfigToken: boolean
       importedData:
-        | { cookies: string; bookmarks: string; extensions: string }
+        | {
+            cookies: string
+            bookmarks: string
+            extensions: string
+            preferences: string
+          }
         | undefined
       userEmail: string
       regions: Array<{ region: AWSRegion; pingTime: number }>

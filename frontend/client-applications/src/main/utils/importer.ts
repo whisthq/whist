@@ -100,6 +100,11 @@ const getExtensionDir = (browser: InstalledBrowser): string[] => {
   return browserDirectories.map((dir) => path.join(dir, "Extensions"))
 }
 
+const getPreferencesFilePath = (browser: InstalledBrowser): string[] => {
+  const browserDirectories = getBrowserDefaultDirectory(browser)
+  return browserDirectories.map((dir) => path.join(dir, "Preferences"))
+}
+
 const getOsCryptName = (browser: InstalledBrowser): string => {
   switch (browser) {
     case InstalledBrowser.CHROME: {
@@ -357,6 +362,18 @@ const getExtensionIDs = (browser: InstalledBrowser): string => {
   }
 }
 
+const getPreferencesFromFile = (browser: InstalledBrowser): string => {
+  const preferencesFile = expandPaths(getPreferencesFilePath(browser))
+
+  try {
+    const preferences = fs.readFileSync(preferencesFile, "utf8")
+    return preferences
+  } catch (err) {
+    console.error("Could not get preferences from file. Error:", err)
+    return ""
+  }
+}
+
 const getCookieEncryptionKey = async (
   browser: InstalledBrowser
 ): Promise<Buffer> => {
@@ -487,10 +504,38 @@ const getExtensions = async (
   return extensions
 }
 
+const getPreferences = async (
+  browser: InstalledBrowser
+): Promise<string | undefined> => {
+  // If no browser is requested or the browser is not recognized, don't run anything
+  if (
+    browser === undefined ||
+    !Object.values(InstalledBrowser).includes(browser)
+  )
+    return undefined
+
+  // For now we only want to get extensions for browsers that are compatible
+  // with chrome extensions ie brave/chrome/chromium
+  if (
+    browser !== InstalledBrowser.CHROME &&
+    browser !== InstalledBrowser.BRAVE &&
+    browser !== InstalledBrowser.CHROMIUM
+  ) {
+    return undefined
+  }
+
+  const extensions = getPreferencesFromFile(browser)
+
+  if (extensions.length === 0) return undefined
+
+  return extensions
+}
+
 export {
   InstalledBrowser,
   getInstalledBrowsers,
   getDecryptedCookies,
   getBookmarks,
   getExtensions,
+  getPreferences,
 }

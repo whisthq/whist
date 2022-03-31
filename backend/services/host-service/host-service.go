@@ -498,6 +498,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		CookiesJSON: req.CookiesJSON,
 		Bookmarks:   &importedBookmarks,
 		Extensions:  mandelboxtypes.Extensions(strings.Join(savedExtensions, ",")),
+		Preferences: req.Preferences,
 	})
 	if err != nil {
 		logger.Errorf("Error writing initial browser data for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelboxSubscription.ID, err)
