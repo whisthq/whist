@@ -630,9 +630,7 @@ jobs:
       - name: On Linux, Build FFmpeg through Docker
         if: runner.os == 'Linux'
         working-directory: .github/workflows/helpers/ffmpeg
-        run: |
-          pwd
-          ./docker-build.sh 20
+        run: ./docker-build.sh 20
 
       ###################################################################################
       ################################# PUBLISH STEPS START #############################
