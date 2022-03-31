@@ -33,13 +33,18 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/rwlock.h>
 #include "whist/core/features.h"
+#include "whist/utils/command_line.h"
 #include "native_window_utils.h"
 #include "network.h"
 #include "client_utils.h"
 #include <whist/debug/protocol_analyzer.h>
 
-#define USE_HARDWARE true
+#define USE_HARDWARE_DECODE_DEFAULT true
 #define NO_NACKS_DURING_IFRAME false
+
+static bool use_hardware_decode = USE_HARDWARE_DECODE_DEFAULT;
+COMMAND_LINE_BOOL_OPTION(use_hardware_decode, 0, "hardware-decode",
+                         "Set whether to use hardware decode.")
 
 // Number of videoframes to have in the ringbuffer
 #define RECV_FRAMES_BUFFER_SIZE 275
@@ -121,7 +126,7 @@ VideoContext* init_video(int initial_width, int initial_height) {
     video_context->render_context = NULL;
     video_context->pending_render_context = false;
     VideoDecoder* decoder =
-        create_video_decoder(initial_width, initial_height, USE_HARDWARE, CODEC_TYPE_H264);
+        create_video_decoder(initial_width, initial_height, use_hardware_decode, CODEC_TYPE_H264);
     if (!decoder) {
         LOG_FATAL("ERROR: Decoder could not be created!");
     }
@@ -422,7 +427,7 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
     }
 
     VideoDecoder* decoder =
-        create_video_decoder(frame->width, frame->height, USE_HARDWARE, frame->codec_type);
+        create_video_decoder(frame->width, frame->height, use_hardware_decode, frame->codec_type);
     if (!decoder) {
         LOG_FATAL("ERROR: Decoder could not be created!");
     }
