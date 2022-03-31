@@ -66,8 +66,8 @@ jobs:
           REM move macOS and Linux to also use upstream FFmpeg eventually, for consistency)
           git clone https://github.com/m-ab-s/media-autobuild_suite C:\media-autobuild_suite
 
-          REM then, clone whisthq/FFmpeg to C:\media-autobuild_suite\build\ffmpeg
-          git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/whisthq/ffmpeg.git" C:\media-autobuild_suite\build\ffmpeg
+          REM then, clone whisthq/whist to C:\media-autobuild_suite\build\whist (for helper files for m-ab-s)
+          git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/whisthq/whist.git" C:\media-autobuild_suite\build\whist
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -112,19 +112,19 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           cp \
-          build/ffmpeg/.github/workflows/helpers/media-autobuild_suite.ini \
-          build/ffmpeg/.github/workflows/helpers/ffmpeg_options.txt \
-          build/ffmpeg/.github/workflows/helpers/mpv_options.txt \
-          build/ffmpeg/.github/workflows/helpers/bash.sh \
-          build/ffmpeg/.github/workflows/helpers/mingw.sh \
-          build/ffmpeg/.github/workflows/helpers/pacman.sh \
+          build/whist/.github/workflows/helpers/ffmpeg/media-autobuild_suite.ini \
+          build/whist/.github/workflows/helpers/ffmpeg/ffmpeg_options.txt \
+          build/whist/.github/workflows/helpers/ffmpeg/mpv_options.txt \
+          build/whist/.github/workflows/helpers/ffmpeg/bash.sh \
+          build/whist/.github/workflows/helpers/ffmpeg/mingw.sh \
+          build/whist/.github/workflows/helpers/ffmpeg/pacman.sh \
           build/
 
       - name: On Windows, build FFmpeg via media-autobuild_suite from C:\ drive
         if: runner.os == 'Windows'
         working-directory: C:\media-autobuild_suite
         shell: cmd
-        run: .\media-autobuild_suite.bat "${{ secrets.GHA_USERNAME }}" "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
+        run: .\media-autobuild_suite.bat
 
       ###################################################################################
       ################################# MACOS STEPS START ###############################
