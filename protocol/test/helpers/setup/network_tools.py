@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def setup_artificial_network_conditions(
-    pexpect_process, pexpect_prompt, network_conditions, running_in_ci
+    pexpect_process, pexpect_prompt, network_conditions, testing_time, running_in_ci
 ):
     """
     Set up the network degradation conditions on the client instance. We apply the network settings
@@ -29,6 +29,7 @@ def setup_artificial_network_conditions(
         network_conditions (str):   The network conditions expressed as either 'normal' for no network
                                     degradation or max_bandwidth, delay, packet drop percentage, with the
                                     three values separated by commas and no space.
+        testing_time (int): The duration of the E2E test in seconds
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
@@ -37,6 +38,11 @@ def setup_artificial_network_conditions(
     if network_conditions == "normal":
         print("Setting up client to run on a instance with no degradation on network conditions")
     else:
+        min_bandwidth = max_bandwidth = None
+        min_pkt_drop_pctg = max_pkt_drop_pctg = None
+        min_delay = max_delay = None
+        min_interval = max_interval = None
+
         # Apply conditions below only for values that are actually set
         if len(network_conditions.split(",")) != 3:
             print(
@@ -45,22 +51,85 @@ def setup_artificial_network_conditions(
             )
             return
 
-        max_bandwidth, net_delay, pkt_drop_pctg = network_conditions.split(",")
-        if max_bandwidth == "None" and net_delay == "None" and pkt_drop_pctg == "None":
+        bandwidth, delay, pkt_drop_pctg, interval = network_conditions.split(",")
+        if bandwidth == "None" and delay == "None" and pkt_drop_pctg == "None":
             print(
                 "Setting up client to run on a instance with no degradation on network conditions"
             )
             return
         else:
+            degradations_command = ""
             print(
                 "Setting up client to run on a instance with the following networking conditions:"
             )
-            if max_bandwidth != "None":
-                print(f"\t* Max bandwidth: {max_bandwidth}")
-            if net_delay != "None":
-                print(f"\t* Delay: {net_delay}ms")
+            if bandwidth != "None":
+                bandwidth = bandwidth.split("-")
+                if len(bandwidth == 1):
+                    min_bandwidth = max_bandwidth = bandwidth[0]
+                    degradations_command += f" -b {min_bandwidth}"
+                    print(f"\t* Max bandwidth: stable at {min_bandwidth}")
+                elif len(bandwidth == 2):
+                    min_bandwidth, max_bandwidth = bandwidth
+                    degradations_command += f" -b {min_bandwidth},{max_bandwidth}"
+                    print(
+                        f"\t* Max bandwidth: variable between {min_bandwidth} and {max_bandwidth}"
+                    )
+                else:
+                    print(
+                        "Error, incorrect number of values passed to max bandwidth network condition"
+                    )
+                    return
+            if delay != "None":
+                delay = delay.split("-")
+                if len(delay == 1):
+                    min_delay = max_delay = delay[0]
+                    degradations_command += f" -q {min_delay}"
+                    print(f"\t* Packet delay: stable at {min_delay}")
+                elif len(delay == 2):
+                    min_delay, max_delay = delay
+                    degradations_command += f" -q {min_delay},{max_delay}"
+                    print(f"\t* Packet delay: variable between {min_delay} and {max_delay}")
+                else:
+                    print(
+                        "Error, incorrect number of values passed to packet delay network condition"
+                    )
+                    return
+
             if pkt_drop_pctg != "None":
-                print(f"\t* Packet drop rate: {pkt_drop_pctg}")
+                pkt_drop_pctg = pkt_drop_pctg.split("-")
+                if len(pkt_drop_pctg == 1):
+                    min_pkt_drop_pctg = max_pkt_drop_pctg = pkt_drop_pctg[0]
+                    degradations_command += f" -p {min_pkt_drop_pctg}"
+                    print(f"\t* Packet drop rate: stable at {min_pkt_drop_pctg}")
+                elif len(pkt_drop_pctg == 2):
+                    min_pkt_drop_pctg, max_pkt_drop_pctg = pkt_drop_pctg
+                    degradations_command += f" -p {min_pkt_drop_pctg},{max_pkt_drop_pctg}"
+                    print(
+                        f"\t* Packet drop rate: variable between {min_pkt_drop_pctg} and {max_pkt_drop_pctg}"
+                    )
+                else:
+                    print(
+                        "Error, incorrect number of values passed to packet drop rate network condition"
+                    )
+                    return
+
+            if interval != "None":
+                interval = interval.split("-")
+                if len(interval == 1):
+                    min_interval = max_interval = interval[0]
+                    degradations_command += f" -i {min_interval}"
+                    print(f"\t* Net conditions change interval: stable at {min_interval}")
+                elif len(interval == 2):
+                    min_interval, max_interval = interval
+                    degradations_command += f" -i {min_interval},{max_interval}"
+                    print(
+                        f"\t* Net conditions change interval: variable between {min_interval} and {max_interval}"
+                    )
+                else:
+                    print(
+                        "Error, incorrect number of values passed to packet drop rate network condition"
+                    )
+                    return
 
         # Install ifconfig
         command = "sudo apt-get install -y net-tools"
@@ -93,43 +162,10 @@ def setup_artificial_network_conditions(
             )
         ]
 
-        commands = []
-
-        # Set up infrastructure to apply degradations on incoming traffic
-        # (https://wiki.linuxfoundation.org/networking/netem#how_can_i_use_netem_on_incoming_traffic)
-        commands.append("sudo modprobe ifb")
-        commands.append("sudo ip link set dev ifb0 up")
-
-        degradation_command = ""
-        if net_delay != "None":
-            degradation_command += f"delay {net_delay}ms "
-        if pkt_drop_pctg != "None":
-            degradation_command += f"loss {pkt_drop_pctg}% "
-        if max_bandwidth != "None":
-            degradation_command += f"rate {max_bandwidth}"
-
-        for device in network_devices:
-            print(f"Applying network degradation to device {device}")
-            # Add devices to delay incoming packets
-            commands.append(f"sudo tc qdisc add dev {device} ingress")
-            commands.append(
-                f"sudo tc filter add dev {device} parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0"
-            )
-
-            # Set outbound degradations
-            command = f"sudo tc qdisc add dev {device} root netem "
-            command += degradation_command
-            commands.append(command)
-
-        # Set inbound degradations
-        command = "sudo tc qdisc add dev ifb0 root netem "
-        command += degradation_command
-        commands.append(command)
-
-        # Execute all commands:
-        for command in commands:
-            pexpect_process.sendline(command)
-            wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        # add 5 more seconds to testing_time to account for time spent in this script before test actually starts
+        command = f"( nohup timeout {testing_time+5}s ~/whist/protocol/test/helpers/apply_network_conditions.sh -d {network_devices.join(',')} > /dev/null 2>&1 & )"
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
 
 def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
@@ -171,6 +207,11 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
             "ifconfig is not installed on the client instance, so we don't need to restore normal network conditions."
         )
         return
+
+    # Stop the process applying the artificial network conditions
+    command = "killall -9 -v apply_network_conditions.sh"
+    pexpect_process.sendline(command)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     # Get names of network devices
     blacklisted_expressions = [pexpect_prompt, "docker", "veth", "ifb", "ifconfig", "\\", "~", ";"]

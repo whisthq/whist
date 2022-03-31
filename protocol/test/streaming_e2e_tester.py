@@ -460,7 +460,12 @@ if __name__ == "__main__":
     # 10 - Run the browser/chrome server mandelbox on the server instance
     # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
     server_pexpect_process = attempt_ssh_connection(
-        server_cmd, aws_timeout_seconds, server_log, pexpect_prompt_server, 5, running_in_ci
+        server_cmd,
+        aws_timeout_seconds,
+        server_log,
+        pexpect_prompt_server,
+        ssh_connection_retries,
+        running_in_ci,
     )
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
     # we need to pass the client for it to connect
@@ -473,12 +478,21 @@ if __name__ == "__main__":
     # Start SSH connection(s) to the EC2 instance(s) to run the development/client
     # client mandelbox on the client instance
     client_pexpect_process = attempt_ssh_connection(
-        client_cmd, aws_timeout_seconds, client_log, pexpect_prompt_client, 5, running_in_ci
+        client_cmd,
+        aws_timeout_seconds,
+        client_log,
+        pexpect_prompt_client,
+        ssh_connection_retries,
+        running_in_ci,
     )
 
     # Set up the artifical network degradation conditions on the client, if needed
     setup_artificial_network_conditions(
-        client_pexpect_process, pexpect_prompt_client, network_conditions, running_in_ci
+        client_pexpect_process,
+        pexpect_prompt_client,
+        network_conditions,
+        testing_time,
+        running_in_ci,
     )
 
     # Run the dev client on the client instance, using the server configs obtained above
