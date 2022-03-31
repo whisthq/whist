@@ -291,7 +291,7 @@ def test_create_preferences_file(browser, browser_preferences_path):
     preferences_str = '{"key1":"value1","key2":"value2","key3":"value3"}'
 
     # Create preferences file at custom path
-    create_preferences_file(browser, preferences_str)
+    create_preferences_file(browser, preferences_str, browser_preferences_path)
 
     # Check preferences file
     expanded_path = os.path.expanduser(browser_preferences_path)
