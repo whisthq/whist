@@ -117,7 +117,6 @@ if [[ ( $min_bandwidth != $max_bandwidth ) || ( $min_packet_drop != $max_packet_
     # Recurrent net conditions variation
     while true
     do
-        # Multiply min and max by 1000; Generate random int in the range; divide by 100
         bandwidth=$(( $RANDOM % (${max_bandwidth%????} - ${min_bandwidth%????} + 1) + ${min_bandwidth%????} ))
         bandwidth_unit=${min_bandwidth:(-4)}
         packet_drop=$(( $RANDOM % (${max_packet_drop} - ${min_packet_drop} + 1) + ${min_packet_drop} )) 
@@ -133,7 +132,7 @@ if [[ ( $min_bandwidth != $max_bandwidth ) || ( $min_packet_drop != $max_packet_
         echo "Setting network conditions on device $device to max bandwidth: ${bandwidth}${bandwidth_unit}, packet drop rate: $packet_drop%, queue length: $delay ms"
         echo "Sleeping for ${interval_seconds}.${interval_milliseconds} seconds"
 
-        # Sleep takes seconds as the smallest value
+        # Sleep takes seconds as the smallest value, so we need to convert the randomly-generated interval number from ms to s
         sleep "${interval_seconds}.${interval_milliseconds}"
     done
 fi
