@@ -100,11 +100,14 @@ typedef struct
         GF256_ALIGNED GF256_M128 TABLE_LO_Y[256];
         GF256_ALIGNED GF256_M128 TABLE_HI_Y[256];
     } MM128;
+
+#if !defined(GF256_TARGET_MOBILE)
     struct
     {
         GF256_ALIGNED GF256_M256 TABLE_LO_Y[256];
         GF256_ALIGNED GF256_M256 TABLE_HI_Y[256];
     } MM256;
+#endif
 
     /// Mul/Div/Inv/Sqr tables
     uint8_t GF256_MUL_TABLE[256 * 256];
