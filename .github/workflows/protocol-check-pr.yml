@@ -171,6 +171,7 @@ jobs:
           # Build the protocol and its test suite, note that ASan doesn't support detect_leaks on macOS clang
           cmake \
             -S . \
+            -B build \
             -D CMAKE_BUILD_TYPE=Debug \
             -D CHECK_CI=TRUE \
             -D SANITIZE=address+undefined \
