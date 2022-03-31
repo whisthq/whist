@@ -56,6 +56,12 @@ struct _whist_server_config {
     int begin_time_to_exit;
 };
 
+typedef enum {
+    NOT_REQUIRED = 1,
+    REQUIRED = 2,
+    BLANK_FRAME_SENT = 3,
+} StreamRestartState;
+
 typedef struct _whist_server_config whist_server_config;
 
 // NOTE: PLEASE DO NOT ADD MORE TO THIS STRUCT
@@ -89,7 +95,7 @@ struct _whist_server_state {
 
     // Whether the stream needs to be restarted with new parameter sets
     // and an intra frame.
-    bool stream_needs_restart;
+    StreamRestartState stream_restart_state;
     // Whether the stream needs to be recovered (but does not require
     // new parameter sets and an intra frame).
     bool stream_needs_recovery;

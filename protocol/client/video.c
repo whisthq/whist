@@ -190,6 +190,7 @@ int render_video(VideoContext* video_context) {
     static WhistCursorInfo* cursor_image = NULL;
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
+    static bool blank_frame_sent = false;
 
     // Receive and process a render context that's being pushed
     if (video_context->pending_render_context) {
@@ -229,10 +230,15 @@ int render_video(VideoContext* video_context) {
             int ret;
             server_timestamp = frame->server_timestamp;
             client_input_timestamp = frame->client_input_timestamp;
-            TIME_RUN(
-                ret = video_decoder_send_packets(video_context->decoder, get_frame_videodata(frame),
-                                                 frame->videodata_length),
-                VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
+            start_timer(&statistics_timer);
+            ret = video_decoder_send_packets(video_context->decoder, get_frame_videodata(frame),
+                                             frame->videodata_length);
+            if (!frame->is_blank_frame) {
+                log_double_statistic(VIDEO_DECODE_SEND_PACKET_TIME,
+                                     get_timer(&statistics_timer) * MS_IN_SECOND);
+            } else {
+                blank_frame_sent = true;
+            }
             if (ret < 0) {
                 LOG_ERROR("Failed to send packets to decoder, unable to render frame");
                 video_context->pending_render_context = false;
@@ -271,8 +277,13 @@ int render_video(VideoContext* video_context) {
         }
 
         if (res == 0) {
-            // Mark that we got at least one frame from the decoder
-            got_frame_from_decoder = true;
+            if (blank_frame_sent) {
+                LOG_INFO("Don't render the blank frame");
+                blank_frame_sent = false;
+            } else {
+                // Mark that we got at least one frame from the decoder
+                got_frame_from_decoder = true;
+            }
         } else {
             // Exit once we get EAGAIN
             break;

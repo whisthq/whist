@@ -24,6 +24,7 @@ typedef struct VideoFrame {
     bool is_empty_frame;     // indicates whether this frame is identical to the one last sent
     bool is_window_visible;  // indicates whether the client app is visible. If the client realizes
                              // the server is wrong, it can correct it
+    bool is_blank_frame;     // indicates whether this frame is a dummy blank frame.
     int videodata_length;
     WhistRGBColor corner_color;
     timestamp_us client_input_timestamp;  // Last ping client timestamp + time elapsed. Used for

@@ -174,7 +174,7 @@ static int handle_streaming_toggle_message(whist_server_state *state, WhistClien
         // MESSAGE_START_STREAMING messages
         LOG_INFO("Received message to start streaming again.");
         state->stop_streaming = false;
-        state->stream_needs_restart = true;
+        state->stream_restart_state = REQUIRED;
     } else {
         LOG_WARNING("Received streaming message to %s streaming, but we're already in that state!",
                     state->stop_streaming ? "stop" : "start");

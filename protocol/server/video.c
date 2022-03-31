@@ -171,7 +171,8 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
                                   WhistTimer* server_frame_timer, CaptureDevice* device,
                                   VideoEncoder* encoder, int id,
                                   timestamp_us client_input_timestamp,
-                                  timestamp_us server_timestamp) {
+                                  timestamp_us server_timestamp,
+                                  bool is_blank_frame) {
     // transfer the capture of the latest frame from the device to
     // the encoder,
     // This function will try to CUDA/OpenGL optimize the transfer by
@@ -186,6 +187,7 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     frame->codec_type = encoder->codec_type;
     frame->is_empty_frame = false;
     frame->is_window_visible = true;
+    frame->is_blank_frame = is_blank_frame;
     frame->corner_color = device->corner_color;
     frame->server_timestamp = server_timestamp;
     frame->client_input_timestamp = client_input_timestamp;
@@ -586,6 +588,8 @@ int32_t multithreaded_send_video(void* opaque) {
     bool initialized_network_settings = false;
     ClientLock* client_lock = client_active_lock(state->client);
 
+    static void *blank_frame = NULL;
+
     // The video loop
     while (client_lock != NULL) {
         // Refresh the client activation lock, to let the client (re/de)activate if it's trying to
@@ -597,7 +601,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // If a new connection occured, restart the stream
         if (previous_connection_id != state->client->connection_id) {
-            state->stream_needs_restart = true;
+            state->stream_restart_state = REQUIRED;
             initialized_network_settings = false;
             previous_connection_id = state->client->connection_id;
         }
@@ -633,7 +637,7 @@ int32_t multithreaded_send_video(void* opaque) {
         if (state->update_device) {
             update_current_device(state, &statistics_timer, device, encoder, true_width,
                                   true_height);
-            state->stream_needs_restart = true;
+            state->stream_restart_state = REQUIRED;
         }
 
         // If no device is set, we need to create one
@@ -642,7 +646,7 @@ int32_t multithreaded_send_video(void* opaque) {
                                   true_height) < 0) {
                 continue;
             }
-            state->stream_needs_restart = true;
+            state->stream_restart_state = REQUIRED;
         }
 
         network_settings = udp_get_network_settings(&state->client->udp_context);
@@ -706,7 +710,17 @@ int32_t multithreaded_send_video(void* opaque) {
         // Accumulated_frames is equal to how many frames have passed since the
         // last call to CaptureScreen
         int accumulated_frames = 0;
-        if ((!state->stop_streaming || state->stream_needs_restart)) {
+
+        if (state->stream_restart_state == REQUIRED) {
+            if (blank_frame) {
+                free(blank_frame);
+                blank_frame = NULL;
+            }
+            device->last_capture_device = X11_DEVICE;
+            device->frame_data = blank_frame = safe_zalloc(device->width * device->height * 4);
+            device->pitch = device->width;
+            LOG_INFO("Sending a blank frame");
+        } else if ((!state->stop_streaming)) {
             start_timer(&statistics_timer);
             accumulated_frames = capture_screen(device);
             if (accumulated_frames > 1) {
@@ -737,7 +751,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // When the encoder is disabled, we only wake the client CPU,
         // DISABLED_ENCODER_FPS times per second, for just a usec at a time.
         bool disable_encoder = consecutive_identical_frames > CONSECUTIVE_IDENTICAL_FRAMES &&
-                               !state->stream_needs_restart;
+                               !(state->stream_restart_state != NOT_REQUIRED);
         // Lower the min_fps to DISABLED_ENCODER_FPS when the encoder is disabled
         int min_fps = disable_encoder ? DISABLED_ENCODER_FPS : MIN_FPS;
 
@@ -752,7 +766,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
 
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
-        if ((accumulated_frames > 0 || state->stream_needs_restart ||
+        if ((accumulated_frames > 0 || (state->stream_restart_state != NOT_REQUIRED) ||
              (get_timer(&start_frame_timer) > (double)(id - start_frame_id) / min_fps &&
               get_timer(&last_frame_timer) > 1.0 / min_fps))) {
             // This loop only runs ~1/current_fps times per second, every 16-100ms
@@ -791,13 +805,12 @@ int32_t multithreaded_send_video(void* opaque) {
 
                 VideoFrameType frame_type;
                 if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
-                    if (state->stream_needs_restart || state->stream_needs_recovery) {
-                        if (state->stream_needs_restart) {
+                    if ((state->stream_restart_state != NOT_REQUIRED) || state->stream_needs_recovery) {
+                        if (state->stream_restart_state != NOT_REQUIRED) {
                             ltr_force_intra(state->ltr_context);
                         } else {
                             ltr_mark_stream_broken(state->ltr_context);
                         }
-                        state->stream_needs_restart = false;
                         state->stream_needs_recovery = false;
                     }
 
@@ -813,15 +826,18 @@ int32_t multithreaded_send_video(void* opaque) {
                     video_encoder_set_ltr_action(encoder, &ltr_action);
                     frame_type = ltr_action.frame_type;
                 } else {
-                    if (state->stream_needs_restart || state->stream_needs_recovery) {
+                    if ((state->stream_restart_state != NOT_REQUIRED) || state->stream_needs_recovery) {
                         video_encoder_set_iframe(encoder);
                         frame_type = VIDEO_FRAME_TYPE_INTRA;
                     } else {
                         frame_type = VIDEO_FRAME_TYPE_NORMAL;
                     }
-                    state->stream_needs_restart = false;
                     state->stream_needs_recovery = false;
                 }
+                if (state->stream_restart_state == REQUIRED)
+                    state->stream_restart_state = BLANK_FRAME_SENT;
+                else
+                    state->stream_restart_state = NOT_REQUIRED;
 
                 start_timer(&statistics_timer);
 
@@ -859,8 +875,8 @@ int32_t multithreaded_send_video(void* opaque) {
                         }
 #endif
                         send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
-                                              encoder, id, client_input_timestamp,
-                                              server_timestamp);
+                                              encoder, id, client_input_timestamp, server_timestamp,
+                                              state->stream_restart_state == BLANK_FRAME_SENT);
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
                         log_double_statistic(VIDEO_FRAME_SIZE, encoder->encoded_frame_size);
@@ -899,6 +915,10 @@ int32_t multithreaded_send_video(void* opaque) {
     if (device) {
         destroy_capture_device(device);
         device = NULL;
+    }
+    if (blank_frame) {
+        free(blank_frame);
+        blank_frame = NULL;
     }
 
     return 0;

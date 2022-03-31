@@ -391,7 +391,7 @@ int main(int argc, char* argv[]) {
     server_state.exiting = false;
 
     server_state.ltr_context = ltr_create();
-    server_state.stream_needs_restart = false;
+    server_state.stream_restart_state = NOT_REQUIRED;
     server_state.stream_needs_recovery = false;
     server_state.update_frame_ack = false;
 
