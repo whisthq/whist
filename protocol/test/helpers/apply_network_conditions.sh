@@ -23,6 +23,7 @@ do
     p) packet_drop_range=${OPTARG} ;;
     q) queue_length_range=${OPTARG} ;;
     i) interval_range=${OPTARG} ;;
+    *)  ;;
   esac
 done
 
@@ -35,7 +36,7 @@ if [ -z "${devices:-}" ]; then
 fi
 
 # Read device names and save them in a array
-read -a devices <<< "$devices"
+read -r devices <<< "$devices"
 echo "Network devices: ${devices[*]}"
 
 # Check that at least one network condition was specified. If no network condition was specified, we don't have anything to do
@@ -46,7 +47,7 @@ fi
 
 # Read the network conditions that are passed and parse the minimum and maximum value
 if [ -n "${bandwidth_range:-}" ]; then
-  read -a bandwidth_range <<< "$bandwidth_range";
+  read -r bandwidth_range <<< "$bandwidth_range";
   if [ ${#bandwidth_range[*]} -eq 2 ]; then
     max_bandwidth="${bandwidth_range[1]}"
   elif [ ${#bandwidth_range[*]} -eq 1 ]; then
@@ -59,7 +60,7 @@ if [ -n "${bandwidth_range:-}" ]; then
 
   # This script only supports bandwidth rates expressed with the format: <integer>{G,M,k}bit.
   # The max and min values in the range should also be expressed using the same units (Gbit, Mbit, kbit)
-  if [[ ! ( "${min_bandwidth%????}" =~ ^[0-9]+$ ) || ! ( "${max_bandwidth%????}" =~ ^[0-9]+$ ) || "${min_bandwidth%????}" -lt 0 || "${min_bandwidth%????}" -gt "${max_bandwidth%????}" || ${min_bandwidth:(-4)} != ${max_bandwidth:(-4)} ]]; then
+  if [[ ! ( "${min_bandwidth%????}" =~ ^[0-9]+$ ) || ! ( "${max_bandwidth%????}" =~ ^[0-9]+$ ) || "${min_bandwidth%????}" -lt 0 || "${min_bandwidth%????}" -gt "${max_bandwidth%????}" || "${min_bandwidth:(-4)}" != "${max_bandwidth:(-4)}" ]]; then
     echo "Bandwidth min and max must be positive integer values and they must be expressed using the same units (Gbit, Mbit, kbit). Min value should be <= max value."
     exit 1
   fi
@@ -68,7 +69,7 @@ if [ -n "${bandwidth_range:-}" ]; then
 fi
 
 if [ -n "${packet_drop_range:-}" ]; then
-  read -a packet_drop_range <<< "$packet_drop_range";
+  read -r packet_drop_range <<< "$packet_drop_range";
   if [ ${#packet_drop_range[*]} -eq 2 ]; then
     max_packet_drop=${packet_drop_range[1]}
   elif [ ${#packet_drop_range[*]} -eq 1 ]; then
@@ -89,7 +90,7 @@ if [ -n "${packet_drop_range:-}" ]; then
 fi
 
 if [ -n "${queue_length_range:-}" ]; then
-  read -a queue_length_range <<< "$queue_length_range";
+  read -r queue_length_range <<< "$queue_length_range";
   if [ ${#queue_length_range[*]} -eq 2 ]; then
     max_queue_length=${queue_length_range[1]}
   elif [ ${#queue_length_range[*]} -eq 1 ]; then
@@ -110,7 +111,7 @@ if [ -n "${queue_length_range:-}" ]; then
 fi
 
 if [ -n "${interval_range:-}" ]; then
-  read -a interval_range <<< "$interval_range";
+  read -r interval_range <<< "$interval_range";
   if [ ${#interval_range[*]} -eq 2 ]; then
     max_interval=${interval_range[1]}
   elif [ ${#interval_range[*]} -eq 1 ]; then
@@ -161,11 +162,11 @@ for i in "${!devices[@]}"; do
   sudo ip link set dev "ifb${i}" up
   sudo tc qdisc add dev "$device" ingress
   sudo tc filter add dev "$device" parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev "ifb${i}"
-  sudo tc qdisc add dev "$device" root netem $degradations_string
-  sudo tc qdisc add dev "ifb${i}" root netem $degradations_string
+  sudo tc qdisc add dev "$device" root netem "$degradations_string"
+  sudo tc qdisc add dev "ifb${i}" root netem "$degradations_string"
 done
 
-if [[ ( $min_bandwidth != $max_bandwidth ) || ( $min_packet_drop != $max_packet_drop ) || ( $min_queue_length != $max_queue_length ) ]]; then
+if [[ ( "$min_bandwidth" != "$max_bandwidth" ) || ( "$min_packet_drop" != "$max_packet_drop" ) || ( "$min_queue_length" != "$max_queue_length" ) ]]; then
   # Seed the random number generator to always get the same results
   RANDOM=34587
 
@@ -175,19 +176,19 @@ if [[ ( $min_bandwidth != $max_bandwidth ) || ( $min_packet_drop != $max_packet_
     echo_string=""
     degradations_string=""
     if [ -n "${min_bandwidth:-}" ] && [ -n "${max_bandwidth:-}" ]; then
-      bandwidth=$(( $RANDOM % (${max_bandwidth%????} - ${min_bandwidth%????} + 1) + ${min_bandwidth%????} ))
+      bandwidth=$(( RANDOM % (${max_bandwidth%????} - ${min_bandwidth%????} + 1) + ${min_bandwidth%????} ))
       bandwidth_unit=${min_bandwidth:(-4)}
 
       echo_string="${echo_string} max bandwidth: ${bandwidth}${bandwidth_unit}"
       degradations_string="${degradations_string} rate ${bandwidth}${bandwidth_unit}"
     fi
     if [ -n "${min_packet_drop:-}" ] && [ -n "${max_packet_drop:-}" ]; then
-      packet_drop=$(( $RANDOM % (${max_packet_drop} - ${min_packet_drop} + 1) + ${min_packet_drop} ))
+      packet_drop=$(( RANDOM % (max_packet_drop - min_packet_drop + 1) + min_packet_drop ))
       echo_string="${echo_string} packet drop rate: $packet_drop%"
       degradations_string="${degradations_string} loss ${packet_drop}%"
     fi
     if [ -n "${min_queue_length:-}" ] && [ -n "${max_queue_length:-}" ]; then
-      delay=$(( $RANDOM % (${max_queue_length} - ${min_queue_length} + 1) + ${min_queue_length} ))
+      delay=$(( RANDOM % (max_queue_length - min_queue_length + 1) + min_queue_length ))
       echo_string="${echo_string} queue length: ${delay} ms"
       degradations_string="${degradations_string} delay ${delay}ms"
     fi
@@ -200,9 +201,9 @@ if [[ ( $min_bandwidth != $max_bandwidth ) || ( $min_packet_drop != $max_packet_
       sudo tc qdisc change dev "ifb${i}" root netem "$degradations_string"
     done
 
-    interval=$(( $RANDOM % (${max_interval} - ${min_interval} + 1) + ${min_interval} ))
-    interval_seconds=$(($interval / 1000))
-    interval_milliseconds=$(($interval - $interval_seconds))
+    interval=$(( RANDOM % (max_interval - min_interval + 1) + min_interval ))
+    interval_seconds=$((interval / 1000))
+    interval_milliseconds=$((interval - interval_seconds))
     echo "Sleeping for ${interval_seconds}.${interval_milliseconds} seconds"
     # Sleep takes seconds as the smallest value, so we need to convert the randomly-generated interval number from ms to s
     sleep "${interval_seconds}.${interval_milliseconds}"
