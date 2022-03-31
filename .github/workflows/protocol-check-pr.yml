@@ -30,21 +30,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Check Protocol PR on Intel x86_64 systems (via GHA runners)
-  protocol-check-pr-x64:
-    name: ${{ matrix.config.name }}
+  # Check Protocol PRs
+  protocol-check-pr:
+    name: Build and Check Protocol on ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
 
     strategy:
       matrix:
         config:
-          - name: "Build and Check Protocol on Windows (cl)"
-            os: windows-2019 # llvm, cmake, clang-tidy are pre-installed on windows-2019+ GHA machines
-            cuda: false # Set to true to CUDA-optimize the windows server executable. Note that CUDA takes 5-7min to install.
-          - name: "Build and Check Protocol on Ubuntu Linux (gcc)"
-            os: ubuntu-20.04 # cmake is pre-installed on ubuntu-20.04+ machines
-          - name: "Build and Check Protocol on macOS x64 (clang)"
-            os: macos-10.15 # cmake is pre-installed on macos-10.15+ machines
+          - name: "Windows"
+            os: windows-2019
+            arch: x86_64
+            # Set to true to CUDA-optimize Windows server. This is slow to install (5-7 minutes).
+            cuda: false
+          - name: "Ubuntu Linux"
+            os: ubuntu-20.04
+            arch: x86_64
+          - name: "macOS (x64)"
+            os: macos-10.15
+            arch: x86_64
+          - name: "macOS (arm64)"
+            os: macos-11.0
+            arch: arm64
 
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -162,17 +169,36 @@ jobs:
         working-directory: protocol
         run: |
           # Build the protocol and its test suite, note that ASan doesn't support detect_leaks on macOS clang
-          mkdir build
+          cmake \
+            -S . \
+            -B build \
+            -D CMAKE_BUILD_TYPE=Debug \
+            -D CHECK_CI=TRUE \
+            -D SANITIZE=address+undefined \
+            -D MACOS_TARGET_ARCHITECTURE=${{ matrix.config.arch }}
+
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -DSANITIZE=address+undefined
           make -j WhistClient
-          make -j test
+
+          if [[ "${{ matrix.config.arch}}" == "x86_64" ]]; then
+            # Run the tests
+            make -j test
+          else
+            # Just build the test, but we can't run it because we are cross-compiling
+            make -j WhistProtocolTest
+          fi
 
       - name: Build the Protocol Client Library on macOS
         if: runner.os == 'macOS'
         working-directory: protocol
         run: |
-          cmake -S . -B build-lib -D CMAKE_BUILD_TYPE=Debug -D CLIENT_SHARED_LIB=ON
+          cmake \
+            -S . \
+            -B build-lib \
+            -D CMAKE_BUILD_TYPE=Debug \
+            -D CLIENT_SHARED_LIB=ON \
+            -D MACOS_TARGET_ARCHITECTURE=${{ matrix.config.arch }}
+
           cd build-lib
           make -j WhistClient
 
@@ -256,65 +282,3 @@ jobs:
           # Ubuntu-specific PATH fix for `fd`
           ln -s $(which fdfind) ~/.local/bin/fd
           ./lint-cmake.sh
-
-  #######################################################################################
-  #######################################################################################
-
-  # Check Protocol PR on ARM64 systems (via self-hosted MacStadium M1 runner)
-  protocol-check-pr-arm64:
-    name: Build and Test Protocol on macOS ARM64 (clang)
-    runs-on: [self-hosted, macOS, ARM64]
-    defaults:
-      run:
-        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
-
-    steps:
-      ################################## CONFIG STEPS START ##############################
-
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3
-
-      # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
-      - name: Configure AWS S3 CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      ###################################################################################
-      ################################# MACOS STEPS START ###############################
-
-      # These commands must be run with sudo, which requires entering the password. They need
-      # to be run via VNC directly in the terminal, so that the password can be provided. They
-      # are left here, commented out, for reference
-      # - name: Install macOS Client Protocol Dependencies
-      #   if: runner.os == 'macOS'
-      #   working-directory: protocol
-      #   run: |
-      #     # llvm for clang-tidy, coreutils for realpath, lcov for codecov
-      #     brew install llvm coreutils perl doxygen lcov
-      #     sudo ln -s "/opt/homebrew/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
-      #     sudo ln -s "/opt/homebrew/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
-
-      - name: Build and Test Protocol Client
-        working-directory: protocol
-        run: |
-          # Build the protocol and its test suite, note that ASan doesn't support detect_leaks on macOS clang
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -DSANITIZE=address+undefined
-          make -j WhistClient
-          make -j test
-
-      - name: Build the Protocol Client Library
-        working-directory: protocol
-        run: |
-          cmake -S . -B build-lib -D CMAKE_BUILD_TYPE=Debug -D CLIENT_SHARED_LIB=ON
-          cd build-lib
-          make -j WhistClient
-
-      # Note that we don't run clang-tidy on arm64 macOS, since we already run it on x64 macOS
-
-  #######################################################################################
-  #######################################################################################
