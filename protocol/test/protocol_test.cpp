@@ -1620,9 +1620,12 @@ TEST_F(ProtocolTest, FECTest) {
     // Initialize FEC
     // Bypass the test, if it's the case hardware not support
     // which happened on Mac CI
-    if (init_fec() == WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT) {
+    int fec_init_result = init_fec();
+    if (fec_init_result == WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT) {
+        fprintf(stderr, "WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT\n");
         return;
     }
+    EXPECT_EQ(fec_init_result, 0);
 
     // Initialize a buffer that's NUM_ORIGINAL_PACKETS packets large
     char original_buffer[BUFFER_SIZE] = {0};
@@ -1694,11 +1697,12 @@ TEST_F(ProtocolTest, FECTest2) {
     // Initialize FEC
     // Bypass the test, if it's the case hardware not support
     // which happened on Mac CI
-    if (init_fec() == WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT) {
-        fprintf(stderr,"WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT\n");
-        fflush(stderr);
+    int fec_init_result = init_fec();
+    if (fec_init_result == WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT) {
+        fprintf(stderr, "WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT\n");
         return;
     }
+    EXPECT_EQ(fec_init_result, 0);
 
     // better random generator than rand()
     std::random_device rd;
