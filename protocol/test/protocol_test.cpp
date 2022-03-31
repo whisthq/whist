@@ -2410,6 +2410,9 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     EXPECT_SUCCESS(whist_option_get_string_value("user", &user_email));
     EXPECT_TRUE(user_email != NULL);
     EXPECT_STREQ(user_email, argv[28]);
+
+    // Undo global option settings which can break other tests.
+    whist_set_single_option("skip-taskbar", "off");
 }
 
 TEST_F(ProtocolTest, ErrorCodes) {

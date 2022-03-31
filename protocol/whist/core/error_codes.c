@@ -28,6 +28,8 @@ const char *whist_error_string(WhistStatus error_code) {
         [-WHIST_ERROR_CONNECTION_RESET] = "connection reset",
         [-WHIST_ERROR_CONNECTION_REFUSED] = "connection refused",
         [-WHIST_ERROR_NO_BUFFERS] = "no buffers",
+        [-WHIST_ERROR_END_OF_FILE] = "end of file",
+        [-WHIST_ERROR_EXTERNAL] = "external library error",
     };
     if (error_code <= 0 && (size_t)-error_code < ARRAY_LENGTH(error_strings) &&
         error_strings[-error_code]) {

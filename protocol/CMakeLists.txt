@@ -230,6 +230,8 @@ if(DOWNLOAD_BINARIES)
 endif()
 
 # FFmpeg: Use the FFmpeg libs in /lib/${arch}/ffmpeg
+set(FFMPEG_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/ffmpeg/${CMAKE_SYSTEM_NAME}")
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FFMPEG_LIBS libswresample.4.dylib;libavcodec.59.dylib;libavdevice.59.dylib;libavfilter.8.dylib;
                     libavformat.59.dylib;libswscale.6.dylib;libavutil.57.dylib)
@@ -243,7 +245,7 @@ foreach(LIB ${FFMPEG_LIBS})
     set(LIB_VAR "LIB_${LIB}")
     find_library(${LIB_VAR}
             NAMES ${LIB}
-            PATHS ${CMAKE_BINARY_DIR}/lib/${arch}/ffmpeg/${CMAKE_SYSTEM_NAME}
+            PATHS ${FFMPEG_DIR_PATH}
             NO_DEFAULT_PATH
             NO_CMAKE_ENVIRONMENT PATH
             NO_CMAKE_PATH
@@ -254,15 +256,18 @@ foreach(LIB ${FFMPEG_LIBS})
     list(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
 endforeach()
 message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
+list(APPEND RUNTIME_DIR_PATHS ${FFMPEG_DIR_PATH})
 
 
 #[[
 ################## Libraries we supply ##################
 ]]
+
 # the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
 # For linux we use the system openssl/libcrypto. For mac and windows we bundle our own because is not included with the os
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    find_library(LIB_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
+    set(OPENSSL_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}")
+    find_library(LIB_OPENSSL NAMES crypto libcrypto PATHS ${OPENSSL_DIR_PATH}
             NO_DEFAULT_PATH
             NO_CMAKE_ENVIRONMENT PATH
             NO_CMAKE_PATH
@@ -271,13 +276,15 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             NO_CMAKE_FIND_ROOT_PATH)
 
     if(NOT LIB_OPENSSL)
-        message(FATAL_ERROR "Library openssl was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
+        message(FATAL_ERROR "Library openssl was not found! ${OPENSSL_DIR_PATH}")
     endif()
+    list(APPEND RUNTIME_DIR_PATHS ${OPENSSL_DIR_PATH})
 else()
     find_package(OpenSSL REQUIRED)
 endif()
 
-find_library(LIB_SENTRY NAMES sentry PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}"
+set(SENTRY_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}")
+find_library(LIB_SENTRY NAMES sentry PATHS "${SENTRY_DIR_PATH}"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT_PATH
         NO_CMAKE_PATH
@@ -285,8 +292,9 @@ find_library(LIB_SENTRY NAMES sentry PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/sent
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
 if(NOT LIB_SENTRY)
-    message(FATAL_ERROR "Library Sentry was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}")
+    message(FATAL_ERROR "Library Sentry was not found! ${SENTRY_DIR_PATH}")
 endif()
+list(APPEND RUNTIME_DIR_PATHS ${SENTRY_DIR_PATH})
 
 find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
         NO_DEFAULT_PATH
@@ -299,17 +307,13 @@ if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
-find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/
-        NO_DEFAULT_PATH
-        NO_CMAKE_ENVIRONMENT_PATH
-        NO_CMAKE_PATH
-        NO_SYSTEM_ENVIRONMENT_PATH
-        NO_CMAKE_SYSTEM_PATH
-        NO_CMAKE_FIND_ROOT_PATH)
-
-if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
-    message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}")
-endif()
+function(copy_runtime_libs TARGET)
+    foreach(DIR ${RUNTIME_DIR_PATHS})
+        add_custom_command(TARGET ${TARGET} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${DIR}
+            $<TARGET_FILE_DIR:${TARGET}>)
+    endforeach()
+endfunction()
 
 fetchcontent_declare(
     googletest
@@ -454,7 +458,6 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile 
         whistFEC
         ${STATIC_SDL2}
         ${LIB_SENTRY}
-        ${LIBMFX}
     )
     # Server Specific windows libs go here
     set(WINDOWS_SPECIFIC_SERVER_LIBS

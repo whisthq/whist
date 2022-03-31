@@ -17,13 +17,7 @@ set_target_properties(WhistServer PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/server/build${arch}
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/server/build${arch})
 
-# copy the Sentry shared library and crashpad handler to the build folder
-# after the build
-add_custom_command(
-        TARGET WhistServer POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
-        $<TARGET_FILE_DIR:WhistServer>)
+copy_runtime_libs(WhistServer)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin"
 OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -41,22 +35,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/server/wserver.bat
             ${CMAKE_BINARY_DIR})
-endif()
-
-add_custom_command(
-    TARGET WhistServer POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
-    $<TARGET_FILE_DIR:WhistServer>)
-
-# OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
-# location to prevent a crash.
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    add_custom_command(
-            TARGET WhistServer POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_BINARY_DIR}/lib/64/openssl/Windows/libcrypto-1_1-x64.dll
-            $<TARGET_FILE_DIR:WhistServer>)
 endif()
 
 # Print out compile flags in verbose mode of CMake

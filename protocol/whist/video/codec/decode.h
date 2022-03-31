@@ -38,20 +38,6 @@ Custom Types
 */
 
 /**
- * @brief   Enum indicating the types of decoding we are doing. Type is initially set to
- * DECODE_TYPE_NONE, then set to one of the below 4. QSV and HARDWARE_OLDER are separate types
- * because they require different configurations than standard hardware-accelerated decoding.
- *
- */
-typedef enum DecodeType {
-    DECODE_TYPE_NONE = 0,
-    DECODE_TYPE_SOFTWARE = 1,
-    DECODE_TYPE_HARDWARE = 2,
-    DECODE_TYPE_QSV = 3,
-    DECODE_TYPE_HARDWARE_OLDER = 4,
-} DecodeType;
-
-/**
  * @brief       Struct that `get_current_decoded_frame` returns.
  */
 typedef struct DecodedFrameData {
@@ -73,13 +59,14 @@ typedef struct VideoDecoder {
     int width;
     int height;
     bool can_use_hardware;
+    bool can_output_hardware;
+    unsigned int decode_type;
     const AVCodec* codec;
     AVCodecContext* context;
     AVFrame* decoded_frame;
     AVBufferRef* ref;
     AVPacket packets[MAX_ENCODED_VIDEO_PACKETS];
     enum AVPixelFormat match_fmt;
-    DecodeType type;
     CodecType codec_type;
     enum AVHWDeviceType device_type;
 
@@ -127,7 +114,7 @@ void destroy_video_decoder(VideoDecoder* decoder);
  *
  * @returns                         0 on success, -1 on failure
  */
-int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, int buffer_size);
+int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffer_size);
 
 /**
  * @brief                           Decode the next available frame from the decoder.
