@@ -230,6 +230,7 @@ static bool CpuHasSSSE3 = false;
 
 #define CPUID_EBX_AVX2    0x00000020
 #define CPUID_ECX_SSSE3   0x00000200
+#define CPUID_EDX_SSE2    0x04000000
 
 static void _cpuid(unsigned int cpu_info[4U], const unsigned int cpu_info_type)
 {
@@ -1319,6 +1320,7 @@ extern "C" void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy
 // WHIST_CHANGE: ADD
 extern "C" bool gf256_has_hardware_support(void)
 {
+/*
 #if !defined(GF256_TARGET_MOBILE)
     unsigned int cpu_info[4];
     _cpuid(cpu_info, 7);
@@ -1327,5 +1329,6 @@ extern "C" bool gf256_has_hardware_support(void)
         return false;
     }
 #endif // GF256_TRY_AVX2
+*/
     return true;
 }
