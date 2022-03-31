@@ -629,7 +629,7 @@ jobs:
 
       - name: On Linux, Build FFmpeg through Docker
         if: runner.os == 'Linux'
-        working-directory: .github/workflows/helpers/ffmpeg
+        working-directory: media-autobuild_suite/whist/.github/workflows/helpers/ffmpeg
         run: ./docker-build.sh 20
 
       ###################################################################################
