@@ -528,10 +528,10 @@ jobs:
           if data["git_branch"] == "prod":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}"
             data["destination_regions"] = [
-              "us-east-1", 
-              "us-east-2", 
-              "us-west-1", 
-              "us-west-2", 
+              "us-east-1",
+              "us-east-2",
+              "us-west-1",
+              "us-west-2",
               "ca-central-1",
               "sa-east-1",
               "eu-north-1",
@@ -919,11 +919,11 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Client Applications: Build & Publish to AWS S3
-  # Build and publish the X86_64 client applications to their respective AWS S3 bucket,
-  # from which Electron-Updater pulls them for auto-updating
+  # Client Application: Build & Publish to AWS S3
+  # Build and publish the client application to the respective AWS S3 bucket,
+  # from which Electron Updater pulls them for auto-updating
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and all previous publish jobs succeed
-  client-applications-publish-build-x64-s3:
+  client-applications-publish-build-s3:
     name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
     runs-on: ${{ matrix.config.os }}
     concurrency: client-applications-publish-build-x64-s3-${{ matrix.config.os }}-${{ github.ref }}
@@ -942,18 +942,23 @@ jobs:
     strategy:
       matrix:
         config:
-          - name: "Windows Desktop Application"
-            os: windows-2019 # cmake is pre-installed on windows-2019+ GHA machines
-          - name: "macOS Desktop Application (X64)"
-            os: macos-10.15 # cmake is pre-installed on macos-10.15+ machines
+          - name: Windows
+            os: windows-2019
+            arch: x86_64
+          - name: macOS (x64)
+            os: macos-10.15
+            arch: x86_64
+          - name: macOS (arm64)
+            os: macos-11.0
+            arch: arm64
 
     steps:
+      # Get the whole git history. We must do this because the
+      # client app calls `git describe` in order to bake the
+      # version number into the React frontend.
       - name: Checkout Git Repository
         uses: actions/checkout@v3
         with:
-          # Get the whole git history. We must do this because the
-          # client app calls `git describe` in order to bake the
-          # version number into the react frontend.
           fetch-depth: 0
 
       - name: Install Node.js 16
@@ -961,7 +966,7 @@ jobs:
         with:
           node-version: "16"
 
-      # Necessary for Electron to upload packaged applications to AWS S3
+      # To retrieve Whist protocol libraries from AWS S3
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -1035,7 +1040,7 @@ jobs:
         working-directory: frontend/client-applications
         env:
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-          MACOS_ARCH: "x86_64"
+          MACOS_ARCH: "${{ matrix.config.arch }}"
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
@@ -1063,120 +1068,6 @@ jobs:
           curl -sL https://sentry.io/get-cli/ | bash
           sentry-cli upload-dif WhistProtocolClient/build/WhistClient
           sentry-cli upload-dif WhistProtocolClient/debugSymbols/WhistClient.debug
-
-  #######################################################################################
-  #######################################################################################
-
-  # Client Applications: Build & Publish to AWS S3
-  # Build and publish the client applications to their respective AWS S3 bucket,
-  # from which Electron-Updater pulls them for auto-updating
-  # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and all previous publish jobs succeed
-  client-applications-publish-build-arm64-s3:
-    name: "Client Applications: Build & Deploy macOS Desktop Application (ARM64)"
-    runs-on: [self-hosted, macOS, ARM64]
-    concurrency: client-applications-publish-build-arm64-s3-${{ github.ref }}
-    defaults:
-      run:
-        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
-    needs:
-      [
-        whist-publish-build-config,
-        client-applications-retrieve-version-number,
-        terraform-deploy,
-      ]
-
-    # Only run client-apps deployment if none of the previous steps failed
-    if: |
-      always() &&
-      (needs.client-applications-retrieve-version-number.result == 'success')
-
-    steps:
-      # Get the whole git history. We must do this because the
-      # client app calls `git describe` in order to bake the
-      # version number into the React frontend.
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Install Node.js 16
-        uses: actions/setup-node@v3.0.0
-        with:
-          node-version: "16"
-          architecture: "arm64"
-
-      # Necessary for Electron to upload packaged applications to AWS S3
-      - name: Configure AWS S3 CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      ############################### Unix Configuration Steps START ##############################
-
-      # This step must only be done once and permission must be granted to use the keychain
-      # manually, since the runner is self-hosted and its state persists across runs. It is
-      # left here for reference, in case you need to configure a new self-hosted runner
-      # - name: Install macOS Codesigning Certificates on macOS GHA Machine
-      #   uses: apple-actions/import-codesign-certs@v1
-      #   with:
-      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
-      #     p12-password: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
-
-      # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
-      - name: Install macOS Notarization API Key
-        run: |
-          mkdir -p ~/private_keys
-          aws s3 cp s3://whist-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
-
-      # If you get the "unable to find utility "altool", not a developer tool or in PATH" error, VNC into the
-      # M1 runner and run `sudo xcode-select -r` and provide the password
-
-      #############################################################################################
-      #################################### Publish Steps START ####################################
-
-      # Bump the package version in package.json using jq
-      - name: Update Package Version
-        working-directory: frontend/client-applications
-        run: |
-          mv package.json packageOld.json
-          # String substitution works here because of the GitHub Actions double-curly-brace variable "pre-processor" notation
-          cat packageOld.json | jq '.version = "${{ needs.client-applications-retrieve-version-number.outputs.release_version }}"' > package.json
-          rm packageOld.json
-
-      # (builds the branch that it is run on automatically, so prod if running on push to prod)
-      - name: Publish the MacOS Electron Application
-        working-directory: frontend/client-applications
-        env:
-          AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-          MACOS_ARCH: "arm64"
-          # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
-        run: |
-          # Build the Whist protocol and package the Electron application
-          # We need to increase the timeout to deal with GHA's weak VMs.
-          yarn config set network-timeout 600000
-          yarn cache clean
-          yarn install
-          yarn package:publish \
-          --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
-          --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
-          --commit='${{ github.sha }}'
-
-        # Each final build has an internal build id and debug id. Sentry will use these
-        # IDs to match the debug symbols with the build that crashed to build the backtrace
-      - name: Copy Client debug symbols to sentry
-        if: runner.os == 'macOS'
-        working-directory: frontend/client-applications
-        env:
-          SENTRY_ORG: whist
-          SENTRY_PROJECT: protocol
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: |
-          sentry-cli upload-dif ./protocol-build/client/WhistClient
-          sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
 
   #######################################################################################
   #######################################################################################

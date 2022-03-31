@@ -53,9 +53,9 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Building (x64)
+  # Building
   # Check that the macOS and Windows client applications build
-  client-applications-check-pr-building-x64:
+  client-applications-check-pr-building:
     name: Building on ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
 
