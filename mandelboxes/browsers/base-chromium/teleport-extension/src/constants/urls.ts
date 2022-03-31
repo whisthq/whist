@@ -10,4 +10,11 @@ export const LINUX_PLATFORM = "Linux x86_64"
 // for those shortcuts to work correctly, since the protocol maps Cmd to Ctrl
 export const URLS_THAT_NEED_LINUX_USERAGENT = ["figma.com"]
 
-export const URLS_THAT_NEED_CAMERA_MIC = ["meet.google.com", "app.gather.town"]
+export const URLS_THAT_NEED_CAMERA_MIC = [
+  "meet.google.com",
+  "app.gather.town",
+  "around.co",
+  "discord.com",
+  "slack.com",
+  "zoom.us",
+]

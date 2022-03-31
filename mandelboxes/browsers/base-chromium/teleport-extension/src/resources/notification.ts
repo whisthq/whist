@@ -6,6 +6,6 @@ const currentURL = document.URL
 if (URLS_THAT_NEED_CAMERA_MIC.some((url) => currentURL.includes(url))) {
   createNotification(
     document,
-    "Sorry! Whist currently doesn't support websites that use your camera/mic. For now, please use your local browser or use the desktop app for this page :("
+    "Oops, you work faster than our engineers! This website may request access to your camera/mic, which we'll be supporting soon. In the meantime, please use another browser to access your camera/mic :)"
   )
 }

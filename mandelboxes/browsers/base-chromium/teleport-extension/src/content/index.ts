@@ -6,7 +6,7 @@
 
 import { initCursorLockDetection } from "./cursor"
 import { initUserAgentSpoofer } from "./userAgent"
-import { initFeatureWarnings } from "./warning"
+import { initFeatureWarnings } from "./notification"
 
 // Enable relative mouse mode
 initCursorLockDetection()
