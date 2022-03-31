@@ -1689,12 +1689,14 @@ TEST_F(ProtocolTest, FECTest) {
 TEST_F(ProtocolTest, FECTest2) {
     WhistTimer timer;
     WhistTimer timer2;
-    const int verbose_print = 0;
+    const int verbose_print = 1;
 
     // Initialize FEC
     // Bypass the test, if it's the case hardware not support
     // which happened on Mac CI
     if (init_fec() == WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT) {
+        fprintf(stderr,"WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT\n");
+        fflush(stderr);
         return;
     }
 

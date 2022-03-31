@@ -69,37 +69,30 @@
     #define GF256_TARGET_MOBILE
 #endif // ANDROID
 
-#if defined(__AVX2__) && (!defined (_MSC_VER) || _MSC_VER >= 1900)
-    #define GF256_TRY_AVX2 /* 256-bit */
-    #include <immintrin.h>
-    #define GF256_ALIGN_BYTES 32
-#else // __AVX2__
-    #define GF256_ALIGN_BYTES 16
-#endif // __AVX2__
 
 #if !defined(GF256_TARGET_MOBILE)
+    #define GF256_ALIGN_BYTES 32
+#else
+    #define GF256_ALIGN_BYTES 16
+#endif
+
+#if !defined(GF256_TARGET_MOBILE)
+    #include <immintrin.h> // AVX2
     #include <tmmintrin.h> // SSSE3: _mm_shuffle_epi8
     #include <emmintrin.h> // SSE2
-#endif // GF256_TARGET_MOBILE
-
-#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+#else // GF256_TARGET_MOBILE
     #include <arm_neon.h>
-    #define GF256_TRY_NEON
 #endif
 
 // Compiler-specific 128-bit SIMD register keyword
 #if defined(GF256_TARGET_MOBILE)
-#if defined(GF256_TRY_NEON)
     #define GF256_M128 uint8x16_t
-#else
-    #define GF256_M128 uint64_t
-#endif // GF256_TRY_NEON
 #else // GF256_TARGET_MOBILE
     #define GF256_M128 __m128i
 #endif // GF256_TARGET_MOBILE
 
 // Compiler-specific 256-bit SIMD register keyword
-#ifdef GF256_TRY_AVX2
+#if !defined(GF256_TARGET_MOBILE)
     #define GF256_M256 __m256i
 #endif
 
@@ -151,13 +144,11 @@ typedef struct
         GF256_ALIGNED GF256_M128 TABLE_LO_Y[256];
         GF256_ALIGNED GF256_M128 TABLE_HI_Y[256];
     } MM128;
-#ifdef GF256_TRY_AVX2
     struct
     {
         GF256_ALIGNED GF256_M256 TABLE_LO_Y[256];
         GF256_ALIGNED GF256_M256 TABLE_HI_Y[256];
     } MM256;
-#endif // GF256_TRY_AVX2
 
     /// Mul/Div/Inv/Sqr tables
     uint8_t GF256_MUL_TABLE[256 * 256];

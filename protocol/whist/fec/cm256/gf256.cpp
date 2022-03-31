@@ -51,7 +51,7 @@
 // Workaround for ARMv7 that doesn't provide vqtbl1_*
 // This comes from linux-raid (https://www.spinics.net/lists/raid/msg58403.html)
 //
-#ifdef GF256_TRY_NEON
+#if defined(GF256_TARGET_MOBILE)
 #if __ARM_ARCH <= 7 && !defined(__aarch64__)
 static GF256_FORCE_INLINE uint8x16_t vqtbl1q_u8(uint8x16_t a, uint8x16_t b)
 {
@@ -208,7 +208,7 @@ static bool gf256_self_test()
 #include <cpu-features.h>
 #endif
 
-#if defined(GF256_TRY_NEON)
+#if defined(GF256_TARGET_MOBILE)
 # if defined(IOS) && (defined(__ARM_NEON) || defined(__ARM_NEON__))
 // Requires iPhone 5S or newer
 static const bool CpuHasNeon = true;
@@ -231,9 +231,7 @@ static bool CpuHasNeon64 = false;   // And we don't have ASIMD
     #pragma warning(disable: 4752) // found Intel(R) Advanced Vector Extensions; consider using /arch:AVX
 #endif
 
-#ifdef GF256_TRY_AVX2
 static bool CpuHasAVX2 = false;
-#endif
 static bool CpuHasSSSE3 = false;
 
 #define CPUID_EBX_AVX2    0x00000020
@@ -305,8 +303,6 @@ static void checkLinuxARMNeonCapabilities( bool& cpuHasNeon )
 
 static void gf256_architecture_init()
 {
-#if defined(GF256_TRY_NEON)
-
     // Check for NEON support on Android platform
 #if defined(HAVE_ANDROID_GETCPUFEATURES)
     AndroidCpuFamily family = android_getCpuFamily();
@@ -328,18 +324,14 @@ static void gf256_architecture_init()
     checkLinuxARMNeonCapabilities(CpuHasNeon);
 #endif
 
-#endif //GF256_TRY_NEON
-
 #if !defined(GF256_TARGET_MOBILE)
     unsigned int cpu_info[4];
 
     _cpuid(cpu_info, 1);
     CpuHasSSSE3 = ((cpu_info[2] & CPUID_ECX_SSSE3) != 0);
 
-#if defined(GF256_TRY_AVX2)
     _cpuid(cpu_info, 7);
     CpuHasAVX2 = ((cpu_info[1] & CPUID_EBX_AVX2) != 0);
-#endif // GF256_TRY_AVX2
 
     // When AVX2 and SSSE3 are unavailable, Siamese takes 4x longer to decode
     // and 2.6x longer to encode.  Encoding requires a lot more simple XOR ops
@@ -580,18 +572,18 @@ static void gf256_mul_mem_init()
             hi[x] = gf256_mul(x << 4, static_cast<uint8_t>( y ));
         }
 
-#if defined(GF256_TRY_NEON)
+#if defined(GF256_TARGET_MOBILE)
         if (CpuHasNeon)
         {
             GF256Ctx.MM128.TABLE_LO_Y[y] = vld1q_u8(lo);
             GF256Ctx.MM128.TABLE_HI_Y[y] = vld1q_u8(hi);
         }
-#elif !defined(GF256_TARGET_MOBILE)
+#else
         const GF256_M128 table_lo = _mm_loadu_si128((GF256_M128*)lo);
         const GF256_M128 table_hi = _mm_loadu_si128((GF256_M128*)hi);
         _mm_storeu_si128(GF256Ctx.MM128.TABLE_LO_Y + y, table_lo);
         _mm_storeu_si128(GF256Ctx.MM128.TABLE_HI_Y + y, table_hi);
-# ifdef GF256_TRY_AVX2
+
         if (CpuHasAVX2)
         {
             const GF256_M256 table_lo2 = _mm256_broadcastsi128_si256(table_lo);
@@ -599,7 +591,6 @@ static void gf256_mul_mem_init()
             _mm256_storeu_si256(GF256Ctx.MM256.TABLE_LO_Y + y, table_lo2);
             _mm256_storeu_si256(GF256Ctx.MM256.TABLE_HI_Y + y, table_hi2);
         }
-# endif // GF256_TRY_AVX2
 #endif // GF256_TARGET_MOBILE
     }
 }
@@ -666,7 +657,6 @@ extern "C" void gf256_add_mem(void * GF256_RESTRICT vx,
     const GF256_M128 * GF256_RESTRICT y16 = reinterpret_cast<const GF256_M128 *>(vy);
 
 #if defined(GF256_TARGET_MOBILE)
-# if defined(GF256_TRY_NEON)
     // Handle multiples of 64 bytes
     if (CpuHasNeon)
     {
@@ -701,7 +691,6 @@ extern "C" void gf256_add_mem(void * GF256_RESTRICT vx,
         }
     }
     else
-# endif // GF256_TRY_NEON
     {
         uint64_t * GF256_RESTRICT x8 = reinterpret_cast<uint64_t *>(x16);
         const uint64_t * GF256_RESTRICT y8 = reinterpret_cast<const uint64_t *>(y16);
@@ -716,7 +705,6 @@ extern "C" void gf256_add_mem(void * GF256_RESTRICT vx,
         bytes -= (count * 8);
     }
 #else // GF256_TARGET_MOBILE
-# if defined(GF256_TRY_AVX2)
     if (CpuHasAVX2)
     {
         GF256_M256 * GF256_RESTRICT x32 = reinterpret_cast<GF256_M256 *>(x16);
@@ -761,7 +749,6 @@ extern "C" void gf256_add_mem(void * GF256_RESTRICT vx,
         y16 = reinterpret_cast<const GF256_M128 *>(y32);
     }
     else
-# endif // GF256_TRY_AVX2
     {
         while (bytes >= 64)
         {
@@ -843,7 +830,6 @@ extern "C" void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_REST
     const GF256_M128 * GF256_RESTRICT y16 = reinterpret_cast<const GF256_M128*>(vy);
 
 #if defined(GF256_TARGET_MOBILE)
-# if defined(GF256_TRY_NEON)
     // Handle multiples of 64 bytes
     if (CpuHasNeon)
     {
@@ -862,7 +848,6 @@ extern "C" void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_REST
         }
     }
     else
-# endif // GF256_TRY_NEON
     {
         uint64_t * GF256_RESTRICT z8 = reinterpret_cast<uint64_t *>(z16);
         const uint64_t * GF256_RESTRICT x8 = reinterpret_cast<const uint64_t *>(x16);
@@ -879,7 +864,6 @@ extern "C" void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_REST
         bytes -= (count * 8);
     }
 #else // GF256_TARGET_MOBILE
-# if defined(GF256_TRY_AVX2)
     if (CpuHasAVX2)
     {
         GF256_M256 * GF256_RESTRICT z32 = reinterpret_cast<GF256_M256 *>(z16);
@@ -902,7 +886,6 @@ extern "C" void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_REST
         x16 = reinterpret_cast<const GF256_M128 *>(x32 + count);
         y16 = reinterpret_cast<const GF256_M128 *>(y32 + count);
     }
-# endif // GF256_TRY_AVX2
 
     // Handle multiples of 16 bytes
     while (bytes >= 16)
@@ -963,7 +946,6 @@ extern "C" void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RE
     const GF256_M128 * GF256_RESTRICT y16 = reinterpret_cast<const GF256_M128*>(vy);
 
 #if defined(GF256_TARGET_MOBILE)
-# if defined(GF256_TRY_NEON)
     // Handle multiples of 64 bytes
     if (CpuHasNeon)
     {
@@ -999,7 +981,6 @@ extern "C" void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RE
         }
     }
     else
-# endif // GF256_TRY_NEON
     {
         uint64_t * GF256_RESTRICT z8 = reinterpret_cast<uint64_t *>(z16);
         const uint64_t * GF256_RESTRICT x8 = reinterpret_cast<const uint64_t *>(x16);
@@ -1016,7 +997,6 @@ extern "C" void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RE
         bytes -= (count * 8);
     }
 #else // GF256_TARGET_MOBILE
-# if defined(GF256_TRY_AVX2)
     if (CpuHasAVX2)
     {
         GF256_M256 * GF256_RESTRICT z32 = reinterpret_cast<GF256_M256 *>(z16);
@@ -1038,7 +1018,6 @@ extern "C" void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RE
         y16 = reinterpret_cast<const GF256_M128 *>(y32 + count);
     }
     else
-# endif // GF256_TRY_AVX2
     {
         // Handle multiples of 64 bytes
         while (bytes >= 64)
@@ -1126,7 +1105,6 @@ extern "C" void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTR
     const GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<const GF256_M128 *>(vx);
 
 #if defined(GF256_TARGET_MOBILE)
-#if defined(GF256_TRY_NEON)
     if (bytes >= 16 && CpuHasNeon)
     {
         // Partial product tables; see above
@@ -1151,9 +1129,7 @@ extern "C" void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTR
             bytes -= 16, ++x16, ++z16;
         } while (bytes >= 16);
     }
-#endif
 #else
-# if defined(GF256_TRY_AVX2)
     if (bytes >= 32 && CpuHasAVX2)
     {
         // Partial product tables; see above
@@ -1184,7 +1160,6 @@ extern "C" void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTR
         z16 = reinterpret_cast<GF256_M128 *>(z32);
         x16 = reinterpret_cast<const GF256_M128 *>(x32);
     }
-# endif // GF256_TRY_AVX2
     if (bytes >= 16 && CpuHasSSSE3)
     {
         // Partial product tables; see above
@@ -1295,7 +1270,6 @@ extern "C" void gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y,
     const GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<const GF256_M128 *>(vx);
 
 #if defined(GF256_TARGET_MOBILE)
-#if defined(GF256_TRY_NEON)
     if (bytes >= 16 && CpuHasNeon)
     {
         // Partial product tables; see above
@@ -1323,9 +1297,7 @@ extern "C" void gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y,
             bytes -= 16, ++x16, ++z16;
         } while (bytes >= 16);
     }
-#endif
 #else // GF256_TARGET_MOBILE
-# if defined(GF256_TRY_AVX2)
     if (bytes >= 32 && CpuHasAVX2)
     {
         // Partial product tables; see above
@@ -1387,7 +1359,6 @@ extern "C" void gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y,
         z16 = reinterpret_cast<GF256_M128 *>(z32);
         x16 = reinterpret_cast<const GF256_M128 *>(x32);
     }
-# endif // GF256_TRY_AVX2
     if (bytes >= 16 && CpuHasSSSE3)
     {
         // Partial product tables; see above
@@ -1585,7 +1556,7 @@ extern "C" void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy
 // WHIST_CHANGE: ADD
 extern "C" FMV_MODIFIER bool gf256_has_hardware_support(void)
 {
-#if defined(GF256_TRY_AVX2)
+#if !defined(GF256_TARGET_MOBILE)
     unsigned int cpu_info[4];
     _cpuid(cpu_info, 7);
     if ((cpu_info[1] & CPUID_EBX_AVX2) == 0)
