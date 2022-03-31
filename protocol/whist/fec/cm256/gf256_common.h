@@ -32,6 +32,11 @@
     #define GF256_ALIGN_BYTES 16
 #endif
 
+// old MSVC doesn't have "immintrin.h", generate an error
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+    #error "MSVC version < 1900, too old to support <immintrin.h>"
+#endif
+
 #if !defined(GF256_TARGET_MOBILE)
     #include <immintrin.h> // AVX2
     #include <tmmintrin.h> // SSSE3: _mm_shuffle_epi8

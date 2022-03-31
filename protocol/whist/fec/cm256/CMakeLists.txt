@@ -13,15 +13,15 @@ message(WARNING "Build type is:" ${CMAKE_BUILD_TYPE} "!!!")
 set(CM256_IS_X86 TRUE)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    if(${MACOS_ARCHITECTURE} MATCHES "arm")
-        #message(WARNING "Current ARCH is macos arm!!!")
-        set(CM256_IS_X86 FALSE)
-    endif()
+        if(${MACOS_ARCHITECTURE} MATCHES "arm")
+                #message(WARNING "Current ARCH is macos arm!!!")
+                set(CM256_IS_X86 FALSE)
+        endif()
 endif()
 
 if(${CM256_IS_X86})
-add_subdirectory(avx2)
-add_subdirectory(ssse3)
+        add_subdirectory(avx2)
+        add_subdirectory(ssse3)
 endif()
 
 add_library(whistFEC_cm256 STATIC
