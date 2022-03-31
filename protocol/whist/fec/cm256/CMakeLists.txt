@@ -12,7 +12,7 @@ message(WARNING "Build type is:" ${CMAKE_BUILD_TYPE} "!!!")
 
 # the below detection works since the only arm we support is M1,
 # otherwise much more complex detections are needed
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" && ${MACOS_ARCHITECTURE} MATCHES "arm")
+if((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") AND (${MACOS_ARCHITECTURE} MATCHES "arm"))
         #message(WARNING "Current ARCH is macos arm!!!")
         set(CM256_IS_ARM TRUE)
 else()
