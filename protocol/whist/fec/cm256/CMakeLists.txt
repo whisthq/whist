@@ -5,8 +5,7 @@ if(NOT MSVC)
         #message(WARNING "Current compiler is NOT MSVC!!!")
         # the below line triggers MSVC complaint: "/RTC1 incompatible with /O2"
         # TODO fix this
-        # add_compile_options("$<$<CONFIG:DEBUG>:-O2>")
-        add_compile_options("-O2")
+        add_compile_options("$<$<CONFIG:DEBUG>:-O2>")
 endif()
 
 message(WARNING "Build type is:" ${CMAKE_BUILD_TYPE} "!!!")
