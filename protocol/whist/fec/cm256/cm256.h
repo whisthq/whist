@@ -29,7 +29,6 @@
 #ifndef CM256_H
 #define CM256_H
 
-#include "gf256.h"
 #include <assert.h>
 
 // Library version
