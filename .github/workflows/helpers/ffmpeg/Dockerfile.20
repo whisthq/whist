@@ -1,0 +1,66 @@
+FROM ubuntu:20.04
+
+# Run commands noninteractively
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install essentials
+RUN apt-get -y update && apt-get -y upgrade && apt-get -y clean
+RUN apt-get -y install apt-utils build-essential autoconf automake libtool git pkg-config yasm
+
+# Install Intel MediaSDK, needed for libmfx (QSV)
+RUN apt-get -y install curl lsb-release
+RUN apt-get -y install libmfx-dev libmfx-tools
+
+# Install SSL, Cmake
+RUN apt-get -y install libssl-dev cmake
+
+# Install Intel gmm, needed for libmfx (QSV)
+RUN git clone https://github.com/intel/gmmlib && cd gmmlib && mkdir build && cd build \
+    && cmake .. \
+    && make -j6 \
+    && make install
+
+# Install libVA, needed for VAAPI
+RUN apt-get -y install libdrm-dev
+RUN git clone https://github.com/intel/libva && cd libva && ./autogen.sh \
+    && make -j6 \
+    && make install
+
+# Install PCI Access
+RUN apt-get -y install libpciaccess-dev
+
+# Now, we can finally get Intel Media Driver for VAAPI/QSV (through apt-get for Ubuntu 20.04)
+RUN apt-get install -y intel-media-va-driver
+
+# Export paths
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu/"
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/opt/intel/mediasdk/lib64"
+ENV PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/opt/intel/mediasdk/lib64/pkgconfig"
+
+# Install FFmpeg dependencies
+RUN apt-get -y install libx264-dev libx265-dev libopus-dev mesa-common-dev nvidia-cuda-toolkit
+
+# Install Nvidia Codec Headers
+RUN env
+RUN git clone https://github.com/ffmpeg/nv-codec-headers \
+    && cd nv-codec-headers \
+    && make \
+    && make install
+
+# Clean installs
+RUN apt autoremove
+
+# Mount FFmpeg repo
+VOLUME ["/FFmpeg"]
+
+# Move FFmpeg repo to folder
+ARG FFmpegrepo
+COPY $FFmpegrepo /FFmpeg
+
+# Import FFmpeg build script
+ADD docker-build-scripts/build_ffmpeg.sh /
+RUN chmod +x /build_ffmpeg.sh
+
+# Build FFmpeg
+RUN /build_ffmpeg.sh
+RUN mkdir /docker-builds
