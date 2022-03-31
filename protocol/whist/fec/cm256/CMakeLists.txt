@@ -10,7 +10,7 @@ endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     #message(WARNING "Current ARCH is LINUx!!!")
-    add_compile_options("-mavx2")
+    add_compile_options("-mssse3")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -34,7 +34,11 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     endif()
 endif()
 
+add_subdirectory(avx2)
+
 add_library(whistFEC_cm256 STATIC
         cm256.cpp
         gf256.cpp
         )
+
+target_link_libraries(whistFEC_cm256 whistFEC_cm256_avx2)
