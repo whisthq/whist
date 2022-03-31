@@ -526,7 +526,7 @@ func (mandelbox *mandelboxData) WriteSavedExtensions(extensions []string) error 
 func (mandelbox *mandelboxData) GetMostRecentMatchingKey(client *s3.Client) (string, error) {
 	recentToken, err := configutils.GetMostRecentToken(client, mandelbox.userID)
 	if err != nil {
-		return "", utils.MakeError("failed to get most recent matching config token: %v", mandelbox.userID, mandelbox.GetID(), err)
+		return "", utils.MakeError("failed to get most recent matching config token: %v", err)
 	}
 
 	// Use the HeadObject to tell if the object exists
