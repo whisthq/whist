@@ -1,8 +1,11 @@
 if(MSVC)
-    #message(WARNING "Current compiler is MSVC!!!")
+    #message(WARNING "cm256_ssse3: Current compiler is MSVC!!!")
+    # the MSVC on ci doesn't recogized the below option
+    # but it does exist on some document
+    # we simply keep this option, since there is no harm to do
     add_compile_options("/arch:SSSE3")
 else()
-    #message(WARNING "Current compiler is not MSVC!!!")
+    #message(WARNING "cm256_ssse3: Current compiler is not MSVC!!!")
     add_compile_options("-mssse3")
 endif()
 

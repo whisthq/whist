@@ -10,18 +10,13 @@ endif()
 
 message(WARNING "Build type is:" ${CMAKE_BUILD_TYPE} "!!!")
 
-set(CM256_IS_X86 TRUE)
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        if(${MACOS_ARCHITECTURE} MATCHES "arm")
-                #message(WARNING "Current ARCH is macos arm!!!")
-                set(CM256_IS_X86 FALSE)
-        endif()
-endif()
-
-if(${CM256_IS_X86})
-        add_subdirectory(avx2)
-        add_subdirectory(ssse3)
+# the below detection works since the only arm we support is M1,
+# otherwise much more complex detections are needed
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" && ${MACOS_ARCHITECTURE} MATCHES "arm")
+        #message(WARNING "Current ARCH is macos arm!!!")
+        set(CM256_IS_ARM TRUE)
+else()
+        set(CM256_IS_ARM FALSE)
 endif()
 
 add_library(whistFEC_cm256 STATIC
@@ -29,7 +24,9 @@ add_library(whistFEC_cm256 STATIC
         gf256.cpp
         )
 
-if(${CM256_IS_X86})
+if(NOT ${CM256_IS_ARM})
+        add_subdirectory(avx2)
+        add_subdirectory(ssse3)
         target_link_libraries(whistFEC_cm256 whistFEC_cm256_avx2)
         target_link_libraries(whistFEC_cm256 whistFEC_cm256_ssse3)
 endif()
