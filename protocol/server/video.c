@@ -325,6 +325,12 @@ static void send_empty_frame(whist_server_state* state, int id) {
     // is_empty_frame is true, so it will just be ignored by the client.
 
     whist_wait_semaphore(consumer);
+    // Increase the size of empty size frames during saturate bandwidth to prevent sending lot of
+    // small packets. Lot of small packets means that we might hit the packet count limit on certain
+    // networks.
+    if (network_settings.saturate_bandwidth) {
+        frame->videodata_length = MAX_PAYLOAD_SIZE - sizeof(VideoFrame);
+    }
     send_frame_id = id;
     currently_sending_index = 1 - currently_sending_index;
     whist_post_semaphore(producer);

@@ -69,7 +69,7 @@ typedef struct {
             int id;
             int index;
             int numBits;
-            unsigned char ba_raw[BITS_TO_CHARS(max(MAX_VIDEO_PACKETS, MAX_AUDIO_PACKETS))];
+            unsigned char ba_raw[BITS_TO_CHARS(MAX_VIDEO_PACKETS)];
         } udp_bitarray_nack_data;
 
         // UDP_STREAM_RESET
@@ -217,8 +217,6 @@ typedef struct {
 // current value (5) is an arbitrary choice that was found to work well in practice.
 #define RETRIES_ON_BUFFER_FULL 5
 
-// Burst interval of the network throttler
-#define UDP_NETWORK_THROTTLER_BUCKET_MS 5.0
 // The time in seconds between network statistics requests
 #define STATISTICS_SECONDS 5.0
 // TODO: Get this out of udp.c somehow
@@ -533,7 +531,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                     &context->group_stats[context->prev_group_id % MAX_GROUP_STATS];
                 send_network_settings = whist_congestion_controller(
                     curr_group_stats, prev_group_stats, get_incoming_bitrate(context),
-                    get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO]),
+                    get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO], context->latency),
                     &context->network_settings);
             }
             context->prev_group_id = context->curr_group_id;

@@ -138,9 +138,15 @@ Defines
 // Used to throttle resize event spam.
 #define WINDOW_RESIZE_MESSAGE_INTERVAL 200
 
+#define MAX_VIDEO_PACKETS 500
 // Maximum allowed FEC ratio. Used for allocation of static buffers
 // Don't let this get too close to 1, e.g. 0.99, or memory usage will explode
-#define MAX_FEC_RATIO 0.7
+// Don't forget to modify MAX_PACKETS, when this is changed
+#define MAX_FEC_RATIO 0.5
+// The below value should also change if MAX_FEC_RATIO is modified.
+// MAX_PACKETS = get_num_fec_packets(MAX_VIDEO_PACKETS, MAX_FEC_RATIO)
+// We need a compile time integer constant for struct member allocation
+#define MAX_PACKETS (MAX_VIDEO_PACKETS * 2)
 
 #define ACK_REFRESH_MS 50
 
@@ -677,8 +683,6 @@ typedef struct {
 
 /* number of characters required to contain number of bits */
 #define BITS_TO_CHARS(bits) ((((bits)-1) / CHAR_BIT) + 1)
-#define MAX_VIDEO_PACKETS 500
-#define MAX_AUDIO_PACKETS 3
 /**
  * @brief   Client message.
  * @details Message from a Whist client to a Whist server.
