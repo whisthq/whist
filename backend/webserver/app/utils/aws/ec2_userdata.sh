@@ -12,6 +12,37 @@ set -Eeuo pipefail
 
 echo "Whist EC2 userdata started"
 
+####################################################
+# Pull Docker images
+####################################################
+
+# `pull_docker_images` contains the commands and setup necessary
+#  for pulling the Whist Chrome and Brave Docker images. They will
+#  be pulled to the Docker data-root directory.
+# Args: none
+pull_docker_images() {
+  # Populate env vars
+  eval "$(cat $USERDATA_ENV)"
+
+  # Login with docker
+  echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
+
+  # Pull Docker images for Chrome and Brave directly to the ephemeral volume
+  pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/chrome"
+  pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
+
+  pull_image_base_brave="ghcr.io/whisthq/$GIT_BRANCH/browsers/brave"
+  pull_image_brave="$pull_image_base_brave:$GIT_HASH"
+
+  docker pull "$pull_image_chrome"
+  docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
+
+  docker pull "$pull_image_brave"
+  docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
+
+  echo "Finished pulling images"
+}
+
 cd /home/ubuntu
 
 # The first thing we want to do is to set up the ephemeral storage available on
@@ -48,34 +79,13 @@ then
   systemctl start docker
 else
   echo "No ephemeral device path found. Warming up EBS volume with fio."
-  # Warm Up EBS Volume
-  # For more information, see: https://github.com/whisthq/whist/pull/5333
-  fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
 fi
 
-# Pull the images regardless if the instance has ephemeral storage or not.
-# This way we avoid ending with an instance that can't launch mandelboxes.
+# Pull Docker images and warmup volume in parallel
+pull_docker_images &
+fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
 
-# Populate env vars
-eval "$(cat $USERDATA_ENV)"
-
-# Login with docker
-echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
-
-# Pull Docker images for Chrome and Brave directly to the ephemeral volume
-pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/chrome"
-pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
-
-pull_image_base_brave="ghcr.io/whisthq/$GIT_BRANCH/browsers/brave"
-pull_image_brave="$pull_image_base_brave:$GIT_HASH"
-
-docker pull "$pull_image_chrome"
-docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
-
-docker pull "$pull_image_brave"
-docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
-
-echo "Finished pulling images"
+wait
 
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
