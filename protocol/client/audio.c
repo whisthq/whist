@@ -48,9 +48,9 @@ Defines
 #define AUDIO_BUFFER_OVERFLOW_SIZE 20
 
 // The time per size sample
-#define AUDIO_SAMPLE_FREQUENCY_MS 100
+#define AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS 100
 // The number of samples we use for average estimation
-#define AUDIO_NUM_SAMPLES 10
+#define AUDIO_BUFSIZE_NUM_SAMPLES 10
 // Acceptable size discrepancy that the average sample size could have
 // [AUDIO_QUEUE_TARGET_SIZE-AUDIO_ACCEPTABLE_DELTA, AUDIO_QUEUE_TARGET_SIZE+AUDIO_ACCEPTABLE_DELTA]
 #define AUDIO_ACCEPTABLE_DELTA 1.2
@@ -100,12 +100,12 @@ struct AudioContext {
     // Samples are measured in frames (Not necessarily whole numbers)
     WhistTimer size_sample_timer;
     int sample_index;
-    double samples[AUDIO_NUM_SAMPLES];
+    double samples[AUDIO_BUFSIZE_NUM_SAMPLES];
     // The adjust as recommended by size sample analysis
     // This will get set to None once it's acted upon
     AdjustCommand adjust_command;
 
-    // Audio state (Buffering, or Playing)
+    // Audio rendering state (Buffering, or Playing)
     AudioState audio_state;
     // Buffer for the audio buffering state
     int audio_buffering_buffer_size;
@@ -212,7 +212,7 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     // Every sample freq ms of playtime, record an audio sample
     if (audio_context->audio_state == PLAYING) {
         if (get_timer(&audio_context->size_sample_timer) * MS_IN_SECOND >
-            AUDIO_SAMPLE_FREQUENCY_MS) {
+            AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS) {
             // Record the sample and reset the timer
             audio_context->samples[audio_context->sample_index] =
                 audio_size / (double)DECODED_BYTES_PER_FRAME;
@@ -225,14 +225,14 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
             }
 
             // If we've sampled numsamples time, act on the average size
-            if (audio_context->sample_index == AUDIO_NUM_SAMPLES) {
+            if (audio_context->sample_index == AUDIO_BUFSIZE_NUM_SAMPLES) {
                 audio_context->sample_index = 0;
                 // Calculate the new average, in fractional frames
                 double avg_sample = 0.0;
-                for (int i = 0; i < AUDIO_NUM_SAMPLES; i++) {
+                for (int i = 0; i < AUDIO_BUFSIZE_NUM_SAMPLES; i++) {
                     avg_sample += audio_context->samples[i];
                 }
-                avg_sample /= AUDIO_NUM_SAMPLES;
+                avg_sample /= AUDIO_BUFSIZE_NUM_SAMPLES;
                 if (LOG_AUDIO) {
                     LOG_INFO("Audio Buffer Average Size: %.2f", avg_sample);
                 }
@@ -257,12 +257,11 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     }
 
     // Always drop if we're overflowing
-    if (audio_size > AUDIO_BUFFER_OVERFLOW_SIZE * DECODED_BYTES_PER_FRAME &&
-        audio_context->adjust_command != DROP_FRAME) {
-        if (LOG_AUDIO) {
-            LOG_INFO("Audio Buffer full (%.2f)! Force-dropping Frame",
-                     audio_size / (double)DECODED_BYTES_PER_FRAME);
-        }
+    // adjust_command check prevents spamming this log
+    if (audio_context->adjust_command != DROP_FRAME &&
+        audio_size > AUDIO_BUFFER_OVERFLOW_SIZE * DECODED_BYTES_PER_FRAME) {
+        LOG_WARNING("Audio Buffer full (%.2f)! Force-dropping Frame",
+                    audio_size / (double)DECODED_BYTES_PER_FRAME);
         audio_context->adjust_command = DROP_FRAME;
     }
 
@@ -289,7 +288,9 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
         }
     }
     // If we're supposed to drop it, drop it.
-    if (audio_context->adjust_command != DROP_FRAME) {
+    if (audio_context->adjust_command == DROP_FRAME) {
+        log_double_statistic(AUDIO_FPS_SKIPPED, 1.0);
+    } else {
         // If we shouldn't drop it, push the audio frame to the render context
         if (!audio_context->pending_render_context) {
             // Mark out the audio frame to the render context
@@ -369,10 +370,10 @@ void render_audio(AudioContext* audio_context) {
                 decoded_data_size = audio_decoder_get_frame_data_size(audio_context->audio_decoder);
 
                 // If the audio device runs dry, begin buffering
-                if (safe_get_audio_queue(audio_context) == 0) {
-                    if (LOG_AUDIO) {
-                        LOG_INFO("Audio Device is dry, will start to buffer");
-                    }
+                // Buffering check prevents spamming this log
+                if (audio_context->audio_state != BUFFERING &&
+                    safe_get_audio_queue(audio_context) == 0) {
+                    LOG_WARNING("Audio Device is dry, will start to buffer");
                     audio_context->audio_state = BUFFERING;
                 }
 
