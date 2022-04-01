@@ -372,7 +372,6 @@ int render_video(VideoContext* video_context) {
             if (last_rendered_time != 0) {
                 capture_latency = (server_timestamp - last_rendered_time);
                 log_double_statistic(VIDEO_CAPTURE_LATENCY, (double)(capture_latency / 1000));
-
             }
             log_double_statistic(VIDEO_E2E_LATENCY,
                                  (double)((pipeline_latency + capture_latency) / 1000));

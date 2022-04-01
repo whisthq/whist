@@ -1228,8 +1228,7 @@ timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context) {
     FATAL_ASSERT(context != NULL);
 
     // Not even one ping is received. So send '0' to indicate a null/invalid client timestamp
-    if (context->last_ping_client_time == 0 || context->last_ping_server_time == 0)
-        return 0;
+    if (context->last_ping_client_time == 0 || context->last_ping_server_time == 0) return 0;
 
     whist_lock_mutex(context->timestamp_mutex);
 
