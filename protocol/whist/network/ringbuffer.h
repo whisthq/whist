@@ -30,7 +30,7 @@ Defines
 ============================
 */
 
-#define PACKET_LOSS_DURATION 1
+#define PACKET_LOSS_DURATION_IN_SEC 1
 
 /**
  * @brief FrameData struct containing content and metadata of encoded frames.

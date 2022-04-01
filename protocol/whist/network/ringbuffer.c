@@ -440,17 +440,18 @@ double get_packet_loss_ratio(RingBuffer* ring_buffer, double latency) {
     int num_packets_received = 0;
     int num_packets_sent = 0;
     // Don't include max_id frame for computing packet loss as it could be in progress
-    for (int id = max(ring_buffer->max_id - MAX_FPS, ring_buffer->min_id); id < ring_buffer->max_id;
-         id++) {
+    for (int id = max(max(ring_buffer->max_id - MAX_FPS, ring_buffer->min_id), 0);
+         id < ring_buffer->max_id; id++) {
         FrameData* frame = get_frame_at_id(ring_buffer, id);
         if (id != frame->id ||
-            get_timer(&frame->frame_creation_timer) > (double)PACKET_LOSS_DURATION) {
+            get_timer(&frame->frame_creation_timer) > (double)PACKET_LOSS_DURATION_IN_SEC) {
             continue;
         }
         num_packets_sent += frame->num_original_packets;
         num_packets_sent += frame->num_fec_packets;
         num_packets_received += frame->original_packets_received;
         num_packets_received += frame->fec_packets_received;
+
         int nacks_sent = 0;
         for (int i = 0; i < frame->num_original_packets + frame->num_fec_packets; i++) {
             if (frame->num_times_index_nacked[i]) {
@@ -461,8 +462,15 @@ double get_packet_loss_ratio(RingBuffer* ring_buffer, double latency) {
                 }
             }
         }
-        // Whatever we considered as "NACKs in flight" could have arrived earlier
+        // Whatever we considered as "NACKs in flight" could have arrived earlier. So if the actual
+        // nack_packets_received is greater our estimate of NACK requests sent, then just
+        // approximate nack_requests_sent = nack_packets_received.
         nacks_sent = max(nacks_sent, frame->nack_packets_received);
+
+        // Currently we don't have any way of knowing in the NACK request packet from client to
+        // server got lost OR if the NACK response packet from server to client got lost. As a
+        // reasonable approximation we are considering both cases as NACK packet loss from server to
+        // client
         num_packets_sent += nacks_sent;
         num_packets_received += frame->unnecessary_nack_packets_received;
 
@@ -533,6 +541,8 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
 
     // Invalidate the current_frame, without deallocating its data with reset_frame,
     // Since currently_rendering_frame now owns that data
+    // Other than the dynamically allocated resources, don't clear other member variables, as it
+    // will be used for packet loss calculation.
     current_frame->packet_buffer = current_frame->fec_frame_buffer = NULL;
     current_frame->fec_decoder = NULL;
 
