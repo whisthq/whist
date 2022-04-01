@@ -99,7 +99,7 @@ def extract_logs_from_mandelbox(
     # Download the network logs from the client machine
     if role == "client":
         command = f"scp -i {ssh_key_path} {username}@{hostname}:~/network_conditions.log {perf_logs_folder_name}"
-        pexpect_process.sendline(command)
+        local_process.sendline(command)
         local_process.expect(["\$", pexpect.EOF])
 
     local_process.kill(0)
