@@ -38,11 +38,6 @@ def setup_artificial_network_conditions(
     if network_conditions == "normal":
         print("Setting up client to run on a instance with no degradation on network conditions")
     else:
-        min_bandwidth = max_bandwidth = None
-        min_pkt_drop_pctg = max_pkt_drop_pctg = None
-        min_delay = max_delay = None
-        min_interval = max_interval = None
-
         # Apply conditions below only for values that are actually set
         if len(network_conditions.split(",")) != 3:
             print(
@@ -57,79 +52,35 @@ def setup_artificial_network_conditions(
                 "Setting up client to run on a instance with no degradation on network conditions"
             )
             return
-        else:
-            degradations_command = ""
-            print(
-                "Setting up client to run on a instance with the following networking conditions:"
-            )
-            if bandwidth != "None":
-                bandwidth = bandwidth.split("-")
-                if len(bandwidth == 1):
-                    min_bandwidth = max_bandwidth = bandwidth[0]
-                    degradations_command += f" -b {min_bandwidth}"
-                    print(f"\t* Max bandwidth: stable at {min_bandwidth}")
-                elif len(bandwidth == 2):
-                    min_bandwidth, max_bandwidth = bandwidth
-                    degradations_command += f" -b {min_bandwidth},{max_bandwidth}"
-                    print(
-                        f"\t* Max bandwidth: variable between {min_bandwidth} and {max_bandwidth}"
-                    )
-                else:
-                    print(
-                        "Error, incorrect number of values passed to max bandwidth network condition"
-                    )
-                    return
-            if delay != "None":
-                delay = delay.split("-")
-                if len(delay == 1):
-                    min_delay = max_delay = delay[0]
-                    degradations_command += f" -q {min_delay}"
-                    print(f"\t* Packet delay: stable at {min_delay}")
-                elif len(delay == 2):
-                    min_delay, max_delay = delay
-                    degradations_command += f" -q {min_delay},{max_delay}"
-                    print(f"\t* Packet delay: variable between {min_delay} and {max_delay}")
-                else:
-                    print(
-                        "Error, incorrect number of values passed to packet delay network condition"
-                    )
-                    return
 
-            if pkt_drop_pctg != "None":
-                pkt_drop_pctg = pkt_drop_pctg.split("-")
-                if len(pkt_drop_pctg == 1):
-                    min_pkt_drop_pctg = max_pkt_drop_pctg = pkt_drop_pctg[0]
-                    degradations_command += f" -p {min_pkt_drop_pctg}"
-                    print(f"\t* Packet drop rate: stable at {min_pkt_drop_pctg}")
-                elif len(pkt_drop_pctg == 2):
-                    min_pkt_drop_pctg, max_pkt_drop_pctg = pkt_drop_pctg
-                    degradations_command += f" -p {min_pkt_drop_pctg},{max_pkt_drop_pctg}"
-                    print(
-                        f"\t* Packet drop rate: variable between {min_pkt_drop_pctg} and {max_pkt_drop_pctg}"
+        def parse_value_or_range(raw_string, condition_name, degradation_command_flag):
+            degradations_command_entry = ""
+            if raw_string != "None":
+                raw_string = raw_string.split("-")
+                if len(raw_string == 1):
+                    min_value = max_value = raw_string[0]
+                    degradations_command_entry = f" {degradation_command_flag} {min_value}"
+                    print(f"\t* {condition_name}: stable at {min_value}")
+                elif len(raw_string == 2):
+                    min_value, max_value = raw_string
+                    degradations_command_entry = (
+                        f" {degradation_command_flag} {min_value},{max_value}"
                     )
+                    print(f"\t* {condition_name}: variable between {min_value} and {max_value}")
                 else:
                     print(
-                        "Error, incorrect number of values passed to packet drop rate network condition"
+                        f"Error, incorrect number of values passed to {condition_name} network condition"
                     )
-                    return
+            return degradations_command_entry
 
-            if interval != "None":
-                interval = interval.split("-")
-                if len(interval == 1):
-                    min_interval = max_interval = interval[0]
-                    degradations_command += f" -i {min_interval}"
-                    print(f"\t* Net conditions change interval: stable at {min_interval}")
-                elif len(interval == 2):
-                    min_interval, max_interval = interval
-                    degradations_command += f" -i {min_interval},{max_interval}"
-                    print(
-                        f"\t* Net conditions change interval: variable between {min_interval} and {max_interval}"
-                    )
-                else:
-                    print(
-                        "Error, incorrect number of values passed to packet drop rate network condition"
-                    )
-                    return
+        degradations_command = ""
+        print("Setting up client to run on a instance with the following networking conditions:")
+        degradations_command += parse_value_or_range(bandwidth, "max bandwidth", "-b")
+        degradations_command += parse_value_or_range(delay, "packet delay", "-q")
+        degradations_command += parse_value_or_range(pkt_drop_pctg, "packet drop rate", "-p")
+        degradations_command += parse_value_or_range(
+            interval, "net conditions change interval", "-i"
+        )
 
         # Install ifconfig
         command = "sudo apt-get install -y net-tools"
@@ -163,7 +114,8 @@ def setup_artificial_network_conditions(
         ]
 
         # add 5 more seconds to testing_time to account for time spent in this script before test actually starts
-        command = f"( nohup timeout {testing_time+5}s ~/whist/protocol/test/helpers/apply_network_conditions.sh -d {network_devices.join(',')} > /dev/null 2>&1 & )"
+        command = f"( nohup timeout {testing_time+5}s ~/whist/protocol/test/helpers/apply_network_conditions.sh -d {network_devices.join(',')} {degradations_command} > /dev/null 2>&1 & )"
+        print(f"Running command {command}")
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
