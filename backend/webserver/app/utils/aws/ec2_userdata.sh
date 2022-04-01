@@ -29,9 +29,9 @@ if [ "$EPHEMERAL_DEVICE_PATH" != "null" ]
 then
   echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
 
-  # We enable case-insensitivity (needed for certain Chrome themes)
+  # We enable mixed case-sensitivity on our filesystem (case-insensitivity is needed for certain Chrome themes)
   mkdir -p "$EPHEMERAL_FS_PATH"
-  zpool create -f zpool-whist -O casesensitivity=insensitive -m "$EPHEMERAL_FS_PATH" "$EPHEMERAL_DEVICE_PATH"
+  zpool create -f zpool-whist -O casesensitivity=mixed -m "$EPHEMERAL_FS_PATH" "$EPHEMERAL_DEVICE_PATH"
   echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
 
   # Stop Docker and copy the data directory to the ephemeral storage
