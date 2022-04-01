@@ -131,12 +131,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
     EXPECT_TRUE(new_window != NULL);
 
-#ifdef _WIN32
-    check_stdout_line(::testing::HasSubstr("SDL: Using renderer: direct3d11"));
-#elif defined(__APPLE__)
-    check_stdout_line(::testing::HasSubstr("SDL: Using renderer: metal"));
-#endif
-
+    check_stdout_line(::testing::HasSubstr("SDL: Using renderer: "));
     check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
     check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
 
