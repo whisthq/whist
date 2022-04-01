@@ -199,11 +199,11 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     }
 
     if (target_output_width == 0) {
-        target_output_width = display_info.w / 2;
+        target_output_width = display_info.w;
     }
 
     if (target_output_height == 0) {
-        target_output_height = display_info.h / 2;
+        target_output_height = display_info.h;
     }
 
     SDL_Window* sdl_window;
