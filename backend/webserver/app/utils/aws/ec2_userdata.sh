@@ -31,7 +31,7 @@ then
 
   # We enable case-insensitivity (needed for certain Chrome themes)
   mkdir -p "$EPHEMERAL_FS_PATH"
-  zpool create -f zpool-whist -O casesensitivity=insensitive -m "$EPHEMERAL_FS_PATH" "$EPHEMERAL_DEVICE_PATH"
+  zpool create -f zpool-whist -O casesensitivity=mixed -m "$EPHEMERAL_FS_PATH" "$EPHEMERAL_DEVICE_PATH"
   echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
 
   # Stop Docker and copy the data directory to the ephemeral storage
