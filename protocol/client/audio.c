@@ -218,6 +218,11 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
                 audio_size / (double)DECODED_BYTES_PER_FRAME;
             audio_context->sample_index++;
             start_timer(&audio_context->size_sample_timer);
+            if (LOG_AUDIO) {
+                LOG_INFO("Audio Buffer Size: %.2f [Device %.2f + Buffer %d]",
+                         audio_size / (double)DECODED_BYTES_PER_FRAME,
+                         audio_device_size / (double)DECODED_BYTES_PER_FRAME, num_frames_buffered);
+            }
 
             // If we've sampled numsamples time, act on the average size
             if (audio_context->sample_index == AUDIO_NUM_SAMPLES) {
@@ -228,11 +233,20 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
                     avg_sample += audio_context->samples[i];
                 }
                 avg_sample /= AUDIO_NUM_SAMPLES;
+                if (LOG_AUDIO) {
+                    LOG_INFO("Audio Buffer Average Size: %.2f", avg_sample);
+                }
                 // Check for size-target discrepancy
                 if (avg_sample < AUDIO_QUEUE_TARGET_SIZE - AUDIO_ACCEPTABLE_DELTA) {
+                    if (LOG_AUDIO) {
+                        LOG_INFO("Duping a frame to catch-up");
+                    }
                     audio_context->adjust_command = DUP_FRAME;
                 }
                 if (avg_sample > AUDIO_QUEUE_TARGET_SIZE + AUDIO_ACCEPTABLE_DELTA) {
+                    if (LOG_AUDIO) {
+                        LOG_INFO("Droping a frame to catch-up");
+                    }
                     audio_context->adjust_command = DROP_FRAME;
                 }
             }
@@ -243,7 +257,12 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     }
 
     // Always drop if we're overflowing
-    if (audio_size > AUDIO_BUFFER_OVERFLOW_SIZE * DECODED_BYTES_PER_FRAME) {
+    if (audio_size > AUDIO_BUFFER_OVERFLOW_SIZE * DECODED_BYTES_PER_FRAME &&
+        audio_context->adjust_command != DROP_FRAME) {
+        if (LOG_AUDIO) {
+            LOG_INFO("Audio Buffer full (%.2f)! Force-dropping Frame",
+                     audio_size / (double)DECODED_BYTES_PER_FRAME);
+        }
         audio_context->adjust_command = DROP_FRAME;
     }
 
@@ -260,6 +279,15 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
+    if (LOG_AUDIO) {
+        if (audio_context->adjust_command == DUP_FRAME) {
+            LOG_INFO("Receiving Audio [Duping Frame]");
+        } else if (audio_context->adjust_command == DROP_FRAME) {
+            LOG_INFO("Receiving Audio [Dropping Frame]");
+        } else {
+            LOG_INFO("Receiving Audio");
+        }
+    }
     // If we're supposed to drop it, drop it.
     if (audio_context->adjust_command != DROP_FRAME) {
         // If we shouldn't drop it, push the audio frame to the render context
@@ -283,6 +311,10 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
 
 void render_audio(AudioContext* audio_context) {
     if (audio_context->pending_render_context) {
+        if (LOG_AUDIO) {
+            LOG_INFO("Rendering Audio");
+        }
+
         // Only do work, if the audio frequency is valid
         FATAL_ASSERT(audio_context->render_context.audio_frame != NULL);
         AudioFrame* audio_frame = (AudioFrame*)audio_context->render_context.audio_frame;
@@ -298,6 +330,7 @@ void render_audio(AudioContext* audio_context) {
         // audio devices, there is a minor race condition that can lead to reinit_audio_player()
         // being called more times than expected.
         if (audio_context->pending_refresh) {
+            LOG_INFO("Refreshing Audio Device");
             // Consume the pending audio refresh
             audio_context->pending_refresh = false;
             // Update the audio device
@@ -328,11 +361,17 @@ void render_audio(AudioContext* audio_context) {
 
                 // If the audio device runs dry, begin buffering
                 if (safe_get_audio_queue(audio_context) == 0) {
+                    if (LOG_AUDIO) {
+                        LOG_INFO("Audio Device is dry, will start to buffer");
+                    }
                     audio_context->audio_state = BUFFERING;
                 }
 
                 // If we're buffering, then buffer
                 if (audio_context->audio_state == BUFFERING) {
+                    if (LOG_AUDIO) {
+                        LOG_INFO("Flushing Audio Buffer to device");
+                    }
                     // If it's large enough to hit the target, start playing it all
                     if (audio_context->audio_buffering_buffer_size + (int)decoded_data_size >
                         (AUDIO_QUEUE_TARGET_SIZE - 1) * DECODED_BYTES_PER_FRAME) {
@@ -344,6 +383,9 @@ void render_audio(AudioContext* audio_context) {
                                                    decoded_data_size);
                         audio_context->audio_state = PLAYING;
                     } else {
+                        if (LOG_AUDIO) {
+                            LOG_INFO("Buffering Audio Frame...");
+                        }
                         // Otherwise, keep buffering
                         memcpy(audio_context->audio_buffering_buffer +
                                    audio_context->audio_buffering_buffer_size,
@@ -361,6 +403,11 @@ void render_audio(AudioContext* audio_context) {
                     }
                 }
             }
+        }
+
+        if (LOG_AUDIO) {
+            LOG_INFO("Done Rendering Audio (%.2f Device Size)",
+                     safe_get_audio_queue(audio_context) / (double)DECODED_BYTES_PER_FRAME);
         }
 
         // No longer rendering audio
@@ -400,9 +447,6 @@ static size_t safe_get_audio_queue(AudioContext* audio_context) {
     size_t audio_queue = 0;
     if (whist_frontend_audio_is_open(audio_context->target_frontend)) {
         audio_queue = whist_frontend_get_audio_buffer_size(audio_context->target_frontend);
-    }
-    if (LOG_AUDIO) {
-        LOG_DEBUG("Audio Queue: %zu", audio_queue);
     }
     return audio_queue;
 }
