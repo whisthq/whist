@@ -56,11 +56,11 @@ def setup_artificial_network_conditions(
             degradations_command_entry = ""
             if raw_string != "None":
                 raw_string = raw_string.split("-")
-                if len(raw_string == 1):
+                if len(raw_string) == 1:
                     min_value = max_value = raw_string[0]
                     degradations_command_entry = f" {degradation_command_flag} {min_value}"
                     print(f"\t* {condition_name}: stable at {min_value}")
-                elif len(raw_string == 2):
+                elif len(raw_string) == 2:
                     min_value, max_value = raw_string
                     degradations_command_entry = (
                         f" {degradation_command_flag} {min_value},{max_value}"
