@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from curses import raw
 import os
 import sys
 from pytablewriter import MarkdownTableWriter
@@ -30,26 +31,49 @@ def network_conditions_to_readable_form(network_conditions):
     """
     human_readable_network_conditions = network_conditions
 
-    if len(network_conditions.split(",")) == 3:
+    if len(network_conditions.split(",")) == 4:
         human_readable_network_conditions = network_conditions.split(",")
-        bandwidth = (
-            human_readable_network_conditions[0]
-            if human_readable_network_conditions[0] != "None"
-            else "full available"
+
+        def parse_value_or_range(raw_string, convert_string):
+            raw_string = raw_string.split("-")
+            if len(raw_string) == 1:
+                return convert_string(raw_string)
+            elif len(raw_string) == 2:
+                return f"variable between {convert_string(raw_string[0])} and {convert_string(raw_string[1])}"
+            else:
+                print(
+                    f"Error, network condition string '{raw_string}' contains incorrect number of values"
+                )
+                sys.exit(-1)
+
+        transform_bandwidth_string = (
+            lambda raw_string: raw_string if raw_string != "None" else "full available"
         )
-        delay = (
-            human_readable_network_conditions[1] + " ms"
-            if human_readable_network_conditions[1] != "None"
-            else human_readable_network_conditions[1]
+        transform_delay_string = (
+            lambda raw_string: raw_string + " ms" if raw_string != "None" else raw_string
         )
-        packet_drops = (
-            "{:.2f}%".format(float(human_readable_network_conditions[2]) * 100.0)
-            if human_readable_network_conditions[2] != "None"
-            else human_readable_network_conditions[2]
+        transform_packet_drops_string = (
+            lambda raw_string: "{:.2f}%".format(float(raw_string) * 100.0)
+            if raw_string != "None"
+            else raw_string
         )
-        human_readable_network_conditions = (
-            f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}"
+        transform_interval_string = (
+            lambda raw_string: raw_string + " ms" if raw_string != "None" else raw_string
         )
+
+        bandwidth = parse_value_or_range(
+            human_readable_network_conditions[0], transform_bandwidth_string
+        )
+        delay = parse_value_or_range(human_readable_network_conditions[1], transform_delay_string)
+        packet_drops = parse_value_or_range(
+            human_readable_network_conditions[2], transform_packet_drops_string
+        )
+        interval = parse_value_or_range(
+            human_readable_network_conditions[3], transform_interval_string
+        )
+        interval = "No." if interval == "None" else f"Yes, frequency is {interval}"
+        human_readable_network_conditions = f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}, Conditions change over time? {interval}"
+
     elif network_conditions == "normal":
         human_readable_network_conditions = f"Bandwidth: Unbounded, Delay: None, Packet Drops: None"
 
