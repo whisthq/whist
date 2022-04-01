@@ -107,6 +107,8 @@ struct AudioContext {
 
     // Audio rendering state (Buffering, or Playing)
     AudioState audio_state;
+    // Overflow state
+    bool is_overflowing;
     // Buffer for the audio buffering state
     int audio_buffering_buffer_size;
     uint8_t audio_buffering_buffer[DECODED_BYTES_PER_FRAME * (AUDIO_QUEUE_TARGET_SIZE + 1)];
@@ -169,6 +171,7 @@ AudioContext* init_audio(WhistFrontend* frontend) {
     audio_context->target_frontend = frontend;
     audio_context->audio_decoder = NULL;
     audio_context->audio_state = BUFFERING;
+    audio_context->is_overflowing = false;
     audio_context->audio_buffering_buffer_size = 0;
     init_audio_player(audio_context);
 
@@ -256,12 +259,24 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
         audio_context->sample_index = 0;
     }
 
-    // Always drop if we're overflowing
-    // adjust_command check prevents spamming this log
-    if (audio_context->adjust_command != DROP_FRAME &&
+    // Check whether or not we're overflowing the audio buffer
+    if (!audio_context->is_overflowing &&
         audio_size > AUDIO_BUFFER_OVERFLOW_SIZE * DECODED_BYTES_PER_FRAME) {
-        LOG_WARNING("Audio Buffer full (%.2f)! Force-dropping Frame",
+        LOG_WARNING("Audio Buffer overflowing (%.2f Frames)! Force-dropping Frames",
                     audio_size / (double)DECODED_BYTES_PER_FRAME);
+        audio_context->is_overflowing = true;
+    }
+
+    // If we've returned back to normal, disable overflowing state
+    if (audio_context->is_overflowing &&
+        audio_size < (AUDIO_QUEUE_TARGET_SIZE + 1) * DECODED_BYTES_PER_FRAME) {
+        LOG_WARNING("Done dropping audio overflow frames (Buffer size: %.2f)",
+                    audio_size / (double)DECODED_BYTES_PER_FRAME);
+        audio_context->is_overflowing = false;
+    }
+
+    // Always drop if we're overflowing
+    if (audio_context->is_overflowing) {
         audio_context->adjust_command = DROP_FRAME;
     }
 
