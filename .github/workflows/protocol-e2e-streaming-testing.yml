@@ -112,7 +112,7 @@ jobs:
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 1Mbit,None,None
+            --network-conditions 1Mbit,None,None,None
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
@@ -131,7 +131,7 @@ jobs:
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 1Mbit,None,0.1
+            --network-conditions 1Mbit,None,0.1,None
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
@@ -150,7 +150,7 @@ jobs:
             --leave-instances-on=false \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 1Mbit,100,0.1
+            --network-conditions 1Mbit,100,0.1,None
 
       # Steps below acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
       - name: Get branch name (merge)
