@@ -88,13 +88,20 @@ def extract_logs_from_mandelbox(
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-    # Download all the logs from the AWS machine
+    # Download all the mandelbox logs from the AWS machine
     command = (
         f"scp -r -i {ssh_key_path} {username}@{hostname}:~/perf_logs/{role} {perf_logs_folder_name}"
     )
 
     local_process = pexpect.spawn(command, timeout=timeout_value, logfile=log_grabber_log.buffer)
     local_process.expect(["\$", pexpect.EOF])
+
+    # Download the network logs from the client machine
+    if role == "client":
+        command = f"scp -i {ssh_key_path} {username}@{hostname}:~/network_conditions.log {perf_logs_folder_name}"
+        pexpect_process.sendline(command)
+        local_process.expect(["\$", pexpect.EOF])
+
     local_process.kill(0)
 
 
