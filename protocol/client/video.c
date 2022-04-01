@@ -190,6 +190,7 @@ int render_video(VideoContext* video_context) {
     static WhistCursorInfo* cursor_image = NULL;
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
+    static timestamp_us last_rendered_time = 0;
 
     // Receive and process a render context that's being pushed
     if (video_context->pending_render_context) {
@@ -252,6 +253,10 @@ int render_video(VideoContext* video_context) {
                 memcpy(cursor_image, frame_cursor_image,
                        whist_cursor_info_get_size(frame_cursor_image));
             }
+        } else {
+            // Reset last_rendered_time for an empty frame, so that a non-empty frame following an
+            // empty frame will not have a huge/wrong VIDEO_CAPTURE_LATENCY.
+            last_rendered_time = 0;
         }
 
         // Mark as received so render_context can be overwritten again
@@ -351,23 +356,28 @@ int render_video(VideoContext* video_context) {
         // Declare user activity to prevent screensaver
         declare_user_activity();
 
-        static timestamp_us last_rendered_time = 0;
+        if (client_input_timestamp != 0) {
+            // Calculate E2E latency
+            // Get the difference in time from the moment client pressed user-input to now.
+            timestamp_us pipeline_latency = current_time_us() - client_input_timestamp;
+            log_double_statistic(VIDEO_PIPELINE_LATENCY, (double)(pipeline_latency / 1000));
 
-        // Calculate E2E latency
-        // Get the difference in time from the moment client pressed user-input to now.
-        timestamp_us e2e_latency = current_time_us() - client_input_timestamp;
-        // But client_input_timestamp used above does not include time it took between user-input to
-        // frame refresh in server-side. Please refer to server\video.c to understand how
-        // client_input_timestamp is calculated.
-        // But "Latency from user-click to frame refresh" cannot be calculated accurately.
-        // We approximate it as "Server time elapsed since last render"/2.
-        // We are doing this calculation on the client-side, since server cannot predict for frame
-        // drops due to packet drops.
-        if (last_rendered_time != 0) {
-            e2e_latency += (server_timestamp - last_rendered_time) / 2;
+            // But client_input_timestamp used above does not include time it took between
+            // user-input to frame capture in server-side. Please refer to server\video.c to
+            // understand how client_input_timestamp is calculated. But "Latency from user-click to
+            // frame capture" cannot be calculated accurately. So we consider the worst-case of
+            // "Server time elapsed since last captute". We are doing this calculation on the
+            // client-side, since server cannot predict for frame drops due to packet drops.
+            timestamp_us capture_latency = 0;
+            if (last_rendered_time != 0) {
+                capture_latency = (server_timestamp - last_rendered_time);
+                log_double_statistic(VIDEO_CAPTURE_LATENCY, (double)(capture_latency / 1000));
+
+            }
+            log_double_statistic(VIDEO_E2E_LATENCY,
+                                 (double)((pipeline_latency + capture_latency) / 1000));
         }
         last_rendered_time = server_timestamp;
-        log_double_statistic(VIDEO_E2E_LATENCY, (double)(e2e_latency / 1000));
 
         video_context->has_video_rendered_yet = true;
 
