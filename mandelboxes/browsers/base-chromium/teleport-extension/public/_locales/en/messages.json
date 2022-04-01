@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "Whist Helper",
-    "description": "Extension name"
+    "message": "Whist",
+    "description": "Extension Name"
   },
   "extDesc": {
-    "message": "Whist Helper",
-    "description": "Whist Helper is a Chromium extension that allows seamless communication between client-side Whist and server-side Whist."
+    "message": "The Whist Chromium extension allows seamless communication between client-side Whist and server-side Whist.",
+    "description": "Extension Description"
   }
 }
