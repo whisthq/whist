@@ -256,7 +256,7 @@ foreach(LIB ${FFMPEG_LIBS})
     list(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
 endforeach()
 message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
-list(APPEND RUNTIME_DIR_PATHS ${FFMPEG_DIR_PATH})
+list(APPEND SHARED_LIBS_PATHS ${FFMPEG_DIR_PATH})
 
 
 #[[
@@ -278,7 +278,6 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(NOT LIB_OPENSSL)
         message(FATAL_ERROR "Library openssl was not found! ${OPENSSL_DIR_PATH}")
     endif()
-    list(APPEND RUNTIME_DIR_PATHS ${OPENSSL_DIR_PATH})
 else()
     find_package(OpenSSL REQUIRED)
 endif()
@@ -294,7 +293,7 @@ find_library(LIB_SENTRY NAMES sentry PATHS "${SENTRY_DIR_PATH}"
 if(NOT LIB_SENTRY)
     message(FATAL_ERROR "Library Sentry was not found! ${SENTRY_DIR_PATH}")
 endif()
-list(APPEND RUNTIME_DIR_PATHS ${SENTRY_DIR_PATH})
+list(APPEND SHARED_LIBS_PATHS ${SENTRY_DIR_PATH})
 
 find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
         NO_DEFAULT_PATH
@@ -308,7 +307,7 @@ if(NOT STATIC_SDL2)
 endif()
 
 function(copy_runtime_libs TARGET)
-    foreach(DIR ${RUNTIME_DIR_PATHS})
+    foreach(DIR ${SHARED_LIBS_PATHS})
         add_custom_command(TARGET ${TARGET} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory ${DIR}
             $<TARGET_FILE_DIR:${TARGET}>)
