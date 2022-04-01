@@ -39,10 +39,9 @@ def setup_artificial_network_conditions(
         print("Setting up client to run on a instance with no degradation on network conditions")
     else:
         # Apply conditions below only for values that are actually set
-        if len(network_conditions.split(",")) != 3:
+        if len(network_conditions.split(",")) != 4:
             print(
-                "Network conditions passed in incorrect format. Setting up client to run on a instance with no degradation \
-                on network conditions"
+                "Network conditions passed in incorrect format. Setting up client to run on a instance with no degradation on network conditions"
             )
             return
 

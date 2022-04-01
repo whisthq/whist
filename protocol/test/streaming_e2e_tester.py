@@ -261,8 +261,7 @@ if __name__ == "__main__":
     # 2 - Perform a sanity check on the arguments and load the SSH key from file
     if use_existing_client_instance != "" and not use_two_instances:
         print(
-            "Error: the `use-two-instances` flag is set to `false` but a non-empty \
-            instance ID was passed with the `use-existing-client-instance` flag."
+            "Error: the `use-two-instances` flag is set to `false` but a non-empty instance ID was passed with the `use-existing-client-instance` flag."
         )
         sys.exit(-1)
     if not os.path.isfile(ssh_key_path):
@@ -364,8 +363,7 @@ if __name__ == "__main__":
         print(f"Connecting to server/client AWS instance with hostname: {server_hostname}...")
     else:
         print(
-            f"Connecting to server AWS instance with hostname: {server_hostname} and client AWS \
-            instance with hostname: {client_hostname}..."
+            f"Connecting to server AWS instance with hostname: {server_hostname} and client AWS instance with hostname: {client_hostname}..."
         )
 
     # Create variables containing the commands to launch SSH connections to the client/server instance(s) and
