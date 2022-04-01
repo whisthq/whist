@@ -346,6 +346,15 @@ void render_audio(AudioContext* audio_context) {
                                            audio_frame->data_length) < 0) {
                 LOG_FATAL("Failed to send packets to decoder!");
             }
+            // If we should dup the frame, resend it into the decoder
+            if (audio_context->render_context.adjust_command == DUP_FRAME) {
+                // Duping via the decoder sounds better,
+                // It must be smoothing it somehow with some unknown method
+                if (audio_decoder_send_packets(audio_context->audio_decoder, audio_frame->data,
+                                               audio_frame->data_length) < 0) {
+                    LOG_ERROR("Failed to send duplicated packets to the decoder!");
+                }
+            }
 
             // While there are frames to decode...
             while (audio_decoder_get_frame(audio_context->audio_decoder) == 0) {
@@ -396,11 +405,6 @@ void render_audio(AudioContext* audio_context) {
                     // If we're playing, then play the audio
                     whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
                                                decoded_data_size);
-                    // If we should dup the frame, queue it out again
-                    if (audio_context->render_context.adjust_command == DUP_FRAME) {
-                        whist_frontend_queue_audio(audio_context->target_frontend, decoded_data,
-                                                   decoded_data_size);
-                    }
                 }
             }
         }
