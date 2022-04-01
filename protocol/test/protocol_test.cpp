@@ -131,6 +131,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
     EXPECT_TRUE(new_window != NULL);
 
+    check_stdout_line(::testing::HasSubstr("SDL: Using renderer: "));
     check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
     check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
 
