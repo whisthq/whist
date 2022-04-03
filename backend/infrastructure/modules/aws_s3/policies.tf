@@ -19,15 +19,6 @@ resource "aws_s3_bucket_public_access_block" "whist-brand-assets" {
   ignore_public_acls      = false
 }
 
-resource "aws_s3_bucket_public_access_block" "whist-website-assets" {
-  count                   = var.env == "prod" ? 1 : 0
-  bucket                  = aws_s3_bucket.whist-website-assets[0].id
-  block_public_acls       = false
-  block_public_policy     = false
-  restrict_public_buckets = false
-  ignore_public_acls      = false
-}
-
 resource "aws_s3_bucket_public_access_block" "whist-test-assets" {
   count                   = var.env == "prod" ? 1 : 0
   bucket                  = aws_s3_bucket.whist-test-assets[0].id
@@ -44,30 +35,6 @@ resource "aws_s3_bucket_public_access_block" "whist-fonts" {
   block_public_policy     = true
   restrict_public_buckets = true
   ignore_public_acls      = true
-}
-
-# This policy will allow all objects in the whist-website-assets to
-# be accessible by anyone on the internet.
-data "aws_iam_policy_document" "whist-website-assets-policy" {
-  count = var.env == "prod" ? 1 : 0
-  statement {
-    sid    = "AllowPublicAccess"
-    effect = "Allow"
-
-    principals {
-      type = "AWS"
-      identifiers = [
-        "*"
-      ]
-    }
-
-    actions = [
-      "s3:GetObject"
-    ]
-    resources = [
-      "${aws_s3_bucket.whist-website-assets[0].arn}/*",
-    ]
-  }
 }
 
 # ------------------------------ Policies for protocol ------------------------------ #
@@ -136,17 +103,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-user-app-co
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-brand-assets-encryption" {
   count  = var.env == "prod" ? 1 : 0
   bucket = aws_s3_bucket.whist-brand-assets[0].id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-website-assets-encryption" {
-  count  = var.env == "prod" ? 1 : 0
-  bucket = aws_s3_bucket.whist-website-assets[0].id
 
   rule {
     apply_server_side_encryption_by_default {

@@ -34,18 +34,6 @@ resource "aws_s3_bucket" "whist-brand-assets" {
   }
 }
 
-# Bucket for storing Whist website assets
-resource "aws_s3_bucket" "whist-website-assets" {
-  count  = var.env == "prod" ? 1 : 0
-  bucket = "whist-website-assets"
-
-  tags = {
-    Name      = "whist-website-assets"
-    Env       = var.env
-    Terraform = true
-  }
-}
-
 # Bucket for storing Whist test assets
 resource "aws_s3_bucket" "whist-test-assets" {
   count  = var.env == "prod" ? 1 : 0
@@ -132,13 +120,4 @@ resource "aws_s3_bucket" "whist-terraform-state" {
     Env       = var.env
     Terraform = true
   }
-}
-
-# ------------------------------ Bucket policy attachments ------------------------------ #
-
-# Attach our custom policy to our website assets bucket, for proper data retrieval
-resource "aws_s3_bucket_policy" "whist-website-assets-policy-attachment" {
-  count  = var.env == "prod" ? 1 : 0
-  bucket = aws_s3_bucket.whist-website-assets[0].id
-  policy = data.aws_iam_policy_document.whist-website-assets-policy[0].json
 }
