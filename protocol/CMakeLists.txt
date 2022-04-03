@@ -278,6 +278,12 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(NOT LIB_OPENSSL)
         message(FATAL_ERROR "Library openssl was not found! ${OPENSSL_DIR_PATH}")
     endif()
+
+    # We build as a static library on macOS and a shared library on
+    # Windows, so only copy to the output directory on Windows.
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        list(APPEND SHARED_LIBS_PATHS ${OPENSSL_DIR_PATH})
+    endif()
 else()
     find_package(OpenSSL REQUIRED)
 endif()
