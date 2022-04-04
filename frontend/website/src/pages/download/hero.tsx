@@ -1,7 +1,6 @@
 import React, { useState } from "react"
 import { FaApple } from "react-icons/fa"
 
-import Popover from "@app/shared/components/popover"
 import { WhistButton, WhistButtonState } from "@app/shared/components/button"
 import { config } from "@app/shared/constants/config"
 import Widget from "@app/pages/download/widget"
@@ -61,70 +60,27 @@ const Hero = () => {
         )}
         {operatingSystem === "MacOS" ? (
           <>
-            {" "}
-            <div className="md:flex md:space-x-4 space-y-4 md:space-y-0 justify-center mt-12">
-              <Popover
-                element={
-                  <a href={config.client_download_urls.macOS_x64} download>
-                    <WhistButton
-                      contents={
-                        <div className="flex">
-                          <FaApple className="relative mr-3 top-0.5" />
-                          macOS (Intel)
-                        </div>
-                      }
-                      state={WhistButtonState.DEFAULT}
-                    />
-                  </a>
-                }
-                popup={
-                  <div>
-                    If your Mac was made{" "}
-                    <span className="font-semibold text-gray-300">
-                      before November 2020
-                    </span>
-                    , it has an Intel chip. To confirm, click the{" "}
-                    <FaApple className="inline-block relative bottom-0.5 text-gray-300" />{" "}
-                    icon in the top left corner of your screen, select
-                    &lsquo;About This Mac&lsquo;, and see the chip description.
+            <a href={config.client_download_urls.macOS_x64} download>
+              <WhistButton
+                contents={
+                  <div className="flex">
+                    <FaApple className="relative mr-3 top-0.5" />
+                    Download
                   </div>
                 }
+                state={WhistButtonState.DEFAULT}
+                className="mt-12"
               />
-              <Popover
-                element={
-                  <a href={config.client_download_urls.macOS_arm64} download>
-                    <WhistButton
-                      contents={
-                        <div className="flex">
-                          <FaApple className="relative mr-3 top-0.5" />
-                          macOS (M1)
-                        </div>
-                      }
-                      state={WhistButtonState.DEFAULT}
-                    />
-                  </a>
-                }
-                popup={
-                  <div>
-                    If your Mac was made{" "}
-                    <span className="font-semibold text-gray-300">
-                      after November 2020
-                    </span>
-                    , it likely has an M1 chip. To confirm, click the{" "}
-                    <FaApple className="inline-block relative bottom-0.5 text-gray-300" />{" "}
-                    icon in the top left corner of your screen, select
-                    &lsquo;About This Mac&lsquo;, and see the chip description.
-                  </div>
-                }
-              />
-            </div>
+            </a>
           </>
         ) : (
           <div className="flex justify-center">
             {" "}
             <WhistButton
               className="mt-12 mx-2"
-              contents={<div className="flex">Join the Windows waitlist</div>}
+              contents={
+                <div className="flex">Join the {operatingSystem} waitlist</div>
+              }
               state={WhistButtonState.DEFAULT}
               onClick={() => setOpen(true)}
             />
