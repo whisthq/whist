@@ -1,7 +1,12 @@
 import { NativeHostMessage, NativeHostMessageType } from "@app/constants/ipc"
 
-const initNativeHostIpc = () =>
-  chrome.runtime.connectNative("whist_teleport_extension_host")
+const initNativeHostIpc = () => {
+  const nativeHostPort = chrome.runtime.connectNative(
+    "whist_teleport_extension_host"
+  )
+
+  return nativeHostPort
+}
 
 const initNativeHostDisconnectHandler = (nativeHostPort: chrome.runtime.Port) =>
   nativeHostPort.onMessage.addListener((msg: NativeHostMessage) => {
@@ -9,4 +14,4 @@ const initNativeHostDisconnectHandler = (nativeHostPort: chrome.runtime.Port) =>
       nativeHostPort.disconnect()
   })
 
-export { initNativeHostDisconnectHandler, initNativeHostIpc }
+export { initNativeHostIpc, initNativeHostDisconnectHandler }

@@ -6,7 +6,7 @@
 
 import { initCursorLockDetection } from "./cursor"
 import { initUserAgentSpoofer } from "./userAgent"
-import { initFeatureWarnings, initDownloadNotifications } from "./notification"
+import { initFeatureWarnings } from "./notification"
 
 // Enable relative mouse mode
 initCursorLockDetection()
@@ -17,6 +17,3 @@ initUserAgentSpoofer()
 // If the user tries to go to a website that uses your camera/mic, show them a warning
 // that this feature is missing
 initFeatureWarnings()
-
-// Show notifications for file download
-initDownloadNotifications()
