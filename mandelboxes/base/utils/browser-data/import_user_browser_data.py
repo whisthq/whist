@@ -364,6 +364,9 @@ def create_local_storage_files(
     with open(os.path.join(path, "LOCK"), "w"):
         pass
 
+    subprocess.run(["chown", "-R", "ubuntu", path])
+    subprocess.run(["chmod", "-R", "777", path])
+
 
 if __name__ == "__main__":
     """
