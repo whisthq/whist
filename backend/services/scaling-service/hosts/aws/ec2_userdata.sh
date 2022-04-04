@@ -55,13 +55,13 @@ pull_docker_images() {
 # Args: none
 warmup_necessary_files() {
   find "/dev/uinput" \
-  "/sys/devices/virtual/input" \
-  "/etc/udev" \
-  "/run/udev" \
-  "/etc/filebeat" \
-  "/var/lib/nvidia" \
-  "/sys/fs/cgroup" \
-  "/root/.aws" -type f -exec touch {} +
+    "/sys/devices/virtual/input" \
+    "/etc/udev" \
+    "/run/udev" \
+    "/etc/filebeat" \
+    "/var/lib/nvidia" \
+    "/sys/fs/cgroup" \
+    "/root/.aws" -type f -exec touch {} +
 
   echo "Finished warming up necessary files."
 }
