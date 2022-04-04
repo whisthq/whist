@@ -36,7 +36,7 @@ if [ -z "${devices:-}" ]; then
 fi
 
 # Read device names and save them in a array
-read -r devices <<< "$devices"
+devices=($devices)
 echo "Network devices: ${devices[*]}"
 
 # Check that at least one network condition was specified. If no network condition was specified, we don't have anything to do
@@ -47,7 +47,7 @@ fi
 
 # Read the network conditions that are passed and parse the minimum and maximum value
 if [ -n "${bandwidth_range:-}" ]; then
-  read -r bandwidth_range <<< "$bandwidth_range";
+  bandwidth_range=($bandwidth_range)
   if [ ${#bandwidth_range[*]} -eq 2 ]; then
     max_bandwidth="${bandwidth_range[1]}"
   elif [ ${#bandwidth_range[*]} -eq 1 ]; then
@@ -69,7 +69,7 @@ if [ -n "${bandwidth_range:-}" ]; then
 fi
 
 if [ -n "${packet_drop_range:-}" ]; then
-  read -r packet_drop_range <<< "$packet_drop_range";
+  packet_drop_range=($packet_drop_range)
   if [ ${#packet_drop_range[*]} -eq 2 ]; then
     max_packet_drop=${packet_drop_range[1]}
   elif [ ${#packet_drop_range[*]} -eq 1 ]; then
@@ -90,7 +90,7 @@ if [ -n "${packet_drop_range:-}" ]; then
 fi
 
 if [ -n "${queue_length_range:-}" ]; then
-  read -r queue_length_range <<< "$queue_length_range";
+  queue_length_range=($queue_length_range)
   if [ ${#queue_length_range[*]} -eq 2 ]; then
     max_queue_length=${queue_length_range[1]}
   elif [ ${#queue_length_range[*]} -eq 1 ]; then
@@ -111,7 +111,7 @@ if [ -n "${queue_length_range:-}" ]; then
 fi
 
 if [ -n "${interval_range:-}" ]; then
-  read -r interval_range <<< "$interval_range";
+  interval_range=($interval_range)
   if [ ${#interval_range[*]} -eq 2 ]; then
     max_interval=${interval_range[1]}
   elif [ ${#interval_range[*]} -eq 1 ]; then
