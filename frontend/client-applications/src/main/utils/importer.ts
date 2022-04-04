@@ -7,9 +7,9 @@ import { homedir } from "os"
 import path, { dirname } from "path"
 import Struct from "ref-struct"
 import ref from "ref"
-// import Database from "better-sqlite3"
 import knex from "knex"
 import crypto from "crypto"
+import ffi from "ffi-napi"
 
 import {
   ALGORITHM_PLAIN,
@@ -506,12 +506,42 @@ const getCookieEncryptionKey = async (
     case "win32":
       const DATA_BLOB = Struct({
         cbData: ref.types.uint32,
-        pbData: "string",
+        pbData: ref.refType(ref.types.byte),
+      })
+      const PDATA_BLOB = ref.refType(DATA_BLOB)
+      const Crypto = new ffi.Library("Crypt32", {
+        CryptUnprotectData: [
+          "bool",
+          [
+            PDATA_BLOB,
+            "string",
+            "string",
+            "void *",
+            "string",
+            "int",
+            PDATA_BLOB,
+          ],
+        ],
+        CryptProtectData: [
+          "bool",
+          [
+            PDATA_BLOB,
+            "string",
+            "string",
+            "void *",
+            "string",
+            "int",
+            PDATA_BLOB,
+          ],
+        ],
       })
 
       const keyFile = expandPaths(getWindowsKeys(browser), "win32")
+      console.log("keyfile", keyFile)
       const data = JSON.parse(fs.readFileSync(keyFile).toString())
+      console.log("data", data)
       const key64 = data.os_crypt.encrypted_key.toString("utf-8")
+      console.log("key64", key64)
 
       let buf = Buffer.from(key64, "base64")
       let dataBlobInput = new DATA_BLOB()
@@ -527,9 +557,15 @@ const getCookieEncryptionKey = async (
         0,
         dataBlobOutput
       )
-      let outputDeref = dataBlobOutput.deref()
-      let plaintext = ref.reinterpret(outputDeref.pbData, outputDeref.cbData, 0)
-      return plaintext.toString("utf16le")
+      let outputDeref = result.deref()
+      const plainText = ref.reinterpret(
+        outputDeref.pbData,
+        outputDeref.cbData,
+        0
+      )
+      console.log("plaintext", plainText)
+
+      return plainText
 
     default:
       throw Error("OS not recognized. Works on OSX or linux.")

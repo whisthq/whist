@@ -1058,6 +1058,13 @@
     "@types/scheduler" "*"
     csstype "^3.0.2"
 
+"@types/ref@^0.0.29":
+  version "0.0.29"
+  resolved "https://registry.yarnpkg.com/@types/ref/-/ref-0.0.29.tgz#4cf0ac223827cfc87c24f436eaa2c0b9ac2f29a3"
+  integrity sha512-NAk1MKcjGAFEbf7ObSFOOm+HKZIr0145t5lrp84H1GBYDpsBDH9r6tTnS9sjTRJBRy8/BUvGiB/4+0Z/Nh4Hvw==
+  dependencies:
+    "@types/node" "*"
+
 "@types/resolve@1.17.1":
   version "1.17.1"
   resolved "https://registry.yarnpkg.com/@types/resolve/-/resolve-1.17.1.tgz#3afd6ad8967c77e4376c598a82ddd58f46ec45d6"
@@ -2381,7 +2388,7 @@ debug@^2.6.0, debug@^2.6.8, debug@^2.6.9:
   dependencies:
     ms "2.0.0"
 
-debug@^3.2.6, debug@^3.2.7:
+debug@^3.1.0, debug@^3.2.6, debug@^3.2.7:
   version "3.2.7"
   resolved "https://registry.yarnpkg.com/debug/-/debug-3.2.7.tgz#72580b7e9145fb39b6676f9c5e5fb100b934179a"
   integrity sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==
@@ -3404,6 +3411,18 @@ fdir@^5.0.0:
   resolved "https://registry.yarnpkg.com/fdir/-/fdir-5.2.0.tgz#5b3d6ae282f8bc0ef48bf913d46f9e08496304ea"
   integrity sha512-skyI2Laxtj9GYzmktPgY6DT8uswXq+VoxH26SskykvEhTSbi7tRM/787uZt/p8maxrQCJdzC90zX1btbxiJ6lw==
 
+ffi-napi@^4.0.3:
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/ffi-napi/-/ffi-napi-4.0.3.tgz#27a8d42a8ea938457154895c59761fbf1a10f441"
+  integrity sha512-PMdLCIvDY9mS32RxZ0XGb95sonPRal8aqRhLbeEtWKZTe2A87qRFG9HjOhvG8EX2UmQw5XNRMIOT+1MYlWmdeg==
+  dependencies:
+    debug "^4.1.1"
+    get-uv-event-loop-napi-h "^1.0.5"
+    node-addon-api "^3.0.0"
+    node-gyp-build "^4.2.1"
+    ref-napi "^2.0.1 || ^3.0.2"
+    ref-struct-di "^1.1.0"
+
 file-entry-cache@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/file-entry-cache/-/file-entry-cache-6.0.1.tgz#211b2dd9659cb0394b073e7323ac3c933d522027"
@@ -3677,6 +3696,18 @@ get-symbol-description@^1.0.0:
   dependencies:
     call-bind "^1.0.2"
     get-intrinsic "^1.1.1"
+
+get-symbol-from-current-process-h@^1.0.1, get-symbol-from-current-process-h@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/get-symbol-from-current-process-h/-/get-symbol-from-current-process-h-1.0.2.tgz#510af52eaef873f7028854c3377f47f7bb200265"
+  integrity sha512-syloC6fsCt62ELLrr1VKBM1ggOpMdetX9hTrdW77UQdcApPHLmf7CI7OKcN1c9kYuNxKcDe4iJ4FY9sX3aw2xw==
+
+get-uv-event-loop-napi-h@^1.0.5:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/get-uv-event-loop-napi-h/-/get-uv-event-loop-napi-h-1.0.6.tgz#42b0b06b74c3ed21fbac8e7c72845fdb7a200208"
+  integrity sha512-t5c9VNR84nRoF+eLiz6wFrEp1SE2Acg0wS+Ysa2zF0eROes+LzOfuTaVHxGy8AbS8rq7FHEJzjnCZo1BupwdJg==
+  dependencies:
+    get-symbol-from-current-process-h "^1.0.1"
 
 getopts@2.2.5:
   version "2.2.5"
@@ -5193,6 +5224,11 @@ node-fetch@^2.6.0, node-fetch@^2.6.6:
   dependencies:
     whatwg-url "^5.0.0"
 
+node-gyp-build@^4.2.1:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.4.0.tgz#42e99687ce87ddeaf3a10b99dc06abc11021f3f4"
+  integrity sha512-amJnQCcgtRVw9SvoebO3BKGESClrfXGCUTX9hSn1OuGQTQBOZmVd0Z0OlecpuRksKvbsUqALE8jls/ErClAPuQ==
+
 node-gyp-build@^4.3.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.3.0.tgz#9f256b03e5826150be39c764bf51e993946d71a3"
@@ -6211,6 +6247,23 @@ reduce-css-calc@^2.1.8:
   dependencies:
     css-unit-converter "^1.1.1"
     postcss-value-parser "^3.3.0"
+
+"ref-napi@^2.0.1 || ^3.0.2":
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/ref-napi/-/ref-napi-3.0.3.tgz#e259bfc2bbafb3e169e8cd9ba49037dd00396b22"
+  integrity sha512-LiMq/XDGcgodTYOMppikEtJelWsKQERbLQsYm0IOOnzhwE9xYZC7x8txNnFC9wJNOkPferQI4vD4ZkC0mDyrOA==
+  dependencies:
+    debug "^4.1.1"
+    get-symbol-from-current-process-h "^1.0.2"
+    node-addon-api "^3.0.0"
+    node-gyp-build "^4.2.1"
+
+ref-struct-di@^1.1.0:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/ref-struct-di/-/ref-struct-di-1.1.1.tgz#5827b1d3b32372058f177547093db1fe1602dc10"
+  integrity sha512-2Xyn/0Qgz89VT+++WP0sTosdm9oeowLP23wRJYhG4BFdMUrLj3jhwHZNEytYNYgtPKLNTP3KJX4HEgBvM1/Y2g==
+  dependencies:
+    debug "^3.1.0"
 
 regenerator-runtime@^0.13.4:
   version "0.13.9"

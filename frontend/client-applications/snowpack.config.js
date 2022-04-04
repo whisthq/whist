@@ -46,6 +46,7 @@ const esbuildCommand = [
   "--external:knex",
   "--external:workerjs",
   "--external:@m-lab/ndt7",
+  "--external:ffi"
 ]
 // We minify our output to make this less convenient for snooping users.
 if (process.env.NODE_ENV === "production") {
@@ -167,6 +168,7 @@ module.exports = {
       "keytar",
       "x11",
       "node:path",
+      "ffi"
     ],
     // We ask Snowpack to polyfill and NodeJS APIs that it can, so that we can
     // still make some use of the NodeJS standard library. It cannot polyfill
