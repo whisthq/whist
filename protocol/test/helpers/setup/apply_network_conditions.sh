@@ -159,11 +159,11 @@ for i in "${!devices[@]}"; do
   fi
   echo "Setting network conditions on device $device to${echo_string}"
 
-  sudo ip link set dev "ifb${i}" up
-  sudo tc qdisc add dev "$device" ingress
-  sudo tc filter add dev "$device" parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev "ifb${i}"
-  sudo tc qdisc add dev "$device" root netem "$degradations_string"
-  sudo tc qdisc add dev "ifb${i}" root netem "$degradations_string"
+  sudo -s eval "ip link set dev ifb${i} up"
+  sudo -s eval "tc qdisc add dev $device ingress"
+  sudo -s eval "tc filter add dev $device parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb${i}"
+  sudo -s eval "tc qdisc add dev $device root netem $degradations_string"
+  sudo -s eval "tc qdisc add dev ifb${i} root netem $degradations_string"
 done
 
 if [[ ( "$min_bandwidth" != "$max_bandwidth" ) || ( "$min_packet_drop" != "$max_packet_drop" ) || ( "$min_queue_length" != "$max_queue_length" ) ]]; then
@@ -197,8 +197,8 @@ if [[ ( "$min_bandwidth" != "$max_bandwidth" ) || ( "$min_packet_drop" != "$max_
     for i in "${!devices[@]}"; do
       device="${devices[i]}"
       echo "Setting network conditions on device $device to${echo_string}"
-      sudo tc qdisc change dev "$device" root netem "$degradations_string"
-      sudo tc qdisc change dev "ifb${i}" root netem "$degradations_string"
+      sudo -s eval "tc qdisc change dev $device root netem $degradations_string"
+      sudo -s eval "tc qdisc change dev ifb${i} root netem $degradations_string"
     done
 
     interval=$(( RANDOM % (max_interval - min_interval + 1) + min_interval ))
