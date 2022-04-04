@@ -37,7 +37,7 @@ def network_conditions_to_readable_form(network_conditions):
         def parse_value_or_range(raw_string, convert_string):
             raw_string = raw_string.split("-")
             if len(raw_string) == 1:
-                return convert_string(raw_string)
+                return convert_string(raw_string[0])
             elif len(raw_string) == 2:
                 return f"variable between {convert_string(raw_string[0])} and {convert_string(raw_string[1])}"
             else:
