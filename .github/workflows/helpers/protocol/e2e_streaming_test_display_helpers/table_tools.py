@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from curses import raw
 import os
 import sys
 from pytablewriter import MarkdownTableWriter
