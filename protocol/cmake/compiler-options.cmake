@@ -43,3 +43,8 @@ else() # GCC and Clang base flags
     endif()
   endif()
 endif()
+
+# For now, log everything. For Metrics builds, also log CPU usage.
+add_compile_definitions(LOG_LEVEL=5
+                        $<$<CONFIG:Metrics>:LOG_CPU_USAGE=1>
+                        __ROOT_FILE__="${PROJECT_SOURCE_DIR}")
