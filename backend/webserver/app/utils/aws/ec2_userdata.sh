@@ -103,7 +103,7 @@ then
 
   echo "Ephemeral device path found. Warming up only necessary files in EBS volume."
 
-  # Pull Docker images and
+  # Pull Docker images and warmup necessary files in parallel.
   pull_docker_images &
   warmup_necessary_files &
 
