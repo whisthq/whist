@@ -154,7 +154,7 @@ for i in "${!devices[@]}"; do
     degradations_string="${degradations_string} loss ${max_packet_drop}%"
   fi
   if [ -n "${max_queue_length:-}" ]; then
-    echo_string="${echo_string} queue length: ${max_queue_length}%"
+    echo_string="${echo_string} queue length: ${max_queue_length}ms"
     degradations_string="${degradations_string} delay ${max_queue_length}ms"
   fi
   echo "Setting network conditions on device $device to${echo_string}"

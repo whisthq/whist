@@ -65,7 +65,9 @@ def setup_artificial_network_conditions(
                     degradations_command_entry = (
                         f" {degradation_command_flag} {min_value},{max_value}"
                     )
-                    print(f"\t* {condition_name}: variable between {min_value}{unit} and {max_value}{unit}")
+                    print(
+                        f"\t* {condition_name}: variable between {min_value}{unit} and {max_value}{unit}"
+                    )
                 else:
                     print(
                         f"Error, incorrect number of values passed to {condition_name} network condition"
