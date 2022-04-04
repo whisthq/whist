@@ -22,7 +22,7 @@ echo "Whist EC2 userdata started"
 # Args: none
 pull_docker_images() {
   # Populate env vars
-  eval "$(cat $USERDATA_ENV)"
+  eval "$(cat "$USERDATA_ENV")"
 
   # Login with docker
   echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
