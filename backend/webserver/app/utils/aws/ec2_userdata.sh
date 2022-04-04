@@ -43,6 +43,34 @@ pull_docker_images() {
   echo "Finished pulling images"
 }
 
+####################################################
+# Warmup necessary files
+####################################################
+
+# `warmup_necessary_files` will touch all files in the
+#  EBS volume that are necessary to run a mandelbox. Doing
+#  so makes the instance pull the blocks from S3 so that
+#  they don't suffer increased I/O latency the first time
+#  they are used.
+# Args: none
+warmup_necessary_files() {
+  # Warmup uinput and devices
+  find "/dev/uinput" -type f -exec touch {} +
+  find "/etc/udev" -type f -exec touch {} +
+  find "/sys/devices/virtual/input" -type f -exec touch {} +
+
+  # Warmup filebeat
+  find "/etc/filebeat" -type f -exec touch {} +
+
+  # Warmup NVIDIA drivers
+  find "/var/lib/nvidia" -type f -exec touch {} +
+
+  # Warmup cgroups
+  find "/sys/fs/cgroup" -type f -exec touch {} +
+
+  echo "Finished warming up necessary files."
+}
+
 cd /home/ubuntu
 
 # The first thing we want to do is to set up the ephemeral storage available on
@@ -79,10 +107,10 @@ then
   systemctl start docker
 
   echo "Ephemeral device path found. Warming up only necessary files in EBS volume."
+
+  # Pull Docker images and warmup necessary files in parallel.
   pull_docker_images &
-  find "/dev/uinput" -type f -exec touch {} + &
-  find "/sys/fs/cgroup" -type f -exec touch {} + &
-  find "/sys/devices/virtual/input" -type f -exec touch {} + &
+  warmup_necessary_files &
 
   wait
 else

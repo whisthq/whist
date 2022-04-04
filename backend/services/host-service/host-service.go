@@ -630,7 +630,6 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 		logger.Infof("Creating Whist directory on ephemeral device.")
 		utils.WhistDir = path.Join(utils.WhistEphemeralFSPath, utils.WhistDir)
 		utils.TempDir = path.Join(utils.WhistDir, "temp/")
-		utils.WhistPrivateDir = path.Join(utils.WhistEphemeralFSPath, utils.WhistPrivateDir)
 	}
 
 	// check if "/whist" already exists --- if so, panic, since
