@@ -21,7 +21,6 @@ import (
 )
 
 // Constants for use in setting up the HTTPS server
-
 const (
 	// Our HTTPS server listens on the port "HOST" converted to a telephone
 	// number.
