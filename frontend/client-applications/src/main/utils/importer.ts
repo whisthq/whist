@@ -107,6 +107,7 @@ const getExtensionDir = (browser: InstalledBrowser): string[] => {
 const getPreferencesFilePath = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
   return browserDirectories.map((dir) => path.join(dir, "Preferences"))
+}
 
 const getLocalStorageDir = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
