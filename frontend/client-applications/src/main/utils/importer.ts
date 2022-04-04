@@ -5,6 +5,8 @@ import fs from "fs"
 import tmp from "tmp"
 import { homedir } from "os"
 import path, { dirname } from "path"
+import Struct from "ref-struct"
+import ref from "ref"
 // import Database from "better-sqlite3"
 import knex from "knex"
 import crypto from "crypto"
@@ -17,6 +19,7 @@ import {
   BusSecretPath,
   ChromeLinuxDefaultDir,
   ChromeOSXDefaultDir,
+  ChromeWindowsDefaultDir,
   ChromiumLinuxDefaultDir,
   ChromiumOSXDefaultDir,
   EdgeLinuxDefaultDir,
@@ -25,7 +28,13 @@ import {
   OperaOSXDefaultDir,
   SecretServiceName,
   InstalledBrowser,
+  ChromeWindowsKeys,
+  OperaWindowsKeys,
+  EdgeWindowsKeys,
+  ChromiumWindowsKeys,
+  BraveWindowsKeys,
 } from "@app/constants/importer"
+import { assert } from "console"
 
 const DEFAULT_ENCRYPTION_KEY = "peanuts"
 
@@ -83,6 +92,13 @@ const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
         }
       }
     }
+    case "win32": {
+      switch (browser) {
+        case InstalledBrowser.CHROME: {
+          return ChromeWindowsDefaultDir
+        }
+      }
+    }
     default: {
       return []
     }
@@ -109,11 +125,35 @@ const getPreferencesFilePath = (browser: InstalledBrowser): string[] => {
   return browserDirectories.map((dir) => path.join(dir, "Preferences"))
 }
 
+<<<<<<< HEAD
 const getLocalStorageDir = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
   return browserDirectories.map((dir) =>
     path.join(dir, "Local Storage", "leveldb")
   )
+=======
+const getWindowsKeys = (browser: InstalledBrowser) => {
+  switch (browser) {
+    case InstalledBrowser.CHROME: {
+      return ChromeWindowsKeys
+    }
+    case InstalledBrowser.OPERA: {
+      return OperaWindowsKeys
+    }
+    case InstalledBrowser.EDGE: {
+      return EdgeWindowsKeys
+    }
+    case InstalledBrowser.CHROMIUM: {
+      return ChromiumWindowsKeys
+    }
+    case InstalledBrowser.BRAVE: {
+      return BraveWindowsKeys
+    }
+    default: {
+      return []
+    }
+  }
+>>>>>>> fa3eddd90 (wip)
 }
 
 const getOsCryptName = (browser: InstalledBrowser): string => {
@@ -233,9 +273,19 @@ const expandUser = (text: string): string => {
   })
 }
 
-const expandPaths = (paths: string[]): string => {
+const expandWinPath = (args: { env: string; path: string }): string => {
+  return path.join(process.env[args.env] ?? "", args.path)
+}
+
+const expandPaths = (paths: any[], os: string): string => {
+  assert(["windows", "linux", "win32"].includes(os))
+
   // expand the path of file and remove invalid files
-  paths = paths.map(expandUser)
+  if (os === "windows") {
+    paths = paths.map(expandWinPath)
+  } else {
+    paths = paths.map(expandUser)
+  }
 
   paths = paths.filter(fs.existsSync)
 
@@ -319,7 +369,7 @@ const decryptCookie = async (
 const getCookiesFromFile = async (
   browser: InstalledBrowser
 ): Promise<Cookie[]> => {
-  const cookieFile = expandPaths(getCookieFilePath(browser))
+  const cookieFile = expandPaths(getCookieFilePath(browser), process.platform)
 
   try {
     const tempFile = createLocalCopy(cookieFile)
@@ -341,7 +391,10 @@ const getCookiesFromFile = async (
 }
 
 const getBookmarksFromFile = (browser: InstalledBrowser): string => {
-  const bookmarkFile = expandPaths(getBookmarkFilePath(browser))
+  const bookmarkFile = expandPaths(
+    getBookmarkFilePath(browser),
+    process.platform
+  )
 
   try {
     const bookmarks = fs.readFileSync(bookmarkFile, "utf8")
@@ -391,7 +444,7 @@ const getLocalStorageFromFiles = (browser: InstalledBrowser): string => {
 }
 
 const getExtensionIDs = (browser: InstalledBrowser): string => {
-  const extensionsDir = expandPaths(getExtensionDir(browser))
+  const extensionsDir = expandPaths(getExtensionDir(browser), process.platform)
 
   try {
     // Get all the directory names as it is the extension's ID
@@ -450,6 +503,34 @@ const getCookieEncryptionKey = async (
 
       return key
     }
+    case "win32":
+      const DATA_BLOB = Struct({
+        cbData: ref.types.uint32,
+        pbData: "string",
+      })
+
+      const keyFile = expandPaths(getWindowsKeys(browser), "win32")
+      const data = JSON.parse(fs.readFileSync(keyFile).toString())
+      const key64 = data.os_crypt.encrypted_key.toString("utf-8")
+
+      let buf = Buffer.from(key64, "base64")
+      let dataBlobInput = new DATA_BLOB()
+      dataBlobInput.pbData = buf
+      dataBlobInput.cbData = buf.length
+      let dataBlobOutput = ref.alloc(DATA_BLOB)
+      let result = Crypto.CryptUnprotectData(
+        dataBlobInput.ref(),
+        null,
+        null,
+        null,
+        null,
+        0,
+        dataBlobOutput
+      )
+      let outputDeref = dataBlobOutput.deref()
+      let plaintext = ref.reinterpret(outputDeref.pbData, outputDeref.cbData, 0)
+      return plaintext.toString("utf16le")
+
     default:
       throw Error("OS not recognized. Works on OSX or linux.")
   }
@@ -469,7 +550,9 @@ const createLocalCopy = (cookieFile: string): string => {
 }
 
 const isBrowserInstalled = (browser: InstalledBrowser) => {
-  return fs.existsSync(expandPaths(getCookieFilePath(browser)))
+  return fs.existsSync(
+    expandPaths(getCookieFilePath(browser), process.platform)
+  )
 }
 
 const getInstalledBrowsers = () => {
