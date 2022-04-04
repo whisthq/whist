@@ -52,7 +52,7 @@ def network_conditions_to_readable_form(network_conditions):
             lambda raw_string: raw_string + " ms" if raw_string != "None" else raw_string
         )
         transform_packet_drops_string = (
-            lambda raw_string: "{:.2f}%".format(float(raw_string) * 100.0)
+            lambda raw_string: "{:.2f}%".format(float(raw_string))
             if raw_string != "None"
             else raw_string
         )

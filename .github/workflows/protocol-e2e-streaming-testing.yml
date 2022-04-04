@@ -150,7 +150,7 @@ jobs:
             --leave-instances-on=false \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 10Mbit-20Mbit,50,0.1,100-1000
+            --network-conditions 10Mbit-20Mbit,50,10,100-1000
 
       # Steps below acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
       - name: Get branch name (merge)
