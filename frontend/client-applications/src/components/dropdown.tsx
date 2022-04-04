@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 
 const Dropdown = (props: {
   options: string[]
@@ -13,10 +13,6 @@ const Dropdown = (props: {
       evt.preventDefault()
     }
   }
-
-  useEffect(() => {
-    setValue(props.options[0])
-  }, [props.options])
 
   return (
     <form onSubmit={onSubmit}>
