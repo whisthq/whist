@@ -81,7 +81,6 @@ def extract_logs_from_mandelbox(
         "/var/log/whist/update_xorg_conf-err.log",
         "/var/log/whist/update_xorg_conf-out.log",
         "/var/log/whist/protocol-err.log",
-        "/var/log/whist/protocol-out.log",
     ]
     for file_path in logfiles:
         command = f"docker cp {docker_id}:{file_path} ~/perf_logs/{role}/"
