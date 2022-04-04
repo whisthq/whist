@@ -9,6 +9,9 @@ from helpers.common.ssh_tools import (
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
+# Constants
+N_NETWORK_CONDITION_PARAMETERS = 5
+
 
 def setup_artificial_network_conditions(
     pexpect_process, pexpect_prompt, network_conditions, testing_time, running_in_ci
@@ -39,13 +42,13 @@ def setup_artificial_network_conditions(
         print("Setting up client to run on a instance with no degradation on network conditions")
     else:
         # Apply conditions below only for values that are actually set
-        if len(network_conditions.split(",")) != 4:
+        if len(network_conditions.split(",")) != N_NETWORK_CONDITION_PARAMETERS:
             print(
                 "Network conditions passed in incorrect format. Setting up client to run on a instance with no degradation on network conditions"
             )
             return
 
-        bandwidth, delay, pkt_drop_pctg, interval = network_conditions.split(",")
+        bandwidth, delay, pkt_drop_pctg, limit, interval = network_conditions.split(",")
         if bandwidth == "None" and delay == "None" and pkt_drop_pctg == "None":
             print(
                 "Setting up client to run on a instance with no degradation on network conditions"
@@ -79,6 +82,9 @@ def setup_artificial_network_conditions(
         degradations_command += parse_value_or_range(bandwidth, "max bandwidth", "-b")
         degradations_command += parse_value_or_range(delay, "packet delay", "-q", "ms")
         degradations_command += parse_value_or_range(pkt_drop_pctg, "packet drop rate", "-p", "%")
+        degradations_command += parse_value_or_range(
+            limit, "maximum number of packets the qdisc may hold queued at a time", "-l"
+        )
         degradations_command += parse_value_or_range(
             interval, "net conditions change interval", "-i", "ms"
         )

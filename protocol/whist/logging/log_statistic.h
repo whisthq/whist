@@ -47,12 +47,13 @@ typedef enum {
     VIDEO_ENCODER_UPDATE_TIME,
     VIDEO_ENCODE_TIME,
     VIDEO_FPS_SENT,
-    VIDEO_FPS_SKIPPED_IN_CAPTURE,
+    VIDEO_FRAMES_SKIPPED_IN_CAPTURE,
     VIDEO_FRAME_SIZE,
     VIDEO_FRAME_PROCESSING_TIME,
     VIDEO_GET_CURSOR_TIME,
-    VIDEO_INTER_FRAME_QP,
-    VIDEO_INTRA_FRAME_QP,
+    VIDEO_FRAME_QP,
+    VIDEO_FRAME_SATD,
+    VIDEO_NUM_RECOVERY_FRAMES,
     VIDEO_SEND_TIME,
     DBUS_MSGS_RECEIVED,
     SERVER_CPU_USAGE,
@@ -60,7 +61,7 @@ typedef enum {
     // Client side metrics
     AUDIO_RECEIVE_TIME,
     AUDIO_UPDATE_TIME,
-    AUDIO_FPS_SKIPPED,
+    AUDIO_FRAMES_SKIPPED,
     NETWORK_READ_PACKET_TCP,
     NETWORK_READ_PACKET_UDP,
     SERVER_HANDLE_MESSAGE_TCP,
@@ -83,18 +84,6 @@ typedef enum {
 
     NUM_METRICS,
 } Metrics;
-
-/*
-============================
-Public Structures
-============================
-*/
-typedef struct {
-    const char *key;
-    bool is_max_needed;
-    bool is_min_needed;
-    bool average_over_time;
-} StatisticInfo;
 
 /*
 ============================
