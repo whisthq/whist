@@ -2,13 +2,13 @@ package utils // import "github.com/whisthq/whist/backend/services/utils"
 
 import "github.com/google/uuid"
 
-// This block contains some constants for directories we use in the host
+// This block contains some variables for directories we use in the host
 // service. They're used in a lot of packages, so we put them in the least
 // common denominator --- this package.
 
-// Path to the "/whist" directory. Set as a variable instead of a constant
-// because its value might change if we are using ephemeral storage.
 var (
+	// Path to the "/whist" directory. Set as a variable instead of a constant
+	// because its value might change if we are using ephemeral storage.
 	WhistDir string = "/whist/"
 	TempDir  string = WhistDir + "temp/"
 )
@@ -18,11 +18,10 @@ const (
 	// certificates to users even if they escape container access and can read
 	// the entire `/whist/` directory.
 	WhistPrivateDir string = "/whistprivate/"
-
 	// WhistEphemeralFSPath is the path where the ephemeral storage device will
 	// be mounted if it exists. If it does, all whist directories will be created
 	// on this path.
-	WhistEphemeralFSPath = "/ephemeral/"
+	WhistEphemeralFSPath string = "/ephemeral/"
 )
 
 // Note: We use these values as placeholder UUIDs because they are obvious and immediate
