@@ -37,7 +37,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["js/userAgent.js", "js/notification.js"],
+      "resources": ["js/*.js"],
       "matches": ["<all_urls>"]
     }
   ]

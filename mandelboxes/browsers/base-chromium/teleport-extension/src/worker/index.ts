@@ -6,9 +6,11 @@
 
 import { initFileSyncHandler } from "./downloads"
 import { initChromeWelcomeRedirect } from "./navigation"
-import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"
+import { initNativeHostDisconnectHandler } from "./ipc"
 import { initCursorLockHandler } from "./cursor"
 import { refreshExtension } from "./update"
+import { initNativeHostIpc } from "./ipc"
+
 import {
   initTabDetachSuppressor,
   initCreateNewTabHandler,

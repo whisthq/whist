@@ -1,5 +1,7 @@
 export enum ContentScriptMessageType {
   POINTER_LOCK = "POINTER_LOCK",
+  DOWNLOAD_COMPLETE = "DOWNLOAD_COMPLETE",
+  DOWNLOAD_IN_PROGRESS = "DOWNLOAD_IN_PROGRESS",
 }
 
 export enum NativeHostMessageType {

@@ -1,4 +1,4 @@
-import { injectResourceIntoDOM } from "@app/utils/dom"
+import { injectResourceIntoDOM } from "@app/utils/resources"
 
 const initUserAgentSpoofer = () => {
   injectResourceIntoDOM(document, "js/userAgent.js")
