@@ -68,12 +68,13 @@ def extract_metrics(client_log_file, server_log_file):
                             max_val = float(metric_value)
                         elif metric_name[0:4] == "MIN_":
                             min_val = float(metric_value)
-                    else:
-                        # Single-value metric (e.g `HANDSHAKE_CONNECT_TO_SERVER_TIME`)
-                        metric_name = l[-3].strip('"')
-                        metric_value = float(l[-1])
-                        count = 1
-                        normal_sum = metric_value
+                        else:
+                            # Single-value metric (e.g `HANDSHAKE_CONNECT_TO_SERVER_TIME`) or
+                            # Sum metrics (e.g VIDEO_NUM_RECOVERY_FRAMES)
+                            metric_name = l[-3].strip('"')
+                            metric_value = float(l[-1])
+                            count = 1
+                            normal_sum += metric_value
 
                     assert count >= 0
                     assert normal_sum >= 0

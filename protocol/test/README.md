@@ -90,8 +90,8 @@ optional arguments:
                         This option allows you to skip cloning the Whist repository on the instance(s) to be used for the test. The test will also not checkout the current branch or pull from Github, using
                         the code from the whist folder on the existing instance(s) as is. This option is useful if you need to run several tests in succession using code from the same commit.
 
-  --simulate-scrolling {false,true}
-                        Whether to simulate mouse scrolling on the client side
+  --simulate-scrolling NUM_SCROLLING_ROUNDS
+                        Number of rounds of scrolling that should be simulated on the client side. One round of scrolling = Slow scroll down + Slow scroll up + Fast scroll down + Fast scroll up
 
   --testing-url TESTING_URL
                         The URL to visit during the test. The default is a 4K video stored on our AWS S3.
@@ -135,7 +135,7 @@ python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </p
 **Run on 2 new instances on `ap-south-2`, simulate scrolling during test, and leave instances on upon completion**
 
 ```bash
-python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here --region-name ap-south-2 --simulate-scrolling=true --leave-instances-on=true>
+python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here --region-name ap-south-2 --simulate-scrolling=10 --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" --leave-instances-on=true>
 ```
 
 **Run on your development instance on `us-west-` with degraded network (1Mbit/s, 100ms delay, 10% packet drop), and leave instance on upon completion**

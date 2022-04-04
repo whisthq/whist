@@ -208,8 +208,7 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
                                                     be used to interact with the remote machine
         pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
                                 ready to execute a command
-        simulate_scrolling (bool):  A boolean controlling whether the client should simulate scrolling
-                                    as part of the test.
+        simulate_scrolling (int):  Number of rounds of scrolling.
 
     Returns:
         client_docker_id (str): The Docker ID of the container running the Whist dev client
@@ -226,12 +225,14 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     client_docker_id = client_mandelbox_output[-2].replace(" ", "")
     print(f"Whist dev client started on EC2 instance, on Docker container {client_docker_id}!")
 
-    if simulate_scrolling:
+    if simulate_scrolling > 0:
         # Sleep for some time so that the webpage can load.
         time.sleep(5)
         print("Simulating the mouse scroll events in the client")
         command = "python3 /usr/share/whist/mouse_events.py"
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
+        while simulate_scrolling > 0:
+            pexpect_process.sendline(command)
+            wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
+            simulate_scrolling = simulate_scrolling - 1
 
     return client_docker_id

@@ -80,9 +80,10 @@ jobs:
       # --use-existing-server-instance, defaults to `` (empty string)
       # --use-existing-client-instance, defaults to `` (empty string)
       # --aws-credentials-filepath, defaults to `~/.aws/credentials`
+      # --network-conditions [bandwidth range],[packet delay range],[packet drop range],[qdisc packet limit range],[interval of change range]
 
       ### Action below will run the End-to-End Streaming Test for each new commit to a branch of a PR. ###
-      - name: Run End-to-End Streaming Test (best network conditions)
+      - name: Run End-to-End Streaming Test (ideal network conditions - S3 video playout)
         id: e2e_streaming_test0
         working-directory: protocol/test
         run: |
@@ -112,7 +113,7 @@ jobs:
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 15Mbit-30Mbit,50,None,1000-2000
+            --network-conditions 15Mbit-30Mbit,50,None,None,1000-2000
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
@@ -131,7 +132,7 @@ jobs:
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 10Mbit-20Mbit,50,None,100-1000
+            --network-conditions 10Mbit-20Mbit,50,None,None,100-1000
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
@@ -150,7 +151,47 @@ jobs:
             --leave-instances-on=false \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 10Mbit-20Mbit,50,10,100-1000
+            --network-conditions 10Mbit-20Mbit,50,10,None,100-1000
+
+      - name: Run End-to-End Streaming Test (10 Mbps - S3 video playout)
+        id: e2e_streaming_test4
+        working-directory: protocol/test
+        run: |
+          python3 streaming_e2e_tester.py \
+            --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
+            --ssh-key-path "/home/runner/.ssh/id_rsa" \
+            --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
+            --use-two-instances=true \
+            --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
+            --use-existing-server-instance "$SERVER_INSTANCE_ID" \
+            --leave-instances-on=true \
+            --skip-host-setup=true \
+            --skip-git-clone=true \
+            --network-conditions 10Mbit,10,None,100,None
+          # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
+          echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
+          echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
+
+      - name: Run End-to-End Streaming Test (10 Mbps - aggressive text scrolling)
+        id: e2e_streaming_test5
+        working-directory: protocol/test
+        run: |
+          python3 streaming_e2e_tester.py \
+            --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
+            --ssh-key-path "/home/runner/.ssh/id_rsa" \
+            --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
+            --use-two-instances=true \
+            --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
+            --use-existing-server-instance "$SERVER_INSTANCE_ID" \
+            --leave-instances-on=true \
+            --skip-host-setup=true \
+            --skip-git-clone=true \
+            --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" \
+            --simulate-scrolling 30 \
+            --network-conditions 10Mbit,10,None,100,None
+          # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
+          echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
+          echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
 
       # Steps below acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
       - name: Get branch name (merge)
@@ -190,6 +231,6 @@ jobs:
           python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py \
             --compared-branch-name "dev" "${{ env.BRANCH_NAME }}" \
             --e2e-script-outcomes "${{ steps.e2e_streaming_test0.outcome }}" "${{ steps.e2e_streaming_test1.outcome }}" "${{ steps.e2e_streaming_test2.outcome }}" "${{ steps.e2e_streaming_test3.outcome }}" \
-            --post-results-on-slack="${{ github.event_name == 'schedule' }}"
+            "${{ steps.e2e_streaming_test4.outcome }}" "${{ steps.e2e_streaming_test5.outcome }}" --post-results-on-slack="${{ github.event_name == 'schedule' }}"
 
   #######################################################################################

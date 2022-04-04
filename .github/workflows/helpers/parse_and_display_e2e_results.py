@@ -142,10 +142,8 @@ if __name__ == "__main__":
         "VIDEO_FPS_RENDERED",
         "VIDEO_END_TO_END_LATENCY",
         "MAX_VIDEO_END_TO_END_LATENCY",
-        "VIDEO_INTER_FRAME_QP",
-        "MAX_VIDEO_INTER_FRAME_QP",
-        "VIDEO_INTRA_FRAME_QP",
-        "MAX_VIDEO_INTRA_FRAME_QP",
+        "VIDEO_FRAME_SATD",
+        "MAX_VIDEO_FRAME_SATD",
         "AUDIO_FPS_SKIPPED",
         "MAX_AUDIO_FPS_SKIPPED",
     }

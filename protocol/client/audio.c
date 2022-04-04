@@ -304,7 +304,7 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     }
     // If we're supposed to drop it, drop it.
     if (audio_context->adjust_command == DROP_FRAME) {
-        log_double_statistic(AUDIO_FPS_SKIPPED, 1.0);
+        log_double_statistic(AUDIO_FRAMES_SKIPPED, 1.0);
     } else {
         // If we shouldn't drop it, push the audio frame to the render context
         if (!audio_context->pending_render_context) {

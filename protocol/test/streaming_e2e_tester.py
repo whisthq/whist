@@ -160,10 +160,10 @@ parser.add_argument(
 
 parser.add_argument(
     "--simulate-scrolling",
-    help="Whether to simulate mouse scrolling on the client side",
-    type=str,
-    choices=["false", "true"],
-    default="false",
+    help="Number of rounds of scrolling that should be simulated on the client side. One round of scrolling = \
+    Slow scroll down + Slow scroll up + Fast scroll down + Fast scroll up",
+    type=int,
+    default=0,
 )
 
 parser.add_argument(
@@ -255,7 +255,7 @@ if __name__ == "__main__":
     ssh_connection_retries = args.ssh_connection_retries
     # Convert boolean 'true'/'false' strings to Python booleans
     use_two_instances = args.use_two_instances == "true"
-    simulate_scrolling = args.simulate_scrolling == "true"
+    simulate_scrolling = args.simulate_scrolling
     running_in_ci = os.getenv("CI") == "true"
 
     # 2 - Perform a sanity check on the arguments and load the SSH key from file
