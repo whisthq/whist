@@ -52,20 +52,20 @@ def setup_artificial_network_conditions(
             )
             return
 
-        def parse_value_or_range(raw_string, condition_name, degradation_command_flag):
+        def parse_value_or_range(raw_string, condition_name, degradation_command_flag, unit=""):
             degradations_command_entry = ""
             if raw_string != "None":
                 raw_string = raw_string.split("-")
                 if len(raw_string) == 1:
                     min_value = max_value = raw_string[0]
                     degradations_command_entry = f" {degradation_command_flag} {min_value}"
-                    print(f"\t* {condition_name}: stable at {min_value}")
+                    print(f"\t* {condition_name}: stable at {min_value}{unit}")
                 elif len(raw_string) == 2:
                     min_value, max_value = raw_string
                     degradations_command_entry = (
                         f" {degradation_command_flag} {min_value},{max_value}"
                     )
-                    print(f"\t* {condition_name}: variable between {min_value} and {max_value}")
+                    print(f"\t* {condition_name}: variable between {min_value}{unit} and {max_value}{unit}")
                 else:
                     print(
                         f"Error, incorrect number of values passed to {condition_name} network condition"
@@ -75,10 +75,10 @@ def setup_artificial_network_conditions(
         degradations_command = ""
         print("Setting up client to run on a instance with the following networking conditions:")
         degradations_command += parse_value_or_range(bandwidth, "max bandwidth", "-b")
-        degradations_command += parse_value_or_range(delay, "packet delay", "-q")
-        degradations_command += parse_value_or_range(pkt_drop_pctg, "packet drop rate", "-p")
+        degradations_command += parse_value_or_range(delay, "packet delay", "-q", "ms")
+        degradations_command += parse_value_or_range(pkt_drop_pctg, "packet drop rate", "-p", "\%")
         degradations_command += parse_value_or_range(
-            interval, "net conditions change interval", "-i"
+            interval, "net conditions change interval", "-i", "ms"
         )
 
         # Install ifconfig
