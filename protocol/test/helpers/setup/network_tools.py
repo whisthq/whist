@@ -76,7 +76,7 @@ def setup_artificial_network_conditions(
         print("Setting up client to run on a instance with the following networking conditions:")
         degradations_command += parse_value_or_range(bandwidth, "max bandwidth", "-b")
         degradations_command += parse_value_or_range(delay, "packet delay", "-q", "ms")
-        degradations_command += parse_value_or_range(pkt_drop_pctg, "packet drop rate", "-p", "\%")
+        degradations_command += parse_value_or_range(pkt_drop_pctg, "packet drop rate", "-p", "%")
         degradations_command += parse_value_or_range(
             interval, "net conditions change interval", "-i", "ms"
         )

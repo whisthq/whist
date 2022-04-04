@@ -139,7 +139,7 @@ fi
 
 
 # Initial Setup for each device
-#sudo modprobe ifb
+sudo modprobe ifb
 for i in "${!devices[@]}"; do
   device="${devices[i]}"
 
