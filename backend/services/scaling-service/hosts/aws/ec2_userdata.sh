@@ -77,15 +77,22 @@ then
   jq '. + {"storage-driver": "zfs"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
 
   systemctl start docker
+
+  echo "Ephemeral device path found. Warming up only necessary files in EBS volume."
+  pull_docker_images &
+  find "/dev/uinput" -type f -exec touch {} + &
+  find "/sys/fs/cgroup" -type f -exec touch {} + &
+  find "/sys/devices/virtual/input" -type f -exec touch {} + &
+
+  wait
 else
-  echo "No ephemeral device path found. Warming up EBS volume with fio."
+  echo "No ephemeral device path found. Warming up entire EBS volume with fio."
+
+  pull_docker_images &
+  fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
+
+  wait
 fi
-
-# Pull Docker images and warmup volume in parallel
-pull_docker_images &
-fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
-
-wait
 
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json

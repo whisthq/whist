@@ -20,11 +20,13 @@ import (
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
-// Constants for use in setting up the HTTPS server
-const (
-	// Our HTTPS server listens on the port "HOST" converted to a telephone
-	// number.
-	PortToListen   uint16 = 4678
+// Variables and constants for use in setting up the HTTPS server
+
+// Our HTTPS server listens on the port "HOST" converted to a telephone
+// number.
+const PortToListen uint16 = 4678
+
+var (
 	certPath       string = utils.WhistPrivateDir + "cert.pem"
 	privatekeyPath string = utils.WhistPrivateDir + "key.pem"
 )
