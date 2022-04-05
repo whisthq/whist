@@ -5,8 +5,8 @@ import fs from "fs"
 import tmp from "tmp"
 import { homedir } from "os"
 import path, { dirname } from "path"
-import Struct from "ref-struct"
-import ref from "ref"
+import Struct from "ref-struct-napi"
+import ref from "ref-napi"
 import knex from "knex"
 import crypto from "crypto"
 import ffi from "ffi-napi"
@@ -44,6 +44,8 @@ interface Cookie {
 
 interface LocalStorageMap {
   [key: string]: string
+const expandWinPath = (args: any): string => {
+  return path.join(process.env[args.env] ?? "", args.path ?? "")
 }
 
 const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
@@ -95,7 +97,7 @@ const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
     case "win32": {
       switch (browser) {
         case InstalledBrowser.CHROME: {
-          return ChromeWindowsDefaultDir
+          return [expandWinPath(ChromeWindowsDefaultDir[0])]
         }
       }
     }
@@ -125,13 +127,13 @@ const getPreferencesFilePath = (browser: InstalledBrowser): string[] => {
   return browserDirectories.map((dir) => path.join(dir, "Preferences"))
 }
 
-<<<<<<< HEAD
 const getLocalStorageDir = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
   return browserDirectories.map((dir) =>
     path.join(dir, "Local Storage", "leveldb")
   )
-=======
+}
+
 const getWindowsKeys = (browser: InstalledBrowser) => {
   switch (browser) {
     case InstalledBrowser.CHROME: {
@@ -153,7 +155,6 @@ const getWindowsKeys = (browser: InstalledBrowser) => {
       return []
     }
   }
->>>>>>> fa3eddd90 (wip)
 }
 
 const getOsCryptName = (browser: InstalledBrowser): string => {
@@ -273,19 +274,19 @@ const expandUser = (text: string): string => {
   })
 }
 
-const expandWinPath = (args: { env: string; path: string }): string => {
-  return path.join(process.env[args.env] ?? "", args.path)
-}
-
 const expandPaths = (paths: any[], os: string): string => {
   assert(["windows", "linux", "win32"].includes(os))
 
+  console.log("assert passed", paths)
+
   // expand the path of file and remove invalid files
-  if (os === "windows") {
+  if (os === "win32") {
     paths = paths.map(expandWinPath)
   } else {
     paths = paths.map(expandUser)
   }
+
+  console.log("filtered paths", paths)
 
   paths = paths.filter(fs.existsSync)
 
@@ -460,7 +461,10 @@ const getExtensionIDs = (browser: InstalledBrowser): string => {
 }
 
 const getPreferencesFromFile = (browser: InstalledBrowser): string => {
-  const preferencesFile = expandPaths(getPreferencesFilePath(browser))
+  const preferencesFile = expandPaths(
+    getPreferencesFilePath(browser),
+    process.platform
+  )
 
   try {
     const preferences = fs.readFileSync(preferencesFile, "utf8")
@@ -537,11 +541,8 @@ const getCookieEncryptionKey = async (
       })
 
       const keyFile = expandPaths(getWindowsKeys(browser), "win32")
-      console.log("keyfile", keyFile)
       const data = JSON.parse(fs.readFileSync(keyFile).toString())
-      console.log("data", data)
       const key64 = data.os_crypt.encrypted_key.toString("utf-8")
-      console.log("key64", key64)
 
       let buf = Buffer.from(key64, "base64")
       let dataBlobInput = new DATA_BLOB()
@@ -557,7 +558,8 @@ const getCookieEncryptionKey = async (
         0,
         dataBlobOutput
       )
-      let outputDeref = result.deref()
+      console.log("result", result)
+      let outputDeref = dataBlobOutput.deref() as any
       const plainText = ref.reinterpret(
         outputDeref.pbData,
         outputDeref.cbData,
@@ -586,6 +588,10 @@ const createLocalCopy = (cookieFile: string): string => {
 }
 
 const isBrowserInstalled = (browser: InstalledBrowser) => {
+  console.log(
+    "looking for",
+    expandPaths(getCookieFilePath(browser), process.platform)
+  )
   return fs.existsSync(
     expandPaths(getCookieFilePath(browser), process.platform)
   )

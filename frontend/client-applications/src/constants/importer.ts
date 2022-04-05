@@ -16,7 +16,7 @@ export const ChromeOSXDefaultDir = [
   "~/Library/Application Support/Google/Chrome/Default/",
 ]
 export const ChromeWindowsDefaultDir = [
-  "%LocalAppData%\\Google\\Chrome\\User Data/Default/",
+  { env: "LOCALAPPDATA", path: "Google\\Chrome\\User Data\\Default\\Network" },
 ]
 export const ChromeWindowsKeys = [
   { env: "APPDATA", path: "..\\Local\\Google\\Chrome\\User Data\\Local State" },
