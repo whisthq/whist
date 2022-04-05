@@ -43,28 +43,6 @@ pull_docker_images() {
   echo "Finished pulling images"
 }
 
-####################################################
-# Warmup necessary files
-####################################################
-
-# `warmup_necessary_files` will touch all files in the
-#  EBS volume that are necessary to run a mandelbox. Doing
-#  so makes the instance pull the blocks from S3 so that
-#  they don't suffer increased I/O latency the first time
-#  they are used.
-# Args: none
-warmup_necessary_files() {
-  find "/dev/uinput" \
-    "/sys/devices/virtual/input" \
-    "/etc/udev" \
-    "/run/udev" \
-    "/etc/filebeat" \
-    "/var/lib/nvidia" \
-    "/sys/fs/cgroup" -type f -exec touch {} +
-
-  echo "Finished warming up necessary files."
-}
-
 cd /home/ubuntu
 
 # The first thing we want to do is to set up the ephemeral storage available on
@@ -99,22 +77,16 @@ then
   jq '. + {"storage-driver": "zfs"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
 
   systemctl start docker
-
-  echo "Ephemeral device path found. Warming up only necessary files in EBS volume."
-
-  # Pull Docker images and warmup necessary files in parallel.
-  pull_docker_images &
-  warmup_necessary_files &
-
-  wait
 else
-  echo "No ephemeral device path found. Warming up entire EBS volume with fio."
-
-  pull_docker_images &
-  fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
-
-  wait
+  echo "No ephemeral device path found. Defaulting to EBS storage."
 fi
+
+# Pull Docker images and warmup entire disk in parallel.
+# TODO: warmup the necessary files instead of the full disk.
+pull_docker_images &
+fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
+
+wait
 
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
