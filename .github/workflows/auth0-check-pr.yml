@@ -87,7 +87,7 @@ jobs:
           ref: ${{ matrix.environment.ref }}
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v3.0.0
+        uses: actions/setup-node@v3.1.0
         with:
           node-version: "16"
 
