@@ -285,8 +285,7 @@ static void send_new_tab_urls_if_needed(WhistFrontend* frontend) {
 }
 
 static int multithreaded_handshake(void* opaque) {
-
-    WhistSemaphore * handshake_sync_semaphore = (WhistSemaphore *) opaque;
+    WhistSemaphore* handshake_sync_semaphore = (WhistSemaphore*)opaque;
 
     WhistTimer handshake_time;
     start_timer(&handshake_time);  // start timer for measuring handshake time

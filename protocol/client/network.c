@@ -50,7 +50,8 @@ Public Function Implementations
 ============================
 */
 
-int connect_to_server(const char *server_ip, bool with_stun, const char *user_email, WhistSemaphore handshake_sync_semaphore) {
+int connect_to_server(const char *server_ip, bool with_stun, const char *user_email,
+                      WhistSemaphore handshake_sync_semaphore) {
     LOG_INFO("using stun is %d", with_stun);
 
     // Connect over UDP first,
