@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-import os
+import base64
 import json
-import sys
-import browser_cookie3
+import os
+import shutil
 import sqlite3
-import pyaes
 import subprocess
+import sys
+from pathlib import Path
+
+import browser_cookie3
+import pyaes
 import sentry_sdk
 from pbkdf2 import PBKDF2
 
@@ -249,7 +253,7 @@ def create_bookmark_file(target_browser_name, bookmarks_json, custom_bookmark_fi
     Create bookmarks file for target browser
     Args:
         target_browser_name (str): the name of the browser we will import cookies to
-        bookmarks_json (str): bookmarks in json format json
+        bookmarks_json (dict): bookmarks in json format
         custom_bookmark_file_path (str): [optional] path to target browser bookmark file
     """
     bookmarks_paths = []
@@ -315,6 +319,55 @@ def create_preferences_file(target_browser_name, preferences, custom_preferences
         browser_preferences_file.write(preferences)
 
 
+def create_local_storage_files(
+    target_browser_name, local_storage_json, custom_local_storage_file_path=None
+):
+    """
+    Create localstorage files for target browser
+    Args:
+        target_browser_name (str): the name of the browser we will import cookies to
+        local_storage_json (str): localstorage data in json string format
+        custom_local_storage_file_path (str): [optional] path to target browser localstorage file
+    """
+    # Unmarshal json string to dict of filename to contents
+    local_storage = json.loads(local_storage_json)
+
+    local_storage_paths = []
+    if custom_local_storage_file_path:
+        local_storage_paths.append(custom_local_storage_file_path)
+    else:
+        local_storage_paths = [
+            os.path.join(directory, "Local Storage", "leveldb")
+            for directory in get_browser_default_dir(target_browser_name)
+        ]
+
+    path = os.path.expanduser(local_storage_paths[0])
+
+    # Remove existing leveldb directory if it exists and create new one
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+    os.makedirs(path)
+    os.chmod(path, 0o777)
+
+    # Write localstorage data to corresponding files
+    for filename, contents in local_storage.items():
+        with open(os.path.join(path, filename), "wb") as local_storage_file:
+            # Decode the base64 string back to raw bytes
+            content_bytes = base64.b64decode(contents)
+            local_storage_file.write(content_bytes)
+
+    # Create the empty LOG and LOCK files
+    with open(os.path.join(path, "LOG"), "w"):
+        pass
+
+    with open(os.path.join(path, "LOCK"), "w"):
+        pass
+
+    subprocess.run(["chown", "-R", "ubuntu", path])
+    subprocess.run(["chmod", "-R", "777", path])
+
+
 if __name__ == "__main__":
     """
     The expected use of this function is:
@@ -342,9 +395,20 @@ if __name__ == "__main__":
 
                 if "preferences" in browser_data and len(browser_data["preferences"]) > 0:
                     create_preferences_file(browser, browser_data["preferences"])
+
+                if "local_storage" in browser_data and len(browser_data["local_storage"]) > 0:
+                    create_local_storage_files(browser, browser_data["local_storage"])
         else:
             print(
                 "Can't import user browser data because browser data file {} does not exist or it is empty".format(
                     browser_data_file
                 )
             )
+
+    # Regardless of import success, once this script finishes running, write an empty file
+    # to indicate that the import is done
+
+    # Put this file in the base user config directory
+    import_complete_file = os.path.join(USER_CONFIG_PATH, ".importComplete")
+    with open(import_complete_file, "w"):
+        pass

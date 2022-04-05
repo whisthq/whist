@@ -22,6 +22,7 @@ export default flow<
           bookmarks: string
           extensions: string
           preferences: string
+          localStorage: string
         }
       | undefined
   } & accessToken &

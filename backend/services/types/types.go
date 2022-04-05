@@ -57,6 +57,9 @@ type Extensions string
 // Preferences is defined as its own type for similar reasons.
 type Preferences string
 
+// LocalStorage is defined as its own type for similar reasons.
+type LocalStorage string
+
 // String is a utility function to return the string representation of a MandelboxID.
 func (mandelboxID MandelboxID) String() string {
 	return uuid.UUID(mandelboxID).String()

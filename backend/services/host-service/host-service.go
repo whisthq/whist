@@ -269,7 +269,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
-		utils.Sprintf("WHIST_INITIAL_USER_DATA_FILE=%v%v", mandelboxData.UserInitialBrowserDirInMbox, mandelboxData.UserInitialBrowserFile),
+		utils.Sprintf("WHIST_INITIAL_USER_DATA_FILE=%v/%v", mandelboxData.UserInitialBrowserDirInMbox, mandelboxData.UserInitialBrowserFile),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -495,10 +495,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Write the user's initial browser data
 	logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 	err = mandelbox.WriteUserInitialBrowserData(mandelboxData.BrowserData{
-		CookiesJSON: req.CookiesJSON,
-		Bookmarks:   &importedBookmarks,
-		Extensions:  mandelboxtypes.Extensions(strings.Join(savedExtensions, ",")),
-		Preferences: req.Preferences,
+		CookiesJSON:  req.CookiesJSON,
+		Bookmarks:    &importedBookmarks,
+		Extensions:   mandelboxtypes.Extensions(strings.Join(savedExtensions, ",")),
+		Preferences:  req.Preferences,
+		LocalStorage: req.LocalStorageJSON,
 	})
 	if err != nil {
 		logger.Errorf("Error writing initial browser data for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelboxSubscription.ID, err)

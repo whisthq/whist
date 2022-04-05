@@ -304,3 +304,41 @@ def test_create_preferences_file(browser, browser_preferences_path):
         assert preferences["key3"] == "value3"
 
     os.remove(expanded_path)
+
+
+local_storage_files = [
+    [
+        "chrome",
+        '{"binary.bin":"AAECAwQFBgcICQoLDA0ODw==","text.txt":"dGVzdDE="}',
+        "~/.config/temp/google-chrome/Default/Local Storage/leveldb",
+        {
+            "text.txt": b"test1",
+            "binary.bin": b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+        },
+    ],
+]
+
+
+@pytest.mark.parametrize(
+    "browser,local_storage_json,local_storage_path,expected_files", local_storage_files
+)
+def test_local_storage_file(browser, local_storage_json, local_storage_path, expected_files):
+    # Set up a test file in the directory to start
+    local_storage_path = os.path.expanduser(local_storage_path)
+    os.makedirs(local_storage_path, exist_ok=True)
+    with open(os.path.join(local_storage_path, "test"), "w") as test_file:
+        test_file.write("test")
+
+    create_local_storage_files(browser, local_storage_json, local_storage_path)
+
+    # Check that the correct directory exists
+    assert os.path.isdir(local_storage_path)
+
+    # Check that the test file is no longer there
+    assert not os.path.isfile(os.path.join(local_storage_path, "test"))
+
+    # Check that the correct files are there with the correct contents
+    for file_name, file_content in expected_files.items():
+        assert os.path.isfile(os.path.join(local_storage_path, file_name))
+        with open(os.path.join(local_storage_path, file_name), "rb") as file:
+            assert file.read() == file_content
