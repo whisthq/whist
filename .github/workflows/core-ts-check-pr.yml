@@ -71,7 +71,7 @@ jobs:
         run: yarn run test:ci
 
       - name: Upload Codecov Report
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: frontend/core-ts/coverage/clover.xml
