@@ -33,6 +33,10 @@ func initializeSentry(f func(scope *sentry.Scope)) (*sentrySender, error) {
 
 	sentryDsn := os.Getenv("SENTRY_DSN")
 
+	if sentryDsn == "" {
+		return nil, utils.MakeError("Error initializing Sentry integration: Sentry Dsn is uninitialized")
+	}
+
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:         sentryDsn,
 		Release:     metadata.GetGitCommit(),

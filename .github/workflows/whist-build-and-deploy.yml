@@ -489,6 +489,7 @@ jobs:
             echo 'APP_ENV=DEV' > app_env.env
             echo 'LOGZIO_SHIPPING_TOKEN=${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}' >> app_env.env
           fi
+          echo 'SENTRY_DSN=https://774bb2996acb4696944e1c847c41773c@o400459.ingest.sentry.io/5461239' >> app_env.env
           echo 'USE_PROD_LOGGING=true' >> app_env.env
           cat app_env.env
 
