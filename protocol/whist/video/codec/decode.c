@@ -351,7 +351,11 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffe
             (int): 0 on success, -1 on failure
             */
 
+    // We expect to only receive one video packet per call to this function.
     int num_packets = extract_avpackets_from_buffer(buffer, (int)buffer_size, decoder->packets);
+    if (num_packets != 1) {
+        LOG_ERROR("Expected one video packet but got %d!", num_packets);
+    }
 
     int res;
     for (int i = 0; i < num_packets; i++) {

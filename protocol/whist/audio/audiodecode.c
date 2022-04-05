@@ -247,7 +247,11 @@ int audio_decoder_send_packets(AudioDecoder *decoder, void *buffer, int buffer_s
             (int): 0 on success, negative error on failure
             */
 
+    // We expect to only receive one audio packet per call to this function.
     int num_packets = extract_avpackets_from_buffer(buffer, buffer_size, decoder->packets);
+    if (num_packets != 1) {
+        LOG_ERROR("Expected one audio packet but got %d!", num_packets);
+    }
 
     int res;
     for (int i = 0; i < num_packets; i++) {
