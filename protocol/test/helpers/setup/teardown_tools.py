@@ -87,6 +87,8 @@ def extract_logs_from_mandelbox(
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
+    # Move the network conditions log to the perf_logs folder, so that it is downloaded
+    # to the machine running this script along with the other logs
     if role == "client":
         command = "mv ~/network_conditions.log ~/perf_logs/client/network_conditions.log"
         pexpect_process.sendline(command)
