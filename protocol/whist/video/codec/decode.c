@@ -23,10 +23,15 @@ Includes
 */
 #include "decode.h"
 #include <whist/logging/log_statistic.h>
+#include <whist/utils/command_line.h>
 #include "whist/core/error_codes.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+
+static bool enable_hw_transfer = true;
+COMMAND_LINE_BOOL_OPTION(enable_hw_transfer, 0, "enable-hw-transfer",
+                         "Whether or not hw transfer should be enabled")
 
 /*
 ============================
@@ -421,13 +426,12 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
 
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(frame->format);
     if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL) {
-        if (decoder->can_output_hardware) {
-            // The caller supports dealing with the hardware frame
-            // directly, so just return it.
+        if (enable_hw_transfer && decoder->can_output_hardware) {
+            // Pass a reference to the hwframe,
             decoder->decoded_frame = frame;
             decoder->using_hw = true;
         } else {
-            // Otherwise, copy the hw data into a new software frame.
+            // Or, copy the hw data into a new software frame.
             start_timer(&latency_clock);
             decoder->decoded_frame = safe_av_frame_alloc();
             res = av_hwframe_transfer_data(decoder->decoded_frame, frame, 0);
