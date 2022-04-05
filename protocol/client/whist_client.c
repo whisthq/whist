@@ -401,11 +401,15 @@ int whist_client_main(int argc, const char* argv[]) {
             }
         }
 
+        LOG_INFO("SDL initialized, time elapsed since start= %fs\n",get_timer(&time_since_start_timer));
+
         // The lines below may be called multiple times,
         // Please ensure they get destroyed properly
 
         // Initialize audio and video renderer system
         WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
+
+        LOG_INFO("Renderer initialized, time elapsed since start= %fs\n",get_timer(&time_since_start_timer));
 
         // Initialize the clipboard and file synchronizers. This must happen before we start
         // the udp/tcp threads
@@ -433,6 +437,8 @@ int whist_client_main(int argc, const char* argv[]) {
         WhistTimer cpu_usage_statistics_timer;
         start_timer(&cpu_usage_statistics_timer);
 
+        LOG_INFO("Other misc stuffs initialized, time elapsed since start= %fs\n",get_timer(&time_since_start_timer));
+
         // now initializations are done,  we release the blocking on handshake,
         // so that handshake finishes its last step
         whist_post_semaphore(handshake_sync_semaphore);
@@ -454,6 +460,8 @@ int whist_client_main(int argc, const char* argv[]) {
             destroy_renderer(whist_renderer);
             continue;
         }
+
+        LOG_INFO("Handshake done, time elapsed since start= %fs\n",get_timer(&time_since_start_timer));
 
         // Reset try counter, because connection succeeded
         try_amount = 0;
