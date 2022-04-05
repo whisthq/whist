@@ -296,6 +296,9 @@ int whist_client_main(int argc, const char* argv[]) {
 
     whist_init_subsystems();
 
+    WhistTimer time_since_start_timer;
+    start_timer(&time_since_start_timer);
+
     // the logic inside guarantees debug console is only enabled for debug build
     init_debug_console();
 
@@ -451,6 +454,7 @@ int whist_client_main(int argc, const char* argv[]) {
             if (!window_has_shown && renderer_has_video_rendered_yet(whist_renderer)) {
                 FATAL_ASSERT(window != NULL);
                 SDL_ShowWindow((SDL_Window*)window);
+                LOG_INFO("Window is shown now, time elapsed since start= %fs\n", get_timer(&time_since_start_timer));
                 window_has_shown = 1;
             }
 
