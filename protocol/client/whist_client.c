@@ -434,7 +434,7 @@ int whist_client_main(int argc, const char* argv[]) {
         start_timer(&cpu_usage_statistics_timer);
 
         // now initializations are done,  we release the blocking on handshake,
-        // so that handshake finsihes its last step
+        // so that handshake finishes its last step
         whist_post_semaphore(handshake_sync_semaphore);
         FATAL_ASSERT(whist_semaphore_value(handshake_sync_semaphore) == 1);
 
@@ -442,7 +442,7 @@ int whist_client_main(int argc, const char* argv[]) {
         int handshake_result;
         whist_wait_thread(handshake_thread, &handshake_result);
 
-        // we don't use this semaphore anymore, destory it
+        // we don't use this semaphore anymore, destroy it
         whist_destroy_semaphore(handshake_sync_semaphore);
 
         // if handshake fails, must destroy everything initialized above this line
