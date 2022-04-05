@@ -243,5 +243,11 @@ int client_connect_socket(whist_server_state *state, Client *client,
         }
     }
 
+    if (!successful_handshake) {
+        LOG_INFO("Handshake not successful, destorying tcp and udp context!");
+        destroy_socket_context(&client->tcp_context);
+        destroy_socket_context(&client->udp_context);
+    }
+
     return successful_handshake ? 0 : -1;
 }
