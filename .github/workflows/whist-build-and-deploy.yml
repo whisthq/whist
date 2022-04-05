@@ -246,7 +246,7 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v3.0.0
+        uses: actions/setup-node@v3.1.0
         with:
           node-version: "16"
 
@@ -395,7 +395,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Set up Python 3.10.0
-        uses: actions/setup-python@v3.0.0
+        uses: actions/setup-python@v3.1.0
         with:
           python-version: "3.10.0"
 
@@ -962,7 +962,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v3.0.0
+        uses: actions/setup-node@v3.1.0
         with:
           node-version: "16"
 
