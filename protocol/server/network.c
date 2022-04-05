@@ -215,6 +215,7 @@ int client_connect_socket(whist_server_state *state, Client *client,
     start_timer(&connection_timer);
     bool successful_handshake = false;
 
+    // TODO: the timeout here is 1000 second, looks like a mistake.
     while (socket_update(&client->tcp_context) &&
            get_timer(&connection_timer) < TCP_CONNECTION_WAIT) {
         WhistPacket *tcp_packet = get_packet(&client->tcp_context, PACKET_MESSAGE);

@@ -31,7 +31,8 @@ Public Functions
  * @param server_ip                Server IP address to connect to.
  * @param using_stun               Whether we are using the STUN server
  * @param user_email               User email to provide.
- *
+ * @param handshake_sync_semaphore Sync this connect_to_server, as know as handshake,
+ *                                 with other relevant concurrent initialization stuffs.
  * @returns                        Returns -1 on failure, 0 on success
  */
 int connect_to_server(const char* server_ip, bool using_stun, const char* user_email,

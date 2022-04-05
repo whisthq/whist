@@ -95,6 +95,8 @@ int connect_to_server(const char *server_ip, bool with_stun, const char *user_em
     wcmsg.init_message.os = WHIST_LINUX;
 #endif
 
+    // Block the last packet of handshake, until the relevant initializations inside main thread are
+    // ready. So that sever won't send audio and video packets, before client is ready to consume
     whist_wait_semaphore(handshake_sync_semaphore);
 
     // Send the init packet

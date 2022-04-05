@@ -284,7 +284,10 @@ static void send_new_tab_urls_if_needed(WhistFrontend* frontend) {
     }
 }
 
+// a thread dedicated to handshake, so that handshake and other initializations inside main thread
+// can be concurrent
 static int multithreaded_handshake(void* opaque) {
+    // get the semaphore from opaque pointer
     WhistSemaphore* handshake_sync_semaphore = (WhistSemaphore*)opaque;
 
     WhistTimer handshake_time;
@@ -313,10 +316,11 @@ int whist_client_main(int argc, const char* argv[]) {
         return WHIST_EXIT_SUCCESS;
     }
 
-    whist_init_subsystems();
-
+    // a timer to help measure the time elasped since client start
     WhistTimer time_since_start_timer;
     start_timer(&time_since_start_timer);
+
+    whist_init_subsystems();
 
     // the logic inside guarantees debug console is only enabled for debug build
     init_debug_console();
@@ -374,7 +378,9 @@ int whist_client_main(int argc, const char* argv[]) {
     for (try_amount = 0; try_amount < MAX_INIT_CONNECTION_ATTEMPTS && !client_exiting &&
                          exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
+        // the semaphore to sync handshake with initializations inside main
         WhistSemaphore handshake_sync_semaphore = whist_create_semaphore(0);
+        // use a dedicated thread to handle handshake, don't block here, run later codes immediately
         WhistThread handshake_thread = whist_create_thread(
             multithreaded_handshake, "multithreaded_handshake", (void*)&handshake_sync_semaphore);
 
@@ -427,12 +433,19 @@ int whist_client_main(int argc, const char* argv[]) {
         WhistTimer cpu_usage_statistics_timer;
         start_timer(&cpu_usage_statistics_timer);
 
+        // now initializations are done,  we release the blocking on handshake,
+        // so that handshake finsihes its last step
         whist_post_semaphore(handshake_sync_semaphore);
         FATAL_ASSERT(whist_semaphore_value(handshake_sync_semaphore) == 1);
+
+        // wait for handshake to finish and get the result
         int handshake_result;
         whist_wait_thread(handshake_thread, &handshake_result);
+
+        // we don't use this semaphore anymore, destory it
         whist_destroy_semaphore(handshake_sync_semaphore);
 
+        // if handshake fails, must destroy everything initialized above this line
         if (handshake_result != 0) {
             LOG_WARNING("Failed to connect to server.");
             destroy_out_of_window_drag_handlers();
@@ -474,7 +487,8 @@ int whist_client_main(int argc, const char* argv[]) {
             if (!window_has_shown && renderer_has_video_rendered_yet(whist_renderer)) {
                 FATAL_ASSERT(window != NULL);
                 SDL_ShowWindow((SDL_Window*)window);
-                LOG_INFO("Window is shown now, time elapsed since start= %fs\n", get_timer(&time_since_start_timer));
+                LOG_INFO("Window is shown now, time elapsed since start= %fs\n",
+                         get_timer(&time_since_start_timer));
                 window_has_shown = 1;
             }
 
