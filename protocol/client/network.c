@@ -50,7 +50,7 @@ Public Function Implementations
 ============================
 */
 
-int connect_to_server(const char *server_ip, bool with_stun, const char *user_email) {
+int connect_to_server(const char *server_ip, bool with_stun, const char *user_email, WhistSemaphore handshake_sync_semaphore) {
     LOG_INFO("using stun is %d", with_stun);
 
     // Connect over UDP first,
@@ -93,6 +93,8 @@ int connect_to_server(const char *server_ip, bool with_stun, const char *user_em
 #else
     wcmsg.init_message.os = WHIST_LINUX;
 #endif
+
+    whist_wait_semaphore(handshake_sync_semaphore);
 
     // Send the init packet
     if (send_packet(&packet_tcp_context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1,

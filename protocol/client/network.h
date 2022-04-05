@@ -34,7 +34,7 @@ Public Functions
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int connect_to_server(const char* server_ip, bool using_stun, const char* user_email);
+int connect_to_server(const char* server_ip, bool using_stun, const char* user_email, WhistSemaphore handshake_sync_semaphore);
 
 int close_connections(void);
 

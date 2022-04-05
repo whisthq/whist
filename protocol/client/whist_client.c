@@ -284,6 +284,26 @@ static void send_new_tab_urls_if_needed(WhistFrontend* frontend) {
     }
 }
 
+static int multithreaded_handshake(void* opaque) {
+
+    WhistSemaphore * handshake_sync_semaphore = (WhistSemaphore *) opaque;
+
+    WhistTimer handshake_time;
+    start_timer(&handshake_time);  // start timer for measuring handshake time
+    LOG_INFO("Begin measuring handshake");
+
+    if (connect_to_server(server_ip, using_stun, user_email, *handshake_sync_semaphore) != 0) {
+        return -1;
+    }
+
+    // Log to METRIC for cross-session tracking and INFO for developer-facing logging
+    double connect_to_server_time = get_timer(&handshake_time);
+    LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
+    LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
+
+    return 0;
+}
+
 int whist_client_main(int argc, const char* argv[]) {
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
@@ -355,6 +375,10 @@ int whist_client_main(int argc, const char* argv[]) {
     for (try_amount = 0; try_amount < MAX_INIT_CONNECTION_ATTEMPTS && !client_exiting &&
                          exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
+        WhistSemaphore handshake_sync_semaphore = whist_create_semaphore(0);
+        WhistThread handshake_thread = whist_create_thread(
+            multithreaded_handshake, "multithreaded_handshake", (void*)&handshake_sync_semaphore);
+
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             // TODO: This is a sleep 1000, but I don't think we should ever show the user
@@ -404,12 +428,13 @@ int whist_client_main(int argc, const char* argv[]) {
         WhistTimer cpu_usage_statistics_timer;
         start_timer(&cpu_usage_statistics_timer);
 
-        WhistTimer handshake_time;
-        start_timer(&handshake_time);  // start timer for measuring handshake time
-        LOG_INFO("Begin measuring handshake");
+        whist_post_semaphore(handshake_sync_semaphore);
+        FATAL_ASSERT(whist_semaphore_value(handshake_sync_semaphore) == 1);
+        int handshake_result;
+        whist_wait_thread(handshake_thread, &handshake_result);
+        whist_destroy_semaphore(handshake_sync_semaphore);
 
-        if (connect_to_server(server_ip, using_stun, user_email) != 0) {
-            // This must destroy everything initialized above this line
+        if (handshake_result != 0) {
             LOG_WARNING("Failed to connect to server.");
             destroy_out_of_window_drag_handlers();
             destroy_file_synchronizer();
@@ -417,14 +442,10 @@ int whist_client_main(int argc, const char* argv[]) {
             destroy_renderer(whist_renderer);
             continue;
         }
+
         // Reset try counter, because connection succeeded
         try_amount = 0;
         connected = true;
-
-        // Log to METRIC for cross-session tracking and INFO for developer-facing logging
-        double connect_to_server_time = get_timer(&handshake_time);
-        LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
-        LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
 
         // Create threads to receive udp/tcp packets and handle them as needed
         // Pass the whist_renderer so that udp packets can be fed into it
