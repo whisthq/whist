@@ -248,6 +248,7 @@ int audio_decoder_send_packets(AudioDecoder *decoder, void *buffer, int buffer_s
             */
 
     int num_packets = extract_avpackets_from_buffer(buffer, buffer_size, decoder->packets);
+    LOG_DEBUG("%d packets extracted from buffer. Sending to decoder via avcodec_send_packet...", num_packets);
 
     int res;
     for (int i = 0; i < num_packets; i++) {

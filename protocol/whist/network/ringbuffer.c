@@ -731,10 +731,14 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
             if (greatest_failed_id > ring_buffer->last_stream_reset_request_id) {
                 FrameData* pending_ctx = get_frame_at_id(ring_buffer, currently_pending_id);
                 if (pending_ctx->id != currently_pending_id) {
+                    LOG_WARNING("pending_ctx->id is %d != to currently_pending_id %d",
+                                pending_ctx->id, currently_pending_id);
                     pending_ctx = NULL;
                 }
                 FrameData* greatest_failed_ctx = get_frame_at_id(ring_buffer, greatest_failed_id);
                 if (greatest_failed_ctx->id != greatest_failed_id) {
+                    LOG_WARNING("greatest_failed_ctx->id is %d != to greatest_failed_id %d",
+                                greatest_failed_ctx->id, greatest_failed_id);
                     greatest_failed_ctx = NULL;
                 }
                 LOG_INFO(
