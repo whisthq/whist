@@ -60,8 +60,7 @@ warmup_necessary_files() {
     "/run/udev" \
     "/etc/filebeat" \
     "/var/lib/nvidia" \
-    "/sys/fs/cgroup" \
-    "/root/.aws" -type f -exec touch {} +
+    "/sys/fs/cgroup" -type f -exec touch {} +
 
   echo "Finished warming up necessary files."
 }
