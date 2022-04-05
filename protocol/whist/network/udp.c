@@ -1068,7 +1068,6 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     if (destination == NULL) {
         // Create the server context
         ret = create_udp_server_context(context, port, connection_timeout_ms);
-
         if (ret == 0) {
             // On the server, we create a network throttler to limit the
             // outgoing bitrate.
@@ -1345,10 +1344,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
     start_timer(&server_creation_timer);
 
     // Create a new listening socket on that port
-    if (create_udp_listen_socket(&context->socket, port, connection_timeout_ms)) {
-        LOG_ERROR("Failed to create UDP listen socket");
-        return -1;
-    }
+    create_udp_listen_socket(&context->socket, port, connection_timeout_ms);
 
     // While we still have some remaining connection time,
     // wait for a connection attempt message from a client
