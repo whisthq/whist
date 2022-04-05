@@ -29,7 +29,7 @@ Includes
 #include <stdio.h>
 #include <stdlib.h>
 
-static bool enable_hw_transfer = true;
+static bool enable_hw_transfer = false;
 COMMAND_LINE_BOOL_OPTION(enable_hw_transfer, 0, "enable-hw-transfer",
                          "Whether or not hw transfer should be enabled")
 
