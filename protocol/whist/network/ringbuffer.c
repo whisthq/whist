@@ -58,6 +58,8 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
  *
  * @param ring_buffer              Ring buffer containing the frame
  * @param frame_data               Frame to reset from the ring buffer
+ *
+ * @note                           The statistics data is still held here
  */
 static void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data);
 
@@ -155,8 +157,10 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     // Mark all the frames as uninitialized
     for (int i = 0; i < ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
-        frame_data->id = frame_data->entire_frame_nacked_id = -1;
-        frame_data->packet_buffer = NULL;
+        memset(frame_data, 0, sizeof(FrameData));
+        frame_data->id = -1;
+        frame_data->statistics_id = -1;
+        frame_data->entire_frame_nacked_id = -1;
     }
 
     // determine largest frame size, including the WhistPacket header
@@ -451,7 +455,7 @@ double get_packet_loss_ratio(RingBuffer* ring_buffer, double latency) {
     for (int id = max(max(ring_buffer->max_id - MAX_FPS, ring_buffer->min_id), 0);
          id < ring_buffer->max_id; id++) {
         FrameData* frame = get_frame_at_id(ring_buffer, id);
-        if (id != frame->id ||
+        if (id != frame->statistics_id ||
             get_timer(&frame->frame_creation_timer) > (double)PACKET_LOSS_DURATION_IN_SEC) {
             continue;
         }
@@ -814,11 +818,13 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
     // Confirm that the frame is uninitialized
     FATAL_ASSERT(frame_data->packet_buffer == NULL);
     unsigned char num_entire_frame_nacked = 0;
-    if (frame_data->entire_frame_nacked_id == id)
+    if (frame_data->entire_frame_nacked_id == id) {
         num_entire_frame_nacked = frame_data->num_entire_frame_nacked;
+    }
     // Initialize new framedata
     memset(frame_data, 0, sizeof(*frame_data));
     frame_data->id = id;
+    frame_data->statistics_id = id;
     frame_data->packet_buffer = allocate_block(ring_buffer->packet_buffer_allocator);
     frame_data->num_original_packets = num_original_indices;
     frame_data->num_fec_packets = num_fec_indices;
@@ -857,6 +863,9 @@ void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
         free_block(ring_buffer->packet_buffer_allocator, frame_data->fec_frame_buffer);
         frame_data->fec_frame_buffer = NULL;
     }
+    // Mark as an invalid frame
+    frame_data->id = -1;
+    // But keep statistics and statistics_id as-is, for packet_loss calculation
 }
 
 void reset_ring_buffer(RingBuffer* ring_buffer) {
@@ -867,7 +876,6 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
         if (frame_data->packet_buffer != NULL) {
             reset_frame(ring_buffer, frame_data);
         }
-        memset(frame_data, 0, sizeof(*frame_data));
     }
     ring_buffer->max_id = -1;
     ring_buffer->min_id = -1;
