@@ -2,18 +2,18 @@
 # it's better to compile as -O2 even for debug version
 
 if(NOT MSVC)
-        #message(WARNING "Current compiler is NOT MSVC!!!")
+        #message(WARNING "cm256: Current compiler is NOT MSVC!!!")
         # the below line triggers MSVC complaint: "/RTC1 incompatible with /O2"
         # TODO fix this
         add_compile_options("$<$<CONFIG:DEBUG>:-O2>")
 endif()
 
-message(WARNING "Build type is:" ${CMAKE_BUILD_TYPE} "!!!")
+#message(WARNING "cm256: Build type is:" ${CMAKE_BUILD_TYPE} "!!!")
 
 # the below detection works since the only arm we support is M1,
 # otherwise much more complex detections are needed
 if((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") AND (${MACOS_ARCHITECTURE} MATCHES "arm"))
-        #message(WARNING "Current ARCH is macos arm!!!")
+        #message(WARNING "cm256: Current ARCH is macos arm!!!")
         set(CM256_IS_ARM TRUE)
 else()
         set(CM256_IS_ARM FALSE)
