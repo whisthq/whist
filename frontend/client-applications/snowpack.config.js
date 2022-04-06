@@ -48,7 +48,7 @@ const esbuildCommand = [
   "--external:@m-lab/ndt7",
   "--external:ref-napi",
   "--external:ffi-napi",
-  "--external:ref-struct-di"
+  "--external:ref-struct-di",
 ]
 // We minify our output to make this less convenient for snooping users.
 if (process.env.NODE_ENV === "production") {
@@ -169,7 +169,7 @@ module.exports = {
       "querystring",
       "keytar",
       "x11",
-      "node:path"
+      "node:path",
     ],
     // We ask Snowpack to polyfill and NodeJS APIs that it can, so that we can
     // still make some use of the NodeJS standard library. It cannot polyfill

@@ -42,7 +42,7 @@ import {
   CACHED_ACCESS_TOKEN,
 } from "@app/constants/store"
 import {
-  getDecryptedCookies,
+  getCookies,
   getBookmarks,
   getExtensions,
   getLocalStorage,
@@ -105,7 +105,7 @@ const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
 const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
   switchMap((t) =>
     zip(
-      from(getDecryptedCookies(t?.importBrowserDataFrom as InstalledBrowser)),
+      from(getCookies(t?.importBrowserDataFrom as InstalledBrowser)),
       from(getBookmarks(t?.importBrowserDataFrom as InstalledBrowser)),
       from(getExtensions(t?.importBrowserDataFrom as InstalledBrowser)),
       from(getPreferences(t?.importBrowserDataFrom as InstalledBrowser)),

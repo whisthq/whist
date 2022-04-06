@@ -7,6 +7,8 @@ export enum InstalledBrowser {
   EDGE = "Edge",
 }
 
+export const DEFAULT_ENCRYPTION_KEY = "peanuts"
+
 // File paths for each browser
 export const ChromeLinuxDefaultDir = [
   "~/.config/google-chrome/Default/",
