@@ -5,7 +5,7 @@ import fs from "fs"
 import tmp from "tmp"
 import { homedir } from "os"
 import path, { dirname } from "path"
-import Struct from "ref-struct-di"
+import StructType from "ref-struct-di"
 import ref from "ref-napi"
 import knex from "knex"
 import crypto from "crypto"
@@ -318,10 +318,10 @@ const decryptCookie = async (
 
     cookie.encrypted_prefix = encryptionPrefix
 
-    const iv = Buffer.from(Array(17).join(" "), "binary")
+    const iv = Buffer.from(Array(encryptKey.length + 1).join(" "), "binary")
 
     const decipher = await crypto.createDecipheriv(
-      "aes-128-cbc",
+      process.platform === "win32" ? "aes-256-gcm" : "aes-128-cbc",
       encryptKey,
       iv
     )
@@ -355,7 +355,7 @@ const decryptCookie = async (
 
     return cookie
   } catch (err) {
-    // console.error("Decrypt failed with error: ", err)
+    console.error("Decrypt failed with error: ", err)
     // console.error("The cookie that failed was", cookie)
     return undefined
   }
@@ -498,8 +498,8 @@ const getCookieEncryptionKey = async (
       return key
     }
     case "win32":
-      const StructType = Struct(ref)
-      const DATA_BLOB = StructType({
+      const Struct = StructType(ref)
+      const DATA_BLOB = Struct({
         length: ref.types.uint32,
         buf: ref.refType(ref.types.byte),
       })
@@ -527,17 +527,10 @@ const getCookieEncryptionKey = async (
       const dataBlobInput = new DATA_BLOB()
       const dataBlobOutput = new DATA_BLOB()
 
-      dataBlobInput.buf = buf
+      dataBlobInput.buf = buf as any
       dataBlobInput.length = buf.length
 
-      console.log("buf length", buf, buf.length)
-      console.log("input length", dataBlobInput.buf.length)
-
-      const deref = dataBlobInput.buf.deref()
-
-      console.log("derefed length", deref, deref.length)
-
-      const result = Crypto.CryptUnprotectData(
+      Crypto.CryptUnprotectData(
         dataBlobInput.ref(),
         null,
         null,
@@ -547,7 +540,27 @@ const getCookieEncryptionKey = async (
         dataBlobOutput.ref()
       )
 
-      return dataBlobOutput.buf
+      console.log("Reinterpreting")
+
+      const output = ref.reinterpret(
+        dataBlobOutput.buf,
+        dataBlobOutput.length,
+        0
+      )
+
+      console.log("Reinterpreted", output.length)
+
+      return output
+
+    // const outputDeref = dataBlobOutput.buf.deref()
+
+    // console.log("DEREFFED")
+
+    // const ret = ref.reinterpret(outputDeref.buf, outputDeref.length, 0)
+
+    // console.log("output length", ret.length)
+
+    // return ret
 
     default:
       throw Error("OS not recognized. Works on OSX or linux.")
