@@ -127,10 +127,11 @@
     "typescript": "^4.5.2"
   },
   "engines": {
-    "node": ">=15.x",
+    "node": ">=16.x <17",
     "npm": "use-yarn",
     "yarn": ">=1.19.x"
   },
+  "engineStrict": true,
   "protocols": {
     "name": "http-protocol",
     "schemes": [
