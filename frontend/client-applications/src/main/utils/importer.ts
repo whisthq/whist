@@ -344,39 +344,10 @@ const decryptCookies = async (
   return cookies
 }
 
-const decryptCookieWindows = (value: string, encryptedValue: Buffer) => {
-  if (value.length > 0) return value
-
-  const ret = cryptUnprotectData(encryptedValue)
-  if (ret === undefined) return undefined
-
-  return ret.toString()
-}
-
 const decryptCookie = async (
   cookie: Cookie,
   encryptKey: Buffer
 ): Promise<Cookie | undefined> => {
-  if (
-    process.platform === "win32" &&
-    typeof cookie.encrypted_value !== "number" &&
-    cookie.encrypted_value[0] == 0x01 &&
-    cookie.encrypted_value[1] == 0x00 &&
-    cookie.encrypted_value[2] == 0x00 &&
-    cookie.encrypted_value[3] == 0x00
-  ) {
-    const decrypted = decryptCookieWindows(
-      cookie.value.toString(),
-      Buffer.from(cookie.encrypted_value.toString())
-    )
-
-    if (decrypted !== undefined) {
-      console.log("Decrypted!", decrypted)
-      cookie.decrypted_value = decrypted
-      return cookie
-    }
-  }
-
   try {
     if (typeof cookie.value === "string" && cookie.value.length > 0)
       return cookie
