@@ -28,7 +28,7 @@ set -Eeuo pipefail
 
 
 # Input arguments: -d [comma-separated device names] -b [bandwidth range] -p [packet drop range] -q [queue length range] -i [changing interval range]
-while getopts d:b:p:q:i:s: flag
+while getopts d:b:p:q:i:s:t: flag
 do
   case "${flag}" in
     d) devices=${OPTARG} ;;
