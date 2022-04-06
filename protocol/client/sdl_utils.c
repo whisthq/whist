@@ -37,7 +37,7 @@ static bool skip_taskbar;
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* frame_buffer = NULL;
-static WhistMutex renderer_mutex;
+WhistMutex renderer_mutex;
 
 // pending render Update
 static volatile bool pending_render = false;

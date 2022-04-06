@@ -23,6 +23,8 @@ Defines
 
 #define SINGLE_THREAD_MODEL false
 
+extern WhistMutex renderer_mutex;
+
 struct WhistRenderer {
     VideoContext* video_context;
     AudioContext* audio_context;
@@ -310,6 +312,7 @@ int32_t multithreaded_video_renderer(void* opaque) {
             break;
         }
 
+        whist_lock_mutex(renderer_mutex);
         // Otherwise, try to render, but note that 1 means the renderer is still pending
         // TODO: Make render_video internally semaphore on render, so we don't have to check
         if (render_video(whist_renderer->video_context) == 1) {
@@ -324,6 +327,7 @@ int32_t multithreaded_video_renderer(void* opaque) {
                 }
             }
         }
+        whist_unlock_mutex(renderer_mutex);
     }
 
     return 0;
