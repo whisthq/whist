@@ -114,7 +114,7 @@ def setup_artificial_network_conditions(
             )
         ]
         # add 5 more seconds to testing_time to account for time spent in this script before test actually starts
-        command = f"( nohup timeout {testing_time+5}s ~/whist/protocol/test/helpers/setup/apply_network_conditions.sh -d {','.join(network_devices)} {degradations_command} > ~/network_conditions.log 2>&1 & )"
+        command = f"( nohup ~/whist/protocol/test/helpers/setup/apply_network_conditions.sh -d {','.join(network_devices)} -t {testing_time+5} {degradations_command} > ~/network_conditions.log 2>&1 & )"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
