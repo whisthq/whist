@@ -64,6 +64,8 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	_, _ = w.Write(buf)
 }
 
+// paymentsHandler handles a payment session request. It verifies the access token,
+// and then creates a StripeClient to get the URL of a payment session.
 func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 	// Verify that we got a GET request
 	err := verifyRequestType(w, req, http.MethodGet)
@@ -72,6 +74,7 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Extract access token from request header
 	accessToken, err := getAccessToken(req)
 	if err != nil {
 		logger.Error(err)
@@ -79,6 +82,7 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Get claims from access token
 	claims, err := auth.ParseToken(accessToken)
 	if err != nil {
 		logger.Errorf("Received an unpermissioned backend request on %s to URL %s. Error: %s", req.Host, req.URL, err)
@@ -86,6 +90,7 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Create a new StripeClient to handle the customer
 	stripeClient := &payments.StripeClient{}
 	err = stripeClient.Initialize(claims.CustomerID, claims.SubscriptionStatus)
 	if err != nil {
@@ -101,6 +106,7 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Marshal and send session URL
 	buf, err := json.Marshal(sessionUrl)
 	if err != nil {
 		logger.Errorf("Error marshalling HTTP Response body: %s", err)

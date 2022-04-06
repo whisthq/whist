@@ -17,13 +17,26 @@ import (
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
+// PaymentsHandler is an abstraction of the methods used for
+// processing payments for a client.
+type PaymentsHandler interface {
+	Initialize() error
+	CreateSession() (string, error)
+	createCheckoutSession() (string, error)
+	createBillingPortal() (string, error)
+}
+
+// StripeClient implements PaymentsHandler, and interacts directly
+// with the official Stripe client.
 type StripeClient struct {
 	customerID          string
 	subscriptionStatus  string
-	restricted          string
 	monthlyPriceInCents int64
 }
 
+// Initialize will pull all necessary configurations from the database
+// and set the StripeClient fields with the values extracted from
+// the access token.
 func (sc *StripeClient) Initialize(customerID string, subscriptionStatus string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -61,11 +74,6 @@ func (sc *StripeClient) Initialize(customerID string, subscriptionStatus string)
 		return utils.MakeError("Could not find key STRIPE_SECRET in configurations map.")
 	}
 
-	restricted, ok := configs["STRIPE_RESTRICTED"]
-	if !ok {
-		return utils.MakeError("Could not find key STRIPE_RESTRICTED in configurations map.")
-	}
-
 	price, ok := configs["MONTHLY_PRICE_IN_CENTS"]
 	if !ok {
 		return utils.MakeError("Could not find key MONTHLY_PRICE_IN_CENTS in configurations map.")
@@ -78,7 +86,6 @@ func (sc *StripeClient) Initialize(customerID string, subscriptionStatus string)
 
 	// Initialize StripeClient fields
 	stripe.Key = secret
-	sc.restricted = restricted
 	sc.monthlyPriceInCents = monthlyPrice
 
 	sc.customerID = customerID
@@ -87,6 +94,9 @@ func (sc *StripeClient) Initialize(customerID string, subscriptionStatus string)
 	return nil
 }
 
+// createCheckoutSession creates a Stripe checkout session for the current customer.
+// It applies the desired price from the database, and if it doesn't exist in Stripe,
+//  creates it.
 func (sc *StripeClient) createCheckoutSession() (string, error) {
 	priceList := price.List(&stripe.PriceListParams{
 		Active: stripe.Bool(true),
@@ -94,6 +104,7 @@ func (sc *StripeClient) createCheckoutSession() (string, error) {
 
 	var priceID string
 
+	// Try to find a Stripe Price with the desired monthly price.
 	for priceList.Next() {
 		currentPrice := priceList.Current().(*stripe.Price)
 		if currentPrice.UnitAmount == sc.monthlyPriceInCents {
@@ -104,6 +115,7 @@ func (sc *StripeClient) createCheckoutSession() (string, error) {
 		return "", utils.MakeError("failed to read price list from Stripe. Err: %v", priceList.Err())
 	}
 
+	// If a Stripe Price was not found, create one.
 	if priceID != "" {
 		logger.Infof("Found price of %v in Stripe.", sc.monthlyPriceInCents)
 	} else {
@@ -115,16 +127,21 @@ func (sc *StripeClient) createCheckoutSession() (string, error) {
 		priceID = newPrice.ID
 	}
 
+	// Set how many subscriptions we want started, and what number of
+	// days we offer as a trial period.
+	subscriptionQuantity := 1
+	trialDays := int64(14)
+
 	params := &stripe.CheckoutSessionParams{
 		Customer: stripe.String(sc.customerID),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				Price:    stripe.String(priceID),
-				Quantity: aws.Int64(1),
+				Quantity: aws.Int64(int64(subscriptionQuantity)),
 			},
 		},
 		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
-			TrialPeriodDays: stripe.Int64(14),
+			TrialPeriodDays: stripe.Int64(trialDays),
 		},
 		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
 		SuccessURL: stripe.String("http://localhost/callback/payment?success=true"),
@@ -139,6 +156,7 @@ func (sc *StripeClient) createCheckoutSession() (string, error) {
 	return s.URL, nil
 }
 
+// createBillingPortal creates a Stripe billing portal for the current customer.
 func (sc *StripeClient) createBillingPortal() (string, error) {
 	s, err := billingPortal.New(&stripe.BillingPortalSessionParams{
 		Customer:  stripe.String(sc.customerID),
@@ -148,6 +166,9 @@ func (sc *StripeClient) createBillingPortal() (string, error) {
 	return s.URL, err
 }
 
+// CreateSession is the method exposed to other packages for getting a Stripe Session URL.
+// It should only be called after `Initialize` has been run first. It decides what kind of
+// Stripe Session to return based on the customer's subscription status.
 func (sc *StripeClient) CreateSession() (string, error) {
 	var (
 		sessionUrl string
@@ -155,11 +176,16 @@ func (sc *StripeClient) CreateSession() (string, error) {
 	)
 
 	if sc.subscriptionStatus == "active" || sc.subscriptionStatus == "trialing" {
+		// If the authenticated user already has a Whist subscription in a non-terminal state
+		// (one of `active` or `trialing`), create a Stripe billing portal that the customer
+		// can use to manage their subscription and billing information.
 		sessionUrl, err = sc.createBillingPortal()
 		if err != nil {
 			return "", utils.MakeError("error creating Stripe billing portal. Err: %v", err)
 		}
 	} else {
+		// If the authenticated user has a Whist subscriptions in a terminal states (not `active` or `trialing`),
+		// create a Stripe checkout session that the customer can use to enroll in a new Whist subscription.
 		sessionUrl, err = sc.createCheckoutSession()
 		if err != nil {
 			return "", utils.MakeError("error creating Stripe checkout session. Err: %v", err)
@@ -169,6 +195,8 @@ func (sc *StripeClient) CreateSession() (string, error) {
 	return sessionUrl, nil
 }
 
+// createPrice is a helper function that creates a new Price object in Stripe
+// with the desired price (in cents), for the product `name` in the given interval.
 func createPrice(cents int64, name string, interval string) (*stripe.Price, error) {
 	return price.New(&stripe.PriceParams{
 		UnitAmount: stripe.Int64(cents),
