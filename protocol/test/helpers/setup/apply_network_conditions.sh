@@ -2,20 +2,32 @@
 
 set -Eeuo pipefail
 
-## Sample usage:
-# ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000
-
+## This program will set artificial network conditions, according to the arguments passed, on the machine where it is run.
+# Arguments: 
+# -d <comma-separated device names>: a mandatory argument that specifies the network devices that we want to affect with the network conditions
+# -b <bandwidth>:   this argument can be a single value (<bandwidth>) or a range (<min bandwidth>,<max bandwidth>). 
+#                   It specifies the maximum bandwidth to be allowed in the network
+# -p <packet drop %>: this argument can be a single value (<packet drop %>) or a range (<min packet drop %>,<max packet drop %>).
+#                     It specifies the percentage of packets that should be randomly dropped by the network.
+# -q <queue length (ms)>: this argument can be a single value (<queue length (ms)>) or a range (<min queue length (ms)>,<max queue length (ms)>). 
+#                         It specifies the delay that each incoming/outcoming packet should incur due to simulated time spent in packet queues.
+# -i <interval (ms)>: this argument can be a single value (<interval (ms)>) or a range (<min interval (ms)>,<max interval (ms)>). 
+#                     It specifies the frequency at which the network conditions should change. If a range is passed, we set the network conditions,
+#                     generate a value in the range, and wait for that amount before updating the network conditions again. 
+#                     If a single value is passed, we always wait for the same amount of time.
+# -s <random_seed>: an optional argument setting the random seed. If no values is passed, 34587 is used.
+#
+# Sample usage:
+# ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587
+# 
 # The command above will change the network conditions each 100 to 1000 ms and apply the following settings to device ens55:
-# Bandwidth limited to a random value in the 10-20 Mbit/s range
-# 5% - 10% of packets, chosen at random, are dropped
-# Queue length is fixed at 50ms to 100ms
-
-# SSH usage:
-# nohup timeout <120s> ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 &
+# - Bandwidth limited to a random value in the 10-20 Mbit/s range
+# - 5% - 10% of packets, chosen at random, are dropped
+# - Queue length is fixed at 50ms to 100ms
 
 
 # Input arguments: -d [comma-separated device names] -b [bandwidth range] -p [packet drop range] -q [queue length range] -i [changing interval range]
-while getopts d:b:p:q:i: flag
+while getopts d:b:p:q:i:s: flag
 do
   case "${flag}" in
     d) devices=${OPTARG} ;;
@@ -23,6 +35,7 @@ do
     p) packet_drop_range=${OPTARG} ;;
     q) queue_length_range=${OPTARG} ;;
     i) interval_range=${OPTARG} ;;
+    s) random_seed=${OPTARG} ;;
     *)  ;;
   esac
 done
@@ -41,7 +54,7 @@ echo "Network devices: ${devices[*]}"
 
 # Check that at least one network condition was specified. If no network condition was specified, we don't have anything to do
 if [ -z "${bandwidth_range:-}" ] && [ -z "${packet_drop_range:-}" ] && [ -z "${queue_length_range:-}" ] ; then
-  echo "No artificial network condition passed."
+  echo "No artificial network condition passed. Not modifying network, exiting."
   exit 0
 fi
 
@@ -53,7 +66,9 @@ if [ -n "${bandwidth_range:-}" ]; then
   elif [ ${#bandwidth_range[*]} -eq 1 ]; then
     max_bandwidth="${bandwidth_range[0]}"
   else
-    echo "Bandwidth must be specified either as a single value or as a range (comma-separated min-max values)"
+    echo "Bandwidth must be specified either as a single value or as a range (comma-separated min-max values)."
+    echo "Sample usage: ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587"
+    echo "Not modifying network, exiting."
     exit 1
   fi
   min_bandwidth="${bandwidth_range[0]}"
@@ -62,6 +77,8 @@ if [ -n "${bandwidth_range:-}" ]; then
   # The max and min values in the range should also be expressed using the same units (Gbit, Mbit, kbit)
   if [[ ! ( "${min_bandwidth%????}" =~ ^[0-9]+$ ) || ! ( "${max_bandwidth%????}" =~ ^[0-9]+$ ) || "${min_bandwidth%????}" -lt 0 || "${min_bandwidth%????}" -gt "${max_bandwidth%????}" || "${min_bandwidth:(-4)}" != "${max_bandwidth:(-4)}" ]]; then
     echo "Bandwidth min and max must be positive integer values and they must be expressed using the same units (Gbit, Mbit, kbit). Min value should be <= max value."
+    echo "Sample usage: ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587"
+    echo "Not modifying network, exiting."
     exit 1
   fi
 
@@ -76,6 +93,8 @@ if [ -n "${packet_drop_range:-}" ]; then
     max_packet_drop=${packet_drop_range[0]}
   else
     echo "Packet drop must be specified either as a single value or as a range (comma-separated min-max values)."
+    echo "Sample usage: ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587"
+    echo "Not modifying network, exiting."
     exit 1
   fi
   min_packet_drop=${packet_drop_range[0]}
@@ -83,6 +102,8 @@ if [ -n "${packet_drop_range:-}" ]; then
   # This script only supports packet drop percentages expressed using integers between 0 and 100.
   if [[ ! ( "${min_packet_drop}" =~ ^[0-9]+$ ) || ! ( "${max_packet_drop}" =~ ^[0-9]+$ ) || "${min_packet_drop}" -lt 0 || "${max_packet_drop}" -gt 100 || "${min_packet_drop}" -gt "${max_packet_drop}" ]]; then
     echo "Packet drop rates should be integer percentages between 0 and 100. Min value should be <= max value."
+    echo "Sample usage: ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587"
+    echo "Not modifying network, exiting."
     exit 1
   fi
 
@@ -97,6 +118,8 @@ if [ -n "${queue_length_range:-}" ]; then
     max_queue_length=${queue_length_range[0]}
   else
     echo "Queue length must be specified either as a single value or as a range (comma-separated min-max values)"
+    echo "Sample usage: ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587"
+    echo "Not modifying network, exiting."
     exit 1
   fi
   min_queue_length=${queue_length_range[0]}
@@ -104,6 +127,8 @@ if [ -n "${queue_length_range:-}" ]; then
   # This script only supports queue lengths expressed in milliseconds and using integers.
   if [[ ! ( "${min_queue_length}" =~ ^[0-9]+$ ) || ! ( "${max_queue_length}" =~ ^[0-9]+$ ) || "${min_queue_length}" -lt 0 || "${min_queue_length}" -gt "${max_queue_length}" ]]; then
     echo "Queue lengths should be positive integer values expressed in milliseconds. Min value should be <= max value."
+    echo "Sample usage: ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587"
+    echo "Not modifying network, exiting."
     exit 1
   fi
 
@@ -118,6 +143,8 @@ if [ -n "${interval_range:-}" ]; then
     max_interval=${interval_range[0]}
   else
     echo "Interval duration must be specified either as a single value or as a range (comma-separated min-max values)"
+    echo "Sample usage: ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587"
+    echo "Not modifying network, exiting."
     exit 1
   fi
   min_interval=${interval_range[0]}
@@ -125,6 +152,8 @@ if [ -n "${interval_range:-}" ]; then
   # This script only supports intervals expressed in milliseconds using integers.
   if [[ ! ( "${min_interval}" =~ ^[0-9]+$ ) || ! ( "${max_interval}" =~ ^[0-9]+$ ) || "${min_interval}" -lt 0 || "${min_interval}" -gt "${max_interval}" ]]; then
     echo "Intervals should be positive integer values expressed in milliseconds. Min value should be <= max value."
+    echo "Sample usage: ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587"
+    echo "Not modifying network, exiting."
     exit 1
   fi
 
@@ -133,10 +162,19 @@ else
   # If interval is not initialized, ensure that all passed network conditions are stable.
   if [[ ( "${min_bandwidth:-}" != "${max_bandwidth:-}" ) || ( "${min_packet_drop:-}" != "${max_packet_drop:-}" ) || ( "${min_queue_length:-}" != "${max_queue_length:-}" ) ]]; then
     echo "Interval must be specified unless all passed network conditions are stable."
+    echo "Sample usage: ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587"
+    echo "Not modifying network, exiting."
     exit 1
   fi
 fi
 
+random_seed="${random_seed:-34587}"
+if [[ ! ( "${random_seed}" =~ ^[0-9]+$ ) ]]; then
+  echo "Random seed must be an integer."
+  echo "Sample usage: ./apply_network_conditions.sh -d ens55 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587"
+  echo "Not modifying network, exiting."
+fi
+echo "Using random seed: $random_seed"
 
 # Initial Setup for each device
 sudo modprobe ifb
@@ -168,7 +206,7 @@ done
 
 if [[ ( "$min_bandwidth" != "$max_bandwidth" ) || ( "$min_packet_drop" != "$max_packet_drop" ) || ( "$min_queue_length" != "$max_queue_length" ) ]]; then
   # Seed the random number generator to always get the same results
-  RANDOM=34587
+  RANDOM=$random_seed
 
   # Recurrent net conditions variation
   while true
