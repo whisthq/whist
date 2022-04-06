@@ -50,6 +50,11 @@ export const BraveOSXDefaultDir = [
   "~/Library/Application Support/BraveSoftware/Brave-Browser/Default/",
   "~/Library/Application Support/BraveSoftware/Brave-Browser-Beta/Default/",
 ]
+export const BraveWindowsDefaultDir = [
+  "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Network",
+  "%APPDATA%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Network",
+]
+
 export const BraveWindowsKeys = [
   "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\User Data\\Local State",
   "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser-Beta\\User Data\\Local State",

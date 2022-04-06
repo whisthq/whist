@@ -15,6 +15,7 @@ import {
   ALGORITHM_PLAIN,
   BraveLinuxDefaultDir,
   BraveOSXDefaultDir,
+  BraveWindowsDefaultDir,
   BusSecretName,
   BusSecretPath,
   ChromeLinuxDefaultDir,
@@ -34,7 +35,6 @@ import {
   ChromiumWindowsKeys,
   BraveWindowsKeys,
 } from "@app/constants/importer"
-import { assert } from "console"
 
 const DEFAULT_ENCRYPTION_KEY = "peanuts"
 
@@ -44,6 +44,44 @@ interface Cookie {
 
 interface LocalStorageMap {
   [key: string]: string
+}
+
+const cryptUnprotectData = (buffer: Buffer) => {
+  const Struct = StructType(ref)
+  const DATA_BLOB = Struct({
+    length: ref.types.uint32,
+    buf: ref.refType(ref.types.byte),
+  })
+  const PDATA_BLOB = ref.refType(DATA_BLOB)
+  const Crypto = new ffi.Library("Crypt32", {
+    CryptUnprotectData: [
+      "bool",
+      [PDATA_BLOB, "string", "string", "void *", "string", "int", PDATA_BLOB],
+    ],
+  })
+
+  const dataBlobInput = new DATA_BLOB()
+  const dataBlobOutput = new DATA_BLOB()
+
+  dataBlobInput.buf = buffer as any
+  dataBlobInput.length = buffer.length
+
+  const result = Crypto.CryptUnprotectData(
+    dataBlobInput.ref(),
+    null,
+    null,
+    null as any,
+    null,
+    0,
+    dataBlobOutput.ref()
+  )
+
+  if (!result) {
+    console.warn("CrytUnprotectData failed")
+    return undefined
+  }
+
+  return ref.reinterpret(dataBlobOutput.buf, dataBlobOutput.length, 0)
 }
 
 const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
@@ -96,6 +134,9 @@ const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
       switch (browser) {
         case InstalledBrowser.CHROME: {
           return ChromeWindowsDefaultDir
+        }
+        case InstalledBrowser.BRAVE: {
+          return BraveWindowsDefaultDir
         }
       }
     }
@@ -313,41 +354,72 @@ const decryptCookie = async (
 
     if (cookie.encrypted_value.toString().length === 0) return cookie
 
+    if (typeof cookie.encrypted_value === "string") {
+      const _encrypted = Buffer.from(cookie.encrypted_value)
+      cookie.encrypted_value = _encrypted
+    }
+
     const encryptionPrefix = cookie.encrypted_value.toString().substring(0, 3)
+
     if (encryptionPrefix !== "v10" && encryptionPrefix !== "v11") return cookie
 
     cookie.encrypted_prefix = encryptionPrefix
 
-    const iv = Buffer.from(Array(encryptKey.length + 1).join(" "), "binary")
+    const iv =
+      process.platform === "win32"
+        ? (cookie.encrypted_value as Buffer).slice(3, 15)
+        : Buffer.from(Array(17).join(" "), "binary")
 
-    const decipher = await crypto.createDecipheriv(
+    const decipher = (await crypto.createDecipheriv(
       process.platform === "win32" ? "aes-256-gcm" : "aes-128-cbc",
       encryptKey,
       iv
-    )
+    )) as any
+
+    if (process.platform === "win32") {
+      const authTag = (cookie.encrypted_value as Buffer).slice(
+        (cookie.encrypted_value as Buffer).length - 16
+      )
+
+      console.log("auth tag is", authTag)
+
+      decipher.setAuthTag(authTag)
+    }
 
     decipher.setAutoPadding(false)
 
     let encryptedData: Buffer = Buffer.from("")
+
     if (
       typeof cookie.encrypted_value !== "number" &&
       typeof cookie.encrypted_value !== "string"
     ) {
-      encryptedData = cookie.encrypted_value.slice(3)
+      encryptedData =
+        process.platform === "win32"
+          ? cookie.encrypted_value.slice(
+              15,
+              (cookie.encrypted_value as Buffer).length - 16
+            )
+          : cookie.encrypted_value.slice(3)
     }
 
     let decoded = decipher.update(encryptedData)
 
-    const final = decipher.final()
-    final.copy(decoded, decoded.length - 1)
+    if (decoded.length === 0) return undefined
 
-    const padding = decoded[decoded.length - 1]
-    if (padding !== 0) decoded = decoded.slice(0, decoded.length - padding)
+    if (process.platform !== "win32") {
+      const final = decipher.final()
+      final.copy(decoded, decoded.length - 1)
 
-    const decodedBuffer = decoded.toString("utf8")
+      const padding = decoded[decoded.length - 1]
+      if (padding !== 0) decoded = decoded.slice(0, decoded.length - padding)
 
-    const originalText = decodedBuffer
-    cookie.decrypted_value = originalText
+      cookie.decrypted_value = decoded.toString("utf8")
+    } else {
+      cookie.decrypted_value = decoded.toString("utf8")
+    }
+
+    return undefined
 
     // We don't want to upload Google cookies because Google will detect that these are not coming
     // from the right browser and prevent users from signing in
@@ -355,8 +427,12 @@ const decryptCookie = async (
 
     return cookie
   } catch (err) {
-    console.error("Decrypt failed with error: ", err)
-    // console.error("The cookie that failed was", cookie)
+    console.log(
+      `Failed to decrypt cookie ${cookie.encrypted_value} of length ${
+        cookie.encrypted_value.toString().length
+      }`,
+      err
+    )
     return undefined
   }
 }
@@ -365,8 +441,6 @@ const getCookiesFromFile = async (
   browser: InstalledBrowser
 ): Promise<Cookie[]> => {
   const cookieFile = expandPaths(getCookieFilePath(browser))
-
-  console.log("the cookie file is", cookieFile)
 
   try {
     const tempFile = createLocalCopy(cookieFile)
@@ -498,70 +572,12 @@ const getCookieEncryptionKey = async (
       return key
     }
     case "win32":
-      const Struct = StructType(ref)
-      const DATA_BLOB = Struct({
-        length: ref.types.uint32,
-        buf: ref.refType(ref.types.byte),
-      })
-      const PDATA_BLOB = ref.refType(DATA_BLOB)
-      const Crypto = new ffi.Library("Crypt32", {
-        CryptUnprotectData: [
-          "bool",
-          [
-            PDATA_BLOB,
-            "string",
-            "string",
-            "void *",
-            "string",
-            "int",
-            PDATA_BLOB,
-          ],
-        ],
-      })
-
       const keyFile = expandPaths(getWindowsKeys(browser))
       const data = JSON.parse(fs.readFileSync(keyFile).toString())
       const key64 = data.os_crypt.encrypted_key.toString("utf-8")
+      const buffer = Buffer.from(key64, "base64").slice(5)
 
-      const buf = Buffer.from(key64, "base64").slice(5)
-      const dataBlobInput = new DATA_BLOB()
-      const dataBlobOutput = new DATA_BLOB()
-
-      dataBlobInput.buf = buf as any
-      dataBlobInput.length = buf.length
-
-      Crypto.CryptUnprotectData(
-        dataBlobInput.ref(),
-        null,
-        null,
-        null as any,
-        null,
-        0,
-        dataBlobOutput.ref()
-      )
-
-      console.log("Reinterpreting")
-
-      const output = ref.reinterpret(
-        dataBlobOutput.buf,
-        dataBlobOutput.length,
-        0
-      )
-
-      console.log("Reinterpreted", output.length)
-
-      return output
-
-    // const outputDeref = dataBlobOutput.buf.deref()
-
-    // console.log("DEREFFED")
-
-    // const ret = ref.reinterpret(outputDeref.buf, outputDeref.length, 0)
-
-    // console.log("output length", ret.length)
-
-    // return ret
-
+      return cryptUnprotectData(buffer)
     default:
       throw Error("OS not recognized. Works on OSX or linux.")
   }
@@ -616,6 +632,8 @@ const getDecryptedCookies = async (
     console.log("encrypted length is", encryptKey.length)
 
     const cookies = await decryptCookies(encryptedCookies, encryptKey)
+
+    console.log("got the cookies", cookies)
 
     return JSON.stringify(cookies)
   } catch (err) {
