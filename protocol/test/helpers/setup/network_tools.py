@@ -113,8 +113,8 @@ def setup_artificial_network_conditions(
                 blacklisted_expression in x for blacklisted_expression in blacklisted_expressions
             )
         ]
-        # add 5 more seconds to testing_time to account for time spent in this script before test actually starts
-        command = f"( nohup ~/whist/protocol/test/helpers/setup/apply_network_conditions.sh -d {','.join(network_devices)} -t {testing_time+5} {degradations_command} > ~/network_conditions.log 2>&1 & )"
+        # add 2 more seconds to testing_time to account for time spent in this script before test actually starts
+        command = f"( nohup ~/whist/protocol/test/helpers/setup/apply_network_conditions.sh -d {','.join(network_devices)} -t {testing_time+2} {degradations_command} > ~/network_conditions.log 2>&1 & )"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
@@ -159,7 +159,7 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
         )
         return
 
-    # Stop the process applying the artificial network conditions
+    # Stop the process applying the artificial network conditions, in case it's still running
     command = "killall -9 -v apply_network_conditions.sh"
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
