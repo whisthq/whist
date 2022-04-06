@@ -392,6 +392,7 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
         LOG_ERROR("Packet payload too large for frame buffer! Dropping the packet...");
         return !ringbuffer_overflowed;
     }
+    FATAL_ASSERT(frame_data->packet_buffer != NULL);
     memcpy(frame_data->packet_buffer + buffer_offset, segment->segment_data, segment_size);
 
     // If this frame isn't an fec frame, the frame_buffer_size is just the sum of the payload sizes
@@ -866,6 +867,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
         if (frame_data->packet_buffer != NULL) {
             reset_frame(ring_buffer, frame_data);
         }
+        memset(frame_data, 0, sizeof(*frame_data));
     }
     ring_buffer->max_id = -1;
     ring_buffer->min_id = -1;
