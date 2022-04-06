@@ -20,6 +20,7 @@ typedef struct
     bool has_avx2;
     bool has_neon;
 } CpuInfo;
+
 // get the cpu type and intruction support info
 CpuInfo gf256_get_cpuinfo(void);
 
