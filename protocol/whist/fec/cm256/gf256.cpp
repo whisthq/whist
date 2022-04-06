@@ -30,6 +30,7 @@
 #include "gf256.h"
 #include "avx2/gf256_avx2.h"
 #include "ssse3/gf256_ssse3.h"
+#include "gf256_cpuinfo.h"
 
 
 #ifdef LINUX_ARM
@@ -1317,18 +1318,28 @@ extern "C" void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy
     }
 }
 
-// WHIST_CHANGE: ADD
-extern "C" bool gf256_has_hardware_support(void)
+CpuInfo gf256_get_cpuinfo(void)
 {
-/*
+    CpuInfo info;
+    memset(&info,0,sizeof(info));
+    gf256_architecture_init();
 #if !defined(GF256_TARGET_MOBILE)
-    unsigned int cpu_info[4];
-    _cpuid(cpu_info, 7);
-    if ((cpu_info[1] & CPUID_EBX_AVX2) == 0)
-    {
-        return false;
-    }
-#endif // GF256_TRY_AVX2
-*/
-    return true;
+    #if defined(_M_X64) || defined(_M_AMD64) || defined(_M_IX86) || defined(__x86_64__)
+        info.cpu_type =CPU_TYPE_X64;
+    #else
+        info.cpu_type =CPU_TYPE_X86;
+    #endif
+    info.has_avx2 = CpuHasAVX2;
+    info.has_ssse3 = CpuHasSSSE3;
+#elif defined(ANDROID) || defined(IOS) || defined(LINUX_ARM) || defined(MACOS_ARM)
+    #if defined(__aarch64__)
+        info.cpu_type = CPU_TYPE_ARM64;
+    #else
+        info.cpu_type = CPU_TYPE_ARM32;
+    #endif
+    info.has_neon = CpuHasNeon;
+#else
+    info.cpu_type =CPU_TYPE_OTHER;
+#endif
+    return info;
 }

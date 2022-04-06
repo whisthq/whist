@@ -2,7 +2,7 @@
 #include <SDL2/SDL_thread.h>
 
 #include <whist/core/whist.h>
-#include "cm256/gf256_extra.h"
+#include "cm256/gf256_cpuinfo.h"
 #include "cm256/cm256.h"
 #include "rs_common.h"
 #include "lugi_rs_extra.h"
@@ -198,10 +198,22 @@ int init_rs_wrapper(void) {
     static int initialized = 0;
     if (initialized == 0) {
         lugi_rs_extra_init();
-        if (!gf256_has_hardware_support()) {
-            LOG_ERROR("Platform is x86/x64 but AVX2 is not supported!");
-            return WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT;
+        CpuInfo cpu_info = gf256_get_cpuinfo();
+
+        if (cpu_info.cpu_type == CPU_TYPE_X86 || cpu_info.cpu_type == CPU_TYPE_X64) {
+            if (!cpu_info.has_avx2) {
+                LOG_WARNING("Platform is x86/x64 but AVX2 is not supported!");
+            }
+
+            if (!cpu_info.has_ssse3) {
+                LOG_FATAL("Platform is x86/x64 but SSSE3 is not supported!");
+            }
+        } else if (cpu_info.cpu_type == CPU_TYPE_ARM32 || cpu_info.cpu_type == CPU_TYPE_ARM64) {
+            LOG_FATAL("Platform is arm32/arm64 but neon is not supported!");
+        } else {
+            LOG_FATAL("unknown Platform/CPU Type");
         }
+
         FATAL_ASSERT(cm256_init() == 0);
         initialized = 1;
     }
