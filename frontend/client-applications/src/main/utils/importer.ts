@@ -344,10 +344,39 @@ const decryptCookies = async (
   return cookies
 }
 
+const decryptCookieWindows = (value: string, encryptedValue: Buffer) => {
+  if (value.length > 0) return value
+
+  const ret = cryptUnprotectData(encryptedValue)
+  if (ret === undefined) return undefined
+
+  return ret.toString()
+}
+
 const decryptCookie = async (
   cookie: Cookie,
   encryptKey: Buffer
 ): Promise<Cookie | undefined> => {
+  if (
+    process.platform === "win32" &&
+    typeof cookie.encrypted_value !== "number" &&
+    cookie.encrypted_value[0] == 0x01 &&
+    cookie.encrypted_value[1] == 0x00 &&
+    cookie.encrypted_value[2] == 0x00 &&
+    cookie.encrypted_value[3] == 0x00
+  ) {
+    const decrypted = decryptCookieWindows(
+      cookie.value.toString(),
+      Buffer.from(cookie.encrypted_value.toString())
+    )
+
+    if (decrypted !== undefined) {
+      console.log("Decrypted!", decrypted)
+      cookie.decrypted_value = decrypted
+      return cookie
+    }
+  }
+
   try {
     if (typeof cookie.value === "string" && cookie.value.length > 0)
       return cookie
@@ -381,8 +410,6 @@ const decryptCookie = async (
         (cookie.encrypted_value as Buffer).length - 16
       )
 
-      console.log("auth tag is", authTag)
-
       decipher.setAuthTag(authTag)
     }
 
@@ -407,19 +434,16 @@ const decryptCookie = async (
 
     if (decoded.length === 0) return undefined
 
+    const final = decipher.final()
+
     if (process.platform !== "win32") {
-      const final = decipher.final()
       final.copy(decoded, decoded.length - 1)
 
       const padding = decoded[decoded.length - 1]
       if (padding !== 0) decoded = decoded.slice(0, decoded.length - padding)
-
-      cookie.decrypted_value = decoded.toString("utf8")
-    } else {
-      cookie.decrypted_value = decoded.toString("utf8")
     }
 
-    return undefined
+    cookie.decrypted_value = decoded.toString("utf8")
 
     // We don't want to upload Google cookies because Google will detect that these are not coming
     // from the right browser and prevent users from signing in
