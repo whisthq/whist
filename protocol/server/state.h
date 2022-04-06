@@ -63,7 +63,7 @@ typedef struct _whist_server_config whist_server_config;
 // Instead, make classes with init/destroy and getters/setters.
 
 /** @brief internal state of the whist server */
-struct _whist_server_state {
+typedef struct WhistServerState {
     // TODO:  Currently it is possible for asynchronous updates to this
     // structure to cause the video thread to see an inconsistent state
     // (for example, an updated width without an updated height).  This
@@ -119,8 +119,6 @@ struct _whist_server_state {
     int encoder_factory_bitrate;
     int encoder_factory_vbv_size;
     CodecType encoder_factory_codec_type;
-};
-
-typedef struct _whist_server_state whist_server_state;
+} WhistServerState;
 
 #endif  // WHIST_SERVER_STATE_H

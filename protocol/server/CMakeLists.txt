@@ -10,7 +10,7 @@ add_executable(WhistServer
         main.c
         handle_client_message.c
         network.c
-        notifications.c
+        dbus.c
         )
 
 set_target_properties(WhistServer PROPERTIES
@@ -98,13 +98,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         message(FATAL_ERROR "Library dbus-1 was not found!")
     endif()
 
-    pkg_check_modules(LIBEVENTPTHREADS REQUIRED libevent_pthreads)
-    include_directories(${LIBEVENTPTHREADS_INCLUDE_DIRS})
-    message(STATUS "LIBEVENTPTHREADS: ${LIBEVENTPTHREADS_INCLUDE_DIRS}")
-    if(NOT LIBEVENTPTHREADS_FOUND)
-        message(FATAL_ERROR "Library libevent_pthreads was not found!")
-    endif()
-
     target_link_libraries(WhistServer
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
@@ -116,8 +109,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             asound
             m
             OpenSSL::Crypto
-            event
-            ${LIBEVENTPTHREADS_LIBRARIES}
             )
 
 

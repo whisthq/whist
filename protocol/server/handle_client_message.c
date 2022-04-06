@@ -36,18 +36,18 @@ Private Functions
 ============================
 */
 
-static int handle_user_input_message(whist_server_state *state, WhistClientMessage *wcmsg);
-static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *wcmsg);
-static int handle_streaming_toggle_message(whist_server_state *state, WhistClientMessage *wcmsg);
-static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_user_input_message(WhistServerState *state, WhistClientMessage *wcmsg);
+static int handle_keyboard_state_message(WhistServerState *state, WhistClientMessage *wcmsg);
+static int handle_streaming_toggle_message(WhistServerState *state, WhistClientMessage *wcmsg);
+static int handle_dimensions_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_clipboard_message(WhistClientMessage *wcmsg);
-static int handle_quit_message(whist_server_state *state, WhistClientMessage *wcmsg);
-static int handle_init_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_quit_message(WhistServerState *state, WhistClientMessage *wcmsg);
+static int handle_init_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_file_metadata_message(WhistClientMessage *wcmsg);
 static int handle_file_chunk_message(WhistClientMessage *wcmsg);
-static int handle_open_urls_message(whist_server_state *state, WhistClientMessage *wcmsg);
-static int handle_frame_ack_message(whist_server_state *state, WhistClientMessage *wcmsg);
-static int handle_file_upload_cancel_message(whist_server_state *, WhistClientMessage *wcmsg);
+static int handle_open_urls_message(WhistServerState *state, WhistClientMessage *wcmsg);
+static int handle_frame_ack_message(WhistServerState *state, WhistClientMessage *wcmsg);
+static int handle_file_upload_cancel_message(WhistServerState *, WhistClientMessage *wcmsg);
 
 /*
 ============================
@@ -55,7 +55,7 @@ Public Function Implementations
 ============================
 */
 
-int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+int handle_client_message(WhistServerState *state, WhistClientMessage *wcmsg) {
     /*
         Handle message from the client.
 
@@ -116,7 +116,7 @@ Private Function Implementations
 ============================
 */
 
-static int handle_user_input_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+static int handle_user_input_message(WhistServerState *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user input message.
 
@@ -139,7 +139,7 @@ static int handle_user_input_message(whist_server_state *state, WhistClientMessa
 }
 
 // TODO: Unix version missing
-static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+static int handle_keyboard_state_message(WhistServerState *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user keyboard state change message. Synchronize client and
         server keyboard state
@@ -155,7 +155,7 @@ static int handle_keyboard_state_message(whist_server_state *state, WhistClientM
     return 0;
 }
 
-static int handle_streaming_toggle_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+static int handle_streaming_toggle_message(WhistServerState *state, WhistClientMessage *wcmsg) {
     /*
         Stop encoding and sending frames if the client requests it to save resources
 
@@ -182,7 +182,7 @@ static int handle_streaming_toggle_message(whist_server_state *state, WhistClien
     return 0;
 }
 
-static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+static int handle_dimensions_message(WhistServerState *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user dimensions change message.
 
@@ -259,7 +259,7 @@ static int handle_file_chunk_message(WhistClientMessage *wcmsg) {
     return 0;
 }
 
-static int handle_quit_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+static int handle_quit_message(WhistServerState *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user quit message
 
@@ -276,7 +276,7 @@ static int handle_quit_message(whist_server_state *state, WhistClientMessage *wc
     return 0;
 }
 
-static int handle_init_message(whist_server_state *state, WhistClientMessage *cwcmsg) {
+static int handle_init_message(WhistServerState *state, WhistClientMessage *cwcmsg) {
     /*
         Handle a user init message
 
@@ -297,7 +297,7 @@ static int handle_init_message(whist_server_state *state, WhistClientMessage *cw
     return 0;
 }
 
-static int handle_open_urls_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+static int handle_open_urls_message(WhistServerState *state, WhistClientMessage *fcmsg) {
     /*
         Handle a open URL message
 
@@ -347,7 +347,7 @@ static int handle_open_urls_message(whist_server_state *state, WhistClientMessag
     return 0;
 }
 
-static int handle_frame_ack_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+static int handle_frame_ack_message(WhistServerState *state, WhistClientMessage *wcmsg) {
     FATAL_ASSERT(FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES) &&
                  "Received frame ack but long-term reference frames "
                  "are not enabled.");
@@ -362,7 +362,7 @@ static int handle_frame_ack_message(whist_server_state *state, WhistClientMessag
     return 0;
 }
 
-static int handle_file_upload_cancel_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+static int handle_file_upload_cancel_message(WhistServerState *state, WhistClientMessage *wcmsg) {
     file_synchronizer_cancel_user_file_upload();
     return 0;
 }

@@ -284,7 +284,7 @@ ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 ENV HYDRAULIC_ROOT /hydraulic-squash
 
-RUN mkdir -p $HYDRAULIC_ROOT/{etc,usr/share/whist/private,root,run/user,/home/whist}
+RUN mkdir -p $HYDRAULIC_ROOT/{etc/dbus-1,usr/share/whist/private,root,run/user,/home/whist}
 
 #########################
 # Permissions
@@ -394,6 +394,9 @@ COPY --chmod=550 startup/entrypoint.sh $HYDRAULIC_ROOT/usr/share/whist/entrypoin
 #########################
 # Main
 #########################
+
+# Copy D-Bus configuration to allow `root` to access `whist` D-Bus
+COPY main/dbus-session-local.conf $HYDRAULIC_ROOT/etc/dbus-1/session-local.conf
 
 # Script to launch `whist-application` as the `whist` user
 COPY --chmod=555 main/run-whist-application.sh $HYDRAULIC_ROOT/usr/bin/run-whist-application.sh

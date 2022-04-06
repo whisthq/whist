@@ -20,7 +20,7 @@ Includes
 #include "state.h"
 #include "parse_args.h"
 #include "handle_client_message.h"
-#include "notifications.h"
+#include "dbus.h"
 
 /*
 ============================
@@ -44,7 +44,7 @@ Globals
 */
 
 // TODO: Remove ugly global state
-whist_server_state server_state;
+WhistServerState server_state;
 
 // TODO: Remove, needed by udp.c temporarily
 volatile bool connected = false;
@@ -55,7 +55,7 @@ Private Functions
 ============================
 */
 
-void graceful_exit(whist_server_state* state);
+void graceful_exit(WhistServerState* state);
 #ifdef __linux__
 int xioerror_handler(Display* d);
 void sig_handler(int sig_num);
@@ -68,7 +68,7 @@ Private Function Implementations
 ============================
 */
 
-void graceful_exit(whist_server_state* state) {
+void graceful_exit(WhistServerState* state) {
     /*
         Quit clients gracefully and allow server to exit.
     */
@@ -123,7 +123,7 @@ void sig_handler(int sig_num) {
 #endif
 
 // Gets all pending Whist UDP messages
-static void get_whist_udp_client_messages(whist_server_state* state) {
+static void get_whist_udp_client_messages(WhistServerState* state) {
     WhistClientMessage wcmsg;
     size_t wcmsg_size;
 
@@ -134,7 +134,7 @@ static void get_whist_udp_client_messages(whist_server_state* state) {
 }
 
 // Gets all pending Whist TCP messages
-static bool get_whist_tcp_client_messages(whist_server_state* state) {
+static bool get_whist_tcp_client_messages(WhistServerState* state) {
     bool ret = false;
 
     WhistPacket* tcp_packet = NULL;
@@ -235,7 +235,7 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         Return:
             (int): 0 on success
     */
-    whist_server_state* state = (whist_server_state*)opaque;
+    WhistServerState* state = (WhistServerState*)opaque;
 
     LOG_INFO("multithreaded_sync_tcp_packets running on Thread %lu", whist_get_thread_id(NULL));
 
@@ -316,7 +316,7 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
     return 0;
 }
 
-static void whist_server_state_init(whist_server_state* state, whist_server_config* config) {
+static void whist_server_state_init(WhistServerState* state, whist_server_config* config) {
     memset(state, 0, sizeof(*state));
     state->config = config;
     state->client_os = WHIST_UNKNOWN_OS;
@@ -400,11 +400,11 @@ int main(int argc, char* argv[]) {
     WhistThread send_audio_thread =
         whist_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
 
-    NotificationsHandler* notifications_handler = init_notifications_handler(&server_state);
+    DBusHandlerContext* dbus_handler = whist_create_dbus_handler(&server_state);
 
     WhistThread sync_tcp_packets_thread = whist_create_thread(
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &server_state);
-    LOG_INFO("Sending video, audio, and notifications...");
+    LOG_INFO("Sending video, audio, and D-Bus handler...");
 
     WhistTimer totaltime;
     start_timer(&totaltime);
@@ -653,7 +653,7 @@ int main(int argc, char* argv[]) {
     whist_wait_thread(send_video_thread, NULL);
     whist_wait_thread(send_audio_thread, NULL);
     whist_wait_thread(sync_tcp_packets_thread, NULL);
-    destroy_notifications_handler(notifications_handler);
+    whist_destroy_dbus_handler(dbus_handler);
 
     ltr_destroy(server_state.ltr_context);
 

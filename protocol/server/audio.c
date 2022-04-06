@@ -59,7 +59,7 @@ Public Function Implementations
 */
 
 int32_t multithreaded_send_audio(void* opaque) {
-    whist_server_state* state = (whist_server_state*)opaque;
+    WhistServerState* state = (WhistServerState*)opaque;
     int id = 1;
 
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
