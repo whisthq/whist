@@ -3,7 +3,6 @@ import { execCommandByOS } from "@app/main/utils/execCommand"
 const getUserLocale = () => {
   const userLocaleRaw = execCommandByOS(
     "locale",
-    /* eslint-disable no-template-curly-in-string */
     "locale",
     "",
     ".",
