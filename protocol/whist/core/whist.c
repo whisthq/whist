@@ -52,12 +52,23 @@ Public Function Implementations
 ============================
 */
 
+static WhistMutex gpu_lock;
+
+void whist_gpu_lock(void) {
+    whist_lock_mutex(gpu_lock);
+}
+
+void whist_gpu_unlock(void) {
+    whist_unlock_mutex(gpu_lock);
+}
+
 void whist_init_subsystems(void) {
     whist_init_multithreading();
     whist_init_logger();
     whist_init_features();
     init_fec();
     whist_init_networking();
+    gpu_lock = whist_create_mutex();
 }
 
 void print_system_info(void) {

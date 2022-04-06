@@ -1004,4 +1004,9 @@ const char* whist_git_revision(void);
 // TODO: Resolve circular references
 #include "whist_frame.h"
 
+// Temporary functions to test whether hang on macOS is a result of
+// simultaneous operations in different threads.
+void whist_gpu_lock(void);
+void whist_gpu_unlock(void);
+
 #endif  // WHIST_H

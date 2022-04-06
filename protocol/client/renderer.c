@@ -226,7 +226,10 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
     }
 
     // Render out any pending audio or video
+    whist_gpu_lock();
     render_video(whist_renderer->video_context);
+    whist_gpu_unlock();
+
     if (has_video_rendered_yet(whist_renderer->video_context)) {
         // Only render audio, if the video has rendered something
         // This is because it feels weird when audio is played to the loading screen
