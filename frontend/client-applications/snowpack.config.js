@@ -48,7 +48,7 @@ const esbuildCommand = [
   "--external:@m-lab/ndt7",
   "--external:ref-napi",
   "--external:ffi-napi",
-  "--external:ref-struct-napi"
+  "--external:ref-struct-di"
 ]
 // We minify our output to make this less convenient for snooping users.
 if (process.env.NODE_ENV === "production") {

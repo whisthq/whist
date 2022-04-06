@@ -16,12 +16,12 @@ export const ChromeOSXDefaultDir = [
   "~/Library/Application Support/Google/Chrome/Default/",
 ]
 export const ChromeWindowsDefaultDir = [
-  { env: "LOCALAPPDATA", path: "Google\\Chrome\\User Data\\Default\\Network" },
+  "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Network",
+  "%APPDATA%\\Google\\Chrome\\User Data\\Default\\Network",
 ]
 export const ChromeWindowsKeys = [
-  { env: "APPDATA", path: "..\\Local\\Google\\Chrome\\User Data\\Local State" },
-  { env: "LOCALAPPDATA", path: "Google\\Chrome\\User Data\\Local State" },
-  { env: "APPDATA", path: "Google\\Chrome\\User Data\\Local State" },
+  "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Local State",
+  "%APPDATA%\\Google\\Chrome\\User Data\\Local State",
 ]
 
 export const ChromiumLinuxDefaultDir = ["~/.config/chromium/Default/"]
@@ -29,9 +29,8 @@ export const ChromiumOSXDefaultDir = [
   "~/Library/Application Support/Chromium/Default/",
 ]
 export const ChromiumWindowsKeys = [
-  { env: "APPDATA", path: "..\\Local\\Chromium\\User Data\\Local State" },
-  { env: "LOCALAPPDATA", path: "Chromium\\User Data\\Local State" },
-  { env: "APPDATA", path: "Chromium\\User Data\\Local State" },
+  "%LOCALAPPDATA%\\Chromium\\User Data\\Local State",
+  "%APPDATA%\\Chromium\\User Data\\Local State",
 ]
 
 export const OperaLinuxDefaultDir = ["~/.config/opera/"]
@@ -39,12 +38,8 @@ export const OperaOSXDefaultDir = [
   "~/Library/Application Support/com.operasoftware.Opera/",
 ]
 export const OperaWindowsKeys = [
-  {
-    env: "APPDATA",
-    path: "..\\Local\\Opera Software\\Opera Stable\\Local State",
-  },
-  { env: "LOCALAPPDATA", path: "Opera Software\\Opera Stable\\Local State" },
-  { env: "APPDATA", path: "Opera Software\\Opera Stable\\Local State" },
+  "%LOCALAPPDATA%\\Opera Software\\Opera Stable\\Local State",
+  "%APPDATA%\\Opera Software\\Opera Stable\\Local State",
 ]
 
 export const BraveLinuxDefaultDir = [
@@ -56,30 +51,12 @@ export const BraveOSXDefaultDir = [
   "~/Library/Application Support/BraveSoftware/Brave-Browser-Beta/Default/",
 ]
 export const BraveWindowsKeys = [
-  {
-    env: "APPDATA",
-    path: "..\\Local\\BraveSoftware\\Brave-Browser\\User Data\\Local State",
-  },
-  {
-    env: "LOCALAPPDATA",
-    path: "BraveSoftware\\Brave-Browser\\User Data\\Local State",
-  },
-  {
-    env: "APPDATA",
-    path: "BraveSoftware\\Brave-Browser\\User Data\\Local State",
-  },
-  {
-    env: "APPDATA",
-    path: "..\\Local\\BraveSoftware\\Brave-Browser-Beta\\User Data\\Local State",
-  },
-  {
-    env: "LOCALAPPDATA",
-    path: "BraveSoftware\\Brave-Browse-Betar\\User Data\\Local State",
-  },
-  {
-    env: "APPDATA",
-    path: "BraveSoftware\\Brave-Browser-Beta\\User Data\\Local State",
-  },
+  "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\User Data\\Local State",
+  "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser-Beta\\User Data\\Local State",
+  "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser-Betar\\User Data\\Local State",
+  "%APPDATA%\\BraveSoftware\\Brave-Browser\\User Data\\Local State",
+  "%APPDATA%\\BraveSoftware\\Brave-Browser-Beta\\User Data\\Local State",
+  "%APPDATA%\\BraveSoftware\\Brave-Browser-Betar\\User Data\\Local State",
 ]
 
 export const EdgeLinuxDefaultDir = [
@@ -90,12 +67,8 @@ export const EdgeOSXDefaultDir = [
   "~/Library/Application Support/Microsoft Edge/Default/",
 ]
 export const EdgeWindowsKeys = [
-  {
-    env: "APPDATA",
-    path: "..\\Local\\Microsoft\\Edge\\User Data\\Local State",
-  },
-  { env: "LOCALAPPDATA", path: "Microsoft\\Edge\\User Data\\Local State" },
-  { env: "APPDATA", path: "Microsoft\\Edge\\User Data\\Local State" },
+  "%APPDATA%\\Microsoft\\Edge\\User Data\\Local State",
+  "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\Local State",
 ]
 
 // Linux DBus / Secret Session

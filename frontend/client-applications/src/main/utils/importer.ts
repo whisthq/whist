@@ -5,7 +5,7 @@ import fs from "fs"
 import tmp from "tmp"
 import { homedir } from "os"
 import path, { dirname } from "path"
-import Struct from "ref-struct-napi"
+import Struct from "ref-struct-di"
 import ref from "ref-napi"
 import knex from "knex"
 import crypto from "crypto"
@@ -44,8 +44,6 @@ interface Cookie {
 
 interface LocalStorageMap {
   [key: string]: string
-const expandWinPath = (args: any): string => {
-  return path.join(process.env[args.env] ?? "", args.path ?? "")
 }
 
 const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
@@ -97,7 +95,7 @@ const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
     case "win32": {
       switch (browser) {
         case InstalledBrowser.CHROME: {
-          return [expandWinPath(ChromeWindowsDefaultDir[0])]
+          return ChromeWindowsDefaultDir
         }
       }
     }
@@ -109,6 +107,7 @@ const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
 
 const getCookieFilePath = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
+
   return browserDirectories.map((dir) => path.join(dir, "Cookies"))
 }
 
@@ -269,25 +268,20 @@ const getLinuxCookieEncryptionKey = async (
 }
 
 const expandUser = (text: string): string => {
-  return text.replace(/^~([a-z]+|\/)/, (_, $1: string) => {
-    return $1 === "/" ? `${homedir()}/` : `${dirname(homedir())}/${$1}`
-  })
+  if (process.platform === "win32") {
+    return text
+      .replace("%LOCALAPPDATA%", process.env.LOCALAPPDATA ?? "")
+      .replace("%APPDATA", process.env.APPDATA ?? "")
+  } else {
+    return text.replace(/^~([a-z]+|\/)/, (_, $1: string) => {
+      return $1 === "/" ? `${homedir()}/` : `${dirname(homedir())}/${$1}`
+    })
+  }
 }
 
-const expandPaths = (paths: any[], os: string): string => {
-  assert(["windows", "linux", "win32"].includes(os))
-
-  console.log("assert passed", paths)
-
-  // expand the path of file and remove invalid files
-  if (os === "win32") {
-    paths = paths.map(expandWinPath)
-  } else {
-    paths = paths.map(expandUser)
-  }
-
-  console.log("filtered paths", paths)
-
+const expandPaths = (paths: any[]): string => {
+  // Expand the path of file and remove invalid files
+  paths = paths.map(expandUser)
   paths = paths.filter(fs.existsSync)
 
   // Get the first valid path for now
@@ -300,8 +294,8 @@ const decryptCookies = async (
 ): Promise<Cookie[]> => {
   const cookies: Cookie[] = []
 
-  const numOfCookise = encryptedCookies.length
-  for (let i = 0; i < numOfCookise; i++) {
+  const numOfCookies = encryptedCookies.length
+  for (let i = 0; i < numOfCookies; i++) {
     const cookie = await decryptCookie(encryptedCookies[i], encryptKey)
     cookie !== undefined && cookies.push(cookie)
   }
@@ -361,8 +355,8 @@ const decryptCookie = async (
 
     return cookie
   } catch (err) {
-    console.error("Decrypt failed with error: ", err)
-    console.error("The cookie that failed was", cookie)
+    // console.error("Decrypt failed with error: ", err)
+    // console.error("The cookie that failed was", cookie)
     return undefined
   }
 }
@@ -370,7 +364,9 @@ const decryptCookie = async (
 const getCookiesFromFile = async (
   browser: InstalledBrowser
 ): Promise<Cookie[]> => {
-  const cookieFile = expandPaths(getCookieFilePath(browser), process.platform)
+  const cookieFile = expandPaths(getCookieFilePath(browser))
+
+  console.log("the cookie file is", cookieFile)
 
   try {
     const tempFile = createLocalCopy(cookieFile)
@@ -392,10 +388,7 @@ const getCookiesFromFile = async (
 }
 
 const getBookmarksFromFile = (browser: InstalledBrowser): string => {
-  const bookmarkFile = expandPaths(
-    getBookmarkFilePath(browser),
-    process.platform
-  )
+  const bookmarkFile = expandPaths(getBookmarkFilePath(browser))
 
   try {
     const bookmarks = fs.readFileSync(bookmarkFile, "utf8")
@@ -445,7 +438,7 @@ const getLocalStorageFromFiles = (browser: InstalledBrowser): string => {
 }
 
 const getExtensionIDs = (browser: InstalledBrowser): string => {
-  const extensionsDir = expandPaths(getExtensionDir(browser), process.platform)
+  const extensionsDir = expandPaths(getExtensionDir(browser))
 
   try {
     // Get all the directory names as it is the extension's ID
@@ -461,10 +454,7 @@ const getExtensionIDs = (browser: InstalledBrowser): string => {
 }
 
 const getPreferencesFromFile = (browser: InstalledBrowser): string => {
-  const preferencesFile = expandPaths(
-    getPreferencesFilePath(browser),
-    process.platform
-  )
+  const preferencesFile = expandPaths(getPreferencesFilePath(browser))
 
   try {
     const preferences = fs.readFileSync(preferencesFile, "utf8")
@@ -508,9 +498,10 @@ const getCookieEncryptionKey = async (
       return key
     }
     case "win32":
-      const DATA_BLOB = Struct({
-        cbData: ref.types.uint32,
-        pbData: ref.refType(ref.types.byte),
+      const StructType = Struct(ref)
+      const DATA_BLOB = StructType({
+        length: ref.types.uint32,
+        buf: ref.refType(ref.types.byte),
       })
       const PDATA_BLOB = ref.refType(DATA_BLOB)
       const Crypto = new ffi.Library("Crypt32", {
@@ -526,48 +517,37 @@ const getCookieEncryptionKey = async (
             PDATA_BLOB,
           ],
         ],
-        CryptProtectData: [
-          "bool",
-          [
-            PDATA_BLOB,
-            "string",
-            "string",
-            "void *",
-            "string",
-            "int",
-            PDATA_BLOB,
-          ],
-        ],
       })
 
-      const keyFile = expandPaths(getWindowsKeys(browser), "win32")
+      const keyFile = expandPaths(getWindowsKeys(browser))
       const data = JSON.parse(fs.readFileSync(keyFile).toString())
       const key64 = data.os_crypt.encrypted_key.toString("utf-8")
 
-      let buf = Buffer.from(key64, "base64")
-      let dataBlobInput = new DATA_BLOB()
-      dataBlobInput.pbData = buf
-      dataBlobInput.cbData = buf.length
-      let dataBlobOutput = ref.alloc(DATA_BLOB)
-      let result = Crypto.CryptUnprotectData(
+      const buf = Buffer.from(key64, "base64").slice(5)
+      const dataBlobInput = new DATA_BLOB()
+      const dataBlobOutput = new DATA_BLOB()
+
+      dataBlobInput.buf = buf
+      dataBlobInput.length = buf.length
+
+      console.log("buf length", buf, buf.length)
+      console.log("input length", dataBlobInput.buf.length)
+
+      const deref = dataBlobInput.buf.deref()
+
+      console.log("derefed length", deref, deref.length)
+
+      const result = Crypto.CryptUnprotectData(
         dataBlobInput.ref(),
         null,
         null,
-        null,
+        null as any,
         null,
         0,
-        dataBlobOutput
+        dataBlobOutput.ref()
       )
-      console.log("result", result)
-      let outputDeref = dataBlobOutput.deref() as any
-      const plainText = ref.reinterpret(
-        outputDeref.pbData,
-        outputDeref.cbData,
-        0
-      )
-      console.log("plaintext", plainText)
 
-      return plainText
+      return dataBlobOutput.buf
 
     default:
       throw Error("OS not recognized. Works on OSX or linux.")
@@ -588,13 +568,7 @@ const createLocalCopy = (cookieFile: string): string => {
 }
 
 const isBrowserInstalled = (browser: InstalledBrowser) => {
-  console.log(
-    "looking for",
-    expandPaths(getCookieFilePath(browser), process.platform)
-  )
-  return fs.existsSync(
-    expandPaths(getCookieFilePath(browser), process.platform)
-  )
+  return fs.existsSync(expandPaths(getCookieFilePath(browser)))
 }
 
 const getInstalledBrowsers = () => {
@@ -625,6 +599,8 @@ const getDecryptedCookies = async (
     const encryptedCookies = await getCookiesFromFile(browser)
 
     const encryptKey = await getCookieEncryptionKey(browser)
+
+    console.log("encrypted length is", encryptKey.length)
 
     const cookies = await decryptCookies(encryptedCookies, encryptKey)
 
