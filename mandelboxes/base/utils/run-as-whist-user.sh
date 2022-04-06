@@ -44,10 +44,9 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     # Set the system-wide timezone
     timedatectl set-timezone "$DESIRED_TIMEZONE"
   fi
-  if [ "$( jq -rc 'has("user_locale")' < $json_data )" == "true"  ]; then
-    USER_LOCALE="$(jq -rc '.user_locale | to_entries[] | "\(.key)=\"\(.value)\""' < $json_data)"
-    USER_LOCALE="$(echo $USER_LOCALE | sed 's/\\[tn]//g')"
-    eval "update-locale $USER_LOCALE"
+  if [ "$( jq -rc 'has("user_locale")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    USER_LOCALE="$(jq -rc '.user_locale | to_entries[] | "\(.key)=\"\(.value)\""' < $WHIST_JSON_FILE)"
+    eval "update-locale ${USER_LOCALE//$'\n'/ }"
   fi
   if [ "$( jq -rc 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
