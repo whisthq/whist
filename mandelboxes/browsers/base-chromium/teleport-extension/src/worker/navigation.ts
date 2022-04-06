@@ -1,7 +1,12 @@
 import { WELCOME_URL } from "@app/constants/pages"
 
 const redirectIfWelcome = (tab: chrome.tabs.Tab) => {
-  if (tab.url !== "chrome://welcome/" && tab.pendingUrl !== "chrome://welcome/")
+  if (
+    tab.url !== "chrome://welcome/" &&
+    tab.pendingUrl !== "chrome://welcome/" &&
+    tab.url !== "chrome://whats-new/" &&
+    tab.pendingUrl !== "chrome://whats-new/"
+  )
     return
 
   if (tab.id === undefined) {
