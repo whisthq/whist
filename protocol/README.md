@@ -243,6 +243,18 @@ For a useful workflow for server development on Linux, see the [server-specific 
 
 **Important:** When running the protocol, please ensure that the client and server are both running on the exact same git commit. If you run into issues, check `git log` on both client and server to ensure the top git hash matches, and ensure that both sides have been compiled.
 
+#### Running in Xcode
+
+Xcode provides an extremely powerful interface for debugging and monitoring exactly what's going on with various system calls on macOS. To build and run WhistClient within Xcode, simply:
+
+```
+cmake -S . -B build-xcode -G Xcode
+# Inside build-xcode, open the generated project file in XCode
+# In the top-middle, make sure to appropriately set the target to WhistClient
+# In the menu, go to Product > Scheme > Edit Schemes
+# For the Run Debug scheme, add arguments -- put in the params to connect to your mandelbox here, without ./wclient
+```
+
 #### Sentry
 
 The sentry-native SDK gets automatically built by our CMake build system.

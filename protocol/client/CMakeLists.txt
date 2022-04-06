@@ -119,19 +119,23 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND ${CMAKE_BUILD_TYPE} MATCHES "Release")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_custom_command(
             TARGET WhistClient POST_BUILD
-            COMMAND objcopy --only-keep-debug $<TARGET_FILE:WhistClient> ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient.debug
-            COMMAND objcopy --strip-debug --strip-unneeded $<TARGET_FILE:WhistClient>)
+            COMMAND "$<IF:$<CONFIG:Release>,objcopy,true>" --only-keep-debug "$<TARGET_FILE:WhistClient>" "${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient.debug"
+            COMMAND "$<IF:$<CONFIG:Release>,objcopy,true>" --strip-debug --strip-unneeded "$<TARGET_FILE:WhistClient>"
+            COMMAND_EXPAND_LISTS
+    )
 endif()
 
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND ${CMAKE_BUILD_TYPE} MATCHES "Release")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_custom_command(
             TARGET WhistClient POST_BUILD
-            COMMAND /usr/bin/dsymutil $<TARGET_FILE:WhistClient> -o ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient.debug
-            COMMAND /usr/bin/strip -S $<TARGET_FILE:WhistClient>)
+            COMMAND "$<IF:$<CONFIG:Release>,/usr/bin/dsymutil,true>" "$<TARGET_FILE:WhistClient>" -o "${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient.debug"
+            COMMAND "$<IF:$<CONFIG:Release>,/usr/bin/strip,true>" -S $<TARGET_FILE:WhistClient>
+            COMMAND_EXPAND_LISTS
+    )
 endif()
 
 

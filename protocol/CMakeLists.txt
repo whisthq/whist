@@ -24,10 +24,6 @@ include(CMakeDependentOption)
 
 project(WhistProtocol LANGUAGES C CXX)
 
-if(CMAKE_CONFIGURATION_TYPES)
-    message(FATAL_ERROR "Detected multi-configuration generator! This CMake file does not support multi-configuration generators.")
-endif()
-
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     check_language(CUDA)
     # CMAKE_CUDA_COMPILER will be set only if check_language(CUDA) succeeded
@@ -85,17 +81,6 @@ include(cmake/clang-format.cmake)
 # A small module which sets the default build type to debug if a .git is present and release otherwise.
 include(cmake/default-build.cmake)
 
-# For debug builds log every thing, for release builds log warnings or higher
-if(${CMAKE_BUILD_TYPE} MATCHES Debug)
-    add_definitions(-DLOG_LEVEL=5)
-elseif(${CMAKE_BUILD_TYPE} MATCHES Metrics)
-    # All except DEBUG
-    add_definitions(-DLOG_LEVEL=5 -DLOG_CPU_USAGE=1)
-elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
-    # For now, always show all logs
-    add_definitions(-DLOG_LEVEL=5)
-endif()
-add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 option(CHECK_CI "Run checks for the CI environment" OFF)
 if(CHECK_CI)
     message(STATUS "Automatically enabling checks for the CI environment")
@@ -164,12 +149,8 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 message(STATUS "Exporting compile commands for clang-tidy - done")
 
-# detect if we are building 64bit or 32bit
-if(${CMAKE_SIZEOF_VOID_P} MATCHES "8")
-    set(arch 64)
-else()
-    set(arch 32)
-endif()
+set(arch 64)
+set(CMAKE_INSTALL_LIBDIR lib)
 
 # on macOS, detect if we are building arm64 or x86_64
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -390,27 +371,9 @@ set(MAC_SPECIFIC_CLIENT_LIBS
 )
 
 # MSVC C/C++ Standard Library linking, based on Debug/Release
-if(${CMAKE_BUILD_TYPE} MATCHES Debug)
-    set(WINDOWS_CORE_LIBS
-        ucrtd
-        libcmtd
-        libcpmtd
-        vcruntimed
-        msvcrtd
-        msvcmrtd
-        msvcprtd
-    )
-elseif(${CMAKE_BUILD_TYPE} MATCHES Release OR ${CMAKE_BUILD_TYPE} MATCHES Metrics)
-    set(WINDOWS_CORE_LIBS
-        ucrt
-        libcmt
-        libcpmt
-        vcruntime
-        msvcrt
-        msvcmrt
-        msvcprt
-    )
-endif()
+set(WINDOWS_CORE_LIBS
+  $<IF:$<CONFIG:Debug>, ucrtd libcmtd libcpmtd vcruntimed msvcrtd msvcmrtd msvcprtd, ucrt libcmt libcpmt vcruntime msvcrt msvcmrt msvcprt>
+)
 
 # Windows Libs Shared by both server and client go here
 set(WINDOWS_CORE_LIBS
