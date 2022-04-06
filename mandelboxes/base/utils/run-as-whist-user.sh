@@ -28,6 +28,7 @@ INITIAL_URL=""
 USER_AGENT=""
 LATITUDE=""
 LONGITUDE=""
+USER_LOCALE=""
 KIOSK_MODE=false
 
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
@@ -42,6 +43,11 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     DESIRED_TIMEZONE="$(jq -rc '.desired_timezone' < $WHIST_JSON_FILE)"
     # Set the system-wide timezone
     timedatectl set-timezone "$DESIRED_TIMEZONE"
+  fi
+  if [ "$( jq -rc 'has("user_locale")' < $json_data )" == "true"  ]; then
+      USER_LOCALE="$(jq -rc '.user_locale | to_entries[] | "\(.key)=\"\(.value)\""' < $json_data)"
+      USER_LOCALE="$(echo $USER_LOCALE | sed 's/\\[tn]//g')"
+      eval "update-locale $USER_LOCALE"
   fi
   if [ "$( jq -rc 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
