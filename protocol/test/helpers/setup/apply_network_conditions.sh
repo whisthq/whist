@@ -3,24 +3,24 @@
 set -Eeuo pipefail
 
 ## This program will set artificial network conditions, according to the arguments passed, on the machine where it is run.
-# Arguments: 
+# Arguments:
 # -d <comma-separated device names>: a mandatory argument that specifies the network devices that we want to affect with the network conditions
 # -t <test_duration>: the test duration in seconds.
-# -b <bandwidth>:   this argument can be a single value (<bandwidth>) or a range (<min bandwidth>,<max bandwidth>). 
+# -b <bandwidth>:   this argument can be a single value (<bandwidth>) or a range (<min bandwidth>,<max bandwidth>).
 #                   It specifies the maximum bandwidth to be allowed in the network
 # -p <packet drop %>: this argument can be a single value (<packet drop %>) or a range (<min packet drop %>,<max packet drop %>).
 #                     It specifies the percentage of packets that should be randomly dropped by the network.
-# -q <queue length (ms)>: this argument can be a single value (<queue length (ms)>) or a range (<min queue length (ms)>,<max queue length (ms)>). 
+# -q <queue length (ms)>: this argument can be a single value (<queue length (ms)>) or a range (<min queue length (ms)>,<max queue length (ms)>).
 #                         It specifies the delay that each incoming/outcoming packet should incur due to simulated time spent in packet queues.
-# -i <interval (ms)>: this argument can be a single value (<interval (ms)>) or a range (<min interval (ms)>,<max interval (ms)>). 
+# -i <interval (ms)>: this argument can be a single value (<interval (ms)>) or a range (<min interval (ms)>,<max interval (ms)>).
 #                     It specifies the frequency at which the network conditions should change. If a range is passed, we set the network conditions,
-#                     generate a value in the range, and wait for that amount before updating the network conditions again. 
+#                     generate a value in the range, and wait for that amount before updating the network conditions again.
 #                     If a single value is passed, we always wait for the same amount of time.
 # -s <random_seed>: an optional argument setting the random seed. If no values is passed, 34587 is used.
 
 # Sample usage:
 # ./apply_network_conditions.sh -d ens55 -t 120 -b 10Mbit,20Mbit -p 5,10 -q 50,100 -i 100,1000 -s 34587
-# 
+#
 # The command above will change the network conditions each 100 to 1000 ms and apply the following settings to device ens55, for a total duration of 120 seconds:
 # - Bandwidth limited to a random value in the 10-20 Mbit/s range
 # - 5% - 10% of packets, chosen at random, are dropped
@@ -61,7 +61,7 @@ test_duration="${test_duration:-}"
 if [ -z "${test_duration:-}" ]; then
   echo "Cannot set network conditions -- no test duration was specified."
   exit_with_usage_message
-else 
+else
   if [[ ! ( "${test_duration}" =~ ^[0-9]+$ )  || "${test_duration}" -lt 1 ]]; then
     echo "Test duration must be a positive, nonzero integer."
     exit_with_usage_message
