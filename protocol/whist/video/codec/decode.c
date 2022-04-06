@@ -24,9 +24,14 @@ Includes
 #include "decode.h"
 #include <whist/logging/log_statistic.h>
 #include "whist/core/error_codes.h"
+#include "whist/utils/command_line.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+
+static const char* save_decoder_input;
+COMMAND_LINE_STRING_OPTION(save_decoder_input, 0, "save-decoder-input", 256,
+                           "Save decoder input to a file.")
 
 /*
 ============================
@@ -320,6 +325,13 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
         return NULL;
     }
 
+    if (save_decoder_input) {
+        decoder->save_input_file = fopen(save_decoder_input, "wb");
+        if (decoder->save_input_file == NULL) {
+            LOG_FATAL("Failed to open \"%s\" to save decoder input.", save_decoder_input);
+        }
+    }
+
     return decoder;
 }
 
@@ -332,8 +344,13 @@ void destroy_video_decoder(VideoDecoder* decoder) {
     */
     destroy_video_decoder_members(decoder);
 
+    if (save_decoder_input) {
+        fclose(decoder->save_input_file);
+    }
+
     // free the buffer and decoder
     free(decoder);
+
     return;
 }
 
@@ -352,6 +369,16 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffe
             */
 
     int num_packets = extract_avpackets_from_buffer(buffer, (int)buffer_size, decoder->packets);
+
+    if (save_decoder_input) {
+        for (int i = 0; i < num_packets; i++) {
+            AVPacket* pkt = &decoder->packets[i];
+            fwrite(pkt->data, pkt->size, 1, decoder->save_input_file);
+        }
+        // Flush after every write - if the decoder fails on this input
+        // then we won't have an opportunity to flush later.
+        fflush(decoder->save_input_file);
+    }
 
     int res;
     for (int i = 0; i < num_packets; i++) {

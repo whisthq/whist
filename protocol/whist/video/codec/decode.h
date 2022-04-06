@@ -73,6 +73,9 @@ typedef struct VideoDecoder {
     bool using_hw;
 
     bool received_a_frame;
+
+    // File written when saving input.
+    FILE* save_input_file;
 } VideoDecoder;
 
 /*
