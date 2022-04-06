@@ -45,6 +45,7 @@ export default flow(
         longitude: string
         latitude: string
       }
+      userLocale: string | undefined
     }>
   ) => {
     const create = mandelboxCreateFlow(
@@ -80,6 +81,7 @@ export default flow(
             user_agent: getUserAgent(), // This spoofs user agent on server-side Chrome to match the current OS
             longitude: t.geolocation.longitude,
             latitude: t.geolocation.latitude,
+            user_locale: t.userLocale,
           }), // Data to send through the JSON transport
         }))
       )

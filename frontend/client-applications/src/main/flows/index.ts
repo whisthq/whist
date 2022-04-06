@@ -34,6 +34,7 @@ import {
   keyRepeat,
   initialKeyRepeat,
   geolocation,
+  userLocale,
 } from "@app/main/utils/state"
 import {
   CACHED_CONFIG_TOKEN,
@@ -143,6 +144,7 @@ const launchTrigger = emitOnSignal(
     keyRepeat,
     initialKeyRepeat,
     geolocation,
+    userLocale,
   }),
   merge(
     zip(

@@ -55,6 +55,7 @@ const darkMode = withAppActivated(of(nativeTheme.shouldUseDarkColors))
 const timezone = of(Intl.DateTimeFormat().resolvedOptions().timeZone)
 const keyRepeat = of(getKeyRepeat())
 const initialKeyRepeat = of(getInitialKeyRepeat())
+const userLocale = of(app.getLocale())
 
 // Keep track of what browsers are installed
 const browsers = of(getInstalledBrowsers())
@@ -72,4 +73,5 @@ export {
   initialKeyRepeat,
   browsers,
   geolocation,
+  userLocale,
 }
