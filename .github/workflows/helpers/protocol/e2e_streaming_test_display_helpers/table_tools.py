@@ -8,6 +8,9 @@ from contextlib import redirect_stdout
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
+# Constants
+N_NETWORK_CONDITION_PARAMETERS = 5
+
 from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
     compute_deltas,
 )
@@ -30,7 +33,7 @@ def network_conditions_to_readable_form(network_conditions):
     """
     human_readable_network_conditions = network_conditions
 
-    if len(network_conditions.split(",")) == 4:
+    if len(network_conditions.split(",")) == N_NETWORK_CONDITION_PARAMETERS:
         human_readable_network_conditions = network_conditions.split(",")
 
         def parse_value_or_range(raw_string, convert_string):
@@ -56,6 +59,9 @@ def network_conditions_to_readable_form(network_conditions):
             if raw_string != "None"
             else raw_string
         )
+        transform_packet_limit_string = (
+            lambda raw_string: raw_string + " packets" if raw_string != "None" else raw_string
+        )
         transform_interval_string = (
             lambda raw_string: raw_string + " ms" if raw_string != "None" else raw_string
         )
@@ -67,14 +73,19 @@ def network_conditions_to_readable_form(network_conditions):
         packet_drops = parse_value_or_range(
             human_readable_network_conditions[2], transform_packet_drops_string
         )
+        packet_limit = parse_value_or_range(
+            human_readable_network_conditions[3], transform_packet_limit_string
+        )
         interval = parse_value_or_range(
-            human_readable_network_conditions[3], transform_interval_string
+            human_readable_network_conditions[4], transform_interval_string
         )
         interval = "No." if interval == "None" else f"Yes, frequency is {interval}"
-        human_readable_network_conditions = f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}, Conditions change over time? {interval}"
+        human_readable_network_conditions = f"Bandwidth: {bandwidth}, Delay: {delay}, Packet Drops: {packet_drops}, Queue Limit: {packet_limit}, Conditions change over time? {interval}"
 
     elif network_conditions == "normal":
-        human_readable_network_conditions = f"Bandwidth: Unbounded, Delay: None, Packet Drops: None"
+        human_readable_network_conditions = (
+            f"Bandwidth: Unbounded, Delay: None, Packet Drops: None, Queue limit: default"
+        )
 
     return human_readable_network_conditions
 

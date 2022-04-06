@@ -129,7 +129,7 @@ jobs:
             --use-two-instances=true \
             --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
             --use-existing-server-instance "$SERVER_INSTANCE_ID" \
-            --leave-instances-on=true \
+            --leave-instances-on=false \
             --skip-host-setup=true \
             --skip-git-clone=true \
             --network-conditions 10Mbit-20Mbit,50,None,None,100-1000
