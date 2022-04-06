@@ -6,7 +6,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/checkout/session"
+	billingPortal "github.com/stripe/stripe-go/v72/billingportal/session"
+	checkout "github.com/stripe/stripe-go/v72/checkout/session"
+	"github.com/stripe/stripe-go/v72/price"
 	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
@@ -16,11 +18,13 @@ import (
 )
 
 type StripeClient struct {
+	customerID          string
+	subscriptionStatus  string
 	restricted          string
 	monthlyPriceInCents int64
 }
 
-func (sc *StripeClient) Initialize() error {
+func (sc *StripeClient) Initialize(customerID string, subscriptionStatus string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -72,24 +76,50 @@ func (sc *StripeClient) Initialize() error {
 		return utils.MakeError("failed to parse monthly price. Err: %v", err)
 	}
 
-	// Assign to StripeClient
+	// Initialize StripeClient fields
 	stripe.Key = secret
 	sc.restricted = restricted
 	sc.monthlyPriceInCents = monthlyPrice
 
+	sc.customerID = customerID
+	sc.subscriptionStatus = subscriptionStatus
+
 	return nil
 }
 
-func CreateCheckoutSession(customer string) (*stripe.CheckoutSession, error) {
-	priceID := "asdasdasd"
+func (sc *StripeClient) createCheckoutSession() (string, error) {
+	priceList := price.List(&stripe.PriceListParams{
+		Active: stripe.Bool(true),
+	})
+
+	var priceID string
+
+	for priceList.Next() {
+		currentPrice := priceList.Current().(*stripe.Price)
+		if currentPrice.UnitAmount == sc.monthlyPriceInCents {
+			break
+		}
+	}
+	if priceList.Err() != nil {
+		return "", utils.MakeError("failed to read price list from Stripe. Err: %v", priceList.Err())
+	}
+
+	if priceID != "" {
+		logger.Infof("Found price of %v in Stripe.", sc.monthlyPriceInCents)
+	} else {
+		//Create new price
+		newPrice, err := createPrice(sc.monthlyPriceInCents, "Whist", "month")
+		if err != nil {
+			return "", utils.MakeError("failed to create new Strip price. Err: %v", err)
+		}
+		priceID = newPrice.ID
+	}
 
 	params := &stripe.CheckoutSessionParams{
-		// Customer: ,
+		Customer: stripe.String(sc.customerID),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
-				Price: stripe.String(priceID),
-			},
-			{
+				Price:    stripe.String(priceID),
 				Quantity: aws.Int64(1),
 			},
 		},
@@ -101,12 +131,55 @@ func CreateCheckoutSession(customer string) (*stripe.CheckoutSession, error) {
 		CancelURL:  stripe.String("http://localhost/callback/payment?success=false"),
 	}
 
-	s, err := session.New(params)
+	s, err := checkout.New(params)
 	if err != nil {
-		return nil, utils.MakeError("failed to create checkout session. Err: %v", err)
+		return "", utils.MakeError("failed to create checkout session. Err: %v", err)
 	}
 
-	return s, nil
+	return s.URL, nil
+}
+
+func (sc *StripeClient) createBillingPortal() (string, error) {
+	s, err := billingPortal.New(&stripe.BillingPortalSessionParams{
+		Customer:  stripe.String(sc.customerID),
+		ReturnURL: stripe.String("http://localhost/callback/payment"),
+	})
+
+	return s.URL, err
+}
+
+func (sc *StripeClient) CreateSession() (string, error) {
+	var (
+		sessionUrl string
+		err        error
+	)
+
+	if sc.subscriptionStatus == "active" || sc.subscriptionStatus == "trialing" {
+		sessionUrl, err = sc.createBillingPortal()
+		if err != nil {
+			return "", utils.MakeError("error creating Stripe billing portal. Err: %v", err)
+		}
+	} else {
+		sessionUrl, err = sc.createCheckoutSession()
+		if err != nil {
+			return "", utils.MakeError("error creating Stripe checkout session. Err: %v", err)
+		}
+	}
+
+	return sessionUrl, nil
+}
+
+func createPrice(cents int64, name string, interval string) (*stripe.Price, error) {
+	return price.New(&stripe.PriceParams{
+		UnitAmount: stripe.Int64(cents),
+		Currency:   stripe.String("usd"),
+		ProductData: &stripe.PriceProductDataParams{
+			Name: stripe.String(name),
+		},
+		Recurring: &stripe.PriceRecurringParams{
+			Interval: stripe.String(interval),
+		},
+	})
 }
 
 // VerifyPayment takes an access token and extracts the claims within it.

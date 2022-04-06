@@ -19,7 +19,7 @@ import (
 
 const PortToListen uint16 = 7730
 
-func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
+func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
 	err := verifyRequestType(w, req, http.MethodPost)
 	if err != nil {
@@ -64,9 +64,59 @@ func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	_, _ = w.Write(buf)
 }
 
+func paymentsHandler(w http.ResponseWriter, req *http.Request) {
+	// Verify that we got a GET request
+	err := verifyRequestType(w, req, http.MethodGet)
+	if err != nil {
+		// err is already logged
+		return
+	}
+
+	accessToken, err := getAccessToken(req)
+	if err != nil {
+		logger.Error(err)
+		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
+		return
+	}
+
+	claims, err := auth.ParseToken(accessToken)
+	if err != nil {
+		logger.Errorf("Received an unpermissioned backend request on %s to URL %s. Error: %s", req.Host, req.URL, err)
+		http.Error(w, "Invalid access token", http.StatusUnauthorized)
+		return
+	}
+
+	stripeClient := &payments.StripeClient{}
+	err = stripeClient.Initialize(claims.CustomerID, claims.SubscriptionStatus)
+	if err != nil {
+		logger.Errorf("Failed to Initialize Stripe Client. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	sessionUrl, err := stripeClient.CreateSession()
+	if err != nil {
+		logger.Errorf("Failed to create Stripe Session. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	buf, err := json.Marshal(sessionUrl)
+	if err != nil {
+		logger.Errorf("Error marshalling HTTP Response body: %s", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(buf)
+}
+
 func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) error {
-	accessToken := r.Header.Get("Authorization")
-	accessToken = strings.Split(accessToken, "Bearer ")[1]
+	accessToken, err := getAccessToken(r)
+	if err != nil {
+		return err
+	}
 
 	claims, err := auth.ParseToken(accessToken)
 	if err != nil {
@@ -83,6 +133,16 @@ func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.Ser
 	// access token to other processes that don't need access to it.
 	s.(*httputils.MandelboxAssignRequest).UserID = types.UserID(claims.Subject)
 	return nil
+}
+
+func getAccessToken(r *http.Request) (string, error) {
+	authorization := r.Header.Get("Authorization")
+	bearer := strings.Split(authorization, "Bearer ")
+	if len(bearer) <= 1 {
+		return "", utils.MakeError("Bearer token is empty.")
+	}
+	accessToken := bearer[1]
+	return accessToken, nil
 }
 
 // throttleMiddleware will limit requests on the endpoint using the provided rate limiter.
@@ -161,13 +221,13 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	limiter := rate.NewLimiter(rate.Every(interval), burst)
 
 	// Create the final assign handler, with the necessary middleware
-	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, createHandler(MandelboxAssignHandler)))
+	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, createHandler(mandelboxAssignHandler)))
 
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.Handle("/mandelbox/assign", assignHandler)
-	mux.Handle("/create-checkout-session", assignHandler)
+	mux.Handle("/payment_portal_url", http.HandlerFunc(paymentsHandler))
 
 	// Set read/write timeouts to help mitigate potential rogue clients
 	// or DDOS attacks.
