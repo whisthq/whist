@@ -19,14 +19,13 @@ Includes
 */
 
 #include <whist/core/whist.h>
+#include "state.h"
 
 /*
 ============================
 Public Functions
 ============================
 */
-
-typedef struct _whist_server_state whist_server_state;
 
 /**
  * @brief                          Handles message received by the server from
@@ -42,6 +41,6 @@ typedef struct _whist_server_state whist_server_state;
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg);
+int handle_client_message(WhistServerState *state, WhistClientMessage *wcmsg);
 
 #endif  // HANDLE_CLIENT_MESSAGE_H

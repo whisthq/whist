@@ -62,7 +62,7 @@ Private Function Declarations
  * @returns                        Returns -1 if either UDP or TCP connection
  *                                 fails or another error occurs, 0 on success.
  */
-static int client_connect_socket(whist_server_state *state, Client *client,
+static int client_connect_socket(WhistServerState *state, Client *client,
                                  char *binary_aes_private_key);
 
 /*
@@ -146,7 +146,7 @@ bool get_using_stun(void) {
 }
 
 bool connect_client(void *state_raw) {
-    whist_server_state *state = (whist_server_state *)state_raw;
+    WhistServerState *state = (WhistServerState *)state_raw;
     Client *client = state->client;
 
     FATAL_ASSERT(!client->is_active);
@@ -185,7 +185,7 @@ Private Function Implementations
 ============================
 */
 
-int client_connect_socket(whist_server_state *state, Client *client,
+int client_connect_socket(WhistServerState *state, Client *client,
                           char *binary_aes_private_key_input) {
     if (!create_udp_socket_context(&client->udp_context, NULL, BASE_UDP_PORT, 1,
                                    UDP_CONNECTION_WAIT, false, binary_aes_private_key_input)) {

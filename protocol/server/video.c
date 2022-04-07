@@ -85,7 +85,7 @@ Private Function Implementations
 */
 
 static int32_t multithreaded_encoder_factory(void* opaque) {
-    whist_server_state* state = (whist_server_state*)opaque;
+    WhistServerState* state = (WhistServerState*)opaque;
 
     state->encoder_factory_result =
         create_video_encoder(state->encoder_factory_server_w, state->encoder_factory_server_h,
@@ -117,7 +117,7 @@ static int32_t multithreaded_destroy_encoder(void* opaque) {
  * @param true_height       True height of client screen
  * @return                  On success, 0. On failure, -1.
  */
-static int32_t create_new_device(whist_server_state* state, WhistTimer* statistics_timer,
+static int32_t create_new_device(WhistServerState* state, WhistTimer* statistics_timer,
                                  CaptureDevice** device, CaptureDevice* rdevice,
                                  VideoEncoder** encoder, uint32_t true_width,
                                  uint32_t true_height) {
@@ -167,7 +167,7 @@ static int32_t create_new_device(whist_server_state* state, WhistTimer* statisti
  * @param client_input_timestamp    Estimated client timestamp at which user input is sent
  * @param server_timestamp          Server timestamp at which this frame is captured
  */
-static void send_populated_frames(whist_server_state* state, WhistTimer* statistics_timer,
+static void send_populated_frames(WhistServerState* state, WhistTimer* statistics_timer,
                                   WhistTimer* server_frame_timer, CaptureDevice* device,
                                   VideoEncoder* encoder, int id,
                                   timestamp_us client_input_timestamp,
@@ -248,7 +248,7 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
  * @param device    CaptureDevice pointer
  * @param encoder   VideoEncoder pointer
  */
-static void retry_capture_screen(whist_server_state* state, CaptureDevice* device,
+static void retry_capture_screen(WhistServerState* state, CaptureDevice* device,
                                  VideoEncoder* encoder) {
     LOG_WARNING("Failed to capture screen");
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device
@@ -274,7 +274,7 @@ static void retry_capture_screen(whist_server_state* state, CaptureDevice* devic
  * @param true_width       True width of client screen
  * @param true_height      True height of client screen
  */
-static void update_current_device(whist_server_state* state, WhistTimer* statistics_timer,
+static void update_current_device(WhistServerState* state, WhistTimer* statistics_timer,
                                   CaptureDevice* device, VideoEncoder* encoder, uint32_t true_width,
                                   uint32_t true_height) {
     state->update_device = false;
@@ -313,7 +313,7 @@ static void update_current_device(whist_server_state* state, WhistTimer* statist
  * @param state		the Whist server state
  * @param id        Pointer to the frame id
  */
-static void send_empty_frame(whist_server_state* state, int id) {
+static void send_empty_frame(WhistServerState* state, int id) {
     // If we don't have a new frame to send, let's just send an empty one
     VideoFrame* frame = (VideoFrame*)encoded_frame_buf[1 - currently_sending_index];
     memset(frame, 0, sizeof(*frame));
@@ -349,7 +349,7 @@ static void send_empty_frame(whist_server_state* state, int id) {
  *
  * @returns         The new encoder
  */
-static VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncoder* encoder,
+static VideoEncoder* update_video_encoder(WhistServerState* state, VideoEncoder* encoder,
                                           CaptureDevice* device, int bitrate, CodecType codec,
                                           int fps, int vbv_size) {
     // If this is a new update encoder request, log it
@@ -444,7 +444,7 @@ static VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncode
 // Video packet sending over UDP is done a separate thread to maximally utilize the available
 // bandwidth, without dropping frames.
 static int32_t multithreaded_send_video_packets(void* opaque) {
-    whist_server_state* state = (whist_server_state*)opaque;
+    WhistServerState* state = (WhistServerState*)opaque;
     // Information to resend the previous frame
     int last_id = -1;
     int previous_connection_id = -1;
@@ -530,7 +530,7 @@ Public Function Implementations
 */
 
 int32_t multithreaded_send_video(void* opaque) {
-    whist_server_state* state = (whist_server_state*)opaque;
+    WhistServerState* state = (WhistServerState*)opaque;
 
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
 
