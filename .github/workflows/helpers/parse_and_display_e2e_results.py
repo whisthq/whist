@@ -274,11 +274,23 @@ if __name__ == "__main__":
                 continue
             # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
             if compared_branch_name != "":
+                testing_url = testing_time = simulate_scrolling = using_two_instances = None
+                current_meta = experiment.get("experiment_metadata")
+                if current_meta:
+                    testing_url = current_meta.get("testing_url")
+                    testing_time = current_meta.get("testing_time")
+                    simulate_scrolling = current_meta.get("simulate_scrolling")
+                    using_two_instances = current_meta.get("using_two_instances")
+
                 download_latest_logs(
                     compared_branch_name,
                     datetime.strptime(test_start_time, "%Y_%m_%d@%H-%M-%S"),
                     experiment["network_conditions"],
                     network_conditions_matching_way,
+                    testing_url,
+                    testing_time,
+                    simulate_scrolling,
+                    using_two_instances,
                 )
                 compared_client_log_path = os.path.join(
                     ".", compared_branch_name, "client", "client.log"
