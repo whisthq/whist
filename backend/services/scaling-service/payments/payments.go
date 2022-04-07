@@ -4,53 +4,33 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stripe/stripe-go/v72"
-	billingPortal "github.com/stripe/stripe-go/v72/billingportal/session"
-	checkout "github.com/stripe/stripe-go/v72/checkout/session"
-	"github.com/stripe/stripe-go/v72/price"
 	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
-	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
-// PaymentsHandler is an abstraction of the methods used for
-// processing payments for a client.
-type PaymentsHandler interface {
-	Initialize() error
-	CreateSession() (string, error)
-	createCheckoutSession() (string, error)
-	createBillingPortal() (string, error)
-}
-
-// StripeClient implements PaymentsHandler, and interacts directly
-// with the official Stripe client.
-type StripeClient struct {
-	customerID          string
-	subscriptionStatus  string
-	monthlyPriceInCents int64
+// PaymentsClient is a wrapper struct that will call our
+// own Stripe client and allow testing. Packages that handle
+// payments should only use this struct.
+type PaymentsClient struct {
+	stripeClient WhistStripeClient
 }
 
 // Initialize will pull all necessary configurations from the database
 // and set the StripeClient fields with the values extracted from
 // the access token.
-func (sc *StripeClient) Initialize(customerID string, subscriptionStatus string) error {
+func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionStatus string, configGraphqlClient subscriptions.WhistGraphQLClient) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Start GraphQL client for getting configuration from the config db
-	useConfigDB := true
-	configGraphqlClient := &subscriptions.GraphQLClient{}
-	err := configGraphqlClient.Initialize(useConfigDB)
-	if err != nil {
-		logger.Errorf("Failed to start config GraphQL client. Error: %v", err)
-	}
-
 	// Get configurations depending on environment
-	var configs map[string]string
+	var (
+		configs map[string]string
+		err     error
+	)
 
 	switch metadata.GetAppEnvironmentLowercase() {
 	case string(metadata.EnvDev):
@@ -84,130 +64,58 @@ func (sc *StripeClient) Initialize(customerID string, subscriptionStatus string)
 		return utils.MakeError("failed to parse monthly price. Err: %v", err)
 	}
 
-	// Initialize StripeClient fields
-	stripe.Key = secret
-	sc.monthlyPriceInCents = monthlyPrice
+	// Create our own Stripe client
+	whistPayments.stripeClient = &StripeClient{}
 
-	sc.customerID = customerID
-	sc.subscriptionStatus = subscriptionStatus
+	// Dynamically set the Stripe key depending on environment
+	if metadata.IsLocalEnv() {
+		// Use the restriced Strip key if on localdev or testing
+		restricedKey, ok := configs["STRIPE_RESTRICTED"]
+		if !ok {
+			return utils.MakeError("Could not find key STRIPE_RESTRICTED in configurations map.")
+		}
+
+		stripe.Key = restricedKey
+		whistPayments.stripeClient.(*StripeClient).key = restricedKey
+	} else {
+		stripe.Key = secret
+		whistPayments.stripeClient.(*StripeClient).key = secret
+	}
+
+	whistPayments.stripeClient.(*StripeClient).monthlyPriceInCents = monthlyPrice
+	whistPayments.stripeClient.(*StripeClient).customerID = customerID
+	whistPayments.stripeClient.(*StripeClient).subscriptionStatus = subscriptionStatus
 
 	return nil
-}
-
-// createCheckoutSession creates a Stripe checkout session for the current customer.
-// It applies the desired price from the database, and if it doesn't exist in Stripe,
-//  creates it.
-func (sc *StripeClient) createCheckoutSession() (string, error) {
-	priceList := price.List(&stripe.PriceListParams{
-		Active: stripe.Bool(true),
-	})
-
-	var priceID string
-
-	// Try to find a Stripe Price with the desired monthly price.
-	for priceList.Next() {
-		currentPrice := priceList.Current().(*stripe.Price)
-		if currentPrice.UnitAmount == sc.monthlyPriceInCents {
-			break
-		}
-	}
-	if priceList.Err() != nil {
-		return "", utils.MakeError("failed to read price list from Stripe. Err: %v", priceList.Err())
-	}
-
-	// If a Stripe Price was not found, create one.
-	if priceID != "" {
-		logger.Infof("Found price of %v in Stripe.", sc.monthlyPriceInCents)
-	} else {
-		//Create new price
-		newPrice, err := createPrice(sc.monthlyPriceInCents, "Whist", "month")
-		if err != nil {
-			return "", utils.MakeError("failed to create new Strip price. Err: %v", err)
-		}
-		priceID = newPrice.ID
-	}
-
-	// Set how many subscriptions we want started, and what number of
-	// days we offer as a trial period.
-	subscriptionQuantity := 1
-	trialDays := int64(14)
-
-	params := &stripe.CheckoutSessionParams{
-		Customer: stripe.String(sc.customerID),
-		LineItems: []*stripe.CheckoutSessionLineItemParams{
-			{
-				Price:    stripe.String(priceID),
-				Quantity: aws.Int64(int64(subscriptionQuantity)),
-			},
-		},
-		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
-			TrialPeriodDays: stripe.Int64(trialDays),
-		},
-		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
-		SuccessURL: stripe.String("http://localhost/callback/payment?success=true"),
-		CancelURL:  stripe.String("http://localhost/callback/payment?success=false"),
-	}
-
-	s, err := checkout.New(params)
-	if err != nil {
-		return "", utils.MakeError("failed to create checkout session. Err: %v", err)
-	}
-
-	return s.URL, nil
-}
-
-// createBillingPortal creates a Stripe billing portal for the current customer.
-func (sc *StripeClient) createBillingPortal() (string, error) {
-	s, err := billingPortal.New(&stripe.BillingPortalSessionParams{
-		Customer:  stripe.String(sc.customerID),
-		ReturnURL: stripe.String("http://localhost/callback/payment"),
-	})
-
-	return s.URL, err
 }
 
 // CreateSession is the method exposed to other packages for getting a Stripe Session URL.
 // It should only be called after `Initialize` has been run first. It decides what kind of
 // Stripe Session to return based on the customer's subscription status.
-func (sc *StripeClient) CreateSession() (string, error) {
+func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 	var (
 		sessionUrl string
 		err        error
 	)
-
-	if sc.subscriptionStatus == "active" || sc.subscriptionStatus == "trialing" {
+	subscriptionStatus := whistPayments.stripeClient.(*StripeClient).subscriptionStatus
+	if subscriptionStatus == "active" || subscriptionStatus == "trialing" {
 		// If the authenticated user already has a Whist subscription in a non-terminal state
 		// (one of `active` or `trialing`), create a Stripe billing portal that the customer
 		// can use to manage their subscription and billing information.
-		sessionUrl, err = sc.createBillingPortal()
+		sessionUrl, err = whistPayments.stripeClient.createBillingPortal()
 		if err != nil {
 			return "", utils.MakeError("error creating Stripe billing portal. Err: %v", err)
 		}
 	} else {
 		// If the authenticated user has a Whist subscriptions in a terminal states (not `active` or `trialing`),
 		// create a Stripe checkout session that the customer can use to enroll in a new Whist subscription.
-		sessionUrl, err = sc.createCheckoutSession()
+		sessionUrl, err = whistPayments.stripeClient.createCheckoutSession()
 		if err != nil {
 			return "", utils.MakeError("error creating Stripe checkout session. Err: %v", err)
 		}
 	}
 
 	return sessionUrl, nil
-}
-
-// createPrice is a helper function that creates a new Price object in Stripe
-// with the desired price (in cents), for the product `name` in the given interval.
-func createPrice(cents int64, name string, interval string) (*stripe.Price, error) {
-	return price.New(&stripe.PriceParams{
-		UnitAmount: stripe.Int64(cents),
-		Currency:   stripe.String("usd"),
-		ProductData: &stripe.PriceProductDataParams{
-			Name: stripe.String(name),
-		},
-		Recurring: &stripe.PriceRecurringParams{
-			Interval: stripe.String(interval),
-		},
-	})
 }
 
 // VerifyPayment takes an access token and extracts the claims within it.

@@ -11,6 +11,7 @@ import (
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/scaling-service/payments"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
+	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -90,16 +91,25 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Setup a config databse GraphQL client to get the Stripe configurations
+	useConfigDB := true
+	configGraphqlClient := &subscriptions.GraphQLClient{}
+	err = configGraphqlClient.Initialize(useConfigDB)
+	if err != nil {
+		logger.Errorf("Failed to setup config GraphQL client. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+	}
+
 	// Create a new StripeClient to handle the customer
-	stripeClient := &payments.StripeClient{}
-	err = stripeClient.Initialize(claims.CustomerID, claims.SubscriptionStatus)
+	paymentsClient := &payments.PaymentsClient{}
+	err = paymentsClient.Initialize(claims.CustomerID, claims.SubscriptionStatus, configGraphqlClient)
 	if err != nil {
 		logger.Errorf("Failed to Initialize Stripe Client. Err: %v", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
-	sessionUrl, err := stripeClient.CreateSession()
+	sessionUrl, err := paymentsClient.CreateSession()
 	if err != nil {
 		logger.Errorf("Failed to create Stripe Session. Err: %v", err)
 		http.Error(w, "", http.StatusInternalServerError)
@@ -118,6 +128,9 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 	_, _ = w.Write(buf)
 }
 
+// authenticateRequest will verify that the access token is valid
+// and will parse the request body and try to unmarshal into a
+// `ServerRequest` type.
 func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) error {
 	accessToken, err := getAccessToken(r)
 	if err != nil {
@@ -141,6 +154,8 @@ func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.Ser
 	return nil
 }
 
+// getAccessToken is a helper function that extracts the access token
+// from a request's "Authorization" header.
 func getAccessToken(r *http.Request) (string, error) {
 	authorization := r.Header.Get("Authorization")
 	bearer := strings.Split(authorization, "Bearer ")
