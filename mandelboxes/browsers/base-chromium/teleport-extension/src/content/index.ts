@@ -7,6 +7,7 @@
 import { initCursorLockDetection } from "./cursor"
 import { initUserAgentSpoofer } from "./userAgent"
 import { initFeatureWarnings } from "./notification"
+import { initPinchToZoom } from "./zoom"
 
 // Enable relative mouse mode
 initCursorLockDetection()
@@ -17,3 +18,5 @@ initUserAgentSpoofer()
 // If the user tries to go to a website that uses your camera/mic, show them a warning
 // that this feature is missing
 initFeatureWarnings()
+
+initPinchToZoom()
