@@ -1068,7 +1068,6 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     if (destination == NULL) {
         // Create the server context
         ret = create_udp_server_context(context, port, connection_timeout_ms);
-
         if (ret == 0) {
             // On the server, we create a network throttler to limit the
             // outgoing bitrate.
