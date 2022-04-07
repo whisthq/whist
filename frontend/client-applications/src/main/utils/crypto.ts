@@ -34,6 +34,7 @@ import {
   EdgeOSXDefaultDir,
   OperaLinuxDefaultDir,
   OperaOSXDefaultDir,
+  OperaWindowsDefaultDir,
 } from "@app/constants/importer"
 
 interface Cookie {
@@ -341,6 +342,9 @@ const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
         case InstalledBrowser.BRAVE: {
           return BraveWindowsDefaultDir
         }
+        case InstalledBrowser.OPERA: {
+          return OperaWindowsDefaultDir
+        }
         default: {
           return []
         }
@@ -355,7 +359,12 @@ const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
 const getCookieFilePath = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
 
-  return browserDirectories.map((dir) => path.join(dir, "Cookies"))
+  return browserDirectories.map((dir) =>
+    path.join(
+      dir,
+      process.platform === "win32" ? "Network\\Cookies" : "Cookies"
+    )
+  )
 }
 
 const getBookmarkFilePath = (browser: InstalledBrowser): string[] => {

@@ -18,8 +18,8 @@ export const ChromeOSXDefaultDir = [
   "~/Library/Application Support/Google/Chrome/Default/",
 ]
 export const ChromeWindowsDefaultDir = [
-  "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Network",
-  "%APPDATA%\\Google\\Chrome\\User Data\\Default\\Network",
+  "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default",
+  "%APPDATA%\\Google\\Chrome\\User Data\\Default",
 ]
 export const ChromeWindowsKeys = [
   "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Local State",
@@ -39,6 +39,10 @@ export const OperaLinuxDefaultDir = ["~/.config/opera/"]
 export const OperaOSXDefaultDir = [
   "~/Library/Application Support/com.operasoftware.Opera/",
 ]
+export const OperaWindowsDefaultDir = [
+  "%LOCALAPPDATA%\\com.operasoftware.Opera",
+]
+
 export const OperaWindowsKeys = [
   "%LOCALAPPDATA%\\Opera Software\\Opera Stable\\Local State",
   "%APPDATA%\\Opera Software\\Opera Stable\\Local State",
