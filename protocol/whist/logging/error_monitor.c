@@ -287,6 +287,25 @@ void whist_error_monitor_shutdown(void) {
     error_monitor_initialized = false;
 }
 
+static const char *skip_unwanted_fields(const char *message) {
+    int i, separators = 0;
+    for (i = 0; separators < 2 && message[i]; i++) {
+        if (message[i] == '|') {
+            ++separators;
+        }
+    }
+    if (separators == 2) {
+        // Skip spaces after the separator.
+        for (; message[i] == ' '; i++)
+            ;
+        // Return the remaining message.
+        return &message[i];
+    } else {
+        // Message format is not as expected, just send it in full.
+        return message;
+    }
+}
+
 void whist_error_monitor_log_breadcrumb(const char *tag, const char *message) {
     /*
         Note: This is automatically called from the `LOG_*` functions from
@@ -298,8 +317,11 @@ void whist_error_monitor_log_breadcrumb(const char *tag, const char *message) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
-        // In the current sentry-native beta version, breadcrumbs can only be logged
-        // from macOS and Linux.
+    // Don't send the timestamp or the tag.
+    message = skip_unwanted_fields(message);
+
+    // In the current sentry-native beta version, breadcrumbs can only be logged
+    // from macOS and Linux.
 #ifndef _WIN32
     sentry_value_t crumb = sentry_value_new_breadcrumb("default", message);
     sentry_value_set_by_key(crumb, "category", sentry_value_new_string("protocol-logs"));
@@ -322,6 +344,10 @@ void whist_error_monitor_log_error(const char *message) {
 
     // If too many errors have been sent in a period, then don't send this error.
     if (!check_backoff()) return;
+
+    // Don't send the timestamp or the tag.
+    message = skip_unwanted_fields(message);
+
     sentry_value_t event =
         sentry_value_new_message_event(SENTRY_LEVEL_ERROR, "protocol-errors", message);
     // Sentry doesn't document it, but this will free error.
