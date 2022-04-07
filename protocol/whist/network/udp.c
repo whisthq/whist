@@ -1344,7 +1344,10 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
     start_timer(&server_creation_timer);
 
     // Create a new listening socket on that port
-    create_udp_listen_socket(&context->socket, port, connection_timeout_ms);
+    if (create_udp_listen_socket(&context->socket, port, connection_timeout_ms)) {
+        LOG_ERROR("Failed to create UDP listen socket");
+        return -1;
+    }
 
     // While we still have some remaining connection time,
     // wait for a connection attempt message from a client
