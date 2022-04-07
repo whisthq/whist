@@ -29,12 +29,12 @@ p {
 
 .draggable {
   -webkit-app-region: drag;
+  -webkit-user-drag: element;
 }
 
 .nondraggable,
 img {
   -webkit-user-drag: none;
-  user-drag: none;
 }
 
 @font-face {

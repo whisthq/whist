@@ -26,15 +26,15 @@ const Template = (props: { contents: JSX.Element; word: string }) => {
   return (
     <div
       tabIndex={0}
-      className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
+      className="flex flex-col h-screen w-full font-body outline-none bg-gray-900 max-w-2xl mx-auto relative"
     >
       <img src={ChromeHeader} className="w-screen nondraggable" />
       {props.word !== undefined && (
-        <div className="absolute left-28" style={{ top: 40.5 }}>
+        <div className="absolute left-28" style={{ top: 40 }}>
           <TypeWriter
             words={[props.word]}
             classNameCursor="bg-gray-300"
-            classNameText="text-gray-300 text-xs font-bold"
+            classNameText="text-gray-400 text-xs font-bold"
             startDelay={0}
           />
         </div>

@@ -48,18 +48,22 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
           },
         }),
     },
-    {
-      icon: Duplicate,
-      text: "Import Tabs from Another Browser",
-      keywords: ["Import", "Google Chrome", "Recover"],
-      onClick: () =>
-        setMainState({
-          trigger: {
-            name: WhistTrigger.showRestoreTabsWindow,
-            payload: undefined,
+    ...(mainState.platform === "win32"
+      ? []
+      : [
+          {
+            icon: Duplicate,
+            text: "Import Tabs from Another Browser",
+            keywords: ["Import", "Google Chrome", "Recover"],
+            onClick: () =>
+              setMainState({
+                trigger: {
+                  name: WhistTrigger.showRestoreTabsWindow,
+                  payload: undefined,
+                },
+              }),
           },
-        }),
-    },
+        ]),
     {
       icon: Dollar,
       text: "Manage My Subscription",

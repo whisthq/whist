@@ -7,8 +7,6 @@ import {
 } from "@app/main/utils/windows"
 
 const relaunch = (options: { sleep: boolean }) => {
-  if (process.platform === "win32") app.exit()
-
   // First destroy all Electron windows
   BrowserWindow.getAllWindows().forEach((win) => {
     const hash = getElectronWindowHash(win)

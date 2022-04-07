@@ -67,7 +67,7 @@ fromTrigger(WhistTrigger.protocolConnection)
   .pipe(filter((connected) => connected))
   .subscribe(() => {
     if (!((persistGet(ONBOARDED) as boolean) ?? false)) {
-      // persistSet(ONBOARDED, true)
+      persistSet(ONBOARDED, true)
       persistSet(RESTORE_LAST_SESSION, true)
       persistSet(ALLOW_NON_US_SERVERS, false)
     }

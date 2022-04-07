@@ -147,6 +147,7 @@ const createOnboardingWindow = () =>
     hash: WindowHashOnboarding,
     options: {
       fullscreenable: false,
+      maximizable: false,
       trafficLightPosition: { x: 12, y: 10 },
     },
   })
@@ -224,6 +225,8 @@ const createOmnibar = () =>
       minimizable: false,
       transparent: true,
       titleBarStyle: "default",
+      titleBarOverlay: false,
+      ...(process.platform === "win32" && { skipTaskbar: true }),
     },
     show: false,
   })

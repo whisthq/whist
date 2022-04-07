@@ -213,7 +213,12 @@ const RootComponent = () => {
   if (show === WindowHashOnboarding)
     return <Onboarding onSubmit={handleOnboardingSubmit} />
   if (show === WindowHashLaunchLoading)
-    return <Launching networkInfo={mainState.networkInfo} />
+    return (
+      <Launching
+        networkInfo={mainState.networkInfo}
+        platform={mainState.platform}
+      />
+    )
   if (show === WindowHashImportLoading) return <Importing />
   if (show === NO_PAYMENT_ERROR)
     return (
