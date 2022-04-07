@@ -90,7 +90,8 @@
     "ref-napi": "^3.0.3",
     "rxjs": "^7.4.0",
     "sqlite3": "^5.0.2",
-    "tmp": "^0.2.1"
+    "tmp": "^0.2.1",
+    "windows-registry-napi": "^0.1.6"
   },
   "devDependencies": {
     "@snowpack/plugin-build-script": "^2.1.0",
