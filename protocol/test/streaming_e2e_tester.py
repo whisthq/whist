@@ -286,6 +286,9 @@ if __name__ == "__main__":
         "start_time": experiment_start_time + " local time"
         if not running_in_ci
         else experiment_start_time + " UTC",
+        "testing_url": testing_url,
+        "testing_time": testing_time,
+        "simulate_scrolling": simulate_scrolling,
         "network_conditions": network_conditions,
         "using_two_instances": use_two_instances,
         "branch_name": get_whist_branch_name(running_in_ci),

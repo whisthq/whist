@@ -67,7 +67,14 @@ def logs_contain_errors(logs_root_dir, verbose=False):
 
 
 def download_latest_logs(
-    branch_name, before_timestamp, network_conditions, network_conditions_matching_way
+    branch_name,
+    before_timestamp,
+    network_conditions,
+    network_conditions_matching_way,
+    testing_url,
+    testing_time,
+    simulate_scrolling,
+    using_two_instances,
 ):
     """
     Download from S3 the most recent logs from a E2E streaming test run. Filter out runs that
@@ -86,6 +93,11 @@ def download_latest_logs(
         network_conditions (str):   The network conditions of the run that we just completed.
         network_conditions_matching_way (str):  A parameter that controls what kind of matching we
                                                 need to do on the S3 logs wrt network conditions
+        testing_url (str):  The url visited during the E2E run that we just completed.
+        testing_time (int): The duration of the E2E test in the run that we just completed.
+        simulate_scrolling (int):   The number of rounds of scrolling that was simulated on the client
+                                    side in the E2E run that we just completed.
+        using_two_instances (bool): Whether the latest E2E run was run using one or two instances
     Returns:
         None
     """
@@ -143,16 +155,29 @@ def download_latest_logs(
             reason_for_discarding.append((subfolder_date, "errors in logs"))
             continue
 
-        # Get the network conditions for the compared run. If the .json file does not exist, then assume it's 'normal'
-        compared_network_conditions = "normal"
-        if os.path.isfile(exp_meta_path):
-            compared_run_meta = parse_metadata(os.path.join(".", branch_name))
-            if compared_run_meta and "network_conditions" in compared_run_meta:
-                compared_network_conditions = compared_run_meta["network_conditions"]
-        else:
-            print("Warning, logs from compared run do not have metadata!")
-        # If the network conditions of the run in question are what we want, we are done. Otherwise, try with another set of logs
+        # Get the metadata for the compared run. If it does not exist, continue
+        if not os.path.isfile(exp_meta_path) or not parse_metadata(os.path.join(".", branch_name)):
+            os.system(
+                f"rm -f {compared_client_log_path} {compared_server_log_path} {exp_meta_path}"
+            )
+            counter += 1
+            reason_for_discarding.append((subfolder_date, "lack of metadata"))
+            continue
+
+        compared_run_meta = parse_metadata(os.path.join(".", branch_name))
+        compared_network_conditions = compared_run_meta.get("network_conditions")
+        compared_testing_url = compared_run_meta.get("testing_url")
+        compared_testing_time = compared_run_meta.get("testing_time")
+        compared_simulate_scrolling = compared_run_meta.get("simulate_scrolling")
+        compared_using_two_instances = compared_run_meta.get("using_two_instances")
+
+        # If the E2E test conditions match and the network conditions of the run in question are what we want, we are done. Otherwise, try with another set of logs
         if (
+            testing_url == compared_testing_url
+            and testing_time == compared_testing_time
+            and simulate_scrolling == compared_simulate_scrolling
+            and using_two_instances == compared_using_two_instances
+        ) and (
             (
                 network_conditions_matching_way == "match"
                 and network_conditions == compared_network_conditions
