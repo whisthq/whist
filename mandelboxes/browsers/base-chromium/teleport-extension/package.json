@@ -26,8 +26,8 @@
   "scripts": {
     "watch": "webpack --config webpack/webpack.dev.js --watch",
     "build": "tailwindcss build -o public/css/tailwind.css && webpack --config webpack/webpack.prod.js",
-    "format": "prettier --write .",
-    "format-check": "prettier --check ,"
+    "format": "prettier --write . --ignore-path .gitignore",
+    "format-check": "prettier --check . --ignore-path .gitignore"
   },
   "dependencies": {
     "@types/react": "^17.0.40",
