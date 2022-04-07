@@ -52,6 +52,7 @@ struct AppleKeyboardMapping {
 static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.keylayout.USExtended", {"xkb:us::eng", ""}},
     {"com.apple.keylayout.US", {"xkb:us::eng", ""}},
+    {"com.apple.keylayout.USInternational-PC", {"xkb:us::eng", ""}},
     {"com.apple.keylayout.Italian-Pro", {"xkb:it::ita", ""}},
     {"com.apple.keylayout.Italian", {"xkb:it::ita", ""}},
     {"com.apple.keylayout.Arabic", {"xkb:ara::ara", ""}},
@@ -70,6 +71,8 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.keylayout.ABC-India", {"xkb:us:intl:eng", ""}},
     {"com.apple.keylayout.Dvorak", {"xkb:us:dvorak:eng", ""}},
     {"com.apple.keylayout.British", {"xkb:gb:extd:eng", ""}},
+    {"com.apple.keylayout.Irish",
+     {"xkb:gb:extd:eng", ""}}, // According to: https://forums.linuxmint.com/viewtopic.php?t=297738
     {"com.apple.keylayout.Russian", {"xkb:ru::rus", ""}},
     {"com.apple.keylayout.ABC", {"xkb:us:intl:eng", ""}},
     {"com.apple.inputmethod.SCIM.ITABC", {"pinyin", ""}},
