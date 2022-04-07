@@ -60,10 +60,19 @@ if [ "$EPHEMERAL_DEVICE_PATH" != "null" ]
 then
   echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
 
-  # We enable mixed case-sensitivity on our filesystem (case-insensitivity is needed for certain Chrome themes)
-  mkdir -p "$EPHEMERAL_FS_PATH"
-  zpool create -f zpool-whist -O casesensitivity=mixed -m "$EPHEMERAL_FS_PATH" "$EPHEMERAL_DEVICE_PATH"
-  echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
+  # Partition ephemeral storage
+  sudo parted "$EPHEMERAL_DEVICE_PATH" --script mklabel gpt
+  sudo parted "$EPHEMERAL_DEVICE_PATH" --script mkpart primary ext4 2048s 12GB
+  sudo parted "$EPHEMERAL_DEVICE_PATH" --script mkpart primary ext4 12GB 100%
+
+  # Create an ext4 filesystem for docker using ephemeral
+  sudo mkfs -t ext4 "${EPHEMERAL_DEVICE_PATH}p1"
+  sudo mkdir -p "$EPHEMERAL_FS_PATH"
+  sudo mount "${EPHEMERAL_DEVICE_PATH}p1" "$EPHEMERAL_FS_PATH"
+
+  # Create a swapfile using the other (much larger) partition
+  sudo mkswap "${EPHEMERAL_DEVICE_PATH}p2"
+  sudo swapon "${EPHEMERAL_DEVICE_PATH}p2"
 
   # Stop Docker and copy the data directory to the ephemeral storage
   systemctl stop docker
@@ -74,7 +83,6 @@ then
   # and start Docker again. Set a higher concurrent download count to speed up the pull.
   jq '. + {"data-root": "'"$EPHEMERAL_FS_PATH/docker"'"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
   jq '. + {"max-concurrent-downloads": '"$MAX_CONCURRENT_DOWNLOADS"'}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
-  jq '. + {"storage-driver": "zfs"}' /etc/docker/daemon.json > tmp.json && mv tmp.json /etc/docker/daemon.json
 
   systemctl start docker
 else
