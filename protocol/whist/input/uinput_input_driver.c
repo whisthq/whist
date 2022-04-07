@@ -415,8 +415,8 @@ static int uinput_ignore_key_state(InputDeviceUInput* input_device, WhistKeycode
             (int): 1 if we ignore the client key state, 0 if we take the client key state
     */
 
-    // If there is an active pinch happening, we preserve the server LCTRL state
-    if (whist_keycode == FK_LCTRL && active_pinch) {
+    // If there is an active pinch happening, we preserve the server shift state
+    if (whist_keycode == FK_LSHIFT && active_pinch) {
         return 1;
     }
 
@@ -493,7 +493,7 @@ static int uinput_emit_multigesture_event(InputDeviceUInput* input_device, float
                                           bool active_gesture) {
     /*
         Emit a trackpad multigesture event. Only handles pinch events
-        for now by holding the LCTRL key and scrolling.
+        for now by holding the LSHIFT key and scrolling.
 
         Arguments:
             input_device (InputDevice*): The initialized input device to write
@@ -508,17 +508,20 @@ static int uinput_emit_multigesture_event(InputDeviceUInput* input_device, float
     */
 
     if (gesture_type == MULTIGESTURE_PINCH_OPEN || gesture_type == MULTIGESTURE_PINCH_CLOSE) {
-        // If the gesture is not active yet, then start holding the LCTRL key
+        // If the gesture is not active yet, then start holding the shift key
+        // This allows our chrome extension to detect the event and zoom in.
         if (!active_gesture) {
-            uinput_emit_key_event(input_device, FK_LCTRL, true);
+            uinput_emit_key_event(input_device, FK_LSHIFT, true);
+            LOG_INFO("START");
         }
-
+        LOG_INFO("SCROLL");
         // Pass a scroll event equivalent to the pinch distance
         uinput_emit_high_res_mouse_wheel_event(input_device, d_dist * sin(d_theta),
                                                d_dist * cos(d_theta));
     } else if (gesture_type == MULTIGESTURE_CANCEL) {
-        // When the pinch action has been changed, then release the lctrl key
-        uinput_emit_key_event(input_device, FK_LCTRL, false);
+        // When the pinch action has been changed, then release the shift key
+        LOG_INFO("END");
+        uinput_emit_key_event(input_device, FK_LSHIFT, false);
     }
 
     return 0;
