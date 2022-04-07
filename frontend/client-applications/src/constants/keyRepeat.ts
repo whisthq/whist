@@ -31,6 +31,8 @@ export const MAX_KEY_REPEAT_MAC = 120
 export const MIN_KEY_REPEAT_WINDOWS = 0
 export const MAX_KEY_REPEAT_WINDOWS = 31
 
+export const MIN_INTIAL_REPEAT_WINDOWS = 0
+
 // The range of values that the key repeat rate can take
 export const KEY_REPEAT_RANGE_MAC = MAX_KEY_REPEAT_MAC - MIN_KEY_REPEAT_MAC
 export const KEY_REPEAT_RANGE_LINUX =

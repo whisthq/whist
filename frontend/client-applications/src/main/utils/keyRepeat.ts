@@ -11,6 +11,9 @@ import {
   REPEAT_COMMAND_LINUX,
   MIN_KEY_REPEAT_WINDOWS,
   KEY_REPEAT_RANGE_WINDOWS,
+  MAX_KEY_REPEAT_LINUX,
+  MAX_KEY_REPEAT_WINDOWS,
+  MIN_INTIAL_REPEAT_WINDOWS,
 } from "@app/constants/keyRepeat"
 import { Key, windef } from "windows-registry-napi"
 
@@ -41,7 +44,10 @@ const windowsInitialRepeatRaw = () => {
   if (process.platform !== "win32")
     throw new Error(`process.platform ${process.platform} is not win32`)
 
-  return parseInt(windowsKey().getValue("KeyboardDelay"))
+  const initialRepeat = windowsKey().getValue("KeyboardDelay") ?? undefined
+  if (initialRepeat === undefined) return MIN_INTIAL_REPEAT_WINDOWS
+
+  return parseInt(initialRepeat)
 }
 
 const windowsRepeatRaw = () => {
@@ -54,7 +60,10 @@ const windowsRepeatRaw = () => {
   if (process.platform !== "win32")
     throw new Error(`process.platform ${process.platform} is not win32`)
 
-  return parseInt(windowsKey().getValue("KeyboardSpeed"))
+  const repeat = windowsKey().getValue("KeyboardSpeed") ?? undefined
+  if (repeat === undefined) return MAX_KEY_REPEAT_WINDOWS
+
+  return parseInt(repeat)
 }
 
 const macInitialRepeatRaw = () => {
@@ -168,9 +177,10 @@ const windowsRepeatToLinux = (repeat: number) =>
   Returns:
    repeat (int): The mapped repeat rate
 */
-  (1.0 - (repeat - MIN_KEY_REPEAT_WINDOWS) / KEY_REPEAT_RANGE_WINDOWS) *
-    KEY_REPEAT_RANGE_LINUX +
-  MIN_KEY_REPEAT_LINUX
+  Math.max(MIN_KEY_REPEAT_WINDOWS, repeat - 1)
+
+const windowsInitialRepeatToLinux = (initialRepeat: number) =>
+  Math.max(300 - 100 * initialRepeat, 0)
 
 const getKeyRepeat = () => {
   switch (process.platform) {
@@ -192,7 +202,7 @@ const getInitialKeyRepeat = () => {
     case "linux":
       return linuxInitialRepeatRaw()
     case "win32":
-      return windowsInitialRepeatRaw()
+      return windowsInitialRepeatToLinux(windowsInitialRepeatRaw())
     default:
       return 0
   }
