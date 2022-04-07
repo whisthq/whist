@@ -108,8 +108,7 @@ def install_and_configure_aws(
 
         if apt_get_awscli_failed:
             print(
-                "Installing AWS-CLI using apt-get failed. \
-                This usually happens when the Ubuntu package lists are being updated."
+                "Installing AWS-CLI using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
             )
 
             # Attempt to install manually. This can also fail from time to time, because we need apt-get
@@ -129,8 +128,7 @@ def install_and_configure_aws(
 
             if apt_get_unzip_failed:
                 print(
-                    "Installing 'unzip' using apt-get failed. \
-                    This usually happens when the Ubuntu package lists are being updated."
+                    "Installing 'unzip' using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
                 )
                 print("Installing AWS-CLI from source failed")
                 return False

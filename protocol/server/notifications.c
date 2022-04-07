@@ -472,7 +472,7 @@ void handle_watch(int fd, short events, void *x) {
     if (events & EV_READ) flags |= DBUS_WATCH_READABLE;
     if (events & EV_WRITE) flags |= DBUS_WATCH_WRITABLE;
 
-    LOG_INFO("Got d-bus watch event fd=%d watch=%p ev=%d", fd, watch, events);
+    LOG_DEBUG("Got d-bus watch event fd=%d watch=%p ev=%d", fd, watch, events);
     if (dbus_watch_handle(watch, flags) == FALSE) LOG_ERROR("dbus_watch_handle() failed");
 
     handle_new_dispatch_status(ctx->conn, DBUS_DISPATCH_DATA_REMAINS, ctx);

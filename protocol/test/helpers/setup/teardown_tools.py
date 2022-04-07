@@ -81,14 +81,20 @@ def extract_logs_from_mandelbox(
         "/var/log/whist/update_xorg_conf-err.log",
         "/var/log/whist/update_xorg_conf-out.log",
         "/var/log/whist/protocol-err.log",
-        "/var/log/whist/protocol-out.log",
     ]
     for file_path in logfiles:
         command = f"docker cp {docker_id}:{file_path} ~/perf_logs/{role}/"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-    # Download all the logs from the AWS machine
+    # Move the network conditions log to the perf_logs folder, so that it is downloaded
+    # to the machine running this script along with the other logs
+    if role == "client":
+        command = "mv ~/network_conditions.log ~/perf_logs/client/network_conditions.log"
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+    # Download all the mandelbox logs from the AWS machine
     command = (
         f"scp -r -i {ssh_key_path} {username}@{hostname}:~/perf_logs/{role} {perf_logs_folder_name}"
     )

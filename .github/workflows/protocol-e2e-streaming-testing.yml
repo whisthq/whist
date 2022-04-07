@@ -82,7 +82,7 @@ jobs:
       # --aws-credentials-filepath, defaults to `~/.aws/credentials`
 
       ### Action below will run the End-to-End Streaming Test for each new commit to a branch of a PR. ###
-      - name: Run End-to-End Streaming Test (normal network conditions)
+      - name: Run End-to-End Streaming Test (best network conditions)
         id: e2e_streaming_test0
         working-directory: protocol/test
         run: |
@@ -98,7 +98,7 @@ jobs:
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
 
-      - name: Run End-to-End Streaming Test (low bandwidth)
+      - name: Run End-to-End Streaming Test (good bandwidth)
         id: e2e_streaming_test1
         working-directory: protocol/test
         run: |
@@ -112,12 +112,12 @@ jobs:
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 1Mbit,None,None
+            --network-conditions 15Mbit-30Mbit,50,None,1000-2000
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
 
-      - name: Run End-to-End Streaming Test (low bandwidth + pkt drops)
+      - name: Run End-to-End Streaming Test (low bandwidth)
         id: e2e_streaming_test2
         working-directory: protocol/test
         run: |
@@ -131,12 +131,12 @@ jobs:
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 1Mbit,None,0.1
+            --network-conditions 10Mbit-20Mbit,50,None,100-1000
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
 
-      - name: Run End-to-End Streaming Test (low bandwidth + pkt drops + delay)
+      - name: Run End-to-End Streaming Test (low bandwidth + 10% packet drop)
         id: e2e_streaming_test3
         working-directory: protocol/test
         run: |
@@ -150,7 +150,7 @@ jobs:
             --leave-instances-on=false \
             --skip-host-setup=true \
             --skip-git-clone=true \
-            --network-conditions 1Mbit,100,0.1
+            --network-conditions 10Mbit-20Mbit,50,10,100-1000
 
       # Steps below acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
       - name: Get branch name (merge)
