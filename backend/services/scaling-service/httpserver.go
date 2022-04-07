@@ -93,7 +93,6 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 
 	// Setup a config databse GraphQL client to get the Stripe configurations
 	useConfigDB := true
-
 	configGraphqlClient := &subscriptions.GraphQLClient{}
 	err = configGraphqlClient.Initialize(useConfigDB)
 	if err != nil {
