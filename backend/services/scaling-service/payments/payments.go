@@ -10,6 +10,7 @@ import (
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // PaymentsClient is a wrapper struct that will call our
