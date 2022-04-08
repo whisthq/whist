@@ -899,7 +899,7 @@ static void sdl_render_nv12data(void) {
 // right sides without data, rendering it green (NV12 color format). We're not sure
 // why that is the case, but in the meantime, clipping that pixel makes the visual
 // look seamless.
-#ifdef __APPLE__ || _WIN32
+#if defined(__APPLE__) || defined(_WIN32)
 #define CLIPPED_PIXELS 1
 #else
 #define CLIPPED_PIXELS 0
