@@ -61,18 +61,18 @@ then
   echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
 
   # Partition ephemeral storage
-  sudo parted "$EPHEMERAL_DEVICE_PATH" --script mklabel gpt
-  sudo parted "$EPHEMERAL_DEVICE_PATH" --script mkpart primary ext4 2048s 12GB
-  sudo parted "$EPHEMERAL_DEVICE_PATH" --script mkpart primary ext4 12GB 100%
+  parted "$EPHEMERAL_DEVICE_PATH" --script mklabel gpt
+  parted "$EPHEMERAL_DEVICE_PATH" --script mkpart primary ext4 2048s 12GiB
+  parted "$EPHEMERAL_DEVICE_PATH" --script mkpart primary ext4 12GiB 100%
 
   # Create an ext4 filesystem for docker using ephemeral
-  sudo mkfs -t ext4 "${EPHEMERAL_DEVICE_PATH}p1"
-  sudo mkdir -p "$EPHEMERAL_FS_PATH"
-  sudo mount "${EPHEMERAL_DEVICE_PATH}p1" "$EPHEMERAL_FS_PATH"
+  mkfs -t ext4 "${EPHEMERAL_DEVICE_PATH}p1"
+  mkdir -p "$EPHEMERAL_FS_PATH"
+  mount "${EPHEMERAL_DEVICE_PATH}p1" "$EPHEMERAL_FS_PATH"
 
   # Create a swapfile using the other (much larger) partition
-  sudo mkswap "${EPHEMERAL_DEVICE_PATH}p2"
-  sudo swapon "${EPHEMERAL_DEVICE_PATH}p2"
+  mkswap "${EPHEMERAL_DEVICE_PATH}p2"
+  swapon "${EPHEMERAL_DEVICE_PATH}p2"
 
   # Stop Docker and copy the data directory to the ephemeral storage
   systemctl stop docker
