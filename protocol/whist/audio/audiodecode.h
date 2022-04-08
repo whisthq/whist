@@ -56,7 +56,7 @@ typedef struct AudioDecoder {
     AVCodecContext* context;
     AVFrame* frame;
     SwrContext* swr_context;
-    AVPacket packets[MAX_ENCODED_AUDIO_PACKETS];
+    AVPacket* packets[MAX_ENCODED_AUDIO_PACKETS];
     uint8_t* out_buffer;
 } AudioDecoder;
 

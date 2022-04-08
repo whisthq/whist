@@ -278,7 +278,7 @@ static void destroy_video_decoder_members(VideoDecoder* decoder) {
 
     // free the packets
     for (int i = 0; i < MAX_ENCODED_VIDEO_PACKETS; i++) {
-        av_packet_unref(&decoder->packets[i]);
+        av_packet_free(&decoder->packets[i]);
     }
     av_buffer_unref(&decoder->ref);
 }
@@ -368,11 +368,11 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffe
             (int): 0 on success, -1 on failure
             */
 
-    int num_packets = extract_avpackets_from_buffer(buffer, (int)buffer_size, decoder->packets);
+    int num_packets = extract_avpackets_from_buffer(buffer, buffer_size, decoder->packets);
 
     if (save_decoder_input) {
         for (int i = 0; i < num_packets; i++) {
-            AVPacket* pkt = &decoder->packets[i];
+            AVPacket* pkt = decoder->packets[i];
             fwrite(pkt->data, pkt->size, 1, decoder->save_input_file);
         }
         // Flush after every write - if the decoder fails on this input
@@ -382,15 +382,18 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffe
 
     int res;
     for (int i = 0; i < num_packets; i++) {
-        while ((res = avcodec_send_packet(decoder->context, &decoder->packets[i])) < 0) {
+        AVPacket* pkt = decoder->packets[i];
+
+        res = avcodec_send_packet(decoder->context, pkt);
+        if (res < 0) {
             LOG_WARNING("Failed to avcodec_send_packet! Error %d: %s", res, av_err2str(res));
             if (try_next_decoder(decoder) != WHIST_SUCCESS) {
-                for (int j = 0; j < num_packets; j++) {
-                    av_packet_unref(&decoder->packets[j]);
-                }
                 destroy_video_decoder(decoder);
+                return -1;
+            } else {
+                // Tail call this function again.
+                return video_decoder_send_packets(decoder, buffer, buffer_size);
             }
-            return -1;
         }
     }
 
