@@ -1,3 +1,11 @@
+/**
+ * @copyright Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file avpacket_buffer.c
+ * @brief Serialisation/deserialisation for packet batches.
+ */
+
+#include <libavutil/intreadwrite.h>
+
 #include "avpacket_buffer.h"
 
 void write_avpackets_to_buffer(int num_packets, AVPacket* packets, int* buf) {
@@ -23,7 +31,7 @@ void write_avpackets_to_buffer(int num_packets, AVPacket* packets, int* buf) {
     }
 }
 
-int extract_avpackets_from_buffer(void* buffer, int buffer_size, AVPacket* packets) {
+int extract_avpackets_from_buffer(uint8_t* buffer, size_t buffer_size, AVPacket** packets) {
     /*
         Read the encoded packets stored in buffer into packets. The buffer should have been filled
         using read_packets_into_buffer.
@@ -45,42 +53,56 @@ int extract_avpackets_from_buffer(void* buffer, int buffer_size, AVPacket* packe
     if (buffer == NULL) {
         LOG_FATAL("Received a NULL buffer!");
     }
-    if (buffer_size < 4) {
-        LOG_FATAL("Received a buffer size of %d, too small!", buffer_size);
+    if (buffer_size < 4 || buffer_size > MAX_VIDEOFRAME_DATA_SIZE) {
+        LOG_FATAL("Invalid packet buffer size: %zu bytes.", buffer_size);
     }
 
     // first entry: number of packets
-    int* int_buffer = buffer;
-    int num_packets = *int_buffer;
-    int_buffer++;
+    uint32_t num_packets = AV_RL32(buffer);
 
-    // we compute the size of metadata + packets and ensure it agrees with buffer_size
-    int computed_size = sizeof(int);
-
-    // find buffer sizes
-    for (int i = 0; i < num_packets; i++) {
-        // make sure to clear the packet data
-        av_packet_unref(&packets[i]);
-        // next entry in buffer is packet size
-        packets[i].size = *int_buffer;
-        computed_size += sizeof(int) + packets[i].size;
-        int_buffer++;
+    // We currently expect exactly one packet in each buffer, but
+    // previously larger numbers were allowed.  We accept but warn if
+    // there is more than one packet.
+    if (num_packets < 1 || num_packets > 10) {
+        LOG_FATAL("Invalid number of packets in buffer: %" PRIu32 " packets found.", num_packets);
+    }
+    if (num_packets != 1) {
+        LOG_ERROR("Unexpected number of packets in buffer: %" PRIu32 " packets found.",
+                  num_packets);
     }
 
-    if (buffer_size != computed_size) {
-        LOG_ERROR(
-            "Given Buffer Size did not match computed buffer size: given %d vs "
-            "computed %d",
-            buffer_size, computed_size);
-        return -1;
-    }
+    size_t size_pos = 4;
+    size_t data_pos = size_pos + 4 * num_packets;
+    for (uint32_t p = 0; p < num_packets; p++) {
+        // Extract the size of this packet.
+        uint32_t packet_size = AV_RL32(buffer + size_pos);
+        size_pos += 4;
 
-    // the rest of the buffer is each packet's data
-    char* char_buffer = (void*)int_buffer;
-    for (int i = 0; i < num_packets; i++) {
-        // set packet data
-        packets[i].data = (void*)char_buffer;
-        char_buffer += packets[i].size;
+        // Validate packet size.
+        if (packet_size == 0 || data_pos + packet_size > buffer_size) {
+            LOG_FATAL("Invalid packet size: %" PRIu32 " bytes at position %zu.", packet_size,
+                      data_pos);
+        }
+
+        if (packets[p] == NULL) {
+            // Allocate a new packet.
+            packets[p] = av_packet_alloc();
+            FATAL_ASSERT(packets[p]);
+        } else {
+            // Unreference the previous packet (the decoder may still
+            // hold a reference to the data).
+            av_packet_unref(packets[p]);
+        }
+        AVPacket* pkt = packets[p];
+
+        // Allocate a new refcounted buffer for the packet data.
+        // (This also includes the necessary zeroed padding.)
+        int res = av_new_packet(pkt, packet_size);
+        FATAL_ASSERT(res == 0);
+
+        // Copy the packet data to the packet.
+        memcpy(pkt->data, buffer + data_pos, packet_size);
+        data_pos += packet_size;
     }
 
     // return number of packets

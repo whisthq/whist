@@ -40,7 +40,7 @@ Public Functions
  *
  * @returns                     0 on success, -1 on failure
  */
-int extract_avpackets_from_buffer(void* buffer, int buffer_size, AVPacket* packets);
+int extract_avpackets_from_buffer(uint8_t* buffer, size_t buffer_size, AVPacket** packets);
 
 /**
  * @brief                       Store num_packets AVPackets, found in packets, into
