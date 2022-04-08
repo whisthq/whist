@@ -62,8 +62,9 @@ const filterLogData = (data: object) => {
         "bookmarks",
         "urls",
         "preferences",
-        "localStorage",
         "local_storage",
+        "extension_settings",
+        "extension_state",
       ].includes(k) &&
       (v ?? undefined) !== undefined
     ) {

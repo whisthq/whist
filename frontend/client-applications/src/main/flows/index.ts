@@ -51,6 +51,8 @@ import {
   getLocalStorage,
   InstalledBrowser,
   getPreferences,
+  getExtensionSettings,
+  getExtensionState,
 } from "@app/main/utils/importer"
 
 // Autoupdate flow
@@ -112,15 +114,19 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
       from(getBookmarks(t?.importBrowserDataFrom as InstalledBrowser)),
       from(getExtensions(t?.importBrowserDataFrom as InstalledBrowser)),
       from(getPreferences(t?.importBrowserDataFrom as InstalledBrowser)),
-      from(getLocalStorage(t?.importBrowserDataFrom as InstalledBrowser))
+      from(getLocalStorage(t?.importBrowserDataFrom as InstalledBrowser)),
+      from(getExtensionSettings(t?.importBrowserDataFrom as InstalledBrowser)),
+      from(getExtensionState(t?.importBrowserDataFrom as InstalledBrowser))
     )
   ),
-  map(([cookies, bookmarks, extensions, preferences, localStorage]) => ({
+  map(([cookies, bookmarks, extensions, preferences, localStorage, extensionSettings, extensionState]) => ({
     cookies,
     bookmarks,
     extensions,
     preferences,
     localStorage,
+    extensionSettings,
+    extensionState,
   })),
   share()
 )
