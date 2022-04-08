@@ -172,6 +172,9 @@ func (sc *StripeClient) createCheckoutSession(withTrialPeriod bool) (string, err
 		PaymentMethodTypes: []*string{
 			stripe.String("card"),
 		},
+		PaymentMethodTypes: []*string{
+			stripe.String("card"),
+		},
 		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
 		SuccessURL: stripe.String("http://localhost/callback/payment?success=true"),
 		CancelURL:  stripe.String("http://localhost/callback/payment?success=false"),
