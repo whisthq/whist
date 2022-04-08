@@ -102,7 +102,8 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 
 	// Create a new StripeClient to handle the customer
 	paymentsClient := &payments.PaymentsClient{}
-	err = paymentsClient.Initialize(claims.CustomerID, claims.SubscriptionStatus, configGraphqlClient)
+	stripeClient := &payments.StripeClient{}
+	err = paymentsClient.Initialize(claims.CustomerID, claims.SubscriptionStatus, configGraphqlClient, stripeClient)
 	if err != nil {
 		logger.Errorf("Failed to Initialize Stripe Client. Err: %v", err)
 		http.Error(w, "", http.StatusInternalServerError)

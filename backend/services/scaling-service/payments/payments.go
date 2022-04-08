@@ -4,12 +4,12 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/stripe/stripe-go/v72"
 	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // PaymentsClient is a wrapper struct that will call our
@@ -22,7 +22,7 @@ type PaymentsClient struct {
 // Initialize will pull all necessary configurations from the database
 // and set the StripeClient fields with the values extracted from
 // the access token.
-func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionStatus string, configGraphqlClient subscriptions.WhistGraphQLClient) error {
+func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionStatus string, configGraphqlClient subscriptions.WhistGraphQLClient, stripeClient WhistStripeClient) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -54,6 +54,12 @@ func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionS
 		return utils.MakeError("Could not find key STRIPE_SECRET in configurations map.")
 	}
 
+	// Use the restriced Strip key if on localdev or testing
+	restricedKey, ok := configs["STRIPE_RESTRICTED"]
+	if !ok {
+		logger.Warningf("Could not find key STRIPE_RESTRICTED in configurations map.")
+	}
+
 	price, ok := configs["MONTHLY_PRICE_IN_CENTS"]
 	if !ok {
 		return utils.MakeError("Could not find key MONTHLY_PRICE_IN_CENTS in configurations map.")
@@ -64,28 +70,8 @@ func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionS
 		return utils.MakeError("failed to parse monthly price. Err: %v", err)
 	}
 
-	// Create our own Stripe client
-	whistPayments.stripeClient = &StripeClient{}
-
-	// Dynamically set the Stripe key depending on environment
-	if metadata.IsLocalEnv() {
-		// Use the restriced Strip key if on localdev or testing
-		restricedKey, ok := configs["STRIPE_RESTRICTED"]
-		if !ok {
-			return utils.MakeError("Could not find key STRIPE_RESTRICTED in configurations map.")
-		}
-
-		stripe.Key = restricedKey
-		whistPayments.stripeClient.(*StripeClient).key = restricedKey
-	} else {
-		stripe.Key = secret
-		whistPayments.stripeClient.(*StripeClient).key = secret
-	}
-
-	whistPayments.stripeClient.(*StripeClient).monthlyPriceInCents = monthlyPrice
-	whistPayments.stripeClient.(*StripeClient).customerID = customerID
-	whistPayments.stripeClient.(*StripeClient).subscriptionStatus = subscriptionStatus
-
+	stripeClient.configure(secret, restricedKey, customerID, subscriptionStatus, monthlyPrice)
+	whistPayments.stripeClient = stripeClient
 	return nil
 }
 
@@ -97,7 +83,7 @@ func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 		sessionUrl string
 		err        error
 	)
-	subscriptionStatus := whistPayments.stripeClient.(*StripeClient).subscriptionStatus
+	subscriptionStatus := whistPayments.stripeClient.getSubscriptionStatus()
 	if subscriptionStatus == "active" || subscriptionStatus == "trialing" {
 		// If the authenticated user already has a Whist subscription in a non-terminal state
 		// (one of `active` or `trialing`), create a Stripe billing portal that the customer

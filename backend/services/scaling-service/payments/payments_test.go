@@ -19,6 +19,17 @@ var (
 	testConfigMap     map[string]string
 )
 
+func setup() {
+	testGraphQLCLient = &mockConfigGraphQLClient{}
+	testPayments = &PaymentsClient{}
+}
+
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	os.Exit(code)
+}
+
 type mockConfigGraphQLClient struct {
 }
 
@@ -76,6 +87,23 @@ type mockStripeClient struct {
 	monthlyPriceInCents int64
 }
 
+func (sc *mockStripeClient) configure(secret string, restrictedSecret string, customerID string, subscriptionStatus string, monthlyPriceInCents int64) {
+	// Dynamically set the Stripe key depending on environment
+	if metadata.IsLocalEnv() {
+		sc.key = restrictedSecret
+	} else {
+		sc.key = secret
+	}
+
+	sc.customerID = customerID
+	sc.subscriptionStatus = subscriptionStatus
+	sc.monthlyPriceInCents = monthlyPriceInCents
+}
+
+func (sc *mockStripeClient) getSubscriptionStatus() string {
+	return sc.subscriptionStatus
+}
+
 func (sc *mockStripeClient) createCheckoutSession() (string, error) {
 	return "https://test-checkout-session.url", nil
 }
@@ -86,17 +114,6 @@ func (sc *mockStripeClient) createBillingPortal() (string, error) {
 
 func (sc *mockStripeClient) createPrice(cents int64, name string, interval string) (*stripe.Price, error) {
 	return &stripe.Price{}, nil
-}
-
-func setup() {
-	testGraphQLCLient = &mockConfigGraphQLClient{}
-	testPayments = &PaymentsClient{}
-}
-
-func TestMain(m *testing.M) {
-	setup()
-	code := m.Run()
-	os.Exit(code)
 }
 
 // TestInitialize will test the StipeClient's `Initialize` function, and verify
@@ -153,7 +170,7 @@ func TestInitialize(t *testing.T) {
 			}
 
 			// Try to initialize a test StripeClient
-			err := testPayments.Initialize(tt.customer, tt.subscriptionStatus, testGraphQLCLient)
+			err := testPayments.Initialize(tt.customer, tt.subscriptionStatus, testGraphQLCLient, &mockStripeClient{})
 			if err != nil {
 				t.Fatalf("Failed to Initialize StripeClient. Err: %v", err)
 			}
@@ -173,7 +190,7 @@ func TestInitialize(t *testing.T) {
 				wantSecret = tt.stripeSecret
 			}
 
-			wantClient := &StripeClient{
+			wantClient := &mockStripeClient{
 				key:                 wantSecret,
 				customerID:          tt.customer,
 				subscriptionStatus:  tt.subscriptionStatus,
@@ -206,29 +223,26 @@ func TestCreateSession(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.subscriptionStatus, func(t *testing.T) {
-			_, err := testPayments.CreateSession()
+			// Set subscription status to the one of the test
+			testPayments.stripeClient.(*mockStripeClient).subscriptionStatus = tt.subscriptionStatus
+
+			// Ask for a payments session
+			url, err := testPayments.CreateSession()
 			if err != nil {
 				t.Errorf("Failed to create session. Err: %v", err)
 			}
+
+			// Checkout session got called
+			if url == "https://test-checkout-session.url" &&
+				!tt.checkoutSessionCreated {
+				t.Errorf("Expected billing portal to be created for status %v, got checkout session instead.", tt.subscriptionStatus)
+			}
+
+			// Billing portal got called
+			if url == "https://test-billing-portal.url" &&
+				!tt.billingPortalCreated {
+				t.Errorf("Expected checkout session to be created for status %v, got billing portal instead.", tt.subscriptionStatus)
+			}
 		})
 	}
-
-}
-
-// TestCreateCheckoutSession will test creating a checkout session
-// on Stripe. This test interacts with Stripe using the restricted key.
-func TestCreateCheckoutSession(t *testing.T) {
-
-}
-
-// TestCreateBillingPortal will test creating a billing portal
-// on Stripe. This test interacts with Stripe using the restricted key.
-func TestCreateBillingPortal(t *testing.T) {
-
-}
-
-// TestCreatePrice will test creating a new Stripe price
-// This test interacts with Stripe using the restricted key.
-func TestCreatePrice(t *testing.T) {
-
 }

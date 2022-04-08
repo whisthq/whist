@@ -6,11 +6,14 @@ import (
 	billingPortal "github.com/stripe/stripe-go/v72/billingportal/session"
 	checkout "github.com/stripe/stripe-go/v72/checkout/session"
 	"github.com/stripe/stripe-go/v72/price"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 type WhistStripeClient interface {
+	configure(string, string, string, string, int64)
+	getSubscriptionStatus() string
 	createCheckoutSession() (string, error)
 	createBillingPortal() (string, error)
 	createPrice(cents int64, name string, interval string) (*stripe.Price, error)
@@ -23,6 +26,27 @@ type StripeClient struct {
 	customerID          string // The Stripe ID of the customer
 	subscriptionStatus  string // The subscription status ("active", "trialing", etc.)
 	monthlyPriceInCents int64  // The desired price in cents for a Whist subscription
+}
+
+// configure will set the fields of the StripeClient to the received values. This method
+// makes it easier to mock for testing.
+func (sc *StripeClient) configure(secret string, restrictedSecret string, customerID string, subscriptionStatus string, monthlyPriceInCents int64) {
+	// Dynamically set the Stripe key depending on environment
+	if metadata.IsLocalEnv() {
+		sc.key = restrictedSecret
+	} else {
+		sc.key = secret
+	}
+
+	stripe.Key = sc.key
+	sc.customerID = customerID
+	sc.subscriptionStatus = subscriptionStatus
+	sc.monthlyPriceInCents = monthlyPriceInCents
+}
+
+// getSubscriptionStatus will return the current subscription status of the customer.
+func (sc *StripeClient) getSubscriptionStatus() string {
+	return sc.subscriptionStatus
 }
 
 // createCheckoutSession creates a Stripe checkout session for the current customer.
