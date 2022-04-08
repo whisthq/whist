@@ -12,7 +12,7 @@ import {
   getPreferencesFromFile,
 } from "@app/main/utils/crypto"
 
-const readLevelDBDir = async (dirPath: string, prefix: string): Promise<LocalStorageMap> => {
+const readNestedLevelDbDir = async (dirPath: string, prefix: string): Promise<LocalStorageMap> => {
   try {
     const relevantFiles: string[] = []
     let data: LocalStorageMap = {}
@@ -22,7 +22,7 @@ const readLevelDBDir = async (dirPath: string, prefix: string): Promise<LocalSto
         if (dirent.isDirectory()) {
           data = {
             ...data,
-            ...(await readLevelDBDir(path.join(dirPath, dirent.name), prefix === '' ? dirent.name : path.join(prefix, dirent.name))),
+            ...(await readNestedLevelDbDir(path.join(dirPath, dirent.name), prefix === '' ? dirent.name : path.join(prefix, dirent.name))),
           }
           return
         }
@@ -54,6 +54,24 @@ const readLevelDBDir = async (dirPath: string, prefix: string): Promise<LocalSto
     console.error("Could not get local storage from files. Error:", err)
     return {}
   }
+}
+
+const getLocalStorageFromFiles = (browser: InstalledBrowser): string => {
+  const localStorageDir = expandPaths(getLocalStorageDir(browser))
+  const data = readNestedLevelDbDir(localStorageDir, "")
+  return JSON.stringify(data)
+}
+
+const getExtensionStateFromFiles = (browser: InstalledBrowser): string => {
+  const extensionStateDir = expandPaths(getExtensionStateDir(browser))
+  const data = readNestedLevelDbDir(extensionStateDir, "")
+  return JSON.stringify(data)
+}
+
+const getExtensionSettingsFromFiles = (browser: InstalledBrowser): string => {
+  const extensionSettingsDir = expandPaths(getExtensionSettingsDir(browser))
+  const data = readNestedLevelDbDir(extensionSettingsDir, "")
+  return JSON.stringify(data)
 }
 
 const getInstalledBrowsers = () => {
@@ -183,6 +201,60 @@ const getPreferences = async (
   return preferences
 }
 
+const getExtensionState = async (
+  browser: InstalledBrowser
+): Promise<string | undefined> => {
+  // If no browser is requested or the browser is not recognized, don't run anything
+  if (
+    browser === undefined ||
+    !Object.values(InstalledBrowser).includes(browser)
+  )
+    return undefined
+
+  // For now we only want to get local storage for browsers that are compatible
+  // with chrome extensions ie brave/chrome/chromium
+  if (
+    browser !== InstalledBrowser.CHROME &&
+    browser !== InstalledBrowser.BRAVE &&
+    browser !== InstalledBrowser.CHROMIUM
+  ) {
+    return undefined
+  }
+
+  const extensionState = getExtensionStateFromFiles(browser)
+
+  if (extensionState.length === 0) return undefined
+
+  return extensionState
+}
+
+const getExtensionSettings = async (
+  browser: InstalledBrowser
+): Promise<string | undefined> => {
+  // If no browser is requested or the browser is not recognized, don't run anything
+  if (
+    browser === undefined ||
+    !Object.values(InstalledBrowser).includes(browser)
+  )
+    return undefined
+
+  // For now we only want to get local storage for browsers that are compatible
+  // with chrome extensions ie brave/chrome/chromium
+  if (
+    browser !== InstalledBrowser.CHROME &&
+    browser !== InstalledBrowser.BRAVE &&
+    browser !== InstalledBrowser.CHROMIUM
+  ) {
+    return undefined
+  }
+
+  const extensionSettings = getExtensionSettingsFromFiles(browser)
+
+  if (extensionSettings.length === 0) return undefined
+
+  return extensionSettings
+}
+
 export {
   InstalledBrowser,
   getInstalledBrowsers,
@@ -191,4 +263,6 @@ export {
   getExtensions,
   getPreferences,
   getLocalStorage,
+  getExtensionState,
+  getExtensionSettings,
 }
