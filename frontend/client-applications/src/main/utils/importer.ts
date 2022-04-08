@@ -12,6 +12,50 @@ import {
   getPreferencesFromFile,
 } from "@app/main/utils/crypto"
 
+const readLevelDBDir = async (dirPath: string, prefix: string): Promise<LocalStorageMap> => {
+  try {
+    const relevantFiles: string[] = []
+    let data: LocalStorageMap = {}
+
+    fs.readdirSync(dirPath, { withFileTypes: true })
+      .forEach(async (dirent) => {
+        if (dirent.isDirectory()) {
+          data = {
+            ...data,
+            ...(await readLevelDBDir(path.join(dirPath, dirent.name), prefix === '' ? dirent.name : path.join(prefix, dirent.name))),
+          }
+          return
+        }
+        
+        if (!dirent.isFile()) {
+          return
+        }
+
+        // We are only interested in .ldb, .log, CURRENT, and MANIFEST files
+        if ((path.extname(dirent.name) === ".ldb" ||
+            path.extname(dirent.name) === ".log" ||
+            dirent.name === "CURRENT" ||
+            dirent.name.startsWith("MANIFEST"))) {
+          relevantFiles.push(dirent.name)
+        }
+      })
+
+    for (const file of relevantFiles) {
+      const filePath = path.join(dirPath, file)
+      const fileKey = prefix === '' ? file : path.join(prefix, file)
+      const fileData = fs.readFileSync(filePath)
+
+      // Base64 encode the binary file data so we can pass as JSON
+      data[fileKey] = fileData.toString("base64")
+    } 
+
+    return data;
+  } catch (err) {
+    console.error("Could not get local storage from files. Error:", err)
+    return {}
+  }
+}
+
 const getInstalledBrowsers = () => {
   return Object.keys(
     pickBy(
