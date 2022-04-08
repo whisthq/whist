@@ -12,11 +12,7 @@ you use an earlier version, the verbose messages will be printed regardless
 of whether verbose output is set to ON or OFF.
 ]]
 
-# 3.15 required for CMP0091
-# We need CMP0091 to select the MSVC_RUNTIME_LIBRARY
-# We need CheckLanguage to call check_language
-# See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.20)
 cmake_policy(SET CMP0091 NEW)
 include(CheckLanguage)
 include(FetchContent)

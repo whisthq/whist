@@ -39,7 +39,7 @@ Module documentation for every module in the `webserver` directory is available 
 
      Specifically, the `pg_dump` and `psql` binaries must be accessible from your `PATH`.
 
-2. **Set up Python 3.10.0**
+2. **Set up Python Environment**
 
    All Webserver development should take place in a Python 3.10.0 environment. We recommend using a tool such as [virtualenv](https://virtualenv.pypa.io/en/latest/) to set up a virtual environment. Setting up a Python virtual environment can feel dauting and confusing, but virtual environments provide for a vastly superior development experience. Don't be afraid to ask for help if you're having trouble setting one up or don't know where to start.
 

@@ -36,7 +36,7 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
 
-      - name: Install Node.js 16
+      - name: Set up NodeJS Environment
         uses: actions/setup-node@v3.1.0
         with:
           node-version: "16"
@@ -57,7 +57,7 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
 
-      - name: Install Node.js 16
+      - name: Set up NodeJS Environment
         uses: actions/setup-node@v3.1.0
         with:
           node-version: "16"
