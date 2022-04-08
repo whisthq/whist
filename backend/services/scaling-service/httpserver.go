@@ -118,7 +118,9 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Marshal and send session URL
-	buf, err := json.Marshal(sessionUrl)
+	buf, err := json.Marshal(map[string]string{
+		"url": sessionUrl,
+	})
 	if err != nil {
 		logger.Errorf("Error marshalling HTTP Response body: %s", err)
 		http.Error(w, "", http.StatusInternalServerError)
