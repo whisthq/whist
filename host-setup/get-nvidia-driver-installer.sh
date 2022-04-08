@@ -9,5 +9,5 @@ set -Eeuo pipefail
 # versions later than 11.0 to g4/latest, but will keep version 11.0 and the earlier versions specific to G4dn under g4/latest.
 
 # Hardcode a GRID driver version to avoid server/client version mismatch. This driver version needs to be updated periodically.
-aws s3 cp --only-show-errors s3://ec2-linux-nvidia-drivers/grid-13.1/NVIDIA-Linux-x86_64-470.82.01-grid-aws.run nvidia-driver-installer.run
+aws s3 cp --only-show-errors s3://ec2-linux-nvidia-drivers/grid-14.0/NVIDIA-Linux-x86_64-510.47.03-grid-aws.run nvidia-driver-installer.run
 chmod +x ./nvidia-driver-installer.run
