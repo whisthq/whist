@@ -16,15 +16,15 @@ const WhistNodeEnvironments = {
 }
 
 // Webserver URLs
-const WhistWebservers = {
-  local: "https://dev-server.whist.com",
-  dev: "https://dev-server.whist.com",
-  staging: "https://staging-server.whist.com",
-  production: "https://prod-server.whist.com",
+const WhistScalingServices = {
+  local: "http://0.0.0.0:7730",
+  dev: "https://dev-scaling-service.whist.com",
+  staging: "https://staging-scaling-service.whist.com",
+  production: "https://prod-scaling-service.whist.com",
 }
 
 module.exports = {
   WhistNodeEnvironments,
   WhistEnvironments,
-  WhistWebservers,
+  WhistScalingServices,
 }

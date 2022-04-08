@@ -10,7 +10,7 @@
 const {
   WhistEnvironments,
   WhistNodeEnvironments,
-  WhistWebservers,
+  WhistScalingServices,
 } = require("./constants")
 
 const {
@@ -37,7 +37,7 @@ const configs = {
       LOGZ_KEY: "MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ",
     },
     url: {
-      WEBSERVER_URL: WhistWebservers.local,
+      WEBSERVER_URL: WhistScalingServices.local,
       FRONTEND_URL: "https://dev.whist.com",
     },
     auth0: {
@@ -63,7 +63,7 @@ const configs = {
       LOGZ_KEY: "MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ",
     },
     url: {
-      WEBSERVER_URL: WhistWebservers.dev,
+      WEBSERVER_URL: WhistScalingServices.dev,
       FRONTEND_URL: "https://dev.whist.com",
     },
     auth0: {
@@ -89,7 +89,7 @@ const configs = {
       LOGZ_KEY: "WrlrWXFqDYqCNCXVwkmuOpQOvHNeqIiJ",
     },
     url: {
-      WEBSERVER_URL: WhistWebservers.staging,
+      WEBSERVER_URL: WhistScalingServices.staging,
       FRONTEND_URL: "https://staging.whist.com",
     },
     auth0: {
@@ -112,7 +112,7 @@ const configs = {
     protocolFolder,
     buildRoot,
     url: {
-      WEBSERVER_URL: WhistWebservers.production,
+      WEBSERVER_URL: WhistScalingServices.production,
       FRONTEND_URL: "https://whist.com",
     },
     keys: {
@@ -141,5 +141,5 @@ module.exports = {
   loggingFiles,
   WhistNodeEnvironments,
   WhistEnvironments,
-  WhistWebservers,
+  WhistScalingServices,
 }
