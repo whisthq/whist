@@ -119,15 +119,25 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
       from(getExtensionState(t?.importBrowserDataFrom as InstalledBrowser))
     )
   ),
-  map(([cookies, bookmarks, extensions, preferences, localStorage, extensionSettings, extensionState]) => ({
-    cookies,
-    bookmarks,
-    extensions,
-    preferences,
-    localStorage,
-    extensionSettings,
-    extensionState,
-  })),
+  map(
+    ([
+      cookies,
+      bookmarks,
+      extensions,
+      preferences,
+      localStorage,
+      extensionSettings,
+      extensionState,
+    ]) => ({
+      cookies,
+      bookmarks,
+      extensions,
+      preferences,
+      localStorage,
+      extensionSettings,
+      extensionState,
+    })
+  ),
   share()
 )
 
