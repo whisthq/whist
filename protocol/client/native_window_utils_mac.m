@@ -203,10 +203,15 @@ int get_native_window_dpi(SDL_Window *window) {
             (int): The DPI as an int, with 96 as a base.
     */
 
+    //tmp hack
+    return 96.0;
+    /*
+
     NSWindow *native_window = get_native_window(window);
 
     const CGFloat scale_factor = [[native_window screen] backingScaleFactor];
     return (int)(96 * scale_factor);
+    */
 }
 
 static IOPMAssertionID power_assertion_id = kIOPMNullAssertionID;

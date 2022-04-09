@@ -343,7 +343,8 @@ int render_video(VideoContext* video_context) {
 
         // Render out the cursor image
         if (cursor_image) {
-            TIME_RUN(sdl_update_cursor(cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
+            // temp hack
+            //TIME_RUN(sdl_update_cursor(cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
             // Cursors need not be double-rendered, so we just unset the cursor image here
             free(cursor_image);
             cursor_image = NULL;
