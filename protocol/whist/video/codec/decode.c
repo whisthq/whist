@@ -450,6 +450,8 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
     LOG_INFO("[yancey_check_decode] pre decoder->decoded_frame free-ed!");
     // Free the old captured frame, if there was any
     av_frame_free(&decoder->decoded_frame);
+
+    //whist_sleep(rand()%10);
     LOG_INFO("[yancey_check_decode] pos decoder->decoded_frame free-ed!");
 
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(frame->format);

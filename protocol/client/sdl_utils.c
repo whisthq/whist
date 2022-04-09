@@ -419,6 +419,7 @@ void sdl_update_framebuffer(AVFrame* frame) {
             LOG_INFO("[yancey_misc] previous pending_nv12_frame free-ed\n");
             av_frame_free(&pending_nv12_frame);
         }
+        LOG_INFO("[yancey_misc] new pending_nv12_frame assigned\n");
         pending_nv12_frame = frame;
         pending_nv12data = true;
     }
