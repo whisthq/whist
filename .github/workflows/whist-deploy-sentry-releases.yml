@@ -41,8 +41,6 @@ jobs:
             sentry-project: mandelboxes
           - name: Protocol (macOS, Windows, Linux)
             sentry-project: protocol
-          - name: Webserver
-            sentry-project: webserver
           - name: Website
             sentry-project: website
 
@@ -125,5 +123,5 @@ jobs:
 
           from notifications.slack_bot import slack_post
           TITLE = ":sentry: Sentry Releases Deployed :sentry:"
-          BODY = f"Sentry Releases for Whist Sentry Projects  `client-applications`, `host-service`, `mandelboxes`, `protocol`, `webserver`, and `website` deployed to Sentry on branch: `${{ needs.whist-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Sentry Releases for Whist Sentry Projects  `client-applications`, `host-service`, `mandelboxes`, `protocol`, and `website` deployed to Sentry on branch: `${{ needs.whist-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
