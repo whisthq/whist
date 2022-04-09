@@ -245,7 +245,7 @@ jobs:
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh
 
-      - name: Install Node.js 16
+      - name: Set up NodeJS Environment
         uses: actions/setup-node@v3.1.0
         with:
           node-version: "16"
@@ -394,10 +394,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Set up Python 3.10.0
+      - name: Set up Python Environment
         uses: actions/setup-python@v3.1.1
         with:
-          python-version: "3.10.0"
+          python-version: "3.10.4"
 
       - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
         working-directory: .github/workflows/helpers
@@ -446,10 +446,10 @@ jobs:
       ##########################################################################################
       ########################### Stage 2 - Build Backend Services #############################
 
-      - name: Setup Go environment
+      - name: Set up Go Environment
         uses: actions/setup-go@v3.0.0
         with:
-          go-version: "1.17"
+          go-version: "1.18"
 
       - name: Authenticate Go commands with GitHub
         env:
@@ -962,7 +962,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Node.js 16
+      - name: Set up NodeJS Environment
         uses: actions/setup-node@v3.1.0
         with:
           node-version: "16"
@@ -1202,10 +1202,10 @@ jobs:
             password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
           EOF
 
-      - name: Setup Go environment
+      - name: Set up Go Environment
         uses: actions/setup-go@v3.0.0
         with:
-          go-version: "1.17"
+          go-version: "1.18"
 
       - name: Authenticate Go commands with GitHub
         env:

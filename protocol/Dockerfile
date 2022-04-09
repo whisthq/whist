@@ -48,8 +48,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     gcc \
     g++ \
     cppcheck \
-    cmake=3.18.4-0kitware1ubuntu20.04.1 \
-    cmake-data=3.18.4-0kitware1ubuntu20.04.1 \
+    cmake \
+    cmake-data \
     sudo \
     clang-format \
     awscli \

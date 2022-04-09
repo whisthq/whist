@@ -14,7 +14,7 @@ node_modules
 # Code coverage
 coverage
 
-# dynamically generated css
+# Dynamically generated CSS
 public/css/tailwind.css
 
 # Python
@@ -48,5 +48,5 @@ yarn-error.log*
 perf_logs
 
 # Local Netlify folder
-# (netlify wants this line in root, not website gitignore)
+# (netlify wants this line in root, not website .gitignore)
 .netlify
