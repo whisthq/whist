@@ -108,23 +108,68 @@ const handleScrollEvent = () => {
   updateTranslationFromScroll()
 }
 
-const initPinchToZoom = () => {
-  const numberOfCanvases = document.getElementsByTagName("canvas").length
+const listAllEventListeners = () => {
+  const allElements = Array.prototype.slice.call(document.querySelectorAll("*"))
+  allElements.push(document)
+  allElements.push(window)
 
-  console.log("number of canvases is", numberOfCanvases)
+  const types = []
 
-  // This browser-hint may be an optimization, but seems to behave poorly on https://maps.google.com and similar.
-  // pageElement.style.willChange = 'transform'
-
-  if (numberOfCanvases === 0) {
-    window.addEventListener("keydown", handleKeyDownEvent)
-
-    // { passive: false s} indicates that this event handler may call preventDefault
-    window.addEventListener("scroll", handleScrollEvent, { passive: false })
-    document.documentElement.addEventListener("wheel", handleWheelEvent, {
-      passive: false,
-    })
+  for (let ev in window) {
+    if (/^on/.test(ev)) types[types.length] = ev
   }
+
+  let elements = []
+  for (let i = 0; i < allElements.length; i++) {
+    const currentElement = allElements[i]
+
+    // Events defined in attributes
+    for (let j = 0; j < types.length; j++) {
+      if (typeof currentElement[types[j]] === "function") {
+        elements.push({
+          node: currentElement,
+          type: types[j],
+          func: currentElement[types[j]].toString(),
+        })
+      }
+    }
+
+    // Events defined with addEventListener
+    if (typeof currentElement._getEventListeners === "function") {
+      let evts = currentElement._getEventListeners()
+      if (Object.keys(evts).length > 0) {
+        for (let evt of Object.keys(evts)) {
+          for (let k = 0; k < evts[evt].length; k++) {
+            elements.push({
+              node: currentElement,
+              type: evt,
+              func: evts[evt][k].listener.toString(),
+            })
+          }
+        }
+      }
+    }
+  }
+
+  return elements.sort()
+}
+
+const initPinchToZoom = () => {
+  window.addEventListener("load", () => {
+    // This browser-hint may be an optimization, but seems to behave poorly on https://maps.google.com and similar.
+    // pageElement.style.willChange = 'trasnsform'
+
+    // If the document contains a canvas it probably has its own zoom handler, so we don't add ours
+    if (document.getElementsByTagName("canvas").length !== 0) {
+      window.addEventListener("keydown", handleKeyDownEvent)
+
+      // { passive: false s} indicates that this event handler may call preventDefault
+      window.addEventListener("scroll", handleScrollEvent, { passive: false })
+      document.documentElement.addEventListener("wheel", handleWheelEvent, {
+        passive: false,
+      })
+    }
+  })
 }
 
 export { initPinchToZoom }
