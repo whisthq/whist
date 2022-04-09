@@ -1,4 +1,8 @@
 import { NativeHostMessage, NativeHostMessageType } from "@app/constants/ipc"
+import {
+  ContentScriptMessage,
+  ContentScriptMessageType,
+} from "@app/constants/ipc"
 
 // Try to cancel or undo a tab drag-out
 const tryRestoreTabLocation = async (
@@ -64,8 +68,21 @@ const initActivateTabHandler = (nativeHostPort: chrome.runtime.Port) => {
   })
 }
 
+const initTabUpdateListener = () => {
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    // read changeInfo data and do something with it
+    // like send the new url to contentscripts.js
+    if (changeInfo.url) {
+      chrome.tabs.sendMessage(tabId, <ContentScriptMessage>{
+        type: ContentScriptMessageType.TAB_UPDATED,
+      })
+    }
+  })
+}
+
 export {
   initTabDetachSuppressor,
   initCreateNewTabHandler,
   initActivateTabHandler,
+  initTabUpdateListener,
 }

@@ -13,6 +13,7 @@ import {
   initTabDetachSuppressor,
   initCreateNewTabHandler,
   initActivateTabHandler,
+  initTabUpdateListener,
 } from "./tabs"
 
 const nativeHostPort = initNativeHostIpc()
@@ -40,3 +41,6 @@ initCreateNewTabHandler(nativeHostPort)
 
 // Switches focus to a current tab if the client asks for it
 initActivateTabHandler(nativeHostPort)
+
+// Sends an IPC message when tab URL has updated
+initTabUpdateListener()

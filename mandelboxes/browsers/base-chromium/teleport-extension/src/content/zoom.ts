@@ -1,3 +1,8 @@
+import {
+  ContentScriptMessage,
+  ContentScriptMessageType,
+} from "@app/constants/ipc"
+
 const clamp = (v: number, min: number, max: number): number =>
   Math.max(Math.min(v, max), min)
 
@@ -154,23 +159,34 @@ const listAllEventListeners = () => {
   return elements.sort()
 }
 
+const toggleCustomPinchToZoom = () => {
+  // This browser-hint may be an optimization, but seems to behave poorly on https://maps.google.com and similar.
+  // pageElement.style.willChange = 'trasnsform'
+
+  // If the document contains a canvas it probably has its own zoom handler, so we don't add ours
+  if (document.getElementsByTagName("canvas").length === 0) {
+    window.addEventListener("keydown", handleKeyDownEvent)
+
+    // { passive: false } indicates that this event handler may call preventDefault
+    window.addEventListener("scroll", handleScrollEvent, { passive: false })
+    document.documentElement.addEventListener("wheel", handleWheelEvent, {
+      passive: false,
+    })
+  } else {
+    window.removeEventListener("scroll", handleScrollEvent)
+    window.removeEventListener("keydown", handleKeyDownEvent)
+    document.documentElement.removeEventListener("wheel", handleWheelEvent)
+  }
+}
+
 const initPinchToZoom = () => {
-  window.addEventListener("load", () => {
-    // This browser-hint may be an optimization, but seems to behave poorly on https://maps.google.com and similar.
-    // pageElement.style.willChange = 'trasnsform'
+  // On page load, decide whether to activate pinch-to-zoom
+  window.addEventListener("load", toggleCustomPinchToZoom)
 
-    console.log("THE LENGTH IS", document.getElementsByTagName("canvas").length)
-
-    // If the document contains a canvas it probably has its own zoom handler, so we don't add ours
-    if (document.getElementsByTagName("canvas").length === 0) {
-      window.addEventListener("keydown", handleKeyDownEvent)
-
-      // { passive: false s} indicates that this event handler may call preventDefault
-      window.addEventListener("scroll", handleScrollEvent, { passive: false })
-      document.documentElement.addEventListener("wheel", handleWheelEvent, {
-        passive: false,
-      })
-    }
+  // If the DOM changes but the page doesn't reload we need to re-check whether to activate pinch-to-zoom
+  chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
+    if (msg.type === ContentScriptMessageType.TAB_UPDATED)
+      toggleCustomPinchToZoom()
   })
 }
 

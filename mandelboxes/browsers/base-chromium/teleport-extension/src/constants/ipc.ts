@@ -1,5 +1,6 @@
 export enum ContentScriptMessageType {
   POINTER_LOCK = "POINTER_LOCK",
+  TAB_UPDATED = "TAB_UPDATED",
 }
 
 export enum NativeHostMessageType {
