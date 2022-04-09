@@ -42,7 +42,7 @@ jobs:
           - name: Protocol (macOS, Windows, Linux)
             sentry-project: protocol
           - name: Scaling Service
-            sentry-project: scaling-service           
+            sentry-project: scaling-service
           - name: Website
             sentry-project: website
 
