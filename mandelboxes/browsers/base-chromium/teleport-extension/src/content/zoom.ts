@@ -165,6 +165,7 @@ const toggleCustomPinchToZoom = () => {
 
   // If the document contains a canvas it probably has its own zoom handler, so we don't add ours
   if (document.getElementsByTagName("canvas").length === 0) {
+    console.log("toggle on")
     window.addEventListener("keydown", handleKeyDownEvent)
 
     // { passive: false } indicates that this event handler may call preventDefault
@@ -173,6 +174,7 @@ const toggleCustomPinchToZoom = () => {
       passive: false,
     })
   } else {
+    console.log("toggle off")
     window.removeEventListener("scroll", handleScrollEvent)
     window.removeEventListener("keydown", handleKeyDownEvent)
     document.documentElement.removeEventListener("wheel", handleWheelEvent)
