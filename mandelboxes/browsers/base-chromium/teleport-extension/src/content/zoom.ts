@@ -62,7 +62,7 @@ const handleWheelEvent = (e: WheelEvent) => {
   e.stopPropagation()
 
   const oldScaleFactor = globalState.scaleFactor
-  globalState.scaleFactor = clampScale(oldScaleFactor + e.deltaY * zoomSpeed)
+  globalState.scaleFactor = clampScale(oldScaleFactor - e.deltaY * zoomSpeed)
 
   if (oldScaleFactor === globalState.scaleFactor) return
 
