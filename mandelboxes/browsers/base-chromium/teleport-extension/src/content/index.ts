@@ -19,4 +19,5 @@ initUserAgentSpoofer()
 // that this feature is missing
 initFeatureWarnings()
 
+// Enable smooth pinch to zoom
 initPinchToZoom()

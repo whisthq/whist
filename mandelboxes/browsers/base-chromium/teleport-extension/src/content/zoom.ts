@@ -109,16 +109,20 @@ const handleScrollEvent = () => {
 }
 
 const initPinchToZoom = () => {
+  const canvas = document.getElementsByTagName("canvas") ?? []
+
   // This browser-hint may be an optimization, but seems to behave poorly on https://maps.google.com and similar.
   // pageElement.style.willChange = 'transform'
 
-  window.addEventListener("keydown", handleKeyDownEvent)
+  if (canvas.length === 0) {
+    window.addEventListener("keydown", handleKeyDownEvent)
 
-  // { passive: false } indicates that this event handler may call preventDefault
-  window.addEventListener("scroll", handleScrollEvent, { passive: false })
-  document.documentElement.addEventListener("wheel", handleWheelEvent, {
-    passive: false,
-  })
+    // { passive: false } indicates that this event handler may call preventDefault
+    window.addEventListener("scroll", handleScrollEvent, { passive: false })
+    document.documentElement.addEventListener("wheel", handleWheelEvent, {
+      passive: false,
+    })
+  }
 }
 
 export { initPinchToZoom }
