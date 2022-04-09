@@ -447,9 +447,10 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
         destroy_video_decoder(decoder);
         return -1;
     }
-
+    LOG_INFO("[yancey_check_decode] pre decoder->decoded_frame free-ed!");
     // Free the old captured frame, if there was any
     av_frame_free(&decoder->decoded_frame);
+    LOG_INFO("[yancey_check_decode] pos decoder->decoded_frame free-ed!");
 
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(frame->format);
     if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL) {
@@ -458,11 +459,13 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
             // directly, so just return it.
             decoder->decoded_frame = frame;
             decoder->using_hw = true;
+            LOG_INFO("[yancey_check_decode] new decoder->decoded_frame assigned1!");
         } else {
             // Otherwise, copy the hw data into a new software frame.
             start_timer(&latency_clock);
             decoder->decoded_frame = safe_av_frame_alloc();
             res = av_hwframe_transfer_data(decoder->decoded_frame, frame, 0);
+            LOG_INFO("[yancey_check_decode] new decoder->decoded_frame assigned2!");
             av_frame_free(&frame);
             if (res < 0) {
                 av_frame_free(&decoder->decoded_frame);
@@ -481,6 +484,7 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
 
         // We already have a software frame, so return it.
         decoder->decoded_frame = frame;
+        LOG_INFO("[yancey_check_decode] new decoder->decoded_frame assigned3!");
         decoder->using_hw = false;
     }
 
