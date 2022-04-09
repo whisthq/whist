@@ -895,7 +895,7 @@ static void sdl_render_nv12data(void) {
         // Take the subsection of texture that should be rendered to screen,
         // And draw it on the renderer
 
-// On macOS & Windows, SDL outputs the texture with the last pixel on the bottom and 
+// On macOS & Windows, SDL outputs the texture with the last pixel on the bottom and
 // right sides without data, rendering it green (NV12 color format). We're not sure
 // why that is the case, but in the meantime, clipping that pixel makes the visual
 // look seamless.
