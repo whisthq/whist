@@ -159,8 +159,10 @@ const initPinchToZoom = () => {
     // This browser-hint may be an optimization, but seems to behave poorly on https://maps.google.com and similar.
     // pageElement.style.willChange = 'trasnsform'
 
+    console.log("THE LENGTH IS", document.getElementsByTagName("canvas").length)
+
     // If the document contains a canvas it probably has its own zoom handler, so we don't add ours
-    if (document.getElementsByTagName("canvas").length !== 0) {
+    if (document.getElementsByTagName("canvas").length === 0) {
       window.addEventListener("keydown", handleKeyDownEvent)
 
       // { passive: false s} indicates that this event handler may call preventDefault
