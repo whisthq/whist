@@ -370,6 +370,8 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffe
 
     int num_packets = extract_avpackets_from_buffer(buffer, buffer_size, decoder->packets);
 
+    LOG_INFO("[yancey_de] contains %d packets\n",num_packets);
+
     if (save_decoder_input) {
         for (int i = 0; i < num_packets; i++) {
             AVPacket* pkt = decoder->packets[i];

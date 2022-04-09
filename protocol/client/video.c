@@ -345,6 +345,8 @@ static int render_video0(VideoContext* video_context) {
 
         // Make a new frame to give to the renderer.
         AVFrame* frame = av_frame_alloc();
+
+        LOG_INFO("[yancey_misc] new frame allocated\n");
         FATAL_ASSERT(frame);
 
         // Fill our local frame with the correct data, which will be a
@@ -366,7 +368,7 @@ static int render_video0(VideoContext* video_context) {
                 av_frame_ref(frame, decoded_frame_data.decoded_frame);
             }
         }
-        LOG_INFO("[yancey_v] render() check_point8!");
+        LOG_INFO("[yancey_v] render() check_point8, frame transfered!");
         // Free the decoded frame.  We have either copied the data to
         // our own frame or made another reference to it.
         video_decoder_free_decoded_frame(&decoded_frame_data);

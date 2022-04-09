@@ -416,6 +416,7 @@ void sdl_update_framebuffer(AVFrame* frame) {
     } else {
         // Free the previous frame, if there was one.
         if (pending_nv12_frame) {
+            LOG_INFO("[yancey_misc] previous pending_nv12_frame free-ed\n");
             av_frame_free(&pending_nv12_frame);
         }
         pending_nv12_frame = frame;
