@@ -895,7 +895,11 @@ static void sdl_render_nv12data(void) {
         // Take the subsection of texture that should be rendered to screen,
         // And draw it on the renderer
 
-#ifdef __APPLE__
+// On macOS & Windows, SDL outputs the texture with the last pixel on the bottom and
+// right sides without data, rendering it green (NV12 color format). We're not sure
+// why that is the case, but in the meantime, clipping that pixel makes the visual
+// look seamless.
+#if defined(__APPLE__) || defined(_WIN32)
 #define CLIPPED_PIXELS 1
 #else
 #define CLIPPED_PIXELS 0
