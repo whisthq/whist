@@ -1,7 +1,7 @@
 import { BrowserWindow } from "electron"
 import { of } from "rxjs"
 import { filter, withLatestFrom, map, mapTo, startWith } from "rxjs/operators"
-import Sentry from "@sentry/electron"
+import * as Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 

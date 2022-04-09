@@ -9,7 +9,7 @@ import { autoUpdater } from "electron-updater"
 import { timer } from "rxjs"
 import { takeUntil, withLatestFrom } from "rxjs/operators"
 import { ChildProcess } from "child_process"
-import Sentry from "@sentry/electron"
+import * as Sentry from "@sentry/electron"
 
 import { CHECK_UPDATE_INTERVAL_IN_MS } from "@app/constants/app"
 
