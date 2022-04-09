@@ -756,6 +756,8 @@ static void sdl_present_pending_framebuffer(void) {
     // Render out the current framebuffer, if there's a pending render
     whist_lock_mutex(renderer_mutex);
 
+    int pending_render_old=pending_render;
+
     // Render the error message immediately during state transition to insufficient bandwidth
     if (prev_insufficient_bandwidth == false && insufficient_bandwidth == true) {
         pending_render = true;
@@ -768,16 +770,24 @@ static void sdl_present_pending_framebuffer(void) {
         return;
     }
 
+    LOG_INFO("[yancey_v] REAL enter sdl_present_pending_framebuffer()! %d %d", (int)pending_render_old ,(int)pending_render);
+
+    LOG_INFO("[yancey_v] misc values: %d %d %d",(int)prev_insufficient_bandwidth, (int)insufficient_bandwidth, (int)pending_file_drag_update, (int)pending_overlay_removal);
+
     // Wipes the renderer to background color before we present
     sdl_render_solid_color(background_color);
 
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
 
+    LOG_INFO("[yancey_v] pending_nv12data_old = %d!", (int)pending_nv12data);
+
     // If any overlays need to be updated make sure a background is rendered
     if (insufficient_bandwidth || pending_file_drag_update || pending_overlay_removal) {
         pending_nv12data = true;
     }
+
+    LOG_INFO("[yancey_v] pending_nv12data_new = %d!", (int)pending_nv12data);
 
     // Render the nv12data, if any exists
     if (pending_nv12data) {
