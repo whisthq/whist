@@ -3,13 +3,13 @@ module github.com/whisthq/whist/backend/services
 go 1.17
 
 require (
-	github.com/MicahParks/keyfunc v1.0.1
+	github.com/MicahParks/keyfunc v1.0.3
 	github.com/NVIDIA/go-nvml v0.11.6-0
-	github.com/aws/aws-sdk-go-v2 v1.16.1
-	github.com/aws/aws-sdk-go-v2/config v1.15.2
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.2
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.33.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.2
+	github.com/aws/aws-sdk-go-v2 v1.16.2
+	github.com/aws/aws-sdk-go-v2/config v1.15.3
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.4
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.4
 	github.com/aws/smithy-go v1.11.2
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/docker/docker v20.10.14+incompatible
@@ -30,8 +30,8 @@ require (
 	github.com/logzio/logzio-go v1.0.3
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pierrec/lz4/v4 v4.1.14
-	github.com/shirou/gopsutil/v3 v3.22.2
-	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064
+	github.com/shirou/gopsutil/v3 v3.22.3
+	golang.org/x/crypto v0.0.0-20220408190544-5352b0902921
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
 )
@@ -39,17 +39,18 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.1 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.11.1 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.2 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.2 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.9 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.11.2 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.9 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.10 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.11.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.11.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.16.3 // indirect
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/bgentry/testnet v0.0.0-20131107221340-05450cdcf16c // indirect
 	github.com/containerd/containerd v1.6.2 // indirect
