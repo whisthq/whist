@@ -796,28 +796,41 @@ static void sdl_present_pending_framebuffer(void) {
         sdl_render_nv12data();
     }
 
+    LOG_INFO("[yancey_v] SDL checkpoint 1 !!!");
+
     if (insufficient_bandwidth) {
         sdl_render_insufficient_bandwidth();
     }
     prev_insufficient_bandwidth = insufficient_bandwidth;
+
+    LOG_INFO("[yancey_v] SDL checkpoint 2 !!!");
 
     // Render the drag icon if a drag update has been signaled
     if (pending_file_drag_update) {
         sdl_render_file_drag_icon(file_drag_update_x, file_drag_update_y);
     }
 
+    LOG_INFO("[yancey_v] SDL checkpoint 3 !!!");
+
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
     whist_unlock_mutex(renderer_mutex);
+
+    LOG_INFO("[yancey_v] SDL checkpoint 4 !!!");
 
     // RenderPresent outside of the mutex, since RenderCopy made a copy anyway
     // and this will take ~8ms if VSYNC is on.
     // (If this causes a bug, feel free to pull back to inside of the mutex)
     TIME_RUN(SDL_RenderPresent(sdl_renderer), VIDEO_RENDER_TIME, statistics_timer);
 
+    LOG_INFO("[yancey_v] SDL checkpoint 5 !!!");
+
     whist_lock_mutex(renderer_mutex);
+    LOG_INFO("[yancey_v] SDL checkpoint 5.5 !!!");
     pending_render = false;
     pending_overlay_removal = false;
     whist_unlock_mutex(renderer_mutex);
+
+    LOG_INFO("[yancey_v] SDL checkpoint 6 !!!");
 
     double t= get_timer(&timer1)*1000;
     if(t>yancey_sdl_warn_time)
