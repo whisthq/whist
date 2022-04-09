@@ -188,7 +188,7 @@ typedef struct {
 #define LOG_FATAL(message, ...)                           \
     do {                                                  \
         LOG_MESSAGE(FATAL_ERROR, message, ##__VA_ARGS__); \
-        terminate_protocol(WHIST_EXIT_FAILURE);           \
+        abort();terminate_protocol(WHIST_EXIT_FAILURE);           \
     } while (0)
 
 // FATAL_ASSERT will fatally exist when something absurd happens,

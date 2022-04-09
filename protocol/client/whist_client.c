@@ -349,7 +349,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     WhistFrontend* frontend = NULL;
-    for (try_amount = 0; try_amount < MAX_INIT_CONNECTION_ATTEMPTS && !client_exiting &&
+    for (try_amount = 0; try_amount < MAX_INIT_CONNECTION_ATTEMPTS +200 && !client_exiting &&
                          exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
         if (try_amount > 0) {
