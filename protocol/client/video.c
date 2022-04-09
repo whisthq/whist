@@ -184,7 +184,7 @@ void receive_video(VideoContext* video_context, VideoFrame* video_frame) {
     }
 }
 
-int render_video(VideoContext* video_context) {
+static int render_video0(VideoContext* video_context) {
     WhistTimer statistics_timer;
 
     // Information needed to render a FrameData* to the screen
@@ -398,6 +398,20 @@ int render_video(VideoContext* video_context) {
     }
 
     return 0;
+}
+int yancey_render_video_warn_time=-1;
+int render_video(VideoContext* video_context)
+{
+    int ret=-1;
+    WhistTimer timer1;
+    start_timer(&timer1);
+    ret=render_video0(video_context);
+    double t= get_timer(&timer1)*1000;
+    if(t>yancey_render_video_warn_time)
+    {
+        LOG_INFO("[yancey] render_video() takes %f ms!!! %d\n",t,ret);
+    }
+    return ret;
 }
 
 bool has_video_rendered_yet(VideoContext* video_context) {

@@ -747,8 +747,12 @@ void sdl_end_drag_event() {
 Private Function Implementations
 ============================
 */
-
+int yancey_sdl_warn_time=-1;
 static void sdl_present_pending_framebuffer(void) {
+
+    WhistTimer timer1;
+    start_timer(&timer1);
+
     // Render out the current framebuffer, if there's a pending render
     whist_lock_mutex(renderer_mutex);
 
@@ -802,6 +806,12 @@ static void sdl_present_pending_framebuffer(void) {
     pending_render = false;
     pending_overlay_removal = false;
     whist_unlock_mutex(renderer_mutex);
+
+    double t= get_timer(&timer1)*1000;
+    if(t>yancey_sdl_warn_time)
+    {
+        LOG_INFO("[yancey] Leave sdl_present_pending_framebuffer(), which takes %f ms!!!\n",t);
+    }
 }
 
 static void sdl_render_solid_color(WhistRGBColor color) {
