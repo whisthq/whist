@@ -111,6 +111,8 @@ const handleScrollEvent = () => {
 const initPinchToZoom = () => {
   const canvas = document.getElementsByTagName("canvas") ?? []
 
+  console.log("THE CANVASES ARE", canvas)
+
   // This browser-hint may be an optimization, but seems to behave poorly on https://maps.google.com and similar.
   // pageElement.style.willChange = 'transform'
 
