@@ -772,7 +772,7 @@ static void sdl_present_pending_framebuffer(void) {
 
     LOG_INFO("[yancey_v] REAL enter sdl_present_pending_framebuffer()! %d %d", (int)pending_render_old ,(int)pending_render);
 
-    LOG_INFO("[yancey_v] misc values: %d %d %d",(int)prev_insufficient_bandwidth, (int)insufficient_bandwidth, (int)pending_file_drag_update, (int)pending_overlay_removal);
+    LOG_INFO("[yancey_v] misc values: %d %d %d %d",(int)prev_insufficient_bandwidth, (int)insufficient_bandwidth, (int)pending_file_drag_update, (int)pending_overlay_removal);
 
     // Wipes the renderer to background color before we present
     sdl_render_solid_color(background_color);

@@ -197,8 +197,13 @@ static int render_video0(VideoContext* video_context) {
     static timestamp_us client_input_timestamp = 0;
     static timestamp_us last_rendered_time = 0;
 
+    int cnt1=0;
     // Receive and process a render context that's being pushed
+    LOG_INFO("[yancey_v] render() check_point1!");
+
     if (video_context->pending_render_context) {
+
+        LOG_INFO("[yancey_v] render() check_point1.5!");
         // Grab and consume the actual frame
         VideoFrame* frame = video_context->render_context;
 
@@ -215,6 +220,7 @@ static int render_video0(VideoContext* video_context) {
             wcmsg.type = MESSAGE_START_STREAMING;
             send_wcmsg(&wcmsg);
         }
+
 
         whist_analyzer_record_decode_video();
         if (!frame->is_empty_frame) {
@@ -235,15 +241,19 @@ static int render_video0(VideoContext* video_context) {
             int ret;
             server_timestamp = frame->server_timestamp;
             client_input_timestamp = frame->client_input_timestamp;
+            LOG_INFO("[yancey_v] render() check_point2!");
             TIME_RUN(
                 ret = video_decoder_send_packets(video_context->decoder, get_frame_videodata(frame),
                                                  frame->videodata_length),
                 VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
+            cnt1++;
+            LOG_INFO("[yancey_v] render() check_point3!");
             if (ret < 0) {
                 LOG_ERROR("Failed to send packets to decoder, unable to render frame");
                 video_context->pending_render_context = false;
                 return -1;
             }
+            LOG_INFO("[yancey_de]sent a packet successfully!!!!");
 
             window_color = frame->corner_color;
 
@@ -271,26 +281,42 @@ static int render_video0(VideoContext* video_context) {
     // Try to keep decoding frames from the decoder, if we can
     // Use static so we can remember, even if sdl_render_pending exits early.
     static bool got_frame_from_decoder = false;
+    int cnt2=0;
     while (video_context->decoder != NULL) {
         int res;
+        LOG_INFO("[yancey_v] render() check_point4!");
         TIME_RUN(res = video_decoder_decode_frame(video_context->decoder),
                  VIDEO_DECODE_GET_FRAME_TIME, statistics_timer);
+        LOG_INFO("[yancey_v] render() check_point5!");
         if (res < 0) {
             LOG_ERROR("Error getting frame from decoder!");
             return -1;
         }
 
         if (res == 0) {
+            cnt2++;
+            FATAL_ASSERT(cnt1==1);
+            FATAL_ASSERT(cnt2==1);
             // Mark that we got at least one frame from the decoder
             got_frame_from_decoder = true;
+            LOG_INFO("[yancey_de]got a packet!!!!");
+            LOG_INFO("cnt2=%d",cnt2);
         } else {
             // Exit once we get EAGAIN
             break;
         }
     }
 
+    LOG_INFO("[yancey_de]cnt1=%d cnt2=%d\n", cnt1,cnt2);
+    //FATAL_ASSERT(cnt1==cnt2);
+    FATAL_ASSERT(cnt2<=cnt1);
+
     // Render any frame we got from the decoder
     if (got_frame_from_decoder) {
+        if(cnt1!=1)
+        {
+            LOG_INFO("[yancey_d][yancey_error]got frame from static status!!!!!cnt1=%d cnt2=%d\n", cnt1,cnt2);
+        }
         if (sdl_render_pending()) {
             // We cannot call `video_decoder_free_decoded_frame`,
             // until the renderer is done rendering the previously decoded frame data.
@@ -309,9 +335,13 @@ static int render_video0(VideoContext* video_context) {
         // Mark frame as consumed
         got_frame_from_decoder = false;
 
+        LOG_INFO("[yancey_v] render() check_point6!");
+
         // Get the last decoded frame
         DecodedFrameData decoded_frame_data =
             video_decoder_get_last_decoded_frame(video_context->decoder);
+
+        LOG_INFO("[yancey_v] render() check_point7!");
 
         // Make a new frame to give to the renderer.
         AVFrame* frame = av_frame_alloc();
@@ -336,11 +366,12 @@ static int render_video0(VideoContext* video_context) {
                 av_frame_ref(frame, decoded_frame_data.decoded_frame);
             }
         }
-
+        LOG_INFO("[yancey_v] render() check_point8!");
         // Free the decoded frame.  We have either copied the data to
         // our own frame or made another reference to it.
         video_decoder_free_decoded_frame(&decoded_frame_data);
 
+        LOG_INFO("[yancey_v] render() check_point9!");
         // Render out the cursor image
         if (cursor_image) {
             // temp hack
@@ -350,6 +381,7 @@ static int render_video0(VideoContext* video_context) {
             cursor_image = NULL;
         }
 
+        LOG_INFO("[yancey_v] render() check_point9.1!");
         // Update the window titlebar color
         sdl_render_window_titlebar_color(window_color);
 
@@ -359,8 +391,12 @@ static int render_video0(VideoContext* video_context) {
         // Mark the framebuffer out to render
         sdl_render_framebuffer();
 
+        LOG_INFO("[yancey_v] render() check_point9.5!");
+
         // Declare user activity to prevent screensaver
         declare_user_activity();
+
+        LOG_INFO("[yancey_v] render() check_point10!");
 
         if (client_input_timestamp != 0) {
             // Calculate E2E latency
@@ -395,7 +431,11 @@ static int render_video0(VideoContext* video_context) {
         }
         start_timer(&last_frame_timer);
         last_frame_timer_started = true;
+
+        LOG_INFO("[yancey_v] render() check_point11!");
     }
+
+    LOG_INFO("[yancey_v] render() check_point12!");
 
     return 0;
 }
