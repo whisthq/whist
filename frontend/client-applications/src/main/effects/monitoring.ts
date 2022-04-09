@@ -4,7 +4,7 @@
  * @brief This file contains miscellaneous effects that deal with monitoring/logging the app
  */
 
-import Sentry from "@sentry/electron"
+import * as Sentry from "@sentry/electron"
 
 import config from "@app/config/environment"
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"

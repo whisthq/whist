@@ -17,7 +17,7 @@ import {
   mapTo,
   startWith,
 } from "rxjs/operators"
-import Sentry from "@sentry/electron"
+import * as Sentry from "@sentry/electron"
 
 import { createTrigger, fromTrigger } from "@app/main/utils/flows"
 import {
