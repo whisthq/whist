@@ -1,8 +1,3 @@
-import {
-  ContentScriptMessage,
-  ContentScriptMessageType,
-} from "@app/constants/ipc"
-
 const clamp = (v: number, min: number, max: number): number =>
   Math.max(Math.min(v, max), min)
 
@@ -113,56 +108,9 @@ const handleScrollEvent = () => {
   updateTranslationFromScroll()
 }
 
-const listAllEventListeners = () => {
-  const allElements = Array.prototype.slice.call(document.querySelectorAll("*"))
-  allElements.push(document)
-  allElements.push(window)
-
-  const types = []
-
-  for (let ev in window) {
-    if (/^on/.test(ev)) types[types.length] = ev
-  }
-
-  let elements = []
-  for (let i = 0; i < allElements.length; i++) {
-    const currentElement = allElements[i]
-
-    // Events defined in attributes
-    for (let j = 0; j < types.length; j++) {
-      if (typeof currentElement[types[j]] === "function") {
-        elements.push({
-          node: currentElement,
-          type: types[j],
-          func: currentElement[types[j]].toString(),
-        })
-      }
-    }
-
-    // Events defined with addEventListener
-    if (typeof currentElement._getEventListeners === "function") {
-      let evts = currentElement._getEventListeners()
-      if (Object.keys(evts).length > 0) {
-        for (let evt of Object.keys(evts)) {
-          for (let k = 0; k < evts[evt].length; k++) {
-            elements.push({
-              node: currentElement,
-              type: evt,
-              func: evts[evt][k].listener.toString(),
-            })
-          }
-        }
-      }
-    }
-  }
-
-  return elements.sort()
-}
-
 const toggleCustomPinchToZoom = () => {
   // If the document contains a canvas it probably has its own zoom handler, so we don't add ours
   if (document.getElementsByTagName("canvas").length === 0) {
-    console.log("toggle on")
     window.addEventListener("keydown", handleKeyDownEvent)
 
     // { passive: false } indicates that this event handler may call preventDefault
@@ -171,7 +119,6 @@ const toggleCustomPinchToZoom = () => {
       passive: false,
     })
   } else {
-    console.log("toggle off")
     window.removeEventListener("scroll", handleScrollEvent)
     window.removeEventListener("keydown", handleKeyDownEvent)
     document.documentElement.removeEventListener("wheel", handleWheelEvent)
@@ -181,7 +128,7 @@ const toggleCustomPinchToZoom = () => {
 const initPinchToZoom = () => {
   const observer = new MutationObserver(toggleCustomPinchToZoom)
   observer.observe(document, {
-    attributes: true,
+    attributes: false,
     childList: true,
     subtree: true,
   })
