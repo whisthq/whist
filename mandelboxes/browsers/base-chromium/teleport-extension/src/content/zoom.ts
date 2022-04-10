@@ -1,3 +1,5 @@
+let pinchToZoomEnabled = false
+
 const clamp = (v: number, min: number, max: number): number =>
   Math.max(Math.min(v, max), min)
 
@@ -110,7 +112,10 @@ const handleScrollEvent = () => {
 
 const toggleCustomPinchToZoom = () => {
   // If the document contains a canvas it probably has its own zoom handler, so we don't add ours
-  if (document.getElementsByTagName("canvas").length === 0) {
+  if (
+    document.getElementsByTagName("canvas").length === 0 &&
+    !pinchToZoomEnabled
+  ) {
     window.addEventListener("keydown", handleKeyDownEvent)
 
     // { passive: false } indicates that this event handler may call preventDefault
@@ -118,10 +123,17 @@ const toggleCustomPinchToZoom = () => {
     document.documentElement.addEventListener("wheel", handleWheelEvent, {
       passive: false,
     })
-  } else {
+
+    pinchToZoomEnabled = true
+  } else if (
+    document.getElementsByTagName("canvas").length > 0 &&
+    pinchToZoomEnabled
+  ) {
     window.removeEventListener("scroll", handleScrollEvent)
     window.removeEventListener("keydown", handleKeyDownEvent)
     document.documentElement.removeEventListener("wheel", handleWheelEvent)
+
+    pinchToZoomEnabled = false
   }
 }
 
