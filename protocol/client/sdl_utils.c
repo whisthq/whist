@@ -820,7 +820,9 @@ static void sdl_present_pending_framebuffer(void) {
     // RenderPresent outside of the mutex, since RenderCopy made a copy anyway
     // and this will take ~8ms if VSYNC is on.
     // (If this causes a bug, feel free to pull back to inside of the mutex)
+    whist_gpu_lock();
     TIME_RUN(SDL_RenderPresent(sdl_renderer), VIDEO_RENDER_TIME, statistics_timer);
+    whist_gpu_unlock();
 
     LOG_INFO("[yancey_v] SDL checkpoint 5 !!!");
 

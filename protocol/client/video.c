@@ -242,10 +242,13 @@ static int render_video0(VideoContext* video_context) {
             server_timestamp = frame->server_timestamp;
             client_input_timestamp = frame->client_input_timestamp;
             LOG_INFO("[yancey_v] render() check_point2!");
+            whist_gpu_lock();
+            LOG_INFO("[yancey_v] render() check_point2.5!");
             TIME_RUN(
                 ret = video_decoder_send_packets(video_context->decoder, get_frame_videodata(frame),
                                                  frame->videodata_length),
                 VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
+            whist_gpu_unlock();
             cnt1++;
             LOG_INFO("[yancey_v] render() check_point3!");
             if (ret < 0) {

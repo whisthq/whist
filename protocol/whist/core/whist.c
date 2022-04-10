@@ -21,6 +21,15 @@ Includes
 #include "features.h"
 #include "../utils/sysinfo.h"
 
+static WhistMutex gpu_lock;
+
+void whist_gpu_lock(void) {
+    whist_lock_mutex(gpu_lock);
+}
+
+void whist_gpu_unlock(void) {
+    whist_unlock_mutex(gpu_lock);
+}
 /*
 ============================
 Private Function Implementations
@@ -53,6 +62,7 @@ Public Function Implementations
 */
 
 void whist_init_subsystems(void) {
+    gpu_lock = whist_create_mutex();
     whist_init_multithreading();
     whist_init_logger();
     whist_init_features();

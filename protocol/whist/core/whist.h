@@ -67,6 +67,9 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/utils/os_utils.h>
 
+
+void whist_gpu_lock(void);
+void whist_gpu_unlock(void);
 /*
 ============================
 Defines
