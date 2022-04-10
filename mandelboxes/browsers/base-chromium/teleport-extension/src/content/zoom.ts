@@ -163,11 +163,9 @@ const toggleCustomPinchToZoom = () => {
   // This browser-hint may be an optimization, but seems to behave poorly on https://maps.google.com and similar.
   // pageElement.style.willChange = 'trasnsform'
   const canvas = document.getElementsByTagName("canvas")
-  console.log("canvas", canvas, canvas.length)
 
   // If the document contains a canvas it probably has its own zoom handler, so we don't add ours
   if (document.getElementsByTagName("canvas").length === 0) {
-    console.log("toggle on")
     window.addEventListener("keydown", handleKeyDownEvent)
 
     // { passive: false } indicates that this event handler may call preventDefault
@@ -176,7 +174,6 @@ const toggleCustomPinchToZoom = () => {
       passive: false,
     })
   } else {
-    console.log("toggle off")
     window.removeEventListener("scroll", handleScrollEvent)
     window.removeEventListener("keydown", handleKeyDownEvent)
     document.documentElement.removeEventListener("wheel", handleWheelEvent)
@@ -191,7 +188,6 @@ const initPinchToZoom = () => {
   // If the DOM changes but the page doesn't reload we need to re-check whether to activate pinch-to-zoom
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type === ContentScriptMessageType.TAB_UPDATED) {
-      console.log("url changed", document.URL, lastURL)
       toggleCustomPinchToZoom()
       lastURL = document.URL
     }
