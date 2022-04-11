@@ -46,12 +46,23 @@ const launchProtocol = async (info?: {
     port_32273: number
   }
 }) => {
+  const display = screen.getPrimaryDisplay()
   // Protocol arguments
   const protocolParameters = {
     // If non-local, send the environment and session id for sentry
     ...(appEnvironment !== WhistEnvironments.LOCAL && {
       environment: config.deployEnv,
       "session-id": sessionID.toString(),
+    }),
+    ...(process.platform === "win32" && {
+      width: Math.max(
+        1000,
+        display.workAreaSize.width * display.scaleFactor
+      ).toString(),
+      height: Math.max(
+        500,
+        display.workAreaSize.height * display.scaleFactor
+      ).toString(),
     }),
   }
 
