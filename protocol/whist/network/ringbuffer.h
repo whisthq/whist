@@ -41,10 +41,17 @@ Defines
  * TODO: Pull this into RingBuffer.c, and stop exposing it to the client
  */
 typedef struct FrameData {
+    // The ID of the frame held in FrameData,
+    // Or -1 if the frame has been deallocated
+    int id;
+    // If id == -1, the frame may still be holding
+    // statistics from an old frame. See statistics_id
+    // for what statistics are held here.
+    int statistics_id;
+
     int num_original_packets;
     int num_fec_packets;
     int prev_frame_num_duplicate_packets;
-    int id;
     int original_packets_received;
     int fec_packets_received;
     int duplicate_packets_received;
