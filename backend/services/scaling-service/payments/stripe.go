@@ -5,6 +5,7 @@ import (
 	billingPortal "github.com/stripe/stripe-go/v72/billingportal/session"
 	checkout "github.com/stripe/stripe-go/v72/checkout/session"
 	"github.com/stripe/stripe-go/v72/price"
+	"github.com/stripe/stripe-go/v72/sub"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -43,8 +44,22 @@ func (sc *StripeClient) configure(secret string, restrictedSecret string, custom
 	sc.monthlyPriceInCents = monthlyPriceInCents
 }
 
-// getSubscriptionStatus will return the current subscription status of the customer.
+// getSubscriptionStatus will try to get the current subscription status for the customer.
+// If it fails to obtain it, default to the subscription status included in the access token.
 func (sc *StripeClient) getSubscriptionStatus() string {
+	subscriptions := sub.List(&stripe.SubscriptionListParams{
+		Customer: sc.customerID,
+	})
+
+	var subscription *stripe.Subscription
+	for subscriptions.Next() {
+		subscription = subscriptions.Subscription()
+	}
+	if subscriptions.Err() != nil || subscription == nil {
+		logger.Warningf("Failed to get subscription for customer %v. Defaulting to access token.", sc.customerID)
+	}
+
+	sc.subscriptionStatus = string(subscription.Status)
 	return sc.subscriptionStatus
 }
 
