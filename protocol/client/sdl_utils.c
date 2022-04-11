@@ -54,6 +54,7 @@ static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks 
 // Window Color Update
 static volatile WhistRGBColor* native_window_color = NULL;
 static volatile bool native_window_color_update = false;
+static WhistRGBColor border_color = { 17, 24, 39 };
 
 // Window Title Update
 static volatile char* window_title = NULL;
@@ -234,7 +235,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
     sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED,
-                                  0, target_output_width, target_output_height,
+                                  0, target_output_width, target_output_height - 60,
                                   window_flags);
 
     // If this isn't set, for some reason the borderless window isn't resizable on Windows despite
@@ -655,6 +656,7 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
     // Handle any pending window titlebar color events
     if (native_window_color_update && native_window_color) {
         set_native_window_color((SDL_Window*)window, *(WhistRGBColor*)native_window_color);
+        border_color = *(WhistRGBColor*)native_window_color;
         native_window_color_update = false;
     }
 
@@ -797,7 +799,7 @@ static void sdl_present_pending_framebuffer(void) {
     }
 
     // Wipes the renderer to background color before we present
-    sdl_render_solid_color(background_color);
+    sdl_render_solid_color(border_color);
 
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
@@ -937,13 +939,19 @@ static void sdl_render_nv12data(void) {
 #define CLIPPED_PIXELS 0
 #endif
 
-        SDL_Rect output_rect = {
+        SDL_Rect source_rect = {
             .x = 0,
             .y = 0,
             .w = min(output_width, texture_rect.w) - CLIPPED_PIXELS,
-            .h = min(output_height, texture_rect.h) - CLIPPED_PIXELS,
+            .h = min(output_height, texture_rect.h) - CLIPPED_PIXELS - 10,
         };
-        SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
+        SDL_Rect dest_rect = {
+            .x = source_rect.x,
+            .y = 10,
+            .w = source_rect.w,
+            .h = source_rect.h
+        };
+        SDL_RenderCopy(sdl_renderer, frame_buffer, &source_rect, &dest_rect);
     }
 
     // No longer pending nv12 data
@@ -1014,7 +1022,9 @@ static void sdl_render_file_drag_icon(int x, int y) {
 // Number of pixels from the edge we want to activate the hit test
 // i.e. if the mouse is PIXELS_FROM_EDGE pixels away from the left edge, 
 // activate the resize cursor
-#define PIXELS_FROM_EDGE 5
+#define PIXELS_FROM_EDGE 10
+#define DRAGGABLE_REGION_WIDTH 125
+#define DRAGGABLE_REGION_HEIGHT 60
 static SDL_HitTestResult sdl_hit_test_callback(SDL_Window* win, const SDL_Point* point, void* data) {
     int width, height;
     whist_frontend_get_window_pixel_size(data, &width, &height);
@@ -1050,7 +1060,7 @@ static SDL_HitTestResult sdl_hit_test_callback(SDL_Window* win, const SDL_Point*
         return SDL_HITTEST_RESIZE_BOTTOM; 
     }
 
-    if (mouse_pos_y < PIXELS_FROM_EDGE) {
+    if (mouse_pos_x < PIXELS_FROM_EDGE || (mouse_pos_x > width - DRAGGABLE_REGION_WIDTH && mouse_pos_y < DRAGGABLE_REGION_HEIGHT)) {
         return SDL_HITTEST_DRAGGABLE;
     }
 

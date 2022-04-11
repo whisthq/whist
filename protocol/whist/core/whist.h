@@ -151,9 +151,14 @@ Defines
 #define ACK_REFRESH_MS 50
 
 // 16:10 is the Mac aspect ratio, but we set the minimum screen to
-// 500x500 since these are the Chrome minimum dimensions
+// 500x500 (or 1000x1000 on Windows) since these are the Chrome minimum dimensions
+#if defined(_WIN32)
+#define MIN_SCREEN_WIDTH 1000
+#define MIN_SCREEN_HEIGHT 500
+#else
 #define MIN_SCREEN_WIDTH 500
 #define MIN_SCREEN_HEIGHT 500
+#endif
 #define MAX_SCREEN_WIDTH 8192
 #define MAX_SCREEN_HEIGHT 4096
 
