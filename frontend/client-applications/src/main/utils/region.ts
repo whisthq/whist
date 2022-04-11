@@ -49,14 +49,14 @@ const pingLoop = (regions: AWSRegion[]) => {
   for (let i = 0; i < regions.length; i += 1) {
     const region = regions[i]
     const randomHash = Math.floor(Math.random() * Math.pow(2, 52)).toString(36)
-    const endpoint = `/does-not-exist?cache-break=${randomHash}`
+    const endpoint = `/ping?cache_buster=${randomHash}`
+
     pingResultPromises.push(
-      whistPingTime(
-        `http://dynamodb.${region}.amazonaws.com${endpoint}`,
-        6
-      ).then((pingTime) => {
-        return { region, pingTime }
-      })
+      whistPingTime(`https://ec2.${region}.amazonaws.com${endpoint}`, 6).then(
+        (pingTime) => {
+          return { region, pingTime }
+        }
+      )
     )
   }
   return pingResultPromises
