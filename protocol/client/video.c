@@ -357,6 +357,7 @@ static int render_video0(VideoContext* video_context) {
         // or a new frame made with swscale if not.
         if (decoded_frame_data.using_hw) {
             av_frame_ref(frame, decoded_frame_data.decoded_frame);
+            LOG_INFO("[yancey_vv] transfer mode 1!!");
         } else {
             // Update the scaler context with the properties of the next
             // frame, or destroy the scaler context if no scale will be
@@ -366,9 +367,11 @@ static int render_video0(VideoContext* video_context) {
             if (video_context->sws) {
                 // Convert from the decoded frame into our target frame.
                 sws_scale_frame(video_context->sws, frame, decoded_frame_data.decoded_frame);
+                LOG_INFO("[yancey_vv] transfer mode 2!!");
             } else {
                 // No conversion required.
                 av_frame_ref(frame, decoded_frame_data.decoded_frame);
+                LOG_INFO("[yancey_vv] transfer mode 3!!");
             }
         }
         LOG_INFO("[yancey_v] render() check_point8, frame transfered!");

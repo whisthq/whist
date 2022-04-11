@@ -918,10 +918,12 @@ static void sdl_render_nv12data(void) {
         // A normal NV12 frame in CPU memory.
         res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, frame->data[0], frame->linesize[0],
                                   frame->data[1], frame->linesize[1]);
+        LOG_INFO("[yancey_vv] SDL_UpdateNVTexture mode 1!!");
     } else if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
         // A CVPixelBufferRef containing both planes in GPU memory.
         res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, frame->data[3], frame->width,
                                   frame->data[3], frame->width);
+        LOG_INFO("[yancey_vv] SDL_UpdateNVTexture mode 2!!");
     } else {
         LOG_FATAL("Attempting to update NV12 texture from frame with invalid format %s.",
                   av_get_pix_fmt_name(frame->format));
