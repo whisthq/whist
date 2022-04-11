@@ -75,6 +75,19 @@ func (sc *StripeClient) getSubscription() (*stripe.Subscription, error) {
 // getSubscriptionStatus returns the subscription status obtained
 // from the access token.
 func (sc *StripeClient) getSubscriptionStatus() string {
+	subscriptions := sub.List(&stripe.SubscriptionListParams{
+		Customer: sc.customerID,
+	})
+
+	var subscription *stripe.Subscription
+	for subscriptions.Next() {
+		subscription = subscriptions.Subscription()
+	}
+	if subscriptions.Err() != nil || subscription == nil {
+		logger.Warningf("Failed to get subscription for customer %v. Defaulting to access token.", sc.customerID)
+	}
+
+	sc.subscriptionStatus = string(subscription.Status)
 	return sc.subscriptionStatus
 }
 
