@@ -195,11 +195,20 @@ withAppActivated(fromTrigger(WhistTrigger.importTabs)).subscribe(() => {
 // if they are open
 withAppActivated(
   fromTrigger(WhistTrigger.protocolConnection).pipe(
-    filter((connected) => connected)
+    filter((connected: boolean) => connected)
   )
 ).subscribe(() => {
   destroyElectronWindow(WindowHashLaunchLoading)
   destroyElectronWindow(WindowHashImportLoading)
   destroyElectronWindow(WindowHashOnboarding)
   destroyElectronWindow(WindowHashImport)
+})
+
+// When the protocol disconnects, destroy the omnibar
+withAppActivated(
+  fromTrigger(WhistTrigger.protocolConnection).pipe(
+    filter((connected: boolean) => !connected)
+  )
+).subscribe(() => {
+  destroyElectronWindow(WindowHashOmnibar)
 })
