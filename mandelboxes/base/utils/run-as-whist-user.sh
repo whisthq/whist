@@ -49,8 +49,8 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     #LOCALES_TO_GENERATE="$(jq -rc '.user_locale | to_entries[] | "\(.value)"' < $WHIST_JSON_FILE)"
     #LOCALES_TO_GENERATE=$(sed -e 's/$'\n'/ /g;s/POSIX//g;' <<< $LOCALES_TO_GENERATE)
     #eval "locale-gen ${LOCALES_TO_GENERATE}"
-    eval "update-locale ${USER_LOCALE//$'\n'/ }"
-    eval "export ${USER_LOCALE//$'\n'/ }"
+    #eval "update-locale ${USER_LOCALE//$'\n'/ }"
+    #eval "export ${USER_LOCALE//$'\n'/ }"
   fi
   if [ "$( jq -rc 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
@@ -158,6 +158,6 @@ exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SES
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
-    LC_ALL=C \
+    ${USER_LOCALE//$"\n"/ } \
     PATH=/usr/local/cuda-11.0/bin:/usr/local/nvidia/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
   DEBIAN_FRONTEND=noninteractive '"$1"
