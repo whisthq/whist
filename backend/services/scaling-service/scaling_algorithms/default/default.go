@@ -91,6 +91,12 @@ func (s *DefaultScalingAlgorithm) CreateDBClient(dbClient dbclient.WhistDBClient
 // according to the environment the scaling service is running in. It's necessary to perform
 // the query before starting to receive any scaling events.
 func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLClient) {
+	// If on local env, use default configurations
+	if metadata.IsLocalEnv() {
+		logger.Infof("Running on localdev, using default scaling algorithm configurations...")
+		return
+	}
+
 	logger.Infof("Populating config variables from config database...")
 	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
