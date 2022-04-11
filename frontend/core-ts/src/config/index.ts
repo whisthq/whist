@@ -4,7 +4,7 @@
 const configs = {
   DEVELOPMENT: { // LOCAL would be the same as DEVELOPMENT here, so we omit it
     urls: {
-      SCALING_SERVICE_URL: "https://dev-scaling-service.whist.com",
+      SCALING_SERVICE_URL: "http://0.0.0.0:7730",
       CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
     auth0: {

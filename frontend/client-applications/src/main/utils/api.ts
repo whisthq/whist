@@ -25,7 +25,7 @@ import { sessionID } from "@app/constants/app"
  */
 
 const httpConfig = {
-  server: config.url.WEBSERVER_URL,
+  server: config.url.SCALING_SERVICE_URL,
   // handleAuth: (_: any) => goTo("/auth"),
   endpointRefreshToken: "/token/refresh",
 }
