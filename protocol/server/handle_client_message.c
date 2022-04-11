@@ -48,6 +48,7 @@ static int handle_file_chunk_message(WhistClientMessage *wcmsg);
 static int handle_open_urls_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_frame_ack_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_file_upload_cancel_message(WhistServerState *, WhistClientMessage *wcmsg);
+static int handle_file_drag_update_message(WhistServerState *, WhistClientMessage *wcmsg);
 
 /*
 ============================
@@ -101,6 +102,8 @@ int handle_client_message(WhistServerState *state, WhistClientMessage *wcmsg) {
             return handle_frame_ack_message(state, wcmsg);
         case MESSAGE_FILE_UPLOAD_CANCEL:
             return handle_file_upload_cancel_message(state, wcmsg);
+        case MESSAGE_FILE_DRAG_UPDATE:
+            return handle_file_drag_update_message(state, wcmsg);
         default:
             LOG_ERROR(
                 "Failed to handle message from client: Unknown WhistClientMessage Received "
@@ -364,5 +367,10 @@ static int handle_frame_ack_message(WhistServerState *state, WhistClientMessage 
 
 static int handle_file_upload_cancel_message(WhistServerState *state, WhistClientMessage *wcmsg) {
     file_synchronizer_cancel_user_file_upload();
+    return 0;
+}
+
+static int handle_file_drag_update_message(whist_server_state * state, WhistClientMessage *wcmsg) {
+    file_drag_update(wcmsg->fileDragUpdate.file_dragging);
     return 0;
 }

@@ -60,4 +60,7 @@ bool sdl_handle_events(WhistFrontend* frontend);
  */
 bool sdl_pending_audio_device_update(void);
 
+// (TODO) temporary solution
+void set_is_dragging_file(bool is_dragging_file);
+
 #endif  // WHIST_EVENT_HANDLER_H

@@ -99,6 +99,13 @@ bool sdl_pending_audio_device_update(void) {
     return pending_audio_device_update > 0;
 }
 
+void set_is_dragging_file(bool is_dragging_file) {
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_FILE_DRAG_UPDATE;
+    msg.fileDragUpdate.file_dragging = is_dragging_file;
+    send_wcmsg(&msg);
+}
+
 /*
 ============================
 Private Function Implementations

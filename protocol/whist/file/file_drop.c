@@ -45,6 +45,10 @@ void destroy_file_drop_handler(void) {
     LOG_WARNING("UNIMPLEMENTED: destroy_file_drop_handler on non-Linux");
 }
 
+void file_drag_update(bool is_dragging) {
+    LOG_WARNING("UNIMPLEMENTED: file_drag_update on non-Linux");
+}
+
 #elif __linux__
 
 /*
@@ -135,99 +139,8 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
         whist_sleep(50);
     }
 
-    if (!display) {
-        return -1;
-    }
-
-    Window our_window;
-    Window active_window;
-    int revert;
-
-    // Get our window and active X11 window
-    unsigned long color = BlackPixel(display, DefaultScreen(display));
-    our_window =
-        XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1, 1, 0, color, color);
-    XGetInputFocus(display, &active_window, &revert);
-
-    if (!active_window) {
-        // No window is active.
-        return -1;
-    }
-
-    LOG_INFO("Executing XDND exchange for file ID %d", drop_file->id);
-
-    // The XDND communication exchange begins. Number steps are taken from
-    // https://freedesktop.org/wiki/Specifications/XDND/
-    XClientMessageEvent m;
-
-    // XDND 1 - We take ownership of XdndSelection
-    XSetSelectionOwner(display, XA_XdndSelection, our_window, CurrentTime);
-
-    // XDND 2 - We send XdndEnter to active X11 window
-    // Get our XDND version
-    int our_xdnd_version = 5;
-    XChangeProperty(display, our_window, XA_XdndAware, XA_ATOM, 32, PropModeReplace,
-                    (unsigned char*)&our_xdnd_version, 1);
-
-    // Get the active X11 window's XDND version
-    unsigned char* version_data = 0;
-    Atom atmp;
-    int fmt;
-    unsigned long nitems, bytes_remaining;
-    int active_window_xdnd_version = -1;
-    if (XGetWindowProperty(display, active_window, XA_XdndAware, 0, 2, False, AnyPropertyType,
-                           &atmp, &fmt, &nitems, &bytes_remaining, &version_data) != Success) {
-        LOG_ERROR("Failed to read active X11 window version");
-        return -1;
-    } else {
-        active_window_xdnd_version = version_data[0];
-    }
-
-    // Formulate XdndEnter message and send to active X11 window
-    memset(&m, 0, sizeof(m));
-    m.type = ClientMessage;
-    m.display = display;
-    m.window = active_window;
-    m.message_type = XA_XdndEnter;
-    m.format = 32;
-    m.data.l[0] = our_window;
-    // We need to use the minimum supported XDND version between the two windows
-    m.data.l[1] = min(our_xdnd_version, active_window_xdnd_version) << 24 | 0;
-    // TODO: Currently we only support drag and drop of files. In order to support more types (e.g.
-    // dragging text or images),
-    //     we need to add on to this list of supported types here.
-    m.data.l[2] = XA_text_uri_list;
-    m.data.l[3] = None;
-    m.data.l[4] = None;
-
-    XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&m);
-    XFlush(display);
-
-    // XDND 3 - TODO: related to the above TODO, if we support more than 3 types of
-    // drag-and-droppable content, then we will need to
-    //     request XdndTypeList and call
-    //     XChangeProperty(disp, w, XdndTypeList, XA_ATOM, 32, PropModeReplace, (unsigned
-    //     char*)&targets[0], targets.size()); beforehand. Since we only support one type right now,
-    //     we can skip this step in the XDND exchange.
-
-    // XDND 4 - Send XdndPosition to active X11 window
-    XClientMessageEvent position_message;
-    memset(&position_message, 0, sizeof(position_message));
-    position_message.type = ClientMessage;
-    position_message.display = display;
-    position_message.window = active_window;
-    position_message.message_type = XA_XdndPosition;
-    position_message.format = 32;
-    position_message.data.l[0] = our_window;
-    position_message.data.l[1] = 0;
-    position_message.data.l[2] =
-        (drop_file->event_info.server_drop.x << 16) | drop_file->event_info.server_drop.y;
-    position_message.data.l[3] =
-        CurrentTime;  // Our data is not time dependent, so send a generic timestamp;
-    position_message.data.l[4] = XA_XdndActionCopy;
-
-    XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&position_message);
-    XFlush(display);
+    // Just in case a drag end event was sent before
+    file_drag_update(true);
 
     // XDND 5 - Active X11 window will respond with XdndStatus
     //     this ClientMessage indicates whether active X11 window will accept the drop and what
@@ -322,18 +235,8 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
             drop_file->id);
     }
 
-    // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate that
-    // the XDND communication sequence is complete
-    memset(&m, 0, sizeof(m));
-    m.type = ClientMessage;
-    m.display = display;
-    m.window = active_window;
-    m.message_type = XA_XdndLeave;
-    m.format = 32;
-    m.data.l[0] = our_window;
-
-    XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&m);
-    XFlush(display);
+    // Just to make sure that the file drag event ends
+    file_drag_update(false);
 
     free(fuse_path);
 
@@ -436,6 +339,134 @@ void destroy_file_drop_handler(void) {
         XCloseDisplay(display);
         display = NULL;
     }
+}
+
+void file_drag_update(bool is_dragging) {
+    /*
+        Update the file drag indicator
+    */
+
+    static bool active_file_drag = false;
+    static Window our_window;
+    static Window active_window;
+
+    if (!display) {
+        return -1;
+    }
+
+    if (is_dragging) {
+        if (!active_file_drag) {
+            // DRAG BEGINS
+
+            int revert;
+
+            // Get our window and active X11 window
+            unsigned long color = BlackPixel(display, DefaultScreen(display));
+            our_window =
+                XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1, 1, 0, color, color);
+            XGetInputFocus(display, &active_window, &revert);
+
+            if (!active_window) {
+                // No window is active.
+                return -1;
+            }
+
+            LOG_INFO("Executing XDND exchange for file ID %d", drop_file->id);
+
+            // The XDND communication exchange begins. Number steps are taken from
+            // https://freedesktop.org/wiki/Specifications/XDND/
+            XClientMessageEvent m;
+
+            // XDND 1 - We take ownership of XdndSelection
+            XSetSelectionOwner(display, XA_XdndSelection, our_window, CurrentTime);
+
+            // XDND 2 - We send XdndEnter to active X11 window
+            // Get our XDND version
+            int our_xdnd_version = 5;
+            XChangeProperty(display, our_window, XA_XdndAware, XA_ATOM, 32, PropModeReplace,
+                            (unsigned char*)&our_xdnd_version, 1);
+
+            // Get the active X11 window's XDND version
+            unsigned char* version_data = 0;
+            Atom atmp;
+            int fmt;
+            unsigned long nitems, bytes_remaining;
+            int active_window_xdnd_version = -1;
+            if (XGetWindowProperty(display, active_window, XA_XdndAware, 0, 2, False, AnyPropertyType,
+                                   &atmp, &fmt, &nitems, &bytes_remaining, &version_data) != Success) {
+                LOG_ERROR("Failed to read active X11 window version");
+                return -1;
+            } else {
+                active_window_xdnd_version = version_data[0];
+            }
+
+            // Formulate XdndEnter message and send to active X11 window
+            memset(&m, 0, sizeof(m));
+            m.type = ClientMessage;
+            m.display = display;
+            m.window = active_window;
+            m.message_type = XA_XdndEnter;
+            m.format = 32;
+            m.data.l[0] = our_window;
+            // We need to use the minimum supported XDND version between the two windows
+            m.data.l[1] = min(our_xdnd_version, active_window_xdnd_version) << 24 | 0;
+            // TODO: Currently we only support drag and drop of files. In order to support more types (e.g.
+            // dragging text or images),
+            //     we need to add on to this list of supported types here.
+            m.data.l[2] = XA_text_uri_list;
+            m.data.l[3] = None;
+            m.data.l[4] = None;
+
+            XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&m);
+            XFlush(display);
+
+            // XDND 3 - TODO: related to the above TODO, if we support more than 3 types of
+            // drag-and-droppable content, then we will need to
+            //     request XdndTypeList and call
+            //     XChangeProperty(disp, w, XdndTypeList, XA_ATOM, 32, PropModeReplace, (unsigned
+            //     char*)&targets[0], targets.size()); beforehand. Since we only support one type right now,
+            //     we can skip this step in the XDND exchange.
+        }
+
+        // XDND 4 - Send XdndPosition to active X11 window
+        XClientMessageEvent position_message;
+        memset(&position_message, 0, sizeof(position_message));
+        position_message.type = ClientMessage;
+        position_message.display = display;
+        position_message.window = active_window;
+        position_message.message_type = XA_XdndPosition;
+        position_message.format = 32;
+        position_message.data.l[0] = our_window;
+        position_message.data.l[1] = 0;
+        position_message.data.l[2] =
+            (drop_file->event_info.server_drop.x << 16) | drop_file->event_info.server_drop.y;
+        position_message.data.l[3] =
+            CurrentTime;  // Our data is not time dependent, so send a generic timestamp;
+        position_message.data.l[4] = XA_XdndActionCopy;
+
+        XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&position_message);
+        XFlush(display);
+    } else {
+        if (active_file_drag) {
+            // DRAG ENDS
+
+            // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate that
+            // the XDND communication sequence is complete
+            memset(&m, 0, sizeof(m));
+            m.type = ClientMessage;
+            m.display = display;
+            m.window = active_window;
+            m.message_type = XA_XdndLeave;
+            m.format = 32;
+            m.data.l[0] = our_window;
+
+            XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&m);
+            XFlush(display);
+        }
+    }
+
+    active_file_drag = is_dragging;
+
 }
 
 #endif  // __linux__

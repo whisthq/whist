@@ -27,6 +27,7 @@ Includes
 #include <whist/utils/color.h>
 #include "native_window_utils.h"
 #include "client_utils.h"
+#include "sdl_event_handler.h"
 
 extern volatile int output_width;
 extern volatile int output_height;
@@ -677,6 +678,8 @@ void sdl_handle_drag_event(WhistFrontend* frontend) {
     // Mouse is not active within window - so we must use the global mouse and manually transform
     whist_frontend_get_global_mouse_position(frontend, &x_mouse_global, &y_mouse_global);
 
+    set_is_dragging_file(true);
+
     if (x_window < x_mouse_global && x_mouse_global < x_window + w_window &&
         y_window < y_mouse_global && y_mouse_global < y_window + h_window) {
         // Scale relative global mouse offset to output window
@@ -698,6 +701,8 @@ void sdl_end_drag_event() {
     pending_file_drag_update = false;
     // Render the next frame to remove the file drag icon
     pending_overlay_removal = true;
+
+    set_is_dragging_file(false);
 }
 
 /*
