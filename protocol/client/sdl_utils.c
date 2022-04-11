@@ -235,7 +235,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
     sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED,
-                                  0, target_output_width, target_output_height - 60,
+                                  0, target_output_width, target_output_height,
                                   window_flags);
 
     // If this isn't set, for some reason the borderless window isn't resizable on Windows despite
