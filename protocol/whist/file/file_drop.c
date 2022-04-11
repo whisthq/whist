@@ -45,8 +45,9 @@ void destroy_file_drop_handler(void) {
     LOG_WARNING("UNIMPLEMENTED: destroy_file_drop_handler on non-Linux");
 }
 
-void file_drag_update(bool is_dragging) {
+int file_drag_update(bool is_dragging, int x, int y) {
     LOG_WARNING("UNIMPLEMENTED: file_drag_update on non-Linux");
+    return -1;
 }
 
 #elif __linux__
@@ -185,7 +186,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
                 whist_sleep(50);
                 // XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&position_message);
                 // XFlush(display);
-                file_drag_update(true, drop_file);
+                file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y);
             } else {
                 // Active X11 window is accepting the drop
                 // XDND 6 - Send XdndDrop to active X11 window
@@ -349,14 +350,14 @@ void destroy_file_drop_handler(void) {
     }
 }
 
-int file_drag_update(bool is_dragging, TransferringFile* drop_file) {
+int file_drag_update(bool is_dragging, int x, int y) {
     /*
         Update the file drag indicator
     */
 
-    if (!drop_file) {
-        return;
-    }
+    // if (!drop_file) {
+    //     return -1;
+    // }
 
     static bool active_file_drag = false;
     // static Window our_window;
@@ -385,7 +386,7 @@ int file_drag_update(bool is_dragging, TransferringFile* drop_file) {
                 return -1;
             }
 
-            LOG_INFO("Executing XDND exchange for file ID %d", drop_file->id);
+            // LOG_INFO("Executing XDND exchange for file ID %d", drop_file->id);
 
             // The XDND communication exchange begins. Number steps are taken from
             // https://freedesktop.org/wiki/Specifications/XDND/
@@ -452,7 +453,8 @@ int file_drag_update(bool is_dragging, TransferringFile* drop_file) {
         position_message.data.l[0] = our_window;
         position_message.data.l[1] = 0;
         position_message.data.l[2] =
-            (drop_file->event_info.server_drop.x << 16) | drop_file->event_info.server_drop.y;
+            // (drop_file->event_info.server_drop.x << 16) | drop_file->event_info.server_drop.y;
+            (x << 16) | y;
         position_message.data.l[3] =
             CurrentTime;  // Our data is not time dependent, so send a generic timestamp;
         position_message.data.l[4] = XA_XdndActionCopy;

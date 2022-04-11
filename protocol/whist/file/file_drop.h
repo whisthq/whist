@@ -54,13 +54,13 @@ int drop_file_into_active_window(TransferringFile* drop_file);
  *                                 and write necesary metadata (for example, the file size)
  *                                 to the metadata file.
  *
- * @param id                      The unique ID for the file transfer
- * @param file_metadata           The metadata for the file being transferred
+ * @param id                       The unique ID for the file transfer
+ * @param file_metadata            The metadata for the file being transferred
  *
- * @returns                      Returns the path to the file data directory on success,
- *                                NULL on failure
+ * @returns                        Returns the path to the file data directory on success,
+ *                                 NULL on failure
  *
- * @note                          This is only for servers running a parallel FUSE filesystem
+ * @note                           This is only for servers running a parallel FUSE filesystem
  */
 const char* file_drop_prepare(int id, FileMetadata* file_metadata);
 
@@ -72,7 +72,7 @@ const char* file_drop_prepare(int id, FileMetadata* file_metadata);
  *
  * @returns                        Returns -1 on failure, 0 on success
  *
- * @note                          This is only for servers running a parallel FUSE filesystem
+ * @note                           This is only for servers running a parallel FUSE filesystem
  */
 int file_drop_mark_ready(int id);
 
@@ -81,6 +81,6 @@ int file_drop_mark_ready(int id);
  */
 void destroy_file_drop_handler(void);
 
-int file_drag_update(bool is_dragging, TransferringFile* drop_file);
+int file_drag_update(bool is_dragging, int x, int y);
 
-#endif  // WINDOW_NAME_H
+#endif  // FILE_DROP_H

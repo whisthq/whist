@@ -540,6 +540,8 @@ typedef struct WhistMouseMotionMessage {
  */
 typedef struct WhistFileDragUpdateMessage {
     bool file_dragging;
+    int x;
+    int y;
     uint8_t __pad[3];
 } WhistFileDragUpdateMessage;
 

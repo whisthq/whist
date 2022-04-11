@@ -99,10 +99,12 @@ bool sdl_pending_audio_device_update(void) {
     return pending_audio_device_update > 0;
 }
 
-void set_is_dragging_file(bool is_dragging_file) {
+void set_is_dragging_file(bool is_dragging_file, int x, int y) {
     WhistClientMessage msg = {0};
     msg.type = MESSAGE_FILE_DRAG_UPDATE;
     msg.fileDragUpdate.file_dragging = is_dragging_file;
+    msg.fileDragUpdate.x = x;
+    msg.fileDragUpdate.y = y;
     send_wcmsg(&msg);
 }
 

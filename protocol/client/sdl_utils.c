@@ -678,14 +678,14 @@ void sdl_handle_drag_event(WhistFrontend* frontend) {
     // Mouse is not active within window - so we must use the global mouse and manually transform
     whist_frontend_get_global_mouse_position(frontend, &x_mouse_global, &y_mouse_global);
 
-    set_is_dragging_file(true);
-
     if (x_window < x_mouse_global && x_mouse_global < x_window + w_window &&
         y_window < y_mouse_global && y_mouse_global < y_window + h_window) {
         // Scale relative global mouse offset to output window
         file_drag_update_x = output_width * (x_mouse_global - x_window) / w_window;
         file_drag_update_y = output_height * (y_mouse_global - y_window) / h_window;
         pending_file_drag_update = true;
+
+        set_is_dragging_file(true, file_drag_update_x, file_drag_update_y);
     } else {
         // Stop the rendering of the file drag icon if event has left the window
         sdl_end_drag_event();
@@ -702,7 +702,7 @@ void sdl_end_drag_event() {
     // Render the next frame to remove the file drag icon
     pending_overlay_removal = true;
 
-    set_is_dragging_file(false);
+    set_is_dragging_file(false, 0, 0);
 }
 
 /*

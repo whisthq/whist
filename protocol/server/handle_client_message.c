@@ -29,6 +29,7 @@ Includes
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
+#include <whist/file/file_drop.h>
 
 /*
 ============================
@@ -372,6 +373,6 @@ static int handle_file_upload_cancel_message(WhistServerState *state, WhistClien
 
 static int handle_file_drag_update_message(whist_server_state * state, WhistClientMessage *wcmsg) {
     // (TODO) update this to actually send the drop_file
-    file_drag_update(wcmsg->fileDragUpdate.file_dragging, NULL);
+    file_drag_update(wcmsg->fileDragUpdate.file_dragging, wcmsg->fileDragUpdate.x, wcmsg->fileDragUpdate.y);
     return 0;
 }
