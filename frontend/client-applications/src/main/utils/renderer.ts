@@ -222,8 +222,8 @@ const createOmnibar = () =>
       resizable: false,
       fullscreenable: false,
       minimizable: false,
-      closable: false,
       transparent: true,
+      titleBarStyle: "default",
     },
     show: false,
   })
