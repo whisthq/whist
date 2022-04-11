@@ -53,10 +53,6 @@ const launchProtocol = async (info?: {
       environment: config.deployEnv,
       "session-id": sessionID.toString(),
     }),
-    ...(process.platform === "win32" && {
-      width: screen.getPrimaryDisplay().workAreaSize.width.toString(),
-      height: screen.getPrimaryDisplay().workAreaSize.height.toString(),
-    }),
   }
 
   const protocolArguments = [
@@ -65,6 +61,8 @@ const launchProtocol = async (info?: {
       .flat(),
     "--read-pipe",
   ]
+
+  console.log(protocolArguments)
 
   const child = spawn(protocolPath, protocolArguments, {
     detached: false,
