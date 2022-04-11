@@ -84,10 +84,12 @@ func (sc *StripeClient) getSubscriptionStatus() string {
 		subscription = subscriptions.Subscription()
 	}
 	if subscriptions.Err() != nil || subscription == nil {
-		logger.Warningf("Failed to get subscription for customer %v. Defaulting to access token.", sc.customerID)
+		logger.Warningf("Failed to get subscription for customer %v. Defaulting to access token status %v. Err: %v", sc.customerID, sc.subscriptionStatus, subscriptions.Err())
+	} else {
+		logger.Infof("Found subscription %v for customer %v with status %v.", subscription, sc.customerID, subscription.Status)
+		sc.subscriptionStatus = string(subscription.Status)
 	}
 
-	sc.subscriptionStatus = string(subscription.Status)
 	return sc.subscriptionStatus
 }
 
