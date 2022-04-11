@@ -14,7 +14,7 @@ import (
 
 // PaymentsClient is a wrapper struct that will call our
 // own Stripe client and allow testing. Packages that handle
-// payments should only use this struct.
+// payments should use this struct.
 type PaymentsClient struct {
 	stripeClient WhistStripeClient
 }
@@ -54,7 +54,7 @@ func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionS
 		return utils.MakeError("Could not find key STRIPE_SECRET in configurations map.")
 	}
 
-	// Use the restriced Strip key if on localdev or testing
+	// Use the restriced Stripe key if on localdev or testing
 	restricedKey, ok := configs["STRIPE_RESTRICTED"]
 	if !ok {
 		logger.Warningf("Could not find key STRIPE_RESTRICTED in configurations map.")

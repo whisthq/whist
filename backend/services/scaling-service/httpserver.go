@@ -158,7 +158,7 @@ func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.Ser
 }
 
 // getAccessToken is a helper function that extracts the access token
-// from a request's "Authorization" header.
+// from the request "Authorization" header.
 func getAccessToken(r *http.Request) (string, error) {
 	authorization := r.Header.Get("Authorization")
 	bearer := strings.Split(authorization, "Bearer ")

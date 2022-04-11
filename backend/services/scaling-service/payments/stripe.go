@@ -1,7 +1,6 @@
 package payments
 
 import (
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stripe/stripe-go/v72"
 	billingPortal "github.com/stripe/stripe-go/v72/billingportal/session"
 	checkout "github.com/stripe/stripe-go/v72/checkout/session"
@@ -92,7 +91,7 @@ func (sc *StripeClient) createCheckoutSession() (string, error) {
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				Price:    stripe.String(priceID),
-				Quantity: aws.Int64(int64(subscriptionQuantity)),
+				Quantity: stripe.Int64(int64(subscriptionQuantity)),
 			},
 		},
 		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
