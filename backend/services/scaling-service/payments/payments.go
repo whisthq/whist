@@ -31,7 +31,8 @@ func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionS
 	if metadata.IsLocalEnvWithoutDB() {
 		key := os.Getenv("STRIPE_KEY")
 		monthlyPriceInCents := int64(25000)
-		whistPayments.stripeClient.configure(key, key, customerID, subscriptionStatus, monthlyPriceInCents)
+		stripeClient.configure(key, key, customerID, subscriptionStatus, monthlyPriceInCents)
+		whistPayments.stripeClient = stripeClient
 		return nil
 	}
 

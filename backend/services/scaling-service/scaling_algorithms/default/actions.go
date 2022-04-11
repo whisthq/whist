@@ -298,7 +298,9 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 // ScaleUpIfNecessary is a scaling action that launched the received number of instances on
 // the cloud provider and registers them on the database with the initial values.
 func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event ScalingEvent, imageID string) error {
-	if metadata.IsLocalEnv() {
+	// Do not run scale up code if running on local environment to avoid
+	// spinning up instances accidentaly while developing.
+	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infof("Running on localdev so not scaling up instances.")
 		return nil
 	}
