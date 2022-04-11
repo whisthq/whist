@@ -650,7 +650,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			ImageID:           string(instanceResult[0].ImageID),
 			ClientSHA:         string(instanceResult[0].ClientSHA),
 			Type:              string(instanceResult[0].Type),
-			RemainingCapacity: int64(instanceCapacity[string(instanceResult[0].Type)]),
+			RemainingCapacity: int64(instanceResult[0].RemainingCapacity),
 			Status:            string(instanceResult[0].Status),
 			CreatedAt:         instanceResult[0].CreatedAt,
 			UpdatedAt:         instanceResult[0].UpdatedAt,
