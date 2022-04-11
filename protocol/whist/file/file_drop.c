@@ -80,6 +80,9 @@ static Atom XA_XdndFinished;    // NOLINT
 
 static Display* display = NULL;
 
+Window our_window;
+Window active_window;
+
 /*
 ============================
 Public Function Implementations
@@ -140,7 +143,11 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     }
 
     // Just in case a drag end event was sent before
-    file_drag_update(true);
+    if (file_drag_update(true, drop_file) < 0) {
+        return -1;
+    }
+
+    XClientMessageEvent m;
 
     // XDND 5 - Active X11 window will respond with XdndStatus
     //     this ClientMessage indicates whether active X11 window will accept the drop and what
@@ -176,8 +183,9 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
                 // XDND 4.5 - Active X11 window is not accepting the drop yet,
                 //     so we wait and resend our XdndPosition message
                 whist_sleep(50);
-                XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&position_message);
-                XFlush(display);
+                // XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&position_message);
+                // XFlush(display);
+                file_drag_update(true, drop_file);
             } else {
                 // Active X11 window is accepting the drop
                 // XDND 6 - Send XdndDrop to active X11 window
@@ -236,7 +244,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     }
 
     // Just to make sure that the file drag event ends
-    file_drag_update(false);
+    file_drag_update(false, drop_file);
 
     free(fuse_path);
 
@@ -341,14 +349,20 @@ void destroy_file_drop_handler(void) {
     }
 }
 
-void file_drag_update(bool is_dragging) {
+int file_drag_update(bool is_dragging, TransferringFile* drop_file) {
     /*
         Update the file drag indicator
     */
 
+    if (!drop_file) {
+        return;
+    }
+
     static bool active_file_drag = false;
-    static Window our_window;
-    static Window active_window;
+    // static Window our_window;
+    // static Window active_window;
+
+    XClientMessageEvent m;
 
     if (!display) {
         return -1;
@@ -375,7 +389,6 @@ void file_drag_update(bool is_dragging) {
 
             // The XDND communication exchange begins. Number steps are taken from
             // https://freedesktop.org/wiki/Specifications/XDND/
-            XClientMessageEvent m;
 
             // XDND 1 - We take ownership of XdndSelection
             XSetSelectionOwner(display, XA_XdndSelection, our_window, CurrentTime);
@@ -467,6 +480,7 @@ void file_drag_update(bool is_dragging) {
 
     active_file_drag = is_dragging;
 
+    return active_window;
 }
 
 #endif  // __linux__

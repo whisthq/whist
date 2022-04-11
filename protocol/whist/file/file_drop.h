@@ -81,6 +81,6 @@ int file_drop_mark_ready(int id);
  */
 void destroy_file_drop_handler(void);
 
-void file_drag_update(bool is_dragging)
+int file_drag_update(bool is_dragging, TransferringFile* drop_file);
 
 #endif  // WINDOW_NAME_H

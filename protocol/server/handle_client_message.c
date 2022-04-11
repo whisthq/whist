@@ -371,6 +371,7 @@ static int handle_file_upload_cancel_message(WhistServerState *state, WhistClien
 }
 
 static int handle_file_drag_update_message(whist_server_state * state, WhistClientMessage *wcmsg) {
-    file_drag_update(wcmsg->fileDragUpdate.file_dragging);
+    // (TODO) update this to actually send the drop_file
+    file_drag_update(wcmsg->fileDragUpdate.file_dragging, NULL);
     return 0;
 }
