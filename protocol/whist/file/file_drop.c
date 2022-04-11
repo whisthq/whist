@@ -144,7 +144,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     }
 
     // Just in case a drag end event was sent before
-    if (file_drag_update(true, drop_file) < 0) {
+    if (file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y) < 0) {
         return -1;
     }
 
@@ -245,7 +245,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     }
 
     // Just to make sure that the file drag event ends
-    file_drag_update(false, drop_file);
+    file_drag_update(false, 0, 0);
 
     free(fuse_path);
 
