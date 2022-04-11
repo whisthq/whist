@@ -143,6 +143,18 @@ static void sdl_render_nv12data(void);
  */
 static void sdl_render_file_drag_icon(int x, int y);
 
+/**
+ * @brief                          Render a file drag indication icon
+ *
+ * @param win                      Pointer to SDL window
+ *
+ * @param point                    Pointer to SDL point (i.e. current mouse position)
+ *
+ * @param data                     Optional callback data
+ *
+ */
+static SDL_HitTestResult sdl_hit_test_callback(SDL_Window* win, const SDL_Point* point, void* data);
+
 /*
 ============================
 Public Function Implementations
@@ -212,6 +224,25 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         hide_native_window_taskbar();
     }
 
+#ifdef _WIN32
+    // We start the window hidden to avoid glitchy-looking titlebar-content combinations while
+    // the window is loading, and to prevent glitches caused by early user interaction.
+    const uint32_t window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS |
+                                  SDL_WINDOW_RESIZABLE | (maximized ? SDL_WINDOW_MAXIMIZED : 0) |
+                                  (skip_taskbar ? SDL_WINDOW_SKIP_TASKBAR : 0) | SDL_WINDOW_HIDDEN;
+
+    // Simulate fullscreen with borderless always on top, so that it can still
+    // be used with multiple monitors
+    sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED,
+                                  0, target_output_width, target_output_height,
+                                  window_flags);
+
+    // If this isn't set, for some reason the borderless window isn't resizable on Windows despite
+    // the flag
+    SDL_SetWindowResizable(sdl_window, true);
+
+    SDL_SetWindowHitTest(sdl_window, sdl_hit_test_callback, out_frontend);
+#else
     // We start the window hidden to avoid glitchy-looking titlebar-content combinations while
     // the window is loading, and to prevent glitches caused by early user interaction.
     const uint32_t window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL |
@@ -223,6 +254,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, target_output_width, target_output_height,
                                   window_flags);
+#endif
 
     // temporary hook -- remove during refactor
     temp_frontend_set_window(out_frontend, sdl_window);
@@ -345,7 +377,7 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
     LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
              current_height);
 
-#ifndef __linux__
+#ifdef __APPLE__
     int dpi = whist_frontend_get_window_dpi(frontend);
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
@@ -977,4 +1009,50 @@ static void sdl_render_file_drag_icon(int x, int y) {
 
     SDL_RenderCopy(sdl_renderer, drop_icon_texture, NULL, &drop_icon_rect);
     SDL_DestroyTexture(drop_icon_texture);
+}
+
+// Number of pixels from the edge we want to activate the hit test
+// i.e. if the mouse is PIXELS_FROM_EDGE pixels away from the left edge, 
+// activate the resize cursor
+#define PIXELS_FROM_EDGE 5
+static SDL_HitTestResult sdl_hit_test_callback(SDL_Window* win, const SDL_Point* point, void* data) {
+    int width, height;
+    whist_frontend_get_window_pixel_size(data, &width, &height);
+
+    int mouse_pos_x = point->x;
+    int mouse_pos_y = point->y;
+
+    if (mouse_pos_x < PIXELS_FROM_EDGE && mouse_pos_y < PIXELS_FROM_EDGE) {
+        return SDL_HITTEST_RESIZE_TOPLEFT;
+    }
+
+    if (mouse_pos_x < PIXELS_FROM_EDGE && mouse_pos_y > height - PIXELS_FROM_EDGE) {
+        return SDL_HITTEST_RESIZE_BOTTOMLEFT;
+    }
+
+    if (mouse_pos_x < PIXELS_FROM_EDGE) {
+        return SDL_HITTEST_RESIZE_LEFT;
+    }
+
+    if (mouse_pos_x > width - PIXELS_FROM_EDGE && mouse_pos_y < PIXELS_FROM_EDGE) {
+        return SDL_HITTEST_RESIZE_TOPRIGHT;
+    }
+
+    if (mouse_pos_x > width - PIXELS_FROM_EDGE && mouse_pos_y > height - PIXELS_FROM_EDGE) {
+        return SDL_HITTEST_RESIZE_BOTTOMRIGHT;
+    }
+
+    if (mouse_pos_x > width - PIXELS_FROM_EDGE) {
+        return SDL_HITTEST_RESIZE_RIGHT;
+    }
+
+    if (mouse_pos_y > height - PIXELS_FROM_EDGE) {
+        return SDL_HITTEST_RESIZE_BOTTOM; 
+    }
+
+    if (mouse_pos_y < PIXELS_FROM_EDGE) {
+        return SDL_HITTEST_DRAGGABLE;
+    }
+
+    return SDL_HITTEST_NORMAL;
 }

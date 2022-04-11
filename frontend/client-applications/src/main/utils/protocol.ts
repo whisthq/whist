@@ -6,7 +6,7 @@
  * passing args, and closing args -- should be done here.
  */
 
-import { app } from "electron"
+import { app, screen } from "electron"
 import path from "path"
 import events from "events"
 import { spawn, ChildProcess } from "child_process"
@@ -52,6 +52,10 @@ const launchProtocol = async (info?: {
     ...(appEnvironment !== WhistEnvironments.LOCAL && {
       environment: config.deployEnv,
       "session-id": sessionID.toString(),
+    }),
+    ...(process.platform === "win32" && {
+      width: screen.getPrimaryDisplay().workAreaSize.width.toString(),
+      height: screen.getPrimaryDisplay().workAreaSize.height.toString(),
     }),
   }
 
