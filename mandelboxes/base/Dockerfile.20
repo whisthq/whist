@@ -601,6 +601,11 @@ RUN apt-get update \
     && rm -rf /tmp/* /var/tmp/*
 
 #########################
+# Locale
+#########################
+RUN cp /usr/share/i18n/SUPPORTED /etc/locale.gen && locale-gen
+
+#########################
 # Permissions
 #########################
 

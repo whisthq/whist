@@ -46,10 +46,11 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
   if [ "$( jq -rc 'has("user_locale")' < $WHIST_JSON_FILE )" == "true"  ]; then
     USER_LOCALE="$(jq -rc '.user_locale | to_entries[] | "\(.key)=\"\(.value)\""' < $WHIST_JSON_FILE)"
-    LOCALES_TO_GENERATE="$(jq -rc '.user_locale | to_entries[] | "\(.value)"' < $WHIST_JSON_FILE)"
-    LOCALES_TO_GENERATE=$(sed -e 's/$'\n'/ /g;s/POSIX//g;' <<< $LOCALES_TO_GENERATE)
-    eval "locale-gen ${LOCALES_TO_GENERATE}"
+    #LOCALES_TO_GENERATE="$(jq -rc '.user_locale | to_entries[] | "\(.value)"' < $WHIST_JSON_FILE)"
+    #LOCALES_TO_GENERATE=$(sed -e 's/$'\n'/ /g;s/POSIX//g;' <<< $LOCALES_TO_GENERATE)
+    #eval "locale-gen ${LOCALES_TO_GENERATE}"
     eval "update-locale ${USER_LOCALE//$'\n'/ }"
+    eval "export ${USER_LOCALE//$'\n'/ }"
   fi
   if [ "$( jq -rc 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
