@@ -2,6 +2,7 @@ package payments
 
 import (
 	"context"
+	"os"
 	"strconv"
 
 	"github.com/whisthq/whist/backend/services/host-service/auth"
@@ -23,6 +24,17 @@ type PaymentsClient struct {
 // and set the StripeClient fields with the values extracted from
 // the access token.
 func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionStatus string, configGraphqlClient subscriptions.WhistGraphQLClient, stripeClient WhistStripeClient) error {
+	// If running on local environment, get the Stripe key from an environment
+	// variable, and use the default configurations. By doing this, we avoid
+	// hardcoding the key or having to query the config database, since they
+	// are disabled on localdev environment.
+	if metadata.IsLocalEnvWithoutDB() {
+		key := os.Getenv("STRIPE_KEY")
+		monthlyPriceInCents := int64(25000)
+		whistPayments.stripeClient.configure(key, key, customerID, subscriptionStatus, monthlyPriceInCents)
+		return nil
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

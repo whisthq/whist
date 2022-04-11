@@ -31,7 +31,7 @@ type StripeClient struct {
 // makes it easier to mock for testing.
 func (sc *StripeClient) configure(secret string, restrictedSecret string, customerID string, subscriptionStatus string, monthlyPriceInCents int64) {
 	// Dynamically set the Stripe key depending on environment
-	if metadata.IsLocalEnv() {
+	if metadata.IsLocalEnv() || metadata.IsRunningInCI() {
 		sc.key = restrictedSecret
 	} else {
 		sc.key = secret
