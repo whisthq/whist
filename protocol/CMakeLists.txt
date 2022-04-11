@@ -368,7 +368,13 @@ set(MAC_SPECIFIC_CLIENT_LIBS
 
 # MSVC C/C++ Standard Library linking, based on Debug/Release
 set(WINDOWS_CORE_LIBS
-  $<IF:$<CONFIG:Debug>, ucrtd libcmtd libcpmtd vcruntimed msvcrtd msvcmrtd msvcprtd, ucrt libcmt libcpmt vcruntime msvcrt msvcmrt msvcprt>
+    $<IF:$<CONFIG:Debug>,ucrtd,ucrt>
+    $<IF:$<CONFIG:Debug>,libcmtd,libcmt>
+    $<IF:$<CONFIG:Debug>,libcpmtd,libcpmt>
+    $<IF:$<CONFIG:Debug>,vcruntimed,vcruntime>
+    $<IF:$<CONFIG:Debug>,msvcrtd,msvcrt>
+    $<IF:$<CONFIG:Debug>,msvcmrtd,msvcmrt>
+    $<IF:$<CONFIG:Debug>,msvcprtd,msvcprt>
 )
 
 # Windows Libs Shared by both server and client go here
