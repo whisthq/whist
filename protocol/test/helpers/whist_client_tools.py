@@ -3,7 +3,7 @@
 import os, sys, json, time
 
 from helpers.setup.network_tools import restore_network_conditions
-
+from helpers.common.e2e_runner_tools import exit_with_error
 from helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
@@ -88,7 +88,8 @@ def client_setup_process(args_dict):
             aws_credentials_filepath,
         )
         if not result:
-            sys.exit(-1)
+            # This will exit the process spawned by the Multiprocess class, not the E2E script
+            exit_with_error(error_message=None)
 
         prune_containers_if_needed(hs_process, pexpect_prompt_client, running_in_ci)
 
