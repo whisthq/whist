@@ -312,11 +312,7 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
     decoder->codec_type = codec_type;
     decoder->received_a_frame = false;
 
-#ifdef __APPLE__
-    decoder->can_output_hardware = true;
-#else
     decoder->can_output_hardware = false;
-#endif
 
     // Try all decoders until we find one that works
     if (try_next_decoder(decoder) != WHIST_SUCCESS) {
