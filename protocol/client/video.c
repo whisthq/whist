@@ -247,8 +247,7 @@ int render_video(VideoContext* video_context) {
             window_color = frame->corner_color;
 
             WhistCursorInfo* frame_cursor_image = get_frame_cursor_info(frame);
-            if (frame_cursor_image)
-            {
+            if (frame_cursor_image) {
                 sdl_update_cursor_info(frame_cursor_image);
             }
             /*

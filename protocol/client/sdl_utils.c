@@ -153,11 +153,9 @@ Public Function Implementations
 
 static WhistCursorInfo* pending_cursor_info = NULL;
 
-void sdl_update_cursor_info(WhistCursorInfo* cursor_info)
-{
-    WhistCursorInfo * p = safe_malloc(whist_cursor_info_get_size(cursor_info));
-    memcpy(p, cursor_info,
-            whist_cursor_info_get_size(cursor_info));
+void sdl_update_cursor_info(WhistCursorInfo* cursor_info) {
+    WhistCursorInfo* p = safe_malloc(whist_cursor_info_get_size(cursor_info));
+    memcpy(p, cursor_info, whist_cursor_info_get_size(cursor_info));
 
     whist_lock_mutex(cursor_update_mutex);
     if (pending_cursor_info) {
@@ -166,7 +164,6 @@ void sdl_update_cursor_info(WhistCursorInfo* cursor_info)
     pending_cursor_info = p;
     whist_unlock_mutex(cursor_update_mutex);
 }
-
 
 bool get_skip_taskbar(void) { return skip_taskbar; }
 
@@ -345,7 +342,7 @@ void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend) {
     if (window_param) {
         window_param = NULL;
     }
-    
+
     whist_destroy_mutex(cursor_update_mutex);
     whist_destroy_mutex(renderer_mutex);
 
@@ -461,20 +458,18 @@ bool sdl_render_pending(void) {
     return pending_render_val;
 }
 
-void sdl_present_pending_cursor(void)
-{
+void sdl_present_pending_cursor(void) {
     WhistTimer statistics_timer;
 
     whist_lock_mutex(cursor_update_mutex);
-    WhistCursorInfo * p= NULL;
+    WhistCursorInfo* p = NULL;
     if (pending_cursor_info) {
-        p =pending_cursor_info;
+        p = pending_cursor_info;
         pending_cursor_info = NULL;
     }
     whist_unlock_mutex(cursor_update_mutex);
 
-    if(p)
-    {
+    if (p) {
         TIME_RUN(sdl_present_pending_cursor_inner(p), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
         // Cursors need not be double-rendered, so we just unset the cursor image here
         free(p);
