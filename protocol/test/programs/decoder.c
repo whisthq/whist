@@ -471,7 +471,7 @@ int main(int argc, const char **argv) {
             break;
         }
 
-        write_avpackets_to_buffer(1, pkt, (int *)input_buffer);
+        write_avpackets_to_buffer(1, &pkt, input_buffer);
         input_buffer_size = 8 + pkt->size;
         av_packet_unref(pkt);
 

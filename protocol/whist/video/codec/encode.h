@@ -48,13 +48,13 @@ typedef struct VideoEncoder {
     VideoEncoderType active_encoder;
     // packet metadata + data
     int num_packets;
-    AVPacket packets[MAX_ENCODER_PACKETS];
+    AVPacket* packets[MAX_ENCODER_PACKETS];
 
     // frame metadata + data
     int in_width, in_height;
     int out_width, out_height;
     VideoFrameType frame_type;
-    int encoded_frame_size;  /// <size of encoded frame in bytes
+    size_t encoded_frame_size;  /// <size of encoded frame in bytes
     CodecType codec_type;
     NvidiaEncoder* nvidia_encoders[NUM_ENCODERS];
     FFmpegEncoder* ffmpeg_encoder;

@@ -229,13 +229,23 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
     }
 
     // get encoded packet
-    // because this always calls av_packet_unref before doing anything,
-    // our previous calls to av_packet_unref are unnecessary.
     encoder->encoded_frame_size = sizeof(int);
     encoder->num_packets = 0;
-    while ((res = audio_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) ==
-           0) {
-        encoder->encoded_frame_size += sizeof(int) + encoder->packets[encoder->num_packets].size;
+    while (1) {
+        AVPacket* pkt = encoder->packets[encoder->num_packets];
+        if (pkt) {
+            av_packet_unref(pkt);
+        } else {
+            pkt = av_packet_alloc();
+            FATAL_ASSERT(pkt);
+            encoder->packets[encoder->num_packets] = pkt;
+        }
+
+        res = audio_encoder_receive_packet(encoder, pkt);
+        if (res != 0) {
+            break;
+        }
+        encoder->encoded_frame_size += sizeof(int) + encoder->packets[encoder->num_packets]->size;
         encoder->num_packets++;
         if (encoder->num_packets == MAX_NUM_AUDIO_PACKETS) {
             LOG_ERROR("Audio encoder encoded into too many packets: reached %d",
@@ -279,7 +289,7 @@ void destroy_audio_encoder(AudioEncoder* encoder) {
 
     // free the packets
     for (int i = 0; i < MAX_NUM_AUDIO_PACKETS; i++) {
-        av_packet_unref(&encoder->packets[i]);
+        av_packet_free(&encoder->packets[i]);
     }
 
     // free swr

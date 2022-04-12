@@ -8,7 +8,7 @@
 
 #include "avpacket_buffer.h"
 
-void write_avpackets_to_buffer(int num_packets, AVPacket* packets, int* buf) {
+void write_avpackets_to_buffer(int num_packets, AVPacket** packets, uint8_t* buffer) {
     /*
         Store the first num_packets AVPackets contained in packets into buf. buf will contain
         the following data: (number of packets)(size of each packet)(data of each packet).
@@ -16,18 +16,23 @@ void write_avpackets_to_buffer(int num_packets, AVPacket* packets, int* buf) {
         Arguments:
             num_packets (int): the number of packets to store in buf
             packets (AVPacket*): array of packets to read packets from
-            buf (int*): memory buffer for storing the packets
+            buffer (uint8_t*): memory buffer for storing the packets
     */
-    *buf = num_packets;
-    buf++;
-    for (int i = 0; i < num_packets; i++) {
-        *buf = packets[i].size;
-        buf++;
+    if (num_packets > 10) {
+        LOG_FATAL("Invalid number of packets to write to buffer: %d.", num_packets);
     }
-    char* char_buf = (void*)buf;
+
+    AV_WL32(buffer, num_packets);
+    size_t pos = 4;
+
     for (int i = 0; i < num_packets; i++) {
-        memcpy(char_buf, packets[i].data, packets[i].size);
-        char_buf += packets[i].size;
+        AV_WL32(buffer + pos, packets[i]->size);
+        pos += 4;
+    }
+
+    for (int i = 0; i < num_packets; i++) {
+        memcpy(buffer + pos, packets[i]->data, packets[i]->size);
+        pos += packets[i]->size;
     }
 }
 

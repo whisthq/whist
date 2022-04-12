@@ -215,16 +215,15 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
 
     frame->frame_id = id;
 
-    frame->videodata_length = encoder->encoded_frame_size;
+    frame->videodata_length = (int)encoder->encoded_frame_size;
 
-    write_avpackets_to_buffer(encoder->num_packets, encoder->packets,
-                              (void*)get_frame_videodata(frame));
+    write_avpackets_to_buffer(encoder->num_packets, encoder->packets, get_frame_videodata(frame));
     whist_wait_semaphore(consumer);
     send_frame_id = id;
     currently_sending_index = 1 - currently_sending_index;
 
     if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type) || LOG_VIDEO) {
-        LOG_INFO("Sent video packet %d (Size: %d) %s", id, encoder->encoded_frame_size,
+        LOG_INFO("Sent video packet %d (Size: %zu) %s", id, encoder->encoded_frame_size,
                  video_frame_type_string(frame->frame_type));
     }
 
@@ -853,9 +852,9 @@ int32_t multithreaded_send_video(void* opaque) {
                                      get_timer(&statistics_timer) * MS_IN_SECOND);
 
                 if (encoder->encoded_frame_size != 0) {
-                    if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
+                    if (encoder->encoded_frame_size > MAX_VIDEOFRAME_DATA_SIZE) {
                         // Please make MAX_VIDEOFRAME_DATA_SIZE larger if this error happens
-                        LOG_ERROR("Frame of size %d bytes is too large! Dropping Frame.",
+                        LOG_ERROR("Frame of size %zu bytes is too large! Dropping Frame.",
                                   encoder->encoded_frame_size);
                         continue;
                     } else {

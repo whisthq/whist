@@ -39,6 +39,18 @@ Private Function Implementations
 ============================
 */
 
+static AVPacket *alloc_packet(VideoEncoder *encoder, int index) {
+    AVPacket *pkt = encoder->packets[index];
+    if (pkt) {
+        av_packet_unref(pkt);
+    } else {
+        pkt = av_packet_alloc();
+        FATAL_ASSERT(pkt);
+        encoder->packets[index] = pkt;
+    }
+    return pkt;
+}
+
 static void transfer_nvidia_data(VideoEncoder *encoder) {
     /*
         Set encoder metadata according to nvidia_encoder members and tell the encoder there is only
@@ -80,13 +92,6 @@ static int transfer_ffmpeg_data(VideoEncoder *encoder) {
         LOG_ERROR("Encoder is not using ffmpeg, but we are trying to call transfer_ffmpge_data!");
         return -1;
     }
-    // If the encoder has been used to encode a frame before we should clear packet data for
-    // previously used packets
-    if (encoder->num_packets) {
-        for (int i = 0; i < encoder->num_packets; i++) {
-            av_packet_unref(&encoder->packets[i]);
-        }
-    }
 
     // The encoded frame size starts out as sizeof(int) because of the way we send packets. See
     // encode.h and decode.h.
@@ -96,9 +101,14 @@ static int transfer_ffmpeg_data(VideoEncoder *encoder) {
 
     // receive packets until we receive a nonzero code (indicating either an encoding error, or that
     // all packets have been received).
-    while ((res = ffmpeg_encoder_receive_packet(encoder->ffmpeg_encoder,
-                                                &encoder->packets[encoder->num_packets])) == 0) {
-        encoder->encoded_frame_size += 4 + encoder->packets[encoder->num_packets].size;
+    while (1) {
+        AVPacket *pkt = alloc_packet(encoder, encoder->num_packets);
+
+        res = ffmpeg_encoder_receive_packet(encoder->ffmpeg_encoder, pkt);
+        if (res != 0) {
+            break;
+        }
+        encoder->encoded_frame_size += 4 + pkt->size;
         encoder->num_packets++;
         if (encoder->num_packets == MAX_ENCODER_PACKETS) {
             LOG_ERROR("TOO MANY PACKETS: REACHED %d", encoder->num_packets);
@@ -337,7 +347,7 @@ void destroy_video_encoder(VideoEncoder *encoder) {
 
     // free packets
     for (int i = 0; i < MAX_ENCODER_PACKETS; i++) {
-        av_packet_unref(&encoder->packets[i]);
+        av_packet_free(&encoder->packets[i]);
     }
     free(encoder);
 
