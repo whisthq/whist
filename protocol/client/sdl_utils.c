@@ -466,7 +466,8 @@ void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info) {
     if (pending_cursor_info) {
         // pending_cursor_info is true, it means an old cursor hasn't been rendered yet.
         // simply free the old one and overwrite the pending_cursor_info.
-        // The duty of free a not-yet-rendered cursor is at producer side.
+        // The duty of free a not-yet-rendered cursor is at producer side, since the ownership
+        // hasn't been taken away.
         free(pending_cursor_info);
     }
     // assign the local pointer to the pending_cursor_info

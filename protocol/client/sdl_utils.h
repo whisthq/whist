@@ -128,7 +128,7 @@ bool sdl_render_pending(void);
  *
  * @param cursor_info              The WhistCursorInfo to use for the new cursor
  *
- * @note                           ALL rendering related API is only safe inside main thread.
+ * @note                           ALL rendering related APIs are only safe inside main thread.
  */
 void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info);
 
