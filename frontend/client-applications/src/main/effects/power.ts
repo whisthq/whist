@@ -8,7 +8,7 @@ import { app, session } from "electron"
 import { merge } from "rxjs"
 import { withLatestFrom, filter, take, takeUntil } from "rxjs/operators"
 import { ChildProcess } from "child_process"
-import Sentry from "@sentry/electron"
+import * as Sentry from "@sentry/electron"
 
 import { fromTrigger } from "@app/main/utils/flows"
 import { relaunch } from "@app/main/utils/app"
