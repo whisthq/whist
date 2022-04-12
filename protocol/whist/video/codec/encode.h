@@ -22,6 +22,8 @@ Includes
 ============================
 */
 
+#include <libavcodec/bsf.h>
+
 #include <whist/core/whist.h>
 #include "whist/video/ltr.h"
 #include "nvidia_encode.h"
@@ -60,6 +62,10 @@ typedef struct VideoEncoder {
     FFmpegEncoder* ffmpeg_encoder;
 
     LTRAction next_ltr_action;
+
+    // Output filter to fix up bitstream properties which do not match
+    // out use-case with long-term reference frames.
+    AVBSFContext* bsf;
 } VideoEncoder;
 
 /*
