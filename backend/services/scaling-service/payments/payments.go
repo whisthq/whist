@@ -105,6 +105,8 @@ func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 		status = string(subscription.Status)
 	}
 
+	isNewUser := whistPayments.stripeClient.isNewUser()
+
 	if status == "active" || status == "trialing" {
 		// If the authenticated user already has a Whist subscription in a non-terminal state
 		// (one of `active` or `trialing`), create a Stripe billing portal that the customer
@@ -113,10 +115,9 @@ func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 		if err != nil {
 			return "", utils.MakeError("error creating Stripe billing portal. Err: %v", err)
 		}
-	} else if status == "past_due" || status == "incomplete" {
-		//  The authenticated user does have an existing Whist subscription but is pending
-		// payment for the last invoice. Create a new subscription without a free trial so
-		// that the user
+	} else if !isNewUser {
+		// The authenticated user has previous canceled Whist subscriptions. This means that the
+		// user has already gone through the initial trial period.
 		withTrialPeriod := false
 		sessionUrl, err = whistPayments.stripeClient.createCheckoutSession(withTrialPeriod)
 		if err != nil {

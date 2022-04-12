@@ -112,6 +112,10 @@ func (sc *mockStripeClient) findPrice() (string, error) {
 	return "", nil
 }
 
+func (sc *mockStripeClient) isNewUser() bool {
+	return false
+}
+
 func (sc *mockStripeClient) createCheckoutSession(withTrialPeriod bool) (string, error) {
 	return "https://test-checkout-session.url", nil
 }

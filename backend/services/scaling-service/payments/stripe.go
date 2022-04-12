@@ -18,6 +18,7 @@ type WhistStripeClient interface {
 	getSubscription() (*stripe.Subscription, error)
 	getSubscriptionStatus() string
 	findPrice() (string, error)
+	isNewUser() bool
 	createCheckoutSession(bool) (string, error)
 	createBillingPortal() (string, error)
 	createPrice(cents int64, name string, interval string) (*stripe.Price, error)
@@ -74,6 +75,25 @@ func (sc *StripeClient) getSubscriptionStatus() string {
 	return sc.subscriptionStatus
 }
 
+// isNewUser is a helper fuction to determine if the user is new or not.
+// A new user is defined as a user who has no previous Whist subscriptions.
+func (sc *StripeClient) isNewUser() bool {
+	canceledSubscriptions := sub.List(&stripe.SubscriptionListParams{
+		Customer: sc.customerID,
+		Status:   "canceled",
+	})
+
+	var hasCanceledSubscriptions bool
+	for canceledSubscriptions.Next() {
+		logger.Infof("Found canceled subscription %v", canceledSubscriptions.Subscription())
+		if canceledSubscriptions.Subscription() != nil {
+			hasCanceledSubscriptions = true
+		}
+	}
+
+	return !hasCanceledSubscriptions
+}
+
 // findPrice will search for a Stripe price matching the desired amount and
 // will return the price ID. If it fails to find it, then creates a new price
 // in Stripe and returns its ID.
@@ -117,9 +137,8 @@ func (sc *StripeClient) createCheckoutSession(withTrialPeriod bool) (string, err
 	// Set how many subscriptions we want started, and what number of
 	// days we offer as a trial period.
 	const (
-		subscriptionQuantity = 1                            // The number of subscriptions that will be created
-		trialPeriodDays      = 14                           // The number of days offered as a free trial period
-		subscriptionID       = "whist_monthly_subscription" // An internal id that will be attached to the subscription
+		subscriptionQuantity = 1  // The number of subscriptions that will be created
+		trialPeriodDays      = 14 // The number of days offered as a free trial period
 	)
 
 	// Get a Stripe price with the desired amount
@@ -134,20 +153,9 @@ func (sc *StripeClient) createCheckoutSession(withTrialPeriod bool) (string, err
 	if withTrialPeriod {
 		subscriptionParams = &stripe.CheckoutSessionSubscriptionDataParams{
 			TrialPeriodDays: stripe.Int64(trialPeriodDays),
-			Metadata: map[string]string{
-				"customer_id":     sc.customerID,
-				"price_id":        priceID,
-				"subscription_id": subscriptionID,
-			},
 		}
 	} else {
-		subscriptionParams = &stripe.CheckoutSessionSubscriptionDataParams{
-			Metadata: map[string]string{
-				"customer_id":     sc.customerID,
-				"price_id":        priceID,
-				"subscription_id": subscriptionID,
-			},
-		}
+		subscriptionParams = &stripe.CheckoutSessionSubscriptionDataParams{}
 	}
 
 	params := &stripe.CheckoutSessionParams{
