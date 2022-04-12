@@ -51,7 +51,7 @@ typedef struct AudioEncoder {
     AVAudioFifo* audio_fifo;
 
     int num_packets;
-    AVPacket packets[MAX_NUM_AUDIO_PACKETS];
+    AVPacket* packets[MAX_NUM_AUDIO_PACKETS];
 
     SwrContext* swr_context;
     int frame_count;

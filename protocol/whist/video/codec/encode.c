@@ -24,6 +24,9 @@ Includes
 #include <libavfilter/avfilter.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "whist/core/error_codes.h"
+#include "whist/core/features.h"
 /*
 ============================
 Private Functions
@@ -38,6 +41,18 @@ static int transfer_ffmpeg_data(VideoEncoder *encoder);
 Private Function Implementations
 ============================
 */
+
+static AVPacket *alloc_packet(VideoEncoder *encoder, int index) {
+    AVPacket *pkt = encoder->packets[index];
+    if (pkt) {
+        av_packet_unref(pkt);
+    } else {
+        pkt = av_packet_alloc();
+        FATAL_ASSERT(pkt);
+        encoder->packets[index] = pkt;
+    }
+    return pkt;
+}
 
 static void transfer_nvidia_data(VideoEncoder *encoder) {
     /*
@@ -57,12 +72,118 @@ static void transfer_nvidia_data(VideoEncoder *encoder) {
     encoder->out_width = nvidia_encoder->width;
     encoder->out_height = nvidia_encoder->height;
 
-    // Construct frame packets
-    encoder->encoded_frame_size = nvidia_encoder->frame_size;
-    encoder->num_packets = 1;
-    encoder->packets[0].data = nvidia_encoder->frame;
-    encoder->packets[0].size = nvidia_encoder->frame_size;
-    encoder->encoded_frame_size += 8;
+    AVPacket *pkt;
+    if (encoder->bsf) {
+        // Apply output filtering.
+        int err;
+
+        pkt = av_packet_alloc();
+        FATAL_ASSERT(pkt);
+
+        // Bitstream filters require a refcounted packet, so we can't
+        // avoid this copy.
+        err = av_new_packet(pkt, nvidia_encoder->frame_size);
+        FATAL_ASSERT(err == 0);
+        memcpy(pkt->data, nvidia_encoder->frame, pkt->size);
+
+        err = av_bsf_send_packet(encoder->bsf, pkt);
+        FATAL_ASSERT(err == 0);
+
+        av_packet_free(&pkt);
+
+        size_t size = 4;
+        int i;
+        for (i = 0; i < MAX_ENCODER_PACKETS; i++) {
+            pkt = alloc_packet(encoder, i);
+
+            err = av_bsf_receive_packet(encoder->bsf, pkt);
+            if (err == AVERROR(EAGAIN)) {
+                break;
+            }
+            FATAL_ASSERT(err == 0);
+
+            size += 4 + pkt->size;
+        }
+
+        encoder->num_packets = i;
+        encoder->encoded_frame_size = size;
+    } else {
+        pkt = alloc_packet(encoder, 0);
+
+        pkt->data = nvidia_encoder->frame;
+        pkt->size = nvidia_encoder->frame_size;
+
+        encoder->num_packets = 1;
+        encoder->encoded_frame_size = 8 + nvidia_encoder->frame_size;
+    }
+}
+
+static WhistStatus create_output_filter(VideoEncoder *encoder) {
+    if (encoder->codec_type != CODEC_TYPE_H264) {
+        // This only applies to H.264.
+        return WHIST_SUCCESS;
+    }
+
+    // This bitstream filter is used to override some internal
+    // properties of the stream which may not be set correctly for our
+    // use-case with long-term reference frames.
+
+    const char *bsf_name = "h264_constraint";
+    int err;
+
+    const AVBitStreamFilter *bsf = av_bsf_get_by_name(bsf_name);
+    if (!bsf) {
+        LOG_WARNING("Failed to find %s BSF.", bsf_name);
+        goto fail;
+    }
+    err = av_bsf_alloc(bsf, &encoder->bsf);
+    if (err < 0) {
+        LOG_ERROR("Failed to open %s BSF: %d.", bsf_name, err);
+        goto fail;
+    }
+
+    AVCodecParameters *par = encoder->bsf->par_in;
+    par->codec_type = AVMEDIA_TYPE_VIDEO;
+    par->codec_id = AV_CODEC_ID_H264;
+
+    // Set gaps_in_frame_num_value_allowed_flag on.
+    // This indicates to the decoder that frame_num values in the
+    // bitstream may contain gaps, so it should not attempt to wait for
+    // the next frame_num value.  This is required because gaps can be
+    // introduced when recovering with a reference to a long-term frame,
+    // where an unknown number of frames before the recovery point are
+    // discarded.
+    err = av_opt_set_int(encoder->bsf->priv_data, "gaps_in_frame_num_value_allowed_flag", 1, 0);
+    if (err < 0) {
+        LOG_ERROR("Failed to set gaps_in_frame_num_value_allowed_flag on %s BSF: %d.", bsf_name,
+                  err);
+        goto fail;
+    }
+
+    // Set max_num_reorder_frames to zero.
+    // This indicates to the decoder that frames should be output
+    // immediately after decoding with no delay.  This is needed because
+    // gaps in the stream may cause the decoder to think that frames are
+    // out of order when frame numbering wraps, which it can react to by
+    // introducing unwanted delay.
+    err = av_opt_set_int(encoder->bsf->priv_data, "max_num_reorder_frames", 0, 0);
+    if (err < 0) {
+        LOG_ERROR("Failed to set max_num_reorder_frames on %s BSF: %d.", bsf_name, err);
+        goto fail;
+    }
+
+    err = av_bsf_init(encoder->bsf);
+    if (err < 0) {
+        LOG_ERROR("Failed to init %s BSF: %d.", bsf_name, err);
+        goto fail;
+    }
+
+    LOG_INFO("Created output filter.");
+    return WHIST_SUCCESS;
+
+fail:
+    av_bsf_free(&encoder->bsf);
+    return WHIST_ERROR_EXTERNAL;
 }
 
 static int transfer_ffmpeg_data(VideoEncoder *encoder) {
@@ -80,13 +201,6 @@ static int transfer_ffmpeg_data(VideoEncoder *encoder) {
         LOG_ERROR("Encoder is not using ffmpeg, but we are trying to call transfer_ffmpge_data!");
         return -1;
     }
-    // If the encoder has been used to encode a frame before we should clear packet data for
-    // previously used packets
-    if (encoder->num_packets) {
-        for (int i = 0; i < encoder->num_packets; i++) {
-            av_packet_unref(&encoder->packets[i]);
-        }
-    }
 
     // The encoded frame size starts out as sizeof(int) because of the way we send packets. See
     // encode.h and decode.h.
@@ -96,9 +210,14 @@ static int transfer_ffmpeg_data(VideoEncoder *encoder) {
 
     // receive packets until we receive a nonzero code (indicating either an encoding error, or that
     // all packets have been received).
-    while ((res = ffmpeg_encoder_receive_packet(encoder->ffmpeg_encoder,
-                                                &encoder->packets[encoder->num_packets])) == 0) {
-        encoder->encoded_frame_size += 4 + encoder->packets[encoder->num_packets].size;
+    while (1) {
+        AVPacket *pkt = alloc_packet(encoder, encoder->num_packets);
+
+        res = ffmpeg_encoder_receive_packet(encoder->ffmpeg_encoder, pkt);
+        if (res != 0) {
+            break;
+        }
+        encoder->encoded_frame_size += 4 + pkt->size;
         encoder->num_packets++;
         if (encoder->num_packets == MAX_ENCODER_PACKETS) {
             LOG_ERROR("TOO MANY PACKETS: REACHED %d", encoder->num_packets);
@@ -150,6 +269,17 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
     encoder->in_width = in_width;
     encoder->in_height = in_height;
     encoder->codec_type = codec_type;
+
+    if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
+        // When long-term reference frames are enabled we need to make
+        // sure that the output stream has the right constraints encoded
+        // in it.  The Nvidia encoder does not, so this extra filter is
+        // required to fix the output.
+        create_output_filter(encoder);
+        // TODO: when we have other encoders supporting long-term
+        // reference frames, disable this if they can directly generate
+        // the expected stream.
+    }
 
 #if USING_NVIDIA_ENCODE
     if (USING_SERVERSIDE_SCALE) {
@@ -335,9 +465,12 @@ void destroy_video_encoder(VideoEncoder *encoder) {
         LOG_INFO("Done destroying ffmpeg encoder!");
     }
 
+    // Free output filter.
+    av_bsf_free(&encoder->bsf);
+
     // free packets
     for (int i = 0; i < MAX_ENCODER_PACKETS; i++) {
-        av_packet_unref(&encoder->packets[i]);
+        av_packet_free(&encoder->packets[i]);
     }
     free(encoder);
 

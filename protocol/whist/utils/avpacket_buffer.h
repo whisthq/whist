@@ -50,9 +50,9 @@ int extract_avpackets_from_buffer(uint8_t* buffer, size_t buffer_size, AVPacket*
  *
  * @param packets               Array of packets to store
  *
- * @param buf                   Buffer to store packets in. Format: (number of packets)(size
+ * @param buffer                Buffer to store packets in. Format: (number of packets)(size
  * 								of each packet)(data of each packet)
  */
-void write_avpackets_to_buffer(int num_packets, AVPacket* packets, int* buf);
+void write_avpackets_to_buffer(int num_packets, AVPacket** packets, uint8_t* buffer);
 
 #endif  // DECODE_H

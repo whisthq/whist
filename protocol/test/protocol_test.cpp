@@ -1191,7 +1191,7 @@ TEST_F(ProtocolTest, PacketsToBuffer) {
 
     // create buffer and add them to a buffer
     int buffer[28];
-    write_avpackets_to_buffer(1, packets, buffer);
+    write_avpackets_to_buffer(1, &packets, (uint8_t*)buffer);
 
     // Confirm buffer creation was successful
     EXPECT_EQ(*buffer, 1);

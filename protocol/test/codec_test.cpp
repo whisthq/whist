@@ -198,7 +198,7 @@ TEST_F(CodecTest, EncodeDecodeTest) {
         EXPECT_EQ(enc->frame_type, frame_type);
         EXPECT_LT(enc->encoded_frame_size, packet_buffer_size);
 
-        write_avpackets_to_buffer(enc->num_packets, enc->packets, (int *)packet_buffer);
+        write_avpackets_to_buffer(enc->num_packets, enc->packets, packet_buffer);
 
         ret = video_decoder_send_packets(dec, packet_buffer, enc->encoded_frame_size);
         EXPECT_EQ(ret, 0);
