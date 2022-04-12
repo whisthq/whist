@@ -1,6 +1,8 @@
 package payments
 
 import (
+	"time"
+
 	"github.com/stripe/stripe-go/v72"
 	billingPortal "github.com/stripe/stripe-go/v72/billingportal/session"
 	checkout "github.com/stripe/stripe-go/v72/checkout/session"
@@ -47,16 +49,19 @@ func (sc *StripeClient) configure(secret string, restrictedSecret string, custom
 // getSubscriptionStatus will try to get the current subscription status for the customer.
 // If it fails to obtain it, default to the subscription status included in the access token.
 func (sc *StripeClient) getSubscriptionStatus() string {
-	subscriptions := sub.List(&stripe.SubscriptionListParams{
+	subscriptionsList := sub.List(&stripe.SubscriptionListParams{
 		Customer: sc.customerID,
+		CurrentPeriodEndRange: &stripe.RangeQueryParams{
+			GreaterThan: time.Now().Unix(),
+		},
 	})
 
 	var subscription *stripe.Subscription
-	for subscriptions.Next() {
-		subscription = subscriptions.Subscription()
+	for subscriptionsList.Next() {
+		subscription = subscriptionsList.Subscription()
 	}
-	if subscriptions.Err() != nil || subscription == nil {
-		logger.Warningf("Failed to get subscription for customer %v. Defaulting to access token status %v. Err: %v", sc.customerID, sc.subscriptionStatus, subscriptions.Err())
+	if subscriptionsList.Err() != nil || subscription == nil {
+		logger.Warningf("Failed to get subscription for customer %v. Defaulting to access token status %v. Err: %v", sc.customerID, sc.subscriptionStatus, subscriptionsList.Err())
 	} else {
 		logger.Infof("Found subscription %v for customer %v with status %v.", subscription, sc.customerID, subscription.Status)
 		sc.subscriptionStatus = string(subscription.Status)
@@ -101,8 +106,11 @@ func (sc *StripeClient) createCheckoutSession() (string, error) {
 
 	// Set how many subscriptions we want started, and what number of
 	// days we offer as a trial period.
-	subscriptionQuantity := 1
-	trialDays := int64(14)
+	const (
+		subscriptionQuantity = 1
+		trialPeriodDays      = 15
+	)
+	trialEnd := time.Now().Add(time.Hour * 24 * trialPeriodDays)
 
 	params := &stripe.CheckoutSessionParams{
 		Customer: stripe.String(sc.customerID),
@@ -113,7 +121,7 @@ func (sc *StripeClient) createCheckoutSession() (string, error) {
 			},
 		},
 		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
-			TrialPeriodDays: stripe.Int64(trialDays),
+			TrialEnd: stripe.Int64(trialEnd.Unix()),
 		},
 		PaymentMethodTypes: []*string{
 			stripe.String("card"),
