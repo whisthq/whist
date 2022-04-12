@@ -29,7 +29,9 @@ class TimeStamps:
         print()
         print("**** E2E time breakdown ****")
         for i, event in enumerate(self.events):
-            print(f"{i+1}. {event[0]}:\t{event[1]}")
+            event_name = event[0]
+            time_elapsed = str(datetime.timedelta(seconds=self.get_time_elapsed(i)))
+            print(f"{i+1}. {event_name}:\t{time_elapsed}")
         print("############################")
         print()
 
