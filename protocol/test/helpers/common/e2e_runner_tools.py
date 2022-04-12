@@ -13,6 +13,7 @@ class TimeStamps:
     def __init__(self):
         self.start_time = time.time()
         self.events = []
+        self.max_event_name_len = 0
 
     def get_time_elapsed(self, index):
         if index < 0 or index >= len(self.events):
@@ -22,6 +23,7 @@ class TimeStamps:
     def add_event(self, event_name):
         timestamp = time.time()
         self.events.append((event_name, timestamp))
+        self.max_event_name_len = max(self.max_event_name_len, len(event_name))
         time_elapsed = str(datetime.timedelta(seconds=self.get_time_elapsed(len(self.events) - 1)))
         print(f"{event_name} took {time_elapsed}")
 
@@ -31,7 +33,10 @@ class TimeStamps:
         for i, event in enumerate(self.events):
             event_name = event[0]
             time_elapsed = str(datetime.timedelta(seconds=self.get_time_elapsed(i)))
-            print(f"{i+1}. {event_name}:\t{time_elapsed}")
+            # Add padding for nicer formatting
+            padding_len = self.max_event_name_len - len(event_name)
+            padding = " " * padding_len if padding_len > 0 else ""
+            print(f"{i+1}. {event_name}{padding}:\t{time_elapsed}")
         print("############################")
         print()
 
