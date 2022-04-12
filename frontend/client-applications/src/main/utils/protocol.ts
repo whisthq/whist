@@ -28,6 +28,8 @@ const serializePorts = (ps: {
 }) => `32262:${ps?.port_32262}.32263:${ps?.port_32263}.32273:${ps?.port_32273}`
 
 const pipeToProtocol = (process: ChildProcess | undefined, message: string) => {
+  if (typeof message !== "string" || message === "") return
+
   try {
     process?.stdin?.write?.(message)
   } catch (err) {
