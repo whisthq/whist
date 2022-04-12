@@ -27,29 +27,6 @@ async function addSubscriptionStatusClaim(user, context, callback) {
     .pop();
     
     let status = subscription ? subscription.status : null;
-       
-   	if (subscription !== undefined) {
-      if (subscription.status !== "active" && subscription.status !== "trialing") {
-        try {          
-          // Delete their subscription so they will be prompted to enter their credit card
-          await stripe.subscriptions.del(subscription.id);
-
-          // Delete any pending invoices; if there are invoices remaining the user will be directed to
-          // a different Stripe checkout page
-          const invoices = await stripe.invoiceItems.list({
-            customer: stripe_customer_id
-          });
-                    
-          for (const invoice in invoices.data) {
-            await stripe.InvoiceItem.delete(invoice.id);
-          }
-          
-          // Because we deleted the subscription, the status needs to be manually set to null          
-          status = null;
-          
-        } catch(err) { console.error(err); }
-      }
-    }
     
     context.accessToken[
       "https://api.fractal.co/subscription_status"
