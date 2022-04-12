@@ -38,7 +38,7 @@ static bool skip_taskbar;
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* frame_buffer = NULL;
 static WhistMutex renderer_mutex;
-
+static WhistMutex cursor_update_mutex;
 // pending render Update
 static volatile bool pending_render = false;
 
@@ -143,11 +143,30 @@ static void sdl_render_nv12data(void);
  */
 static void sdl_render_file_drag_icon(int x, int y);
 
+static void sdl_present_pending_cursor_inner(WhistCursorInfo* cursor);
+
 /*
 ============================
 Public Function Implementations
 ============================
 */
+
+static WhistCursorInfo* pending_cursor_info = NULL;
+
+void sdl_update_cursor_info(WhistCursorInfo* cursor_info)
+{
+    WhistCursorInfo * p = safe_malloc(whist_cursor_info_get_size(cursor_info));
+    memcpy(p, cursor_info,
+            whist_cursor_info_get_size(cursor_info));
+
+    whist_lock_mutex(cursor_update_mutex);
+    if (pending_cursor_info) {
+        free(pending_cursor_info);
+    }
+    pending_cursor_info = p;
+    whist_unlock_mutex(cursor_update_mutex);
+}
+
 
 bool get_skip_taskbar(void) { return skip_taskbar; }
 
@@ -182,6 +201,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     }
 
     renderer_mutex = whist_create_mutex();
+
+    cursor_update_mutex = whist_create_mutex();
 
     // Allow the screensaver to activate
     SDL_EnableScreenSaver();
@@ -324,7 +345,8 @@ void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend) {
     if (window_param) {
         window_param = NULL;
     }
-
+    
+    whist_destroy_mutex(cursor_update_mutex);
     whist_destroy_mutex(renderer_mutex);
 
     if (frontend) {
@@ -439,110 +461,23 @@ bool sdl_render_pending(void) {
     return pending_render_val;
 }
 
-void sdl_update_cursor(WhistCursorInfo* cursor) {
-    /*
-      Update the cursor image on the screen. If the cursor hasn't changed since the last frame we
-      received, we don't do anything. Otherwise, we either use the provided bitmap or update the
-      cursor ID to tell SDL which cursor to render.
-     */
-    // Set cursor to frame's desired cursor type
-    // Only update the cursor, if a cursor image is even embedded in the frame at all.
+void sdl_present_pending_cursor(void)
+{
+    WhistTimer statistics_timer;
 
-    // The PNG decodes to RGBA
-#define CURSORIMAGE_R 0xff000000
-#define CURSORIMAGE_G 0x00ff0000
-#define CURSORIMAGE_B 0x0000ff00
-#define CURSORIMAGE_A 0x000000ff
-
-    static WhistCursorState last_cursor_state = CURSOR_STATE_VISIBLE;
-    static struct {
-        int x;
-        int y;
-    } last_visible_cursor_position = {0, 0};
-
-    static uint32_t last_cursor_hash = 0;
-    static SDL_Cursor* cleanup_cursor = NULL;
-
-    if (cursor == NULL) {
-        return;
+    whist_lock_mutex(cursor_update_mutex);
+    WhistCursorInfo * p= NULL;
+    if (pending_cursor_info) {
+        p =pending_cursor_info;
+        pending_cursor_info = NULL;
     }
+    whist_unlock_mutex(cursor_update_mutex);
 
-    if (cursor->hash != last_cursor_hash) {
-        SDL_Cursor* sdl_cursor = NULL;
-        // Render new cursor
-        if (cursor->using_png) {
-            uint8_t* rgba = whist_cursor_info_to_rgba(cursor);
-            // use png data to set cursor
-            SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
-                rgba, cursor->png_width, cursor->png_height, sizeof(uint32_t) * 8,
-                sizeof(uint32_t) * cursor->png_width, CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B,
-                CURSORIMAGE_A);
-
-            // Use BLENDMODE_NONE to allow for proper cursor blit-resize
-            SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
-
-#ifdef _WIN32
-            // on Windows, the cursor DPI is unchanged
-            const int cursor_dpi = 96;
-#else
-            // on other platforms, use the window DPI
-            const int cursor_dpi = get_native_window_dpi((SDL_Window*)window);
-#endif  // _WIN32
-
-            // Create the scaled cursor surface which takes DPI into account
-            SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
-                0, cursor->png_width * 96 / cursor_dpi, cursor->png_height * 96 / cursor_dpi,
-                cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
-                cursor_surface->format->Gmask, cursor_surface->format->Bmask,
-                cursor_surface->format->Amask);
-
-            // Copy the original cursor into the scaled surface
-            SDL_BlitScaled(cursor_surface, NULL, scaled_cursor_surface, NULL);
-
-            // Release the original cursor surface
-            SDL_FreeSurface(cursor_surface);
-            free(rgba);
-
-            // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
-            // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
-            sdl_cursor =
-                SDL_CreateColorCursor(scaled_cursor_surface, cursor->png_hot_x * 96 / cursor_dpi,
-                                      cursor->png_hot_y * 96 / cursor_dpi);
-            SDL_FreeSurface(scaled_cursor_surface);
-        } else {
-            // use cursor id to set cursor
-            sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
-        }
-        SDL_SetCursor(sdl_cursor);
-
-        // SDL_SetCursor only works as long as the currently set cursor still exists.
-        // Hence, we maintain a reference to the currently set cursor and only clean it up
-        // after a new cursor is created.
-        if (cleanup_cursor) {
-            SDL_FreeCursor(cleanup_cursor);
-        }
-        cleanup_cursor = sdl_cursor;
-
-        last_cursor_hash = cursor->hash;
-    }
-
-    if (cursor->cursor_state != last_cursor_state) {
-        if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
-            // Capture the coordinates of the cursor so we can restore it when it becomes visible
-            // again
-            SDL_GetGlobalMouseState(&last_visible_cursor_position.x,
-                                    &last_visible_cursor_position.y);
-            SDL_SetRelativeMouseMode(true);
-            LOG_INFO("CURSOR GOING HIDDEN AT %d %d", last_visible_cursor_position.x,
-                     last_visible_cursor_position.y);
-        } else {
-            // The cursor became visible, so move it to where it was captured.
-            SDL_SetRelativeMouseMode(false);
-            SDL_WarpMouseGlobal(last_visible_cursor_position.x, last_visible_cursor_position.y);
-            LOG_INFO("CURSOR GOING VISIBLE AT %d %d", last_visible_cursor_position.x,
-                     last_visible_cursor_position.y);
-        }
-        last_cursor_state = cursor->cursor_state;
+    if(p)
+    {
+        TIME_RUN(sdl_present_pending_cursor_inner(p), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
+        // Cursors need not be double-rendered, so we just unset the cursor image here
+        free(p);
     }
 }
 
@@ -635,6 +570,8 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
         start_timer(&window_resize_timer);
     }
     whist_unlock_mutex(window_resize_mutex);
+
+    sdl_present_pending_cursor();
 
     sdl_present_pending_framebuffer();
 }
@@ -977,4 +914,111 @@ static void sdl_render_file_drag_icon(int x, int y) {
 
     SDL_RenderCopy(sdl_renderer, drop_icon_texture, NULL, &drop_icon_rect);
     SDL_DestroyTexture(drop_icon_texture);
+}
+
+static void sdl_present_pending_cursor_inner(WhistCursorInfo* cursor) {
+    /*
+      Update the cursor image on the screen. If the cursor hasn't changed since the last frame we
+      received, we don't do anything. Otherwise, we either use the provided bitmap or update the
+      cursor ID to tell SDL which cursor to render.
+     */
+    // Set cursor to frame's desired cursor type
+    // Only update the cursor, if a cursor image is even embedded in the frame at all.
+
+    // The PNG decodes to RGBA
+#define CURSORIMAGE_R 0xff000000
+#define CURSORIMAGE_G 0x00ff0000
+#define CURSORIMAGE_B 0x0000ff00
+#define CURSORIMAGE_A 0x000000ff
+
+    static WhistCursorState last_cursor_state = CURSOR_STATE_VISIBLE;
+    static struct {
+        int x;
+        int y;
+    } last_visible_cursor_position = {0, 0};
+
+    static uint32_t last_cursor_hash = 0;
+    static SDL_Cursor* cleanup_cursor = NULL;
+
+    if (cursor == NULL) {
+        return;
+    }
+
+    if (cursor->hash != last_cursor_hash) {
+        SDL_Cursor* sdl_cursor = NULL;
+        // Render new cursor
+        if (cursor->using_png) {
+            uint8_t* rgba = whist_cursor_info_to_rgba(cursor);
+            // use png data to set cursor
+            SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
+                rgba, cursor->png_width, cursor->png_height, sizeof(uint32_t) * 8,
+                sizeof(uint32_t) * cursor->png_width, CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B,
+                CURSORIMAGE_A);
+
+            // Use BLENDMODE_NONE to allow for proper cursor blit-resize
+            SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
+
+#ifdef _WIN32
+            // on Windows, the cursor DPI is unchanged
+            const int cursor_dpi = 96;
+#else
+            // on other platforms, use the window DPI
+            const int cursor_dpi = get_native_window_dpi((SDL_Window*)window);
+#endif  // _WIN32
+
+            // Create the scaled cursor surface which takes DPI into account
+            SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
+                0, cursor->png_width * 96 / cursor_dpi, cursor->png_height * 96 / cursor_dpi,
+                cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
+                cursor_surface->format->Gmask, cursor_surface->format->Bmask,
+                cursor_surface->format->Amask);
+
+            // Copy the original cursor into the scaled surface
+            SDL_BlitScaled(cursor_surface, NULL, scaled_cursor_surface, NULL);
+
+            // Release the original cursor surface
+            SDL_FreeSurface(cursor_surface);
+            free(rgba);
+
+            // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
+            // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
+            sdl_cursor =
+                SDL_CreateColorCursor(scaled_cursor_surface, cursor->png_hot_x * 96 / cursor_dpi,
+                                      cursor->png_hot_y * 96 / cursor_dpi);
+            SDL_FreeSurface(scaled_cursor_surface);
+        } else {
+            // use cursor id to set cursor
+            sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
+        }
+        SDL_SetCursor(sdl_cursor);
+
+        // SDL_SetCursor only works as long as the currently set cursor still exists.
+        // Hence, we maintain a reference to the currently set cursor and only clean it up
+        // after a new cursor is created.
+        if (cleanup_cursor) {
+            SDL_FreeCursor(cleanup_cursor);
+        }
+        cleanup_cursor = sdl_cursor;
+
+        last_cursor_hash = cursor->hash;
+    }
+
+    if (cursor->cursor_state != last_cursor_state) {
+        if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
+            // Capture the coordinates of the cursor so we can restore it when it becomes visible
+            // again
+            SDL_GetGlobalMouseState(&last_visible_cursor_position.x,
+                                    &last_visible_cursor_position.y);
+            SDL_SetRelativeMouseMode(true);
+            LOG_INFO("CURSOR GOING HIDDEN AT %d %d", last_visible_cursor_position.x,
+                     last_visible_cursor_position.y);
+        } else {
+            // The cursor became visible, so move it to where it was captured.
+            SDL_SetRelativeMouseMode(false);
+            SDL_WarpMouseGlobal(last_visible_cursor_position.x, last_visible_cursor_position.y);
+            LOG_INFO("CURSOR GOING VISIBLE AT %d %d", last_visible_cursor_position.x,
+                     last_visible_cursor_position.y);
+        }
+        last_cursor_state = cursor->cursor_state;
+    }
 }

@@ -90,6 +90,8 @@ void sdl_update_framebuffer_loading_screen(int idx);
 // The pixel format required for the data/linesize passed into sdl_update_framebuffer
 #define WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT AV_PIX_FMT_NV12
 
+void sdl_update_cursor_info(WhistCursorInfo* cursor_info);
+
 /**
  * @brief                          Update the renderer's framebuffer,
  *                                 using the provided frame.
@@ -130,7 +132,7 @@ bool sdl_render_pending(void);
  * @note                           This function is virtually instantaneous and
  *                                 is not thread-safe
  */
-void sdl_update_cursor(WhistCursorInfo* cursor);
+void sdl_present_pending_cursor(void);
 
 /**
  * @brief                          Update the color of the window's titlebar
