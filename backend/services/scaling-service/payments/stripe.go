@@ -80,12 +80,11 @@ func (sc *StripeClient) getSubscriptionStatus() string {
 func (sc *StripeClient) isNewUser() bool {
 	canceledSubscriptions := sub.List(&stripe.SubscriptionListParams{
 		Customer: sc.customerID,
-		Status:   "canceled",
+		Status:   "ended",
 	})
 
 	var hasCanceledSubscriptions bool
 	for canceledSubscriptions.Next() {
-		logger.Infof("Found canceled subscription %v", canceledSubscriptions.Subscription())
 		if canceledSubscriptions.Subscription() != nil {
 			hasCanceledSubscriptions = true
 		}
