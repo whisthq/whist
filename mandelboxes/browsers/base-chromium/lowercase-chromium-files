@@ -1,0 +1,28 @@
+#!/bin/bash
+
+monitor() {
+  inotifywait -q -m -r -e create "$1" | while read DIRECTORY EVENT FILE; do
+    case $EVENT in
+      CREATE*)
+        # Get lowercase version of filename
+        LOWER_FILE="${FILE,,}"
+        # If the lowercase version is different from original filename,
+        # symlink the lowercase version to the original version
+        # Check against "$1/", to not flood /tmp or ./Extensions
+        if [[ "$LOWER_FILE" != "$FILE" && "$DIRECTORY" != "$1/" ]]; then
+          ln -s "./$FILE" "$DIRECTORY/$LOWER_FILE"
+          echo ln -s "./$FILE" "$DIRECTORY/$LOWER_FILE"
+        fi
+      ;;
+    esac
+  done
+}
+
+# By watching /tmp and ./Extensions, this allows chromium themes
+# to function properly
+
+monitor /tmp &
+# $1 should be google-chrome or BraveSoftware
+monitor "/home/whist/.config/$1/Default/Extensions" &
+
+wait

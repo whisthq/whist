@@ -47,3 +47,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends kdialog \
     && rm usr/bin/kdialog \
     && ln -s /opt/teleport/teleport-kde-proxy.py /usr/bin/kdialog \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy lowercase-chromium-file descript
+COPY --chmod=555 lowercase-chromium-files /usr/bin/lowercase-chromium-files
