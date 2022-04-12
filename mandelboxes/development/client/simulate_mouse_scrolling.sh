@@ -13,7 +13,7 @@ repeats=$1
 
 echo "Simulating the mouse scroll events in the client $repeats times..."
 
-for (( i=1; i<=$repeats; i++ ))
+for (( i=1; i<=repeats; i++ ))
 do
   sleep 5
   echo "Mouse scroll events - round $i"
