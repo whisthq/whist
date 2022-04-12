@@ -90,8 +90,6 @@ void sdl_update_framebuffer_loading_screen(int idx);
 // The pixel format required for the data/linesize passed into sdl_update_framebuffer
 #define WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT AV_PIX_FMT_NV12
 
-void sdl_update_cursor_info(WhistCursorInfo* cursor_info);
-
 /**
  * @brief                          Update the renderer's framebuffer,
  *                                 using the provided frame.
@@ -125,12 +123,22 @@ void sdl_render_framebuffer(void);
 bool sdl_render_pending(void);
 
 /**
- * @brief                          Update the cursor
+ * @brief                          Set the cursor info as pending, so that it will be draw in the
+ *                                 main thread.
+ *
+ * @param cursor_info              The WhistCursorInfo to use for the new cursor
+ *
+ * @note                           ALL rendering related API is only safe inside main thread.
+ */
+void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info);
+
+/**
+ * @brief                          Do the rendering job of the pending cursor info.
  *
  * @param cursor                   The WhistCursorInfo to use for the new cursor
  *
- * @note                           This function is virtually instantaneous and
- *                                 is not thread-safe
+ * @note                           This function is virtually instantaneous. Should be only called
+ *                                 in main thread, since it's the only safe way to do any render.
  */
 void sdl_present_pending_cursor(void);
 

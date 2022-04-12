@@ -38,7 +38,7 @@ static bool skip_taskbar;
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* frame_buffer = NULL;
 static WhistMutex renderer_mutex;
-static WhistMutex cursor_update_mutex;
+
 // pending render Update
 static volatile bool pending_render = false;
 
@@ -47,6 +47,12 @@ static volatile bool prev_insufficient_bandwidth = false;
 // NV12 framebuffer update
 static bool pending_nv12data = false;
 static AVFrame* pending_nv12_frame;
+
+// for cursor update. The value is writen by teh video render thread, and taken away by the main
+// thread.
+static WhistCursorInfo* pending_cursor_info = NULL;
+// the mutex to protect pending_cursor_info
+static WhistMutex cursor_update_mutex;
 
 // The background color for the loading screen
 static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
@@ -143,6 +149,14 @@ static void sdl_render_nv12data(void);
  */
 static void sdl_render_file_drag_icon(int x, int y);
 
+/**
+ * @brief                          A helper funcion that does the actual curosr rendering
+ *
+ * @param cursor                   The WhistCursorInfo to use for the new cursor
+ *
+ * @note                           This helper fucntion helps keep the logic of
+ *                                 sdl_present_pending_cursor() clearer.
+ */
 static void sdl_present_pending_cursor_inner(WhistCursorInfo* cursor);
 
 /*
@@ -150,21 +164,6 @@ static void sdl_present_pending_cursor_inner(WhistCursorInfo* cursor);
 Public Function Implementations
 ============================
 */
-
-static WhistCursorInfo* pending_cursor_info = NULL;
-
-void sdl_update_cursor_info(WhistCursorInfo* cursor_info) {
-    WhistCursorInfo* p = safe_malloc(whist_cursor_info_get_size(cursor_info));
-    memcpy(p, cursor_info, whist_cursor_info_get_size(cursor_info));
-
-    whist_lock_mutex(cursor_update_mutex);
-    if (pending_cursor_info) {
-        free(pending_cursor_info);
-    }
-    pending_cursor_info = p;
-    whist_unlock_mutex(cursor_update_mutex);
-}
-
 bool get_skip_taskbar(void) { return skip_taskbar; }
 
 SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
@@ -458,11 +457,30 @@ bool sdl_render_pending(void) {
     return pending_render_val;
 }
 
-void sdl_present_pending_cursor(void) {
-    WhistTimer statistics_timer;
+void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info) {
+    // do the operations with a local pointer first, so to minimize locking
+    WhistCursorInfo* p = safe_malloc(whist_cursor_info_get_size(cursor_info));
+    memcpy(p, cursor_info, whist_cursor_info_get_size(cursor_info));
 
     whist_lock_mutex(cursor_update_mutex);
+    if (pending_cursor_info) {
+        // pending_cursor_info is true, it means an old cursor hasn't been rendered yet.
+        // simply free the old one and overwrite the pending_cursor_info.
+        // The duty of free a not-yet-rendered cursor is at producer side.
+        free(pending_cursor_info);
+    }
+    // assign the local pointer to the pending_cursor_info
+    pending_cursor_info = p;
+    whist_unlock_mutex(cursor_update_mutex);
+}
+
+void sdl_present_pending_cursor(void) {
+    WhistTimer statistics_timer;
     WhistCursorInfo* p = NULL;
+
+    // if there is a pending curor, take the ownership of pending_cursor_info, and assgin it to the
+    // local pointer. do rendering with the local pointer after unlock, to minimize locking.
+    whist_lock_mutex(cursor_update_mutex);
     if (pending_cursor_info) {
         p = pending_cursor_info;
         pending_cursor_info = NULL;
@@ -471,7 +489,9 @@ void sdl_present_pending_cursor(void) {
 
     if (p) {
         TIME_RUN(sdl_present_pending_cursor_inner(p), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
-        // Cursors need not be double-rendered, so we just unset the cursor image here
+        // Cursors need not be double-rendered, so we just unset the cursor image here.
+        // The duty of ree a rendered cursor is at consumer side (here), since the ownership is
+        // taken.
         free(p);
     }
 }

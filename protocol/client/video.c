@@ -247,20 +247,11 @@ int render_video(VideoContext* video_context) {
             window_color = frame->corner_color;
 
             WhistCursorInfo* frame_cursor_image = get_frame_cursor_info(frame);
-            if (frame_cursor_image) {
-                sdl_update_cursor_info(frame_cursor_image);
-            }
-            /*
-            if (frame_cursor_image) {
-                if (cursor_image) {
-                    free(cursor_image);
-                    cursor_image = NULL;
-                }
 
-                cursor_image = safe_malloc(whist_cursor_info_get_size(frame_cursor_image));
-                memcpy(cursor_image, frame_cursor_image,
-                       whist_cursor_info_get_size(frame_cursor_image));
-            }*/
+            // set the cursor image as pending, so that it will be rendered in main.
+            if (frame_cursor_image) {
+                sdl_set_cursor_info_as_pending(frame_cursor_image);
+            }
         } else {
             // Reset last_rendered_time for an empty frame, so that a non-empty frame following an
             // empty frame will not have a huge/wrong VIDEO_CAPTURE_LATENCY.
