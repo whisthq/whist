@@ -241,7 +241,6 @@ if __name__ == "__main__":
     ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
     testing_url = args.testing_url
-    testing_time = args.testing_time
     region_name = args.region_name
     use_existing_client_instance = args.use_existing_client_instance
     use_existing_server_instance = args.use_existing_server_instance
@@ -257,6 +256,8 @@ if __name__ == "__main__":
     use_two_instances = args.use_two_instances == "true"
     simulate_scrolling = args.simulate_scrolling
     running_in_ci = os.getenv("CI") == "true"
+    # Each call to the mouse scrolling simulator script takes a total of 25s to complete, including 5s in-between runs
+    testing_time = max(args.testing_time, simulate_scrolling * 25)
 
     # 2 - Perform a sanity check on the arguments and load the SSH key from file
     if use_existing_client_instance != "" and not use_two_instances:

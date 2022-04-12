@@ -226,13 +226,9 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     print(f"Whist dev client started on EC2 instance, on Docker container {client_docker_id}!")
 
     if simulate_scrolling > 0:
-        # Sleep for some time so that the webpage can load.
-        time.sleep(5)
-        print("Simulating the mouse scroll events in the client")
-        command = "python3 /usr/share/whist/mouse_events.py"
-        while simulate_scrolling > 0:
-            pexpect_process.sendline(command)
-            wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
-            simulate_scrolling = simulate_scrolling - 1
+        # Launch the script to simulate the scrolling in the background
+        command = f"(nohup /usr/share/whist/simulate_mouse_scrolling.sh {simulate_scrolling} > /var/log/whist/simulated_scrolling.log 2>&1 & )"
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
 
     return client_docker_id
