@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
-import time, timedelta
+import time
+import datetime
+import sys
+import os
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 class TimeStamps:
-    def __init__():
+    def __init__(self):
         self.start_time = time.time()
         self.events = []
 
