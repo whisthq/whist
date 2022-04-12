@@ -21,8 +21,8 @@ class TimeStamps:
 
     def add_event(self, event_name):
         timestamp = time.time()
-        self.events.append(event_name, timestamp)
-        time_elapsed = str(datetime.timedelta(seconds=get_time_elapsed(len(self.events) - 1)))
+        self.events.append((event_name, timestamp))
+        time_elapsed = str(datetime.timedelta(seconds=self.get_time_elapsed(len(self.events) - 1)))
         print(f"{event_name} took {time_elapsed}")
 
     def print_timestamps(self):
