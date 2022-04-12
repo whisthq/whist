@@ -312,11 +312,13 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
     decoder->codec_type = codec_type;
     decoder->received_a_frame = false;
 
-#ifdef __APPLE__
-    decoder->can_output_hardware = true;
-#else
+    // We previously had this as `true` for macOS only, since we've modified
+    // SDL to pagealign in the GPU. However, we found that this lead to concurrent
+    // memory access causing a complete freeze of the system. The modifications
+    // are still in our SDL fork, but are opted out by setting this to `false`
+    // unconditionally. Eventually, we could serialize the data better to keep
+    // everything in the GPU, for some small latency and CPU utilization improvements
     decoder->can_output_hardware = false;
-#endif
 
     // Try all decoders until we find one that works
     if (try_next_decoder(decoder) != WHIST_SUCCESS) {
