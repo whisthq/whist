@@ -15,8 +15,10 @@ import (
 
 type WhistStripeClient interface {
 	configure(string, string, string, string, int64)
+	getSubscription() (*stripe.Subscription, error)
 	getSubscriptionStatus() string
-	createCheckoutSession() (string, error)
+	findPrice() (string, error)
+	createCheckoutSession(bool) (string, error)
 	createBillingPortal() (string, error)
 	createPrice(cents int64, name string, interval string) (*stripe.Price, error)
 }
@@ -46,9 +48,8 @@ func (sc *StripeClient) configure(secret string, restrictedSecret string, custom
 	sc.monthlyPriceInCents = monthlyPriceInCents
 }
 
-// getSubscriptionStatus will try to get the current subscription status for the customer.
-// If it fails to obtain it, default to the subscription status included in the access token.
-func (sc *StripeClient) getSubscriptionStatus() string {
+// getSubscription will try to get the current subscription for the customer.
+func (sc *StripeClient) getSubscription() (*stripe.Subscription, error) {
 	subscriptionsList := sub.List(&stripe.SubscriptionListParams{
 		Customer: sc.customerID,
 		CurrentPeriodEndRange: &stripe.RangeQueryParams{
@@ -61,24 +62,27 @@ func (sc *StripeClient) getSubscriptionStatus() string {
 		subscription = subscriptionsList.Subscription()
 	}
 	if subscriptionsList.Err() != nil || subscription == nil {
-		logger.Warningf("Failed to get subscription for customer %v. Defaulting to access token status %v. Err: %v", sc.customerID, sc.subscriptionStatus, subscriptionsList.Err())
-	} else {
-		logger.Infof("Found subscription %v for customer %v with status %v.", subscription, sc.customerID, subscription.Status)
-		sc.subscriptionStatus = string(subscription.Status)
+		return nil, utils.MakeError("Failed to obtain subscription for customer %v", sc.customerID)
 	}
 
+	return subscription, nil
+}
+
+// getSubscriptionStatus returns the subscription status obtained
+// from the access token.
+func (sc *StripeClient) getSubscriptionStatus() string {
 	return sc.subscriptionStatus
 }
 
-// createCheckoutSession creates a Stripe checkout session for the current customer.
-// It applies the desired price from the database, and if it doesn't exist in Stripe,
-//  creates it.
-func (sc *StripeClient) createCheckoutSession() (string, error) {
+// findPrice will search for a Stripe price matching the desired amount and
+// will return the price ID. If it fails to find it, then creates a new price
+// in Stripe and returns its ID.
+func (sc *StripeClient) findPrice() (string, error) {
+	var priceID string
+
 	priceList := price.List(&stripe.PriceListParams{
 		Active: stripe.Bool(true),
 	})
-
-	var priceID string
 
 	// Try to find a Stripe Price with the desired monthly price.
 	for priceList.Next() {
@@ -88,8 +92,9 @@ func (sc *StripeClient) createCheckoutSession() (string, error) {
 			break
 		}
 	}
-	if priceList.Err() != nil {
-		return "", utils.MakeError("failed to read price list from Stripe. Err: %v", priceList.Err())
+
+	if priceList.Err() != nil || priceID == "" {
+		logger.Warningf("Failed to find price in Stripe. Creating new price.")
 	}
 
 	// If a Stripe Price was not found, create one.
@@ -104,13 +109,46 @@ func (sc *StripeClient) createCheckoutSession() (string, error) {
 		priceID = newPrice.ID
 	}
 
+	return priceID, nil
+}
+
+// createCheckoutSession creates a Stripe checkout session for the current customer.
+func (sc *StripeClient) createCheckoutSession(withTrialPeriod bool) (string, error) {
 	// Set how many subscriptions we want started, and what number of
 	// days we offer as a trial period.
 	const (
-		subscriptionQuantity = 1
-		trialPeriodDays      = 15
+		subscriptionQuantity = 1                            // The number of subscriptions that will be created
+		trialPeriodDays      = 14                           // The number of days offered as a free trial period
+		subscriptionID       = "whist_monthly_subscription" // An internal id that will be attached to the subscription
 	)
-	trialEnd := time.Now().Add(time.Hour * 24 * trialPeriodDays)
+
+	// Get a Stripe price with the desired amount
+	priceID, err := sc.findPrice()
+	if err != nil {
+		return "", utils.MakeError("failed to find or create Stripe price for amount %v. Err: %v", sc.monthlyPriceInCents, err)
+	}
+
+	// Decide if the subscription will have a free trial period. We attach metadata
+	// so that we can use the Stripe search API.
+	var subscriptionParams *stripe.CheckoutSessionSubscriptionDataParams
+	if withTrialPeriod {
+		subscriptionParams = &stripe.CheckoutSessionSubscriptionDataParams{
+			TrialPeriodDays: stripe.Int64(trialPeriodDays),
+			Metadata: map[string]string{
+				"customer_id":     sc.customerID,
+				"price_id":        priceID,
+				"subscription_id": subscriptionID,
+			},
+		}
+	} else {
+		subscriptionParams = &stripe.CheckoutSessionSubscriptionDataParams{
+			Metadata: map[string]string{
+				"customer_id":     sc.customerID,
+				"price_id":        priceID,
+				"subscription_id": subscriptionID,
+			},
+		}
+	}
 
 	params := &stripe.CheckoutSessionParams{
 		Customer: stripe.String(sc.customerID),
@@ -120,9 +158,7 @@ func (sc *StripeClient) createCheckoutSession() (string, error) {
 				Quantity: stripe.Int64(int64(subscriptionQuantity)),
 			},
 		},
-		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
-			TrialEnd: stripe.Int64(trialEnd.Unix()),
-		},
+		SubscriptionData: subscriptionParams,
 		PaymentMethodTypes: []*string{
 			stripe.String("card"),
 		},

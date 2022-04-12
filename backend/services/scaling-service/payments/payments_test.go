@@ -100,11 +100,19 @@ func (sc *mockStripeClient) configure(secret string, restrictedSecret string, cu
 	sc.monthlyPriceInCents = monthlyPriceInCents
 }
 
+func (sc *mockStripeClient) getSubscription() (*stripe.Subscription, error) {
+	return nil, nil
+}
+
 func (sc *mockStripeClient) getSubscriptionStatus() string {
 	return sc.subscriptionStatus
 }
 
-func (sc *mockStripeClient) createCheckoutSession() (string, error) {
+func (sc *mockStripeClient) findPrice() (string, error) {
+	return "", nil
+}
+
+func (sc *mockStripeClient) createCheckoutSession(withTrialPeriod bool) (string, error) {
 	return "https://test-checkout-session.url", nil
 }
 

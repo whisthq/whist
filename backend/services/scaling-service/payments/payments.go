@@ -93,11 +93,19 @@ func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionS
 // Stripe Session to return based on the customer's subscription status.
 func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 	var (
+		status     string
 		sessionUrl string
-		err        error
 	)
-	subscriptionStatus := whistPayments.stripeClient.getSubscriptionStatus()
-	if subscriptionStatus == "active" || subscriptionStatus == "trialing" {
+
+	subscription, err := whistPayments.stripeClient.getSubscription()
+	if err != nil {
+		logger.Warningf("Failed to get subscription. Defaulting to access token subscription status.")
+		status = whistPayments.stripeClient.getSubscriptionStatus()
+	} else {
+		status = string(subscription.Status)
+	}
+
+	if status == "active" || status == "trialing" {
 		// If the authenticated user already has a Whist subscription in a non-terminal state
 		// (one of `active` or `trialing`), create a Stripe billing portal that the customer
 		// can use to manage their subscription and billing information.
@@ -105,10 +113,20 @@ func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 		if err != nil {
 			return "", utils.MakeError("error creating Stripe billing portal. Err: %v", err)
 		}
+	} else if status == "past_due" || status == "incomplete" {
+		//  The authenticated user does have an existing Whist subscription but is pending
+		// payment for the last invoice. Create a new subscription without a free trial so
+		// that the user
+		withTrialPeriod := false
+		sessionUrl, err = whistPayments.stripeClient.createCheckoutSession(withTrialPeriod)
+		if err != nil {
+			return "", utils.MakeError("error creating Stripe billing portal. Err: %v", err)
+		}
 	} else {
-		// If the authenticated user has a Whist subscriptions in a terminal states (not `active` or `trialing`),
-		// create a Stripe checkout session that the customer can use to enroll in a new Whist subscription.
-		sessionUrl, err = whistPayments.stripeClient.createCheckoutSession()
+		// The authenticated user does not have an active Whist subscription, so we offer
+		// a free trial period.
+		withTrialPeriod := true
+		sessionUrl, err = whistPayments.stripeClient.createCheckoutSession(withTrialPeriod)
 		if err != nil {
 			return "", utils.MakeError("error creating Stripe checkout session. Err: %v", err)
 		}
