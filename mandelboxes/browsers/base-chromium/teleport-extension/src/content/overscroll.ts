@@ -34,11 +34,11 @@ const navigateOnGesture = (e: WheelEvent) => {
 
   if (leftGestureDetected || rightGestureDetected) {
     throttled = true
-    chrome.runtime.sendMessage(<ContentScriptMessage>{
-      type: leftGestureDetected
-        ? ContentScriptMessageType.HISTORY_GO_BACK
-        : ContentScriptMessageType.HISTORY_GO_FORWARD,
-    })
+    // chrome.runtime.sendMessage(<ContentScriptMessage>{
+    //   type: leftGestureDetected
+    //     ? ContentScriptMessageType.HISTORY_GO_BACK
+    //     : ContentScriptMessageType.HISTORY_GO_FORWARD,
+    // })
 
     setTimeout(() => {
       throttled = false
