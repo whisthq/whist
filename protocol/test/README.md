@@ -41,7 +41,7 @@ The script's arguments are summarized below. Three of them are required (`--ssh-
 
 ```bash
 usage: streaming_e2e_tester.py [-h] --ssh-key-name SSH_KEY_NAME --ssh-key-path SSH_KEY_PATH --github-token GITHUB_TOKEN
-                               [--region-name {us-east-1,us-east-2,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,ap-northeast-2,ap-southeast-1,ap-southeast-2,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}]
+                               [--region-name {us-east-1,us-east-2,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,ap-northeast-2,ap-southeast-1,ap-southeast-2,ap-southeast-3,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}]
                                [--use-existing-server-instance USE_EXISTING_SERVER_INSTANCE] [--use-existing-client-instance USE_EXISTING_CLIENT_INSTANCE] [--use-two-instances {false,true}]
                                [--leave-instances-on {false,true}] [--skip-host-setup {false,true}] [--skip-git-clone {false,true}] [--simulate-scrolling {false,true}] [--testing-url TESTING_URL]
                                [--testing-time TESTING_TIME] [--cmake-build-type {dev,prod,metrics}] [--aws-credentials-filepath AWS_CREDENTIALS_FILEPATH] [--network-conditions NETWORK_CONDITIONS]
@@ -62,7 +62,7 @@ optional arguments:
   -h, --help            show this help message and exit
 
   --region-name {us-east-1,us-east-2,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,
-                ap-northeast-2, ap-southeast-1,ap-southeast-2,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}
+                ap-northeast-2, ap-southeast-1,ap-southeast-2,ap-southeast-3,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}
 
                         The AWS region to use for testing. If you are looking to re-use an instance for the client and/or server, the instance(s) must live on the region passed to this parameter.
 
