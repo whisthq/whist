@@ -1,6 +1,6 @@
 const initOverscroll = () => {
   window.addEventListener("wheel", (e) => {
-    console.log("deltaX", e.screenX - e.clientX)
+    console.log("deltaX", e)
   })
 }
 
