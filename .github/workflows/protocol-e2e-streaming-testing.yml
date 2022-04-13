@@ -32,9 +32,9 @@ jobs:
   protocol-streaming-e2e-check-pr:
     name: "Protocol Streaming End-to-End Test"
     runs-on: ubuntu-20.04
-    #env:
-    #CLIENT_INSTANCE_ID: "i-061d322780ae41d19"
-    #SERVER_INSTANCE_ID: "i-0ceaa243ec8cfc667"
+    env:
+    CLIENT_INSTANCE_ID: "i-061d322780ae41d19"
+    SERVER_INSTANCE_ID: "i-0ceaa243ec8cfc667"
 
     steps:
       - name: Checkout Git Repository
@@ -93,6 +93,7 @@ jobs:
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
             --use-two-instances=true \
+            --testing_time=750 \
             --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
             --use-existing-server-instance "$SERVER_INSTANCE_ID" \
             --leave-instances-on=true
