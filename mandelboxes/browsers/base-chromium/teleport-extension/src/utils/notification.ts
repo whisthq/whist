@@ -65,14 +65,15 @@ const drawLeftArrow = (document: Document) => {
   let element = document.createElement("p")
 
   element.style.width = "70px"
-  element.style.height = "120px"
-  element.style.borderRadius = "0px 60px 60px 0px"
+  element.style.height = "160px"
+  element.style.borderRadius = "0px 80px 80px 0px"
   element.style.background = "rgba(0, 0, 0, 0.7)"
   element.style.position = "fixed"
   element.style.top = "48%"
   element.style.left = "0px"
   element.style.padding = "10px"
   element.style.zIndex = "99999999"
+  element.style.opacity = "0"
 
   // For security, some websites block injected HTML, so we use the TrustedHTML
   // API to bypass this.
@@ -82,10 +83,8 @@ const drawLeftArrow = (document: Document) => {
   })
 
   element.innerHTML += escapeHTMLPolicy.createHTML(
-    '<svg style="position: relative; top: 20px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
+    '<svg style="position: relative; top: 30px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
   )
-
-  console.log("setting inner HTML", element.innerHTML)
 
   // Inject the HTMLElement into the DOM
   ;(document.body || document.documentElement).appendChild(element)
