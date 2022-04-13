@@ -35,7 +35,8 @@ export LONGITUDE=$LONGITUDE
 export LATITUDE=$LATITUDE
 printenv
 echo "Exporting user_locale"
-export $USER_LOCALE
+export $USER_LOCALE # We are exporting a list of variables
+export LANGUAGE=$USER_LANGUAGE
 printenv
 
 #export LANGUAGE=IT_it
