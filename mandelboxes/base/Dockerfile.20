@@ -461,7 +461,10 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /tmp/* /var/tmp/*
 
 # We install the Sentry CLI and set the DSN so that we can report Bash errors to Sentry
-RUN wget -qO - https://sentry.io/get-cli/ --no-check-certificate | bash
+RUN curl -SL "https://downloads.sentry-cdn.com/sentry-cli/1.74.3/sentry-cli-Linux-x86_64" \
+    > /usr/local/bin/sentry-cli \
+    && chmod 0755 /usr/local/bin/sentry-cli
+
 ENV SENTRY_DSN https://6765c9aeb9c449a599ca6242829799b8@o400459.ingest.sentry.io/6073955
 
 #########################
