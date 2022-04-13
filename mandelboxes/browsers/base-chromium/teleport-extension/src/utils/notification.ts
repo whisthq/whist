@@ -65,6 +65,7 @@ const drawLeftArrow = (document: Document) => {
   let element = document.createElement("p")
 
   element.style.width = "100px"
+  element.style.height = "100px"
   element.style.borderRadius = "0px 50px 50px 0px"
   element.style.background = "rgba(0, 0, 0, 0.7)"
   element.style.position = "fixed"
@@ -79,7 +80,12 @@ const drawLeftArrow = (document: Document) => {
   const escapeHTMLPolicy = (window as any).trustedTypes.createPolicy("policy", {
     createHTML: (s: string) => s.replace(/\>/g, "<"),
   })
-  // element.innerHTML =
+
+  element.innerHTML += escapeHTMLPolicy.createHTML(
+    '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="6"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
+  )
+
+  console.log("setting inner HTML", element.innerHTML)
 
   // Inject the HTMLElement into the DOM
   ;(document.body || document.documentElement).appendChild(element)
