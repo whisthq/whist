@@ -64,12 +64,12 @@ const drawLeftArrow = (document: Document) => {
   // Create the notification HTMLElement
   let element = document.createElement("p")
 
-  element.style.width = "60px"
-  element.style.height = "100px"
-  element.style.borderRadius = "0px 50px 50px 0px"
+  element.style.width = "70px"
+  element.style.height = "120px"
+  element.style.borderRadius = "0px 60px 60px 0px"
   element.style.background = "rgba(0, 0, 0, 0.7)"
   element.style.position = "fixed"
-  element.style.top = "50%"
+  element.style.top = "48%"
   element.style.left = "0px"
   element.style.padding = "10px"
   element.style.zIndex = "99999999"
