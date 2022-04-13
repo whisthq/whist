@@ -4,7 +4,7 @@
 const configs = {
   DEVELOPMENT: { // LOCAL would be the same as DEVELOPMENT here, so we omit it
     urls: {
-      WEBSERVER_URL: "https://dev-server.whist.com",
+      SCALING_SERVICE_URL: "https://dev-scaling-service.whist.com",
       CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
     auth0: {
@@ -15,7 +15,7 @@ const configs = {
   },
   STAGING: {
     urls: {
-      WEBSERVER_URL: "https://staging-server.whist.com",
+      SCALING_SERVICE_URL: "https://staging-scaling-service.whist.com",
       CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
     auth0: {
@@ -26,7 +26,7 @@ const configs = {
   },
   PRODUCTION: {
     urls: {
-      WEBSERVER_URL: "https://prod-server.whist.com",
+      SCALING_SERVICE_URL: "https://prod-scaling-service.whist.com",
       CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
     auth0: {

@@ -2,7 +2,7 @@ import { config } from "../config"
 import { configGet } from "../"
 import { accessToken, subscriptionStatus } from "../types/data"
 
-const get = configGet({ server: config.urls.WEBSERVER_URL })
+const get = configGet({ server: config.urls.SCALING_SERVICE_URL })
 
 export const paymentPortalRequest = async ({ accessToken }: accessToken) => {
   /*
