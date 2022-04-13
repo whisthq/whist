@@ -7,9 +7,14 @@ let previousOffset = 0
 let throttled = false
 
 const navigateOnGesture = (e: WheelEvent) => {
-  console.log(e.deltaX)
+  console.log(e.deltaX, e.deltaY)
 
-  if (e.offsetX - previousOffset === 0 && e.deltaX > 50 && !throttled) {
+  if (
+    e.offsetX - previousOffset === 0 &&
+    e.deltaX > 100 &&
+    !throttled &&
+    Math.abs(e.deltaY) < 10
+  ) {
     throttled = true
     // chrome.runtime.sendMessage(<ContentScriptMessage>{
     //   type: ContentScriptMessageType.HISTORY_GO_FORWARD,
@@ -20,7 +25,12 @@ const navigateOnGesture = (e: WheelEvent) => {
     }, 2000)
   }
 
-  if (e.offsetX - previousOffset === 0 && e.deltaX < -50) {
+  if (
+    e.offsetX - previousOffset === 0 &&
+    e.deltaX < -100 &&
+    !throttled &&
+    Math.abs(e.deltaY) < 10
+  ) {
     throttled = true
     // chrome.runtime.sendMessage(<ContentScriptMessage>{
     //   type: ContentScriptMessageType.HISTORY_GO_BACK,
