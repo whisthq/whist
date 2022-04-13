@@ -93,7 +93,7 @@ jobs:
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
             --use-two-instances=true \
-            --testing_time=750 \
+            --testing-time=750 \
             --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
             --use-existing-server-instance "$SERVER_INSTANCE_ID" \
             --leave-instances-on=true
