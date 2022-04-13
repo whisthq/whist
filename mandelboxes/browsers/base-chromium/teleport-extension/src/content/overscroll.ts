@@ -3,17 +3,30 @@ import {
   ContentScriptMessageType,
 } from "@app/constants/ipc"
 
+const lastN = <T>(limit: number, array: Array<T>) => {
+  if (array.length > limit) array.splice(0, array.length - limit)
+  const fluent = {
+    add: (value: T) => {
+      if (array.length >= limit) array.splice(0, array.length - limit + 1)
+      array.push(value)
+      return fluent
+    },
+    getAll: () => array,
+  }
+  return fluent
+}
+
 let previousOffset = 0
 let throttled = false
+let previousYDeltas = lastN<number>(10, [])
+let previousXDeltas = lastN<number>(10, [])
 
 const navigateOnGesture = (e: WheelEvent) => {
-  console.log(e.deltaX, e.deltaY)
-
   if (
     e.offsetX - previousOffset === 0 &&
     e.deltaX > 100 &&
     !throttled &&
-    Math.abs(e.deltaY) < 10
+    !previousYDeltas.getAll().some((delta) => Math.abs(delta) > 10)
   ) {
     throttled = true
     // chrome.runtime.sendMessage(<ContentScriptMessage>{
@@ -31,7 +44,7 @@ const navigateOnGesture = (e: WheelEvent) => {
     e.offsetX - previousOffset === 0 &&
     e.deltaX < -100 &&
     !throttled &&
-    Math.abs(e.deltaY) < 10
+    !previousYDeltas.getAll().some((delta) => Math.abs(delta) > 10)
   ) {
     throttled = true
     // chrome.runtime.sendMessage(<ContentScriptMessage>{
@@ -46,6 +59,8 @@ const navigateOnGesture = (e: WheelEvent) => {
   }
 
   previousOffset = e.offsetX
+  previousYDeltas.add(e.deltaY)
+  previousXDeltas.add(e.deltaX)
 }
 
 const initOverscroll = () => {
