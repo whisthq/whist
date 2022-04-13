@@ -32,7 +32,7 @@ mkdir -p "$DEPLOY_DIR" && cp ./backend/services/build/scaling-service "$DEPLOY_D
 echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
 
 # Write Procfile
-echo -e "scaling: ./scaling-service" > "$PROCFILE"
+echo -e "web: ./scaling-service" > "$PROCFILE"
 
 # Populate the deploy/ directory
 mv "$DEPLOY_DIR" ..
@@ -50,5 +50,5 @@ heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HER
 echo "Deploying scaling-service..."
 git push -f heroku-whist-scaling-service deploy-branch:master
 
-# Scale Heroku dyno to start the scaling process
-heroku ps:scale scaling=1 -a "$HEROKU_APP_NAME"
+# Scale Heroku dyno to start the web process
+heroku ps:scale web=1 -a "$HEROKU_APP_NAME"
