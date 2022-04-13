@@ -353,7 +353,7 @@ def complete_experiment_and_save_results(
     timestamps.add_event("Stopping/terminating instance(s)")
 
     # 7- Delete the cleanup todo-list, because we already completed it.
-    #os.remove("instances_to_remove.txt")
+    # os.remove("instances_to_remove.txt")
 
     # 8- Check if either of the WhistServer/WhistClient failed to start, or whether the client failed
     # to connect to the server. If so, add the error to the metadata, and exit with an error code (-1).
