@@ -742,7 +742,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // When the encoder is disabled, we only wake the client CPU,
         // DISABLED_ENCODER_FPS times per second, for just a usec at a time.
         bool disable_encoder = consecutive_identical_frames > CONSECUTIVE_IDENTICAL_FRAMES &&
-                               !state->stream_needs_restart;
+                               !state->stream_needs_restart && !state->stream_needs_recovery;
         // Lower the min_fps to DISABLED_ENCODER_FPS when the encoder is disabled
         int min_fps = disable_encoder ? DISABLED_ENCODER_FPS : MIN_FPS;
 
