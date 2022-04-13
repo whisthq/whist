@@ -8,6 +8,7 @@ import { initCursorLockDetection } from "./cursor"
 import { initUserAgentSpoofer } from "./userAgent"
 import { initFeatureWarnings } from "./notification"
 import { initPinchToZoom } from "./zoom"
+import { initOverscroll } from "./overscroll"
 
 // Enable relative mouse mode
 initCursorLockDetection()
@@ -21,3 +22,5 @@ initFeatureWarnings()
 
 // Enable smooth pinch to zoom
 initPinchToZoom()
+
+initOverscroll()
