@@ -23,6 +23,8 @@ const navigateOnGesture = (e: WheelEvent) => {
     setTimeout(() => {
       throttled = false
     }, 2000)
+
+    console.log("SCROLLING")
   }
 
   if (
@@ -39,6 +41,8 @@ const navigateOnGesture = (e: WheelEvent) => {
     setTimeout(() => {
       throttled = false
     }, 2000)
+
+    console.log("SCROLLING")
   }
 
   previousOffset = e.offsetX
