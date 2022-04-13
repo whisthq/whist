@@ -1,12 +1,23 @@
+import {
+  ContentScriptMessage,
+  ContentScriptMessageType,
+} from "@app/constants/ipc"
+
 let previousOffset = 0
 
 const wheelHandler = (e: WheelEvent) => {
-  console.log(
-    "Delta X",
-    e.deltaX,
-    "Overflowing",
-    e.offsetX - previousOffset === 0 && Math.abs(e.deltaX) > 25
-  )
+  if (e.offsetX - previousOffset === 0 && e.deltaX > 50) {
+    chrome.runtime.sendMessage(<ContentScriptMessage>{
+      type: ContentScriptMessageType.HISTORY_GO_FORWARD,
+    })
+  }
+
+  if (e.offsetX - previousOffset === 0 && e.deltaX < -50) {
+    chrome.runtime.sendMessage(<ContentScriptMessage>{
+      type: ContentScriptMessageType.HISTORY_GO_BACK,
+    })
+  }
+
   previousOffset = e.offsetX
 }
 

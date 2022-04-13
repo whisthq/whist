@@ -13,6 +13,8 @@ import {
   initTabDetachSuppressor,
   initCreateNewTabHandler,
   initActivateTabHandler,
+  initHistoryGoBackHandler,
+  initHistoryGoForwardHandler,
 } from "./tabs"
 
 const nativeHostPort = initNativeHostIpc()
@@ -40,3 +42,6 @@ initCreateNewTabHandler(nativeHostPort)
 
 // Switches focus to a current tab if the client asks for it
 initActivateTabHandler(nativeHostPort)
+
+initHistoryGoBackHandler()
+initHistoryGoForwardHandler()

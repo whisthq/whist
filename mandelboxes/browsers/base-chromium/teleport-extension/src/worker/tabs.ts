@@ -68,8 +68,36 @@ const initActivateTabHandler = (nativeHostPort: chrome.runtime.Port) => {
   })
 }
 
+const initHistoryGoBackHandler = () => {
+  chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
+    if (msg.type !== ContentScriptMessageType.HISTORY_GO_BACK) return
+
+    chrome.tabs.query(
+      { active: true, currentWindow: true },
+      (tabs: chrome.tabs.Tab[]) => {
+        if (tabs[0].id !== undefined) chrome.tabs.goBack(tabs[0].id)
+      }
+    )
+  })
+}
+
+const initHistoryGoForwardHandler = () => {
+  chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
+    if (msg.type !== ContentScriptMessageType.HISTORY_GO_FORWARD) return
+
+    chrome.tabs.query(
+      { active: true, currentWindow: true },
+      (tabs: chrome.tabs.Tab[]) => {
+        if (tabs[0].id !== undefined) chrome.tabs.goForward(tabs[0].id)
+      }
+    )
+  })
+}
+
 export {
   initTabDetachSuppressor,
   initCreateNewTabHandler,
   initActivateTabHandler,
+  initHistoryGoBackHandler,
+  initHistoryGoForwardHandler,
 }
