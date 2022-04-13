@@ -116,7 +116,7 @@ func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 			return "", utils.MakeError("error creating Stripe billing portal. Err: %v", err)
 		}
 	} else if !isNewUser {
-		// The authenticated user has previous canceled Whist subscriptions. This means that the
+		// The authenticated user has previous Whist subscriptions. This means that the
 		// user has already gone through the initial trial period.
 		withTrialPeriod := false
 		sessionUrl, err = whistPayments.stripeClient.createCheckoutSession(withTrialPeriod)

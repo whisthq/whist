@@ -299,7 +299,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 // the cloud provider and registers them on the database with the initial values.
 func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event ScalingEvent, imageID string) error {
 	// Do not run scale up code if running on local environment to avoid
-	// spinning up instances accidentaly while developing.
+	// spinning up instances accidentally while developing.
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infof("Running on localdev so not scaling up instances.")
 		return nil

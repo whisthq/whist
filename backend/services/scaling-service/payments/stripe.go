@@ -13,6 +13,9 @@ import (
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
+// WhistStripeClient abstracts our own Stripe Client with the necessary
+// methods to process payments for users. Structs that implement it should
+// encapsulate the logic that uses the official Stripe SDK.
 type WhistStripeClient interface {
 	configure(string, string, string, string, int64)
 	getSubscription() (*stripe.Subscription, error)
@@ -76,21 +79,22 @@ func (sc *StripeClient) getSubscriptionStatus() string {
 }
 
 // isNewUser is a helper fuction to determine if the user is new or not.
-// A new user is defined as a user who has no previous Whist subscriptions.
 func (sc *StripeClient) isNewUser() bool {
-	canceledSubscriptions := sub.List(&stripe.SubscriptionListParams{
+	// Search if a user has any previous Whist subscription, either
+	// cancelled or expired due to incomplete payment.
+	endedSubscriptions := sub.List(&stripe.SubscriptionListParams{
 		Customer: sc.customerID,
 		Status:   "ended",
 	})
 
-	var hasCanceledSubscriptions bool
-	for canceledSubscriptions.Next() {
-		if canceledSubscriptions.Subscription() != nil {
-			hasCanceledSubscriptions = true
+	var hasEndedSubscriptions bool
+	for endedSubscriptions.Next() {
+		if endedSubscriptions.Subscription() != nil {
+			hasEndedSubscriptions = true
 		}
 	}
 
-	return !hasCanceledSubscriptions
+	return !hasEndedSubscriptions
 }
 
 // findPrice will search for a Stripe price matching the desired amount and
@@ -146,8 +150,7 @@ func (sc *StripeClient) createCheckoutSession(withTrialPeriod bool) (string, err
 		return "", utils.MakeError("failed to find or create Stripe price for amount %v. Err: %v", sc.monthlyPriceInCents, err)
 	}
 
-	// Decide if the subscription will have a free trial period. We attach metadata
-	// so that we can use the Stripe search API.
+	// Create subscription params depending if we are offering a free trial or not
 	var subscriptionParams *stripe.CheckoutSessionSubscriptionDataParams
 	if withTrialPeriod {
 		subscriptionParams = &stripe.CheckoutSessionSubscriptionDataParams{
@@ -182,7 +185,8 @@ func (sc *StripeClient) createCheckoutSession(withTrialPeriod bool) (string, err
 	return s.URL, nil
 }
 
-// createBillingPortal creates a Stripe billing portal for the current customer.
+// createBillingPortal creates a Stripe billing portal for the current customer to manage
+// the subscription.
 func (sc *StripeClient) createBillingPortal() (string, error) {
 	s, err := billingPortal.New(&stripe.BillingPortalSessionParams{
 		Customer:  stripe.String(sc.customerID),
