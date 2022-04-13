@@ -2,65 +2,46 @@ import {
   ContentScriptMessage,
   ContentScriptMessageType,
 } from "@app/constants/ipc"
-
-const lastN = <T>(limit: number, array: Array<T>) => {
-  if (array.length > limit) array.splice(0, array.length - limit)
-  const fluent = {
-    add: (value: T) => {
-      if (array.length >= limit) array.splice(0, array.length - limit + 1)
-      array.push(value)
-      return fluent
-    },
-    getAll: () => array,
-  }
-  return fluent
-}
+import { cyclingArray } from "@app/utils/arrays"
 
 let previousOffset = 0
 let throttled = false
-let previousYDeltas = lastN<number>(10, [])
-let previousXDeltas = lastN<number>(10, [])
+let previousYDeltas = cyclingArray<number>(10, [])
+let previousXDeltas = cyclingArray<number>(10, [])
+
+const detectVerticalOverscroll = (e: WheelEvent) =>
+  e.offsetX - previousOffset === 0 &&
+  Math.abs(previousXDeltas.getAll().slice(-1).pop() ?? 0) > 100
+
+const detectHorizontalScroll = () =>
+  previousYDeltas.getAll().some((delta) => Math.abs(delta) > 10)
 
 const navigateOnGesture = (e: WheelEvent) => {
-  if (
-    e.offsetX - previousOffset === 0 &&
-    e.deltaX > 100 &&
-    !throttled &&
-    !previousYDeltas.getAll().some((delta) => Math.abs(delta) > 10)
-  ) {
+  previousYDeltas.add(e.deltaY)
+  previousXDeltas.add(e.deltaX)
+
+  const gestureDetected =
+    detectVerticalOverscroll(e) && // The user is overscrolling horizontally
+    !detectHorizontalScroll() && // The user isn't scrolling vertically
+    !throttled // Ensures we don't fire multiple gesture events in a row
+
+  const leftGestureDetected = gestureDetected && e.deltaX < -100
+  const rightGestureDetected = gestureDetected && e.deltaX > 100
+
+  if (leftGestureDetected || rightGestureDetected) {
     throttled = true
-    // chrome.runtime.sendMessage(<ContentScriptMessage>{
-    //   type: ContentScriptMessageType.HISTORY_GO_FORWARD,
-    // })
+    chrome.runtime.sendMessage(<ContentScriptMessage>{
+      type: leftGestureDetected
+        ? ContentScriptMessageType.HISTORY_GO_BACK
+        : ContentScriptMessageType.HISTORY_GO_FORWARD,
+    })
 
     setTimeout(() => {
       throttled = false
     }, 2000)
-
-    console.log("SCROLLING")
-  }
-
-  if (
-    e.offsetX - previousOffset === 0 &&
-    e.deltaX < -100 &&
-    !throttled &&
-    !previousYDeltas.getAll().some((delta) => Math.abs(delta) > 10)
-  ) {
-    throttled = true
-    // chrome.runtime.sendMessage(<ContentScriptMessage>{
-    //   type: ContentScriptMessageType.HISTORY_GO_BACK,
-    // })
-
-    setTimeout(() => {
-      throttled = false
-    }, 2000)
-
-    console.log("SCROLLING")
   }
 
   previousOffset = e.offsetX
-  previousYDeltas.add(e.deltaY)
-  previousXDeltas.add(e.deltaX)
 }
 
 const initOverscroll = () => {
