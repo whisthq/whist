@@ -13,6 +13,7 @@ module.exports = {
     content: path.join(srcDir, "content", "index.ts"),
     userAgent: path.join(srcDir, "resources", "userAgent.ts"),
     notification: path.join(srcDir, "resources", "notification.ts"),
+    overscrollLeft: path.join(srcDir, "resources", "overscrollLeft.ts"),
   },
   output: {
     path: outDir,

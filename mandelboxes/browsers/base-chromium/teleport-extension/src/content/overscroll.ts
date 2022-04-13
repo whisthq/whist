@@ -3,6 +3,7 @@ import {
   ContentScriptMessageType,
 } from "@app/constants/ipc"
 import { cyclingArray } from "@app/utils/arrays"
+import { injectResourceIntoDOM } from "@app/utils/dom"
 
 let previousOffset = 0
 let throttled = false
@@ -27,6 +28,9 @@ const navigateOnGesture = (e: WheelEvent) => {
 
   const leftGestureDetected = gestureDetected && e.deltaX < -100
   const rightGestureDetected = gestureDetected && e.deltaX > 100
+
+  if (leftGestureDetected)
+    injectResourceIntoDOM(document, "js/overscrollLeft.js")
 
   if (leftGestureDetected || rightGestureDetected) {
     throttled = true

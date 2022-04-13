@@ -60,4 +60,32 @@ const createNotification = (document: Document, text: string) => {
   setTimeout(() => fadeOut(element), 10000)
 }
 
-export { createNotification }
+const drawLeftArrow = (document: Document) => {
+  // Create the notification HTMLElement
+  let element = document.createElement("p")
+
+  element.style.width = "100px"
+  element.style.borderRadius = "0px 50px 50px 0px"
+  element.style.background = "rgba(0, 0, 0, 0.7)"
+  element.style.position = "fixed"
+  element.style.top = "50%"
+  element.style.left = "0px"
+  element.style.padding = "10px"
+  element.style.zIndex = "99999999"
+
+  // For security, some websites block injected HTML, so we use the TrustedHTML
+  // API to bypass this.
+  // For more info: https://developer.mozilla.org/en-US/docs/Web/API/TrustedHTML
+  const escapeHTMLPolicy = (window as any).trustedTypes.createPolicy("policy", {
+    createHTML: (s: string) => s.replace(/\>/g, "<"),
+  })
+  // element.innerHTML =
+
+  // Inject the HTMLElement into the DOM
+  ;(document.body || document.documentElement).appendChild(element)
+
+  fadeIn(element)
+  setTimeout(() => fadeOut(element), 10000)
+}
+
+export { createNotification, drawLeftArrow }
