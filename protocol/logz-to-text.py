@@ -181,6 +181,8 @@ def parse_logs(parsed_logs, logs_page):
             logz_io_timestamp = log["_source"]["@timestamp"]
             # Strip the trailing 'Z' from logz_io_timestamp
             timestamp = datetime.fromisoformat(logz_io_timestamp.strip("Z"))
+        except IndexError:
+            print("Found a log line without message : " + str(log["_source"]))
 
         if component == "clientapp":
             # if it's client app, then we know these are logs from the client
