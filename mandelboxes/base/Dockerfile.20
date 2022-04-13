@@ -603,7 +603,8 @@ RUN apt-get update \
 #########################
 # Locale
 #########################
-RUN cp /usr/share/i18n/SUPPORTED /etc/locale.gen && locale-gen
+#RUN cp /usr/share/i18n/SUPPORTED /etc/locale.gen && locale-gen
+RUN apt-get install -y locales locales-all
 
 #########################
 # Permissions

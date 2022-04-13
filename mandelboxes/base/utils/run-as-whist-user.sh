@@ -45,7 +45,7 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     timedatectl set-timezone "$DESIRED_TIMEZONE"
   fi
   if [ "$( jq -rc 'has("user_locale")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    USER_LOCALE="$(jq -rc '.user_locale | to_entries[] | "\(.key)=\"\(.value)\""' < $WHIST_JSON_FILE)"
+    USER_LOCALE="$(jq -rc '.user_locale | to_entries[] | "\(.key)=\(.value)"' < $WHIST_JSON_FILE)"
     #LOCALES_TO_GENERATE="$(jq -rc '.user_locale | to_entries[] | "\(.value)"' < $WHIST_JSON_FILE)"
     #LOCALES_TO_GENERATE=$(sed -e 's/$'\n'/ /g;s/POSIX//g;' <<< $LOCALES_TO_GENERATE)
     #eval "locale-gen ${LOCALES_TO_GENERATE}"
@@ -154,11 +154,12 @@ export KIOSK_MODE=$KIOSK_MODE
 export LONGITUDE=$LONGITUDE
 export LATITUDE=$LATITUDE
 export SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-}
-
-exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE -c \
+export USER_LOCALE=$USER_LOCALE
+printenv > /var/log/whist/vars1.log
+exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
     LC_ALL=C \
     PATH=/usr/local/cuda-11.0/bin:/usr/local/nvidia/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-  DEBIAN_FRONTEND=noninteractive '$USER_LOCALE " $1"
+  DEBIAN_FRONTEND=noninteractive '"$1"
