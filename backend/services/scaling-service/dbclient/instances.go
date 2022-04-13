@@ -2,6 +2,7 @@ package dbclient
 
 import (
 	"context"
+	"time"
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -99,13 +100,13 @@ func (client *DBClient) UpdateInstance(scalingCtx context.Context, graphQLClient
 		Provider:          graphql.String(updateParams.Provider),
 		Region:            graphql.String(updateParams.Region),
 		ImageID:           graphql.String(updateParams.ImageID),
-		ClientSHA:         graphql.String(metadata.GetGitCommit()),
+		ClientSHA:         graphql.String(updateParams.ClientSHA),
 		IPAddress:         updateParams.IPAddress,
 		Type:              graphql.String(updateParams.Type),
 		RemainingCapacity: graphql.Int(updateParams.RemainingCapacity),
 		Status:            graphql.String(updateParams.Status),
 		CreatedAt:         updateParams.CreatedAt,
-		UpdatedAt:         updateParams.UpdatedAt,
+		UpdatedAt:         time.Now(),
 	}
 
 	mutationParams := map[string]interface{}{

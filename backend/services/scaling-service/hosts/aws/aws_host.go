@@ -360,6 +360,11 @@ func (host *AWSHost) getSecurityGroup() (ec2Types.SecurityGroup, error) {
 
 // getInstanceProfile returns the arn of the instance profile to use.
 func (host *AWSHost) getInstanceProfile() string {
+	if metadata.IsLocalEnv() {
+		logger.Infof("Running on localdev, using dummy instance profile...")
+		return "dummy_instance_profile"
+	}
+
 	switch metadata.GetAppEnvironmentLowercase() {
 	case string(metadata.EnvDev):
 		return os.Getenv("INSTANCE_PROFILE_DEV")

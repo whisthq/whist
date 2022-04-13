@@ -298,6 +298,13 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 // ScaleUpIfNecessary is a scaling action that launched the received number of instances on
 // the cloud provider and registers them on the database with the initial values.
 func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event ScalingEvent, imageID string) error {
+	// Do not run scale up code if running on local environment to avoid
+	// spinning up instances accidentally while developing.
+	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
+		logger.Infof("Running on localdev so not scaling up instances.")
+		return nil
+	}
+
 	logger.Infof("Starting scale up action for event: %v", event)
 	defer logger.Infof("Finished scale up action for event: %v", event)
 
@@ -643,7 +650,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			ImageID:           string(instanceResult[0].ImageID),
 			ClientSHA:         string(instanceResult[0].ClientSHA),
 			Type:              string(instanceResult[0].Type),
-			RemainingCapacity: int64(instanceCapacity[string(instanceResult[0].Type)]),
+			RemainingCapacity: int64(instanceResult[0].RemainingCapacity),
 			Status:            string(instanceResult[0].Status),
 			CreatedAt:         instanceResult[0].CreatedAt,
 			UpdatedAt:         instanceResult[0].UpdatedAt,

@@ -11,6 +11,7 @@ import (
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/scaling-service/payments"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
+	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -19,7 +20,7 @@ import (
 
 const PortToListen uint16 = 7730
 
-func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
+func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
 	err := verifyRequestType(w, req, http.MethodPost)
 	if err != nil {
@@ -64,9 +65,81 @@ func MandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	_, _ = w.Write(buf)
 }
 
+// paymentsHandler handles a payment session request. It verifies the access token,
+// and then creates a StripeClient to get the URL of a payment session.
+func paymentsHandler(w http.ResponseWriter, req *http.Request) {
+	// Verify that we got a GET request
+	err := verifyRequestType(w, req, http.MethodGet)
+	if err != nil {
+		// err is already logged
+		return
+	}
+
+	// Extract access token from request header
+	accessToken, err := getAccessToken(req)
+	if err != nil {
+		logger.Error(err)
+		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
+		return
+	}
+
+	// Get claims from access token
+	claims, err := auth.ParseToken(accessToken)
+	if err != nil {
+		logger.Errorf("Received an unpermissioned backend request on %s to URL %s. Error: %s", req.Host, req.URL, err)
+		http.Error(w, "Invalid access token", http.StatusUnauthorized)
+		return
+	}
+
+	// Setup a config databse GraphQL client to get the Stripe configurations
+	useConfigDB := true
+
+	configGraphqlClient := &subscriptions.GraphQLClient{}
+	err = configGraphqlClient.Initialize(useConfigDB)
+	if err != nil {
+		logger.Errorf("Failed to setup config GraphQL client. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+	}
+
+	// Create a new StripeClient to handle the customer
+	paymentsClient := &payments.PaymentsClient{}
+	stripeClient := &payments.StripeClient{}
+	err = paymentsClient.Initialize(claims.CustomerID, claims.SubscriptionStatus, configGraphqlClient, stripeClient)
+	if err != nil {
+		logger.Errorf("Failed to Initialize Stripe Client. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	sessionUrl, err := paymentsClient.CreateSession()
+	if err != nil {
+		logger.Errorf("Failed to create Stripe Session. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	// Marshal and send session URL
+	buf, err := json.Marshal(map[string]string{
+		"url": sessionUrl,
+	})
+	if err != nil {
+		logger.Errorf("Error marshalling HTTP Response body: %s", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(buf)
+}
+
+// authenticateRequest will verify that the access token is valid
+// and will parse the request body and try to unmarshal into a
+// `ServerRequest` type.
 func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) error {
-	accessToken := r.Header.Get("Authorization")
-	accessToken = strings.Split(accessToken, "Bearer ")[1]
+	accessToken, err := getAccessToken(r)
+	if err != nil {
+		return err
+	}
 
 	claims, err := auth.ParseToken(accessToken)
 	if err != nil {
@@ -83,6 +156,18 @@ func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.Ser
 	// access token to other processes that don't need access to it.
 	s.(*httputils.MandelboxAssignRequest).UserID = types.UserID(claims.Subject)
 	return nil
+}
+
+// getAccessToken is a helper function that extracts the access token
+// from the request "Authorization" header.
+func getAccessToken(r *http.Request) (string, error) {
+	authorization := r.Header.Get("Authorization")
+	bearer := strings.Split(authorization, "Bearer ")
+	if len(bearer) <= 1 {
+		return "", utils.MakeError("Bearer token is empty.")
+	}
+	accessToken := bearer[1]
+	return accessToken, nil
 }
 
 // throttleMiddleware will limit requests on the endpoint using the provided rate limiter.
@@ -161,12 +246,13 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	limiter := rate.NewLimiter(rate.Every(interval), burst)
 
 	// Create the final assign handler, with the necessary middleware
-	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, createHandler(MandelboxAssignHandler)))
+	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, createHandler(mandelboxAssignHandler)))
 
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.Handle("/mandelbox/assign", assignHandler)
+	mux.Handle("/payment_portal_url", http.HandlerFunc(paymentsHandler))
 
 	// Set read/write timeouts to help mitigate potential rogue clients
 	// or DDOS attacks.
