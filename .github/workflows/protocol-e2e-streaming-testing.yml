@@ -31,9 +31,9 @@ jobs:
   protocol-streaming-e2e-check-pr:
     name: "Protocol Streaming End-to-End Test"
     runs-on: ubuntu-20.04
-    env:
-      CLIENT_INSTANCE_ID: "i-061d322780ae41d19"
-      SERVER_INSTANCE_ID: "i-0ceaa243ec8cfc667"
+    #env:
+      #CLIENT_INSTANCE_ID: "i-061d322780ae41d19"
+      #SERVER_INSTANCE_ID: "i-0ceaa243ec8cfc667"
 
     steps:
       - name: Checkout Git Repository
