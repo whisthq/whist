@@ -39,6 +39,7 @@ flags=(
   "--force-color-profile=display-p3-d65"
   "--disable-gpu-process-crash-limit"
   "--no-default-browser-check"
+  "--password-store=basic" # This disables the kwalletd backend, which we don't support
   "--load-extension=/opt/teleport/chrome-extension"
 )
 
