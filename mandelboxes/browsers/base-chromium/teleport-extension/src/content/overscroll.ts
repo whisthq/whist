@@ -6,8 +6,13 @@ import {
 let previousOffset = 0
 let hasNavigated = false
 
-const wheelHandler = (e: WheelEvent) => {
-  if (hasNavigated) return
+const navigateOnGesture = (e: WheelEvent) => {
+  if (hasNavigated) {
+    window.removeEventListener("wheel", navigateOnGesture)
+    return
+  }
+
+  console.log(e.deltaX)
 
   if (e.offsetX - previousOffset === 0 && e.deltaX > 50) {
     hasNavigated = true
@@ -27,7 +32,7 @@ const wheelHandler = (e: WheelEvent) => {
 }
 
 const initOverscroll = () => {
-  window.addEventListener("wheel", wheelHandler)
+  window.addEventListener("wheel", navigateOnGesture)
 }
 
 export { initOverscroll }
