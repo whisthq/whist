@@ -37,7 +37,12 @@ const getUserLocale = () => {
   const userLocaleDictionary: { [key: string]: string } = {}
   for (const s of parsedUserLocale) {
     const keyValuePair = s.split(/=/)
-    if (keyValuePair.length === 2 && keyValuePair[1].length >= 1) {
+    if (
+      keyValuePair.length === 2 &&
+      keyValuePair[0].length >= 1 &&
+      keyValuePair[1].length >= 1 &&
+      !keyValuePair[0].includes("LANG")
+    ) {
       userLocaleDictionary[keyValuePair[0]] = keyValuePair[1]
         .split('"')
         .join("")
