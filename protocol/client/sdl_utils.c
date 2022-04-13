@@ -52,7 +52,7 @@ static AVFrame* pending_nv12_frame;
 // thread.
 static WhistCursorInfo* pending_cursor_info = NULL;
 // the mutex to protect pending_cursor_info
-static WhistMutex cursor_render_mutex;
+static WhistMutex pending_cursor_info_mutex;
 
 // The background color for the loading screen
 static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
@@ -150,7 +150,7 @@ static void sdl_render_nv12data(void);
 static void sdl_render_file_drag_icon(int x, int y);
 
 /**
- * @brief                          A helper funcion that does the actual curosr rendering
+ * @brief                          A helper funcion that does the actual cursor rendering
  *
  * @param cursor                   The WhistCursorInfo to use for the new cursor
  *
@@ -198,7 +198,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     renderer_mutex = whist_create_mutex();
 
-    cursor_render_mutex = whist_create_mutex();
+    pending_cursor_info_mutex = whist_create_mutex();
     // set pending_cursor_info to NULL for safety, not necessary at the moment since init_sdl() is
     // only called once.
     pending_cursor_info = NULL;
@@ -345,7 +345,7 @@ void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend) {
         window_param = NULL;
     }
 
-    whist_destroy_mutex(cursor_render_mutex);
+    whist_destroy_mutex(pending_cursor_info_mutex);
     whist_destroy_mutex(renderer_mutex);
 
     if (frontend) {
@@ -462,41 +462,43 @@ bool sdl_render_pending(void) {
 
 void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info) {
     // do the operations with a local pointer first, so to minimize locking
-    WhistCursorInfo* p = safe_malloc(whist_cursor_info_get_size(cursor_info));
-    memcpy(p, cursor_info, whist_cursor_info_get_size(cursor_info));
+    WhistCursorInfo* temp_cursor_info = safe_malloc(whist_cursor_info_get_size(cursor_info));
+    memcpy(temp_cursor_info, cursor_info, whist_cursor_info_get_size(cursor_info));
 
-    whist_lock_mutex(cursor_render_mutex);
-    if (pending_cursor_info) {
-        // if pending_cursor_info is not nukk, it means an old cursor hasn't been rendered yet.
+    whist_lock_mutex(pending_cursor_info_mutex);
+    if (pending_cursor_info != NULL) {
+        // if pending_cursor_info is not null, it means an old cursor hasn't been rendered yet.
         // simply free the old one and overwrite the pending_cursor_info.
         // The duty of free a not-yet-rendered cursor is at producer side, since the ownership
         // hasn't been taken away.
         free(pending_cursor_info);
     }
+
     // assign the local pointer to the pending_cursor_info
-    pending_cursor_info = p;
-    whist_unlock_mutex(cursor_render_mutex);
+    pending_cursor_info = temp_cursor_info;
+    whist_unlock_mutex(pending_cursor_info_mutex);
 }
 
 void sdl_present_pending_cursor(void) {
     WhistTimer statistics_timer;
-    WhistCursorInfo* p = NULL;
+    WhistCursorInfo* temp_cursor_info = NULL;
 
     // if there is a pending curor, take the ownership of pending_cursor_info, and assgin it to the
     // local pointer. do rendering with the local pointer after unlock, to minimize locking.
-    whist_lock_mutex(cursor_render_mutex);
+    whist_lock_mutex(pending_cursor_info_mutex);
     if (pending_cursor_info) {
-        p = pending_cursor_info;
+        temp_cursor_info = pending_cursor_info;
         pending_cursor_info = NULL;
     }
-    whist_unlock_mutex(cursor_render_mutex);
+    whist_unlock_mutex(pending_cursor_info_mutex);
 
-    if (p) {
-        TIME_RUN(sdl_present_pending_cursor_inner(p), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
+    if (temp_cursor_info != NULL) {
+        TIME_RUN(sdl_present_pending_cursor_inner(temp_cursor_info), VIDEO_CURSOR_UPDATE_TIME,
+                 statistics_timer);
         // Cursors need not be double-rendered, so we just unset the cursor image here.
         // The duty of ree a rendered cursor is at consumer side (here), since the ownership is
         // taken.
-        free(p);
+        free(temp_cursor_info);
     }
 }
 
