@@ -164,6 +164,7 @@ void whist_frontend_get_window_pixel_size(WhistFrontend* frontend, int* width, i
 void whist_frontend_get_window_virtual_size(WhistFrontend* frontend, int* width, int* height);
 void whist_frontend_get_window_position(WhistFrontend* frontend, int* x, int* y);
 WhistStatus whist_frontend_get_window_display_index(WhistFrontend* frontend, int* index);
+// note: whist_frontend_get_window_dpi() should only be called inside main thread, at least on MacOS
 int whist_frontend_get_window_dpi(WhistFrontend* frontend);
 bool whist_frontend_is_window_visible(WhistFrontend* frontend);
 bool whist_frontend_is_window_occluded(WhistFrontend* frontend);

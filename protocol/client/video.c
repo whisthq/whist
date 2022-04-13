@@ -192,7 +192,6 @@ int render_video(VideoContext* video_context) {
     // a later call to render_video can still access the data
     // from the most recently consumed render context.
     static WhistRGBColor window_color = {0};
-    static WhistCursorInfo* cursor_image = NULL;
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
     static timestamp_us last_rendered_time = 0;
@@ -248,15 +247,10 @@ int render_video(VideoContext* video_context) {
             window_color = frame->corner_color;
 
             WhistCursorInfo* frame_cursor_image = get_frame_cursor_info(frame);
-            if (frame_cursor_image) {
-                if (cursor_image) {
-                    free(cursor_image);
-                    cursor_image = NULL;
-                }
 
-                cursor_image = safe_malloc(whist_cursor_info_get_size(frame_cursor_image));
-                memcpy(cursor_image, frame_cursor_image,
-                       whist_cursor_info_get_size(frame_cursor_image));
+            // set the cursor image as pending, so that it will be rendered in main.
+            if (frame_cursor_image) {
+                sdl_set_cursor_info_as_pending(frame_cursor_image);
             }
         } else {
             // Reset last_rendered_time for an empty frame, so that a non-empty frame following an
@@ -340,14 +334,6 @@ int render_video(VideoContext* video_context) {
         // Free the decoded frame.  We have either copied the data to
         // our own frame or made another reference to it.
         video_decoder_free_decoded_frame(&decoded_frame_data);
-
-        // Render out the cursor image
-        if (cursor_image) {
-            TIME_RUN(sdl_update_cursor(cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
-            // Cursors need not be double-rendered, so we just unset the cursor image here
-            free(cursor_image);
-            cursor_image = NULL;
-        }
 
         // Update the window titlebar color
         sdl_render_window_titlebar_color(window_color);

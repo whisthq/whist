@@ -65,6 +65,8 @@ int set_native_window_color(SDL_Window* window, WhistRGBColor color);
  * @param window                   The SDL window handle whose DPI to retrieve.
  *
  * @returns                        The DPI as an int, with 96 as a base.
+ *
+ * @note                           Should only be called inside main thread, at least on MacOS.
  */
 int get_native_window_dpi(SDL_Window* window);
 
