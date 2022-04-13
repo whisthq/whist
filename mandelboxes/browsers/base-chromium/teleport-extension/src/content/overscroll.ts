@@ -5,13 +5,15 @@ import {
 import { cyclingArray } from "@app/utils/arrays"
 import { injectResourceIntoDOM } from "@app/utils/dom"
 
-let previousOffset = 0
+let previousOffsetX = 0
 let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 
+const velocity = (distance: number, time: number) => distance / time
+
 const detectVerticalOverscroll = (e: WheelEvent) =>
-  e.offsetX - previousOffset === 0 &&
+  e.offsetX - previousOffsetX === 0 &&
   Math.abs(previousXDeltas.getAll().slice(-1).pop()?.delta ?? 0) > 100
 
 const detectHorizontalScroll = () =>
@@ -20,6 +22,8 @@ const detectHorizontalScroll = () =>
 const navigateOnGesture = (e: WheelEvent) => {
   previousYDeltas.add({ timestamp: Date.now(), delta: e.deltaY })
   previousXDeltas.add({ timestamp: Date.now(), delta: e.deltaX })
+
+  console.log(previousXDeltas)
 
   const gestureDetected =
     detectVerticalOverscroll(e) && // The user is overscrolling horizontally
@@ -44,7 +48,7 @@ const navigateOnGesture = (e: WheelEvent) => {
     }, 2000)
   }
 
-  previousOffset = e.offsetX
+  previousOffsetX = e.offsetX
 }
 
 const initOverscroll = () => {
