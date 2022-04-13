@@ -21,8 +21,23 @@ monitor() {
 # By watching /tmp and ./Extensions, this allows chromium themes
 # to function properly
 
+# Monitor the /tmp directory, chromium puts extensions there first
 monitor /tmp &
-# $1 should be google-chrome or BraveSoftware
-monitor "/home/whist/.config/$1/Default/Extensions" &
 
+# $1 should be "google-chrome" or "BraveSoftware"
+EXTENSION_DIR="/home/whist/.config/$1/Default/Extensions"
+
+# Wait for the extensions directory to be created
+while [[ ! -d "$EXTENSION_DIR" ]]; do
+  sleep 0.05
+done
+
+# Monitor the extensions directory
+monitor "$EXTENSION_DIR" &
+
+# Let both jobs run indefinitely
 wait
+
+# Always succeed, even if the jobs fail for some reason
+exit 0
+
