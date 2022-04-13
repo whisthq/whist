@@ -1,4 +1,4 @@
-import { createNotification } from "@app/utils/notification"
+import { createNotification } from "@app/utils/overlays"
 import { URLS_THAT_NEED_CAMERA_MIC } from "@app/constants/urls"
 
 const currentURL = document.URL

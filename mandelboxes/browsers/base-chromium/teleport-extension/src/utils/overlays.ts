@@ -93,4 +93,37 @@ const drawLeftArrow = (document: Document) => {
   setTimeout(() => fadeOut(element), 10000)
 }
 
-export { createNotification, drawLeftArrow }
+const drawRightArrow = (document: Document) => {
+  // Create the notification HTMLElement
+  let element = document.createElement("p")
+
+  element.style.width = "70px"
+  element.style.height = "160px"
+  element.style.borderRadius = "80px 0px 0px 80px"
+  element.style.background = "rgba(0, 0, 0, 0.7)"
+  element.style.position = "fixed"
+  element.style.top = "48%"
+  element.style.right = "0px"
+  element.style.padding = "10px"
+  element.style.zIndex = "99999999"
+  element.style.opacity = "0"
+
+  // For security, some websites block injected HTML, so we use the TrustedHTML
+  // API to bypass this.
+  // For more info: https://developer.mozilla.org/en-US/docs/Web/API/TrustedHTML
+  const escapeHTMLPolicy = (window as any).trustedTypes.createPolicy("policy", {
+    createHTML: (s: string) => s,
+  })
+
+  element.innerHTML += escapeHTMLPolicy.createHTML(
+    '<svg style="position: relative; top: 30px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>'
+  )
+
+  // Inject the HTMLElement into the DOM
+  ;(document.body || document.documentElement).appendChild(element)
+
+  fadeIn(element)
+  setTimeout(() => fadeOut(element), 10000)
+}
+
+export { createNotification, drawLeftArrow, drawRightArrow }
