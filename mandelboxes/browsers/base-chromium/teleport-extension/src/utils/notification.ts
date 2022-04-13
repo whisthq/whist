@@ -64,7 +64,7 @@ const drawLeftArrow = (document: Document) => {
   // Create the notification HTMLElement
   let element = document.createElement("p")
 
-  element.style.width = "100px"
+  element.style.width = "60px"
   element.style.height = "100px"
   element.style.borderRadius = "0px 50px 50px 0px"
   element.style.background = "rgba(0, 0, 0, 0.7)"
@@ -78,7 +78,7 @@ const drawLeftArrow = (document: Document) => {
   // API to bypass this.
   // For more info: https://developer.mozilla.org/en-US/docs/Web/API/TrustedHTML
   const escapeHTMLPolicy = (window as any).trustedTypes.createPolicy("policy", {
-    createHTML: (s: string) => s.replace(/\>/g, "<"),
+    createHTML: (s: string) => s,
   })
 
   element.innerHTML += escapeHTMLPolicy.createHTML(
