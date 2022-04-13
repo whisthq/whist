@@ -133,7 +133,7 @@ bool sdl_render_pending(void);
 void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info);
 
 /**
- * @brief                          Do the rendering job of the pending cursor info.
+ * @brief                          Do the rendering job of the pending cursor info, if any.
  *
  * @note                           This function is virtually instantaneous. Should be only called
  *                                 in main thread, since it's the only safe way to do any render.
