@@ -28,7 +28,7 @@ func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionS
 	// variable, and use the default configurations. By doing this, we avoid
 	// hardcoding the key or having to query the config database, since they
 	// are disabled on localdev environment.
-	if metadata.IsLocalEnvWithoutDB() {
+	if metadata.IsLocalEnvWithoutDB() && !metadata.IsRunningInCI() {
 		key := os.Getenv("STRIPE_KEY")
 		monthlyPriceInCents := int64(2500)
 		stripeClient.configure(key, key, customerID, subscriptionStatus, monthlyPriceInCents)

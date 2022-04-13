@@ -101,7 +101,9 @@ func (sc *mockStripeClient) configure(secret string, restrictedSecret string, cu
 }
 
 func (sc *mockStripeClient) getSubscription() (*stripe.Subscription, error) {
-	return nil, nil
+	return &stripe.Subscription{
+		Status: stripe.SubscriptionStatus(sc.subscriptionStatus),
+	}, nil
 }
 
 func (sc *mockStripeClient) getSubscriptionStatus() string {
@@ -117,7 +119,13 @@ func (sc *mockStripeClient) isNewUser() bool {
 }
 
 func (sc *mockStripeClient) createCheckoutSession(withTrialPeriod bool) (string, error) {
-	return "https://test-checkout-session.url", nil
+	var url string
+	if withTrialPeriod {
+		url = "https://test-checkout-session.url/withTrialPeriod"
+	} else {
+		url = "https://test-checkout-session.url/noTrialPeriod"
+	}
+	return url, nil
 }
 
 func (sc *mockStripeClient) createBillingPortal() (string, error) {
@@ -223,14 +231,16 @@ func TestCreateSession(t *testing.T) {
 		subscriptionStatus     string
 		checkoutSessionCreated bool
 		billingPortalCreated   bool
+		withTrialPeriod        bool
 	}{
-		{"active", false, true},
-		{"trialing", false, true},
-		{"incomplete", true, false},
-		{"incomplete_expired", true, false},
-		{"past_due", true, false},
-		{"canceled", true, false},
-		{"unpaid", true, false},
+		{"active", false, true, false},
+		{"trialing", false, true, false},
+		{"incomplete", true, false, false},
+		{"incomplete_expired", true, false, false},
+		{"past_due", true, false, false},
+		{"canceled", true, false, false},
+		{"unpaid", true, false, false},
+		{"null", true, false, true},
 	}
 
 	for _, tt := range tests {
@@ -244,9 +254,17 @@ func TestCreateSession(t *testing.T) {
 				t.Errorf("Failed to create session. Err: %v", err)
 			}
 
-			// Checkout session got called
-			if url == "https://test-checkout-session.url" &&
-				!tt.checkoutSessionCreated {
+			// Checkout session got called with trial period
+			if url == "https://test-checkout-session.url/withTrialPeriod" &&
+				!tt.checkoutSessionCreated &&
+				tt.withTrialPeriod {
+				t.Errorf("Expected billing portal to be created for status %v, got checkout session instead.", tt.subscriptionStatus)
+			}
+
+			// Checkout session got called with no trial period
+			if url == "https://test-checkout-session.url/noTrialPeriod" &&
+				!tt.checkoutSessionCreated &&
+				!tt.withTrialPeriod {
 				t.Errorf("Expected billing portal to be created for status %v, got checkout session instead.", tt.subscriptionStatus)
 			}
 
