@@ -3,12 +3,14 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/httputils"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/payments"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -17,8 +19,6 @@ import (
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 	"golang.org/x/time/rate"
 )
-
-const PortToListen uint16 = 7730
 
 func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
@@ -254,10 +254,17 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	mux.Handle("/mandelbox/assign", assignHandler)
 	mux.Handle("/payment_portal_url", http.HandlerFunc(paymentsHandler))
 
+	// The PORT env var will be automatically set by Heroku.
+	// If running on localdev, use default port.
+	port := os.Getenv("PORT")
+	if metadata.IsLocalEnv() || port == "" {
+		port = "7730"
+	}
+
 	// Set read/write timeouts to help mitigate potential rogue clients
 	// or DDOS attacks.
 	srv := &http.Server{
-		Addr:         utils.Sprintf("0.0.0.0:%v", PortToListen),
+		Addr:         utils.Sprintf("0.0.0.0:%v", port),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 		IdleTimeout:  120 * time.Second,
