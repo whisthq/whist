@@ -34,6 +34,7 @@ import {
   keyRepeat,
   initialKeyRepeat,
   geolocation,
+  userLanguage,
   userLocale,
 } from "@app/main/utils/state"
 import {
@@ -144,6 +145,7 @@ const launchTrigger = emitOnSignal(
     keyRepeat,
     initialKeyRepeat,
     geolocation,
+    userLanguage,
     userLocale,
   }),
   merge(
