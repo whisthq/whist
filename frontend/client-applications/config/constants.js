@@ -15,7 +15,7 @@ const WhistNodeEnvironments = {
   PRODUCTION: "production",
 }
 
-// Webserver URLs
+// Scaling service URLs
 const WhistScalingServices = {
   local: "http://0.0.0.0:7730",
   dev: "https://dev-scaling-service.whist.com",
