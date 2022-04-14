@@ -595,7 +595,7 @@ func TestDeploy(t *testing.T) {
 			Provider:  "AWS",
 			Region:    "test-region",
 			ImageID:   "test-image-id-old",
-			ClientSHA: graphql.String(metadata.GetGitCommit()),
+			ClientSHA: "test-sha",
 			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
 		},
 	}
@@ -695,9 +695,14 @@ func TestMandelboxAssign(t *testing.T) {
 		clientSHA, want  string
 		shouldBeAssigned bool
 	}{
-		{"happy path", instanceCapacity["g4dn.2xlarge"], "test-sha", "", true},                                    // Happy path, sufficient capacity and matching commit hash
+		{"happy path", instanceCapacity["g4dn.2xlarge"], CLIENT_COMMIT_HASH_DEV_OVERRIDE, "", true},               // Happy path, sufficient capacity and matching commit hash
 		{"commit hash mismatch", instanceCapacity["g4dn.2xlarge"], "outdated-sha", "COMMIT_HASH_MISMATCH", false}, // Commit mismatch, sufficient capacity but different commit hashes
-		{"no capacity", 0, "test-sha", "NO_INSTANCE_AVAILABLE", false},                                            // No capacity, but matching commit hash
+		{"no capacity", 0, CLIENT_COMMIT_HASH_DEV_OVERRIDE, "NO_INSTANCE_AVAILABLE", false},                       // No capacity, but matching commit hash
+	}
+
+	// Override environment so we can test commit hashes on the request
+	metadata.GetAppEnvironment = func() metadata.AppEnvironment {
+		return metadata.EnvDev
 	}
 
 	for _, tt := range tests {
@@ -712,7 +717,7 @@ func TestMandelboxAssign(t *testing.T) {
 					Status:            "ACTIVE",
 					Type:              "g4dn.2xlarge",
 					Region:            "us-east-1",
-					IPAddress:         "1.1.1.1",
+					IPAddress:         "1.1.1.1/24",
 					ClientSHA:         graphql.String("test-sha"),
 					RemainingCapacity: graphql.Int(tt.capacity),
 				},
@@ -723,12 +728,29 @@ func TestMandelboxAssign(t *testing.T) {
 					Status:            "ACTIVE",
 					Type:              "g4dn.2xlarge",
 					Region:            "us-west-1",
-					IPAddress:         "1.1.1.1",
+					IPAddress:         "1.1.1.1/24",
 					ClientSHA:         graphql.String("test-sha"),
 					RemainingCapacity: graphql.Int(tt.capacity),
 				},
 			}
-			t.Logf("testInstances set to: %v", testInstances)
+
+			// Set the current image for testing
+			testImages = subscriptions.WhistImages{
+				struct {
+					Provider  graphql.String `graphql:"provider"`
+					Region    graphql.String `graphql:"region"`
+					ImageID   graphql.String `graphql:"image_id"`
+					ClientSHA graphql.String `graphql:"client_sha"`
+					UpdatedAt time.Time      `graphql:"updated_at"`
+				}{
+					Provider:  "AWS",
+					Region:    "test-region",
+					ImageID:   "test-image-id-old",
+					ClientSHA: "test-sha",
+					UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
+				},
+			}
+
 			testAssignRequest := &httputils.MandelboxAssignRequest{
 				Regions:    []string{"us-east-1", "us-west-1"},
 				CommitHash: tt.clientSHA,
