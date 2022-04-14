@@ -84,7 +84,7 @@ const drawArrow = (document: Document, direction: string) => {
       '<svg style="position: relative; top: 40px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
     )
   } else {
-    element.style.right = "70px"
+    element.style.right = "30px"
     element.innerHTML += escapeHTMLPolicy.createHTML(
       '<svg style="position: relative; top: 40px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
     )
