@@ -12,12 +12,11 @@ let previousOffset = 0
 let arrow: HTMLDivElement | undefined = undefined
 let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
-let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
+let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(20, [])
 
 const rollingDelta = (offsetX: number) => {
   if (offsetX - previousOffset !== 0) return 0
 
-  const now = Date.now() / 1000
   return previousXDeltas.get().reduce((reduced, args) => {
     return reduced + args.delta
   }, 0)
