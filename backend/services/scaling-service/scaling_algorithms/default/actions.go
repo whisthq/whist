@@ -627,7 +627,10 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		mandelboxRequest.CommitHash = string(imageResult[0].ClientSHA)
 	}
 
-	// Start looking for instances
+	// This is the "main" loop that does all the work and tries to find an instance for a user. first, it will iterate
+	// over the list of regions provided on the request, and will query the database on each to return the list of
+	// instances with capacity on the current region. Once it gets the instances, it will iterate over them and try
+	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
 	for _, region := range allowedRegions {
 		logger.Infof("Trying to find instance for user %v in region %v, with commit hash %v. (client reported email %v, this value might not be accurate and is untrusted)",
 			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail)
@@ -674,6 +677,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		}
 	}
 
+	// No instances with capacity were found
 	if assignedInstance == (subscriptions.Instance{}) {
 		err := utils.MakeError("did not find an instance with capacity for user %v and commit hash %v.", mandelboxRequest.UserEmail, mandelboxRequest.CommitHash)
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
@@ -682,6 +686,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return err
 	}
 
+	// There are instances with capacity available, but none of them with the desired commit hash
 	if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
 		err := utils.MakeError("found instance with capacity but it has a different commit hash %v that frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
