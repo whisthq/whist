@@ -10,16 +10,6 @@ let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 
-const forwardGestureDetected = (args: {
-  offsetX: number
-  d3: number
-  v0: number
-  v1: number
-}) => {
-  const movementX = args.offsetX - previousOffset
-  return movementX === 0 && args.d3 > 150 && args.v0 < -500 && args.v1 < -500
-}
-
 const backGestureDetected = (args: {
   offsetX: number
   d3: number
@@ -28,7 +18,17 @@ const backGestureDetected = (args: {
 }) => {
   const movementX = args.offsetX - previousOffset
   console.log("d3", args.d3, "v0", args.v0, "v1", args.v1)
-  return movementX === 0 && args.d3 < -150 && args.v0 > 500 && args.v1 > 500
+  return movementX === 0 && args.d3 < -150 && args.v0 < -500 && args.v1 < -500
+}
+
+const forwardGestureDetected = (args: {
+  offsetX: number
+  d3: number
+  v0: number
+  v1: number
+}) => {
+  const movementX = args.offsetX - previousOffset
+  return movementX === 0 && args.d3 > 150 && args.v0 > 500 && args.v1 > 500
 }
 
 const detectVerticalScroll = () =>
@@ -47,8 +47,8 @@ const navigateOnGesture = (e: WheelEvent) => {
   const t0 = previousXDeltas.get().at(-1)?.timestamp ?? 1 // t, in sec since epoch
   const t1 = previousXDeltas.get().at(-2)?.timestamp ?? 1 // t - 1, in sec since epoch
   const t2 = previousXDeltas.get().at(-3)?.timestamp ?? 1 // t - 2, in sec since epoch
-  const v0 = (d1 - d0) / (t1 - t0) // X velocity at time t (most recent)
-  const v1 = (d2 - d1) / (t2 - t1) // X velocity at time t - 1
+  const v0 = (d0 - d1) / (t0 - t1) // X velocity at time t (most recent)
+  const v1 = (d1 - d2) / (t1 - t2) // X velocity at time t - 1
 
   const goBack = backGestureDetected({
     offsetX: e.offsetX,
@@ -57,7 +57,7 @@ const navigateOnGesture = (e: WheelEvent) => {
     v1,
   })
 
-  const goForward = backGestureDetected({
+  const goForward = forwardGestureDetected({
     offsetX: e.offsetX,
     d3,
     v0,
