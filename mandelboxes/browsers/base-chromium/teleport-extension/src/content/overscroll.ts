@@ -10,7 +10,7 @@ let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 
-const detectRightRelease = (args: {
+const forwardGestureDetected = (args: {
   offsetX: number
   d3: number
   v0: number
@@ -20,7 +20,7 @@ const detectRightRelease = (args: {
   return movementX === 0 && args.d3 > 150 && args.v0 < -500 && args.v1 < -500
 }
 
-const detectLeftRelease = (args: {
+const backGestureDetected = (args: {
   offsetX: number
   d3: number
   v0: number
@@ -35,10 +35,10 @@ const detectVerticalScroll = () =>
   previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
 
 const navigateOnGesture = (e: WheelEvent) => {
-  if (detectVerticalScroll() || throttled) return
-
   previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
   previousXDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaX })
+
+  if (detectVerticalScroll() || throttled) return
 
   const d0 = previousXDeltas.get().at(-1)?.delta ?? 0 // X displacement at time t (most recent)
   const d1 = previousXDeltas.get().at(-2)?.delta ?? 0 // X displacement at time t-1
@@ -50,42 +50,45 @@ const navigateOnGesture = (e: WheelEvent) => {
   const v0 = (d1 - d0) / (t1 - t0) // X velocity at time t (most recent)
   const v1 = (d2 - d1) / (t2 - t1) // X velocity at time t - 1
 
-  const leftGestureDetected = detectLeftRelease({
+  const goBack = backGestureDetected({
     offsetX: e.offsetX,
     d3,
     v0,
     v1,
   })
 
-  const rightGestureDetected = detectRightRelease({
+  const goForward = backGestureDetected({
     offsetX: e.offsetX,
     d3,
     v0,
     v1,
   })
 
-  if (leftGestureDetected)
+  if (goBack) {
+    console.log("GO BACK")
     injectResourceIntoDOM(document, "js/overscrollLeft.js")
-  if (rightGestureDetected)
+  }
+  if (goForward) {
+    console.log("GO FORWARD")
     injectResourceIntoDOM(document, "js/overscrollRight.js")
+  }
 
-  if (leftGestureDetected || rightGestureDetected) {
-    console.log("RELEASE DETECTED")
-    // throttled = true
+  if (goBack || goForward) {
+    throttled = true
 
     // Wait some time so the left/right arrow can display
-    // setTimeout(() => {
-    //   chrome.runtime.sendMessage(<ContentScriptMessage>{
-    //     type: leftGestureDetected
-    //       ? ContentScriptMessageType.HISTORY_GO_BACK
-    //       : ContentScriptMessageType.HISTORY_GO_FORWARD,
-    //   })
-    // }, 200)
+    setTimeout(() => {
+      chrome.runtime.sendMessage(<ContentScriptMessage>{
+        type: goBack
+          ? ContentScriptMessageType.HISTORY_GO_BACK
+          : ContentScriptMessageType.HISTORY_GO_FORWARD,
+      })
+    }, 100)
 
     // Don't allow multiple gestures to send within the same 2s interval
-    // setTimeout(() => {
-    //   throttled = false
-    // }, 2000)
+    setTimeout(() => {
+      throttled = false
+    }, 1000)
   }
 
   previousOffset = e.offsetX
