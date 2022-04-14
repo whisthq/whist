@@ -1,14 +1,10 @@
 import { drawArrow } from "@app/utils/overlays"
-import {
-  ContentScriptMessage,
-  ContentScriptMessageType,
-} from "@app/constants/ipc"
 import { cyclingArray } from "@app/utils/arrays"
 
 // If the rolling delta exceeds this amount (in absolute value), display the arrow
 const rollingDeltaThreshold = 10
 // If the rolling delta exceeds this amount (in absolute value), navigate
-const navigationThreshold = 250
+const navigationThreshold = 200
 // How many seconds to look back when detecting gestures
 const rollingLookbackPeriod = 2.5
 
@@ -58,7 +54,7 @@ const detectGesture = (e: WheelEvent) => {
   const amountToShift =
     _rollingDeltaAbs >= navigationThreshold
       ? "0px"
-      : `-${(70 * _rollingDeltaAbs) / navigationThreshold}px`
+      : `-${70 - (70 * _rollingDeltaAbs) / navigationThreshold}px`
 
   if (arrow === undefined)
     arrow = drawArrow(document, goBack ? "left" : "right")
@@ -68,10 +64,11 @@ const detectGesture = (e: WheelEvent) => {
     0.2
   ).toString()
 
+  console.log("Delta", _rollingDelta)
   console.log("Shifting", amountToShift)
   console.log(
     "opacity",
-    Math.max(_rollingDeltaAbs / navigationThreshold, 0.2).toString()
+    Math.max(_rollingDeltaAbs / navigationThreshold, 0.4).toString()
   )
 
   if (goBack) arrow.style.left = amountToShift
