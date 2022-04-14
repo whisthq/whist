@@ -17,8 +17,7 @@ const backGestureDetected = (args: {
   v1: number
 }) => {
   const movementX = args.offsetX - previousOffset
-  console.log("d3", args.d3, "v0", args.v0, "args.v1", args.v1)
-  return movementX === 0 && args.d3 < -150 && args.v0 > 500 && args.v1 > 500
+  return movementX === 0 && args.d3 < -100 && args.v0 > 300 && args.v1 > 300
 }
 
 const forwardGestureDetected = (args: {
@@ -28,7 +27,7 @@ const forwardGestureDetected = (args: {
   v1: number
 }) => {
   const movementX = args.offsetX - previousOffset
-  return movementX === 0 && args.d3 > 150 && args.v0 < -500 && args.v1 < -500
+  return movementX === 0 && args.d3 > 100 && args.v0 < -300 && args.v1 < -300
 }
 
 const detectVerticalScroll = () =>
@@ -87,8 +86,8 @@ const navigateOnGesture = (e: WheelEvent) => {
   }, 1000)
 }
 
-const initOverscroll = () => {
+const initSwipeGestures = () => {
   window.addEventListener("wheel", navigateOnGesture)
 }
 
-export { initOverscroll }
+export { initSwipeGestures }
