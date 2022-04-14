@@ -71,6 +71,7 @@ const detectGesture = (e: WheelEvent) => {
 
   if (Math.abs(rollingDelta) < navigationThreshold) return
 
+  console.log("GESTURE DETECTED")
   chrome.runtime.sendMessage(EXTENSION_ID, <ContentScriptMessage>{
     type: ContentScriptMessageType.GESTURE_DETECTED,
     value: goBack ? "back" : "forward",
