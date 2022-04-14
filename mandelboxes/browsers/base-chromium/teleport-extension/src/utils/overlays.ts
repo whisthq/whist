@@ -96,7 +96,7 @@ const drawArrow = (document: Document, direction: string) => {
   ;(document.body || document.documentElement).appendChild(element)
 
   fadeIn(element, 3)
-  setTimeout(() => element.remove(), 2000)
+  setTimeout(() => element.remove(), 1000)
 }
 
 export { createNotification, drawArrow }

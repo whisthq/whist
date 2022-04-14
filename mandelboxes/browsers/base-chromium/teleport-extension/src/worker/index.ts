@@ -13,8 +13,7 @@ import {
   initTabDetachSuppressor,
   initCreateNewTabHandler,
   initActivateTabHandler,
-  initHistoryGoBackHandler,
-  initHistoryGoForwardHandler,
+  initHistoryHandler,
 } from "./tabs"
 
 const nativeHostPort = initNativeHostIpc()
@@ -43,8 +42,5 @@ initCreateNewTabHandler(nativeHostPort)
 // Switches focus to a current tab if the client asks for it
 initActivateTabHandler(nativeHostPort)
 
-// For two-finger swipe: goes back to the previous page in history
-initHistoryGoBackHandler()
-
-// For two-finger swipe: goes back to the previous page in history
-initHistoryGoForwardHandler()
+// For two-finger swipe: goes forward/back to the previous page in history
+initHistoryHandler()

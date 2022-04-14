@@ -6,7 +6,6 @@ import {
 import { cyclingArray } from "@app/utils/arrays"
 
 let previousOffset = 0
-let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 
@@ -37,7 +36,7 @@ const navigateOnGesture = (e: WheelEvent) => {
   previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
   previousXDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaX })
 
-  if (detectVerticalScroll() || throttled) return
+  if (detectVerticalScroll()) return
 
   const d0 = previousXDeltas.get().at(-1)?.delta ?? 0 // X displacement at time t (most recent)
   const d1 = previousXDeltas.get().at(-2)?.delta ?? 0 // X displacement at time t-1
@@ -66,24 +65,16 @@ const navigateOnGesture = (e: WheelEvent) => {
   previousOffset = e.offsetX
   if (!(goBack || goForward)) return
 
-  throttled = true
-
   if (goBack) injectResourceIntoDOM(document, "js/overscrollLeft.js")
   if (goForward) injectResourceIntoDOM(document, "js/overscrollRight.js")
 
   // Wait some time so the left/right arrow can display
   setTimeout(() => {
     chrome.runtime.sendMessage(<ContentScriptMessage>{
-      type: goBack
-        ? ContentScriptMessageType.HISTORY_GO_BACK
-        : ContentScriptMessageType.HISTORY_GO_FORWARD,
+      type: ContentScriptMessageType.NAVIGATE_HISTORY,
+      value: goBack ? "back" : "forward",
     })
   }, 100)
-
-  // Don't allow multiple gestures to send within the same 2s interval
-  setTimeout(() => {
-    throttled = false
-  }, 1000)
 }
 
 const initSwipeGestures = () => {

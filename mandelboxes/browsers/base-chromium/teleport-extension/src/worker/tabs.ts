@@ -3,6 +3,7 @@ import {
   ContentScriptMessage,
   ContentScriptMessageType,
 } from "@app/constants/ipc"
+import { throttle } from "@app/utils/listeners"
 
 // Try to cancel or undo a tab drag-out
 const tryRestoreTabLocation = async (
@@ -68,36 +69,28 @@ const initActivateTabHandler = (nativeHostPort: chrome.runtime.Port) => {
   })
 }
 
-const initHistoryGoBackHandler = () => {
-  chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
-    if (msg.type !== ContentScriptMessageType.HISTORY_GO_BACK) return
+const initHistoryHandler = () => {
+  const handler = (msg: ContentScriptMessage) => {
+    if (msg.type !== ContentScriptMessageType.NAVIGATE_HISTORY) return
 
     chrome.tabs.query(
       { active: true, currentWindow: true },
       (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0].id !== undefined) chrome.tabs.goBack(tabs[0].id)
+        if (tabs[0].id !== undefined) {
+          msg.value === "back"
+            ? chrome.tabs.goBack(tabs[0].id)
+            : chrome.tabs.goForward(tabs[0].id)
+        }
       }
     )
-  })
-}
+  }
 
-const initHistoryGoForwardHandler = () => {
-  chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
-    if (msg.type !== ContentScriptMessageType.HISTORY_GO_FORWARD) return
-
-    chrome.tabs.query(
-      { active: true, currentWindow: true },
-      (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0].id !== undefined) chrome.tabs.goForward(tabs[0].id)
-      }
-    )
-  })
+  chrome.runtime.onMessage.addListener(throttle(handler, 1000))
 }
 
 export {
   initTabDetachSuppressor,
   initCreateNewTabHandler,
   initActivateTabHandler,
-  initHistoryGoBackHandler,
-  initHistoryGoForwardHandler,
+  initHistoryHandler,
 }

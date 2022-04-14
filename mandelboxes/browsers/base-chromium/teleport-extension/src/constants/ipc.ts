@@ -1,7 +1,6 @@
 export enum ContentScriptMessageType {
   POINTER_LOCK = "POINTER_LOCK",
-  HISTORY_GO_BACK = "HISTORY_GO_BACK",
-  HISTORY_GO_FORWARD = "HISTORY_GO_FORWARD",
+  NAVIGATE_HISTORY = "NAVIGATE_HISTORY",
 }
 
 export enum NativeHostMessageType {
