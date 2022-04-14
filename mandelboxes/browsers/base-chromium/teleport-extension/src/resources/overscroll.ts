@@ -10,6 +10,8 @@ let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 
+console.log("inside resources")
+
 const detectVerticalOverscroll = (e: WheelEvent) =>
   e.offsetX - previousOffset === 0 &&
   Math.abs(previousXDeltas.getAll().slice(-1).pop()?.delta ?? 0) > 100
@@ -31,7 +33,6 @@ const navigateOnGesture = (e: WheelEvent) => {
 
   if (leftGestureDetected) drawLeftArrow(document)
   if (rightGestureDetected) drawRightArrow(document)
-
   if (leftGestureDetected || rightGestureDetected) {
     throttled = true
     // chrome.runtime.sendMessage(<ContentScriptMessage>{
@@ -48,8 +49,4 @@ const navigateOnGesture = (e: WheelEvent) => {
   previousOffset = e.offsetX
 }
 
-const initOverscroll = () => {
-  window.addEventListener("wheel", navigateOnGesture)
-}
-
-export { initOverscroll }
+window.addEventListener("wheel", navigateOnGesture)
