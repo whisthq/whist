@@ -31,14 +31,20 @@ features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization,OverlayScrollbar"
 flags=(
   "--use-gl=desktop"
   "--flag-switches-begin"
+  "--use-passthrough-command-decoder"
   "--enable-gpu-rasterization"
   "--enable-zero-copy"
+  "--enable-raw-draw"
+  "--enable-accelerated-2d-canvas"
+  "--enable-accelerated-video-decode" # This may not be necessary
   "--double-buffer-compositing"
   "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
   "--disable-font-subpixel-positioning"
   "--force-color-profile=display-p3-d65"
+  "--ozone-platform-hint=x11"
   "--disable-gpu-process-crash-limit"
   "--no-default-browser-check"
+  "--ignore-gpu-blocklist"
   "--password-store=basic" # This disables the kwalletd backend, which we don't support
   "--load-extension=/opt/teleport/chrome-extension"
 )
