@@ -99,12 +99,32 @@ bool sdl_pending_audio_device_update(void) {
     return pending_audio_device_update > 0;
 }
 
-void set_is_dragging_file(bool is_dragging_file, int x, int y) {
+void sdl_begin_file_drag(char* filename_list) {
+    // TODO: send filename_list with this message
     WhistClientMessage msg = {0};
-    msg.type = MESSAGE_FILE_DRAG_UPDATE;
-    msg.fileDragUpdate.file_dragging = is_dragging_file;
-    msg.fileDragUpdate.x = x;
-    msg.fileDragUpdate.y = y;
+    msg.type = MESSAGE_CONTENT_DRAG_UPDATE;
+    msg.contentDragUpdate.update_type = CONTENT_DRAG_FILE_START;
+    msg.contentDragUpdate.x = 0;
+    msg.contentDragUpdate.y = 0;
+    send_wcmsg(&msg);
+}
+
+// void set_is_dragging_content(bool is_dragging_content, int x, int y) {
+void sdl_move_content_drag(int x, int y) {
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_CONTENT_DRAG_UPDATE;
+    msg.contentDragUpdate.update_type = CONTENT_DRAG_MOVE;
+    msg.contentDragUpdate.x = x;
+    msg.contentDragUpdate.y = y;
+    send_wcmsg(&msg);
+}
+
+void sdl_complete_content_drag(void) {
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_CONTENT_DRAG_UPDATE;
+    msg.contentDragUpdate.update_type = CONTENT_DRAG_COMPLETE;
+    msg.contentDragUpdate.x = 0;
+    msg.contentDragUpdate.y = 0;
     send_wcmsg(&msg);
 }
 
@@ -210,6 +230,10 @@ static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEven
     free(event->filename);
 }
 
+static void handle_content_drop_complete_event(WhistFrontend* frontend) {
+    sdl_complete_content_drag();
+}
+
 static void handle_quit_event(FrontendQuitEvent* event) {
     if (event->quit_application) {
         const char* quit_client_app_notification = "QUIT_APPLICATION";
@@ -278,6 +302,10 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
         }
         case FRONTEND_EVENT_FILE_DROP: {
             handle_file_drop_event(event->frontend, &event->file_drop);
+            break;
+        }
+        case FRONTEND_EVENT_CONTENT_DROP_COMPLETE: {
+            handle_content_drop_complete_event(event->frontend);
             break;
         }
         case FRONTEND_EVENT_QUIT: {

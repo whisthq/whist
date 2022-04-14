@@ -57,6 +57,8 @@ void initialize_out_of_window_drag_handlers(WhistFrontend *frontend) {
     static bool file_drag_mouse_down;
     static int current_change_count;
 
+    static bool file_drag_began_and_ongoing = false;
+
     // Initialize change count since global drag board change count starts incrementing at system
     // start
     NSPasteboard *change_count_pb = [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
@@ -75,10 +77,26 @@ void initialize_out_of_window_drag_handlers(WhistFrontend *frontend) {
                                             // down and update changecount
                                             current_change_count = change_count;
                                             file_drag_mouse_down = true;
+
+                                            // if ( [[pb types] containsObject:NSFilenamesPboardType] ) {
+                                            //     NSArray *files = [pb propertyListForType:NSFilenamesPboardType];
+                                            //     int numberOfFiles = [files count];
+                                            //     // Perform operation using the list of files
+                                            //     // LOG_INFO("drag content: %s", (char*)[[pb dataForType:NSPasteboardTypeFileURL] bytes]);
+                                            //     LOG_INFO("dragging %d files", numberOfFiles);
+                                            //     LOG_INFO("first file: %s", (char*)[[files objectAtIndex:0] UTF8String]);
+                                            // }
+
+                                            // NSArray *files = [pb propertyListForType:NSFilenamesPboardType];
+
+                                            // // TODO: turn *files into a \n-separated string of filenames (without paths)
+                                            // sdl_handle_begin_file_drag(files);
+
                                         } else if (file_drag_mouse_down) {
                                             // We are continuing to drag our file from its
                                             // original mousedown selection - turn over to sdl
                                             // handler
+
                                             sdl_handle_drag_event(frontend);
                                         }
                                       }];

@@ -103,8 +103,8 @@ int handle_client_message(WhistServerState *state, WhistClientMessage *wcmsg) {
             return handle_frame_ack_message(state, wcmsg);
         case MESSAGE_FILE_UPLOAD_CANCEL:
             return handle_file_upload_cancel_message(state, wcmsg);
-        case MESSAGE_FILE_DRAG_UPDATE:
-            return handle_file_drag_update_message(state, wcmsg);
+        case MESSAGE_CONTENT_DRAG_UPDATE:
+            return handle_content_drag_update_message(state, wcmsg);
         default:
             LOG_ERROR(
                 "Failed to handle message from client: Unknown WhistClientMessage Received "
@@ -371,8 +371,26 @@ static int handle_file_upload_cancel_message(WhistServerState *state, WhistClien
     return 0;
 }
 
-static int handle_file_drag_update_message(whist_server_state * state, WhistClientMessage *wcmsg) {
+static int handle_content_drag_update_message(whist_server_state * state, WhistClientMessage *wcmsg) {
+    switch (wcmsg->contentDragUpdate.update_type) {
+        case CONTENT_DRAG_FILE_START: {
+            break;
+        }
+        case CONTENT_DRAG_TEXT_START: {
+            LOG_INFO("CONTENT_DRAG_TEXT UNIMPLEMENTED");
+            break;
+        }
+        case CONTENT_DRAG_MOVE: {
+            break;
+        }
+        case CONTENT_DRAG_COMPLETE: {
+            break;
+        }
+        default: {
+            break;
+        }
+    }
     // (TODO) update this to actually send the drop_file
-    file_drag_update(wcmsg->fileDragUpdate.file_dragging, wcmsg->fileDragUpdate.x, wcmsg->fileDragUpdate.y);
+    // file_drag_update(wcmsg->contentDragUpdate.update_type, wcmsg->contentDragUpdate.x, wcmsg->contentDragUpdate.y);
     return 0;
 }

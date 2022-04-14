@@ -536,14 +536,26 @@ typedef struct WhistMouseMotionMessage {
 } WhistMouseMotionMessage;
 
 /**
+ * @brief   Drag update type.
+ * @details The type of drag update.
+ */
+typedef enum WhistContentDragUpdateType {
+    CONTENT_DRAG_FILE_START = 0,
+    CONTENT_DRAG_TEXT_START = 1, // unused, for now
+    CONTENT_DRAG_MOVE = 2,
+    CONTENT_DRAG_COMPLETE = 3,
+    // CONTENT_DRAG_CANCEL = 4, // maybe not necessary to differentiate?
+} WhistContentDragUpdateType;
+
+/**
  * @brief   TODO
  */
-typedef struct WhistFileDragUpdateMessage {
-    bool file_dragging;
+typedef struct WhistContentDragUpdateMessage {
+    WhistContentDragUpdateType update_type;
     int x;
     int y;
     uint8_t __pad[3];
-} WhistFileDragUpdateMessage;
+} WhistContentDragUpdateMessage;
 
 /**
  * @brief   Multigesture type.
@@ -649,7 +661,7 @@ typedef enum WhistClientMessageType {
 
     MESSAGE_FILE_UPLOAD_CANCEL = 122,  ///< User has hit cancel on file upload dialog
 
-    MESSAGE_FILE_DRAG_UPDATE = 123, ///< If there is an update for file dragging
+    MESSAGE_CONTENT_DRAG_UPDATE = 123, ///< If there is an update for file dragging
 
     CMESSAGE_QUIT = 999,
 } WhistClientMessageType;
@@ -718,8 +730,8 @@ typedef struct WhistClientMessage {
         // MESSAGE_MOUSE_MOTION
         WhistMouseMotionMessage mouseMotion;
 
-        // MESSAGE_FILE_DRAG_UPDATE
-        WhistFileDragUpdateMessage fileDragUpdate;
+        // MESSAGE CONTENT_DRAG_UPDATE
+        WhistContentDragUpdateMessage contentDragUpdate;
 
         // MESSAGE_MULTIGESTURE
         WhistMultigestureMessage multigesture;  ///< Multigesture message.

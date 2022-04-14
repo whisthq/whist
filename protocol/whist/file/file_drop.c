@@ -125,7 +125,9 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
         onto the active X11 window.
 
         Arguments:
-            drop_file (TransferringFile*): the file to be dropped into the active X11 window
+            drop_file (TransferringFile*): the file to be dropped into the active X11 window.
+                If NULL, then drop all the previous files at once. If not NULL, just add filename
+                to list of files to be dropped together.
 
         Returns:
             (int): 0 on success, -1 on failure
@@ -133,41 +135,77 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
         NOTE: This is only for servers running a parallel FUSE filesystem
     */
 
-    // Try to wait for FUSE path to exist before initiating drop sequence
-    WhistTimer fuse_ready_wait_timer;
-    start_timer(&fuse_ready_wait_timer);
-    char fuse_ready_path[128];
-    snprintf(fuse_ready_path, 128, "/home/whist/.teleport/drag-drop/fuse_ready/%d", drop_file->id);
-    while (access(fuse_ready_path, F_OK) != 0 &&
-           get_timer(&fuse_ready_wait_timer) < 200.0 / MS_IN_SECOND) {
-        whist_sleep(50);
+    static char* file_uri_list = NULL;
+    static int file_uri_list_strlen = 0;
+    static int drop_x = 0;
+    static int drop_y = 0;
+
+    if (drop_file) {
+        // Try to wait for FUSE path to exist before initiating drop sequence
+        WhistTimer fuse_ready_wait_timer;
+        start_timer(&fuse_ready_wait_timer);
+        char fuse_ready_path[128];
+        snprintf(fuse_ready_path, 128, "/home/whist/.teleport/drag-drop/fuse_ready/%d", drop_file->id);
+        while (access(fuse_ready_path, F_OK) != 0 &&
+               get_timer(&fuse_ready_wait_timer) < 200.0 / MS_IN_SECOND) {
+            whist_sleep(50);
+        }
+
+        // // Just in case a drag end event was sent before
+        // if (file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y) < 0) {
+        //     return -1;
+        // }
+
+        XClientMessageEvent m;
+
+        // XDND 5 - Active X11 window will respond with XdndStatus
+        //     this ClientMessage indicates whether active X11 window will accept the drop and what
+        //     action will be taken in the meantime, the active X11 window may send SelectionRequest
+        //     messages - process and respond to these
+        const char* fuse_directory = "/home/whist/drag-drop/";
+        int fuse_path_maxlen =
+            strlen(fuse_directory) + 20 + strlen(drop_file->filename) + 1;  // have enough space for int
+        char* fuse_path = safe_malloc(fuse_path_maxlen);
+        memset(fuse_path, 0, fuse_path_maxlen);
+        snprintf(fuse_path, fuse_path_maxlen, "%s%d/%s", fuse_directory, drop_file->id,
+                 drop_file->filename);
+
+        // Create the file URL to send as part of the SelectionNotify event to the active X11 window
+        int xdnd_file_url_len = 7 + strlen(fuse_path) + 1;  // +7 for 'file://'; +1 for null terminator
+        // char* xdnd_file_url = safe_malloc(xdnd_file_url_len);
+        // memset(xdnd_file_url, 0, xdnd_file_url_len);
+        // safe_strncpy(xdnd_file_url, "file://", 8);
+        // safe_strncpy(xdnd_file_url + 7, fuse_path, strlen(fuse_path) + 1);
+
+        file_uri_list_strlen += xdnd_file_url_len;
+        if (file_uri_list) {
+            file_uri_list = safe_realloc(file_uri_list, file_uri_list_strlen);
+            file_uri_list[file_uri_list_strlen - xdnd_file_url_len - 1] = '\n';
+        } else {
+            file_uri_list = safe_malloc(file_uri_list_strlen);
+        }
+
+        char* new_file_uri_position = file_uri_list + file_uri_list_strlen - xdnd_file_url_len;
+        // TODO: add new url to end of lis
+        memset(new_file_uri_position, 0, xdnd_file_url_len);
+        safe_strncpy(new_file_uri_position, "file://", 8);
+        safe_strncpy(new_file_uri_position + 7, fuse_path, strlen(fuse_path) + 1);
+
+        drop_x = drop_file->event_info.server_drop.x;
+        drop_y = drop_file->event_info.server_drop.y;
+
+        // Don't initiate XDND sequence until we receive a NULL TransferringFile
+        return 0;
     }
+
+    int retval = 0;
 
     // Just in case a drag end event was sent before
-    if (file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y) < 0) {
-        return -1;
+    // if (file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y) < 0) {
+    if (!file_uri_list || file_drag_update(true, drop_x, drop_y) < 0) {
+        retval = -1;
+        goto reset_file_drop_statics;
     }
-
-    XClientMessageEvent m;
-
-    // XDND 5 - Active X11 window will respond with XdndStatus
-    //     this ClientMessage indicates whether active X11 window will accept the drop and what
-    //     action will be taken in the meantime, the active X11 window may send SelectionRequest
-    //     messages - process and respond to these
-    const char* fuse_directory = "/home/whist/drag-drop/";
-    int fuse_path_maxlen =
-        strlen(fuse_directory) + 20 + strlen(drop_file->filename) + 1;  // have enough space for int
-    char* fuse_path = safe_malloc(fuse_path_maxlen);
-    memset(fuse_path, 0, fuse_path_maxlen);
-    snprintf(fuse_path, fuse_path_maxlen, "%s%d/%s", fuse_directory, drop_file->id,
-             drop_file->filename);
-
-    // Create the file URL to send as part of the SelectionNotify event to the active X11 window
-    int xdnd_file_url_len = 7 + strlen(fuse_path) + 1;  // +7 for 'file://'; +1 for null terminator
-    char* xdnd_file_url = safe_malloc(xdnd_file_url_len);
-    memset(xdnd_file_url, 0, xdnd_file_url_len);
-    safe_strncpy(xdnd_file_url, "file://", 8);
-    safe_strncpy(xdnd_file_url + 7, fuse_path, strlen(fuse_path) + 1);
 
     WhistTimer active_window_response_loop_timer;
     start_timer(&active_window_response_loop_timer);
@@ -187,7 +225,8 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
                 whist_sleep(50);
                 // XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&position_message);
                 // XFlush(display);
-                file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y);
+                // file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y);
+                file_drag_update(true, drop_x, drop_y);
             } else {
                 LOG_INFO("ACCEPTING DROP");
                 // Active X11 window is accepting the drop
@@ -228,10 +267,14 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
             s.xselection.time = e.xselectionrequest.time;
             s.xselection.property = selection_request_property;
 
-            LOG_INFO("XDND_FILE_URL: %s", xdnd_file_url);
+            // LOG_INFO("XDND_FILE_URL: %s", xdnd_file_url);
+            LOG_INFO("XDND_FILE_URL_LIST: %s", file_uri_list);
+            // XChangeProperty(display, requestor_window, selection_request_property, XA_text_uri_list,
+            //                 8, PropModeReplace, (unsigned char*)xdnd_file_url,
+            //                 strlen(xdnd_file_url));
             XChangeProperty(display, requestor_window, selection_request_property, XA_text_uri_list,
-                            8, PropModeReplace, (unsigned char*)xdnd_file_url,
-                            strlen(xdnd_file_url));
+                            8, PropModeReplace, (unsigned char*)file_uri_list,
+                            strlen(file_uri_list));
 
             XSendEvent(display, requestor_window, True, 0, &s);
             XFlush(display);
@@ -244,9 +287,10 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     }
 
     if (!accepted_drop) {
+        // TODO: update how we log this since we are dropping many files
         LOG_WARNING(
-            "XDND exchange for file ID %d was rejected by target and completed unsuccessfully",
-            drop_file->id);
+            "XDND exchange for file ID %d was rejected by target and completed unsuccessfully", -1);
+            // drop_file->id);
     }
 
     // Just to make sure that the file drag event ends
@@ -254,9 +298,19 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
 
     free(fuse_path);
 
-    LOG_INFO("XDND exchange for file ID %d complete", drop_file->id);
+    // TODO: update how we log this since we are dropping many files
+    // LOG_INFO("XDND exchange for file ID %d complete", drop_file->id);
+    LOG_INFO("XDND exchange for file ID %d complete", -1);
 
-    return 0;
+reset_file_drop_statics:
+    if (file_uri_list) {
+        free(file_uri_list);
+    }
+    file_uri_list_strlen = 0;
+    drop_x = 0;
+    drop_y = 0;
+
+    return retval;
 }
 
 const char* file_drop_prepare(int id, FileMetadata* file_metadata) {
@@ -477,7 +531,7 @@ int file_drag_update(bool is_dragging, int x, int y) {
         // // while (get_timer(&active_window_response_loop_timer) < 2.0) {
             XLockDisplay(display);
             // XNextEvent(display, &e);
-            XPeekEvent(display, &e);
+            XPeekEvent(display, &e); // TODO: fix the order of events to make sure that we are not double-reading and double-reacting to events
             XUnlockDisplay(display);
 
             if (e.type == ClientMessage && e.xclient.message_type == XA_XdndStatus) {
@@ -529,6 +583,7 @@ int file_drag_update(bool is_dragging, int x, int y) {
                 s.xselection.property = selection_request_property;
 
                 const char* xdnd_file_url = "file:///home/whist/drag-drop/0/testtest.txt";
+                // const char* xdnd_file_url = "file://a";
 
                 XChangeProperty(display, requestor_window, selection_request_property, XA_text_uri_list,
                                 8, PropModeReplace, (unsigned char*)xdnd_file_url,
