@@ -27,7 +27,6 @@ const detectLeftRelease = (args: {
   v1: number
 }) => {
   const movementX = args.offsetX - previousOffset
-  console.log("d3", args.d3, "v0", args.v0, "v1", args.v1)
   return movementX === 0 && args.d3 < -150 && args.v0 > 500 && args.v1 > 500
 }
 
@@ -35,6 +34,12 @@ const detectVerticalScroll = () =>
   previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
 
 const navigateOnGesture = (e: WheelEvent) => {
+  const filter =
+    !detectVerticalScroll() && // Check that the user isn't scrolling vertically
+    !throttled // Ensure we don't fire multiple gesture events in a row
+
+  if (!filter) return
+
   previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
   previousXDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaX })
 
@@ -48,27 +53,19 @@ const navigateOnGesture = (e: WheelEvent) => {
   const v0 = (d1 - d0) / (t1 - t0) // X velocity at time t (most recent)
   const v1 = (d2 - d1) / (t2 - t1) // X velocity at time t - 1
 
-  const filter =
-    !detectVerticalScroll() && // Check that the user isn't scrolling vertically
-    !throttled // Ensure we don't fire multiple gesture events in a row
+  const leftGestureDetected = detectLeftRelease({
+    offsetX: e.offsetX,
+    d3,
+    v0,
+    v1,
+  })
 
-  const leftGestureDetected =
-    filter &&
-    detectLeftRelease({
-      offsetX: e.offsetX,
-      d3,
-      v0,
-      v1,
-    })
-
-  const rightGestureDetected =
-    filter &&
-    detectRightRelease({
-      offsetX: e.offsetX,
-      d3,
-      v0,
-      v1,
-    })
+  const rightGestureDetected = detectRightRelease({
+    offsetX: e.offsetX,
+    d3,
+    v0,
+    v1,
+  })
 
   if (leftGestureDetected)
     injectResourceIntoDOM(document, "js/overscrollLeft.js")
@@ -76,16 +73,17 @@ const navigateOnGesture = (e: WheelEvent) => {
     injectResourceIntoDOM(document, "js/overscrollRight.js")
 
   if (leftGestureDetected || rightGestureDetected) {
+    console.log("RELEASE DETECTED")
     throttled = true
 
     // Wait some time so the left/right arrow can display
-    setTimeout(() => {
-      chrome.runtime.sendMessage(<ContentScriptMessage>{
-        type: leftGestureDetected
-          ? ContentScriptMessageType.HISTORY_GO_BACK
-          : ContentScriptMessageType.HISTORY_GO_FORWARD,
-      })
-    }, 200)
+    // setTimeout(() => {
+    //   chrome.runtime.sendMessage(<ContentScriptMessage>{
+    //     type: leftGestureDetected
+    //       ? ContentScriptMessageType.HISTORY_GO_BACK
+    //       : ContentScriptMessageType.HISTORY_GO_FORWARD,
+    //   })
+    // }, 200)
 
     // Don't allow multiple gestures to send within the same 2s interval
     setTimeout(() => {
