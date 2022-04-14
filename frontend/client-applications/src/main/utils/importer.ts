@@ -18,18 +18,18 @@ const readNestedLevelDbDir = async (
 ): Promise<LocalStorageMap> => {
   try {
     const relevantFiles: string[] = []
-    let data: LocalStorageMap = {}
+    const data: LocalStorageMap = {}
 
     fs.readdirSync(dirPath, { withFileTypes: true }).forEach((dirent) => {
       void (async () => {
         if (dirent.isDirectory()) {
-          data = {
-            ...data,
-            ...(await readNestedLevelDbDir(
+          Object.assign(
+            data,
+            await readNestedLevelDbDir(
               path.join(dirPath, dirent.name),
               prefix === "" ? dirent.name : path.join(prefix, dirent.name)
-            )),
-          }
+            )
+          )
           return
         }
 
