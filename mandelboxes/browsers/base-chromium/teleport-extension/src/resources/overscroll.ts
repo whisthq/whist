@@ -74,6 +74,7 @@ const detectGesture = (e: WheelEvent) => {
 
   if (Math.abs(rollingDelta) < navigationThreshold) return
 
+  e.preventDefault()
   if (goBack) history.back()
   if (!goBack) history.forward()
 
@@ -91,5 +92,5 @@ const refreshArrow = () => {
   }
 }
 
-window.addEventListener("wheel", detectGesture)
+window.addEventListener("wheel", detectGesture, { passive: false })
 setInterval(refreshArrow, rollingLookbackPeriod)

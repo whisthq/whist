@@ -66,7 +66,7 @@ const drawArrow = (document: Document, direction: string) => {
   let element = document.createElement("div")
 
   element.style.width = "70px"
-  element.style.height = "160px"
+  element.style.height = "140px"
   element.style.background = "rgba(0, 0, 0, 0.7)"
   element.style.position = "fixed"
   element.style.top = "46%"
@@ -78,15 +78,15 @@ const drawArrow = (document: Document, direction: string) => {
 
   if (direction === "left") {
     element.style.left = "0px"
-    element.style.borderRadius = "0px 80px 80px 0px"
+    element.style.borderRadius = "0px 50% 50% 0px"
     element.innerHTML += escapeHTMLPolicy.createHTML(
-      '<svg style="position: relative; top: 40px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
+      '<svg style="position: relative; top: 35px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
     )
   } else {
     element.style.right = "0px"
-    element.style.borderRadius = "80px 0px 0px 80px"
+    element.style.borderRadius = "50% 0px 0px 50%"
     element.innerHTML += escapeHTMLPolicy.createHTML(
-      '<svg style="position: relative; top: 40px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
+      '<svg style="position: relative; top: 35px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
     )
   }
 
