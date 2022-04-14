@@ -69,7 +69,7 @@ const drawLeftArrow = (document: Document) => {
   element.style.borderRadius = "0px 80px 80px 0px"
   element.style.background = "rgba(0, 0, 0, 0.7)"
   element.style.position = "fixed"
-  element.style.top = "48%"
+  element.style.top = "47%"
   element.style.left = "0px"
   element.style.padding = "10px"
   element.style.zIndex = "99999999"
@@ -89,7 +89,8 @@ const drawLeftArrow = (document: Document) => {
   // Inject the HTMLElement into the DOM
   ;(document.body || document.documentElement).appendChild(element)
 
-  fadeIn(element, 2)
+  fadeIn(element, 3)
+  setTimeout(() => element.remove(), 2000)
 }
 
 const drawRightArrow = (document: Document) => {
@@ -101,7 +102,7 @@ const drawRightArrow = (document: Document) => {
   element.style.borderRadius = "80px 0px 0px 80px"
   element.style.background = "rgba(0, 0, 0, 0.7)"
   element.style.position = "fixed"
-  element.style.top = "48%"
+  element.style.top = "47%"
   element.style.right = "0px"
   element.style.padding = "10px"
   element.style.zIndex = "99999999"
@@ -121,7 +122,8 @@ const drawRightArrow = (document: Document) => {
   // Inject the HTMLElement into the DOM
   ;(document.body || document.documentElement).appendChild(element)
 
-  fadeIn(element, 2)
+  fadeIn(element, 3)
+  setTimeout(() => element.remove(), 2000)
 }
 
 export { createNotification, drawLeftArrow, drawRightArrow }
