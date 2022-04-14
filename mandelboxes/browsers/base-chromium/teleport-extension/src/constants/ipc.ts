@@ -1,6 +1,7 @@
 export enum ContentScriptMessageType {
   POINTER_LOCK = "POINTER_LOCK",
   NAVIGATE_HISTORY = "NAVIGATE_HISTORY",
+  DRAW_NAVIGATION_ARROW = "DRAW_NAVIGATION_ARROW",
 }
 
 export enum NativeHostMessageType {

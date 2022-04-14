@@ -3,6 +3,7 @@ import {
   ContentScriptMessage,
   ContentScriptMessageType,
 } from "@app/constants/ipc"
+import { runInActiveTab } from "@app/utils/chrome"
 import { throttle } from "@app/utils/listeners"
 
 // Try to cancel or undo a tab drag-out
@@ -73,16 +74,20 @@ const initHistoryHandler = () => {
   const handler = (msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.NAVIGATE_HISTORY) return
 
-    chrome.tabs.query(
-      { active: true, currentWindow: true },
-      (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0].id !== undefined) {
-          msg.value === "back"
-            ? chrome.tabs.goBack(tabs[0].id)
-            : chrome.tabs.goForward(tabs[0].id)
-        }
-      }
+    runInActiveTab((tabID: number) =>
+      chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
+        type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
+        value: msg.value,
+      })
     )
+
+    setTimeout(() => {
+      runInActiveTab((tabID: number) =>
+        msg.value === "back"
+          ? chrome.tabs.goBack(tabID)
+          : chrome.tabs.goForward(tabID)
+      )
+    }, 100)
   }
 
   chrome.runtime.onMessage.addListener(throttle(handler, 1000))

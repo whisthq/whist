@@ -32,7 +32,7 @@ const forwardGestureDetected = (args: {
 const detectVerticalScroll = () =>
   previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
 
-const navigateOnGesture = (e: WheelEvent) => {
+const detectGesture = (e: WheelEvent) => {
   previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
   previousXDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaX })
 
@@ -65,20 +65,24 @@ const navigateOnGesture = (e: WheelEvent) => {
   previousOffset = e.offsetX
   if (!(goBack || goForward)) return
 
-  if (goBack) injectResourceIntoDOM(document, "js/overscrollLeft.js")
-  if (goForward) injectResourceIntoDOM(document, "js/overscrollRight.js")
+  chrome.runtime.sendMessage(<ContentScriptMessage>{
+    type: ContentScriptMessageType.NAVIGATE_HISTORY,
+    value: goBack ? "back" : "forward",
+  })
+}
 
-  // Wait some time so the left/right arrow can display
-  setTimeout(() => {
-    chrome.runtime.sendMessage(<ContentScriptMessage>{
-      type: ContentScriptMessageType.NAVIGATE_HISTORY,
-      value: goBack ? "back" : "forward",
-    })
-  }, 100)
+const drawNavigationArrow = (msg: ContentScriptMessage) => {
+  if (msg.type !== ContentScriptMessageType.DRAW_NAVIGATION_ARROW) return
+
+  if (msg.value === "back")
+    injectResourceIntoDOM(document, "js/overscrollLeft.js")
+  if (msg.value === "forward")
+    injectResourceIntoDOM(document, "js/overscrollRight.js")
 }
 
 const initSwipeGestures = () => {
-  window.addEventListener("wheel", navigateOnGesture)
+  window.addEventListener("wheel", detectGesture)
+  chrome.runtime.onMessage.addListener(drawNavigationArrow)
 }
 
 export { initSwipeGestures }
