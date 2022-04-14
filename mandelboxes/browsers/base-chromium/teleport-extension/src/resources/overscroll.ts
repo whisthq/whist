@@ -21,6 +21,7 @@ const navigateOnGesture = (e: WheelEvent) => {
   previousYDeltas.add({ timestamp: Date.now(), delta: e.deltaY })
   previousXDeltas.add({ timestamp: Date.now(), delta: e.deltaX })
 
+  console.log(e.deltaX)
   console.log(previousXDeltas.get())
 
   const gestureDetected =
