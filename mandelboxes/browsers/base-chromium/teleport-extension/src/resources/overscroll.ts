@@ -6,21 +6,13 @@ const rollingDeltaThreshold = 10
 // If the rolling delta exceeds this amount (in absolute value), navigate
 const navigationThreshold = 400
 // How many seconds to look back when detecting gestures
-const rollingLookbackPeriod = 2
+const rollingLookbackPeriod = 1.5
 
 let previousOffset = 0
+let rollingDelta = 0
 let arrow: HTMLDivElement | undefined = undefined
 let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
-let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(20, [])
-
-const rollingDelta = (offsetX: number) => {
-  if (offsetX - previousOffset !== 0) return 0
-
-  return previousXDeltas.get().reduce((reduced, args) => {
-    return reduced + args.delta
-  }, 0)
-}
 
 const detectVerticalScroll = () =>
   previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
@@ -35,62 +27,67 @@ const removeArrow = () => {
 const detectGesture = (e: WheelEvent) => {
   // Keep track of the last 10 X and Y wheel deltas
   previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
-  previousXDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaX })
 
   // If the user is scrolling vertically, abort
-  if (detectVerticalScroll() || throttled) return
+  if (detectVerticalScroll() || throttled || previousOffset - e.offsetX !== 0) {
+    previousOffset = e.offsetX
+    return
+  }
 
   // Calculate how far the wheel has overscrolled horizontally in the last rollingLookbackPeriod seconds
-  const _rollingDelta = rollingDelta(e.offsetX)
-  const _rollingDeltaAbs = Math.abs(_rollingDelta)
-  previousOffset = e.offsetX
+  rollingDelta += e.offsetX
 
   // If the wheel hasn't moved much, abort and remove all arrow drawings
-  if (Math.abs(_rollingDelta) < rollingDeltaThreshold) {
+  if (Math.abs(rollingDelta) < rollingDeltaThreshold) {
+    rollingDelta = 0
     removeArrow()
     return
   }
 
   // The wheel has moved, detect which direction and draw the appropriate arrow
-  const goBack = _rollingDelta < 0
+  const goBack = rollingDelta < 0
 
   const amountToShift =
-    _rollingDeltaAbs >= navigationThreshold
+    Math.abs(rollingDelta) >= navigationThreshold
       ? "0px"
-      : `-${70 - (70 * _rollingDeltaAbs) / navigationThreshold}px`
+      : `-${70 - (70 * Math.abs(rollingDelta)) / navigationThreshold}px`
 
   if (arrow === undefined)
     arrow = drawArrow(document, goBack ? "left" : "right")
 
   arrow.style.opacity = Math.max(
-    _rollingDeltaAbs / navigationThreshold,
+    Math.abs(rollingDelta) / navigationThreshold,
     0.2
   ).toString()
 
-  console.log("Delta", _rollingDelta)
+  console.log("Delta", rollingDelta)
   console.log("Shifting", amountToShift)
   console.log(
     "opacity",
-    Math.max(_rollingDeltaAbs / navigationThreshold, 0.4).toString()
+    Math.max(Math.abs(rollingDelta) / navigationThreshold, 0.4).toString()
   )
 
   if (goBack) arrow.style.left = amountToShift
   if (!goBack) arrow.style.right = amountToShift
 
-  if (_rollingDeltaAbs < navigationThreshold) return
+  if (Math.abs(rollingDelta) < navigationThreshold) return
 
   if (goBack) history.back()
   if (!goBack) history.forward()
 
+  rollingDelta = 0
   throttled = true
   setTimeout(() => (throttled = false), 1000)
 }
 
 const refreshArrow = () => {
   const now = Date.now() / 1000
-  const mostRecentTime = previousXDeltas.get().at(-1)?.timestamp ?? 0
+  const mostRecentTime = previousYDeltas.get().at(-1)?.timestamp ?? 0
 
-  if (now - mostRecentTime > rollingLookbackPeriod) removeArrow()
+  if (now - mostRecentTime > rollingLookbackPeriod) {
+    rollingDelta = 0
+    removeArrow()
+  }
 }
 
 window.addEventListener("wheel", detectGesture)
