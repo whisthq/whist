@@ -22,7 +22,7 @@ const navigateOnGesture = (e: WheelEvent) => {
   previousXDeltas.add({ timestamp: Date.now(), delta: e.deltaX })
 
   console.log(e.deltaX)
-  console.log(previousXDeltas.get())
+  console.log(previousXDeltas.get().slice(-1).pop()?.delta)
 
   const gestureDetected =
     detectVerticalOverscroll(e) && // The user is overscrolling horizontally
