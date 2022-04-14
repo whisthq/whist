@@ -1,3 +1,3 @@
-import { drawLeftArrow } from "@app/utils/overlays"
+import { drawArrow } from "@app/utils/overlays"
 
-drawLeftArrow(document)
+drawArrow(document, "left")

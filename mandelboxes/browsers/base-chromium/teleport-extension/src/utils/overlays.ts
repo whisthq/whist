@@ -1,3 +1,10 @@
+// For security, some websites block injected HTML, so we use the TrustedHTML
+// API to bypass this.
+// For more info: https://developer.mozilla.org/en-US/docs/Web/API/TrustedHTML
+const escapeHTMLPolicy = (window as any).trustedTypes.createPolicy("policy", {
+  createHTML: (s: string) => s,
+})
+
 const fadeOut = (element: HTMLElement, speed = 1) => {
   var op = 1 // initial opacity
   var timer = setInterval(function () {
@@ -45,12 +52,6 @@ const createNotification = (document: Document, text: string) => {
   element.style.letterSpacing = "0.05em"
   element.style.lineHeight = "1rem"
 
-  // For security, some websites block injected HTML, so we use the TrustedHTML
-  // API to bypass this.
-  // For more info: https://developer.mozilla.org/en-US/docs/Web/API/TrustedHTML
-  const escapeHTMLPolicy = (window as any).trustedTypes.createPolicy("policy", {
-    createHTML: (s: string) => s.replace(/\>/g, "<"),
-  })
   element.innerHTML = escapeHTMLPolicy.createHTML(text)
 
   // Inject the HTMLElement into the DOM
@@ -60,7 +61,9 @@ const createNotification = (document: Document, text: string) => {
   setTimeout(() => fadeOut(element), 10000)
 }
 
-const drawLeftArrow = (document: Document) => {
+const drawArrow = (document: Document, direction: string) => {
+  if (!["left", "right"].includes(direction)) return
+
   // Create the notification HTMLElement
   let element = document.createElement("p")
 
@@ -69,23 +72,23 @@ const drawLeftArrow = (document: Document) => {
   element.style.borderRadius = "0px 80px 80px 0px"
   element.style.background = "rgba(0, 0, 0, 0.7)"
   element.style.position = "fixed"
-  element.style.top = "47%"
-  element.style.left = "0px"
+  element.style.top = "46%"
   element.style.padding = "10px"
   element.style.zIndex = "99999999"
   element.style.opacity = "0"
   element.style.color = "white"
 
-  // For security, some websites block injected HTML, so we use the TrustedHTML
-  // API to bypass this.
-  // For more info: https://developer.mozilla.org/en-US/docs/Web/API/TrustedHTML
-  const escapeHTMLPolicy = (window as any).trustedTypes.createPolicy("policy", {
-    createHTML: (s: string) => s,
-  })
-
-  element.innerHTML += escapeHTMLPolicy.createHTML(
-    '<svg style="position: relative; top: 40px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
-  )
+  if (direction === "left") {
+    element.style.left = "0px"
+    element.innerHTML += escapeHTMLPolicy.createHTML(
+      '<svg style="position: relative; top: 40px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
+    )
+  } else {
+    element.style.right = "70px"
+    element.innerHTML += escapeHTMLPolicy.createHTML(
+      '<svg style="position: relative; top: 40px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
+    )
+  }
 
   // Inject the HTMLElement into the DOM
   ;(document.body || document.documentElement).appendChild(element)
@@ -94,36 +97,4 @@ const drawLeftArrow = (document: Document) => {
   setTimeout(() => element.remove(), 2000)
 }
 
-const drawRightArrow = (document: Document) => {
-  // Create the notification HTMLElement
-  let element = document.createElement("p")
-
-  element.style.width = "70px"
-  element.style.height = "160px"
-  element.style.borderRadius = "80px 0px 0px 80px"
-  element.style.background = "rgba(0, 0, 0, 0.7)"
-  element.style.position = "fixed"
-  element.style.top = "47%"
-  element.style.right = "0px"
-  element.style.padding = "10px"
-  element.style.zIndex = "99999999"
-  element.style.opacity = "0"
-
-  // For security, some websites block injected HTML, so we use the TrustedHTML
-  // API to bypass this.
-  // For more info: https://developer.mozilla.org/en-US/docs/Web/API/TrustedHTML
-  const escapeHTMLPolicy = (window as any).trustedTypes.createPolicy("policy", {
-    createHTML: (s: string) => s,
-  })
-
-  element.innerHTML += escapeHTMLPolicy.createHTML(
-    '<svg style="position: relative; top: 40px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
-  )
-
-  // Inject the HTMLElement into the DOM(document.body || document.documentElement).appendChild(element)
-
-  fadeIn(element, 3)
-  setTimeout(() => element.remove(), 2000)
-}
-
-export { createNotification, drawLeftArrow, drawRightArrow }
+export { createNotification, drawArrow }
