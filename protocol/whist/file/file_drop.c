@@ -140,6 +140,8 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     static int drop_x = 0;
     static int drop_y = 0;
 
+    XClientMessageEvent m;
+
     if (drop_file) {
         // Try to wait for FUSE path to exist before initiating drop sequence
         WhistTimer fuse_ready_wait_timer;
@@ -155,8 +157,6 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
         // if (file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y) < 0) {
         //     return -1;
         // }
-
-        XClientMessageEvent m;
 
         // XDND 5 - Active X11 window will respond with XdndStatus
         //     this ClientMessage indicates whether active X11 window will accept the drop and what
@@ -190,6 +190,8 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
         memset(new_file_uri_position, 0, xdnd_file_url_len);
         safe_strncpy(new_file_uri_position, "file://", 8);
         safe_strncpy(new_file_uri_position + 7, fuse_path, strlen(fuse_path) + 1);
+
+        free(fuse_path);
 
         drop_x = drop_file->event_info.server_drop.x;
         drop_y = drop_file->event_info.server_drop.y;
@@ -295,8 +297,6 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
 
     // Just to make sure that the file drag event ends
     file_drag_update(false, 0, 0);
-
-    free(fuse_path);
 
     // TODO: update how we log this since we are dropping many files
     // LOG_INFO("XDND exchange for file ID %d complete", drop_file->id);

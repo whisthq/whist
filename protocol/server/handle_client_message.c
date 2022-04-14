@@ -49,7 +49,7 @@ static int handle_file_chunk_message(WhistClientMessage *wcmsg);
 static int handle_open_urls_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_frame_ack_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_file_upload_cancel_message(WhistServerState *, WhistClientMessage *wcmsg);
-static int handle_file_drag_update_message(WhistServerState *, WhistClientMessage *wcmsg);
+static int handle_content_drag_update_message(WhistServerState *, WhistClientMessage *wcmsg);
 
 /*
 ============================
@@ -384,6 +384,7 @@ static int handle_content_drag_update_message(whist_server_state * state, WhistC
             break;
         }
         case CONTENT_DRAG_COMPLETE: {
+            drop_file_into_active_window(NULL);
             break;
         }
         default: {
