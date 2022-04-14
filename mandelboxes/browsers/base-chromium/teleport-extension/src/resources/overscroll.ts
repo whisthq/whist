@@ -17,8 +17,17 @@ const detectLeftRelease = (args: {
   v1: number
 }) => {
   const movementX = args.offsetX - previousOffset
-  console.log("d3", args.d3, "v0", args.v0, "v1", args.v1)
-  return movementX === 0 && args.d3 > 150 && args.v0 > 500 && args.v1 > 500
+  return movementX === 0 && args.d3 > 150 && args.v0 < -500 && args.v1 < -500
+}
+
+const detectRightRelease = (args: {
+  offsetX: number
+  d3: number
+  v0: number
+  v1: number
+}) => {
+  const movementX = args.offsetX - previousOffset
+  return movementX === 0 && args.d3 < -150 && args.v0 > 500 && args.v1 > 500
 }
 
 const detectHorizontalScroll = () =>
@@ -51,22 +60,32 @@ const navigateOnGesture = (e: WheelEvent) => {
       v1,
     })
 
-  if (leftGestureDetected) drawLeftArrow(document)
+  const rightGestureDetected =
+    filter &&
+    detectRightRelease({
+      offsetX: e.offsetX,
+      d3,
+      v0,
+      v1,
+    })
 
-  if (leftGestureDetected) {
+  if (leftGestureDetected) drawLeftArrow(document)
+  if (rightGestureDetected) drawRightArrow(document)
+
+  if (leftGestureDetected || rightGestureDetected) {
     throttled = true
 
     setTimeout(() => {
-      // chrome.runtime.sendMessage(<ContentScriptMessage>{
-      //   type: leftGestureDetected
-      //     ? ContentScriptMessageType.HISTORY_GO_BACK
-      //     : ContentScriptMessageType.HISTORY_GO_FORWARD,
-      // })
+      chrome.runtime.sendMessage(<ContentScriptMessage>{
+        type: leftGestureDetected
+          ? ContentScriptMessageType.HISTORY_GO_BACK
+          : ContentScriptMessageType.HISTORY_GO_FORWARD,
+      })
     }, 1000)
 
     setTimeout(() => {
       throttled = false
-    }, 2000)
+    }, 2500)
   }
 
   previousOffset = e.offsetX
