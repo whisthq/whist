@@ -51,7 +51,7 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
   if [ "$( jq -rc 'has("user_language")' < $WHIST_JSON_FILE )" == "true"  ]; then
     USER_LANGUAGE="$(jq -rc '.user_language' < $WHIST_JSON_FILE)"
-    USER_LANGUAGE="$(python3 match_language_name.py $USER_LANGUAGE)"
+    USER_LANGUAGE="$(python3 /usr/share/whist/match_language_name.py $USER_LANGUAGE)"
   fi
   if [ "$( jq -rc 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
@@ -158,6 +158,8 @@ export USER_LOCALE=$USER_LOCALE
 export USER_LANGUAGE=$USER_LANGUAGE
 
 printenv > /var/log/whist/vars1.log
+echo $USER_LOCALE
+echo $USER_LANGUAGE
 
 exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,USER_LANGUAGE -c \
   'DISPLAY=:10 \

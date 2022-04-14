@@ -315,6 +315,7 @@ RUN \
     # Set up script to run a program as user `whist` (make sure to do
     # this after setting /usr/share/whist to 600)
     COPY --chmod=550 utils/run-as-whist-user.sh $HYDRAULIC_ROOT/usr/share/whist/run-as-whist-user.sh
+    COPY utils/match_language_name.py $HYDRAULIC_ROOT/usr/share/whist/match_language_name.py
 
 #########################
 # Input
