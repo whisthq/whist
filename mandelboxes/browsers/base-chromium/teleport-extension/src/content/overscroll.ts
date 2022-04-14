@@ -27,10 +27,11 @@ const detectLeftRelease = (args: {
   v1: number
 }) => {
   const movementX = args.offsetX - previousOffset
+  console.log("d3", args.d3, "v0", args.v0, "v1", args.v1)
   return movementX === 0 && args.d3 < -150 && args.v0 > 500 && args.v1 > 500
 }
 
-const detectHorizontalScroll = () =>
+const detectVerticalScroll = () =>
   previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
 
 const navigateOnGesture = (e: WheelEvent) => {
@@ -48,7 +49,7 @@ const navigateOnGesture = (e: WheelEvent) => {
   const v1 = (d2 - d1) / (t2 - t1) // X velocity at time t - 1
 
   const filter =
-    !detectHorizontalScroll() && // Check that the user isn't scrolling vertically
+    !detectVerticalScroll() && // Check that the user isn't scrolling vertically
     !throttled // Ensure we don't fire multiple gesture events in a row
 
   const leftGestureDetected =
