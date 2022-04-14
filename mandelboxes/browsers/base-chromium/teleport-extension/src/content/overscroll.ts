@@ -35,11 +35,7 @@ const detectVerticalScroll = () =>
   previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
 
 const navigateOnGesture = (e: WheelEvent) => {
-  const filter =
-    !detectVerticalScroll() && // Check that the user isn't scrolling vertically
-    !throttled // Ensure we don't fire multiple gesture events in a row
-
-  if (!filter) return
+  if (detectVerticalScroll() || throttled) return
 
   previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
   previousXDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaX })
@@ -75,7 +71,7 @@ const navigateOnGesture = (e: WheelEvent) => {
 
   if (leftGestureDetected || rightGestureDetected) {
     console.log("RELEASE DETECTED")
-    throttled = true
+    // throttled = true
 
     // Wait some time so the left/right arrow can display
     // setTimeout(() => {
@@ -87,9 +83,9 @@ const navigateOnGesture = (e: WheelEvent) => {
     // }, 200)
 
     // Don't allow multiple gestures to send within the same 2s interval
-    setTimeout(() => {
-      throttled = false
-    }, 2000)
+    // setTimeout(() => {
+    //   throttled = false
+    // }, 2000)
   }
 
   previousOffset = e.offsetX
