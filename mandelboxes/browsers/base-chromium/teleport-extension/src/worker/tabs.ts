@@ -80,6 +80,8 @@ const initGestureThrottler = () => {
         ? chrome.tabs.goBack(tabID)
         : chrome.tabs.goForward(tabID)
     )
+
+    return true
   }
 
   chrome.runtime.onMessage.addListener(throttle(handler, 1000))
