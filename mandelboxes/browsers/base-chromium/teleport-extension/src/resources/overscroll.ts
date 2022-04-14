@@ -13,6 +13,7 @@ let rollingDelta = 0
 let arrow: HTMLDivElement | undefined = undefined
 let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
+let mostRecentX = 0
 
 const detectVerticalScroll = () =>
   previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
@@ -35,6 +36,7 @@ const detectGesture = (e: WheelEvent) => {
   }
 
   // Calculate how far the wheel has overscrolled horizontally in the last rollingLookbackPeriod seconds
+  mostRecentX = Date.now() / 1000
   rollingDelta += e.offsetX
 
   // If the wheel hasn't moved much, abort and remove all arrow drawings
@@ -82,9 +84,8 @@ const detectGesture = (e: WheelEvent) => {
 
 const refreshArrow = () => {
   const now = Date.now() / 1000
-  const mostRecentTime = previousYDeltas.get().at(-1)?.timestamp ?? 0
 
-  if (now - mostRecentTime > rollingLookbackPeriod) {
+  if (now - mostRecentX > rollingLookbackPeriod) {
     rollingDelta = 0
     removeArrow()
   }
