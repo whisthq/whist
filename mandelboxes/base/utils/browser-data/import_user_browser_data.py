@@ -492,7 +492,10 @@ if __name__ == "__main__":
                 if "local_storage" in browser_data and len(browser_data["local_storage"]) > 0:
                     create_local_storage_files(browser, browser_data["local_storage"])
 
-                if "extension_settings" in browser_data and len(browser_data["extension_settings"]) > 0:
+                if (
+                    "extension_settings" in browser_data
+                    and len(browser_data["extension_settings"]) > 0
+                ):
                     create_extension_settings_files(browser, browser_data["extension_settings"])
 
                 if "extension_state" in browser_data and len(browser_data["extension_state"]) > 0:
