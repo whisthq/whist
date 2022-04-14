@@ -17,5 +17,11 @@ esac
 # # Exit on subcommand errors
 set -Eeuo pipefail
 
+# It seems like pulseaudio doesn't create the required `pulse` directory within 
+# the XDG_CONFIG_HOME tree by itself when the directory doesn't exist, so we 
+# create it ourselves.
+# See: https://bugzilla.redhat.com/show_bug.cgi?id=981840
+mkdir /home/whist/.config/pulse
+
 # Launch PulseAudio
-/usr/bin/pulseaudio --system --daemonize=no --exit-idle-time=-1 --disallow-exit
+/usr/bin/pulseaudio --daemonize=no --exit-idle-time=-1 --disallow-exit
