@@ -6,7 +6,7 @@ const rollingDeltaThreshold = 10
 // If the rolling delta exceeds this amount (in absolute value), navigate
 const navigationThreshold = 400
 // How many seconds to look back when detecting gestures
-const rollingLookbackPeriod = 5
+const rollingLookbackPeriod = 2
 
 let previousOffset = 0
 let arrow: HTMLDivElement | undefined = undefined
@@ -19,7 +19,6 @@ const rollingDelta = (offsetX: number) => {
 
   const now = Date.now() / 1000
   return previousXDeltas.get().reduce((reduced, args) => {
-    if (now - args.timestamp > rollingLookbackPeriod) return reduced
     return reduced + args.delta
   }, 0)
 }
