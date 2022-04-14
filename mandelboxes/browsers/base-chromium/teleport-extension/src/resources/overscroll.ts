@@ -17,6 +17,7 @@ const detectLeftRelease = (args: {
   v1: number
 }) => {
   const movementX = args.offsetX - previousOffset
+  console.log("d3", args.d3, "v0", args.v0, "v1", args.v1)
   return movementX === 0 && args.d3 > 150 && args.v0 > 500 && args.v1 > 500
 }
 
@@ -27,19 +28,19 @@ const navigateOnGesture = (e: WheelEvent) => {
   previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
   previousXDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaX })
 
-  const d0 = previousXDeltas.get().at(-1)?.delta ?? 0
-  const d1 = previousXDeltas.get().at(-2)?.delta ?? 0
-  const d2 = previousXDeltas.get().at(-3)?.delta ?? 0
-  const d3 = previousXDeltas.get().at(-4)?.delta ?? 0
-  const t0 = previousXDeltas.get().at(-1)?.timestamp ?? 1
-  const t1 = previousXDeltas.get().at(-2)?.timestamp ?? 1
-  const t2 = previousXDeltas.get().at(-3)?.timestamp ?? 1
-  const v0 = (d1 - d0) / (t1 - t0)
-  const v1 = (d2 - d1) / (t2 - t1)
+  const d0 = previousXDeltas.get().at(-1)?.delta ?? 0 // X displacement at time t (most recent)
+  const d1 = previousXDeltas.get().at(-2)?.delta ?? 0 // X displacement at time t-1
+  const d2 = previousXDeltas.get().at(-3)?.delta ?? 0 // X displacement at time t-2
+  const d3 = previousXDeltas.get().at(-4)?.delta ?? 0 // X displament at time t-3
+  const t0 = previousXDeltas.get().at(-1)?.timestamp ?? 1 // t, in sec since epoch
+  const t1 = previousXDeltas.get().at(-2)?.timestamp ?? 1 // t - 1, in sec since epoch
+  const t2 = previousXDeltas.get().at(-3)?.timestamp ?? 1 // t - 2, in sec since epoch
+  const v0 = (d1 - d0) / (t1 - t0) // X velocity at time t (most recent)
+  const v1 = (d2 - d1) / (t2 - t1) // X velocity at time t - 1
 
   const filter =
-    !detectHorizontalScroll() && // The user isn't scrolling vertically
-    !throttled // Ensures we don't fire multiple gesture events in a row
+    !detectHorizontalScroll() && // Check that the user isn't scrolling vertically
+    !throttled // Ensure we don't fire multiple gesture events in a row
 
   const leftGestureDetected =
     filter &&
