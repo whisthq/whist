@@ -62,8 +62,6 @@ const createNotification = (document: Document, text: string) => {
 }
 
 const drawArrow = (document: Document, direction: string) => {
-  if (!["left", "right"].includes(direction)) return
-
   // Create the notification HTMLElement
   let element = document.createElement("div")
 
@@ -95,8 +93,7 @@ const drawArrow = (document: Document, direction: string) => {
   // Inject the HTMLElement into the DOM
   ;(document.body || document.documentElement).appendChild(element)
 
-  fadeIn(element, 3)
-  setTimeout(() => element.remove(), 1000)
+  return element
 }
 
 export { createNotification, drawArrow }
