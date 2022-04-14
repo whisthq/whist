@@ -6,7 +6,7 @@ const cyclingArray = <T>(limit: number, array: Array<T>) => {
       array.push(value)
       return fluent
     },
-    getAll: () => array,
+    get: () => array,
   }
   return fluent
 }

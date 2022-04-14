@@ -10,18 +10,18 @@ let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 
-console.log("inside resources")
-
 const detectVerticalOverscroll = (e: WheelEvent) =>
   e.offsetX - previousOffset === 0 &&
-  Math.abs(previousXDeltas.getAll().slice(-1).pop()?.delta ?? 0) > 100
+  Math.abs(previousXDeltas.get().slice(-1).pop()?.delta ?? 0) > 100
 
 const detectHorizontalScroll = () =>
-  previousYDeltas.getAll().some((args) => Math.abs(args.delta) > 10)
+  previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
 
 const navigateOnGesture = (e: WheelEvent) => {
   previousYDeltas.add({ timestamp: Date.now(), delta: e.deltaY })
   previousXDeltas.add({ timestamp: Date.now(), delta: e.deltaX })
+
+  console.log(previousXDeltas.get())
 
   const gestureDetected =
     detectVerticalOverscroll(e) && // The user is overscrolling horizontally
