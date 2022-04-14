@@ -42,7 +42,6 @@ const detectGesture = (e: WheelEvent) => {
   const _rollingDelta = rollingDelta(e.offsetX)
   const _rollingDeltaAbs = Math.abs(_rollingDelta)
   previousOffset = e.offsetX
-  console.log(_rollingDelta)
 
   // If the wheel hasn't moved much, abort and remove all arrow drawings
   if (Math.abs(_rollingDelta) < rollingDeltaThreshold) {
@@ -69,6 +68,12 @@ const detectGesture = (e: WheelEvent) => {
     0.2
   ).toString()
 
+  console.log("Shifting", amountToShift)
+  console.log(
+    "opacity",
+    Math.max(_rollingDeltaAbs / navigationThreshold, 0.2).toString()
+  )
+
   if (goBack) arrow.style.left = amountToShift
   if (!goBack) arrow.style.right = amountToShift
 
@@ -77,3 +82,4 @@ const detectGesture = (e: WheelEvent) => {
 }
 
 window.addEventListener("wheel", detectGesture)
+setInterval(detectGesture, rollingLookbackPeriod)
