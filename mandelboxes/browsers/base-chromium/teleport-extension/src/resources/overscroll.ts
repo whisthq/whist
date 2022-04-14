@@ -1,4 +1,9 @@
 import { drawArrow } from "@app/utils/overlays"
+import {
+  ContentScriptMessage,
+  ContentScriptMessageType,
+} from "@app/constants/ipc"
+import { EXTENSION_ID } from "@app/constants/app"
 import { cyclingArray } from "@app/utils/arrays"
 
 // If the rolling delta exceeds this amount (in absolute value), display the arrow
@@ -11,7 +16,6 @@ const rollingLookbackPeriod = 1.5
 let previousOffset = 0
 let rollingDelta = 0
 let arrow: HTMLDivElement | undefined = undefined
-let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let mostRecentX = 0
 
@@ -30,7 +34,7 @@ const detectGesture = (e: WheelEvent) => {
   previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
 
   // If the user is scrolling vertically, abort
-  if (detectVerticalScroll() || throttled || previousOffset - e.offsetX !== 0) {
+  if (detectVerticalScroll() || previousOffset - e.offsetX !== 0) {
     previousOffset = e.offsetX
     return
   }
@@ -62,25 +66,17 @@ const detectGesture = (e: WheelEvent) => {
     0.2
   ).toString()
 
-  console.log("Delta", rollingDelta)
-  console.log("Shifting", amountToShift)
-  console.log(
-    "opacity",
-    Math.max(Math.abs(rollingDelta) / navigationThreshold, 0.4).toString()
-  )
-
   if (goBack) arrow.style.left = amountToShift
   if (!goBack) arrow.style.right = amountToShift
 
   if (Math.abs(rollingDelta) < navigationThreshold) return
 
-  e.preventDefault()
-  if (goBack) history.back()
-  if (!goBack) history.forward()
+  chrome.runtime.sendMessage(EXTENSION_ID, <ContentScriptMessage>{
+    type: ContentScriptMessageType.GESTURE_DETECTED,
+    value: goBack ? "back" : "forward",
+  })
 
   rollingDelta = 0
-  throttled = true
-  setTimeout(() => (throttled = false), 1000)
 }
 
 const refreshArrow = () => {
@@ -92,5 +88,7 @@ const refreshArrow = () => {
   }
 }
 
-window.addEventListener("wheel", detectGesture, { passive: false })
+// Fires whenever the wheel moves
+window.addEventListener("wheel", detectGesture)
+// Fires every rollingLookbackPeriod seconds to see if the wheel is still moving
 setInterval(refreshArrow, rollingLookbackPeriod)

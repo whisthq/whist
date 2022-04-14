@@ -70,24 +70,15 @@ const initActivateTabHandler = (nativeHostPort: chrome.runtime.Port) => {
   })
 }
 
-const initHistoryHandler = () => {
+const initGestureThrottler = () => {
   const handler = (msg: ContentScriptMessage) => {
-    if (msg.type !== ContentScriptMessageType.NAVIGATE_HISTORY) return
+    if (msg.type !== ContentScriptMessageType.GESTURE_DETECTED) return
 
     runInActiveTab((tabID: number) =>
-      chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
-        type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
-        value: msg.value,
-      })
+      msg.value === "back"
+        ? chrome.tabs.goBack(tabID)
+        : chrome.tabs.goForward(tabID)
     )
-
-    setTimeout(() => {
-      runInActiveTab((tabID: number) =>
-        msg.value === "back"
-          ? chrome.tabs.goBack(tabID)
-          : chrome.tabs.goForward(tabID)
-      )
-    }, 100)
   }
 
   chrome.runtime.onMessage.addListener(throttle(handler, 1000))
@@ -97,5 +88,5 @@ export {
   initTabDetachSuppressor,
   initCreateNewTabHandler,
   initActivateTabHandler,
-  initHistoryHandler,
+  initGestureThrottler,
 }
