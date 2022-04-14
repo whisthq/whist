@@ -81,5 +81,15 @@ const detectGesture = (e: WheelEvent) => {
   if (_rollingDeltaAbs >= navigationThreshold && !goBack) history.forward()
 }
 
+const refreshArrow = () => {
+  const now = Date.now() / 1000
+  const mostRecentTime = previousXDeltas.get().at(-1)?.timestamp ?? 0
+
+  if (now - mostRecentTime > rollingLookbackPeriod && arrow !== undefined) {
+    arrow.remove()
+    arrow = undefined
+  }
+}
+
 window.addEventListener("wheel", detectGesture)
-setInterval(detectGesture, rollingLookbackPeriod)
+setInterval(refreshArrow, rollingLookbackPeriod)
