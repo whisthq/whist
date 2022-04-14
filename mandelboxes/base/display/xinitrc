@@ -62,7 +62,8 @@ echo "xsettingsd started as PID: $xsettingsd_pid"
 
 # start ibus daemon 
 $RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS /home/whist/run_ibus.sh"
-echo "ibus started at address $($RUN_AS_WHIST 'ibus address')"
+ibus_address=$($RUN_AS_WHIST "ibus address")
+echo "ibus started at address: $ibus_address"
 
 # Let everyone know that xinit is initialized
 echo "Writing xinitrc PID to /usr/share/whist/xinit-pid to complete whist-display.service initialization..."
