@@ -627,7 +627,10 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		mandelboxRequest.CommitHash = string(imageResult[0].ClientSHA)
 	}
 
-	// Start looking for instances
+	// This is the "main" loop that does all the work and tries to find an instance for a user. first, it will iterate
+	// over the list of regions provided on the request, and will query the database on each to return the list of
+	// instances with capacity on the current region. Once it gets the instances, it will iterate over them and try
+	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
 	for _, region := range allowedRegions {
 		logger.Infof("Trying to find instance for user %v in region %v, with commit hash %v. (client reported email %v, this value might not be accurate and is untrusted)",
 			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail)
@@ -642,36 +645,52 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			continue
 		}
 
-		assignedInstance = subscriptions.Instance{
-			ID:                string(instanceResult[0].ID),
-			IPAddress:         string(instanceResult[0].IPAddress),
-			Provider:          string(instanceResult[0].Provider),
-			Region:            string(instanceResult[0].Region),
-			ImageID:           string(instanceResult[0].ImageID),
-			ClientSHA:         string(instanceResult[0].ClientSHA),
-			Type:              string(instanceResult[0].Type),
-			RemainingCapacity: int64(instanceResult[0].RemainingCapacity),
-			Status:            string(instanceResult[0].Status),
-			CreatedAt:         instanceResult[0].CreatedAt,
-			UpdatedAt:         instanceResult[0].UpdatedAt,
+		var instanceFound bool
+
+		// Iterate over available instances, try to find one with a matching commit hash
+		for i := range instanceResult {
+			assignedInstance = subscriptions.Instance{
+				ID:                string(instanceResult[i].ID),
+				IPAddress:         string(instanceResult[i].IPAddress),
+				Provider:          string(instanceResult[i].Provider),
+				Region:            string(instanceResult[i].Region),
+				ImageID:           string(instanceResult[i].ImageID),
+				ClientSHA:         string(instanceResult[i].ClientSHA),
+				Type:              string(instanceResult[i].Type),
+				RemainingCapacity: int64(instanceResult[i].RemainingCapacity),
+				Status:            string(instanceResult[i].Status),
+				CreatedAt:         instanceResult[i].CreatedAt,
+				UpdatedAt:         instanceResult[i].UpdatedAt,
+			}
+
+			if assignedInstance.ClientSHA == mandelboxRequest.CommitHash {
+				logger.Infof("Found instance %v for user %v with commit hash %v.", assignedInstance.ID, mandelboxRequest.UserEmail, assignedInstance.ClientSHA)
+				instanceFound = true
+				break
+			}
 		}
 
-		if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
-			err := utils.MakeError("found instance with capacity but it has a different commit hash %v that frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
-			mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
-				Error: COMMIT_HASH_MISMATCH,
-			}, err)
-			return err
+		// Break of outer loop if instance was found. If no instance with
+		// matching commit hash was found, move on to the next region.
+		if instanceFound {
+			break
 		}
-
-		logger.Infof("Found instance %v for user %v in %v", assignedInstance.ID, unsafeEmail, region)
-		break
 	}
 
+	// No instances with capacity were found
 	if assignedInstance == (subscriptions.Instance{}) {
 		err := utils.MakeError("did not find an instance with capacity for user %v and commit hash %v.", mandelboxRequest.UserEmail, mandelboxRequest.CommitHash)
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: NO_INSTANCE_AVAILABLE,
+		}, err)
+		return err
+	}
+
+	// There are instances with capacity available, but none of them with the desired commit hash
+	if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
+		err := utils.MakeError("found instance with capacity but it has a different commit hash %v that frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+			Error: COMMIT_HASH_MISMATCH,
 		}, err)
 		return err
 	}
