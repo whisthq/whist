@@ -16,7 +16,8 @@ esac
 set -Eeuo pipefail
 
 monitor() {
-  inotifywait -q -m -r -e create "$1" | while read DIRECTORY EVENT FILE; do
+  # Exclude .service files, since we're not allowed to watch those
+  inotifywait -q -m -r -e create -exclude '*.service*' "$1" | while read DIRECTORY EVENT FILE; do
     case $EVENT in
       CREATE*)
         # Get lowercase version of filename
