@@ -9,6 +9,8 @@ let previousOffset = 0
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 
+let deltaSum = 0
+
 const backGestureDetected = (args: {
   offsetX: number
   d3: number
@@ -35,6 +37,9 @@ const detectVerticalScroll = () =>
 const detectGesture = (e: WheelEvent) => {
   previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
   previousXDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaX })
+
+  deltaSum += e.deltaX
+  console.log("Total delta", deltaSum, "Delta", e.deltaX)
 
   if (detectVerticalScroll()) return
 
@@ -65,10 +70,10 @@ const detectGesture = (e: WheelEvent) => {
   previousOffset = e.offsetX
   if (!(goBack || goForward)) return
 
-  chrome.runtime.sendMessage(<ContentScriptMessage>{
-    type: ContentScriptMessageType.NAVIGATE_HISTORY,
-    value: goBack ? "back" : "forward",
-  })
+  // chrome.runtime.sendMessage(<ContentScriptMessage>{
+  //   type: ContentScriptMessageType.NAVIGATE_HISTORY,
+  //   value: goBack ? "back" : "forward",
+  // })
 }
 
 const drawNavigationArrow = (msg: ContentScriptMessage) => {
