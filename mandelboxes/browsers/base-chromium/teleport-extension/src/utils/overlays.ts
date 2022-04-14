@@ -65,7 +65,7 @@ const drawArrow = (document: Document, direction: string) => {
   if (!["left", "right"].includes(direction)) return
 
   // Create the notification HTMLElement
-  let element = document.createElement("p")
+  let element = document.createElement("div")
 
   element.style.width = "70px"
   element.style.height = "160px"
@@ -76,6 +76,7 @@ const drawArrow = (document: Document, direction: string) => {
   element.style.zIndex = "99999999"
   element.style.opacity = "0"
   element.style.color = "white"
+  element.style.fontFamily = "Helvetica"
 
   if (direction === "left") {
     element.style.left = "0px"
