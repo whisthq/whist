@@ -41,7 +41,7 @@ const detectGesture = (e: WheelEvent) => {
   // Calculate how far the wheel has overscrolled horizontally in the last rollingLookbackPeriod seconds
   const _rollingDelta = rollingDelta(e.offsetX)
   const _rollingDeltaAbs = Math.abs(_rollingDelta)
-
+  previousOffset = e.offsetX
   console.log(_rollingDelta)
 
   // If the wheel hasn't moved much, abort and remove all arrow drawings
@@ -64,13 +64,16 @@ const detectGesture = (e: WheelEvent) => {
   if (arrow === undefined)
     arrow = drawArrow(document, goBack ? "left" : "right")
 
-  arrow.style.opacity = (_rollingDeltaAbs / navigationThreshold).toString()
+  arrow.style.opacity = Math.max(
+    _rollingDeltaAbs / navigationThreshold,
+    0.2
+  ).toString()
 
-  if (goBack) {
-    arrow.style.left = amountToShift
-  } else {
-    arrow.style.right = amountToShift
-  }
+  if (goBack) arrow.style.left = amountToShift
+  if (!goBack) arrow.style.right = amountToShift
+
+  if (_rollingDeltaAbs >= navigationThreshold && goBack) history.back()
+  if (_rollingDeltaAbs >= navigationThreshold && !goBack) history.forward()
 }
 
 window.addEventListener("wheel", detectGesture)
