@@ -2,6 +2,7 @@ package scaling_algorithms
 
 import (
 	"context"
+	"net"
 	"time"
 
 	"github.com/google/uuid"
@@ -613,7 +614,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// This condition is to accomodate the worflow for developers of client_apps
 	// to test their changes without needing to update the development database with
 	// commit_hashes on their local machines.
-	if metadata.IsLocalEnv() && mandelboxRequest.CommitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {
+	if metadata.IsLocalEnv() || mandelboxRequest.CommitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {
 		// Query for the latest image id
 		imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
 		if err != nil {
@@ -737,9 +738,16 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	logger.Infof("Updated %v rows in database.", affectedRows)
 
+	// Parse IP address. The database uses the CIDR notation (192.0.2.0/24)
+	// so we need to extract the address and send it to the frontend.
+	ip, _, err := net.ParseCIDR(assignedInstance.IPAddress)
+	if err != nil {
+		return utils.MakeError("failed to parse IP address %v. Err: %v", assignedInstance.IPAddress, err)
+	}
+
 	// Return result to assign request
 	mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
-		IP:          assignedInstance.IPAddress,
+		IP:          ip.String(),
 		MandelboxID: types.MandelboxID(mandelboxID),
 	}, nil)
 
