@@ -306,6 +306,7 @@ reset_file_drop_statics:
     if (file_uri_list) {
         free(file_uri_list);
     }
+    file_uri_list = NULL;
     file_uri_list_strlen = 0;
     drop_x = 0;
     drop_y = 0;
