@@ -37,7 +37,7 @@ const detectGesture = (e: WheelEvent) => {
 
   // Calculate how far the wheel has overscrolled horizontally in the last rollingLookbackPeriod seconds
   mostRecentX = Date.now() / 1000
-  rollingDelta += e.offsetX
+  rollingDelta += e.deltaX
 
   // If the wheel hasn't moved much, abort and remove all arrow drawings
   if (Math.abs(rollingDelta) < rollingDeltaThreshold) {
