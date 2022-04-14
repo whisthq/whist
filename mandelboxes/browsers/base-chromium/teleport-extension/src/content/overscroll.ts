@@ -17,7 +17,6 @@ const backGestureDetected = (args: {
   v1: number
 }) => {
   const movementX = args.offsetX - previousOffset
-  console.log("d3", args.d3, "v0", args.v0, "v1", args.v1)
   return movementX === 0 && args.d3 < -150 && args.v0 > 500 && args.v1 > 500
 }
 
@@ -64,34 +63,27 @@ const navigateOnGesture = (e: WheelEvent) => {
     v1,
   })
 
-  if (goBack) {
-    console.log("GO BACK")
-    injectResourceIntoDOM(document, "js/overscrollLeft.js")
-  }
-  if (goForward) {
-    console.log("GO FORWARD")
-    injectResourceIntoDOM(document, "js/overscrollRight.js")
-  }
-
-  if (goBack || goForward) {
-    throttled = true
-
-    // Wait some time so the left/right arrow can display
-    setTimeout(() => {
-      chrome.runtime.sendMessage(<ContentScriptMessage>{
-        type: goBack
-          ? ContentScriptMessageType.HISTORY_GO_BACK
-          : ContentScriptMessageType.HISTORY_GO_FORWARD,
-      })
-    }, 100)
-
-    // Don't allow multiple gestures to send within the same 2s interval
-    setTimeout(() => {
-      throttled = false
-    }, 1000)
-  }
-
   previousOffset = e.offsetX
+  if (!(goBack || goForward)) return
+
+  throttled = true
+
+  if (goBack) injectResourceIntoDOM(document, "js/overscrollLeft.js")
+  if (goForward) injectResourceIntoDOM(document, "js/overscrollRight.js")
+
+  // Wait some time so the left/right arrow can display
+  setTimeout(() => {
+    chrome.runtime.sendMessage(<ContentScriptMessage>{
+      type: goBack
+        ? ContentScriptMessageType.HISTORY_GO_BACK
+        : ContentScriptMessageType.HISTORY_GO_FORWARD,
+    })
+  }, 100)
+
+  // Don't allow multiple gestures to send within the same 2s interval
+  setTimeout(() => {
+    throttled = false
+  }, 1000)
 }
 
 const initOverscroll = () => {
