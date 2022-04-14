@@ -74,6 +74,7 @@ const drawLeftArrow = (document: Document) => {
   element.style.padding = "10px"
   element.style.zIndex = "99999999"
   element.style.opacity = "0"
+  element.style.color = "white"
 
   // For security, some websites block injected HTML, so we use the TrustedHTML
   // API to bypass this.
@@ -83,7 +84,7 @@ const drawLeftArrow = (document: Document) => {
   })
 
   element.innerHTML += escapeHTMLPolicy.createHTML(
-    '<svg style="position: relative; top: 40px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
+    '<svg style="position: relative; top: 40px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
   )
 
   // Inject the HTMLElement into the DOM
@@ -116,11 +117,10 @@ const drawRightArrow = (document: Document) => {
   })
 
   element.innerHTML += escapeHTMLPolicy.createHTML(
-    '<svg style="position: relative; top: 40px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
+    '<svg style="position: relative; top: 40px; color: white;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
   )
 
-  // Inject the HTMLElement into the DOM
-  ;(document.body || document.documentElement).appendChild(element)
+  // Inject the HTMLElement into the DOM(document.body || document.documentElement).appendChild(element)
 
   fadeIn(element, 3)
   setTimeout(() => element.remove(), 2000)

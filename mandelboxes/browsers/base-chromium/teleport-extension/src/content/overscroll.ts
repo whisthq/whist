@@ -77,14 +77,16 @@ const navigateOnGesture = (e: WheelEvent) => {
   if (leftGestureDetected || rightGestureDetected) {
     throttled = true
 
+    // Wait some time so the left/right arrow can display
     setTimeout(() => {
-      chrome.runtime.sendMessage(chrome.runtime.id, <ContentScriptMessage>{
+      chrome.runtime.sendMessage(<ContentScriptMessage>{
         type: leftGestureDetected
           ? ContentScriptMessageType.HISTORY_GO_BACK
           : ContentScriptMessageType.HISTORY_GO_FORWARD,
       })
-    }, 500)
+    }, 200)
 
+    // Don't allow multiple gestures to send within the same 2s interval
     setTimeout(() => {
       throttled = false
     }, 2000)
