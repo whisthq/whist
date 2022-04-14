@@ -65,21 +65,27 @@ const readNestedLevelDbDir = async (
   }
 }
 
-const getLocalStorageFromFiles = (browser: InstalledBrowser): string => {
+const getLocalStorageFromFiles = async (
+  browser: InstalledBrowser
+): Promise<string> => {
   const localStorageDir = expandPaths(getLocalStorageDir(browser))
-  const data = readNestedLevelDbDir(localStorageDir, "")
+  const data = await readNestedLevelDbDir(localStorageDir, "")
   return JSON.stringify(data)
 }
 
-const getExtensionStateFromFiles = (browser: InstalledBrowser): string => {
+const getExtensionStateFromFiles = async (
+  browser: InstalledBrowser
+): Promise<string> => {
   const extensionStateDir = expandPaths(getExtensionStateDir(browser))
-  const data = readNestedLevelDbDir(extensionStateDir, "")
+  const data = await readNestedLevelDbDir(extensionStateDir, "")
   return JSON.stringify(data)
 }
 
-const getExtensionSettingsFromFiles = (browser: InstalledBrowser): string => {
+const getExtensionSettingsFromFiles = async (
+  browser: InstalledBrowser
+): Promise<string> => {
   const extensionSettingsDir = expandPaths(getExtensionSettingsDir(browser))
-  const data = readNestedLevelDbDir(extensionSettingsDir, "")
+  const data = await readNestedLevelDbDir(extensionSettingsDir, "")
   return JSON.stringify(data)
 }
 
@@ -175,7 +181,12 @@ const getLocalStorage = async (
     return undefined
   }
 
+<<<<<<< HEAD
   const localStorage = getLocalStorageFromFile(browser)
+=======
+  const localStorage = await getLocalStorageFromFiles(browser)
+
+>>>>>>> 13a6c1dac (add await)
   if (localStorage.length === 0) return undefined
 
   return localStorage
@@ -230,7 +241,7 @@ const getExtensionState = async (
     return undefined
   }
 
-  const extensionState = getExtensionStateFromFiles(browser)
+  const extensionState = await getExtensionStateFromFiles(browser)
 
   if (extensionState.length === 0) return undefined
 
@@ -257,7 +268,7 @@ const getExtensionSettings = async (
     return undefined
   }
 
-  const extensionSettings = getExtensionSettingsFromFiles(browser)
+  const extensionSettings = await getExtensionSettingsFromFiles(browser)
 
   if (extensionSettings.length === 0) return undefined
 
