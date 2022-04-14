@@ -17,6 +17,7 @@ let rollingDelta = 0
 let arrow: HTMLDivElement | undefined = undefined
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let mostRecentX = 0
+let goBack = false
 
 const detectVerticalScroll = () =>
   previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
@@ -50,7 +51,8 @@ const detectGesture = (e: WheelEvent) => {
   }
 
   // The wheel has moved, detect which direction and draw the appropriate arrow
-  const goBack = rollingDelta < 0
+  if (rollingDelta < 0 !== goBack) removeArrow()
+  goBack = rollingDelta < 0
 
   const amountToShift =
     Math.abs(rollingDelta) >= navigationThreshold
@@ -75,6 +77,7 @@ const detectGesture = (e: WheelEvent) => {
     value: goBack ? "back" : "forward",
   })
 
+  removeArrow()
   rollingDelta = 0
 }
 
