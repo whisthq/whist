@@ -37,11 +37,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": [
-        "js/userAgent.js",
-        "js/notification.js",
-        "js/overscroll.js"
-      ],
+      "resources": ["js/userAgent.js", "js/notification.js"],
       "matches": ["<all_urls>"]
     }
   ]
