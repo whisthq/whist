@@ -1,4 +1,4 @@
-const fadeOut = (element: HTMLElement) => {
+const fadeOut = (element: HTMLElement, speed = 1) => {
   var op = 1 // initial opacity
   var timer = setInterval(function () {
     if (op <= 0.1) {
@@ -8,10 +8,10 @@ const fadeOut = (element: HTMLElement) => {
     element.style.opacity = op.toString()
     element.style.filter = "alpha(opacity=" + op * 100 + ")"
     op -= op * 0.1
-  }, 25)
+  }, 25 / speed)
 }
 
-const fadeIn = (element: HTMLElement) => {
+const fadeIn = (element: HTMLElement, speed = 1) => {
   var op = 0.1 // initial opacity
   element.style.display = "block"
   var timer = setInterval(function () {
@@ -21,7 +21,7 @@ const fadeIn = (element: HTMLElement) => {
     element.style.opacity = op.toString()
     element.style.filter = "alpha(opacity=" + op * 100 + ")"
     op += op * 0.1
-  }, 25)
+  }, 25 / speed)
 }
 
 const createNotification = (document: Document, text: string) => {
@@ -89,8 +89,7 @@ const drawLeftArrow = (document: Document) => {
   // Inject the HTMLElement into the DOM
   ;(document.body || document.documentElement).appendChild(element)
 
-  fadeIn(element)
-  setTimeout(() => fadeOut(element), 10000)
+  fadeIn(element, 2)
 }
 
 const drawRightArrow = (document: Document) => {
@@ -122,8 +121,7 @@ const drawRightArrow = (document: Document) => {
   // Inject the HTMLElement into the DOM
   ;(document.body || document.documentElement).appendChild(element)
 
-  fadeIn(element)
-  setTimeout(() => fadeOut(element), 10000)
+  fadeIn(element, 2)
 }
 
 export { createNotification, drawLeftArrow, drawRightArrow }

@@ -10,7 +10,7 @@ let throttled = false
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let previousXDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 
-const detectLeftRelease = (args: {
+const detectRightRelease = (args: {
   offsetX: number
   d3: number
   v0: number
@@ -20,7 +20,7 @@ const detectLeftRelease = (args: {
   return movementX === 0 && args.d3 > 150 && args.v0 < -500 && args.v1 < -500
 }
 
-const detectRightRelease = (args: {
+const detectLeftRelease = (args: {
   offsetX: number
   d3: number
   v0: number
@@ -76,16 +76,16 @@ const navigateOnGesture = (e: WheelEvent) => {
     throttled = true
 
     setTimeout(() => {
-      chrome.runtime.sendMessage(<ContentScriptMessage>{
+      chrome.runtime.sendMessage(chrome.runtime.id, <ContentScriptMessage>{
         type: leftGestureDetected
           ? ContentScriptMessageType.HISTORY_GO_BACK
           : ContentScriptMessageType.HISTORY_GO_FORWARD,
       })
-    }, 1000)
+    }, 500)
 
     setTimeout(() => {
       throttled = false
-    }, 2500)
+    }, 2000)
   }
 
   previousOffset = e.offsetX
