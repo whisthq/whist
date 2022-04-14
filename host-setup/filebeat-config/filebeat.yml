@@ -3,6 +3,7 @@ filebeat.inputs:
   - type: log
     paths:
       - /whist/temp/logs/*/*/*.log
+      - /ephemeral/whist/temp/logs/*/*/*.log
 
     fields:
       # For JSON logs, set to `json`. For plain log lines, set to `plain`
