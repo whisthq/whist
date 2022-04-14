@@ -39,7 +39,7 @@ const detectGesture = (e: WheelEvent) => {
   previousXDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaX })
 
   deltaSum += e.deltaX
-  console.log("Total delta", deltaSum, "Delta", e.deltaX)
+  console.log("Delta", e.deltaX, e)
 
   if (detectVerticalScroll()) return
 
