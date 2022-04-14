@@ -18,7 +18,7 @@ const backGestureDetected = (args: {
 }) => {
   const movementX = args.offsetX - previousOffset
   console.log("d3", args.d3, "v0", args.v0, "v1", args.v1)
-  return movementX === 0 && args.d3 < -150 && args.v0 < -500 && args.v1 < -500
+  return movementX === 0 && args.d3 < -150 && args.v0 > 500 && args.v1 > 500
 }
 
 const forwardGestureDetected = (args: {
@@ -28,7 +28,7 @@ const forwardGestureDetected = (args: {
   v1: number
 }) => {
   const movementX = args.offsetX - previousOffset
-  return movementX === 0 && args.d3 > 150 && args.v0 > 500 && args.v1 > 500
+  return movementX === 0 && args.d3 > 150 && args.v0 < -500 && args.v1 < -500
 }
 
 const detectVerticalScroll = () =>
