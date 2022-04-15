@@ -589,22 +589,37 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	}
 
 	var (
-		requestedRegions = mandelboxRequest.Regions
-		allowedRegions   []string
-		assignedInstance subscriptions.Instance
+		requestedRegions   = mandelboxRequest.Regions
+		availableRegions   []string
+		unavailableRegions []string
+		assignedInstance   subscriptions.Instance
 	)
 
-	// Populate allowedRegions
+	// Populate availableRegions
 	for _, enabledRegion := range GetEnabledRegions() {
 		for _, requestedRegion := range requestedRegions {
 			if enabledRegion == requestedRegion {
-				allowedRegions = append(allowedRegions, requestedRegion)
+				availableRegions = append(availableRegions, requestedRegion)
+			} else {
+				unavailableRegions = append(unavailableRegions, requestedRegion)
 			}
 		}
 	}
 
-	if len(allowedRegions) == 0 {
-		err := utils.MakeError("could not assign mandelbox. Wanted regions are not valid or are not enabled.")
+	// This means that the user has requested access to some regions that are not yet enabled,
+	// but could still be allocated to a region that is relatively close.
+	if len(unavailableRegions) != 0 && len(unavailableRegions) != len(requestedRegions) {
+		logger.Errorf("User %v requested access to the following unavailable regions (in order of proximity) %v. Trying to find instance on remaining available regions %v.", unsafeEmail, unavailableRegions, availableRegions)
+	}
+
+	// The user requested access to only unavailable regions. The last resort is to default to us-east-1.
+	if len(unavailableRegions) == len(requestedRegions) {
+		logger.Errorf("User %v requested access to only unavailable regions (in order of proximity) %v. Defaulting to us-east-1.", unsafeEmail, unavailableRegions)
+		availableRegions = []string{"us-east-1"}
+	}
+
+	if len(availableRegions) == 0 {
+		err := utils.MakeError("")
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: REGION_NOT_ENABLED,
 		}, err)
@@ -632,7 +647,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// over the list of regions provided on the request, and will query the database on each to return the list of
 	// instances with capacity on the current region. Once it gets the instances, it will iterate over them and try
 	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
-	for _, region := range allowedRegions {
+	for _, region := range availableRegions {
 		logger.Infof("Trying to find instance for user %v in region %v, with commit hash %v. (client reported email %v, this value might not be accurate and is untrusted)",
 			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail)
 
