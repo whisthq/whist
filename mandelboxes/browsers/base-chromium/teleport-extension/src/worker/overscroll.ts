@@ -9,14 +9,14 @@ import { runInActiveTab } from "@app/utils/chrome"
 let throttled = false
 
 const navigationArrowOffset = (rollingDelta: number) => {
-  const slideDistance = MAXIMUM_X_OVERSCROLL - 200
+  const slideDistance = MAXIMUM_X_OVERSCROLL - 300
   if (Math.abs(rollingDelta) > slideDistance) return "0px"
 
   return `-${70 - (70 * Math.abs(rollingDelta)) / slideDistance}px`
 }
 
 const navigationArrowOpacity = (rollingDelta: number) =>
-  `${Math.max(Math.abs(rollingDelta) / MAXIMUM_X_OVERSCROLL, 0.4).toString()}`
+  `${Math.max(Math.abs(rollingDelta) / MAXIMUM_X_OVERSCROLL, 0.3).toString()}`
 
 const initGestureHandler = () => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
