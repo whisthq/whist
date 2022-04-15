@@ -1317,6 +1317,30 @@ extern "C" void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy
     }
 }
 
+
+const char * cpu_type_to_str(CpuType cpu_type) {
+    switch (cpu_type) {
+        case CPU_TYPE_X86: {
+            return "x86";
+        }
+        case CPU_TYPE_X64: {
+            return "x64";
+        }
+        case CPU_TYPE_ARM32: {
+            return "arm32";
+        }
+        case CPU_TYPE_ARM64: {
+            return "arm64";
+        }
+        case CPU_TYPE_OTHER: {
+            return "other";
+        }
+        default: {
+            return "invalid";
+        }
+    }
+}
+
 CpuInfo gf256_get_cpuinfo(void)
 {
     CpuInfo info;

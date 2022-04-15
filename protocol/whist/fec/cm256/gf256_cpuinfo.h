@@ -21,30 +21,8 @@ typedef struct
     bool has_neon;
 } CpuInfo;
 
-
 // convert CpuType to str
-inline const char * cpu_type_to_str(CpuType cpu_type) {
-    switch (cpu_type) {
-        case CPU_TYPE_X86: {
-            return "x86";
-        }
-        case CPU_TYPE_X64: {
-            return "x64";
-        }
-        case CPU_TYPE_ARM32: {
-            return "arm32";
-        }
-        case CPU_TYPE_ARM64: {
-            return "arm64";
-        }
-        case CPU_TYPE_OTHER: {
-            return "other";
-        }
-        default: {
-            return "invalid";
-        }
-    }
-}
+const char * cpu_type_to_str(CpuType cpu_type);
 
 // get the cpu type and intruction support info
 CpuInfo gf256_get_cpuinfo(void);
