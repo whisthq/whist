@@ -17,6 +17,14 @@ Includes
 ============================
 */
 
+#ifdef _WIN32
+#define COBJMACROS
+#include <libavutil/hwcontext_d3d11va.h>
+#include <d3d11_1.h>
+#include <dxgi1_3.h>
+#include <dxgidebug.h>
+#endif
+
 #include "sdl_utils.h"
 #include <whist/utils/png.h>
 #include <whist/utils/lodepng.h>
@@ -36,7 +44,6 @@ static bool skip_taskbar;
 
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
 static SDL_Renderer* sdl_renderer = NULL;
-static SDL_Texture* frame_buffer = NULL;
 static WhistMutex renderer_mutex;
 
 // pending render Update
@@ -44,9 +51,21 @@ static volatile bool pending_render = false;
 
 static volatile bool prev_insufficient_bandwidth = false;
 
-// NV12 framebuffer update
-static bool pending_nv12data = false;
-static AVFrame* pending_nv12_frame;
+// Renderer D3D11 device.
+#ifdef _WIN32
+static ID3D11Device* renderer_d3d11_device;
+#endif
+
+// Video device and format compatible with the renderer.
+static AVBufferRef* video_hardware_device = NULL;
+static enum AVPixelFormat video_hardware_format = AV_PIX_FMT_NONE;
+
+// Video texture update
+static SDL_Texture* video_texture = NULL;
+static SDL_PixelFormatEnum video_texture_format = SDL_PIXELFORMAT_UNKNOWN;
+static AVFrame* video_frame = NULL;
+static bool pending_video = false;
+static AVFrame* pending_video_frame = NULL;
 
 // for cursor update. The value is writen by the video render thread, and taken away by the main
 // thread.
@@ -133,11 +152,18 @@ static void sdl_render_solid_color(WhistRGBColor color);
 static void sdl_render_insufficient_bandwidth(void);
 
 /**
- * @brief                          Renders out any pending nv12 data
+ * @brief                          Update the video texture with pending video data.
  *
  * @note                           Must be called on the main thread
  */
-static void sdl_render_nv12data(void);
+static void sdl_update_video(void);
+
+/**
+ * @brief                          Render the video texture to the output.
+ *
+ * @note                           Must be called on the main thread
+ */
+static void sdl_render_video(void);
 
 /**
  * @brief                          Render a file drag indication icon
@@ -158,6 +184,15 @@ static void sdl_render_file_drag_icon(int x, int y);
  *                                 sdl_present_pending_cursor() clearer.
  */
 static void sdl_present_pending_cursor_inner(WhistCursorInfo* cursor);
+
+/**
+ * Determine whether the renderer supports an associated video device,
+ * and initialise it if it does.
+ *
+ * This must happen before the video thread runs; it will later retrieve
+ * the result via sdl_get_video_device().
+ */
+static void sdl_init_video_device(SDL_Renderer* renderer, const char* driver_name);
 
 /*
 ============================
@@ -265,19 +300,13 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     SDL_GetRendererInfo(sdl_renderer, &info);
     LOG_INFO("SDL: Using renderer: %s", info.name);
 
+    sdl_init_video_device(sdl_renderer, info.name);
+
     // Render a black screen before anything else,
     // To prevent being exposed to random colors
-    pending_nv12data = false;
+    pending_video = false;
     pending_render = true;
     sdl_present_pending_framebuffer();
-
-    // Initialize the framebuffer texture
-    frame_buffer =
-        SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
-                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-    if (frame_buffer == NULL) {
-        LOG_FATAL("SDL: could not create texture - exiting: %s", SDL_GetError());
-    }
 
     // Set icon, if an icon_filename was given
     if (icon_filename != NULL) {
@@ -322,17 +351,45 @@ void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend) {
             window_param (SDL_Window*): SDL window to be destroyed
     */
 
-    // Destroy the framebuffer
-    if (frame_buffer) {
-        SDL_DestroyTexture(frame_buffer);
-        frame_buffer = NULL;
+    // Destroy the video texture
+    if (video_texture) {
+        SDL_DestroyTexture(video_texture);
+        video_texture = NULL;
     }
+
+    // Destroy any video frames we have references to.
+    av_frame_free(&video_frame);
+    av_frame_free(&pending_video_frame);
+
+    // Destroy video device.
+    av_buffer_unref(&video_hardware_device);
 
     // Destroy the renderer
     if (sdl_renderer) {
         SDL_DestroyRenderer(sdl_renderer);
         sdl_renderer = NULL;
     }
+
+#ifdef _WIN32
+    // Release renderer device, if it exists.
+    if (renderer_d3d11_device) {
+        ID3D11Device_Release(renderer_d3d11_device);
+
+#ifndef NDEBUG
+        // In debug mode, enumerate all live D3D11 objects since we
+        // should have destroyed them all by now.
+        IDXGIDebug* dxgi_debug;
+        HRESULT hr = DXGIGetDebugInterface1(0, &IID_IDXGIDebug, &dxgi_debug);
+        if (FAILED(hr)) {
+            // Ignore - probably missing some debug feature (e.g. being
+            // run on a device without the SDK installed).
+        } else {
+            IDXGIDebug_ReportLiveObjects(dxgi_debug, DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+            IDXGIDebug_Release(dxgi_debug);
+        }
+#endif
+    }
+#endif  // _WIN32
 
     if (native_window_color) {
         free((WhistRGBColor*)native_window_color);
@@ -424,23 +481,36 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
     LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, output_width, output_height);
 }
 
+static SDL_PixelFormatEnum sdl_get_pixel_format(enum AVPixelFormat pixfmt) {
+    switch (pixfmt) {
+        case AV_PIX_FMT_NV12:
+        case AV_PIX_FMT_D3D11:
+        case AV_PIX_FMT_VIDEOTOOLBOX:
+            // Hardware formats all use NV12 internally.
+            return SDL_PIXELFORMAT_NV12;
+        case AV_PIX_FMT_YUV420P:
+            return SDL_PIXELFORMAT_IYUV;
+        default:
+            return SDL_PIXELFORMAT_UNKNOWN;
+    }
+}
+
 void sdl_update_framebuffer(AVFrame* frame) {
     whist_lock_mutex(renderer_mutex);
 
     // Check dimensions as a fail-safe
     if ((frame->width < 0 || frame->width > MAX_SCREEN_WIDTH) ||
         (frame->height < 0 || frame->height > MAX_SCREEN_HEIGHT)) {
-        LOG_ERROR("Invalid Dimensions! %dx%d. nv12 update dropped", frame->width, frame->height);
-    } else if (frame->format != AV_PIX_FMT_VIDEOTOOLBOX &&
-               frame->format != WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT) {
-        LOG_ERROR("Invalid format %s for NV12 update.", av_get_pix_fmt_name(frame->format));
+        LOG_ERROR("Invalid dimensions %dx%d for video update.", frame->width, frame->height);
+    } else if (sdl_get_pixel_format(frame->format) == SDL_PIXELFORMAT_UNKNOWN) {
+        LOG_ERROR("Invalid format %s for video update.", av_get_pix_fmt_name(frame->format));
     } else {
-        // Free the previous frame, if there was one.
-        if (pending_nv12_frame) {
-            av_frame_free(&pending_nv12_frame);
-        }
-        pending_nv12_frame = frame;
-        pending_nv12data = true;
+        // The previous frame should have been rendered and this
+        // reference removed, but free here anyway just in case.
+        av_frame_free(&pending_video_frame);
+
+        pending_video_frame = frame;
+        pending_video = true;
     }
 
     whist_unlock_mutex(renderer_mutex);
@@ -700,6 +770,15 @@ void sdl_end_drag_event() {
     pending_overlay_removal = true;
 }
 
+WhistStatus sdl_get_video_device(AVBufferRef** device, enum AVPixelFormat* format) {
+    // These are set when SDL is initialised before anything
+    // video-related has started, so not further synchronisation is
+    // required here.
+    *device = video_hardware_device;
+    *format = video_hardware_format;
+    return WHIST_SUCCESS;
+}
+
 /*
 ============================
 Private Function Implementations
@@ -728,15 +807,13 @@ static void sdl_present_pending_framebuffer(void) {
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
 
-    // If any overlays need to be updated make sure a background is rendered
-    if (insufficient_bandwidth || pending_file_drag_update || pending_overlay_removal) {
-        pending_nv12data = true;
+    // Update the video texture if new video is pending.
+    if (pending_video) {
+        sdl_update_video();
     }
 
-    // Render the nv12data, if any exists
-    if (pending_nv12data) {
-        sdl_render_nv12data();
-    }
+    // Render video if possible.
+    sdl_render_video();
 
     if (insufficient_bandwidth) {
         sdl_render_insufficient_bandwidth();
@@ -814,44 +891,173 @@ static void sdl_render_insufficient_bandwidth(void) {
     }
 }
 
-static void sdl_render_nv12data(void) {
-    FATAL_ASSERT(pending_nv12data == true);
+static void sdl_update_video(void) {
+    int res;
 
-    AVFrame* frame = pending_nv12_frame;
-    if (!frame) {
-        // We are attempting to render before any frame has been decoded.
-        // TODO: can we do something else here?
+    FATAL_ASSERT(pending_video == true);
+
+    AVFrame* frame = pending_video_frame;
+    FATAL_ASSERT(frame);
+
+    SDL_PixelFormatEnum format = sdl_get_pixel_format(frame->format);
+    FATAL_ASSERT(format != SDL_PIXELFORMAT_UNKNOWN);
+
+    // Formats we support for texture import to SDL.
+    bool import_texture =
+        (frame->format == AV_PIX_FMT_VIDEOTOOLBOX || frame->format == AV_PIX_FMT_D3D11);
+
+    if (import_texture || format != video_texture_format) {
+        // When importing we will make a new SDL texture referring to
+        // the imported one, so the old texture should be destroyed.
+        // When uploading this is only needed if the format changes.
+        if (video_texture) {
+            SDL_DestroyTexture(video_texture);
+            video_texture = NULL;
+        }
+    }
+    // The old video data is no longer needed.
+    av_frame_free(&video_frame);
+
+    if (import_texture) {
+        SDL_TextureHandleD3D11 d3d11_handle = {0};
+        void* handle;
+
+        if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
+            // This is a pointer to the CVPixelBuffer containing the
+            // frame data.
+            handle = frame->data[3];
+        } else if (frame->format == AV_PIX_FMT_D3D11) {
+#ifdef _WIN32
+            // This is a pointer to a texture, but it exists on the
+            // video decode device rather than the render device.  Make
+            // a new reference on the render device to give to SDL.
+            ID3D11Texture2D* texture = (ID3D11Texture2D*)frame->data[0];
+            int index = (intptr_t)frame->data[1];
+
+            HRESULT hr;
+            IDXGIResource1* resource;
+            hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGIResource1, &resource);
+            if (FAILED(hr)) {
+                LOG_ERROR("Failed to get DXGI resource for video texture: %#x.", hr);
+                goto fail;
+            }
+
+            HANDLE shared_handle;
+            hr = IDXGIResource1_CreateSharedHandle(resource, NULL, DXGI_SHARED_RESOURCE_READ, NULL,
+                                                   &shared_handle);
+            IDXGIResource1_Release(resource);
+            if (FAILED(hr)) {
+                LOG_ERROR("Failed to create shared handle for video texture: %#x.", hr);
+                goto fail;
+            }
+
+            ID3D11Device1* device1;
+            hr = ID3D11Device_QueryInterface(renderer_d3d11_device, &IID_ID3D11Device1, &device1);
+            if (FAILED(hr)) {
+                LOG_ERROR("Failed to get D3D11 device1 for device: %#x.", hr);
+                CloseHandle(shared_handle);
+                goto fail;
+            }
+
+            ID3D11Texture2D* render_texture;
+            hr = ID3D11Device1_OpenSharedResource1(device1, shared_handle, &IID_ID3D11Texture2D,
+                                                   &render_texture);
+            ID3D11Device1_Release(device1);
+            CloseHandle(shared_handle);
+            if (FAILED(hr)) {
+                LOG_ERROR("Failed to open shared handle for renderer texture: %#x.", hr);
+                goto fail;
+            }
+
+            d3d11_handle.texture = render_texture;
+            d3d11_handle.index = index;
+            handle = &d3d11_handle;
+#else
+            LOG_FATAL("D3D11 support requires Windows.");
+#endif
+        } else {
+            LOG_FATAL("Invalid format %s for texture import.", av_get_pix_fmt_name(frame->format));
+        }
+
+        // The texture dimensions match the coded size of the video, not
+        // the cropped size.
+        int texture_width = FFALIGN(frame->width, 16);
+        int texture_height = FFALIGN(frame->height, 16);
+
+        video_texture = SDL_CreateTextureFromHandle(sdl_renderer, format, SDL_TEXTUREACCESS_STATIC,
+                                                    texture_width, texture_height, handle);
+        if (video_texture == NULL) {
+            LOG_ERROR("Failed to import video texture: %s.", SDL_GetError());
+            goto fail;
+        }
+
+#ifdef _WIN32
+        if (frame->format == AV_PIX_FMT_D3D11) {
+            // Release the render texture - the SDL texture now contains
+            // a reference to it.
+            ID3D11Texture2D_Release((ID3D11Texture2D*)d3d11_handle.texture);
+        }
+#endif
+    } else {
+        if (video_texture == NULL) {
+            // Create new video texture.
+            video_texture = SDL_CreateTexture(sdl_renderer, format, SDL_TEXTUREACCESS_STREAMING,
+                                              MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+            if (video_texture == NULL) {
+                LOG_ERROR("Failed to create %s video texture: %s.",
+                          av_get_pix_fmt_name(frame->format), SDL_GetError());
+                goto fail;
+            }
+
+            LOG_INFO("Using %s video texture.", av_get_pix_fmt_name(frame->format));
+            video_texture_format = format;
+        }
+
+        // The texture object we allocate is larger than the frame,
+        // so we only copy the valid section of the frame into the texture.
+        SDL_Rect texture_rect = {
+            .x = 0,
+            .y = 0,
+            .w = frame->width,
+            .h = frame->height,
+        };
+        if (frame->format == AV_PIX_FMT_NV12) {
+            res = SDL_UpdateNVTexture(video_texture, &texture_rect, frame->data[0],
+                                      frame->linesize[0], frame->data[1], frame->linesize[1]);
+        } else if (frame->format == AV_PIX_FMT_YUV420P) {
+            res = SDL_UpdateYUVTexture(video_texture, &texture_rect, frame->data[0],
+                                       frame->linesize[0], frame->data[1], frame->linesize[1],
+                                       frame->data[2], frame->linesize[2]);
+        } else {
+            LOG_FATAL("Invalid format %s for texture update.", av_get_pix_fmt_name(frame->format));
+        }
+
+        if (res < 0) {
+            LOG_ERROR("Failed to update texture from %s frame: %s.",
+                      av_get_pix_fmt_name(frame->format), SDL_GetError());
+            goto fail;
+        }
+    }
+
+    // Move reference: the lifetime of this frame wants to matcn the
+    // texture associated with it.
+    video_frame = pending_video_frame;
+    pending_video_frame = NULL;
+
+fail:
+    pending_video = false;
+}
+
+static void sdl_render_video(void) {
+    // Take the subsection of texture that should be rendered to screen,
+    // And draw it on the renderer
+    if (video_texture == NULL) {
+        // We must be attempting to render before any frame has been
+        // decoded.  Just do nothing - the background colour will be
+        // drawn instead.
         return;
     }
-
-    // The texture object we allocate is larger than the frame,
-    // so we only copy the valid section of the frame into the texture.
-    SDL_Rect texture_rect = {
-        .x = 0,
-        .y = 0,
-        .w = frame->width,
-        .h = frame->height,
-    };
-
-    // Update the SDLTexture with the given nvdata
-    int res;
-    if (frame->format == AV_PIX_FMT_NV12) {
-        // A normal NV12 frame in CPU memory.
-        res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, frame->data[0], frame->linesize[0],
-                                  frame->data[1], frame->linesize[1]);
-    } else if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
-        // A CVPixelBufferRef containing both planes in GPU memory.
-        res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, frame->data[3], frame->width,
-                                  frame->data[3], frame->width);
-    } else {
-        LOG_FATAL("Attempting to update NV12 texture from frame with invalid format %s.",
-                  av_get_pix_fmt_name(frame->format));
-    }
-    if (res < 0) {
-        LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
-    } else {
-        // Take the subsection of texture that should be rendered to screen,
-        // And draw it on the renderer
+    FATAL_ASSERT(video_frame);
 
 // On macOS & Windows, SDL outputs the texture with the last pixel on the bottom and
 // right sides without data, rendering it green (NV12 color format). We're not sure
@@ -863,17 +1069,16 @@ static void sdl_render_nv12data(void) {
 #define CLIPPED_PIXELS 0
 #endif
 
-        SDL_Rect output_rect = {
-            .x = 0,
-            .y = 0,
-            .w = min(output_width, texture_rect.w) - CLIPPED_PIXELS,
-            .h = min(output_height, texture_rect.h) - CLIPPED_PIXELS,
-        };
-        SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
+    SDL_Rect output_rect = {
+        .x = 0,
+        .y = 0,
+        .w = min(output_width, video_frame->width) - CLIPPED_PIXELS,
+        .h = min(output_height, video_frame->height) - CLIPPED_PIXELS,
+    };
+    int res = SDL_RenderCopy(sdl_renderer, video_texture, &output_rect, NULL);
+    if (res < 0) {
+        LOG_ERROR("Failed to render video texture: %s.", SDL_GetError());
     }
-
-    // No longer pending nv12 data
-    pending_nv12data = false;
 }
 
 static SDL_Surface* sdl_surface_from_png_file(char* filename) {
@@ -1042,4 +1247,79 @@ static void sdl_present_pending_cursor_inner(WhistCursorInfo* cursor) {
         }
         last_cursor_state = cursor->cursor_state;
     }
+}
+
+static void sdl_init_video_device(SDL_Renderer* renderer, const char* driver_name) {
+    int err;
+
+#ifdef _WIN32
+    HRESULT hr;
+    if (!strcmp(driver_name, "direct3d11")) {
+        ID3D11Device* d3d11_device = SDL_RenderGetD3D11Device(renderer);
+        if (d3d11_device == NULL) {
+            LOG_WARNING("Failed to fetch D3D11 device: %s.", SDL_GetError());
+            return;
+        }
+
+        LOG_INFO("Using D3D11 device from SDL renderer.");
+        renderer_d3d11_device = d3d11_device;
+
+        // Make an independent reference to the device so we have a
+        // separate immediate context to use on the video thread.
+
+        IDXGIDevice* dxgi_device;
+        hr = ID3D11Device_QueryInterface(d3d11_device, &IID_IDXGIDevice, &dxgi_device);
+        if (FAILED(hr)) {
+            LOG_WARNING("Failed to get DXGI device from D3D11 device: %#x.", hr);
+            return;
+        }
+        IDXGIAdapter* dxgi_adapter;
+        hr = IDXGIDevice_GetAdapter(dxgi_device, &dxgi_adapter);
+        IDXGIDevice_Release(dxgi_device);
+        if (FAILED(hr)) {
+            LOG_WARNING("Failed to get DXGI adapter from DXGI device: %#x.", hr);
+            return;
+        }
+
+        AVBufferRef* dev_ref = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_D3D11VA);
+        FATAL_ASSERT(dev_ref);
+        AVHWDeviceContext* dev = (AVHWDeviceContext*)dev_ref->data;
+        AVD3D11VADeviceContext* hwctx = dev->hwctx;
+
+        UINT device_flags = 0;
+#ifndef NDEBUG
+        device_flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+        hr = D3D11CreateDevice(dxgi_adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, device_flags, NULL, 0,
+                               D3D11_SDK_VERSION, &hwctx->device, NULL, &hwctx->device_context);
+        IDXGIAdapter_Release(dxgi_adapter);
+        if (FAILED(hr)) {
+            LOG_WARNING("Failed to create D3D11 device for video: %#x.", hr);
+            return;
+        }
+
+        err = av_hwdevice_ctx_init(dev_ref);
+        if (err < 0) {
+            LOG_WARNING("Failed to init D3D11 hardware device for video: %s.", av_err2str(err));
+            av_buffer_unref(&dev_ref);
+            return;
+        }
+
+        video_hardware_device = dev_ref;
+        video_hardware_format = AV_PIX_FMT_D3D11;
+    }
+#endif
+
+#ifdef __APPLE__
+    if (!strcmp(driver_name, "metal")) {
+        // No device required; output can use Core Video pixel buffers
+        // from VideoToolbox.
+        video_hardware_format = AV_PIX_FMT_VIDEOTOOLBOX;
+    }
+#endif
+
+    // More:
+    // * OpenGL on Linux can work with VAAPI via DRM.
+    // * D3D9 can work with DXVA2.
+    // * Nvidia devices might work with NVDEC somehow?
 }

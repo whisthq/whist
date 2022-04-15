@@ -243,4 +243,17 @@ void sdl_handle_drag_event(WhistFrontend* frontend);
  */
 void sdl_end_drag_event(void);
 
+/**
+ * Retrieve the video device and format from the renderer.
+ *
+ * @param device  Hardware device to be given to the decoder, or NULL if
+ *                no device required or available.
+ * @param format  Hardware pixel format which the renderer can handle
+ *                natively without conversion, or AV_PIX_FMT_NONE if no
+ *                such format.
+ * @return  Error code.  Results will be set to no device/format on
+ *          failure.
+ */
+WhistStatus sdl_get_video_device(AVBufferRef** device, enum AVPixelFormat* format);
+
 #endif  // WHIST_SDL_UTILS_H

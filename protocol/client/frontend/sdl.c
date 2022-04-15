@@ -35,7 +35,11 @@ static WhistStatus sdl_init_frontend(WhistFrontend* frontend) {
     // (The D3D9 driver does work, but it does not support the NV12
     // textures that we use, so performance with it is terrible.)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");
+#ifndef NDEBUG
+    // Enable the D3D11 debug layer in debug builds.
+    SDL_SetHint(SDL_HINT_RENDER_DIRECT3D11_DEBUG, "1");
 #endif
+#endif  // _WIN32
 
     // We only need to SDL_Quit once, regardless of the subsystem refcount.
     // SDL_QuitSubSystem() would require us to register an atexit for each
