@@ -5,10 +5,7 @@ import pickBy from "lodash.pickby"
 
 import { sortRegionByProximity } from "@app/main/utils/region"
 import { flow } from "@app/main/utils/flows"
-import {
-  defaultAllowedRegions,
-  defaultUSRegions,
-} from "@app/constants/mandelbox"
+import { regions } from "@app/constants/mandelbox"
 import { persistGet } from "@app/main/utils/persist"
 import {
   ALLOW_NON_US_SERVERS,
@@ -32,7 +29,15 @@ export default flow("awsPingFlow", (trigger) => {
     switchMap(
       async () =>
         await sortRegionByProximity(
-          nonUSRegionsAllowed ? defaultAllowedRegions : defaultUSRegions
+          regions
+            .filter(
+              (region) =>
+                region.enabled &&
+                (nonUSRegionsAllowed
+                  ? true
+                  : region.territory === "United States")
+            )
+            .map((region) => region.name)
         )
     )
   )
