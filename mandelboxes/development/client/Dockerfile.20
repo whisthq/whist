@@ -25,6 +25,7 @@ RUN rm /usr/share/whist/run-whist-server.sh
 COPY --chmod=555 run-whist-client.sh /usr/share/whist/run-whist-client.sh
 
 COPY mouse_events.py /usr/share/whist/mouse_events.py
+COPY --chmod=550 simulate_mouse_scrolling.sh /usr/share/whist/simulate_mouse_scrolling.sh
 
 COPY --chown=root:root --chmod=600 whist-main.service /etc/systemd/system
 

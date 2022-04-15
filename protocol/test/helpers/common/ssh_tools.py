@@ -3,6 +3,8 @@
 import os, sys, time
 import pexpect
 
+from helpers.common.timestamps_and_exit_tools import exit_with_error
+
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
@@ -67,8 +69,9 @@ def attempt_ssh_connection(
             child.kill(0)
             time.sleep(30)
     # Give up if the SSH connection was refused too many times.
-    print(f"SSH connection refused by host {max_retries} times. Giving up now.")
-    sys.exit(-1)
+    exit_with_error(
+        f"SSH connection refused by host {max_retries} times. Giving up now.", timestamps=None
+    )
 
 
 def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=False):
@@ -101,13 +104,11 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
 
     # Handle timeout and error cases
     if result == 1:
-        print("Error: pexpect process timed out! Check the logs for troubleshooting.")
-        sys.exit(-1)
+        exit_with_error("Error: pexpect process timed out! Check the logs for troubleshooting.")
     elif result == 2:
-        print(
+        exit_with_error(
             "Error: pexpect process encountered an unexpected exception! Check the logs for troubleshooting."
         )
-        sys.exit(-1)
 
     # Clean stdout output and save it in a list, one line per element. We need to do this before calling expect
     # again (if we are not in CI), otherwise the output will be overwritten.

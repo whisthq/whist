@@ -17,6 +17,11 @@ from helpers.common.ssh_tools import (
     attempt_ssh_connection,
 )
 
+from helpers.common.timestamps_and_exit_tools import (
+    TimeStamps,
+    exit_with_error,
+)
+
 from helpers.setup.instance_setup_tools import (
     start_host_service,
 )
@@ -237,12 +242,13 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
 
+    timestamps = TimeStamps()
+
     # 1 - Parse args from the command line
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
     ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
     testing_url = args.testing_url
-    testing_time = args.testing_time
     region_name = args.region_name
     use_existing_client_instance = args.use_existing_client_instance
     use_existing_server_instance = args.use_existing_server_instance
@@ -258,13 +264,15 @@ if __name__ == "__main__":
     use_two_instances = args.use_two_instances == "true"
     simulate_scrolling = args.simulate_scrolling
     running_in_ci = os.getenv("CI") == "true"
+    # Each call to the mouse scrolling simulator script takes a total of 25s to complete, including 5s in-between runs
+    testing_time = max(args.testing_time, simulate_scrolling * 25)
 
     # 2 - Perform a sanity check on the arguments and load the SSH key from file
     if use_existing_client_instance != "" and not use_two_instances:
-        print(
-            "Error: the `use-two-instances` flag is set to `false` but a non-empty instance ID was passed with the `use-existing-client-instance` flag."
+        exit_with_error(
+            "Error: the `use-two-instances` flag is set to `false` but a non-empty instance ID was passed with the `use-existing-client-instance` flag.",
+            timestamps=timestamps,
         )
-        sys.exit(-1)
     if not os.path.isfile(ssh_key_path):
         print(f"SSH key file {ssh_key_path} does not exist")
         exit()
@@ -300,14 +308,15 @@ if __name__ == "__main__":
     with open(metadata_filename, "w") as metadata_file:
         json.dump(experiment_metadata, metadata_file)
 
+    timestamps.add_event("Initialization")
+
     # 4 - Create a boto3 client, connect to the EC2 console, and create or start the instance(s).
     boto3client = boto3.client("ec2", region_name=region_name)
     server_instance_id = create_or_start_aws_instance(
         boto3client, region_name, use_existing_server_instance, ssh_key_name, running_in_ci
     )
     if server_instance_id == "":
-        print("Creating new instance for the server failed!")
-        sys.exit(-1)
+        exit_with_error("Creating new instance for the server failed!", timestamps=timestamps)
     client_instance_id = (
         create_or_start_aws_instance(
             boto3client, region_name, use_existing_client_instance, ssh_key_name, running_in_ci
@@ -316,8 +325,9 @@ if __name__ == "__main__":
         else server_instance_id
     )
     if client_instance_id == "":
-        print("Creating/starting new instance for the client failed!")
-        sys.exit(-1)
+        exit_with_error(
+            "Creating/starting new instance for the client failed!", timestamps=timestamps
+        )
 
     # 5 - Create a todo-list of EC2 cleanup steps we need to do at the end of the test.
     # Save the todo-list to a file named `instances_to_remove.txt` so that we can retrieve
@@ -349,6 +359,8 @@ if __name__ == "__main__":
         instances_file.write(f"stop {region_name} {i}\n")
     instances_file.close()
 
+    timestamps.add_event("Creating/starting instance(s)")
+
     # 6 - Get the IP address of the instance(s) that are now running
     server_instance_ip = get_instance_ip(boto3client, server_instance_id)
     server_hostname = server_instance_ip[0]["public"]
@@ -372,12 +384,14 @@ if __name__ == "__main__":
 
     # Create variables containing the commands to launch SSH connections to the client/server instance(s) and
     # generate strings containing the shell prompt(s) that we expect on the EC2 instance(s) when running commands.
-    server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
-    client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
+    server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path} -o TCPKeepAlive=yes -o ServerAliveCountMax=20 -o ServerAliveInterval=15"
+    client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path} -o TCPKeepAlive=yes -o ServerAliveCountMax=20 -o ServerAliveInterval=15"
     pexpect_prompt_server = f"{username}@ip-{server_private_ip}"
     pexpect_prompt_client = (
         f"{username}@ip-{client_private_ip}" if use_two_instances else pexpect_prompt_server
     )
+
+    timestamps.add_event("Connecting to the instance(s)")
 
     # 7 - Setup the client and the server. Use multiprocesssing to parallelize the work in case
     # we are using two instances. If we are using one instance, the setup will happen sequentially.
@@ -421,9 +435,11 @@ if __name__ == "__main__":
         p2.start()
         p2.join()
 
+    timestamps.add_event("Setting up the instance(s) and building the mandelboxes")
+
     # Check if the server or client setup failed. If so, exit.
     if p1.exitcode == -1 or p2.exitcode == -1:
-        sys.exit(-1)
+        exit_with_error(None, timestamps=timestamps)
 
     # 8 - Open the server/client monitoring logs
     server_log = open(os.path.join(perf_logs_folder_name, "server_monitoring.log"), "a")
@@ -458,6 +474,8 @@ if __name__ == "__main__":
     start_host_service(server_hs_process, pexpect_prompt_server)
     if use_two_instances:
         start_host_service(client_hs_process, pexpect_prompt_client)
+
+    timestamps.add_event("Starting the host service on the mandelboxes ")
 
     # 10 - Run the browser/chrome server mandelbox on the server instance
     # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
@@ -502,8 +520,12 @@ if __name__ == "__main__":
         client_pexpect_process, server_configs_data, simulate_scrolling
     )
 
+    timestamps.add_event("Starting the mandelboxes and setting up the network conditions")
+
     # 12 - Sit down and wait Wait <testing_time> seconds to let the test run to completion
     time.sleep(testing_time)
+
+    timestamps.add_event("Waiting for the test to finish")
 
     # 13 - Grab the logs, check for errors, restore default network conditions, cleanup, shut down the instances, and save the results
     complete_experiment_and_save_results(
@@ -539,6 +561,7 @@ if __name__ == "__main__":
         perf_logs_folder_name,
         experiment_metadata,
         metadata_filename,
+        timestamps,
     )
 
     # 23 - Success!

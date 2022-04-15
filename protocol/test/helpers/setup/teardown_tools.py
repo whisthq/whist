@@ -10,6 +10,8 @@ from helpers.common.ssh_tools import (
     wait_until_cmd_done,
 )
 
+from helpers.common.timestamps_and_exit_tools import TimeStamps
+
 from helpers.aws.boto3_tools import (
     terminate_or_stop_aws_instance,
 )
@@ -81,6 +83,8 @@ def extract_logs_from_mandelbox(
         "/var/log/whist/update_xorg_conf-err.log",
         "/var/log/whist/update_xorg_conf-out.log",
         "/var/log/whist/protocol-err.log",
+        # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
+        "/var/log/whist/simulated_scrolling.log",
     ]
     for file_path in logfiles:
         command = f"docker cp {docker_id}:{file_path} ~/perf_logs/{role}/"
@@ -137,6 +141,7 @@ def complete_experiment_and_save_results(
     perf_logs_folder_name,
     experiment_metadata,
     metadata_filename,
+    timestamps,
 ):
     """
     This function performs the teardown and cleanup required at the end of a E2E streaming test. This
@@ -199,6 +204,7 @@ def complete_experiment_and_save_results(
                                         where to store the logs
         experiment_metadata (dict): The dictionary containing the experiment metadata
         metadata_filename (str): The name of the file to save the updated experiment metadata in json format
+        timestamps (Timestamps):  The Timestamps object containing the timestamps from the major E2E events
 
     Returns:
         On success: 0
@@ -221,6 +227,8 @@ def complete_experiment_and_save_results(
         restore_network_conditions(client_restore_net_process, pexpect_prompt_client, running_in_ci)
         client_restore_net_process.kill(0)
 
+    timestamps.add_event("Restoring undegraded network conditions")
+
     # 2- Quit the server and check whether it shuts down gracefully or whether it hangs
     server_hang_detected = False
     server_shutdown_desired_message = "Both whist-application and WhistServer have exited."
@@ -231,6 +239,8 @@ def complete_experiment_and_save_results(
     else:
         print("Server has not exited gracefully!")
         server_hang_detected = True
+
+    timestamps.add_event("Shutting down the server and checking for potential server hang")
 
     # 3- Extract the client/server protocol logs from the two Docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
@@ -282,6 +292,8 @@ def complete_experiment_and_save_results(
         role="client",
     )
 
+    timestamps.add_event("Extracting the mandelbox logs")
+
     # 4- Clean up the instance(s) by stopping all docker containers and quitting the host-service.
     # Exit the server/client mandelboxes
     server_mandelbox_pexpect_process.sendline("exit")
@@ -315,6 +327,8 @@ def complete_experiment_and_save_results(
     server_log.close()
     client_log.close()
 
+    timestamps.add_event("Stopping all containers and closing connections to the instance(s)")
+
     # 6- Stop or terminate the AWS EC2 instance(s)
     if leave_instances_on == "false":
         # Terminate or stop AWS instance(s)
@@ -336,8 +350,10 @@ def complete_experiment_and_save_results(
 
     print("Instance successfully stopped/terminated, goodbye")
 
+    timestamps.add_event("Stopping/terminating instance(s)")
+
     # 7- Delete the cleanup todo-list, because we already completed it.
-    os.remove("instances_to_remove.txt")
+    # os.remove("instances_to_remove.txt")
 
     # 8- Check if either of the WhistServer/WhistClient failed to start, or whether the client failed
     # to connect to the server. If so, add the error to the metadata, and exit with an error code (-1).
@@ -361,6 +377,9 @@ def complete_experiment_and_save_results(
     # 9- Update metadata file with any new metadata that we added
     with open(metadata_filename, "w") as metadata_file:
         json.dump(experiment_metadata, metadata_file)
+
+    # 10- Print time breakdown of the experiment
+    timestamps.print_timestamps()
 
     # 10- Print error message and exit with error if needed
     for cause, message in {

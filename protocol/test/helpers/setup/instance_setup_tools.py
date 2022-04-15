@@ -12,6 +12,8 @@ from helpers.common.ssh_tools import (
     reboot_instance,
 )
 
+from helpers.common.timestamps_and_exit_tools import exit_with_error
+
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
@@ -50,8 +52,9 @@ def install_and_configure_aws(
         # Extract AWS credentials from aws configuration file on disk
         aws_credentials_filepath_expanded = os.path.expanduser(aws_credentials_filepath)
         if not os.path.isfile(aws_credentials_filepath_expanded):
-            print(f"Could not find local AWS credential file at path {aws_credentials_filepath}!")
-            sys.exit(-1)
+            exit_with_error(
+                f"Could not find local AWS credential file at path {aws_credentials_filepath}!"
+            )
         aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
 
         # Read the AWS configuration file
@@ -286,8 +289,7 @@ def start_host_service(pexpect_process, pexpect_prompt):
 
     # If the desired output does not get printed, handle potential host service startup issues.
     if result != 0:
-        print("Host service failed to start! Check the logs for troubleshooting!")
-        sys.exit(-1)
+        exit_with_error("Host service failed to start! Check the logs for troubleshooting!")
 
     print("Host service is ready!")
 

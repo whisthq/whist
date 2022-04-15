@@ -8,6 +8,7 @@ from helpers.common.ssh_tools import (
     reboot_instance,
     apply_dpkg_locking_fixup,
 )
+from helpers.common.timestamps_and_exit_tools import exit_with_error
 
 from helpers.setup.instance_setup_tools import (
     install_and_configure_aws,
@@ -76,7 +77,8 @@ def server_setup_process(args_dict):
     )
 
     if not result:
-        sys.exit(-1)
+        # This will exit the process spawned by the Multiprocess class, not the E2E script
+        exit_with_error(None)
 
     prune_containers_if_needed(hs_process, pexpect_prompt_server, running_in_ci)
 
