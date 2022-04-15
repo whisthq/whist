@@ -106,8 +106,13 @@ void whist_sleep(uint32_t ms) { SDL_Delay(ms); }
 
 void whist_usleep(uint32_t us) {
 #ifdef _WIN32
-    // Not sure if this is implemented on Windows, so just fall back to SDL_Delay.
-    whist_sleep(us / 1000);
+    // No clean usleep() on Windows, so just fall back to SDL_Delay.
+    if (us > 0 && us < 1000) {
+        // Ensure that short sleeps do something.
+        whist_sleep(1);
+    } else {
+        whist_sleep(us / 1000);
+    }
 #else
     usleep(us);
 #endif  // _WIN32

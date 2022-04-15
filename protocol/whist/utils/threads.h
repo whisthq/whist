@@ -208,13 +208,14 @@ void whist_sleep(uint32_t ms);
 /**
  * Try to sleep for at least a given number of microseconds.
  *
- * This can return early if interrupted.
+ * It may sleep for significantly longer than intended, and can return
+ * early if interrupted.
  *
  * Note that small values are unlikely to be efficient due to context
  * switch and timer overhead.  It is recommended to use whist_sleep()
  * instead if possible.
  *
- * @param us  Minimum number of microseconds to sleep for.
+ * @param us  Minimum number of microseconds to try to sleep for.
  */
 void whist_usleep(uint32_t us);
 
