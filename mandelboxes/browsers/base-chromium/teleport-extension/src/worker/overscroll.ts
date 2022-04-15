@@ -25,7 +25,7 @@ const initGestureHandler = () => {
     if (Math.abs(msg.value.rollingDelta) > MAXIMUM_X_OVERSCROLL) {
       throttled = true
       runInActiveTab((tabID: number) =>
-        msg.value === "back"
+        msg.value.rollingDelta < 0
           ? chrome.tabs.goBack(tabID)
           : chrome.tabs.goForward(tabID)
       )
@@ -40,7 +40,7 @@ const initGestureHandler = () => {
           value: {
             offset: navigationArrowOffset(msg.value.rollingDelta),
             opacity: navigationArrowOpacity(msg.value.rollingDelta),
-            direction: msg.value.rollingDelta > 0 ? "forward" : "back",
+            direction: msg.value.rollingDelta < 0 ? "back" : "forward",
           },
         })
       })
