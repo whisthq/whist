@@ -7,6 +7,7 @@ import {
 } from "@app/constants/ipc"
 import {
   MAXIMUM_X_OVERSCROLL,
+  MAXIMUM_X_UPDATE,
   MINIMUM_X_OVERSCROLL,
 } from "@app/constants/overscroll"
 
@@ -37,7 +38,12 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 }
 
 const updateOverscroll = (e: WheelEvent) => {
-  overscroll.rollingDelta += e.deltaX
+  const trimmedDelta = Math.min(Math.abs(e.deltaX), MAXIMUM_X_UPDATE)
+  if (e.deltaX < 0) {
+    overscroll.rollingDelta - trimmedDelta
+  } else {
+    overscroll.rollingDelta + trimmedDelta
+  }
   overscroll.lastTimestamp = now()
 }
 
