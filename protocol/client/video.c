@@ -335,6 +335,15 @@ int render_video(VideoContext* video_context) {
         // our own frame or made another reference to it.
         video_decoder_free_decoded_frame(&decoded_frame_data);
 
+        // Render out the cursor image
+        if (cursor_image) {
+            // TODO: whist_frontend_set_cursor here instead of sdl_update_cursor
+            TIME_RUN(sdl_update_cursor(cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
+            // Cursors need not be double-rendered, so we just unset the cursor image here
+            free(cursor_image);
+            cursor_image = NULL;
+        }
+
         // Update the window titlebar color
         sdl_render_window_titlebar_color(window_color);
 

@@ -21,7 +21,6 @@ Includes
 #include <whist/utils/png.h>
 #include <whist/utils/lodepng.h>
 #include "frontend/frontend.h"
-#include "whist/utils/command_line.h"
 #include <whist/logging/log_statistic.h>
 
 #include <whist/utils/color.h>
@@ -31,12 +30,8 @@ Includes
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile bool insufficient_bandwidth;
-volatile SDL_Window* window;
 static bool skip_taskbar;
 
-// on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
-static SDL_Renderer* sdl_renderer = NULL;
-static SDL_Texture* frame_buffer = NULL;
 static WhistMutex renderer_mutex;
 
 // pending render Update
@@ -76,15 +71,6 @@ static int file_drag_update_y = 0;
 
 // Overlay removals
 static volatile bool pending_overlay_removal = false;
-
-/*
-============================
-Command-line options
-============================
-*/
-
-COMMAND_LINE_BOOL_OPTION(skip_taskbar, 's', "skip-taskbar",
-                         "Launch the protocol without displaying an icon in the taskbar.")
 
 /*
 ============================
@@ -164,31 +150,11 @@ static void sdl_present_pending_cursor_inner(WhistCursorInfo* cursor);
 Public Function Implementations
 ============================
 */
-bool get_skip_taskbar(void) { return skip_taskbar; }
 
-SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
+void init_sdl(int target_output_width, int target_output_height, char* name,
                      char* icon_filename, WhistFrontend** frontend) {
-    /*
-        Attaches the current thread to the specified current input client
-
-        Arguments:
-            target_output_width (int): The width of the SDL window to create, in pixels
-            target_output_height (int): The height of the SDL window to create, in pixels
-            name (char*): The title of the window
-            icon_filename (char*): The filename of the window icon, pointing to a 64x64 png,
-                or NULL for the default icon
-
-        Return:
-            sdl_window (SDL_Window*): NULL if fails to create SDL window, else the created SDL
-                window
-    */
-
-#if defined(_WIN32)
-    // set Windows DPI
-    SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
-#endif
-
-    WhistFrontend* out_frontend = whist_frontend_create_sdl();
+    WhistFrontend* out_frontend =
+        whist_frontend_create_sdl(target_output_height, target_output_height, name);
     if (out_frontend == NULL) {
         return NULL;
     }
@@ -196,74 +162,10 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         *frontend = out_frontend;
     }
 
-    renderer_mutex = whist_create_mutex();
-
     pending_cursor_info_mutex = whist_create_mutex();
     // set pending_cursor_info to NULL for safety, not necessary at the moment since init_sdl() is
     // only called once.
     pending_cursor_info = NULL;
-
-    // Allow the screensaver to activate
-    SDL_EnableScreenSaver();
-
-    bool maximized = target_output_width == 0 && target_output_height == 0;
-
-    // Grab the default display dimensions -- if the window starts maximized and
-    // the user then unmaximizes (double click the titlebar on macOS), we will
-    // set the default size of the unmaximized window to be 50% of the display's
-    // width and height. Even if this isn't a multiple of 8, it's fine because
-    // clicking the minimize button will trigger an SDL resize event.
-    SDL_DisplayMode display_info;
-    if (SDL_GetDesktopDisplayMode(0, &display_info)) {
-        LOG_WARNING("SDL_GetCurrentDisplayMode failed: %s", SDL_GetError());
-    }
-
-    if (target_output_width == 0) {
-        target_output_width = display_info.w;
-    }
-
-    if (target_output_height == 0) {
-        target_output_height = display_info.h;
-    }
-
-    SDL_Window* sdl_window;
-
-    if (skip_taskbar) {
-        hide_native_window_taskbar();
-    }
-
-    // We start the window hidden to avoid glitchy-looking titlebar-content combinations while
-    // the window is loading, and to prevent glitches caused by early user interaction.
-    const uint32_t window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL |
-                                  SDL_WINDOW_RESIZABLE | (maximized ? SDL_WINDOW_MAXIMIZED : 0) |
-                                  (skip_taskbar ? SDL_WINDOW_SKIP_TASKBAR : 0) | SDL_WINDOW_HIDDEN;
-
-    // Simulate fullscreen with borderless always on top, so that it can still
-    // be used with multiple monitors
-    sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, target_output_width, target_output_height,
-                                  window_flags);
-
-    // temporary hook -- remove during refactor
-    temp_frontend_set_window(out_frontend, sdl_window);
-    if (!sdl_window) {
-        LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
-        return NULL;
-    }
-
-    Uint32 flags = SDL_RENDERER_ACCELERATED;
-#if VSYNC_ON
-    flags |= SDL_RENDERER_PRESENTVSYNC;
-#endif
-    sdl_renderer = SDL_CreateRenderer(sdl_window, -1, flags);
-    if (sdl_renderer == NULL) {
-        LOG_FATAL("SDL: could not create renderer - exiting: %s", SDL_GetError());
-    }
-    SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
-
-    SDL_RendererInfo info;
-    SDL_GetRendererInfo(sdl_renderer, &info);
-    LOG_INFO("SDL: Using renderer: %s", info.name);
 
     // Render a black screen before anything else,
     // To prevent being exposed to random colors
@@ -271,69 +173,15 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     pending_render = true;
     sdl_present_pending_framebuffer();
 
-    // Initialize the framebuffer texture
-    frame_buffer =
-        SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
-                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-    if (frame_buffer == NULL) {
-        LOG_FATAL("SDL: could not create texture - exiting: %s", SDL_GetError());
-    }
-
-    // Set icon, if an icon_filename was given
-    if (icon_filename != NULL) {
-        SDL_Surface* icon_surface = sdl_surface_from_png_file(icon_filename);
-        SDL_SetWindowIcon(sdl_window, icon_surface);
-        sdl_free_png_file_rgb_surface(icon_surface);
-    }
-
-    SDL_Event event;
-    // Pump the event loop until the window is actually initialized (for macOS mainly).
-    while (SDL_PollEvent(&event))
-        ;
-    // Initialize the window color to the loading background color
-    set_native_window_color(sdl_window, background_color);
-
-    // Only after the window finishes loading is it safe to initialize native options.
-    init_native_window_options(sdl_window);
-
-    // Only after the window finishes loading may we set the window minimum size
-    SDL_SetWindowMinimumSize(sdl_window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
-
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
     int w, h;
     whist_frontend_get_window_pixel_size(out_frontend, &w, &h);
     output_width = w;
     output_height = h;
-
-    // Pump the event loop until the window fully finishes loading (prevents bugs where the window
-    // is permanently unfocused).
-    while (SDL_PollEvent(&event))
-        ;
-
-    return sdl_window;
 }
 
-void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend) {
-    /*
-        Destroy the SDL resources
-
-        Arguments:
-            window_param (SDL_Window*): SDL window to be destroyed
-    */
-
-    // Destroy the framebuffer
-    if (frame_buffer) {
-        SDL_DestroyTexture(frame_buffer);
-        frame_buffer = NULL;
-    }
-
-    // Destroy the renderer
-    if (sdl_renderer) {
-        SDL_DestroyRenderer(sdl_renderer);
-        sdl_renderer = NULL;
-    }
-
+void destroy_sdl(WhistFrontend* frontend) {
     if (native_window_color) {
         free((WhistRGBColor*)native_window_color);
         native_window_color = NULL;
@@ -341,12 +189,7 @@ void destroy_sdl(SDL_Window* window_param, WhistFrontend* frontend) {
 
     LOG_INFO("Destroying SDL");
 
-    if (window_param) {
-        window_param = NULL;
-    }
-
     whist_destroy_mutex(pending_cursor_info_mutex);
-    whist_destroy_mutex(renderer_mutex);
 
     if (frontend) {
         whist_frontend_destroy(frontend);

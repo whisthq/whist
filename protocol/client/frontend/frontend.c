@@ -4,20 +4,21 @@
 
 static atomic_int next_frontend_id = ATOMIC_VAR_INIT(0);
 
-static WhistFrontend* whist_frontend_create(const WhistFrontendFunctionTable* function_table) {
+static WhistFrontend* whist_frontend_create(const WhistFrontendFunctionTable* function_table,
+                                            int width, int height, const char* title) {
     WhistFrontend* frontend = safe_malloc(sizeof(WhistFrontend));
     frontend->context = NULL;
     frontend->id = atomic_fetch_add(&next_frontend_id, 1);
     frontend->call = function_table;
-    if (frontend->call->init(frontend) != WHIST_SUCCESS) {
+    if (frontend->call->init(frontend, width, height, title) != WHIST_SUCCESS) {
         free(frontend);
         return NULL;
     }
     return frontend;
 }
 
-WhistFrontend* whist_frontend_create_sdl(void) {
-    return whist_frontend_create(sdl_get_function_table());
+WhistFrontend* whist_frontend_create_sdl(int width, int height, const char* title) {
+    return whist_frontend_create(sdl_get_function_table(), width, height, title);
 }
 
 void whist_frontend_destroy(WhistFrontend* frontend) {
@@ -108,4 +109,20 @@ bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* even
 void whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y) {
     FATAL_ASSERT(frontend != NULL);
     frontend->call->get_global_mouse_position(frontend, x, y);
+}
+
+void whist_frontend_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->set_cursor(frontend, cursor);
+}
+
+void whist_frontend_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state,
+                                       int* key_count, int* mod_state) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->get_keyboard_state(frontend, key_state, key_count, mod_state);
+}
+
+void whist_frontend_restore_window(WhistFrontend* frontend) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->restore_window(frontend);
 }

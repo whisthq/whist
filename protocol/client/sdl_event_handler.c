@@ -28,10 +28,6 @@ Includes
 #include <whist/utils/atomic.h>
 #include <whist/debug/debug_console.h>
 
-// Keyboard state variables
-bool lgui_pressed = false;
-bool rgui_pressed = false;
-
 // Main state variables
 extern bool client_exiting;
 extern MouseMotionAccumulation mouse_state;
@@ -106,12 +102,6 @@ Private Function Implementations
 */
 
 static void handle_keypress_event(FrontendKeypressEvent* event) {
-    if (event->code == FK_LGUI) {
-        lgui_pressed = event->pressed;
-    } else if (event->code == FK_RGUI) {
-        rgui_pressed = event->pressed;
-    }
-
     WhistClientMessage msg = {0};
     msg.type = MESSAGE_KEYBOARD;
     msg.keyboard.code = event->code;

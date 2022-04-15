@@ -106,9 +106,10 @@ typedef struct WhistFrontendEvent {
     };
 } WhistFrontendEvent;
 
+// TODO: Opaquify this
 typedef struct WhistFrontendFunctionTable {
     // Lifecycle
-    WhistStatus (*init)(WhistFrontend* frontend);
+    WhistStatus (*init)(WhistFrontend* frontend, int width, int height, const char* title);
     void (*destroy)(WhistFrontend* frontend);
 
     // Audio
@@ -127,12 +128,18 @@ typedef struct WhistFrontendFunctionTable {
     int (*get_window_dpi)(WhistFrontend* frontend);
     bool (*is_window_visible)(WhistFrontend* frontend);
     WhistStatus (*set_title)(WhistFrontend* frontend, const char* title);
+    WhistStatus (*restore_window)(WhistFrontend* frontend);
 
     // Events
     bool (*poll_event)(WhistFrontend* frontend, WhistFrontendEvent* event);
 
     // Mouse
     void (*get_global_mouse_position)(WhistFrontend* frontend, int* x, int* y);
+    void (*set_cursor)(WhistFrontend* frontend, WhistCursorInfo* cursor);
+
+    // Keyboard
+    void (*get_keyboard_state)(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,
+                               int* mod_state);
 } WhistFrontendFunctionTable;
 
 struct WhistFrontend {
@@ -144,7 +151,7 @@ struct WhistFrontend {
 const WhistFrontendFunctionTable* sdl_get_function_table(void);
 
 // Lifecycle
-WhistFrontend* whist_frontend_create_sdl(void);
+WhistFrontend* whist_frontend_create_sdl(int width, int height, const char* title);
 WhistFrontend* whist_frontend_create_external(void);
 unsigned int whist_frontend_get_id(WhistFrontend* frontend);
 void whist_frontend_destroy(WhistFrontend* frontend);
@@ -170,9 +177,8 @@ bool whist_frontend_is_window_visible(WhistFrontend* frontend);
 bool whist_frontend_is_window_occluded(WhistFrontend* frontend);
 int whist_frontend_set_screensaver_enabled(WhistFrontend* frontend, bool enabled);
 int whist_frontend_resize_window(WhistFrontend* frontend, int width, int height);
-int whist_frontend_set_window_minimized(WhistFrontend* frontend, bool minimized);
+int whist_frontend_restore_window(WhistFrontend* frontend);
 int whist_frontend_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen);
-int whist_frontend_set_window_accent_color(WhistFrontend* frontend, WhistRGBColor color);
 
 // Title
 WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title);
@@ -182,10 +188,12 @@ bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* even
 
 // Keyboard
 int whist_frontend_send_key_event(WhistFrontend* frontend, WhistKeycode keycode, bool pressed);
-int whist_frontend_get_keyboard_state(WhistFrontend* frontend, WhistKeyboardState* state);
+void whist_frontend_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state,
+                                       int* key_count, int* mod_state);
 
 // Mouse
 void whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y);
+void whist_frontend_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor);
 
 // Video
 int whist_frontend_render_solid(WhistFrontend* frontend, WhistRGBColor color);

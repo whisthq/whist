@@ -30,15 +30,6 @@ Public Functions
 */
 
 /**
- * @brief                          Check whether we are going to initialize the protocol window
- * without the taskbar.
- *
- * @returns                        A copy of the skip_taskbar static variable, which is set by a
- * command line option.
- */
-bool get_skip_taskbar(void);
-
-/**
  * @brief                          Creates the SDL window,
  *                                 with the currently running thread at the owner
  *
@@ -55,21 +46,17 @@ bool get_skip_taskbar(void);
  * @param frontend                 (Temporary) A pointer to the frontend to be initialized and
  *                                 registered with the created SDL window.
  *
- * @returns                        NULL if fails to create SDL window, else it
- *                                 returns the SDL window variable
  */
-SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename,
+void init_sdl(int output_width, int output_height, char* name, char* icon_filename,
                      WhistFrontend** frontend);
 
 /**
  * @brief                          Destroys an SDL window and associated
  *                                 parameters
  *
- * @param window                   The SDL window to destroy
- *
  * @param frontend                 The frontend to be destroyed
  */
-void destroy_sdl(SDL_Window* window, WhistFrontend* frontend);
+void destroy_sdl(WhistFrontend* frontend);
 
 /**
  * @brief                          When the window gets resized, call this function

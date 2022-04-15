@@ -2414,8 +2414,6 @@ TEST_F(ProtocolTest, ClientParseArgs) {
         // Set the session id
         "-d",
         "2rhfnq384",
-        // Request to launch protocol without an icon in the taskbar
-        "-s",
         // Pass the user's email
         "-u",
         "user@whist.com",
@@ -2509,9 +2507,6 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     EXPECT_EQ(strlen(session_id_copy), strlen(argv[25]));
     EXPECT_EQ(strcmp(session_id_copy, argv[25]), 0);
     free(session_id_copy);
-
-    // Check skip taskbar
-    EXPECT_TRUE(get_skip_taskbar());
 
     // Check user email
     const char* user_email;
