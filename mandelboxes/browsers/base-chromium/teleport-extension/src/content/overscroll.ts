@@ -1,9 +1,10 @@
 import { drawArrow } from "@app/utils/overlays"
+import { cyclingArray } from "@app/utils/arrays"
+
 import {
   ContentScriptMessage,
   ContentScriptMessageType,
 } from "@app/constants/ipc"
-import { cyclingArray } from "@app/utils/arrays"
 import {
   MAXIMUM_X_OVERSCROLL,
   MINIMUM_X_OVERSCROLL,
@@ -19,6 +20,7 @@ let overscroll = {
   previousXOffset: 0,
   rollingDelta: 0,
   lastTimestamp: 0,
+  lastArrowDirection: undefined,
 }
 
 const now = () => Date.now() / 1000
@@ -67,10 +69,18 @@ const initNavigationArrow = () => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.DRAW_NAVIGATION_ARROW) return
 
-    if (arrow === undefined)
-      arrow = drawArrow(document, msg.value.direction) as HTMLDivElement
+    if (
+      arrow === undefined ||
+      overscroll.lastArrowDirection !== msg.value.direction
+    ) {
+      arrow?.remove()
+      arrow = undefined
 
-    arrow.style.opacity = msg.value.opacity
+      arrow = drawArrow(document, msg.value.direction) as HTMLDivElement
+      overscroll.lastArrowDirection = msg.value.direction
+    }
+
+    if (msg.value.direction) arrow.style.opacity = msg.value.opacity
 
     if (msg.value.direction === "back") {
       arrow.style.left = msg.value.offset
