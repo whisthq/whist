@@ -1,4 +1,9 @@
 #include "../gf256_common.h"
+/**
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file gf256_avx2.cpp
+ * @brief Seperate out all avx2 instructions of gf256 into a single file, in order to make the simd fallback work correctly.
+ */
 
 void gf256_mul_mem_init_inner_avx2(const GF256_M128 &table_lo, const GF256_M128 &table_hi,int &y)
 {

@@ -1,4 +1,9 @@
 #pragma once
+/**
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file gf256_common.h
+ * @brief some common function taken out from gf256.h, in order to fix the SIMD fallback, and make the code clearer
+ */
 
 #include <stdint.h> // uint32_t etc
 #include <string.h> // memcpy, memset
