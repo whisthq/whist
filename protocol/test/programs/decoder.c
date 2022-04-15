@@ -10,6 +10,10 @@
 #include <SDL2/SDL.h>
 #include <openssl/evp.h>
 
+#ifdef _WIN32
+#include <libavutil/hwcontext_d3d11va.h>
+#endif
+
 #include "whist/core/whist.h"
 #include "whist/video/codec/decode.h"
 #include "whist/utils/aes.h"
@@ -152,6 +156,8 @@ typedef struct TestOutput {
     SDL_Renderer *sdl_renderer;
     SDL_Texture *sdl_texture;
     SDL_PixelFormatEnum sdl_texture_format;
+    enum AVPixelFormat hardware_format;
+    AVBufferRef *hardware_device;
 } TestOutput;
 
 static void output_to_hash(TestOutput *output, AVFrame *frame) {
@@ -212,29 +218,82 @@ static void output_to_file(TestOutput *output, AVFrame *frame) {
 }
 
 static void output_to_sdl(TestOutput *output, AVFrame *frame) {
-    int res;
-    if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
-        res = SDL_UpdateNVTexture(output->sdl_texture, NULL, frame->data[3], frame->width,
-                                  frame->data[3], frame->width);
+    if (frame->format == AV_PIX_FMT_D3D11) {
+        // Render texture directly without an extra copy.
 
-    } else if (frame->format == AV_PIX_FMT_NV12) {
-        res = SDL_UpdateNVTexture(output->sdl_texture, NULL, frame->data[0], frame->linesize[0],
-                                  frame->data[1], frame->linesize[1]);
-    } else if (frame->format == AV_PIX_FMT_YUV420P) {
-        res = SDL_UpdateYUVTexture(output->sdl_texture, NULL, frame->data[0], frame->linesize[0],
-                                   frame->data[1], frame->linesize[1], frame->data[2],
-                                   frame->linesize[2]);
+        struct {
+            void *texture;
+            int index;
+        } handle;
+        handle.texture = frame->data[0];
+        handle.index = (intptr_t)frame->data[1];
+
+        SDL_Texture *tex;
+
+        tex = SDL_CreateTextureFromHandle(output->sdl_renderer, SDL_PIXELFORMAT_NV12,
+                                          SDL_TEXTUREACCESS_STATIC, frame->width, frame->height,
+                                          &handle);
+        if (tex == NULL) {
+            LOG_ERROR("Failed to create texture: %s.", SDL_GetError());
+            return;
+        }
+
+        SDL_RenderCopy(output->sdl_renderer, tex, NULL, NULL);
+
+        SDL_DestroyTexture(tex);
+
     } else {
-        LOG_ERROR("Pixel format %s not supported with SDL output.",
-                  av_get_pix_fmt_name(frame->format));
-        return;
-    }
-    if (res < 0) {
-        LOG_ERROR("Failed to update texture: %s.", SDL_GetError());
-        return;
-    }
+        // Copy to an intermediate texture, then render with that.
 
-    SDL_RenderCopy(output->sdl_renderer, output->sdl_texture, NULL, NULL);
+        SDL_PixelFormatEnum format;
+        if (frame->format == AV_PIX_FMT_YUV420P) {
+            format = SDL_PIXELFORMAT_IYUV;
+        } else {
+            format = SDL_PIXELFORMAT_NV12;
+        }
+
+        if (format == output->sdl_texture_format) {
+            // Existing texture can be reused.
+        } else {
+            if (output->sdl_texture) {
+                // Destroy an existing texture.
+                SDL_DestroyTexture(output->sdl_texture);
+            }
+
+            output->sdl_texture =
+                SDL_CreateTexture(output->sdl_renderer, format, SDL_TEXTUREACCESS_STREAMING,
+                                  frame->width, frame->height);
+            if (!output->sdl_texture) {
+                LOG_ERROR("Failed to create SDL texture: %s.", SDL_GetError());
+                return;
+            }
+
+            output->sdl_texture_format = format;
+        }
+
+        int res;
+        if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
+            res = SDL_UpdateNVTexture(output->sdl_texture, NULL, frame->data[3], frame->width,
+                                      frame->data[3], frame->width);
+        } else if (frame->format == AV_PIX_FMT_NV12) {
+            res = SDL_UpdateNVTexture(output->sdl_texture, NULL, frame->data[0], frame->linesize[0],
+                                      frame->data[1], frame->linesize[1]);
+        } else if (frame->format == AV_PIX_FMT_YUV420P) {
+            res = SDL_UpdateYUVTexture(output->sdl_texture, NULL, frame->data[0],
+                                       frame->linesize[0], frame->data[1], frame->linesize[1],
+                                       frame->data[2], frame->linesize[2]);
+        } else {
+            LOG_ERROR("Pixel format %s not supported with SDL output.",
+                      av_get_pix_fmt_name(frame->format));
+            return;
+        }
+        if (res < 0) {
+            LOG_ERROR("Failed to update texture: %s.", SDL_GetError());
+            return;
+        }
+
+        SDL_RenderCopy(output->sdl_renderer, output->sdl_texture, NULL, NULL);
+    }
 
     SDL_RenderPresent(output->sdl_renderer);
 
@@ -257,6 +316,58 @@ static bool hardware;
 
 COMMAND_LINE_BOOL_OPTION(hardware, 0, "hw", "Use hardware decoder.")
 
+static WhistStatus sdl_get_hardware_device(TestOutput *output) {
+    SDL_RendererInfo info;
+    int err;
+
+    err = SDL_GetRendererInfo(output->sdl_renderer, &info);
+    if (err < 0) {
+        LOG_ERROR("Failed to get renderer info: %s.", SDL_GetError());
+        return WHIST_ERROR_EXTERNAL;
+    }
+    LOG_INFO("SDL renderer is %s.", info.name);
+
+#ifdef _WIN32
+    if (!strcmp(info.name, "direct3d11")) {
+        ID3D11Device *d3d11_device = SDL_RenderGetD3D11Device(output->sdl_renderer);
+        if (!d3d11_device) {
+            LOG_ERROR("Failed to fetch D3D11 device: %s.", SDL_GetError());
+            return WHIST_ERROR_EXTERNAL;
+        }
+
+        if (d3d11_device) {
+            LOG_INFO("Using D3D11 device from SDL renderer.");
+
+            AVBufferRef *dev_ref = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_D3D11VA);
+            FATAL_ASSERT(dev_ref);
+
+            AVHWDeviceContext *dev = (AVHWDeviceContext *)dev_ref->data;
+            AVD3D11VADeviceContext *hwctx = dev->hwctx;
+            hwctx->device = d3d11_device;
+
+            err = av_hwdevice_ctx_init(dev_ref);
+            if (err < 0) {
+                LOG_WARNING("Failed to create hardware device.");
+                av_buffer_unref(&dev_ref);
+                return WHIST_ERROR_EXTERNAL;
+            }
+
+            output->hardware_device = dev_ref;
+            output->hardware_format = AV_PIX_FMT_D3D11;
+        }
+    }
+#endif
+
+#ifdef __APPLE__
+    if (!strcmp(info.name, "metal")) {
+        // No device required; output can use VideoToolbox.
+        output->hardware_format = AV_PIX_FMT_VIDEOTOOLBOX;
+    }
+#endif
+
+    return WHIST_SUCCESS;
+}
+
 static WhistStatus create_sdl(TestOutput *output) {
     int res;
 
@@ -265,6 +376,14 @@ static WhistStatus create_sdl(TestOutput *output) {
         LOG_ERROR("Failed to initialise SDL: %s.", SDL_GetError());
         return WHIST_ERROR_EXTERNAL;
     }
+
+#ifdef _WIN32
+    // Ensure that we use D3D11 and enable debug layers.
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");
+    SDL_SetHint(SDL_HINT_RENDER_DIRECT3D11_DEBUG, "1");
+#endif
+
+    SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 
     uint32_t window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
@@ -283,22 +402,10 @@ static WhistStatus create_sdl(TestOutput *output) {
         return WHIST_ERROR_EXTERNAL;
     }
 
-    // This is a bit of a hack, but it is expected to work because the
-    // different decodes should output these formats.  Unfortunately, it
-    // means fallback cases can break and may need special handling.
-    if (hardware) {
-        output->sdl_texture_format = SDL_PIXELFORMAT_NV12;
-    } else {
-        output->sdl_texture_format = SDL_PIXELFORMAT_IYUV;
-    }
+    // We only make a texture when the first frame arrives.
+    output->sdl_texture_format = SDL_PIXELFORMAT_UNKNOWN;
 
-    output->sdl_texture =
-        SDL_CreateTexture(output->sdl_renderer, output->sdl_texture_format,
-                          SDL_TEXTUREACCESS_STREAMING, sdl_window_width, sdl_window_height);
-    if (!output->sdl_texture) {
-        LOG_ERROR("Failed to create SDL texture: %s.", SDL_GetError());
-        return WHIST_ERROR_EXTERNAL;
-    }
+    sdl_get_hardware_device(output);
 
     return WHIST_SUCCESS;
 }
@@ -431,6 +538,8 @@ int main(int argc, const char **argv) {
         return 1;
     }
 
+    output = create_output();
+
     AVPacket *pkt = av_packet_alloc();
     AVFrame *frame = av_frame_alloc();
     uint8_t *input_buffer = safe_malloc(MAX_VIDEOFRAME_DATA_SIZE);
@@ -448,7 +557,15 @@ int main(int argc, const char **argv) {
             LOG_ERROR("Codec %s is not supported.", avcodec_get_name(par->codec_id));
             return 1;
         }
-        video_decoder = create_video_decoder(par->width, par->height, hardware, video_codec_type);
+        VideoDecoderParams video_decoder_params = {
+            .codec_type = video_codec_type,
+            .width = par->width,
+            .height = par->height,
+            .hardware_decode = hardware,
+            .hardware_output_format = output->hardware_format,
+            .hardware_device = output->hardware_device,
+        };
+        video_decoder = video_decoder_create(&video_decoder_params);
         if (!video_decoder) {
             LOG_ERROR("Failed to create video decoder.");
             return 1;
@@ -457,8 +574,6 @@ int main(int argc, const char **argv) {
         LOG_ERROR("Audio is not currently supported.");
         return 1;
     }
-
-    output = create_output();
 
     while (1) {
         err = get_next_packet(input, pkt);
