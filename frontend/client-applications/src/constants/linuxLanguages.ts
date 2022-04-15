@@ -1,8 +1,6 @@
 // List of languages available on Linux Ubuntu, and the default dialects/regions for the same languages
 
 export const linuxLanguages: string[] = [
-  "C",
-  "POSIX",
   "aa_DJ",
   "aa_ER",
   "aa_ET",

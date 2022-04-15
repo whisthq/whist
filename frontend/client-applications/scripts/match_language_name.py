@@ -60,7 +60,7 @@ def populate_language_to_dialect(locales):
     language_to_dialect = {}
 
     # Remove part after . and @
-    locales = sorted(set([x.split(".")[0].split("@")[0] for x in locales]))
+    locales = sorted(set([x.split(".")[0].split("@")[0] for x in locales if x != "C" and x != "POSIX"]))
     locales_string = ", ".join([f"'{loc}'" for loc in locales])
     # Print list of supported <language>_<REGION> combinations
     print(f"export const linuxLanguages: string[] = [{locales_string}]")
