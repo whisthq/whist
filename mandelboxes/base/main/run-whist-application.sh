@@ -33,7 +33,7 @@ export USER_AGENT=$USER_AGENT
 export KIOSK_MODE=$KIOSK_MODE
 export LONGITUDE=$LONGITUDE
 export LATITUDE=$LATITUDE
-export $USER_LOCALE
+export ${USER_LOCALE?}
 export LANGUAGE=$USER_LANGUAGE
 
 # Explicitly export the fonts path, so that the
