@@ -1688,7 +1688,7 @@ TEST_F(ProtocolTest, FECTest) {
 TEST_F(ProtocolTest, FECTest2) {
     WhistTimer timer;
     WhistTimer timer2;
-    const int verbose_print = 1;
+    const int verbose_print = 0;
 
     // Initialize FEC
     // Bypass the test, if it's the case hardware not support
