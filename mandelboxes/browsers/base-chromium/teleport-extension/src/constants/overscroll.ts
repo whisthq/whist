@@ -1,2 +1,2 @@
-export const MAXIMUM_X_OVERSCROLL = 450
-export const MINIMUM_X_OVERSCROLL = 0
+export const MAXIMUM_X_OVERSCROLL = 750
+export const MINIMUM_X_OVERSCROLL = 4

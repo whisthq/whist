@@ -32,7 +32,7 @@ const initGestureHandler = () => {
 
       setTimeout(() => {
         throttled = false
-      }, 2000)
+      }, 1000)
     } else {
       runInActiveTab((tabID: number) => {
         chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{

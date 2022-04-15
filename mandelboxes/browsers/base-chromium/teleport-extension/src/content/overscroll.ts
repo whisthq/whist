@@ -56,8 +56,6 @@ const detectGesture = (e: WheelEvent) => {
     arrow = undefined
   }
 
-  console.log(overscroll.rollingDelta)
-
   // Send the overscroll amount to the worker
   chrome.runtime.sendMessage(<ContentScriptMessage>{
     type: ContentScriptMessageType.GESTURE_DETECTED,
