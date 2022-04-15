@@ -55,7 +55,7 @@ const updateOverscroll = (e: WheelEvent) => {
     overscroll.throttle = true
     setTimeout(() => {
       overscroll.throttle = false
-    }, 250)
+    }, 1000)
   } else {
     overscroll.rollingDelta = _updatedRollingDelta
   }
