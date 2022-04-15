@@ -57,10 +57,8 @@ const detectGesture = (e: WheelEvent) => {
 
   const amountToShift =
     Math.abs(rollingDelta) >= navigationThreshold
-      ? "0px !important"
-      : `-${
-          70 - (70 * Math.abs(rollingDelta)) / navigationThreshold
-        }px !important`
+      ? "0px"
+      : `-${70 - (70 * Math.abs(rollingDelta)) / navigationThreshold}px`
 
   if (arrow === undefined)
     arrow = drawArrow(document, goBack ? "left" : "right")
@@ -68,7 +66,7 @@ const detectGesture = (e: WheelEvent) => {
   arrow.style.opacity = `${Math.max(
     Math.abs(rollingDelta) / navigationThreshold,
     0.2
-  ).toString()} !important`
+  ).toString()}`
 
   if (goBack) arrow.style.left = amountToShift
   if (!goBack) arrow.style.right = amountToShift
