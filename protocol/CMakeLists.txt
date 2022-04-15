@@ -278,7 +278,8 @@ if(NOT LIB_SENTRY)
 endif()
 list(APPEND SHARED_LIBS_PATHS ${SENTRY_DIR_PATH})
 
-find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
+set(SDL2_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
+find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${SDL2_DIR_PATH}"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT_PATH
         NO_CMAKE_PATH
@@ -286,7 +287,7 @@ find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${CMAKE_BINARY_DIR}/lib/$
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
 if(NOT STATIC_SDL2)
-    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
+    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${SDL2_DIR_PATH}")
 endif()
 
 function(copy_runtime_libs TARGET)
