@@ -1,7 +1,7 @@
 #include "../gf256_common.h"
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file gf256_ssse3.cpp
+ * file gf256_ssse3.cpp
  * @brief Seperate out all ssse3 instructions of gf256 into a single file, in order to make the simd fallback work correctly.
  */
 
