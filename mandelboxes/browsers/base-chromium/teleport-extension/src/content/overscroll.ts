@@ -37,13 +37,16 @@ const isScrollingHorizontally = (e: WheelEvent) => {
   return isScrolling
 }
 
+const trimDelta = (delta: number) => {
+  const trimmedDelta = Math.min(Math.abs(delta), MAXIMUM_X_UPDATE)
+  return delta < 0 ? -1 * trimmedDelta : trimmedDelta
+}
+
 const updateOverscroll = (e: WheelEvent) => {
-  const trimmedDelta = Math.min(Math.abs(e.deltaX), MAXIMUM_X_UPDATE)
-  if (e.deltaX < 0) {
-    overscroll.rollingDelta - trimmedDelta
-  } else {
-    overscroll.rollingDelta + trimmedDelta
-  }
+  overscroll.rollingDelta += trimDelta(e.deltaX)
+
+  console.log(overscroll.rollingDelta)
+
   overscroll.lastTimestamp = now()
 }
 
