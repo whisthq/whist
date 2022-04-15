@@ -53,6 +53,9 @@ const detectGesture = (e: WheelEvent) => {
     arrow?.remove()
     arrow = undefined
   }
+
+  console.log(overscroll.rollingDelta)
+
   // Send the overscroll amount to the worker
   chrome.runtime.sendMessage(<ContentScriptMessage>{
     type: ContentScriptMessageType.GESTURE_DETECTED,
@@ -85,14 +88,12 @@ const refreshNavigationArrow = () => {
 }
 
 const initSwipeGestures = () => {
-  setTimeout(() => {
-    // Fires whenever the wheel moves
-    window.addEventListener("wheel", detectGesture)
-    // Fires every rollingLookbackPeriod seconds to see if the wheel is still moving
-    setInterval(refreshNavigationArrow, rollingLookbackPeriod)
+  // Fires whenever the wheel moves
+  window.addEventListener("wheel", detectGesture)
+  // Fires every rollingLookbackPeriod seconds to see if the wheel is still moving
+  setInterval(refreshNavigationArrow, rollingLookbackPeriod)
 
-    initNavigationArrow()
-  }, 2000)
+  initNavigationArrow()
 }
 
 export { initSwipeGestures }
