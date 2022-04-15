@@ -74,7 +74,6 @@ const initGestureThrottler = () => {
   const handler = (msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.GESTURE_DETECTED) return
 
-    console.log("GESTURE DETECTED", msg)
     runInActiveTab((tabID: number) =>
       msg.value === "back"
         ? chrome.tabs.goBack(tabID)

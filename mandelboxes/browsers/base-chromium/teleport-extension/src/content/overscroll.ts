@@ -91,10 +91,12 @@ const refreshArrow = () => {
 }
 
 const initSwipeGestures = () => {
-  // Fires whenever the wheel moves
-  window.addEventListener("wheel", detectGesture)
-  // Fires every rollingLookbackPeriod seconds to see if the wheel is still moving
-  setInterval(refreshArrow, rollingLookbackPeriod)
+  setTimeout(() => {
+    // Fires whenever the wheel moves
+    window.addEventListener("wheel", detectGesture)
+    // Fires every rollingLookbackPeriod seconds to see if the wheel is still moving
+    setInterval(refreshArrow, rollingLookbackPeriod)
+  }, 1000)
 }
 
 export { initSwipeGestures }
