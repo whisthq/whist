@@ -9,9 +9,10 @@ import { runInActiveTab } from "@app/utils/chrome"
 let throttled = false
 
 const navigationArrowOffset = (rollingDelta: number) => {
-  if (Math.abs(rollingDelta) > MAXIMUM_X_OVERSCROLL) return "0px"
+  const slideDistance = MAXIMUM_X_OVERSCROLL - 200
+  if (Math.abs(rollingDelta) > slideDistance) return "0px"
 
-  return `-${70 - (70 * Math.abs(rollingDelta)) / MAXIMUM_X_OVERSCROLL}px`
+  return `-${70 - (70 * Math.abs(rollingDelta)) / slideDistance}px`
 }
 
 const navigationArrowOpacity = (rollingDelta: number) =>
