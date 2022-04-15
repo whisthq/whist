@@ -9,6 +9,7 @@ import {
   MAXIMUM_X_OVERSCROLL,
   MAXIMUM_X_UPDATE,
   MINIMUM_X_OVERSCROLL,
+  MINIMUM_X_UPDATE,
 } from "@app/constants/overscroll"
 
 // How many seconds to look back when detecting gestures
@@ -38,7 +39,8 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 }
 
 const trimDelta = (delta: number) => {
-  const trimmedDelta = Math.min(Math.abs(delta), MAXIMUM_X_UPDATE)
+  let trimmedDelta = Math.min(Math.abs(delta), MAXIMUM_X_UPDATE)
+  trimmedDelta = Math.max(trimmedDelta, MINIMUM_X_UPDATE)
   return delta < 0 ? -1 * trimmedDelta : trimmedDelta
 }
 
@@ -112,7 +114,7 @@ const initSwipeGestures = () => {
   window.addEventListener("wheel", detectGesture)
   // Fires every rollingLookbackPeriod seconds to see if the wheel is still moving
   setInterval(refreshNavigationArrow, rollingLookbackPeriod)
-
+  // Respond to draw arrow commands from the worker
   initNavigationArrow()
 }
 

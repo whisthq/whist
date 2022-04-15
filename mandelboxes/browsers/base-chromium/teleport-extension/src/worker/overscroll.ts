@@ -32,7 +32,7 @@ const initGestureHandler = () => {
 
       setTimeout(() => {
         throttled = false
-      }, 1000)
+      }, 1500)
     }
 
     runInActiveTab((tabID: number) => {
