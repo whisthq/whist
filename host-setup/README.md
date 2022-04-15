@@ -18,7 +18,7 @@ To set up your personal Whist development instance:
 
   - Note that the EC2 instance type must be **g4** for GPU compatibility with our containers and streaming technology. We use these instances as they have the best GPU compatibility and performance, and come with fast-access ephemeral storage.
 
-- Add your EC2 instance to the `MainVPCdev` VPC and security group **MandelboxesSecurityGroupDev**, to enable proper networking rules. We use Terraform to consolidate our AWS infrastructure, so the security group name should be the same across all regions. If you encounter some issues, contact the CODEOWNER of `backend/infrastructure/`.
+- Add your EC2 instance to the **MainVPCdev** VPC and security group **MandelboxesSecurityGroupDev**, to enable proper networking rules. We use Terraform to consolidate our AWS infrastructure, so the security group name should be the same across all regions. If you encounter some issues, contact the CODEOWNER of `backend/infrastructure/`.
 
 - Name your instance by making a new tag with key `Name` and value the desired name. We tag instances because we used to have all sorts of instances burning money for no reason, so we name all instances. If an instance is unnamed, it is liable to be terminated! Your instance's name tag should include your name as well, so we can identify whose it is.
 
