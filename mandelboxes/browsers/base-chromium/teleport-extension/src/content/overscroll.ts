@@ -103,6 +103,7 @@ const refreshNavigationArrow = () => {
   if (now() - overscroll.lastTimestamp > rollingLookbackPeriod) {
     arrow?.remove()
     arrow = undefined
+    overscroll.rollingDelta = 0
   }
 }
 
