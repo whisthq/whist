@@ -70,13 +70,14 @@ const drawArrow = (document: Document, direction: string) => {
   element.style.background = "rgba(0, 0, 0, 0.7)"
   element.style.position = "fixed"
   element.style.top = "46%"
-  element.style.padding = "10px"
   element.style.zIndex = "99999999"
   element.style.opacity = "0"
   element.style.color = "white"
   element.style.fontFamily = "Helvetica"
+  element.style.textAlign = "center"
+  element.style.padding = "0px"
 
-  if (direction === "left") {
+  if (direction === "back") {
     element.style.left = "-70px"
     element.style.borderRadius = "0px 70px 70px 0px"
     element.innerHTML += escapeHTMLPolicy.createHTML(

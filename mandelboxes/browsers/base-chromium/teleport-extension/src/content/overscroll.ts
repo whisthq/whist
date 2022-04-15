@@ -4,94 +4,83 @@ import {
   ContentScriptMessageType,
 } from "@app/constants/ipc"
 import { cyclingArray } from "@app/utils/arrays"
+import {
+  MAXIMUM_X_OVERSCROLL,
+  MINIMUM_X_OVERSCROLL,
+} from "@app/constants/overscroll"
 
-// If the rolling delta exceeds this amount (in absolute value), display the arrow
-const rollingDeltaThreshold = 10
-// If the rolling delta exceeds this amount (in absolute value), navigate
-const navigationThreshold = 500
 // How many seconds to look back when detecting gestures
 const rollingLookbackPeriod = 1.5
 
-let previousOffset = 0
-let rollingDelta = 0
 let arrow: HTMLDivElement | undefined = undefined
-let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
-let mostRecentX = 0
-let goBack = false
-let throttle = false
+let previousYDeltas = cyclingArray<number>(10, [])
 
-const detectVerticalScroll = () =>
-  previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
+let overscroll = {
+  previousXOffset: 0,
+  rollingDelta: 0,
+  lastTimestamp: 0,
+}
 
-const removeArrow = () => {
-  if (arrow !== undefined) {
-    arrow.remove()
-    arrow = undefined
-  }
+const now = () => Date.now() / 1000
+
+const isScrollingVertically = (e: WheelEvent) => {
+  previousYDeltas.add(e.deltaY)
+  return previousYDeltas.get().some((delta: number) => Math.abs(delta) > 10)
+}
+
+const isScrollingHorizontally = (e: WheelEvent) => {
+  const isScrolling = overscroll.previousXOffset - e.offsetX !== 0
+  overscroll.previousXOffset = e.offsetX
+  return isScrolling
+}
+
+const updateOverscroll = (e: WheelEvent) => {
+  overscroll.rollingDelta += e.deltaX
+  overscroll.lastTimestamp = now()
 }
 
 const detectGesture = (e: WheelEvent) => {
-  // Keep track of the last 10 X and Y wheel deltas
-  previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
+  // If the user is scrolling within the page (i.e not overscrolling), abort
+  if (isScrollingVertically(e) || isScrollingHorizontally(e)) return
 
-  // If the user is scrolling vertically, abort
-  if (detectVerticalScroll() || throttle || previousOffset - e.offsetX !== 0) {
-    previousOffset = e.offsetX
-    return
+  // Trakc how much has been overscrolling horizontally in total
+  updateOverscroll(e)
+
+  // If there hasn't been much overscroll, don't do anything
+  if (Math.abs(overscroll.rollingDelta) < MINIMUM_X_OVERSCROLL) return
+
+  if (Math.abs(overscroll.rollingDelta) > MAXIMUM_X_OVERSCROLL) {
+    arrow?.remove()
+    arrow = undefined
   }
-
-  console.log("Detecting gesture", e.deltaX)
-
-  // Calculate how far the wheel has overscrolled horizontally in the last rollingLookbackPeriod seconds
-  mostRecentX = Date.now() / 1000
-  rollingDelta += e.deltaX
-
-  // If the wheel hasn't moved much, abort and remove all arrow drawings
-  if (Math.abs(rollingDelta) < rollingDeltaThreshold) {
-    rollingDelta = 0
-    removeArrow()
-    return
-  }
-
-  // The wheel has moved, detect which direction and draw the appropriate arrow
-  if (rollingDelta < 0 !== goBack) removeArrow()
-  goBack = rollingDelta < 0
-
-  const amountToShift =
-    Math.abs(rollingDelta) >= navigationThreshold
-      ? "0px"
-      : `-${70 - (70 * Math.abs(rollingDelta)) / navigationThreshold}px`
-
-  if (arrow === undefined)
-    arrow = drawArrow(document, goBack ? "left" : "right")
-
-  arrow.style.opacity = `${Math.max(
-    Math.abs(rollingDelta) / navigationThreshold,
-    0.2
-  ).toString()}`
-
-  if (goBack) arrow.style.left = amountToShift
-  if (!goBack) arrow.style.right = amountToShift
-
-  if (Math.abs(rollingDelta) < navigationThreshold) return
-
-  throttle = true
+  // Send the overscroll amount to the worker
   chrome.runtime.sendMessage(<ContentScriptMessage>{
     type: ContentScriptMessageType.GESTURE_DETECTED,
-    value: goBack ? "back" : "forward",
+    value: overscroll,
   })
-
-  removeArrow()
-  rollingDelta = 0
-  setTimeout(() => (throttle = false), 1000)
 }
 
-const refreshArrow = () => {
-  const now = Date.now() / 1000
+const initNavigationArrow = () => {
+  chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
+    if (msg.type !== ContentScriptMessageType.DRAW_NAVIGATION_ARROW) return
 
-  if (now - mostRecentX > rollingLookbackPeriod) {
-    rollingDelta = 0
-    removeArrow()
+    if (arrow === undefined)
+      arrow = drawArrow(document, msg.value.direction) as HTMLDivElement
+
+    arrow.style.opacity = msg.value.opacity
+
+    if (msg.value.direction === "back") {
+      arrow.style.left = msg.value.offset
+    } else {
+      arrow.style.right = msg.value.offset
+    }
+  })
+}
+
+const refreshNavigationArrow = () => {
+  if (now() - overscroll.lastTimestamp > rollingLookbackPeriod) {
+    arrow?.remove()
+    arrow = undefined
   }
 }
 
@@ -100,7 +89,9 @@ const initSwipeGestures = () => {
     // Fires whenever the wheel moves
     window.addEventListener("wheel", detectGesture)
     // Fires every rollingLookbackPeriod seconds to see if the wheel is still moving
-    setInterval(refreshArrow, rollingLookbackPeriod)
+    setInterval(refreshNavigationArrow, rollingLookbackPeriod)
+
+    initNavigationArrow()
   }, 2000)
 }
 

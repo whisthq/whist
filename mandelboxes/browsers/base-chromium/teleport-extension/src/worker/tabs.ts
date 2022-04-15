@@ -70,25 +70,8 @@ const initActivateTabHandler = (nativeHostPort: chrome.runtime.Port) => {
   })
 }
 
-const initGestureThrottler = () => {
-  const handler = (msg: ContentScriptMessage) => {
-    if (msg.type !== ContentScriptMessageType.GESTURE_DETECTED) return
-
-    runInActiveTab((tabID: number) =>
-      msg.value === "back"
-        ? chrome.tabs.goBack(tabID)
-        : chrome.tabs.goForward(tabID)
-    )
-
-    return true
-  }
-
-  chrome.runtime.onMessage.addListener(throttle(handler, 1000))
-}
-
 export {
   initTabDetachSuppressor,
   initCreateNewTabHandler,
   initActivateTabHandler,
-  initGestureThrottler,
 }

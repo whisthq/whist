@@ -13,8 +13,8 @@ import {
   initTabDetachSuppressor,
   initCreateNewTabHandler,
   initActivateTabHandler,
-  initGestureThrottler,
 } from "./tabs"
+import { initGestureHandler } from "./overscroll"
 
 const nativeHostPort = initNativeHostIpc()
 
@@ -43,4 +43,4 @@ initCreateNewTabHandler(nativeHostPort)
 initActivateTabHandler(nativeHostPort)
 
 // For two-finger swipe: goes forward/back to the previous page in history
-initGestureThrottler()
+initGestureHandler()
