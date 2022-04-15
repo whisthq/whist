@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 
+# This script is used to generate the typescript array with the list of languages supported
+# by Linux, as well as a dictionary with the default dialect for those languages that have
+# regional variations. For these languages, we pick the dialect used in the country where
+# there are most speakers.
+
+# This script must be run on Linux! You should then copy the array and the dictionary into
+# the frontend/client-applications/src/constants/linuxLanguages.ts
+
 import os
 import sys
 import subprocess
 
 language_to_default_dialect = {
-    "aa": "DJ",  # Afar, spoken in Djibouti, Eritrea, and the Afar Region of Ethiopia. Most speakers live in Djibouti.
+    "aa": "DJ",  # Afar, spoken in Djibouti, Eritrea, and the Afar Region of Ethiopia.
+    # Most speakers live in Djibouti.
     "ar": "EG",  # Arabic. Country with most speakers of Standard Arabic is Egypt.
     "az": "AZ",  # Azerbaijani
     "ber": "MA",  # Berber language, spoken in Morocco, among other countries

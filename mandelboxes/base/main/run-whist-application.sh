@@ -33,10 +33,8 @@ export USER_AGENT=$USER_AGENT
 export KIOSK_MODE=$KIOSK_MODE
 export LONGITUDE=$LONGITUDE
 export LATITUDE=$LATITUDE
-export $USER_LOCALE # We are exporting all the locale variables stored in the USER_LOCALE variable
+export $USER_LOCALE
 export LANGUAGE=$USER_LANGUAGE
-echo "Environment variables in whist user's space:"
-printenv
 
 # Explicitly export the fonts path, so that the
 # application can find the fonts. Per: https://askubuntu.com/questions/492033/fontconfig-error-cannot-load-default-config-file
