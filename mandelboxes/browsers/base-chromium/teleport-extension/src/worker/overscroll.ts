@@ -23,8 +23,8 @@ const trimDelta = (delta: number) => {
   return delta < 0 ? -1 * trimmedDelta : trimmedDelta
 }
 
-const updateOverscroll = (e: WheelEvent) => {
-  const _updatedRollingDelta = overscroll.rollingDelta + trimDelta(e.deltaX)
+const updateOverscroll = (deltaX: number) => {
+  const _updatedRollingDelta = overscroll.rollingDelta + trimDelta(deltaX)
   if (
     (overscroll.rollingDelta > 0 && _updatedRollingDelta <= 0) ||
     (overscroll.rollingDelta < 0 && _updatedRollingDelta >= 0)
@@ -54,7 +54,7 @@ const initGestureHandler = () => {
     if (msg.type !== ContentScriptMessageType.GESTURE_DETECTED || throttled)
       return
 
-    updateOverscroll(msg.value.e)
+    updateOverscroll(msg.value)
 
     // If there hasn't been much overscroll, don't do anything
     if (Math.abs(overscroll.rollingDelta) < MINIMUM_X_OVERSCROLL) return
