@@ -40,6 +40,8 @@ const detectGesture = (e: WheelEvent) => {
     return
   }
 
+  console.log("Detecting gesture", e.deltaX)
+
   // Calculate how far the wheel has overscrolled horizontally in the last rollingLookbackPeriod seconds
   mostRecentX = Date.now() / 1000
   rollingDelta += e.deltaX
