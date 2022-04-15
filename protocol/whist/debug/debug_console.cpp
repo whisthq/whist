@@ -95,9 +95,9 @@ int init_debug_console() {
     whist_analyzer_init();
 #else
     // supress ci error
-    UNUSED(init_overrided_values);
-    UNUSED(create_local_udp_listen_socket);
-    UNUSED(debug_console_thread);
+    UNUSED(&init_overrided_values);
+    UNUSED(&create_local_udp_listen_socket);
+    UNUSED(&debug_console_thread);
 #endif
     return 0;
 }
