@@ -13,9 +13,7 @@ import { runInActiveTab } from "@app/utils/chrome"
 
 let throttled = false
 let overscroll = {
-  previousXOffset: 0,
   rollingDelta: 0,
-  lastTimestamp: 0,
   lastArrowDirection: undefined,
 }
 
@@ -39,7 +37,6 @@ const updateOverscroll = (e: WheelEvent) => {
   } else {
     overscroll.rollingDelta = _updatedRollingDelta
   }
-  overscroll.lastTimestamp = Date.now() / 1000
 }
 
 const navigationArrowOffset = (rollingDelta: number) => {

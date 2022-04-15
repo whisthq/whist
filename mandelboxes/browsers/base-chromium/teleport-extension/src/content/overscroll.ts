@@ -5,26 +5,15 @@ import {
   ContentScriptMessage,
   ContentScriptMessageType,
 } from "@app/constants/ipc"
-import {
-  MAXIMUM_X_OVERSCROLL,
-  MAXIMUM_X_UPDATE,
-  MINIMUM_X_OVERSCROLL,
-  MINIMUM_X_UPDATE,
-} from "@app/constants/overscroll"
 
 // How many seconds to look back when detecting gestures
-const rollingLookbackPeriod = 1.5
+const rollingLookbackPeriod = 1
 
 let arrow: HTMLDivElement | undefined = undefined
 let previousYDeltas = cyclingArray<number>(3, [])
-
-let overscroll = {
-  previousXOffset: 0,
-  rollingDelta: 0,
-  lastTimestamp: 0,
-  lastArrowDirection: undefined,
-  throttle: false,
-}
+let previousXOffset = 0
+let previousArrowDirection: string | undefined = undefined
+let lastTimestamp = 0
 
 const now = () => Date.now() / 1000
 
@@ -34,8 +23,8 @@ const isScrollingVertically = (e: WheelEvent) => {
 }
 
 const isScrollingHorizontally = (e: WheelEvent) => {
-  const isScrolling = overscroll.previousXOffset - e.offsetX !== 0
-  overscroll.previousXOffset = e.offsetX
+  const isScrolling = previousXOffset - e.offsetX !== 0
+  previousXOffset = e.offsetX
   return isScrolling
 }
 
@@ -56,18 +45,19 @@ const initNavigationArrow = () => {
 
     if (
       arrow === undefined ||
-      overscroll.lastArrowDirection !== msg.value.direction ||
+      previousArrowDirection !== msg.value.direction ||
       !msg.value.draw
     ) {
       arrow?.remove()
       arrow = undefined
-      overscroll.rollingDelta = 0
 
       if (msg.value.draw) {
         arrow = drawArrow(document, msg.value.direction)
-        overscroll.lastArrowDirection = msg.value.direction
+        previousArrowDirection = msg.value.direction
       }
     }
+
+    if (msg.value.draw) lastTimestamp = now()
 
     if (msg.value.direction)
       (arrow as HTMLDivElement).style.opacity = msg.value.opacity
@@ -81,10 +71,9 @@ const initNavigationArrow = () => {
 }
 
 const refreshNavigationArrow = () => {
-  if (now() - overscroll.lastTimestamp > rollingLookbackPeriod) {
+  if (now() - lastTimestamp > rollingLookbackPeriod) {
     arrow?.remove()
     arrow = undefined
-    overscroll.rollingDelta = 0
   }
 }
 
