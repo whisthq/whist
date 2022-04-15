@@ -196,29 +196,41 @@ Public Function Implementations
 
 int init_rs_wrapper(void) {
     static int initialized = 0;
-    if (initialized == 0) {
-        lugi_rs_extra_init();
-        CpuInfo cpu_info = gf256_get_cpuinfo();
+    if (initialized == 1) return 0;
 
-        if (cpu_info.cpu_type == CPU_TYPE_X86 || cpu_info.cpu_type == CPU_TYPE_X64) {
-            if (!cpu_info.has_avx2) {
-                LOG_WARNING("Platform is x86/x64 but AVX2 is not supported!");
+    switch (rs_implementation_to_use) {
+        case CM256: {
+            CpuInfo cpu_info = gf256_get_cpuinfo();
+            LOG_INFO("Gf256 detected CPU type is %s", cpu_type_to_str(cpu_info.cpu_type));
+
+            if (cpu_info.cpu_type == CPU_TYPE_X86 || cpu_info.cpu_type == CPU_TYPE_X64) {
+                if (!cpu_info.has_avx2) {
+                    LOG_WARNING("CPU type is x86/x64 but AVX2 is not supported!");
+                }
+                if (!cpu_info.has_ssse3) {
+                    LOG_FATAL("CPU type is x86/x64 but SSSE3 is not supported!");
+                }
+            } else if (cpu_info.cpu_type == CPU_TYPE_ARM32 || cpu_info.cpu_type == CPU_TYPE_ARM64) {
+                if (!cpu_info.has_neon) {
+                    LOG_FATAL("CPU type is arm32/arm64 but neon is not supported!");
+                }
+            } else {
+                LOG_FATAL("unknown CPU type");
             }
 
-            if (!cpu_info.has_ssse3) {
-                LOG_FATAL("Platform is x86/x64 but SSSE3 is not supported!");
-            }
-        } else if (cpu_info.cpu_type == CPU_TYPE_ARM32 || cpu_info.cpu_type == CPU_TYPE_ARM64) {
-            if (!cpu_info.has_neon) {
-                LOG_FATAL("Platform is arm32/arm64 but neon is not supported!");
-            }
-        } else {
-            LOG_FATAL("unknown Platform/CPU Type");
+            FATAL_ASSERT(cm256_init() == 0);
+            break;
         }
-
-        FATAL_ASSERT(cm256_init() == 0);
-        initialized = 1;
+        case LUGI_RS: {
+            lugi_rs_extra_init();
+            break;
+        }
+        default: {
+            LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation_to_use);
+        }
     }
+
+    initialized = 1;
     return 0;
 }
 

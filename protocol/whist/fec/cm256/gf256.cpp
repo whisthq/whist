@@ -32,7 +32,6 @@
 #include "ssse3/gf256_ssse3.h"
 #include "gf256_cpuinfo.h"
 
-
 #ifdef LINUX_ARM
 #include <unistd.h>
 #include <fcntl.h>
