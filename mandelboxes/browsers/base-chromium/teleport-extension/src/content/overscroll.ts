@@ -18,6 +18,7 @@ let arrow: HTMLDivElement | undefined = undefined
 let previousYDeltas = cyclingArray<{ timestamp: number; delta: number }>(10, [])
 let mostRecentX = 0
 let goBack = false
+let throttle = false
 
 const detectVerticalScroll = () =>
   previousYDeltas.get().some((args) => Math.abs(args.delta) > 10)
@@ -34,7 +35,7 @@ const detectGesture = (e: WheelEvent) => {
   previousYDeltas.add({ timestamp: Date.now() / 1000, delta: e.deltaY })
 
   // If the user is scrolling vertically, abort
-  if (detectVerticalScroll() || previousOffset - e.offsetX !== 0) {
+  if (detectVerticalScroll() || throttle || previousOffset - e.offsetX !== 0) {
     previousOffset = e.offsetX
     return
   }
@@ -72,13 +73,12 @@ const detectGesture = (e: WheelEvent) => {
 
   if (Math.abs(rollingDelta) < navigationThreshold) return
 
-  chrome.runtime.sendMessage(<ContentScriptMessage>{
-    type: ContentScriptMessageType.GESTURE_DETECTED,
-    value: goBack ? "back" : "forward",
-  })
+  throttle = true
+  goBack ? history.back() : history.forward()
 
   removeArrow()
   rollingDelta = 0
+  setTimeout(() => (throttle = false), 1000)
 }
 
 const refreshArrow = () => {
