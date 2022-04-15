@@ -132,6 +132,10 @@ Defines
 
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof(array[0]))
 
+// How fast the event loop runs normally
+#define EVENT_LOOP_TIMEOUT_MS 1
+// How fast the event loop runs during occlusion
+#define EVENT_LOOP_OCCLUDED_TIMEOUT_MS 10
 #define VSYNC_ON false
 
 // Milliseconds between sending resize events from client to server

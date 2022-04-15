@@ -96,9 +96,10 @@ WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title)
     return frontend->call->set_title(frontend, title);
 }
 
-bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
+bool whist_frontend_poll_event_timeout(WhistFrontend* frontend, WhistFrontendEvent* event,
+                                       uint32_t timeout_ms) {
     FATAL_ASSERT(frontend != NULL);
-    bool ret = frontend->call->poll_event(frontend, event);
+    bool ret = frontend->call->poll_event_timeout(frontend, event, timeout_ms);
     if (ret && event != NULL) {
         event->frontend = frontend;
     }

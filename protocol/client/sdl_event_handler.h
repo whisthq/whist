@@ -36,6 +36,12 @@ Public Functions
  *                                 otherwise "Application not responding" or a Mac beachball
  *                                 may appear.
  *
+ * @param frontend                 The WhistFrontend to handle events from
+ *
+ * @param timeout_ms               The amount of time to wait for events to happen.
+ *                                 This function may return early, if an event was received first.
+ *                                 If no events occurred, it's guaranteed to wait the full interval.
+ *
  * @returns                        True on success,
  *                                 False on failure
  *
@@ -45,7 +51,7 @@ Public Functions
  *                                 To see more information on this issue, and my related rant,
  *                                 go to https://github.com/libsdl-org/SDL/issues/1059
  */
-bool sdl_handle_events(WhistFrontend* frontend);
+bool sdl_handle_events(WhistFrontend* frontend, uint32_t timeout_ms);
 
 /**
  * @brief                          The function will let you know if an audio device has

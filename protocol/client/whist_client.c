@@ -462,10 +462,23 @@ int whist_client_main(int argc, const char* argv[]) {
                 start_timer(&cpu_usage_statistics_timer);
             }
 
+            // How long to wait for an event
+            // This affects render latency
+            int event_loop_timeout = 0;
+
+            // Check if the window is visible, versus being minimized/occluded.
+            if (whist_frontend_is_window_visible(frontend)) {
+                event_loop_timeout = EVENT_LOOP_TIMEOUT_MS;
+            } else {
+                // If the window is minimized/occluded, we can use the occlusion timeout.
+                // This lets the CPU take a deeper sleep.
+                event_loop_timeout = EVENT_LOOP_OCCLUDED_TIMEOUT_MS;
+            }
+
             // We _must_ keep make calling this function as much as we can,
             // or else the user will get beachball / "Whist Not Responding"
             // Note, that the OS will sometimes hang this function for an arbitrarily long time
-            if (!sdl_handle_events(frontend)) {
+            if (!sdl_handle_events(frontend, event_loop_timeout)) {
                 // unable to handle event
                 exit_code = WHIST_EXIT_FAILURE;
                 break;
@@ -526,16 +539,6 @@ int whist_client_main(int argc, const char* argv[]) {
                 }
 
                 start_timer(&monitor_change_timer);
-            }
-
-            // Check if the window is minimized or occluded.
-            if (!whist_frontend_is_window_visible(frontend)) {
-                // If it is, we can sleep for a good while to keep CPU usage very low.
-                whist_sleep(10);
-            } else {
-                // Otherwise, we sleep for a much shorter time to stay responsive,
-                // but we still don't let the loop be tight (in order to improve battery life)
-                whist_usleep(0.25 * US_IN_MS);
             }
 
             // Check if file upload has been initiated and initiated selection dialog if so

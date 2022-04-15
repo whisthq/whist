@@ -102,7 +102,11 @@ void whist_set_thread_local_storage(WhistThreadLocalStorageKey key, void *data,
 
 void *whist_get_thread_local_storage(WhistThreadLocalStorageKey key) { return SDL_TLSGet(key); }
 
-void whist_sleep(uint32_t ms) { SDL_Delay(ms); }
+void whist_sleep(uint32_t ms) {
+    if (ms > 0) {
+        SDL_Delay(ms);
+    }
+}
 
 void whist_usleep(uint32_t us) {
 #ifdef _WIN32

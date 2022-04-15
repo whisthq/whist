@@ -129,7 +129,8 @@ typedef struct WhistFrontendFunctionTable {
     WhistStatus (*set_title)(WhistFrontend* frontend, const char* title);
 
     // Events
-    bool (*poll_event)(WhistFrontend* frontend, WhistFrontendEvent* event);
+    bool (*poll_event_timeout)(WhistFrontend* frontend, WhistFrontendEvent* event,
+                               uint32_t timeout_ms);
 
     // Mouse
     void (*get_global_mouse_position)(WhistFrontend* frontend, int* x, int* y);
@@ -178,7 +179,10 @@ int whist_frontend_set_window_accent_color(WhistFrontend* frontend, WhistRGBColo
 WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title);
 
 // Events
-bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event);
+// This will return when an event is received, or when timeout_ms time has passed.
+// Whichever comes first
+bool whist_frontend_poll_event_timeout(WhistFrontend* frontend, WhistFrontendEvent* event,
+                                       uint32_t timeout_ms);
 
 // Keyboard
 int whist_frontend_send_key_event(WhistFrontend* frontend, WhistKeycode keycode, bool pressed);

@@ -176,16 +176,35 @@ static WhistStatus sdl_set_title(WhistFrontend* frontend, const char* title) {
     return WHIST_SUCCESS;
 }
 
-static bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
-    if (!event) {
-        return SDL_PollEvent(NULL) != 0;
+static bool sdl_poll_event_timeout(WhistFrontend* frontend, WhistFrontendEvent* event,
+                                   uint32_t timeout_ms) {
+#ifdef __linux__
+    // We cannot use SDL_WaitEventTimeout on Linux, because
+    // Linux seems to treat a 1ms timeout as an infinite timeout
+    bool skip_timeout = true;
+#else
+    bool skip_timeout = false;
+#endif
+
+    SDL_Event sdl_event;
+    if (timeout_ms == 0 || skip_timeout) {
+        if (!SDL_PollEvent(&sdl_event)) {
+            // If there was no event, we should sleep for the specified time.
+            // Note: We are not allowed to sleep if we received an event,
+            // that violates the doxygen comment (Return quickly, if an event is in the queue)
+            whist_sleep(timeout_ms);
+            return false;
+        }
+    } else {
+        if (!SDL_WaitEventTimeout(&sdl_event, timeout_ms)) {
+            return false;
+        }
     }
 
-    // We cannot use SDL_WaitEventTimeout here, because
-    // Linux seems to treat a 1ms timeout as an infinite timeout
-    SDL_Event sdl_event;
-    if (!SDL_PollEvent(&sdl_event)) {
-        return false;
+    // If the caller doesn't care about the event,
+    // We can skip filling out the event struct
+    if (event == NULL) {
+        return true;
     }
 
     memset(event, 0, sizeof(WhistFrontendEvent));
@@ -338,7 +357,7 @@ static const WhistFrontendFunctionTable sdl_function_table = {
     .is_window_visible = sdl_is_window_visible,
     .temp_set_window = temp_sdl_set_window,
     .set_title = sdl_set_title,
-    .poll_event = sdl_poll_event,
+    .poll_event_timeout = sdl_poll_event_timeout,
     .get_global_mouse_position = sdl_get_global_mouse_position,
 };
 

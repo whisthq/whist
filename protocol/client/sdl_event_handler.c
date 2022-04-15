@@ -69,9 +69,28 @@ Public Function Implementations
 ============================
 */
 
-bool sdl_handle_events(WhistFrontend* frontend) {
+bool sdl_handle_events(WhistFrontend* frontend, uint32_t timeout_ms) {
+    WhistTimer poll_timer;
+    start_timer(&poll_timer);
+
+    // First, flush the event queue completely.
+    // The event queue must be held empty regularly,
+    // otherwise beachball / "Application not responding" will happen
     WhistFrontendEvent event;
-    while (whist_frontend_poll_event(frontend, &event)) {
+    while (whist_frontend_poll_event_timeout(frontend, &event, 0)) {
+        if (handle_frontend_event(&event) != 0) {
+            return false;
+        }
+    }
+
+    // Amount of ms passed, rounded down
+    int ms_passed = (int)(get_timer(&poll_timer) * MS_IN_SECOND);
+
+    // With any remaining time, we wait for another event
+    // If an event happens early, we can return without waiting the full timeout
+    // We guarantee that we wait the entire interval, if no events were received
+    int ms_remaining = max(timeout_ms - ms_passed, 0);
+    if (whist_frontend_poll_event_timeout(frontend, &event, ms_remaining)) {
         if (handle_frontend_event(&event) != 0) {
             return false;
         }
@@ -79,6 +98,8 @@ bool sdl_handle_events(WhistFrontend* frontend) {
 
     // After handle_sdl_event potentially captures a mouse motion,
     // We throttle it down to only update once every 0.5ms
+    // This is outside the event loop, so that it can update even if the last event
+    // received is a mouse movement that had its message suppressed due to throttling.
     static WhistTimer mouse_motion_timer;
     static bool first_mouse_motion = true;
     if (first_mouse_motion || get_timer(&mouse_motion_timer) * MS_IN_SECOND > 0.5) {

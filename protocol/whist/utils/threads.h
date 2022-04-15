@@ -202,6 +202,8 @@ void* whist_get_thread_local_storage(WhistThreadLocalStorageKey key);
  * This will not return early if interrupted.
  *
  * @param ms  Minimum number of milliseconds to sleep for.
+ *
+ * @note This function will no-op, if ms is 0
  */
 void whist_sleep(uint32_t ms);
 
