@@ -50,16 +50,42 @@ typedef struct DecodedFrameData {
 } DecodedFrameData;
 
 /**
+ * Struct for video decoder parameters at init time.
+ */
+typedef struct VideoDecoderParams {
+    /** Video codec to use. */
+    CodecType codec_type;
+    /** Frame width in pixels. */
+    int width;
+    /** Frame height in pixels. */
+    int height;
+    /** Whether hardware decode should be used. */
+    bool hardware_decode;
+    /**
+     * Hardware format to use for output.
+     *
+     * This indicates that the caller can support this format directly,
+     * so frames of this format should be returned without downloading
+     * them.  If unset all hardware formats will be downloaded.
+     */
+    enum AVPixelFormat hardware_output_format;
+    /**
+     * Hardware device to use.
+     *
+     * If unset the decoder will create one internally.
+     */
+    AVBufferRef* hardware_device;
+} VideoDecoderParams;
+
+/**
  * @brief       Struct for decoding frames via ffmpeg. Decoding is handled by the codec and context,
  * and after decoding finishes, the decoded frame will be in sw_frame, regardless of whether or not
  * we used hardware-accelerated decoding.
  *
  */
 typedef struct VideoDecoder {
-    int width;
-    int height;
-    bool can_use_hardware;
-    bool can_output_hardware;
+    VideoDecoderParams params;
+
     unsigned int decode_type;
     const AVCodec* codec;
     AVCodecContext* context;
@@ -67,7 +93,6 @@ typedef struct VideoDecoder {
     AVBufferRef* ref;
     AVPacket* packets[MAX_ENCODED_VIDEO_PACKETS];
     enum AVPixelFormat match_fmt;
-    CodecType codec_type;
     enum AVHWDeviceType device_type;
 
     bool using_hw;
@@ -83,6 +108,15 @@ typedef struct VideoDecoder {
 Public Functions
 ============================
 */
+
+/**
+ * Create a video decoder instance, using the given parameters.
+ *
+ * @param params  Parameters to create decoder with.
+ *
+ * @return  New video decoder instance, or NULL on failure.
+ */
+VideoDecoder* video_decoder_create(const VideoDecoderParams* params);
 
 /**
  * @brief                          Initialize the FFmpeg H264 or H265

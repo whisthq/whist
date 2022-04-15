@@ -30,6 +30,10 @@ Includes
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef _WIN32
+#include <libavutil/hwcontext_d3d11va.h>
+#endif
+
 static const char* save_decoder_input;
 COMMAND_LINE_STRING_OPTION(save_decoder_input, 0, "save-decoder-input", 256,
                            "Save decoder input to a file.")
@@ -39,7 +43,6 @@ COMMAND_LINE_STRING_OPTION(save_decoder_input, 0, "save-decoder-input", 256,
 Private Functions
 ============================
 */
-static enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts);
 static WhistStatus try_setup_video_decoder(VideoDecoder* decoder);
 static WhistStatus try_next_decoder(VideoDecoder* decoder);
 static void destroy_video_decoder_members(VideoDecoder* decoder);
@@ -58,62 +61,124 @@ static AVFrame* safe_av_frame_alloc(void) {
     return frame;
 }
 
-static enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts) {
-    /*
-        Determine if match_pix_fmt is in the array of pixel formats given in pix_fmts. This is
-       called as a helper function in FFmpeg.
+static bool find_pix_fmt(const enum AVPixelFormat* list, enum AVPixelFormat format) {
+    for (int i = 0; list[i] != AV_PIX_FMT_NONE; i++) {
+        if (list[i] == format) {
+            return true;
+        }
+    }
+    return false;
+}
 
-        Arguments:
-            ctx (AVCodecContext*): unused, but required for the function signature by FFmpeg.
-            pix_fmts (const enum AVPixelFormat*): Array of pixel formats to search through
-
-        Returns:
-            (enum AVPixelFormat): the match_pix_fmt if found; otherwise, the first software
-            decode entry of pix_fmts if there is one; otherwise, AV_PIX_FMT_NONE.
-    */
-    VideoDecoder* decoder = ctx->opaque;
-
+static void log_pix_fmts(const enum AVPixelFormat* pix_fmts) {
+    // log all the entries of pix_fmts as supported formats.
     STRING_BUFFER_LOCAL(supported_formats, 256);
     for (const enum AVPixelFormat* p = pix_fmts; *p != AV_PIX_FMT_NONE; p++) {
         string_buffer_printf(&supported_formats, " %s", av_get_pix_fmt_name(*p));
     }
     LOG_INFO("Supported formats:%s.", string_buffer_string(&supported_formats));
+}
 
-    for (const enum AVPixelFormat* p = pix_fmts; *p != AV_PIX_FMT_NONE; p++) {
-        if (*p == decoder->match_fmt) {
-            LOG_INFO("Hardware format found, using format: %s", av_get_pix_fmt_name(*p));
-            return *p;
-        }
-    }
-
-    // default to the first software decode entry of pix_fmts if we couldn't find a match
-    for (const enum AVPixelFormat* p = pix_fmts; *p != AV_PIX_FMT_NONE; p++) {
-        const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(*p);
+static enum AVPixelFormat get_format_software(AVCodecContext* avctx,
+                                              const enum AVPixelFormat* pix_fmts) {
+    // Use the first software format in the list.
+    for (int i = 0; pix_fmts[i] != AV_PIX_FMT_NONE; i++) {
+        const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(pix_fmts[i]);
         if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL) {
             continue;
         }
-        LOG_WARNING("Hardware format not found, defaulting to using format: %s",
-                    av_get_pix_fmt_name(*p));
-        return *p;
+        LOG_INFO("Using software format %s.", av_get_pix_fmt_name(pix_fmts[i]));
+        return pix_fmts[i];
     }
 
     // There were no supported formats.
-    LOG_WARNING("Failed to get HW surface format.");
+    LOG_WARNING("No usable decoding format found.");
     return AV_PIX_FMT_NONE;
 }
+
+#ifdef _WIN32
+static enum AVPixelFormat get_format_d3d11(AVCodecContext* avctx,
+                                           const enum AVPixelFormat* pix_fmts) {
+    AVBufferRef* frames_ref = NULL;
+    int err;
+
+    log_pix_fmts(pix_fmts);
+
+    if (!find_pix_fmt(pix_fmts, AV_PIX_FMT_D3D11)) {
+        LOG_WARNING("Expected D3D11 format not found, falling back to software.");
+        goto fail;
+    }
+
+    err = avcodec_get_hw_frames_parameters(avctx, avctx->hw_device_ctx, AV_PIX_FMT_D3D11,
+                                           &frames_ref);
+    if (err < 0) {
+        LOG_WARNING("Failed to get D3D11 hardware frame parameters: %s.", av_err2str(err));
+        goto fail;
+    }
+
+    AVHWFramesContext* frames = (AVHWFramesContext*)frames_ref->data;
+    AVD3D11VAFramesContext* d3d11 = frames->hwctx;
+
+    // We normally want to use the returned frames as a shader resource
+    // (e.g. for rendering within SDL).  This flag is not needed if they
+    // are instead copied to CPU memory, but it is easier to always set
+    // it.
+    d3d11->BindFlags |= D3D11_BIND_SHADER_RESOURCE;
+    // If run in a multithreaded context then we will want to share the
+    // frames with the render device.
+    d3d11->MiscFlags |= D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE;
+
+    err = av_hwframe_ctx_init(frames_ref);
+    if (err < 0) {
+        LOG_WARNING("Failed to init D3D11 hardware frame context: %s.", av_err2str(err));
+        goto fail;
+    }
+
+    avctx->hw_frames_ctx = frames_ref;
+    LOG_INFO("Using D3D11 hardware format.");
+    return AV_PIX_FMT_D3D11;
+
+fail:
+    av_buffer_unref(&frames_ref);
+    return get_format_software(avctx, pix_fmts);
+}
+#endif
+
+static enum AVPixelFormat get_format_default(AVCodecContext* avctx,
+                                             const enum AVPixelFormat* pix_fmts) {
+    VideoDecoder* decoder = avctx->opaque;
+
+    log_pix_fmts(pix_fmts);
+
+    if (find_pix_fmt(pix_fmts, decoder->match_fmt)) {
+        LOG_INFO("Using matched hardware format %s.", av_get_pix_fmt_name(decoder->match_fmt));
+        return decoder->match_fmt;
+    }
+
+    // If we didn't find a match, fall back to software decoding.
+    return get_format_software(avctx, pix_fmts);
+}
+
+typedef struct {
+    // Nice name for log messages.
+    const char* name;
+    // Hardware device type needed for this mode.
+    enum AVHWDeviceType device_type;
+    // Pixel format which we will want to return in this mode.
+    enum AVPixelFormat pix_fmt;
+    // Custom get_format() callback for additional setup.  Can be NULL,
+    // in which case a default which just matches the pix_fmt is used.
+    enum AVPixelFormat (*get_format)(AVCodecContext* avctx, const enum AVPixelFormat* pix_fmts);
+} HardwareDecodeType;
 
 // This table specifies the possible hardware acceleration methods we
 // can use, in the order we try them.  Software decode is tried after
 // all hardware methods fail (or if it was requested explicitly).
 // For example, on Windows we try D3D11VA -> DXVA2 -> NVDEC -> software
 // in that order.
-static const struct {
-    const char* name;
-    enum AVHWDeviceType type;
-    enum AVPixelFormat pix_fmt;
-} hardware_decode_types[] = {
+static const HardwareDecodeType hardware_decode_types[] = {
 #if defined(_WIN32)
-    {"D3D11VA", AV_HWDEVICE_TYPE_D3D11VA, AV_PIX_FMT_D3D11},
+    {"D3D11VA", AV_HWDEVICE_TYPE_D3D11VA, AV_PIX_FMT_D3D11, &get_format_d3d11},
     {"DXVA2", AV_HWDEVICE_TYPE_DXVA2, AV_PIX_FMT_DXVA2_VLD},
 #endif
 #if defined(__linux__)
@@ -147,17 +212,17 @@ static WhistStatus try_setup_video_decoder(VideoDecoder* decoder) {
 
     destroy_video_decoder_members(decoder);
 
-    if (!decoder->can_use_hardware) {
+    if (!decoder->params.hardware_decode) {
         decoder->decode_type = software_decode_type;
     }
 
     const char* decoder_name;
-    if (decoder->codec_type == CODEC_TYPE_H264) {
+    if (decoder->params.codec_type == CODEC_TYPE_H264) {
         decoder_name = "h264";
-    } else if (decoder->codec_type == CODEC_TYPE_H265) {
+    } else if (decoder->params.codec_type == CODEC_TYPE_H265) {
         decoder_name = "hevc";
     } else {
-        LOG_WARNING("Invalid codec type %d.", decoder->codec_type);
+        LOG_WARNING("Invalid codec type %d.", decoder->params.codec_type);
         return WHIST_ERROR_INVALID_ARGUMENT;
     }
 
@@ -177,19 +242,53 @@ static WhistStatus try_setup_video_decoder(VideoDecoder* decoder) {
 
     if (decoder->decode_type == software_decode_type) {
         // Software decoder.
+        decoder->context->get_format = &get_format_software;
     } else {
-        enum AVHWDeviceType device_type = hardware_decode_types[decoder->decode_type].type;
-        enum AVPixelFormat pix_fmt = hardware_decode_types[decoder->decode_type].pix_fmt;
+        const HardwareDecodeType* hw = &hardware_decode_types[decoder->decode_type];
 
-        err = av_hwdevice_ctx_create(&decoder->context->hw_device_ctx, device_type, NULL, NULL, 0);
-        if (err < 0) {
-            LOG_WARNING("Failed to create %s hardware device for decoder: %s.",
-                        av_hwdevice_get_type_name(device_type), av_err2str(err));
-            return WHIST_ERROR_NOT_FOUND;
+        bool create_new_device = true;
+        if (decoder->params.hardware_device) {
+            // User-supplied hardware device is present - use it if it
+            // matches the decode type we are using.
+            AVHWDeviceContext* dev = (AVHWDeviceContext*)decoder->params.hardware_device->data;
+            if (dev->type == hw->device_type) {
+                decoder->context->hw_device_ctx = av_buffer_ref(decoder->params.hardware_device);
+                if (decoder->context->hw_device_ctx == NULL) {
+                    LOG_WARNING("Failed to reference user-supplied device.");
+                    return WHIST_ERROR_EXTERNAL;
+                }
+                LOG_INFO("Using existing %s device for decoder.",
+                         av_hwdevice_get_type_name(dev->type));
+                create_new_device = false;
+            } else {
+                // If it doesn't match then we will create a new device.
+                // This happens if, for example, we supply a D3D11
+                // device (because we would like to share a device with
+                // the output to avoid copies), but that doesn't work
+                // so we fall back to DXVA2 (and will then need to copy,
+                // but can still hardware decode).
+            }
         }
 
-        decoder->match_fmt = pix_fmt;
-        decoder->context->get_format = &get_format;
+        if (create_new_device) {
+            // Make a new device here.
+            err = av_hwdevice_ctx_create(&decoder->context->hw_device_ctx, hw->device_type, NULL,
+                                         NULL, 0);
+            if (err < 0) {
+                LOG_WARNING("Failed to create %s hardware device for decoder: %s.",
+                            av_hwdevice_get_type_name(hw->device_type), av_err2str(err));
+                return WHIST_ERROR_NOT_FOUND;
+            }
+            LOG_INFO("Created new %s device for decoder.",
+                     av_hwdevice_get_type_name(hw->device_type));
+        }
+
+        if (hw->get_format) {
+            decoder->context->get_format = hw->get_format;
+        } else {
+            decoder->match_fmt = hw->pix_fmt;
+            decoder->context->get_format = &get_format_default;
+        }
     }
 
     if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
@@ -205,7 +304,7 @@ static WhistStatus try_next_decoder(VideoDecoder* decoder) {
 
     WhistStatus err;
 
-    if (decoder->can_use_hardware) {
+    if (decoder->params.hardware_decode) {
         LOG_INFO("Trying decoder type #%u", decoder->decode_type);
 
         while (decoder->decode_type <= software_decode_type) {
@@ -283,36 +382,14 @@ Public Function Implementations
 ============================
 */
 
-VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, CodecType codec_type) {
-    /*
-        Initialize a video decoder with the specified parameters.
-
-        Arguments:
-            width (int): width of the frames to decode
-            height (int): height of the frames to decode
-            use_hardware (bool): Whether or not we should try hardware-accelerated decoding
-            codec_type (CodecType): which video codec (H264 or H265) we should use
-
-        Returns:
-            (VideoDecoder*): decoder with the specified parameters, or NULL on failure.
-    */
+VideoDecoder* video_decoder_create(const VideoDecoderParams* params) {
     VideoDecoder* decoder = (VideoDecoder*)safe_malloc(sizeof(VideoDecoder));
     memset(decoder, 0, sizeof(VideoDecoder));
 
-    decoder->width = width;
-    decoder->height = height;
-    decoder->can_use_hardware = use_hardware;
-    decoder->decode_type = 0;
-    decoder->codec_type = codec_type;
-    decoder->received_a_frame = false;
+    decoder->params = *params;
 
-    // We previously had this as `true` for macOS only, since we've modified
-    // SDL to pagealign in the GPU. However, we found that this lead to concurrent
-    // memory access causing a complete freeze of the system. The modifications
-    // are still in our SDL fork, but are opted out by setting this to `false`
-    // unconditionally. Eventually, we could serialize the data better to keep
-    // everything in the GPU, for some small latency and CPU utilization improvements
-    decoder->can_output_hardware = false;
+    decoder->decode_type = 0;
+    decoder->received_a_frame = false;
 
     // Try all decoders until we find one that works
     if (try_next_decoder(decoder) != WHIST_SUCCESS) {
@@ -329,6 +406,18 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
     }
 
     return decoder;
+}
+
+VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, CodecType codec_type) {
+    VideoDecoderParams params = {
+        .codec_type = codec_type,
+        .width = width,
+        .height = height,
+        .hardware_decode = use_hardware,
+        .hardware_output_format = AV_PIX_FMT_NONE,
+
+    };
+    return video_decoder_create(&params);
 }
 
 void destroy_video_decoder(VideoDecoder* decoder) {
@@ -447,7 +536,7 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
 
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(frame->format);
     if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL) {
-        if (decoder->can_output_hardware) {
+        if (decoder->params.hardware_output_format == frame->format) {
             // The caller supports dealing with the hardware frame
             // directly, so just return it.
             decoder->decoded_frame = frame;
@@ -497,8 +586,8 @@ DecodedFrameData video_decoder_get_last_decoded_frame(VideoDecoder* decoder) {
     // Copy the data into the struct
     decoded_frame_data.using_hw = decoder->using_hw;
     decoded_frame_data.pixel_format = decoded_frame_data.decoded_frame->format;
-    decoded_frame_data.width = decoder->width;
-    decoded_frame_data.height = decoder->height;
+    decoded_frame_data.width = decoder->params.width;
+    decoded_frame_data.height = decoder->params.height;
 
     return decoded_frame_data;
 }
