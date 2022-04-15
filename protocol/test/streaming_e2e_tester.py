@@ -383,8 +383,8 @@ if __name__ == "__main__":
 
     # Create variables containing the commands to launch SSH connections to the client/server instance(s) and
     # generate strings containing the shell prompt(s) that we expect on the EC2 instance(s) when running commands.
-    server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
-    client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
+    server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path} -o TCPKeepAlive=yes -o ServerAliveCountMax=20 -o ServerAliveInterval=15"
+    client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path} -o TCPKeepAlive=yes -o ServerAliveCountMax=20 -o ServerAliveInterval=15"
     pexpect_prompt_server = f"{username}@ip-{server_private_ip}"
     pexpect_prompt_client = (
         f"{username}@ip-{client_private_ip}" if use_two_instances else pexpect_prompt_server
