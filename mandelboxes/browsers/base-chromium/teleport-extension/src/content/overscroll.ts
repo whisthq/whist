@@ -44,9 +44,6 @@ const trimDelta = (delta: number) => {
 
 const updateOverscroll = (e: WheelEvent) => {
   overscroll.rollingDelta += trimDelta(e.deltaX)
-
-  console.log(overscroll.rollingDelta)
-
   overscroll.lastTimestamp = now()
 }
 
@@ -78,21 +75,26 @@ const initNavigationArrow = () => {
 
     if (
       arrow === undefined ||
-      overscroll.lastArrowDirection !== msg.value.direction
+      overscroll.lastArrowDirection !== msg.value.direction ||
+      !msg.value.draw
     ) {
       arrow?.remove()
       arrow = undefined
+      overscroll.rollingDelta = 0
 
-      arrow = drawArrow(document, msg.value.direction) as HTMLDivElement
-      overscroll.lastArrowDirection = msg.value.direction
+      if (msg.value.draw) {
+        arrow = drawArrow(document, msg.value.direction)
+        overscroll.lastArrowDirection = msg.value.direction
+      }
     }
 
-    if (msg.value.direction) arrow.style.opacity = msg.value.opacity
+    if (msg.value.direction)
+      (arrow as HTMLDivElement).style.opacity = msg.value.opacity
 
     if (msg.value.direction === "back") {
-      arrow.style.left = msg.value.offset
+      ;(arrow as HTMLDivElement).style.left = msg.value.offset
     } else {
-      arrow.style.right = msg.value.offset
+      ;(arrow as HTMLDivElement).style.right = msg.value.offset
     }
   })
 }

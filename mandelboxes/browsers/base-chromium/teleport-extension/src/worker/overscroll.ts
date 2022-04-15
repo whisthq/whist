@@ -33,18 +33,19 @@ const initGestureHandler = () => {
       setTimeout(() => {
         throttled = false
       }, 1000)
-    } else {
-      runInActiveTab((tabID: number) => {
-        chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
-          type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
-          value: {
-            offset: navigationArrowOffset(msg.value.rollingDelta),
-            opacity: navigationArrowOpacity(msg.value.rollingDelta),
-            direction: msg.value.rollingDelta < 0 ? "back" : "forward",
-          },
-        })
-      })
     }
+
+    runInActiveTab((tabID: number) => {
+      chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
+        type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
+        value: {
+          offset: navigationArrowOffset(msg.value.rollingDelta),
+          opacity: navigationArrowOpacity(msg.value.rollingDelta),
+          direction: msg.value.rollingDelta < 0 ? "back" : "forward",
+          draw: Math.abs(msg.value.rollingDelta) <= MAXIMUM_X_OVERSCROLL,
+        },
+      })
+    })
 
     return true
   })
