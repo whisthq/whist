@@ -589,10 +589,10 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	}
 
 	var (
-		requestedRegions   = mandelboxRequest.Regions
-		availableRegions   []string
-		unavailableRegions []string
-		assignedInstance   subscriptions.Instance
+		requestedRegions   = mandelboxRequest.Regions // This is a list of the regions requested by the frontend, in order of proximity.
+		availableRegions   []string                   // List of regions that are enabled and match the regions in the request.
+		unavailableRegions []string                   // List of regions that are not enabled but are present in the request.
+		assignedInstance   subscriptions.Instance     // The instance that is assigned to the user.
 	)
 
 	// Populate availableRegions
