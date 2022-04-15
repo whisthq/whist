@@ -81,13 +81,13 @@ const drawArrow = (document: Document, direction: string) => {
     element.style.left = "-70px"
     element.style.borderRadius = "0px 70px 70px 0px"
     element.innerHTML += escapeHTMLPolicy.createHTML(
-      '<svg style="position: relative; top: 45px; color: white; left: 10x; width: 40px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
+      '<svg style="position: relative; top: 45px; color: white; left: 10x; width: 40px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
     )
   } else {
     element.style.right = "-70px"
     element.style.borderRadius = "70px 0px 0px 70px"
     element.innerHTML += escapeHTMLPolicy.createHTML(
-      '<svg style="position: relative; top: 45px; color: white; left: 10x; width: 40px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
+      '<svg style="position: relative; top: 45px; color: white; left: 10x; width: 40px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
     )
   }
 

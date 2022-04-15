@@ -23,6 +23,7 @@ let overscroll = {
   rollingDelta: 0,
   lastTimestamp: 0,
   lastArrowDirection: undefined,
+  throttle: false,
 }
 
 const now = () => Date.now() / 1000
@@ -45,13 +46,30 @@ const trimDelta = (delta: number) => {
 }
 
 const updateOverscroll = (e: WheelEvent) => {
-  overscroll.rollingDelta += trimDelta(e.deltaX)
+  const _updatedRollingDelta = overscroll.rollingDelta + trimDelta(e.deltaX)
+  if (
+    (overscroll.rollingDelta > 0 && _updatedRollingDelta <= 0) ||
+    (overscroll.rollingDelta < 0 && _updatedRollingDelta >= 0)
+  ) {
+    overscroll.rollingDelta = 0
+    overscroll.throttle = true
+    setTimeout(() => {
+      overscroll.throttle = false
+    }, 250)
+  } else {
+    overscroll.rollingDelta = _updatedRollingDelta
+  }
   overscroll.lastTimestamp = now()
 }
 
 const detectGesture = (e: WheelEvent) => {
   // If the user is scrolling within the page (i.e not overscrolling), abort
-  if (isScrollingVertically(e) || isScrollingHorizontally(e)) return
+  if (
+    isScrollingVertically(e) ||
+    isScrollingHorizontally(e) ||
+    overscroll.throttle
+  )
+    return
 
   // Trakc how much has been overscrolling horizontally in total
   updateOverscroll(e)
