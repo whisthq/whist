@@ -74,7 +74,10 @@ const detectGesture = (e: WheelEvent) => {
   if (Math.abs(rollingDelta) < navigationThreshold) return
 
   throttle = true
-  goBack ? history.back() : history.forward()
+  chrome.runtime.sendMessage(<ContentScriptMessage>{
+    type: ContentScriptMessageType.GESTURE_DETECTED,
+    value: goBack ? "back" : "forward",
+  })
 
   removeArrow()
   rollingDelta = 0
