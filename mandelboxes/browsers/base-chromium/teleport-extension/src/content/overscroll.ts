@@ -8,7 +8,7 @@ import { cyclingArray } from "@app/utils/arrays"
 // If the rolling delta exceeds this amount (in absolute value), display the arrow
 const rollingDeltaThreshold = 10
 // If the rolling delta exceeds this amount (in absolute value), navigate
-const navigationThreshold = 400
+const navigationThreshold = 500
 // How many seconds to look back when detecting gestures
 const rollingLookbackPeriod = 1.5
 
@@ -57,16 +57,18 @@ const detectGesture = (e: WheelEvent) => {
 
   const amountToShift =
     Math.abs(rollingDelta) >= navigationThreshold
-      ? "0px"
-      : `-${70 - (70 * Math.abs(rollingDelta)) / navigationThreshold}px`
+      ? "0px !important"
+      : `-${
+          70 - (70 * Math.abs(rollingDelta)) / navigationThreshold
+        }px !important`
 
   if (arrow === undefined)
     arrow = drawArrow(document, goBack ? "left" : "right")
 
-  arrow.style.opacity = Math.max(
+  arrow.style.opacity = `${Math.max(
     Math.abs(rollingDelta) / navigationThreshold,
     0.2
-  ).toString()
+  ).toString()} !important`
 
   if (goBack) arrow.style.left = amountToShift
   if (!goBack) arrow.style.right = amountToShift
@@ -99,7 +101,7 @@ const initSwipeGestures = () => {
     window.addEventListener("wheel", detectGesture)
     // Fires every rollingLookbackPeriod seconds to see if the wheel is still moving
     setInterval(refreshArrow, rollingLookbackPeriod)
-  }, 1000)
+  }, 500)
 }
 
 export { initSwipeGestures }
