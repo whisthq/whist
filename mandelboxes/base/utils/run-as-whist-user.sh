@@ -51,7 +51,6 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
   if [ "$( jq -rc 'has("user_language")' < $WHIST_JSON_FILE )" == "true"  ]; then
     USER_LANGUAGE="$(jq -rc '.user_language' < $WHIST_JSON_FILE)"
-    USER_LANGUAGE="$(python3 /usr/share/whist/match_language_name.py $USER_LANGUAGE)"
   fi
   if [ "$( jq -rc 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
