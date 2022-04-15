@@ -209,7 +209,10 @@ int init_rs_wrapper(void) {
                 LOG_FATAL("Platform is x86/x64 but SSSE3 is not supported!");
             }
         } else if (cpu_info.cpu_type == CPU_TYPE_ARM32 || cpu_info.cpu_type == CPU_TYPE_ARM64) {
-            LOG_FATAL("Platform is arm32/arm64 but neon is not supported!");
+            if(!cpu_info.has_neon)
+            {
+                LOG_FATAL("Platform is arm32/arm64 but neon is not supported!");
+            }
         } else {
             LOG_FATAL("unknown Platform/CPU Type");
         }
