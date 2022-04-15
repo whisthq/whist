@@ -40,7 +40,7 @@ Private Defines. Made public only for unit testing
 */
 // Confirmed visually that these values produce reasonable output quality for DPI of 192. For other
 // DPIs they need to scaled accordingly.
-#define MINIMUM_BITRATE_PER_PIXEL 0.75
+#define MINIMUM_BITRATE_PER_PIXEL 2.0
 #define MAXIMUM_BITRATE_PER_PIXEL 4.0
 #define STARTING_BITRATE_PER_PIXEL 3.0
 
