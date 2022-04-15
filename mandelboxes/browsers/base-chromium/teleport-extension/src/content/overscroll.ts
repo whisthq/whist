@@ -16,7 +16,7 @@ import {
 const rollingLookbackPeriod = 1.5
 
 let arrow: HTMLDivElement | undefined = undefined
-let previousYDeltas = cyclingArray<number>(10, [])
+let previousYDeltas = cyclingArray<number>(3, [])
 
 let overscroll = {
   previousXOffset: 0,
@@ -39,53 +39,14 @@ const isScrollingHorizontally = (e: WheelEvent) => {
   return isScrolling
 }
 
-const trimDelta = (delta: number) => {
-  let trimmedDelta = Math.min(Math.abs(delta), MAXIMUM_X_UPDATE)
-  trimmedDelta = Math.max(trimmedDelta, MINIMUM_X_UPDATE)
-  return delta < 0 ? -1 * trimmedDelta : trimmedDelta
-}
-
-const updateOverscroll = (e: WheelEvent) => {
-  const _updatedRollingDelta = overscroll.rollingDelta + trimDelta(e.deltaX)
-  if (
-    (overscroll.rollingDelta > 0 && _updatedRollingDelta <= 0) ||
-    (overscroll.rollingDelta < 0 && _updatedRollingDelta >= 0)
-  ) {
-    overscroll.rollingDelta = 0
-    overscroll.throttle = true
-    setTimeout(() => {
-      overscroll.throttle = false
-    }, 1000)
-  } else {
-    overscroll.rollingDelta = _updatedRollingDelta
-  }
-  overscroll.lastTimestamp = now()
-}
-
 const detectGesture = (e: WheelEvent) => {
   // If the user is scrolling within the page (i.e not overscrolling), abort
-  if (
-    isScrollingVertically(e) ||
-    isScrollingHorizontally(e) ||
-    overscroll.throttle
-  )
-    return
-
-  // Trakc how much has been overscrolling horizontally in total
-  updateOverscroll(e)
-
-  // If there hasn't been much overscroll, don't do anything
-  if (Math.abs(overscroll.rollingDelta) < MINIMUM_X_OVERSCROLL) return
-
-  if (Math.abs(overscroll.rollingDelta) > MAXIMUM_X_OVERSCROLL) {
-    arrow?.remove()
-    arrow = undefined
-  }
+  if (isScrollingVertically(e) || isScrollingHorizontally(e)) return
 
   // Send the overscroll amount to the worker
   chrome.runtime.sendMessage(<ContentScriptMessage>{
     type: ContentScriptMessageType.GESTURE_DETECTED,
-    value: overscroll,
+    value: e,
   })
 }
 
