@@ -60,7 +60,9 @@ def populate_language_to_dialect(locales):
     language_to_dialect = {}
 
     # Remove part after . and @
-    locales = sorted(set([x.split(".")[0].split("@")[0] for x in locales if x != "C" and x != "POSIX"]))
+    locales = sorted(
+        set([x.split(".")[0].split("@")[0] for x in locales if x != "C" and x != "POSIX"])
+    )
     locales_string = ", ".join([f"'{loc}'" for loc in locales])
     # Print list of supported <language>_<REGION> combinations
     print(f"export const linuxLanguages: string[] = [{locales_string}]")
@@ -91,6 +93,15 @@ def populate_language_to_dialect(locales):
     )
 
 
+def get_chrome_languages():
+    # Languages below obtained by enabling all languages on Chrome (from Settings -> Advanced Settings -> Languages)
+    # on Linux and then extracting the list of languages from .config/google-chrome/Default/Preferences
+    chrome_languages = "de,it,en-US,en,af,sq,de-DE,de-AT,de-LI,de-CH,am,en-ZA,en-AU,en-CA,en-IN,en-NZ,en-GB-oxendict,en-GB,ar,an,hy,ast,az,eu,bn,be,my,bs,br,bg,ca,ceb,chr,ny,zh,zh-HK,zh-CN,zh-TW,si,ko,co,ht,hr,da,es,es-419,es-AR,es-CL,es-CO,es-CR,es-ES,es-US,es-HN,es-MX,es-PE,es-UY,es-VE,eo,et,fo,fil,fi,fr,fr-CA,fr-FR,fr-CH,gd,gl,cy,ka,gu,el,gn,fy,ha,haw,he,hi,hmn,hu,ig,id,ia,ga,is,it-IT,it-CH,ja,jv,kn,kk,km,rw,ky,ku,lo,la,lv,ln,lt,lb,mk,ms,ml,mg,mt,mi,mr,mn,nl,ne,no,nb,nn,oc,or,om,ug,ur,uz,ps,pa,fa,pl,pt,pt-BR,pt-PT,qu,rm,ro,mo,ru,sm,sr,sh,sn,sd,sk,sl,so,ckb,st,su,sv,sw,tg,ta,tt,cs,te,th,ti,to,tn,tr,tk,tw,uk,vi,wa,wo,xh,yi,yo,zu"
+    chrome_languages = ", ".join([f"'{loc}'" for loc in chrome_languages.split(",")])
+    print()
+    print(f"export const chromeLanguages: string[] = [{chrome_languages}]")
+
+
 if __name__ == "__main__":
     # Get list of available languages
     subproc_handle = subprocess.Popen("locale -a", shell=True, stdout=subprocess.PIPE)
@@ -98,3 +109,5 @@ if __name__ == "__main__":
     locales = [line.decode("utf-8").strip() for line in subprocess_stdout]
 
     populate_language_to_dialect(locales)
+
+    get_chrome_languages()
