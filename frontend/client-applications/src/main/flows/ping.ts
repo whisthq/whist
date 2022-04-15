@@ -34,8 +34,8 @@ export default flow("awsPingFlow", (trigger) => {
               (region) =>
                 region.enabled &&
                 (nonUSRegionsAllowed
-                  ? region.territory === "United States"
-                  : true)
+                  ? true
+                  : region.territory === "United States")
             )
             .map((region) => region.name)
         )
