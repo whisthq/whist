@@ -32,9 +32,10 @@ jobs:
   protocol-streaming-e2e-check-pr:
     name: "Protocol Streaming End-to-End Test"
     runs-on: ubuntu-20.04
+    # Not reusing instances for now because Turnstyle is broken. Once Turnstyle is fixed, comment back in the lines below.
     #env:
-    #CLIENT_INSTANCE_ID: "i-061d322780ae41d19"
-    #SERVER_INSTANCE_ID: "i-0ceaa243ec8cfc667"
+    # CLIENT_INSTANCE_ID: "i-061d322780ae41d19"
+    # SERVER_INSTANCE_ID: "i-0ceaa243ec8cfc667"
 
     steps:
       - name: Checkout Git Repository
@@ -172,7 +173,7 @@ jobs:
             --skip-host-setup=true \
             --skip-git-clone=true \
             --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" \
-            --simulate-scrolling 30 \
+            --simulate-scrolling 10 \
             --network-conditions 10Mbit,10,None,100,None
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
