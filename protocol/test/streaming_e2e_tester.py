@@ -17,7 +17,7 @@ from helpers.common.ssh_tools import (
     attempt_ssh_connection,
 )
 
-from helpers.common.e2e_runner_tools import (
+from helpers.common.timestamps_and_exit_tools import (
     TimeStamps,
     exit_with_error,
 )

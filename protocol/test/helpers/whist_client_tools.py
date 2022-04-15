@@ -3,7 +3,7 @@
 import os, sys, json, time
 
 from helpers.setup.network_tools import restore_network_conditions
-from helpers.common.e2e_runner_tools import exit_with_error
+from helpers.common.timestamps_and_exit_tools import exit_with_error
 from helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,

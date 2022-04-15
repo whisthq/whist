@@ -3,7 +3,7 @@
 import os, sys, time
 import pexpect
 
-from helpers.common.e2e_runner_tools import exit_with_error
+from helpers.common.timestamps_and_exit_tools import exit_with_error
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))

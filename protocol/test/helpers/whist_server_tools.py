@@ -8,7 +8,7 @@ from helpers.common.ssh_tools import (
     reboot_instance,
     apply_dpkg_locking_fixup,
 )
-from helpers.common.e2e_runner_tools import exit_with_error
+from helpers.common.timestamps_and_exit_tools import exit_with_error
 
 from helpers.setup.instance_setup_tools import (
     install_and_configure_aws,
