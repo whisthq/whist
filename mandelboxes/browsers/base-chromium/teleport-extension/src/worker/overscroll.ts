@@ -54,6 +54,8 @@ const initGestureHandler = () => {
     if (msg.type !== ContentScriptMessageType.GESTURE_DETECTED || throttled)
       return
 
+    console.log("worker received msg", msg.value)
+
     updateOverscroll(msg.value)
 
     // If there hasn't been much overscroll, don't do anything
