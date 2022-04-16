@@ -65,15 +65,14 @@ const drawArrow = (document: Document, direction: string) => {
   let element = document.createElement("div")
   let inner = document.createElement("div")
 
-  element.style.width = "70px"
-  element.style.height = "70px"
+  element.style.width = "80px"
+  element.style.height = "80px"
   element.style.borderRadius = "100%"
   element.style.background = "rgba(0, 146, 255, 0.2)"
   element.style.position = "fixed"
-  element.style.top = "46%"
+  element.style.top = "40%"
   element.style.zIndex = "99999999"
   element.style.opacity = "1"
-  element.style.color = "white"
   element.style.fontFamily = "Helvetica"
   element.style.display = "flex"
   element.style.flexDirection = "row"
@@ -94,12 +93,12 @@ const drawArrow = (document: Document, direction: string) => {
   if (direction === "back") {
     element.style.left = "-70px"
     inner.innerHTML += escapeHTMLPolicy.createHTML(
-      '<svg style="position: relative; top: 20px; color: white; left: 10x; width: 20px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
+      '<svg style="width: 20px; color: #EFEFEF" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
     )
   } else {
     element.style.right = "-70px"
     inner.innerHTML += escapeHTMLPolicy.createHTML(
-      '<svg style="position: relative; top: 20px; color: white; left: 10x; width: 20px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
+      '<svg style="width: 20px; color: #EFEFEF" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
     )
   }
 
@@ -109,7 +108,7 @@ const drawArrow = (document: Document, direction: string) => {
 
   return {
     update: (progress: number) => {
-      const offset = `${-70 + progress * 1.5}px`
+      const offset = `${Math.max(-70 + progress * 2, 80)}px`
       const fill = `${Math.max(50, progress)}%`
 
       if (direction === "back") {
