@@ -108,7 +108,7 @@ const drawArrow = (document: Document, direction: string) => {
 
   return {
     update: (progress: number) => {
-      const offset = `${Math.max(-70 + progress * 2, 80)}px`
+      const offset = `${Math.min(-70 + progress * 2, 80)}px`
       const fill = `${Math.max(35, progress)}%`
 
       if (direction === "back") {
