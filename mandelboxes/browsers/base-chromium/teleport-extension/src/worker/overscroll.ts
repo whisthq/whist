@@ -29,7 +29,7 @@ const updateOverscroll = (deltaX: number, reset = false) => {
 
   const _scrollX = scrollX + trim(deltaX, minXUpdate, maxXUpdate)
 
-  if (!sameSign(scrollX, _scrollX)) {
+  if (!sameSign(scrollX, _scrollX) && scrollX !== 0) {
     scrollX = 0
     throttle(750)
   } else {
