@@ -64,7 +64,7 @@ const navigate = () => {
 
 const refreshNavigationArrow = () => {
   if (Date.now() / 1000 - lastTimestamp > 1) {
-    throttle(100)
+    throttle(150)
     chrome.runtime.sendMessage(<ContentScriptMessage>{
       type: ContentScriptMessageType.GESTURE_DETECTED,
       value: {
