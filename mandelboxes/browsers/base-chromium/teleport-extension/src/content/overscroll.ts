@@ -73,7 +73,6 @@ const initNavigationArrow = () => {
 
 const refreshNavigationArrow = () => {
   if (now() - lastTimestamp > rollingLookbackPeriod) {
-    removeArrow()
     chrome.runtime.sendMessage(<ContentScriptMessage>{
       type: ContentScriptMessageType.GESTURE_DETECTED,
       value: {
