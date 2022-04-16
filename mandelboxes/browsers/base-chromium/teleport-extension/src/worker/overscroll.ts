@@ -65,6 +65,7 @@ const initGestureHandler = () => {
     if (Math.abs(overscroll.rollingDelta) < MINIMUM_X_OVERSCROLL) return
 
     if (Math.abs(overscroll.rollingDelta) > MAXIMUM_X_OVERSCROLL) {
+      overscroll.rollingDelta = 0
       throttled = true
       runInActiveTab((tabID: number) =>
         overscroll.rollingDelta < 0
@@ -78,7 +79,6 @@ const initGestureHandler = () => {
     }
 
     runInActiveTab((tabID: number) => {
-      overscroll.rollingDelta = 0
       chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
         type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
         value: {
