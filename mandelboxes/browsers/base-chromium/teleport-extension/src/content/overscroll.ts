@@ -6,14 +6,10 @@ import {
   ContentScriptMessageType,
 } from "@app/constants/ipc"
 
-// How many seconds to look back when detecting gestures
-const rollingLookbackPeriod = 1
-
 let arrow: any = undefined
 let previousYDeltas = cyclingArray<number>(4, [])
 let previousXOffset = 0
 let previousArrowDirection: string | undefined = undefined
-let lastTimestamp = 0
 
 const now = () => Date.now() / 1000
 
@@ -48,8 +44,6 @@ const initNavigationArrow = () => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.DRAW_NAVIGATION_ARROW) return
 
-    lastTimestamp = now()
-
     if (!msg.value.draw) {
       removeArrow()
       return
@@ -65,22 +59,9 @@ const initNavigationArrow = () => {
   })
 }
 
-const refreshNavigationArrow = () => {
-  if (now() - lastTimestamp > rollingLookbackPeriod) {
-    chrome.runtime.sendMessage(<ContentScriptMessage>{
-      type: ContentScriptMessageType.GESTURE_DETECTED,
-      value: {
-        reset: true,
-      },
-    })
-  }
-}
-
 const initSwipeGestures = () => {
   // Fires whenever the wheel moves
   window.addEventListener("wheel", detectGesture)
-  // Fires every rollingLookbackPeriod seconds to see if the wheel is still moving
-  setInterval(refreshNavigationArrow, rollingLookbackPeriod)
   // Respond to draw arrow commands from the worker
   initNavigationArrow()
 

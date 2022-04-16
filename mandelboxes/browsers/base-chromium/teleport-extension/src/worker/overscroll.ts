@@ -13,6 +13,7 @@ import { sameSign, trim } from "@app/utils/operators"
 
 let throttled = false
 let scrollX = 0
+let lastTimestamp = 0
 
 const throttle = (ms: number) => {
   throttled = true
@@ -38,6 +39,7 @@ const updateOverscroll = (deltaX: number, reset = false) => {
 }
 
 const drawArrow = () => {
+  lastTimestamp = Date.now() / 1000
   runInActiveTab((tabID: number) => {
     chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
       type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
@@ -60,7 +62,22 @@ const navigate = () => {
   throttle(500)
 }
 
+const refreshNavigationArrow = () => {
+  if (Date.now() / 1000 - lastTimestamp > 1) {
+    throttle(100)
+    chrome.runtime.sendMessage(<ContentScriptMessage>{
+      type: ContentScriptMessageType.GESTURE_DETECTED,
+      value: {
+        reset: true,
+      },
+    })
+  }
+}
+
 const initGestureHandler = () => {
+  // Fires every rollingLookbackPeriod seconds to see if the wheel is still moving
+  setInterval(refreshNavigationArrow, 1)
+
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.GESTURE_DETECTED) return
     if (throttled) return
