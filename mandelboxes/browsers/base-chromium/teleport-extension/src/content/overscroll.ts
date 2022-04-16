@@ -34,18 +34,12 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 }
 
 const detectGesture = (e: WheelEvent) => {
-  // If the user is scrolling within the page (i.e not overscrolling), abort
-  if (isScrollingVertically(e) || isScrollingHorizontally(e)) {
-    removeArrow()
-    return
-  }
-
   // Send the overscroll amount to the worker
   chrome.runtime.sendMessage(<ContentScriptMessage>{
     type: ContentScriptMessageType.GESTURE_DETECTED,
     value: {
       offset: e.deltaX,
-      reset: false,
+      reset: isScrollingVertically(e) || isScrollingHorizontally(e),
     },
   })
 }

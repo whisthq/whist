@@ -122,13 +122,13 @@ const drawArrow = (document: Document, direction: string) => {
     },
     remove: () => {
       let offset = parseInt(element.style.left ?? 0) // initial opacity
-      let timer = setInterval(function () {
+      let timer = setInterval(() => {
         if (offset <= 0) {
           clearInterval(timer)
           element.remove()
         }
         element.style.left = `${offset.toString()}px`
-        offset -= 10
+        offset -= 8
       }, 25)
     },
   }
