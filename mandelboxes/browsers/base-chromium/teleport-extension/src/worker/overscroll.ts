@@ -56,8 +56,6 @@ const initGestureHandler = () => {
 
     updateOverscroll(msg.value)
 
-    console.log(overscroll.rollingDelta)
-
     runInActiveTab((tabID: number) => {
       chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
         type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
@@ -73,19 +71,13 @@ const initGestureHandler = () => {
     })
 
     if (Math.abs(overscroll.rollingDelta) > MAXIMUM_X_OVERSCROLL) {
-      console.log(
-        "should go back",
-        overscroll.rollingDelta < 0,
-        overscroll.rollingDelta
-      )
-      throttled = true
-      runInActiveTab((tabID: number) =>
-        overscroll.rollingDelta < 0
-          ? chrome.tabs.goBack(tabID)
-          : chrome.tabs.goForward(tabID)
-      )
+      const goBack = overscroll.rollingDelta < 0
+      runInActiveTab((tabID: number) => {
+        goBack ? chrome.tabs.goBack(tabID) : chrome.tabs.goForward(tabID)
+      })
 
       overscroll.rollingDelta = 0
+      throttled = true
 
       setTimeout(() => {
         throttled = false
