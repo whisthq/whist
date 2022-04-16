@@ -65,13 +65,14 @@ const initGestureHandler = () => {
     if (Math.abs(overscroll.rollingDelta) < MINIMUM_X_OVERSCROLL) return
 
     if (Math.abs(overscroll.rollingDelta) > MAXIMUM_X_OVERSCROLL) {
-      overscroll.rollingDelta = 0
       throttled = true
       runInActiveTab((tabID: number) =>
         overscroll.rollingDelta < 0
           ? chrome.tabs.goBack(tabID)
           : chrome.tabs.goForward(tabID)
       )
+
+      overscroll.rollingDelta = 0
 
       setTimeout(() => {
         throttled = false
