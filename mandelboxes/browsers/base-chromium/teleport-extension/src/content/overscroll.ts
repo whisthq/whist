@@ -12,7 +12,6 @@ const rollingLookbackPeriod = 1
 let arrow: any = undefined
 let previousYDeltas = cyclingArray<number>(4, [])
 let previousXOffset = 0
-let previousYOffset = 0
 let previousArrowDirection: string | undefined = undefined
 let lastTimestamp = 0
 
@@ -84,6 +83,16 @@ const initSwipeGestures = () => {
   setInterval(refreshNavigationArrow, rollingLookbackPeriod)
   // Respond to draw arrow commands from the worker
   initNavigationArrow()
+
+  window.addEventListener("popstate", () => {
+    console.log("State popped")
+    removeArrow()
+  })
+
+  window.addEventListener("pushstate", () => {
+    console.log("State pushed")
+    removeArrow()
+  })
 }
 
 export { initSwipeGestures }
