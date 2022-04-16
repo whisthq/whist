@@ -7,7 +7,7 @@ import {
 } from "@app/constants/ipc"
 
 // How many seconds to look back when detecting gestures
-const rollingLookbackPeriod = 1
+const rollingLookbackPeriod = 1.5
 
 let arrow: any = undefined
 let previousYDeltas = cyclingArray<number>(5, [])
@@ -16,6 +16,11 @@ let previousArrowDirection: string | undefined = undefined
 let lastTimestamp = 0
 
 const now = () => Date.now() / 1000
+
+const removeArrow = () => {
+  arrow?.remove()
+  arrow = undefined
+}
 
 const isScrollingVertically = (e: WheelEvent) => {
   previousYDeltas.add(e.deltaY)
@@ -30,9 +35,8 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 
 const detectGesture = (e: WheelEvent) => {
   // If the user is scrolling within the page (i.e not overscrolling), abort
-  if (isScrollingHorizontally(e)) return
-
-  if (isScrollingVertically(e)) {
+  if (isScrollingVertically(e) || isScrollingHorizontally(e)) {
+    removeArrow()
     chrome.runtime.sendMessage(<ContentScriptMessage>{
       type: ContentScriptMessageType.GESTURE_DETECTED,
       value: {
@@ -62,8 +66,7 @@ const initNavigationArrow = () => {
       previousArrowDirection !== msg.value.direction ||
       !msg.value.draw
     ) {
-      arrow?.remove()
-      arrow = undefined
+      removeArrow()
 
       if (msg.value.draw) {
         arrow = drawArrow(document, msg.value.direction)
@@ -79,8 +82,7 @@ const initNavigationArrow = () => {
 
 const refreshNavigationArrow = () => {
   if (now() - lastTimestamp > rollingLookbackPeriod) {
-    arrow?.remove()
-    arrow = undefined
+    removeArrow()
   }
 }
 
