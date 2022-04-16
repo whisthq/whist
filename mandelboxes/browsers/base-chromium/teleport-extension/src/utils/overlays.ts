@@ -10,7 +10,7 @@ const fadeOut = (element: HTMLElement, speed = 1) => {
   var timer = setInterval(function () {
     if (op <= 0.1) {
       clearInterval(timer)
-      element.style.display = "none"
+      element.remove()
     }
     element.style.opacity = op.toString()
     element.style.filter = "alpha(opacity=" + op * 100 + ")"
@@ -28,6 +28,30 @@ const fadeIn = (element: HTMLElement, speed = 1) => {
     element.style.opacity = op.toString()
     element.style.filter = "alpha(opacity=" + op * 100 + ")"
     op += op * 0.1
+  }, 25 / speed)
+}
+
+const fadeOutLeft = (element: HTMLElement, speed = 1) => {
+  let offset = parseInt(element.style.left ?? 0) // initial opacity
+  let timer = setInterval(function () {
+    if (offset <= 0) {
+      clearInterval(timer)
+      element.remove()
+    }
+    element.style.left = `${offset.toString()}px`
+    offset -= 10
+  }, 25 / speed)
+}
+
+const fadeOutRight = (element: HTMLElement, speed = 1) => {
+  let offset = parseInt(element.style.right ?? 0) // initial opacity
+  let timer = setInterval(function () {
+    if (offset <= 0) {
+      clearInterval(timer)
+      element.remove()
+    }
+    element.style.right = `${offset.toString()}px`
+    offset -= 10
   }, 25 / speed)
 }
 
@@ -120,7 +144,13 @@ const drawArrow = (document: Document, direction: string) => {
       inner.style.width = fill
       inner.style.height = fill
     },
-    remove: () => element.remove(),
+    remove: () => {
+      if (direction === "back") {
+        fadeOutLeft(element)
+      } else {
+        fadeOutRight(element)
+      }
+    },
   }
 }
 

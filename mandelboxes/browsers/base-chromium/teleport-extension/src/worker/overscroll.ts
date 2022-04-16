@@ -31,7 +31,7 @@ const updateOverscroll = (deltaX: number, reset = false) => {
 
   if (!sameSign(scrollX, _scrollX) && scrollX !== 0) {
     scrollX = 0
-    throttle(750)
+    throttle(1000)
   } else {
     scrollX = _scrollX
   }

@@ -10,7 +10,7 @@ import {
 const rollingLookbackPeriod = 1.5
 
 let arrow: any = undefined
-let previousYDeltas = cyclingArray<number>(5, [])
+let previousYDeltas = cyclingArray<number>(3, [])
 let previousXOffset = 0
 let previousArrowDirection: string | undefined = undefined
 let lastTimestamp = 0
@@ -61,24 +61,19 @@ const initNavigationArrow = () => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.DRAW_NAVIGATION_ARROW) return
 
-    if (!msg.value.draw) removeArrow()
-
-    if (
-      arrow === undefined ||
-      previousArrowDirection !== msg.value.direction ||
-      !msg.value.draw
-    ) {
+    if (!msg.value.draw) {
       removeArrow()
-
-      if (msg.value.draw) {
-        arrow = drawArrow(document, msg.value.direction)
-        previousArrowDirection = msg.value.direction
-      }
+      return
     }
 
-    if (msg.value.draw) lastTimestamp = now()
+    if (arrow === undefined || previousArrowDirection !== msg.value.direction) {
+      removeArrow()
+      arrow = drawArrow(document, msg.value.direction)
+      previousArrowDirection = msg.value.direction
+    }
 
-    if (msg.value.direction) arrow.update(msg.value.progress)
+    lastTimestamp = now()
+    arrow.update(msg.value.progress)
   })
 }
 
