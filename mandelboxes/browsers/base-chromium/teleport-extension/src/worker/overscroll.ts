@@ -3,88 +3,86 @@ import {
   ContentScriptMessageType,
 } from "@app/constants/ipc"
 import {
-  MAXIMUM_X_OVERSCROLL,
-  MINIMUM_X_OVERSCROLL,
-  MAXIMUM_X_UPDATE,
-  MINIMUM_X_UPDATE,
+  maxXOverscroll,
+  maxXUpdate,
+  minXUpdate,
 } from "@app/constants/overscroll"
 
 import { runInActiveTab } from "@app/utils/chrome"
+import { sameSign, trim } from "@app/utils/operators"
 
 let throttled = false
-let overscroll = {
-  rollingDelta: 0,
-  lastArrowDirection: undefined,
+let scrollX = 0
+
+const throttle = (ms: number) => {
+  throttled = true
+  setTimeout(() => {
+    throttled = false
+  }, ms)
 }
 
-const trimDelta = (delta: number) => {
-  let trimmedDelta = Math.min(Math.abs(delta), MAXIMUM_X_UPDATE)
-  trimmedDelta = Math.max(trimmedDelta, MINIMUM_X_UPDATE)
-  return delta < 0 ? -1 * trimmedDelta : trimmedDelta
-}
+const updateOverscroll = (deltaX: number, reset = false) => {
+  if (reset) {
+    scrollX = 0
+    return
+  }
 
-const updateOverscroll = (deltaX: number) => {
-  const updatedRollingDelta = overscroll.rollingDelta + trimDelta(deltaX)
-  if (
-    (overscroll.rollingDelta > 0 && updatedRollingDelta <= 0) ||
-    (overscroll.rollingDelta < 0 && updatedRollingDelta >= 0)
-  ) {
-    overscroll.rollingDelta = 0
-    throttled = true
-    setTimeout(() => {
-      throttled = false
-    }, 750)
+  const s = deltaX < 0 ? -1 : 1
+  const _scrollX = scrollX + trim(deltaX, minXUpdate * s, maxXUpdate * s)
+
+  if (!sameSign(scrollX, _scrollX)) {
+    scrollX = 0
+    throttle(750)
   } else {
-    overscroll.rollingDelta = updatedRollingDelta
+    scrollX = _scrollX
   }
 }
 
-const navigationArrowOffset = (rollingDelta: number) => {
-  const slideDistance = MAXIMUM_X_OVERSCROLL - 300
-  if (Math.abs(rollingDelta) > slideDistance) return "0px"
+const navigationArrowOffset = (scrollX: number) => {
+  const slideDistance = maxXOverscroll - 300
+  if (Math.abs(scrollX) > slideDistance) return "0px"
 
-  return `-${70 - (70 * Math.abs(rollingDelta)) / slideDistance}px`
+  return `-${70 - (70 * Math.abs(scrollX)) / slideDistance}px`
 }
 
-const navigationArrowOpacity = (rollingDelta: number) =>
-  `${Math.max(Math.abs(rollingDelta) / MAXIMUM_X_OVERSCROLL, 0.3).toString()}`
+const navigationArrowOpacity = (scrollX: number) =>
+  `${Math.max(Math.abs(scrollX) / maxXOverscroll, 0.3).toString()}`
+
+const drawArrow = () => {
+  runInActiveTab((tabID: number) => {
+    chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
+      type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
+      value: {
+        offset: navigationArrowOffset(scrollX),
+        opacity: navigationArrowOpacity(scrollX),
+        direction: scrollX < 0 ? "back" : "forward",
+        draw: Math.abs(scrollX) <= maxXOverscroll && scrollX !== 0,
+      },
+    })
+  })
+}
+
+const navigate = () => {
+  const goBack = scrollX < 0
+  runInActiveTab((tabID: number) => {
+    goBack ? chrome.tabs.goBack(tabID) : chrome.tabs.goForward(tabID)
+  })
+
+  scrollX = 0
+  throttle(1500)
+}
 
 const initGestureHandler = () => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.GESTURE_DETECTED) return
     if (throttled) return
 
-    updateOverscroll(msg.value)
-
-    runInActiveTab((tabID: number) => {
-      chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
-        type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
-        value: {
-          offset: navigationArrowOffset(overscroll.rollingDelta),
-          opacity: navigationArrowOpacity(overscroll.rollingDelta),
-          direction: overscroll.rollingDelta < 0 ? "back" : "forward",
-          draw:
-            Math.abs(overscroll.rollingDelta) <= MAXIMUM_X_OVERSCROLL &&
-            overscroll.rollingDelta !== 0,
-        },
-      })
-    })
-
-    if (Math.abs(overscroll.rollingDelta) > MAXIMUM_X_OVERSCROLL) {
-      const goBack = overscroll.rollingDelta < 0
-      runInActiveTab((tabID: number) => {
-        goBack ? chrome.tabs.goBack(tabID) : chrome.tabs.goForward(tabID)
-      })
-
-      overscroll.rollingDelta = 0
-      throttled = true
-
-      setTimeout(() => {
-        throttled = false
-      }, 1500)
-    }
-
-    return true
+    // Update the total X overscroll amount
+    updateOverscroll(msg.value.offset, msg.value.direction !== "x")
+    // Draw the appropriate arrow
+    drawArrow()
+    // Navigate if necessary
+    if (Math.abs(scrollX) > maxXOverscroll) navigate()
   })
 }
 

@@ -11,4 +11,12 @@ const cyclingArray = <T>(limit: number, array: Array<T>) => {
   return fluent
 }
 
-export { cyclingArray }
+const trim = (value: number, lower: number, upper: number) => {
+  if (value > upper) return upper
+  if (value < lower) return lower
+  return value
+}
+
+const sameSign = (a: number, b: number) => a * b > 0
+
+export { cyclingArray, trim, sameSign }

@@ -1,5 +1,5 @@
 import { drawArrow } from "@app/utils/overlays"
-import { cyclingArray } from "@app/utils/arrays"
+import { cyclingArray } from "@app/utils/operators"
 
 import {
   ContentScriptMessage,
@@ -30,20 +30,30 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 
 const detectGesture = (e: WheelEvent) => {
   // If the user is scrolling within the page (i.e not overscrolling), abort
-  if (isScrollingVertically(e) || isScrollingHorizontally(e)) return
+  if (isScrollingVertically(e) || isScrollingHorizontally(e)) {
+    chrome.runtime.sendMessage(<ContentScriptMessage>{
+      type: ContentScriptMessageType.GESTURE_DETECTED,
+      value: {
+        offset: e.deltaY,
+        direction: "y",
+      },
+    })
+    return
+  }
 
   // Send the overscroll amount to the worker
   chrome.runtime.sendMessage(<ContentScriptMessage>{
     type: ContentScriptMessageType.GESTURE_DETECTED,
-    value: e.deltaX,
+    value: {
+      offset: e.deltaX,
+      direciton: "x",
+    },
   })
 }
 
 const initNavigationArrow = () => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.DRAW_NAVIGATION_ARROW) return
-
-    console.log("draw msg received", msg.value)
 
     if (
       arrow === undefined ||
