@@ -12,6 +12,7 @@ const rollingLookbackPeriod = 1
 let arrow: any = undefined
 let previousYDeltas = cyclingArray<number>(4, [])
 let previousXOffset = 0
+let previousYOffset = 0
 let previousArrowDirection: string | undefined = undefined
 let lastTimestamp = 0
 
@@ -23,8 +24,9 @@ const removeArrow = () => {
 }
 
 const isScrollingVertically = (e: WheelEvent) => {
-  previousYDeltas.add(e.deltaY)
-  return previousYDeltas.get().some((delta: number) => Math.abs(delta) > 5)
+  const isScrolling = previousYOffset - e.offsetY !== 0
+  previousYOffset = e.offsetY
+  return isScrolling
 }
 
 const isScrollingHorizontally = (e: WheelEvent) => {
