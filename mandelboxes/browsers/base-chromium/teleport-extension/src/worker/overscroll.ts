@@ -51,15 +51,26 @@ const navigationArrowOpacity = (rollingDelta: number) =>
 
 const initGestureHandler = () => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
-    if (msg.type !== ContentScriptMessageType.GESTURE_DETECTED || throttled)
-      return
+    if (msg.type !== ContentScriptMessageType.GESTURE_DETECTED) return
+    if (throttled) return
 
     updateOverscroll(msg.value)
 
-    // If there hasn't been much overscroll, don't do anything
-    if (Math.abs(overscroll.rollingDelta) < MINIMUM_X_OVERSCROLL) return
-
     console.log(overscroll.rollingDelta)
+
+    runInActiveTab((tabID: number) => {
+      chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
+        type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
+        value: {
+          offset: navigationArrowOffset(overscroll.rollingDelta),
+          opacity: navigationArrowOpacity(overscroll.rollingDelta),
+          direction: overscroll.rollingDelta < 0 ? "back" : "forward",
+          draw:
+            Math.abs(overscroll.rollingDelta) <= MAXIMUM_X_OVERSCROLL &&
+            overscroll.rollingDelta !== 0,
+        },
+      })
+    })
 
     if (Math.abs(overscroll.rollingDelta) > MAXIMUM_X_OVERSCROLL) {
       throttled = true
@@ -75,20 +86,6 @@ const initGestureHandler = () => {
         throttled = false
       }, 1500)
     }
-
-    runInActiveTab((tabID: number) => {
-      chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
-        type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
-        value: {
-          offset: navigationArrowOffset(overscroll.rollingDelta),
-          opacity: navigationArrowOpacity(overscroll.rollingDelta),
-          direction: overscroll.rollingDelta < 0 ? "back" : "forward",
-          draw:
-            Math.abs(overscroll.rollingDelta) <= MAXIMUM_X_OVERSCROLL &&
-            overscroll.rollingDelta !== 0,
-        },
-      })
-    })
 
     return true
   })
