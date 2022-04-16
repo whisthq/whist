@@ -156,16 +156,6 @@ void sdl_set_window_title(const char* window_title);
 void sdl_set_fullscreen(bool is_fullscreen);
 
 /**
- * @brief                          Returns whether or not the window is currently visible
- *
- * @returns                        False if the window is occluded or minimized,
- *                                 True otherwise
- *
- * @note                           This function is virtually instantaneous
- */
-bool sdl_is_window_visible(void);
-
-/**
  * @brief                          The above functions may be expensive, and thus may
  *                                 have to be queued up. This function executes all of the
  *                                 currently internally queued actions.

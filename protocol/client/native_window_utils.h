@@ -22,6 +22,7 @@ Includes
 ============================
 */
 
+#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <whist/utils/color.h>
 #include "frontend/frontend.h"

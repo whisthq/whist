@@ -24,8 +24,6 @@ Includes
 #include <string.h>
 #include <fcntl.h>
 
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
 #include <whist/core/whist.h>
 #include <whist/network/network.h>
 #include <whist/utils/aes.h>

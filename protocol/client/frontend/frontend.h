@@ -128,7 +128,9 @@ typedef struct WhistFrontendFunctionTable {
     int (*get_window_dpi)(WhistFrontend* frontend);
     bool (*is_window_visible)(WhistFrontend* frontend);
     WhistStatus (*set_title)(WhistFrontend* frontend, const char* title);
-    WhistStatus (*restore_window)(WhistFrontend* frontend);
+    void (*restore_window)(WhistFrontend* frontend);
+    void (*set_window_fullscreen)(WhistFrontend* frontend, bool fullscreen);
+    void (*resize_window)(WhistFrontend* frontend, int width, int height);
 
     // Events
     bool (*poll_event)(WhistFrontend* frontend, WhistFrontendEvent* event);
@@ -140,6 +142,14 @@ typedef struct WhistFrontendFunctionTable {
     // Keyboard
     void (*get_keyboard_state)(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,
                                int* mod_state);
+
+    // Video
+    void (*paint_png)(WhistFrontend* frontend, const char* filename, int x, int y);
+    void (*paint_solid)(WhistFrontend* frontend, WhistRGBColor* color);
+    void (*paint_avframe)(WhistFrontend* frontend, AVFrame* frame);
+    void (*render)(WhistFrontend* frontend);
+    void (*set_titlebar_color)(WhistFrontend* frontend, WhistRGBColor* color);
+
 } WhistFrontendFunctionTable;
 
 struct WhistFrontend {
@@ -176,9 +186,9 @@ int whist_frontend_get_window_dpi(WhistFrontend* frontend);
 bool whist_frontend_is_window_visible(WhistFrontend* frontend);
 bool whist_frontend_is_window_occluded(WhistFrontend* frontend);
 int whist_frontend_set_screensaver_enabled(WhistFrontend* frontend, bool enabled);
-int whist_frontend_resize_window(WhistFrontend* frontend, int width, int height);
-int whist_frontend_restore_window(WhistFrontend* frontend);
-int whist_frontend_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen);
+void whist_frontend_resize_window(WhistFrontend* frontend, int width, int height);
+void whist_frontend_restore_window(WhistFrontend* frontend);
+void whist_frontend_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen);
 
 // Title
 WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title);
@@ -196,10 +206,11 @@ void whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, i
 void whist_frontend_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor);
 
 // Video
-int whist_frontend_render_solid(WhistFrontend* frontend, WhistRGBColor color);
-int whist_frontend_render_nv12(WhistFrontend* frontend, uint8_t* y_plane, uint8_t* uv_plane,
-                               int y_stride, int uv_stride, int x, int y, int width, int height);
-int whist_frontend_render_png(WhistFrontend* frontend, const char* filename);
+void whist_frontend_paint_solid(WhistFrontend* frontend, WhistRGBColor* color);
+void whist_frontend_paint_avframe(WhistFrontend* frontend, AVFrame* frame);
+void whist_frontend_paint_png(WhistFrontend* frontend, const char* filename, int x, int y);
+void whist_frontend_render(WhistFrontend* frontend);
+void whist_frontend_set_titlebar_color(WhistFrontend* frontend, WhistRGBColor* color);
 
 // Alerts
 int whist_frontend_show_insufficient_bandwidth_alert(WhistFrontend* frontend);

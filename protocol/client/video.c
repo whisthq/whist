@@ -27,7 +27,6 @@ Includes
 
 #include <stdio.h>
 
-#include <SDL2/SDL.h>
 #include <whist/utils/color.h>
 #include <whist/utils/png.h>
 #include <whist/logging/log_statistic.h>
@@ -203,7 +202,7 @@ int render_video(VideoContext* video_context) {
 
         // If server thinks the window isn't visible, but the window is visible now,
         // Send a START_STREAMING message
-        if (!frame->is_window_visible && sdl_is_window_visible()) {
+        if (!frame->is_window_visible && whist_frontend_is_window_visible(frontend)) {
             // The server thinks the client window is occluded/minimized, but it isn't. So
             // we'll correct it. NOTE: Most of the time, this is just because there was a
             // delay between the window losing visibility and the server reacting.

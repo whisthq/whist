@@ -126,3 +126,38 @@ void whist_frontend_restore_window(WhistFrontend* frontend) {
     FATAL_ASSERT(frontend != NULL);
     frontend->call->restore_window(frontend);
 }
+
+void whist_frontend_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->set_window_fullscreen(frontend, fullscreen);
+}
+
+void whist_frontend_paint_png(WhistFrontend* frontend, const char* filename, int x, int y) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->paint_png(frontend, filename, x, y);
+}
+
+void whist_frontend_paint_solid(WhistFrontend* frontend, WhistRGBColor* color) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->paint_solid(frontend, color);
+}
+
+void whist_frontend_paint_avframe(WhistFrontend* frontend, AVFrame* frame) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->paint_avframe(frontend, frame);
+}
+
+void whist_frontend_render(WhistFrontend* frontend) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->render(frontend);
+}
+
+void whist_frontend_resize_window(WhistFrontend* frontend, int width, int height) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->resize_window(frontend, width, height);
+}
+
+void whist_set_titlebar_color(WhistFrontend* frontend, WhistRGBColor* color) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->set_titlebar_color(frontend, color);
+}
