@@ -67,7 +67,7 @@ const drawArrow = (document: Document, direction: string) => {
   element.style.width = "70px"
   element.style.height = "70px"
   element.style.borderRadius = "35px"
-  element.style.background = "rgba(0, 0, 0, 0.7)"
+  element.style.background = "rgba(0,146,255)"
   element.style.position = "fixed"
   element.style.top = "46%"
   element.style.zIndex = "99999999"

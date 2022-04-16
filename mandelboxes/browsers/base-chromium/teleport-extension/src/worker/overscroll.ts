@@ -48,7 +48,7 @@ const navigationArrowOffset = (scrollX: number) => {
 }
 
 const navigationArrowBorderWidth = (scrollX: number) =>
-  `-${15 - (15 * Math.abs(scrollX)) / maxXOverscroll}px`
+  `${15 - (15 * Math.abs(scrollX)) / maxXOverscroll}px`
 
 const drawArrow = () => {
   runInActiveTab((tabID: number) => {
