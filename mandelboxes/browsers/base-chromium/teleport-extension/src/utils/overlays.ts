@@ -121,13 +121,20 @@ const drawArrow = (document: Document, direction: string) => {
       inner.style.height = fill
     },
     remove: () => {
-      let offset = parseInt(element.style.left ?? 0) // initial opacity
+      let offset =
+        direction === "back"
+          ? parseInt(element.style.left ?? 0)
+          : parseInt(element.style.right ?? 0)
       let timer = setInterval(() => {
         if (offset <= 0) {
           clearInterval(timer)
           element.remove()
         }
-        element.style.left = `${offset.toString()}px`
+        if (direction === "back") {
+          element.style.left = `${offset.toString()}px`
+        } else {
+          element.style.right = `${offset.toString()}px`
+        }
         offset -= 8
       }, 25)
     },
