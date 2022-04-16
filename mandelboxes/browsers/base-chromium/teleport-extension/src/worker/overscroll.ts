@@ -35,8 +35,6 @@ const updateOverscroll = (deltaX: number, reset = false) => {
   } else {
     scrollX = _scrollX
   }
-
-  console.log("updated", scrollX)
 }
 
 const drawArrow = () => {

@@ -61,6 +61,8 @@ const initNavigationArrow = () => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.DRAW_NAVIGATION_ARROW) return
 
+    if (!msg.value.draw) removeArrow()
+
     if (
       arrow === undefined ||
       previousArrowDirection !== msg.value.direction ||
