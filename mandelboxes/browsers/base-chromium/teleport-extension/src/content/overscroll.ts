@@ -72,7 +72,7 @@ const initNavigationArrow = () => {
     if (msg.value.draw) lastTimestamp = now()
 
     if (msg.value.direction)
-      (arrow as HTMLDivElement).style.opacity = msg.value.opacity
+      (arrow as HTMLDivElement).style.borderWidth = msg.value.borderWidth
 
     if (msg.value.direction === "back") {
       ;(arrow as HTMLDivElement).style.left = msg.value.offset

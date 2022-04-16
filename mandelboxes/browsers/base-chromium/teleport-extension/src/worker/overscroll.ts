@@ -46,8 +46,8 @@ const navigationArrowOffset = (scrollX: number) => {
   return `-${70 - (70 * Math.abs(scrollX)) / slideDistance}px`
 }
 
-const navigationArrowOpacity = (scrollX: number) =>
-  `${Math.max(Math.abs(scrollX) / maxXOverscroll, 0.3).toString()}`
+const navigationArrowBorderWidth = (scrollX: number) =>
+  `-${15 - (15 * Math.abs(scrollX)) / maxXOverscroll}px`
 
 const drawArrow = () => {
   runInActiveTab((tabID: number) => {
@@ -55,7 +55,7 @@ const drawArrow = () => {
       type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
       value: {
         offset: navigationArrowOffset(scrollX),
-        opacity: navigationArrowOpacity(scrollX),
+        borderWidth: navigationArrowBorderWidth(scrollX),
         direction: scrollX < 0 ? "back" : "forward",
         draw: Math.abs(scrollX) <= maxXOverscroll && scrollX !== 0,
       },
