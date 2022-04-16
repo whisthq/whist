@@ -44,7 +44,7 @@ const drawArrow = () => {
     chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
       type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
       value: {
-        progress: Math.abs(scrollX / maxXOverscroll),
+        progress: Math.abs(scrollX / maxXOverscroll) * 100,
         direction: scrollX < 0 ? "back" : "forward",
         draw: Math.abs(scrollX) <= maxXOverscroll && scrollX !== 0,
       },
