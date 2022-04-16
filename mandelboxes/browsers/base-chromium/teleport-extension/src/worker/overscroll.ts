@@ -33,11 +33,10 @@ const updateOverscroll = (deltaX: number) => {
     throttled = true
     setTimeout(() => {
       throttled = false
-    }, 500)
+    }, 750)
   } else {
     overscroll.rollingDelta = updatedRollingDelta
   }
-  overscroll.rollingDelta = updatedRollingDelta
 }
 
 const navigationArrowOffset = (rollingDelta: number) => {
@@ -59,6 +58,8 @@ const initGestureHandler = () => {
 
     // If there hasn't been much overscroll, don't do anything
     if (Math.abs(overscroll.rollingDelta) < MINIMUM_X_OVERSCROLL) return
+
+    console.log(overscroll.rollingDelta)
 
     if (Math.abs(overscroll.rollingDelta) > MAXIMUM_X_OVERSCROLL) {
       throttled = true
@@ -82,7 +83,9 @@ const initGestureHandler = () => {
           offset: navigationArrowOffset(overscroll.rollingDelta),
           opacity: navigationArrowOpacity(overscroll.rollingDelta),
           direction: overscroll.rollingDelta < 0 ? "back" : "forward",
-          draw: Math.abs(overscroll.rollingDelta) <= MAXIMUM_X_OVERSCROLL,
+          draw:
+            Math.abs(overscroll.rollingDelta) <= MAXIMUM_X_OVERSCROLL &&
+            overscroll.rollingDelta !== 0,
         },
       })
     })
