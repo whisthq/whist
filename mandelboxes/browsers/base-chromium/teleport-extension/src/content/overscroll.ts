@@ -25,7 +25,7 @@ const removeArrow = () => {
 
 const isScrollingVertically = (e: WheelEvent) => {
   previousYDeltas.add(e.deltaY)
-  return previousYDeltas.get().some((delta: number) => Math.abs(delta) > 5)
+  return previousYDeltas.get().some((delta: number) => Math.abs(delta) > 0)
 }
 
 const isScrollingHorizontally = (e: WheelEvent) => {

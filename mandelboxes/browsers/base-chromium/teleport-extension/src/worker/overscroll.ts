@@ -57,7 +57,7 @@ const navigate = () => {
   })
 
   scrollX = 0
-  throttle(1500)
+  throttle(750)
 }
 
 const initGestureHandler = () => {
