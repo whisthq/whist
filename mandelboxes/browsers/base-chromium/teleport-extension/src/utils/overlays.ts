@@ -71,7 +71,7 @@ const drawArrow = (document: Document, direction: string) => {
   element.style.position = "fixed"
   element.style.top = "46%"
   element.style.zIndex = "99999999"
-  element.style.opacity = "0"
+  element.style.opacity = "1"
   element.style.color = "white"
   element.style.fontFamily = "Helvetica"
   element.style.textAlign = "center"
