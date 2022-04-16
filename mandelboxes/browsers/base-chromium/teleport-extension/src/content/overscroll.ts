@@ -37,13 +37,6 @@ const detectGesture = (e: WheelEvent) => {
   // If the user is scrolling within the page (i.e not overscrolling), abort
   if (isScrollingVertically(e) || isScrollingHorizontally(e)) {
     removeArrow()
-    chrome.runtime.sendMessage(<ContentScriptMessage>{
-      type: ContentScriptMessageType.GESTURE_DETECTED,
-      value: {
-        offset: e.deltaY,
-        direction: "y",
-      },
-    })
     return
   }
 
@@ -52,7 +45,7 @@ const detectGesture = (e: WheelEvent) => {
     type: ContentScriptMessageType.GESTURE_DETECTED,
     value: {
       offset: e.deltaX,
-      direction: "x",
+      reset: false,
     },
   })
 }
@@ -60,6 +53,8 @@ const detectGesture = (e: WheelEvent) => {
 const initNavigationArrow = () => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.DRAW_NAVIGATION_ARROW) return
+
+    lastTimestamp = now()
 
     if (!msg.value.draw) {
       removeArrow()
@@ -72,7 +67,6 @@ const initNavigationArrow = () => {
       previousArrowDirection = msg.value.direction
     }
 
-    lastTimestamp = now()
     arrow.update(msg.value.progress)
   })
 }
@@ -80,6 +74,12 @@ const initNavigationArrow = () => {
 const refreshNavigationArrow = () => {
   if (now() - lastTimestamp > rollingLookbackPeriod) {
     removeArrow()
+    chrome.runtime.sendMessage(<ContentScriptMessage>{
+      type: ContentScriptMessageType.GESTURE_DETECTED,
+      value: {
+        reset: true,
+      },
+    })
   }
 }
 

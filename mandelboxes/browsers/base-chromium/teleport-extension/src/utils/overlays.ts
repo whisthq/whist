@@ -31,30 +31,6 @@ const fadeIn = (element: HTMLElement, speed = 1) => {
   }, 25 / speed)
 }
 
-const fadeOutLeft = (element: HTMLElement, speed = 1) => {
-  let offset = parseInt(element.style.left ?? 0) // initial opacity
-  let timer = setInterval(function () {
-    if (offset <= 0) {
-      clearInterval(timer)
-      element.remove()
-    }
-    element.style.left = `${offset.toString()}px`
-    offset -= 10
-  }, 25 / speed)
-}
-
-const fadeOutRight = (element: HTMLElement, speed = 1) => {
-  let offset = parseInt(element.style.right ?? 0) // initial opacity
-  let timer = setInterval(function () {
-    if (offset <= 0) {
-      clearInterval(timer)
-      element.remove()
-    }
-    element.style.right = `${offset.toString()}px`
-    offset -= 10
-  }, 25 / speed)
-}
-
 const createNotification = (document: Document, text: string) => {
   // Create the notification HTMLElement
   let element = document.createElement("p")
@@ -145,11 +121,15 @@ const drawArrow = (document: Document, direction: string) => {
       inner.style.height = fill
     },
     remove: () => {
-      if (direction === "back") {
-        fadeOutLeft(element)
-      } else {
-        fadeOutRight(element)
-      }
+      let offset = parseInt(element.style.left ?? 0) // initial opacity
+      let timer = setInterval(function () {
+        if (offset <= 0) {
+          clearInterval(timer)
+          element.remove()
+        }
+        element.style.left = `${offset.toString()}px`
+        offset -= 10
+      }, 25)
     },
   }
 }

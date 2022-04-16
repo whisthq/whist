@@ -66,7 +66,7 @@ const initGestureHandler = () => {
     if (throttled) return
 
     // Update the total X overscroll amount
-    updateOverscroll(msg.value.offset, msg.value.direction !== "x")
+    updateOverscroll(msg.value.offset, msg.value.reset)
     // Draw the appropriate arrow
     drawArrow()
     // Navigate if necessary
