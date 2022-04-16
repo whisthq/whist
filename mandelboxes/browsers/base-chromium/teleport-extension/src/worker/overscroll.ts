@@ -73,6 +73,11 @@ const initGestureHandler = () => {
     })
 
     if (Math.abs(overscroll.rollingDelta) > MAXIMUM_X_OVERSCROLL) {
+      console.log(
+        "should go back",
+        overscroll.rollingDelta < 0,
+        overscroll.rollingDelta
+      )
       throttled = true
       runInActiveTab((tabID: number) =>
         overscroll.rollingDelta < 0
