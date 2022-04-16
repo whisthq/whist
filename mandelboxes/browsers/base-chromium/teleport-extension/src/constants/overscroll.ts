@@ -1,3 +1,3 @@
-export const maxXOverscroll = 700
-export const maxXUpdate = 100
+export const maxXOverscroll = 600
+export const maxXUpdate = 150
 export const minXUpdate = 35
