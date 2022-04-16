@@ -7,7 +7,7 @@ import {
 } from "@app/constants/ipc"
 
 // How many seconds to look back when detecting gestures
-const rollingLookbackPeriod = 1.5
+const rollingLookbackPeriod = 1
 
 let arrow: any = undefined
 let previousYDeltas = cyclingArray<number>(3, [])
