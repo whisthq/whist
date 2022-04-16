@@ -12,9 +12,14 @@ const cyclingArray = <T>(limit: number, array: Array<T>) => {
 }
 
 const trim = (value: number, lower: number, upper: number) => {
-  if (value > upper) return upper
-  if (value < lower) return lower
-  return value
+  if (lower < 0 || upper < 0)
+    throw new Error("Lower/upper bounds must be positive")
+  if (lower >= upper)
+    throw new Error("Lower bound must be less than upper bound")
+
+  let trimmed = Math.min(Math.abs(value), upper)
+  trimmed = Math.max(trimmed, lower)
+  return value < 0 ? -1 * trimmed : trimmed
 }
 
 const sameSign = (a: number, b: number) => a * b > 0

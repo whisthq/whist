@@ -27,8 +27,7 @@ const updateOverscroll = (deltaX: number, reset = false) => {
     return
   }
 
-  const s = deltaX < 0 ? -1 : 1
-  const _scrollX = scrollX + trim(deltaX, minXUpdate * s, maxXUpdate * s)
+  const _scrollX = scrollX + trim(deltaX, minXUpdate, maxXUpdate)
 
   if (!sameSign(scrollX, _scrollX)) {
     scrollX = 0
