@@ -24,19 +24,20 @@ const trimDelta = (delta: number) => {
 }
 
 const updateOverscroll = (deltaX: number) => {
-  const _updatedRollingDelta = overscroll.rollingDelta + trimDelta(deltaX)
-  if (
-    (overscroll.rollingDelta > 0 && _updatedRollingDelta <= 0) ||
-    (overscroll.rollingDelta < 0 && _updatedRollingDelta >= 0)
-  ) {
-    overscroll.rollingDelta = 0
-    throttled = true
-    setTimeout(() => {
-      throttled = false
-    }, 500)
-  } else {
-    overscroll.rollingDelta = _updatedRollingDelta
-  }
+  const updatedRollingDelta = overscroll.rollingDelta + trimDelta(deltaX)
+  overscroll.rollingDelta = updatedRollingDelta
+  //   if (
+  //     (overscroll.rollingDelta > 0 && updatedRollingDelta <= 0) ||
+  //     (overscroll.rollingDelta < 0 && updatedRollingDelta >= 0)
+  //   ) {
+  //     overscroll.rollingDelta = 0
+  //     throttled = true
+  //     setTimeout(() => {
+  //       throttled = false
+  //     }, 500)
+  //   } else {
+  //     overscroll.rollingDelta = updatedRollingDelta
+  //   }
 }
 
 const navigationArrowOffset = (rollingDelta: number) => {
@@ -57,6 +58,8 @@ const initGestureHandler = () => {
     console.log("worker received msg", msg.value)
 
     updateOverscroll(msg.value)
+
+    console.log("overscroll", overscroll)
 
     // If there hasn't been much overscroll, don't do anything
     if (Math.abs(overscroll.rollingDelta) < MINIMUM_X_OVERSCROLL) return
