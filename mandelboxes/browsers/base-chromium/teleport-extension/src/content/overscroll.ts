@@ -10,7 +10,7 @@ import {
 const rollingLookbackPeriod = 1
 
 let arrow: any = undefined
-let previousYDeltas = cyclingArray<number>(3, [])
+let previousYDeltas = cyclingArray<number>(2, [])
 let previousXOffset = 0
 let previousArrowDirection: string | undefined = undefined
 let lastTimestamp = 0
