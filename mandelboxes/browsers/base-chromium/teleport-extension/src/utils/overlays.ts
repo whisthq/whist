@@ -64,9 +64,9 @@ const drawArrow = (document: Document, direction: string) => {
   // Create the notification HTMLElement
   let element = document.createElement("div")
 
-  element.style.width = "50px"
-  element.style.height = "50px"
-  element.style.borderRadius = "25px"
+  element.style.width = "70px"
+  element.style.height = "70px"
+  element.style.borderRadius = "35px"
   element.style.background = "rgba(0, 0, 0, 0.7)"
   element.style.position = "fixed"
   element.style.top = "46%"

@@ -41,7 +41,8 @@ const updateOverscroll = (deltaX: number, reset = false) => {
 
 const navigationArrowOffset = (scrollX: number) => {
   const slideDistance = maxXOverscroll - 300
-  if (Math.abs(scrollX) > slideDistance) return "0px"
+  if (Math.abs(scrollX) > slideDistance)
+    return `${(70 * Math.abs(scrollX)) / slideDistance}px`
 
   return `-${70 - (70 * Math.abs(scrollX)) / slideDistance}px`
 }
