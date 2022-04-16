@@ -10,7 +10,7 @@ import {
 const rollingLookbackPeriod = 1
 
 let arrow: any = undefined
-let previousYDeltas = cyclingArray<number>(3, [])
+let previousYDeltas = cyclingArray<number>(5, [])
 let previousXOffset = 0
 let previousArrowDirection: string | undefined = undefined
 let lastTimestamp = 0
@@ -19,7 +19,7 @@ const now = () => Date.now() / 1000
 
 const isScrollingVertically = (e: WheelEvent) => {
   previousYDeltas.add(e.deltaY)
-  return previousYDeltas.get().some((delta: number) => Math.abs(delta) > 10)
+  return previousYDeltas.get().some((delta: number) => Math.abs(delta) > 5)
 }
 
 const isScrollingHorizontally = (e: WheelEvent) => {
@@ -30,7 +30,9 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 
 const detectGesture = (e: WheelEvent) => {
   // If the user is scrolling within the page (i.e not overscrolling), abort
-  if (isScrollingVertically(e) || isScrollingHorizontally(e)) {
+  if (isScrollingHorizontally(e)) return
+
+  if (isScrollingVertically(e)) {
     chrome.runtime.sendMessage(<ContentScriptMessage>{
       type: ContentScriptMessageType.GESTURE_DETECTED,
       value: {
@@ -54,8 +56,6 @@ const detectGesture = (e: WheelEvent) => {
 const initNavigationArrow = () => {
   chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
     if (msg.type !== ContentScriptMessageType.DRAW_NAVIGATION_ARROW) return
-
-    console.log(msg)
 
     if (
       arrow === undefined ||

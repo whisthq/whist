@@ -80,8 +80,8 @@ const drawArrow = (document: Document, direction: string) => {
   element.style.justifyContent = "center"
   element.style.alignItems = "center"
 
-  inner.style.width = "35%"
-  inner.style.height = "35%"
+  inner.style.width = "40%"
+  inner.style.height = "40%"
   inner.style.background = "rgba(0, 146, 255)"
   inner.style.borderRadius = "100%"
   inner.style.display = "flex"
@@ -108,8 +108,8 @@ const drawArrow = (document: Document, direction: string) => {
 
   return {
     update: (progress: number) => {
-      const offset = `${Math.min(-70 + progress * 2, 80)}px`
-      const fill = `${Math.max(35, progress)}%`
+      const offset = `${Math.min(-70 + progress * 2, 70)}px`
+      const fill = `${Math.max(40, progress)}%`
 
       if (direction === "back") {
         element.style.left = offset
