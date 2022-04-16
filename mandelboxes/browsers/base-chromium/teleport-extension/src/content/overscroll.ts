@@ -46,7 +46,7 @@ const detectGesture = (e: WheelEvent) => {
     type: ContentScriptMessageType.GESTURE_DETECTED,
     value: {
       offset: e.deltaX,
-      direciton: "x",
+      direction: "x",
     },
   })
 }
