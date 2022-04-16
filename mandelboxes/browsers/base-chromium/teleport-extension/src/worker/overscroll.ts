@@ -39,24 +39,12 @@ const updateOverscroll = (deltaX: number, reset = false) => {
   console.log("updated", scrollX)
 }
 
-const navigationArrowOffset = (scrollX: number) => {
-  const slideDistance = maxXOverscroll - 300
-  if (Math.abs(scrollX) > slideDistance)
-    return `${(70 * Math.abs(scrollX)) / slideDistance}px`
-
-  return `-${70 - (70 * Math.abs(scrollX)) / slideDistance}px`
-}
-
-const navigationArrowBorderWidth = (scrollX: number) =>
-  `${15 - (15 * Math.abs(scrollX)) / maxXOverscroll}px`
-
 const drawArrow = () => {
   runInActiveTab((tabID: number) => {
     chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
       type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
       value: {
-        offset: navigationArrowOffset(scrollX),
-        borderWidth: navigationArrowBorderWidth(scrollX),
+        progress: Math.abs(scrollX / maxXOverscroll),
         direction: scrollX < 0 ? "back" : "forward",
         draw: Math.abs(scrollX) <= maxXOverscroll && scrollX !== 0,
       },

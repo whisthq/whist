@@ -9,7 +9,7 @@ import {
 // How many seconds to look back when detecting gestures
 const rollingLookbackPeriod = 1
 
-let arrow: HTMLDivElement | undefined = undefined
+let arrow: any = undefined
 let previousYDeltas = cyclingArray<number>(3, [])
 let previousXOffset = 0
 let previousArrowDirection: string | undefined = undefined
@@ -73,14 +73,7 @@ const initNavigationArrow = () => {
 
     if (msg.value.draw) lastTimestamp = now()
 
-    if (msg.value.direction)
-      (arrow as HTMLDivElement).style.borderWidth = msg.value.borderWidth
-
-    if (msg.value.direction === "back") {
-      ;(arrow as HTMLDivElement).style.left = msg.value.offset
-    } else {
-      ;(arrow as HTMLDivElement).style.right = msg.value.offset
-    }
+    if (msg.value.direction) arrow.update(msg.value.progress)
   })
 }
 
