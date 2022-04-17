@@ -32,7 +32,7 @@ extern volatile int output_height;
 extern volatile bool insufficient_bandwidth;
 static bool skip_taskbar;
 
-static WhistMutex renderer_mutex;
+static WhistMutex frontend_render_mutex;
 
 // pending render Update
 static volatile bool pending_render = false;
@@ -64,6 +64,10 @@ static volatile bool should_update_window_title = false;
 static volatile bool fullscreen_trigger = false;
 static volatile bool fullscreen_value = false;
 
+// File Drag
+static int file_drag_update_x = 0;
+static int file_drag_update_y = 0;
+
 // Overlay removals
 static volatile bool pending_overlay_removal = false;
 
@@ -77,30 +81,14 @@ Private Function Declarations
  * @brief                          Updates the framebuffer from any pending framebuffer call,
  *                                 Then RenderPresent if sdl_render_framebuffer is pending.
  */
-static void sdl_present_pending_framebuffer(void);
-
-/**
- * @brief                          Renders out a solid color to the framebuffer
- *
- * @param color                    The color to render
- *
- * @note                           Must be called on the main thread
- */
-static void sdl_render_solid_color(WhistRGBColor color);
+static void sdl_present_pending_framebuffer(WhistFrontend* frontend);
 
 /**
  * @brief                          Renders out the insufficient bandwidth error message
  *
  * @note                           Must be called on the main thread
  */
-static void sdl_render_insufficient_bandwidth(void);
-
-/**
- * @brief                          Renders out any pending nv12 data
- *
- * @note                           Must be called on the main thread
- */
-static void sdl_render_nv12data(void);
+static void render_insufficient_bandwidth(WhistFrontend* frontend);
 
 /*
 ============================
@@ -108,18 +96,19 @@ Public Function Implementations
 ============================
 */
 
-void init_sdl(int target_output_width, int target_output_height, char* name,
-                     char* icon_filename, WhistFrontend** frontend) {
+void init_sdl(int target_output_width, int target_output_height, char* name, char* icon_filename,
+              WhistFrontend** frontend) {
     WhistFrontend* out_frontend =
         whist_frontend_create_sdl(target_output_height, target_output_height, name);
     if (out_frontend == NULL) {
-        return NULL;
+        return;  // NULL;
     }
     if (frontend) {
         *frontend = out_frontend;
     }
 
     pending_cursor_info_mutex = whist_create_mutex();
+    frontend_render_mutex = whist_create_mutex();
     // set pending_cursor_info to NULL for safety, not necessary at the moment since init_sdl() is
     // only called once.
     pending_cursor_info = NULL;
@@ -127,8 +116,7 @@ void init_sdl(int target_output_width, int target_output_height, char* name,
     // Render a black screen before anything else,
     // To prevent being exposed to random colors
     pending_nv12data = false;
-    pending_render = true;
-    sdl_present_pending_framebuffer();
+    pending_render = false;
 
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
@@ -147,6 +135,7 @@ void destroy_sdl(WhistFrontend* frontend) {
     LOG_INFO("Destroying SDL");
 
     whist_destroy_mutex(pending_cursor_info_mutex);
+    whist_destroy_mutex(frontend_render_mutex);
 
     if (frontend) {
         whist_frontend_destroy(frontend);
@@ -201,9 +190,8 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
             whist_frontend_get_window_pixel_size(frontend, &current_width, &current_height);
 
             if (current_width != desired_width || current_height != desired_height) {
-                LOG_WARNING(
-                    "Failed to force resize -- got %dx%d instead of desired %dx%d",
-                    current_width, current_height, desired_width, desired_height);
+                LOG_WARNING("Failed to force resize -- got %dx%d instead of desired %dx%d",
+                            current_width, current_height, desired_width, desired_height);
             }
         }
     }
@@ -223,7 +211,7 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
 }
 
 void sdl_update_framebuffer(AVFrame* frame) {
-    whist_lock_mutex(renderer_mutex);
+    whist_lock_mutex(frontend_render_mutex);
 
     // Check dimensions as a fail-safe
     if ((frame->width < 0 || frame->width > MAX_SCREEN_WIDTH) ||
@@ -241,20 +229,20 @@ void sdl_update_framebuffer(AVFrame* frame) {
         pending_nv12data = true;
     }
 
-    whist_unlock_mutex(renderer_mutex);
+    whist_unlock_mutex(frontend_render_mutex);
 }
 
 void sdl_render_framebuffer(void) {
-    whist_lock_mutex(renderer_mutex);
+    whist_lock_mutex(frontend_render_mutex);
     // Mark a render as pending
     pending_render = true;
-    whist_unlock_mutex(renderer_mutex);
+    whist_unlock_mutex(frontend_render_mutex);
 }
 
 bool sdl_render_pending(void) {
-    whist_lock_mutex(renderer_mutex);
+    whist_lock_mutex(frontend_render_mutex);
     bool pending_render_val = pending_render;
-    whist_unlock_mutex(renderer_mutex);
+    whist_unlock_mutex(frontend_render_mutex);
     return pending_render_val;
 }
 
@@ -277,7 +265,7 @@ void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info) {
     whist_unlock_mutex(pending_cursor_info_mutex);
 }
 
-void sdl_present_pending_cursor(void) {
+void sdl_present_pending_cursor(WhistFrontend* frontend) {
     WhistTimer statistics_timer;
     WhistCursorInfo* temp_cursor_info = NULL;
 
@@ -381,9 +369,9 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
     }
     whist_unlock_mutex(window_resize_mutex);
 
-    sdl_present_pending_cursor();
+    sdl_present_pending_cursor(frontend);
 
-    sdl_present_pending_framebuffer();
+    sdl_present_pending_framebuffer(frontend);
 }
 
 void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
@@ -454,9 +442,9 @@ Private Function Implementations
 ============================
 */
 
-static void sdl_present_pending_framebuffer(void) {
+static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
     // Render out the current framebuffer, if there's a pending render
-    whist_lock_mutex(renderer_mutex);
+    whist_lock_mutex(frontend_render_mutex);
 
     // Render the error message immediately during state transition to insufficient bandwidth
     if (prev_insufficient_bandwidth == false && insufficient_bandwidth == true) {
@@ -466,12 +454,12 @@ static void sdl_present_pending_framebuffer(void) {
     // If there's no pending render or overlay visualizations, just do nothing,
     // Don't consume and discard any pending nv12 or loading screen.
     if (!pending_render && !pending_overlay_removal) {
-        whist_unlock_mutex(renderer_mutex);
+        whist_unlock_mutex(frontend_render_mutex);
         return;
     }
 
     // Wipes the renderer to background color before we present
-    whist_frontend_paint_solid(frontend, background_color);
+    whist_frontend_paint_solid(frontend, &background_color);
 
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
@@ -483,29 +471,36 @@ static void sdl_present_pending_framebuffer(void) {
 
     // Render the nv12data, if any exists
     if (pending_nv12data) {
-        sdl_render_nv12data();
+        AVFrame* frame = pending_nv12_frame;
+        if (frame) {
+            whist_frontend_paint_avframe(frontend, frame, output_width, output_height);
+
+            // No longer pending nv12 data
+            pending_nv12data = false;
+        }
+        // TODO: Should we do something else if no frame?
     }
 
     if (insufficient_bandwidth) {
-        sdl_render_insufficient_bandwidth();
+        render_insufficient_bandwidth(frontend);
     }
     prev_insufficient_bandwidth = insufficient_bandwidth;
 
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
-    whist_unlock_mutex(renderer_mutex);
+    whist_unlock_mutex(frontend_render_mutex);
 
     // RenderPresent outside of the mutex, since RenderCopy made a copy anyway
     // and this will take ~8ms if VSYNC is on.
     // (If this causes a bug, feel free to pull back to inside of the mutex)
     TIME_RUN(whist_frontend_render(frontend), VIDEO_RENDER_TIME, statistics_timer);
 
-    whist_lock_mutex(renderer_mutex);
+    whist_lock_mutex(frontend_render_mutex);
     pending_render = false;
     pending_overlay_removal = false;
-    whist_unlock_mutex(renderer_mutex);
+    whist_unlock_mutex(frontend_render_mutex);
 }
 
-static void sdl_render_insufficient_bandwidth(void) {
+static void render_insufficient_bandwidth(WhistFrontend* frontend) {
     const char* filenames[] = {"error_message_500x50.png", "error_message_750x75.png",
                                "error_message_1000x100.png", "error_message_1500x150.png"};
     // Width in pixels for the above files. Maintain the below list in ascending order.
@@ -525,21 +520,35 @@ static void sdl_render_insufficient_bandwidth(void) {
 
     char frame_filename[256];
     snprintf(frame_filename, sizeof(frame_filename), "images/%s", filenames[chosen_idx]);
-    whist_frontend_paint_png(frontend, frame_filename, -1, -1);
+    whist_frontend_paint_png(frontend, frame_filename, output_width, output_height, -1, -1);
 }
 
-static void sdl_render_nv12data(void) {
-    FATAL_ASSERT(pending_nv12data == true);
+void sdl_handle_drag_event(WhistFrontend* frontend) {
+    /*
+      Initiates the rendering of the drag icon by checking if the drag is occuring within
+      the sdl window and then setting the correct state variables for pending_file_drag_update
+      This will spam logs pretty badly when dragging is active - so avoiding that here.
+      exception of native_window_color_is_null_ptr, which has a slightly different purpose) with the
+      values held by the corresponding sdl_utils.c globals. If native_window_color_is_null_ptr is
+      not NULL, we set the value pointed to by it with a boolean indicating whether the
+      native_window_color global pointer is NULL.
+     */
 
-    AVFrame* frame = pending_nv12_frame;
-    if (!frame) {
-        // We are attempting to render before any frame has been decoded.
-        // TODO: can we do something else here?
-        return;
+    int x_window, y_window, w_window, h_window, x_mouse_global, y_mouse_global;
+    whist_frontend_get_window_position(frontend, &x_window, &y_window);
+    whist_frontend_get_window_virtual_size(frontend, &w_window, &h_window);
+    // Mouse is not active within window - so we must use the global mouse and manually transform
+    whist_frontend_get_global_mouse_position(frontend, &x_mouse_global, &y_mouse_global);
+
+    if (x_window < x_mouse_global && x_mouse_global < x_window + w_window &&
+        y_window < y_mouse_global && y_mouse_global < y_window + h_window) {
+        // Scale relative global mouse offset to output window
+        file_drag_update_x = output_width * (x_mouse_global - x_window) / w_window;
+        file_drag_update_y = output_height * (y_mouse_global - y_window) / h_window;
+    } else {
+        // Stop the rendering of the file drag icon if event has left the window
+        sdl_end_drag_event();
     }
-
-    whist_frontend_paint_avframe(frontend, frame);
-
-    // No longer pending nv12 data
-    pending_nv12data = false;
 }
+
+void sdl_end_drag_event() {}

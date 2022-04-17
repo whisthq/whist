@@ -90,7 +90,7 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
 
     // Initialize audio and video systems
     whist_renderer->audio_context = init_audio(frontend);
-    whist_renderer->video_context = init_video(initial_width, initial_height);
+    whist_renderer->video_context = init_video(frontend, initial_width, initial_height);
 
     if (SINGLE_THREAD_MODEL) {
         // These mutex/sem/timer pass work to the renderer thread when necessary

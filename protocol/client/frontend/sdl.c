@@ -37,7 +37,6 @@ typedef struct SDLFrontendContext {
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* texture;
-    WhistMutex render_mutex;
     struct {
         WhistCursorState state;
         struct {
@@ -147,6 +146,7 @@ static WhistStatus sdl_init_frontend(WhistFrontend* frontend, int width, int hei
     }
 
     SDLFrontendContext* context = safe_malloc(sizeof(SDLFrontendContext));
+    frontend->context = context;
 
     context->audio_device = 0;
     context->key_state = SDL_GetKeyboardState(&context->key_count);
@@ -156,8 +156,6 @@ static WhistStatus sdl_init_frontend(WhistFrontend* frontend, int width, int hei
     context->cursor.last_visible_position.x = 0;
     context->cursor.last_visible_position.y = 0;
     context->cursor.handle = NULL;
-
-    context->render_mutex = whist_create_mutex();
 
     context->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width,
                                        height, window_flags);
@@ -182,7 +180,7 @@ static WhistStatus sdl_init_frontend(WhistFrontend* frontend, int width, int hei
 
     frontend->call->paint_solid(frontend, &background_color);
     frontend->call->render(frontend);
-    frontend->call->set_native_window_color(frontend, &background_color);
+    frontend->call->set_titlebar_color(frontend, &background_color);
 
     context->texture =
         SDL_CreateTexture(context->renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
@@ -215,7 +213,6 @@ static WhistStatus sdl_init_frontend(WhistFrontend* frontend, int width, int hei
     // Show the window now that it's fully loaded.
     SDL_ShowWindow(context->window);
 
-    frontend->context = context;
     return WHIST_SUCCESS;
 }
 
@@ -236,8 +233,6 @@ static void sdl_destroy_frontend(WhistFrontend* frontend) {
         SDL_DestroyWindow(context->window);
         context->window = NULL;
     }
-
-    whist_destroy_mutex(context->render_mutex);
 
     free(context);
 }
@@ -546,9 +541,9 @@ static void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
 #endif  // defined(_WIN32)
 
         SDL_Surface* scaled = SDL_CreateRGBSurface(
-            0, cursor->width * 96 / dpi, cursor->height * 96 / dpi, surface->format->BitsPerPixel,
-            surface->format->Rmask, surface->format->Gmask, surface->format->Bmask,
-            surface->format->Amask);
+            0, cursor->png_width * 96 / dpi, cursor->png_height * 96 / dpi,
+            surface->format->BitsPerPixel, surface->format->Rmask, surface->format->Gmask,
+            surface->format->Bmask, surface->format->Amask);
 
         SDL_BlitScaled(surface, NULL, scaled, NULL);
         SDL_FreeSurface(surface);
@@ -573,8 +568,8 @@ static void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
     context->cursor.hash = cursor->hash;
 }
 
-static void sdl_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,
-                            int* mod_state) {
+static void sdl_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state,
+                                   int* key_count, int* mod_state) {
     SDLFrontendContext* context = frontend->context;
 
     // We could technically call SDL_PumpEvents here, but it's not needed unless we
@@ -596,7 +591,8 @@ static void sdl_restore_window(WhistFrontend* frontend) {
     SDL_RestoreWindow(context->window);
 }
 
-static void sdl_paint_png(WhistFrontend* frontend, const char* filename, int x, int y) {
+static void sdl_paint_png(WhistFrontend* frontend, const char* filename, int output_width,
+                          int output_height, int x, int y) {
     SDLFrontendContext* context = frontend->context;
     unsigned int w, h;
     uint8_t* image;
@@ -627,11 +623,11 @@ static void sdl_paint_png(WhistFrontend* frontend, const char* filename, int x, 
     // TODO: Formalize window position constants.
     if (x == -1) {
         // Center horizontally
-        x = (context->window_width - w) / 2;
+        x = (output_width - w) / 2;
     }
     if (y == -1) {
         // Place at bottom
-        y = context->window_height - h;
+        y = output_height - h;
     }
     SDL_Rect rect = {x, y, w, h};
     SDL_RenderCopy(context->renderer, texture, NULL, &rect);
@@ -644,12 +640,12 @@ static void sdl_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen) 
     SDL_SetWindowFullscreen(context->window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
 
-static void sdl_paint_solid(WhistFrontend* frontend, WhistRGBColor* color) {
+static void sdl_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {
     SDLFrontendContext* context = frontend->context;
-    SDL_SetRenderDrawColor(context->renderer, color->red, color->green, color->blue, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(context->renderer, color->red, color->green, color->blue,
+                           SDL_ALPHA_OPAQUE);
     SDL_RenderClear(context->renderer);
 }
-
 
 // On macOS & Windows, SDL outputs the texture with the last pixel on the bottom and
 // right sides without data, rendering it green (NV12 color format). We're not sure
@@ -661,7 +657,8 @@ static void sdl_paint_solid(WhistFrontend* frontend, WhistRGBColor* color) {
 #define CLIPPED_PIXELS 0
 #endif
 
-static void sdl_paint_avframe(WhistFrontend* frontend, AVFrame* frame) {
+static void sdl_paint_avframe(WhistFrontend* frontend, AVFrame* frame, int output_width,
+                              int output_height) {
     SDLFrontendContext* context = frontend->context;
     // The texture object we allocate is larger than the frame,
     // so we only copy the valid section of the frame into the texture.
@@ -676,8 +673,8 @@ static void sdl_paint_avframe(WhistFrontend* frontend, AVFrame* frame) {
     int res;
     if (frame->format == AV_PIX_FMT_NV12) {
         // A normal NV12 frame in CPU memory.
-        res = SDL_UpdateNVTexture(context->texture, &texture_rect, frame->data[0], frame->linesize[0],
-                                  frame->data[1], frame->linesize[1]);
+        res = SDL_UpdateNVTexture(context->texture, &texture_rect, frame->data[0],
+                                  frame->linesize[0], frame->data[1], frame->linesize[1]);
     } else if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
         // A CVPixelBufferRef containing both planes in GPU memory.
         res = SDL_UpdateNVTexture(context->texture, &texture_rect, frame->data[3], frame->width,
@@ -699,7 +696,7 @@ static void sdl_paint_avframe(WhistFrontend* frontend, AVFrame* frame) {
         .w = min(output_width, texture_rect.w) - CLIPPED_PIXELS,
         .h = min(output_height, texture_rect.h) - CLIPPED_PIXELS,
     };
-    SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
+    SDL_RenderCopy(context->renderer, context->texture, &output_rect, NULL);
 }
 
 static void sdl_render(WhistFrontend* frontend) {
@@ -712,7 +709,7 @@ static void sdl_resize_window(WhistFrontend* frontend, int width, int height) {
     SDL_SetWindowSize(context->window, width, height);
 }
 
-static void sdl_set_titlebar_color(WhistFrontend* frontend, WhistRGBColor* color) {
+static void sdl_set_titlebar_color(WhistFrontend* frontend, const WhistRGBColor* color) {
     SDLFrontendContext* context = frontend->context;
     // TODO: Only pass the reference, not the whole struct
     set_native_window_color(context->window, *color);
@@ -732,6 +729,7 @@ static const WhistFrontendFunctionTable sdl_function_table = {
     .get_window_display_index = sdl_get_window_display_index,
     .get_window_dpi = sdl_get_window_dpi,
     .is_window_visible = sdl_is_window_visible,
+    .get_keyboard_state = sdl_get_keyboard_state,
     .temp_set_window = temp_sdl_set_window,
     .set_title = sdl_set_title,
     .poll_event = sdl_poll_event,

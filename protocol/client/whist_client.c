@@ -474,10 +474,7 @@ int whist_client_main(int argc, const char* argv[]) {
             }
 
             if (get_timer(&keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
-                if (sync_keyboard_state(frontend) != 0) {
-                    exit_code = WHIST_EXIT_FAILURE;
-                    break;
-                }
+                sync_keyboard_state(frontend);
                 start_timer(&keyboard_sync_timer);
             }
 

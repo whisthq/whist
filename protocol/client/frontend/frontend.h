@@ -144,11 +144,13 @@ typedef struct WhistFrontendFunctionTable {
                                int* mod_state);
 
     // Video
-    void (*paint_png)(WhistFrontend* frontend, const char* filename, int x, int y);
-    void (*paint_solid)(WhistFrontend* frontend, WhistRGBColor* color);
-    void (*paint_avframe)(WhistFrontend* frontend, AVFrame* frame);
+    void (*paint_png)(WhistFrontend* frontend, const char* filename, int output_width,
+                      int output_height, int x, int y);
+    void (*paint_solid)(WhistFrontend* frontend, const WhistRGBColor* color);
+    void (*paint_avframe)(WhistFrontend* frontend, AVFrame* frame, int output_width,
+                          int output_height);
     void (*render)(WhistFrontend* frontend);
-    void (*set_titlebar_color)(WhistFrontend* frontend, WhistRGBColor* color);
+    void (*set_titlebar_color)(WhistFrontend* frontend, const WhistRGBColor* color);
 
 } WhistFrontendFunctionTable;
 
@@ -206,11 +208,13 @@ void whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, i
 void whist_frontend_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor);
 
 // Video
-void whist_frontend_paint_solid(WhistFrontend* frontend, WhistRGBColor* color);
-void whist_frontend_paint_avframe(WhistFrontend* frontend, AVFrame* frame);
-void whist_frontend_paint_png(WhistFrontend* frontend, const char* filename, int x, int y);
+void whist_frontend_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color);
+void whist_frontend_paint_avframe(WhistFrontend* frontend, AVFrame* frame, int output_width,
+                                  int output_height);
+void whist_frontend_paint_png(WhistFrontend* frontend, const char* filename, int output_width,
+                              int output_height, int x, int y);
 void whist_frontend_render(WhistFrontend* frontend);
-void whist_frontend_set_titlebar_color(WhistFrontend* frontend, WhistRGBColor* color);
+void whist_frontend_set_titlebar_color(WhistFrontend* frontend, const WhistRGBColor* color);
 
 // Alerts
 int whist_frontend_show_insufficient_bandwidth_alert(WhistFrontend* frontend);

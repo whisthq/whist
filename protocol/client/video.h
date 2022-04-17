@@ -45,6 +45,7 @@ Includes
 */
 
 #include <whist/core/whist.h>
+#include "frontend/frontend.h"
 
 /*
 ============================
@@ -67,7 +68,7 @@ Public Functions
  *
  * @returns                        The new video context
  */
-VideoContext* init_video(int initial_width, int initial_height);
+VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial_height);
 
 /**
  * @brief                          Receive video packet

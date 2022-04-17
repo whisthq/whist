@@ -66,6 +66,8 @@ struct VideoContext {
     int last_frame_height;
     CodecType last_frame_codec;
 
+    WhistFrontend* frontend;
+
     bool has_video_rendered_yet;
 
     // Context of the frame that is currently being rendered
@@ -116,13 +118,14 @@ Public Function Implementations
 ============================
 */
 
-VideoContext* init_video(int initial_width, int initial_height) {
+VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial_height) {
     VideoContext* video_context = safe_malloc(sizeof(*video_context));
     memset(video_context, 0, sizeof(*video_context));
 
     video_context->has_video_rendered_yet = false;
     video_context->sws = NULL;
     video_context->render_context = NULL;
+    video_context->frontend = frontend;
     video_context->pending_render_context = false;
     VideoDecoder* decoder =
         create_video_decoder(initial_width, initial_height, use_hardware_decode, CODEC_TYPE_H264);
@@ -202,7 +205,8 @@ int render_video(VideoContext* video_context) {
 
         // If server thinks the window isn't visible, but the window is visible now,
         // Send a START_STREAMING message
-        if (!frame->is_window_visible && whist_frontend_is_window_visible(frontend)) {
+        if (!frame->is_window_visible &&
+            whist_frontend_is_window_visible(video_context->frontend)) {
             // The server thinks the client window is occluded/minimized, but it isn't. So
             // we'll correct it. NOTE: Most of the time, this is just because there was a
             // delay between the window losing visibility and the server reacting.
@@ -333,15 +337,6 @@ int render_video(VideoContext* video_context) {
         // Free the decoded frame.  We have either copied the data to
         // our own frame or made another reference to it.
         video_decoder_free_decoded_frame(&decoded_frame_data);
-
-        // Render out the cursor image
-        if (cursor_image) {
-            // TODO: whist_frontend_set_cursor here instead of sdl_update_cursor
-            TIME_RUN(sdl_update_cursor(cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
-            // Cursors need not be double-rendered, so we just unset the cursor image here
-            free(cursor_image);
-            cursor_image = NULL;
-        }
 
         // Update the window titlebar color
         sdl_render_window_titlebar_color(window_color);

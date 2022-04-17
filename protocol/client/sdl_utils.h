@@ -48,7 +48,7 @@ Public Functions
  *
  */
 void init_sdl(int output_width, int output_height, char* name, char* icon_filename,
-                     WhistFrontend** frontend);
+              WhistFrontend** frontend);
 
 /**
  * @brief                          Destroys an SDL window and associated
@@ -125,7 +125,7 @@ void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info);
  * @note                           This function is virtually instantaneous. Should be only called
  *                                 in main thread, since it's the only safe way to do any render.
  */
-void sdl_present_pending_cursor(void);
+void sdl_present_pending_cursor(WhistFrontend* frontend);
 
 /**
  * @brief                          Update the color of the window's titlebar

@@ -220,8 +220,6 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
                 send_wcmsg(&wcmsg);
             } else {
                 LOG_INFO("Window now hidden -- stop streaming");
-                // End any active drag event
-                sdl_end_drag_event();
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_STOP_STREAMING;
                 send_wcmsg(&wcmsg);
@@ -250,7 +248,6 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
             break;
         }
         case FRONTEND_EVENT_MOUSE_LEAVE: {
-            sdl_end_drag_event();
             break;
         }
         case FRONTEND_EVENT_GESTURE: {

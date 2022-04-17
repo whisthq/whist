@@ -404,7 +404,6 @@ static int max_frames;
 COMMAND_LINE_INT_OPTION(max_frames, 0, "frames", 1, INT_MAX,
                         "Stop after processing this many frames.")
 
-
 int main(int argc, const char **argv) {
     WhistStatus err = whist_parse_command_line(argc, argv, NULL);
     if (err != WHIST_SUCCESS) {
