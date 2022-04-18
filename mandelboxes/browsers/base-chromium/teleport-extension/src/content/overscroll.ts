@@ -71,10 +71,7 @@ const detectGesture = (e: WheelEvent) => {
 
 const initSwipeGestures = () => {
   // Fires whenever the wheel moves
-  setTimeout(() => {
-    window.addEventListener("wheel", detectGesture)
-  }, 500)
-
+  window.addEventListener("wheel", detectGesture)
   window.addEventListener("popstate", () => console.log("POP STATE"))
   window.addEventListener("pushstate", () => console.log("PUSH STATE"))
 }
