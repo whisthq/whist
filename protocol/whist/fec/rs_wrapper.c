@@ -208,22 +208,22 @@ int init_rs_wrapper(void) {
             if (cpu_info.cpu_type == CPU_TYPE_X86 || cpu_info.cpu_type == CPU_TYPE_X64) {
                 // cpu without avx2 is not rare.
                 // if cpu doesn't support avx2, with ssse3 it's only 30% slow.
-                // so we this is only a warning, and the lib will fallback to ssse3
+                // so this is only a warning, and the lib will fallback to ssse3
                 if (!cpu_info.has_avx2) {
                     LOG_WARNING("CPU type is x86/x64 but AVX2 is not supported!");
                 }
                 // we assume cpu without ssse3 is rare.
                 // And simply yeild a fatal here
                 // If this causes a problem for developing, consider make it a WARNING,
-                // then the lib has ability to fallback to sse2, but it's much slower.
+                // then the lib will fallback to sse2, but it's much slower.
                 if (!cpu_info.has_ssse3) {
                     LOG_FATAL("CPU type is x86/x64 but SSSE3 is not supported!");
                 }
             } else if (cpu_info.cpu_type == CPU_TYPE_ARM32 || cpu_info.cpu_type == CPU_TYPE_ARM64) {
                 // the only arm platform we support is M1 and above
                 // they should all support neon.
-                // the lib has the ability fallback to pure c for arm, but arm without
-                // neon is unexpect, so still yeild a fatal here.
+                // the lib has the ability of fallback to pure c for arm, but arm without
+                // neon is unexpected, so still yeild a fatal here.
                 if (!cpu_info.has_neon) {
                     LOG_FATAL("CPU type is arm32/arm64 but neon is not supported!");
                 }
