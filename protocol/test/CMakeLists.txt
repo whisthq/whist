@@ -39,7 +39,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/sync_packets.c
         ../client/renderer.c
         ../client/frontend/frontend.c
-        ../client/frontend/sdl.c
+        ../client/frontend/sdl/sdl.c
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp
@@ -124,7 +124,7 @@ target_link_libraries(${PROTOCOL_TEST_BINARY}
 # Link macOS-specific files and libraries
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
-        ../client/native_window_utils_mac.m
+        ../client/frontend/sdl/native_macos.m
         ../client/notif_utils/display_notifs_mac.m
     )
     target_link_libraries(${PROTOCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
@@ -133,7 +133,7 @@ endif()
 # Link more Linux-specific libraries
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
-        ../client/native_window_utils_x11.c
+        ../client/frontend/sdl/native_x11.c
     )
     find_package(X11 REQUIRED
         Xfixes
@@ -183,7 +183,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
 
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
-        ../client/native_window_utils_windows.c
+        ../client/frontend/sdl/native_windows.c
     )
 
     set_property(TARGET ${PROTOCOL_TEST_BINARY} PROPERTY

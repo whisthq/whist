@@ -1,24 +1,28 @@
 #include "frontend.h"
+#include "sdl/sdl.h"
 #include <whist/core/whist.h>
 #include <whist/utils/atomic.h>
 
 static atomic_int next_frontend_id = ATOMIC_VAR_INIT(0);
 
-static WhistFrontend* whist_frontend_create(const WhistFrontendFunctionTable* function_table,
-                                            int width, int height, const char* title) {
+static WhistFrontend* whist_frontend_create(const WhistFrontendFunctionTable* function_table) {
     WhistFrontend* frontend = safe_malloc(sizeof(WhistFrontend));
     frontend->context = NULL;
     frontend->id = atomic_fetch_add(&next_frontend_id, 1);
     frontend->call = function_table;
-    if (frontend->call->init(frontend, width, height, title) != WHIST_SUCCESS) {
-        free(frontend);
-        return NULL;
-    }
     return frontend;
 }
 
-WhistFrontend* whist_frontend_create_sdl(int width, int height, const char* title) {
-    return whist_frontend_create(sdl_get_function_table(), width, height, title);
+WhistFrontend* whist_frontend_create_sdl() {
+    return whist_frontend_create(sdl_get_function_table());
+}
+
+// TODO: Can we use the bindings to do this?
+
+WhistStatus whist_frontend_init(WhistFrontend* frontend, int width, int height, const char* title,
+                                const WhistRGBColor* color) {
+    FATAL_ASSERT(frontend != NULL);
+    return frontend->call->init(frontend, width, height, title, color);
 }
 
 void whist_frontend_destroy(WhistFrontend* frontend) {
@@ -55,11 +59,6 @@ WhistStatus whist_frontend_queue_audio(WhistFrontend* frontend, const uint8_t* d
 size_t whist_frontend_get_audio_buffer_size(WhistFrontend* frontend) {
     FATAL_ASSERT(frontend != NULL);
     return frontend->call->get_audio_buffer_size(frontend);
-}
-
-void temp_frontend_set_window(WhistFrontend* frontend, void* window) {
-    FATAL_ASSERT(frontend != NULL);
-    frontend->call->temp_set_window(frontend, window);
 }
 
 void whist_frontend_get_window_pixel_size(WhistFrontend* frontend, int* width, int* height) {

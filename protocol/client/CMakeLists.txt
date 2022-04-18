@@ -14,7 +14,12 @@ set(WHIST_CLIENT_DEPENDS
         sync_packets.c
         renderer.c
         frontend/frontend.c
-        frontend/sdl.c
+        frontend/sdl/audio.c
+        frontend/sdl/events.c
+        frontend/sdl/lifecycle.c
+        frontend/sdl/sdl.c
+        frontend/sdl/video.c
+        frontend/sdl/window.c
 )
 
 if(CLIENT_SHARED_LIB)
@@ -103,7 +108,7 @@ target_link_libraries(WhistClient ${PLATFORM_INDEPENDENT_LIBS})
 ]]
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(WhistClient PRIVATE
-        native_window_utils_x11.c
+        frontend/sdl/native_x11.c
     )
 
     find_package(X11 REQUIRED
@@ -144,7 +149,7 @@ endif()
 ]]
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(WhistClient PRIVATE
-        native_window_utils_mac.m
+        frontend/sdl/native_macos.m
         notif_utils/display_notifs_mac.m
     )
 
@@ -160,7 +165,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099 ")
 
     target_sources(WhistClient PRIVATE
-        native_window_utils_windows.c
+        frontend/sdl/native_windows.c
     )
 
     set_property(TARGET WhistClient PROPERTY

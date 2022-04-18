@@ -33,7 +33,6 @@ Includes
 #include <whist/utils/rwlock.h>
 #include "whist/core/features.h"
 #include "whist/utils/command_line.h"
-#include "native_window_utils.h"
 #include "network.h"
 #include "client_utils.h"
 #include <whist/debug/protocol_analyzer.h>
@@ -346,9 +345,6 @@ int render_video(VideoContext* video_context) {
 
         // Mark the framebuffer out to render
         sdl_render_framebuffer();
-
-        // Declare user activity to prevent screensaver
-        declare_user_activity();
 
         if (client_input_timestamp != 0) {
             // Calculate E2E latency

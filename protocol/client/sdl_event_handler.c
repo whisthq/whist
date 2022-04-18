@@ -24,7 +24,6 @@ Includes
 #include "audio.h"
 #include "client_utils.h"
 #include "network.h"
-#include "native_window_utils.h"
 #include <whist/utils/atomic.h>
 #include <whist/debug/debug_console.h>
 

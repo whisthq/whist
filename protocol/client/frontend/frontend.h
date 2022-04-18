@@ -3,6 +3,7 @@
 
 #include <whist/core/whist.h>
 #include <whist/core/error_codes.h>
+#include "api.h"
 
 typedef struct WhistFrontend WhistFrontend;
 
@@ -107,52 +108,12 @@ typedef struct WhistFrontendEvent {
 } WhistFrontendEvent;
 
 // TODO: Opaquify this
+#define FRONTEND_FUNCTION_TABLE_DECLARATION(return_type, name, ...) \
+    return_type (*name)(__VA_ARGS__);
 typedef struct WhistFrontendFunctionTable {
-    // Lifecycle
-    WhistStatus (*init)(WhistFrontend* frontend, int width, int height, const char* title);
-    void (*destroy)(WhistFrontend* frontend);
-
-    // Audio
-    void (*open_audio)(WhistFrontend* frontend, unsigned int frequency, unsigned int channels);
-    bool (*audio_is_open)(WhistFrontend* frontend);
-    void (*close_audio)(WhistFrontend* frontend);
-    WhistStatus (*queue_audio)(WhistFrontend* frontend, const uint8_t* data, size_t size);
-    size_t (*get_audio_buffer_size)(WhistFrontend* frontend);
-
-    // Display
-    void (*temp_set_window)(WhistFrontend* frontend, void* window);
-    void (*get_window_pixel_size)(WhistFrontend* frontend, int* width, int* height);
-    void (*get_window_virtual_size)(WhistFrontend* frontend, int* width, int* height);
-    void (*get_window_position)(WhistFrontend* frontend, int* x, int* y);
-    WhistStatus (*get_window_display_index)(WhistFrontend* frontend, int* index);
-    int (*get_window_dpi)(WhistFrontend* frontend);
-    bool (*is_window_visible)(WhistFrontend* frontend);
-    WhistStatus (*set_title)(WhistFrontend* frontend, const char* title);
-    void (*restore_window)(WhistFrontend* frontend);
-    void (*set_window_fullscreen)(WhistFrontend* frontend, bool fullscreen);
-    void (*resize_window)(WhistFrontend* frontend, int width, int height);
-
-    // Events
-    bool (*poll_event)(WhistFrontend* frontend, WhistFrontendEvent* event);
-
-    // Mouse
-    void (*get_global_mouse_position)(WhistFrontend* frontend, int* x, int* y);
-    void (*set_cursor)(WhistFrontend* frontend, WhistCursorInfo* cursor);
-
-    // Keyboard
-    void (*get_keyboard_state)(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,
-                               int* mod_state);
-
-    // Video
-    void (*paint_png)(WhistFrontend* frontend, const char* filename, int output_width,
-                      int output_height, int x, int y);
-    void (*paint_solid)(WhistFrontend* frontend, const WhistRGBColor* color);
-    void (*paint_avframe)(WhistFrontend* frontend, AVFrame* frame, int output_width,
-                          int output_height);
-    void (*render)(WhistFrontend* frontend);
-    void (*set_titlebar_color)(WhistFrontend* frontend, const WhistRGBColor* color);
-
+    FRONTEND_API(FRONTEND_FUNCTION_TABLE_DECLARATION)
 } WhistFrontendFunctionTable;
+#undef FRONTEND_FUNCTION_TABLE_DECLARATION
 
 struct WhistFrontend {
     void* context;
@@ -160,63 +121,13 @@ struct WhistFrontend {
     const WhistFrontendFunctionTable* call;
 };
 
-const WhistFrontendFunctionTable* sdl_get_function_table(void);
+#define FRONTEND_HEADER_DECLARATION(return_type, name, ...) \
+    return_type whist_frontend_##name(__VA_ARGS__);
+FRONTEND_API(FRONTEND_HEADER_DECLARATION)
+#undef FRONTEND_HEADER_DECLARATION
 
-// Lifecycle
-WhistFrontend* whist_frontend_create_sdl(int width, int height, const char* title);
+WhistFrontend* whist_frontend_create_sdl(void);
 WhistFrontend* whist_frontend_create_external(void);
 unsigned int whist_frontend_get_id(WhistFrontend* frontend);
-void whist_frontend_destroy(WhistFrontend* frontend);
-
-// Audio
-void whist_frontend_open_audio(WhistFrontend* frontend, unsigned int frequency,
-                               unsigned int channels);
-WhistStatus whist_frontend_queue_audio(WhistFrontend* frontend, const uint8_t* audio_data,
-                                       size_t audio_data_size);
-size_t whist_frontend_get_audio_buffer_size(WhistFrontend* frontend);
-bool whist_frontend_audio_is_open(WhistFrontend* frontend);
-void whist_frontend_close_audio(WhistFrontend* frontend);
-
-// Display
-void temp_frontend_set_window(WhistFrontend* frontend, void* window);
-void whist_frontend_get_window_pixel_size(WhistFrontend* frontend, int* width, int* height);
-void whist_frontend_get_window_virtual_size(WhistFrontend* frontend, int* width, int* height);
-void whist_frontend_get_window_position(WhistFrontend* frontend, int* x, int* y);
-WhistStatus whist_frontend_get_window_display_index(WhistFrontend* frontend, int* index);
-// note: whist_frontend_get_window_dpi() should only be called inside main thread, at least on MacOS
-int whist_frontend_get_window_dpi(WhistFrontend* frontend);
-bool whist_frontend_is_window_visible(WhistFrontend* frontend);
-bool whist_frontend_is_window_occluded(WhistFrontend* frontend);
-int whist_frontend_set_screensaver_enabled(WhistFrontend* frontend, bool enabled);
-void whist_frontend_resize_window(WhistFrontend* frontend, int width, int height);
-void whist_frontend_restore_window(WhistFrontend* frontend);
-void whist_frontend_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen);
-
-// Title
-WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title);
-
-// Events
-bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event);
-
-// Keyboard
-int whist_frontend_send_key_event(WhistFrontend* frontend, WhistKeycode keycode, bool pressed);
-void whist_frontend_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state,
-                                       int* key_count, int* mod_state);
-
-// Mouse
-void whist_frontend_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y);
-void whist_frontend_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor);
-
-// Video
-void whist_frontend_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color);
-void whist_frontend_paint_avframe(WhistFrontend* frontend, AVFrame* frame, int output_width,
-                                  int output_height);
-void whist_frontend_paint_png(WhistFrontend* frontend, const char* filename, int output_width,
-                              int output_height, int x, int y);
-void whist_frontend_render(WhistFrontend* frontend);
-void whist_frontend_set_titlebar_color(WhistFrontend* frontend, const WhistRGBColor* color);
-
-// Alerts
-int whist_frontend_show_insufficient_bandwidth_alert(WhistFrontend* frontend);
 
 #endif  // WHIST_CLIENT_FRONTEND_H

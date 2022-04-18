@@ -24,7 +24,6 @@ Includes
 #include <whist/logging/log_statistic.h>
 
 #include <whist/utils/color.h>
-#include "native_window_utils.h"
 #include "client_utils.h"
 
 extern volatile int output_width;
@@ -98,8 +97,12 @@ Public Function Implementations
 
 void init_sdl(int target_output_width, int target_output_height, char* name, char* icon_filename,
               WhistFrontend** frontend) {
-    WhistFrontend* out_frontend =
-        whist_frontend_create_sdl(target_output_height, target_output_height, name);
+    WhistFrontend* out_frontend = whist_frontend_create_sdl();
+    if (whist_frontend_init(out_frontend, target_output_height, target_output_height, name,
+                            &background_color) != WHIST_SUCCESS) {
+        whist_frontend_destroy(out_frontend);
+        LOG_FATAL("Failed to initialize frontend");
+    }
     if (out_frontend == NULL) {
         return;  // NULL;
     }

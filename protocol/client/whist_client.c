@@ -44,7 +44,6 @@ Includes
 #include "video.h"
 #include "sync_packets.h"
 #include <whist/utils/color.h>
-#include "native_window_utils.h"
 #include "renderer.h"
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
@@ -356,9 +355,6 @@ int whist_client_main(int argc, const char* argv[]) {
         init_clipboard_synchronizer(true);
         init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
 
-        // Add listeners for global file drag events
-        initialize_out_of_window_drag_handlers(frontend);
-
         start_timer(&window_resize_timer);
         window_resize_mutex = whist_create_mutex();
 
@@ -384,7 +380,6 @@ int whist_client_main(int argc, const char* argv[]) {
         if (connect_to_server(server_ip, using_stun, user_email) != 0) {
             // This must destroy everything initialized above this line
             LOG_WARNING("Failed to connect to server.");
-            destroy_out_of_window_drag_handlers();
             destroy_file_synchronizer();
             destroy_clipboard_synchronizer();
             destroy_renderer(whist_renderer);
@@ -521,7 +516,6 @@ int whist_client_main(int argc, const char* argv[]) {
 
         // Destroy the network system
         destroy_packet_synchronizers();
-        destroy_out_of_window_drag_handlers();
         destroy_file_synchronizer();
         destroy_clipboard_synchronizer();
         close_connections();

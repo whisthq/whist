@@ -56,8 +56,6 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │   ├── client_utils.c <- cmdline options, among others
 │   ├── handle_server_message.c <- Handle server fcmsg's
 │   ├── main.c <- SDL Event loop, receive and categorize packets as fcmsg/audio/video
-│   ├── native_window_utils_windows.c <- Functions to modify SDL window on Windows
-│   ├── native_window_utils_x11.c <- Functions to modify SDL window for X11
 │   ├── network.c <- Functions to connect to server, and send_fcmsg
 │   ├── sdl_event_handler.c <- Handle SDL Events
 │   ├── sdlscreeninfo.c <- Get monitor/window width/height functions
