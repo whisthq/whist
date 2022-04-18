@@ -54,11 +54,11 @@ const drawArrow = () => {
 
 const navigate = () => {
   const goBack = scrollX < 0
-  runInActiveTab((tabID: number) => {
-    goBack ? chrome.tabs.goBack(tabID) : chrome.tabs.goForward(tabID)
-  })
+  //   runInActiveTab((tabID: number) => {
+  //     goBack ? chrome.tabs.goBack(tabID) : chrome.tabs.goForward(tabID)
+  //   })
 
-  scrollX = 0
+  //   scrollX = 0
   throttle(500)
 }
 
