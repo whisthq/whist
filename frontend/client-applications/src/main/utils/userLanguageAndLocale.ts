@@ -110,17 +110,15 @@ const getUserLanguages = () => {
       // Split at newline
       const parsedLanguages = languagesRaw.toString().split(/\r?\n/)
       for (const expr of ["LANGUAGE", "LANG"]) {
-        if (parsedLanguages.includes(expr)) {
-          for (const s of parsedLanguages) {
-            const keyValuePair = s.split(/=/)
-            if (
-              keyValuePair.length === 2 &&
-              keyValuePair[1].length >= 1 &&
-              keyValuePair[0].includes(expr)
-            ) {
-              // Peel off double quotes
-              return keyValuePair[1].split('"').join("")
-            }
+        for (const s of parsedLanguages) {
+          const keyValuePair = s.split(/=/)
+          if (
+            keyValuePair.length === 2 &&
+            keyValuePair[1].length >= 1 &&
+            keyValuePair[0].includes(expr)
+          ) {
+            // Peel off double quotes
+            return keyValuePair[1].split('"').join("")
           }
         }
       }
