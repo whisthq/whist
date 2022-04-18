@@ -34,7 +34,7 @@ HEROKU_API_TOKEN = os.environ.get("HEROKU_DEVELOPER_API_KEY")
 SERVER_DEV = "whist-dev-server"
 SERVER_STAGING = "whist-staging-server"
 SERVER_PROD = "whist-prod-server"
-PATH_BRANCH_SCHEMA = "backend/webserver/db_migration/schema.sql"
+PATH_BRANCH_SCHEMA = "backend/database/schema.sql"
 COMMENT_IDENTIFIER = "AUTOMATED_DB_MIGRATION_MESSAGE"
 
 

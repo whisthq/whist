@@ -1,9 +1,9 @@
-# workflows/webserver-cloud-infrastructure-monitoring.yml
+# workflows/backend-cloud-infrastructure-monitoring.yml
 #
-# Webserver: Cloud Infrastructure Monitoring
+# Backend: Cloud Infrastructure Monitoring
 # Checks and flags old EC2 instances and cleans dangling Packer instances, AMIs, and EBS snapshots
 
-name: "Webserver: Cloud Infrastructure Monitoring"
+name: "Backend: Cloud Infrastructure Monitoring"
 on:
   schedule:
     - cron: "12 13 * * 1-5" # runs at 08:18 +/- a few minutes (EST/New York) each weekday
@@ -14,14 +14,14 @@ on:
 # This guarantees that if you push many commits to the same PR, only the latest
 # commit will get run (others get cancelled)
 concurrency:
-  group: webserver-cloud-infrastructure-monitoring-${{ github.head_ref || github.run_id }}
+  group: backend-cloud-infrastructure-monitoring-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   # Find the number of AWS EC2 instances we have across all instance states (running, stopped)
   # running in each region, and notify Slack
-  webserver-enumerate-all-instances:
-    name: Webserver Enumerate All Instances
+  backend-enumerate-all-instances:
+    name: Enumerate All Instances
     runs-on: ubuntu-20.04
     env:
       AWS_REGIONS: "us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 eu-central-1 eu-west-1 eu-west-2 eu-west-3 eu-south-1 eu-north-1 sa-east-1 me-south-1 af-south-1 ap-east-1 ap-south-1 ap-northeast-1 ap-northeast-2 ap-northeast-3 ap-southeast-1 ap-southeast-2 ap-southeast-3"
@@ -71,10 +71,10 @@ jobs:
   #     updated their `last_update` value >2 mins for running instances, >15 mins
   #     for pre-connected instances, or `status` is DRAINING for >2 minutes
   #     without an associated mandelbox (`last_update` can be <2 mins)
-  webserver-old-hanging-lingering-resource-notifications:
-    name: Webserver Old, Hanging, or Lingering Resource Notifications
+  backend-old-hanging-lingering-resource-notifications:
+    name: Backend Old, Hanging, or Lingering Resource Notifications
     runs-on: ubuntu-20.04
-    needs: [webserver-enumerate-all-instances]
+    needs: [backend-enumerate-all-instances]
     strategy:
       matrix:
         aws-region:
@@ -215,7 +215,7 @@ jobs:
   # Delete lingering Packer Builder EC2 instances, and extraneous AMI snapshots and associated
   # EBS volumes from CI and old dev/staging/prod AMIs
   # The utilies we use to clean resources run per-region, so this job is run as a matrix over our AWS regions
-  webserver-cleanup-lingering-packer-builders-and-ami-resources:
+  backend-cleanup-lingering-packer-builders-and-ami-resources:
     name: Delete Lingering Packer Builder Instances, AMI Snapshots & EBS Volumes
     runs-on: ubuntu-20.04
     strategy:
@@ -290,7 +290,7 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          BODY = "@releases :rotating_light: Failed to clean lingering Packer Instances and AMI Snapshots in `webserver-cleanup-lingering-packer-builders-and-ami-resources` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Failed to clean lingering Packer Instances and AMI Snapshots in `backend-cleanup-lingering-packer-builders-and-ami-resources` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   # Notify Slack if an error occurs in the workflow, so that it can be fixed promptly
@@ -298,9 +298,9 @@ jobs:
     name: "Notify Slack if Cloud Infrastructure Monitoring Workflow Fails"
     needs:
       [
-        webserver-enumerate-all-instances,
-        webserver-old-hanging-lingering-resource-notifications,
-        webserver-cleanup-lingering-packer-builders-and-ami-resources,
+        backend-enumerate-all-instances,
+        backend-old-hanging-lingering-resource-notifications,
+        backend-cleanup-lingering-packer-builders-and-ami-resources,
       ]
     if: failure()
     runs-on: ubuntu-20.04

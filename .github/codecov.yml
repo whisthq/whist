@@ -15,11 +15,6 @@ coverage:
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - backend-services
-      backend-webserver:
-        target: auto # /backend/webserver code coverage
-        threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
-        flags:
-          - backend-webserver
       frontend-core-ts:
         target: auto # /frontend/core-ts code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
@@ -34,20 +29,10 @@ coverage:
   round: down # Up, down, or nearest
   range: "50...90" # First number represents red, and second represents green (default is 70..100)
 
-# Files ignored by Codecov
-ignore:
-  - "backend/webserver/app/utils/flask/cli.py"
-  - "backend/webserver/app/config.py"
-  - "backend/webserver/app/utils/flask/sentry.py"
-
 # Heroku CI makes /app the root on the Heroku CI instances,
-# so we need this fix to retrieve /webserver as the root folder
+# so we need this fix to retrieve /services as the root folder
 fixes:
-  - "app/::backend/webserver/" # Replace app/... with backend/webserver/...
-  - "scripts/::backend/webserver/" # Replace scripts/... with backend/webserver/...
-  - "tests/::backend/webserver/" # Replace tests/... with backend/webserver/...
   - "**/whist/backend/services/::services/" # Make backend/services coverage relative to backend/services directory
-  - "**/whist/backend/webserver/::webserver/" # Make webserver coverage relative to webserver directory
   - "**/whist/frontend/core-ts/::core-ts/" # Make core-ts coverage relative to core-ts directory
   - "**/whist/protocol/::protocol/" # Make protocol coverage relative to protocol directory
 
@@ -64,10 +49,6 @@ comment:
 # This is where we define every flag for the Codecov uploader and update when new Flags are added
 # See here for carryforward documentation: https://docs.codecov.com/docs/carryforward-flags
 flags:
-  backend-webserver:
-    paths:
-      - backend/webserver/
-    carryforward: true
   backend-services:
     paths:
       - backend/services/

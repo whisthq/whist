@@ -1,4 +1,4 @@
-# workflows/gha-obtain-webserver-authorization.yml
+# workflows/gha-obtain-authorization.yml
 #
 # GitHub Actions: Obtain Authorization to Call Whist's API
 # Obtain authorization from Auth0 for all Workflows to call Whist's API. This
@@ -19,12 +19,12 @@ on:
 # This guarantees that if you push many commits to the same PR, only the latest
 # commit will get run (others get cancelled)
 concurrency:
-  group: github-actions-obtain-webserver-authorization-${{ github.head_ref || github.run_id }}
+  group: github-actions-obtain-authorization-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
-  gha-obtain-webserver-authorization:
-    name: Obtain and Cache a Webserver Access Token
+  gha-obtain-authorization:
+    name: Obtain and Cache an Access Token
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
