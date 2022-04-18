@@ -484,7 +484,7 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
             free(create_path);
 
             file_list_token = strtok_r(NULL, delimiter, &strtok_context);
-            xdnd_file_list_len += addon_size;
+            xdnd_file_list_len += drag_path_size;
             id++;
         }
     }
