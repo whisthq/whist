@@ -16,6 +16,7 @@ add_library(whistUtils STATIC
         linked_list.c
         queue.c
         command_line.c
+        string_buffer.c
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
