@@ -819,7 +819,7 @@ extern "C" void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_REST
 #else // GF256_TARGET_MOBILE
     if (CpuHasAVX2)
     {
-        gf256_add2_mem_innder_avx2(z16,x16,y16,bytes);
+        gf256_add2_mem_inner_avx2(z16,x16,y16,bytes);
     }
 
     // Handle multiples of 16 bytes
@@ -934,7 +934,7 @@ extern "C" void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RE
 #else // GF256_TARGET_MOBILE
     if (CpuHasAVX2)
     {
-        gf256_addset_mem_innder_avx2(z16,x16,y16,bytes);
+        gf256_addset_mem_inner_avx2(z16,x16,y16,bytes);
     }
     else
     {
@@ -1051,7 +1051,7 @@ extern "C" void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTR
 #else
     if (bytes >= 32 && CpuHasAVX2)
     {
-        gf256_mul_mem_innder_avx2(vz,vx,z16,x16,y,bytes);
+        gf256_mul_mem_inner_avx2(vz,vx,z16,x16,y,bytes);
     }
     if (bytes >= 16 && CpuHasSSSE3)
     {

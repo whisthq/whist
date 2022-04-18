@@ -58,7 +58,7 @@ void gf256_add_mem_inner_avx2(GF256_M128 * GF256_RESTRICT &x16,
         y16 = reinterpret_cast<const GF256_M128 *>(y32);
 }
 
-void gf256_add2_mem_innder_avx2(GF256_M128 * GF256_RESTRICT &z16, const GF256_M128 * GF256_RESTRICT &x16, const GF256_M128 * GF256_RESTRICT &y16, int &bytes)
+void gf256_add2_mem_inner_avx2(GF256_M128 * GF256_RESTRICT &z16, const GF256_M128 * GF256_RESTRICT &x16, const GF256_M128 * GF256_RESTRICT &y16, int &bytes)
 {
         GF256_M256 * GF256_RESTRICT z32 = reinterpret_cast<GF256_M256 *>(z16);
         const GF256_M256 * GF256_RESTRICT x32 = reinterpret_cast<const GF256_M256 *>(x16);
@@ -81,7 +81,7 @@ void gf256_add2_mem_innder_avx2(GF256_M128 * GF256_RESTRICT &z16, const GF256_M1
         y16 = reinterpret_cast<const GF256_M128 *>(y32 + count);
 }
 
-void gf256_addset_mem_innder_avx2(GF256_M128 * GF256_RESTRICT &z16, const GF256_M128 * GF256_RESTRICT &x16, const GF256_M128 * GF256_RESTRICT &y16, int &bytes)
+void gf256_addset_mem_inner_avx2(GF256_M128 * GF256_RESTRICT &z16, const GF256_M128 * GF256_RESTRICT &x16, const GF256_M128 * GF256_RESTRICT &y16, int &bytes)
 {
         GF256_M256 * GF256_RESTRICT z32 = reinterpret_cast<GF256_M256 *>(z16);
         const GF256_M256 * GF256_RESTRICT x32 = reinterpret_cast<const GF256_M256 *>(x16);
@@ -102,7 +102,7 @@ void gf256_addset_mem_innder_avx2(GF256_M128 * GF256_RESTRICT &z16, const GF256_
         y16 = reinterpret_cast<const GF256_M128 *>(y32 + count);
 }
 
-void gf256_mul_mem_innder_avx2(void * GF256_RESTRICT &vz, const void * GF256_RESTRICT &vx, 
+void gf256_mul_mem_inner_avx2(void * GF256_RESTRICT &vz, const void * GF256_RESTRICT &vx,
                                 GF256_M128 * GF256_RESTRICT &z16, const GF256_M128 * GF256_RESTRICT &x16, 
                                 uint8_t &y, int &bytes)
 {
