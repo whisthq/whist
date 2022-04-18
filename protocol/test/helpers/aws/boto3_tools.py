@@ -5,6 +5,10 @@ import botocore
 from operator import itemgetter
 
 from helpers.common.git_tools import get_whist_branch_name
+from helpers.common.timestamps_and_exit_tools import (
+    printred,
+    printyellow,
+)
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -42,7 +46,7 @@ def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
     )
 
     if len(response) < 1:
-        print(f"Error, could not get instance AMI for region {region_name}")
+        printred(f"Error, could not get instance AMI for region {region_name}")
         return ""
 
     # Sort the Images in reverse order of creation
@@ -110,7 +114,7 @@ def create_ec2_instance(
     try:
         resp = boto3client.run_instances(**kwargs)
     except botocore.exceptions.ClientError as e:
-        print(
+        printred(
             f"Caught Boto3 client exception. Could not create EC2 instance with AMI '{instance_AMI}'"
         )
         return ""
@@ -148,7 +152,7 @@ def start_instance(boto3client: botocore.client, instance_id: str, max_retries: 
                 time.sleep(60)
                 continue
             else:
-                print(f"Could not start instance after {max_retries} retries. Giving up now.")
+                printred(f"Could not start instance after {max_retries} retries. Giving up now.")
                 return False
         break
     return True
@@ -313,7 +317,7 @@ def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
         print(f"Testing complete, stopping EC2 instance")
         result = stop_instance(boto3client, instance_id)
         if result is False:
-            print("Error while stopping the EC2 instance!")
+            printyellow("Error while stopping the EC2 instance!")
             return
 
     # Wait for the instance to be terminated
