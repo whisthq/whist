@@ -661,6 +661,7 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
 }
 
 void sdl_handle_begin_file_drag(char* file_list) {
+    LOG_INFO("handle begin file drag");
     sdl_begin_file_drag(file_list);
 }
 
@@ -690,6 +691,7 @@ void sdl_handle_drag_event(WhistFrontend* frontend) {
         pending_file_drag_update = true;
 
         // set_is_dragging_file(true, file_drag_update_x, file_drag_update_y);
+        LOG_INFO("handle move content drag");
         sdl_move_content_drag(file_drag_update_x, file_drag_update_y);
     } else {
         // Stop the rendering of the file drag icon if event has left the window

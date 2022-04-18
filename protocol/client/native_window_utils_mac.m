@@ -80,9 +80,11 @@ void initialize_out_of_window_drag_handlers(WhistFrontend *frontend) {
 
                                             if ([[pb types] containsObject:NSFilenamesPboardType]) {
                                                 NSArray *files = [pb propertyListForType:NSFilenamesPboardType];
+                                                // NSArray *files = [pb readObjectsForClasses:@[[NSURL class]] options:nil];
                                                 int numberOfFiles = [files count];
                                                 // Perform operation using the list of files
                                                 // LOG_INFO("drag content: %s", (char*)[[pb dataForType:NSPasteboardTypeFileURL] bytes]);
+                                                LOG_INFO("URLs are: %s", (char*)[[files componentsJoinedByString:@" "] UTF8String]);
                                                 LOG_INFO("dragging %d files", numberOfFiles);
                                                 LOG_INFO("first file: %s", (char*)[[files objectAtIndex:0] UTF8String]);
 
@@ -102,6 +104,8 @@ void initialize_out_of_window_drag_handlers(WhistFrontend *frontend) {
                                                 // TODO: turn *files into a \n-separated string of filenames (without paths)
                                                 // sdl_handle_begin_file_drag(files);
                                                 sdl_handle_begin_file_drag((char*)[file_list UTF8String]);
+                                            } else {
+                                                LOG_INFO("NOT NSFilenamesPboardType, TYPES: %s", (char*)[[[pb types] componentsJoinedByString:@" "] UTF8String]);
                                             }
 
                                         } else if (file_drag_mouse_down) {
