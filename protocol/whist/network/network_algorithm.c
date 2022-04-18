@@ -545,8 +545,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
     // this MIN_LATENCY_THRESHOLD_SEC absolute threshold.
     latency_threshold_decrease_state =
         max(latency_threshold_decrease_state, MIN_LATENCY_THRESHOLD_SEC);
-    latency_threshold_hold_state =
-        max(latency_threshold_hold_state, MIN_LATENCY_THRESHOLD_SEC);
+    latency_threshold_hold_state = max(latency_threshold_hold_state, MIN_LATENCY_THRESHOLD_SEC);
 
     if (short_term_latency > latency_threshold_decrease_state) {
         delay_controller_state = DELAY_CONTROLLER_DECREASE;
@@ -592,8 +591,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         // Use incoming bitrate only when saturate_bandwidth is on OR if it is within the
         // convergence range
         if (network_settings->saturate_bandwidth ||
-            incoming_bitrate * DECREASE_RATIO > max_bitrate_available * CONVERGENCE_THRESHOLD_LOW ||
-            short_term_latency > latency_threshold_decrease_state) {
+            incoming_bitrate * DECREASE_RATIO > max_bitrate_available * CONVERGENCE_THRESHOLD_LOW) {
             new_bitrate = incoming_bitrate * DECREASE_RATIO;
             // If we are reaching convergence than reduce the increase percentage and switch off
             // saturate bandwidth
@@ -674,8 +672,9 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         }
         return true;
     }
-    if (!network_settings->saturate_bandwidth)
+    if (!network_settings->saturate_bandwidth) {
         network_settings->congestion_detected = false;
+    }
 
     return false;
 }
