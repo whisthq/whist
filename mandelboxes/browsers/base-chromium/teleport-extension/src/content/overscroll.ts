@@ -1,15 +1,14 @@
 import { drawArrow } from "@app/utils/overlays"
 import { cyclingArray } from "@app/utils/operators"
-import { getState, setState } from "@app/utils/state"
 import { trim } from "@app/utils/operators"
-
 import {
-  ContentScriptMessage,
-  ContentScriptMessageType,
-} from "@app/constants/ipc"
-import { maxXOverscroll, minXUpdate } from "@app/constants/overscroll"
+  maxXOverscroll,
+  maxXUpdate,
+  minXUpdate,
+} from "@app/constants/overscroll"
 
 let arrow: any = undefined
+let overscrollX = 0
 let previousYDeltas = cyclingArray<number>(4, [])
 let previousXOffset = 0
 let previousArrowDirection: string | undefined = undefined
@@ -31,40 +30,49 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 }
 
 const detectGesture = (e: WheelEvent) => {
+  // Update overscroll tracker
   if (isScrollingVertically(e) || isScrollingHorizontally(e)) {
-    setState("overscrollX", 0)
+    overscrollX = 0
   } else {
-    getState(
-      "overscrollX",
-      (x) => x + trim(e.deltaX, minXUpdate, maxXOverscroll)
-    )
+    overscrollX += trim(e.deltaX, minXUpdate, maxXUpdate)
   }
-}
 
-const initNavigationArrow = () => {
-  chrome.runtime.onMessage.addListener((msg: ContentScriptMessage) => {
-    if (msg.type !== ContentScriptMessageType.DRAW_NAVIGATION_ARROW) return
+  // If not overscrolled, don't do anything
+  if (overscrollX === 0) {
+    removeArrow()
+    return
+  }
 
-    if (!msg.value.draw) {
+  // If overscrolled a lot, redirect
+  if (overscrollX > maxXOverscroll) {
+    window.removeEventListener("wheel", detectGesture)
+
+    if (overscrollX < 0) {
+      history.back()
+    } else {
+      history.forward()
+    }
+    // If overscrolled a little, draw the arrow
+  } else {
+    const direction = overscrollX < 0 ? "back" : "forward"
+    if (arrow === undefined || previousArrowDirection !== direction) {
       removeArrow()
-      return
+      arrow = drawArrow(document, direction)
+      previousArrowDirection = direction
     }
 
-    if (arrow === undefined || previousArrowDirection !== msg.value.direction) {
-      removeArrow()
-      arrow = drawArrow(document, msg.value.direction)
-      previousArrowDirection = msg.value.direction
-    }
-
-    arrow.update(msg.value.progress)
-  })
+    arrow.update(Math.abs((overscrollX * 100) / maxXOverscroll))
+  }
 }
 
 const initSwipeGestures = () => {
   // Fires whenever the wheel moves
-  window.addEventListener("wheel", detectGesture)
-  // Respond to draw arrow commands from the worker
-  initNavigationArrow()
+  setTimeout(() => {
+    window.addEventListener("wheel", detectGesture)
+  }, 500)
+
+  window.addEventListener("popstate", () => console.log("POP STATE"))
+  window.addEventListener("pushstate", () => console.log("PUSH STATE"))
 }
 
 export { initSwipeGestures }

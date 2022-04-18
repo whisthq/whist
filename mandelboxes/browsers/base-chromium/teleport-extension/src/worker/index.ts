@@ -14,7 +14,6 @@ import {
   initCreateNewTabHandler,
   initActivateTabHandler,
 } from "./tabs"
-import { initGestureHandler } from "./overscroll"
 
 const nativeHostPort = initNativeHostIpc()
 
@@ -41,6 +40,3 @@ initCreateNewTabHandler(nativeHostPort)
 
 // Switches focus to a current tab if the client asks for it
 initActivateTabHandler(nativeHostPort)
-
-// For two-finger swipe: goes forward/back to the previous page in history
-initGestureHandler()
