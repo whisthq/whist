@@ -80,7 +80,7 @@ const initSwipeGestures = () => {
   window.removeEventListener("wheel", detectGesture)
   setTimeout(() => {
     window.addEventListener("wheel", throttle(detectGesture, 50))
-  }, throttleMs)
+  }, throttleMs * 2)
 }
 
 export { initSwipeGestures }
