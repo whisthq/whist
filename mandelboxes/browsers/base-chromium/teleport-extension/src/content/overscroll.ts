@@ -1,6 +1,6 @@
 import { drawArrow } from "@app/utils/overlays"
-import { cyclingArray } from "@app/utils/operators"
-import { trim } from "@app/utils/operators"
+import { cyclingArray, trim } from "@app/utils/operators"
+import { throttle } from "@app/utils/listeners"
 import {
   maxXOverscroll,
   maxXUpdate,
@@ -79,7 +79,7 @@ const initSwipeGestures = () => {
   // Fires whenever the wheel moves
   window.removeEventListener("wheel", detectGesture)
   setTimeout(() => {
-    window.addEventListener("wheel", detectGesture)
+    window.addEventListener("wheel", throttle(detectGesture, 50))
   }, throttleMs)
 }
 
