@@ -22,7 +22,7 @@ const execCommand = (
     })
     return output
   } catch (error) {
-    return null
+    return ""
   }
 }
 

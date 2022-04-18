@@ -3,7 +3,7 @@
 // + dictionary mapping the Linux languages with multiple dialects to the default dialect/region
 // + list of languages available in Google Chrome on Linux
 
-export const linuxLanguages: string[] = [
+export const linuxSupportedLanguages: string[] = [
   "aa_DJ",
   "aa_ER",
   "aa_ET",
@@ -513,7 +513,7 @@ export const linuxLanguageToDefaultRegion: { [key: string]: string } = {
   zu: "ZA",
 }
 
-export const chromeLanguages: string[] = [
+export const chromeSupportedLanguages: string[] = [
   "de",
   "it",
   "en-US",

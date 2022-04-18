@@ -12,47 +12,49 @@ import os
 import sys
 import subprocess
 
+# fmt: off
 language_to_default_dialect = {
-    "aa": "DJ",  # Afar, spoken in Djibouti, Eritrea, and the Afar Region of Ethiopia.
-    # Most speakers live in Djibouti.
-    "ar": "EG",  # Arabic. Country with most speakers of Standard Arabic is Egypt.
-    "az": "AZ",  # Azerbaijani
-    "ber": "MA",  # Berber language, spoken in Morocco, among other countries
-    "bho": "IN",  # Bhojpuri, spoken in India and Nepal
-    "bn": "BD",  # Bengali, spoken in Bangladesh and India
-    "bo": "CN",  # Tibetan, spoken in China and India,
-    "ca": "ES",  # Catalan, spoken chiefly in Spain
-    "de": "DE",  # German
-    "el": "GR",  # Greek
-    "en": "US",  # English
-    "es": "ES",  # Spanish
-    "eu": "FR",  # Basque, spoken in France and Spain
-    "fr": "FR",  # France
-    "fy": "NL",  # Western Frisian. Spoken mainly in the Netherlands
-    "gez": "ET",  # Ge'ez, Ethiopian Semitic language.
-    "it": "IT",  # Italian
-    "li": "NL",  # Limburgish, spoken mainly in the Netherlands
-    "mai": "NP",  # Maithili. Most speakers live in Nepal
-    "nds": "DE",  # Low German / Low Saxon. Most speakers live in Germany
-    "niu": "NZ",  # Niuean. Most speakers live in New Zealand
-    "nl": "NL",  # Dutch
-    "om": "ET",  # Oromo, most speakers live in Ethiopia
-    "pa": "PK",  # Pakistani
-    "pap": "CW",  # Papiamento, spoken mainly in Curaçao
-    "pt": "PT",  # Portuguese
-    "ru": "RU",  # Russian, spoken mainly in Russia
-    "sd": "IN",  # Sindhi, spoken mainly in Pakistan
-    "so": "SO",  # Somali, spoken mainly in Somalia
-    "sq": "AL",  # Albanian
-    "sr": "RS",  # Serbian
-    "sv": "SE",  # Swedish
-    "sw": "TZ",  # Swahili. Country with most speakers is Tanzania
-    "ta": "LK",  # Tamil. Country with most speakers is Sri Lanka
-    "ti": "ET",  # Tigrinya. Country with most speakers is Eritrea
-    "tr": "TR",  # Turkish
-    "ur": "PK",  # Urdu. Country with most speakers is Pakistan
-    "zh": "CN",  # Chinese
+    "aa":   "DJ",   # Afar, spoken in Djibouti, Eritrea, and the Afar Region of Ethiopia.
+                    # Most speakers live in Djibouti.
+    "ar":   "EG",   # Arabic. Country with most speakers of Standard Arabic is Egypt.
+    "az":   "AZ",   # Azerbaijani
+    "ber":  "MA",   # Berber language, spoken in Morocco, among other countries
+    "bho":  "IN",   # Bhojpuri, spoken in India and Nepal
+    "bn":   "BD",   # Bengali, spoken in Bangladesh and India
+    "bo":   "CN",   # Tibetan, spoken in China and India,
+    "ca":   "ES",   # Catalan, spoken chiefly in Spain
+    "de":   "DE",   # German
+    "el":   "GR",   # Greek
+    "en":   "US",   # English
+    "es":   "ES",   # Spanish
+    "eu":   "FR",   # Basque, spoken in France and Spain
+    "fr":   "FR",   # France
+    "fy":   "NL",   # Western Frisian. Spoken mainly in the Netherlands
+    "gez":  "ET",   # Ge'ez, Ethiopian Semitic language.
+    "it":   "IT",   # Italian
+    "li":   "NL",   # Limburgish, spoken mainly in the Netherlands
+    "mai":  "NP",   # Maithili. Most speakers live in Nepal
+    "nds":  "DE",   # Low German / Low Saxon. Most speakers live in Germany
+    "niu":  "NZ",   # Niuean. Most speakers live in New Zealand
+    "nl":   "NL",   # Dutch
+    "om":   "ET",   # Oromo, most speakers live in Ethiopia
+    "pa":   "PK",   # Pakistani
+    "pap":  "CW",   # Papiamento, spoken mainly in Curaçao
+    "pt":   "PT",   # Portuguese
+    "ru":   "RU",   # Russian, spoken mainly in Russia
+    "sd":   "IN",   # Sindhi, spoken mainly in Pakistan
+    "so":   "SO",   # Somali, spoken mainly in Somalia
+    "sq":   "AL",   # Albanian
+    "sr":   "RS",   # Serbian
+    "sv":   "SE",   # Swedish
+    "sw":   "TZ",   # Swahili. Country with most speakers is Tanzania
+    "ta":   "LK",   # Tamil. Country with most speakers is Sri Lanka
+    "ti":   "ET",   # Tigrinya. Country with most speakers is Eritrea
+    "tr":   "TR",   # Turkish
+    "ur":   "PK",   # Urdu. Country with most speakers is Pakistan
+    "zh":   "CN",   # Chinese
 }
+# fmt: on
 
 
 def populate_language_to_dialect(locales):

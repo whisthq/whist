@@ -1,28 +1,21 @@
-import { execCommandByOS } from "@app/main/utils/execCommand"
+import { execCommand } from "@app/main/utils/execCommand"
 import {
-  linuxLanguages,
+  linuxSupportedLanguages,
   linuxLanguageToDefaultRegion,
-} from "@app/constants/linuxLanguages"
+  chromeSupportedLanguages,
+} from "@app/constants/mandelboxLanguages"
 
-const getUserLanguage = () => {
-  const userLanguageRaw = execCommandByOS(
-    "defaults read -g AppleLocale",
-    'locale | grep "LANG"',
-    "",
-    ".",
-    {},
-    "pipe"
+const getUserLanguages = () => {
+  const lowerCasedlinuxSupportedLanguages = linuxSupportedLanguages.map(
+    (element) => {
+      return element.toLowerCase()
+    }
   )
-
-  const lowerCasedLinuxLanguages = linuxLanguages.map((element) => {
-    return element.toLowerCase()
-  })
   const caseInsensitiveLanguageSearch = (language: string) => {
-    const linuxLanguagesIndex = lowerCasedLinuxLanguages.indexOf(
-      language.toLowerCase()
-    )
-    if (linuxLanguagesIndex !== -1) {
-      return linuxLanguages[linuxLanguagesIndex]
+    const linuxSupportedLanguagesIndex =
+      lowerCasedlinuxSupportedLanguages.indexOf(language.toLowerCase())
+    if (linuxSupportedLanguagesIndex !== -1) {
+      return linuxSupportedLanguages[linuxSupportedLanguagesIndex]
     }
     return ""
   }
@@ -63,7 +56,8 @@ const getUserLanguage = () => {
     const languageAndScript = language.split("-")
     if (languageAndScript[1].split("_").length === 1) {
       // Handle the [language designator]-[script designator] case. No region has been provided
-      // If no region is provided and the script is Traditional Chinese, we need to set the region to Taiwan (or Hong Kong), otherwise the default region will use the Simplified script
+      // If no region is provided and the script is Traditional Chinese, we need to set the region
+      // to Taiwan (or Hong Kong), otherwise the default region will use the Simplified script
       if (languageAndScript[1].includes("Hant")) {
         // Add default region for Traditional Chinese script
         return searchLanguageWithRegion(languageAndScript[0] + "_" + "TW")
@@ -73,7 +67,8 @@ const getUserLanguage = () => {
       }
     } else if (languageAndScript[1].split("_").length === 2) {
       // Handle the [language designator]-[script designator]_[region designator] case
-      // If the script is Traditional Chinese, we need to set the overwrite the region and use Taiwan (or Hong Kong), otherwise the Simplified script might be used instead
+      // If the script is Traditional Chinese, we need to set the overwrite the region and use
+      // Taiwan (or Hong Kong), otherwise the Simplified script might be used instead
       if (
         languageAndScript[1].includes("Hant") &&
         !languageAndScript[1].split("_")[1].includes("HK") &&
@@ -94,45 +89,99 @@ const getUserLanguage = () => {
         return searchLanguageWithRegion(languageAndScript[0] + "_" + regionName)
       }
     }
+    return ""
   }
-
   const currentPlatform = process.platform
-  if (currentPlatform === "darwin") {
-    // Remove newlines and the encoding if found
-    const language =
-      userLanguageRaw
-        ?.toString()
-        ?.replace(/(\r\n|\n|\r)/gm, "")
-        ?.split(".")[0] ?? ""
-    // Check if a script is present
-    if (language.includes("-")) {
-      return searchLanguageWithScript(language)
-    } else if (language.split("_").length === 2) {
-      return searchLanguageWithRegion(language)
-    } else {
-      return searchLanguageWithoutRegion(language)
-    }
-  } else if (currentPlatform === "linux") {
-    const parsedUserLanguage = userLanguageRaw?.toString()?.split(/\r?\n/) ?? ""
-    for (const expr of ["LANGUAGE", "LANG"]) {
-      if (parsedUserLanguage.includes(expr)) {
-        for (const s of parsedUserLanguage) {
-          const keyValuePair = s.split(/=/)
-          if (
-            keyValuePair.length === 2 &&
-            keyValuePair[1].length >= 1 &&
-            keyValuePair[0].includes(expr)
-          ) {
-            return keyValuePair[1].split('"').join("")
+
+  const parseUserLanguages = () => {
+    if (currentPlatform === "darwin") {
+      // This function will return the language in the Mac client format
+      const languagesRaw = execCommand(
+        "defaults read -g AppleLocale",
+        ".",
+        {},
+        "pipe"
+      )
+      // Remove newlines
+      return languagesRaw.toString().replace(/(\r\n|\n|\r)/gm, "")
+    } else if (currentPlatform === "linux") {
+      // This function will return the language (or list of languages separated by ':') in the Linux client format
+      const languagesRaw = execCommand('locale | grep "LANG"', ".", {}, "pipe")
+      // Split at newline
+      const parsedLanguages = languagesRaw.toString().split(/\r?\n/)
+      for (const expr of ["LANGUAGE", "LANG"]) {
+        if (parsedLanguages.includes(expr)) {
+          for (const s of parsedLanguages) {
+            const keyValuePair = s.split(/=/)
+            if (
+              keyValuePair.length === 2 &&
+              keyValuePair[1].length >= 1 &&
+              keyValuePair[0].includes(expr)
+            ) {
+              // Peel off double quotes
+              return keyValuePair[1].split('"').join("")
+            }
           }
         }
       }
+      return ""
     }
+    return ""
+  }
+
+  const systemLanguages = parseUserLanguages()
+    .split(":")
+    .map((currentElement: string) => {
+      // Remove encoding
+      const language = currentElement.split(".")[0]
+      if (currentPlatform === "darwin") {
+        // Check if a script is present
+        if (language.includes("-")) {
+          return searchLanguageWithScript(language)
+        } else if (language.split("_").length === 2) {
+          return searchLanguageWithRegion(language)
+        } else {
+          return searchLanguageWithoutRegion(language)
+        }
+      } else if (currentPlatform === "linux") {
+        return language
+      }
+      return ""
+    })
+
+  const chromeLanguages = systemLanguages
+    .map((language: string) => {
+      if (chromeSupportedLanguages.includes(language)) {
+        return language
+      }
+      const noUnderscoresLanguage = language.split("_").join("-")
+      if (chromeSupportedLanguages.includes(noUnderscoresLanguage)) {
+        return noUnderscoresLanguage
+      }
+      const noRegionLanguage = language.split("_")[0]
+      if (chromeSupportedLanguages.includes(noRegionLanguage)) {
+        return noRegionLanguage
+      }
+      // If the language is not supported, just use English
+      return ""
+    })
+    .filter((e) => e)
+
+  // Add fallback options and remove duplicates
+  const uniqueChromeLanguages = [...chromeLanguages, "en-US", "en"].filter(
+    (c, index) => {
+      return [...chromeLanguages, "en-US", "en"].indexOf(c) === index
+    }
+  )
+
+  return {
+    systemLanguages: systemLanguages.join(":"),
+    chromeLanguages: uniqueChromeLanguages.join(","),
   }
 }
 
 const getUserLocale = () => {
-  const userLocaleRaw = execCommandByOS("locale", "locale", "", ".", {}, "pipe")
+  const userLocaleRaw = execCommand("locale", ".", {}, "pipe")
   const parsedUserLocale = userLocaleRaw?.toString()?.split(/\r?\n/) ?? ""
   const userLocaleDictionary: { [key: string]: string } = {}
   for (const s of parsedUserLocale) {
@@ -151,4 +200,4 @@ const getUserLocale = () => {
   return userLocaleDictionary
 }
 
-export { getUserLanguage, getUserLocale }
+export { getUserLanguages, getUserLocale }
