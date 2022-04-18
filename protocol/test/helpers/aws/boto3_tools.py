@@ -102,7 +102,7 @@ def create_ec2_instance(
         ],
         "VpcId": "vpc-03a7ed0d3076fa64c",  # MainVPCdev
         "SecurityGroups": [
-            "container-tester",
+            "MandelboxesSecurityGroup",
         ],
         "InstanceInitiatedShutdownBehavior": "terminate",
         "KeyName": key_name,  # needs to be the same that's loaded on the client calling this function
