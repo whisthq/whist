@@ -11,7 +11,6 @@ let arrow: any = undefined
 let overscrollX = 0
 let previousYDeltas = cyclingArray<number>(4, [])
 let previousXOffset = 0
-let previousArrowDirection: string | undefined = undefined
 
 const removeArrow = (animate: boolean) => {
   arrow?.remove(animate)
@@ -60,10 +59,11 @@ const detectGesture = (e: WheelEvent) => {
     // If overscrolled a little, draw the arrow
   } else {
     const direction = overscrollX < 0 ? "back" : "forward"
-    if (arrow === undefined || previousArrowDirection !== direction) {
+    if (direction === "forward") return
+
+    if (arrow === undefined) {
       removeArrow(false)
-      arrow = drawArrow(document, direction)
-      previousArrowDirection = direction
+      arrow = drawArrow(document, "back")
     }
 
     arrow.update(Math.abs((overscrollX * 100) / maxXOverscroll))
