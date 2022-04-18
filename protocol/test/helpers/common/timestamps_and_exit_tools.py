@@ -10,32 +10,39 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 # Acknowledged to https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal-in-python
 class PrintFormats:
-    blue = '\033[94m'
-    cyan = '\033[96m'
-    green = '\033[92m'
-    yellow = '\033[93m'
-    red = '\033[91m'
-    bold = '\033[1m'
-    underline = '\033[4m'
-    end_formatting = '\033[0m'
+    blue = "\033[94m"
+    cyan = "\033[96m"
+    green = "\033[92m"
+    yellow = "\033[93m"
+    red = "\033[91m"
+    bold = "\033[1m"
+    underline = "\033[4m"
+    end_formatting = "\033[0m"
+
 
 def print_in_blue(text):
     print(f"{PrintFormats.blue}{text}{PrintFormats.ENDC}")
 
+
 def print_in_cyan(text):
     print(f"{PrintFormats.cyan}{text}{PrintFormats.ENDC}")
+
 
 def print_in_green(text):
     print(f"{PrintFormats.green}{text}{PrintFormats.ENDC}")
 
+
 def print_in_yellow(text):
     print(f"{PrintFormats.yellow}{text}{PrintFormats.ENDC}")
+
 
 def print_in_red(text):
     print(f"{PrintFormats.red}{text}{PrintFormats.ENDC}")
 
+
 def print_in_bold(text):
     print(f"{PrintFormats.bold}{text}{PrintFormats.ENDC}")
+
 
 def print_in_underline(text):
     print(f"{PrintFormats.underline}{text}{PrintFormats.ENDC}")
@@ -46,6 +53,7 @@ class TimeStamps:
         self.start_time = time.time()
         self.events = []
         self.max_event_name_len = 0
+        self.most_time_consuming_event = 0
 
     def get_time_elapsed(self, index):
         if index < 0 or index >= len(self.events):
@@ -54,9 +62,12 @@ class TimeStamps:
 
     def add_event(self, event_name):
         timestamp = time.time()
-        self.events.append((event_name, timestamp))
         self.max_event_name_len = max(self.max_event_name_len, len(event_name))
-        time_elapsed = str(datetime.timedelta(seconds=self.get_time_elapsed(len(self.events) - 1)))
+
+        self.events.append((event_name, timestamp))
+        event_index = len(self.events)
+        time_elapsed = str(datetime.timedelta(seconds=self.get_time_elapsed(event_index - 1)))
+        self.most_time_consuming_event = max(self.most_time_consuming_event, time_elapsed)
         print(f"{event_name} took {time_elapsed}")
 
     def print_timestamps(self):
@@ -68,7 +79,10 @@ class TimeStamps:
             # Add padding for nicer formatting
             padding_len = self.max_event_name_len - len(event_name)
             padding = " " * padding_len if padding_len > 0 else ""
-            print(f"{i+1}. {event_name}{padding}:\t{time_elapsed}")
+            if time_elapsed == self.most_time_consuming_event:
+                print_in_bold(f"{i+1}. {event_name}{padding}:\t{time_elapsed}")
+            else:
+                print(f"{i+1}. {event_name}{padding}:\t{time_elapsed}")
         print("############################")
         print()
 
