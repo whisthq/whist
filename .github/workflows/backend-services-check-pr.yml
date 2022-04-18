@@ -79,22 +79,16 @@ jobs:
           make check
 
   # Database Migration
-  # Compare the schema of the live database with backend/webserver/db-migration/schema.sql, and
+  # Compare the schema of the live database with backend/database/schema.sql, and
   # notify the PR if schema changes are detected
-  webserver-check-migra-diff:
+  check-migra-diff:
     name: Check Migra Diff
     runs-on: ubuntu-20.04
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
       GITHUB_ISSUE: ${{ github.event.number }}
       GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
-      HEROKU_DB_KEY: "DATABASE_URL"
       HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }} # needed to retrieve config vars from Heroku
-      PATH_HELPERS: ".github/workflows/helpers"
-      PATH_SCRIPTS: "backend/webserver/db_migration"
-      PATH_CURRENT: "../temporary_db_schema.sql"
-      PATH_MERGING: "backend/webserver/db_migration/schema.sql"
-      PATH_DIFF: "../temporary_diff_file.sql"
       TITLE_ERROR: >-
         An error occured while comparing the database schema.
       TITLE_NO_CHANGES: >-
@@ -177,7 +171,6 @@ jobs:
 
       # Need to install this dependency for the notification step.
       - name: Install Python Dependencies
-        working-directory: backend/webserver
         run: pip install PyGithub
 
       # Using the workflow notifcation helpers, we'll send out
