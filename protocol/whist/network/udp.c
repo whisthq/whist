@@ -132,7 +132,7 @@ typedef struct {
 #define OUT_OF_ORDER_EWMA_FACTOR 0.01
 // Number of pings currently in-between the client and server
 // Let's choose a nearest power of two, greater than (UDP_PONG_TIMEOUT_SEC / UDP_PING_INTERVAL_SEC)
-#define MAX_PINGS_IN_FLIGHT 64
+#define MAX_PINGS_IN_FLIGHT 256
 
 typedef struct {
     bool pending_stream_reset;
@@ -533,7 +533,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                     &context->group_stats[context->prev_group_id % MAX_GROUP_STATS];
                 send_network_settings = whist_congestion_controller(
                     curr_group_stats, prev_group_stats, get_incoming_bitrate(context),
-                    get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO], context->short_term_latency),
+                    get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
+                                          context->short_term_latency),
                     context->short_term_latency, context->long_term_latency,
                     &context->network_settings);
             }
@@ -642,19 +643,8 @@ static bool udp_update(void* raw_context) {
     // *************
 
     if (context->ring_buffers[PACKET_VIDEO] != NULL) {
-        double estimated_latency = context->short_term_latency;
-        double time_since_last_ping;
-        // If there is/are ping(s) in flight for a long time, then update the estimated latency
-        // accordingly.
-        if (context->last_ping_id > context->last_pong_id &&
-            (time_since_last_ping = get_timer(
-                 &context->ping_timer[(context->last_pong_id + 1) % MAX_PINGS_IN_FLIGHT])) >
-                context->short_term_latency) {
-            estimated_latency = PING_LAMBDA_SHORT_TERM * context->short_term_latency +
-                                time_since_last_ping * (1.0 - PING_LAMBDA_SHORT_TERM);
-        }
         try_recovering_missing_packets_or_frames(
-            context->ring_buffers[PACKET_VIDEO], estimated_latency,
+            context->ring_buffers[PACKET_VIDEO], context->short_term_latency,
             (int)round(context->unordered_packet_info.max_unordered_packets),
             &context->network_settings);
     }
@@ -1958,8 +1948,10 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     if (LOG_VIDEO || LOG_AUDIO || LOG_NETWORKING ||
         id % max((int)(UDP_PING_LOG_INTERVAL_SEC / (double)UDP_PING_INTERVAL_SEC), 1) == 0 ||
         ping_time > 2.0 * context->long_term_latency) {
-        LOG_INFO("Pong %d received: took %.2fms, latency %.2fms", id, ping_time * MS_IN_SECOND,
-                 context->long_term_latency * MS_IN_SECOND);
+        LOG_INFO(
+            "Pong %d received: took %.2fms, long term latency %.2fms, short term latency %.2fms",
+            id, ping_time * MS_IN_SECOND, context->long_term_latency * MS_IN_SECOND,
+            context->short_term_latency * MS_IN_SECOND);
     }
 
     // Calculate latency

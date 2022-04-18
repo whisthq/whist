@@ -2070,7 +2070,7 @@ TEST_F(ProtocolTest, WCCTest) {
     EXPECT_EQ(network_settings.saturate_bandwidth, false);
 
     // Now there is prolonged congestion and WCC should converge to the available bandwidth quickly
-    int available_bandwidth = 3000000;
+    int available_bandwidth = 6000000;
     for (int i = 0; i < 80; i++) {
         if (network_settings.video_bitrate > available_bandwidth) {
             incoming_bitrate = available_bandwidth;

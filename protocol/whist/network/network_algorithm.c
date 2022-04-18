@@ -400,7 +400,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
 // Latest delay variation gets this weightage. Older value gets a weightage of (1 - EWMA_FACTOR)
 #define EWMA_FACTOR 0.3
 // Latest max bitrate gets this weightage.
-#define MAX_BITRATE_EWMA_FACTOR 0.1
+#define MAX_BITRATE_EWMA_FACTOR 0.05
 #define DELAY_VARIATION_THRESHOLD_IN_SEC 0.01   // 10ms
 #define LONG_OVERUSE_TIME_THRESHOLD_IN_SEC 0.1  // 100ms
 #define DECREASE_RATIO 0.95
@@ -545,8 +545,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
     // this MIN_LATENCY_THRESHOLD_SEC absolute threshold.
     latency_threshold_decrease_state =
         max(latency_threshold_decrease_state, MIN_LATENCY_THRESHOLD_SEC);
-    latency_threshold_hold_state =
-        max(latency_threshold_hold_state, MIN_LATENCY_THRESHOLD_SEC);
+    latency_threshold_hold_state = max(latency_threshold_hold_state, MIN_LATENCY_THRESHOLD_SEC);
 
     if (short_term_latency > latency_threshold_decrease_state) {
         delay_controller_state = DELAY_CONTROLLER_DECREASE;
@@ -592,8 +591,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         // Use incoming bitrate only when saturate_bandwidth is on OR if it is within the
         // convergence range
         if (network_settings->saturate_bandwidth ||
-            incoming_bitrate * DECREASE_RATIO > max_bitrate_available * CONVERGENCE_THRESHOLD_LOW ||
-            short_term_latency > latency_threshold_decrease_state) {
+            incoming_bitrate * DECREASE_RATIO > max_bitrate_available * CONVERGENCE_THRESHOLD_LOW) {
             new_bitrate = incoming_bitrate * DECREASE_RATIO;
             // If we are reaching convergence than reduce the increase percentage and switch off
             // saturate bandwidth
@@ -674,8 +672,9 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         }
         return true;
     }
-    if (!network_settings->saturate_bandwidth)
+    if (!network_settings->saturate_bandwidth) {
         network_settings->congestion_detected = false;
+    }
 
     return false;
 }
