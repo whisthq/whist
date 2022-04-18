@@ -11,7 +11,7 @@ let arrow: any = undefined
 let overscrollX = 0
 let previousYDeltas = cyclingArray<number>(4, [])
 let previousXOffset = 0
-let throttled = false
+let throttleMs = 1000
 
 const removeArrow = (animate: boolean) => {
   arrow?.remove(animate)
@@ -30,7 +30,7 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 }
 
 const detectGesture = (e: WheelEvent) => {
-  if (Math.abs(overscrollX) > maxXOverscroll || throttled) return
+  if (Math.abs(overscrollX) > maxXOverscroll) return
 
   if (isScrollingVertically(e) || isScrollingHorizontally(e)) {
     // Update overscroll tracker
@@ -48,7 +48,6 @@ const detectGesture = (e: WheelEvent) => {
 
   // If overscrolled a lot, redirect
   if (Math.abs(overscrollX) > maxXOverscroll) {
-    throttled = true
     removeArrow(false)
 
     if (overscrollX < 0) {
@@ -57,10 +56,9 @@ const detectGesture = (e: WheelEvent) => {
       history.forward()
     }
 
-    overscrollX = 0
     setTimeout(() => {
-      throttled = false
-    }, 500)
+      overscrollX = 0
+    }, throttleMs)
     // If overscrolled a little, draw the arrow
   } else {
     const direction = overscrollX < 0 ? "back" : "forward"
@@ -79,7 +77,7 @@ const initSwipeGestures = () => {
   // Fires whenever the wheel moves
   setTimeout(() => {
     window.addEventListener("wheel", detectGesture)
-  }, 500)
+  }, throttleMs)
 }
 
 export { initSwipeGestures }
