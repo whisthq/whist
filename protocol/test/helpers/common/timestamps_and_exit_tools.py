@@ -20,31 +20,31 @@ class PrintFormats:
     end_formatting = "\033[0m"
 
 
-def print_in_blue(text):
+def print_blue(text):
     print(f"{PrintFormats.blue}{text}{PrintFormats.end_formatting}")
 
 
-def print_in_cyan(text):
+def print_cyan(text):
     print(f"{PrintFormats.cyan}{text}{PrintFormats.end_formatting}")
 
 
-def print_in_green(text):
+def print_green(text):
     print(f"{PrintFormats.green}{text}{PrintFormats.end_formatting}")
 
 
-def print_in_yellow(text):
+def print_yellow(text):
     print(f"{PrintFormats.yellow}{text}{PrintFormats.end_formatting}")
 
 
-def print_in_red(text):
+def print_red(text):
     print(f"{PrintFormats.red}{text}{PrintFormats.end_formatting}")
 
 
-def print_in_bold(text):
+def print_bold(text):
     print(f"{PrintFormats.bold}{text}{PrintFormats.end_formatting}")
 
 
-def print_in_underline(text):
+def print_underline(text):
     print(f"{PrintFormats.underline}{text}{PrintFormats.end_formatting}")
 
 
@@ -80,7 +80,7 @@ class TimeStamps:
             padding_len = self.max_event_name_len - len(event_name)
             padding = " " * padding_len if padding_len > 0 else ""
             if time_elapsed == self.most_time_consuming_event:
-                print_in_bold(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}")
+                print_bold(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}")
             else:
                 print(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}")
         print("############################")
@@ -89,7 +89,7 @@ class TimeStamps:
 
 def exit_with_error(error_message, timestamps=None):
     if error_message is not None:
-        print_in_red(error_message)
+        print_red(error_message)
     if timestamps is not None:
         timestamps.print_timestamps()
     sys.exit(-1)

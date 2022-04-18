@@ -389,7 +389,7 @@ def complete_experiment_and_save_results(
         "server_hang_detected": "WhistServer hang detected",
     }.items():
         if experiment_metadata[cause]:
-            print_in_red(f"{message}! Exiting with error. Check the logs for more details.")
+            print_red(f"{message}! Exiting with error. Check the logs for more details.")
             return -1
 
     return 0
