@@ -29,7 +29,7 @@ USER_AGENT=""
 LATITUDE=""
 LONGITUDE=""
 USER_LOCALE=""
-USER_LANGUAGES="en_US"
+SYSTEM_LANGUAGES="en_US"
 CHROME_LANGUAGES="en-US,en"
 KIOSK_MODE=false
 
@@ -50,8 +50,8 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     USER_LOCALE="$(jq -rc '.user_locale | to_entries[] | "\(.key)=\(.value)"' < $WHIST_JSON_FILE)"
     USER_LOCALE="${USER_LOCALE//$'\n'/ }"
   fi
-  if [ "$( jq -rc 'has("user_languages")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    USER_LANGUAGES="$(jq -rc '.user_languages' < $WHIST_JSON_FILE)"
+  if [ "$( jq -rc 'has("system_languages")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    SYSTEM_LANGUAGES="$(jq -rc '.system_languages' < $WHIST_JSON_FILE)"
   fi
   if [ "$( jq -rc 'has("chrome_languages")' < $WHIST_JSON_FILE )" == "true"  ]; then
     CHROME_LANGUAGES="$(jq -rc '.chrome_languages' < $WHIST_JSON_FILE)"
@@ -158,11 +158,11 @@ export LONGITUDE=$LONGITUDE
 export LATITUDE=$LATITUDE
 export SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-}
 export USER_LOCALE=$USER_LOCALE
-export USER_LANGUAGES=$USER_LANGUAGES
+export SYSTEM_LANGUAGES=$SYSTEM_LANGUAGES
 export CHROME_LANGUAGES=$CHROME_LANGUAGES
 
 
-exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,USER_LANGUAGES,CHROME_LANGUAGES -c \
+exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,SYSTEM_LANGUAGES,CHROME_LANGUAGES -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \

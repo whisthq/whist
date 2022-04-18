@@ -36,7 +36,7 @@ export LATITUDE=$LATITUDE
 # Set the locale (the line below exports all the locale environment variables)
 export ${USER_LOCALE?}
 # Set the system languages
-export LANGUAGE=$USER_LANGUAGES
+export LANGUAGE=$SYSTEM_LANGUAGES
 # Set the Chrome languages
 echo {} | jq '.intl |= . + {"accept_languages": "'"${CHROME_LANGUAGES}"'", "selected_languages": "'"${CHROME_LANGUAGES}"'"}' > /home/whist/.config/google-chrome/Default/Preferences
 
