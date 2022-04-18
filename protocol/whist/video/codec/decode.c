@@ -25,6 +25,7 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include "whist/core/error_codes.h"
 #include "whist/utils/command_line.h"
+#include "whist/utils/string_buffer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,18 +73,11 @@ static enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelForm
     */
     VideoDecoder* decoder = ctx->opaque;
 
-    // log all the entries of pix_fmts as supported formats.
-    char supported_formats[2000] = "";
-    int len = 2000;
-    int i = 0;
-
-    i += snprintf(supported_formats, len, "Supported formats:");
-
+    STRING_BUFFER_LOCAL(supported_formats, 256);
     for (const enum AVPixelFormat* p = pix_fmts; *p != AV_PIX_FMT_NONE; p++) {
-        i += snprintf(supported_formats + i, len - i, " %s", av_get_pix_fmt_name(*p));
+        string_buffer_printf(&supported_formats, " %s", av_get_pix_fmt_name(*p));
     }
-
-    LOG_INFO("%s", supported_formats);
+    LOG_INFO("Supported formats:%s.", string_buffer_string(&supported_formats));
 
     for (const enum AVPixelFormat* p = pix_fmts; *p != AV_PIX_FMT_NONE; p++) {
         if (*p == decoder->match_fmt) {

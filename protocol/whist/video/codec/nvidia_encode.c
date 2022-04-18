@@ -2,6 +2,7 @@
 #include "../cudacontext.h"
 #include <whist/logging/log_statistic.h>
 #include "whist/core/features.h"
+#include "whist/utils/string_buffer.h"
 
 #include <dlfcn.h>
 #include <string.h>
@@ -40,6 +41,97 @@ static void try_free_frame(NvidiaEncoder* encoder) {
 
         encoder->frame = NULL;
     }
+}
+
+static void string_buffer_write_nvidia_guid(StringBuffer* sb, const char* name, const GUID* guid) {
+    string_buffer_printf(sb, "%s GUID: ", name);
+    string_buffer_printf(sb, "%08" PRIx32 "-%04" PRIx16 "-%04" PRIx16, guid->Data1, guid->Data2,
+                         guid->Data3);
+    for (int i = 0; i < 8; i++) {
+        if (i == 0 || i == 2) {
+            string_buffer_puts(sb, "-");
+        }
+        string_buffer_printf(sb, "%02x", guid->Data4[i]);
+    }
+    string_buffer_puts(sb, "\n");
+}
+
+static void string_buffer_write_nvidia_qp(StringBuffer* sb, const char* name, const NV_ENC_QP* qp) {
+    string_buffer_printf(sb, "%s QP: { P = %d, B = %d, I = %d }\n", name, qp->qpInterP,
+                         qp->qpInterB, qp->qpIntra);
+}
+
+static void dump_encode_config(const NV_ENC_CONFIG* config) {
+    char config_string[1024];
+    StringBuffer buf;
+    string_buffer_init(&buf, config_string, sizeof(config_string));
+
+#define DUMP_FIELD(field) string_buffer_printf(&buf, #field ": %d\n", config->field)
+
+    string_buffer_write_nvidia_guid(&buf, "profile", &config->profileGUID);
+
+    DUMP_FIELD(gopLength);
+    DUMP_FIELD(frameIntervalP);
+    DUMP_FIELD(frameFieldMode);
+
+    string_buffer_write_nvidia_qp(&buf, "const", &config->rcParams.constQP);
+
+    DUMP_FIELD(rcParams.rateControlMode);
+    DUMP_FIELD(rcParams.averageBitRate);
+    DUMP_FIELD(rcParams.maxBitRate);
+    DUMP_FIELD(rcParams.vbvBufferSize);
+    DUMP_FIELD(rcParams.vbvInitialDelay);
+    DUMP_FIELD(rcParams.enableMinQP);
+    DUMP_FIELD(rcParams.enableMaxQP);
+    DUMP_FIELD(rcParams.enableInitialRCQP);
+    DUMP_FIELD(rcParams.enableAQ);
+    DUMP_FIELD(rcParams.enableLookahead);
+    DUMP_FIELD(rcParams.enableTemporalAQ);
+    DUMP_FIELD(rcParams.zeroReorderDelay);
+    DUMP_FIELD(rcParams.enableNonRefP);
+
+    string_buffer_write_nvidia_qp(&buf, "min", &config->rcParams.minQP);
+    string_buffer_write_nvidia_qp(&buf, "max", &config->rcParams.maxQP);
+    string_buffer_write_nvidia_qp(&buf, "initial", &config->rcParams.initialRCQP);
+
+    DUMP_FIELD(rcParams.targetQuality);
+    DUMP_FIELD(rcParams.lookaheadDepth);
+
+#undef DUMP_FIELD
+
+    LOG_WARNING("NVENC config:\n%s", config_string);
+}
+
+static void dump_encode_init_params(const NV_ENC_INITIALIZE_PARAMS* params) {
+    char params_string[1024];
+    StringBuffer buf;
+    string_buffer_init(&buf, params_string, sizeof(params_string));
+
+    string_buffer_write_nvidia_guid(&buf, "encode", &params->encodeGUID);
+    string_buffer_write_nvidia_guid(&buf, "preset", &params->presetGUID);
+
+    string_buffer_printf(&buf, "encodeSize: %dx%d\n", params->encodeWidth, params->encodeHeight);
+    string_buffer_printf(&buf, "darSize: %dx%d\n", params->darWidth, params->darHeight);
+    string_buffer_printf(&buf, "frameRate: %d/%d\n", params->frameRateNum, params->frameRateDen);
+    string_buffer_printf(&buf, "maxEncodeSize: %dx%d\n", params->maxEncodeWidth,
+                         params->maxEncodeHeight);
+
+    LOG_WARNING("NVENC init params:\n%s", params_string);
+
+    dump_encode_config(params->encodeConfig);
+}
+
+static void dump_encode_reconfigure_params(const NV_ENC_RECONFIGURE_PARAMS* params) {
+    char params_string[1024];
+    StringBuffer buf;
+    string_buffer_init(&buf, params_string, sizeof(params_string));
+
+    string_buffer_printf(&buf, "resetEncoder: %d\n", params->resetEncoder);
+    string_buffer_printf(&buf, "forceIDR: %d\n", params->resetEncoder);
+
+    LOG_WARNING("NVENC reconfigure params:\n%s", params_string);
+
+    dump_encode_init_params(&params->reInitEncodeParams);
 }
 
 NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height,
@@ -161,6 +253,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     status =
         encoder->p_enc_fn.nvEncInitializeEncoder(encoder->internal_nvidia_encoder, &init_params);
     if (status != NV_ENC_SUCCESS) {
+        dump_encode_init_params(&init_params);
         LOG_ERROR("Failed to initialize the encode session, status = %d", status);
         free(encoder);
         return NULL;
@@ -660,10 +753,12 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
         reconfigure_params.resetEncoder = 0;
         reconfigure_params.forceIDR = 0;
     }
+
     // Set encode_config params, since this is the bitrate and codec stuff we really want to change
     status = encoder->p_enc_fn.nvEncReconfigureEncoder(encoder->internal_nvidia_encoder,
                                                        &reconfigure_params);
     if (status != NV_ENC_SUCCESS) {
+        dump_encode_reconfigure_params(&reconfigure_params);
         LOG_ERROR("Failed to reconfigure the encoder, status = %d", status);
         return false;
     }

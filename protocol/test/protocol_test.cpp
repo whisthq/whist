@@ -53,9 +53,9 @@ extern "C" {
 #include <whist/utils/linked_list.h>
 #include <whist/utils/queue.h>
 #include <whist/utils/command_line.h>
-#include <whist/utils/linked_list.h>
 #include <whist/fec/fec.h>
 #include <whist/fec/rs_wrapper.h>
+#include "whist/utils/string_buffer.h"
 
 #include "whist/core/error_codes.h"
 #include <whist/core/features.h>
@@ -2557,6 +2557,40 @@ TEST_F(ProtocolTest, GitRevision) {
     for (unsigned int i = 0; i < len; i++) {
         EXPECT_TRUE(isxdigit(rev[i]));
     }
+}
+
+TEST_F(ProtocolTest, StringBufferTest) {
+    char buf[8];
+    StringBuffer sb;
+
+    // Test initial state.
+    string_buffer_init(&sb, buf, sizeof(buf));
+    EXPECT_STREQ(buf, "");
+
+    // Test simple write.
+    string_buffer_printf(&sb, "Hello");
+    EXPECT_STREQ(buf, "Hello");
+
+    // Verify state.
+    EXPECT_EQ(string_buffer_written(&sb), 5);
+    EXPECT_EQ(string_buffer_remaining(&sb), 2);
+    EXPECT_EQ(string_buffer_string(&sb), buf);
+
+    // Test overflow.
+    string_buffer_printf(&sb, " world!");
+    EXPECT_STREQ(buf, "Hello w");
+
+    // Test formatting.
+    string_buffer_init(&sb, buf, sizeof(buf));
+    string_buffer_printf(&sb, "%d %x", 3, 42);
+    EXPECT_STREQ(buf, "3 2a");
+
+    // Test write limiting.
+    memset(buf, 'X', sizeof(buf));
+    string_buffer_init(&sb, buf, 5);
+    string_buffer_printf(&sb, "Test!");
+    EXPECT_STREQ(buf, "Test");
+    EXPECT_EQ(buf[5], 'X');
 }
 
 /*

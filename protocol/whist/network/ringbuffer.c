@@ -10,6 +10,7 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/debug/protocol_analyzer.h>
 #include <whist/debug/debug_console.h>
+#include "whist/utils/string_buffer.h"
 
 /*
 ============================
@@ -908,9 +909,10 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
                                      int max_packets_to_nack, double latency) {
     // Something really large, static because this only gets called from one thread
     static char nack_log_buffer[1024 * 32];
-    int log_len = 0;
-    log_len += snprintf(nack_log_buffer + log_len, sizeof(nack_log_buffer) - log_len,
-                        "NACKing Frame ID %d, Indices ", frame_data->id);
+    StringBuffer buf;
+    string_buffer_init(&buf, nack_log_buffer, sizeof(nack_log_buffer));
+
+    string_buffer_printf(&buf, "NACKing Frame ID %d, Indices ", frame_data->id);
 
     int num_packets_nacked = 0;
     for (int i = 0; i <= end_index && num_packets_nacked < max_packets_to_nack; i++) {
@@ -919,8 +921,7 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
             (frame_data->num_times_index_nacked[i] == 0 ||
              get_timer(&frame_data->last_nacked_timer[i]) > latency_plus_jitter(latency))) {
             nack_single_packet(ring_buffer, frame_data->id, i);
-            log_len += snprintf(nack_log_buffer + log_len, sizeof(nack_log_buffer) - log_len,
-                                "%s%d", num_packets_nacked == 0 ? "" : ", ", i);
+            string_buffer_printf(&buf, "%s%d", num_packets_nacked == 0 ? "" : ", ", i);
             frame_data->num_times_index_nacked[i]++;
             start_timer(&frame_data->last_nacked_timer[i]);
             num_packets_nacked++;
