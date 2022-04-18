@@ -100,9 +100,8 @@ def create_ec2_instance(
                 ],
             },
         ],
-        "SecurityGroups": [
-            "container-tester",
-        ],
+        "SubnetId": "subnet-02865ffebdb591468",  # (DefaultSubnetdev)
+        "SecurityGroupIds": ["sg-01fb458379935c191"],  # (MandelboxesSecurityGroup)
         "InstanceInitiatedShutdownBehavior": "terminate",
         "KeyName": key_name,  # needs to be the same that's loaded on the client calling this function
     }
