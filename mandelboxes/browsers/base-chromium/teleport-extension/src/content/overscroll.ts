@@ -13,8 +13,8 @@ let previousYDeltas = cyclingArray<number>(4, [])
 let previousXOffset = 0
 let previousArrowDirection: string | undefined = undefined
 
-const removeArrow = () => {
-  arrow?.remove()
+const removeArrow = (animate: boolean) => {
+  arrow?.remove(animate)
   arrow = undefined
 }
 
@@ -30,25 +30,25 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 }
 
 const detectGesture = (e: WheelEvent) => {
-  console.log("detect gesture", e.deltaX)
-  // Update overscroll tracker
+  if (Math.abs(overscrollX) > maxXOverscroll) return
+
   if (isScrollingVertically(e) || isScrollingHorizontally(e)) {
+    // Update overscroll tracker
+    removeArrow(true)
     overscrollX = 0
     return
   } else {
     overscrollX += trim(e.deltaX, minXUpdate, maxXUpdate)
   }
-
-  console.log("overscroll", overscrollX, "delta", e.deltaX)
-
   // If not overscrolled, don't do anything
   if (overscrollX === 0) {
-    removeArrow()
+    removeArrow(false)
     return
   }
 
   // If overscrolled a lot, redirect
   if (Math.abs(overscrollX) > maxXOverscroll) {
+    removeArrow(false)
     window.removeEventListener("wheel", detectGesture)
 
     if (overscrollX < 0) {
@@ -56,11 +56,13 @@ const detectGesture = (e: WheelEvent) => {
     } else {
       history.forward()
     }
+
+    overscrollX = 0
     // If overscrolled a little, draw the arrow
   } else {
     const direction = overscrollX < 0 ? "back" : "forward"
     if (arrow === undefined || previousArrowDirection !== direction) {
-      removeArrow()
+      removeArrow(false)
       arrow = drawArrow(document, direction)
       previousArrowDirection = direction
     }

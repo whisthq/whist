@@ -120,7 +120,12 @@ const drawArrow = (document: Document, direction: string) => {
       inner.style.width = fill
       inner.style.height = fill
     },
-    remove: () => {
+    remove: (animate: boolean) => {
+      if (!animate) {
+        element.remove()
+        return
+      }
+
       let offset =
         direction === "back"
           ? parseInt(element.style.left ?? 0)
