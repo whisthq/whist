@@ -86,10 +86,10 @@ export default flow(
             longitude: t.geolocation.longitude,
             latitude: t.geolocation.latitude,
             ...(t.userLanguages.systemLanguages.length > 0 && {
-              user_language: t.userLanguages.systemLanguages,
+              user_languages: t.userLanguages.systemLanguages,
             }),
             ...(t.userLanguages.chromeLanguages.length > 0 && {
-              chrome_language: t.userLanguages.chromeLanguages,
+              chrome_languages: t.userLanguages.chromeLanguages,
             }),
             ...(t.userLocale.length > 0 && { user_locale: t.userLocale }),
           }), // Data to send through the JSON transport
