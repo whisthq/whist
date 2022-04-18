@@ -56,9 +56,9 @@ const detectGesture = (e: WheelEvent) => {
       history.forward()
     }
 
-    overscrollX = 0
     window.removeEventListener("wheel", detectGesture)
     setTimeout(() => {
+      overscrollX = 0
       window.addEventListener("wheel", detectGesture)
     }, throttleMs)
     // If overscrolled a little, draw the arrow
@@ -80,7 +80,7 @@ const initSwipeGestures = () => {
   window.removeEventListener("wheel", detectGesture)
   setTimeout(() => {
     window.addEventListener("wheel", throttle(detectGesture, 50))
-  }, throttleMs * 2)
+  }, throttleMs)
 }
 
 export { initSwipeGestures }
