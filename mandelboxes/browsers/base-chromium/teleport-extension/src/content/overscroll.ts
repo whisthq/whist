@@ -49,7 +49,6 @@ const detectGesture = (e: WheelEvent) => {
   // If overscrolled a lot, redirect
   if (Math.abs(overscrollX) > maxXOverscroll) {
     removeArrow(false)
-    overscrollX = 0
 
     if (overscrollX < 0) {
       history.back()
@@ -57,6 +56,7 @@ const detectGesture = (e: WheelEvent) => {
       history.forward()
     }
 
+    overscrollX = 0
     window.removeEventListener("wheel", detectGesture)
     setTimeout(() => {
       window.addEventListener("wheel", detectGesture)
