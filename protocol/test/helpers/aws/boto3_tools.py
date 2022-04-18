@@ -152,7 +152,9 @@ def start_instance(boto3client: botocore.client, instance_id: str, max_retries: 
                 time.sleep(60)
                 continue
             else:
-                print_in_red(f"Could not start instance after {max_retries} retries. Giving up now.")
+                print_in_red(
+                    f"Could not start instance after {max_retries} retries. Giving up now."
+                )
                 return False
         break
     return True

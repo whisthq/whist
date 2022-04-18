@@ -53,7 +53,7 @@ class TimeStamps:
         self.start_time = time.time()
         self.events = []
         self.max_event_name_len = 0
-        self.most_time_consuming_event = 0
+        self.most_time_consuming_event = datetime.timedelta(seconds=0)
 
     def get_time_elapsed(self, index):
         if index < 0 or index >= len(self.events):
