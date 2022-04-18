@@ -21,31 +21,31 @@ class PrintFormats:
 
 
 def print_in_blue(text):
-    print(f"{PrintFormats.blue}{text}{PrintFormats.ENDC}")
+    print(f"{PrintFormats.blue}{text}{PrintFormats.end_formatting}")
 
 
 def print_in_cyan(text):
-    print(f"{PrintFormats.cyan}{text}{PrintFormats.ENDC}")
+    print(f"{PrintFormats.cyan}{text}{PrintFormats.end_formatting}")
 
 
 def print_in_green(text):
-    print(f"{PrintFormats.green}{text}{PrintFormats.ENDC}")
+    print(f"{PrintFormats.green}{text}{PrintFormats.end_formatting}")
 
 
 def print_in_yellow(text):
-    print(f"{PrintFormats.yellow}{text}{PrintFormats.ENDC}")
+    print(f"{PrintFormats.yellow}{text}{PrintFormats.end_formatting}")
 
 
 def print_in_red(text):
-    print(f"{PrintFormats.red}{text}{PrintFormats.ENDC}")
+    print(f"{PrintFormats.red}{text}{PrintFormats.end_formatting}")
 
 
 def print_in_bold(text):
-    print(f"{PrintFormats.bold}{text}{PrintFormats.ENDC}")
+    print(f"{PrintFormats.bold}{text}{PrintFormats.end_formatting}")
 
 
 def print_in_underline(text):
-    print(f"{PrintFormats.underline}{text}{PrintFormats.ENDC}")
+    print(f"{PrintFormats.underline}{text}{PrintFormats.end_formatting}")
 
 
 class TimeStamps:
