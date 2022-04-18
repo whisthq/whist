@@ -37,6 +37,8 @@ const detectGesture = (e: WheelEvent) => {
     overscrollX += trim(e.deltaX, minXUpdate, maxXUpdate)
   }
 
+  console.log("overscroll", overscrollX, "delta", e.deltaX)
+
   // If not overscrolled, don't do anything
   if (overscrollX === 0) {
     removeArrow()
