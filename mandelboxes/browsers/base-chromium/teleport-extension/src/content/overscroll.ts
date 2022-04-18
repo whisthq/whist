@@ -30,9 +30,11 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 }
 
 const detectGesture = (e: WheelEvent) => {
+  console.log("detect gesture", e.deltaX)
   // Update overscroll tracker
   if (isScrollingVertically(e) || isScrollingHorizontally(e)) {
     overscrollX = 0
+    return
   } else {
     overscrollX += trim(e.deltaX, minXUpdate, maxXUpdate)
   }
