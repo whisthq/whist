@@ -220,20 +220,19 @@ for i in "${!devices[@]}"; do
     degradations_string="${degradations_string} loss ${max_packet_drop}%"
   fi
   if [ -n "${max_queue_length:-}" ]; then
-    echo_string="${echo_string} queue length: ${max_queue_length} ms"
+    echo_string="${echo_string} delay: ${max_queue_length} ms"
     degradations_string="${degradations_string} delay ${max_queue_length}ms"
   fi
   if [ -n "${max_packet_limit:-}" ]; then
-    echo_string="${echo_string} qdisc packet limit: ${max_packet_limit} packets"
+    echo_string="${echo_string} packet limit: ${max_packet_limit} packets"
     degradations_string="${degradations_string} limit ${max_packet_limit}"
   fi
   echo "Setting network conditions on device $device to${echo_string}"
 
-  sudo -s eval "ip link set dev ifb${i} up"
-  sudo -s eval "tc qdisc add dev $device ingress"
-  sudo -s eval "tc filter add dev $device parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb${i}"
+#  sudo -s eval "tc qdisc add dev $device ingress"
+#  sudo -s eval "tc filter add dev $device parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb${i}"
   sudo -s eval "tc qdisc add dev $device root netem $degradations_string"
-  sudo -s eval "tc qdisc add dev ifb${i} root netem $degradations_string"
+#  sudo -s eval "tc qdisc add dev ifb${i} root netem $degradations_string"
 done
 
 if [[ ( "${min_bandwidth:-}" != "${max_bandwidth:-}" ) || ( "${min_packet_drop:-}" != "${max_packet_drop:-}" ) || ( "${min_queue_length:-}" != "${max_queue_length:-}" ) ]]; then

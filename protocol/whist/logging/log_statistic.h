@@ -82,6 +82,11 @@ typedef enum {
     NOTIFICATIONS_RECEIVED,
     CLIENT_CPU_USAGE,
 
+    TEST1,
+    TEST2,
+    TEST3,
+    TEST4,
+
     NUM_METRICS,
 } Metrics;
 

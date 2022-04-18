@@ -184,11 +184,10 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
     for device in network_devices:
         print(f"Restoring normal network conditions on device {device}")
         # Inbound degradations
-        commands.append(f"sudo tc qdisc del dev {device} handle ffff: ingress")
+#        commands.append(f"sudo tc qdisc del dev {device} handle ffff: ingress")
         # Outbound degradations
         commands.append(f"sudo tc qdisc del dev {device} root netem")
 
-    commands.append("sudo modprobe -r ifb")
 
     # Execute all commands:
     for command in commands:

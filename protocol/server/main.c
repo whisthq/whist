@@ -129,7 +129,11 @@ static void get_whist_udp_client_messages(WhistServerState* state) {
 
     // If received a UDP message
     if (try_get_next_message_udp(state->client, &wcmsg, &wcmsg_size) == 0 && wcmsg_size != 0) {
+        WhistTimer timer;
+        start_timer(&timer);
+
         handle_client_message(state, &wcmsg);
+        log_double_statistic(TEST2, get_timer(&timer) * MS_IN_SECOND);
     }
 }
 
@@ -489,6 +493,9 @@ int main(int argc, char* argv[]) {
         // Get UDP messages
         get_whist_udp_client_messages(&server_state);
 
+        WhistTimer timer;
+        start_timer(&timer);
+
         // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set because
         // getting cpu usage statistics is expensive.
         if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) > 1) {
@@ -545,6 +552,8 @@ int main(int argc, char* argv[]) {
             }
             start_timer(&window_name_timer);
         }
+        log_double_statistic(TEST3, get_timer(&timer) * MS_IN_SECOND);
+        start_timer(&timer);
 
 #ifndef _WIN32
 #define URI_HANDLER_FILE "/home/whist/.teleport/handled-uri"
@@ -625,6 +634,8 @@ int main(int argc, char* argv[]) {
             }
             start_timer(&uploaded_file_timer);
         }
+        log_double_statistic(TEST4, get_timer(&timer) * MS_IN_SECOND);
+
 
 #endif  // ! _WIN32
     }

@@ -379,7 +379,7 @@ def complete_experiment_and_save_results(
         json.dump(experiment_metadata, metadata_file)
 
     # 10- Print time breakdown of the experiment
-    timestamps.print_timestamps()
+    #timestamps.print_timestamps()
 
     # 10- Print error message and exit with error if needed
     for cause, message in {

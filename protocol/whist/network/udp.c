@@ -560,6 +560,8 @@ static bool udp_update(void* raw_context) {
      */
     FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
+    WhistTimer enter_timer;
+    start_timer(&enter_timer);
 
     if (context->connection_lost) {
         return false;
@@ -571,6 +573,7 @@ static bool udp_update(void* raw_context) {
 
     // Check if we need to ping
     // This implicitly keeps the connection alive as well
+
     udp_update_ping(context);
 
     // udp_update_ping may have detected a newly lost connection
@@ -581,12 +584,24 @@ static bool udp_update(void* raw_context) {
     // *************
     // Pull a packet from the network, if any is there
     // *************
-
+    static WhistTimer last_recv_timer;
+    // Initialize the timer
+    if (last_recv_timer.opaque[0] == 0 && last_recv_timer.opaque[1] == 0) {
+        start_timer(&last_recv_timer);
+    }
+    double last_recv = get_timer(&last_recv_timer);
+    if (last_recv * MS_IN_SECOND > 1.0) {
+        LOG_WARNING("Time between recv() calls is too long: %fms",
+                                    last_recv * MS_IN_SECOND);
+        LOG_WARNING("enter_timer: %fms",
+                                    get_timer(&enter_timer) * MS_IN_SECOND);
+    }
     UDPPacket udp_packet;
     timestamp_us arrival_time;
     int network_payload_size;
     bool received_packet =
         udp_get_udp_packet(context, &udp_packet, &arrival_time, &network_payload_size);
+    start_timer(&last_recv_timer);
 
     if (received_packet) {
         // if the packet is a whist_segment, store the data to give later via get_packet
@@ -633,8 +648,11 @@ static bool udp_update(void* raw_context) {
                 }
             }
         } else {
+            WhistTimer timer;
+            start_timer(&timer);
             // Handle the UDP message
             udp_handle_message(context, &udp_packet);
+            log_double_statistic(TEST1, get_timer(&timer) * MS_IN_SECOND);
         }
     }
 
@@ -1794,6 +1812,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
             LOG_FATAL("Packet of unknown type! %d", (int)packet->type);
         }
     }
+
 }
 
 void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, int packet_index,

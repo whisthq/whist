@@ -90,6 +90,11 @@ static StatisticInfo statistic_info[NUM_METRICS] = {
     [NOTIFICATIONS_RECEIVED] = {"NOTIFICATIONS_RECEIVED", false, false, SUM},
     [CLIENT_CPU_USAGE] = {"CLIENT_CPU_USAGE", false, false, AVERAGE},
 
+    [TEST1] = {"TEST1", true, false, AVERAGE},
+    [TEST2] = {"TEST2", true, false, AVERAGE},
+    [TEST3] = {"TEST3", true, false, AVERAGE},
+    [TEST4] = {"TEST4", true, false, AVERAGE},
+
 };
 
 /*

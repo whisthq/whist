@@ -75,6 +75,9 @@ def install_and_configure_aws(
     ):
         exit_with_error(f"Could not obtain the AWS credentials!")
 
+    pexpect_process.sendline("sleep 20")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
     # Step 2: Install the AWS CLI if it's not already there
     pexpect_process.sendline("sudo apt-get -y update")
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
