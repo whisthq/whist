@@ -13,7 +13,9 @@ import {
   MAX_KEY_REPEAT_WINDOWS,
   MIN_INTIAL_REPEAT_WINDOWS,
 } from "@app/constants/keyRepeat"
-import { Key, windef } from "windows-registry-napi"
+
+const win =
+  process.platform === "win32" ? require("windows-registry-napi") : undefined
 
 const windowsKey = () => {
   /*
@@ -25,10 +27,10 @@ const windowsKey = () => {
   if (process.platform !== "win32")
     throw new Error(`process.platform ${process.platform} is not win32`)
 
-  return new Key(
-    windef.HKEY.HKEY_CURRENT_USER,
+  return new win.Key(
+    win.windef.HKEY.HKEY_CURRENT_USER,
     "Control Panel\\Keyboard",
-    windef.KEY_ACCESS.KEY_ALL_ACCESS
+    win.windef.KEY_ACCESS.KEY_ALL_ACCESS
   )
 }
 

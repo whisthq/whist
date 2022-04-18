@@ -48,7 +48,6 @@
     "@types/pbkdf2": "^3.1.0",
     "@types/react-router": "^5.1.13",
     "@types/react-router-dom": "^5.1.7",
-    "@types/ref-napi": "^3.0.4",
     "@types/tmp": "^0.2.1",
     "@whist/core-ts": "file:../core-ts",
     "applescript": "^1.0.0",
@@ -58,7 +57,6 @@
     "deepdash": "^5.3.9",
     "electron-store": "^8.0.0",
     "electron-updater": "4.6.5",
-    "ffi-napi": "^4.0.3",
     "fuzzy-search": "^3.2.1",
     "history": "^5.0.1",
     "jwt-decode": "^3.1.2",
@@ -87,10 +85,15 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-use-intercom": "^1.4.1",
-    "ref-napi": "^3.0.3",
     "rxjs": "^7.4.0",
     "sqlite3": "^5.0.2",
-    "tmp": "^0.2.1",
+    "tmp": "^0.2.1"
+  },
+  "optionalDependencies": {
+    "@types/ref-napi": "^3.0.4",
+    "ffi-napi": "^4.0.3",
+    "ref-napi": "^3.0.3",
+    "ref-struct-di": "^1.1.1",
     "windows-registry-napi": "^0.1.6"
   },
   "devDependencies": {

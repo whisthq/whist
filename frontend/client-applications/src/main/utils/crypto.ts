@@ -1,6 +1,3 @@
-import StructType from "ref-struct-di"
-import ref from "ref-napi"
-import ffi from "ffi-napi"
 import keytar from "keytar"
 import dbus from "dbus-next"
 import fs from "fs"
@@ -36,6 +33,11 @@ import {
   OperaOSXDefaultDir,
   OperaWindowsDefaultDir,
 } from "@app/constants/importer"
+
+const ref = process.platform === "win32" ? require("ref-napi") : undefined
+const ffi = process.platform === "win32" ? require("ffi-napi") : undefined
+const StructType =
+  process.platform === "win32" ? require("ref-struct-di") : undefined
 
 interface Cookie {
   [key: string]: Buffer | string | number

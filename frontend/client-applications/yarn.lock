@@ -6305,7 +6305,7 @@ ref-napi@^1.2.0, ref-napi@^1.4.2, ref-napi@^1.5.2:
     node-addon-api "^3.0.0"
     node-gyp-build "^4.2.1"
 
-ref-struct-di@^1.1.0:
+ref-struct-di@^1.1.0, ref-struct-di@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/ref-struct-di/-/ref-struct-di-1.1.1.tgz#5827b1d3b32372058f177547093db1fe1602dc10"
   integrity sha512-2Xyn/0Qgz89VT+++WP0sTosdm9oeowLP23wRJYhG4BFdMUrLj3jhwHZNEytYNYgtPKLNTP3KJX4HEgBvM1/Y2g==

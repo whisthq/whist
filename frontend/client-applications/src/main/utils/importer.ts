@@ -133,10 +133,10 @@ const getPreferences = async (
     return undefined
   }
 
-  const extensions = getPreferencesFromFile(browser)
-  if (extensions.length === 0) return undefined
+  const preferences = getPreferencesFromFile(browser)
+  if (preferences.length === 0) return undefined
 
-  return extensions
+  return preferences
 }
 
 export {
