@@ -58,7 +58,9 @@ const navigate = () => {
   //     goBack ? chrome.tabs.goBack(tabID) : chrome.tabs.goForward(tabID)
   //   })
 
-  //   scrollX = 0
+  console.log("----------- RESETTING -----------")
+
+  scrollX = 0
   throttle(500)
 }
 
@@ -84,6 +86,7 @@ const initGestureHandler = () => {
 
     // Update the total X overscroll amount
     updateOverscroll(msg.value.offset, msg.value.reset)
+    console.log("Delta", msg.value.offset, "Total", scrollX)
     // Draw the appropriate arrow
     drawArrow()
     // Navigate if necessary
