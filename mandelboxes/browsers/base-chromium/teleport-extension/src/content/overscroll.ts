@@ -50,7 +50,6 @@ const detectGesture = (e: WheelEvent) => {
   if (Math.abs(overscrollX) > maxXOverscroll) {
     removeArrow(false)
     overscrollX = 0
-    window.removeEventListener("wheel", detectGesture)
 
     if (overscrollX < 0) {
       history.back()
@@ -58,6 +57,7 @@ const detectGesture = (e: WheelEvent) => {
       history.forward()
     }
 
+    window.removeEventListener("wheel", detectGesture)
     setTimeout(() => {
       window.addEventListener("wheel", detectGesture)
     }, throttleMs)
@@ -77,6 +77,7 @@ const detectGesture = (e: WheelEvent) => {
 
 const initSwipeGestures = () => {
   // Fires whenever the wheel moves
+  window.removeEventListener("wheel", detectGesture)
   setTimeout(() => {
     window.addEventListener("wheel", detectGesture)
   }, throttleMs)

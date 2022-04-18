@@ -79,6 +79,7 @@ const drawArrow = (document: Document, direction: string) => {
   element.style.flexWrap = "wrap"
   element.style.justifyContent = "center"
   element.style.alignItems = "center"
+  element.style.opacity = "0"
 
   inner.style.width = "40%"
   inner.style.height = "40%"
@@ -91,12 +92,12 @@ const drawArrow = (document: Document, direction: string) => {
   inner.style.alignItems = "center"
 
   if (direction === "back") {
-    element.style.left = "-70px"
+    element.style.left = "20px"
     inner.innerHTML += escapeHTMLPolicy.createHTML(
       '<svg style="width: 20px; color: #EFEFEF" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>'
     )
   } else {
-    element.style.right = "-70px"
+    element.style.right = "20px"
     inner.innerHTML += escapeHTMLPolicy.createHTML(
       '<svg style="width: 20px; color: #EFEFEF" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>'
     )
@@ -108,8 +109,11 @@ const drawArrow = (document: Document, direction: string) => {
 
   return {
     update: (progress: number) => {
-      const offset = `${Math.min(-70 + progress * 2, 70)}px`
+      const offset = `${Math.min(20 + progress * 2, 100)}px`
       const fill = `${Math.max(40, progress)}%`
+      const opacity = `${progress === 0 ? 0 : 1}`
+
+      element.style.opacity = opacity
 
       if (direction === "back") {
         element.style.left = offset
