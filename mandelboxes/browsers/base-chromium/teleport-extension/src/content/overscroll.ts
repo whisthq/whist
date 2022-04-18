@@ -49,6 +49,8 @@ const detectGesture = (e: WheelEvent) => {
   // If overscrolled a lot, redirect
   if (Math.abs(overscrollX) > maxXOverscroll) {
     removeArrow(false)
+    overscrollX = 0
+    window.removeEventListener("wheel", detectGesture)
 
     if (overscrollX < 0) {
       history.back()
@@ -57,7 +59,7 @@ const detectGesture = (e: WheelEvent) => {
     }
 
     setTimeout(() => {
-      overscrollX = 0
+      window.addEventListener("wheel", detectGesture)
     }, throttleMs)
     // If overscrolled a little, draw the arrow
   } else {
