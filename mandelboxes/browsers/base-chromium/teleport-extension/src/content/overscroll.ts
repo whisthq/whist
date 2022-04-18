@@ -44,7 +44,7 @@ const detectGesture = (e: WheelEvent) => {
   }
 
   // If overscrolled a lot, redirect
-  if (overscrollX > maxXOverscroll) {
+  if (Math.abs(overscrollX) > maxXOverscroll) {
     window.removeEventListener("wheel", detectGesture)
 
     if (overscrollX < 0) {
