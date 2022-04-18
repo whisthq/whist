@@ -236,7 +236,7 @@ for i in "${!devices[@]}"; do
   sudo -s eval "tc qdisc add dev ifb${i} root netem $degradations_string"
 done
 
-if [[ ( "$min_bandwidth" != "$max_bandwidth" ) || ( "$min_packet_drop" != "$max_packet_drop" ) || ( "$min_queue_length" != "$max_queue_length" ) ]]; then
+if [[ ( "${min_bandwidth:-}" != "${max_bandwidth:-}" ) || ( "${min_packet_drop:-}" != "${max_packet_drop:-}" ) || ( "${min_queue_length:-}" != "${max_queue_length:-}" ) ]]; then
   # Seed the random number generator to always get the same results
   RANDOM=$random_seed
 
