@@ -1,10 +1,13 @@
 import { drawArrow } from "@app/utils/overlays"
 import { cyclingArray } from "@app/utils/operators"
+import { getState, setState } from "@app/utils/state"
+import { trim } from "@app/utils/operators"
 
 import {
   ContentScriptMessage,
   ContentScriptMessageType,
 } from "@app/constants/ipc"
+import { maxXOverscroll, minXUpdate } from "@app/constants/overscroll"
 
 let arrow: any = undefined
 let previousYDeltas = cyclingArray<number>(4, [])
@@ -28,14 +31,14 @@ const isScrollingHorizontally = (e: WheelEvent) => {
 }
 
 const detectGesture = (e: WheelEvent) => {
-  // Send the overscroll amount to the worker
-  chrome.runtime.sendMessage(<ContentScriptMessage>{
-    type: ContentScriptMessageType.GESTURE_DETECTED,
-    value: {
-      offset: e.deltaX,
-      reset: isScrollingVertically(e) || isScrollingHorizontally(e),
-    },
-  })
+  if (isScrollingVertically(e) || isScrollingHorizontally(e)) {
+    setState("overscrollX", 0)
+  } else {
+    getState(
+      "overscrollX",
+      (x) => x + trim(e.deltaX, minXUpdate, maxXOverscroll)
+    )
+  }
 }
 
 const initNavigationArrow = () => {
