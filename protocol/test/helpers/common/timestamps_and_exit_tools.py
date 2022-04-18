@@ -40,10 +40,42 @@ class TimeStamps:
         print("############################")
         print()
 
+# Acknowledged to https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal-in-python
+class PrintFormats:
+    blue = '\033[94m'
+    cyan = '\033[96m'
+    green = '\033[92m'
+    yellow = '\033[93m'
+    red = '\033[91m'
+    bold = '\033[1m'
+    underline = '\033[4m'
+    end_formatting = '\033[0m'
+
+def print_in_blue(text):
+    print(f"{PrintFormats.blue}{text}{PrintFormats.ENDC}")
+
+def print_in_cyan(text):
+    print(f"{PrintFormats.cyan}{text}{PrintFormats.ENDC}")
+
+def print_in_green(text):
+    print(f"{PrintFormats.green}{text}{PrintFormats.ENDC}")
+
+def print_in_yellow(text):
+    print(f"{PrintFormats.yellow}{text}{PrintFormats.ENDC}")
+
+def print_in_red(text):
+    print(f"{PrintFormats.red}{text}{PrintFormats.ENDC}")
+
+def print_in_bold(text):
+    print(f"{PrintFormats.bold}{text}{PrintFormats.ENDC}")
+
+def print_in_underline(text):
+    print(f"{PrintFormats.underline}{text}{PrintFormats.ENDC}")
+
 
 def exit_with_error(error_message, timestamps=None):
     if error_message is not None:
-        print(error_message)
+        print_in_red(error_message)
     if timestamps is not None:
         timestamps.print_timestamps()
     sys.exit(-1)
