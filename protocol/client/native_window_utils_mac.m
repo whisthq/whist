@@ -78,7 +78,7 @@ void initialize_out_of_window_drag_handlers(WhistFrontend *frontend) {
                                             current_change_count = change_count;
                                             file_drag_mouse_down = true;
 
-                                            if ( [[pb types] containsObject:NSFilenamesPboardType] ) {
+                                            if ([[pb types] containsObject:NSFilenamesPboardType]) {
                                                 NSArray *files = [pb propertyListForType:NSFilenamesPboardType];
                                                 int numberOfFiles = [files count];
                                                 // Perform operation using the list of files
@@ -86,11 +86,22 @@ void initialize_out_of_window_drag_handlers(WhistFrontend *frontend) {
                                                 LOG_INFO("dragging %d files", numberOfFiles);
                                                 LOG_INFO("first file: %s", (char*)[[files objectAtIndex:0] UTF8String]);
 
+                                                NSString *file_list = [NSString init];
+                                                int i = 0;
+                                                for (NSString* file in files) {
+                                                    file_list = [file_list stringByAppendingString:[file lastPathComponent]];
+                                                    if (i < numberOfFiles - 1) {
+                                                        file_list = [file_list stringByAppendingString:@"\n"];
+                                                    }
+                                                    i++;
+                                                }
+
                                                 // NSArray *files = [pb propertyListForType:NSFilenamesPboardType];
-                                                NSString *file_list = [files componentsJoinedByString:@"\n"];
+                                                // NSString *file_list = [files componentsJoinedByString:@"\n"];
 
                                                 // TODO: turn *files into a \n-separated string of filenames (without paths)
                                                 // sdl_handle_begin_file_drag(files);
+                                                sdl_handle_begin_file_drag((char*)[file_list UTF8String]);
                                             }
 
                                         } else if (file_drag_mouse_down) {
