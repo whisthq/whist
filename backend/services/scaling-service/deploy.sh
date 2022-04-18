@@ -27,7 +27,15 @@ DEPLOY_DIR="$SCALING_SERVICE_DIR/deploy"
 IMAGE_FILE="$DEPLOY_DIR/images.json"
 PROCFILE="$DEPLOY_DIR/Procfile"
 
-function deploy_scaling_service() {
+####################################################
+# Deploy Scaling Service
+####################################################
+
+# `deploy_scaling_service` will perform the necessary setup for
+# deploying a new version of the scaling service to Heroku and 
+# push the changes.
+# Args: none
+deploy_scaling_service() {
     # Copy the binary to the scaling-service deploy directory. This is necessary because we will use it as standalone repo.
     mkdir -p "$DEPLOY_DIR" && cp ./backend/services/build/scaling-service "$DEPLOY_DIR"
 
@@ -65,16 +73,14 @@ DB_URL=$(heroku config:get DATABASE_URL --app "${HEROKU_APP_NAME}")
 echo "APP: $HEROKU_APP_NAME, DB URL: $DB_URL"
 
 if [ "$MIGRA_EXIT_CODE" == "2" ] || [ "$MIGRA_EXIT_CODE" == "3" ]; then
-  # a diff exists, now apply it atomically by first pausing the webserver
-
+  # a diff exists, now apply it atomically by first pausing the scaling service
   echo "Migra SQL diff:"
   echo "${SQL_DIFF_STRING}"
 
-  # stop webserver. TODO: parse how many dynos exist currently and
-  # restore that many as opposed to just restoring to 1 dyno
+  # stop scaling service
   heroku ps:scale web=0 --app "${HEROKU_APP_NAME}"
 
-  # Apply diff safely, knowing nothing is happening on webserver.  Note that
+  # Apply diff safely, knowing nothing is happening on scaling service.  Note that
   # we don't put quotes around SQL_DIFF_STRING to prevent. `$function$` from
   # turning into `$`.
   echo "${SQL_DIFF_STRING}" | psql -v ON_ERROR_STOP=1 --single-transaction "${DB_URL}"
