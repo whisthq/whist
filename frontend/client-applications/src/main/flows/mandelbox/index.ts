@@ -91,7 +91,9 @@ export default flow(
             ...(t.userLanguages.chromeLanguages.length > 0 && {
               chrome_languages: t.userLanguages.chromeLanguages,
             }),
-            ...(Object.keys(t.userLocale).length > 0 && { user_locale: t.userLocale }),
+            ...(Object.keys(t.userLocale).length > 0 && {
+              user_locale: t.userLocale,
+            }),
           }), // Data to send through the JSON transport
         }))
       )
