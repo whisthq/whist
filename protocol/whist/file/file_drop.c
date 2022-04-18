@@ -317,7 +317,7 @@ reset_file_drop_statics:
 const char* file_drop_prepare(int id, FileMetadata* file_metadata) {
     /*
         Create directories to house the file data and metadata, and write
-        necesary metadata (for example, the file size) to the metadata file.
+        necessary metadata (for example, the file size) to the metadata file.
 
         Arguments:
             id (int): the unique ID for the file transfer
@@ -410,7 +410,7 @@ void destroy_file_drop_handler(void) {
     }
 }
 
-int file_drag_update(bool is_dragging, int x, int y) {
+int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
     /*
         Update the file drag indicator
     */
@@ -419,9 +419,79 @@ int file_drag_update(bool is_dragging, int x, int y) {
     //     return -1;
     // }
 
+    // if (!file_list) {
+    //     return -1;
+    // }
+
+    static char* xdnd_file_list = NULL;
+    static int xdnd_file_list_len = 0;
+    const char* drag_path_middle_template = "drag-drop/temp_dragging/%d_";
+
+    const char* drag_path_template = "file:///home/whist/%s";
+    const char* create_path_template = "file:///home/whist/.teleport/%s";
+
+    if (!file_list && !xdnd_file_list) {
+        return -1;
+    }
+
+    // When drag first begins, peer should send a file_list to create temporary files for dragging
+    if (file_list) {
+        // TODO: remove existing temp dragging files by deleting everything in the temp_dragging folder
+        const char* delimiter = "\n";
+        char* file_list_token = strtok_s(file_list, delimiter);
+        char drag_path_middle[64];
+        int id = 0;
+        while (file_list_token) {
+            snprintf(drag_path_middle, 64, drag_path_middle_template, id);
+            int file_path_end_size = strlen(drag_path_middle) + strlen(file_list_token) + 1;
+            char* file_path_end = malloc(file_path_end_size);
+            memset(file_path_end, 0, file_path_end_size);
+            safe_strncpy(file_path_end, drag_path_middle, strlen(drag_path_middle) + 1);
+            safe_strncpy(file_path_end + strlen(drag_path_middle), file_list_token, strlen(file_list_token) + 1);
+
+            int drag_path_size = strlen(drag_path_template) + file_path_end_size + 2;
+            char* drag_path = malloc(drag_path_size);
+            snprintf(drag_path, drag_path_size, drag_path_template, file_path_end);
+
+            int create_path_size = strlen(create_path_template) + file_path_end_size + 2;
+            char* create_path = malloc(create_path_size);
+            snprintf(create_path, create_path_size, create_path_template, file_path_end);
+
+            free(file_path_end);
+
+            if (xdnd_file_list) {
+                xdnd_file_list = safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
+                xdnd_file_list[xdnd_file_list_len - 1] = '\n';
+            } else {
+                xdnd_file_list = safe_malloc(addon_size);
+            }
+            // memset(xdnd_file_list + xdnd_file_list_len, 0, addon_size);
+            // safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path_start, strlen(drag_path_start) + 1);
+            // safe_strncpy(xdnd_file_list + xdnd_file_list_len + strlen(drag_path_start),
+            //     file_list_token, strlen(file_list_token) + 1);
+
+            safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path, strlen(drag_path) + 1);
+
+            free(drag_path);
+
+            // Create temp file
+            FILE* temp_file_fd = fopen(create_path, "wb");
+            if (temp_file_fd) {
+                fclose(temp_file_fd);
+            }
+
+            free(create_path);
+
+
+            xdnd_file_list_len += addon_size;
+            id++;
+        }
+    }
+
     static bool active_file_drag = false;
     // static Window our_window;
     // static Window active_window;
+
 
     XClientMessageEvent m;
 
@@ -583,9 +653,12 @@ int file_drag_update(bool is_dragging, int x, int y) {
                 s.xselection.time = e.xselectionrequest.time;
                 s.xselection.property = selection_request_property;
 
-                const char* xdnd_file_url = "file:///home/whist/drag-drop/0/testtest.txt";
+                // const char* xdnd_file_url = "file:///home/whist/drag-drop/0/testtest.txt";
                 // const char* xdnd_file_url = "file://a";
 
+                // XChangeProperty(display, requestor_window, selection_request_property, XA_text_uri_list,
+                //                 8, PropModeReplace, (unsigned char*)xdnd_file_url,
+                //                 strlen(xdnd_file_url));
                 XChangeProperty(display, requestor_window, selection_request_property, XA_text_uri_list,
                                 8, PropModeReplace, (unsigned char*)xdnd_file_url,
                                 strlen(xdnd_file_url));
@@ -618,6 +691,10 @@ int file_drag_update(bool is_dragging, int x, int y) {
 
             XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&m);
             XFlush(display);
+
+            free(xdnd_file_list);
+            xdnd_file_list = NULL;
+            xdnd_file_list_len = 0;
         }
     }
 

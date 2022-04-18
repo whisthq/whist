@@ -513,6 +513,7 @@ void *multithreaded_download_watcher(void *opaque) {
     inotify_fd = inotify_init();
 
     mkpath(WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/downloads", 0777);
+    mkpath(WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/temp_dragging", 0777);
     mkpath(WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/ready", 0777);
     mkpath(WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/file_info", 0777);
     mkpath(WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/fuse_ready", 0777);

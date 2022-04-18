@@ -26,6 +26,16 @@ Includes
 
 #include <whist/file/file_synchronizer.h>
 
+/**
+ * @brief                          A packet of data referring to and containing
+ *                                 the information for an active file drag.
+ */
+typedef struct FileDragData {
+    int num_files;             // The number of files being dragged
+    size_t file_uri_list_len;  // Number of bytes for the file uri list
+    char data[0];              // The file uri list (separated by \0s)
+} FileDragData;
+
 /*
 ============================
 Public Functions

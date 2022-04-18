@@ -62,6 +62,7 @@ Includes
 #include <whist/utils/threads.h>
 #include <whist/clipboard/clipboard_synchronizer.h>
 #include <whist/file/file_synchronizer.h>
+#include <whist/file/file_drop.h>
 #include <whist/utils/color.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
@@ -757,6 +758,7 @@ typedef struct WhistClientMessage {
         FileMetadata file_metadata;  // CMESSAGE_FILE_METADATA
         FileData file;               // CMESSAGE_FILE_DATA
         char urls_to_open[0];        // MESSAGE_OPEN_URL
+        FileDragData file_drag_data; // MESSAGE_CONTENT_DRAG_UPDATE
     };
 } WhistClientMessage;
 
