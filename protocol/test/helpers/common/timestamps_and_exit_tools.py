@@ -20,31 +20,31 @@ class PrintFormats:
     end_formatting = "\033[0m"
 
 
-def print_blue(text):
+def printblue(text):
     print(f"{PrintFormats.blue}{text}{PrintFormats.end_formatting}")
 
 
-def print_cyan(text):
+def printcyan(text):
     print(f"{PrintFormats.cyan}{text}{PrintFormats.end_formatting}")
 
 
-def print_green(text):
+def printgreen(text):
     print(f"{PrintFormats.green}{text}{PrintFormats.end_formatting}")
 
 
-def print_yellow(text):
+def printyellow(text):
     print(f"{PrintFormats.yellow}{text}{PrintFormats.end_formatting}")
 
 
-def print_red(text):
+def printred(text):
     print(f"{PrintFormats.red}{text}{PrintFormats.end_formatting}")
 
 
-def print_bold(text):
+def printbold(text):
     print(f"{PrintFormats.bold}{text}{PrintFormats.end_formatting}")
 
 
-def print_underline(text):
+def printunderline(text):
     print(f"{PrintFormats.underline}{text}{PrintFormats.end_formatting}")
 
 
@@ -70,7 +70,7 @@ class TimeStamps:
         self.most_time_consuming_event = max(self.most_time_consuming_event, time_elapsed)
         print(f"{event_name} took {str(time_elapsed)}")
 
-    def print_timestamps(self):
+    def printtimestamps(self):
         print()
         print("**** E2E time breakdown ****")
         for i, event in enumerate(self.events):
@@ -80,7 +80,7 @@ class TimeStamps:
             padding_len = self.max_event_name_len - len(event_name)
             padding = " " * padding_len if padding_len > 0 else ""
             if time_elapsed == self.most_time_consuming_event:
-                print_bold(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}")
+                printbold(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}")
             else:
                 print(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}")
         print("############################")
@@ -89,7 +89,7 @@ class TimeStamps:
 
 def exit_with_error(error_message, timestamps=None):
     if error_message is not None:
-        print_red(error_message)
+        printred(error_message)
     if timestamps is not None:
-        timestamps.print_timestamps()
+        timestamps.printtimestamps()
     sys.exit(-1)

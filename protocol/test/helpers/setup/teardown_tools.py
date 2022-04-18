@@ -10,7 +10,7 @@ from helpers.common.ssh_tools import (
     wait_until_cmd_done,
 )
 
-from helpers.common.timestamps_and_exit_tools import TimeStamps
+from helpers.common.timestamps_and_exit_tools import TimeStamps, printred
 
 from helpers.aws.boto3_tools import (
     terminate_or_stop_aws_instance,
@@ -389,7 +389,7 @@ def complete_experiment_and_save_results(
         "server_hang_detected": "WhistServer hang detected",
     }.items():
         if experiment_metadata[cause]:
-            print_red(f"{message}! Exiting with error. Check the logs for more details.")
+            printred(f"{message}! Exiting with error. Check the logs for more details.")
             return -1
 
     return 0

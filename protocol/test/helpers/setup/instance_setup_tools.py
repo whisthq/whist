@@ -12,7 +12,7 @@ from helpers.common.ssh_tools import (
     reboot_instance,
 )
 
-from helpers.common.timestamps_and_exit_tools import exit_with_error, print_yellow
+from helpers.common.timestamps_and_exit_tools import exit_with_error, printyellow
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -129,7 +129,7 @@ def install_and_configure_aws(
             )
 
             if apt_get_unzip_failed:
-                print_yellow(
+                printyellow(
                     "Installing 'unzip' using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
                 )
                 exit_with_error("Installing AWS-CLI from source failed")
