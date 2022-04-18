@@ -323,6 +323,8 @@ int get_wcmsg_size(WhistClientMessage *wcmsg) {
         return (int)(sizeof(*wcmsg) + wcmsg->file_metadata.filename_len);
     } else if (wcmsg->type == CMESSAGE_FILE_DATA) {
         return (int)(sizeof(*wcmsg) + wcmsg->file.size);
+    } else if (wcmsg->type == MESSAGE_CONTENT_DRAG_UPDATE) {
+        return (int)(sizeof(*wcmsg) + wcmsg->file_drag_data.file_uri_list_len);
     } else if (wcmsg->type == MESSAGE_OPEN_URL) {
         return (int)(sizeof(*wcmsg) + strlen((const char *)&wcmsg->urls_to_open) + 1);
     } else {

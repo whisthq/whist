@@ -372,8 +372,9 @@ static int handle_file_upload_cancel_message(WhistServerState *state, WhistClien
 }
 
 static int handle_content_drag_update_message(whist_server_state * state, WhistClientMessage *wcmsg) {
-    switch (wcmsg->contentDragUpdate.update_type) {
+    switch (wcmsg->file_drag_data.update_type) {
         case CONTENT_DRAG_FILE_START: {
+            file_drag_update(true, wcmsg->contentDragUpdate.x, wcmsg->contentDragUpdate.y, &wcmsg->file_drag_data);
             break;
         }
         case CONTENT_DRAG_TEXT_START: {
@@ -381,6 +382,7 @@ static int handle_content_drag_update_message(whist_server_state * state, WhistC
             break;
         }
         case CONTENT_DRAG_MOVE: {
+            file_drag_update(true, wcmsg->contentDragUpdate.x, wcmsg->contentDragUpdate.y, NULL);
             break;
         }
         case CONTENT_DRAG_COMPLETE: {
@@ -391,7 +393,6 @@ static int handle_content_drag_update_message(whist_server_state * state, WhistC
             break;
         }
     }
-    // (TODO) update this to actually send the drop_file
-    // file_drag_update(wcmsg->contentDragUpdate.update_type, wcmsg->contentDragUpdate.x, wcmsg->contentDragUpdate.y);
+
     return 0;
 }

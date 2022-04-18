@@ -31,7 +31,7 @@ Includes
  *                                 the information for an active file drag.
  */
 typedef struct FileDragData {
-    int num_files;             // The number of files being dragged
+    // int num_files;             // The number of files being dragged
     size_t file_uri_list_len;  // Number of bytes for the file uri list
     char data[0];              // The file uri list (separated by \0s)
 } FileDragData;
@@ -91,6 +91,6 @@ int file_drop_mark_ready(int id);
  */
 void destroy_file_drop_handler(void);
 
-int file_drag_update(bool is_dragging, int x, int y);
+int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list);
 
 #endif  // FILE_DROP_H

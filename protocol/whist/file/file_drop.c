@@ -45,7 +45,7 @@ void destroy_file_drop_handler(void) {
     LOG_WARNING("UNIMPLEMENTED: destroy_file_drop_handler on non-Linux");
 }
 
-int file_drag_update(bool is_dragging, int x, int y) {
+int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
     LOG_WARNING("UNIMPLEMENTED: file_drag_update on non-Linux");
     return -1;
 }
@@ -204,7 +204,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
 
     // Just in case a drag end event was sent before
     // if (file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y) < 0) {
-    if (!file_uri_list || file_drag_update(true, drop_x, drop_y) < 0) {
+    if (!file_uri_list || file_drag_update(true, drop_x, drop_y, NULL) < 0) {
         retval = -1;
         goto reset_file_drop_statics;
     }
@@ -228,7 +228,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
                 // XSendEvent(display, active_window, False, NoEventMask, (XEvent*)&position_message);
                 // XFlush(display);
                 // file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y);
-                file_drag_update(true, drop_x, drop_y);
+                file_drag_update(true, drop_x, drop_y, NULL);
             } else {
                 LOG_INFO("ACCEPTING DROP");
                 // Active X11 window is accepting the drop
@@ -296,7 +296,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     }
 
     // Just to make sure that the file drag event ends
-    file_drag_update(false, 0, 0);
+    file_drag_update(false, 0, 0, NULL);
 
     // TODO: update how we log this since we are dropping many files
     // LOG_INFO("XDND exchange for file ID %d complete", drop_file->id);
@@ -410,7 +410,7 @@ void destroy_file_drop_handler(void) {
     }
 }
 
-int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
+int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
     /*
         Update the file drag indicator
     */
@@ -438,7 +438,8 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
     if (file_list) {
         // TODO: remove existing temp dragging files by deleting everything in the temp_dragging folder
         const char* delimiter = "\n";
-        char* file_list_token = strtok_s(file_list, delimiter);
+        char* strtok_context = NULL;
+        char* file_list_token = strtok_r(file_list->data, delimiter, &strtok_context);
         char drag_path_middle[64];
         int id = 0;
         while (file_list_token) {
@@ -463,7 +464,7 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
                 xdnd_file_list = safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
                 xdnd_file_list[xdnd_file_list_len - 1] = '\n';
             } else {
-                xdnd_file_list = safe_malloc(addon_size);
+                xdnd_file_list = safe_malloc(drag_path_size);
             }
             // memset(xdnd_file_list + xdnd_file_list_len, 0, addon_size);
             // safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path_start, strlen(drag_path_start) + 1);
@@ -482,7 +483,7 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
 
             free(create_path);
 
-
+            file_list_token = strtok_r(NULL, delimiter, &strtok_context);
             xdnd_file_list_len += addon_size;
             id++;
         }
@@ -660,8 +661,8 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
                 //                 8, PropModeReplace, (unsigned char*)xdnd_file_url,
                 //                 strlen(xdnd_file_url));
                 XChangeProperty(display, requestor_window, selection_request_property, XA_text_uri_list,
-                                8, PropModeReplace, (unsigned char*)xdnd_file_url,
-                                strlen(xdnd_file_url));
+                                8, PropModeReplace, (unsigned char*)xdnd_file_list,
+                                strlen(xdnd_file_list));
 
                 XSendEvent(display, requestor_window, True, 0, &s);
                 XFlush(display);
