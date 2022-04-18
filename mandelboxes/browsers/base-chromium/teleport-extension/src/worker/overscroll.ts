@@ -54,13 +54,19 @@ const drawArrow = () => {
 
 const navigate = () => {
   const goBack = scrollX < 0
-  //   runInActiveTab((tabID: number) => {
-  //     goBack ? chrome.tabs.goBack(tabID) : chrome.tabs.goForward(tabID)
-  //   })
+  runInActiveTab((tabID: number) => {
+    goBack ? chrome.tabs.goBack(tabID) : chrome.tabs.goForward(tabID)
 
-  console.log("----------- RESETTING -----------")
+    chrome.tabs.sendMessage(tabID, <ContentScriptMessage>{
+      type: ContentScriptMessageType.DRAW_NAVIGATION_ARROW,
+      value: {
+        draw: false,
+      },
+    })
+  })
 
   scrollX = 0
+
   throttle(500)
 }
 
@@ -73,6 +79,7 @@ const refreshNavigationArrow = () => {
         draw: false,
       },
     })
+    scrollX = 0
   }
 }
 
@@ -86,7 +93,6 @@ const initGestureHandler = () => {
 
     // Update the total X overscroll amount
     updateOverscroll(msg.value.offset, msg.value.reset)
-    console.log("Delta", msg.value.offset, "Total", scrollX)
     // Draw the appropriate arrow
     drawArrow()
     // Navigate if necessary
