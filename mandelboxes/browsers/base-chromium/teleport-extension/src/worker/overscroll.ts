@@ -79,7 +79,6 @@ const refreshNavigationArrow = () => {
         draw: false,
       },
     })
-    scrollX = 0
   }
 }
 

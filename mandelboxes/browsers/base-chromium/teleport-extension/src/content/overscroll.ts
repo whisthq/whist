@@ -11,8 +11,6 @@ let previousYDeltas = cyclingArray<number>(4, [])
 let previousXOffset = 0
 let previousArrowDirection: string | undefined = undefined
 
-const now = () => Date.now() / 1000
-
 const removeArrow = () => {
   arrow?.remove()
   arrow = undefined
@@ -64,16 +62,6 @@ const initSwipeGestures = () => {
   window.addEventListener("wheel", detectGesture)
   // Respond to draw arrow commands from the worker
   initNavigationArrow()
-
-  window.addEventListener("popstate", () => {
-    console.log("State popped")
-    removeArrow()
-  })
-
-  window.addEventListener("pushstate", () => {
-    console.log("State pushed")
-    removeArrow()
-  })
 }
 
 export { initSwipeGestures }
