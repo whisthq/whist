@@ -69,16 +69,12 @@ def server_setup_process(args_dict):
     )
 
     print("Configuring AWS credentials on server instance...")
-    result = install_and_configure_aws(
+    install_and_configure_aws(
         hs_process,
         pexpect_prompt_server,
         running_in_ci,
         aws_credentials_filepath,
     )
-
-    if not result:
-        # This will exit the process spawned by the Multiprocess class, not the E2E script
-        exit_with_error(None)
 
     prune_containers_if_needed(hs_process, pexpect_prompt_server, running_in_ci)
 

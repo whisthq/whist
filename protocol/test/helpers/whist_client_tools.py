@@ -81,15 +81,12 @@ def client_setup_process(args_dict):
         restore_network_conditions(hs_process, pexpect_prompt_client, running_in_ci)
 
         print("Configuring AWS credentials on client instance...")
-        result = install_and_configure_aws(
+        install_and_configure_aws(
             hs_process,
             pexpect_prompt_client,
             running_in_ci,
             aws_credentials_filepath,
         )
-        if not result:
-            # This will exit the process spawned by the Multiprocess class, not the E2E script
-            exit_with_error(error_message=None)
 
         prune_containers_if_needed(hs_process, pexpect_prompt_client, running_in_ci)
 
