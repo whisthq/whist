@@ -100,7 +100,8 @@ def create_ec2_instance(
                 ],
             },
         ],
-        "VpcId": "vpc-03a7ed0d3076fa64c",  # MainVPCdev
+        # "VpcId": "vpc-03a7ed0d3076fa64c",  # MainVPCdev
+        "SubnetId": "DefaultSubnetdev",
         "SecurityGroups": [
             "MandelboxesSecurityGroup",
         ],
