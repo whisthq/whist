@@ -61,6 +61,7 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.keylayout.Austrian", {"xkb:de::ger", ""}},  // Same as German on Linux
     {"com.apple.keylayout.Canadian-CSA", {"xkb:ca:eng:eng", ""}},
     {"com.apple.keylayout.Turkish-QWERTY", {"xkb:tr::tur", ""}},
+    {"com.apple.keylayout.Turkish-QWERTY-PC", {"xkb:tr::tur", ""}},
     {"com.apple.keylayout.ABC-AZERTY", {"xkb:fr::fra", ""}},
     {"com.apple.keylayout.French", {"xkb:fr::fra", ""}},
     {"com.apple.keylayout.SwissFrench", {"xkb:ch:fr:fra", ""}},
