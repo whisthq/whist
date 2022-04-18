@@ -32,37 +32,37 @@ PROCFILE="$DEPLOY_DIR/Procfile"
 ####################################################
 
 # `deploy_scaling_service` will perform the necessary setup for
-# deploying a new version of the scaling service to Heroku and 
+# deploying a new version of the scaling service to Heroku and
 # push the changes.
 # Args: none
 deploy_scaling_service() {
-    # Copy the binary to the scaling-service deploy directory. This is necessary because we will use it as standalone repo.
-    mkdir -p "$DEPLOY_DIR" && cp ./backend/services/build/scaling-service "$DEPLOY_DIR"
+  # Copy the binary to the scaling-service deploy directory. This is necessary because we will use it as standalone repo.
+  mkdir -p "$DEPLOY_DIR" && cp ./backend/services/build/scaling-service "$DEPLOY_DIR"
 
-    # Write region image map to var file so the Procfile can read it.
-    echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
+  # Write region image map to var file so the Procfile can read it.
+  echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
 
-    # Write Procfile
-    echo -e "web: ./scaling-service" > "$PROCFILE"
+  # Write Procfile
+  echo -e "web: ./scaling-service" > "$PROCFILE"
 
-    # Populate the deploy/ directory
-    mv "$DEPLOY_DIR" ..
-    git switch --orphan deploy-branch
-    git clean -dfx # remove any .gitignored files that might remain
-    mv ../deploy/* .
-    git add .
-    git commit -m "scaling-service deploy for $MONOREPO_COMMIT_HASH"
+  # Populate the deploy/ directory
+  mv "$DEPLOY_DIR" ..
+  git switch --orphan deploy-branch
+  git clean -dfx # remove any .gitignored files that might remain
+  mv ../deploy/* .
+  git add .
+  git commit -m "scaling-service deploy for $MONOREPO_COMMIT_HASH"
 
-    # Create null buildpack, see: https://elements.heroku.com/buildpacks/ryandotsmith/null-buildpack, this is
-    # necessary since Heroku requires a buildpack for every app
-    heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP_NAME" || true
+  # Create null buildpack, see: https://elements.heroku.com/buildpacks/ryandotsmith/null-buildpack, this is
+  # necessary since Heroku requires a buildpack for every app
+  heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP_NAME" || true
 
-    # Push deploy directory to Heroku
-    echo "Deploying scaling-service..."
-    git push -f heroku-whist-scaling-service deploy-branch:master
+  # Push deploy directory to Heroku
+  echo "Deploying scaling-service..."
+  git push -f heroku-whist-scaling-service deploy-branch:master
 
-    # Scale Heroku dyno to start the web process
-    heroku ps:scale web=1 -a "$HEROKU_APP_NAME"
+  # Scale Heroku dyno to start the web process
+  heroku ps:scale web=1 -a "$HEROKU_APP_NAME"
 }
 
 # if true, a future step will send a slack notification
