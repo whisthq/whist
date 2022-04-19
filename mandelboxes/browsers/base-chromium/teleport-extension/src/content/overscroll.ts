@@ -32,10 +32,11 @@ const resetFlag = () => {
 }
 
 const trim = (update: number) => {
-  let abs = Math.abs(update)
-  if (abs > 250) abs = 250
+  return update
+  //   let abs = Math.abs(update)
+  //   if (abs > 250) abs = 250
 
-  return update >= 0 ? abs : -1 * abs
+  //   return update >= 0 ? abs : -1 * abs
 }
 
 const render = () => {
