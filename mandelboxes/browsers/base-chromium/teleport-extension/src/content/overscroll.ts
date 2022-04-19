@@ -9,7 +9,6 @@ const trim = (delta: number) => {
   let abs = Math.abs(delta)
 
   if (abs > 25) abs = 25
-  if (abs < 5) abs = 5
 
   return delta > 0 ? abs : -1 * abs
 }
@@ -38,7 +37,7 @@ const handleYOverscroll = (e: WheelEvent) => {
 
   updateTotalMargin(trim(e.deltaY))
 
-  body.style.marginTop = `${topOverscroll}px`
+  body.style.marginTop = `${Math.abs(topOverscroll)}px`
 
   console.log(body.style.marginTop)
 }
