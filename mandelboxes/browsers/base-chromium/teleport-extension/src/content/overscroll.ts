@@ -23,9 +23,11 @@ const updateTotalMargin = (delta: number) => {
 }
 
 const handleYOverscroll = (e: WheelEvent) => {
+  const canScroll = element.scrollHeight > element.clientHeight
+  console.log(canScroll)
   const isOverscrollingTop = element.scrollTop === 0 && e.deltaY < 0
 
-  if (!isOverscrollingTop) {
+  if (!isOverscrollingTop || !canScroll) {
     topOverscroll = 0
     return
   }
@@ -42,8 +44,7 @@ const handleYOverscroll = (e: WheelEvent) => {
 }
 
 const initYOverscrollHandler = () => {
-  const canScroll = element.scrollHeight > element.clientHeight
-  if (canScroll) window.addEventListener("wheel", handleYOverscroll)
+  window.addEventListener("wheel", handleYOverscroll)
 }
 
 export { initYOverscrollHandler }
