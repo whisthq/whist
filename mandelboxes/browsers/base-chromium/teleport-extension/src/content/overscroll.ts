@@ -3,51 +3,47 @@ const element =
     ? document.body
     : document.documentElement
 
-let previousYOffset = 0
-let totalMargin = 0
+let topOverscroll = 0
 
-// const trim = (delta: number) => {
-//     let abs = Math.abs(delta)
+const trim = (delta: number) => {
+  let abs = Math.abs(delta)
 
-//     if(abs > 25) abs = 25
-//     if(abs < 5) abs = 5
+  if (abs > 25) abs = 25
+  if (abs < 5) abs = 5
 
-//     return delta > 0 ? abs : -1 * abs
-// }
+  return delta > 0 ? abs : -1 * abs
+}
 
-// const updateTotalMargin = (delta: number) => {
-//     if(totalMargin + )
-// }
+const updateTotalMargin = (delta: number) => {
+  if (topOverscroll + delta < 50) {
+    topOverscroll += delta
+  } else {
+    topOverscroll = 50
+  }
+}
 
 const handleYOverscroll = (e: WheelEvent) => {
-  //   if (previousYOffset - e.offsetY !== 0) {
-  //     previousYOffset = e.offsetY
-  //     return
-  //   }
+  const isOverscrollingTop = element.scrollTop === 0 && e.deltaY < 0
 
-  previousYOffset = e.offsetY
+  if (!isOverscrollingTop) {
+    topOverscroll = 0
+    return
+  }
 
-  console.log(
-    "offset",
-    e.offsetY,
-    "scrolltop",
-    element.scrollTop,
-    "inner height",
-    window.innerHeight
-  )
+  const body = (
+    document.getElementsByTagName("BODY") as HTMLCollectionOf<HTMLElement>
+  )[0]
 
-  //   const body = (
-  //     document.getElementsByTagName("BODY") as HTMLCollectionOf<HTMLElement>
-  //   )[0]
-  //   const overscrollTop = e.deltaX < 0
+  updateTotalMargin(trim(e.deltaY))
 
-  //   if(overscrollTop) {
-  //       body.style.marginTop = totalMargin +
-  //   }
+  body.style.marginTop = `${topOverscroll}px`
+
+  console.log(body.style.marginTop)
 }
 
 const initYOverscrollHandler = () => {
-  window.addEventListener("wheel", handleYOverscroll)
+  const canScroll = element.scrollHeight > element.clientHeight
+  if (canScroll) window.addEventListener("wheel", handleYOverscroll)
 }
 
 export { initYOverscrollHandler }
