@@ -14,14 +14,14 @@ let backFlag = false
 
 let timer: any
 
-function resetFlag() {
+const resetFlag = () => {
   clearTimeout(timer)
   timer = setTimeout(() => {
     backFlag = false
   }, 30)
 }
 
-function render() {
+const render = () => {
   if (!offset && !rendered) {
     lastDis = 0
 
@@ -60,31 +60,16 @@ const DELTA_MODE = [1.0, 28.0, 500.0]
 
 const getDeltaMode = (mode: any) => DELTA_MODE[mode] || DELTA_MODE[0]
 
-const getDelta = (evt: any) => {
-  if ("deltaX" in evt) {
-    const mode = getDeltaMode(evt.deltaMode)
+const getDelta = (evt: WheelEvent) => {
+  const mode = getDeltaMode(evt.deltaMode)
 
-    return {
-      x: (evt.deltaX / DELTA_SCALE.STANDARD) * mode,
-      y: (evt.deltaY / DELTA_SCALE.STANDARD) * mode,
-    }
-  }
-
-  if ("wheelDeltaX" in evt) {
-    return {
-      x: evt.wheelDeltaX / DELTA_SCALE.OTHERS,
-      y: evt.wheelDeltaY / DELTA_SCALE.OTHERS,
-    }
-  }
-
-  // ie with touchpad
   return {
-    x: 0,
-    y: evt.wheelDelta / DELTA_SCALE.OTHERS,
+    x: (evt.deltaX / DELTA_SCALE.STANDARD) * mode,
+    y: (evt.deltaY / DELTA_SCALE.STANDARD) * mode,
   }
 }
 
-function isOntoEdge(delta: any) {
+const isOntoEdge = (delta: number) => {
   const { scrollTop, scrollHeight, clientHeight } = content
 
   const max = scrollHeight - clientHeight
