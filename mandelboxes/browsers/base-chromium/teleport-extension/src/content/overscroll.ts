@@ -114,10 +114,13 @@ const handler = (evt: WheelEvent) => {
 
     const updated = offset + update
     if ((onTopEdge && updated > 0) || (onBottomEdge && updated < 0)) {
+      backFlag = true
       offset = 0
     } else {
       offset = updated
     }
+
+    console.log(offset)
   }
 }
 
@@ -125,7 +128,7 @@ render()
 
 // wheel events handler
 const initYOverscrollHandler = () => {
-  window.addEventListener("wheel", throttle(handler, 10), { passive: false })
+  window.addEventListener("wheel", handler, { passive: false })
 }
 
 export { initYOverscrollHandler }
