@@ -119,7 +119,7 @@ const handler = (evt: WheelEvent) => {
     const updated = trim(offset + update)
     if ((onTopEdge && updated > 0) || (onBottomEdge && updated < 0)) {
       content.style.transform = "none"
-      offset = -1
+      //   offset = -1
     } else {
       offset = updated
     }
