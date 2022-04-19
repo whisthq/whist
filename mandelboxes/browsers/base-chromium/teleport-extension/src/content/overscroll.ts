@@ -27,19 +27,11 @@ const resetFlag = () => {
   clearTimeout(timer)
   timer = setTimeout(() => {
     backFlag = false
-  }, 30)
+  }, 50)
 }
 
-const throttle = (fn: any, delay: number) => {
-  let lastCall = 0
-  return (...args: any[]) => {
-    const now = new Date().getTime()
-    if (now - lastCall < delay) {
-      return
-    }
-    lastCall = now
-    return fn(...args)
-  }
+const sleep = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 const render = () => {
@@ -51,7 +43,7 @@ const render = () => {
 
   const dis = offset - rendered
 
-  if (lastDis * dis < 0) {
+  if (lastDis * dis <= 0) {
     backFlag = true
   }
 
@@ -129,7 +121,7 @@ render()
 
 // wheel events handler
 const initYOverscrollHandler = () => {
-  window.addEventListener("wheel", throttle(handler, 20), { passive: false })
+  window.addEventListener("wheel", handler, { passive: false })
 }
 
 export { initYOverscrollHandler }
