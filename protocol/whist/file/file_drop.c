@@ -119,14 +119,6 @@ bool init_file_drop_handler(void) {
     return true;
 }
 
-void xdnd_get_windows() {
-    // Get our window and active X11 window
-    unsigned long color = BlackPixel(display, DefaultScreen(display));
-    our_window =
-        XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1, 1, 0, color, color);
-    XGetInputFocus(display, &active_window, &revert);
-}
-
 void xdnd_send_drop() {
     XClientMessageEvent m;
     memset(&m, 0, sizeof(m));
@@ -188,6 +180,14 @@ void xdnd_send_position(int x, int y) {
 }
 
 int xdnd_own_and_send_enter() {
+    if (!display || !active_window || !our_window) {
+        // Get our window and active X11 window
+        unsigned long color = BlackPixel(display, DefaultScreen(display));
+        our_window =
+            XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1, 1, 0, color, color);
+        XGetInputFocus(display, &active_window, &revert);
+    }
+
     XSetSelectionOwner(display, XA_XdndSelection, our_window, CurrentTime);
 
     XClientMessageEvent m;
@@ -341,7 +341,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     // XDND 1 - We take ownership of XdndSelection
     // XDND 2 - We send XdndEnter to active X11 window
     // Get our XDND version
-    if (xdnd_own_and_send_enter(active_window, our_window, display) < 0) {
+    if (xdnd_own_and_send_enter() < 0) {
         return -1;
     }
 
@@ -353,8 +353,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     //     we can skip this step in the XDND exchange.
 
     // XDND 4 - Send XdndPosition to active X11 window
-    xdnd_send_position(drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y,
-        active_window, our_window, display);
+    xdnd_send_position(drop_x, drop_y);
 
     WhistTimer active_window_response_loop_timer;
     start_timer(&active_window_response_loop_timer);
@@ -371,16 +370,15 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
                 // XDND 4.5 - Active X11 window is not accepting the drop yet,
                 //     so we wait and resend our XdndPosition message
                 whist_sleep(50);
-                xdnd_send_position(drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y,
-                    active_window, our_window, display);
+                xdnd_send_position(drop_x, drop_y);
             } else {
                 // Active X11 window is accepting the drop
                 // XDND 6 - Send XdndDrop to active X11 window
-                xdnd_send_drop(active_window, our_window, display);
+                xdnd_send_drop();
                 accepted_drop = true;
             }
         } else if (e.type == SelectionRequest) {
-            xdnd_send_selection_notify(file_uri_list, e, display);
+            xdnd_send_selection_notify(file_uri_list, e);
         } else if (e.type == ClientMessage && e.xclient.message_type == XA_XdndFinished) {
             // The active X11 window has indicated that it is done with the drag and drop sequence,
             // so we can break
@@ -390,7 +388,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
 
     // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate that
     // the XDND communication sequence is complete
-    xdnd_send_leave(active_window, our_window, display);
+    xdnd_send_leave();
 
     if (!accepted_drop) {
         // TODO: update how we log this since we are dropping many files
@@ -599,8 +597,6 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
 
     // static bool active_file_drag = false;
 
-    // xdnd_get_windows();
-
     // if (!display || !active_window) {
     //     // No display or active window
     //     return -1;
@@ -622,7 +618,7 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
     //         // XDND 1 - We take ownership of XdndSelection
     //         // XDND 2 - We send XdndEnter to active X11 window
     //         // Get our XDND version
-    //         if (xdnd_own_and_send_enter(active_window, our_window, display) < 0) {
+    //         if (xdnd_own_and_send_enter() < 0) {
     //             return -1;
     //         }
 
@@ -635,7 +631,7 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
     //     }
 
     //     // XDND 4 - Send XdndPosition to active X11 window
-    //     xdnd_send_position(x, y, active_window, our_window, display);
+    //     xdnd_send_position(x, y);
 
     //     XEvent e;
     //     XLockDisplay(display);
@@ -649,12 +645,12 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
     //         if ((e.xclient.data.l[1] & 1) == 0) {
     //             // XDND 4.5 - Active X11 window is not accepting the drop yet,
     //             //     so we wait and resend our XdndPosition message
-    //             xdnd_send_position(x, y, active_window, our_window, display);
+    //             xdnd_send_position(x, y);
     //             LOG_INFO("NOT ACCEPTING DROP");
     //         } else {
     //             // Active X11 window is accepting the drop
     //             // XDND 6 - Send XdndDrop to active X11 window
-    //             xdnd_send_drop(active_window, our_window, display);
+    //             xdnd_send_drop();
     //             accepted_drop = true;
     //             LOG_INFO("ACCEPTING DROP");
     //         }
@@ -662,7 +658,7 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
     //         // When we receive a SelectionRequest from the active X11 window, we send a
     //         // SelectionNotify event back to
     //         //     the active X11 window with all of the information about the drop.
-    //         xdnd_send_selection_notify(xdnd_file_list, e, display);
+    //         xdnd_send_selection_notify(xdnd_file_list, e);
     //         LOG_INFO("SELECTION REQUEST %s", xdnd_file_list);
     //     } else if (e.type == ClientMessage && e.xclient.message_type == XA_XdndFinished) {
     //         // The active X11 window has indicated that it is done with the drag and drop sequence,
@@ -678,7 +674,7 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
 
     //         // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate that
     //         // the XDND communication sequence is complete
-    //         xdnd_send_leave(active_window, our_window, display);
+    //         xdnd_send_leave();
 
     //         free(xdnd_file_list);
     //         xdnd_file_list = NULL;
