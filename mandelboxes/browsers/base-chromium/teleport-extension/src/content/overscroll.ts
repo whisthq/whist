@@ -1,18 +1,22 @@
+// A lower damping value causes the spring to bounce back more quickly
 const damping = 0.9
+// A higher maxOffset means the page can bounce further
 const maxOffset = 100
+// The minimum Y delta, so light scrolls can lead to bigger bounces
+const minDelta = 10
 
-const content =
-  document.compatMode === "BackCompat"
-    ? document.body
-    : document.documentElement
-
-// states
+// Number of pixels to bounce
 let offset = 0
 let rendered = 0
 let lastDis = 0
 let backFlag = false
 
 let timer: any
+
+const content =
+  document.compatMode === "BackCompat"
+    ? document.body
+    : document.documentElement
 
 // Copied from smooth-scrollbar/src/utils/get-delta.js
 const DELTA_SCALE = {
@@ -105,9 +109,10 @@ const handler = (evt: WheelEvent) => {
 
   // If the user is overscrolling, play the animation
   if (!backFlag && y) {
-    const update = (y * (maxOffset - Math.abs(offset))) / maxOffset
+    let update = (y * (maxOffset - Math.abs(offset))) / maxOffset
 
-    if (Math.abs(update) < 10) return
+    if (Math.abs(update) < minDelta && update < 0) update = -1 * minDelta
+    if (Math.abs(update) < minDelta && update > 0) update = minDelta
 
     const updated = trim(offset + update)
     if ((onTopEdge && updated > 0) || (onBottomEdge && updated < 0)) {
