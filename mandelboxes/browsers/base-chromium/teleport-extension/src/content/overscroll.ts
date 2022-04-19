@@ -8,7 +8,7 @@ let topOverscroll = 0
 const trim = (delta: number) => {
   let abs = Math.abs(delta)
 
-  if (abs > 10) abs = 10
+  if (abs > 8) abs = 8
 
   return delta > 0 ? abs : -1 * abs
 }
@@ -24,8 +24,7 @@ const updateTotalMargin = (delta: number) => {
 
 const handleYOverscroll = (e: WheelEvent) => {
   const canScroll = element.scrollHeight > element.clientHeight
-  console.log(canScroll)
-  const isOverscrollingTop = element.scrollTop === 0 && e.deltaY < 0
+  const isOverscrollingTop = element.scrollTop === 0 && Math.abs(e.deltaY) > 0
 
   if (!isOverscrollingTop || !canScroll) {
     topOverscroll = 0
@@ -39,8 +38,6 @@ const handleYOverscroll = (e: WheelEvent) => {
   updateTotalMargin(trim(e.deltaY))
 
   body.style.marginTop = `${Math.abs(topOverscroll)}px`
-
-  console.log(body.style.marginTop)
 }
 
 const initYOverscrollHandler = () => {
