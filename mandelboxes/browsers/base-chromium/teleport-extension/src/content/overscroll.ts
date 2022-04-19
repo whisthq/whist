@@ -2,7 +2,7 @@
 const damping = 0.9
 // A higher maxOffset means the page can bounce further
 const maxOffset = 100
-const minDelta = 20
+const minDelta = 50
 
 // Number of pixels to bounce
 let offset = 0
