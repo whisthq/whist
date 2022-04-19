@@ -1,47 +1,115 @@
-const element =
+const damping = 0.8
+const maxOffset = 100
+
+const container = window
+const content =
   document.compatMode === "BackCompat"
     ? document.body
     : document.documentElement
 
-let topMargin = 0
+// states
+let offset = 0
+let rendered = 0
+let lastDis = 0
+let backFlag = false
 
-const trim = (delta: number) => {
-  let abs = Math.abs(delta)
+let timer: any
 
-  if (abs > 5) abs = 5
-
-  return delta > 0 ? abs : -1 * abs
+function resetFlag() {
+  clearTimeout(timer)
+  timer = setTimeout(() => {
+    backFlag = false
+  }, 30)
 }
 
-const updateTopMargin = (delta: number) => {
-  const update = topMargin + delta
-  if (update < -50) {
-    topMargin = -50
-  } else {
-    topMargin = update
+function render() {
+  if (!offset && !rendered) {
+    lastDis = 0
+
+    return requestAnimationFrame(render)
+  }
+
+  const dis = offset - rendered
+
+  if (lastDis * dis < 0) {
+    backFlag = true
+  }
+
+  lastDis = dis
+
+  // throw away float part
+  const next = offset - ((dis * damping) | 0)
+
+  content.style.transform = `translate3d(0, ${-next}px, 0)`
+
+  rendered = next
+  offset = (offset * damping) | 0
+
+  requestAnimationFrame(render)
+}
+
+render()
+
+// wheel delta normalizing
+// copied from smooth-scrollbar/src/utils/get-delta.js
+const DELTA_SCALE = {
+  STANDARD: 1,
+  OTHERS: -3,
+}
+
+const DELTA_MODE = [1.0, 28.0, 500.0]
+
+const getDeltaMode = (mode: any) => DELTA_MODE[mode] || DELTA_MODE[0]
+
+const getDelta = (evt: any) => {
+  if ("deltaX" in evt) {
+    const mode = getDeltaMode(evt.deltaMode)
+
+    return {
+      x: (evt.deltaX / DELTA_SCALE.STANDARD) * mode,
+      y: (evt.deltaY / DELTA_SCALE.STANDARD) * mode,
+    }
+  }
+
+  if ("wheelDeltaX" in evt) {
+    return {
+      x: evt.wheelDeltaX / DELTA_SCALE.OTHERS,
+      y: evt.wheelDeltaY / DELTA_SCALE.OTHERS,
+    }
+  }
+
+  // ie with touchpad
+  return {
+    x: 0,
+    y: evt.wheelDelta / DELTA_SCALE.OTHERS,
   }
 }
 
-const handleYOverscroll = (e: WheelEvent) => {
-  const canScroll = element.scrollHeight > element.clientHeight
-  const isOverscrollingTop = element.scrollTop === 0 && Math.abs(e.deltaY) > 0
-  const body = (
-    document.getElementsByTagName("BODY") as HTMLCollectionOf<HTMLElement>
-  )[0]
+function isOntoEdge(delta: any) {
+  const { scrollTop, scrollHeight, clientHeight } = content
 
-  if (!isOverscrollingTop || !canScroll) {
-    topMargin = 0
-    body.style.marginTop = "0px"
-    return
-  }
+  const max = scrollHeight - clientHeight
 
-  updateTopMargin(trim(e.deltaY))
-
-  body.style.marginTop = `${Math.abs(topMargin)}px`
+  return (scrollTop === 0 && delta <= 0) || (scrollTop === max && delta >= 0)
 }
 
+// wheel events handler
 const initYOverscrollHandler = () => {
-  window.addEventListener("wheel", handleYOverscroll)
+  window.addEventListener("wheel", (evt) => {
+    const { y } = getDelta(evt)
+
+    // check if scrolling onto very edge
+    if (!isOntoEdge(y)) {
+      return
+    }
+
+    resetFlag()
+    evt.preventDefault()
+
+    if (!backFlag && y) {
+      offset += (y * (maxOffset - Math.abs(offset))) / maxOffset
+    }
+  })
 }
 
 export { initYOverscrollHandler }
