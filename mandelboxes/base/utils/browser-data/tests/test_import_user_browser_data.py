@@ -366,21 +366,14 @@ leveldb_files = [
 
 @pytest.mark.parametrize("data_json,base_path,expected_files", leveldb_files)
 def test_write_leveldb_files(data_json, base_path, expected_files):
-    # Set up a test file in the directory to start
     base_path = os.path.expanduser(base_path)
     os.makedirs(base_path, exist_ok=True)
-    with open(os.path.join(base_path, "test"), "w") as test_file:
-        test_file.write("test")
 
     write_leveldb_data_to_files(data_json, base_path)
 
     # Check that the correct directory exists
     assert os.path.isdir(base_path)
 
-    # Check that the test file is no longer there
-    assert not os.path.isfile(os.path.join(base_path, "test"))
-
-    # Check that the correct files are there with the correct contents
     for file_name, file_content in expected_files.items():
         assert os.path.isfile(os.path.join(base_path, file_name))
         with open(os.path.join(base_path, file_name), "rb") as file:
