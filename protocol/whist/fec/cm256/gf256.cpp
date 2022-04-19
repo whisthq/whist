@@ -1344,7 +1344,7 @@ CpuInfo gf256_get_cpuinfo(void)
     #endif
     info.has_avx2 = CpuHasAVX2;
     info.has_ssse3 = CpuHasSSSE3;
-    into.has_sse2 = CpuHasSSE2;
+    info.has_sse2 = CpuHasSSE2;
 #elif defined(ANDROID) || defined(IOS) || defined(LINUX_ARM) || defined(MACOS_ARM)
     #if defined(__aarch64__)
         info.cpu_type = CPU_TYPE_ARM64;
