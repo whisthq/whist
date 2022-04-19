@@ -33,7 +33,7 @@ const resetFlag = () => {
 
 const trim = (update: number) => {
   let abs = Math.abs(update)
-  if (abs > 225) abs = 225
+  if (abs > maxOffset) abs = maxOffset
 
   return update >= 0 ? abs : -1 * abs
 }
