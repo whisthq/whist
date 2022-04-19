@@ -578,6 +578,8 @@ const getLocalStorage = async (
 const getPreferences = async (
   browser: InstalledBrowser
 ): Promise<string | undefined> => {
+  // TODO: Make this not crash
+  return undefined
   // If no browser is requested or the browser is not recognized, don't run anything
   if (
     browser === undefined ||
