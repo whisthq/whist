@@ -91,6 +91,9 @@ const isOnBottomEdge = (delta: number) => {
 const handler = (evt: WheelEvent) => {
   // Don't overscroll if the page has no scrollbar
   const canScroll = content.scrollHeight > content.clientHeight
+
+  console.log("can scroll", canScroll)
+
   if (!canScroll) return
 
   const { y } = getDelta(evt)
@@ -98,6 +101,8 @@ const handler = (evt: WheelEvent) => {
   // Check if the user has scrolled to the top/bottom limits of the page
   const onTopEdge = isOnTopEdge(y)
   const onBottomEdge = isOnBottomEdge(y)
+
+  console.log("on top edge", onTopEdge)
 
   if (!onTopEdge && !onBottomEdge) {
     content.style.transform = "none"
