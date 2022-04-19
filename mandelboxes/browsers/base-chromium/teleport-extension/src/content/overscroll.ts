@@ -27,7 +27,7 @@ const resetFlag = () => {
   clearTimeout(timer)
   timer = setTimeout(() => {
     backFlag = false
-  }, 50)
+  }, 250)
 }
 
 const trim = (update: number) => {
