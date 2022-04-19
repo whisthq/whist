@@ -20,6 +20,7 @@ from helpers.common.ssh_tools import (
 from helpers.common.timestamps_and_exit_tools import (
     TimeStamps,
     exit_with_error,
+    printyellow,
 )
 
 from helpers.setup.instance_setup_tools import (
@@ -41,7 +42,6 @@ from helpers.whist_server_tools import (
     server_setup_process,
     run_server_on_instance,
 )
-from protocol.test.helpers.common.timestamps_and_exit_tools import printyellow
 
 
 # Add the current directory to the path no matter where this is called from
