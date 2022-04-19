@@ -195,6 +195,10 @@ int xdnd_own_and_send_enter(void) {
         XGetInputFocus(display, &active_window, &revert);
     }
 
+    if (!display || !active_window || !our_window) {
+        return -1;
+    }
+
     XSetSelectionOwner(display, XA_XdndSelection, our_window, CurrentTime);
 
     XClientMessageEvent m;
@@ -524,170 +528,146 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
         Update the file drag indicator
     */
 
-    // // if (!drop_file) {
-    // //     return -1;
-    // // }
+    static char* xdnd_file_list = NULL;
+    static int xdnd_file_list_len = 0;
+    // const char* drag_path_middle_template = "drag-drop/temp_dragging/%d_";
+    const char* drag_path_middle_template = "drag-drop/temp%d/";
 
-    // // if (!file_list) {
-    // //     return -1;
-    // // }
+    const char* drag_path_template = "file:///home/whist/%s";
+    // const char* create_path_template = "/home/whist/.teleport/%s";
 
-    // static char* xdnd_file_list = NULL;
-    // static int xdnd_file_list_len = 0;
-    // // const char* drag_path_middle_template = "drag-drop/temp_dragging/%d_";
-    // const char* drag_path_middle_template = "drag-drop/temp%d/";
+    if (!file_list && !xdnd_file_list) {
+        return -1;
+    }
 
-    // const char* drag_path_template = "file:///home/whist/%s";
-    // // const char* create_path_template = "/home/whist/.teleport/%s";
+    // When drag first begins, peer should send a file_list of filenames being dragged
+    if (file_list) {
+        const char* delimiter = "\n";
+        char* strtok_context = NULL;
+        char* file_list_token = strtok_r(file_list->data, delimiter, &strtok_context);
+        char drag_path_middle[64];
+        int id = 0;
+        while (file_list_token) {
+            snprintf(drag_path_middle, 64, drag_path_middle_template, id);
+            int file_path_end_size = strlen(drag_path_middle) + strlen(file_list_token) + 1;
+            char* file_path_end = malloc(file_path_end_size);
+            memset(file_path_end, 0, file_path_end_size);
+            safe_strncpy(file_path_end, drag_path_middle, strlen(drag_path_middle) + 1);
+            safe_strncpy(file_path_end + strlen(drag_path_middle), file_list_token, strlen(file_list_token) + 1);
 
-    // if (!file_list && !xdnd_file_list) {
-    //     return -1;
-    // }
+            int drag_path_size = strlen(drag_path_template) + file_path_end_size + 2;
+            char* drag_path = malloc(drag_path_size);
+            snprintf(drag_path, drag_path_size, drag_path_template, file_path_end);
 
-    // // When drag first begins, peer should send a file_list to create temporary files for dragging
-    // if (file_list) {
-    //     // TODO: remove existing temp dragging files by deleting everything in the temp_dragging folder
-    //     const char* delimiter = "\n";
-    //     char* strtok_context = NULL;
-    //     char* file_list_token = strtok_r(file_list->data, delimiter, &strtok_context);
-    //     char drag_path_middle[64];
-    //     int id = 0;
-    //     while (file_list_token) {
-    //         snprintf(drag_path_middle, 64, drag_path_middle_template, id);
-    //         int file_path_end_size = strlen(drag_path_middle) + strlen(file_list_token) + 1;
-    //         char* file_path_end = malloc(file_path_end_size);
-    //         memset(file_path_end, 0, file_path_end_size);
-    //         safe_strncpy(file_path_end, drag_path_middle, strlen(drag_path_middle) + 1);
-    //         safe_strncpy(file_path_end + strlen(drag_path_middle), file_list_token, strlen(file_list_token) + 1);
+            // int create_path_size = strlen(create_path_template) + file_path_end_size + 2;
+            // char* create_path = malloc(create_path_size);
+            // snprintf(create_path, create_path_size, create_path_template, file_path_end);
 
-    //         int drag_path_size = strlen(drag_path_template) + file_path_end_size + 2;
-    //         char* drag_path = malloc(drag_path_size);
-    //         snprintf(drag_path, drag_path_size, drag_path_template, file_path_end);
+            free(file_path_end);
 
-    //         // int create_path_size = strlen(create_path_template) + file_path_end_size + 2;
-    //         // char* create_path = malloc(create_path_size);
-    //         // snprintf(create_path, create_path_size, create_path_template, file_path_end);
+            if (xdnd_file_list) {
+                xdnd_file_list = safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
+                xdnd_file_list[xdnd_file_list_len - 1] = '\n';
+            } else {
+                xdnd_file_list = safe_malloc(drag_path_size);
+            }
+            // memset(xdnd_file_list + xdnd_file_list_len, 0, addon_size);
+            // safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path_start, strlen(drag_path_start) + 1);
+            // safe_strncpy(xdnd_file_list + xdnd_file_list_len + strlen(drag_path_start),
+            //     file_list_token, strlen(file_list_token) + 1);
 
-    //         free(file_path_end);
+            safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path, strlen(drag_path) + 1);
 
-    //         if (xdnd_file_list) {
-    //             xdnd_file_list = safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
-    //             xdnd_file_list[xdnd_file_list_len - 1] = '\n';
-    //         } else {
-    //             xdnd_file_list = safe_malloc(drag_path_size);
-    //         }
-    //         // memset(xdnd_file_list + xdnd_file_list_len, 0, addon_size);
-    //         // safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path_start, strlen(drag_path_start) + 1);
-    //         // safe_strncpy(xdnd_file_list + xdnd_file_list_len + strlen(drag_path_start),
-    //         //     file_list_token, strlen(file_list_token) + 1);
+            free(drag_path);
 
-    //         safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path, strlen(drag_path) + 1);
+            // // Create temp file
+            // FILE* temp_file_fd = fopen(create_path, "wb");
+            // LOG_INFO("CREATE FILE: %s", create_path);
+            // if (temp_file_fd) {
+            //     fclose(temp_file_fd);
+            // } else {
+            //     LOG_ERROR("COULD NOT OPEN TEMP FILE");
+            // }
 
-    //         free(drag_path);
+            // free(create_path);
 
-    //         // // Create temp file
-    //         // FILE* temp_file_fd = fopen(create_path, "wb");
-    //         // LOG_INFO("CREATE FILE: %s", create_path);
-    //         // if (temp_file_fd) {
-    //         //     fclose(temp_file_fd);
-    //         // } else {
-    //         //     LOG_ERROR("COULD NOT OPEN TEMP FILE");
-    //         // }
+            file_list_token = strtok_r(NULL, delimiter, &strtok_context);
+            xdnd_file_list_len += drag_path_size;
+            id++;
+        }
+    }
 
-    //         // free(create_path);
+    static bool active_file_drag = false;
 
-    //         file_list_token = strtok_r(NULL, delimiter, &strtok_context);
-    //         xdnd_file_list_len += drag_path_size;
-    //         id++;
-    //     }
-    // }
+    if (is_dragging) {
+        if (!active_file_drag) {
+            // DRAG BEGINS
 
-    // static bool active_file_drag = false;
+            LOG_INFO("DRAG BEGINS");
 
-    // if (!display || !active_window) {
-    //     // No display or active window
-    //     return -1;
-    // }
+            // The XDND communication exchange begins. Number steps are taken from
+            // https://freedesktop.org/wiki/Specifications/XDND/
 
-    // if (is_dragging) {
-    //     if (!active_file_drag) {
-    //         // DRAG BEGINS
+            // XDND 1 - We take ownership of XdndSelection
+            // XDND 2 - We send XdndEnter to active X11 window
+            // Get our XDND version
+            if (xdnd_own_and_send_enter() < 0) {
+                return -1;
+            }
 
-    //         LOG_INFO("DRAG BEGINS");
+            // XDND 3 - TODO: related to the above TODO, if we support more than 3 types of
+            // drag-and-droppable content, then we will need to
+            //     request XdndTypeList and call
+            //     XChangeProperty(disp, w, XdndTypeList, XA_ATOM, 32, PropModeReplace, (unsigned
+            //     char*)&targets[0], targets.size()); beforehand. Since we only support one type right now,
+            //     we can skip this step in the XDND exchange.
+        }
 
-    //         // LOG_INFO("Executing XDND exchange for file ID %d", drop_file->id);
+        // XDND 4 - Send XdndPosition to active X11 window
+        xdnd_send_position(x, y);
 
-    //         // The XDND communication exchange begins. Number steps are taken from
-    //         // https://freedesktop.org/wiki/Specifications/XDND/
+        XEvent e;
+        XLockDisplay(display);
+        // XNextEvent(display, &e);
+        XPeekEvent(display, &e); // TODO: fix the order of events to make sure that we are not double-reading and double-reacting to events
+        XUnlockDisplay(display);
 
-    //         // XDND 1 - We take ownership of XdndSelection
-    //         // XDND 2 - We send XdndEnter to active X11 window
-    //         // Get our XDND version
-    //         if (xdnd_own_and_send_enter() < 0) {
-    //             return -1;
-    //         }
+        if (e.type == ClientMessage && e.xclient.message_type == XA_XdndStatus) {
+            if ((e.xclient.data.l[1] & 1) == 0) {
+                // XDND 4.5 - Active X11 window is not accepting the drop yet,
+                //     so we wait and resend our XdndPosition message
+                xdnd_send_position(x, y);
+            } else {
+                // Active X11 window is accepting the drop
+                // XDND 6 - Send XdndDrop to active X11 window
+                xdnd_send_drop();
+                accepted_drop = true;
+            }
+        } else if (e.type == SelectionRequest) {
+            // When we receive a SelectionRequest from the active X11 window, we send a
+            // SelectionNotify event back to
+            //     the active X11 window with all of the information about the drop.
+            xdnd_send_selection_notify(xdnd_file_list, e);
+        } else if (e.type == ClientMessage && e.xclient.message_type == XA_XdndFinished) {
+            // The active X11 window has indicated that it is done with the drag and drop sequence,
+            // so we can break
+            xdnd_send_leave();
+        }
+    } else {
+        if (active_file_drag) {
+            // DRAG ENDS
 
-    //         // XDND 3 - TODO: related to the above TODO, if we support more than 3 types of
-    //         // drag-and-droppable content, then we will need to
-    //         //     request XdndTypeList and call
-    //         //     XChangeProperty(disp, w, XdndTypeList, XA_ATOM, 32, PropModeReplace, (unsigned
-    //         //     char*)&targets[0], targets.size()); beforehand. Since we only support one type right now,
-    //         //     we can skip this step in the XDND exchange.
-    //     }
+            // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate that
+            // the XDND communication sequence is complete
+            xdnd_send_leave();
 
-    //     // XDND 4 - Send XdndPosition to active X11 window
-    //     xdnd_send_position(x, y);
+            free(xdnd_file_list);
+            xdnd_file_list = NULL;
+            xdnd_file_list_len = 0;
+        }
+    }
 
-    //     XEvent e;
-    //     XLockDisplay(display);
-    //     // XNextEvent(display, &e);
-    //     XPeekEvent(display, &e); // TODO: fix the order of events to make sure that we are not double-reading and double-reacting to events
-    //     XUnlockDisplay(display);
-
-    //     LOG_INFO("DRAG POSITION - 2");
-
-    //     if (e.type == ClientMessage && e.xclient.message_type == XA_XdndStatus) {
-    //         if ((e.xclient.data.l[1] & 1) == 0) {
-    //             // XDND 4.5 - Active X11 window is not accepting the drop yet,
-    //             //     so we wait and resend our XdndPosition message
-    //             xdnd_send_position(x, y);
-    //             LOG_INFO("NOT ACCEPTING DROP");
-    //         } else {
-    //             // Active X11 window is accepting the drop
-    //             // XDND 6 - Send XdndDrop to active X11 window
-    //             xdnd_send_drop();
-    //             accepted_drop = true;
-    //             LOG_INFO("ACCEPTING DROP");
-    //         }
-    //     } else if (e.type == SelectionRequest) {
-    //         // When we receive a SelectionRequest from the active X11 window, we send a
-    //         // SelectionNotify event back to
-    //         //     the active X11 window with all of the information about the drop.
-    //         xdnd_send_selection_notify(xdnd_file_list, e);
-    //         LOG_INFO("SELECTION REQUEST %s", xdnd_file_list);
-    //     } else if (e.type == ClientMessage && e.xclient.message_type == XA_XdndFinished) {
-    //         // The active X11 window has indicated that it is done with the drag and drop sequence,
-    //         // so we can break
-    //         // break;
-    //         LOG_INFO("XDND FINISHED");
-    //     }
-    // } else {
-    //     if (active_file_drag) {
-    //         // DRAG ENDS
-
-    //         LOG_INFO("DRAG ENDS");
-
-    //         // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate that
-    //         // the XDND communication sequence is complete
-    //         xdnd_send_leave();
-
-    //         free(xdnd_file_list);
-    //         xdnd_file_list = NULL;
-    //         xdnd_file_list_len = 0;
-    //     }
-    // }
-
-    // active_file_drag = is_dragging;
+    active_file_drag = is_dragging;
 
     // return active_window;
     return 0;
