@@ -14,12 +14,12 @@ func TestGetAppName(t *testing.T) {
 		environmentVar string
 		want           string
 	}{
-		{"LOCALDEV", "whist-dev-server"},
-		{"LOCALDEVWITHDB", "whist-dev-server"},
-		{"DEV", "whist-dev-server"},
-		{"STAGING", "whist-staging-server"},
-		{"PROD", "whist-prod-server"},
-		{"UNKNOWN", "whist-dev-server"},
+		{"LOCALDEV", "whist-dev-scaling-service"},
+		{"LOCALDEVWITHDB", "whist-dev-scaling-service"},
+		{"DEV", "whist-dev-scaling-service"},
+		{"STAGING", "whist-staging-scaling-service"},
+		{"PROD", "whist-prod-scaling-service"},
+		{"UNKNOWN", "whist-dev-scaling-service"},
 	}
 
 	for _, tt := range webserverTests {
