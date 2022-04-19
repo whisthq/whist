@@ -41,6 +41,7 @@ from helpers.whist_server_tools import (
     server_setup_process,
     run_server_on_instance,
 )
+from protocol.test.helpers.common.timestamps_and_exit_tools import printyellow
 
 
 # Add the current directory to the path no matter where this is called from
@@ -427,19 +428,41 @@ if __name__ == "__main__":
     if use_two_instances:
         p1.start()
         p2.start()
+        # Monitor the processes and immediately exit if one of them errors
+        p_done = []
+        while len(p_done) < 2:
+            for p in [p1, p2]:
+                if p is not None:
+                    if p.exitcode == 0:
+                        p_done.append(p)
+                    else:
+                        if p == p1:
+                            printyellow(
+                                "Server setup process failed. Terminating the client setup process and exiting."
+                            )
+                            p2.terminate()
+                        else:
+                            printyellow(
+                                "Client setup process failed. Terminating the server setup process and exiting."
+                            )
+                            p1.terminate()
+                        exit_with_error(None, timestamps=timestamps)
+            time.sleep(1)
         p1.join()
         p2.join()
     else:
         p1.start()
         p1.join()
+        # Exit if the server setup process has failed
+        if p1.exitcode == -1:
+            exit_with_error(None, timestamps=timestamps)
         p2.start()
         p2.join()
+        # Exit if the client setup process has failed
+        if p2.exitcode == -1:
+            exit_with_error(None, timestamps=timestamps)
 
     timestamps.add_event("Setting up the instance(s) and building the mandelboxes")
-
-    # Check if the server or client setup failed. If so, exit.
-    if p1.exitcode == -1 or p2.exitcode == -1:
-        exit_with_error(None, timestamps=timestamps)
 
     # 8 - Open the server/client monitoring logs
     server_log = open(os.path.join(perf_logs_folder_name, "server_monitoring.log"), "a")
