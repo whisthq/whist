@@ -202,8 +202,8 @@ int init_rs_wrapper(void) {
         case CM256: {
             CpuInfo cpu_info = gf256_get_cpuinfo();
             LOG_INFO("gf256 detected CPU type is %s", cpu_type_to_str(cpu_info.cpu_type));
-            LOG_INFO("cpu_info: has_avx2=%d has_ssse3=%d has_neon=%d", cpu_info.has_avx2,
-                     cpu_info.has_ssse3, cpu_info.has_neon);
+            LOG_INFO("cpu_info: has_avx2=%d has_ssse3=%d has_sse2=%d has_neon=%d",
+                     cpu_info.has_avx2, cpu_info.has_ssse3, cpu_info.has_sse2, cpu_info.has_neon);
 
             if (cpu_info.cpu_type == CPU_TYPE_X86 || cpu_info.cpu_type == CPU_TYPE_X64) {
                 // cpu without avx2 is not rare.

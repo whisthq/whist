@@ -230,7 +230,11 @@ static bool CpuHasSSSE3 = false;
 
 #define CPUID_EBX_AVX2    0x00000020
 #define CPUID_ECX_SSSE3   0x00000200
+
+// WHIST_CHANGE: ADD
+// currently only for check purpose
 #define CPUID_EDX_SSE2    0x04000000
+static bool CpuHasSSE2 = false;
 
 static void _cpuid(unsigned int cpu_info[4U], const unsigned int cpu_info_type)
 {
@@ -324,6 +328,8 @@ static void gf256_architecture_init()
 
     _cpuid(cpu_info, 1);
     CpuHasSSSE3 = ((cpu_info[2] & CPUID_ECX_SSSE3) != 0);
+    // WHIST_CHANGE: ADD
+    CpuHasSSE2 = ((cpu_info[3] & CPUID_EDX_SSE2) != 0);
 
     _cpuid(cpu_info, 7);
     CpuHasAVX2 = ((cpu_info[1] & CPUID_EBX_AVX2) != 0);
@@ -1338,6 +1344,7 @@ CpuInfo gf256_get_cpuinfo(void)
     #endif
     info.has_avx2 = CpuHasAVX2;
     info.has_ssse3 = CpuHasSSSE3;
+    into.has_sse2 = CpuHasSSE2;
 #elif defined(ANDROID) || defined(IOS) || defined(LINUX_ARM) || defined(MACOS_ARM)
     #if defined(__aarch64__)
         info.cpu_type = CPU_TYPE_ARM64;

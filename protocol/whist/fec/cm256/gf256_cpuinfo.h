@@ -23,6 +23,7 @@ typedef enum
 typedef struct
 {
     CpuType cpu_type;
+    bool has_sse2;
     bool has_ssse3;
     bool has_avx2;
     bool has_neon;
