@@ -8,16 +8,17 @@ let topOverscroll = 0
 const trim = (delta: number) => {
   let abs = Math.abs(delta)
 
-  if (abs > 25) abs = 25
+  if (abs > 10) abs = 10
 
   return delta > 0 ? abs : -1 * abs
 }
 
 const updateTotalMargin = (delta: number) => {
-  if (topOverscroll + delta < 50) {
-    topOverscroll += delta
+  const update = topOverscroll + delta
+  if (update < -50) {
+    topOverscroll = -50
   } else {
-    topOverscroll = 50
+    topOverscroll = update
   }
 }
 
