@@ -1,5 +1,5 @@
 // A lower damping value causes the spring to bounce back more quickly
-const damping = 0.8
+const damping = 0.85
 // A higher maxOffset means the page can bounce further
 const maxOffset = 100
 
@@ -27,15 +27,14 @@ const resetFlag = () => {
   clearTimeout(timer)
   timer = setTimeout(() => {
     backFlag = false
-  }, 50)
+  }, 40)
 }
 
 const trim = (update: number) => {
-  return update
-  //   let abs = Math.abs(update)
-  //   if (abs > 250) abs = 250
+  let abs = Math.abs(update)
+  if (abs > 250) abs = 250
 
-  //   return update >= 0 ? abs : -1 * abs
+  return update >= 0 ? abs : -1 * abs
 }
 
 const render = () => {
@@ -118,12 +117,9 @@ const handler = (evt: WheelEvent) => {
     const updated = trim(offset + update)
     if ((onTopEdge && updated > 0) || (onBottomEdge && updated < 0)) {
       content.style.transform = "none"
-      //   offset = -1
     } else {
       offset = updated
     }
-
-    console.log("Delta", y, "Offset", offset)
   }
 }
 
