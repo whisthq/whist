@@ -29,7 +29,7 @@ Includes
 Private Functions
 ============================
 */
-static bool set_opt(FFmpegEncoder *encoder, char *option, char *value);
+
 static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width,
                                            int out_height, int bitrate, int vbv_size,
                                            CodecType codec_type);
@@ -41,7 +41,7 @@ static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_wid
 Private Function Implementations
 ============================
 */
-static bool set_opt(FFmpegEncoder *encoder, char *option, char *value) {
+static bool set_opt(FFmpegEncoder *encoder, const char *option, const char *value) {
     /*
         Wrapper function to set encoder options, like presets, latency, and bitrate.
 
@@ -50,9 +50,12 @@ static bool set_opt(FFmpegEncoder *encoder, char *option, char *value) {
             option (char*): name of option as string
             value (char*): value of option as string
     */
-    int ret = av_opt_set(encoder->context->priv_data, option, value, 0);
+    int ret = av_opt_set(encoder->context->priv_data, option, value, AV_OPT_SEARCH_CHILDREN);
     if (ret < 0) {
-        LOG_WARNING("Could not av_opt_set %s to %s for EncodeType %d!", option, value,
+    	char error_buf[1024] = {0};
+
+    	av_strerror(ret, error_buf, sizeof(error_buf));
+        LOG_WARNING("Could not av_opt_set %s to %s (%s) for EncodeType %d !", option, value, error_buf,
                     encoder->type);
         return false;
     } else {
@@ -62,11 +65,59 @@ static bool set_opt(FFmpegEncoder *encoder, char *option, char *value) {
 
 typedef FFmpegEncoder *(*FFmpegEncoderCreator)(int, int, int, int, int, int, CodecType);
 
-static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width,
-                                           int out_height, int bitrate, int vbv_size,
-                                           CodecType codec_type) {
+typedef struct {
+    const char *opt_name;
+    const char *opt_value;
+} FfmpegEncoderOption;
+
+typedef struct {
+    const char *hw_encoder_name;
+    FFmpegEncodeType encoder_type;
+    enum AVPixelFormat hw_pixel_format;
+    enum AVHWDeviceType hw_device_type;
+    char *hw_device;
+    int min_width;
+    int min_height;
+    const char *h264_encoder_name;
+    const char *h265_encoder_name;
+    FfmpegEncoderOption *options;
+} HwEncoderParams;
+
+static bool configure_encoder_context(FFmpegEncoder *encoder, enum AVPixelFormat pix_format,
+                                      int64_t bitrate, int vbv_size,
+                                      const FfmpegEncoderOption *options, bool strictSettings) {
+    AVCodecContext *context = encoder->context;
+    context->width = encoder->out_width;
+    context->height = encoder->out_height;
+    context->bit_rate = bitrate;         // averageBitRate
+    context->rc_buffer_size = vbv_size;  // vbvBufferSize
+    context->qmax = MAX_QP;
+    context->time_base.num = 1;
+    context->time_base.den = MAX_FPS;
+    context->gop_size = encoder->gop_size;
+    // context->keyint_min = 5;
+    context->max_b_frames = 0;
+    context->pix_fmt = pix_format;
+
+    while (options->opt_name) {
+        set_opt(encoder, options->opt_name, options->opt_value);
+        options++;
+    }
+
+    // Make all I-Frames IDR Frames
+    if (!set_opt(encoder, "forced-idr", "1")) {
+        LOG_ERROR("Cannot force IDR");
+        if (strictSettings) return false;
+    }
+
+    return true;
+}
+
+static FFmpegEncoder *create_gen_encoder(HwEncoderParams *params, int in_width, int in_height,
+                                         int out_width, int out_height, int bitrate, int vbv_size,
+                                         CodecType codec_type) {
     /*
-        Create an encoder using Nvidia's video encoding alorithms.
+        Create an encoder using the given parameters
 
         Arguments:
             in_width (int): Width of the frames that the encoder intakes
@@ -79,15 +130,15 @@ static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_
         Returns:
             (FFmpegEncoder*): the newly created encoder
      */
-    LOG_INFO("Trying NVENC encoder...");
+    LOG_INFO("Trying %s encoder...", params->hw_encoder_name);
     FFmpegEncoder *encoder = (FFmpegEncoder *)safe_malloc(sizeof(FFmpegEncoder));
     memset(encoder, 0, sizeof(FFmpegEncoder));
 
-    encoder->type = NVENC_ENCODE;
+    encoder->type = params->encoder_type;
     encoder->in_width = in_width;
     encoder->in_height = in_height;
-    if (out_width <= 32) out_width = MIN_NVENC_WIDTH;
-    if (out_height <= 16) out_height = MIN_NVENC_HEIGHT;
+    if (out_width <= 32) out_width = params->min_width;
+    if (out_height <= 16) out_height = params->min_height;
     encoder->out_width = out_width;
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
@@ -95,7 +146,7 @@ static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_
     encoder->frames_since_last_iframe = 0;
 
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
-    enum AVPixelFormat hw_format = AV_PIX_FMT_CUDA;
+    enum AVPixelFormat hw_format = params->hw_pixel_format;
     enum AVPixelFormat sw_format = AV_PIX_FMT_0RGB32;
 
     // init intake format in sw_frame
@@ -117,8 +168,8 @@ static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_
                          encoder->out_height, 1);
 
     // init hw_device_ctx
-    if (av_hwdevice_ctx_create(&encoder->hw_device_ctx, AV_HWDEVICE_TYPE_CUDA, "CUDA", NULL, 0) <
-        0) {
+    if (av_hwdevice_ctx_create(&encoder->hw_device_ctx, params->hw_device_type, params->hw_device,
+                               NULL, 0) < 0) {
         LOG_WARNING("Failed to create hardware device context");
         destroy_ffmpeg_encoder(encoder);
         return NULL;
@@ -126,40 +177,19 @@ static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_
 
     // init encoder format in context
 
-    if (encoder->codec_type == CODEC_TYPE_H264) {
-        encoder->codec = avcodec_find_encoder_by_name("h264_nvenc");
-    } else if (encoder->codec_type == CODEC_TYPE_H265) {
-        encoder->codec = avcodec_find_encoder_by_name("hevc_nvenc");
+    switch (encoder->codec_type) {
+        case CODEC_TYPE_H264:
+            encoder->codec = avcodec_find_encoder_by_name(params->h264_encoder_name);
+            break;
+        case CODEC_TYPE_H265:
+            encoder->codec = avcodec_find_encoder_by_name(params->h265_encoder_name);
+            break;
+        default:
+            break;
     }
 
     encoder->context = avcodec_alloc_context3(encoder->codec);
-    encoder->context->width = encoder->out_width;
-    encoder->context->height = encoder->out_height;
-    encoder->context->bit_rate = bitrate;         // averageBitRate
-    encoder->context->rc_buffer_size = vbv_size;  // vbvBufferSize
-    encoder->context->qmax = MAX_QP;
-    encoder->context->time_base.num = 1;
-    encoder->context->time_base.den = MAX_FPS;
-    encoder->context->gop_size = encoder->gop_size;
-    // encoder->context->keyint_min = 5;
-    encoder->context->pix_fmt = hw_format;
-
-    // enable automatic insertion of non-reference P-frames
-    set_opt(encoder, "nonref_p", "1");
-    // llhq is deprecated - we are now supposed to use p1-p7 and tune
-    // p1: fastest, but lowest quality -- p7: slowest, best quality
-    // only constqp/cbr/vbr are supported now with these presets
-    // tune: high quality, low latency, ultra low latency, or lossless; we use ultra low latency
-    set_opt(encoder, "preset", "p4");
-    set_opt(encoder, "tune", "ull");
-    set_opt(encoder, "rc", "cbr");
-    // zerolatency: no reordering delay
-    set_opt(encoder, "zerolatency", "1");
-    // delay frame output by 0 frames
-    set_opt(encoder, "delay", "0");
-    // Make all I-Frames IDR Frames
-    if (!set_opt(encoder, "forced-idr", "1")) {
-        LOG_ERROR("Cannot create encoder if IDR's cannot be forced");
+    if (!configure_encoder_context(encoder, hw_format, bitrate, vbv_size, params->options, true)) {
         destroy_ffmpeg_encoder(encoder);
         return NULL;
     }
@@ -236,6 +266,7 @@ static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_
         return NULL;
     }
     av_free(avbsp);
+
     encoder->filter_graph_source = filter_contexts[0];
     // sink buffer
     if (avfilter_graph_create_filter(&filter_contexts[1], filters[1], "sink", NULL, NULL,
@@ -266,6 +297,38 @@ static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_
     encoder->filtered_frame = av_frame_alloc();
 
     return encoder;
+}
+
+static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width,
+                                           int out_height, int bitrate, int vbv_size,
+                                           CodecType codec_type) {
+    FfmpegEncoderOption options[] = {
+        {"nonref_p", "1"},    {"preset", "p4"}, {"tune", "ull"}, {"rc", "cbr"},
+        {"zerolatency", "1"}, {"delay", "0"},   {NULL, NULL},
+    };
+
+    HwEncoderParams params = {
+        "NVENC",         NVENC_ENCODE,     AV_PIX_FMT_CUDA, AV_HWDEVICE_TYPE_CUDA, "CUDA",
+        MIN_NVENC_WIDTH, MIN_NVENC_HEIGHT, "h264_nvenc",    "hevc_nvenc",          options};
+
+    return create_gen_encoder(&params, in_width, in_height, out_width, out_height, bitrate,
+                              vbv_size, codec_type);
+}
+
+static FFmpegEncoder *create_vaapi_encoder(int in_width, int in_height, int out_width,
+                                           int out_height, int bitrate, int vbv_size,
+                                           CodecType codec_type) {
+    FfmpegEncoderOption options[] = {
+        {"preset", "medium"}, {"tune", "zerolatency"}, {"rc_mode", "CBR"},
+        {NULL, NULL},
+    };
+
+    HwEncoderParams params = {
+        "VAAPI",         VAAPI_ENCODE,     AV_PIX_FMT_VAAPI, AV_HWDEVICE_TYPE_VAAPI, NULL,
+        MIN_NVENC_WIDTH, MIN_NVENC_HEIGHT, "h264_vaapi", "hevc_vaapi", options};
+
+    return create_gen_encoder(&params, in_width, in_height, out_width, out_height, bitrate,
+                              vbv_size, codec_type);
 }
 
 static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
@@ -351,8 +414,7 @@ static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_wid
     filter_contexts[0] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[0], "src");
     av_opt_set_int(filter_contexts[0], "width", encoder->in_width, AV_OPT_SEARCH_CHILDREN);
     av_opt_set_int(filter_contexts[0], "height", encoder->in_height, AV_OPT_SEARCH_CHILDREN);
-    av_opt_set(filter_contexts[0], "pix_fmt", av_get_pix_fmt_name(in_format),
-               AV_OPT_SEARCH_CHILDREN);
+    av_opt_set(filter_contexts[0], "pix_fmt", av_get_pix_fmt_name(in_format), AV_OPT_SEARCH_CHILDREN);
     av_opt_set_q(filter_contexts[0], "time_base", (AVRational){1, MAX_FPS}, AV_OPT_SEARCH_CHILDREN);
     if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
         LOG_WARNING("Unable to initialize buffer source");
@@ -418,24 +480,14 @@ static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_wid
         encoder->codec = avcodec_find_encoder_by_name("libx265");
     }
 
-    encoder->context = avcodec_alloc_context3(encoder->codec);
-    encoder->context->width = encoder->out_width;
-    encoder->context->height = encoder->out_height;
-    encoder->context->bit_rate = bitrate;
-    encoder->context->rc_buffer_size = vbv_size;  // vbvBufferSize
-    encoder->context->qmax = MAX_QP;
-    encoder->context->time_base.num = 1;
-    encoder->context->time_base.den = MAX_FPS;
-    encoder->context->gop_size = encoder->gop_size;
-    encoder->context->keyint_min = 5;
-    encoder->context->pix_fmt = out_format;
-    encoder->context->max_b_frames = 0;
+    const FfmpegEncoderOption options[] = {
+        {"preset", "fast"},
+        {"tune", "zerolatency"},
+        {NULL, NULL},
+    };
 
-    set_opt(encoder, "preset", "fast");
-    set_opt(encoder, "tune", "zerolatency");
-    // Make all I-Frames IDR Frames
-    if (!set_opt(encoder, "forced-idr", "1")) {
-        LOG_ERROR("Cannot create encoder if IDR's cannot be forced");
+    encoder->context = avcodec_alloc_context3(encoder->codec);
+    if (!configure_encoder_context(encoder, out_format, bitrate, vbv_size, options, true)) {
         destroy_ffmpeg_encoder(encoder);
         return NULL;
     }
@@ -473,7 +525,8 @@ FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width,
      */
     FFmpegEncoder *ffmpeg_encoder = NULL;
     // TODO: Get QSV Encoder Working
-    FFmpegEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_sw_encoder};
+    FFmpegEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_vaapi_encoder,
+                                                 create_sw_encoder};
     for (unsigned int i = 0; i < sizeof(encoder_precedence) / sizeof(FFmpegEncoderCreator); ++i) {
         ffmpeg_encoder = encoder_precedence[i](in_width, in_height, out_width, out_height, bitrate,
                                                vbv_size, codec_type);
@@ -502,9 +555,9 @@ bool ffmpeg_reconfigure_encoder(FFmpegEncoder *encoder, int in_width, int in_hei
         out_width != encoder->out_width || out_height != encoder->out_height ||
         bitrate != encoder->bitrate || codec_type != encoder->codec_type) {
         return false;
-    } else {
-        return true;
     }
+
+    return true;
 }
 
 int ffmpeg_encoder_frame_intake(FFmpegEncoder *encoder, void *rgb_pixels, int pitch) {
@@ -577,9 +630,9 @@ void destroy_ffmpeg_encoder(FFmpegEncoder *encoder) {
         av_buffer_unref(&encoder->hw_device_ctx);
     }
 
-    av_frame_free(&encoder->hw_frame);
-    av_frame_free(&encoder->sw_frame);
-    av_frame_free(&encoder->filtered_frame);
+    if (encoder->hw_frame) av_frame_free(&encoder->hw_frame);
+    if (encoder->sw_frame) av_frame_free(&encoder->sw_frame);
+    if (encoder->filtered_frame) av_frame_free(&encoder->filtered_frame);
 
     // free the buffer and encoder
     free(encoder->sw_frame_buffer);

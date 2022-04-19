@@ -36,7 +36,8 @@ Custom Types
 typedef enum FFmpegEncodeType {
     SOFTWARE_ENCODE = 0,
     NVENC_ENCODE = 1,
-    QSV_ENCODE = 2
+    QSV_ENCODE = 2,
+    VAAPI_ENCODE = 3,
 } FFmpegEncodeType;
 
 /**
