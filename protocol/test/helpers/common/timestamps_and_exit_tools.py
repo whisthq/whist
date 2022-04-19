@@ -70,7 +70,7 @@ class TimeStamps:
         self.most_time_consuming_event = max(self.most_time_consuming_event, time_elapsed)
         print(f"{event_name} took {str(time_elapsed)}")
 
-    def printtimestamps(self):
+    def print_timestamps(self):
         print()
         print("**** E2E time breakdown ****")
         for i, event in enumerate(self.events):
@@ -91,5 +91,5 @@ def exit_with_error(error_message, timestamps=None):
     if error_message is not None:
         printred(error_message)
     if timestamps is not None:
-        timestamps.printtimestamps()
+        timestamps.print_timestamps()
     sys.exit(-1)
