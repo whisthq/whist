@@ -270,11 +270,10 @@ static void destroy_video_decoder_members(VideoDecoder* decoder) {
     av_free(decoder->context);
     av_frame_free(&decoder->decoded_frame);
 
-    // free the packets
-    for (int i = 0; i < MAX_ENCODED_VIDEO_PACKETS; i++) {
-        av_packet_free(&decoder->packets[i]);
-    }
     av_buffer_unref(&decoder->ref);
+
+    // Note that we do not free input packets here - they need to
+    // persist across reinitialisation for fallback to work.
 }
 
 /*
@@ -340,6 +339,11 @@ void destroy_video_decoder(VideoDecoder* decoder) {
     */
     destroy_video_decoder_members(decoder);
 
+    // Free input packets.
+    for (int i = 0; i < MAX_ENCODED_VIDEO_PACKETS; i++) {
+        av_packet_free(&decoder->packets[i]);
+    }
+
     if (save_decoder_input) {
         fclose(decoder->save_input_file);
     }
@@ -350,7 +354,8 @@ void destroy_video_decoder(VideoDecoder* decoder) {
     return;
 }
 
-int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffer_size) {
+int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffer_size,
+                               bool start_of_stream) {
     /*
         Send the packets stored in buffer to the decoder. The buffer format should be as described
        in extract_avpackets_from_buffer.
@@ -365,6 +370,7 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffe
             */
 
     int num_packets = extract_avpackets_from_buffer(buffer, buffer_size, decoder->packets);
+    FATAL_ASSERT(num_packets > 0);
 
     if (save_decoder_input) {
         for (int i = 0; i < num_packets; i++) {
@@ -376,20 +382,35 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffe
         fflush(decoder->save_input_file);
     }
 
-    int res;
-    for (int i = 0; i < num_packets; i++) {
-        AVPacket* pkt = decoder->packets[i];
+    while (1) {
+        int res = AVERROR_INVALIDDATA;
+        for (int i = 0; i < num_packets; i++) {
+            AVPacket* pkt = decoder->packets[i];
 
-        res = avcodec_send_packet(decoder->context, pkt);
-        if (res < 0) {
-            LOG_WARNING("Failed to avcodec_send_packet! Error %d: %s", res, av_err2str(res));
-            if (try_next_decoder(decoder) != WHIST_SUCCESS) {
-                destroy_video_decoder(decoder);
-                return -1;
-            } else {
-                // Tail call this function again.
-                return video_decoder_send_packets(decoder, buffer, buffer_size);
+            res = avcodec_send_packet(decoder->context, pkt);
+            if (res < 0) {
+                LOG_WARNING("Send packet failed with decode type %d: %d (%s).",
+                            decoder->decode_type, res, av_err2str(res));
+                break;
             }
+        }
+
+        if (res < 0) {
+            if (start_of_stream) {
+                while (decoder->decode_type < software_decode_type) {
+                    // A hardware decoder failed on the first frame: we
+                    // can try a different one immediately.
+                    ++decoder->decode_type;
+                    res = try_next_decoder(decoder);
+                    if (res == WHIST_SUCCESS) {
+                        break;
+                    }
+                }
+                continue;
+            }
+            return -1;
+        } else {
+            break;
         }
     }
 

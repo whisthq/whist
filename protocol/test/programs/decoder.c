@@ -471,13 +471,15 @@ int main(int argc, const char **argv) {
             break;
         }
 
+        bool key_frame = !!(pkt->flags & AV_PKT_FLAG_KEY);
         write_avpackets_to_buffer(1, &pkt, input_buffer);
         input_buffer_size = 8 + pkt->size;
         av_packet_unref(pkt);
 
         if (input->media_type == AVMEDIA_TYPE_VIDEO) {
             int dec_err;
-            dec_err = video_decoder_send_packets(video_decoder, input_buffer, input_buffer_size);
+            dec_err = video_decoder_send_packets(video_decoder, input_buffer, input_buffer_size,
+                                                 key_frame);
             if (dec_err < 0) {
                 LOG_ERROR("Failed to send packets to decoder: %d.", dec_err);
                 break;
