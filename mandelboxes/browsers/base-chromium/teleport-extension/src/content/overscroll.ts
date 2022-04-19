@@ -14,8 +14,7 @@ let backFlag = false
 
 let timer: any
 
-// Wheel delta normalizing
-// copied from smooth-scrollbar/src/utils/get-delta.js
+// Copied from smooth-scrollbar/src/utils/get-delta.js
 const DELTA_SCALE = {
   STANDARD: 1,
   OTHERS: -3,
@@ -46,7 +45,7 @@ const render = () => {
 
   const dis = offset - rendered
 
-  if (lastDis * dis <= 0) {
+  if (lastDis * dis < 0) {
     backFlag = true
   }
 
@@ -113,7 +112,7 @@ const handler = (evt: WheelEvent) => {
     const updated = trim(offset + update)
     if ((onTopEdge && updated > 0) || (onBottomEdge && updated < 0)) {
       content.style.transform = "none"
-      offset = 0
+      offset = -1
     } else {
       offset = updated
     }
