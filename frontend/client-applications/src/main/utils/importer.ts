@@ -575,6 +575,7 @@ const getLocalStorage = async (
   return localStorage
 }
 
+/* eslint-disable no-unreachable */
 const getPreferences = async (
   browser: InstalledBrowser
 ): Promise<string | undefined> => {
