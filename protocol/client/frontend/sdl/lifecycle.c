@@ -122,6 +122,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 
     context->audio_device = 0;
     context->key_state = SDL_GetKeyboardState(&context->key_count);
+    context->file_drag_event_id = SDL_RegisterEvents(1);
 
     context->cursor.state = CURSOR_STATE_VISIBLE;
     context->cursor.hash = 0;
@@ -169,7 +170,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     //     sdl_free_png_file_rgb_surface(icon_surface);
     // }
 
-    sdl_native_init_external_drag_handler();
+    sdl_native_init_external_drag_handler(frontend);
 
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -208,7 +209,7 @@ void sdl_destroy(WhistFrontend* frontend) {
         context->window = NULL;
     }
 
-    sdl_native_destroy_external_drag_handler();
+    sdl_native_destroy_external_drag_handler(frontend);
 
     free(context);
 }

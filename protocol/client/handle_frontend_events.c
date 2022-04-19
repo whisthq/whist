@@ -1,14 +1,13 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file sdl_event_handler.c
- * @brief This file contains client-specific wrappers to low-level network
- *        functions.
+ * @file handle_frontend_events.c
+ * @brief This file exposes the functions to handle frontend events in the main loop.
 ============================
 Usage
 ============================
 
-handleSDLEvent() must be called on any SDL event that occurs. Any action
-trigged an SDL event must be triggered in sdl_event_handler.c
+handle_frontend_events() should be periodically called in the main loop to poll and handle
+frontend events, including input, mouse motion, and resize events.
 */
 
 /*
@@ -17,7 +16,7 @@ Includes
 ============================
 */
 
-#include "sdl_event_handler.h"
+#include "handle_frontend_events.h"
 
 #include <whist/logging/logging.h>
 #include "sdl_utils.h"
@@ -64,7 +63,7 @@ Public Function Implementations
 ============================
 */
 
-bool sdl_handle_events(WhistFrontend* frontend) {
+bool handle_frontend_events(WhistFrontend* frontend) {
     WhistFrontendEvent event;
     while (whist_frontend_poll_event(frontend, &event)) {
         if (handle_frontend_event(&event) != 0) {
@@ -87,7 +86,7 @@ bool sdl_handle_events(WhistFrontend* frontend) {
     return true;
 }
 
-bool sdl_pending_audio_device_update(void) {
+bool pending_audio_device_update(void) {
     // Mark as no longer pending "0",
     // and return whether or not it was pending since the last time we called this function
     int pending_audio_device_update = atomic_exchange(&g_pending_audio_device_update, 0);
@@ -184,10 +183,22 @@ static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEven
     // Scale the drop coordinates for server-side compatibility
     drop_info.server_drop.x = event->position.x * dpi / 96;
     drop_info.server_drop.y = event->position.y * dpi / 96;
-    sdl_end_drag_event();
+    // TODO: Clear any state from a stale file drag event
     file_synchronizer_set_file_reading_basic_metadata(event->filename, FILE_TRANSFER_SERVER_DROP,
                                                       &drop_info);
     free(event->filename);
+}
+
+static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEvent* event) {
+    if (event->end_drag == true) {
+        // Handle the drag end case (this either means the drag has ended or the drag has
+        // left the window)
+        return;
+    }
+
+    // The event->position.{x,y} values are in screen coordinates, so we
+    // would need to multiply by output_{width,height} and divide by
+    // window_{width,height} to know where to draw the file drag overlay
 }
 
 static void handle_quit_event(FrontendQuitEvent* event) {
@@ -255,6 +266,10 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
         }
         case FRONTEND_EVENT_FILE_DROP: {
             handle_file_drop_event(event->frontend, &event->file_drop);
+            break;
+        }
+        case FRONTEND_EVENT_FILE_DRAG: {
+            handle_file_drag_event(event->frontend, &event->file_drag);
             break;
         }
         case FRONTEND_EVENT_QUIT: {

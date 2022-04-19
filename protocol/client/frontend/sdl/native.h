@@ -71,12 +71,12 @@ void sdl_native_declare_user_activity(void);
  * @brief                          Set up callbacks for out of window drag events
  *
  */
-void sdl_native_init_external_drag_handler(void);
+void sdl_native_init_external_drag_handler(WhistFrontend* frontend);
 
 /**
  * @brief                          Destroy callbacks for out of window drag events
  *
  */
-void sdl_native_destroy_external_drag_handler(void);
+void sdl_native_destroy_external_drag_handler(WhistFrontend* frontend);
 
 #endif  // WHIST_CLIENT_FRONTEND_SDL_NATIVE_H

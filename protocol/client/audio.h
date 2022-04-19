@@ -75,22 +75,6 @@ void refresh_audio_device(AudioContext* audio_context);
 void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame);
 
 /**
- * @brief                          Does any pending work the audio context
- *                                 wants to do. (Including decoding frames,
- *                                 and calculating statistics)
- *
- * @param audio_context            The audio context to update
- *
- * @note                           This function is guaranteed to return virtually instantly.
- *                                 It may be used in any hotpaths.
- *
- * @note                           In order for audio to be responsive,
- *                                 this function *MUST* be called in a tight loop,
- *                                 at least once every millisecond.
- */
-void update_audio(AudioContext* audio_context);
-
-/**
  * @brief                          Render the audio frame (If any are available to render)
  *
  * @param audio_context            The audio context that potentially wants to render audio

@@ -38,7 +38,7 @@ Includes
 #include "audio.h"
 #include "client_utils.h"
 #include "network.h"
-#include "sdl_event_handler.h"
+#include "handle_frontend_events.h"
 #include "sdl_utils.h"
 #include "handle_server_message.h"
 #include "video.h"
@@ -70,7 +70,7 @@ extern bool using_stun;
 // Mouse motion state
 extern MouseMotionAccumulation mouse_state;
 
-// Whether a pinch is currently active - set in sdl_event_handler.c
+// Whether a pinch is currently active - set in handle_frontend_events.c
 extern bool active_pinch;
 
 // Window resizing state
@@ -136,14 +136,11 @@ static void sync_keyboard_state(WhistFrontend* frontend) {
         }
     }
 
-    // Also send caps lock and num lock status for synchronization
-    wcmsg.keyboard_state.state[FK_LGUI] = mod_state & KMOD_LGUI;
-    wcmsg.keyboard_state.state[FK_RGUI] = mod_state & KMOD_RGUI;
-    wcmsg.keyboard_state.state[FK_LSHIFT] = mod_state & KMOD_LSHIFT;
-    wcmsg.keyboard_state.state[FK_RSHIFT] = mod_state & KMOD_RSHIFT;
-    wcmsg.keyboard_state.caps_lock = mod_state & KMOD_CAPS;
-    wcmsg.keyboard_state.num_lock = mod_state & KMOD_NUM;
-
+    // Handle keys and state not tracked by key_state.
+    wcmsg.keyboard_state.state[FK_LGUI] = !!(mod_state & KMOD_LGUI);
+    wcmsg.keyboard_state.state[FK_RGUI] = !!(mod_state & KMOD_RGUI);
+    wcmsg.keyboard_state.caps_lock = !!(mod_state & KMOD_CAPS);
+    wcmsg.keyboard_state.num_lock = !!(mod_state & KMOD_NUM);
     wcmsg.keyboard_state.active_pinch = active_pinch;
 
     // Grabs the keyboard layout as well
@@ -341,7 +338,7 @@ int whist_client_main(int argc, const char* argv[]) {
             whist_sleep(1000);
         } else {
             // Only initialize this once.
-            init_sdl(output_width, output_height, (char*)program_name, NULL, &frontend);
+            frontend = init_sdl(output_width, output_height, program_name);
         }
 
         // The lines below may be called multiple times,
@@ -429,10 +426,8 @@ int whist_client_main(int argc, const char* argv[]) {
                 start_timer(&cpu_usage_statistics_timer);
             }
 
-            // We _must_ keep make calling this function as much as we can,
-            // or else the user will get beachball / "Whist Not Responding"
-            // Note, that the OS will sometimes hang this function for an arbitrarily long time
-            if (!sdl_handle_events(frontend)) {
+            // This might hang for a long time
+            if (!handle_frontend_events(frontend)) {
                 // unable to handle event
                 exit_code = WHIST_EXIT_FAILURE;
                 break;

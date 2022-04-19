@@ -95,19 +95,16 @@ Public Function Implementations
 ============================
 */
 
-void init_sdl(int target_output_width, int target_output_height, char* name, char* icon_filename,
-              WhistFrontend** frontend) {
-    WhistFrontend* out_frontend = whist_frontend_create_sdl();
-    if (whist_frontend_init(out_frontend, target_output_height, target_output_height, name,
+WhistFrontend* init_sdl(int target_output_width, int target_output_height, const char* title) {
+    WhistFrontend* frontend = whist_frontend_create_sdl();
+    if (frontend == NULL) {
+        LOG_FATAL("Failed to create frontend");
+    }
+
+    if (whist_frontend_init(frontend, target_output_height, target_output_height, title,
                             &background_color) != WHIST_SUCCESS) {
-        whist_frontend_destroy(out_frontend);
+        whist_frontend_destroy(frontend);
         LOG_FATAL("Failed to initialize frontend");
-    }
-    if (out_frontend == NULL) {
-        return;  // NULL;
-    }
-    if (frontend) {
-        *frontend = out_frontend;
     }
 
     pending_cursor_info_mutex = whist_create_mutex();
@@ -124,9 +121,10 @@ void init_sdl(int target_output_width, int target_output_height, char* name, cha
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
     int w, h;
-    whist_frontend_get_window_pixel_size(out_frontend, &w, &h);
+    whist_frontend_get_window_pixel_size(frontend, &w, &h);
     output_width = w;
     output_height = h;
+    return frontend;
 }
 
 void destroy_sdl(WhistFrontend* frontend) {
@@ -525,33 +523,3 @@ static void render_insufficient_bandwidth(WhistFrontend* frontend) {
     snprintf(frame_filename, sizeof(frame_filename), "images/%s", filenames[chosen_idx]);
     whist_frontend_paint_png(frontend, frame_filename, output_width, output_height, -1, -1);
 }
-
-void sdl_handle_drag_event(WhistFrontend* frontend) {
-    /*
-      Initiates the rendering of the drag icon by checking if the drag is occuring within
-      the sdl window and then setting the correct state variables for pending_file_drag_update
-      This will spam logs pretty badly when dragging is active - so avoiding that here.
-      exception of native_window_color_is_null_ptr, which has a slightly different purpose) with the
-      values held by the corresponding sdl_utils.c globals. If native_window_color_is_null_ptr is
-      not NULL, we set the value pointed to by it with a boolean indicating whether the
-      native_window_color global pointer is NULL.
-     */
-
-    int x_window, y_window, w_window, h_window, x_mouse_global, y_mouse_global;
-    whist_frontend_get_window_position(frontend, &x_window, &y_window);
-    whist_frontend_get_window_virtual_size(frontend, &w_window, &h_window);
-    // Mouse is not active within window - so we must use the global mouse and manually transform
-    whist_frontend_get_global_mouse_position(frontend, &x_mouse_global, &y_mouse_global);
-
-    if (x_window < x_mouse_global && x_mouse_global < x_window + w_window &&
-        y_window < y_mouse_global && y_mouse_global < y_window + h_window) {
-        // Scale relative global mouse offset to output window
-        file_drag_update_x = output_width * (x_mouse_global - x_window) / w_window;
-        file_drag_update_y = output_height * (y_mouse_global - y_window) / h_window;
-    } else {
-        // Stop the rendering of the file drag icon if event has left the window
-        sdl_end_drag_event();
-    }
-}
-
-void sdl_end_drag_event() {}

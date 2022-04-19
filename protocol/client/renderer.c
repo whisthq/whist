@@ -11,7 +11,7 @@ Includes
 */
 
 #include "renderer.h"
-#include "sdl_event_handler.h"
+#include "handle_frontend_events.h"
 #include "whist/debug/debug_console.h"
 #include <whist/logging/log_statistic.h>
 
@@ -221,7 +221,7 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
 
     // If the audio device is pending an update,
     // refresh the audio device
-    if (sdl_pending_audio_device_update()) {
+    if (pending_audio_device_update()) {
         refresh_audio_device(whist_renderer->audio_context);
     }
 
@@ -348,7 +348,7 @@ int32_t multithreaded_audio_renderer(void* opaque) {
         }
 
         // Refresh the audio device, if a new audio device update is pending
-        if (sdl_pending_audio_device_update()) {
+        if (pending_audio_device_update()) {
             refresh_audio_device(whist_renderer->audio_context);
         }
 

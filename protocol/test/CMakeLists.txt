@@ -32,7 +32,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/client_utils.c
         ../client/whist_client.c
         ../client/network.c
-        ../client/sdl_event_handler.c
+        ../client/handle_frontend_events.c
         ../client/sdl_utils.c
         ../client/handle_server_message.c
         ../client/video.c

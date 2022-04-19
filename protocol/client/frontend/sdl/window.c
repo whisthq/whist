@@ -11,11 +11,6 @@ void sdl_get_window_virtual_size(WhistFrontend* frontend, int* width, int* heigh
     SDL_GetWindowSize(context->window, width, height);
 }
 
-void sdl_get_window_position(WhistFrontend* frontend, int* x, int* y) {
-    SDLFrontendContext* context = frontend->context;
-    SDL_GetWindowPosition(context->window, x, y);
-}
-
 WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int* index) {
     SDLFrontendContext* context = frontend->context;
     int ret = SDL_GetWindowDisplayIndex(context->window);

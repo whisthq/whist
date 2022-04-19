@@ -39,7 +39,7 @@ volatile bool connected = false;
 #define UDP_CONNECTION_WAIT 500  // ms
 #define TCP_CONNECTION_WAIT 500  // ms
 // Controls the timeouts of read_packet on UDP
-// 0ms hurts laptop batteries, but 1ms keeps update_video/update_audio live
+// 0 ms hurts laptop batteries, but 1ms keeps our loops live
 #define UDP_CONNECTION_TIMEOUT 1  // ms
 // Controls the timeout of read_packet on TCP
 #define TCP_CONNECTION_TIMEOUT 1  // ms

@@ -1,16 +1,15 @@
-#ifndef WHIST_EVENT_HANDLER_H
-#define WHIST_EVENT_HANDLER_H
+#ifndef WHIST_CLIENT_HANDLE_FRONTEND_EVENTS_H
+#define WHIST_CLIENT_HANDLE_FRONTEND_EVENTS_H
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file sdl_event_handler.h
- * @brief This file contains client-specific wrappers to low-level network
- *        functions.
+ * @file handle_frontend_events.c
+ * @brief This file exposes the functions to handle frontend events in the main loop.
 ============================
 Usage
 ============================
 
-handleSDLEvent() must be called on any SDL event that occurs. Any action
-trigged an SDL event must be triggered in sdl_event_handler.c
+handle_frontend_events() should be periodically called in the main loop to poll and handle
+frontend events, including input, mouse motion, and resize events.
 
 TODO: Combine this with sdl_utils.h in some way
 */
@@ -45,7 +44,7 @@ Public Functions
  *                                 To see more information on this issue, and my related rant,
  *                                 go to https://github.com/libsdl-org/SDL/issues/1059
  */
-bool sdl_handle_events(WhistFrontend* frontend);
+bool handle_frontend_events(WhistFrontend* frontend);
 
 /**
  * @brief                          The function will let you know if an audio device has
@@ -58,6 +57,6 @@ bool sdl_handle_events(WhistFrontend* frontend);
  *
  * @note                           This function is thread-safe with any other sdl function call.
  */
-bool sdl_pending_audio_device_update(void);
+bool pending_audio_device_update(void);
 
-#endif  // WHIST_EVENT_HANDLER_H
+#endif  // WHIST_CLIENT_HANDLE_FRONTEND_EVENTS_H

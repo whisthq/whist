@@ -1,6 +1,7 @@
 #include "common.h"
 
 bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
+    SDLFrontendContext* context = frontend->context;
     if (!event) {
         return SDL_PollEvent(NULL) != 0;
     }
@@ -13,6 +14,13 @@ bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
     }
 
     memset(event, 0, sizeof(WhistFrontendEvent));
+
+    if (sdl_event.type == context->file_drag_event_id) {
+        event->type = FRONTEND_EVENT_FILE_DRAG;
+        event->file_drag = *(FrontendFileDragEvent*)sdl_event.user.data1;
+        free(sdl_event.user.data1);
+        return true;
+    }
 
     switch (sdl_event.type) {
         case SDL_WINDOWEVENT: {
@@ -140,10 +148,6 @@ bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
     }
 
     return true;
-}
-
-void sdl_get_global_mouse_position(WhistFrontend* frontend, int* x, int* y) {
-    SDL_GetGlobalMouseState(x, y);
 }
 
 void sdl_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,

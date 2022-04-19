@@ -18,6 +18,7 @@ typedef enum FrontendEventType {
     FRONTEND_EVENT_MOUSE_WHEEL,
     FRONTEND_EVENT_MOUSE_LEAVE,
     FRONTEND_EVENT_GESTURE,
+    FRONTEND_EVENT_FILE_DRAG,
     FRONTEND_EVENT_FILE_DROP,
     FRONTEND_EVENT_QUIT,
 } FrontendEventType;
@@ -87,6 +88,14 @@ typedef struct FrontendFileDropEvent {
     char* filename;  // must be freed by handler
 } FrontendFileDropEvent;
 
+typedef struct FrontendFileDragEvent {
+    struct {
+        int x;
+        int y;
+    } position;
+    bool end_drag;
+} FrontendFileDragEvent;
+
 typedef struct FrontendQuitEvent {
     bool quit_application;
 } FrontendQuitEvent;
@@ -101,6 +110,7 @@ typedef struct WhistFrontendEvent {
         FrontendMouseWheelEvent mouse_wheel;
         FrontendGestureEvent gesture;
         FrontendFileDropEvent file_drop;
+        FrontendFileDragEvent file_drag;
         FrontendQuitEvent quit;
         FrontendResizeEvent resize;
         FrontendVisibilityEvent visibility;

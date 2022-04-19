@@ -160,15 +160,60 @@ void sdl_native_declare_user_activity(void) {
     }
 }
 
-// TODO: Put these into the frontend so that creation and destruction
-// can properly happen per-frontend.
-static id global_left_mouse_drag_listener;
-static id global_left_mouse_up_listener;
-static id global_swipe_listener;
+typedef struct FileDragState {
+    id left_mouse_drag_listener;
+    id left_mouse_up_listener;
+    id swipe_listener;
+    bool mouse_down;
+    int change_count;
+    bool active;
+} FileDragState;
 
-// TODO: Add a system (piggybacking the events system, taking a callback, etc.)
-// to handle the drag events.
-void sdl_native_init_external_drag_handler(void) {
+static void push_drag_end_event(WhistFrontend *frontend) {
+    SDLFrontendContext *context = frontend->context;
+    FileDragState *state = context->native_data;
+    state->active = false;
+
+    SDL_Event event = {0};
+    event.type = context->file_drag_event_id;
+    FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
+    memset(drag_event, 0, sizeof(FrontendFileDragEvent));
+    drag_event->end_drag = true;
+    event.user.data1 = drag_event;
+    SDL_PushEvent(&event);
+}
+
+static void push_drag_event(WhistFrontend *frontend) {
+    SDLFrontendContext *context = frontend->context;
+    FileDragState *state = context->native_data;
+
+    int window_x, window_y, mouse_x, mouse_y;
+    int window_w, window_h;
+    SDL_GetWindowPosition(context->window, &window_x, &window_y);
+    SDL_GetWindowSize(context->window, &window_w, &window_h);
+    // Mouse is not active in window - so we must use the global mouse and manually transform
+    SDL_GetGlobalMouseState(&mouse_x, &mouse_y);
+
+    // If the mouse is in the window
+    if (mouse_x >= window_x && mouse_x <= window_x + window_w && mouse_y >= window_y &&
+        mouse_y <= window_y + window_h) {
+        state->active = true;
+
+        SDL_Event event = {0};
+        event.type = context->file_drag_event_id;
+        FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
+        memset(drag_event, 0, sizeof(FrontendFileDragEvent));
+        drag_event->end_drag = false;
+        drag_event->position.x = mouse_x - window_x;
+        drag_event->position.y = mouse_y - window_y;
+        event.user.data1 = drag_event;
+        SDL_PushEvent(&event);
+    } else if (state->active) {
+        push_drag_end_event(frontend);
+    }
+}
+
+void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
     /*
         Initializes global event handlers for left mouse down dragged
         and left mouse up events. The drag board change count changes
@@ -180,76 +225,77 @@ void sdl_native_init_external_drag_handler(void) {
         by monitoring when the mouse up event occurs which signals that the user
         is finished dragging the file in question.
     */
-
-    // Monitor change count and mouse press as state variables
-    global_left_mouse_drag_listener = NULL;
-    global_left_mouse_up_listener = NULL;
-    global_swipe_listener = NULL;
-    static bool file_drag_mouse_down;
-    static int current_change_count;
+    SDLFrontendContext *context = frontend->context;
+    context->native_data = safe_malloc(sizeof(FileDragState));
+    FileDragState *state = context->native_data;
+    memset(state, 0, sizeof(FileDragState));
 
     // Initialize change count since global drag board change count starts incrementing at system
     // start
     NSPasteboard *change_count_pb = [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
-    current_change_count = (int)[change_count_pb changeCount];
-    file_drag_mouse_down = false;
+    state->change_count = (int)[change_count_pb changeCount];
+    state->mouse_down = false;
+    state->active = false;
 
     // Set event handler for detecting when a new file is being dragged
-    global_left_mouse_drag_listener = [NSEvent
+    state->left_mouse_drag_listener = [NSEvent
         addGlobalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDragged
                                       handler:^(NSEvent *event) {
                                         NSPasteboard *pb =
                                             [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
                                         int change_count = (int)[pb changeCount];
-                                        if (change_count > current_change_count) {
+                                        if (change_count > state->change_count) {
                                             // If a new file has been loaded, mark as mouse
                                             // down and update changecount
-                                            current_change_count = change_count;
-                                            file_drag_mouse_down = true;
-                                        } else if (file_drag_mouse_down) {
+                                            state->change_count = change_count;
+                                            state->mouse_down = true;
+                                        } else if (state->mouse_down) {
                                             // We are continuing to drag our file from its
-                                            // original mousedown selection - turn over to sdl
-                                            // handler
-                                            // TODO: Use a callback or fire a FrontendEvent
-                                            // sdl_handle_drag_event(frontend);
+                                            // original mousedown selection
+                                            push_drag_event(frontend);
                                         }
                                       }];
 
     // Mouse up event indicates that file is no longer being dragged
-    global_left_mouse_up_listener =
+    state->left_mouse_up_listener =
         [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskLeftMouseUp
                                                handler:^(NSEvent *event) {
-                                                 file_drag_mouse_down = false;
-                                                 // TODO: Use a callback or fire a FrontendEvent
-                                                 // sdl_end_drag_event();
+                                                 state->mouse_down = false;
+                                                 push_drag_end_event(frontend);
                                                }];
 
     // Swipe gesture event indicates that file is no longer being dragged
-    global_swipe_listener = [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskSwipe
+    state->swipe_listener = [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskSwipe
                                                                    handler:^(NSEvent *event) {
-                                                                     file_drag_mouse_down = false;
-                                                                     // TODO: Use a callback or fire
-                                                                     // a FrontendEvent
-                                                                     // sdl_end_drag_event();
+                                                                     state->mouse_down = false;
+                                                                     push_drag_end_event(frontend);
                                                                    }];
 }
 
-// TODO: Destroy these event handlers per WhistFrontend.
-void sdl_native_destroy_external_drag_handler(void) {
+void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
     /*
         NSEvent event listeners are removed by passing in their ids
         to the removeMonitor call
     */
+    SDLFrontendContext *context = frontend->context;
+    FileDragState *state = context->native_data;
 
-    if (global_left_mouse_drag_listener != NULL) {
-        [NSEvent removeMonitor:global_left_mouse_drag_listener];
+    if (state == NULL) {
+        return;
     }
 
-    if (global_left_mouse_drag_listener != NULL) {
-        [NSEvent removeMonitor:global_left_mouse_up_listener];
+    if (state->left_mouse_drag_listener != NULL) {
+        [NSEvent removeMonitor:state->left_mouse_drag_listener];
     }
 
-    if (global_swipe_listener != NULL) {
-        [NSEvent removeMonitor:global_swipe_listener];
+    if (state->left_mouse_up_listener != NULL) {
+        [NSEvent removeMonitor:state->left_mouse_up_listener];
     }
+
+    if (state->swipe_listener != NULL) {
+        [NSEvent removeMonitor:state->swipe_listener];
+    }
+
+    context->native_data = NULL;
+    free(state);
 }

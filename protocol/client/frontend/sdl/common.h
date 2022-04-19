@@ -23,6 +23,8 @@ typedef struct SDLFrontendContext {
     } cursor;
     const uint8_t* key_state;
     int key_count;
+    uint32_t file_drag_event_id;
+    void* native_data;
 } SDLFrontendContext;
 
 #define SDL_COMMON_HEADER_ENTRY(return_type, name, ...) return_type sdl_##name(__VA_ARGS__);

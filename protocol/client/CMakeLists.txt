@@ -7,7 +7,7 @@ set(WHIST_CLIENT_DEPENDS
         audio.c
         client_utils.c
         network.c
-        sdl_event_handler.c
+        handle_frontend_events.c
         sdl_utils.c
         handle_server_message.c
         video.c

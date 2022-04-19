@@ -13,7 +13,6 @@
     GENERATOR(size_t, get_audio_buffer_size, WhistFrontend* frontend)                              \
     GENERATOR(void, get_window_pixel_size, WhistFrontend* frontend, int* width, int* height)       \
     GENERATOR(void, get_window_virtual_size, WhistFrontend* frontend, int* width, int* height)     \
-    GENERATOR(void, get_window_position, WhistFrontend* frontend, int* x, int* y)                  \
     GENERATOR(WhistStatus, get_window_display_index, WhistFrontend* frontend, int* index)          \
     GENERATOR(int, get_window_dpi, WhistFrontend* frontend)                                        \
     GENERATOR(bool, is_window_visible, WhistFrontend* frontend)                                    \
@@ -22,7 +21,6 @@
     GENERATOR(void, set_window_fullscreen, WhistFrontend* frontend, bool fullscreen)               \
     GENERATOR(void, resize_window, WhistFrontend* frontend, int width, int height)                 \
     GENERATOR(bool, poll_event, WhistFrontend* frontend, WhistFrontendEvent* event)                \
-    GENERATOR(void, get_global_mouse_position, WhistFrontend* frontend, int* x, int* y)            \
     GENERATOR(void, set_cursor, WhistFrontend* frontend, WhistCursorInfo* cursor)                  \
     GENERATOR(void, get_keyboard_state, WhistFrontend* frontend, const uint8_t** key_state,        \
               int* key_count, int* mod_state)                                                      \

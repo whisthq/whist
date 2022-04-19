@@ -15,16 +15,9 @@ NOTE: Only ONE thread can call a function on video_context at a time,
 VideoContext* video_context = init_video();
 
 In one thread:
-update_video(video_context);
 receive_video(video_context, packet_1);
-update_video(video_context);
-update_video(video_context);
 receive_video(video_context, packet_2);
-update_video(video_context);
-update_video(video_context);
 receive_video(video_context, packet_3);
-update_video(video_context);
-update_video(video_context);
 
 In another thread: (NOTE: ONLY render_video is thread-safe. The rest of the functions are not)
 render_video(video_context);

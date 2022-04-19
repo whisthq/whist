@@ -47,8 +47,7 @@ Public Functions
  *                                 registered with the created SDL window.
  *
  */
-void init_sdl(int output_width, int output_height, char* name, char* icon_filename,
-              WhistFrontend** frontend);
+WhistFrontend* init_sdl(int output_width, int output_height, const char* name);
 
 /**
  * @brief                          Destroys an SDL window and associated
@@ -204,20 +203,5 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
                                   bool* native_window_color_update_ptr, char* window_title_ptr,
                                   bool* should_update_window_title_ptr,
                                   bool* fullscreen_trigger_ptr, bool* fullscreen_value_ptr);
-
-/**
- * @brief                          Called when a drag event has been detected. Uses the
- *                                 sdl global mouse and window state to initiate dragging
- *                                 indication or emulation.
- *
- */
-void sdl_handle_drag_event(WhistFrontend* frontend);
-
-/**
- * @brief                          Cancel or terminate drag indications/emulations
- *
- * @note                           This should be called when mouse exits the window or on mouseup
- */
-void sdl_end_drag_event(void);
 
 #endif  // WHIST_SDL_UTILS_H
