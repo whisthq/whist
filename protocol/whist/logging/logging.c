@@ -498,9 +498,7 @@ void whist_log_printf(unsigned int level, const char* file_name, const char* fun
     va_list args;
     va_start(args, fmt_str);
 
-    // whist_log_vprintf(level, file_name, function, line_number, fmt_str, args);
-    vfprintf(stderr, fmt_str, args);
-    fflush(stderr);
+    whist_log_vprintf(level, file_name, function, line_number, fmt_str, args);
 
     va_end(args);
 }
