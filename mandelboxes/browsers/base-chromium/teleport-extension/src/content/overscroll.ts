@@ -1,5 +1,5 @@
 const damping = 0.8
-const maxOffset = 150
+const maxOffset = 100
 
 const content =
   document.compatMode === "BackCompat"
@@ -101,7 +101,10 @@ const handler = (evt: WheelEvent) => {
   const onTopEdge = isOnTopEdge(y)
   const onBottomEdge = isOnBottomEdge(y)
 
-  if (!onTopEdge && !onBottomEdge) return
+  if (!onTopEdge && !onBottomEdge) {
+    content.style.transform = "none"
+    return
+  }
 
   resetFlag()
   evt.preventDefault()
@@ -114,13 +117,11 @@ const handler = (evt: WheelEvent) => {
 
     const updated = offset + update
     if ((onTopEdge && updated > 0) || (onBottomEdge && updated < 0)) {
-      backFlag = true
+      content.style.transform = "none"
       offset = 0
     } else {
       offset = updated
     }
-
-    console.log(offset)
   }
 }
 
@@ -128,7 +129,7 @@ render()
 
 // wheel events handler
 const initYOverscrollHandler = () => {
-  window.addEventListener("wheel", handler, { passive: false })
+  window.addEventListener("wheel", throttle(handler, 20), { passive: false })
 }
 
 export { initYOverscrollHandler }
