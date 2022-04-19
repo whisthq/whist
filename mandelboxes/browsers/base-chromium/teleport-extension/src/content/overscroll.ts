@@ -30,7 +30,7 @@ const resetFlag = () => {
   clearTimeout(timer)
   timer = setTimeout(() => {
     backFlag = false
-  }, 75)
+  }, 40)
 }
 
 const trim = (update: number) => {
@@ -109,7 +109,6 @@ const handler = (evt: WheelEvent) => {
   evt.preventDefault()
 
   // If the user is overscrolling, play the animation
-  console.log("backflag", backFlag, "y", y)
   if (!backFlag && y) {
     let update = (y * (maxOffset - Math.abs(offset))) / maxOffset
 
