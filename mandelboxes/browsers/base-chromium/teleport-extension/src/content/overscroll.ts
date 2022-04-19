@@ -30,6 +30,18 @@ const resetFlag = () => {
   }, 30)
 }
 
+const throttle = (fn: any, delay: number) => {
+  let lastCall = 0
+  return (...args: any[]) => {
+    const now = new Date().getTime()
+    if (now - lastCall < delay) {
+      return
+    }
+    lastCall = now
+    return fn(...args)
+  }
+}
+
 const render = () => {
   if (!offset && !rendered) {
     lastDis = 0
@@ -79,9 +91,13 @@ const isOnBottomEdge = (delta: number) => {
 }
 
 const handler = (evt: WheelEvent) => {
+  // Don't overscroll if the page has no scrollbar
+  const canScroll = content.scrollHeight > content.clientHeight
+  if (!canScroll) return
+
   const { y } = getDelta(evt)
 
-  // Check if overscrolling is possible
+  // Check if the user has scrolled to the top/bottom limits of the page
   const onTopEdge = isOnTopEdge(y)
   const onBottomEdge = isOnBottomEdge(y)
 
@@ -90,6 +106,7 @@ const handler = (evt: WheelEvent) => {
   resetFlag()
   evt.preventDefault()
 
+  // If the user is overscrolling, play the animation
   if (!backFlag && y) {
     const update = (y * (maxOffset - Math.abs(offset))) / maxOffset
 
@@ -108,7 +125,7 @@ render()
 
 // wheel events handler
 const initYOverscrollHandler = () => {
-  window.addEventListener("wheel", handler, { passive: false })
+  window.addEventListener("wheel", throttle(handler, 50), { passive: false })
 }
 
 export { initYOverscrollHandler }
