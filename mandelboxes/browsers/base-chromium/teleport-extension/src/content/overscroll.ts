@@ -121,13 +121,15 @@ const handler = (evt: WheelEvent) => {
     } else {
       offset = updated
     }
+
+    console.log("Update", update, "Delta", y, "Offset", offset)
   }
 }
 
 render()
 
-const initYOverscrollHandler = () => {
+const initElasticOverscroll = () => {
   window.addEventListener("wheel", handler, { passive: false })
 }
 
-export { initYOverscrollHandler }
+export { initElasticOverscroll }
