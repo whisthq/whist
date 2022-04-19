@@ -69,8 +69,6 @@ const getDeltaMode = (mode: number) => DELTA_MODE[mode] || DELTA_MODE[0]
 const getDelta = (evt: WheelEvent) => {
   const mode = getDeltaMode(evt.deltaMode)
 
-  console.log("The mode is", mode)
-
   return {
     x: evt.deltaX * mode,
     y: evt.deltaY * mode,
@@ -109,8 +107,10 @@ const handler = (evt: WheelEvent) => {
   resetFlag()
   evt.preventDefault()
 
+  console.log("Delta", y)
+
   // If the user is overscrolling, play the animation
-  if (!backFlag && y) {
+  if (!backFlag) {
     // if (Math.abs(y) < minDelta && y < 0) y = -1 * minDelta
     // if (Math.abs(y) < minDelta && y > 0) y = minDelta
 
