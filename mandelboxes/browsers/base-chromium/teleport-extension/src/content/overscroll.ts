@@ -98,8 +98,10 @@ const handler = (evt: WheelEvent) => {
     if ((onTopEdge && update > 0) || (onBottomEdge && update < 0)) {
       offset = 0
     } else {
-      offset += update
+      offset = update
     }
+
+    console.log(offset)
   }
 }
 
