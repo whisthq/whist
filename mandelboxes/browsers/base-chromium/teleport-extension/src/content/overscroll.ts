@@ -91,6 +91,8 @@ const handler = (evt: WheelEvent) => {
   if (!backFlag && y) {
     offset += (y * (maxOffset - Math.abs(offset))) / maxOffset
   }
+
+  console.log("the offset is", offset)
 }
 
 // wheel events handler
