@@ -119,6 +119,12 @@ bool init_file_drop_handler(void) {
     return true;
 }
 
+void xdnd_send_drop();
+void xdnd_send_selection_notify(char* xdnd_file_list, XEvent selection_request_event);
+void xdnd_send_position(int x, int y);
+int xdnd_own_and_send_enter();
+void xdnd_send_leave();
+
 void xdnd_send_drop() {
     XClientMessageEvent m;
     memset(&m, 0, sizeof(m));
@@ -180,6 +186,7 @@ void xdnd_send_position(int x, int y) {
 }
 
 int xdnd_own_and_send_enter() {
+    int revert;
     if (!display || !active_window || !our_window) {
         // Get our window and active X11 window
         unsigned long color = BlackPixel(display, DefaultScreen(display));
@@ -329,7 +336,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
 
     // Just in case a drag end event was sent before
     // if (file_drag_update(true, drop_file->event_info.server_drop.x, drop_file->event_info.server_drop.y) < 0) {
-    file_drag_update(false, 0, 0 NULL);
+    file_drag_update(false, 0, 0, NULL);
     if (!file_uri_list) {
         retval = -1;
         goto reset_file_drop_statics;
@@ -607,8 +614,6 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
     //         // DRAG BEGINS
 
     //         LOG_INFO("DRAG BEGINS");
-
-    //         int revert;
 
     //         // LOG_INFO("Executing XDND exchange for file ID %d", drop_file->id);
 
