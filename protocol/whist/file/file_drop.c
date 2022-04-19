@@ -119,6 +119,12 @@ bool init_file_drop_handler(void) {
     return true;
 }
 
+void xdnd_send_drop(void);
+void xdnd_send_selection_notify(char* xdnd_file_list, XEvent selection_request_event);
+void xdnd_send_position(int x, int y);
+int xdnd_own_and_send_enter(void);
+void xdnd_send_leave(void);
+
 void xdnd_send_drop(void) {
     XClientMessageEvent m;
     memset(&m, 0, sizeof(m));
