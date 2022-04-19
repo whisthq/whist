@@ -48,5 +48,5 @@ RUN pip install -r /root/requirements.txt
 # The "exec" form of ENTRYPOINT accepts a CMD list as "default" arguments.
 # If no additional "docker run" arguments are passed, then ENTRYPOINT will
 # use the CMD list below. By default, we run the migration process.
-ENTRYPOINT ["python", "/root/entrypoint.py"]
-CMD ["python", "/root/main.py"]
+ENTRYPOINT ["python", "-B", "/root/entrypoint.py"]
+CMD ["python", "-B", "/root/main.py"]
