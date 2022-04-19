@@ -1,7 +1,8 @@
 // A lower damping value causes the spring to bounce back more quickly
 const damping = 0.85
 // A higher maxOffset means the page can bounce further
-const maxOffset = 120
+const maxOffset = 150
+const minDelta = 20
 
 // Number of pixels to bounce
 let offset = 0
@@ -93,7 +94,7 @@ const handler = (evt: WheelEvent) => {
 
   if (!canScroll) return
 
-  const { y } = getDelta(evt)
+  let { y } = getDelta(evt)
 
   // Check if the user has scrolled to the top/bottom limits of the page
   const onTopEdge = isOnTopEdge(y)
@@ -109,6 +110,8 @@ const handler = (evt: WheelEvent) => {
 
   // If the user is overscrolling, play the animation
   if (!backFlag && y) {
+    if (Math.abs(y) < minDelta) y *= 10
+
     let update = (y * (maxOffset - Math.abs(offset))) / maxOffset
 
     const updated = trim(offset + update)
