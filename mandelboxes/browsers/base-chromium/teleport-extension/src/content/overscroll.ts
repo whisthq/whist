@@ -1,7 +1,6 @@
 const damping = 0.8
 const maxOffset = 100
 
-const container = window
 const content =
   document.compatMode === "BackCompat"
     ? document.body
@@ -93,23 +92,25 @@ function isOntoEdge(delta: any) {
   return (scrollTop === 0 && delta <= 0) || (scrollTop === max && delta >= 0)
 }
 
+const handler = (evt: WheelEvent) => {
+  const { y } = getDelta(evt)
+
+  // check if scrolling onto very edge
+  if (!isOntoEdge(y)) {
+    return
+  }
+
+  resetFlag()
+  evt.preventDefault()
+
+  if (!backFlag && y) {
+    offset += (y * (maxOffset - Math.abs(offset))) / maxOffset
+  }
+}
+
 // wheel events handler
 const initYOverscrollHandler = () => {
-  window.addEventListener("wheel", (evt) => {
-    const { y } = getDelta(evt)
-
-    // check if scrolling onto very edge
-    if (!isOntoEdge(y)) {
-      return
-    }
-
-    resetFlag()
-    evt.preventDefault()
-
-    if (!backFlag && y) {
-      offset += (y * (maxOffset - Math.abs(offset))) / maxOffset
-    }
-  })
+  window.addEventListener("wheel", handler, { passive: false })
 }
 
 export { initYOverscrollHandler }
