@@ -1,9 +1,7 @@
 // A lower damping value causes the spring to bounce back more quickly
 const damping = 0.9
 // A higher maxOffset means the page can bounce further
-const maxOffset = 150
-// The minimum Y offset update (in magnitude), so light scrolls can lead to more noticeable bounces
-const minUpdate = 20
+const maxOffset = 100
 
 // Number of pixels to bounce
 let offset = 0
@@ -13,27 +11,23 @@ let rendered = 0
 let lastDis = 0
 // Used to throttle so we don't send too many bounce animations
 let backFlag = false
-
 let timer: any
 
+// Get the body HTML element
 const content =
   document.compatMode === "BackCompat"
     ? document.body
     : document.documentElement
 
-// Copied from smooth-scrollbar/src/utils/get-delta.js
-const DELTA_SCALE = {
-  STANDARD: 1,
-  OTHERS: -3,
-}
-
+// For scaling the delta values [DELTA_PIXEL, DELTA_LINE, DELTA_PAGE]
+// https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent/deltaMode
 const DELTA_MODE = [1.0, 28.0, 500.0]
 
 const resetFlag = () => {
   clearTimeout(timer)
   timer = setTimeout(() => {
     backFlag = false
-  }, 30)
+  }, 40)
 }
 
 const trim = (update: number) => {
@@ -68,14 +62,16 @@ const render = () => {
   requestAnimationFrame(render)
 }
 
-const getDeltaMode = (mode: any) => DELTA_MODE[mode] || DELTA_MODE[0]
+const getDeltaMode = (mode: number) => DELTA_MODE[mode] || DELTA_MODE[0]
 
 const getDelta = (evt: WheelEvent) => {
   const mode = getDeltaMode(evt.deltaMode)
 
+  console.log("The mode is", mode)
+
   return {
-    x: (evt.deltaX / DELTA_SCALE.STANDARD) * mode,
-    y: (evt.deltaY / DELTA_SCALE.STANDARD) * mode,
+    x: evt.deltaX * mode,
+    y: evt.deltaY * mode,
   }
 }
 
@@ -122,9 +118,9 @@ const handler = (evt: WheelEvent) => {
     } else {
       offset = updated
     }
-
-    console.log("Update", update, "Delta", y, "Offset", offset)
   }
+
+  console.log("Delta", y, "Offset", offset, "Backflag", backFlag)
 }
 
 render()
