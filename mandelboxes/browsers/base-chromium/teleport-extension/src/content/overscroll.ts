@@ -1,7 +1,7 @@
 // A lower damping value causes the spring to bounce back more quickly
-const damping = 0.85
+const damping = 0.8
 // A higher maxOffset means the page can bounce further
-const maxOffset = 150
+const maxOffset = 100
 const minDelta = 20
 
 // Number of pixels to bounce
@@ -123,8 +123,6 @@ const handler = (evt: WheelEvent) => {
       offset = updated
     }
   }
-
-  console.log("Delta", y, "Offset", offset, "Backflag", backFlag)
 }
 
 render()
