@@ -14,6 +14,15 @@ let backFlag = false
 
 let timer: any
 
+// Wheel delta normalizing
+// copied from smooth-scrollbar/src/utils/get-delta.js
+const DELTA_SCALE = {
+  STANDARD: 1,
+  OTHERS: -3,
+}
+
+const DELTA_MODE = [1.0, 28.0, 500.0]
+
 const resetFlag = () => {
   clearTimeout(timer)
   timer = setTimeout(() => {
@@ -36,7 +45,6 @@ const render = () => {
 
   lastDis = dis
 
-  // throw away float part
   const next = offset - ((dis * damping) | 0)
 
   content.style.transform = `translate3d(0, ${-next}px, 0)`
@@ -46,17 +54,6 @@ const render = () => {
 
   requestAnimationFrame(render)
 }
-
-render()
-
-// wheel delta normalizing
-// copied from smooth-scrollbar/src/utils/get-delta.js
-const DELTA_SCALE = {
-  STANDARD: 1,
-  OTHERS: -3,
-}
-
-const DELTA_MODE = [1.0, 28.0, 500.0]
 
 const getDeltaMode = (mode: any) => DELTA_MODE[mode] || DELTA_MODE[0]
 
@@ -94,16 +91,20 @@ const handler = (evt: WheelEvent) => {
   evt.preventDefault()
 
   if (!backFlag && y) {
-    const update = offset + (y * (maxOffset - Math.abs(offset))) / maxOffset
-    if ((onTopEdge && update > 0) || (onBottomEdge && update < 0)) {
+    const update = (y * (maxOffset - Math.abs(offset))) / maxOffset
+
+    if (Math.abs(update) < 10) return
+
+    const updated = offset + update
+    if ((onTopEdge && updated > 0) || (onBottomEdge && updated < 0)) {
       offset = 0
     } else {
-      offset = update
+      offset = updated
     }
-
-    console.log(offset)
   }
 }
+
+render()
 
 // wheel events handler
 const initYOverscrollHandler = () => {
