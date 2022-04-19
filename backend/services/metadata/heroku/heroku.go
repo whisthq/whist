@@ -21,7 +21,7 @@ var client heroku.Client = heroku.Client{Username: email, Password: apiKey}
 
 // GetAppName provides the Heroku app name to use based on the app environment
 // the host-service is running on, or the override if provided during build
-// time. In a local environment, it defaults to the dev server.
+// time. In a local environment, it defaults to the dev scaling service.
 func GetAppName() string {
 	// Respect the override if set.
 	if appNameOverride != "" {
@@ -30,14 +30,14 @@ func GetAppName() string {
 
 	switch metadata.GetAppEnvironment() {
 	case metadata.EnvDev:
-		return "whist-dev-server"
+		return "whist-dev-scaling-service"
 	case metadata.EnvStaging:
-		return "whist-staging-server"
+		return "whist-staging-scaling-service"
 	case metadata.EnvProd:
-		return "whist-prod-server"
+		return "whist-prod-scaling-service"
 	default:
-		// In the default case we use the dev server, like the webserver.
-		return "whist-dev-server"
+		// In the default case we use the dev scaling service.
+		return "whist-dev-scaling-service"
 	}
 }
 

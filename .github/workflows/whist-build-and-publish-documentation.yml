@@ -15,7 +15,6 @@ on:
       - ".github/workflows/whist-build-and-publish-documentation.yml"
       - "backend/services/**"
       - "protocol/**"
-      - "backend/webserver/**"
   push:
     branches:
       - dev
@@ -23,7 +22,6 @@ on:
       - ".github/workflows/whist-build-and-publish-documentation.yml"
       - "backend/services/**"
       - "protocol/**"
-      - "backend/webserver/**"
   workflow_dispatch:
 
 # This guarantees that if you push many commits to the same PR, only the latest
@@ -113,33 +111,10 @@ jobs:
         run: rm -r docs/protocol && cp -r whist/protocol/build-docker/docs/html docs/protocol # Since the protocol is built inside a Docker container, the folder is build-docker
 
       ##############################################################################
-      ################################ WEBSERVER STEPS #############################
-
-      # Install the version of Sphinx specified in backend/webserver/requirements-test.txt
-      - name: Install requirements
-        run: |
-          pip install $(cat whist/backend/webserver/requirements.txt)
-          pip install $(cat whist/backend/webserver/requirements-test.txt)
-
-      - name: Build the Latest Documentation
-        working-directory: whist/backend/webserver/docs
-        run: sphinx-apidoc --no-toc -fo . ../app && make html
-
-      - name: Diff Old and New Documentation
-        id: webserver-diff
-        run: |
-          git diff --no-index whist/backend/webserver/docs/_build/html docs/webserver && echo "No changes detected"
-          echo "::set-output name=changed::$?"
-
-      - name: Copy New Webserver Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.webserver-diff.outputs.changed == true }}
-        run: rm -r docs/webserver && cp -r whist/backend/webserver/docs/_build/html docs/webserver
-
-      ##############################################################################
       ################################# PUBLISH STEPS ##############################
 
       - name: Commit the Documentation Changes to whisthq/docs (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true) }}
         working-directory: docs
         run: |
           # Set the author of the commit in whisthq/docs to be the user
@@ -167,7 +142,7 @@ jobs:
       ##############################################################################
 
       - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) && failure() }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true) && failure() }}
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
@@ -176,7 +151,7 @@ jobs:
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
       - name: Notify Slack on Workflow Success (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) && success() }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true) && success() }}
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post

@@ -13,13 +13,13 @@ on:
     paths:
       - "backend/services/**"
       - "!backend/services/README.md"
-      - "backend/webserver/db_migration/schema.sql"
+      - "backend/database/schema.sql"
       - ".github/workflows/backend-services-check-pr.yml"
   pull_request:
     paths:
       - "backend/services/**"
       - "!backend/services/README.md"
-      - "backend/webserver/db_migration/schema.sql"
+      - "backend/database/schema.sql"
       - ".github/workflows/backend-services-check-pr.yml"
   workflow_dispatch:
 
@@ -77,3 +77,159 @@ jobs:
 
           # This checks for building, vet, format and lint, and will fail if unformatted
           make check
+
+  # Database Migration
+  # Compare the schema of the live database with backend/database/schema.sql, and
+  # notify the PR if schema changes are detected
+  check-migra-diff:
+    name: Check Migra Diff
+    runs-on: ubuntu-20.04
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
+      GITHUB_ISSUE: ${{ github.event.number }}
+      GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
+      HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }} # needed to retrieve config vars from Heroku
+      TITLE_ERROR: >-
+        An error occured while comparing the database schema.
+      TITLE_NO_CHANGES: >-
+        Schema is unchanged, no database migration needed.
+      TITLE_SAFE_CHANGES: >-
+        There's some changes to be made to the schema!
+      TITLE_UNSAFE_CHANGES: >-
+        This PR introduces destructive changes to the schema!
+      TITLE_INVALID_CHANGES: >-
+        This PR will not migrate successfully.
+      BODY_ERROR: >-
+        The diff tool `migra` exited with an error.
+      BODY_NO_CHANGES: >-
+        Carry on!
+      BODY_SAFE_CHANGES: >-
+        The SQL commands below will perform the migration.
+      BODY_UNSAFE_CHANGES: >-
+        The schema diff produced some unsafe commands, which can be
+        dangerous to run on the database.
+
+
+        Remember these will be run automatically upon merge, so be sure
+        to review these changes extra carefully.
+
+
+        The SQL commands below will perform the migration.
+      BODY_INVALID_CHANGES: >-
+        The schema diff did not pass the migration test. The following
+        SQL commands will not be applied properly to the database.
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Log GitHub Context
+        shell: python3 {0}
+        run: |
+          import os
+          context = """
+          GITHUB CONTEXT:
+          ${{ toJSON(github) }}
+          JOB CONTEXT:
+          ${{ toJSON(job) }}
+          STEPS CONTEXT:
+          ${{ toJSON(steps) }}
+          RUNNER CONTEXT:
+          ${{ toJSON(runner) }}
+          STRATEGY CONTEXT:
+          ${{ toJSON(strategy) }}
+          MATRIX CONTEXT:
+          ${{ toJSON(matrix) }}
+          """
+
+      - name: Set up Python Environment
+        uses: actions/setup-python@v3.1.1
+        with:
+          python-version: "3.10.4"
+
+      - name: Determine heroku app name
+        run: |
+          if [[ ${GITHUB_BASE_REF} == dev || ${GITHUB_REF_NAME} == dev ]]; then
+              HEROKU_APP_NAME=whist-dev-scaling-service
+          elif [[ ${GITHUB_BASE_REF} == staging || ${GITHUB_REF_NAME} == staging ]]; then
+              HEROKU_APP_NAME=whist-staging-scaling-service
+          elif [[ ${GITHUB_BASE_REF} == prod || ${GITHUB_REF_NAME} == prod ]]; then
+              HEROKU_APP_NAME=whist-prod-scaling-service
+          elif [[ -z ${GITHUB_BASE_REF} ]]; then
+              HEROKU_APP_NAME=whist-dev-scaling-service
+          else
+              echo 'Error: Invalid branch' && false
+          fi
+          echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
+
+      - name: Diff database schema with local schema.sql
+        id: db-diff
+        env:
+          HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+          HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
+        uses: ./.github/actions/db-migration
+
+      # Need to install this dependency for the notification step.
+      - name: Install Python Dependencies
+        run: pip install PyGithub
+
+      # Using the workflow notifcation helpers, we'll send out
+      # formatted alerts based on the error code response from the
+      # previous step.
+
+      # Actual messages are defined in the environment configuration at
+      # the top of this job.
+      - name: Send Alerts on Diff Result
+        shell: python3 {0}
+        run: |
+          import os
+          import sys
+          sys.path.append(".github/workflows/helpers")
+          from notifications.github_bot import github_comment_update
+
+          code = int(${{ steps.db-diff.outputs.code }})
+          diff = """${{ steps.db-diff.outputs.diff }}"""
+
+          print("MIGRA RETURN CODE:", code)
+          print("MIGRA SQL DIFF:", diff)
+
+          if not os.environ.get("GITHUB_ISSUE"):
+            print("No GitHub Issue number! Skipping PR notification.")
+            sys.exit(0)
+
+          github_token = os.environ["GITHUB_TOKEN"]
+          github_issue = int(os.environ["GITHUB_ISSUE"])
+          github_repo = "whisthq/whist"
+
+          identifier = "AUTOMATED_DB_MIGRATION_MESSAGE"
+
+          if code == 0:
+            title = os.environ["TITLE_NO_CHANGES"]
+            body = os.environ["BODY_NO_CHANGES"]
+
+          elif code == 2:
+            title = ":construction:" + os.environ["TITLE_SAFE_CHANGES"] + ":construction:"
+            body = os.environ["BODY_SAFE_CHANGES"]
+
+          elif code == 3:
+            title = ":exclamation:" + os.environ["TITLE_UNSAFE_CHANGES"] + ":exclamation:"
+            body = os.environ["BODY_UNSAFE_CHANGES"]
+
+          elif code == 4:
+            title = ":rotating_light:" + os.environ["TITLE_INVALID_CHANGES"] + ":rotating_light:"
+            body = os.environ["BODY_INVALID_CHANGES"]
+
+          else:
+            title = ":x:" + os.environ["TITLE_ERROR"] + ":x:"
+            body = os.environ["BODY_ERROR"]
+
+          github_comment_update(
+            github_token,
+            github_repo,
+            github_issue,
+            identifier,
+            body,
+            title=title,
+            code=diff,
+            lang="sql",
+          )

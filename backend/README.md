@@ -12,6 +12,6 @@ This repository contains all the projects related to the Whist backend. They are
   - `/scaling-service`: This is the code that implements the Scaling-Service, which is the backend service that is responsible for assigning users to instances, and for dynamically scaling the number of instances to meet demand.
   - All other subfolders are shared utilities used by our backend services.
 
-- Webserver: `/webserver`. This code is getting sunsetted, it is being replaced by the Scaling-Service. It is currently still responsible for performing instance allocation and handling payments, but will soon be fully replaced and removed. Do not modify.
+- Database: `/database`: This contains the database schema file that is version controled as code for the branch it resides in. Any changes made to it should be reviewed and approved, since we treat this file as the "source of truth" for our databases.
 
 Please refer to each of those projects for their respective development practices, code standards, and further documentation.

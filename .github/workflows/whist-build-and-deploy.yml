@@ -51,7 +51,6 @@ jobs:
     outputs:
       branch: ${{ steps.set-deploy-environment.outputs.environment }}
       publish: ${{ steps.detect-publish.outputs.publish }}
-      webserver_url: ${{ steps.set-backend-services-urls.outputs.webserver_url }}
       scaling_service_url: ${{ steps.set-backend-services-urls.outputs.scaling_service_url }}
       auth0-domain: ${{ steps.set-deploy-environment.outputs.auth0-domain }}
       auth0-client-id: ${{ steps.set-deploy-environment.outputs.auth0-client-id }}
@@ -84,17 +83,12 @@ jobs:
           # Grab the name of the deployment environment from set-deploy-environment
           BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
           if [ "$BRANCH_NAME" == "prod" ]; then
-            WEBSERVER_URL=https://prod-server.whist.com
             SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
           elif [ "$BRANCH_NAME" == "staging" ]; then
-            WEBSERVER_URL=https://staging-server.whist.com
             SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
           else
-            WEBSERVER_URL=https://dev-server.whist.com
             SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
           fi
-          echo "webserver_url is set to: $WEBSERVER_URL"
-          echo "::set-output name=webserver_url::$WEBSERVER_URL"
           echo "scaling_service_url is set to: $SCALING_SERVICE_URL"
           echo "::set-output name=scaling_service_url::$SCALING_SERVICE_URL"
 
@@ -667,133 +661,6 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Webserver: Deploy to Heroku
-  # Push the webserver subtree to the appropriate Heroku app.
-  webserver-deploy-heroku:
-    name: "Webserver: Deploy to Heroku"
-    runs-on: ubuntu-20.04
-    concurrency: webserver-deploy-heroku-${{ github.ref }}
-    needs: [whist-publish-build-config, terraform-deploy]
-
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # need to get full history for splitsh-lite
-
-      - name: Setup Python-based notifications
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
-
-      - name: Authenticate Heroku
-        run: |
-          cat > ~/.netrc << EOF
-          machine api.heroku.com
-            login developers@whist.com
-            password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-          machine git.heroku.com
-            login developers@whist.com
-            password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-          EOF
-
-      - name: Add Heroku Remote
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-        run: |
-          if [[ ${{ needs.whist-publish-build-config.outputs.branch }} == dev ]]; then
-            HEROKU_APP_NAME=whist-dev-server
-          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == staging ]]; then
-            HEROKU_APP_NAME=whist-staging-server
-          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == prod ]]; then
-            HEROKU_APP_NAME=whist-prod-server
-          else
-            echo 'Error: Invalid branch' && false
-          fi
-          echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
-
-          heroku git:remote --app $HEROKU_APP_NAME --remote heroku-whist-server
-
-      - name: Install splitsh-lite for Subtree Split
-        run: >
-          wget -qO - https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
-          | sudo tar -zxp --directory /usr/local/bin/
-
-      - name: Diff database schema with local schema.sql
-        id: db-diff
-        env:
-          HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-          HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
-        uses: ./.github/actions/db-migration
-
-      - name: Deploy the Webserver Atomically & Migrate DB Schema (as needed)
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
-        env:
-          HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
-        shell: bash --noprofile --norc -eo pipefail {0}
-        run: backend/webserver/atomic_deployment.sh $HEROKU_APP_NAME '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
-
-      - name: Notify Slack on Database Migration Performed
-        shell: python3 {0}
-        run: |
-          import os
-          import sys
-          import urllib.parse
-          from notifications.slack_bot import slack_post
-
-          # This should be set by backend/webserver/atomic_deployment.sh
-          if os.environ.get("DB_MIGRATION_PERFORMED", "false") != "true":
-            sys.exit(0)
-
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
-          TITLE = ":construction: Database Migration Performed :construction:"
-          BODY = f"Database Schema Migration performed on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
-
-      - name: Notify Slack on Successful Webserver Deploy
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
-        shell: python3 {0}
-        run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
-          import os
-          from notifications.slack_bot import slack_post
-          HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
-          TITLE = ":heroku: Webserver Deployed :heroku:"
-          BODY = f"Webserver deployed to Heroku app `{HEROKU_APP_NAME}` on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
-
-      - name: Notify Slack on Job Error
-        if: failure()
-        shell: python3 {0}
-        run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
-          from notifications.slack_bot import slack_post
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Webserver in `webserver-deploy-heroku` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
-
-  #######################################################################################
-  #######################################################################################
-
   # Client Applications: Retrieve Version Number
   # Retrieve the current Whist version number from our configuration database, through Hasura
   # This is the first step in the client-applications deployment jobs
@@ -818,7 +685,6 @@ jobs:
     if: |
       always() &&
       (needs.scaling-service-deploy.result == 'success') &&
-      (needs.webserver-deploy-heroku.result == 'success') &&
       (needs.auth0-deploy-rules.result == 'success') &&
       (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
 
@@ -1176,7 +1042,6 @@ jobs:
       [
         whist-publish-build-config,
         mandelboxes-and-amis-publish-ghcr-and-aws,
-        webserver-deploy-heroku,
         auth0-deploy-rules,
         terraform-deploy,
       ]
@@ -1252,11 +1117,42 @@ jobs:
           password=${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
           EOF
 
-      - name: Deploy the Scaling Service & Start image upgrade
+      - name: Diff database schema with local schema.sql
+        id: db-diff
+        env:
+          HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+          HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
+        uses: ./.github/actions/db-migration
+
+      - name: Deploy the Scaling Service,  Start image upgrade and Migrate database schema
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         shell: bash --noprofile --norc -eo pipefail {0}
         working-directory: backend/services/scaling-service
-        run: ./deploy.sh "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}" ${{ env.HEROKU_APP_NAME }} ${{ github.sha }}
+        run: ./deploy.sh "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}" ${{ env.HEROKU_APP_NAME }} ${{ github.sha }} '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
+
+      - name: Notify Slack on Database Migration Performed
+        shell: python3 {0}
+        run: |
+          import os
+          import sys
+          import urllib.parse
+          from notifications.slack_bot import slack_post
+
+          # This should be set by backend/services/scaling-service/deploy.sh
+          if os.environ.get("DB_MIGRATION_PERFORMED", "false") != "true":
+            sys.exit(0)
+
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          TITLE = ":construction: Database Migration Performed :construction:"
+          BODY = f"Database Schema Migration performed on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Successful Scaling Service Deploy
         if: needs.whist-publish-build-config.outputs.publish == 'true'
@@ -1308,7 +1204,6 @@ jobs:
         auth0-deploy-rules,
         terraform-deploy,
         mandelboxes-and-amis-publish-ghcr-and-aws,
-        webserver-deploy-heroku,
         scaling-service-deploy,
         client-applications-retrieve-version-number,
         client-applications-publish-build-s3,
