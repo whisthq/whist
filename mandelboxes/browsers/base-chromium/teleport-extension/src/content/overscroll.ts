@@ -1,5 +1,5 @@
 // A lower damping value causes the spring to bounce back more quickly
-const damping = 0.7
+const damping = 0.8
 // A higher maxOffset means the page can bounce further
 const maxOffset = 100
 const minDelta = 20
