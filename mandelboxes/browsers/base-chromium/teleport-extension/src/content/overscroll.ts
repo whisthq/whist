@@ -49,7 +49,7 @@ const render = () => {
 
   const dis = offset - rendered
 
-  if (lastDis * dis < 0) {
+  if (lastDis * dis < 0 && !throttle) {
     throttle = true
   }
 
@@ -108,10 +108,8 @@ const handler = (evt: WheelEvent) => {
   resetThrottle()
   evt.preventDefault()
 
-  console.log("Delta", y)
   // If the user is overscrolling, play the animation
   if (!throttle) {
-    console.log("Not throttled!")
     let update = (y * (maxOffset - Math.abs(offset))) / maxOffset
 
     const updated = trim(offset + update)
@@ -121,8 +119,6 @@ const handler = (evt: WheelEvent) => {
     } else {
       offset = updated
     }
-
-    console.log("offset", offset)
   }
 }
 
