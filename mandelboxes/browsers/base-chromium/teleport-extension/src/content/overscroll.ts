@@ -1,7 +1,7 @@
 // A lower damping value causes the spring to bounce back more quickly
 const damping = 0.85
 // A higher maxOffset means the page can bounce further
-const maxOffset = 120
+const maxOffset = 150
 const minDelta = 20
 
 // Number of pixels to bounce
@@ -33,7 +33,7 @@ const resetFlag = () => {
 
 const trim = (update: number) => {
   let abs = Math.abs(update)
-  if (abs > 300) abs = 300
+  if (abs > 225) abs = 225
 
   return update >= 0 ? abs : -1 * abs
 }
