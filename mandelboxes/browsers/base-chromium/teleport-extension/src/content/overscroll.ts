@@ -108,7 +108,7 @@ const handler = (evt: WheelEvent) => {
   if (!backFlag && y) {
     const update = (y * (maxOffset - Math.abs(offset))) / maxOffset
 
-    if (Math.abs(update) < 10) return
+    // if (Math.abs(update) < 10) return
 
     const updated = trim(offset + update)
     if ((onTopEdge && updated > 0) || (onBottomEdge && updated < 0)) {
