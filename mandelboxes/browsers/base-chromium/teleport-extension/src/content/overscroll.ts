@@ -125,7 +125,7 @@ render()
 
 // wheel events handler
 const initYOverscrollHandler = () => {
-  window.addEventListener("wheel", throttle(handler, 50), { passive: false })
+  window.addEventListener("wheel", throttle(handler, 10), { passive: false })
 }
 
 export { initYOverscrollHandler }
