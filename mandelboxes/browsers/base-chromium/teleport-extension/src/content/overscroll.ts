@@ -1,4 +1,4 @@
-const damping = 0.8
+const damping = 0.6
 const maxOffset = 100
 
 const content =
