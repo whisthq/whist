@@ -30,7 +30,7 @@ const resetFlag = () => {
   clearTimeout(timer)
   timer = setTimeout(() => {
     backFlag = false
-  }, 100)
+  }, 75)
 }
 
 const trim = (update: number) => {
@@ -92,8 +92,6 @@ const handler = (evt: WheelEvent) => {
   // Don't overscroll if the page has no scrollbar
   const canScroll = content.scrollHeight > content.clientHeight
 
-  console.log("can scroll", canScroll)
-
   if (!canScroll) return
 
   const { y } = getDelta(evt)
@@ -101,8 +99,6 @@ const handler = (evt: WheelEvent) => {
   // Check if the user has scrolled to the top/bottom limits of the page
   const onTopEdge = isOnTopEdge(y)
   const onBottomEdge = isOnBottomEdge(y)
-
-  console.log("on top edge", onTopEdge)
 
   if (!onTopEdge && !onBottomEdge) {
     content.style.transform = "none"
@@ -113,6 +109,7 @@ const handler = (evt: WheelEvent) => {
   evt.preventDefault()
 
   // If the user is overscrolling, play the animation
+  console.log("backflag", backFlag, "y", y)
   if (!backFlag && y) {
     let update = (y * (maxOffset - Math.abs(offset))) / maxOffset
 
