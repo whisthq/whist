@@ -10,7 +10,7 @@ let rendered = 0
 // Tracks the difference in offset
 let lastDis = 0
 // Used to throttle so we don't send too many bounce animations
-let backFlag = false
+let throttle = false
 let timer: any
 
 // Get the body HTML element
@@ -23,10 +23,12 @@ const content =
 // https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent/deltaMode
 const DELTA_MODE = [1.0, 28.0, 500.0]
 
-const resetFlag = () => {
+// When the spring has returned to its original position, wait 40ms
+// so it doesn't pick up lingering mouse events
+const resetThrottle = () => {
   clearTimeout(timer)
   timer = setTimeout(() => {
-    backFlag = false
+    throttle = false
   }, 40)
 }
 
@@ -47,7 +49,7 @@ const render = () => {
   const dis = offset - rendered
 
   if (lastDis * dis < 0) {
-    backFlag = true
+    throttle = true
   }
 
   lastDis = dis
@@ -102,16 +104,11 @@ const handler = (evt: WheelEvent) => {
     return
   }
 
-  resetFlag()
+  resetThrottle()
   evt.preventDefault()
 
-  console.log("Delta", y)
-
   // If the user is overscrolling, play the animation
-  if (!backFlag) {
-    // if (Math.abs(y) < minDelta && y < 0) y = -1 * minDelta
-    // if (Math.abs(y) < minDelta && y > 0) y = minDelta
-
+  if (!throttle) {
     let update = (y * (maxOffset - Math.abs(offset))) / maxOffset
 
     const updated = trim(offset + update)
