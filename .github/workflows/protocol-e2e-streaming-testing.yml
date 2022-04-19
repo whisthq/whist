@@ -45,12 +45,12 @@ jobs:
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh true
 
-      - name: Turnstyle
-        uses: rpadaki/turnstyle@v1.1
-        with:
-          same-branch-only: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Turnstyle
+      #   uses: rpadaki/turnstyle@v1.1
+      #   with:
+      #     same-branch-only: false
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
