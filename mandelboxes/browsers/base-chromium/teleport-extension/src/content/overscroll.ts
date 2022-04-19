@@ -110,7 +110,8 @@ const handler = (evt: WheelEvent) => {
 
   // If the user is overscrolling, play the animation
   if (!backFlag && y) {
-    if (Math.abs(y) < minDelta) y *= 10
+    if (Math.abs(y) < minDelta && y < 0) y = -1 * minDelta
+    if (Math.abs(y) < minDelta && y > 0) y = minDelta
 
     let update = (y * (maxOffset - Math.abs(offset))) / maxOffset
 
