@@ -6,6 +6,7 @@ from helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
     reboot_instance,
+    wait_for_apt_locks,
 )
 from helpers.common.timestamps_and_exit_tools import exit_with_error
 
@@ -87,17 +88,17 @@ def server_setup_process(args_dict):
         print("Skipping git clone whisthq/whist repository on server instance.")
 
     if skip_host_setup == "false":
-        # 1- Reboot instance for extra robustness
-        hs_process = reboot_instance(
-            hs_process,
-            server_cmd,
-            aws_timeout_seconds,
-            server_log,
-            pexpect_prompt_server,
-            ssh_connection_retries,
-            running_in_ci,
-        )
-
+        # # 1- Reboot instance for extra robustness
+        # hs_process = reboot_instance(
+        #     hs_process,
+        #     server_cmd,
+        #     aws_timeout_seconds,
+        #     server_log,
+        #     pexpect_prompt_server,
+        #     ssh_connection_retries,
+        #     running_in_ci,
+        # )
+        wait_for_apt_locks(hs_process, pexpect_prompt_server, running_in_ci)
         # 2- run host-setup
         hs_process = run_host_setup(
             hs_process,

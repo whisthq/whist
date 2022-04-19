@@ -98,7 +98,6 @@ def install_and_configure_aws(
     # Step 2: Install the AWS CLI if it's not already there
     pexpect_process.sendline("sudo apt-get -y update")
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-
     # Check if the AWS CLI is installed, and install it if not.
     pexpect_process.sendline("aws -v")
     stdout = wait_until_cmd_done(
@@ -107,11 +106,9 @@ def install_and_configure_aws(
         running_in_ci,
         return_output=True,
     )
-
     # Check if the message below, indicating that aws is not installed, is present in the output.
     error_msg = "Command 'aws' not found, but can be installed with:"
     aws_not_installed = any(error_msg in item for item in stdout if isinstance(item, str))
-
     # Attempt installation using apt-get
     if aws_not_installed:
         print("Installing AWS-CLI using apt-get")
