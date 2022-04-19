@@ -88,15 +88,17 @@ void initialize_out_of_window_drag_handlers(WhistFrontend *frontend) {
                                                 LOG_INFO("dragging %d files", numberOfFiles);
                                                 LOG_INFO("first file: %s", (char*)[[files objectAtIndex:0] UTF8String]);
 
-                                                NSString *file_list = [NSString init];
+                                                NSString *file_list = [NSString string];
                                                 int i = 0;
                                                 for (NSString* file in files) {
+                                                    LOG_INFO("iter file: %s", (char*)[file UTF8String]);
                                                     file_list = [file_list stringByAppendingString:[file lastPathComponent]];
                                                     if (i < numberOfFiles - 1) {
                                                         file_list = [file_list stringByAppendingString:@"\n"];
                                                     }
                                                     i++;
                                                 }
+                                                LOG_INFO("file in files done");
 
                                                 // NSArray *files = [pb propertyListForType:NSFilenamesPboardType];
                                                 // NSString *file_list = [files componentsJoinedByString:@"\n"];

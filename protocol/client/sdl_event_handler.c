@@ -100,13 +100,15 @@ bool sdl_pending_audio_device_update(void) {
 }
 
 void sdl_begin_file_drag(char* filename_list) {
-    // TODO: send filename_list with this message
-    WhistClientMessage msg = {0};
-    msg.type = MESSAGE_CONTENT_DRAG_UPDATE;
-    msg.contentDragUpdate.update_type = CONTENT_DRAG_FILE_START;
-    msg.contentDragUpdate.x = 0;
-    msg.contentDragUpdate.y = 0;
-    send_wcmsg(&msg);
+    WhistClientMessage* msg = safe_malloc(sizeof(WhistClientMessage) + sizeof(FileDragData) + strlen(filename_list) + 1);
+    msg->type = MESSAGE_CONTENT_DRAG_UPDATE;
+    msg->contentDragUpdate.update_type = CONTENT_DRAG_FILE_START;
+    msg->contentDragUpdate.x = 0;
+    msg->contentDragUpdate.y = 0;
+    safe_strncpy(msg->file_drag_data.data, filename_list, strlen(filename_list) + 1);
+    msg->file_drag_data.file_uri_list_len = strlen(filename_list) + 1;
+    send_wcmsg(msg);
+    free(msg);
 }
 
 // void set_is_dragging_content(bool is_dragging_content, int x, int y) {
