@@ -114,6 +114,7 @@ def create_ec2_instance(
     try:
         resp = boto3client.run_instances(**kwargs)
     except botocore.exceptions.ClientError as e:
+        print(e)
         printred(
             f"Caught Boto3 client exception. Could not create EC2 instance with AMI '{instance_AMI}'"
         )

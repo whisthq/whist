@@ -10,7 +10,7 @@ from helpers.common.ssh_tools import (
     wait_until_cmd_done,
 )
 
-from helpers.common.timestamps_and_exit_tools import TimeStamps, printred
+from helpers.common.timestamps_and_exit_tools import exit_with_error
 
 from helpers.aws.boto3_tools import (
     terminate_or_stop_aws_instance,
