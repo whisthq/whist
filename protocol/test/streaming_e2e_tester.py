@@ -218,9 +218,9 @@ parser.add_argument(
 parser.add_argument(
     "--aws-timeout-seconds",
     help="The timeout after which we give up on commands that have not finished on a remote AWS EC2 instance. \
-    This value should not be set to less than 30mins (1800s)",
+    This value should not be set to less than 20mins (1200s)",
     type=int,
-    default=1800,
+    default=1200,
 )
 
 parser.add_argument(
