@@ -8,7 +8,6 @@ from helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
     reboot_instance,
-    apply_dpkg_locking_fixup,
 )
 
 from helpers.setup.instance_setup_tools import (
@@ -16,6 +15,7 @@ from helpers.setup.instance_setup_tools import (
     clone_whist_repository,
     run_host_setup,
     prune_containers_if_needed,
+    prepare_instance_for_host_setup,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -80,6 +80,9 @@ def client_setup_process(args_dict):
         # Restore network conditions in case a previous run failed / was canceled before restoring the normal conditions.
         restore_network_conditions(hs_process, pexpect_prompt_client, running_in_ci)
 
+        print("Running pre-host-setup on the instance...")
+        prepare_instance_for_host_setup(hs_process, pexpect_prompt_client, running_in_ci)
+
         print("Configuring AWS credentials on client instance...")
         install_and_configure_aws(
             hs_process,
@@ -107,10 +110,7 @@ def client_setup_process(args_dict):
                 running_in_ci,
             )
 
-            # 2- Fix DPKG issue in case it comes up
-            apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client, running_in_ci)
-
-            # 3- Run host-setup
+            # 2- Run host-setup
             hs_process = run_host_setup(
                 hs_process,
                 pexpect_prompt_client,

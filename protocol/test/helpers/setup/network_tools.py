@@ -4,6 +4,7 @@ import os, sys
 
 from helpers.common.ssh_tools import (
     wait_until_cmd_done,
+    wait_for_apt_locks,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -88,6 +89,9 @@ def setup_artificial_network_conditions(
         degradations_command += parse_value_or_range(
             interval, "net conditions change interval", "-i", "ms"
         )
+
+        # Wait for apt lock
+        wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
 
         # Install ifconfig
         command = "sudo apt-get install -y net-tools"

@@ -74,6 +74,13 @@ def attempt_ssh_connection(
     )
 
 
+def wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci):
+    pexpect_process.sendline(
+        "while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do echo 'Waiting for apt locks...'; sleep 1; done"
+    )
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+
 def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=False):
     """
     Wait until the currently-running command on a remote machine finishes its execution on the shell

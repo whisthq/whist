@@ -9,6 +9,7 @@ from helpers.common.git_tools import (
 
 from helpers.common.ssh_tools import (
     wait_until_cmd_done,
+    wait_for_apt_locks,
     reboot_instance,
 )
 
@@ -16,6 +17,22 @@ from helpers.common.timestamps_and_exit_tools import exit_with_error, printyello
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
+
+
+def prepare_instance_for_host_setup(pexpect_process, pexpect_prompt, running_in_ci):
+    # Set dkpg frontend as non-interactive to avoid irrelevant warnings
+    pexpect_process.sendline(
+        "echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections"
+    )
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+    # Wait for dpkg / apt locks
+    wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+    # Clean, upgrade and update all the apt lists
+    pexpect_process.sendline(
+        "sudo apt-get clean -y && sudo apt-get upgrade -y && sudo apt-get update -y"
+    )
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
 
 def install_and_configure_aws(
@@ -74,6 +91,9 @@ def install_and_configure_aws(
         or len(aws_secret_access_key) == 0
     ):
         exit_with_error(f"Could not obtain the AWS credentials!")
+
+    # Wait for apt locks
+    wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
 
     # Step 2: Install the AWS CLI if it's not already there
     pexpect_process.sendline("sudo apt-get -y update")

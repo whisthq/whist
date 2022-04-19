@@ -6,7 +6,6 @@ from helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
     reboot_instance,
-    apply_dpkg_locking_fixup,
 )
 from helpers.common.timestamps_and_exit_tools import exit_with_error
 
@@ -15,6 +14,7 @@ from helpers.setup.instance_setup_tools import (
     clone_whist_repository,
     run_host_setup,
     prune_containers_if_needed,
+    prepare_instance_for_host_setup,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -68,6 +68,9 @@ def server_setup_process(args_dict):
         running_in_ci,
     )
 
+    print("Running pre-host-setup on the instance...")
+    prepare_instance_for_host_setup(hs_process, pexpect_prompt_server, running_in_ci)
+
     print("Configuring AWS credentials on server instance...")
     install_and_configure_aws(
         hs_process,
@@ -95,10 +98,7 @@ def server_setup_process(args_dict):
             running_in_ci,
         )
 
-        # 2- Fix DPKG issue in case it comes up
-        apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
-
-        # 3- run host-setup
+        # 2- run host-setup
         hs_process = run_host_setup(
             hs_process,
             pexpect_prompt_server,
