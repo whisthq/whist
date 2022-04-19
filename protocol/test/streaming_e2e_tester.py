@@ -432,7 +432,7 @@ if __name__ == "__main__":
         p_done = []
         while len(p_done) < 2:
             for p in [p1, p2]:
-                if p is not None:
+                if p.exitcode is not None:
                     if p.exitcode == 0:
                         p_done.append(p)
                     else:
