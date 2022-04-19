@@ -1,14 +1,17 @@
 // A lower damping value causes the spring to bounce back more quickly
 const damping = 0.9
 // A higher maxOffset means the page can bounce further
-const maxOffset = 100
-// The minimum Y delta, so light scrolls can lead to bigger bounces
-const minDelta = 20
+const maxOffset = 150
+// The minimum Y offset update (in magnitude), so light scrolls can lead to more noticeable bounces
+const minUpdate = 20
 
 // Number of pixels to bounce
 let offset = 0
+// Tracks the last offset amount
 let rendered = 0
+// Tracks the difference in offset
 let lastDis = 0
+// Used to throttle so we don't send too many bounce animations
 let backFlag = false
 
 let timer: any
@@ -30,7 +33,7 @@ const resetFlag = () => {
   clearTimeout(timer)
   timer = setTimeout(() => {
     backFlag = false
-  }, 40)
+  }, 30)
 }
 
 const trim = (update: number) => {
@@ -111,9 +114,6 @@ const handler = (evt: WheelEvent) => {
   // If the user is overscrolling, play the animation
   if (!backFlag && y) {
     let update = (y * (maxOffset - Math.abs(offset))) / maxOffset
-
-    if (Math.abs(update) < minDelta && update < 0) update = -1 * minDelta
-    if (Math.abs(update) < minDelta && update > 0) update = minDelta
 
     const updated = trim(offset + update)
     if ((onTopEdge && updated > 0) || (onBottomEdge && updated < 0)) {
