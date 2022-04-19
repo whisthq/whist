@@ -47,7 +47,7 @@ export default flow(
       }
       userLanguages: {
         systemLanguages: string
-        chromeLanguages: string
+        browserLanguages: string
       }
       userLocale: string
     }>
@@ -88,8 +88,8 @@ export default flow(
             ...(t.userLanguages.systemLanguages.length > 0 && {
               system_languages: t.userLanguages.systemLanguages,
             }),
-            ...(t.userLanguages.chromeLanguages.length > 0 && {
-              chrome_languages: t.userLanguages.chromeLanguages,
+            ...(t.userLanguages.browserLanguages.length > 0 && {
+              browser_languages: t.userLanguages.browserLanguages,
             }),
             ...(Object.keys(t.userLocale).length > 0 && {
               user_locale: t.userLocale,

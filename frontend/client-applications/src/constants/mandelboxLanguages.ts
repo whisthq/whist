@@ -513,7 +513,7 @@ export const linuxLanguageToDefaultRegion: { [key: string]: string } = {
   zu: "ZA",
 }
 
-export const chromeSupportedLanguages: string[] = [
+export const browserSupportedLanguages: string[] = [
   "de",
   "it",
   "en-US",

@@ -2,7 +2,7 @@ import { execCommand } from "@app/main/utils/execCommand"
 import {
   linuxSupportedLanguages,
   linuxLanguageToDefaultRegion,
-  chromeSupportedLanguages,
+  browserSupportedLanguages,
 } from "@app/constants/mandelboxLanguages"
 
 const getUserLanguages = () => {
@@ -147,17 +147,17 @@ const getUserLanguages = () => {
       return ""
     })
 
-  const chromeLanguages = systemLanguages
+  const browserLanguages = systemLanguages
     .map((language: string) => {
-      if (chromeSupportedLanguages.includes(language)) {
+      if (browserSupportedLanguages.includes(language)) {
         return language
       }
       const noUnderscoresLanguage = language.split("_").join("-")
-      if (chromeSupportedLanguages.includes(noUnderscoresLanguage)) {
+      if (browserSupportedLanguages.includes(noUnderscoresLanguage)) {
         return noUnderscoresLanguage
       }
       const noRegionLanguage = language.split("_")[0]
-      if (chromeSupportedLanguages.includes(noRegionLanguage)) {
+      if (browserSupportedLanguages.includes(noRegionLanguage)) {
         return noRegionLanguage
       }
       // If the language is not supported, just use English
@@ -166,15 +166,15 @@ const getUserLanguages = () => {
     .filter((e) => e)
 
   // Add fallback options and remove duplicates
-  const uniqueChromeLanguages = [...chromeLanguages, "en-US", "en"].filter(
+  const uniquebrowserLanguages = [...browserLanguages, "en-US", "en"].filter(
     (c, index) => {
-      return [...chromeLanguages, "en-US", "en"].indexOf(c) === index
+      return [...browserLanguages, "en-US", "en"].indexOf(c) === index
     }
   )
 
   return {
     systemLanguages: systemLanguages.join(":"),
-    chromeLanguages: uniqueChromeLanguages.join(","),
+    browserLanguages: uniquebrowserLanguages.join(","),
   }
 }
 

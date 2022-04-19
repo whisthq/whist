@@ -37,8 +37,8 @@ export LATITUDE=$LATITUDE
 export ${USER_LOCALE?}
 # Set the system languages
 export LANGUAGE=$SYSTEM_LANGUAGES
-# Set the Chrome languages
-echo {} | jq '.intl |= . + {"accept_languages": "'"${CHROME_LANGUAGES}"'", "selected_languages": "'"${CHROME_LANGUAGES}"'"}' > /home/whist/.config/google-chrome/Default/Preferences
+# Export the browser languages (Chrome/Brave)
+export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
 
 # Explicitly export the fonts path, so that the
 # application can find the fonts. Per: https://askubuntu.com/questions/492033/fontconfig-error-cannot-load-default-config-file
