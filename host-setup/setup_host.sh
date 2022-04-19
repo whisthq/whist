@@ -75,6 +75,7 @@ common_steps () {
 
   # Set dkpg frontend as non-interactive to avoid irrelevant warnings
   echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+  echo "Setting dkpg frontend to non-interactive"
   sudo apt-get install -y -q
 
   echo "================================================"
@@ -83,12 +84,17 @@ common_steps () {
 
   # Attempt to remove potentially outdated Docker runtime
   # Allow failure with ||:, in case they're not installed yet
+  echo "Removing potentially outdated Docker runtime"
   sudo apt-get remove -y docker docker-engine docker.io containerd runc ||:
+  echo "Clearing the apt-get cache"
   sudo apt-get clean -y
+  echo "Upgrading apt-get packages"
   sudo apt-get upgrade -y
+  echo "Updating apt-get packages"
   sudo apt-get update -y
 
   # Install latest Docker runtime and dependencies
+  echo "Installing latest Docker runtime and dependencies"
   sudo apt-get install -y apt-transport-https ca-certificates curl wget gnupg-agent software-properties-common
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key add -
   APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key fingerprint 0EBFCD88
