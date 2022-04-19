@@ -1,3 +1,8 @@
+const element =
+  document.compatMode === "BackCompat"
+    ? document.body
+    : document.documentElement
+
 let previousYOffset = 0
 let totalMargin = 0
 
@@ -15,14 +20,21 @@ let totalMargin = 0
 // }
 
 const handleYOverscroll = (e: WheelEvent) => {
-  if (previousYOffset - e.offsetY !== 0) {
-    previousYOffset = e.offsetY
-    return
-  }
+  //   if (previousYOffset - e.offsetY !== 0) {
+  //     previousYOffset = e.offsetY
+  //     return
+  //   }
 
   previousYOffset = e.offsetY
 
-  console.log(e.deltaY)
+  console.log(
+    "offset",
+    e.offsetY,
+    "scrolltop",
+    element.scrollTop,
+    "inner height",
+    window.innerHeight
+  )
 
   //   const body = (
   //     document.getElementsByTagName("BODY") as HTMLCollectionOf<HTMLElement>
