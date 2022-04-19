@@ -577,12 +577,22 @@ static bool udp_update(void* raw_context) {
     // *************
     // Pull a packet from the network, if any is there
     // *************
-
+    static WhistTimer last_recv_timer;
+    // Initialize the timer
+    if (last_recv_timer.opaque[0] == 0 && last_recv_timer.opaque[1] == 0) {
+        start_timer(&last_recv_timer);
+    }
+    double last_recv = get_timer(&last_recv_timer);
+    if (last_recv * MS_IN_SECOND > 5.0) {
+        LOG_WARNING_RATE_LIMITED(60, 4, "Time between recv() calls is too long: %fms",
+                                 last_recv * MS_IN_SECOND);
+    }
     UDPPacket udp_packet;
     timestamp_us arrival_time;
     int network_payload_size;
     bool received_packet =
         udp_get_udp_packet(context, &udp_packet, &arrival_time, &network_payload_size);
+    start_timer(&last_recv_timer);
 
     if (received_packet) {
         // if the packet is a whist_segment, store the data to give later via get_packet
