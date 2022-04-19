@@ -637,12 +637,9 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
                 // XDND 4.5 - Active X11 window is not accepting the drop yet,
                 //     so we wait and resend our XdndPosition message
                 xdnd_send_position(x, y);
-            } else {
-                // Active X11 window is accepting the drop
-                // XDND 6 - Send XdndDrop to active X11 window
-                xdnd_send_drop();
-                accepted_drop = true;
             }
+            // Don't actually deal with any of the logistics of dropping the file here
+            //    - we're using fake paths!
         } else if (e.type == SelectionRequest) {
             // When we receive a SelectionRequest from the active X11 window, we send a
             // SelectionNotify event back to
