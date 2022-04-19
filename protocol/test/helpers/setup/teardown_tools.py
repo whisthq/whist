@@ -207,8 +207,7 @@ def complete_experiment_and_save_results(
         timestamps (Timestamps):  The Timestamps object containing the timestamps from the major E2E events
 
     Returns:
-        On success: 0
-        On failure: -1
+        None
     """
 
     # 1- Restore un-degradated network conditions in case the instance is reused later on.
@@ -389,7 +388,4 @@ def complete_experiment_and_save_results(
         "server_hang_detected": "WhistServer hang detected",
     }.items():
         if experiment_metadata[cause]:
-            printred(f"{message}! Exiting with error. Check the logs for more details.")
-            return -1
-
-    return 0
+            exit_with_error(f"{message}! Exiting with error. Check the logs for more details.")
