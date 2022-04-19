@@ -1,7 +1,7 @@
 // A lower damping value causes the spring to bounce back more quickly
-const damping = 0.9
+const damping = 0.85
 // A higher maxOffset means the page can bounce further
-const maxOffset = 100
+const maxOffset = 120
 
 // Number of pixels to bounce
 let offset = 0
