@@ -30,8 +30,11 @@ const resetFlag = () => {
   }, 50)
 }
 
-const sleep = (ms: number) => {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+const trim = (update: number) => {
+  let abs = Math.abs(update)
+  if (abs > 300) abs = 300
+
+  return update >= 0 ? abs : -1 * abs
 }
 
 const render = () => {
@@ -107,7 +110,7 @@ const handler = (evt: WheelEvent) => {
 
     if (Math.abs(update) < 10) return
 
-    const updated = offset + update
+    const updated = trim(offset + update)
     if ((onTopEdge && updated > 0) || (onBottomEdge && updated < 0)) {
       content.style.transform = "none"
       offset = 0
@@ -119,7 +122,6 @@ const handler = (evt: WheelEvent) => {
 
 render()
 
-// wheel events handler
 const initYOverscrollHandler = () => {
   window.addEventListener("wheel", handler, { passive: false })
 }
