@@ -32,6 +32,7 @@ const resetThrottle = () => {
   }, 40)
 }
 
+// Make sure the offset doesn't go AWOL
 const trim = (update: number) => {
   let abs = Math.abs(update)
   if (abs > 250) abs = 250
@@ -50,6 +51,7 @@ const render = () => {
 
   if (lastDis * dis < 0) {
     throttle = true
+    resetThrottle()
   }
 
   lastDis = dis
