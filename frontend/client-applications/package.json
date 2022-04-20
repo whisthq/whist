@@ -78,6 +78,7 @@
     "lodash.topairs": "^4.3.0",
     "log-rotate": "^0.2.8",
     "logzio-nodejs": "^2.0.2",
+    "macos-location": "github:whisthq/macos-location#master",
     "node-fetch": "^2.6.6",
     "os": "^0.1.2",
     "path": "^0.12.7",
