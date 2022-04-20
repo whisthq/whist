@@ -178,21 +178,12 @@ static WhistStatus sdl_set_title(WhistFrontend* frontend, const char* title) {
 
 static bool sdl_poll_event_timeout(WhistFrontend* frontend, WhistFrontendEvent* event,
                                    uint32_t timeout_ms) {
-#ifdef __linux__
-    // We cannot use SDL_WaitEventTimeout on Linux, because
-    // Linux seems to treat a 1ms timeout as an infinite timeout
-    bool skip_timeout = true;
-#else
-    bool skip_timeout = false;
-#endif
-
     SDL_Event sdl_event;
-    if (timeout_ms == 0 || skip_timeout) {
+
+    // Poll/Wait event, getting the SDL_Event in response
+    if (timeout_ms == 0) {
+        // Only pollevent, if we don't want a timeout
         if (!SDL_PollEvent(&sdl_event)) {
-            // If there was no event, we should sleep for the specified time.
-            // Note: We are not allowed to sleep if we received an event,
-            // that violates the doxygen comment (Return quickly, if an event is in the queue)
-            whist_sleep(timeout_ms);
             return false;
         }
     } else {
@@ -202,10 +193,11 @@ static bool sdl_poll_event_timeout(WhistFrontend* frontend, WhistFrontendEvent* 
     }
 
     // If the caller doesn't care about the event,
-    // We can skip filling out the event struct
+    // We can skip filling out the WhistFrontendEvent struct
     if (event == NULL) {
         return true;
     }
+    // Otherwise, we fill out the event struct
 
     memset(event, 0, sizeof(WhistFrontendEvent));
 
