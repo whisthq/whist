@@ -32,10 +32,9 @@ jobs:
   protocol-streaming-e2e-check-pr:
     name: "Protocol Streaming End-to-End Test"
     runs-on: ubuntu-20.04
-    # Not reusing instances for now because Turnstyle is broken. Once Turnstyle is fixed, comment back in the lines below.
-    #env:
-    # CLIENT_INSTANCE_ID: "i-061d322780ae41d19"
-    # SERVER_INSTANCE_ID: "i-0ceaa243ec8cfc667"
+    env:
+      CLIENT_INSTANCE_ID: "i-0f198404fc63b3b3f"
+      SERVER_INSTANCE_ID: "i-0d215f4e50a4313ff"
 
     steps:
       - name: Checkout Git Repository
@@ -44,13 +43,6 @@ jobs:
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh true
-
-      - name: Turnstyle
-        uses: rpadaki/turnstyle@v1.1
-        with:
-          same-branch-only: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -71,6 +63,14 @@ jobs:
 
       - name: Install End-to-End Streaming Test Dependencies
         run: pip install boto3 paramiko numpy pytablewriter
+
+      # Prevent two instances of this workflow from running the steps below simultaneously
+      - name: Turnstyle
+        uses: rpadaki/turnstyle@v1.1
+        with:
+          same-branch-only: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under
       # Key Pairs, where the SSH key is defined. Other possible flags:

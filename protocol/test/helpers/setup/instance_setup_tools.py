@@ -1,21 +1,45 @@
 #!/usr/bin/env python3
 
 import pexpect
-import os, sys
+import os
+import sys
 
 from helpers.common.git_tools import (
     get_whist_branch_name,
 )
 
 from helpers.common.ssh_tools import (
+    expression_in_pexpect_output,
     wait_until_cmd_done,
-    reboot_instance,
+    wait_for_apt_locks,
 )
 
-from helpers.common.timestamps_and_exit_tools import exit_with_error, printyellow
+from helpers.common.timestamps_and_exit_tools import (
+    exit_with_error,
+    printyellow,
+)
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
+
+HOST_SETUP_MAX_RETRIES = 5
+HOST_SETUP_TIMEOUT_SECONDS = 5 * 60  # 5 mins
+
+
+def prepare_instance_for_host_setup(pexpect_process, pexpect_prompt, running_in_ci):
+    # Set dkpg frontend as non-interactive to avoid irrelevant warnings
+    pexpect_process.sendline(
+        "echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections"
+    )
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+    # Wait for dpkg / apt locks
+    wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+    # Clean, upgrade and update all the apt lists
+    pexpect_process.sendline(
+        "sudo apt-get clean -y && sudo apt-get upgrade -y && sudo apt-get update -y"
+    )
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
 
 def install_and_configure_aws(
@@ -75,10 +99,12 @@ def install_and_configure_aws(
     ):
         exit_with_error(f"Could not obtain the AWS credentials!")
 
+    # Wait for apt locks
+    wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+
     # Step 2: Install the AWS CLI if it's not already there
     pexpect_process.sendline("sudo apt-get -y update")
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-
     # Check if the AWS CLI is installed, and install it if not.
     pexpect_process.sendline("aws -v")
     stdout = wait_until_cmd_done(
@@ -87,14 +113,14 @@ def install_and_configure_aws(
         running_in_ci,
         return_output=True,
     )
-
     # Check if the message below, indicating that aws is not installed, is present in the output.
     error_msg = "Command 'aws' not found, but can be installed with:"
-    aws_not_installed = any(error_msg in item for item in stdout if isinstance(item, str))
-
     # Attempt installation using apt-get
-    if aws_not_installed:
+    if expression_in_pexpect_output(error_msg, stdout):
         print("Installing AWS-CLI using apt-get")
+
+        # Wait for apt locks
+        wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
 
         pexpect_process.sendline("sudo apt-get install -y awscli")
         stdout = wait_until_cmd_done(
@@ -106,9 +132,7 @@ def install_and_configure_aws(
 
         # Check if the apt-get installation failed (it happens from time to time)
         error_msg = "E: Package 'awscli' has no installation candidate"
-        apt_get_awscli_failed = any(error_msg in item for item in stdout if isinstance(item, str))
-
-        if apt_get_awscli_failed:
+        if expression_in_pexpect_output(error_msg, stdout):
             print(
                 "Installing AWS-CLI using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
             )
@@ -117,6 +141,9 @@ def install_and_configure_aws(
             # to install the `unzip` package
             print("Installing AWS-CLI from source")
 
+            # Wait for apt locks
+            wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+
             # Download the unzip program
             command = "sudo apt-get install -y unzip"
             pexpect_process.sendline(command)
@@ -124,11 +151,8 @@ def install_and_configure_aws(
                 pexpect_process, pexpect_prompt, running_in_ci, return_output=True
             )
             error_msg = "E: Package 'unzip' has no installation candidate"
-            apt_get_unzip_failed = any(
-                error_msg in item for item in stdout if isinstance(item, str)
-            )
 
-            if apt_get_unzip_failed:
+            if expression_in_pexpect_output(error_msg, stdout):
                 printyellow(
                     "Installing 'unzip' using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
                 )
@@ -201,10 +225,6 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, runnin
 def run_host_setup(
     pexpect_process,
     pexpect_prompt,
-    ssh_cmd,
-    ssh_connection_retries,
-    timeout_value,
-    logfile,
     running_in_ci,
 ):
     """
@@ -218,46 +238,43 @@ def run_host_setup(
                                                     be used to interact with the remote machine
         pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
                                 execute a command
-        ssh_cmd (str):  The shell command to use to establish a SSH connection to the remote machine.
-                        This is used if we need to reboot the machine.
-        timeout_value (int):    The amount of time to wait before timing out the attemps to gain a SSH connection
-                                to the remote machine.
-        logfile (file): The file (already opened) to use for logging the terminal output from the remote machine
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process to be used from now on to interact with
-                                                    the remote machine. This is equal to the first argument if a
-                                                    reboot of the remote machine was not needed.
+        None
     """
-    print("Running the host setup on the instance ...")
-    command = "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
-    pexpect_process.sendline(command)
-    host_setup_output = wait_until_cmd_done(
-        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
-    )
 
-    error_msg = "E: Could not get lock"
-    dpkg_lock_issue = any(error_msg in item for item in host_setup_output if isinstance(item, str))
-    if dpkg_lock_issue == 1:
-        # If still getting lock issues, no alternative but to reboot
+    success_msg = "Install complete. If you set this machine up for local development, please 'sudo reboot' before continuing."
+    timeout_msg = f"host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s"
+    lock_error_msg = "E: Could not get lock"
+    command = f"cd ~/whist/host-setup && timeout {HOST_SETUP_TIMEOUT_SECONDS} ./setup_host.sh --localdevelopment || echo '{timeout_msg}' | tee ~/host_setup.log"
+
+    for retry in range(HOST_SETUP_MAX_RETRIES):
         print(
-            "Running into severe locking issues (happens frequently), rebooting the instance and trying again!"
+            f"Running the host setup on the instance (retry {retry+1}/{HOST_SETUP_MAX_RETRIES})..."
         )
-        pexpect_process = reboot_instance(
-            pexpect_process,
-            ssh_cmd,
-            timeout_value,
-            logfile,
-            pexpect_prompt,
-            ssh_connection_retries,
-            running_in_ci,
-        )
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        # 1- Ensure that the apt/dpkg locks are not taken by other processes
+        wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
 
-    print("Finished running the host setup script on the EC2 instance")
-    return pexpect_process
+        # 2 - Run the host setup command and grab the output
+        pexpect_process.sendline(command)
+        host_setup_output = wait_until_cmd_done(
+            pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+        )
+
+        # 3 - Check if the setup succeeded or report reason for failure
+        if expression_in_pexpect_output(success_msg, host_setup_output):
+            print("Finished running the host setup script on the EC2 instance")
+            break
+        elif expression_in_pexpect_output(lock_error_msg, host_setup_output):
+            printyellow("Host setup failed to grab the necessary apt/dpkg locks.")
+        elif expression_in_pexpect_output(timeout_msg, host_setup_output):
+            printyellow("Host setup timed out!")
+        else:
+            printyellow("Host setup failed for unknown reason!")
+
+        if retry == HOST_SETUP_MAX_RETRIES - 1:
+            exit_with_error(f"Host setup failed {HOST_SETUP_MAX_RETRIES} times. Giving up now!")
 
 
 def start_host_service(pexpect_process, pexpect_prompt):

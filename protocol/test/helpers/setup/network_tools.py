@@ -3,7 +3,9 @@
 import os, sys
 
 from helpers.common.ssh_tools import (
+    expression_in_pexpect_output,
     wait_until_cmd_done,
+    wait_for_apt_locks,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -89,6 +91,9 @@ def setup_artificial_network_conditions(
             interval, "net conditions change interval", "-i", "ms"
         )
 
+        # Wait for apt lock
+        wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+
         # Install ifconfig
         command = "sudo apt-get install -y net-tools"
         pexpect_process.sendline(command)
@@ -156,10 +161,8 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
     # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know
     # that no network degradations have been applied to the machine.
     error_msg = "sudo: ifconfig: command not found"
-    ifconfig_not_installed = any(
-        error_msg in item for item in ifconfig_output if isinstance(item, str)
-    )
-    if ifconfig_not_installed:
+
+    if expression_in_pexpect_output(error_msg, ifconfig_output):
         print(
             "ifconfig is not installed on the client instance, so we don't need to restore normal network conditions."
         )

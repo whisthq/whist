@@ -3,7 +3,9 @@
 import os, sys, time
 import pexpect
 
-from helpers.common.timestamps_and_exit_tools import exit_with_error
+from helpers.common.timestamps_and_exit_tools import (
+    exit_with_error,
+)
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -74,6 +76,32 @@ def attempt_ssh_connection(
     )
 
 
+def wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci):
+    """
+    This function is used to prevent lock contention issues between E2E commands that use `apt` or `dpkg`
+    and other Linux processes. These issues are especially common on a EC2 instance's first boot.
+
+    We simply wait until no process holds the following locks (more could be added in the future):
+    - /var/lib/dpkg/lock
+    - /var/lib/apt/lists/lock
+    - /var/cache/apt/archives/lock
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process
+                        on the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
+                        execute a new command
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+
+    Returns:
+        None
+    """
+    pexpect_process.sendline(
+        "while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do echo 'Waiting for apt locks...'; sleep 1; done"
+    )
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+
 def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=False):
     """
     Wait until the currently-running command on a remote machine finishes its execution on the shell
@@ -86,17 +114,17 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
     This function also has the option to return the shell stdout in a list of strings format.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process
-                        on the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
-                        execute a new command
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process monitoring the execution of the process
+                                                    on the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
+                                execute a new command
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
         return_output (bool): A boolean controlling whether to return the stdout output in a list of strings format
 
     Returns:
         On Success:
-            pexpect_output (list): the stdout output of the command, with one entry for each line of the original
-                        output. If return_output=False, pexpect_output is set to None
+            pexpect_output (list):  the stdout output of the command, with one entry for each line of the original
+                                    output. If return_output=False, pexpect_output is set to None
         On Failure:
             None and exit with exitcode -1
     """
@@ -127,6 +155,21 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
         pexpect_process.expect(pexpect_prompt)
 
     return pexpect_output
+
+
+def expression_in_pexpect_output(expression, pexpect_output):
+    """
+    This function is used to search whether the output of a pexpect command contains an expression of interest
+
+    Args:
+        expression (string): This is the expression we are searching for
+        pexpect_output (list):  the stdout output of the pexpect command, with one entry for each line of the
+                                original output.
+
+    Returns:
+        A boolean indicating whether the expression was found.
+    """
+    return any(expression in item for item in pexpect_output if isinstance(item, str))
 
 
 def reboot_instance(
@@ -164,37 +207,3 @@ def reboot_instance(
     )
     print("Reboot complete")
     return pexpect_process
-
-
-def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
-    """
-    Prevent dpkg locking issues such as the following one:
-    - E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
-    - E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
-
-    Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used
-                                                    to interact with the remote machine
-        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when
-                                it is ready to execute a command
-        running_in_ci (bool):   A boolean indicating whether this script is currently running in CI
-
-    Returns:
-        None
-    """
-
-    dpkg_commands = [
-        "sudo kill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`",
-        "sudo kill -9 `sudo lsof /var/lib/apt/lists/lock | awk '{print $2}' | tail -n 1`",
-        "sudo kill -9 `sudo lsof /var/lib/dpkg/lock | awk '{print $2}' | tail -n 1`",
-        "sudo killall apt apt-get",
-        "sudo pkill -9 apt",
-        "sudo pkill -9 apt-get",
-        "sudo pkill -9 dpkg",
-        "sudo rm /var/lib/apt/lists/lock; \
-        sudo rm /var/lib/apt/lists/lock-frontend; sudo rm /var/cache/apt/archives/lock; sudo rm /var/lib/dpkg/lock",
-        "sudo dpkg --configure -a",
-    ]
-    for command in dpkg_commands:
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)

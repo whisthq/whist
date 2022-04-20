@@ -4,17 +4,17 @@ import os, sys
 
 from helpers.common.ssh_tools import (
     attempt_ssh_connection,
+    expression_in_pexpect_output,
     wait_until_cmd_done,
     reboot_instance,
-    apply_dpkg_locking_fixup,
 )
-from helpers.common.timestamps_and_exit_tools import exit_with_error
 
 from helpers.setup.instance_setup_tools import (
     install_and_configure_aws,
     clone_whist_repository,
     run_host_setup,
     prune_containers_if_needed,
+    prepare_instance_for_host_setup,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -68,6 +68,9 @@ def server_setup_process(args_dict):
         running_in_ci,
     )
 
+    print("Running pre-host-setup on the instance...")
+    prepare_instance_for_host_setup(hs_process, pexpect_prompt_server, running_in_ci)
+
     print("Configuring AWS credentials on server instance...")
     install_and_configure_aws(
         hs_process,
@@ -84,28 +87,9 @@ def server_setup_process(args_dict):
         print("Skipping git clone whisthq/whist repository on server instance.")
 
     if skip_host_setup == "false":
-        # 1- Reboot instance for extra robustness
-        hs_process = reboot_instance(
-            hs_process,
-            server_cmd,
-            aws_timeout_seconds,
-            server_log,
-            pexpect_prompt_server,
-            ssh_connection_retries,
-            running_in_ci,
-        )
-
-        # 2- Fix DPKG issue in case it comes up
-        apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
-
-        # 3- run host-setup
-        hs_process = run_host_setup(
+        run_host_setup(
             hs_process,
             pexpect_prompt_server,
-            server_cmd,
-            ssh_connection_retries,
-            aws_timeout_seconds,
-            server_log,
             running_in_ci,
         )
     else:
@@ -235,9 +219,7 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
     server_mandelbox_output = wait_until_cmd_done(
         pexpect_process, ":/#", running_in_ci=True, return_output=True
     )
-    server_has_exited = any(
-        exit_confirm_exp in item for item in server_mandelbox_output if isinstance(item, str)
-    )
+    server_has_exited = expression_in_pexpect_output(exit_confirm_exp, server_mandelbox_output)
 
     # Kill tail process
     pexpect_process.sendcontrol("c")

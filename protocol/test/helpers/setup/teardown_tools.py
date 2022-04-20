@@ -3,14 +3,18 @@
 import os, sys, json
 import pexpect
 
-from helpers.whist_server_tools import shutdown_and_wait_server_exit
+from helpers.whist_server_tools import (
+    shutdown_and_wait_server_exit,
+)
 
 from helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
 )
 
-from helpers.common.timestamps_and_exit_tools import TimeStamps, printred
+from helpers.common.timestamps_and_exit_tools import (
+    exit_with_error,
+)
 
 from helpers.aws.boto3_tools import (
     terminate_or_stop_aws_instance,
@@ -207,8 +211,7 @@ def complete_experiment_and_save_results(
         timestamps (Timestamps):  The Timestamps object containing the timestamps from the major E2E events
 
     Returns:
-        On success: 0
-        On failure: -1
+        None
     """
 
     # 1- Restore un-degradated network conditions in case the instance is reused later on.
@@ -227,7 +230,7 @@ def complete_experiment_and_save_results(
         restore_network_conditions(client_restore_net_process, pexpect_prompt_client, running_in_ci)
         client_restore_net_process.kill(0)
 
-    timestamps.add_event("Restoring undegraded network conditions")
+    timestamps.add_event("Restoring un-degraded network conditions")
 
     # 2- Quit the server and check whether it shuts down gracefully or whether it hangs
     server_hang_detected = False
@@ -389,7 +392,4 @@ def complete_experiment_and_save_results(
         "server_hang_detected": "WhistServer hang detected",
     }.items():
         if experiment_metadata[cause]:
-            printred(f"{message}! Exiting with error. Check the logs for more details.")
-            return -1
-
-    return 0
+            exit_with_error(f"{message}! Exiting with error. Check the logs for more details.")
