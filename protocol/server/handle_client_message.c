@@ -371,7 +371,7 @@ static int handle_file_upload_cancel_message(WhistServerState *state, WhistClien
     return 0;
 }
 
-static int handle_content_drag_update_message(whist_server_state * state, WhistClientMessage *wcmsg) {
+static int handle_content_drag_update_message(WhistServerState * state, WhistClientMessage *wcmsg) {
     switch (wcmsg->contentDragUpdate.update_type) {
         case CONTENT_DRAG_FILE_START: {
             LOG_INFO("CONTENT_DRAG_FILE_START");
