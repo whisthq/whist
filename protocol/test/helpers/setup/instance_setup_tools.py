@@ -119,6 +119,9 @@ def install_and_configure_aws(
     if expression_in_pexpect_output(error_msg, stdout):
         print("Installing AWS-CLI using apt-get")
 
+        # Wait for apt locks
+        wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+
         pexpect_process.sendline("sudo apt-get install -y awscli")
         stdout = wait_until_cmd_done(
             pexpect_process,
@@ -137,6 +140,9 @@ def install_and_configure_aws(
             # Attempt to install manually. This can also fail from time to time, because we need apt-get
             # to install the `unzip` package
             print("Installing AWS-CLI from source")
+
+            # Wait for apt locks
+            wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
 
             # Download the unzip program
             command = "sudo apt-get install -y unzip"

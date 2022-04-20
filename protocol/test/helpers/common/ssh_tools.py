@@ -177,37 +177,3 @@ def reboot_instance(
     )
     print("Reboot complete")
     return pexpect_process
-
-
-def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
-    """
-    Prevent dpkg locking issues such as the following one:
-    - E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
-    - E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
-
-    Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used
-                                                    to interact with the remote machine
-        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when
-                                it is ready to execute a command
-        running_in_ci (bool):   A boolean indicating whether this script is currently running in CI
-
-    Returns:
-        None
-    """
-
-    dpkg_commands = [
-        "sudo kill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`",
-        "sudo kill -9 `sudo lsof /var/lib/apt/lists/lock | awk '{print $2}' | tail -n 1`",
-        "sudo kill -9 `sudo lsof /var/lib/dpkg/lock | awk '{print $2}' | tail -n 1`",
-        "sudo killall apt apt-get",
-        "sudo pkill -9 apt",
-        "sudo pkill -9 apt-get",
-        "sudo pkill -9 dpkg",
-        "sudo rm /var/lib/apt/lists/lock; \
-        sudo rm /var/lib/apt/lists/lock-frontend; sudo rm /var/cache/apt/archives/lock; sudo rm /var/lib/dpkg/lock",
-        "sudo dpkg --configure -a",
-    ]
-    for command in dpkg_commands:
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
