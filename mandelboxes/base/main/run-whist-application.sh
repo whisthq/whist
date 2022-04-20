@@ -35,9 +35,7 @@ export LONGITUDE=$LONGITUDE
 export LATITUDE=$LATITUDE
 # Set the locale (the line below exports all the locale environment variables)
 export ${USER_LOCALE?}
-# Set the system languages
 export LANGUAGE=$SYSTEM_LANGUAGES
-# Export the browser languages (Chrome/Brave)
 export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
 
 # Explicitly export the fonts path, so that the
