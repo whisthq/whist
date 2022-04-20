@@ -122,11 +122,14 @@ function cleanup {
   sudo shutdown now
 }
 
-ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
-export ENV_NAME
-if [ "$ENV_NAME" != "localdev" ]; then
-  # Make sure `cleanup` gets called on script exit in all environments except localdev.
-  trap cleanup EXIT ERR
+# Set Sentry environment, if provided
+if [ -f "$SENTRY_ENV_FILENAME" ]; then
+  ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
+  export ENV_NAME
+  if [ "$ENV_NAME" != "localdev" ]; then
+    # Make sure `cleanup` gets called on script exit in all environments except localdev.
+    trap cleanup EXIT ERR
+  fi
 fi
 
 # WhistServer and cookie authentication require that the D-Bus environment variables be set
