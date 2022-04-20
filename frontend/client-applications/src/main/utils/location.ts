@@ -12,6 +12,8 @@ import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
 import { persistGet } from "@app/main/utils/persist"
 
+const IPSTACK_API_KEY = "f3e4e15355710b759775d121e243e39b"
+
 const whistPingTime = async (host: string, numberPings: number) => {
   /*
     Description:
@@ -109,4 +111,16 @@ const closestRegionHasChanged = (
   return true
 }
 
-export { sortRegionByProximity, closestRegionHasChanged }
+const getGeolocation = async () => {
+  const response = await fetch(
+    `http://api.ipstack.com/check?access_key=${IPSTACK_API_KEY}&format=1`
+  )
+  const json = await response.json()
+
+  return {
+    longitude: json.longitude.toFixed(7),
+    latitude: json.latitude.toFixed(7),
+  }
+}
+
+export { sortRegionByProximity, closestRegionHasChanged, getGeolocation }

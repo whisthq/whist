@@ -4,7 +4,7 @@
  * @brief This file contains effects that deal with electron-store
  */
 
-import { merge, filter } from "rxjs"
+import { merge, filter, of } from "rxjs"
 import toPairs from "lodash.topairs"
 import find from "lodash.find"
 
@@ -17,7 +17,10 @@ import {
   WHIST_IS_DEFAULT_BROWSER,
   ONBOARDED,
   ALLOW_NON_US_SERVERS,
+  GEOLOCATION,
 } from "@app/constants/store"
+import { withAppActivated } from "@app/main/utils/observables"
+import { getGeolocation } from "../utils/location"
 
 // On a successful auth, store the auth credentials in Electron store
 // so the user is remembered
@@ -78,3 +81,11 @@ fromTrigger(WhistTrigger.allowNonUSServers).subscribe(
     persistSet(ALLOW_NON_US_SERVERS, body.allow)
   }
 )
+
+withAppActivated(of(persistGet(GEOLOCATION))).subscribe(async (location) => {
+  if (location === undefined) {
+    console.log("IT IS UNDEFINED")
+    location = await getGeolocation()
+    persistSet(GEOLOCATION, location)
+  }
+})

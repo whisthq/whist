@@ -3,7 +3,7 @@ import { filter, switchMap } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
-import { sortRegionByProximity } from "@app/main/utils/region"
+import { sortRegionByProximity } from "@app/main/utils/location"
 import { flow } from "@app/main/utils/flows"
 import { regions } from "@app/constants/mandelbox"
 import { persistGet } from "@app/main/utils/persist"

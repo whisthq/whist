@@ -41,6 +41,10 @@ export default flow(
       timezone: string
       keyRepeat: number | undefined
       initialKeyRepeat: number | undefined
+      geoLocation: {
+        longitude: string
+        latitude: string
+      }
     }>
   ) => {
     const create = mandelboxCreateFlow(
@@ -74,6 +78,7 @@ export default flow(
               local_client: true,
             }),
             user_agent: getUserAgent(), // This spoofs user agent on server-side Chrome to match the current OS
+            geolocation: t.geoLocation,
           }), // Data to send through the JSON transport
         }))
       )
