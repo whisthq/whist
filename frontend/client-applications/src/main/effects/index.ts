@@ -29,7 +29,7 @@ import "@app/main/effects/windows"
 // an "Effect" in this sense, even though it is not a pure function.
 // We care very much about the result of loginEmail, and important behavior is
 // triggered based on the contents of the loginEmail result.
-// While loginEmail happens to get its result from our webserver and
+// While loginEmail happens to get its result from our scaling service and
 // is thus async, observables do not discriminate their handling of
 // async functions.
 //

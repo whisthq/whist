@@ -109,7 +109,7 @@ func TestSpinUpHandler(t *testing.T) {
 	}
 }
 
-// TestHttpServerIntegration spins up a webserver and checks that requests are processed correctly
+// TestHttpServerIntegration spins up an HTTP server and checks that requests are processed correctly
 func TestHttpServerIntegration(t *testing.T) {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}

@@ -101,7 +101,7 @@ wait
 # Note that we do not restart the host service. This is because if the host
 # service dies for some reason, it is not safe to restart it, since we cannot
 # tell the status of the existing cloud storage directories. We just need to
-# wait for them to unmount (that is an asynchronous process) and the webserver
+# wait for them to unmount (that is an asynchronous process) and the scaling service
 # should declare the host dead and prune it.
 cat << EOF | sudo tee /etc/systemd/system/host-service.service
 [Unit]

@@ -3,8 +3,7 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file logging.h
- * @brief This file contains the logging macros and utils to send Winlogon
- *        status and to send the logs to the webserver.
+ * @brief This file contains the logging macros and utils for Whist.
 ============================
 Usage
 ============================

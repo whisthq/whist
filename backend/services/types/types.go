@@ -17,7 +17,7 @@ import (
 // of type safety, including making sure we never switch Docker and Whist
 // IDs, for instance.
 
-// A MandelboxID is a random string that the webserver creates for each
+// A MandelboxID is a random string that the scaling service creates for each
 // mandelbox. We need some sort of identifier for each mandelbox, and we need
 // it _before_ Docker gives us back the runtime Docker ID for the mandelbox.
 type MandelboxID uuid.UUID

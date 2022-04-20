@@ -6,13 +6,12 @@ This repository contains the bulk of the code for the Whist Browser, previously 
 
 [![Whist: Build & Deploy](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml/badge.svg)](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
 
-|             Project | Code Coverage                                                                                                                                             |
-| ------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  `backend/services` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=backend-services)](https://codecov.io/gh/whisthq/whist)  |
-| `backend/webserver` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=backend-webserver)](https://codecov.io/gh/whisthq/whist) |
-|  `frontend/core-ts` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=frontend-core-ts)](https://codecov.io/gh/whisthq/whist)  |
-|          `protocol` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=protocol)](https://codecov.io/gh/whisthq/whist)          |
-|             Overall | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/whisthq/whist)                        |
+|            Project | Code Coverage                                                                                                                                            |
+| -----------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `backend/services` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=backend-services)](https://codecov.io/gh/whisthq/whist) |
+| `frontend/core-ts` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=frontend-core-ts)](https://codecov.io/gh/whisthq/whist) |
+|         `protocol` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=protocol)](https://codecov.io/gh/whisthq/whist)         |
+|            Overall | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/whisthq/whist)                       |
 
 ## Table of Contents
 
@@ -35,7 +34,6 @@ The Whist monorepository contains many subprojects:
 | backend/auth0                    | Auth0 is a third-party service which manages authentication and user accounts for us.   |
 | backend/services/host-service    | This service runs on EC2 instance hosts and orchestrates mandelbox management.          |
 | backend/services/scaling-service | This service is responsible for scaling up/down EC2 instances to run mandelboxes on.    |
-| backend/webserver                | This service is responsible for payments handling and assigning users to mandelboxes.   |
 | frontend/client-applications     | The client-side Electron-based application users download and use to launch Whist.      |
 | frontend/core-ts                 | The Whist internal TypeScript library of utilities and reusable components.             |
 | frontend/website                 | The website hosted at `whist.com`.                                                      |
@@ -46,7 +44,6 @@ The Whist monorepository contains many subprojects:
 For a more in-depth explanation of each subrepository, see that subrepository's README. Note that there is also additional documentation for some subrepos (and other Whist repos) at [docs.whist.com](https://docs.whist.com):
 
 - [docs.whist.com/backend/services](https://docs.whist.com/backend/services)
-- [docs.whist.com/webserver](https://docs.whist.com/backend/webserver)
 - [docs.whist.com/protocol](https://docs.whist.com/protocol)
 - [docs.whist.com/SDL](https://docs.whist.com/SDL)
 

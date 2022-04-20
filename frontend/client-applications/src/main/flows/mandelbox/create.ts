@@ -1,6 +1,6 @@
 // This file is home to observables that manage mandelbox creation.
 // Their responsibilities are to listen for state that will trigger protocol
-// launches. These observables then communicate with the webserver and
+// launches. These observables then communicate with the scaling service and
 // poll the state of the mandelboxs while they spin up.
 //
 // These observables are subscribed by protocol launching observables, which

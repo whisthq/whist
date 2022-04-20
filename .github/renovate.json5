@@ -39,10 +39,6 @@
       groupName: "backend/services",
     },
     {
-      matchPaths: ["backend/webserver/"],
-      groupName: "backend/webserver",
-    },
-    {
       matchPaths: ["frontend/client-applications/"],
       groupName: "frontend/client-applications",
     },
