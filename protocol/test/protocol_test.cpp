@@ -1995,7 +1995,7 @@ TEST_F(ProtocolTest, WCCTest) {
 
     EXPECT_EQ(network_settings.saturate_bandwidth, true);
     whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
-                                packet_loss_ratio, &network_settings);
+                                packet_loss_ratio, 0.0, 0.0, &network_settings);
     // No change in bitrates as timers would have just initialized in the first call.
     EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
     EXPECT_EQ(network_settings.saturate_bandwidth, true);
@@ -2003,7 +2003,7 @@ TEST_F(ProtocolTest, WCCTest) {
     // Wait for little more than NEW_BITRATE_DURATION_IN_SEC, for WCC to react
     whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 1.1 * MS_IN_SECOND));
     whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
-                                packet_loss_ratio, &network_settings);
+                                packet_loss_ratio, 0.0, 0.0, &network_settings);
     expected_video_bitrate *= (1.0 + MAX_INCREASE_PERCENTAGE / 100.0);
     EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
     EXPECT_EQ(network_settings.burst_bitrate, network_settings.video_bitrate);
@@ -2013,13 +2013,13 @@ TEST_F(ProtocolTest, WCCTest) {
     incoming_bitrate = 4000000;
     packet_loss_ratio = 0.11;
     whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
-                                packet_loss_ratio, &network_settings);
+                                packet_loss_ratio, 0.0, 0.0, &network_settings);
     // No change in bitrate as congestion should be present for atleast
     // OVERUSE_TIME_THRESHOLD_IN_SEC
     EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
     whist_sleep(OVERUSE_TIME_THRESHOLD_IN_SEC * 1.1 * MS_IN_SECOND);
     whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
-                                packet_loss_ratio, &network_settings);
+                                packet_loss_ratio, 0.0, 0.0, &network_settings);
     // Now bitrate should have dropped to something lesser than incoming_bitrate
     EXPECT_LT(network_settings.video_bitrate, incoming_bitrate);
     EXPECT_EQ(network_settings.saturate_bandwidth, true);
@@ -2030,14 +2030,14 @@ TEST_F(ProtocolTest, WCCTest) {
     packet_loss_ratio = 0.11;
     expected_video_bitrate = network_settings.video_bitrate;
     whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
-                                packet_loss_ratio, &network_settings);
+                                packet_loss_ratio, 0.0, 0.0, &network_settings);
     whist_sleep(OVERUSE_TIME_THRESHOLD_IN_SEC * 1.1 * MS_IN_SECOND);
     whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
-                                packet_loss_ratio, &network_settings);
+                                packet_loss_ratio, 0.0, 0.0, &network_settings);
     EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
     whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 1.1 * MS_IN_SECOND));
     whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
-                                packet_loss_ratio, &network_settings);
+                                packet_loss_ratio, 0.0, 0.0, &network_settings);
     EXPECT_LT(network_settings.video_bitrate, incoming_bitrate);
     EXPECT_EQ(network_settings.saturate_bandwidth, true);
 
@@ -2047,7 +2047,7 @@ TEST_F(ProtocolTest, WCCTest) {
     expected_video_bitrate = output_width * output_height * MINIMUM_BITRATE_PER_PIXEL;
     whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 1.1 * MS_IN_SECOND));
     whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
-                                packet_loss_ratio, &network_settings);
+                                packet_loss_ratio, 0.0, 0.0, &network_settings);
     EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
     EXPECT_EQ(network_settings.burst_bitrate, network_settings.video_bitrate);
     EXPECT_EQ(network_settings.saturate_bandwidth, true);
@@ -2059,7 +2059,7 @@ TEST_F(ProtocolTest, WCCTest) {
         expected_video_bitrate = output_width * output_height * MINIMUM_BITRATE_PER_PIXEL;
         whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 1.1 * MS_IN_SECOND));
         whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
-                                    packet_loss_ratio, &network_settings);
+                                    packet_loss_ratio, 0.0, 0.0, &network_settings);
     }
     expected_video_bitrate = output_width * output_height * MAXIMUM_BITRATE_PER_PIXEL;
     EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
@@ -2068,7 +2068,7 @@ TEST_F(ProtocolTest, WCCTest) {
     EXPECT_EQ(network_settings.saturate_bandwidth, false);
 
     // Now there is prolonged congestion and WCC should converge to the available bandwidth quickly
-    int available_bandwidth = 3000000;
+    int available_bandwidth = 6000000;
     for (int i = 0; i < 80; i++) {
         if (network_settings.video_bitrate > available_bandwidth) {
             incoming_bitrate = available_bandwidth;
@@ -2079,7 +2079,7 @@ TEST_F(ProtocolTest, WCCTest) {
         }
         whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 0.51 * MS_IN_SECOND));
         whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
-                                    packet_loss_ratio, &network_settings);
+                                    packet_loss_ratio, 0.0, 0.0, &network_settings);
     }
     EXPECT_LT(network_settings.video_bitrate, available_bandwidth);
     EXPECT_GT(network_settings.video_bitrate, available_bandwidth * CONVERGENCE_THRESHOLD_LOW);
