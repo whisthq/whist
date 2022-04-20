@@ -3,6 +3,7 @@ package scaling_algorithms
 import (
 	"context"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -10,6 +11,7 @@ import (
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
 	aws "github.com/whisthq/whist/backend/services/scaling-service/hosts/aws"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
@@ -125,24 +127,38 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 		return
 	}
 
-	configMandelboxes, ok := configs["DESIRED_FREE_MANDELBOXES"]
-	if !ok {
-		logger.Errorf("Did not find the DESIRED_FREE_MANDELBOXES on config map.")
+	// Temporary map to hold all parsed values
+	mandelboxRegionMap := make(map[string]int)
 
-		// Something went wrong, use default configuration values
-		return
+	// Look for each region's entry in the config database values
+	// to populate the `desiredFreeMandelboxesPerRegion` map.
+	for _, region := range GetEnabledRegions() {
+		// Parse the region string to the format used by
+		// the config database so we can get the value.
+		key := strings.ReplaceAll(region, "-", "_")
+		key = strings.ToUpper(key)
+
+		configMandelboxes, ok := configs[utils.Sprintf("DESIRED_FREE_MANDELBOXES_%s", key)]
+		if !ok {
+			logger.Errorf("Desired mandelboxes for region %v not found on %v config database. Using default value.", region, metadata.GetAppEnvironmentLowercase())
+			// Use default value of 2 if the entry for the specific
+			// region was not found
+			mandelboxRegionMap[region] = 2
+			continue
+		}
+
+		mandelboxInt, err := strconv.Atoi(configMandelboxes)
+		if err != nil {
+			logger.Errorf("Error parsing desired mandelboxes value. Using default value. Err: %v", err)
+			// Use default value of 2 if we failed to convert to int
+			mandelboxRegionMap[region] = 2
+			continue
+		}
+
+		mandelboxRegionMap[region] = mandelboxInt
 	}
 
-	// Parse as int
-	mandelboxInt, err := strconv.Atoi(configMandelboxes)
-	if err != nil {
-		logger.Errorf("Error parsing desired mandelboxes value. Err: %v", err)
-
-		// Something went wrong, use default configuration values
-		return
-	}
-
-	desiredFreeMandelboxesPerRegion = mandelboxInt
+	desiredFreeMandelboxesPerRegion = mandelboxRegionMap
 }
 
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing
