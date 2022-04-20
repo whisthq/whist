@@ -10,6 +10,7 @@ FILE_DOWNLOAD_TRIGGER_PATH = "/home/whist/.teleport/downloaded-file"
 POINTER_LOCK_TRIGGER_PATH = "/home/whist/.teleport/pointer-lock-update"
 DID_UPDATE_EXTENSION_TRIGGER_PATH = "/home/whist/.teleport/did-update-extension"
 
+
 def send_message(message):
     """
     Send message to connected chrome extension by writing to stdout buffer
@@ -87,10 +88,9 @@ def main():
     latitude = os.getenv("LATITUDE")
 
     if (not longitude == "") and (not latitude == ""):
-        send_message({"type": "GEOLOCATION", "value": {
-            "longitude": longitude,
-            "latitude": latitude
-        }})
+        send_message(
+            {"type": "GEOLOCATION", "value": {"longitude": longitude, "latitude": latitude}}
+        )
 
     # Enter main message handling loop
     while True:
