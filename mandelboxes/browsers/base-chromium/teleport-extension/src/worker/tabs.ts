@@ -1,8 +1,4 @@
 import { NativeHostMessage, NativeHostMessageType } from "@app/constants/ipc"
-import {
-  ContentScriptMessage,
-  ContentScriptMessageType,
-} from "@app/constants/ipc"
 
 // Try to cancel or undo a tab drag-out
 const tryRestoreTabLocation = async (

@@ -42,7 +42,7 @@ const configToken = fromTrigger(WhistTrigger.storeDidChange).pipe(
 const isNewConfigToken = of(persistGet(CACHED_CONFIG_TOKEN) ?? "").pipe(
   map((x) => x === "")
 )
-const geoLocation = from(getGeolocation())
+const geolocation = from(getGeolocation())
 
 // JSON transport state e.g. system settings
 const darkMode = withAppActivated(of(nativeTheme.shouldUseDarkColors))
@@ -65,5 +65,5 @@ export {
   keyRepeat,
   initialKeyRepeat,
   browsers,
-  geoLocation,
+  geolocation,
 }

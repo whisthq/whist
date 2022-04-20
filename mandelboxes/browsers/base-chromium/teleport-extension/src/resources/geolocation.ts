@@ -22,7 +22,7 @@ const getGeolocation = () => {
 }
 
 const spoofLocation = (
-  geoLocation: {
+  geolocation: {
     longitude: number
     latitude: number
   },
@@ -34,8 +34,8 @@ const spoofLocation = (
       altitude: null,
       altitudeAccuracy: null,
       heading: null,
-      latitude: geoLocation.latitude,
-      longitude: geoLocation.longitude,
+      latitude: geolocation.latitude,
+      longitude: geolocation.longitude,
       speed: null,
     } as GeolocationCoordinates,
     timestamp: Date.now(),
@@ -47,16 +47,16 @@ navigator.geolocation.getCurrentPosition = (
   _errorCallback,
   _options
 ) => {
-  let geoLocation = getGeolocation() as
+  let geolocation = getGeolocation() as
     | undefined
     | { longitude: number; latitude: number }
 
-  if (geoLocation === undefined) {
+  if (geolocation === undefined) {
     const observer = new MutationObserver((_mutations, obs) => {
-      geoLocation = getGeolocation()
+      geolocation = getGeolocation()
 
-      if (geoLocation !== undefined) {
-        spoofLocation(geoLocation, successCallback)
+      if (geolocation !== undefined) {
+        spoofLocation(geolocation, successCallback)
         obs.disconnect()
       }
     })
@@ -66,6 +66,6 @@ navigator.geolocation.getCurrentPosition = (
       subtree: true,
     })
   } else {
-    spoofLocation(geoLocation, successCallback)
+    spoofLocation(geolocation, successCallback)
   }
 }

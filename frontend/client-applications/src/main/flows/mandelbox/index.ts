@@ -41,7 +41,7 @@ export default flow(
       timezone: string
       keyRepeat: number | undefined
       initialKeyRepeat: number | undefined
-      geoLocation: {
+      geolocation: {
         longitude: string
         latitude: string
       }
@@ -78,8 +78,8 @@ export default flow(
               local_client: true,
             }),
             user_agent: getUserAgent(), // This spoofs user agent on server-side Chrome to match the current OS
-            longitude: t.geoLocation.longitude,
-            latitude: t.geoLocation.latitude,
+            longitude: t.geolocation.longitude,
+            latitude: t.geolocation.latitude,
           }), // Data to send through the JSON transport
         }))
       )

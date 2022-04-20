@@ -34,9 +34,6 @@ export KIOSK_MODE=$KIOSK_MODE
 export LONGITUDE=$LONGITUDE 
 export LATITUDE=$LATITUDE
 
-echo "run-whist-application.sh logs:"
-printenv
-
 # Explicitly export the fonts path, so that the
 # application can find the fonts. Per: https://askubuntu.com/questions/492033/fontconfig-error-cannot-load-default-config-file
 export FONTCONFIG_PATH=/etc/fonts

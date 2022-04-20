@@ -4,8 +4,6 @@ const initLocationSpoofer = () => {
   injectResourceIntoDOM(document, "js/geolocation.js")
 
   chrome.storage.local.get(["geolocation"], (result) => {
-    console.log("Local storage got", result)
-
     const meta_longitude = document.createElement("meta")
     meta_longitude.name = "longitude"
     meta_longitude.content = result.geolocation.longitude
