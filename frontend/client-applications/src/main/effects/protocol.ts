@@ -50,32 +50,32 @@ withAppActivated(fromTrigger(WhistTrigger.protocol))
       launchProtocol().catch((err) => Sentry.captureException(err))
   })
 
-// fromTrigger(WhistTrigger.mandelboxFlowSuccess)
-//   .pipe(
-//     withLatestFrom(
-//       fromTrigger(WhistTrigger.protocol),
-//       fromTrigger(WhistTrigger.beginImport).pipe(mapTo(true), startWith(false))
-//     ),
-//     map((x) => ({
-//       info: x[0],
-//       protocol: x[1],
-//       import: x[2],
-//     }))
-//   )
-//   .subscribe((args: { info: any; protocol: ChildProcess; import: boolean }) => {
-//     logToAmplitude("Creating window PROTOCOL", {
-//       ...args.info,
-//       region: JSON.stringify(
-//         ((persistGet(AWS_REGIONS_SORTED_BY_PROXIMITY) as any[]) ?? [])[0]
-//       ),
-//     }).catch((err) => console.error(err))
+fromTrigger(WhistTrigger.mandelboxFlowSuccess)
+  .pipe(
+    withLatestFrom(
+      fromTrigger(WhistTrigger.protocol),
+      fromTrigger(WhistTrigger.beginImport).pipe(mapTo(true), startWith(false))
+    ),
+    map((x) => ({
+      info: x[0],
+      protocol: x[1],
+      import: x[2],
+    }))
+  )
+  .subscribe((args: { info: any; protocol: ChildProcess; import: boolean }) => {
+    logToAmplitude("Creating window PROTOCOL", {
+      ...args.info,
+      region: JSON.stringify(
+        ((persistGet(AWS_REGIONS_SORTED_BY_PROXIMITY) as any[]) ?? [])[0]
+      ),
+    }).catch((err) => console.error(err))
 
-//     if (args.import) destroyProtocol(args.protocol)
+    if (args.import) destroyProtocol(args.protocol)
 
-//     args.protocol === undefined || args.import
-//       ? launchProtocol(args.info).catch((err) => Sentry.captureException(err))
-//       : pipeNetworkInfo(args.protocol, args.info)
-//   })
+    args.protocol === undefined || args.import
+      ? launchProtocol(args.info).catch((err) => Sentry.captureException(err))
+      : pipeNetworkInfo(args.protocol, args.info)
+  })
 
 threeProtocolFailures.subscribe(([, info]: [any, any]) => {
   launchProtocol(info).catch((err) => Sentry.captureException(err))

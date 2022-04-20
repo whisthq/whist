@@ -82,10 +82,13 @@ fromTrigger(WhistTrigger.allowNonUSServers).subscribe(
   }
 )
 
+/* eslint-disable @typescript-eslint/no-misused-promises */
 withAppActivated(of(persistGet(GEOLOCATION))).subscribe(async (location) => {
   if (location === undefined) {
-    console.log("IT IS UNDEFINED")
-    location = await getGeolocation()
-    persistSet(GEOLOCATION, location)
+    getGeolocation()
+      .then((l) => {
+        persistSet(GEOLOCATION, JSON.stringify(l))
+      })
+      .catch((err) => console.error(err))
   }
 })

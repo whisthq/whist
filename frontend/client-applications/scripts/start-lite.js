@@ -31,6 +31,5 @@ if (require.main === module) {
   start({
     SHOW_PROTOCOL_LOGS: argv.showProtocolLogs,
     DEVELOPMENT_ENV: argv.useLocalServer ? "local" : "dev",
-    GOOGLLE_API_KEY: "AIzaSyCxFye1or3nLk5D6Oh4MLEbLvQ6nCo89ms",
   })
 }
