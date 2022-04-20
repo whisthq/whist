@@ -352,7 +352,12 @@ def test_local_storage_file(browser, local_storage_json, local_storage_path, exp
 
 leveldb_files = [
     [
-        '{"binary.bin":"AAECAwQFBgcICQoLDA0ODw==","text.txt":"dGVzdDE=","nested/text.txt":"dGVzdDI=","nested/nested/text.txt":"dGVzdDM="}',
+        {
+            "binary.bin": "AAECAwQFBgcICQoLDA0ODw==",
+            "text.txt": "dGVzdDE=",
+            "nested/text.txt": "dGVzdDI=",
+            "nested/nested/text.txt": "dGVzdDM=",
+        },
         "~/.config/temp/google-chrome/Default/Local Storage/leveldb",
         {
             "text.txt": b"test1",
