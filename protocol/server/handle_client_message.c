@@ -243,6 +243,7 @@ static int handle_file_metadata_message(WhistClientMessage *wcmsg) {
             (int): Returns -1 on failure, 0 on success
     */
 
+    LOG_INFO("CMESSAGE_FILE_METADATA");
     file_synchronizer_open_file_for_writing(&wcmsg->file_metadata);
 
     return 0;

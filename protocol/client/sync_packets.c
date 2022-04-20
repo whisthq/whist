@@ -27,6 +27,7 @@ Includes
 #include "video.h"
 #include "sync_packets.h"
 #include "client_utils.h"
+#include "sdl_event_handler.h"
 
 // Updater variables
 extern SocketContext packet_udp_context;
@@ -264,9 +265,19 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         // READ FILE HANDLER
         FileData* file_chunk;
         FileMetadata* file_metadata;
+        FileTransferType group_end_transfer_type;
         // Iterate through all file indexes and try to read next chunk to send
         LinkedList* transferring_files = file_synchronizer_get_transferring_files();
         linked_list_for_each(transferring_files, TransferringFile, transferring_file) {
+            if (file_synchronizer_handle_type_group_end(transferring_file, &group_end_transfer_type)) {
+                // Returns true when the TransferringFile was a type group end indicator, populates
+                //     group_end_transfer_type with the appropriate type
+                if (group_end_transfer_type == FILE_TRANSFER_SERVER_DROP) {
+                    // Dropping files into the server can consist of multiple files
+                    sdl_complete_content_drag();
+                }
+                continue;
+            }
             file_synchronizer_read_next_file_chunk(transferring_file, &file_chunk);
             if (file_chunk == NULL) {
                 // If chunk cannot be read, then try opening the file

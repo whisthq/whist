@@ -66,5 +66,6 @@ void set_is_dragging_file(bool is_dragging_file, int x, int y);
 void sdl_begin_file_drag(char* filename_list);
 void sdl_move_content_drag(int x, int y);
 void sdl_complete_content_drag(void);
+void sdl_cancel_content_drag(void);
 
 #endif  // WHIST_EVENT_HANDLER_H

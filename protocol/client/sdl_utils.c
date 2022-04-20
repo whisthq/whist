@@ -691,7 +691,6 @@ void sdl_handle_drag_event(WhistFrontend* frontend) {
         pending_file_drag_update = true;
 
         // set_is_dragging_file(true, file_drag_update_x, file_drag_update_y);
-        LOG_INFO("handle move content drag");
         sdl_move_content_drag(file_drag_update_x, file_drag_update_y);
     } else {
         // Stop the rendering of the file drag icon if event has left the window
@@ -710,7 +709,8 @@ void sdl_end_drag_event() {
     pending_overlay_removal = true;
 
     // set_is_dragging_file(false, 0, 0);
-    sdl_complete_content_drag();
+    // sdl_complete_content_drag();
+    sdl_cancel_content_drag();
 }
 
 /*

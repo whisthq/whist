@@ -122,9 +122,20 @@ void sdl_move_content_drag(int x, int y) {
 }
 
 void sdl_complete_content_drag(void) {
+    LOG_INFO("SEND CONTENT_DRAG_COMPLETE");
     WhistClientMessage msg = {0};
     msg.type = MESSAGE_CONTENT_DRAG_UPDATE;
     msg.contentDragUpdate.update_type = CONTENT_DRAG_COMPLETE;
+    msg.contentDragUpdate.x = 0;
+    msg.contentDragUpdate.y = 0;
+    send_wcmsg(&msg);
+}
+
+void sdl_cancel_content_drag(void) {
+    LOG_INFO("SEND CONTENT_DRAG_CANCEL");
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_CONTENT_DRAG_UPDATE;
+    msg.contentDragUpdate.update_type = CONTENT_DRAG_CANCEL;
     msg.contentDragUpdate.x = 0;
     msg.contentDragUpdate.y = 0;
     send_wcmsg(&msg);
@@ -220,20 +231,23 @@ static void handle_gesture_event(FrontendGestureEvent* event) {
 }
 
 static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEvent* event) {
+    LOG_INFO("SEND FILE DRAG-DROP EVENT");
     FileEventInfo drop_info;
     int dpi = whist_frontend_get_window_dpi(frontend);
 
     // Scale the drop coordinates for server-side compatibility
     drop_info.server_drop.x = event->position.x * dpi / 96;
     drop_info.server_drop.y = event->position.y * dpi / 96;
-    sdl_end_drag_event();
+    // sdl_end_drag_event();
     file_synchronizer_set_file_reading_basic_metadata(event->filename, FILE_TRANSFER_SERVER_DROP,
                                                       &drop_info);
     free(event->filename);
 }
 
 static void handle_content_drop_complete_event(WhistFrontend* frontend) {
-    sdl_complete_content_drag();
+    LOG_INFO("DRAG DROP COMPLETE EVENT");
+    // sdl_complete_content_drag();
+    file_synchronizer_end_type_group(FILE_TRANSFER_SERVER_DROP);
 }
 
 static void handle_quit_event(FrontendQuitEvent* event) {

@@ -228,7 +228,7 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
         wcmsg->type == MESSAGE_DIMENSIONS ||
         (wcmsg->type == MESSAGE_CONTENT_DRAG_UPDATE &&
             (wcmsg->contentDragUpdate.update_type == CONTENT_DRAG_FILE_START ||
-                wcmsg->contentDragUpdate.update_Type == CONTENT_DRAG_COMPLETE) ||
+                wcmsg->contentDragUpdate.update_type == CONTENT_DRAG_COMPLETE)) ||
         (size_t)wcmsg_size > sizeof(*wcmsg)) {
         return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, -1, false);
     } else {

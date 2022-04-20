@@ -251,6 +251,7 @@ static void initiate_file_upload(void) {
     if (ns_picked_file_path) {
         file_synchronizer_set_file_reading_basic_metadata(ns_picked_file_path,
                                                           FILE_TRANSFER_SERVER_UPLOAD, NULL);
+        file_synchronizer_end_type_group(FILE_TRANSFER_SERVER_UPLOAD);
         LOG_INFO("Upload has been initiated");
     } else {
         LOG_INFO("No file selected");

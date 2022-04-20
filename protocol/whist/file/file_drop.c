@@ -284,6 +284,8 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
 
     XClientMessageEvent m;
 
+    LOG_INFO("drag drop_file_into_active_window: %p", drop_file);
+
     if (drop_file) {
         // Try to wait for FUSE path to exist before initiating drop sequence
         WhistTimer fuse_ready_wait_timer;
@@ -566,7 +568,6 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
         if (!file_list && !xdnd_file_list) {
             return -1;
         }
-
         // When drag first begins, peer should send a file_list of filenames being dragged
         if (file_list) {
             const char* delimiter = "\n";
@@ -574,6 +575,7 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
             char* file_list_token = strtok_r(file_list->data, delimiter, &strtok_context);
             char drag_path_middle[64];
             int id = 0;
+            LOG_INFO("file list begin");
             while (file_list_token) {
                 snprintf(drag_path_middle, 64, drag_path_middle_template, id);
                 int file_path_end_size = strlen(drag_path_middle) + strlen(file_list_token) + 1;
@@ -622,6 +624,7 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
                 xdnd_file_list_len += drag_path_size;
                 id++;
             }
+            LOG_INFO("file list end");
         }
 
         LOG_INFO("xdnd_file_list: %s", xdnd_file_list);
@@ -645,6 +648,7 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
                 whist_unlock_mutex(xdnd_mutex);
                 return -1;
             }
+            active_file_drag = true;
 
             // XDND 3 - TODO: related to the above TODO, if we support more than 3 types of
             // drag-and-droppable content, then we will need to
@@ -667,7 +671,7 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
             if ((e.xclient.data.l[1] & 1) == 0) {
                 // XDND 4.5 - Active X11 window is not accepting the drop yet,
                 //     so we wait and resend our XdndPosition message
-                xdnd_send_position(x, y);
+                // xdnd_send_position(x, y);
             }
             // Don't actually deal with any of the logistics of dropping the file here
             //    - we're using fake paths!
@@ -698,7 +702,7 @@ int file_drag_update(bool is_dragging, int x, int y, FileDragData* file_list) {
 
     whist_unlock_mutex(xdnd_mutex);
 
-    active_file_drag = is_dragging;
+    // active_file_drag = is_dragging;
 
     LOG_INFO("returning from file_drag_update");
 

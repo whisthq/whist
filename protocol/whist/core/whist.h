@@ -544,8 +544,8 @@ typedef enum WhistContentDragUpdateType {
     CONTENT_DRAG_FILE_START = 0,
     CONTENT_DRAG_TEXT_START = 1, // unused, for now
     CONTENT_DRAG_MOVE = 2,
-    CONTENT_DRAG_COMPLETE = 3,
-    // CONTENT_DRAG_CANCEL = 4, // maybe not necessary to differentiate?
+    CONTENT_DRAG_COMPLETE = 3, // indicates a successful drag completion (a drop)
+    CONTENT_DRAG_CANCEL = 4, // indicates an aborted drag (leaves window)
 } WhistContentDragUpdateType;
 
 /**

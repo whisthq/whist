@@ -115,6 +115,10 @@ typedef struct TransferringFile {
     int global_file_id;  // Unique identifier for client-server synchrony
     int id;              // Unique identifier (unique across ALL written files,
                          //     not just active ones, but can be -1 for read files)
+    bool group_end;      // Used to indicate if this is the end of an associated group of
+                         //    `transfer_type` files. For example, multiple files can be
+                         //    dropped in one motion, and each file will be assumed to be
+                         //    a part of the same group until it encounters a `group_end`.
     char* filename;      // The filename without the path (can be NULL for read-end files)
     char* file_path;     // The local file path
     FILE* file_handle;   // The local file handle
@@ -218,6 +222,17 @@ void reset_all_transferring_files(void);
  *
  */
 void file_synchronizer_cancel_user_file_upload(void);
+
+/**
+ * @brief                          Adds an entry to indicate the end of a group of the
+ *                                 same type of file that may need to be handled
+ *                                 together.
+ *
+ */
+void file_synchronizer_end_type_group(FileTransferType transfer_type);
+
+bool file_synchronizer_handle_type_group_end(TransferringFile* transferring_file,
+                                             FileTransferType *group_end_transfer_type);
 
 /**
  * @brief                          Cleanup the file synchronizer
