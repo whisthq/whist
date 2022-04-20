@@ -5,7 +5,6 @@
 # the Whist mandelbox to use. It then starts systemd, which starts all of the
 # Whist system services (.service files), starting Whist inside the mandelbox.
 
-
 SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
 # If SENTRY_ENV is set, then create file
 if [ -n "${SENTRY_ENV+1}" ]
