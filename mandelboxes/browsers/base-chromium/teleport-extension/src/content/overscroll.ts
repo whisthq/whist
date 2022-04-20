@@ -1,3 +1,5 @@
+import { URLS_NO_OVERSCROLL } from "@app/constants/urls"
+
 // A lower damping value causes the spring to bounce back more quickly
 const damping = 0.85
 // A higher maxOffset means the page can bounce further
@@ -125,7 +127,9 @@ const handler = (evt: WheelEvent) => {
 render()
 
 const initElasticOverscroll = () => {
-  window.addEventListener("wheel", handler, { passive: false })
+  if (!URLS_NO_OVERSCROLL.some((url) => document.URL.includes(url))) {
+    window.addEventListener("wheel", handler, { passive: false })
+  }
 }
 
 export { initElasticOverscroll }
