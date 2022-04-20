@@ -86,13 +86,10 @@ def main():
     longitude = os.getenv("LONGITUDE")
     latitude = os.getenv("LATITUDE")
 
-    print("The longitude is", longitude)
-    print("The latitude is", latitude)
-
     if (not longitude == "") and (not latitude == ""):
         send_message({"type": "GEOLOCATION", "value": {
-            longitude: longitude,
-            latitude: latitude
+            "longitude": longitude,
+            "latitude": latitude
         }})
 
     # Enter main message handling loop
