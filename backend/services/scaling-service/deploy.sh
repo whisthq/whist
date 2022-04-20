@@ -55,7 +55,7 @@ deploy_scaling_service() {
 
   # Create null buildpack, see: https://elements.heroku.com/buildpacks/ryandotsmith/null-buildpack, this is
   # necessary since Heroku requires a buildpack for every app
-  heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP_NAME" > /dev/null || true
+  heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP_NAME" &> /dev/null || true
 
   # Push deploy directory to Heroku
   echo "Deploying scaling-service..."

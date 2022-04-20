@@ -23,8 +23,8 @@ xmodmap /root/.Xmodmap
 # Things running outside runuser are run as root
 
 # Start playerctl daemon to respond to media keys and get the PID of the backgrounded process
-echo "Starting 'playerctl daemon' in the background..."
-$RUN_AS_WHIST "playerctl daemon" &
+echo "Starting 'playerctld daemon' in the background..."
+$RUN_AS_WHIST "playerctld daemon" &
 playerctld_pid=$!
 echo "playerctld daemon started as PID: $playerctld_pid"
 
