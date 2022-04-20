@@ -20,7 +20,10 @@ import {
   GEOLOCATION,
 } from "@app/constants/store"
 import { withAppActivated } from "@app/main/utils/observables"
-import { getGeolocation } from "../utils/location"
+import {
+  getGeolocation,
+  closestRegionHasChanged,
+} from "@app/main/utils/location"
 
 // On a successful auth, store the auth credentials in Electron store
 // so the user is remembered
@@ -85,6 +88,16 @@ fromTrigger(WhistTrigger.allowNonUSServers).subscribe(
 /* eslint-disable @typescript-eslint/no-misused-promises */
 withAppActivated(of(persistGet(GEOLOCATION))).subscribe(async (location) => {
   if (location === undefined) {
+    getGeolocation()
+      .then((l) => {
+        persistSet(GEOLOCATION, JSON.stringify(l))
+      })
+      .catch((err) => console.error(err))
+  }
+})
+
+fromTrigger(WhistTrigger.awsPingRefresh).subscribe((regions) => {
+  if (closestRegionHasChanged(regions)) {
     getGeolocation()
       .then((l) => {
         persistSet(GEOLOCATION, JSON.stringify(l))
