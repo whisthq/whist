@@ -18,6 +18,7 @@
     "downloads",
     "downloads.shelf",
     "nativeMessaging",
+    "scripting",
     "tabs",
     "webNavigation"
   ],
@@ -37,7 +38,11 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["js/userAgent.js", "js/notification.js"],
+      "resources": [
+        "js/userAgent.js",
+        "js/notification.js",
+        "js/geolocation.js"
+      ],
       "matches": ["<all_urls>"]
     }
   ]
