@@ -118,6 +118,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     }
 
     SDLFrontendContext* context = safe_malloc(sizeof(SDLFrontendContext));
+    memset(context, 0, sizeof(SDLFrontendContext));
     frontend->context = context;
 
     context->audio_device = 0;
@@ -193,6 +194,10 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 
 void sdl_destroy(WhistFrontend* frontend) {
     SDLFrontendContext* context = frontend->context;
+
+    if (!context) {
+        return;
+    }
 
     if (context->texture != NULL) {
         SDL_DestroyTexture(context->texture);
