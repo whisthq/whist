@@ -98,13 +98,15 @@ Public Function Implementations
 WhistFrontend* init_sdl(int target_output_width, int target_output_height, const char* title) {
     WhistFrontend* frontend = whist_frontend_create_sdl();
     if (frontend == NULL) {
-        LOG_FATAL("Failed to create frontend");
+        LOG_ERROR("Failed to create frontend");
+        return NULL;
     }
 
     if (whist_frontend_init(frontend, target_output_width, target_output_height, title,
                             &background_color) != WHIST_SUCCESS) {
         whist_frontend_destroy(frontend);
-        LOG_FATAL("Failed to initialize frontend");
+        LOG_ERROR("Failed to initialize frontend");
+        return NULL;
     }
 
     pending_cursor_info_mutex = whist_create_mutex();
