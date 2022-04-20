@@ -491,6 +491,8 @@ int main(int argc, char* argv[]) {
 
         // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set because
         // getting cpu usage statistics is expensive.
+        // TODO : Do NOT enable this, as it is bottlenecking UDP receive. Change expensive 'top'
+        // based logic to simple '/proc/stat' logic for CPU usage.
         if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) > 1) {
             double cpu_usage = get_cpu_usage();
             log_double_statistic(SERVER_CPU_USAGE, cpu_usage);
