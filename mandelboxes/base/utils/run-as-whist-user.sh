@@ -26,6 +26,8 @@ INITIAL_KEY_REPEAT=68 # default value on macOS, options are 120, 94, 68, 35, 25,
 KEY_REPEAT=6 # default value on macOS, options are 120, 90, 60, 30, 12, 6, 2
 INITIAL_URL=""
 USER_AGENT=""
+LATITUDE=""
+LONGITUDE=""
 KIOSK_MODE=false
 
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
@@ -57,6 +59,12 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
   if [ "$( jq -rc 'has("kiosk_mode")' < $WHIST_JSON_FILE )" == "true"  ]; then
     KIOSK_MODE="$(jq -rc '.kiosk_mode' < $WHIST_JSON_FILE)"
+  fi
+  if [ "$( jq -rc 'has("latitude")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    LATITUDE="$(jq -rc '.latitude' < $WHIST_JSON_FILE)"
+  fi
+  if [ "$( jq -rc 'has("longitude")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    LONGITUDE="$(jq -rc '.longitude' < $WHIST_JSON_FILE)"
   fi
 fi
 
@@ -133,9 +141,11 @@ export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 export INITIAL_URL=$INITIAL_URL
 export USER_AGENT="$USER_AGENT"
 export KIOSK_MODE=$KIOSK_MODE
+export LONGITUDE=$LONGITUDE 
+export LATITUDE=$LATITUDE
 export SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-}
 
-exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT -c \
+exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \

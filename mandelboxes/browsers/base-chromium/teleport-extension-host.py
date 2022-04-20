@@ -9,7 +9,6 @@ import time
 FILE_DOWNLOAD_TRIGGER_PATH = "/home/whist/.teleport/downloaded-file"
 POINTER_LOCK_TRIGGER_PATH = "/home/whist/.teleport/pointer-lock-update"
 DID_UPDATE_EXTENSION_TRIGGER_PATH = "/home/whist/.teleport/did-update-extension"
-CONFIG_PATH = "home/whist/resourceMappings/config.json"
 
 def send_message(message):
     """
@@ -84,10 +83,17 @@ def main():
     else:
         send_message({"type": "NATIVE_HOST_UPDATE", "value": False})
 
-    if os.path.exists(CONFIG_PATH):
-        file = open(CONFIG_PATH)
-        json_data = json.load(file)
-        send_message({"type": "GEOLOCATION", "value": json_data["geolocation"]})
+    longitude = os.getenv("LONGITUDE")
+    latitude = os.getenv("LATITUDE")
+
+    print("The longitude is", longitude)
+    print("The latitude is", latitude)
+
+    if (not longitude == "") and (not latitude == ""):
+        send_message({"type": "GEOLOCATION", "value": {
+            longitude: longitude,
+            latitude: latitude
+        }})
 
     # Enter main message handling loop
     while True:
