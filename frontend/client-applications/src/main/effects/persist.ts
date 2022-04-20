@@ -64,7 +64,7 @@ fromTrigger(WhistTrigger.setDefaultBrowser).subscribe(
 // If the user is not onboarded but is requesting a mandelbox, this means
 // they completed onboarding
 fromTrigger(WhistTrigger.protocolConnection)
-  .pipe(filter((connected) => connected))
+  .pipe(filter((connected: boolean) => connected))
   .subscribe(() => {
     if (!((persistGet(ONBOARDED) as boolean) ?? false)) {
       persistSet(ONBOARDED, true)

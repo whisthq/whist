@@ -55,10 +55,12 @@ const shouldSleep = merge(
 shouldSleep
   .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
   .subscribe(async ([, p]: [any, ChildProcess]) => {
-    await logToAmplitude("Whist sleeping")
+    await logToAmplitude(
+      process.platform === "win32" ? "Whist quitting" : "Whist sleeping"
+    )
 
     destroyProtocol(p)
-    relaunch({ sleep: true })
+    process.platform === "win32" ? app.exit() : relaunch({ sleep: true })
   })
 
 // On signout, clear the cache (so the user can log in again) and restart

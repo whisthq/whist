@@ -1,80 +1,213 @@
-import { execCommandByOS } from "@app/main/utils/execCommand"
+import { execCommand } from "@app/main/utils/execCommand"
 import {
   INITIAL_KEY_REPEAT_MAC_TO_LINUX_CONVERSION_FACTOR,
-  KEY_REPEAT_RATE_MIN_MAC,
-  KEY_REPEAT_RATE_RANGE_LINUX,
-  KEY_REPEAT_RATE_RANGE_MAC,
-  KEY_REPEAT_RATE_MIN_LINUX,
+  MIN_KEY_REPEAT_MAC,
+  KEY_REPEAT_RANGE_LINUX,
+  KEY_REPEAT_RANGE_MAC,
+  MIN_KEY_REPEAT_LINUX,
+  INITIAL_REPEAT_COMMAND_MAC,
+  INITIAL_REPEAT_COMMAND_LINUX,
+  REPEAT_COMMAND_MAC,
+  REPEAT_COMMAND_LINUX,
+  MIN_KEY_REPEAT_WINDOWS,
+  MAX_KEY_REPEAT_WINDOWS,
+  MIN_INTIAL_REPEAT_WINDOWS,
 } from "@app/constants/keyRepeat"
 
-const getInitialKeyRepeat = () => {
-  const initialKeyRepeatRaw = execCommandByOS(
-    "defaults read NSGlobalDomain InitialKeyRepeat",
-    /* eslint-disable no-template-curly-in-string */
-    "xset -q | grep 'auto repeat delay'",
-    "",
-    ".",
-    {},
-    "pipe"
+const win =
+  process.platform === "win32" ? require("windows-registry-napi") : undefined
+
+const windowsKey = () => {
+  /*
+  Creates a Windows Registry Key object
+
+  Returns:
+   key (Key): Windows Registry Key
+*/
+  if (process.platform !== "win32")
+    throw new Error(`process.platform ${process.platform} is not win32`)
+
+  return new win.Key(
+    win.windef.HKEY.HKEY_CURRENT_USER,
+    "Control Panel\\Keyboard",
+    win.windef.KEY_ACCESS.KEY_ALL_ACCESS
   )
-
-  let initialKeyRepeat =
-    initialKeyRepeatRaw?.toString()?.replace(/\n$/, "") ?? ""
-
-  // Extract value from bash output
-  if (process.platform === "linux" && initialKeyRepeat !== "") {
-    const startIndex =
-      initialKeyRepeat.indexOf("auto repeat delay:") +
-      "auto repeat delay:".length +
-      2
-    const endIndex = initialKeyRepeat.indexOf("repeat rate:") - 4
-    initialKeyRepeat = initialKeyRepeat.substring(startIndex, endIndex)
-  } else if (process.platform === "darwin" && initialKeyRepeat !== "") {
-    // Convert the key repetition delay from macOS scale to Linux scale, see src/constants/keyRepeat.ts
-    const initialKeyRepeatFloat =
-      parseInt(initialKeyRepeat) *
-      INITIAL_KEY_REPEAT_MAC_TO_LINUX_CONVERSION_FACTOR
-    initialKeyRepeat = initialKeyRepeatFloat.toFixed()
-  }
-
-  const keyRepeatInt = parseInt(initialKeyRepeat)
-  return !isNaN(keyRepeatInt) ? keyRepeatInt : undefined
 }
 
-const getKeyRepeat = () => {
-  const keyRepeatRaw = execCommandByOS(
-    "defaults read NSGlobalDomain KeyRepeat",
-    /* eslint-disable no-template-curly-in-string */
-    "xset -q | grep 'auto repeat delay'",
-    "",
-    ".",
-    {},
-    "pipe"
+const windowsInitialRepeatRaw = () => {
+  /*
+  Returns the raw Windows initial keyboard repeat rate as stored in the Windows Registry
+
+  Returns:
+   initialRepeat (int): The initial keyboard repeat rate
+*/
+  if (process.platform !== "win32")
+    throw new Error(`process.platform ${process.platform} is not win32`)
+
+  const initialRepeat = windowsKey().getValue("KeyboardDelay") ?? undefined
+  if (initialRepeat === undefined) return MIN_INTIAL_REPEAT_WINDOWS
+
+  return parseInt(initialRepeat)
+}
+
+const windowsRepeatRaw = () => {
+  /*
+  Returns the raw Windows keyboard repeat rate as stored in the Windows Registry
+
+  Returns:
+   initialRepeat (int): The keyboard repeat rate
+*/
+  if (process.platform !== "win32")
+    throw new Error(`process.platform ${process.platform} is not win32`)
+
+  const repeat = windowsKey().getValue("KeyboardSpeed") ?? undefined
+  if (repeat === undefined) return MAX_KEY_REPEAT_WINDOWS
+
+  return parseInt(repeat)
+}
+
+const macInitialRepeatRaw = () => {
+  /*
+  Returns the raw Mac initial keyboard repeat rate
+
+  Returns:
+   initialRepeat (int): The initial keyboard repeat rate
+*/
+  if (process.platform !== "darwin")
+    throw new Error(`process.platform ${process.platform} is not darwin`)
+
+  return parseInt(
+    execCommand(INITIAL_REPEAT_COMMAND_MAC, ".", {}, "pipe")
+      ?.toString()
+      ?.replace(/\n$/, "") ?? ""
+  )
+}
+
+const macRepeatRaw = () => {
+  /*
+  Returns the raw Mac keyboard repeat rate
+
+  Returns:
+   repeat (int): The keyboard repeat rate
+*/
+  if (process.platform !== "darwin")
+    throw new Error(`process.platform ${process.platform} is not darwin`)
+
+  return parseInt(
+    execCommand(REPEAT_COMMAND_MAC, ".", {}, "pipe")
+      ?.toString()
+      ?.replace(/\n$/, "") ?? ""
+  )
+}
+
+const linuxInitialRepeatRaw = () => {
+  /*
+  Returns the raw Linux initial keyboard repeat rate
+
+  Returns:
+   initialRepeat (int): The initial keyboard repeat rate
+*/
+  if (process.platform !== "linux")
+    throw new Error(`process.platform ${process.platform} is not linux`)
+
+  let initialRepeat =
+    execCommand(INITIAL_REPEAT_COMMAND_LINUX, ".", {}, "pipe")
+      ?.toString()
+      ?.replace(/\n$/, "") ?? ""
+
+  // Filter out strings in initial repeat
+  initialRepeat = initialRepeat.substring(
+    initialRepeat.indexOf("auto repeat delay:") +
+      "auto repeat delay:".length +
+      2,
+    initialRepeat.indexOf("repeat rate:") - 4
   )
 
-  let keyRepeat = keyRepeatRaw !== null ? keyRepeatRaw.toString() : ""
+  return parseInt(initialRepeat)
+}
 
-  // Remove trailing '\n'
-  keyRepeat.replace(/\n$/, "")
-  // Extract value from bash output
-  if (process.platform === "linux" && keyRepeat !== "") {
-    const startIndex =
-      keyRepeat.indexOf("repeat rate:") + "repeat rate:".length + 2
-    const endIndex = keyRepeat.length
-    keyRepeat = keyRepeat.substring(startIndex, endIndex)
-  } else if (process.platform === "darwin" && keyRepeat !== "") {
-    // Convert the key repetition delay from macOS scale to Linux scale, see see src/constants/keyRepeat.ts
-    const keyRepeatFloat =
-      (1.0 -
-        (parseInt(keyRepeat) - KEY_REPEAT_RATE_MIN_MAC) /
-          KEY_REPEAT_RATE_RANGE_MAC) *
-        KEY_REPEAT_RATE_RANGE_LINUX +
-      KEY_REPEAT_RATE_MIN_LINUX
-    keyRepeat = keyRepeatFloat.toFixed()
+const linuxRepeatRaw = () => {
+  /*
+  Returns the raw Linux initial keyboard repeat rate
+
+  Returns:
+   initialRepeat (int): The initial keyboard repeat rate
+*/
+  if (process.platform !== "linux")
+    throw new Error(`process.platform ${process.platform} is not linux`)
+
+  let repeat =
+    execCommand(REPEAT_COMMAND_LINUX, ".", {}, "pipe")
+      ?.toString()
+      ?.replace(/\n$/, "") ?? ""
+
+  // Filter out strings in repeat
+  repeat = repeat.substring(
+    repeat.indexOf("repeat rate:") + "repeat rate:".length + 2,
+    repeat.length
+  )
+
+  return parseInt(repeat)
+}
+
+const macRepeatToLinux = (repeat: number) =>
+  /*
+  Maps the Mac key repeat to the Linux key repeat
+
+  Returns:
+   repeat (int): The mapped repeat rate
+*/
+  Math.round(
+    (1.0 - (repeat - MIN_KEY_REPEAT_MAC) / KEY_REPEAT_RANGE_MAC) *
+      KEY_REPEAT_RANGE_LINUX +
+      MIN_KEY_REPEAT_LINUX
+  )
+
+const macInitialRepeatToLinux = (initialRepeat: number) =>
+  /*
+  Maps the Mac initial key repeat to the Linux initial key repeat
+
+  Returns:
+    initialRepeat (int): The mapped initial repeat rate
+*/
+  Math.round(initialRepeat * INITIAL_KEY_REPEAT_MAC_TO_LINUX_CONVERSION_FACTOR)
+
+const windowsRepeatToLinux = (repeat: number) =>
+  /*
+  Maps the Mac key repeat to the Linux key repeat
+
+  Returns:
+   repeat (int): The mapped repeat rate
+*/
+  Math.round(Math.max(MIN_KEY_REPEAT_WINDOWS, repeat - 1))
+
+const windowsInitialRepeatToLinux = (initialRepeat: number) =>
+  Math.max(300 - 100 * initialRepeat, 0)
+
+const getKeyRepeat = () => {
+  switch (process.platform) {
+    case "darwin":
+      return macRepeatToLinux(macRepeatRaw())
+    case "linux":
+      return linuxRepeatRaw()
+    case "win32":
+      return windowsRepeatToLinux(windowsRepeatRaw())
+    default:
+      return 0
   }
+}
 
-  const keyRepeatInt = parseInt(keyRepeat)
-  return !isNaN(keyRepeatInt) ? keyRepeatInt : undefined
+const getInitialKeyRepeat = () => {
+  switch (process.platform) {
+    case "darwin":
+      return macInitialRepeatToLinux(macInitialRepeatRaw())
+    case "linux":
+      return linuxInitialRepeatRaw()
+    case "win32":
+      return windowsInitialRepeatToLinux(windowsInitialRepeatRaw())
+    default:
+      return 0
+  }
 }
 
 export { getInitialKeyRepeat, getKeyRepeat }

@@ -13,11 +13,12 @@ import {
   MIN_ACCEPTABLE_DOWNLOAD_MBPS,
 } from "@app/constants/network"
 
-const loadingMessage = sample([
-  "to view settings when launched",
-  "for live chat support when launched",
-  "to import tabs from another browser",
-])
+const loadingMessage = (platform: string) =>
+  sample([
+    "to view settings when launched",
+    "for live chat support when launched",
+    ...(platform === "win32" ? [] : ["to import tabs from another browser"]),
+  ])
 
 const InternetNotification = (props: {
   networkInfo: {
@@ -106,6 +107,7 @@ const Loading = (props: {
     downloadMbps: number
     ping: number
   }
+  platform: string
 }) => {
   return (
     <div className="flex flex-col h-screen w-full font-body bg-gray-900">
@@ -145,7 +147,9 @@ const Loading = (props: {
             J
           </kbd>
         </div>
-        <div className="text-gray-500 text-sm mt-2">{loadingMessage}</div>
+        <div className="text-gray-500 text-sm mt-2">
+          {loadingMessage(props.platform)}
+        </div>
       </div>
       <div
         className="absolute bottom-4 left-0 right-0 w-full bg-gray-800 bg-opacity-50 px-8 py-4 text-center text-gray-400 text-sm max-w-md rounded m-auto opacity-0 animate-fade-in-up"

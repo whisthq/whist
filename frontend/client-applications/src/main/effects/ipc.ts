@@ -96,6 +96,7 @@ const subscribed = combineLatest(
       regions: fromTrigger(WhistTrigger.awsPingRefresh).pipe(
         map((regions) => regions?.map((r: any) => r.region))
       ),
+      platform: of(process.platform),
     },
     (obs) => concat(of(undefined), obs)
   )

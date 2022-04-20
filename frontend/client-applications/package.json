@@ -30,6 +30,7 @@
     "@typeform/embed-react": "^1.1.0",
     "@types/auto-launch": "^5.0.2",
     "@types/crypto-js": "^4.0.2",
+    "@types/ffi-napi": "^4.0.5",
     "@types/fuzzy-search": "^2.1.2",
     "@types/lodash.clonedeep": "^4.5.6",
     "@types/lodash.find": "^4.6.6",
@@ -87,6 +88,13 @@
     "rxjs": "^7.4.0",
     "sqlite3": "^5.0.2",
     "tmp": "^0.2.1"
+  },
+  "optionalDependencies": {
+    "@types/ref-napi": "^3.0.4",
+    "ffi-napi": "^4.0.3",
+    "ref-napi": "^3.0.3",
+    "ref-struct-di": "^1.1.1",
+    "windows-registry-napi": "^0.1.6"
   },
   "devDependencies": {
     "@snowpack/plugin-build-script": "^2.1.0",

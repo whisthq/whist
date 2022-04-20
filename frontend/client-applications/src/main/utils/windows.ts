@@ -17,11 +17,18 @@ const base = {
     preload: path.join(config.buildRoot, "preload.js"),
   },
   resizable: false,
+  maximizable: false,
   titleBarStyle: "hidden",
-  frame: false,
   border: false,
   show: false,
+  frame: false,
   opacity: 0.0,
+  ...(process.platform === "win32" && {
+    titleBarOverlay: {
+      color: "#202124",
+      symbolColor: "#cbd5e1",
+    },
+  }),
 }
 
 const replaceUserAgent = (userAgent: string) =>

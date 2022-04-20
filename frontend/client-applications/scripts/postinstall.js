@@ -70,6 +70,21 @@ const postInstall = (_env, ..._args) => {
     "new WebSocket(url, 'net.measurementlab.ndt.v7', { rejectUnauthorized: false })"
   )
 
+  if (process.platform !== "win32") {
+    console.log("Removing Windows node modules")
+    ;[
+      "ffi-napi",
+      "ref-napi",
+      "windows-registry-napi",
+      "@types/ffi-napi",
+    ].forEach((folder) => {
+      fs.rmSync(path.join("node_modules", folder), {
+        recursive: true,
+        force: true,
+      })
+    })
+  }
+
   // Recompile node native modules
   helpers.electronBuilderInstallAppDeps()
 }

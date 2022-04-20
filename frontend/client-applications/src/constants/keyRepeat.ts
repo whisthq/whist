@@ -24,13 +24,25 @@ export const INITIAL_KEY_REPEAT_MAC_TO_LINUX_CONVERSION_FACTOR =
 //
 // The max allowed key repeat rate on Linux is 255. However, values higher than 30 do not work well in practice.
 // This is a subjective value, and we could modify it up to 255.
-export const KEY_REPEAT_RATE_MIN_LINUX = 1
-export const KEY_REPEAT_RATE_MAX_LINUX = 30
-export const KEY_REPEAT_RATE_MIN_MAC = 2
-export const KEY_REPEAT_RATE_MAX_MAC = 120
+export const MIN_KEY_REPEAT_LINUX = 1
+export const MAX_KEY_REPEAT_LINUX = 30
+export const MIN_KEY_REPEAT_MAC = 2
+export const MAX_KEY_REPEAT_MAC = 120
+export const MIN_KEY_REPEAT_WINDOWS = 0
+export const MAX_KEY_REPEAT_WINDOWS = 31
+
+export const MIN_INTIAL_REPEAT_WINDOWS = 0
 
 // The range of values that the key repeat rate can take
-export const KEY_REPEAT_RATE_RANGE_MAC =
-  KEY_REPEAT_RATE_MAX_MAC - KEY_REPEAT_RATE_MIN_MAC
-export const KEY_REPEAT_RATE_RANGE_LINUX =
-  KEY_REPEAT_RATE_MAX_LINUX - KEY_REPEAT_RATE_MIN_LINUX
+export const KEY_REPEAT_RANGE_MAC = MAX_KEY_REPEAT_MAC - MIN_KEY_REPEAT_MAC
+export const KEY_REPEAT_RANGE_LINUX =
+  MAX_KEY_REPEAT_LINUX - MIN_KEY_REPEAT_LINUX
+export const KEY_REPEAT_RANGE_WINDOWS =
+  MAX_KEY_REPEAT_WINDOWS - MIN_KEY_REPEAT_WINDOWS
+
+export const INITIAL_REPEAT_COMMAND_MAC =
+  "defaults read NSGlobalDomain InitialKeyRepeat"
+export const REPEAT_COMMAND_MAC = "defaults read NSGlobalDomain KeyRepeat"
+
+export const INITIAL_REPEAT_COMMAND_LINUX = "xset -q | grep 'auto repeat delay'"
+export const REPEAT_COMMAND_LINUX = "xset -q | grep 'auto repeat delay'"
