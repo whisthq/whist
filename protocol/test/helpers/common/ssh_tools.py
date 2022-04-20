@@ -77,6 +77,25 @@ def attempt_ssh_connection(
 
 
 def wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci):
+    """
+    This function is used to prevent lock contention issues between E2E commands that use `apt` or `dpkg`
+    and other Linux processes. These issues are especially common on a EC2 instance's first boot.
+
+    We simply wait until no process holds the following locks (more could be added in the future):
+    - /var/lib/dpkg/lock
+    - /var/lib/apt/lists/lock
+    - /var/cache/apt/archives/lock
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process
+                        on the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
+                        execute a new command
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+
+    Returns:
+        None
+    """
     pexpect_process.sendline(
         "while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do echo 'Waiting for apt locks...'; sleep 1; done"
     )
@@ -95,17 +114,17 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
     This function also has the option to return the shell stdout in a list of strings format.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process
-                        on the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
-                        execute a new command
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process monitoring the execution of the process
+                                                    on the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
+                                execute a new command
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
         return_output (bool): A boolean controlling whether to return the stdout output in a list of strings format
 
     Returns:
         On Success:
-            pexpect_output (list): the stdout output of the command, with one entry for each line of the original
-                        output. If return_output=False, pexpect_output is set to None
+            pexpect_output (list):  the stdout output of the command, with one entry for each line of the original
+                                    output. If return_output=False, pexpect_output is set to None
         On Failure:
             None and exit with exitcode -1
     """
@@ -139,6 +158,17 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
 
 
 def expression_in_pexpect_output(expression, pexpect_output):
+    """
+    This function is used to search whether the output of a pexpect command contains an expression of interest
+
+    Args:
+        expression (string): This is the expression we are searching for
+        pexpect_output (list):  the stdout output of the pexpect command, with one entry for each line of the
+                                original output.
+
+    Returns:
+        A boolean indicating whether the expression was found.
+    """
     return any(expression in item for item in pexpect_output if isinstance(item, str))
 
 

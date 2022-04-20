@@ -49,18 +49,48 @@ def printunderline(text):
 
 
 class TimeStamps:
+    """
+    The TimeStamps class provides functions to easily track the time elapsed in each section of the E2E code
+    and print a summary table at the end.
+
+    Sample Usage:
+
+        timestamps = TimeStamps()
+        < instruction block A >
+        timestamps.add_event("block A")
+        < instruction block B >
+        timestamps.add_event("block B")
+
+        if something_bad_happened:
+            exit_with_error("Oh no, something terrible just happened. Exiting now!", timestamps=timestamps)
+        else:
+            timestamps.print_timestamps()
+    """
+
     def __init__(self):
         self.start_time = time.time()
         self.events = []
         self.max_event_name_len = 0
         self.most_time_consuming_event = datetime.timedelta(seconds=0)
 
-    def get_time_elapsed(self, index):
+    def __get_time_elapsed(self, index):
+        # Returns the time elapsed in the block of code with a given index in the list of events
         if index < 0 or index >= len(self.events):
             return -1
         return self.events[index][1] - self.events[max(0, index - 1)][1]
 
     def add_event(self, event_name):
+        """
+        Record the time elapsed in the block of code between the previous call to this function
+        (or the initialization of this class if this is the first call) and the present call
+        to this function.
+
+        Args:
+            event_name (str): A name to assign to the block of code that we're seeking to time
+
+        Returns:
+            None
+        """
         timestamp = time.time()
         self.max_event_name_len = max(self.max_event_name_len, len(event_name))
 
@@ -71,6 +101,15 @@ class TimeStamps:
         print(f"{event_name} took {str(time_elapsed)}")
 
     def print_timestamps(self):
+        """
+        Print a summary table with the time elapsed in each block of the code
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         print()
         print("**** E2E time breakdown ****")
         for i, event in enumerate(self.events):
@@ -88,6 +127,19 @@ class TimeStamps:
 
 
 def exit_with_error(error_message, timestamps=None):
+    """
+    Exit the process calling this function with error code -1. Optionally, also print an error message in red
+    and print a summary table with the time elapsed in each part of the E2E experiment.
+
+    Args:
+        error_message (str):  The error message to print in red, or None if you don't want to print any message
+        timestamps (TimeStamps):    The object containing the data to print the summary table with the time elapsed
+                                    in each part of the E2E experiment, or None if you don't want to print the
+                                    summary table
+
+    Returns:
+        None and exit with exitcode -1
+    """
     if error_message is not None:
         printred(error_message)
     if timestamps is not None:

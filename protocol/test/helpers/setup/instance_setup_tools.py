@@ -238,11 +238,6 @@ def run_host_setup(
                                                     be used to interact with the remote machine
         pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
                                 execute a command
-        ssh_cmd (str):  The shell command to use to establish a SSH connection to the remote machine.
-                        This is used if we need to reboot the machine.
-        timeout_value (int):    The amount of time to wait before timing out the attemps to gain a SSH connection
-                                to the remote machine.
-        logfile (file): The file (already opened) to use for logging the terminal output from the remote machine
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
