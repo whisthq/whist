@@ -114,9 +114,8 @@ TEST_F(ProtocolTest, InitSDL) {
     EXPECT_GE(height, MIN_SCREEN_HEIGHT);
 
     WhistFrontend* frontend = init_sdl(width, height, very_long_title);
-    SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->window;
 
-    if (new_window == NULL) {
+    if (frontend == NULL) {
         // Check if there is no device available to test SDL (e.g. on Ubuntu CI)
         const char* err = SDL_GetError();
         int res = strcmp(err, "No available video device");
@@ -128,6 +127,8 @@ TEST_F(ProtocolTest, InitSDL) {
         }
     }
 
+    EXPECT_TRUE(frontend != NULL);
+    SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->window;
     EXPECT_TRUE(new_window != NULL);
 
     check_stdout_line(::testing::HasSubstr("Using renderer: "));
