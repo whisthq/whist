@@ -329,7 +329,7 @@ If only a particular test case needs to be run, then use the below `--gtest_filt
 
 ### Continuous Integration
 
-For every push or PR, the code will be automatically linted via clang-format according to the [styling](#styling) guidelines.
+For every push or PR, the code will be automatically linted via clang-format according to the [#styling](styling) guidelines.
 
 ## Styling
 

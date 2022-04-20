@@ -30,7 +30,7 @@ Public Functions
 */
 
 /**
- * @brief                          Creates the SDL window,
+ * @brief                          Creates the SDL window frontend,
  *                                 with the currently running thread at the owner
  *
  * @param output_width             The width of the SDL window to create, in
@@ -38,16 +38,12 @@ Public Functions
  * @param output_height            The height of the SDL window to create, in
  *                                 pixels
  *
- * @param name                     The title of the window
+ * @param title                    The title of the window
  *
- * @param icon_filename            The filename of the window icon, pointing to a 64x64 png,
- *                                 or NULL to use the default icon.
- *
- * @param frontend                 (Temporary) A pointer to the frontend to be initialized and
- *                                 registered with the created SDL window.
+ * @returns                        A handle for the created frontend
  *
  */
-WhistFrontend* init_sdl(int output_width, int output_height, const char* name);
+WhistFrontend* init_sdl(int output_width, int output_height, const char* title);
 
 /**
  * @brief                          Destroys an SDL window and associated
