@@ -18,5 +18,3 @@ export const URLS_THAT_NEED_CAMERA_MIC = [
   "slack.com",
   "zoom.us",
 ]
-
-export const URLS_NO_OVERSCROLL = ["youtube.com", "figma.com"]
