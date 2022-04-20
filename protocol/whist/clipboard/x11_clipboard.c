@@ -176,6 +176,8 @@ ClipboardData* unsafe_get_os_clipboard(void) {
 
     ClipboardData* cb = NULL;
 
+    XLockDisplay(display);
+
     // Try to get a string/picture/files clipboard object
     if (cb == NULL) {
         cb = get_os_clipboard_string();
@@ -187,6 +189,8 @@ ClipboardData* unsafe_get_os_clipboard(void) {
         // Not implementing clipboard files right now
         // cb = get_os_clipboard_files();
     }
+
+    XUnlockDisplay(display);
 
     if (cb == NULL) {
         // If no cb was found, just return the CLIPBOARD_NONE object
@@ -297,13 +301,16 @@ bool unsafe_has_os_clipboard_updated(void) {
         }
         return false;
     }
+    XLockDisplay(display);
     while (XPending(display)) {
         XNextEvent(display, &event);
         if (event.type == event_base + XFixesSelectionNotify &&
             ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard) {
+            XUnlockDisplay(display);
             return true;
         }
     }
+    XUnlockDisplay(display);
     return false;
 }
 
@@ -325,12 +332,16 @@ static bool clipboard_has_target(Atom property_atom, Atom target_atom) {
 
     XEvent event;
 
+    XLockDisplay(display);
+
     XSelectInput(display, window, PropertyChangeMask);
     XConvertSelection(display, clipboard, target_atom, property_atom, window, CurrentTime);
 
     do {
         XNextEvent(display, &event);
     } while (event.type != SelectionNotify || event.xselection.selection != clipboard);
+
+    XUnlockDisplay(display);
 
     if (event.xselection.property == property_atom) {
         return true;
