@@ -1,5 +1,12 @@
 import { NativeHostMessage, NativeHostMessageType } from "@app/constants/ipc"
 
+chrome.storage.local.set({
+  geolocation: {
+    longitude: 21.0,
+    latitude: 19.9999,
+  },
+})
+
 const initLocationHandler = (nativeHostPort: chrome.runtime.Port) => {
   // If this is a new mandelbox, refresh the extension to get the latest version.
   nativeHostPort.onMessage.addListener((msg: NativeHostMessage) => {
