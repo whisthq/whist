@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file mandelbox.ts
- * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
+ * @brief This file contains utility functions interacting with the scaling service to create mandelboxes.
  */
 
 import isEmpty from "lodash.isempty"

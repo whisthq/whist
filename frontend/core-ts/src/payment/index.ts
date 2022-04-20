@@ -7,7 +7,7 @@ const get = configGet({ server: config.urls.SCALING_SERVICE_URL })
 export const paymentPortalRequest = async ({ accessToken }: accessToken) => {
   /*
     Description:
-      Makes a webserver call to get a stripe customer portal url
+      Makes a scaling service call to get a stripe customer portal url
 
     Arguments:
       {

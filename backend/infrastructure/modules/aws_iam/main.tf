@@ -73,10 +73,10 @@ resource "aws_iam_role" "PackerAMIBuilder" {
   }
 }
 
-# This role is used by the scaling service and webserver to manage instances.
+# This role is used by the scaling service to manage instances.
 resource "aws_iam_role" "EC2DeploymentRole" {
   name               = "EC2DeploymentRole${var.env}"
-  description        = "This role is used by the scaling service and webserver to manage instances"
+  description        = "This role is used by the scaling service to manage instances"
   assume_role_policy = data.aws_iam_policy_document.EC2AssumeRolePolicy.json
 
   inline_policy {

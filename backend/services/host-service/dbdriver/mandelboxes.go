@@ -20,7 +20,7 @@ import (
 // Note that we don't explicitly use transactions for any database interactions
 // in this file, since the instance's singular host-service should be the only
 // agent interacting with the database rows for the mandelboxes once the
-// webserver creates them in the "ALLOCATED" state.
+// scaling service creates them in the "ALLOCATED" state.
 
 // A MandelboxStatus represents a possible status that a mandelbox can have in the database.
 type MandelboxStatus string

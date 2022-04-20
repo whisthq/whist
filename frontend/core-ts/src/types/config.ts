@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 export type WhistConfig = {
   url: {
-    WEBSERVER_URL: string | undefined
+    SCALING_SERVICE_URL: string | undefined
     FRONTEND_URL: string | undefined
     GOOGLE_REDIRECT_URI: string | undefined
   }

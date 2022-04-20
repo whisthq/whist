@@ -309,19 +309,6 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 		// Listen for global context cancellation
 		<-globalCtx.Done()
 
-		// This is only necessary since we don't have the ability to subscribe to
-		// database events. In particular, the webserver might mark this host
-		// service as draining after allocating a mandelbox on it. If we didn't
-		// have this sleep, we would stop accepting requests right away, and the
-		// SpinUpMandelbox request from the client app would error out. We don't
-		// want that, so we accept requests for another 30 seconds. This would be
-		// annoying in local development, so it's disabled in that case.
-		// TODO: get rid of this once we have pubsub
-		if !metadata.IsLocalEnv() {
-			logger.Infof("Global context cancelled. Starting 30 second grace period for requests before http server is shutdown...")
-			time.Sleep(30 * time.Second)
-		}
-
 		logger.Infof("Shutting down httpserver...")
 		shutdownCtx, shutdownCancel := context.WithTimeout(globalCtx, 30*time.Second)
 		defer shutdownCancel()

@@ -4,7 +4,7 @@ package dbdriver // import "github.com/whisthq/whist/backend/services/host-servi
 
 // We don't pass the schema path in as an environment variable from the
 // Makefile, since it needs to be relative to this file, not the Makefile.
-//go:generate pggen gen go --schema-glob "../../../webserver/db_migration/schema.sql" --query-glob ./queries/*.sql
+//go:generate pggen gen go --schema-glob "../../../database/schema.sql" --query-glob ./queries/*.sql
 
 import (
 	"math/bits"

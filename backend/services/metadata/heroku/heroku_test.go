@@ -10,7 +10,7 @@ import (
 )
 
 func TestGetAppName(t *testing.T) {
-	var webserverTests = []struct {
+	var herokuAppTests = []struct {
 		environmentVar string
 		want           string
 	}{
@@ -22,7 +22,7 @@ func TestGetAppName(t *testing.T) {
 		{"UNKNOWN", "whist-dev-scaling-service"},
 	}
 
-	for _, tt := range webserverTests {
+	for _, tt := range herokuAppTests {
 		testname := utils.Sprintf("%s,%v", tt.environmentVar, tt.want)
 		t.Run(testname, func(t *testing.T) {
 

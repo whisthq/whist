@@ -22,7 +22,7 @@ func init() {
 }
 
 // An AppEnvironment represents either localdev or localdevwithdb (i.e. an engineer's
-// development instance), dev (i.e. talking to the dev webserver), staging, or prod
+// development instance), dev (i.e. talking to the dev scaling service), staging, or prod
 type AppEnvironment string
 
 // Constants for the various AppEnvironments. DO NOT CHANGE THESE without

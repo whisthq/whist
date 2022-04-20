@@ -4,7 +4,7 @@ The directory contains the source code for the Whist Backend Services, which are
 
 - The **Whist Host-Service**, which is responsible for orchestrating mandelboxes on Whist EC2 instances, which are referred to as **hosts** throughout the codebase. The host-service is responsible for making Docker calls to start and stop mandelboxes, for enabling multiple mandelboxes to run concurrently on the same host by dynamically assigning TTYs, and for passing startup data to the mandelboxes from the users' devices, like DPI, time zone, etc.
 
-- The **Whist Scaling-Service**, which is responsible for responding to load and deploy events to scale instances up and down. The scaling-service will also eventually supersede the [webserver](../webserver/README.md) and handle assigning users to mandelboxes, though that is currently a work-in-progress.
+- The **Whist Scaling-Service**, which is responsible for responding to load and deploy events to scale instances up and down. The scaling-service also handles assigning users to mandelboxes, and validating payments.
 
 ## Development
 

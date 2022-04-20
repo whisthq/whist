@@ -12,7 +12,6 @@
 /backend/auth0/                     @owenniles @rpadaki @philippemnoel
 /backend/infrastructure/            @philippemnoel @djsavvy @mauaraujo
 /backend/services/                  @djsavvy @rpadaki @mauaraujo
-/backend/webserver/                 @djsavvy @owenniles @mauaraujo
 /frontend/client-applications/      @mingy98 @rpadaki @mauaraujo
 /frontend/core-ts/                  @mingy98 @owenniles @sardination
 /frontend/website/                  @mingy98 @rpadaki @philippemnoel

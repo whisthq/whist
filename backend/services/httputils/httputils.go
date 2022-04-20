@@ -152,7 +152,7 @@ func VerifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 	return nil
 }
 
-// Creates a TLS certificate/private key pair for secure communication with the Whist webserver
+// Creates a TLS certificate/private key pair for secure communication with the Whist frontend
 func InitializeTLS(privatekeyPath string, certPath string) error {
 	// Create a self-signed passwordless certificate
 	// https://unix.stackexchange.com/questions/104171/create-ssl-certificate-non-interactively

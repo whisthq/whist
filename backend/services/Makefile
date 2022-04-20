@@ -49,7 +49,7 @@ endif
 
 queries_sql_files := $(wildcard ./host-service/dbdriver/queries/*.sql)
 queries_sql_go_files := $(patsubst %.sql,%.sql.go,$(queries_sql_files))
-$(queries_sql_go_files): $(queries_sql_files) ../webserver/db_migration/schema.sql go.mod
+$(queries_sql_go_files): $(queries_sql_files) ../database/schema.sql go.mod
 	$(GOCMD) install github.com/jschaf/pggen/cmd/pggen@latest
 	touch $(CURDIR)/host-service/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/host-service/dbdriver/queries -type f -name "*.sql.go" | xargs rm

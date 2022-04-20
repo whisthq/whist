@@ -8,8 +8,8 @@ import { AsyncReturnType } from "@app/@types/state"
 import { hostPut } from "@app/main/utils/api"
 import { HostServicePort } from "@app/constants/mandelbox"
 
-// This file directly interacts with data returned from the webserver, which
-// has keys labelled in Python's snake_case format. We want to be able to pass
+// This file directly interacts with data returned from the scaling service, which
+// has keys labelled in snake_case format. We want to be able to pass
 // these objects through to functions that validate and parse them. We also
 // want to make use of argument destruction in functions. We also don't want
 // to obfuscate the server's data format by converting everything to camelCase.
@@ -32,14 +32,14 @@ export const hostSpinUp = async ({
   mandelbox_id: string
   json_data: string
   importedData:
-    | {
-        cookies?: string
-        bookmarks?: string
-        extensions?: string
-        preferences?: string
-        localStorage?: string
-      }
-    | undefined
+  | {
+    cookies?: string
+    bookmarks?: string
+    extensions?: string
+    preferences?: string
+    localStorage?: string
+  }
+  | undefined
 }) =>
   hostPut(`https://${ip}:${HostServicePort}`)({
     endpoint: "/json_transport",
