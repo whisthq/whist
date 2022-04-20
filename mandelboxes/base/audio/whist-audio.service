@@ -1,4 +1,4 @@
-# Activates PulseAudio with correct settings for Whist, runs as root
+# A service that waits for audio to be active
 [Unit]
 Description=Whist Audio
 After=whist-display.service network.target
@@ -7,8 +7,6 @@ Requires=whist-display.service
 [Service]
 User=root
 Type=exec
-Environment=DISPLAY=:10
-Environment=XAUTHORITY=/home/whist/.Xauthority
 ExecStart=/usr/share/whist/run-pulseaudio.sh
 StandardOutput=file:/var/log/whist/audio-out.log
 StandardError=file:/var/log/whist/audio-err.log
