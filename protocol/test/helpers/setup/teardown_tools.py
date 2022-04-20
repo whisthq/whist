@@ -3,14 +3,18 @@
 import os, sys, json
 import pexpect
 
-from helpers.whist_server_tools import shutdown_and_wait_server_exit
+from helpers.whist_server_tools import (
+    shutdown_and_wait_server_exit,
+)
 
 from helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
 )
 
-from helpers.common.timestamps_and_exit_tools import exit_with_error
+from helpers.common.timestamps_and_exit_tools import (
+    exit_with_error,
+)
 
 from helpers.aws.boto3_tools import (
     terminate_or_stop_aws_instance,

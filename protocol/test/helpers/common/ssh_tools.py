@@ -3,7 +3,9 @@
 import os, sys, time
 import pexpect
 
-from helpers.common.timestamps_and_exit_tools import exit_with_error
+from helpers.common.timestamps_and_exit_tools import (
+    exit_with_error,
+)
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -134,6 +136,10 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
         pexpect_process.expect(pexpect_prompt)
 
     return pexpect_output
+
+
+def expression_in_pexpect_output(expression, pexpect_output):
+    return any(expression in item for item in pexpect_output if isinstance(item, str))
 
 
 def reboot_instance(

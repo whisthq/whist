@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-import os, sys, json, time
+import os, sys, json
 
-from helpers.setup.network_tools import restore_network_conditions
-from helpers.common.timestamps_and_exit_tools import exit_with_error
+from helpers.setup.network_tools import (
+    restore_network_conditions,
+)
+
 from helpers.common.ssh_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
@@ -99,27 +101,7 @@ def client_setup_process(args_dict):
             print("Skipping git clone whisthq/whist repository on client instance.")
 
         if skip_host_setup == "false":
-            # 1- Reboot instance for extra robustness
-            hs_process = reboot_instance(
-                hs_process,
-                client_cmd,
-                aws_timeout_seconds,
-                client_log,
-                pexpect_prompt_client,
-                ssh_connection_retries,
-                running_in_ci,
-            )
-
-            # 2- Run host-setup
-            hs_process = run_host_setup(
-                hs_process,
-                pexpect_prompt_client,
-                client_cmd,
-                ssh_connection_retries,
-                aws_timeout_seconds,
-                client_log,
-                running_in_ci,
-            )
+            run_host_setup(hs_process, pexpect_prompt_client, running_in_ci)
         else:
             print("Skipping host-setup on server instance.")
 

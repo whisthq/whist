@@ -4,11 +4,10 @@ import os, sys
 
 from helpers.common.ssh_tools import (
     attempt_ssh_connection,
+    expression_in_pexpect_output,
     wait_until_cmd_done,
     reboot_instance,
-    wait_for_apt_locks,
 )
-from helpers.common.timestamps_and_exit_tools import exit_with_error
 
 from helpers.setup.instance_setup_tools import (
     install_and_configure_aws,
@@ -88,25 +87,9 @@ def server_setup_process(args_dict):
         print("Skipping git clone whisthq/whist repository on server instance.")
 
     if skip_host_setup == "false":
-        # # 1- Reboot instance for extra robustness
-        # hs_process = reboot_instance(
-        #     hs_process,
-        #     server_cmd,
-        #     aws_timeout_seconds,
-        #     server_log,
-        #     pexpect_prompt_server,
-        #     ssh_connection_retries,
-        #     running_in_ci,
-        # )
-        wait_for_apt_locks(hs_process, pexpect_prompt_server, running_in_ci)
-        # 2- run host-setup
-        hs_process = run_host_setup(
+        run_host_setup(
             hs_process,
             pexpect_prompt_server,
-            server_cmd,
-            ssh_connection_retries,
-            aws_timeout_seconds,
-            server_log,
             running_in_ci,
         )
     else:
@@ -236,9 +219,7 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
     server_mandelbox_output = wait_until_cmd_done(
         pexpect_process, ":/#", running_in_ci=True, return_output=True
     )
-    server_has_exited = any(
-        exit_confirm_exp in item for item in server_mandelbox_output if isinstance(item, str)
-    )
+    server_has_exited = expression_in_pexpect_output(exit_confirm_exp, server_mandelbox_output)
 
     # Kill tail process
     pexpect_process.sendcontrol("c")
