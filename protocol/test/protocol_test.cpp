@@ -132,6 +132,13 @@ TEST_F(ProtocolTest, InitSDL) {
     EXPECT_TRUE(new_window != NULL);
 
     check_stdout_line(::testing::HasSubstr("Using renderer: "));
+
+#ifdef _WIN32
+    check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
+#elif defined(__linux__)
+    check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
+#endif
+
 #ifdef _WIN32
     check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
 #elif defined(__linux__)
