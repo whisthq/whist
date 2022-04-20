@@ -374,7 +374,7 @@ def test_write_leveldb_files(data_json, base_path, expected_files):
     base_path = os.path.expanduser(base_path)
     os.makedirs(base_path, exist_ok=True)
 
-    write_leveldb_data_to_files(data_json, base_path)
+    write_leveldb_data_to_files(base_path, data_json)
 
     # Check that the correct directory exists
     assert os.path.isdir(base_path)
