@@ -152,3 +152,8 @@ void whist_frontend_set_titlebar_color(WhistFrontend* frontend, const WhistRGBCo
     FATAL_ASSERT(frontend != NULL);
     frontend->call->set_titlebar_color(frontend, color);
 }
+
+void whist_frontend_declare_user_activity(WhistFrontend* frontend) {
+    FATAL_ASSERT(frontend != NULL);
+    frontend->call->declare_user_activity(frontend);
+}

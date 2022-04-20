@@ -39,7 +39,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/sync_packets.c
         ../client/renderer.c
         ../client/frontend/frontend.c
+        ../client/frontend/sdl/audio.c
+        ../client/frontend/sdl/events.c
+        ../client/frontend/sdl/lifecycle.c
         ../client/frontend/sdl/sdl.c
+        ../client/frontend/sdl/video.c
+        ../client/frontend/sdl/window.c
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp
@@ -90,7 +95,12 @@ else()
         ../client/sync_packets.c
         ../client/renderer.c
         ../client/frontend/frontend.c
-        ../client/frontend/sdl.c
+        ../client/frontend/sdl/audio.c
+        ../client/frontend/sdl/events.c
+        ../client/frontend/sdl/lifecycle.c
+        ../client/frontend/sdl/sdl.c
+        ../client/frontend/sdl/video.c
+        ../client/frontend/sdl/window.c
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp

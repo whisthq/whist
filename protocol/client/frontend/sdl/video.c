@@ -119,8 +119,9 @@ void sdl_paint_avframe(WhistFrontend* frontend, AVFrame* frame, int output_width
 void sdl_render(WhistFrontend* frontend) {
     SDLFrontendContext* context = frontend->context;
     SDL_RenderPresent(context->renderer);
-    sdl_native_declare_user_activity();
 }
+
+void sdl_declare_user_activity(WhistFrontend* frontend) { sdl_native_declare_user_activity(); }
 
 void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
     SDLFrontendContext* context = frontend->context;

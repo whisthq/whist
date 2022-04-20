@@ -346,6 +346,9 @@ int render_video(VideoContext* video_context) {
         // Mark the framebuffer out to render
         sdl_render_framebuffer();
 
+        // Declare user activity to suppress screensaver
+        whist_frontend_declare_user_activity(video_context->frontend);
+
         if (client_input_timestamp != 0) {
             // Calculate E2E latency
             // Get the difference in time from the moment client pressed user-input to now.

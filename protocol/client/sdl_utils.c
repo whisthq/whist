@@ -101,7 +101,7 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
         LOG_FATAL("Failed to create frontend");
     }
 
-    if (whist_frontend_init(frontend, target_output_height, target_output_height, title,
+    if (whist_frontend_init(frontend, target_output_width, target_output_height, title,
                             &background_color) != WHIST_SUCCESS) {
         whist_frontend_destroy(frontend);
         LOG_FATAL("Failed to initialize frontend");

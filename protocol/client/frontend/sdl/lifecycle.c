@@ -205,6 +205,7 @@ void sdl_destroy(WhistFrontend* frontend) {
     }
 
     if (context->window != NULL) {
+        LOG_INFO("Destroying window");
         SDL_DestroyWindow(context->window);
         context->window = NULL;
     }

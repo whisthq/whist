@@ -94,6 +94,8 @@ void sdl_native_init_window_options(SDL_Window *window) {
     [native_window setTitleVisibility:NSWindowTitleHidden];
 }
 
+// These can be global static, not per-frontend, since screensaver is global.
+// There may be race conditions with mutex creation, though.
 static IOPMAssertionID power_assertion_id = kIOPMNullAssertionID;
 static WhistMutex last_user_activity_timer_mutex;
 static WhistTimer last_user_activity_timer;
@@ -171,7 +173,7 @@ typedef struct FileDragState {
 
 static void push_drag_end_event(WhistFrontend *frontend) {
     SDLFrontendContext *context = frontend->context;
-    FileDragState *state = context->native_data;
+    FileDragState *state = context->file_drag_data;
     state->active = false;
 
     SDL_Event event = {0};
@@ -185,7 +187,7 @@ static void push_drag_end_event(WhistFrontend *frontend) {
 
 static void push_drag_event(WhistFrontend *frontend) {
     SDLFrontendContext *context = frontend->context;
-    FileDragState *state = context->native_data;
+    FileDragState *state = context->file_drag_data;
 
     int window_x, window_y, mouse_x, mouse_y;
     int window_w, window_h;
@@ -226,8 +228,8 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
         is finished dragging the file in question.
     */
     SDLFrontendContext *context = frontend->context;
-    context->native_data = safe_malloc(sizeof(FileDragState));
-    FileDragState *state = context->native_data;
+    context->file_drag_data = safe_malloc(sizeof(FileDragState));
+    FileDragState *state = context->file_drag_data;
     memset(state, 0, sizeof(FileDragState));
 
     // Initialize change count since global drag board change count starts incrementing at system
@@ -278,7 +280,7 @@ void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
         to the removeMonitor call
     */
     SDLFrontendContext *context = frontend->context;
-    FileDragState *state = context->native_data;
+    FileDragState *state = context->file_drag_data;
 
     if (state == NULL) {
         return;
@@ -296,6 +298,6 @@ void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
         [NSEvent removeMonitor:state->swipe_listener];
     }
 
-    context->native_data = NULL;
+    context->file_drag_data = NULL;
     free(state);
 }

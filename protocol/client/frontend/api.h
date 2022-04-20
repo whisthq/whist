@@ -30,6 +30,7 @@
     GENERATOR(void, paint_avframe, WhistFrontend* frontend, AVFrame* frame, int output_width,      \
               int output_height)                                                                   \
     GENERATOR(void, render, WhistFrontend* frontend)                                               \
-    GENERATOR(void, set_titlebar_color, WhistFrontend* frontend, const WhistRGBColor* color)
+    GENERATOR(void, set_titlebar_color, WhistFrontend* frontend, const WhistRGBColor* color)       \
+    GENERATOR(void, declare_user_activity, WhistFrontend* frontend)
 
 #endif  // WHIST_CLIENT_FRONTEND_API_H
