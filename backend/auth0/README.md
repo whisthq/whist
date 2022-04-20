@@ -46,7 +46,7 @@ The `tenant.yaml` contains a list of clients -- these may represent either user-
 Here's an example client configuration:
 
 ```yaml
-- name: Webserver
+- name: Example Client
   app_type: non_interactive
   cross_origin_auth: false
   custom_login_page_on: true

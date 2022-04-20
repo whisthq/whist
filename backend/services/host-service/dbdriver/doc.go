@@ -27,7 +27,7 @@
 // since it would help us ensure that changes to the schema also get reflected
 // in the host-service code. However, the specific implementation proposed by
 // `sqlboiler` isn't well-suited to our deployment since it would require us to
-// spin up a local webserver deployment every time we wanted to build the host
+// spin up a local server every time we wanted to build the host
 // service. A solution that worked directly with `schema.sql` (which
 // `sqlboiler` does not, as far as I can tell) would be ideal. Using
 // `sqlboiler` would also require not to use views, which might be a

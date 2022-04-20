@@ -259,7 +259,7 @@ func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.Ser
 	return nil
 }
 
-// StartHTTPServer returns a channel of events from the webserver as its first return value
+// StartHTTPServer returns a channel of events from the HTTP server as its first return value
 func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (<-chan httputils.ServerRequest, error) {
 	logger.Info("Setting up HTTP server.")
 
