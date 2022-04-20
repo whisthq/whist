@@ -96,7 +96,7 @@ class TimeStamps:
 
         self.events.append((event_name, timestamp))
         event_index = len(self.events)
-        time_elapsed = datetime.timedelta(seconds=self.get_time_elapsed(event_index - 1))
+        time_elapsed = datetime.timedelta(seconds=self.__get_time_elapsed(event_index - 1))
         self.most_time_consuming_event = max(self.most_time_consuming_event, time_elapsed)
         print(f"{event_name} took {str(time_elapsed)}")
 
@@ -114,7 +114,7 @@ class TimeStamps:
         print("**** E2E time breakdown ****")
         for i, event in enumerate(self.events):
             event_name = event[0]
-            time_elapsed = datetime.timedelta(seconds=self.get_time_elapsed(i))
+            time_elapsed = datetime.timedelta(seconds=self.__get_time_elapsed(i))
             # Add padding for nicer formatting
             padding_len = self.max_event_name_len - len(event_name)
             padding = " " * padding_len if padding_len > 0 else ""
