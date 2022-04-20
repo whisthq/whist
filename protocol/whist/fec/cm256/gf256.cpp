@@ -28,6 +28,9 @@
 */
 
 #include "gf256.h"
+#include "avx2/gf256_avx2.h"
+#include "ssse3/gf256_ssse3.h"
+#include "gf256_cpuinfo.h"
 
 #ifdef LINUX_ARM
 #include <unistd.h>
@@ -51,7 +54,7 @@
 // Workaround for ARMv7 that doesn't provide vqtbl1_*
 // This comes from linux-raid (https://www.spinics.net/lists/raid/msg58403.html)
 //
-#ifdef GF256_TRY_NEON
+#if defined(GF256_TARGET_MOBILE)
 #if __ARM_ARCH <= 7 && !defined(__aarch64__)
 static GF256_FORCE_INLINE uint8x16_t vqtbl1q_u8(uint8x16_t a, uint8x16_t b)
 {
@@ -64,15 +67,6 @@ static GF256_FORCE_INLINE uint8x16_t vqtbl1q_u8(uint8x16_t a, uint8x16_t b)
                        vtbl2_u8(__a.pair, vget_high_u8(b)));
 }
 #endif
-#endif
-
-// WHIST_CHANGE: ADD
-// ensure extra safety to let compiler not optimize some codes to unwanted instructions
-// supported by gcc and clang
-#if !defined(GF256_TARGET_MOBILE) && !defined (_MSC_VER)
-#define FMV_MODIFIER __attribute__((target("no-avx2"),target("no-ssse3")))
-#else
-#define FMV_MODIFIER
 #endif
 
 //------------------------------------------------------------------------------
@@ -208,7 +202,7 @@ static bool gf256_self_test()
 #include <cpu-features.h>
 #endif
 
-#if defined(GF256_TRY_NEON)
+#if defined(GF256_TARGET_MOBILE)
 # if defined(IOS) && (defined(__ARM_NEON) || defined(__ARM_NEON__))
 // Requires iPhone 5S or newer
 static const bool CpuHasNeon = true;
@@ -231,15 +225,18 @@ static bool CpuHasNeon64 = false;   // And we don't have ASIMD
     #pragma warning(disable: 4752) // found Intel(R) Advanced Vector Extensions; consider using /arch:AVX
 #endif
 
-#ifdef GF256_TRY_AVX2
 static bool CpuHasAVX2 = false;
-#endif
 static bool CpuHasSSSE3 = false;
 
 #define CPUID_EBX_AVX2    0x00000020
 #define CPUID_ECX_SSSE3   0x00000200
 
-FMV_MODIFIER static void _cpuid(unsigned int cpu_info[4U], const unsigned int cpu_info_type)
+// WHIST_CHANGE: ADD
+// currently only for check purpose
+#define CPUID_EDX_SSE2    0x04000000
+static bool CpuHasSSE2 = false;
+
+static void _cpuid(unsigned int cpu_info[4U], const unsigned int cpu_info_type)
 {
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_AMD64) || defined(_M_IX86))
     __cpuid((int *) cpu_info, cpu_info_type);
@@ -305,8 +302,6 @@ static void checkLinuxARMNeonCapabilities( bool& cpuHasNeon )
 
 static void gf256_architecture_init()
 {
-#if defined(GF256_TRY_NEON)
-
     // Check for NEON support on Android platform
 #if defined(HAVE_ANDROID_GETCPUFEATURES)
     AndroidCpuFamily family = android_getCpuFamily();
@@ -328,18 +323,16 @@ static void gf256_architecture_init()
     checkLinuxARMNeonCapabilities(CpuHasNeon);
 #endif
 
-#endif //GF256_TRY_NEON
-
 #if !defined(GF256_TARGET_MOBILE)
     unsigned int cpu_info[4];
 
     _cpuid(cpu_info, 1);
     CpuHasSSSE3 = ((cpu_info[2] & CPUID_ECX_SSSE3) != 0);
+    // WHIST_CHANGE: ADD
+    CpuHasSSE2 = ((cpu_info[3] & CPUID_EDX_SSE2) != 0);
 
-#if defined(GF256_TRY_AVX2)
     _cpuid(cpu_info, 7);
     CpuHasAVX2 = ((cpu_info[1] & CPUID_EBX_AVX2) != 0);
-#endif // GF256_TRY_AVX2
 
     // When AVX2 and SSSE3 are unavailable, Siamese takes 4x longer to decode
     // and 2.6x longer to encode.  Encoding requires a lot more simple XOR ops
@@ -580,26 +573,22 @@ static void gf256_mul_mem_init()
             hi[x] = gf256_mul(x << 4, static_cast<uint8_t>( y ));
         }
 
-#if defined(GF256_TRY_NEON)
+#if defined(GF256_TARGET_MOBILE)
         if (CpuHasNeon)
         {
             GF256Ctx.MM128.TABLE_LO_Y[y] = vld1q_u8(lo);
             GF256Ctx.MM128.TABLE_HI_Y[y] = vld1q_u8(hi);
         }
-#elif !defined(GF256_TARGET_MOBILE)
+#else
         const GF256_M128 table_lo = _mm_loadu_si128((GF256_M128*)lo);
         const GF256_M128 table_hi = _mm_loadu_si128((GF256_M128*)hi);
         _mm_storeu_si128(GF256Ctx.MM128.TABLE_LO_Y + y, table_lo);
         _mm_storeu_si128(GF256Ctx.MM128.TABLE_HI_Y + y, table_hi);
-# ifdef GF256_TRY_AVX2
+
         if (CpuHasAVX2)
         {
-            const GF256_M256 table_lo2 = _mm256_broadcastsi128_si256(table_lo);
-            const GF256_M256 table_hi2 = _mm256_broadcastsi128_si256(table_hi);
-            _mm256_storeu_si256(GF256Ctx.MM256.TABLE_LO_Y + y, table_lo2);
-            _mm256_storeu_si256(GF256Ctx.MM256.TABLE_HI_Y + y, table_hi2);
+            gf256_mul_mem_init_inner_avx2(table_lo,table_hi,y);
         }
-# endif // GF256_TRY_AVX2
 #endif // GF256_TARGET_MOBILE
     }
 }
@@ -666,7 +655,6 @@ extern "C" void gf256_add_mem(void * GF256_RESTRICT vx,
     const GF256_M128 * GF256_RESTRICT y16 = reinterpret_cast<const GF256_M128 *>(vy);
 
 #if defined(GF256_TARGET_MOBILE)
-# if defined(GF256_TRY_NEON)
     // Handle multiples of 64 bytes
     if (CpuHasNeon)
     {
@@ -701,7 +689,6 @@ extern "C" void gf256_add_mem(void * GF256_RESTRICT vx,
         }
     }
     else
-# endif // GF256_TRY_NEON
     {
         uint64_t * GF256_RESTRICT x8 = reinterpret_cast<uint64_t *>(x16);
         const uint64_t * GF256_RESTRICT y8 = reinterpret_cast<const uint64_t *>(y16);
@@ -716,52 +703,11 @@ extern "C" void gf256_add_mem(void * GF256_RESTRICT vx,
         bytes -= (count * 8);
     }
 #else // GF256_TARGET_MOBILE
-# if defined(GF256_TRY_AVX2)
     if (CpuHasAVX2)
     {
-        GF256_M256 * GF256_RESTRICT x32 = reinterpret_cast<GF256_M256 *>(x16);
-        const GF256_M256 * GF256_RESTRICT y32 = reinterpret_cast<const GF256_M256 *>(y16);
-
-        while (bytes >= 128)
-        {
-            GF256_M256 x0 = _mm256_loadu_si256(x32);
-            GF256_M256 y0 = _mm256_loadu_si256(y32);
-            x0 = _mm256_xor_si256(x0, y0);
-            GF256_M256 x1 = _mm256_loadu_si256(x32 + 1);
-            GF256_M256 y1 = _mm256_loadu_si256(y32 + 1);
-            x1 = _mm256_xor_si256(x1, y1);
-            GF256_M256 x2 = _mm256_loadu_si256(x32 + 2);
-            GF256_M256 y2 = _mm256_loadu_si256(y32 + 2);
-            x2 = _mm256_xor_si256(x2, y2);
-            GF256_M256 x3 = _mm256_loadu_si256(x32 + 3);
-            GF256_M256 y3 = _mm256_loadu_si256(y32 + 3);
-            x3 = _mm256_xor_si256(x3, y3);
-
-            _mm256_storeu_si256(x32, x0);
-            _mm256_storeu_si256(x32 + 1, x1);
-            _mm256_storeu_si256(x32 + 2, x2);
-            _mm256_storeu_si256(x32 + 3, x3);
-
-            bytes -= 128, x32 += 4, y32 += 4;
-        }
-
-        // Handle multiples of 32 bytes
-        while (bytes >= 32)
-        {
-            // x[i] = x[i] xor y[i]
-            _mm256_storeu_si256(x32,
-                _mm256_xor_si256(
-                    _mm256_loadu_si256(x32),
-                    _mm256_loadu_si256(y32)));
-
-            bytes -= 32, ++x32, ++y32;
-        }
-
-        x16 = reinterpret_cast<GF256_M128 *>(x32);
-        y16 = reinterpret_cast<const GF256_M128 *>(y32);
+        gf256_add_mem_inner_avx2(x16,y16,bytes);
     }
     else
-# endif // GF256_TRY_AVX2
     {
         while (bytes >= 64)
         {
@@ -843,7 +789,6 @@ extern "C" void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_REST
     const GF256_M128 * GF256_RESTRICT y16 = reinterpret_cast<const GF256_M128*>(vy);
 
 #if defined(GF256_TARGET_MOBILE)
-# if defined(GF256_TRY_NEON)
     // Handle multiples of 64 bytes
     if (CpuHasNeon)
     {
@@ -862,7 +807,6 @@ extern "C" void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_REST
         }
     }
     else
-# endif // GF256_TRY_NEON
     {
         uint64_t * GF256_RESTRICT z8 = reinterpret_cast<uint64_t *>(z16);
         const uint64_t * GF256_RESTRICT x8 = reinterpret_cast<const uint64_t *>(x16);
@@ -879,30 +823,10 @@ extern "C" void gf256_add2_mem(void * GF256_RESTRICT vz, const void * GF256_REST
         bytes -= (count * 8);
     }
 #else // GF256_TARGET_MOBILE
-# if defined(GF256_TRY_AVX2)
     if (CpuHasAVX2)
     {
-        GF256_M256 * GF256_RESTRICT z32 = reinterpret_cast<GF256_M256 *>(z16);
-        const GF256_M256 * GF256_RESTRICT x32 = reinterpret_cast<const GF256_M256 *>(x16);
-        const GF256_M256 * GF256_RESTRICT y32 = reinterpret_cast<const GF256_M256 *>(y16);
-
-        const unsigned count = bytes / 32;
-        for (unsigned i = 0; i < count; ++i)
-        {
-            _mm256_storeu_si256(z32 + i,
-                _mm256_xor_si256(
-                    _mm256_loadu_si256(z32 + i),
-                    _mm256_xor_si256(
-                        _mm256_loadu_si256(x32 + i),
-                        _mm256_loadu_si256(y32 + i))));
-        }
-
-        bytes -= count * 32;
-        z16 = reinterpret_cast<GF256_M128 *>(z32 + count);
-        x16 = reinterpret_cast<const GF256_M128 *>(x32 + count);
-        y16 = reinterpret_cast<const GF256_M128 *>(y32 + count);
+        gf256_add2_mem_inner_avx2(z16,x16,y16,bytes);
     }
-# endif // GF256_TRY_AVX2
 
     // Handle multiples of 16 bytes
     while (bytes >= 16)
@@ -963,7 +887,6 @@ extern "C" void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RE
     const GF256_M128 * GF256_RESTRICT y16 = reinterpret_cast<const GF256_M128*>(vy);
 
 #if defined(GF256_TARGET_MOBILE)
-# if defined(GF256_TRY_NEON)
     // Handle multiples of 64 bytes
     if (CpuHasNeon)
     {
@@ -999,7 +922,6 @@ extern "C" void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RE
         }
     }
     else
-# endif // GF256_TRY_NEON
     {
         uint64_t * GF256_RESTRICT z8 = reinterpret_cast<uint64_t *>(z16);
         const uint64_t * GF256_RESTRICT x8 = reinterpret_cast<const uint64_t *>(x16);
@@ -1016,29 +938,11 @@ extern "C" void gf256_addset_mem(void * GF256_RESTRICT vz, const void * GF256_RE
         bytes -= (count * 8);
     }
 #else // GF256_TARGET_MOBILE
-# if defined(GF256_TRY_AVX2)
     if (CpuHasAVX2)
     {
-        GF256_M256 * GF256_RESTRICT z32 = reinterpret_cast<GF256_M256 *>(z16);
-        const GF256_M256 * GF256_RESTRICT x32 = reinterpret_cast<const GF256_M256 *>(x16);
-        const GF256_M256 * GF256_RESTRICT y32 = reinterpret_cast<const GF256_M256 *>(y16);
-
-        const unsigned count = bytes / 32;
-        for (unsigned i = 0; i < count; ++i)
-        {
-            _mm256_storeu_si256(z32 + i,
-                _mm256_xor_si256(
-                    _mm256_loadu_si256(x32 + i),
-                    _mm256_loadu_si256(y32 + i)));
-        }
-
-        bytes -= count * 32;
-        z16 = reinterpret_cast<GF256_M128 *>(z32 + count);
-        x16 = reinterpret_cast<const GF256_M128 *>(x32 + count);
-        y16 = reinterpret_cast<const GF256_M128 *>(y32 + count);
+        gf256_addset_mem_inner_avx2(z16,x16,y16,bytes);
     }
     else
-# endif // GF256_TRY_AVX2
     {
         // Handle multiples of 64 bytes
         while (bytes >= 64)
@@ -1126,7 +1030,6 @@ extern "C" void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTR
     const GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<const GF256_M128 *>(vx);
 
 #if defined(GF256_TARGET_MOBILE)
-#if defined(GF256_TRY_NEON)
     if (bytes >= 16 && CpuHasNeon)
     {
         // Partial product tables; see above
@@ -1151,63 +1054,14 @@ extern "C" void gf256_mul_mem(void * GF256_RESTRICT vz, const void * GF256_RESTR
             bytes -= 16, ++x16, ++z16;
         } while (bytes >= 16);
     }
-#endif
 #else
-# if defined(GF256_TRY_AVX2)
     if (bytes >= 32 && CpuHasAVX2)
     {
-        // Partial product tables; see above
-        const GF256_M256 table_lo_y = _mm256_loadu_si256(GF256Ctx.MM256.TABLE_LO_Y + y);
-        const GF256_M256 table_hi_y = _mm256_loadu_si256(GF256Ctx.MM256.TABLE_HI_Y + y);
-
-        // clr_mask = 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
-        const GF256_M256 clr_mask = _mm256_set1_epi8(0x0f);
-
-        GF256_M256 * GF256_RESTRICT z32 = reinterpret_cast<GF256_M256 *>(vz);
-        const GF256_M256 * GF256_RESTRICT x32 = reinterpret_cast<const GF256_M256 *>(vx);
-
-        // Handle multiples of 32 bytes
-        do
-        {
-            // See above comments for details
-            GF256_M256 x0 = _mm256_loadu_si256(x32);
-            GF256_M256 l0 = _mm256_and_si256(x0, clr_mask);
-            x0 = _mm256_srli_epi64(x0, 4);
-            GF256_M256 h0 = _mm256_and_si256(x0, clr_mask);
-            l0 = _mm256_shuffle_epi8(table_lo_y, l0);
-            h0 = _mm256_shuffle_epi8(table_hi_y, h0);
-            _mm256_storeu_si256(z32, _mm256_xor_si256(l0, h0));
-
-            bytes -= 32, ++x32, ++z32;
-        } while (bytes >= 32);
-
-        z16 = reinterpret_cast<GF256_M128 *>(z32);
-        x16 = reinterpret_cast<const GF256_M128 *>(x32);
+        gf256_mul_mem_inner_avx2(vz,vx,z16,x16,y,bytes);
     }
-# endif // GF256_TRY_AVX2
     if (bytes >= 16 && CpuHasSSSE3)
     {
-        // Partial product tables; see above
-        const GF256_M128 table_lo_y = _mm_loadu_si128(GF256Ctx.MM128.TABLE_LO_Y + y);
-        const GF256_M128 table_hi_y = _mm_loadu_si128(GF256Ctx.MM128.TABLE_HI_Y + y);
-
-        // clr_mask = 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
-        const GF256_M128 clr_mask = _mm_set1_epi8(0x0f);
-
-        // Handle multiples of 16 bytes
-        do
-        {
-            // See above comments for details
-            GF256_M128 x0 = _mm_loadu_si128(x16);
-            GF256_M128 l0 = _mm_and_si128(x0, clr_mask);
-            x0 = _mm_srli_epi64(x0, 4);
-            GF256_M128 h0 = _mm_and_si128(x0, clr_mask);
-            l0 = _mm_shuffle_epi8(table_lo_y, l0);
-            h0 = _mm_shuffle_epi8(table_hi_y, h0);
-            _mm_storeu_si128(z16, _mm_xor_si128(l0, h0));
-
-            bytes -= 16, ++x16, ++z16;
-        } while (bytes >= 16);
+        gf256_mul_mem_inner_ssse3(z16,x16,y,bytes);
     }
 #endif
 
@@ -1295,7 +1149,6 @@ extern "C" void gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y,
     const GF256_M128 * GF256_RESTRICT x16 = reinterpret_cast<const GF256_M128 *>(vx);
 
 #if defined(GF256_TARGET_MOBILE)
-#if defined(GF256_TRY_NEON)
     if (bytes >= 16 && CpuHasNeon)
     {
         // Partial product tables; see above
@@ -1323,126 +1176,14 @@ extern "C" void gf256_muladd_mem(void * GF256_RESTRICT vz, uint8_t y,
             bytes -= 16, ++x16, ++z16;
         } while (bytes >= 16);
     }
-#endif
 #else // GF256_TARGET_MOBILE
-# if defined(GF256_TRY_AVX2)
     if (bytes >= 32 && CpuHasAVX2)
     {
-        // Partial product tables; see above
-        const GF256_M256 table_lo_y = _mm256_loadu_si256(GF256Ctx.MM256.TABLE_LO_Y + y);
-        const GF256_M256 table_hi_y = _mm256_loadu_si256(GF256Ctx.MM256.TABLE_HI_Y + y);
-
-        // clr_mask = 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
-        const GF256_M256 clr_mask = _mm256_set1_epi8(0x0f);
-
-        GF256_M256 * GF256_RESTRICT z32 = reinterpret_cast<GF256_M256 *>(z16);
-        const GF256_M256 * GF256_RESTRICT x32 = reinterpret_cast<const GF256_M256 *>(x16);
-
-        // On my Reed Solomon codec, the encoder unit test runs in 640 usec without and 550 usec with the optimization (86% of the original time)
-        const unsigned count = bytes / 64;
-        for (unsigned i = 0; i < count; ++i)
-        {
-            // See above comments for details
-            GF256_M256 x0 = _mm256_loadu_si256(x32 + i * 2);
-            GF256_M256 l0 = _mm256_and_si256(x0, clr_mask);
-            x0 = _mm256_srli_epi64(x0, 4);
-            const GF256_M256 z0 = _mm256_loadu_si256(z32 + i * 2);
-            GF256_M256 h0 = _mm256_and_si256(x0, clr_mask);
-            l0 = _mm256_shuffle_epi8(table_lo_y, l0);
-            h0 = _mm256_shuffle_epi8(table_hi_y, h0);
-            const GF256_M256 p0 = _mm256_xor_si256(l0, h0);
-            _mm256_storeu_si256(z32 + i * 2, _mm256_xor_si256(p0, z0));
-
-            GF256_M256 x1 = _mm256_loadu_si256(x32 + i * 2 + 1);
-            GF256_M256 l1 = _mm256_and_si256(x1, clr_mask);
-            x1 = _mm256_srli_epi64(x1, 4);
-            const GF256_M256 z1 = _mm256_loadu_si256(z32 + i * 2 + 1);
-            GF256_M256 h1 = _mm256_and_si256(x1, clr_mask);
-            l1 = _mm256_shuffle_epi8(table_lo_y, l1);
-            h1 = _mm256_shuffle_epi8(table_hi_y, h1);
-            const GF256_M256 p1 = _mm256_xor_si256(l1, h1);
-            _mm256_storeu_si256(z32 + i * 2 + 1, _mm256_xor_si256(p1, z1));
-        }
-        bytes -= count * 64;
-        z32 += count * 2;
-        x32 += count * 2;
-
-        if (bytes >= 32)
-        {
-            GF256_M256 x0 = _mm256_loadu_si256(x32);
-            GF256_M256 l0 = _mm256_and_si256(x0, clr_mask);
-            x0 = _mm256_srli_epi64(x0, 4);
-            GF256_M256 h0 = _mm256_and_si256(x0, clr_mask);
-            l0 = _mm256_shuffle_epi8(table_lo_y, l0);
-            h0 = _mm256_shuffle_epi8(table_hi_y, h0);
-            const GF256_M256 p0 = _mm256_xor_si256(l0, h0);
-            const GF256_M256 z0 = _mm256_loadu_si256(z32);
-            _mm256_storeu_si256(z32, _mm256_xor_si256(p0, z0));
-
-            bytes -= 32;
-            z32++;
-            x32++;
-        }
-
-        z16 = reinterpret_cast<GF256_M128 *>(z32);
-        x16 = reinterpret_cast<const GF256_M128 *>(x32);
+        gf256_muladd_mem_inner_avx2(z16,x16,y,bytes);
     }
-# endif // GF256_TRY_AVX2
     if (bytes >= 16 && CpuHasSSSE3)
     {
-        // Partial product tables; see above
-        const GF256_M128 table_lo_y = _mm_loadu_si128(GF256Ctx.MM128.TABLE_LO_Y + y);
-        const GF256_M128 table_hi_y = _mm_loadu_si128(GF256Ctx.MM128.TABLE_HI_Y + y);
-
-        // clr_mask = 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
-        const GF256_M128 clr_mask = _mm_set1_epi8(0x0f);
-
-        // This unroll seems to provide about 7% speed boost when AVX2 is disabled
-        while (bytes >= 32)
-        {
-            bytes -= 32;
-
-            GF256_M128 x1 = _mm_loadu_si128(x16 + 1);
-            GF256_M128 l1 = _mm_and_si128(x1, clr_mask);
-            x1 = _mm_srli_epi64(x1, 4);
-            GF256_M128 h1 = _mm_and_si128(x1, clr_mask);
-            l1 = _mm_shuffle_epi8(table_lo_y, l1);
-            h1 = _mm_shuffle_epi8(table_hi_y, h1);
-            const GF256_M128 z1 = _mm_loadu_si128(z16 + 1);
-
-            GF256_M128 x0 = _mm_loadu_si128(x16);
-            GF256_M128 l0 = _mm_and_si128(x0, clr_mask);
-            x0 = _mm_srli_epi64(x0, 4);
-            GF256_M128 h0 = _mm_and_si128(x0, clr_mask);
-            l0 = _mm_shuffle_epi8(table_lo_y, l0);
-            h0 = _mm_shuffle_epi8(table_hi_y, h0);
-            const GF256_M128 z0 = _mm_loadu_si128(z16);
-
-            const GF256_M128 p1 = _mm_xor_si128(l1, h1);
-            _mm_storeu_si128(z16 + 1, _mm_xor_si128(p1, z1));
-
-            const GF256_M128 p0 = _mm_xor_si128(l0, h0);
-            _mm_storeu_si128(z16, _mm_xor_si128(p0, z0));
-
-            x16 += 2, z16 += 2;
-        }
-
-        // Handle multiples of 16 bytes
-        while (bytes >= 16)
-        {
-            // See above comments for details
-            GF256_M128 x0 = _mm_loadu_si128(x16);
-            GF256_M128 l0 = _mm_and_si128(x0, clr_mask);
-            x0 = _mm_srli_epi64(x0, 4);
-            GF256_M128 h0 = _mm_and_si128(x0, clr_mask);
-            l0 = _mm_shuffle_epi8(table_lo_y, l0);
-            h0 = _mm_shuffle_epi8(table_hi_y, h0);
-            const GF256_M128 p0 = _mm_xor_si128(l0, h0);
-            const GF256_M128 z0 = _mm_loadu_si128(z16);
-            _mm_storeu_si128(z16, _mm_xor_si128(p0, z0));
-
-            bytes -= 16, ++x16, ++z16;
-        }
+        gf256_muladd_mem_inner_ssse3(z16,x16,y,bytes);
     }
 #endif // GF256_TARGET_MOBILE
 
@@ -1582,16 +1323,61 @@ extern "C" void gf256_memswap(void * GF256_RESTRICT vx, void * GF256_RESTRICT vy
     }
 }
 
-// WHIST_CHANGE: ADD
-extern "C" FMV_MODIFIER bool gf256_has_hardware_support(void)
+/*
+============================
+Functions below are added by Whist.
+Copyright (c) 2021-2022 Whist Technologies, Inc.
+============================
+*/
+
+// get the cpu type and intruction support info
+CpuInfo gf256_get_cpuinfo(void)
 {
-#if defined(GF256_TRY_AVX2)
-    unsigned int cpu_info[4];
-    _cpuid(cpu_info, 7);
-    if ((cpu_info[1] & CPUID_EBX_AVX2) == 0)
-    {
-        return false;
+    CpuInfo info;
+    memset(&info,0,sizeof(info));
+    gf256_architecture_init();
+#if !defined(GF256_TARGET_MOBILE)
+    #if defined(_M_X64) || defined(_M_AMD64) || defined(_M_IX86) || defined(__x86_64__)
+        info.cpu_type =CPU_TYPE_X64;
+    #else
+        info.cpu_type =CPU_TYPE_X86;
+    #endif
+    info.has_avx2 = CpuHasAVX2;
+    info.has_ssse3 = CpuHasSSSE3;
+    info.has_sse2 = CpuHasSSE2;
+#elif defined(ANDROID) || defined(IOS) || defined(LINUX_ARM) || defined(MACOS_ARM)
+    #if defined(__aarch64__)
+        info.cpu_type = CPU_TYPE_ARM64;
+    #else
+        info.cpu_type = CPU_TYPE_ARM32;
+    #endif
+    info.has_neon = CpuHasNeon;
+#else
+    info.cpu_type =CPU_TYPE_OTHER;
+#endif
+    return info;
+}
+
+// convert CpuType to str
+const char * cpu_type_to_str(CpuType cpu_type) {
+    switch (cpu_type) {
+        case CPU_TYPE_X86: {
+            return "x86";
+        }
+        case CPU_TYPE_X64: {
+            return "x64";
+        }
+        case CPU_TYPE_ARM32: {
+            return "arm32";
+        }
+        case CPU_TYPE_ARM64: {
+            return "arm64";
+        }
+        case CPU_TYPE_OTHER: {
+            return "other";
+        }
+        default: {
+            return "invalid";
+        }
     }
-#endif // GF256_TRY_AVX2
-    return true;
 }

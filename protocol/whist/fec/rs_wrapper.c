@@ -2,7 +2,7 @@
 #include <SDL2/SDL_thread.h>
 
 #include <whist/core/whist.h>
-#include "cm256/gf256.h"
+#include "cm256/gf256_cpuinfo.h"
 #include "cm256/cm256.h"
 #include "rs_common.h"
 #include "lugi_rs_extra.h"
@@ -196,15 +196,54 @@ Public Function Implementations
 
 int init_rs_wrapper(void) {
     static int initialized = 0;
-    if (initialized == 0) {
-        lugi_rs_extra_init();
-        if (!gf256_has_hardware_support()) {
-            LOG_ERROR("Platform is x86/x64 but AVX2 is not supported!");
-            return WHIST_FEC_ERROR_HARDWARD_NOT_SUPPORT;
+    if (initialized == 1) return 0;
+
+    switch (rs_implementation_to_use) {
+        case CM256: {
+            CpuInfo cpu_info = gf256_get_cpuinfo();
+            LOG_INFO("gf256 detected CPU type is %s", cpu_type_to_str(cpu_info.cpu_type));
+            LOG_INFO("cpu_info: has_avx2=%d has_ssse3=%d has_sse2=%d has_neon=%d",
+                     cpu_info.has_avx2, cpu_info.has_ssse3, cpu_info.has_sse2, cpu_info.has_neon);
+
+            if (cpu_info.cpu_type == CPU_TYPE_X86 || cpu_info.cpu_type == CPU_TYPE_X64) {
+                // cpu without avx2 is not rare.
+                // if cpu doesn't support avx2, with ssse3 it's only 30% slow.
+                // so this is only a warning, and the lib will fallback to ssse3
+                if (!cpu_info.has_avx2) {
+                    LOG_WARNING("CPU type is x86/x64 but AVX2 is not supported!");
+                }
+                // we assume cpu without ssse3 is rare.
+                // And simply yeild a fatal here
+                // If this causes a problem for developing, consider make it a WARNING,
+                // then the lib will fallback to sse2, but it's much slower.
+                if (!cpu_info.has_ssse3) {
+                    LOG_FATAL("CPU type is x86/x64 but SSSE3 is not supported!");
+                }
+            } else if (cpu_info.cpu_type == CPU_TYPE_ARM32 || cpu_info.cpu_type == CPU_TYPE_ARM64) {
+                // the only arm platform we support is M1 and above
+                // they should all support neon.
+                // the lib has the ability of fallback to pure c for arm, but arm without
+                // neon is unexpected, so still yeild a fatal here.
+                if (!cpu_info.has_neon) {
+                    LOG_FATAL("CPU type is arm32/arm64 but neon is not supported!");
+                }
+            } else {
+                LOG_FATAL("unknown CPU type");
+            }
+
+            FATAL_ASSERT(cm256_init() == 0);
+            break;
         }
-        FATAL_ASSERT(cm256_init() == 0);
-        initialized = 1;
+        case LUGI_RS: {
+            lugi_rs_extra_init();
+            break;
+        }
+        default: {
+            LOG_FATAL("unknown RS implentation value %d\n", (int)rs_implementation_to_use);
+        }
     }
+
+    initialized = 1;
     return 0;
 }
 
