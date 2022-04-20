@@ -34,6 +34,12 @@ void sdl_native_declare_user_activity(void) {
     SDL_DisableScreenSaver();
 }
 
-void sdl_native_init_external_drag_handler(void) { LOG_INFO("Not implemented on X11"); }
+void sdl_native_init_external_drag_handler(WhistFrontend* frontend) {
+    UNUSED(frontend);
+    LOG_INFO("Not implemented on X11");
+}
 
-void sdl_native_destroy_external_drag_handler(void) { LOG_INFO("Not implemented on X11"); }
+void sdl_native_destroy_external_drag_handler(WhistFrontend* frontend) {
+    UNUSED(frontend);
+    LOG_INFO("Not implemented on X11");
+}
