@@ -51,23 +51,17 @@ navigator.geolocation.getCurrentPosition = (
     | undefined
     | { longitude: number; latitude: number }
 
-  console.log("First try", geoLocation)
-
   if (geoLocation === undefined) {
     const observer = new MutationObserver((_mutations, obs) => {
       geoLocation = getGeolocation()
 
       if (geoLocation !== undefined) {
-        console.log("got it", geoLocation)
         spoofLocation(geoLocation, successCallback)
         obs.disconnect()
       }
     })
 
-    console.log("Creating an observer")
-
     observer.observe(document, {
-      attributes: false,
       childList: true,
       subtree: true,
     })
