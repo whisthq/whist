@@ -157,9 +157,11 @@ const macRepeatToLinux = (repeat: number) =>
   Returns:
    repeat (int): The mapped repeat rate
 */
-  (1.0 - (repeat - MIN_KEY_REPEAT_MAC) / KEY_REPEAT_RANGE_MAC) *
-    KEY_REPEAT_RANGE_LINUX +
-  MIN_KEY_REPEAT_LINUX
+  Math.round(
+    (1.0 - (repeat - MIN_KEY_REPEAT_MAC) / KEY_REPEAT_RANGE_MAC) *
+      KEY_REPEAT_RANGE_LINUX +
+      MIN_KEY_REPEAT_LINUX
+  )
 
 const macInitialRepeatToLinux = (initialRepeat: number) =>
   /*
@@ -168,7 +170,7 @@ const macInitialRepeatToLinux = (initialRepeat: number) =>
   Returns:
     initialRepeat (int): The mapped initial repeat rate
 */
-  initialRepeat * INITIAL_KEY_REPEAT_MAC_TO_LINUX_CONVERSION_FACTOR
+  Math.round(initialRepeat * INITIAL_KEY_REPEAT_MAC_TO_LINUX_CONVERSION_FACTOR)
 
 const windowsRepeatToLinux = (repeat: number) =>
   /*
@@ -177,7 +179,7 @@ const windowsRepeatToLinux = (repeat: number) =>
   Returns:
    repeat (int): The mapped repeat rate
 */
-  Math.max(MIN_KEY_REPEAT_WINDOWS, repeat - 1)
+  Math.round(Math.max(MIN_KEY_REPEAT_WINDOWS, repeat - 1))
 
 const windowsInitialRepeatToLinux = (initialRepeat: number) =>
   Math.max(300 - 100 * initialRepeat, 0)
