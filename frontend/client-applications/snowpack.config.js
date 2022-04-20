@@ -46,10 +46,14 @@ const esbuildCommand = [
   "--external:knex",
   "--external:workerjs",
   "--external:@m-lab/ndt7",
+<<<<<<< HEAD
   "--external:ref-napi",
   "--external:ffi-napi",
   "--external:ref-struct-di",
   "--external:windows-registry-napi",
+=======
+  "--external:macos-location",
+>>>>>>> 1dc81da30 (wip)
 ]
 // We minify our output to make this less convenient for snooping users.
 if (process.env.NODE_ENV === "production") {
