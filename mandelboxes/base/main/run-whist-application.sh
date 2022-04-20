@@ -32,5 +32,9 @@ export INITIAL_URL=$INITIAL_URL
 export USER_AGENT=$USER_AGENT
 export KIOSK_MODE=$KIOSK_MODE
 
+# Explicitly export the fonts path, so that the
+# application can find the fonts. Per: https://askubuntu.com/questions/492033/fontconfig-error-cannot-load-default-config-file
+export FONTCONFIG_PATH=/etc/fonts
+
 # Start the application that this mandelbox runs
 exec whist-application
