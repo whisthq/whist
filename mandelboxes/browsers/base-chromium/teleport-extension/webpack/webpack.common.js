@@ -13,6 +13,7 @@ module.exports = {
     content: path.join(srcDir, "content", "index.ts"),
     userAgent: path.join(srcDir, "resources", "userAgent.ts"),
     notification: path.join(srcDir, "resources", "notification.ts"),
+    geolocation: path.join(srcDir, "resources", "geolocation.ts"),
   },
   output: {
     path: outDir,

@@ -37,7 +37,7 @@ import {
   waitForSignal,
 } from "@app/main/utils/observables"
 import { WhistTrigger } from "@app/constants/triggers"
-import { closestRegionHasChanged } from "@app/main/utils/region"
+import { closestRegionHasChanged } from "@app/main/utils/location"
 import { persistGet } from "@app/main/utils/persist"
 import { ONBOARDED } from "@app/constants/store"
 

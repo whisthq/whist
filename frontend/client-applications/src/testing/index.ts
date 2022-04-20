@@ -49,6 +49,7 @@ if (testingEnabled) {
   console.log("TESTING MODE: Selected schemas:", schemaArguments.join(", "))
 
   const available = new Set(Object.keys(schemas))
+
   schemaArguments.forEach((arg) => {
     if (!available.has(arg))
       console.log("TESTING MODE: Received unknown schema argument:", arg)

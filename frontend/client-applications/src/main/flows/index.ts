@@ -33,6 +33,7 @@ import {
   timezone,
   keyRepeat,
   initialKeyRepeat,
+  geolocation,
 } from "@app/main/utils/state"
 import {
   CACHED_CONFIG_TOKEN,
@@ -141,6 +142,7 @@ const launchTrigger = emitOnSignal(
     timezone,
     keyRepeat,
     initialKeyRepeat,
+    geolocation,
   }),
   merge(
     zip(

@@ -84,6 +84,14 @@ def main():
     else:
         send_message({"type": "NATIVE_HOST_UPDATE", "value": False})
 
+    longitude = os.getenv("LONGITUDE")
+    latitude = os.getenv("LATITUDE")
+
+    if (not longitude == "") and (not latitude == ""):
+        send_message(
+            {"type": "GEOLOCATION", "value": {"longitude": longitude, "latitude": latitude}}
+        )
+
     # Enter main message handling loop
     while True:
         message = read_message()

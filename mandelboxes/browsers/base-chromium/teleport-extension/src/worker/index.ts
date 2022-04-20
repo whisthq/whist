@@ -14,6 +14,7 @@ import {
   initCreateNewTabHandler,
   initActivateTabHandler,
 } from "./tabs"
+import { initLocationHandler } from "./geolocation"
 
 const nativeHostPort = initNativeHostIpc()
 
@@ -40,3 +41,6 @@ initCreateNewTabHandler(nativeHostPort)
 
 // Switches focus to a current tab if the client asks for it
 initActivateTabHandler(nativeHostPort)
+
+// Receive geolocation from extension host
+initLocationHandler(nativeHostPort)

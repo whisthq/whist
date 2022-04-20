@@ -17,7 +17,9 @@ import {
   WHIST_IS_DEFAULT_BROWSER,
   ONBOARDED,
   ALLOW_NON_US_SERVERS,
+  GEOLOCATION,
 } from "@app/constants/store"
+import { geolocation } from "@app/main/utils/state"
 
 // On a successful auth, store the auth credentials in Electron store
 // so the user is remembered
@@ -78,3 +80,7 @@ fromTrigger(WhistTrigger.allowNonUSServers).subscribe(
     persistSet(ALLOW_NON_US_SERVERS, body.allow)
   }
 )
+
+geolocation.subscribe((location: any) => {
+  if (location !== undefined) persistSet(GEOLOCATION, location)
+})

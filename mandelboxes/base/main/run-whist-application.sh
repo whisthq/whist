@@ -31,6 +31,8 @@ export TZ=$TZ # TZ variable automatically adjusts the timezone (https://www.gnu.
 export INITIAL_URL=$INITIAL_URL
 export USER_AGENT=$USER_AGENT
 export KIOSK_MODE=$KIOSK_MODE
+export LONGITUDE=$LONGITUDE
+export LATITUDE=$LATITUDE
 
 # Explicitly export the fonts path, so that the
 # application can find the fonts. Per: https://askubuntu.com/questions/492033/fontconfig-error-cannot-load-default-config-file

@@ -1,5 +1,5 @@
-import { Observable, of } from "rxjs"
-import { map, startWith } from "rxjs/operators"
+import { Observable, of, from } from "rxjs"
+import { map, startWith, timeout, catchError } from "rxjs/operators"
 import { nativeTheme } from "electron"
 
 import { fromTrigger } from "@app/main/utils/flows"
@@ -9,11 +9,13 @@ import {
   CACHED_REFRESH_TOKEN,
   CACHED_USER_EMAIL,
   CACHED_CONFIG_TOKEN,
+  GEOLOCATION,
 } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated } from "@app/main/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
 import { getInstalledBrowsers } from "@app/main/utils/importer"
+import { getGeolocation } from "./location"
 
 const sleep = of(process.argv.includes("--sleep"))
 
@@ -40,6 +42,13 @@ const configToken = fromTrigger(WhistTrigger.storeDidChange).pipe(
 const isNewConfigToken = of(persistGet(CACHED_CONFIG_TOKEN) ?? "").pipe(
   map((x) => x === "")
 )
+const geolocation = from(getGeolocation()).pipe(
+  timeout(1500),
+  catchError(() => {
+    console.warn("Geolocation timed out")
+    return of(persistGet(GEOLOCATION))
+  })
+)
 
 // JSON transport state e.g. system settings
 const darkMode = withAppActivated(of(nativeTheme.shouldUseDarkColors))
@@ -62,4 +71,5 @@ export {
   keyRepeat,
   initialKeyRepeat,
   browsers,
+  geolocation,
 }
