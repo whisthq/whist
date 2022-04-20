@@ -6,12 +6,12 @@ This repository contains the bulk of the code for the Whist Browser, previously 
 
 [![Whist: Build & Deploy](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml/badge.svg)](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
 
-|             Project | Code Coverage                                                                                                                                             |
-| ------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  `backend/services` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=backend-services)](https://codecov.io/gh/whisthq/whist)  |
-|  `frontend/core-ts` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=frontend-core-ts)](https://codecov.io/gh/whisthq/whist)  |
-|          `protocol` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=protocol)](https://codecov.io/gh/whisthq/whist)          |
-|             Overall | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/whisthq/whist)                        |
+|            Project | Code Coverage                                                                                                                                            |
+| -----------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `backend/services` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=backend-services)](https://codecov.io/gh/whisthq/whist) |
+| `frontend/core-ts` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=frontend-core-ts)](https://codecov.io/gh/whisthq/whist) |
+|         `protocol` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=protocol)](https://codecov.io/gh/whisthq/whist)         |
+|            Overall | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/whisthq/whist)                       |
 
 ## Table of Contents
 

@@ -12,7 +12,7 @@ The syntax for workflows is documented in the [GitHub Docs](https://docs.github.
 
 Since GitHub does not yet allow us to sort our workflow files into directories, we must name them in a clear and consistent manner. In particular, we name our workflows as `[subproject]-[verb]-[noun].yml`.
 
-For example, a workflow for the `backend/services` projects which checks the PR and runs tests is called  `backend-services-check-pr.yml`, whereas a meta workflow (one which operates on workflows and PRs themselves) which labels pull requests is named `meta-label-pull-requests.yml`. Workflows that belong to the whole repo -- for example, for pushing Sentry releases, are instead written `whist-deploy-sentry-releases.yml`.
+For example, a workflow for the `backend/services` projects which checks the PR and runs tests is called `backend-services-check-pr.yml`, whereas a meta workflow (one which operates on workflows and PRs themselves) which labels pull requests is named `meta-label-pull-requests.yml`. Workflows that belong to the whole repo -- for example, for pushing Sentry releases, are instead written `whist-deploy-sentry-releases.yml`.
 
 ### Headers
 
