@@ -19,6 +19,7 @@
     "downloads.shelf",
     "nativeMessaging",
     "scripting",
+    "storage",
     "tabs",
     "webNavigation"
   ],

@@ -1,5 +1,6 @@
 export enum ContentScriptMessageType {
   POINTER_LOCK = "POINTER_LOCK",
+  GEOLOCATION = "GEOLOCATION",
 }
 
 export enum NativeHostMessageType {
