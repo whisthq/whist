@@ -2402,7 +2402,7 @@ TEST_F(ProtocolTest, ClientParseArgs) {
         "-h",
         "750",
         // Set the icon (using a 64x64 png file)
-        "-i",
+        "--sdl-icon",
         "assets/icon_dev.png",
         // Set the protocol window title
         "-n",
@@ -2473,7 +2473,7 @@ TEST_F(ProtocolTest, ClientParseArgs) {
 
     // Check that the icon filename was set correctly
     const char* png_icon_filename;
-    EXPECT_SUCCESS(whist_option_get_string_value("icon", &png_icon_filename));
+    EXPECT_SUCCESS(whist_option_get_string_value("sdl-icon", &png_icon_filename));
     EXPECT_TRUE(png_icon_filename != NULL);
     EXPECT_STREQ(png_icon_filename, argv[17]);
 
@@ -2515,9 +2515,6 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     EXPECT_SUCCESS(whist_option_get_string_value("user", &user_email));
     EXPECT_TRUE(user_email != NULL);
     EXPECT_STREQ(user_email, argv[27]);
-
-    // Undo global option settings which can break other tests.
-    whist_set_single_option("sdl-skip-taskbar", "off");
 }
 
 TEST_F(ProtocolTest, ErrorCodes) {

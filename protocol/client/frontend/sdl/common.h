@@ -2,6 +2,12 @@
 #define WHIST_CLIENT_FRONTEND_SDL_COMMON_H
 
 #define SDL_MAIN_HANDLED
+// So that SDL sees symbols such as memcpy
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <string.h>
+#endif
 #include <SDL2/SDL.h>
 #include <whist/core/whist.h>
 #include "../api.h"

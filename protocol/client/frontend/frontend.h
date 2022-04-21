@@ -101,7 +101,6 @@ typedef struct FrontendQuitEvent {
 } FrontendQuitEvent;
 
 typedef struct WhistFrontendEvent {
-    WhistFrontend* frontend;
     FrontendEventType type;
     union {
         FrontendKeypressEvent keypress;
@@ -129,15 +128,18 @@ struct WhistFrontend {
     void* context;
     unsigned int id;
     const WhistFrontendFunctionTable* call;
+    const char* type;
 };
+
+#define WHIST_FRONTEND_SDL "sdl"
+#define WHIST_FRONTEND_EXTERNAL "external"
 
 #define FRONTEND_HEADER_DECLARATION(return_type, name, ...) \
     return_type whist_frontend_##name(__VA_ARGS__);
 FRONTEND_API(FRONTEND_HEADER_DECLARATION)
 #undef FRONTEND_HEADER_DECLARATION
 
-WhistFrontend* whist_frontend_create_sdl(void);
-WhistFrontend* whist_frontend_create_external(void);
+WhistFrontend* whist_frontend_create(const char* type);
 unsigned int whist_frontend_get_id(WhistFrontend* frontend);
 
 #endif  // WHIST_CLIENT_FRONTEND_H

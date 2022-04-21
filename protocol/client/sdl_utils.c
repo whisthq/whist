@@ -96,7 +96,7 @@ Public Function Implementations
 */
 
 WhistFrontend* init_sdl(int target_output_width, int target_output_height, const char* title) {
-    WhistFrontend* frontend = whist_frontend_create_sdl();
+    WhistFrontend* frontend = whist_frontend_create("sdl");
     if (frontend == NULL) {
         LOG_ERROR("Failed to create frontend");
         return NULL;

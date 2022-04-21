@@ -11,10 +11,12 @@ Command-line options
 
 static bool skip_taskbar;
 static char* icon_png_filename;
-COMMAND_LINE_BOOL_OPTION(skip_taskbar, 0, "sdl-skip-taskbar",
-                         "Launch the protocol without displaying an icon in the taskbar.")
-COMMAND_LINE_STRING_OPTION(icon_png_filename, 'i', "icon", WHIST_ARGS_MAXLEN,
-                           "Set the protocol window icon from a 64x64 pixel png file.")
+COMMAND_LINE_BOOL_OPTION(
+    skip_taskbar, 0, "sdl-skip-taskbar",
+    "Launch the protocol without displaying an icon in the taskbar (SDL frontend only).")
+COMMAND_LINE_STRING_OPTION(
+    icon_png_filename, 0, "sdl-icon", WHIST_ARGS_MAXLEN,
+    "Set the protocol window icon from a 64x64 pixel png file (SDL frontend only).")
 
 /*
 ============================

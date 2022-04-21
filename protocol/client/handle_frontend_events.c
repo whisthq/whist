@@ -55,7 +55,7 @@ Private Functions Declarations
 ============================
 */
 
-static int handle_frontend_event(WhistFrontendEvent* event);
+static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* event);
 
 /*
 ============================
@@ -66,7 +66,7 @@ Public Function Implementations
 bool handle_frontend_events(WhistFrontend* frontend) {
     WhistFrontendEvent event;
     while (whist_frontend_poll_event(frontend, &event)) {
-        if (handle_frontend_event(&event) != 0) {
+        if (handle_frontend_event(frontend, &event) != 0) {
             return false;
         }
     }
@@ -211,7 +211,7 @@ static void handle_quit_event(FrontendQuitEvent* event) {
     client_exiting = true;
 }
 
-static int handle_frontend_event(WhistFrontendEvent* event) {
+static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
     if (event->type != FRONTEND_EVENT_MOUSE_WHEEL && active_momentum_scroll) {
         // Cancel momentum scrolls on non-wheel events
         active_momentum_scroll = false;
@@ -219,7 +219,7 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
 
     switch (event->type) {
         case FRONTEND_EVENT_RESIZE: {
-            sdl_renderer_resize_window(event->frontend, event->resize.width, event->resize.height);
+            sdl_renderer_resize_window(frontend, event->resize.width, event->resize.height);
             break;
         }
         case FRONTEND_EVENT_VISIBILITY: {
@@ -265,11 +265,11 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
             break;
         }
         case FRONTEND_EVENT_FILE_DROP: {
-            handle_file_drop_event(event->frontend, &event->file_drop);
+            handle_file_drop_event(frontend, &event->file_drop);
             break;
         }
         case FRONTEND_EVENT_FILE_DRAG: {
-            handle_file_drag_event(event->frontend, &event->file_drag);
+            handle_file_drag_event(frontend, &event->file_drag);
             break;
         }
         case FRONTEND_EVENT_QUIT: {
