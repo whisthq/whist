@@ -185,7 +185,8 @@ void init_file_synchronizer(FileTransferType requested_actions) {
 }
 
 #ifdef _WIN32
-#define HOME_ENV_VAR "HOMEPATH"
+// USERPROFILE concatenates both HOMEDRIVE and HOMEPATH
+#define HOME_ENV_VAR "USERPROFILE"
 #else
 #define HOME_ENV_VAR "HOME"
 #endif  // _WIN32
