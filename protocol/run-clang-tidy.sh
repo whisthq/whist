@@ -81,43 +81,41 @@ if [[ -n "$isWindows" ]]; then
   sed -i 's/\/external:I/-I/g' "$compileCommands"
 fi
 
-# header files to be included in clang-tidy (we don't want to include third-party headers, only our code)
-headerFilter="^((?!$FILES_EXCLUDE).)*$"
-
-# If clang-tidy succeeded and it didn't generate a fixesFile, then we're good to go
-# (clang-tidy will return error code 0 even if it puts warnings in the fixesFile)
 if [[ ! -f ".clang-tidy" ]]; then
   echo "Hm, .clang-tidy not found, is run-clang-tidy.sh not in the source directory?"
   exit 1
 fi
-if clang-tidy -p="$BUILD_DIR" --header-filter="$headerFilter" --quiet --export-fixes="$fixesFile" "${filesToFix[@]}" && [[ ! -f "$fixesFile" ]]; then
+
+# If clang-tidy succeeded and it didn't generate a fixesFile, then we're good to go
+# (clang-tidy will return error code 0 even if it puts warnings in the fixesFile)
+if clang-tidy -p="$BUILD_DIR" --export-fixes="$fixesFile" "${filesToFix[@]}" && [[ ! -f "$fixesFile" ]]; then
   echo "clang-tidy successful"
-else
-  if [[ -n "$CICheck" ]]; then
-    # A yaml file with no format issues should have exactly 4 lines
-    echo "Format issues found. See $fixesFile"
-    exit 1
-  else
-    echo "-----> CHECK PROPOSED REPLACEMENTS IN ${fixesFile} <-----"
-    echo "----->       THEN TYPE 'r' TO REPLACE ALL OF THEM. ANY OTHER KEY WILL QUIT       <-----"
-
-    read -r -n 1 -p "'r' to replace, any other key to quit without replacing: " k
-    if [[ "$k" == "r" ]]; then
-      echo
-      echo "Running clang-apply-replacements"
-
-      # run clang-tidy noted replacements
-      if command -v clang-apply-replacements &> /dev/null
-      then
-        clang-apply-replacements "$yamlFolder"
-      else
-        clang-apply-replacements-10 "$yamlFolder"
-      fi
-    else
-      exit
-    fi
-  fi
+  rm -rf "$yamlFolder"
+  exit 0
 fi
 
-# cleanup
-rm -r "$yamlFolder"
+if [[ -n "$CICheck" ]]; then
+  # A yaml file with no format issues should have exactly 4 lines
+  echo "Format issues found. See $fixesFile"
+  exit 1
+fi
+
+echo "-----> CHECK PROPOSED REPLACEMENTS IN ${fixesFile} <-----"
+echo "----->       THEN TYPE 'r' TO REPLACE ALL OF THEM. ANY OTHER KEY WILL QUIT       <-----"
+
+read -r -n 1 -p "'r' to replace, any other key to quit without replacing: " k
+if [[ "$k" != "r" ]]; then
+  echo "Quitting without replacing"
+  exit 1
+fi
+
+echo
+echo "Running clang-apply-replacements"
+
+# run clang-tidy noted replacements
+APPLY_REPLACEMENTS="clang-apply-replacements"
+if ! command -v "$APPLY_REPLACEMENTS" &> /dev/null; then
+  APPLY_REPLACEMENTS="clang-apply-replacements-10"
+fi
+"$APPLY_REPLACEMENTS" "$yamlFolder"
+rm -rf "$yamlFolder"
