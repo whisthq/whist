@@ -154,9 +154,13 @@ const createOnboardingWindow = () =>
 
 const createUpdateWindow = () =>
   createElectronWindow({
-    ...width.md,
-    ...height.sm,
+    ...width.sm,
+    ...height.md,
     hash: WindowHashUpdate,
+    options: {
+      fullscreenable: false,
+      titleBarStyle: "customButtonsOnHover",
+    },
   })
 
 const createLaunchLoadingWindow = () =>

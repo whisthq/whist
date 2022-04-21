@@ -60,8 +60,17 @@ const subscribed = combineLatest(
         WhistTrigger.checkPaymentFlowSuccess
       ).pipe(pluck("subscriptionStatus"), startWith(undefined)),
       appEnvironment: of(appEnvironment),
-      updateInfo: fromTrigger(WhistTrigger.downloadProgress).pipe(
-        map((obj) => JSON.stringify(obj))
+      updateInfo: merge(
+        fromTrigger(WhistTrigger.downloadProgress).pipe(
+          map((obj) => JSON.stringify(obj))
+        ),
+        fromTrigger(WhistTrigger.updateDownloaded).pipe(
+          mapTo(
+            JSON.stringify({
+              percent: 100,
+            })
+          )
+        )
       ),
       browsers: browsers,
       networkInfo: combineLatest([
