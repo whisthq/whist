@@ -5,94 +5,94 @@ import {
   browserSupportedLanguages,
 } from "@app/constants/mandelboxLanguages"
 
-const getUserLanguages = () => {
-  const lowerCasedlinuxSupportedLanguages = linuxSupportedLanguages.map(
-    (element) => {
-      return element.toLowerCase()
-    }
-  )
-  const caseInsensitiveLanguageSearch = (language: string) => {
-    const linuxSupportedLanguagesIndex =
-      lowerCasedlinuxSupportedLanguages.indexOf(language.toLowerCase())
-    if (linuxSupportedLanguagesIndex !== -1) {
-      return linuxSupportedLanguages[linuxSupportedLanguagesIndex]
-    }
-    return ""
+const lowerCasedlinuxSupportedLanguages = linuxSupportedLanguages.map(
+  (element) => {
+    return element.toLowerCase()
   }
-
-  // Check if a language in the form [language designator] is available on the docker container
-  const searchLanguageWithoutRegion = (language: string) => {
-    // Check if the language can be found (using a case insensitive search)
-    const ubuntuLanguage = caseInsensitiveLanguageSearch(language)
-    if (ubuntuLanguage !== "") {
-      return ubuntuLanguage
-    }
-    // Check if the language can be found after adding the default region name
-    if (language.toLowerCase() in linuxLanguageToDefaultRegion) {
-      const ubuntuDefaultRegionLanguage = caseInsensitiveLanguageSearch(
-        language.toLowerCase() +
-          "_" +
-          linuxLanguageToDefaultRegion[language.toLowerCase()]
-      )
-      if (ubuntuDefaultRegionLanguage !== "") {
-        return ubuntuDefaultRegionLanguage
-      }
-    }
-    return ""
+)
+const caseInsensitiveLanguageSearch = (language: string) => {
+  const linuxSupportedLanguagesIndex =
+    lowerCasedlinuxSupportedLanguages.indexOf(language.toLowerCase())
+  if (linuxSupportedLanguagesIndex !== -1) {
+    return linuxSupportedLanguages[linuxSupportedLanguagesIndex]
   }
+  return ""
+}
 
-  // Check if a language in the form [language designator]_[region designator] is available on the Docker container
-  const searchLanguageWithRegion = (language: string) => {
-    // Check if the language can be found (using a case insensitive search)
-    const ubuntuLanguage: string = caseInsensitiveLanguageSearch(language)
-    if (ubuntuLanguage !== "") {
-      return ubuntuLanguage
-    }
-    // Check if the language can be found after removing the region or after replacing the region with the default one
-    return searchLanguageWithoutRegion(language.split("_")[0])
+// Check if a language in the form [language designator] is available on the docker container
+const searchLanguageWithoutRegion = (language: string) => {
+  // Check if the language can be found (using a case insensitive search)
+  const ubuntuLanguage = caseInsensitiveLanguageSearch(language)
+  if (ubuntuLanguage !== "") {
+    return ubuntuLanguage
   }
-
-  const searchLanguageWithScript = (language: string) => {
-    const languageAndScript = language.split("-")
-    if (languageAndScript[1].split("_").length === 1) {
-      // Handle the [language designator]-[script designator] case. No region has been provided
-      // If no region is provided and the script is Traditional Chinese, we need to set the region
-      // to Taiwan (or Hong Kong), otherwise the default region will use the Simplified script
-      if (languageAndScript[1].includes("Hant")) {
-        // Add default region for Traditional Chinese script
-        return searchLanguageWithRegion(languageAndScript[0] + "_" + "TW")
-      } else {
-        // Remove the script and find a best match for the language
-        return searchLanguageWithoutRegion(languageAndScript[0])
-      }
-    } else if (languageAndScript[1].split("_").length === 2) {
-      // Handle the [language designator]-[script designator]_[region designator] case
-      // If the script is Traditional Chinese, we need to set the overwrite the region and use
-      // Taiwan (or Hong Kong), otherwise the Simplified script might be used instead
-      if (
-        languageAndScript[1].includes("Hant") &&
-        !languageAndScript[1].split("_")[1].includes("HK") &&
-        !languageAndScript[1].split("_")[1].includes("TW")
-      ) {
-        // Search using "TW" as the region, instead of the one detected
-        return searchLanguageWithRegion(languageAndScript[0] + "_" + "TW")
-      } else if (
-        languageAndScript[1].includes("Hans") &&
-        !languageAndScript[1].split("_")[1].includes("CN") &&
-        !languageAndScript[1].split("_")[1].includes("SG")
-      ) {
-        // Search using "TW" as the region, instead of the one detected
-        return searchLanguageWithRegion(languageAndScript[0] + "_" + "CN")
-      } else {
-        // Remove the script and find a best match for the language
-        const regionName = languageAndScript[1].split("_")[1]
-        return searchLanguageWithRegion(languageAndScript[0] + "_" + regionName)
-      }
+  // Check if the language can be found after adding the default region name
+  if (language.toLowerCase() in linuxLanguageToDefaultRegion) {
+    const ubuntuDefaultRegionLanguage = caseInsensitiveLanguageSearch(
+      language.toLowerCase() +
+        "_" +
+        linuxLanguageToDefaultRegion[language.toLowerCase()]
+    )
+    if (ubuntuDefaultRegionLanguage !== "") {
+      return ubuntuDefaultRegionLanguage
     }
-    return ""
   }
-  const currentPlatform = process.platform
+  return ""
+}
 
+// Check if a language in the form [language designator]_[region designator] is available on the Docker container
+const searchLanguageWithRegion = (language: string) => {
+  // Check if the language can be found (using a case insensitive search)
+  const ubuntuLanguage: string = caseInsensitiveLanguageSearch(language)
+  if (ubuntuLanguage !== "") {
+    return ubuntuLanguage
+  }
+  // Check if the language can be found after removing the region or after replacing the region with the default one
+  return searchLanguageWithoutRegion(language.split("_")[0])
+}
+
+const searchLanguageWithScript = (language: string) => {
+  const languageAndScript = language.split("-")
+  if (languageAndScript[1].split("_").length === 1) {
+    // Handle the [language designator]-[script designator] case. No region has been provided
+    // If no region is provided and the script is Traditional Chinese, we need to set the region
+    // to Taiwan (or Hong Kong), otherwise the default region will use the Simplified script
+    if (languageAndScript[1].includes("Hant")) {
+      // Add default region for Traditional Chinese script
+      return searchLanguageWithRegion(languageAndScript[0] + "_" + "TW")
+    } else {
+      // Remove the script and find a best match for the language
+      return searchLanguageWithoutRegion(languageAndScript[0])
+    }
+  } else if (languageAndScript[1].split("_").length === 2) {
+    // Handle the [language designator]-[script designator]_[region designator] case
+    // If the script is Traditional Chinese, we need to set the overwrite the region and use
+    // Taiwan (or Hong Kong), otherwise the Simplified script might be used instead
+    if (
+      languageAndScript[1].includes("Hant") &&
+      !languageAndScript[1].split("_")[1].includes("HK") &&
+      !languageAndScript[1].split("_")[1].includes("TW")
+    ) {
+      // Search using "TW" as the region, instead of the one detected
+      return searchLanguageWithRegion(languageAndScript[0] + "_" + "TW")
+    } else if (
+      languageAndScript[1].includes("Hans") &&
+      !languageAndScript[1].split("_")[1].includes("CN") &&
+      !languageAndScript[1].split("_")[1].includes("SG")
+    ) {
+      // Search using "TW" as the region, instead of the one detected
+      return searchLanguageWithRegion(languageAndScript[0] + "_" + "CN")
+    } else {
+      // Remove the script and find a best match for the language
+      const regionName = languageAndScript[1].split("_")[1]
+      return searchLanguageWithRegion(languageAndScript[0] + "_" + regionName)
+    }
+  }
+  return ""
+}
+const currentPlatform = process.platform
+
+export const getUserLanguages = () => {
   const parseUserLanguages = () => {
     if (currentPlatform === "darwin") {
       // This function will return the language in the Mac client format
@@ -201,12 +201,11 @@ const getUserLanguages = () => {
   }
 }
 
-const getUserLocale = () => {
-  const currentPlatform = process.platform
+export const getUserLocale = () => {
+  const userLocaleDictionary: { [key: string]: string } = {}
   if (currentPlatform === "darwin" || currentPlatform === "linux") {
     const userLocaleRaw = execCommand("locale", ".", {}, "pipe")
     const parsedUserLocale = userLocaleRaw?.toString()?.split(/\r?\n/) ?? ""
-    const userLocaleDictionary: { [key: string]: string } = {}
     for (const s of parsedUserLocale) {
       const keyValuePair = s.split(/=/)
       if (
@@ -220,7 +219,6 @@ const getUserLocale = () => {
           .join("")
       }
     }
-    return userLocaleDictionary
   } else {
     // This function will return the locale in the Windows client format
     const userLocaleRaw = execCommand(
@@ -235,11 +233,15 @@ const getUserLocale = () => {
       .replace(/(\r\n|\n|\r)/gm, "")
       .split(" ")
     // Extract locale, transform them into the `language_region` format
-    return (
-      "LC_ALL=" +
+    const windowsLocale = searchLanguageWithRegion(
       parsedUserLocale[parsedUserLocale.length - 1].split("-").join("_")
     )
+    const userLocaleDictionary: { [key: string]: string } = {}
+    if (windowsLocale !== "") {
+      userLocaleDictionary.LC_ALL = windowsLocale
+    } else {
+      userLocaleDictionary.LC_ALL = "C"
+    }
   }
+  return userLocaleDictionary
 }
-
-export { getUserLanguages, getUserLocale }
