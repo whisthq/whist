@@ -126,13 +126,22 @@ const getUserLanguages = () => {
     } else {
       // This function will return the language in the Windows client format
       const languagesRaw = execCommand(
-        'reg query "HCKU\Control Panel\International\User Profile" /v Languages | findstr /c:"Languages"',
+        'reg query "HKCU\\Control Panel\\International\\User Profile" /v Languages | findstr /c:"Languages"',
         ".",
         {},
         "pipe"
       )
-      const parsedLanguagesRaw = languagesRaw.toString().replace(/(\r\n|\n|\r)/gm, "").split(" ")
-      return parsedLanguagesRaw[parsedLanguagesRaw.length - 1].split("\0").join(":").split("-").join("_")
+      // Remove all new-lines and split over spaces to select last word (containing the languages)
+      const parsedLanguagesRaw = languagesRaw
+        .toString()
+        .replace(/(\r\n|\n|\r)/gm, "")
+        .split(" ")
+      // Extract languages, separate them with colons, and transform them into the `language_region` format
+      return parsedLanguagesRaw[parsedLanguagesRaw.length - 1]
+        .split("\\0")
+        .join(":")
+        .split("-")
+        .join("_")
     }
   }
 
@@ -193,23 +202,41 @@ const getUserLanguages = () => {
 }
 
 const getUserLocale = () => {
-  const userLocaleRaw = execCommand("locale", ".", {}, "pipe")
-  const parsedUserLocale = userLocaleRaw?.toString()?.split(/\r?\n/) ?? ""
-  const userLocaleDictionary: { [key: string]: string } = {}
-  for (const s of parsedUserLocale) {
-    const keyValuePair = s.split(/=/)
-    if (
-      keyValuePair.length === 2 &&
-      keyValuePair[0].length >= 1 &&
-      keyValuePair[1].length >= 1 &&
-      !keyValuePair[0].includes("LANG")
-    ) {
-      userLocaleDictionary[keyValuePair[0]] = keyValuePair[1]
-        .split('"')
-        .join("")
+  const currentPlatform = process.platform
+  if (currentPlatform === "darwin" || currentPlatform === "linux") {
+    const userLocaleRaw = execCommand("locale", ".", {}, "pipe")
+    const parsedUserLocale = userLocaleRaw?.toString()?.split(/\r?\n/) ?? ""
+    const userLocaleDictionary: { [key: string]: string } = {}
+    for (const s of parsedUserLocale) {
+      const keyValuePair = s.split(/=/)
+      if (
+        keyValuePair.length === 2 &&
+        keyValuePair[0].length >= 1 &&
+        keyValuePair[1].length >= 1 &&
+        !keyValuePair[0].includes("LANG")
+      ) {
+        userLocaleDictionary[keyValuePair[0]] = keyValuePair[1]
+          .split('"')
+          .join("")
+      }
     }
+    return userLocaleDictionary
+  } else {
+    // This function will return the locale in the Windows client format
+    const userLocaleRaw = execCommand(
+      'reg query "HKCU\\Control Panel\\International" /v LocaleName | findstr /c:"LocaleName"',
+      ".",
+      {},
+      "pipe"
+    )
+    // Remove all new-lines and split over spaces to select last word (containing the locale)
+    const parsedUserLocale = userLocaleRaw
+      .toString()
+      .replace(/(\r\n|\n|\r)/gm, "")
+      .split(" ")
+    // Extract locale, transform them into the `language_region` format
+    return parsedUserLocale[parsedUserLocale.length - 1].split("-").join("_")
   }
-  return userLocaleDictionary
 }
 
 export { getUserLanguages, getUserLocale }
