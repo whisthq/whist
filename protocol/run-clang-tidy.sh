@@ -67,8 +67,8 @@ filesToFix=()
 IFS=$'\n' # Break for-loop on newline rather than any whitespace
 for line in $(< "$compileCommands" jq -r '.[].file' | grep -Ev "($FILES_EXCLUDE)"); do
   if [[ -n "$isWindows" ]]; then
-      # Replace Windows path with Linux path
-      line="$(echo "$line" | sed "s/\([^:]*\):/\/\1/g")"
+    # Replace Windows path with Linux path
+    line="$(echo "$line" | sed "s/\([^:]*\):/\/\1/g")"
   fi
   filesToFix+=("$line")
 done
