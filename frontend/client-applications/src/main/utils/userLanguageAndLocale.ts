@@ -235,7 +235,10 @@ const getUserLocale = () => {
       .replace(/(\r\n|\n|\r)/gm, "")
       .split(" ")
     // Extract locale, transform them into the `language_region` format
-    return parsedUserLocale[parsedUserLocale.length - 1].split("-").join("_")
+    return (
+      "LC_ALL=" +
+      parsedUserLocale[parsedUserLocale.length - 1].split("-").join("_")
+    )
   }
 }
 
