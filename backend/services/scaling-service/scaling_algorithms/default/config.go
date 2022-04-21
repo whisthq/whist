@@ -17,9 +17,11 @@ var (
 	// scale up if we don't have enough capacity.
 	defaultInstanceBuffer = 1
 	// desiredFreeMandelboxesPerRegion is the number of free mandelboxes we always
-	// want available in a region. This value is the same across all regions, but
-	// represents the free mandelboxes we want on each.
-	desiredFreeMandelboxesPerRegion = 2
+	// want available in a region. This value is set per-region and it represents
+	// the free mandelboxes we want on each.
+	desiredFreeMandelboxesPerRegion = map[string]int{
+		"us-east-1": 2,
+	}
 )
 
 const (
