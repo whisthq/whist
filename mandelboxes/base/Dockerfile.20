@@ -208,7 +208,7 @@ RUN mkdir /dist /ignore && \
     --x-module-path=/dist/usr/lib/xorg/modules \
     --opengl-prefix=/dist/usr \
     --utility-prefix=/dist/usr \
-    --utility-libdir=dist/usr/lib \
+    --utility-libdir=lib \
     --documentation-prefix=/ignore \
     --no-nvidia-modprobe \
     --no-rpms \
