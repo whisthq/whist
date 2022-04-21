@@ -113,6 +113,7 @@ void sdl_begin_file_drag(char* filename_list) {
 
 // void set_is_dragging_content(bool is_dragging_content, int x, int y) {
 void sdl_move_content_drag(int x, int y) {
+    LOG_INFO("SEND CONTENT_DRAG_MOVE");
     WhistClientMessage msg = {0};
     msg.type = MESSAGE_CONTENT_DRAG_UPDATE;
     msg.contentDragUpdate.update_type = CONTENT_DRAG_MOVE;

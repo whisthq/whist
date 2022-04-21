@@ -704,6 +704,8 @@ void sdl_end_drag_event() {
         the file icon from being displayed in the next sdl step
     */
 
+    LOG_INFO("sdl_end_drag_event");
+
     pending_file_drag_update = false;
     // Render the next frame to remove the file drag icon
     pending_overlay_removal = true;

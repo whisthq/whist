@@ -303,6 +303,7 @@ bool unsafe_has_os_clipboard_updated(void) {
     }
     XLockDisplay(display);
     while (XPending(display)) {
+        LOG_INFO("has clipboard updated xnextevent");
         XNextEvent(display, &event);
         if (event.type == event_base + XFixesSelectionNotify &&
             ((XFixesSelectionNotifyEvent*)&event)->selection == clipboard) {
@@ -338,6 +339,7 @@ static bool clipboard_has_target(Atom property_atom, Atom target_atom) {
     XConvertSelection(display, clipboard, target_atom, property_atom, window, CurrentTime);
 
     do {
+        LOG_INFO("clipboard_has_target xnextevent");
         XNextEvent(display, &event);
     } while (event.type != SelectionNotify || event.xselection.selection != clipboard);
 
@@ -384,6 +386,7 @@ ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size) {
         do {
             XEvent event;
             do {
+                LOG_INFO("get_os_clipboard_data xnextevent");
                 XNextEvent(display, &event);
             } while (event.type != PropertyNotify || event.xproperty.atom != property_atom ||
                      event.xproperty.state != PropertyNewValue);
