@@ -22,10 +22,10 @@ OPTIND=1
 CICheck=
 
 while getopts "c" opt; do
-  case "$opt" in
-    c) CICheck=1 ;;
-    *) echo "Invalid Option: $opt" ;;
-  esac
+    case "$opt" in
+        c) CICheck=1 ;;
+        *) echo "Invalid Option: $opt" ;;
+    esac
 done
 
 shift $((OPTIND-1))
@@ -36,8 +36,8 @@ shift $((OPTIND-1))
 isWindows=
 unameOut="$(uname -s)"
 case "${unameOut}" in
-  CYGWIN*)    isWindows=1 ;;
-  MINGW*)     isWindows=1 ;;
+    CYGWIN*)    isWindows=1 ;;
+    MINGW*)     isWindows=1 ;;
 esac
 
 
@@ -59,65 +59,63 @@ FILES_EXCLUDE="include|lib|docs|sentry-native|share|nvidia-linux|whistgetopt\.[c
 # This causes it to not filter .c files from other OS's, which causes errors.
 compileCommands="$BUILD_DIR/compile_commands.json"
 if [[ ! -f "$compileCommands" ]]; then
-  echo "Hm, $compileCommands not found."
-  echo "Note that you must call $0 _from_ the build directory that you called \"make\" in"
-  exit 1
+    echo "Hm, $compileCommands not found."
+    echo "Note that you must call $0 _from_ the build directory that you called \"make\" in"
+    exit 1
 fi
 filesToFix=()
 IFS=$'\n' # Break for-loop on newline rather than any whitespace
 for line in $(< "$compileCommands" jq -r '.[].file' | grep -Ev "($FILES_EXCLUDE)"); do
-  if [[ -n "$isWindows" ]]; then
-    # Replace Windows path with Linux path
-    line="$(echo "$line" | sed "s/\([^:]*\):/\/\1/g")"
-  fi
-  filesToFix+=("$line")
+    if [[ -n "$isWindows" ]]; then
+        # Replace Windows path with Linux path
+        line="$(echo "$line" | sed "s/\([^:]*\):/\/\1/g")"
+    fi
+    filesToFix+=("$line")
 done
 unset IFS
 
 # Replace /experimental:external /external:W0 /external:I with -I, since clang can only read -I
 if [[ -n "$isWindows" ]]; then
-  sed -i 's/\/experimental:external//g' "$compileCommands"
-  sed -i 's/\/external:W0//g' "$compileCommands"
-  sed -i 's/\/external:I/-I/g' "$compileCommands"
+    sed -i 's/\/experimental:external//g' "$compileCommands"
+    sed -i 's/\/external:W0//g' "$compileCommands"
+    sed -i 's/\/external:I/-I/g' "$compileCommands"
 fi
 
-# header files to be included in clang-tidy (we don't want to include third-party headers, only our code)
-headerFilter="^((?!$FILES_EXCLUDE).)*$"
+if [[ ! -f ".clang-tidy" ]]; then
+    echo "Hm, .clang-tidy not found, is run-clang-tidy.sh not in the source directory?"
+    exit 1
+fi
 
 # If clang-tidy succeeded and it didn't generate a fixesFile, then we're good to go
 # (clang-tidy will return error code 0 even if it puts warnings in the fixesFile)
-if [[ ! -f ".clang-tidy" ]]; then
-  echo "Hm, .clang-tidy not found, is run-clang-tidy.sh not in the source directory?"
-  exit 1
+if clang-tidy -p="$BUILD_DIR" --export-fixes="$fixesFile" "${filesToFix[@]}" && [[ ! -f "$fixesFile" ]]; then
+    echo "clang-tidy successful"
+    rm -rf "$yamlFolder"
+    exit 0
 fi
-if clang-tidy -p="$BUILD_DIR" --header-filter="$headerFilter" --quiet --export-fixes="$fixesFile" "${filesToFix[@]}" && [[ ! -f "$fixesFile" ]]; then
-  echo "clang-tidy successful"
-else
-  if [[ -n "$CICheck" ]]; then
+
+if [[ -n "$CICheck" ]]; then
     # A yaml file with no format issues should have exactly 4 lines
     echo "Format issues found. See $fixesFile"
     exit 1
-  else
-    echo "-----> CHECK PROPOSED REPLACEMENTS IN ${fixesFile} <-----"
-    echo "----->       THEN TYPE 'r' TO REPLACE ALL OF THEM. ANY OTHER KEY WILL QUIT       <-----"
-
-    read -r -n 1 -p "'r' to replace, any other key to quit without replacing: " k
-    if [[ "$k" == "r" ]]; then
-      echo
-      echo "Running clang-apply-replacements"
-
-      # run clang-tidy noted replacements
-      if command -v clang-apply-replacements &> /dev/null
-      then
-        clang-apply-replacements "$yamlFolder"
-      else
-        clang-apply-replacements-10 "$yamlFolder"
-      fi
-    else
-      exit
-    fi
-  fi
 fi
 
-# cleanup
-rm -r "$yamlFolder"
+echo "-----> CHECK PROPOSED REPLACEMENTS IN ${fixesFile} <-----"
+echo "----->       THEN TYPE 'r' TO REPLACE ALL OF THEM. ANY OTHER KEY WILL QUIT       <-----"
+
+read -r -n 1 -p "'r' to replace, any other key to quit without replacing: " k
+if [[ "$k" != "r" ]]; then
+    echo "Quitting without replacing"
+    exit 1
+fi
+
+echo
+echo "Running clang-apply-replacements"
+
+# run clang-tidy noted replacements
+APPLY_REPLACEMENTS="clang-apply-replacements"
+if ! command -v "$APPLY_REPLACEMENTS" &> /dev/null; then
+    APPLY_REPLACEMENTS="clang-apply-replacements-10"
+fi
+"$APPLY_REPLACEMENTS" "$yamlFolder"
+rm -rf "$yamlFolder"
