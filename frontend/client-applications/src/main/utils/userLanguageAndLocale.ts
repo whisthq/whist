@@ -126,19 +126,13 @@ const getUserLanguages = () => {
     } else {
       // This function will return the language in the Windows client format
       const languagesRaw = execCommand(
-        'systeminfo | findstr /c:"System Locale"',
+        'reg query "HCKU\Control Panel\International\User Profile" /v Languages | findstr /c:"Languages"',
         ".",
         {},
         "pipe"
       )
-      // Remove newlines, extract text right before semicolon and right after last space. Then replace dashes with underscores.
-      return languagesRaw
-        .toString()
-        .replace(/(\r\n|\n|\r)/gm, "")
-        .split(";")[0]
-        .split(" ")
-        [-1].split("-")
-        .join("_")
+      const parsedLanguagesRaw = languagesRaw.toString().replace(/(\r\n|\n|\r)/gm, "").split(" ")
+      return parsedLanguagesRaw[parsedLanguagesRaw.length - 1].split("\0").join(":").split("-").join("_")
     }
   }
 
