@@ -1,0 +1,128 @@
+# workflows/mandelboxes-publish-ghcr.yml
+#
+# Mandelboxes: Publish to GHCR
+# Build and deploy our mandelboxes to GHCR
+name: "Mandelboxes: Publish to GHCR"
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        required: true
+        type: string
+    secrets:
+      SENTRY_AUTH_TOKEN:
+        required: true
+      GHA_USERNAME:
+        required: true
+      GHA_PERSONAL_ACCESS_TOKEN:
+        required: true
+      AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID:
+        required: true
+      AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY:
+        required: true
+      SLACK_HOOKS_ENDPOINT_DEV:
+        required: true
+      SLACK_HOOKS_ENDPOINT_STAGING:
+        required: true
+      SLACK_HOOKS_ENDPOINT_PROD:
+        required: true
+
+jobs:
+  mandelboxes-publish-ghcr-main:
+    name: "Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs"
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS CLI # To get and install GRID driver
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Set up Python Environment
+        uses: actions/setup-python@v3.1.2
+        with:
+          python-version: "3.10.4"
+
+      - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh "true"
+
+      - name: Build release protocol # No need to run this for debug, just for release
+        working-directory: protocol
+        run: ./build_protocol_targets.sh --cmakebuildtype=Release WhistServer
+
+        # Each final build has an internal build id and debug id. Sentry will use these
+        # IDs to match the debug symbols with the build that crashed to build the backtrace
+      - name: Copy Server debug symbols to sentry
+        env:
+          SENTRY_ORG: whist
+          SENTRY_PROJECT: protocol
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        working-directory: protocol
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+          sentry-cli upload-dif ./build-docker/server/build64/WhistServer
+
+      # In deploys, we only build the Docker images used in production
+      # Note that they will build the images they depend on automatically (i.e. base)
+      - name: Build Mandelboxes
+        env:
+          DOCKER_BUILDKIT: 1
+        working-directory: mandelboxes
+        run: ./build.sh browsers/chrome browsers/brave --prod
+
+      - name: Print logs of failed mandelbox(es)  on failure
+        if: failure()
+        working-directory: mandelboxes
+        run: find . -name "build.log" -type f -exec cat {} +
+
+      # We only deploy the browsers mandelboxes, other mandelboxes are for internal use only
+      - name: Push mandelboxes
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        working-directory: mandelboxes
+        env:
+          GH_USERNAME: ${{ secrets.GHA_USERNAME }}
+          GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+        run: |
+          ./push.sh browsers/chrome ${{ inputs.branch }}
+          ./push.sh browsers/brave ${{ inputs.branch }}
+
+      # Notify Slack after building and deploying the Whist AMI to all supported AWS regions.
+      - name: Notify Slack on Job Successs
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          TITLE = ":whale: Mandelboxes Deployed :whale:"
+          BODY = "Mandelboxes deployed to GHCR on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
+
+      - name: Notify Slack on Job Error
+        if: failure()
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy mandelboxes in the `mandelboxes-publish-ghcr.yml` workflow, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
