@@ -31,6 +31,8 @@ typedef struct SDLFrontendContext {
     int key_count;
     uint32_t file_drag_event_id;
     void* file_drag_data;
+    bool video_has_rendered;
+    bool window_has_shown;
 } SDLFrontendContext;
 
 #define SDL_COMMON_HEADER_ENTRY(return_type, name, ...) return_type sdl_##name(__VA_ARGS__);

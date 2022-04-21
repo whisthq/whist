@@ -104,7 +104,6 @@ TEST_F(ProtocolTest, InitSDL) {
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
-    char icon_filepath[] = PATH_JOIN("assets", "icon_dev.png");
 
     // These need to be small enough to fit on the screen, but bigger
     // than our set minima from whist/core/whist.h.

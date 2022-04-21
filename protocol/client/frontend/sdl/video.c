@@ -114,11 +114,21 @@ void sdl_paint_avframe(WhistFrontend* frontend, AVFrame* frame, int output_width
         .h = min(output_height, texture_rect.h) - CLIPPED_PIXELS,
     };
     SDL_RenderCopy(context->renderer, context->texture, &output_rect, NULL);
+
+    if (!context->video_has_rendered) {
+        context->video_has_rendered = true;
+    }
 }
 
 void sdl_render(WhistFrontend* frontend) {
     SDLFrontendContext* context = frontend->context;
+
     SDL_RenderPresent(context->renderer);
+
+    if (context->video_has_rendered && !context->window_has_shown) {
+        SDL_ShowWindow(context->window);
+        context->window_has_shown = true;
+    }
 }
 
 void sdl_declare_user_activity(WhistFrontend* frontend) { sdl_native_declare_user_activity(); }

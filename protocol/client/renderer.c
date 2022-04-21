@@ -358,7 +358,3 @@ int32_t multithreaded_audio_renderer(void* opaque) {
 
     return 0;
 }
-
-bool renderer_has_video_rendered_yet(WhistRenderer* renderer) {
-    return has_video_rendered_yet(renderer->video_context);
-}

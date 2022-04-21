@@ -29,7 +29,6 @@ Includes
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile bool insufficient_bandwidth;
-static bool skip_taskbar;
 
 static WhistMutex frontend_render_mutex;
 
@@ -62,10 +61,6 @@ static volatile bool should_update_window_title = false;
 // Full Screen Update
 static volatile bool fullscreen_trigger = false;
 static volatile bool fullscreen_value = false;
-
-// File Drag
-static int file_drag_update_x = 0;
-static int file_drag_update_y = 0;
 
 // Overlay removals
 static volatile bool pending_overlay_removal = false;

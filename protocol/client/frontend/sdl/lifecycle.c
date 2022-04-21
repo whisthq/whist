@@ -126,6 +126,8 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     context->audio_device = 0;
     context->key_state = SDL_GetKeyboardState(&context->key_count);
     context->file_drag_event_id = SDL_RegisterEvents(1);
+    context->video_has_rendered = false;
+    context->window_has_shown = false;
 
     context->cursor.state = CURSOR_STATE_VISIBLE;
     context->cursor.hash = 0;
@@ -166,7 +168,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
         return WHIST_ERROR_UNKNOWN;
     }
 
-    // TODO: Build out this functionality.
+    // TODO: Rebuild this functionality.
     // if (icon_png_filename != NULL) {
     //     SDL_Surface* icon_surface = sdl_surface_from_png_file(icon_filename);
     //     SDL_SetWindowIcon(sdl_window, icon_surface);
@@ -188,8 +190,9 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
         // Pump the event loop until the window fully finishes loading.
     }
 
-    // Show the window now that it's fully loaded.
-    SDL_ShowWindow(context->window);
+    // The window is fully loaded, but we hold off on showing it until we actually start rendering.
+    // The first call to sdl_paint_avframe() will set context->video_has_rendered to true. Then,
+    // the next call to sdl_render() will show the window and set context->window_has_shown to true.
 
     return WHIST_SUCCESS;
 }
