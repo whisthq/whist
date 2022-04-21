@@ -785,7 +785,7 @@ int32_t multithreaded_send_video(void* opaque) {
                 // This function will try to CUDA/OpenGL optimize the transfer by
                 // only passing a GPU reference rather than copy to/from the CPU
                 start_timer(&statistics_timer);
-                if (transfer_capture(device, encoder) != 0) {
+                if (transfer_capture(device, encoder, &state->stream_needs_restart) != 0) {
                     // If there was a failure, exit
                     LOG_ERROR("transfer_capture failed! Exiting!");
                     state->exiting = true;
