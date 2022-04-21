@@ -312,7 +312,7 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Setup Terraform CLI
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v2
 
       - name: Initialize Terraform
         working-directory: backend/infrastructure
