@@ -19,7 +19,7 @@ const caseInsensitiveLanguageSearch = (language: string) => {
   return ""
 }
 
-// Check if a language in the form [language designator] is available on the docker container
+// Check if a language in the form [language designator] is available on the mandelbox
 const searchLanguageWithoutRegion = (language: string) => {
   // Check if the language can be found (using a case insensitive search)
   const ubuntuLanguage = caseInsensitiveLanguageSearch(language)
@@ -40,7 +40,7 @@ const searchLanguageWithoutRegion = (language: string) => {
   return ""
 }
 
-// Check if a language in the form [language designator]_[region designator] is available on the Docker container
+// Check if a language in the form [language designator]_[region designator] is available on the mandelbox
 const searchLanguageWithRegion = (language: string) => {
   // Check if the language can be found (using a case insensitive search)
   const ubuntuLanguage: string = caseInsensitiveLanguageSearch(language)
@@ -184,6 +184,11 @@ export const getUserLanguages = () => {
         return noRegionLanguage
       }
       // If the language is not supported, just use English
+      console.log(
+        "Could not find a match for client language" +
+          language +
+          ". Using English instead"
+      )
       return ""
     })
     .filter((e) => e)
@@ -239,6 +244,12 @@ export const getUserLocale = () => {
     if (windowsLocale !== "") {
       userLocaleDictionary.LC_ALL = windowsLocale
     } else {
+      // If the locale is not supported, just use the standard C linux locale.
+      console.log(
+        "Could not find a match for client locale" +
+          parsedUserLocale[parsedUserLocale.length - 1].split("-").join("_") +
+          ". Using C instead"
+      )
       userLocaleDictionary.LC_ALL = "C"
     }
   }
