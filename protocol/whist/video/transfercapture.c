@@ -1,7 +1,7 @@
 #include "transfercapture.h"
 #include "capture/capture.h"
 
-int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
+int transfer_capture(CaptureDevice* device, VideoEncoder* encoder, bool* force_iframe) {
     if (device->width != encoder->in_width || device->height != encoder->in_height) {
         LOG_ERROR(
             "Tried to pass in a captured frame of dimension %dx%d, "
@@ -30,7 +30,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
                         old_encoder->height, old_encoder->vbv_size,
                         *get_video_thread_cuda_context_ptr());
                 }
-                video_encoder_set_iframe(encoder);
+                *force_iframe = true;
             }
         }
         RegisteredResource resource_to_register = {0};
@@ -47,7 +47,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     if (encoder->active_encoder != FFMPEG_ENCODER) {
         LOG_INFO("Switching back to FFmpeg encoder for use with X11 capture!");
         encoder->active_encoder = FFMPEG_ENCODER;
-        video_encoder_set_iframe(encoder);
+        *force_iframe = true;
     }
 
     // CPU transfer, if hardware transfer doesn't work

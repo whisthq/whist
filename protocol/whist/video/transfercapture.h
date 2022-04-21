@@ -34,8 +34,10 @@ Public Functions
  *                                texture
  * @param encoder                 The encoder into which to load the frame data
  *
+ * @param force_iframe            Whether an I-frame needs to be generated
+ *
  * @returns                       0 on success, else -1
  */
-int transfer_capture(CaptureDevice* device, VideoEncoder* encoder);
+int transfer_capture(CaptureDevice* device, VideoEncoder* encoder, bool* force_iframe);
 
 #endif  // TRANSFER_CAPTURE_H
