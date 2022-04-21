@@ -62,9 +62,6 @@ static volatile bool should_update_window_title = false;
 static volatile bool fullscreen_trigger = false;
 static volatile bool fullscreen_value = false;
 
-// Overlay removals
-static volatile bool pending_overlay_removal = false;
-
 /*
 ============================
 Private Function Declarations
@@ -110,8 +107,6 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
     // only called once.
     pending_cursor_info = NULL;
 
-    // Render a black screen before anything else,
-    // To prevent being exposed to random colors
     pending_nv12data = false;
     pending_render = false;
 
@@ -451,7 +446,7 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
 
     // If there's no pending render or overlay visualizations, just do nothing,
     // Don't consume and discard any pending nv12 or loading screen.
-    if (!pending_render && !pending_overlay_removal) {
+    if (!pending_render) {
         whist_unlock_mutex(frontend_render_mutex);
         return;
     }
@@ -463,7 +458,7 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
     start_timer(&statistics_timer);
 
     // If any overlays need to be updated make sure a background is rendered
-    if (insufficient_bandwidth || pending_overlay_removal) {
+    if (insufficient_bandwidth) {
         pending_nv12data = true;
     }
 
@@ -494,7 +489,6 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
 
     whist_lock_mutex(frontend_render_mutex);
     pending_render = false;
-    pending_overlay_removal = false;
     whist_unlock_mutex(frontend_render_mutex);
 }
 
