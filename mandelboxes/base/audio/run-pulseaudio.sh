@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# This script launches a PulseAudio server associated with the Whist display
-
 # # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
 case $(cat $SENTRY_ENV_FILENAME) in
@@ -17,5 +15,26 @@ esac
 # # Exit on subcommand errors
 set -Eeuo pipefail
 
-# Launch PulseAudio
-/usr/bin/pulseaudio --system --daemonize=no --exit-idle-time=-1 --disallow-exit
+# Wait for the PulseAudio unix socket to be active
+# Uses 5% CPU until pulseaudio activates
+while ! pactl list | grep UNIX; do
+  sleep 0.01
+done
+
+pulseaudio_watchdog() {
+  # Periodically check that the pulseaudio daemon exists
+  while pidof pulseaudio; do
+    sleep 10
+  done
+
+  exit 1
+}
+
+# Run the watchdog
+pulseaudio_watchdog &
+
+# Write the pid of the watchdog into the pidfile for the systemd service
+echo "$!" > /usr/share/whist/whist-audio-pid
+
+# Detatch the watchdog
+disown

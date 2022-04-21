@@ -367,6 +367,7 @@ COPY display/theme/awesome-rc.lua $HYDRAULIC_ROOT/home/whist/.config/awesome/rc.
 # Set up service to start pulseaudio
 COPY --chmod=550 audio/run-pulseaudio.sh $HYDRAULIC_ROOT/usr/share/whist
 COPY audio/pulse-client.conf $HYDRAULIC_ROOT/etc/pulse/client.conf
+COPY audio/pulse-default.pa $HYDRAULIC_ROOT/etc/pulse/default.pa
 COPY audio/pulse-daemon.conf $HYDRAULIC_ROOT/etc/pulse/daemon.conf
 COPY --chown=root:root --chmod=600 audio/whist-audio.service $HYDRAULIC_ROOT/etc/systemd/system
 
@@ -756,15 +757,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
-
-# Give access to Pulse Audio virtual sound card
-RUN adduser root pulse-access \
-    && adduser whist pulse-access
-
-# Prevent Pulse Audio from running as user (breaking sound for non-root users)
-RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service \
-    && systemctl mask pulseaudio \
-    && chmod -x /usr/bin/start-pulseaudio-x11
 
 #########################
 # Startup
