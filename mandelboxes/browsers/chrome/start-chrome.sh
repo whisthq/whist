@@ -39,7 +39,7 @@ flags=(
   "--force-color-profile=display-p3-d65"
   "--disable-gpu-process-crash-limit"
   "--no-default-browser-check"
-  "--force-device-scale-factor=1.5" # TEMP PHIL: This should make the address bar fonts bigger
+  "--force-device-scale-factor=2" # TEMP PHIL: This should make the address bar fonts bigger
   "--password-store=basic" # This disables the kwalletd backend, which we don't support
   "--load-extension=/opt/teleport/chrome-extension"
 )
