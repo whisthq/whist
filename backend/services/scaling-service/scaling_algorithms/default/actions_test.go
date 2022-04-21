@@ -301,6 +301,11 @@ func setup() {
 	testAlgorithm.CreateEventChans()
 	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
 	testAlgorithm.CreateDBClient(testDBClient)
+
+	// Set the desired mandelboxes map to a default value for testing
+	desiredFreeMandelboxesPerRegion = map[string]int{
+		"test-region": 2,
+	}
 }
 
 func TestMain(m *testing.M) {
