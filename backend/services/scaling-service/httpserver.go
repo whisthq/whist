@@ -25,12 +25,15 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	err := verifyRequestType(w, req, http.MethodPost)
 	if err != nil {
 		logger.Errorf("Error verifying request type. Err: %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	var reqdata httputils.MandelboxAssignRequest
 	err = authenticateRequest(w, req, &reqdata)
 	if err != nil {
 		logger.Errorf("Failed while authenticating request. Err: %v", err)
+		return
 	}
 
 	// Once we have authenticated and validated the request send it to the scaling
@@ -188,19 +191,31 @@ func throttleMiddleware(limiter *rate.Limiter, f func(http.ResponseWriter, *http
 func verifyPaymentMiddleware(f func(http.ResponseWriter, *http.Request)) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		// Get and parse Authorization header from access token
-		accessToken := r.Header.Get("Authorization")
-		accessToken = strings.Split(accessToken, "Bearer ")[1]
+		accessToken, err := getAccessToken(r)
+		if err != nil {
+			logger.Error(err)
+			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		if len(strings.Split(accessToken, "Bearer")) <= 1 {
+			logger.Warningf("Access token does not have Bearer header. Trying to parse token as is.")
+		} else {
+			accessToken = strings.Split(accessToken, "Bearer ")[1]
+		}
 
 		// Verify if the user's subscription is valid
 		paymentValid, err := payments.VerifyPayment(accessToken)
 		if err != nil {
 			logger.Errorf("Failed to validate Stripe payment from access token. Err: %v", err)
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
 		}
 
 		if !paymentValid {
 			logger.Warningf("User does not have an active Stripe subscription.")
 			http.Error(rw, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
 		}
 		f(rw, r)
 	})
