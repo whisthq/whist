@@ -3,19 +3,19 @@ module github.com/whisthq/whist/backend/services
 go 1.17
 
 require (
-	github.com/MicahParks/keyfunc v1.0.3
+	github.com/MicahParks/keyfunc v1.1.0
 	github.com/NVIDIA/go-nvml v0.11.6-0
 	github.com/aws/aws-sdk-go-v2 v1.16.2
 	github.com/aws/aws-sdk-go-v2/config v1.15.3
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.4
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.4
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.5
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.35.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.5
 	github.com/aws/smithy-go v1.11.2
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/docker/docker v20.10.14+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
-	github.com/fsnotify/fsnotify v1.5.1
+	github.com/fsnotify/fsnotify v1.5.2
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-co-op/gocron v1.13.0
 	github.com/golang-jwt/jwt/v4 v4.4.1
@@ -27,13 +27,13 @@ require (
 	github.com/jackc/pgtype v1.10.0
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/lithammer/shortuuid/v3 v3.0.7
-	github.com/logzio/logzio-go v1.0.3
+	github.com/logzio/logzio-go v1.0.4
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pierrec/lz4/v4 v4.1.14
 	github.com/shirou/gopsutil/v3 v3.22.3
-	golang.org/x/crypto v0.0.0-20220408190544-5352b0902921
+	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
+	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 )
 
 require (
@@ -79,7 +79,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/stripe/stripe-go/v72 v72.97.0
+	github.com/stripe/stripe-go/v72 v72.102.0
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
