@@ -236,7 +236,6 @@ export const getUserLocale = () => {
     const windowsLocale = searchLanguageWithRegion(
       parsedUserLocale[parsedUserLocale.length - 1].split("-").join("_")
     )
-    const userLocaleDictionary: { [key: string]: string } = {}
     if (windowsLocale !== "") {
       userLocaleDictionary.LC_ALL = windowsLocale
     } else {
