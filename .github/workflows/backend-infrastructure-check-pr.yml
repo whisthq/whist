@@ -34,7 +34,7 @@ jobs:
       GITHUB_ISSUE: ${{ github.event.number }}
     steps:
       - name: Setup Terraform CLI
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v2
 
       - name: Checkout Git Repository
         uses: actions/checkout@v3
