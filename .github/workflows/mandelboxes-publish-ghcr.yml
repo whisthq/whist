@@ -10,6 +10,10 @@ on:
       branch:
         required: true
         type: string
+      publish:
+        required: false
+        default: false
+        type: boolean
     secrets:
       SENTRY_AUTH_TOKEN:
         required: true
@@ -84,7 +88,7 @@ jobs:
 
       # We only deploy the browsers mandelboxes, other mandelboxes are for internal use only
       - name: Push mandelboxes
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        if: ${{ inputs.publish }}
         working-directory: mandelboxes
         env:
           GH_USERNAME: ${{ secrets.GHA_USERNAME }}
@@ -95,20 +99,20 @@ jobs:
 
       # Notify Slack after building and deploying the Whist AMI to all supported AWS regions.
       - name: Notify Slack on Job Successs
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        if: ${{ inputs.publish }}
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+          if "prod" in "${{ input.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+          elif "staging" in "${{ input.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
           from notifications.slack_bot import slack_post
           TITLE = ":whale: Mandelboxes Deployed :whale:"
-          BODY = "Mandelboxes deployed to GHCR on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "Mandelboxes deployed to GHCR on branch: `${{ input.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -116,9 +120,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+          if "prod" in "${{ input.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+          elif "staging" in "${{ input.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
