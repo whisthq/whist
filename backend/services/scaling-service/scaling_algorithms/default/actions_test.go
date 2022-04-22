@@ -245,15 +245,16 @@ func (mh *mockHostHandler) Initialize(region string) error {
 	return nil
 }
 
-func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTime time.Duration, imageID string) (createdInstances []subscriptions.Instance, err error) {
+func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTime time.Duration, image subscriptions.Image) (createdInstances []subscriptions.Instance, err error) {
 	var newInstances []subscriptions.Instance
 	for i := 0; i < int(numInstances); i++ {
 		newInstances = append(newInstances, subscriptions.Instance{
-			ID:       "test-scale-up-instance",
-			Provider: "AWS",
-			ImageID:  imageID,
-			Type:     "g4dn.2xlarge",
-			Status:   "PRE_CONNECTION",
+			ID:        "test-scale-up-instance",
+			Provider:  "AWS",
+			ImageID:   image.ImageID,
+			ClientSHA: image.ClientSHA,
+			Type:      "g4dn.2xlarge",
+			Status:    "PRE_CONNECTION",
 		})
 	}
 
@@ -533,7 +534,9 @@ func TestScaleUpIfNecessary(t *testing.T) {
 
 	// For this test, try to scale up instances and check if they are
 	// successfully added to the database with the correct data.
-	err := testAlgorithm.ScaleUpIfNecessary(testInstancesToScale, context, ScalingEvent{Region: "test-region"}, "test-image-id-scale-up")
+	err := testAlgorithm.ScaleUpIfNecessary(testInstancesToScale, context, ScalingEvent{Region: "test-region"}, subscriptions.Image{
+		ImageID: "test-image-id-scale-up",
+	})
 	if err != nil {
 		t.Errorf("Failed while testing scale up action. Err: %v", err)
 	}

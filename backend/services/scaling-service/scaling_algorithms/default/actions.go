@@ -95,7 +95,13 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		logger.Warningf("Image not found on %v. Not performing any scaling actions.", event.Region)
 		return nil
 	}
-	latestImageID := string(imageResult[0].ImageID)
+	latestImage := subscriptions.Image{
+		Provider:  string(imageResult[0].Provider),
+		Region:    string(imageResult[0].Region),
+		ImageID:   string(imageResult[0].ImageID),
+		ClientSHA: string(imageResult[0].ClientSHA),
+		UpdatedAt: imageResult[0].UpdatedAt,
+	}
 
 	// This query will return all instances with the ACTIVE status
 	allActive, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
@@ -109,13 +115,13 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
 	}
 
-	mandelboxCapacity := helpers.ComputeExpectedMandelboxCapacity(latestImageID, allActive, allStarting)
+	mandelboxCapacity := helpers.ComputeExpectedMandelboxCapacity(string(latestImage.ImageID), allActive, allStarting)
 
 	// We consider the expected mandelbox capacity (active instances + starting instances)
 	// to account for warmup time and so that we don't scale up unnecesary instances.
 	if mandelboxCapacity < desiredFreeMandelboxesPerRegion[event.Region] {
 		logger.Infof("Current mandelbox capacity of %v is less than desired %v. Scaling up %v instances to satisfy minimum desired capacity.", mandelboxCapacity, desiredFreeMandelboxesPerRegion[event.Region], defaultInstanceBuffer)
-		err = s.ScaleUpIfNecessary(defaultInstanceBuffer, scalingCtx, event, latestImageID)
+		err = s.ScaleUpIfNecessary(defaultInstanceBuffer, scalingCtx, event, latestImage)
 		if err != nil {
 			// err is already wrapped here
 			return err
@@ -298,7 +304,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 // ScaleUpIfNecessary is a scaling action that launched the received number of instances on
 // the cloud provider and registers them on the database with the initial values.
-func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event ScalingEvent, imageID string) error {
+func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event ScalingEvent, image subscriptions.Image) error {
 	logger.Infof("Starting scale up action for event: %v", event)
 	defer logger.Infof("Finished scale up action for event: %v", event)
 
@@ -313,10 +319,10 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	// them on the cloud provider for us.
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infof("Running on localdev so scaling up fake instances.")
-		instancesForDb = helpers.SpinUpFakeInstances(instancesToScale, imageID, event.Region)
+		instancesForDb = helpers.SpinUpFakeInstances(instancesToScale, image.ImageID, event.Region)
 	} else {
 		// Call the host handler to handle the instance spinup in the cloud provider
-		createdInstances, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, imageID)
+		createdInstances, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, image)
 		if err != nil {
 			return utils.MakeError("Failed to spin up instances, created %v, err: %v", createdInstances, err)
 		}
@@ -372,7 +378,13 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		return nil
 	}
 
-	newImageID := imageID.(string)
+	newImage := subscriptions.Image{
+		Provider:  "AWS",
+		Region:    event.Region,
+		ImageID:   imageID.(string),
+		ClientSHA: metadata.GetGitCommit(),
+		UpdatedAt: time.Now(),
+	}
 
 	// Query for the current image id
 	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
@@ -380,7 +392,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
 	}
 
-	logger.Infof("Creating new instance buffer for image %v", newImageID)
+	logger.Infof("Creating new instance buffer for image %v", newImage.ImageID)
 
 	// Slice that will hold the instances and pass them to the dbclient
 	var instancesForDb []subscriptions.Instance
@@ -390,11 +402,11 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// them on the cloud provider for us.
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infof("Running on localdev so scaling up fake instances.")
-		instancesForDb = helpers.SpinUpFakeInstances(defaultInstanceBuffer, newImageID, event.Region)
+		instancesForDb = helpers.SpinUpFakeInstances(defaultInstanceBuffer, newImage.ImageID, event.Region)
 	} else {
-		bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, int32(defaultInstanceBuffer), maxWaitTimeReady, newImageID)
+		bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, int32(defaultInstanceBuffer), maxWaitTimeReady, newImage)
 		if err != nil {
-			return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImageID, err)
+			return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImage.ImageID, err)
 		}
 
 		for _, instance := range bufferInstances {
@@ -424,14 +436,6 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	logger.Infof("Inserted %v rows to database.", affectedRows)
 
-	newImage := subscriptions.Image{
-		Provider:  "AWS",
-		Region:    event.Region,
-		ImageID:   newImageID,
-		ClientSHA: metadata.GetGitCommit(),
-		UpdatedAt: time.Now(),
-	}
-
 	// Acquire lock on protected from scale down map
 	s.protectedMapLock.Lock()
 	defer s.protectedMapLock.Unlock()
@@ -440,23 +444,23 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// during deploy, as the active image will be switched until the client app has updated
 	// its version on the config database.
 	s.protectedFromScaleDown = make(map[string]subscriptions.Image)
-	s.protectedFromScaleDown[newImageID] = newImage
+	s.protectedFromScaleDown[newImage.ImageID] = newImage
 
 	// If the region does not have an existing image, insert the new one to the database.
 	if len(imageResult) == 0 {
-		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImageID)
+		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImage.ImageID)
 
 		updateParams := subscriptions.Image{
 			Provider:  "AWS",
 			Region:    event.Region,
-			ImageID:   newImageID,
-			ClientSHA: metadata.GetGitCommit(),
+			ImageID:   newImage.ImageID,
+			ClientSHA: newImage.ClientSHA,
 			UpdatedAt: time.Now(),
 		}
 
 		_, err = s.DBClient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{updateParams})
 		if err != nil {
-			return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
+			return utils.MakeError("Failed to insert image %v into database. Error: %v", newImage.ImageID, err)
 		}
 	}
 
@@ -466,7 +470,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// failed to deploy, and if it does we rollback the new version.
 	select {
 	case s.SyncChan <- true:
-		logger.Infof("Finished upgrading image %v in region %v", newImageID, event.Region)
+		logger.Infof("Finished upgrading image %v in region %v", newImage.ImageID, event.Region)
 	case <-time.After(1 * time.Hour):
 		// Clear protected map since the client app deploy didn't complete successfully.
 		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
