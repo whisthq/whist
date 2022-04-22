@@ -115,9 +115,14 @@ void destroy_video_decoder(VideoDecoder* decoder);
  *
  * @param buffer_size               The size of the buffer containing the frame to decode
  *
+ * @param start_of_stream           True if the packets represent the start of a stream (e.g. for
+ *                                  H.264 they contain parameter sets and an IDR frame).  If so, a
+ *                                  new decoder may be started from this point.
+ *
  * @returns                         0 on success, -1 on failure
  */
-int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffer_size);
+int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, size_t buffer_size,
+                               bool start_of_stream);
 
 /**
  * @brief                           Decode the next available frame from the decoder.

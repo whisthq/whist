@@ -236,10 +236,10 @@ int render_video(VideoContext* video_context) {
             int ret;
             server_timestamp = frame->server_timestamp;
             client_input_timestamp = frame->client_input_timestamp;
-            TIME_RUN(
-                ret = video_decoder_send_packets(video_context->decoder, get_frame_videodata(frame),
-                                                 frame->videodata_length),
-                VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
+            TIME_RUN(ret = video_decoder_send_packets(
+                         video_context->decoder, get_frame_videodata(frame),
+                         frame->videodata_length, frame->frame_type == VIDEO_FRAME_TYPE_INTRA),
+                     VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
             if (ret < 0) {
                 LOG_ERROR("Failed to send packets to decoder, unable to render frame");
                 video_context->pending_render_context = false;

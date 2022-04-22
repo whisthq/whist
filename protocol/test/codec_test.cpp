@@ -129,7 +129,7 @@ TEST_F(CodecTest, DecodeTest) {
     for (int n = 0; n < 10; n++) {
         const DecodeTestInput *input = &decode_test_input[n];
 
-        ret = video_decoder_send_packets(dec, (void *)input->packet, input->size);
+        ret = video_decoder_send_packets(dec, (void *)input->packet, input->size, n == 0);
         EXPECT_EQ(ret, 0);
 
         ret = video_decoder_decode_frame(dec);
@@ -200,7 +200,7 @@ TEST_F(CodecTest, EncodeDecodeTest) {
 
         write_avpackets_to_buffer(enc->num_packets, enc->packets, packet_buffer);
 
-        ret = video_decoder_send_packets(dec, packet_buffer, enc->encoded_frame_size);
+        ret = video_decoder_send_packets(dec, packet_buffer, enc->encoded_frame_size, frame == 0);
         EXPECT_EQ(ret, 0);
 
         ret = video_decoder_decode_frame(dec);
