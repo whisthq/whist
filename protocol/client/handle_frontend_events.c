@@ -1,14 +1,13 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file sdl_event_handler.c
- * @brief This file contains client-specific wrappers to low-level network
- *        functions.
+ * @file handle_frontend_events.c
+ * @brief This file exposes the functions to handle frontend events in the main loop.
 ============================
 Usage
 ============================
 
-handleSDLEvent() must be called on any SDL event that occurs. Any action
-trigged an SDL event must be triggered in sdl_event_handler.c
+handle_frontend_events() should be periodically called in the main loop to poll and handle
+frontend events, including input, mouse motion, and resize events.
 */
 
 /*
@@ -17,20 +16,15 @@ Includes
 ============================
 */
 
-#include "sdl_event_handler.h"
+#include "handle_frontend_events.h"
 
 #include <whist/logging/logging.h>
 #include "sdl_utils.h"
 #include "audio.h"
 #include "client_utils.h"
 #include "network.h"
-#include "native_window_utils.h"
 #include <whist/utils/atomic.h>
 #include <whist/debug/debug_console.h>
-
-// Keyboard state variables
-bool lgui_pressed = false;
-bool rgui_pressed = false;
 
 // Main state variables
 extern bool client_exiting;
@@ -61,7 +55,7 @@ Private Functions Declarations
 ============================
 */
 
-static int handle_frontend_event(WhistFrontendEvent* event);
+static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* event);
 
 /*
 ============================
@@ -69,10 +63,10 @@ Public Function Implementations
 ============================
 */
 
-bool sdl_handle_events(WhistFrontend* frontend) {
+bool handle_frontend_events(WhistFrontend* frontend) {
     WhistFrontendEvent event;
     while (whist_frontend_poll_event(frontend, &event)) {
-        if (handle_frontend_event(&event) != 0) {
+        if (handle_frontend_event(frontend, &event) != 0) {
             return false;
         }
     }
@@ -92,7 +86,7 @@ bool sdl_handle_events(WhistFrontend* frontend) {
     return true;
 }
 
-bool sdl_pending_audio_device_update(void) {
+bool pending_audio_device_update(void) {
     // Mark as no longer pending "0",
     // and return whether or not it was pending since the last time we called this function
     int pending_audio_device_update = atomic_exchange(&g_pending_audio_device_update, 0);
@@ -106,12 +100,6 @@ Private Function Implementations
 */
 
 static void handle_keypress_event(FrontendKeypressEvent* event) {
-    if (event->code == FK_LGUI) {
-        lgui_pressed = event->pressed;
-    } else if (event->code == FK_RGUI) {
-        rgui_pressed = event->pressed;
-    }
-
     WhistClientMessage msg = {0};
     msg.type = MESSAGE_KEYBOARD;
     msg.keyboard.code = event->code;
@@ -195,10 +183,22 @@ static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEven
     // Scale the drop coordinates for server-side compatibility
     drop_info.server_drop.x = event->position.x * dpi / 96;
     drop_info.server_drop.y = event->position.y * dpi / 96;
-    sdl_end_drag_event();
+    // TODO: Clear any state from a stale file drag event
     file_synchronizer_set_file_reading_basic_metadata(event->filename, FILE_TRANSFER_SERVER_DROP,
                                                       &drop_info);
     free(event->filename);
+}
+
+static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEvent* event) {
+    if (event->end_drag == true) {
+        // Handle the drag end case (this either means the drag has ended or the drag has
+        // left the window)
+        return;
+    }
+
+    // The event->position.{x,y} values are in screen coordinates, so we
+    // would need to multiply by output_{width,height} and divide by
+    // window_{width,height} to know where to draw the file drag overlay
 }
 
 static void handle_quit_event(FrontendQuitEvent* event) {
@@ -211,7 +211,7 @@ static void handle_quit_event(FrontendQuitEvent* event) {
     client_exiting = true;
 }
 
-static int handle_frontend_event(WhistFrontendEvent* event) {
+static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
     if (event->type != FRONTEND_EVENT_MOUSE_WHEEL && active_momentum_scroll) {
         // Cancel momentum scrolls on non-wheel events
         active_momentum_scroll = false;
@@ -219,7 +219,7 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
 
     switch (event->type) {
         case FRONTEND_EVENT_RESIZE: {
-            sdl_renderer_resize_window(event->frontend, event->resize.width, event->resize.height);
+            sdl_renderer_resize_window(frontend, event->resize.width, event->resize.height);
             break;
         }
         case FRONTEND_EVENT_VISIBILITY: {
@@ -230,8 +230,6 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
                 send_wcmsg(&wcmsg);
             } else {
                 LOG_INFO("Window now hidden -- stop streaming");
-                // End any active drag event
-                sdl_end_drag_event();
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_STOP_STREAMING;
                 send_wcmsg(&wcmsg);
@@ -260,7 +258,6 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
             break;
         }
         case FRONTEND_EVENT_MOUSE_LEAVE: {
-            sdl_end_drag_event();
             break;
         }
         case FRONTEND_EVENT_GESTURE: {
@@ -268,7 +265,11 @@ static int handle_frontend_event(WhistFrontendEvent* event) {
             break;
         }
         case FRONTEND_EVENT_FILE_DROP: {
-            handle_file_drop_event(event->frontend, &event->file_drop);
+            handle_file_drop_event(frontend, &event->file_drop);
+            break;
+        }
+        case FRONTEND_EVENT_FILE_DRAG: {
+            handle_file_drag_event(frontend, &event->file_drag);
             break;
         }
         case FRONTEND_EVENT_QUIT: {

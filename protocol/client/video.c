@@ -27,14 +27,12 @@ Includes
 
 #include <stdio.h>
 
-#include <SDL2/SDL.h>
 #include <whist/utils/color.h>
 #include <whist/utils/png.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/rwlock.h>
 #include "whist/core/features.h"
 #include "whist/utils/command_line.h"
-#include "native_window_utils.h"
 #include "network.h"
 #include "client_utils.h"
 #include <whist/debug/protocol_analyzer.h>
@@ -66,6 +64,8 @@ struct VideoContext {
     int last_frame_width;
     int last_frame_height;
     CodecType last_frame_codec;
+
+    WhistFrontend* frontend;
 
     bool has_video_rendered_yet;
 
@@ -117,13 +117,14 @@ Public Function Implementations
 ============================
 */
 
-VideoContext* init_video(int initial_width, int initial_height) {
+VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial_height) {
     VideoContext* video_context = safe_malloc(sizeof(*video_context));
     memset(video_context, 0, sizeof(*video_context));
 
     video_context->has_video_rendered_yet = false;
     video_context->sws = NULL;
     video_context->render_context = NULL;
+    video_context->frontend = frontend;
     video_context->pending_render_context = false;
     VideoDecoder* decoder =
         create_video_decoder(initial_width, initial_height, use_hardware_decode, CODEC_TYPE_H264);
@@ -203,7 +204,8 @@ int render_video(VideoContext* video_context) {
 
         // If server thinks the window isn't visible, but the window is visible now,
         // Send a START_STREAMING message
-        if (!frame->is_window_visible && sdl_is_window_visible()) {
+        if (!frame->is_window_visible &&
+            whist_frontend_is_window_visible(video_context->frontend)) {
             // The server thinks the client window is occluded/minimized, but it isn't. So
             // we'll correct it. NOTE: Most of the time, this is just because there was a
             // delay between the window losing visibility and the server reacting.
@@ -344,8 +346,8 @@ int render_video(VideoContext* video_context) {
         // Mark the framebuffer out to render
         sdl_render_framebuffer();
 
-        // Declare user activity to prevent screensaver
-        declare_user_activity();
+        // Declare user activity to suppress screensaver
+        whist_frontend_declare_user_activity(video_context->frontend);
 
         if (client_input_timestamp != 0) {
             // Calculate E2E latency

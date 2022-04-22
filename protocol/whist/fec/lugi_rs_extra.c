@@ -5,7 +5,7 @@
  */
 
 #include <string.h>
-#include <SDL2/SDL_thread.h>
+#include <whist/utils/threads.h>
 #include "lugi_rs_extra.h"
 #include "rs_common.h"
 #include <whist/logging/logging.h>
@@ -20,7 +20,7 @@ Globals
 */
 
 // Holds the RSTable for each thread
-static SDL_TLSID rs_table_tls_id;
+static WhistThreadLocalStorageKey rs_table_tls_key;
 
 // This is the type for the rs_table we use for caching
 typedef RSCode *RSTable[RS_TABLE_SIZE][RS_TABLE_SIZE];
@@ -33,7 +33,7 @@ Public Function Implementations
 
 void lugi_rs_extra_init(void) {
     init_rs();
-    rs_table_tls_id = SDL_TLSCreate();
+    rs_table_tls_key = whist_create_thread_local_storage();
 }
 
 RSCode *lugi_rs_extra_get_rs_code(int k, int n) {
@@ -41,13 +41,14 @@ RSCode *lugi_rs_extra_get_rs_code(int k, int n) {
     FATAL_ASSERT(n <= RS_FIELD_SIZE);
 
     // Get the rs code table for this thread
-    RSTable *rs_code_table = SDL_TLSGet(rs_table_tls_id);
+    RSTable *rs_code_table = whist_get_thread_local_storage(rs_table_tls_key);
 
     // If the table for this thread doesn't exist, initialize it
     if (rs_code_table == NULL) {
         rs_code_table = (RSTable *)safe_malloc(sizeof(RSTable));
         memset(rs_code_table, 0, sizeof(RSTable));
-        SDL_TLSSet(rs_table_tls_id, rs_code_table, lugi_rs_extra_free_rs_code_table);
+        whist_set_thread_local_storage(rs_table_tls_key, rs_code_table,
+                                       lugi_rs_extra_free_rs_code_table);
     }
 
     // If (n, k)'s rs_code hasn't been create yet, create it

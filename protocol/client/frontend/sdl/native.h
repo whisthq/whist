@@ -1,9 +1,8 @@
-#ifndef NATIVE_WINDOW_UTILS_H
-#define NATIVE_WINDOW_UTILS_H
-
+#ifndef WHIST_CLIENT_FRONTEND_SDL_NATIVE_H
+#define WHIST_CLIENT_FRONTEND_SDL_NATIVE_H
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file native_window_utils.h
+ * @file native.h
  * @brief This file exposes platform-independent APIs for
  *        native window modifications not handled by SDL.
 ============================
@@ -22,22 +21,14 @@ Includes
 ============================
 */
 
-#include <SDL2/SDL.h>
-#include <whist/utils/color.h>
-#include "frontend/frontend.h"
-
-/*
-============================
-Public Functions
-============================
-*/
+#include "common.h"
 
 /**
  * @brief                          Hide the taskbar icon for the app. This only works on
  *                                 macOS (for Windows and Linux, SDL already implements this in
  *                                 the `SDL_WINDOW_SKIP_TASKBAR` flag).
  */
-void hide_native_window_taskbar(void);
+void sdl_native_hide_taskbar(void);
 
 /**
  * @brief                          Initialize the customized native window. This is called from
@@ -45,7 +36,7 @@ void hide_native_window_taskbar(void);
  *
  * @param window                   The SDL window wrapper for the NSWindow to customize.
  */
-void init_native_window_options(SDL_Window* window);
+void sdl_native_init_window_options(SDL_Window* window);
 
 /**
  * @brief                          Set the color of the titlebar of the provided window, and
@@ -57,7 +48,7 @@ void init_native_window_options(SDL_Window* window);
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int set_native_window_color(SDL_Window* window, WhistRGBColor color);
+int sdl_native_set_titlebar_color(SDL_Window* window, const WhistRGBColor* color);
 
 /**
  * @brief                          Get the DPI for the display of the provided window.
@@ -68,25 +59,24 @@ int set_native_window_color(SDL_Window* window, WhistRGBColor color);
  *
  * @note                           Should only be called inside main thread, at least on MacOS.
  */
-int get_native_window_dpi(SDL_Window* window);
+int sdl_native_get_dpi(SDL_Window* window);
+
+/**
+ * @brief                          Declares that user activity has occured,
+ *                                 resetting the timer for screensavers and sleep mode.
+ */
+void sdl_native_declare_user_activity(void);
 
 /**
  * @brief                          Set up callbacks for out of window drag events
  *
- * @note                           This must be called after init_sdl
  */
-void initialize_out_of_window_drag_handlers(WhistFrontend* frontend);
+void sdl_native_init_external_drag_handler(WhistFrontend* frontend);
 
 /**
  * @brief                          Destroy callbacks for out of window drag events
  *
  */
-void destroy_out_of_window_drag_handlers(void);
+void sdl_native_destroy_external_drag_handler(WhistFrontend* frontend);
 
-/**
- * @brief                          Declares that UserActivity has occured,
- *                                 resetting the timer for screensavers/sleepmode
- */
-void declare_user_activity(void);
-
-#endif  // NATIVE_WINDOW_UTILS_H
+#endif  // WHIST_CLIENT_FRONTEND_SDL_NATIVE_H

@@ -11,7 +11,7 @@ Includes
 */
 
 #include "renderer.h"
-#include "sdl_event_handler.h"
+#include "handle_frontend_events.h"
 #include "whist/debug/debug_console.h"
 #include <whist/logging/log_statistic.h>
 
@@ -90,7 +90,7 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
 
     // Initialize audio and video systems
     whist_renderer->audio_context = init_audio(frontend);
-    whist_renderer->video_context = init_video(initial_width, initial_height);
+    whist_renderer->video_context = init_video(frontend, initial_width, initial_height);
 
     if (SINGLE_THREAD_MODEL) {
         // These mutex/sem/timer pass work to the renderer thread when necessary
@@ -221,7 +221,7 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
 
     // If the audio device is pending an update,
     // refresh the audio device
-    if (sdl_pending_audio_device_update()) {
+    if (pending_audio_device_update()) {
         refresh_audio_device(whist_renderer->audio_context);
     }
 
@@ -348,7 +348,7 @@ int32_t multithreaded_audio_renderer(void* opaque) {
         }
 
         // Refresh the audio device, if a new audio device update is pending
-        if (sdl_pending_audio_device_update()) {
+        if (pending_audio_device_update()) {
             refresh_audio_device(whist_renderer->audio_context);
         }
 
@@ -357,8 +357,4 @@ int32_t multithreaded_audio_renderer(void* opaque) {
     }
 
     return 0;
-}
-
-bool renderer_has_video_rendered_yet(WhistRenderer* renderer) {
-    return has_video_rendered_yet(renderer->video_context);
 }

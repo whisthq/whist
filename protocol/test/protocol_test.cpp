@@ -35,8 +35,8 @@ extern "C" {
 #include <whist/utils/os_utils.h>
 #include <whist/network/ringbuffer.h>
 #include <client/audio.h>
-
-#include <client/native_window_utils.h>
+#include <client/frontend/frontend.h>
+#include <client/frontend/sdl/common.h>
 
 #ifndef __APPLE__
 #include "server/state.h"
@@ -63,7 +63,6 @@ extern "C" {
 extern int output_width;
 extern int output_height;
 extern WhistMutex window_resize_mutex;
-extern volatile SDL_Window* window;
 extern volatile char client_hex_aes_private_key[33];
 extern unsigned short port_mappings[USHRT_MAX + 1];
 
@@ -105,7 +104,6 @@ TEST_F(ProtocolTest, InitSDL) {
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
-    char icon_filepath[] = PATH_JOIN("assets", "icon_dev.png");
 
     // These need to be small enough to fit on the screen, but bigger
     // than our set minima from whist/core/whist.h.
@@ -114,10 +112,9 @@ TEST_F(ProtocolTest, InitSDL) {
     EXPECT_GE(width, MIN_SCREEN_WIDTH);
     EXPECT_GE(height, MIN_SCREEN_HEIGHT);
 
-    WhistFrontend* frontend = NULL;
-    SDL_Window* new_window = init_sdl(width, height, very_long_title, icon_filepath, &frontend);
+    WhistFrontend* frontend = init_sdl(width, height, very_long_title);
 
-    if (new_window == NULL) {
+    if (frontend == NULL) {
         // Check if there is no device available to test SDL (e.g. on Ubuntu CI)
         const char* err = SDL_GetError();
         int res = strcmp(err, "No available video device");
@@ -129,16 +126,22 @@ TEST_F(ProtocolTest, InitSDL) {
         }
     }
 
+    EXPECT_TRUE(frontend != NULL);
+    SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->window;
     EXPECT_TRUE(new_window != NULL);
 
-    check_stdout_line(::testing::HasSubstr("SDL: Using renderer: "));
-    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
-    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
+    check_stdout_line(::testing::HasSubstr("Using renderer: "));
 
 #ifdef _WIN32
-    check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+    check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
 #elif defined(__linux__)
-    check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
+    check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
+#endif
+
+#ifdef _WIN32
+    check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
+#elif defined(__linux__)
+    check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
 #endif
 
     // Check that the initial title was set appropriately
@@ -174,7 +177,6 @@ TEST_F(ProtocolTest, InitSDL) {
     // Check the update_pending_task_functioning
 
     window_resize_mutex = whist_create_mutex();
-    window = new_window;
 
     // Window resize
     {
@@ -273,7 +275,7 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_TRUE(new_color.blue == c.blue);
         EXPECT_TRUE(new_color.green == c.green);
 
-        set_native_window_color(new_window, c);
+        whist_frontend_set_titlebar_color(frontend, &c);
 
 #ifdef _WIN32
         check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
@@ -355,8 +357,7 @@ TEST_F(ProtocolTest, InitSDL) {
         //       but this was literally the only place in our codebase where we needed
         //       to compute the screen size, so I opted to remove that function.
     }
-
-    destroy_sdl(new_window, frontend);
+    destroy_sdl(frontend);
     whist_destroy_mutex(window_resize_mutex);
 
     check_stdout_line(::testing::HasSubstr("Destroying SDL"));
@@ -2400,7 +2401,7 @@ TEST_F(ProtocolTest, ClientParseArgs) {
         "-h",
         "750",
         // Set the icon (using a 64x64 png file)
-        "-i",
+        "--sdl-icon",
         "assets/icon_dev.png",
         // Set the protocol window title
         "-n",
@@ -2414,8 +2415,6 @@ TEST_F(ProtocolTest, ClientParseArgs) {
         // Set the session id
         "-d",
         "2rhfnq384",
-        // Request to launch protocol without an icon in the taskbar
-        "-s",
         // Pass the user's email
         "-u",
         "user@whist.com",
@@ -2473,7 +2472,7 @@ TEST_F(ProtocolTest, ClientParseArgs) {
 
     // Check that the icon filename was set correctly
     const char* png_icon_filename;
-    EXPECT_SUCCESS(whist_option_get_string_value("icon", &png_icon_filename));
+    EXPECT_SUCCESS(whist_option_get_string_value("sdl-icon", &png_icon_filename));
     EXPECT_TRUE(png_icon_filename != NULL);
     EXPECT_STREQ(png_icon_filename, argv[17]);
 
@@ -2510,17 +2509,11 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     EXPECT_EQ(strcmp(session_id_copy, argv[25]), 0);
     free(session_id_copy);
 
-    // Check skip taskbar
-    EXPECT_TRUE(get_skip_taskbar());
-
     // Check user email
     const char* user_email;
     EXPECT_SUCCESS(whist_option_get_string_value("user", &user_email));
     EXPECT_TRUE(user_email != NULL);
-    EXPECT_STREQ(user_email, argv[28]);
-
-    // Undo global option settings which can break other tests.
-    whist_set_single_option("skip-taskbar", "off");
+    EXPECT_STREQ(user_email, argv[27]);
 }
 
 TEST_F(ProtocolTest, ErrorCodes) {

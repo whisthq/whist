@@ -24,7 +24,6 @@ Includes
 
 #include "client_utils.h"
 #include "network.h"
-#include "native_window_utils.h"
 #include <whist/logging/logging.h>
 #include <whist/logging/error_monitor.h>
 #include <whist/debug/debug_console.h>

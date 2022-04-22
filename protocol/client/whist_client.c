@@ -24,8 +24,6 @@ Includes
 #include <string.h>
 #include <fcntl.h>
 
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
 #include <whist/core/whist.h>
 #include <whist/network/network.h>
 #include <whist/utils/aes.h>
@@ -40,14 +38,12 @@ Includes
 #include "audio.h"
 #include "client_utils.h"
 #include "network.h"
-#include "sdl_event_handler.h"
+#include "handle_frontend_events.h"
 #include "sdl_utils.h"
 #include "handle_server_message.h"
 #include "video.h"
 #include "sync_packets.h"
-#include <SDL2/SDL_syswm.h>
 #include <whist/utils/color.h>
-#include "native_window_utils.h"
 #include "renderer.h"
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
@@ -63,24 +59,18 @@ Includes
 // Global state variables
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
-extern volatile SDL_Window* window;
 
 extern volatile int output_width;
 extern volatile int output_height;
 static char* program_name;
 static char* server_ip;
 static char* user_email;
-static char* icon_png_filename;
 extern bool using_stun;
-
-// Keyboard state variables
-extern bool lgui_pressed;
-extern bool rgui_pressed;
 
 // Mouse motion state
 extern MouseMotionAccumulation mouse_state;
 
-// Whether a pinch is currently active - set in sdl_event_handler.c
+// Whether a pinch is currently active - set in handle_frontend_events.c
 extern bool active_pinch;
 
 // Window resizing state
@@ -109,22 +99,17 @@ extern bool upload_initiated;
 
 COMMAND_LINE_STRING_OPTION(user_email, 'u', "user", WHIST_ARGS_MAXLEN,
                            "Tell Whist the user's email.  Default: None.")
-COMMAND_LINE_STRING_OPTION(icon_png_filename, 'i', "icon", WHIST_ARGS_MAXLEN,
-                           "Set the protocol window icon from a 64x64 pixel png file.")
 COMMAND_LINE_STRING_OPTION(new_tab_urls, 'x', "new-tab-url", MAX_URL_LENGTH* MAX_NEW_TAB_URLS,
                            "URL to open in new tab.")
 COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
                            "Set the window title.  Default: Whist.")
 COMMAND_LINE_STRING_OPTION(server_ip, 0, "server-ip", IP_MAXLEN, "Set the server IP to connect to.")
 
-static int sync_keyboard_state(void) {
+static void sync_keyboard_state(WhistFrontend* frontend) {
     /*
         Synchronize the keyboard state of the host machine with
         that of the server by grabbing the host keyboard state and
         sending a packet to the server.
-
-        Return:
-            (int): 0 on success
     */
 
     // Set keyboard state initialized to null
@@ -133,42 +118,35 @@ static int sync_keyboard_state(void) {
     wcmsg.type = MESSAGE_KEYBOARD_STATE;
 
     int num_keys;
-    const Uint8* state = SDL_GetKeyboardState(&num_keys);
-#if defined(_WIN32)
-    wcmsg.keyboard_state.num_keycodes = (short)min(KEYCODE_UPPERBOUND, num_keys);
-#else
-    wcmsg.keyboard_state.num_keycodes = fmin(KEYCODE_UPPERBOUND, num_keys);
-#endif
+    const uint8_t* key_state;
+    int mod_state;
+
+    whist_frontend_get_keyboard_state(frontend, &key_state, &num_keys, &mod_state);
+
+    wcmsg.keyboard_state.num_keycodes = (short)min(num_keys, KEYCODE_UPPERBOUND);
 
     // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
     // Must convert to/from the name of the key so SDL returns the scancode for the key in the
     // current layout rather than the scancode for the physical key.
     for (int i = 0; i < wcmsg.keyboard_state.num_keycodes; i++) {
-        if (state[i]) {
+        if (key_state[i]) {
             if (0 <= i && i < (int)sizeof(wcmsg.keyboard_state.state)) {
                 wcmsg.keyboard_state.state[i] = 1;
             }
         }
     }
 
-    // Also send caps lock and num lock status for synchronization
-    wcmsg.keyboard_state.state[FK_LGUI] = lgui_pressed;
-    wcmsg.keyboard_state.state[FK_RGUI] = rgui_pressed;
-
-    wcmsg.keyboard_state.caps_lock = SDL_GetModState() & KMOD_CAPS;
-#ifndef __APPLE__
-    // On macs, the num lock has no functionality, so we should always have it disabled
-    wcmsg.keyboard_state.num_lock = SDL_GetModState() & KMOD_NUM;
-#endif
-
+    // Handle keys and state not tracked by key_state.
+    wcmsg.keyboard_state.state[FK_LGUI] = !!(mod_state & KMOD_LGUI);
+    wcmsg.keyboard_state.state[FK_RGUI] = !!(mod_state & KMOD_RGUI);
+    wcmsg.keyboard_state.caps_lock = !!(mod_state & KMOD_CAPS);
+    wcmsg.keyboard_state.num_lock = !!(mod_state & KMOD_NUM);
     wcmsg.keyboard_state.active_pinch = active_pinch;
 
     // Grabs the keyboard layout as well
     wcmsg.keyboard_state.layout = get_keyboard_layout();
 
     send_wcmsg(&wcmsg);
-
-    return 0;
 }
 
 static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
@@ -279,7 +257,7 @@ static void send_new_tab_urls_if_needed(WhistFrontend* frontend) {
 
         // Unmimimize the window if needed
         if (!whist_frontend_is_window_visible(frontend)) {
-            SDL_RestoreWindow((SDL_Window*)window);
+            whist_frontend_restore_window(frontend);
         }
     }
 }
@@ -358,15 +336,9 @@ int whist_client_main(int argc, const char* argv[]) {
             // a frozen window for 1 second if we're not connected to the server. Better to
             // show a "reconnecting" message within the main loop.
             whist_sleep(1000);
-        }
-
-        // Initialize the SDL window (and only do this once!)
-        if (!window) {
-            window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename,
-                              &frontend);
-            if (!window) {
-                LOG_FATAL("Failed to initialize SDL");
-            }
+        } else {
+            // Only initialize this once.
+            frontend = init_sdl(output_width, output_height, program_name);
         }
 
         // The lines below may be called multiple times,
@@ -379,9 +351,6 @@ int whist_client_main(int argc, const char* argv[]) {
         // the udp/tcp threads
         init_clipboard_synchronizer(true);
         init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
-
-        // Add listeners for global file drag events
-        initialize_out_of_window_drag_handlers(frontend);
 
         start_timer(&window_resize_timer);
         window_resize_mutex = whist_create_mutex();
@@ -408,7 +377,6 @@ int whist_client_main(int argc, const char* argv[]) {
         if (connect_to_server(server_ip, using_stun, user_email) != 0) {
             // This must destroy everything initialized above this line
             LOG_WARNING("Failed to connect to server.");
-            destroy_out_of_window_drag_handlers();
             destroy_file_synchronizer();
             destroy_clipboard_synchronizer();
             destroy_renderer(whist_renderer);
@@ -431,9 +399,6 @@ int whist_client_main(int argc, const char* argv[]) {
         // so it can synchronize with us
         send_message_dimensions(frontend);
 
-        // Indicated if window as been shown
-        bool window_has_shown = false;
-
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
@@ -447,13 +412,6 @@ int whist_client_main(int argc, const char* argv[]) {
             // Try rendering anything out, if there's something to render out
             renderer_try_render(whist_renderer);
 
-            // if only show window after video has rendered
-            if (!window_has_shown && renderer_has_video_rendered_yet(whist_renderer)) {
-                FATAL_ASSERT(window != NULL);
-                SDL_ShowWindow((SDL_Window*)window);
-                window_has_shown = 1;
-            }
-
             // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set
             // because getting cpu usage statistics is expensive.
             if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) > 1) {
@@ -462,10 +420,8 @@ int whist_client_main(int argc, const char* argv[]) {
                 start_timer(&cpu_usage_statistics_timer);
             }
 
-            // We _must_ keep make calling this function as much as we can,
-            // or else the user will get beachball / "Whist Not Responding"
-            // Note, that the OS will sometimes hang this function for an arbitrarily long time
-            if (!sdl_handle_events(frontend)) {
+            // This might hang for a long time
+            if (!handle_frontend_events(frontend)) {
                 // unable to handle event
                 exit_code = WHIST_EXIT_FAILURE;
                 break;
@@ -502,10 +458,7 @@ int whist_client_main(int argc, const char* argv[]) {
             }
 
             if (get_timer(&keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
-                if (sync_keyboard_state() != 0) {
-                    exit_code = WHIST_EXIT_FAILURE;
-                    break;
-                }
+                sync_keyboard_state(frontend);
                 start_timer(&keyboard_sync_timer);
             }
 
@@ -552,7 +505,6 @@ int whist_client_main(int argc, const char* argv[]) {
 
         // Destroy the network system
         destroy_packet_synchronizers();
-        destroy_out_of_window_drag_handlers();
         destroy_file_synchronizer();
         destroy_clipboard_synchronizer();
         close_connections();
@@ -592,9 +544,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
-    if (window) {
-        destroy_sdl((SDL_Window*)window, frontend);
-    }
+    destroy_sdl(frontend);
 
     destroy_statistic_logger();
 

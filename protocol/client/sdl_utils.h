@@ -30,16 +30,7 @@ Public Functions
 */
 
 /**
- * @brief                          Check whether we are going to initialize the protocol window
- * without the taskbar.
- *
- * @returns                        A copy of the skip_taskbar static variable, which is set by a
- * command line option.
- */
-bool get_skip_taskbar(void);
-
-/**
- * @brief                          Creates the SDL window,
+ * @brief                          Creates the SDL window frontend,
  *                                 with the currently running thread at the owner
  *
  * @param output_width             The width of the SDL window to create, in
@@ -47,29 +38,20 @@ bool get_skip_taskbar(void);
  * @param output_height            The height of the SDL window to create, in
  *                                 pixels
  *
- * @param name                     The title of the window
+ * @param title                    The title of the window
  *
- * @param icon_filename            The filename of the window icon, pointing to a 64x64 png,
- *                                 or NULL to use the default icon.
+ * @returns                        A handle for the created frontend
  *
- * @param frontend                 (Temporary) A pointer to the frontend to be initialized and
- *                                 registered with the created SDL window.
- *
- * @returns                        NULL if fails to create SDL window, else it
- *                                 returns the SDL window variable
  */
-SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename,
-                     WhistFrontend** frontend);
+WhistFrontend* init_sdl(int output_width, int output_height, const char* title);
 
 /**
  * @brief                          Destroys an SDL window and associated
  *                                 parameters
  *
- * @param window                   The SDL window to destroy
- *
  * @param frontend                 The frontend to be destroyed
  */
-void destroy_sdl(SDL_Window* window, WhistFrontend* frontend);
+void destroy_sdl(WhistFrontend* frontend);
 
 /**
  * @brief                          When the window gets resized, call this function
@@ -138,7 +120,7 @@ void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info);
  * @note                           This function is virtually instantaneous. Should be only called
  *                                 in main thread, since it's the only safe way to do any render.
  */
-void sdl_present_pending_cursor(void);
+void sdl_present_pending_cursor(WhistFrontend* frontend);
 
 /**
  * @brief                          Update the color of the window's titlebar
@@ -167,16 +149,6 @@ void sdl_set_window_title(const char* window_title);
  * @note                           This function is virtually instantaneous
  */
 void sdl_set_fullscreen(bool is_fullscreen);
-
-/**
- * @brief                          Returns whether or not the window is currently visible
- *
- * @returns                        False if the window is occluded or minimized,
- *                                 True otherwise
- *
- * @note                           This function is virtually instantaneous
- */
-bool sdl_is_window_visible(void);
 
 /**
  * @brief                          The above functions may be expensive, and thus may
@@ -227,20 +199,5 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
                                   bool* native_window_color_update_ptr, char* window_title_ptr,
                                   bool* should_update_window_title_ptr,
                                   bool* fullscreen_trigger_ptr, bool* fullscreen_value_ptr);
-
-/**
- * @brief                          Called when a drag event has been detected. Uses the
- *                                 sdl global mouse and window state to initiate dragging
- *                                 indication or emulation.
- *
- */
-void sdl_handle_drag_event(WhistFrontend* frontend);
-
-/**
- * @brief                          Cancel or terminate drag indications/emulations
- *
- * @note                           This should be called when mouse exits the window or on mouseup
- */
-void sdl_end_drag_event(void);
 
 #endif  // WHIST_SDL_UTILS_H

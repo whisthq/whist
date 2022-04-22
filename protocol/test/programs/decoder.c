@@ -7,6 +7,7 @@
 #include <libavcodec/avcodec.h>
 #include <libavcodec/bsf.h>
 #include <libavformat/avformat.h>
+#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <openssl/evp.h>
 
@@ -402,13 +403,6 @@ static int max_frames;
 
 COMMAND_LINE_INT_OPTION(max_frames, 0, "frames", 1, INT_MAX,
                         "Stop after processing this many frames.")
-
-#ifdef _WIN32
-// SDL redefines main for Windows applications to try to do some global
-// initialisation early.  We want the initialisation to happen normally
-// so undo that.
-#undef main
-#endif
 
 int main(int argc, const char **argv) {
     WhistStatus err = whist_parse_command_line(argc, argv, NULL);

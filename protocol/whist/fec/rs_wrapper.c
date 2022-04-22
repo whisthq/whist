@@ -1,5 +1,4 @@
 #include <string.h>
-#include <SDL2/SDL_thread.h>
 
 #include <whist/core/whist.h>
 #include "cm256/gf256_cpuinfo.h"
