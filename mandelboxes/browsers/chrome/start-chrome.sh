@@ -27,12 +27,14 @@ if [[ -n $WHIST_CHROME_SINGLETON_LOCK ]]; then
   rm -f $GOOGLE_CHROME_SINGLETON_LOCK
 fi
 
+# Note: We cannot use the "--enable-zero-copy" flag while using
+# Nvidia Capture as our video capture backend, as this will cause
+# visual glitches
 features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization,OverlayScrollbar"
 flags=(
   "--use-gl=desktop"
   "--flag-switches-begin"
   "--enable-gpu-rasterization"
-  "--enable-zero-copy"
   "--double-buffer-compositing"
   "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
   "--disable-font-subpixel-positioning"
