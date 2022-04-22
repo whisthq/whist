@@ -282,7 +282,9 @@ def create_extension_file(base_path, extension):
         os.makedirs(base_path)
 
     with open(os.path.join(base_path, extension + ".json"), "w") as extension_file:
-        extension_file.write('{"update_url": "https://clients2.google.com/service/update2/crx"}')
+        extension_file.write(
+            '{"external_update_url": "https://clients2.google.com/service/update2/crx"}'
+        )
 
 
 def create_extension_files(extensions, custom_path=None):
