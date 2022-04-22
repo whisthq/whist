@@ -32,7 +32,6 @@ flags=(
   "--use-gl=desktop"
   "--flag-switches-begin"
   "--enable-gpu-rasterization"
-  "--enable-zero-copy"
   "--double-buffer-compositing"
   "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
   "--disable-font-subpixel-positioning"
