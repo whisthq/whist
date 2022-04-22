@@ -6,8 +6,8 @@
 
 import { BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
-import { timer } from "rxjs"
-import { takeUntil, withLatestFrom } from "rxjs/operators"
+import { timer, merge } from "rxjs"
+import { takeUntil, withLatestFrom, take } from "rxjs/operators"
 import { ChildProcess } from "child_process"
 import * as Sentry from "@sentry/electron"
 
@@ -62,9 +62,10 @@ timer(0, CHECK_UPDATE_INTERVAL_IN_MS)
   })
 
 withAppActivated(
-  fromTrigger(WhistTrigger.updateAvailable).pipe(
-    takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
-  )
+  merge(
+    fromTrigger(WhistTrigger.updateAvailable),
+    fromTrigger(WhistTrigger.updateDownloaded)
+  ).pipe(takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess)), take(1))
 ).subscribe(() => {
   const openWindows = BrowserWindow.getAllWindows()
 
