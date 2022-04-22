@@ -7,7 +7,8 @@
     "postcss.config.js",
     "snowpack.config.js",
     "tailwind.config.js",
-    ".eslintrc.js"
+    ".eslintrc.js",
+    "jest.config.js"
   ],
   "compilerOptions": {
     "allowJs": true,

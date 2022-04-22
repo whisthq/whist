@@ -22,7 +22,7 @@
     "lint:fix": "node ./scripts/lint.js --fix",
     "cache:clear": "electron ./scripts/clearAppData.js",
     "test:manual": "node ./scripts/testManual.js",
-    "test:ci": "jest"
+    "test:ci": "jest --config ./jest.config.js"
   },
   "dependencies": {
     "@amplitude/node": "^1.8.0",
@@ -89,7 +89,8 @@
     "react-use-intercom": "^1.4.1",
     "rxjs": "^7.4.0",
     "sqlite3": "^5.0.2",
-    "tmp": "^0.2.1"
+    "tmp": "^0.2.1",
+    "ts-jest": "^27.1.4"
   },
   "optionalDependencies": {
     "@types/ref-napi": "^3.0.4",
