@@ -86,7 +86,7 @@ typedef union FileEventInfo {
 } FileEventInfo;
 
 /**
- * @brief                          A packet of data containing a file's metadata
+ * @brief                            A packet of data containing a file's metadata
  */
 typedef struct FileMetadata {
     int global_file_id;              // The global id of the file for synchrony
@@ -96,6 +96,13 @@ typedef struct FileMetadata {
     size_t filename_len;             // Length of the filename
     char filename[0];                // The file name
 } FileMetadata;
+
+/**
+ * @brief                            A packet of data indicating the end of a file group
+ */
+typedef struct FileGroupEnd {
+    FileTransferType transfer_type;  // Type of file transfer
+} FileGroupEnd;
 
 /**
  * @brief                          The local direction of the transfer
@@ -239,14 +246,13 @@ void file_synchronizer_end_type_group(FileTransferType transfer_type);
  * @param transferring_file        The TransferringFile that is being checked if it is a
  *                                 group end indicator.
  *
- * @param group_end_transfer_type  The pointer to the TransferType of the TransferringFile
- *                                 to be populated
+ * @param group_end_info           The pointer to the FileGroupEnd to be populated
  *
  * @returns                        True if group end, else false
  *
  */
 bool file_synchronizer_handle_type_group_end(TransferringFile* transferring_file,
-                                             FileTransferType *group_end_transfer_type);
+                                             FileGroupEnd *group_end_info);
 
 /**
  * @brief                          Cleanup the file synchronizer

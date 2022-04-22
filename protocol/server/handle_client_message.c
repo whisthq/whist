@@ -46,6 +46,7 @@ static int handle_quit_message(WhistServerState *state, WhistClientMessage *wcms
 static int handle_init_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_file_metadata_message(WhistClientMessage *wcmsg);
 static int handle_file_chunk_message(WhistClientMessage *wcmsg);
+static int handle_file_group_end_message(WhistClientMessage *wcmsg);
 static int handle_file_drag_message(WhistClientMessage *wcmsg);
 static int handle_open_urls_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_frame_ack_message(WhistServerState *state, WhistClientMessage *wcmsg);
@@ -93,6 +94,8 @@ int handle_client_message(WhistServerState *state, WhistClientMessage *wcmsg) {
             return handle_file_metadata_message(wcmsg);
         case CMESSAGE_FILE_DATA:
             return handle_file_chunk_message(wcmsg);
+        case CMESSAGE_FILE_GROUP_END:
+            return handle_file_group_end_message(wcmsg);
         case CMESSAGE_FILE_DRAG:
             return handle_file_drag_message(wcmsg);
         case CMESSAGE_QUIT:
@@ -263,6 +266,24 @@ static int handle_file_chunk_message(WhistClientMessage *wcmsg) {
     return 0;
 }
 
+static int handle_file_group_end_message(WhistClientMessage *wcmsg) {
+    /*
+        Handle a file group end message.
+
+        Arguments:
+            wcmsg (WhistClientMessage*): message packet from client
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
+    if (wcmsg->file_group_end.transfer_type == FILE_TRANSFER_SERVER_DROP) {
+        LOG_INFO("end_drop");
+        drop_file_into_active_window(NULL);
+    }
+
+    return 0;
+}
+
 static int handle_file_drag_message(WhistClientMessage *wcmsg) {
     /*
         Handle a file drag message.
@@ -273,15 +294,17 @@ static int handle_file_drag_message(WhistClientMessage *wcmsg) {
             (int): Returns -1 on failure, 0 on success
     */
 
+    LOG_INFO("handle_file_drag_message");
+
     if (wcmsg->file_drag_data.end_drag) {
+        LOG_INFO("end_drag");
         file_drag_update(false, 0, 0, NULL);
     } else {
+        LOG_INFO("move_drag");
         file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, wcmsg->file_drag_data.file_list);
     }
 
-    if (wcmsg->file_drag_data.end_drop) {
-        drop_file_into_active_window(NULL);
-    }
+    LOG_INFO("finished handle_file_drag_message");
 
     return 0;
 }

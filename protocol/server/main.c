@@ -225,6 +225,28 @@ static void create_and_send_tcp_wmsg(WhistServerMessageType message_type, char* 
     deallocate_region(wmsg_tcp);
 }
 
+static void send_complete_file_drop_message(FileTransferType transfer_type) {
+    /*
+        Create and send a file drop complete message
+
+        Arguments:
+            transfer_type (FileTransferType): group end type
+    */
+
+    // Alloc wcmsg
+    WhistServerMessage wsmsg = {0};
+
+    // Build wcmsg
+    wsmsg.type = SMESSAGE_FILE_GROUP_END;
+    wsmsg.file_group_end.transfer_type = transfer_type;
+
+    // Send wcmsg
+    if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)(&wsmsg),
+                             sizeof(WhistServerMessage)) < 0) {
+        LOG_WARNING("Failed to broadcast server message of type SMESSAGE_FILE_GROUP_END.");
+    }
+}
+
 static int multithreaded_sync_tcp_packets(void* opaque) {
     /*
         Thread to send and receive all TCP packets (clipboard and file)
@@ -274,11 +296,14 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         // READ FILE CHUNK HANDLER
         FileData* file_chunk;
         FileMetadata* file_metadata;
+        FileGroupEnd file_group_end;
+        // Iterate through all file indexes and try to read next chunk to send
         LinkedList* transferring_files = file_synchronizer_get_transferring_files();
         // Iterate through all file indexes and try to read next chunk to send
         linked_list_for_each(transferring_files, TransferringFile, transferring_file) {
-            if (file_synchronizer_handle_type_group_end(transferring_file, NULL)) {
+            if (file_synchronizer_handle_type_group_end(transferring_file, &file_group_end)) {
                 // Returns true when the TransferringFile was a type group end indicator
+                send_complete_file_drop_message(file_group_end.transfer_type);
                 continue;
             }
 

@@ -560,9 +560,9 @@ void file_synchronizer_end_type_group(FileTransferType transfer_type) {
 }
 
 bool file_synchronizer_handle_type_group_end(TransferringFile* active_file,
-                                             FileTransferType *group_end_transfer_type) {
+                                             FileGroupEnd *group_end_info) {
     /*
-        If `active_file` is a group end indicator, populate the `group_end_transfer_type`
+        If `active_file` is a group end indicator, populate the `group_end_info`
         pointer and reset the entry.
     */
 
@@ -570,8 +570,8 @@ bool file_synchronizer_handle_type_group_end(TransferringFile* active_file,
         return false;
     }
 
-    if (group_end_transfer_type) {
-        *group_end_transfer_type = active_file->transfer_type;
+    if (group_end_info) {
+        group_end_info->transfer_type = active_file->transfer_type;
     }
     reset_transferring_file(active_file);
 

@@ -636,12 +636,13 @@ typedef enum WhistClientMessageType {
 
     CMESSAGE_FILE_METADATA = 119,  ///< file metadata
     CMESSAGE_FILE_DATA = 120,      ///< file chunk
+    CMESSAGE_FILE_GROUP_END = 121, ///< file type group end
 
-    MESSAGE_FRAME_ACK = 121,  ///< Frame has been received.
+    MESSAGE_FRAME_ACK = 122,  ///< Frame has been received.
 
-    MESSAGE_FILE_UPLOAD_CANCEL = 122,  ///< User has hit cancel on file upload dialog
+    MESSAGE_FILE_UPLOAD_CANCEL = 123,  ///< User has hit cancel on file upload dialog
 
-    CMESSAGE_FILE_DRAG = 123,
+    CMESSAGE_FILE_DRAG = 124,
 
     CMESSAGE_QUIT = 999,
 } WhistClientMessageType;
@@ -736,6 +737,9 @@ typedef struct WhistClientMessage {
 
         // MESSAGE_FRAME_ACK
         WhistFrameAckMessage frame_ack;
+
+        // CMESSAGE_END_FILE_GROUP
+        FileGroupEnd file_group_end;
     };
 
     // Any type of message that has an additional `data[]` (or equivalent)
@@ -748,7 +752,6 @@ typedef struct WhistClientMessage {
             int x;
             int y;
             bool end_drag;
-            bool end_drop;
             char file_list[0];
         } file_drag_data;            // CMESSAGE_FILE_DRAG
         char urls_to_open[0];        // MESSAGE_OPEN_URL
@@ -770,9 +773,10 @@ typedef enum WhistServerMessageType {
     SMESSAGE_FULLSCREEN = 8,
     SMESSAGE_FILE_METADATA = 9,
     SMESSAGE_FILE_DATA = 10,
-    SMESSAGE_NOTIFICATION = 11,
-    SMESSAGE_INITIATE_UPLOAD = 12,
-    SMESSAGE_FILE_DRAG = 13,
+    SMESSAGE_FILE_GROUP_END = 11,
+    SMESSAGE_NOTIFICATION = 12,
+    SMESSAGE_INITIATE_UPLOAD = 13,
+    SMESSAGE_FILE_DRAG = 14,
     SMESSAGE_QUIT = 100,
 } WhistServerMessageType;
 
@@ -791,6 +795,7 @@ typedef struct WhistServerMessage {
         ClipboardData clipboard;
         FileMetadata file_metadata;
         FileData file;
+        FileGroupEnd file_group_end;
         char window_title[0];
         char requested_uri[0];
         WhistNotification notif;

@@ -563,123 +563,134 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
         Update the file drag indicator
     */
 
-    static char* xdnd_file_list = NULL;
-    static int xdnd_file_list_len = 0;
+    // static char* xdnd_file_list = NULL;
+    // static int xdnd_file_list_len = 0;
 
-    const char* drag_path_middle_template = "drag-drop/temp%d/";
-    const char* drag_path_template = "file:///home/whist/%s";
+    // const char* drag_path_middle_template = "drag-drop/temp%d/";
+    // const char* drag_path_template = "file:///home/whist/%s";
 
-    static bool active_file_drag = false;
+    // static bool active_file_drag = false;
 
-    if (is_dragging) {
-        if (!file_list && !xdnd_file_list) {
-            return -1;
-        }
-        // When drag first begins, peer should send a file_list of filenames being dragged
-        if (file_list) {
-            const char* delimiter = "\n";
-            char* strtok_context = NULL;
-            char* file_list_token = strtok_r(file_list, delimiter, &strtok_context);
-            char drag_path_middle[64];
-            int id = 0;
-            while (file_list_token) {
-                snprintf(drag_path_middle, 64, drag_path_middle_template, id);
-                int file_path_end_size = strlen(drag_path_middle) + strlen(file_list_token) + 1;
-                char* file_path_end = malloc(file_path_end_size);
-                memset(file_path_end, 0, file_path_end_size);
-                safe_strncpy(file_path_end, drag_path_middle, strlen(drag_path_middle) + 1);
-                safe_strncpy(file_path_end + strlen(drag_path_middle), file_list_token, strlen(file_list_token) + 1);
+    // LOG_INFO("file_drag_update");
 
-                int drag_path_size = strlen(drag_path_template) + file_path_end_size + 2;
-                char* drag_path = malloc(drag_path_size);
-                snprintf(drag_path, drag_path_size, drag_path_template, file_path_end);
+    // if (is_dragging) {
+    //     if (!file_list && !xdnd_file_list) {
+    //         return -1;
+    //     }
+    //     // When drag first begins, peer should send a file_list of filenames being dragged
+    //     if (file_list) {
+    //         const char* delimiter = "\n";
+    //         char* strtok_context = NULL;
+    //         char* file_list_token = strtok_r(file_list, delimiter, &strtok_context);
+    //         char drag_path_middle[64];
+    //         int id = 0;
+    //         while (file_list_token) {
+    //             snprintf(drag_path_middle, 64, drag_path_middle_template, id);
+    //             int file_path_end_size = strlen(drag_path_middle) + strlen(file_list_token) + 1;
+    //             char* file_path_end = malloc(file_path_end_size);
+    //             memset(file_path_end, 0, file_path_end_size);
+    //             safe_strncpy(file_path_end, drag_path_middle, strlen(drag_path_middle) + 1);
+    //             safe_strncpy(file_path_end + strlen(drag_path_middle), file_list_token, strlen(file_list_token) + 1);
 
-                free(file_path_end);
+    //             int drag_path_size = strlen(drag_path_template) + file_path_end_size + 2;
+    //             char* drag_path = malloc(drag_path_size);
+    //             snprintf(drag_path, drag_path_size, drag_path_template, file_path_end);
 
-                if (xdnd_file_list) {
-                    xdnd_file_list = safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
-                    xdnd_file_list[xdnd_file_list_len - 1] = '\n';
-                } else {
-                    xdnd_file_list = safe_malloc(drag_path_size);
-                }
+    //             free(file_path_end);
 
-                safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path, strlen(drag_path) + 1);
+    //             if (xdnd_file_list) {
+    //                 xdnd_file_list = safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
+    //                 xdnd_file_list[xdnd_file_list_len - 1] = '\n';
+    //             } else {
+    //                 xdnd_file_list = safe_malloc(drag_path_size);
+    //             }
 
-                free(drag_path);
+    //             safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path, strlen(drag_path) + 1);
 
-                file_list_token = strtok_r(NULL, delimiter, &strtok_context);
-                xdnd_file_list_len += drag_path_size;
-                id++;
-            }
-        }
-    }
+    //             free(drag_path);
 
-    whist_lock_mutex(xdnd_mutex);
-    XLockDisplay(display);
+    //             file_list_token = strtok_r(NULL, delimiter, &strtok_context);
+    //             xdnd_file_list_len += drag_path_size;
+    //             id++;
+    //         }
 
-    // Since this function doesn't handle the actual dropping, we don't really care much about
-    //     any queueud events that haven't already been handled, so we clear them out.
-    XSync(display, True);
+    //         LOG_INFO("file list prepared: %s", xdnd_file_list);
+    //     }
+    // }
 
-    if (is_dragging) {
-        if (!active_file_drag) {
-            // DRAG BEGINS
+    // whist_lock_mutex(xdnd_mutex);
+    // XLockDisplay(display);
 
-            // The XDND communication exchange begins. Number steps are taken from
-            // https://freedesktop.org/wiki/Specifications/XDND/
+    // // Since this function doesn't handle the actual dropping, we don't really care much about
+    // //     any queueud events that haven't already been handled, so we clear them out.
+    // XSync(display, True);
 
-            // XDND 1 - We take ownership of XdndSelection
-            // XDND 2 - We send XdndEnter to active X11 window
-            // Get our XDND version
-            if (xdnd_own_and_send_enter() < 0) {
-                XUnlockDisplay(display);
-                whist_unlock_mutex(xdnd_mutex);
-                return -1;
-            }
-            active_file_drag = true;
+    // if (is_dragging) {
+    //     if (!active_file_drag) {
+    //         // DRAG BEGINS
 
-            // XDND 3 - TODO: related to the above TODO, if we support more than 3 types of
-            // drag-and-droppable content, then we will need to
-            //     request XdndTypeList and call
-            //     XChangeProperty(disp, w, XdndTypeList, XA_ATOM, 32, PropModeReplace, (unsigned
-            //     char*)&targets[0], targets.size()); beforehand. Since we only support one type right now,
-            //     we can skip this step in the XDND exchange.
-        }
+    //         LOG_INFO("DRAG BEGINS");
 
-        // XDND 4 - Send XdndPosition to active X11 window
-        xdnd_send_position(x, y);
+    //         // The XDND communication exchange begins. Number steps are taken from
+    //         // https://freedesktop.org/wiki/Specifications/XDND/
 
-        XEvent e;
-        XNextEvent(display, &e);
+    //         // XDND 1 - We take ownership of XdndSelection
+    //         // XDND 2 - We send XdndEnter to active X11 window
+    //         // Get our XDND version
+    //         if (xdnd_own_and_send_enter() < 0) {
+    //             XUnlockDisplay(display);
+    //             whist_unlock_mutex(xdnd_mutex);
+    //             return -1;
+    //         }
+    //         active_file_drag = true;
 
-        if (e.type == SelectionRequest) {
-            // When we receive a SelectionRequest from the active X11 window, we send a
-            // SelectionNotify event back to
-            //     the active X11 window with all of the information about the drop.
-            xdnd_send_selection_notify(xdnd_file_list, e);
-        } else if (e.type == ClientMessage && e.xclient.message_type == XA_XdndFinished) {
-            // The active X11 window has indicated that it is done with the drag and drop sequence,
-            // so we can break
-            xdnd_send_leave();
-        }
-    } else {
-        if (active_file_drag) {
-            // DRAG ENDS
+    //         // XDND 3 - TODO: related to the above TODO, if we support more than 3 types of
+    //         // drag-and-droppable content, then we will need to
+    //         //     request XdndTypeList and call
+    //         //     XChangeProperty(disp, w, XdndTypeList, XA_ATOM, 32, PropModeReplace, (unsigned
+    //         //     char*)&targets[0], targets.size()); beforehand. Since we only support one type right now,
+    //         //     we can skip this step in the XDND exchange.
+    //     }
 
-            // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate that
-            // the XDND communication sequence is complete
-            xdnd_send_leave();
+    //     LOG_INFO("DRAG MOVES");
 
-            free(xdnd_file_list);
-            xdnd_file_list = NULL;
-            xdnd_file_list_len = 0;
-        }
-    }
+    //     // XDND 4 - Send XdndPosition to active X11 window
+    //     xdnd_send_position(x, y);
 
-    XUnlockDisplay(display);
-    whist_unlock_mutex(xdnd_mutex);
+    //     XEvent e;
+    //     XNextEvent(display, &e);
 
-    active_file_drag = is_dragging;
+    //     LOG_INFO("FINISHED XNextEvent");
+
+    //     if (e.type == SelectionRequest) {
+    //         // When we receive a SelectionRequest from the active X11 window, we send a
+    //         // SelectionNotify event back to
+    //         //     the active X11 window with all of the information about the drop.
+    //         xdnd_send_selection_notify(xdnd_file_list, e);
+    //     } else if (e.type == ClientMessage && e.xclient.message_type == XA_XdndFinished) {
+    //         // The active X11 window has indicated that it is done with the drag and drop sequence,
+    //         // so we can break
+    //         xdnd_send_leave();
+    //     }
+    // } else {
+    //     if (active_file_drag) {
+    //         // DRAG ENDS
+    //         LOG_INFO("DRAG ENDS");
+
+    //         // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate that
+    //         // the XDND communication sequence is complete
+    //         xdnd_send_leave();
+
+    //         free(xdnd_file_list);
+    //         xdnd_file_list = NULL;
+    //         xdnd_file_list_len = 0;
+    //     }
+    // }
+
+    // XUnlockDisplay(display);
+    // whist_unlock_mutex(xdnd_mutex);
+
+    // active_file_drag = is_dragging;
 
     return 0;
 }

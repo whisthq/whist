@@ -224,9 +224,12 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
     // Please ask the maintainers of each CMESSAGE_ type
     // before adding/removing from this list
     if (wcmsg->type == CMESSAGE_INIT || wcmsg->type == CMESSAGE_FILE_DATA ||
-        wcmsg->type == CMESSAGE_FILE_METADATA || wcmsg->type == CMESSAGE_CLIPBOARD ||
-        wcmsg->type == MESSAGE_DIMENSIONS || wcmsg->type == CMESSAGE_FILE_DRAG ||
+        wcmsg->type == CMESSAGE_FILE_METADATA || wcmsg->type == CMESSAGE_FILE_GROUP_END ||
+        wcmsg->type == CMESSAGE_CLIPBOARD || wcmsg->type == MESSAGE_DIMENSIONS ||
         (size_t)wcmsg_size > sizeof(*wcmsg)) {
+        if (wcmsg->type == CMESSAGE_FILE_DRAG) {
+            LOG_INFO("SENDING FILE DRAG OVER TCP: %d > %lu", wcmsg_size, sizeof(*wcmsg));
+        }
         return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, -1, false);
     } else {
         if ((size_t)wcmsg_size > MAX_PACKET_SIZE) {
@@ -236,6 +239,10 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
         }
         static int sent_packet_id = 0;
         sent_packet_id++;
+
+        if (wcmsg->type == CMESSAGE_FILE_DRAG) {
+            LOG_INFO("SENDING FILE DRAG OVER UDP: %d > %lu", wcmsg_size, sizeof(*wcmsg));
+        }
 
         return send_packet(&packet_udp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, sent_packet_id,
                            false);
