@@ -47,6 +47,7 @@ typedef struct CaptureDevice {
     bool pending_destruction;
     WhistThread nvidia_manager;
     WhistSemaphore nvidia_device_semaphore;
+    WhistSemaphore nvidia_device_created;
     bool nvidia_context_is_stale;
     // Shared X11 state
     Display* display;
