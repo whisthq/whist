@@ -81,13 +81,5 @@ RUN chmod +x /usr/bin/start-brave && ln -sf /usr/bin/start-brave /usr/bin/whist-
 # Install handle to browser program to be able to open a new tab from the protocol
 RUN ln -sf /usr/bin/brave-browser /usr/bin/whist-open-new-tab
 
-# Edit the Chrome Preferences Config file to set the Whist fonts as default
-RUN mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser/Default \
-    && touch /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences \
-    && chown whist:whist /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences \
-    && echo {} \
-    | jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
-    > /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
-
 # If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/
