@@ -231,7 +231,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 					scalingCancel()
 
 					if err != nil {
-						logger.Errorf("Error verifying instance scale down. Error: %v", err)
+						logger.Errorf("Error running image swapover. Error: %v", err)
 					}
 				}()
 
