@@ -664,7 +664,7 @@ jobs:
       always() &&
       (needs.scaling-service-deploy.result == 'success') &&
       (needs.auth0-deploy-rules.result == 'success') &&
-      (needs.mandelboxes-publish-ghcr.result == 'success')
+      (needs.mandelboxes-publish-ghcr.result == 'success') &&
       (needs.amis-publish-aws.result == 'success')
 
     steps:
