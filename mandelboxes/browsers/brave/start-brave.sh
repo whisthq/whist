@@ -41,8 +41,10 @@ fi
 # https://www.reddit.com/r/Stadia/comments/jwh0sl/greatly_reduce_inputlag_when_playing_in_chrome/
 # https://nira.com/chrome-flags/
 # https://bbs.archlinux.org/viewtopic.php?id=244031&p=25
-# One of the flags from these link that was tested and makes performance significantly worse on
-# YouTube is "--disable-frame-rate-limit", so we don't enable it.
+#
+# We intentionally disable/don't set the following flags, as they were causing issues:
+# "--enable-zero-copy" --> causes visual glitches when using Nvidia Capture
+# "--disable-frame-rate-limit" --> significantly degrades frame rate on YouTube
 #
 features="VaapiVideoDecoder,VaapiVideoEncoder,Vulkan,CanvasOopRasterization,OverlayScrollbar,ParallelDownloading"
 flags=(
