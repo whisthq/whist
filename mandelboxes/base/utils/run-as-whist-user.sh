@@ -32,6 +32,7 @@ USER_LOCALE=""
 SYSTEM_LANGUAGES="en_US"
 BROWSER_LANGUAGES="en-US,en"
 KIOSK_MODE=false
+PLATFORM=""
 
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 if [[ -f $WHIST_JSON_FILE ]]; then
@@ -78,6 +79,9 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
   if [ "$( jq -rc 'has("longitude")' < $WHIST_JSON_FILE )" == "true"  ]; then
     LONGITUDE="$(jq -rc '.longitude' < $WHIST_JSON_FILE)"
+  fi
+  if [ "$( jq -rc 'has("platform")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    PLATFORM="$(jq -rc '.platform' < $WHIST_JSON_FILE)"
   fi
 fi
 
@@ -160,9 +164,9 @@ export SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-}
 export USER_LOCALE=$USER_LOCALE
 export SYSTEM_LANGUAGES=$SYSTEM_LANGUAGES
 export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
+export PLATFORM=$PLATFORM
 
-
-exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,SYSTEM_LANGUAGES,BROWSER_LANGUAGES -c \
+exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,SYSTEM_LANGUAGES,BROWSER_LANGUAGES,PLATFORM -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \

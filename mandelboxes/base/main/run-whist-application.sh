@@ -37,6 +37,7 @@ export LATITUDE=$LATITUDE
 export ${USER_LOCALE?}
 export LANGUAGE=$SYSTEM_LANGUAGES
 export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
+export PLATFORM=$PLATFORM
 
 # Explicitly export the fonts path, so that the
 # application can find the fonts. Per: https://askubuntu.com/questions/492033/fontconfig-error-cannot-load-default-config-file
