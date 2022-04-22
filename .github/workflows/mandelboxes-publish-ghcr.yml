@@ -103,16 +103,16 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in "${{ input.branch }}":
+          if "prod" in "${{ inputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ input.branch }}":
+          elif "staging" in "${{ inputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
           from notifications.slack_bot import slack_post
           TITLE = ":whale: Mandelboxes Deployed :whale:"
-          BODY = "Mandelboxes deployed to GHCR on branch: `${{ input.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "Mandelboxes deployed to GHCR on branch: `${{ inputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -120,9 +120,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in "${{ input.branch }}":
+          if "prod" in "${{ inputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ input.branch }}":
+          elif "staging" in "${{ inputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
