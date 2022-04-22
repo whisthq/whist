@@ -431,6 +431,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ID:                "test-scale-down-instance-1",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -439,6 +440,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ID:                "test-scale-down-instance-2",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -447,6 +449,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ID:                "test-scale-down-instance-3",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -540,7 +543,8 @@ func TestScaleUpIfNecessary(t *testing.T) {
 	// For this test, try to scale up instances and check if they are
 	// successfully added to the database with the correct data.
 	err := testAlgorithm.ScaleUpIfNecessary(testInstancesToScale, context, ScalingEvent{Region: "test-region"}, subscriptions.Image{
-		ImageID: "test-image-id-scale-up",
+		ImageID:   "test-image-id-scale-up",
+		ClientSHA: "test-sha-dev",
 	})
 	if err != nil {
 		t.Errorf("Failed while testing scale up action. Err: %v", err)
