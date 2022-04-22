@@ -27,21 +27,54 @@ if [[ -n $WHIST_CHROME_SINGLETON_LOCK ]]; then
   rm -f $GOOGLE_CHROME_SINGLETON_LOCK
 fi
 
-# Note: We cannot use the "--enable-zero-copy" flag while using
-# Nvidia Capture as our video capture backend, as this will cause
-# visual glitches
-features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization,OverlayScrollbar"
+# Notes on Chromium flags:
+#
+# The following flags are currently unsupported on Linux, but desirable. Once they are
+# supported, we should add support for them:
+# "--enable-native-gpu-memory-buffers" --> https://bugs.chromium.org/p/chromium/issues/detail?id=1031269
+#
+# When inspecting chrome://gpu, you'll see that Optimus is disabled. This is intentional, as it
+# is not well supported on Linux, and is a feature intended to increase battery life by doing
+# process switching, which is undesirable for Whist.
+#
+# Some of these flags are inspired from the following links:
+# https://www.reddit.com/r/Stadia/comments/jwh0sl/greatly_reduce_inputlag_when_playing_in_chrome/
+# https://nira.com/chrome-flags/
+# https://bbs.archlinux.org/viewtopic.php?id=244031&p=25
+#
+# We intentionally disable/don't set the following flags, as they were causing issues:
+# "--enable-zero-copy" --> causes visual glitches when using Nvidia Capture
+# "--disable-frame-rate-limit" --> significantly degrades frame rate on YouTube
+#
+features="VaapiVideoDecoder,VaapiVideoEncoder,Vulkan,CanvasOopRasterization,OverlayScrollbar,ParallelDownloading"
 flags=(
   "--use-gl=desktop"
   "--flag-switches-begin"
+  "--enable-show-autofill-signatures"
+  "--enable-vp9-kSVC-decode-acceleration"
+  "--enable-accelerated-video-decode"
+  "--enable-accelerated-mjpeg-decode"
+  "--enable-accelerated-2d-canvas"
+  "--enable-lazy-image-loading"
+  "--enable-gpu-compositing"
   "--enable-gpu-rasterization"
+  "--enable-oop-rasterization"
+  "--canvas-oop-rasterization"
+  "--enable-drdc"
+  "--enable-raw-draw"
+  "--enable-quic"
+  "--use-passthrough-command-decoder"
   "--double-buffer-compositing"
   "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
+  "--disable-software-rasterizer" # Since we --enable-gpu-rasterization
   "--disable-font-subpixel-positioning"
-  "--force-color-profile=display-p3-d65"
+  "--disable-gpu-vsync" # Increases resource utilization, but improves performance
   "--disable-gpu-process-crash-limit"
+  "--ignore-gpu-blocklist"
   "--no-default-browser-check"
+  "--ozone-platform-hint=x11"
   "--password-store=basic" # This disables the kwalletd backend, which we don't support
+  "--disable-features=UseChromeOSDirectVideoDecoder" # This apparently makes things faster on Linux
   "--load-extension=/opt/teleport/chrome-extension"
 )
 
@@ -88,4 +121,4 @@ echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Start Chrome with the KDE desktop environment
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-exec env XDG_CURRENT_DESKTOP=KDE google-chrome "${flags[@]}"
+exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
