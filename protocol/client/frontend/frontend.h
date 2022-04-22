@@ -85,7 +85,8 @@ typedef struct FrontendFileDropEvent {
         int x;
         int y;
     } position;
-    char* filename;  // must be freed by handler
+    char* filename;  // must be freed by handler, if not NULL
+    bool end_drop;   // true when ending a series of a drop events part of the same multi-file drop
 } FrontendFileDropEvent;
 
 typedef struct FrontendFileDragEvent {
@@ -94,6 +95,8 @@ typedef struct FrontendFileDragEvent {
         int y;
     } position;
     bool end_drag;
+    char* file_list; // '\n'-separated list of files being dragged,
+                     // must be freed by handler, if not NULL
 } FrontendFileDragEvent;
 
 typedef struct FrontendQuitEvent {

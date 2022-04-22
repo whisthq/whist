@@ -185,6 +185,20 @@ static void push_drag_end_event(WhistFrontend *frontend) {
     SDL_PushEvent(&event);
 }
 
+static void push_drag_start_event(WhistFrontend *frontend, char* file_list) {
+    SDLFrontendContext *context = frontend->context;
+    FileDragState *state = context->file_drag_data;
+
+    SDL_Event event = {0};
+    event.type = context->file_drag_event_id;
+    FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
+    memset(drag_event, 0, sizeof(FrontendFileDragEvent));
+    drag_event->end_drag = false;
+    drag_event->file_list = strdup(file_list);
+    event.user.data1 = drag_event;
+    SDL_PushEvent(&event);
+}
+
 static void push_drag_event(WhistFrontend *frontend) {
     SDLFrontendContext *context = frontend->context;
     FileDragState *state = context->file_drag_data;
@@ -251,6 +265,21 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
                                             // down and update changecount
                                             state->change_count = change_count;
                                             state->mouse_down = true;
+
+                                            if ([[pb types] containsObject:NSFilenamesPboardType]) {
+                                                NSArray *files = [pb propertyListForType:NSFilenamesPboardType];
+                                                int numberOfFiles = [files count];
+                                                NSString *file_list = [NSString string];
+                                                int i = 0;
+                                                for (NSString* file in files) {
+                                                    file_list = [file_list stringByAppendingString:[file lastPathComponent]];
+                                                    if (i < numberOfFiles - 1) {
+                                                        file_list = [file_list stringByAppendingString:@"\n"];
+                                                    }
+                                                    i++;
+                                                }
+                                                push_drag_start_event(frontend, (char*)[file_list UTF8String]);
+                                            }
                                         } else if (state->mouse_down) {
                                             // We are continuing to drag our file from its
                                             // original mousedown selection

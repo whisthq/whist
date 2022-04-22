@@ -277,6 +277,11 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         LinkedList* transferring_files = file_synchronizer_get_transferring_files();
         // Iterate through all file indexes and try to read next chunk to send
         linked_list_for_each(transferring_files, TransferringFile, transferring_file) {
+            if (file_synchronizer_handle_type_group_end(transferring_file, NULL)) {
+                // Returns true when the TransferringFile was a type group end indicator
+                continue;
+            }
+
             file_synchronizer_read_next_file_chunk(transferring_file, &file_chunk);
             if (file_chunk == NULL) {
                 // If chunk cannot be read, then try opening the file
@@ -600,6 +605,7 @@ int main(int argc, char* argv[]) {
                              "%s/%s", FILE_DOWNLOADS_PREFIX, downloaded_filename);
                     file_synchronizer_set_file_reading_basic_metadata(
                         filename, FILE_TRANSFER_CLIENT_DOWNLOAD, NULL);
+                    file_synchronizer_end_type_group(FILE_TRANSFER_CLIENT_DOWNLOAD);
                     free(filename);
                 } else {
                     LOG_WARNING("Unable to read downloaded file trigger file: %d", errno);

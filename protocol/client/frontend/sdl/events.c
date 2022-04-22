@@ -136,6 +136,11 @@ bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
             SDL_CaptureMouse(false);
             break;
         }
+        case SDL_DROPCOMPLETE: {
+            event->type = FRONTEND_EVENT_FILE_DROP;
+            event->file_drop.end_drop = true;
+            break;
+        }
         case SDL_QUIT: {
             event->type = FRONTEND_EVENT_QUIT;
             event->quit.quit_application = sdl_event.quit.quit_app;

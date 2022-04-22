@@ -177,6 +177,13 @@ static void handle_gesture_event(FrontendGestureEvent* event) {
 }
 
 static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEvent* event) {
+    if (event->end_drop) {
+        // If end_drop is set, this indicates the end of a series of file drop events
+        //     corresponding to a single drop.
+        file_synchronizer_end_type_group(FILE_TRANSFER_SERVER_DROP);
+        return;
+    }
+
     FileEventInfo drop_info;
     int dpi = whist_frontend_get_window_dpi(frontend);
 

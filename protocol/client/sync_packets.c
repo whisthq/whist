@@ -204,6 +204,32 @@ static void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char*
     deallocate_region(wcmsg_tcp);
 }
 
+static void send_complete_file_drop_message() {
+    /*
+        Create and send a file drop complete message
+
+        Arguments:
+            message_type (WhistClientMessageType): the type of the TCP message to be sent
+            payload (char*): the payload of the TCP message
+    */
+
+    // Alloc wcmsg
+    WhistClientMessage* wcmsg = allocate_region(sizeof(WhistClientMessage));
+
+    // Build wcmsg
+    // Init header to 0 to prevent sending uninitialized packets over the network
+    memset(wcmsg, 0, sizeof(*wcmsg));
+    wcmsg->type = CMESSAGE_FILE_DRAG;
+    wcmsg->file_drag_data.end_drag = true;
+    wcmsg->file_drag_data.end_drop = true;
+
+    // Send wcmsg
+    send_wcmsg(wcmsg);
+
+    // Free wcmsg
+    deallocate_region(wcmsg);
+}
+
 #define SYNC_TCP_LOOP_TARGET_PERIOD_MS 25.0
 static int multithreaded_sync_tcp_packets(void* opaque) {
     /*
@@ -256,9 +282,19 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         // READ FILE HANDLER
         FileData* file_chunk;
         FileMetadata* file_metadata;
+        FileTransferType group_end_transfer_type;
         // Iterate through all file indexes and try to read next chunk to send
         LinkedList* transferring_files = file_synchronizer_get_transferring_files();
         linked_list_for_each(transferring_files, TransferringFile, transferring_file) {
+            if (file_synchronizer_handle_type_group_end(transferring_file, &group_end_transfer_type)) {
+                // Returns true when the TransferringFile was a type group end indicator, populates
+                //     group_end_transfer_type with the appropriate type
+                if (group_end_transfer_type == FILE_TRANSFER_SERVER_DROP) {
+                    // Dropping files into the server can consist of multiple files
+                    send_complete_file_drop_message();
+                }
+                continue;
+            }
             file_synchronizer_read_next_file_chunk(transferring_file, &file_chunk);
             if (file_chunk == NULL) {
                 // If chunk cannot be read, then try opening the file

@@ -641,6 +641,8 @@ typedef enum WhistClientMessageType {
 
     MESSAGE_FILE_UPLOAD_CANCEL = 122,  ///< User has hit cancel on file upload dialog
 
+    CMESSAGE_FILE_DRAG = 123,
+
     CMESSAGE_QUIT = 999,
 } WhistClientMessageType;
 
@@ -676,6 +678,17 @@ typedef struct {
 typedef struct {
     uint32_t frame_id;  ///< ID of frame we are acking.
 } WhistFrameAckMessage;
+
+/**
+ * @brief                          A packet of data referring to and containing
+ *                                 the information for a file drag.
+ */
+typedef struct FileDragData {
+    int global_file_id;        // The global id of the file for synchrony
+    size_t size;               // Number of bytes for the file chunk data
+    FileChunkType chunk_type;  // Whether this is a first, middle or last chunk
+    char data[0];              // The file chunk byte contents
+} FileDragData;
 
 /* position of bit within character */
 #define BIT_CHAR(bit) ((bit) / CHAR_BIT)
@@ -731,6 +744,13 @@ typedef struct WhistClientMessage {
         ClipboardData clipboard;     // CMESSAGE_CLIPBOARD
         FileMetadata file_metadata;  // CMESSAGE_FILE_METADATA
         FileData file;               // CMESSAGE_FILE_DATA
+        struct {
+            int x;
+            int y;
+            bool end_drag;
+            bool end_drop;
+            char file_list[0];
+        } file_drag_data;            // CMESSAGE_FILE_DRAG
         char urls_to_open[0];        // MESSAGE_OPEN_URL
     };
 } WhistClientMessage;
@@ -752,6 +772,7 @@ typedef enum WhistServerMessageType {
     SMESSAGE_FILE_DATA = 10,
     SMESSAGE_NOTIFICATION = 11,
     SMESSAGE_INITIATE_UPLOAD = 12,
+    SMESSAGE_FILE_DRAG = 13,
     SMESSAGE_QUIT = 100,
 } WhistServerMessageType;
 
