@@ -363,14 +363,39 @@ jobs:
 
   #######################################################################################
   #######################################################################################
-  # Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs
-  # This job does:
-  # 1- Build and publish the mandelboxes to a GitHub Container Registry repository
-  # 2- Build and publish the Whist Linux AMI, containing the pre-built Whist Host Service and pre-pulled
-  #    Whist mandelboxes from step 1, to all supported AWS EC2 regions
-  # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
-  mandelboxes-and-amis-publish-ghcr-and-aws:
-    name: "Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs"
+
+  # Mandelboxes: Publish to GHCR
+  # This job builds and publishes the mandelboxes to GHCR so that they can be pulled from our instances.
+  # We invoke a separate workflow file to keep things nicely factored out.
+  #
+  # Runs if config succeeds and branch is in ["dev", "staging", "prod"]
+  mandelboxes-publish-ghcr:
+    name: "Mandelboxes: Publish to GHCR"
+    needs: [whist-publish-build-config]
+    concurrency: mandelboxes-publish-ghcr-${{ github.ref }}
+    uses: ./.github/workflows/mandelboxes-publish-ghcr.yml
+    with:
+      branch: ${{ needs.whist-publish-build-config.outputs.branch }}
+    secrets:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      GHA_USERNAME: ${{ secrets.GHA_USERNAME }}
+      GHA_PERSONAL_ACCESS_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+      AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+      AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+      SLACK_HOOKS_ENDPOINT_DEV: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
+      SLACK_HOOKS_ENDPOINT_STAGING: ${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}
+      SLACK_HOOKS_ENDPOINT_PROD: ${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}
+
+  #######################################################################################
+  #######################################################################################
+
+  # AMIs: Build & Publish Whist AMIs
+  # This job builds and publishes the Whist Linux AMI, containing the pre-built Whist Host service,
+  # to all supported AWS EC2 regions.
+  #
+  # Runs if config succeeds, terraform has deployed, and branch is in ["dev", "staging", "prod"]
+  amis-publish-aws:
+    name: "AMIs: Publish to AWS"
     runs-on: ubuntu-20.04
     concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
     needs: [whist-publish-build-config, terraform-deploy]
@@ -397,48 +422,8 @@ jobs:
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh "true"
 
-      - name: Build release protocol # No need to run this for debug, just for release
-        working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Release WhistServer
-
-        # Each final build has an internal build id and debug id. Sentry will use these
-        # IDs to match the debug symbols with the build that crashed to build the backtrace
-      - name: Copy Server debug symbols to sentry
-        env:
-          SENTRY_ORG: whist
-          SENTRY_PROJECT: protocol
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        working-directory: protocol
-        run: |
-          curl -sL https://sentry.io/get-cli/ | bash
-          sentry-cli upload-dif ./build-docker/server/build64/WhistServer
-
-      # In deploys, we only build the Docker images used in production
-      # Note that they will build the images they depend on automatically (i.e. base)
-      - name: Build Mandelboxes
-        env:
-          DOCKER_BUILDKIT: 1
-        working-directory: mandelboxes
-        run: ./build.sh browsers/chrome browsers/brave --prod
-
-      - name: Print logs of failed mandelbox(es)  on failure
-        if: failure()
-        working-directory: mandelboxes
-        run: find . -name "build.log" -type f -exec cat {} +
-
-      # We only deploy the browsers mandelboxes, other mandelboxes are for internal use only
-      - name: Push mandelboxes
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
-        working-directory: mandelboxes
-        env:
-          GH_USERNAME: ${{ secrets.GHA_USERNAME }}
-          GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-        run: |
-          ./push.sh browsers/chrome ${{ needs.whist-publish-build-config.outputs.branch }}
-          ./push.sh browsers/brave ${{ needs.whist-publish-build-config.outputs.branch }}
-
       ##########################################################################################
-      ########################### Stage 2 - Build Backend Services #############################
+      ########################### Stage 1 - Build Backend Services #############################
 
       - name: Set up Go Environment
         uses: actions/setup-go@v3.0.0
@@ -459,14 +444,7 @@ jobs:
         run: make build
 
       ##########################################################################################
-      ####################### Stage 3 - Build & Publish AMIs to AWS EC2 ########################
-
-      - name: Configure AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+      ####################### Stage 2 - Build & Publish AMIs to AWS EC2 ########################
 
       - name: Set Host Service APP_ENV based on Git Branch (File gets read by host-service.service)
         working-directory: host-setup
@@ -622,7 +600,7 @@ jobs:
           print(f"::set-output name=region_to_ami_map::{region_to_ami_map_str}")
 
       ##########################################################################################
-      ############################# Stage 4 - Slack Notifications ##############################
+      ############################# Stage 3 - Slack Notifications ##############################
 
       # Notify Slack after building and deploying the Whist AMI to all supported AWS regions.
       - name: Notify Slack on Job Successs
@@ -638,8 +616,8 @@ jobs:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
           from notifications.slack_bot import slack_post
-          TITLE = ":whale: Mandelboxes & AMIs Deployed :whale:"
-          BODY = "Mandelboxes & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          TITLE = ":package: AMIs Deployed :package:"
+          BODY = "AMIs deployed to all supported AWS regions on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -655,7 +633,7 @@ jobs:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
           from notifications.slack_bot import slack_post
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Mandelboxes and AMIs in `mandelboxes-and-amis-publish-ghcr-and-aws` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy AMIs in the `amis-publish-aws` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
@@ -1041,7 +1019,8 @@ jobs:
     needs:
       [
         whist-publish-build-config,
-        mandelboxes-and-amis-publish-ghcr-and-aws,
+        mandelboxes-publish-ghcr,
+        amis-publish-aws,
         auth0-deploy-rules,
         terraform-deploy,
       ]
@@ -1203,7 +1182,8 @@ jobs:
         whist-publish-build-config,
         auth0-deploy-rules,
         terraform-deploy,
-        mandelboxes-and-amis-publish-ghcr-and-aws,
+        mandelboxes-publish-ghcr,
+        amis-publish-aws,
         scaling-service-deploy,
         client-applications-retrieve-version-number,
         client-applications-publish-build-s3,
