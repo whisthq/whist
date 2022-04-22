@@ -27,16 +27,8 @@ if [[ ! -f $WHIST_BRAVE_SINGLETON_LOCK ]]; then
   rm -f $BRAVE_SINGLETON_LOCK
 fi
 
-# Edit the Brave Preferences Config file to set the fonts based on the client's OS
-if [[ "$PLATFORM" == "darwin" ]]; then
-  echo {} | \
-    jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
-    > /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
-fi
-
 # Set the Brave language
 echo {} | jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'", "selected_languages": "'"${BROWSER_LANGUAGES}"'"}' > /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
-
 
 # Notes on Chromium flags:
 #
@@ -80,7 +72,6 @@ flags=(
   "--enable-gpu-rasterization"
   "--enable-gpu-compositing"
   "--double-buffer-compositing"
-  "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
   "--disable-font-subpixel-positioning"
   "--disable-gpu-process-crash-limit"
   "--no-default-browser-check"
@@ -117,6 +108,17 @@ fi
 # empty, Brave will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.
 flags+=("$INITIAL_URL")
+
+# OS-specific provisions
+if [[ "$PLATFORM" == "darwin" ]]; then
+  # Edit the Brave Preferences Config file to set the fonts based on the client's OS
+  echo {} | \
+    jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
+    > /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
+  
+  # Disable smooth scrolling, which we handle via uinput instead
+  flags+=("--disable-smooth-scrolling")
+fi
 
 # Load D-Bus configurations; necessary for Brave
 # The -10 comes from the display ID
