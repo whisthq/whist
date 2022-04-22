@@ -393,13 +393,11 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
     }
     try_update_dimensions(device, width, height, dpi);
     if (USING_NVIDIA_CAPTURE) {
-        if (device->active_capture_device == NVIDIA_DEVICE) {
-            // destroy the device
-            destroy_nvidia_capture_device(device->nvidia_capture_device);
-            device->nvidia_capture_device = NULL;
-            device->active_capture_device = X11_DEVICE;
-            whist_post_semaphore(device->nvidia_device_semaphore);
-        }
+        // destroy the device
+        destroy_nvidia_capture_device(device->nvidia_capture_device);
+        device->nvidia_capture_device = NULL;
+        device->active_capture_device = X11_DEVICE;
+        whist_post_semaphore(device->nvidia_device_semaphore);
     }
     return reconfigure_x11_capture_device(device->x11_capture_device, width, height, dpi);
 }
