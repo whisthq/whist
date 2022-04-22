@@ -97,5 +97,10 @@ RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whis
 # Install handle to browser program to be able to open a new tab from the protocol
 RUN ln -sf /usr/bin/google-chrome /usr/bin/whist-open-new-tab
 
+# Create the Chrome preferences config file if it doesn't exist
+RUN mkdir -p /home/whist/.config/google-chrome/Default \
+    && touch /home/whist/.config/google-chrome/Default/Preferences \
+    && chown whist:whist /home/whist/.config/google-chrome/Default/Preferences
+
 # If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/
