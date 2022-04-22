@@ -84,7 +84,7 @@ RUN ln -sf /usr/bin/brave-browser /usr/bin/whist-open-new-tab
 # Create the Brave preferences config file if it doesn't exist
 RUN mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser/Default \
     && touch /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences \
-    && chown whist:whist /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences \
+    && chown whist:whist /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
 
 # If needed, install WhistServer and helpers. Must be last step.
 COPY --from=build-assets protocol/* /usr/share/whist/
