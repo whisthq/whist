@@ -4,51 +4,38 @@ import {
   linuxLanguageToDefaultRegion,
   browserSupportedLanguages,
 } from "@app/constants/mandelboxLanguages"
+import _ from "lodash"
 
-const lowerCasedlinuxSupportedLanguages = linuxSupportedLanguages.map(
-  (element) => {
-    return element.toLowerCase()
-  }
-)
 const caseInsensitiveLanguageSearch = (language: string) => {
-  const linuxSupportedLanguagesIndex =
-    lowerCasedlinuxSupportedLanguages.indexOf(language.toLowerCase())
-  if (linuxSupportedLanguagesIndex !== -1) {
-    return linuxSupportedLanguages[linuxSupportedLanguagesIndex]
-  }
-  return ""
+  return _.find(
+    linuxSupportedLanguages,
+    (linuxLang) => language.toLowerCase() === linuxLang.toLowerCase()
+  )
 }
 
 // Check if a language in the form [language designator] is available on the mandelbox
 const searchLanguageWithoutRegion = (language: string) => {
-  // Check if the language can be found (using a case insensitive search)
-  const ubuntuLanguage = caseInsensitiveLanguageSearch(language)
-  if (ubuntuLanguage !== "") {
-    return ubuntuLanguage
-  }
-  // Check if the language can be found after adding the default region name
-  if (language.toLowerCase() in linuxLanguageToDefaultRegion) {
-    const ubuntuDefaultRegionLanguage = caseInsensitiveLanguageSearch(
+  // Check if the language can be found (using a case insensitive search). If not, check
+  // if the language can be found after adding the default region name
+  return (
+    caseInsensitiveLanguageSearch(language) ??
+    caseInsensitiveLanguageSearch(
       language.toLowerCase() +
         "_" +
         linuxLanguageToDefaultRegion[language.toLowerCase()]
-    )
-    if (ubuntuDefaultRegionLanguage !== "") {
-      return ubuntuDefaultRegionLanguage
-    }
-  }
-  return ""
+    ) ??
+    ""
+  )
 }
 
 // Check if a language in the form [language designator]_[region designator] is available on the mandelbox
 const searchLanguageWithRegion = (language: string) => {
-  // Check if the language can be found (using a case insensitive search)
-  const ubuntuLanguage: string = caseInsensitiveLanguageSearch(language)
-  if (ubuntuLanguage !== "") {
-    return ubuntuLanguage
-  }
-  // Check if the language can be found after removing the region or after replacing the region with the default one
-  return searchLanguageWithoutRegion(language.split("_")[0])
+  // Check if the language can be found (using a case insensitive search). If not found, check if the language
+  // can be found after removing the region or after replacing the region with the default one
+  return (
+    caseInsensitiveLanguageSearch(language) ??
+    searchLanguageWithoutRegion(language.split("_")[0])
+  )
 }
 
 const searchLanguageWithScript = (language: string) => {
@@ -193,21 +180,15 @@ export const getUserLanguages = () => {
     })
     .filter((e) => e)
 
-  // Add fallback options and remove duplicates
-  const uniquebrowserLanguages = [...browserLanguages, "en-US", "en"].filter(
-    (c, index) => {
-      return [...browserLanguages, "en-US", "en"].indexOf(c) === index
-    }
-  )
-
   return {
     systemLanguages: systemLanguages.join(":"),
-    browserLanguages: uniquebrowserLanguages.join(","),
+    // Add fallback options (english), remove duplicates, and join values in a single string
+    browserLanguages: _.uniq([...browserLanguages, "en-US", "en"]).join(","),
   }
 }
 
 export const getUserLocale = () => {
-  const userLocaleDictionary: { [key: string]: string } = {}
+  const userLocales: { [key: string]: string } = {}
   if (currentPlatform === "darwin" || currentPlatform === "linux") {
     const userLocaleRaw = execCommand("locale", ".", {}, "pipe")
     const parsedUserLocale = userLocaleRaw?.toString()?.split(/\r?\n/) ?? ""
@@ -219,9 +200,7 @@ export const getUserLocale = () => {
         keyValuePair[1].length >= 1 &&
         !keyValuePair[0].includes("LANG")
       ) {
-        userLocaleDictionary[keyValuePair[0]] = keyValuePair[1]
-          .split('"')
-          .join("")
+        userLocales[keyValuePair[0]] = keyValuePair[1].split('"').join("")
       }
     }
   } else {
@@ -242,7 +221,7 @@ export const getUserLocale = () => {
       parsedUserLocale[parsedUserLocale.length - 1].split("-").join("_")
     )
     if (windowsLocale !== "") {
-      userLocaleDictionary.LC_ALL = windowsLocale
+      userLocales.LC_ALL = windowsLocale
     } else {
       // If the locale is not supported, just use the standard C linux locale.
       console.log(
@@ -250,8 +229,8 @@ export const getUserLocale = () => {
           parsedUserLocale[parsedUserLocale.length - 1].split("-").join("_") +
           ". Using C instead"
       )
-      userLocaleDictionary.LC_ALL = "C"
+      userLocales.LC_ALL = "C"
     }
   }
-  return userLocaleDictionary
+  return userLocales
 }
