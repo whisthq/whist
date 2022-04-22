@@ -220,6 +220,7 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
         safe_strncpy(msg->file_drag_data.file_list, event->file_list, data_len);
         msg->file_drag_data.x = event->position.x;
         msg->file_drag_data.y = event->position.y;
+        msg->file_drag_data.start_drag = true;
         send_wcmsg(msg);
         free(msg);
     } else {

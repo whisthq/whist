@@ -299,9 +299,12 @@ static int handle_file_drag_message(WhistClientMessage *wcmsg) {
     if (wcmsg->file_drag_data.end_drag) {
         LOG_INFO("end_drag");
         file_drag_update(false, 0, 0, NULL);
+    } else if (wcmsg->file_drag_data.start_drag) {
+        LOG_INFO("start_drag");
+        file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, wcmsg->file_drag_data.file_list);
     } else {
         LOG_INFO("move_drag");
-        file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, wcmsg->file_drag_data.file_list);
+        file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, NULL);
     }
 
     LOG_INFO("finished handle_file_drag_message");

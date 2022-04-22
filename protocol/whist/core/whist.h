@@ -751,6 +751,7 @@ typedef struct WhistClientMessage {
         struct {
             int x;
             int y;
+            bool start_drag;
             bool end_drag;
             char file_list[0];
         } file_drag_data;            // CMESSAGE_FILE_DRAG
