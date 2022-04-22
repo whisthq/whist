@@ -390,6 +390,20 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
         // If a nvidia capture device creation is in progress, then we should wait for it.
         // Otherwise nvidia drivers will fail/crash.
         whist_wait_semaphore(device->nvidia_device_created);
+        if (device->nvidia_context_is_stale) {
+            // the nvidia device's context should be in video_context_ptr
+            CUresult cu_res = cu_ctx_pop_current_ptr(get_nvidia_thread_cuda_context_ptr());
+            if (cu_res != CUDA_SUCCESS) {
+                LOG_ERROR("Failed to pop video thread context into nvidia thread context");
+            }
+            cu_res = cu_ctx_push_current_ptr(*get_video_thread_cuda_context_ptr());
+            if (cu_res != CUDA_SUCCESS) {
+                LOG_ERROR("Failed to swap contexts!");
+            }
+            cu_ctx_synchronize_ptr();
+            nvidia_bind_context(device->nvidia_capture_device);
+            device->nvidia_context_is_stale = false;
+        }
     }
     try_update_dimensions(device, width, height, dpi);
     if (USING_NVIDIA_CAPTURE) {
