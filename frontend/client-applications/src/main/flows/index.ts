@@ -192,3 +192,7 @@ createTrigger(WhistTrigger.authRefreshSuccess, authRefresh.success)
 createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)
 createTrigger(WhistTrigger.mandelboxFlowTimeout, mandelbox.timeout)
+
+fromTrigger(WhistTrigger.beginImport).subscribe((x) => {
+  console.log("BEGIN IMPORT", x)
+})
