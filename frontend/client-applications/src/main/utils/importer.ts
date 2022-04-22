@@ -34,7 +34,6 @@ const getInstalledBrowsers = () => {
 const getCookies = async (
   browser: InstalledBrowser
 ): Promise<string | undefined> => {
-  console.log("getting cookies for", browser)
   if (browser === undefined) return undefined
 
   try {
