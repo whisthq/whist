@@ -79,6 +79,7 @@ static int32_t multithreaded_nvidia_device_manager(void* opaque) {
         device->nvidia_context_is_stale = true;
         // Tell the main thread nvidia is active again
         device->active_capture_device = NVIDIA_DEVICE;
+        whist_post_semaphore(device->nvidia_device_created);
     }
     return 0;
 }
@@ -276,6 +277,7 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
                   *get_video_thread_cuda_context_ptr());
         // set up semaphore and nvidia manager
         device->nvidia_device_semaphore = whist_create_semaphore(0);
+        device->nvidia_device_created = whist_create_semaphore(0);
         device->nvidia_manager = whist_create_thread(multithreaded_nvidia_device_manager,
                                                      "multithreaded_nvidia_manager", device);
         whist_post_semaphore(device->nvidia_device_semaphore);
@@ -383,6 +385,11 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
     if (device == NULL) {
         LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
         return false;
+    }
+    if (USING_NVIDIA_CAPTURE) {
+        // If a nvidia capture device creation is in progress, then we should wait for it.
+        // Otherwise nvidia drivers will fail/crash.
+        whist_wait_semaphore(device->nvidia_device_created);
     }
     try_update_dimensions(device, width, height, dpi);
     if (USING_NVIDIA_CAPTURE) {
