@@ -397,7 +397,7 @@ jobs:
   amis-publish-aws:
     name: "AMIs: Publish to AWS"
     runs-on: ubuntu-20.04
-    concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
+    concurrency: amis-publish-aws-${{ github.ref }}
     needs: [whist-publish-build-config, terraform-deploy]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
@@ -664,7 +664,8 @@ jobs:
       always() &&
       (needs.scaling-service-deploy.result == 'success') &&
       (needs.auth0-deploy-rules.result == 'success') &&
-      (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
+      (needs.mandelboxes-publish-ghcr.result == 'success')
+      (needs.amis-publish-aws.result == 'success')
 
     steps:
       - name: Checkout Git Repository
@@ -1107,7 +1108,7 @@ jobs:
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         shell: bash --noprofile --norc -eo pipefail {0}
         working-directory: backend/services/scaling-service
-        run: ./deploy.sh "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}" ${{ env.HEROKU_APP_NAME }} ${{ github.sha }} '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
+        run: ./deploy.sh "${{ needs.amis-publish-aws.outputs.region_to_ami_map }}" ${{ env.HEROKU_APP_NAME }} ${{ github.sha }} '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
 
       - name: Notify Slack on Database Migration Performed
         shell: python3 {0}
