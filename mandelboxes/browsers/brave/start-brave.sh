@@ -27,9 +27,7 @@ if [[ ! -f $WHIST_BRAVE_SINGLETON_LOCK ]]; then
   rm -f $BRAVE_SINGLETON_LOCK
 fi
 
-# Edit the Brave Preferences Config file (create it if it doesn't exit) to set the fonts based on the client's OS
-mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser/Default
-touch /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
+# Edit the Brave Preferences Config file to set the fonts based on the client's OS
 if [[ "$PLATFORM" == "darwin" ]]; then
   echo {} | \
     jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
