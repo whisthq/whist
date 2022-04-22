@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
-	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -42,45 +41,40 @@ func main() {
 	serverEvents := make(chan algos.ScalingEvent, 100)
 	StartHTTPServer(serverEvents)
 
-	// In this block we setup the events that use database or interact with cloud providers.
-	// For convenience, they are disabled when running on local environment.
-	if !metadata.IsLocalEnvWithoutDB() {
-		logger.Infof("Running on localdev, so not enabling scaling or deploy code...")
-		// Start GraphQL client for queries/mutations
-		useConfigDB := false
-		graphqlClient = &subscriptions.GraphQLClient{}
-		err := graphqlClient.Initialize(useConfigDB)
-		if err != nil {
-			logger.Errorf("Failed to start GraphQL client. Error: %v", err)
-		}
-
-		// Start GraphQL client for getting configuration from the config db
-		useConfigDB = true
-		configGraphqlClient = &subscriptions.GraphQLClient{}
-		err = configGraphqlClient.Initialize(useConfigDB)
-		if err != nil {
-			logger.Errorf("Failed to start config GraphQL client. Error: %v", err)
-		}
-
-		// Start database subscriptions
-		subscriptionEvents = make(chan subscriptions.SubscriptionEvent, 100)
-		subscriptionClient = &subscriptions.SubscriptionClient{}
-		configClient = &subscriptions.SubscriptionClient{}
-		StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents, subscriptionClient, configClient)
-
-		// Initialize database client
-		dbClient = &dbclient.DBClient{}
-
-		// Start scheduler and setup scheduler event chan
-		scheduledEvents = make(chan algos.ScalingEvent, 100)
-
-		// Set to run every 10 minutes, starting 10 minutes from now
-		start := time.Duration(10 * time.Minute)
-		StartSchedulerEvents(scheduledEvents, 10, start)
-
-		// Start the deploy events once since we are starting the scaling service.
-		StartDeploy(scheduledEvents)
+	// Start GraphQL client for queries/mutations
+	useConfigDB := false
+	graphqlClient = &subscriptions.GraphQLClient{}
+	err := graphqlClient.Initialize(useConfigDB)
+	if err != nil {
+		logger.Errorf("Failed to start GraphQL client. Error: %v", err)
 	}
+
+	// Start GraphQL client for getting configuration from the config db
+	useConfigDB = true
+	configGraphqlClient = &subscriptions.GraphQLClient{}
+	err = configGraphqlClient.Initialize(useConfigDB)
+	if err != nil {
+		logger.Errorf("Failed to start config GraphQL client. Error: %v", err)
+	}
+
+	// Start database subscriptions
+	subscriptionEvents = make(chan subscriptions.SubscriptionEvent, 100)
+	subscriptionClient = &subscriptions.SubscriptionClient{}
+	configClient = &subscriptions.SubscriptionClient{}
+	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents, subscriptionClient, configClient)
+
+	// Initialize database client
+	dbClient = &dbclient.DBClient{}
+
+	// Start scheduler and setup scheduler event chan
+	scheduledEvents = make(chan algos.ScalingEvent, 100)
+
+	// Set to run every 10 minutes, starting 10 minutes from now
+	start := time.Duration(10 * time.Minute)
+	StartSchedulerEvents(scheduledEvents, 10, start)
+
+	// Start the deploy events once since we are starting the scaling service.
+	StartDeploy(scheduledEvents)
 
 	// algorithmByRegionMap holds all of the scaling algorithms mapped by region.
 	// Use a sync map since we only write the keys once but will be reading multiple
@@ -244,7 +238,7 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 		return algorithm.(algos.ScalingAlgorithm)
 	}
 
-	logger.Errorf("Failed to get scaling algorithm in %v", scalingEvent.Region)
+	logger.Warningf("Failed to get scaling algorithm in %v", scalingEvent.Region)
 
 	return nil
 }

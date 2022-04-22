@@ -245,15 +245,16 @@ func (mh *mockHostHandler) Initialize(region string) error {
 	return nil
 }
 
-func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTime time.Duration, imageID string) (createdInstances []subscriptions.Instance, err error) {
+func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTime time.Duration, image subscriptions.Image) (createdInstances []subscriptions.Instance, err error) {
 	var newInstances []subscriptions.Instance
 	for i := 0; i < int(numInstances); i++ {
 		newInstances = append(newInstances, subscriptions.Instance{
-			ID:       "test-scale-up-instance",
-			Provider: "AWS",
-			ImageID:  imageID,
-			Type:     "g4dn.2xlarge",
-			Status:   "PRE_CONNECTION",
+			ID:        "test-scale-up-instance",
+			Provider:  "AWS",
+			ImageID:   image.ImageID,
+			ClientSHA: image.ClientSHA,
+			Type:      "g4dn.2xlarge",
+			Status:    "PRE_CONNECTION",
 		})
 	}
 
@@ -359,6 +360,7 @@ func TestVerifyInstanceScaleDown(t *testing.T) {
 			ID:                "test-scale-up-instance",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -406,6 +408,7 @@ func TestVerifyCapacity(t *testing.T) {
 			ID:                "test-scale-up-instance",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -428,6 +431,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ID:                "test-scale-down-instance-1",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -436,6 +440,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ID:                "test-scale-down-instance-2",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -444,6 +449,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ID:                "test-scale-down-instance-3",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -480,6 +486,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ID:                "test-scale-down-instance-1",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "DRAINING",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -488,6 +495,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ID:                "test-scale-down-instance-2",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "DRAINING",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -496,6 +504,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ID:                "test-scale-down-instance-3",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -533,7 +542,10 @@ func TestScaleUpIfNecessary(t *testing.T) {
 
 	// For this test, try to scale up instances and check if they are
 	// successfully added to the database with the correct data.
-	err := testAlgorithm.ScaleUpIfNecessary(testInstancesToScale, context, ScalingEvent{Region: "test-region"}, "test-image-id-scale-up")
+	err := testAlgorithm.ScaleUpIfNecessary(testInstancesToScale, context, ScalingEvent{Region: "test-region"}, subscriptions.Image{
+		ImageID:   "test-image-id-scale-up",
+		ClientSHA: "test-sha-dev",
+	})
 	if err != nil {
 		t.Errorf("Failed while testing scale up action. Err: %v", err)
 	}
@@ -544,6 +556,7 @@ func TestScaleUpIfNecessary(t *testing.T) {
 			ID:                "test-scale-up-instance",
 			Provider:          "AWS",
 			ImageID:           "test-image-id-scale-up",
+			ClientSHA:         "test-sha-dev",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -552,6 +565,7 @@ func TestScaleUpIfNecessary(t *testing.T) {
 			ID:                "test-scale-up-instance",
 			Provider:          "AWS",
 			ImageID:           "test-image-id-scale-up",
+			ClientSHA:         "test-sha-dev",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -560,6 +574,7 @@ func TestScaleUpIfNecessary(t *testing.T) {
 			ID:                "test-scale-up-instance",
 			Provider:          "AWS",
 			ImageID:           "test-image-id-scale-up",
+			ClientSHA:         "test-sha-dev",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
@@ -600,7 +615,6 @@ func TestDeploy(t *testing.T) {
 			Provider:  "AWS",
 			Region:    "test-region",
 			ImageID:   "test-image-id-old",
-			ClientSHA: "test-sha",
 			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
 		},
 	}
@@ -678,7 +692,6 @@ func TestDeploy(t *testing.T) {
 			Provider:  "AWS",
 			Region:    "test-region",
 			ImageID:   "test-image-id-new",
-			ClientSHA: graphql.String(metadata.GetGitCommit()),
 			UpdatedAt: time.Date(2022, 04, 11, 11, 54, 30, 0, time.Local),
 		},
 	}

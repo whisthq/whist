@@ -80,7 +80,7 @@ func (host *AWSHost) MakeTags(c context.Context, input *ec2.CreateTagsInput) (*e
 }
 
 // SpinDownInstances is responsible for launching `numInstances` number of instances with the received imageID.
-func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTimeReady time.Duration, imageID string) ([]subscriptions.Instance, error) {
+func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTimeReady time.Duration, image subscriptions.Image) ([]subscriptions.Instance, error) {
 	ctx, cancel := context.WithCancel(scalingCtx)
 	defer cancel()
 
@@ -94,7 +94,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 	input := &ec2.RunInstancesInput{
 		MinCount:                          aws.Int32(MIN_INSTANCE_COUNT),
 		MaxCount:                          aws.Int32(numInstances),
-		ImageId:                           aws.String(imageID),
+		ImageId:                           aws.String(image.ImageID),
 		InstanceInitiatedShutdownBehavior: ec2Types.ShutdownBehaviorTerminate,
 		InstanceType:                      INSTANCE_TYPE,
 		IamInstanceProfile: &ec2Types.IamInstanceProfileSpecification{
@@ -122,7 +122,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 				return
 
 			case <-retryTicker.C:
-				logger.Infof("Trying to spinup %v instances with image %v", numInstances, imageID)
+				logger.Infof("Trying to spinup %v instances with image %v", numInstances, image.ImageID)
 
 				attempts += 1
 				result, err = host.MakeInstances(ctx, input)
@@ -167,6 +167,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 			InstanceID = aws.ToString(outputInstance.InstanceId)
 			Region     = host.Region
 			Status     = "PRE_CONNECTION"
+			ClientSHA  = image.ClientSHA
 			Name       = host.GenerateName()
 		)
 
@@ -193,6 +194,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 			Region:    Region,
 			Provider:  "AWS",
 			ImageID:   ImageID,
+			ClientSHA: ClientSHA,
 			Type:      Type,
 			Status:    Status,
 		})

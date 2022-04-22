@@ -79,12 +79,10 @@ type MandelboxAssignRequestResult struct {
 // ReturnResult is called to pass the result of a request back to the HTTP
 // request handler.
 func (s *MandelboxAssignRequest) ReturnResult(result interface{}, err error) {
-	logger.Infof("Sending result to chan %v", s.ResultChan)
 	s.ResultChan <- RequestResult{
 		Result: result,
 		Err:    err,
 	}
-	logger.Infof("Sent to chan %v", s.ResultChan)
 }
 
 // createResultChan is called to create the Go channel to pass the request
