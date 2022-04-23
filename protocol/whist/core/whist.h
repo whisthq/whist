@@ -680,17 +680,6 @@ typedef struct {
     uint32_t frame_id;  ///< ID of frame we are acking.
 } WhistFrameAckMessage;
 
-/**
- * @brief                          A packet of data referring to and containing
- *                                 the information for a file drag.
- */
-typedef struct FileDragData {
-    int global_file_id;        // The global id of the file for synchrony
-    size_t size;               // Number of bytes for the file chunk data
-    FileChunkType chunk_type;  // Whether this is a first, middle or last chunk
-    char data[0];              // The file chunk byte contents
-} FileDragData;
-
 /* position of bit within character */
 #define BIT_CHAR(bit) ((bit) / CHAR_BIT)
 

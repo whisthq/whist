@@ -197,39 +197,43 @@ static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEven
 }
 
 static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEvent* event) {
-    if (event->end_drag == true) {
-        LOG_INFO("handle_file_drag_event: end drag");
-        // Handle the drag end case (this either means the drag has ended or the drag has
-        // left the window)
-        WhistClientMessage msg = {0};
-        msg.type = CMESSAGE_FILE_DRAG;
-        msg.file_drag_data.end_drag = true;
-        send_wcmsg(&msg);
-        return;
+    int data_len = 0;
+    if (event->file_list) {
+        data_len = strlen((const char*)event->file_list) + 1;
     }
+    WhistClientMessage* msg = malloc(sizeof(WhistClientMessage) + data_len);
+    memset(msg, 0, sizeof(WhistClientMessage) + data_len);
+    msg->type = CMESSAGE_FILE_DRAG;
 
     // The event->position.{x,y} values are in screen coordinates, so we
     // would need to multiply by output_{width,height} and divide by
     // window_{width,height} to know where to draw the file drag overlay
-    if (event->file_list) {
-        LOG_INFO("handle_file_drag_event: start drag with file list %s", event->file_list);
-        int data_len = strlen((const char*)event->file_list) + 1;
-        WhistClientMessage* msg = malloc(sizeof(WhistClientMessage) + data_len);
-        memset(msg, 0, sizeof(WhistClientMessage) + data_len);
-        msg->type = CMESSAGE_FILE_DRAG;
+    if (event->end_drag) {
+        // Handle the drag end case (this either means the drag has ended or the drag has
+        // left the window)
+        msg->file_drag_data.start_drag = false;
+        msg->file_drag_data.end_drag = true;
+    } else if (event->file_list) {
+        // When file_list is set, the drag is starting
         safe_strncpy(msg->file_drag_data.file_list, event->file_list, data_len);
-        msg->file_drag_data.x = event->position.x;
-        msg->file_drag_data.y = event->position.y;
         msg->file_drag_data.start_drag = true;
-        send_wcmsg(msg);
-        free(msg);
+        msg->file_drag_data.end_drag = false;
     } else {
-        WhistClientMessage msg = {0};
-        msg.type = CMESSAGE_FILE_DRAG;
-        msg.file_drag_data.x = event->position.x;
-        msg.file_drag_data.y = event->position.y;
-        LOG_INFO("handle_file_drag_event: move drag %d", send_wcmsg(&msg));
+        // In all other cases, the drag is in the middle of moving
+        msg->file_drag_data.start_drag = false;
+        msg->file_drag_data.end_drag = false;
     }
+
+    int dpi = whist_frontend_get_window_dpi(frontend);
+    msg->file_drag_data.x = event->position.x * dpi / 96;
+    msg->file_drag_data.y = event->position.y * dpi / 96;
+
+    if (event->file_list) {
+        free(event->file_list);
+    }
+
+    send_wcmsg(msg);
+    free(msg);
 }
 
 static void handle_quit_event(FrontendQuitEvent* event) {

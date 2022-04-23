@@ -571,7 +571,6 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
 
     static bool active_file_drag = false;
 
-    LOG_INFO("file_drag_update");
 
     if (is_dragging) {
         if (!file_list && !xdnd_file_list) {
@@ -579,7 +578,6 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
         }
         // When drag first begins, peer should send a file_list of filenames being dragged
         if (file_list) {
-            LOG_INFO("file_list: %s", file_list);
             const char* delimiter = "\n";
             char* strtok_context = NULL;
             char* file_list_token = strtok_r(file_list, delimiter, &strtok_context);
@@ -615,7 +613,10 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
                 id++;
             }
 
-            LOG_INFO("file list prepared: %s", xdnd_file_list);
+            if (!xdnd_file_list) {
+                LOG_WARNING("There is no file list for the drag start event");
+                return -1;
+            }
         }
     }
 
@@ -629,8 +630,6 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
     if (is_dragging) {
         if (!active_file_drag) {
             // DRAG BEGINS
-
-            LOG_INFO("DRAG BEGINS");
 
             // The XDND communication exchange begins. Number steps are taken from
             // https://freedesktop.org/wiki/Specifications/XDND/
@@ -653,30 +652,27 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
             //     we can skip this step in the XDND exchange.
         }
 
-        LOG_INFO("DRAG MOVES");
-
         // XDND 4 - Send XdndPosition to active X11 window
         xdnd_send_position(x, y);
 
         XEvent e;
-        XNextEvent(display, &e);
+        do {
+            XNextEvent(display, &e);
 
-        LOG_INFO("FINISHED XNextEvent");
-
-        if (e.type == SelectionRequest) {
-            // When we receive a SelectionRequest from the active X11 window, we send a
-            // SelectionNotify event back to
-            //     the active X11 window with all of the information about the drop.
-            xdnd_send_selection_notify(xdnd_file_list, e);
-        } else if (e.type == ClientMessage && e.xclient.message_type == XA_XdndFinished) {
-            // The active X11 window has indicated that it is done with the drag and drop sequence,
-            // so we can break
-            xdnd_send_leave();
-        }
+            if (e.type == SelectionRequest) {
+                // When we receive a SelectionRequest from the active X11 window, we send a
+                // SelectionNotify event back to
+                //     the active X11 window with all of the information about the drop.
+                xdnd_send_selection_notify(xdnd_file_list, e);
+            } else if (e.type == ClientMessage && e.xclient.message_type == XA_XdndFinished) {
+                // The active X11 window has indicated that it is done with the drag and drop sequence,
+                // so we can break
+                xdnd_send_leave();
+            }
+        } while (XPending(display));
     } else {
         if (active_file_drag) {
             // DRAG ENDS
-            LOG_INFO("DRAG ENDS");
 
             // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate that
             // the XDND communication sequence is complete

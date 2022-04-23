@@ -277,7 +277,6 @@ static int handle_file_group_end_message(WhistClientMessage *wcmsg) {
     */
 
     if (wcmsg->file_group_end.transfer_type == FILE_TRANSFER_SERVER_DROP) {
-        LOG_INFO("end_drop");
         drop_file_into_active_window(NULL);
     }
 
@@ -294,20 +293,13 @@ static int handle_file_drag_message(WhistClientMessage *wcmsg) {
             (int): Returns -1 on failure, 0 on success
     */
 
-    LOG_INFO("handle_file_drag_message");
-
     if (wcmsg->file_drag_data.end_drag) {
-        LOG_INFO("end_drag");
         file_drag_update(false, 0, 0, NULL);
     } else if (wcmsg->file_drag_data.start_drag) {
-        LOG_INFO("start_drag");
         file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, wcmsg->file_drag_data.file_list);
     } else {
-        LOG_INFO("move_drag");
         file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, NULL);
     }
-
-    LOG_INFO("finished handle_file_drag_message");
 
     return 0;
 }
