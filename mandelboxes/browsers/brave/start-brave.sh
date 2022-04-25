@@ -30,7 +30,6 @@ fi
 # Set the Brave language
 echo {} | jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'", "selected_languages": "'"${BROWSER_LANGUAGES}"'"}' > /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
 
-
 # Notes on Chromium flags:
 #
 # The following flags are currently unsupported on Linux, but desirable. Once they are
