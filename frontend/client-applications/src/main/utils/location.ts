@@ -122,8 +122,8 @@ const getGeolocation = async () => {
   }
 
   return {
-    longitude: json.longitude.toFixed(7),
-    latitude: json.latitude.toFixed(7),
+    longitude: json.longitude.toFixed(7) as number,
+    latitude: json.latitude.toFixed(7) as number,
   }
 }
 
