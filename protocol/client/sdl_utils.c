@@ -22,6 +22,7 @@ Includes
 #include <whist/utils/lodepng.h>
 #include "frontend/frontend.h"
 #include <whist/logging/log_statistic.h>
+#include <whist/utils/command_line.h>
 
 #include <whist/utils/color.h>
 #include "client_utils.h"
@@ -61,6 +62,10 @@ static volatile bool should_update_window_title = false;
 static volatile bool fullscreen_trigger = false;
 static volatile bool fullscreen_value = false;
 
+static const char* frontend_type;
+COMMAND_LINE_STRING_OPTION(frontend_type, 'f', "frontend", WHIST_ARGS_MAXLEN,
+                           "Which frontend type to attempt to use.  Default: sdl.")
+
 /*
 ============================
 Private Function Declarations
@@ -87,7 +92,7 @@ Public Function Implementations
 */
 
 WhistFrontend* init_sdl(int target_output_width, int target_output_height, const char* title) {
-    WhistFrontend* frontend = whist_frontend_create("sdl");
+    WhistFrontend* frontend = whist_frontend_create(frontend_type ? frontend_type : "sdl");
     if (frontend == NULL) {
         LOG_ERROR("Failed to create frontend");
         return NULL;
