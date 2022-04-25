@@ -27,11 +27,13 @@ if [[ -n $WHIST_CHROME_SINGLETON_LOCK ]]; then
   rm -f $GOOGLE_CHROME_SINGLETON_LOCK
 fi
 
+
 # Notes on Chromium flags:
 #
 # The following flags are currently unsupported on Linux, but desirable. Once they are
 # supported, we should add support for them:
 # "--enable-native-gpu-memory-buffers" --> https://bugs.chromium.org/p/chromium/issues/detail?id=1031269
+# "--use-passthrough-command-decoder" --> https://bugs.chromium.org/p/chromium/issues/detail?id=976283
 #
 # When inspecting chrome://gpu, you'll see that Optimus is disabled. This is intentional, as it
 # is not well supported on Linux, and is a feature intended to increase battery life by doing
@@ -42,9 +44,18 @@ fi
 # https://nira.com/chrome-flags/
 # https://bbs.archlinux.org/viewtopic.php?id=244031&p=25
 #
-# We intentionally disable/don't set the following flags, as they were causing issues:
+# We intentionally disable/don't set the following flags, as they were either causing issues, or 
+# simply not improving performance:
 # "--enable-zero-copy" --> causes visual glitches when using Nvidia Capture
 # "--disable-frame-rate-limit" --> significantly degrades frame rate on YouTube
+# "--disable-features=UseChromeOSDirectVideoDecoder" --> had no impact
+# "--ignore-gpu-blocklist" --> had no impact
+# "--disable-software-rasterizer" --> had no impact
+# "--ignore-gpu-blocklist" --> had no impact
+# "--disable-gpu-vsync" --> had no impact
+# "--enable-drdc" --> had no impact
+# "--enable-raw-draw" --> not well supported on Linux yet
+# "--enable-quic" --> had no impact
 #
 features="VaapiVideoDecoder,VaapiVideoEncoder,Vulkan,CanvasOopRasterization,OverlayScrollbar,ParallelDownloading"
 flags=(
