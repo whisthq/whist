@@ -8,60 +8,72 @@ import {
 import _ from "lodash"
 const currentPlatform = process.platform
 
-export const getUserLanguages = () => {
-  const parseUserLanguages = () => {
-    if (currentPlatform === "darwin") {
-      // This function will return the language in the Mac client format
-      const languagesRaw = execCommand(
-        "defaults read -g AppleLocale",
-        ".",
-        {},
-        "pipe"
-      )
-      // Remove newlines
-      return languagesRaw.toString().replace(/(\r\n|\n|\r)/gm, "")
-    } else if (currentPlatform === "linux") {
-      // This function will return the language (or list of languages separated by ':') in the Linux client format
-      const languagesRaw = execCommand('locale | grep "LANG"', ".", {}, "pipe")
-      // Split at newline
-      const parsedLanguages = languagesRaw.toString().split(/\r?\n/)
-      for (const expr of ["LANGUAGE", "LANG"]) {
-        for (const s of parsedLanguages) {
-          const keyValuePair = s.split(/=/)
-          if (
-            keyValuePair.length === 2 &&
-            keyValuePair[1].length >= 1 &&
-            keyValuePair[0].includes(expr)
-          ) {
-            // Peel off double quotes
-            return keyValuePair[1].split('"').join("")
-          }
-        }
+const getMacLanguageRaw = () => {
+  // This function will return the language in the Mac client format
+  const languagesRaw = execCommand(
+    "defaults read -g AppleLocale",
+    ".",
+    {},
+    "pipe"
+  )
+  // Remove newlines
+  return languagesRaw.toString().replace(/(\r\n|\n|\r)/gm, "")
+}
+
+const getLinuxLanguageRaw = () => {
+  // This function will return the language (or list of languages separated by ':') in the Linux client format
+  const languagesRaw = execCommand('locale | grep "LANG"', ".", {}, "pipe")
+  // Split at newline
+  const parsedLanguages = languagesRaw.toString().split(/\r?\n/)
+  for (const expr of ["LANGUAGE", "LANG"]) {
+    for (const s of parsedLanguages) {
+      const keyValuePair = s.split(/=/)
+      if (
+        keyValuePair.length === 2 &&
+        keyValuePair[1].length >= 1 &&
+        keyValuePair[0].includes(expr)
+      ) {
+        // Peel off double quotes
+        return keyValuePair[1].split('"').join("")
       }
-      return ""
-    } else {
-      // This function will return the language in the Windows client format
-      const languagesRaw = execCommand(
-        'reg query "HKCU\\Control Panel\\International\\User Profile" /v Languages | findstr /c:"Languages"',
-        ".",
-        {},
-        "pipe"
-      )
-      // Remove all new-lines and split over spaces to select last word (containing the languages)
-      const parsedLanguagesRaw = languagesRaw
-        .toString()
-        .replace(/(\r\n|\n|\r)/gm, "")
-        .split(" ")
-      // Extract languages, separate them with colons, and transform them into the `language_region` format
-      return parsedLanguagesRaw[parsedLanguagesRaw.length - 1]
-        .split("\\0")
-        .join(":")
-        .split("-")
-        .join("_")
     }
   }
+  return ""
+}
 
-  const systemLanguages = parseUserLanguages()
+const getWindowsLanguageRaw = () => {
+  // This function will return the language in the Windows client format
+  const languagesRaw = execCommand(
+    'reg query "HKCU\\Control Panel\\International\\User Profile" /v Languages | findstr /c:"Languages"',
+    ".",
+    {},
+    "pipe"
+  )
+  // Remove all new-lines and split over spaces to select last word (containing the languages)
+  const parsedLanguagesRaw = languagesRaw
+    .toString()
+    .replace(/(\r\n|\n|\r)/gm, "")
+    .split(" ")
+  // Extract languages, separate them with colons, and transform them into the `language_region` format
+  return parsedLanguagesRaw[parsedLanguagesRaw.length - 1]
+    .split("\\0")
+    .join(":")
+    .split("-")
+    .join("_")
+}
+
+const parseUserLanguagesRaw = () => {
+  if (currentPlatform === "darwin") {
+    return getMacLanguageRaw()
+  } else if (currentPlatform === "linux") {
+    return getLinuxLanguageRaw()
+  } else {
+    return getWindowsLanguageRaw()
+  }
+}
+
+export const getUserLanguages = () => {
+  const systemLanguages = parseUserLanguagesRaw()
     .split(":")
     .map((currentElement: string) => {
       // Remove encoding
