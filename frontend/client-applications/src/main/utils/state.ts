@@ -14,10 +14,8 @@ import {
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated } from "@app/main/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
-import {
-  getUserLanguages,
-  getUserLocale,
-} from "@app/main/utils/userLanguageAndLocale"
+import { getUserLanguages } from "@app/main/utils/language"
+import { getUserLocale } from "@app/main/utils/locale"
 import { getInstalledBrowsers } from "@app/main/utils/importer"
 import { getGeolocation } from "./location"
 
