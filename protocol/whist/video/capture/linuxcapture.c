@@ -69,7 +69,9 @@ static int32_t multithreaded_nvidia_device_manager(void* opaque) {
         while (device->nvidia_capture_device == NULL) {
             LOG_INFO("Creating nvidia capture device...");
             device->nvidia_capture_device = create_nvidia_capture_device();
-            whist_sleep(500);
+            if (device->nvidia_capture_device == NULL) {
+                whist_sleep(500);
+            }
         }
         LOG_INFO("Created nvidia capture device!");
         LOG_DEBUG("device handle: %" PRIu64, device->nvidia_capture_device->fbc_handle);

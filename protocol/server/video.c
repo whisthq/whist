@@ -447,11 +447,12 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
     // Information to resend the previous frame
     int last_id = -1;
     int previous_connection_id = -1;
+    int packet_sent = -1;
     int index = 0;
     while (true) {
         // TODO: Move to UDP's update_socket, and remove the sleep-loop
         // Till a new frame, send any nack or duplicate packets as required
-        if (whist_semaphore_value(producer) == 0 && last_id != -1) {
+        if (whist_semaphore_value(producer) == 0 && packet_sent != -1) {
             bool did_work = false;
 
             ClientLock* client_lock = client_active_trylock(state->client);
@@ -473,10 +474,11 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
                         // Something wrong happened
                         LOG_ERROR("udp_get_num_indices returned %d", num_indices);
                         index = 0;
+                        did_work = false;
                     } else if (num_indices == index) {
                         index = 0;
+                        did_work = true;
                     }
-                    did_work = true;
                 }
 
                 client_active_unlock(client_lock);
@@ -502,10 +504,14 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
         VideoFrame* frame = (VideoFrame*)encoded_frame_buf[currently_sending_index];
         ClientLock* client_lock = client_active_trylock(state->client);
         if (client_lock != NULL) {
-            send_packet(&state->client->udp_context, PACKET_VIDEO, frame,
-                        get_total_frame_size(frame), send_frame_id,
-                        VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type));
+            packet_sent = send_packet(&state->client->udp_context, PACKET_VIDEO, frame,
+                                      get_total_frame_size(frame), send_frame_id,
+                                      VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type));
+            if (packet_sent != 0) {
+                LOG_WARNING("Failed to send the video packet!");
+            }
             previous_connection_id = state->client->connection_id;
+            last_id = send_frame_id;
             client_active_unlock(client_lock);
         }
         // Mark the video frame as sent
@@ -513,7 +519,6 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
         log_double_statistic(VIDEO_SEND_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
         udp_reset_duplicate_packet_counter(&state->client->udp_context, PACKET_VIDEO);
         // Variables for network saturation resending
-        last_id = send_frame_id;
         index = 0;
     }
 
