@@ -71,7 +71,6 @@ flags=(
   "--enable-lazy-image-loading"
   "--enable-gpu-compositing"
   "--enable-gpu-rasterization"
-  "--use-passthrough-command-decoder"
   "--double-buffer-compositing"
   "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
   "--disable-font-subpixel-positioning"
