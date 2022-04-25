@@ -53,31 +53,11 @@ const Importer = (props: {
           Chrome, Brave, and Opera.
         </div>
         <div className="mt-8 max-w-sm m-auto">
-          {props.browsers.length === 0 ? (
-            <Dropdown
-              options={["No supported browsers found :("]}
-              onSubmit={undefined}
-              submitButton={
-                <input
-                  type="submit"
-                  value="Continue"
-                  className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light rounded py-4 font-bold bg-opacity-50"
-                />
-              }
-            />
-          ) : (
-            <Dropdown
-              options={props.browsers}
-              onSubmit={(value) => onSubmit(value)}
-              submitButton={
-                <input
-                  type="submit"
-                  value="Continue"
-                  className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light rounded py-4 font-bold cursor-pointer"
-                />
-              }
-            />
-          )}
+          <Dropdown
+            defaultText="No supported browsers found :("
+            options={props.browsers}
+            onSubmit={(value) => onSubmit(value)}
+          />
         </div>
         {props.allowSkip && (
           <div className="relative top-12">
