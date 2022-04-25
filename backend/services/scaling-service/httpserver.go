@@ -199,7 +199,7 @@ func verifyPaymentMiddleware(f func(http.ResponseWriter, *http.Request)) http.Ha
 		}
 
 		if len(strings.Split(accessToken, "Bearer")) <= 1 {
-			logger.Warningf("Access token does not have Bearer header. Trying to parse token as is.")
+			logger.Infof("Access token does not have Bearer header. Trying to parse token as is.")
 		} else {
 			accessToken = strings.Split(accessToken, "Bearer ")[1]
 		}

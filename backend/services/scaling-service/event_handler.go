@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -167,6 +168,10 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 }
 
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
+	if metadata.IsLocalEnv() {
+		logger.Infof("Running in localenv so not performing deploy actions.")
+		return
+	}
 
 	regionImageMap, err := getRegionImageMap()
 	if err != nil {

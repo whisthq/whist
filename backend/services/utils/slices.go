@@ -40,3 +40,16 @@ func StringSliceContains(slice []string, val string) bool {
 	}
 	return false
 }
+
+// PrintSlice is a helper function to print the slice elements as a string of comma separated values.
+func PrintSlice(slice []string) string {
+	var message string
+	for i, v := range slice {
+		if i+1 == len(slice) {
+			message += Sprintf("%s", v)
+		} else {
+			message += Sprintf("%s, ", v)
+		}
+	}
+	return message
+}
