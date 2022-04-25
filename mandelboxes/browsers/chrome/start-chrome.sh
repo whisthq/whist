@@ -118,8 +118,8 @@ if [[ "$CLIENT_OS" == "darwin" ]]; then
 
   # Disable smooth scrolling, which we handle via uinput instead
   flags+=("--disable-smooth-scrolling")
-elif [[ "$CLIENT_OS" == "win32" ]]; then
-  # Edit the Chrome Preferences Config file to use the default Windows fonts
+else
+  # Edit the Chrome Preferences Config file to use the default Windows/Ubuntu fonts
   echo {} | \
     jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}' \
     > /home/whist/.config/google-chrome/Default/Preferences

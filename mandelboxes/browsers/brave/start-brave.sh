@@ -118,9 +118,11 @@ if [[ "$CLIENT_OS" == "darwin" ]]; then
 
   # Disable smooth scrolling, which we handle via uinput instead
   flags+=("--disable-smooth-scrolling")
-elif [[ "$CLIENT_OS" == "win32" ]]; then
+else
   # Edit the Brave Preferences Config file to use the default Windows fonts
-  echo {} | jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}' > /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
+  echo {} | \
+    jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}' \
+    > /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
 fi
 
 # Load D-Bus configurations; necessary for Brave
