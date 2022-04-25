@@ -2,10 +2,10 @@ import {
   linuxSupportedLanguages,
   linuxLanguageToDefaultRegion,
 } from "@app/constants/mandelboxLanguages"
-import _ from "lodash"
+import find from "lodash.find"
 
 export const caseInsensitiveLanguageSearch = (language: string) => {
-  return _.find(
+  return find(
     linuxSupportedLanguages,
     (linuxLang) => language.toLowerCase() === linuxLang.toLowerCase()
   )

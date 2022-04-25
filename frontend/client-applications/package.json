@@ -78,6 +78,7 @@
     "lodash.set": "^4.3.2",
     "lodash.sortby": "^4.7.0",
     "lodash.topairs": "^4.3.0",
+    "lodash.uniq": "^4.5.0",
     "log-rotate": "^0.2.8",
     "logzio-nodejs": "^2.0.2",
     "node-fetch": "^3.0.0",

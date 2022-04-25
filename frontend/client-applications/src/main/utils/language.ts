@@ -5,7 +5,7 @@ import {
   matchServerLanguageWithRegionFormat,
   matchServerLanguageWithScriptFormat,
 } from "@app/main/utils/matchServerLanguages"
-import _ from "lodash"
+import uniq from "lodash.uniq"
 const currentPlatform = process.platform
 
 const getMacLanguageRaw = () => {
@@ -124,6 +124,6 @@ export const getUserLanguages = () => {
   return {
     systemLanguages: systemLanguages.join(":"),
     // Add fallback options (english), remove duplicates, and join values in a single string
-    browserLanguages: _.uniq([...browserLanguages, "en-US", "en"]).join(","),
+    browserLanguages: uniq([...browserLanguages, "en-US", "en"]).join(","),
   }
 }
