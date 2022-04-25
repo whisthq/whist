@@ -110,12 +110,12 @@ fi
 flags+=("$INITIAL_URL")
 
 # OS-specific provisions
-if [[ "$PLATFORM" == "darwin" ]]; then
+if [[ "$CLIENT_OS" == "darwin" ]]; then
   # Edit the Brave Preferences Config file to set the fonts based on the client's OS
   echo {} | \
     jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
     > /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
-  
+
   # Disable smooth scrolling, which we handle via uinput instead
   flags+=("--disable-smooth-scrolling")
 fi

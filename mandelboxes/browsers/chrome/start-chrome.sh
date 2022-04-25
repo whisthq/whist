@@ -110,7 +110,7 @@ fi
 flags+=("$INITIAL_URL")
 
 # OS-specific provisions
-if [[ "$PLATFORM" == "darwin" ]]; then
+if [[ "$CLIENT_OS" == "darwin" ]]; then
   # Edit the Chrome Preferences Config file to set the fonts based on the client's OS
   echo {} | \
     jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
