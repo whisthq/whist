@@ -41,12 +41,12 @@ const getLocaleWindows = () => {
   if (windowsLocale !== "") {
     userLocales.LC_ALL = windowsLocale
   } else {
-    // If the locale is not supported, just use the standard C linux locale.
     console.log(
       "Could not find a match for client locale" +
         parsedUserLocale[parsedUserLocale.length - 1].split("-").join("_") +
         ". Using C instead"
     )
+    // If the locale is not supported, just use the standard POSIX (C) linux locale.
     userLocales.LC_ALL = "C"
   }
   return userLocales
