@@ -375,16 +375,20 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
         // leading to security problems
         if (tcp_network_packet->payload_size < 0 ||
             MAX_TCP_PAYLOAD_SIZE < tcp_network_packet->payload_size) {
-            // Wipe the reading packet buffer,
-            context->reading_packet_len = 0;
-            resize_dynamic_buffer(encrypted_tcp_packet_buffer, 0);
-            // And mark the connection as lost
+            // Since the TCP connection has been manipulated, we drop the connection
             // NOTE: It's okay to drop the connection when this happens,
             //       without exposing us to DOS attacks.
-            //       It requires a MITM to interrupt a connection (Requires guessing the sequence
-            //       number). Even TLS/SSL will not safeguard us from this, it's fundamental to TCP.
+            //       It requires a MITM to interrupt a TCP connection (Requires guessing the
+            //       sequence number). Even TLS/SSL will not safeguard us from this, it's
+            //       fundamental to TCP.
             LOG_WARNING("Invalid packet size: %d, connection dropping",
                         tcp_network_packet->payload_size);
+
+            // Wipe the reading packet buffer, including the tcp_network_packet view
+            context->reading_packet_len = 0;
+            resize_dynamic_buffer(encrypted_tcp_packet_buffer, 0);
+
+            // Mark the connection as lost and return
             context->connection_lost = true;
             return NULL;
         }
