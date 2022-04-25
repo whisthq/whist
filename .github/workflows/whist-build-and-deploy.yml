@@ -376,7 +376,7 @@ jobs:
     uses: ./.github/workflows/mandelboxes-publish-ghcr.yml
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
-      publish: ${{ needs.whist-publish-build-config.outputs.publish }} == "true"
+      publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
     secrets:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       GHA_USERNAME: ${{ secrets.GHA_USERNAME }}
