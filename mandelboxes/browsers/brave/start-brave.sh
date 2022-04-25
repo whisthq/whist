@@ -32,6 +32,7 @@ fi
 # The following flags are currently unsupported on Linux, but desirable. Once they are
 # supported, we should add support for them:
 # "--enable-native-gpu-memory-buffers" --> https://bugs.chromium.org/p/chromium/issues/detail?id=1031269
+# "--use-passthrough-command-decoder" --> https://bugs.chromium.org/p/chromium/issues/detail?id=976283
 #
 # When inspecting chrome://gpu, you'll see that Optimus is disabled. This is intentional, as it
 # is not well supported on Linux, and is a feature intended to increase battery life by doing
@@ -42,9 +43,21 @@ fi
 # https://nira.com/chrome-flags/
 # https://bbs.archlinux.org/viewtopic.php?id=244031&p=25
 #
-# We intentionally disable/don't set the following flags, as they were causing issues:
+# We intentionally disable/don't set the following flags, as they were either causing issues, or 
+# simply not improving performance:
 # "--enable-zero-copy" --> causes visual glitches when using Nvidia Capture
 # "--disable-frame-rate-limit" --> significantly degrades frame rate on YouTube
+# "--disable-features=UseChromeOSDirectVideoDecoder" --> did not make a difference
+# "--ignore-gpu-blocklist" --> did not make a difference
+# "--disable-software-rasterizer" --> did not make a difference
+
+
+
+#   "--ignore-gpu-blocklist"
+# "--disable-gpu-vsync" --> NEED TO CHECK THE EFFECT IT HAD
+#   "--enable-drdc"
+#  "--enable-raw-draw"
+#  "--enable-quic"
 #
 features="VaapiVideoDecoder,VaapiVideoEncoder,Vulkan,CanvasOopRasterization,OverlayScrollbar,ParallelDownloading"
 flags=(
@@ -58,23 +71,14 @@ flags=(
   "--enable-lazy-image-loading"
   "--enable-gpu-compositing"
   "--enable-gpu-rasterization"
-  "--enable-oop-rasterization"
-  "--canvas-oop-rasterization"
-  "--enable-drdc"
-  "--enable-raw-draw"
-  "--enable-quic"
   "--use-passthrough-command-decoder"
   "--double-buffer-compositing"
   "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
-  "--disable-software-rasterizer" # Since we --enable-gpu-rasterization
   "--disable-font-subpixel-positioning"
-  "--disable-gpu-vsync" # Increases resource utilization, but improves performance
   "--disable-gpu-process-crash-limit"
-  "--ignore-gpu-blocklist"
   "--no-default-browser-check"
   "--ozone-platform-hint=x11"
   "--password-store=basic" # This disables the kwalletd backend, which we don't support
-  "--disable-features=UseChromeOSDirectVideoDecoder" # This apparently makes things faster on Linux
   "--load-extension=/opt/teleport/chrome-extension"
 )
 

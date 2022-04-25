@@ -58,23 +58,14 @@ flags=(
   "--enable-lazy-image-loading"
   "--enable-gpu-compositing"
   "--enable-gpu-rasterization"
-  "--enable-oop-rasterization"
-  "--canvas-oop-rasterization"
-  "--enable-drdc"
-  "--enable-raw-draw"
-  "--enable-quic"
   "--use-passthrough-command-decoder"
   "--double-buffer-compositing"
   "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
-  "--disable-software-rasterizer" # Since we --enable-gpu-rasterization
   "--disable-font-subpixel-positioning"
-  "--disable-gpu-vsync" # Increases resource utilization, but improves performance
   "--disable-gpu-process-crash-limit"
-  "--ignore-gpu-blocklist"
   "--no-default-browser-check"
   "--ozone-platform-hint=x11"
   "--password-store=basic" # This disables the kwalletd backend, which we don't support
-  "--disable-features=UseChromeOSDirectVideoDecoder" # This apparently makes things faster on Linux
   "--load-extension=/opt/teleport/chrome-extension"
 )
 
