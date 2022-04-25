@@ -30,6 +30,7 @@ Command-line options
 ============================
 */
 
+
 static const char* private_key_option;
 COMMAND_LINE_STRING_OPTION(private_key_option, 'k', "private-key", 32,
                            "Pass in the RSA Private Key as a hexadecimal string.")
@@ -43,6 +44,10 @@ static const char* identifier_option;
 COMMAND_LINE_STRING_OPTION(identifier_option, 'i', "identifier", WHIST_IDENTIFIER_MAXLEN,
                            "Pass in the unique identifier for this "
                            "server as a hexadecimal string.")
+
+static bool weston_mode = false;
+COMMAND_LINE_BOOL_OPTION(weston_mode, 'W', "weston", "Run the server in weston mode")
+
 
 /*
 ============================
@@ -59,7 +64,8 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
 
     config->begin_time_to_exit = timeout_option;
 
-    safe_strncpy(config->identifier, identifier_option, sizeof(config->identifier));
+    if (identifier_option)
+    	safe_strncpy(config->identifier, identifier_option, sizeof(config->identifier));
 
     if (private_key_option) {
         if (!read_hexadecimal_private_key(private_key_option, config->binary_aes_private_key,
@@ -74,5 +80,6 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
                sizeof(config->hex_aes_private_key));
     }
 
+    config->weston_mode = weston_mode;
     return 0;
 }

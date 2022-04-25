@@ -109,55 +109,6 @@ static int32_t multithreaded_destroy_encoder(void* opaque) {
 }
 
 /**
- * @brief                   Creates a new CaptureDevice
- *
- * @param state				The whist server state
- * @param statistics_timer  Pointer to statistics timer used for logging
- * @param device            CaptureDevice pointer
- * @param rdevice           CaptureDevice pointer
- * @param encoder           VideoEncoder pointer
- * @param true_width        True width of client screen
- * @param true_height       True height of client screen
- * @return                  On success, 0. On failure, -1.
- */
-static int32_t create_new_device(WhistServerState* state, WhistTimer* statistics_timer,
-                                 CaptureDevice** device, CaptureDevice* rdevice,
-                                 VideoEncoder** encoder, uint32_t true_width,
-                                 uint32_t true_height) {
-    start_timer(statistics_timer);
-    *device = rdevice;
-    if (create_capture_device(*device, true_width, true_height, state->client_dpi) < 0) {
-        LOG_WARNING("Failed to create capture device");
-        *device = NULL;
-        state->update_device = true;
-
-        whist_sleep(100);
-        return -1;
-    }
-
-    LOG_INFO("Created a new Capture Device of dimensions %dx%d with DPI %d", (*device)->width,
-             (*device)->height, state->client_dpi);
-
-    // If an encoder is pending, while capture_device is updating, then we should wait
-    // for it to be created
-    while (state->pending_encoder) {
-        if (state->encoder_finished) {
-            *encoder = state->encoder_factory_result;
-            state->pending_encoder = false;
-            break;
-        }
-        whist_sleep(1);
-    }
-
-    // Next, we should update our ffmpeg encoder
-    state->update_encoder = true;
-
-    log_double_statistic(VIDEO_CAPTURE_CREATE_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
-
-    return 0;
-}
-
-/**
  * @brief                           Sends the populated video frames to the
  *                                  client
  *
@@ -195,8 +146,9 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
     frame->client_input_timestamp = client_input_timestamp;
 
     start_timer(statistics_timer);
-    WhistCursorInfo* current_cursor = whist_cursor_capture();
+    WhistCursorInfo* current_cursor = state->desktop->cursors_handler->capture(state->desktop->cursors_handler);
     FATAL_ASSERT(current_cursor != NULL);
+
     log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
     // Client needs to know about frame type to find recovery points.
@@ -306,26 +258,23 @@ static void update_current_device(WhistServerState* state, WhistTimer* statistic
              true_width, true_height, state->client_dpi);
 
     // If a device already exists, we should reconfigure or destroy it
-    if (device != NULL) {
-        if (reconfigure_capture_device(device, true_width, true_height, state->client_dpi)) {
-            // Reconfigured the capture device!
-            // No need to recreate it, the device has now been updated
-            LOG_INFO("Successfully reconfigured the capture device");
-            // We should also update the encoder since the device has been reconfigured
-            state->update_encoder = true;
-        } else {
-            // Destroying the old capture device so that a new one can be recreated below
-            LOG_FATAL(
-                "Failed to reconfigure the capture device! We probably have a memory "
-                "leak!");
-            // "Destroying and recreating the capture device instead!");
+	if (reconfigure_capture_device(&state->capture_device, true_width, true_height, state->client_dpi)) {
+		// Reconfigured the capture device!
+		// No need to recreate it, the device has now been updated
+		LOG_INFO("Successfully reconfigured the capture device");
+		// We should also update the encoder since the device has been reconfigured
+		state->update_encoder = true;
+	} else {
+		// Destroying the old capture device so that a new one can be recreated below
+		LOG_FATAL(
+			"Failed to reconfigure the capture device! We probably have a memory "
+			"leak!");
+		// "Destroying and recreating the capture device instead!");
 
-            // For the time being, we have disabled the reconfigure functionality because
-            // of some weirdness happening in vkCreateDevice()
-        }
-    } else {
-        LOG_INFO("No capture device exists yet, creating a new one.");
-    }
+		// For the time being, we have disabled the reconfigure functionality because
+		// of some weirdness happening in vkCreateDevice()
+	}
+
     log_double_statistic(VIDEO_CAPTURE_UPDATE_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 }
 
@@ -374,6 +323,8 @@ static void send_empty_frame(WhistServerState* state, int id) {
 static VideoEncoder* update_video_encoder(WhistServerState* state, VideoEncoder* encoder,
                                           CaptureDevice* device, int bitrate, CodecType codec,
                                           int vbv_size) {
+	CaptureDeviceInfos* infos = &device->infos;
+
     // If this is a new update encoder request, log it
     if (!state->pending_encoder) {
         LOG_INFO("Update encoder request received, will update the encoder now!");
@@ -382,10 +333,11 @@ static VideoEncoder* update_video_encoder(WhistServerState* state, VideoEncoder*
     // First, try to simply reconfigure the encoder to
     // handle the update_encoder event
     if (encoder != NULL) {
-        if (reconfigure_encoder(encoder, device->width, device->height, bitrate, vbv_size, codec)) {
+        // TODO: Use requested_video_fps as well
+        if (reconfigure_encoder(encoder, infos->width, infos->height, bitrate, vbv_size, codec)) {
             // If we could update the encoder in-place, then we're done updating the encoder
-            LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d, and Codec %d", device->width,
-                     device->height, bitrate, (int)codec);
+            LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d, and Codec %d", infos->width,
+            		infos->height, bitrate, (int)codec);
             state->update_encoder = false;
         } else {
             // TODO: Make LOG_ERROR after ffmpeg reconfiguration is implemented
@@ -415,12 +367,13 @@ static VideoEncoder* update_video_encoder(WhistServerState* state, VideoEncoder*
             // actually update it yet, we'll still use the old one for a bit
 
             LOG_INFO(
-                "Creating a new Encoder of dimensions %dx%d using Bitrate: %d, and "
-                "Codec %d",
-                device->width, device->height, bitrate, (int)codec);
+                "Creating a new Encoder of dimensions %dx%d using Bitrate: %d, "
+                "Codec %d client dimensions %dx%d",
+				infos->width, infos->height, bitrate, (int)codec,
+				state->client_width, state->client_height);
             state->encoder_finished = false;
-            state->encoder_factory_server_w = device->width;
-            state->encoder_factory_server_h = device->height;
+            state->encoder_factory_server_w = infos->width;
+            state->encoder_factory_server_h = infos->height;
             state->encoder_factory_client_w = (int)state->client_width;
             state->encoder_factory_client_h = (int)state->client_height;
             state->encoder_factory_codec_type = codec;
@@ -573,10 +526,10 @@ int32_t multithreaded_send_video(void* opaque) {
     }
 
     // Capture Device
-    CaptureDevice rdevice;
-    CaptureDevice* device = NULL;
+    /*CaptureDevice rdevice;
+    CaptureDevice* device = NULL;*/
 
-    whist_cursor_capture_init();
+    //whist_cursor_capture_init();
 
     VideoEncoder* encoder = NULL;
 
@@ -660,12 +613,13 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // If we got an update device request, we should update the device
         if (state->update_device) {
-            update_current_device(state, &statistics_timer, device, encoder, true_width,
+            update_current_device(state, &statistics_timer, &state->capture_device, encoder, true_width,
                                   true_height);
             state->stream_needs_restart = true;
         }
 
         // If no device is set, we need to create one
+#if 0
         if (device == NULL) {
             if (create_new_device(state, &statistics_timer, &device, &rdevice, &encoder, true_width,
                                   true_height) < 0) {
@@ -673,6 +627,7 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             state->stream_needs_restart = true;
         }
+#endif
 
         network_settings = udp_get_network_settings(&state->client->udp_context);
 
@@ -695,7 +650,7 @@ int32_t multithreaded_send_video(void* opaque) {
             int vbv_size =
                 (VBV_IN_SEC_BY_BURST_BITRATE_RATIO * video_bitrate * burst_bitrate_ratio);
             encoder =
-                update_video_encoder(state, encoder, device, video_bitrate, video_codec, vbv_size);
+                update_video_encoder(state, encoder, &state->capture_device, video_bitrate, video_codec, vbv_size);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
         }
@@ -735,7 +690,7 @@ int32_t multithreaded_send_video(void* opaque) {
         int accumulated_frames = 0;
         if ((!state->stop_streaming || state->stream_needs_restart)) {
             start_timer(&statistics_timer);
-            accumulated_frames = capture_screen(device);
+            accumulated_frames = capture_screen(&state->capture_device);
             if (accumulated_frames > 1) {
                 log_double_statistic(VIDEO_FRAMES_SKIPPED_IN_CAPTURE, (accumulated_frames - 1));
                 if (LOG_VIDEO) {
@@ -745,7 +700,7 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             // If capture screen failed, we should try again
             if (accumulated_frames < 0) {
-                retry_capture_screen(state, device, encoder);
+                retry_capture_screen(state, &state->capture_device, encoder);
                 continue;
             }
             // Immediately bring consecutives to 0, when a new frame is captured
@@ -807,8 +762,8 @@ int32_t multithreaded_send_video(void* opaque) {
                 // This function will try to CUDA/OpenGL optimize the transfer by
                 // only passing a GPU reference rather than copy to/from the CPU
                 start_timer(&statistics_timer);
-                if (transfer_capture(device, encoder, &state->stream_needs_restart) != 0) {
-                    // If there was a failure, exit
+                if (transfer_capture(&state->capture_device, encoder, &state->stream_needs_restart) != 0) {
+                    // if there was a failure
                     LOG_ERROR("transfer_capture failed! Exiting!");
                     state->exiting = true;
                     break;
@@ -886,7 +841,8 @@ int32_t multithreaded_send_video(void* opaque) {
                             }
                             fflush(fp);
                         }
-                        send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
+
+                        send_populated_frames(state, &statistics_timer, &server_frame_timer, &state->capture_device,
                                               encoder, id, client_input_timestamp,
                                               server_timestamp);
 
@@ -909,7 +865,7 @@ int32_t multithreaded_send_video(void* opaque) {
         client_active_unlock(client_lock);
     }
 
-    whist_cursor_capture_destroy();
+    //whist_cursor_capture_destroy();
 
     if (SAVE_VIDEO_OUTPUT) {
         fclose(fp);
@@ -926,10 +882,13 @@ int32_t multithreaded_send_video(void* opaque) {
         multithreaded_destroy_encoder(encoder);
         encoder = NULL;
     }
+
+#if 0
     if (device) {
-        destroy_capture_device(device);
+        destroy_capture_device(&state->capture_device);
         device = NULL;
     }
+#endif
 
     return 0;
 }

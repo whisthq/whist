@@ -21,10 +21,13 @@ Includes
 #include <whist/core/whist.h>
 #include <whist/utils/color.h>
 #include <whist/utils/linked_list.h>
+
 #if OS_IS(OS_LINUX)
+
+//#include "nvidiacapture.h"
+//#include "x11capture.h"
+
 #include <X11/Xlib.h>
-#include "nvidiacapture.h"
-#include "x11capture.h"
 #endif
 
 /*
@@ -33,17 +36,53 @@ Custom Types
 ============================
 */
 
-typedef struct CaptureDevice {
-    int id;
-    int width;
-    int height;
-    int pitch;
+typedef struct CaptureDevice CaptureDevice;
+typedef struct CaptureDeviceImpl CaptureDeviceImpl;
+
+typedef int (*CaptureDeviceInitFn)(CaptureDeviceImpl* device, uint32_t width, uint32_t height, uint32_t dpi);
+typedef int (*CaptureDeviceReconfigureFn)(CaptureDeviceImpl* device, uint32_t width, uint32_t height, uint32_t dpi);
+typedef int (*CaptureDeviceCaptureScreenFn)(CaptureDeviceImpl* device);
+typedef int (*CaptureDeviceTransferScreenFn)(CaptureDeviceImpl* device);
+typedef int (*CaptureDeviceGetDataFn)(CaptureDeviceImpl* device, void** buf, uint32_t* stride);
+typedef int (*CaptureDeviceGetDimensionsFn)(CaptureDeviceImpl* device, uint32_t* width, uint32_t* height, uint32_t* dpi);
+typedef int (*CaptureDeviceUpdateDimensionsFn)(CaptureDeviceImpl* device, uint32_t width, uint32_t height, uint32_t dpi);
+typedef void (*CaptureDeviceDestroyFn)(CaptureDeviceImpl** device);
+
+
+typedef struct {
+	uint32_t width;
+	uint32_t height;
+	uint32_t dpi;
+    uint32_t pitch;
+} CaptureDeviceInfos;
+
+/** @brief a capture implementation */
+struct CaptureDeviceImpl {
+	CaptureDeviceType device_type;
+	CaptureDeviceInfos* infos;
+
+    CaptureDeviceInitFn init;
+    CaptureDeviceReconfigureFn reconfigure;
+    CaptureDeviceCaptureScreenFn capture_screen;
+    CaptureDeviceTransferScreenFn transfer_screen;
+    CaptureDeviceGetDataFn capture_get_data;
+    CaptureDeviceGetDimensionsFn get_dimensions;
+    CaptureDeviceUpdateDimensionsFn update_dimensions;
+    CaptureDeviceDestroyFn destroy;
+};
+
+
+/** @brief */
+struct CaptureDevice {
+	CaptureDeviceInfos infos;
+
     void* frame_data;
     WhistWindow window_data[MAX_WINDOWS];
     WhistRGBColor corner_color;
     void* internal;
 
-#if OS_IS(OS_LINUX)
+    CaptureDeviceImpl* impl;
+
     CaptureDeviceType active_capture_device;  // the device currently used for capturing
     CaptureDeviceType last_capture_device;  // the device used for the last capture, so we can pick
                                             // the right encoder
@@ -52,6 +91,8 @@ typedef struct CaptureDevice {
     WhistSemaphore nvidia_device_semaphore;
     WhistSemaphore nvidia_device_created;
     bool nvidia_context_is_stale;
+
+#if 0
     // Shared X11 state
     Display* display;
     Window root;
@@ -59,7 +100,7 @@ typedef struct CaptureDevice {
     NvidiaCaptureDevice* nvidia_capture_device;
     X11CaptureDevice* x11_capture_device;
 #endif
-} CaptureDevice;
+};
 
 /*
 ============================
@@ -72,13 +113,15 @@ Public Functions
  *
  * @param device                   Capture device struct to hold the capture
  *                                 device
+ * @param captureType              Kind of capture device
+ * @param data                     An opaque data pointer given to the device
  * @param width                    Width of the screen to capture, in pixels
  * @param height                   Height of the screen to capture, in pixels
  * @param dpi                      Dots per sq inch of the screen, (Where 96 is neutral)
  *
  * @returns                        0 if succeeded, else -1
  */
-int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
+int create_capture_device(CaptureDevice* device, CaptureDeviceType captureType, void* data, uint32_t width, uint32_t height, uint32_t dpi);
 
 /**
  * @brief                          Tries to reconfigure the capture device
@@ -116,6 +159,9 @@ int capture_screen(CaptureDevice* device);
  * @returns                        0 always
  */
 int transfer_screen(CaptureDevice* device);
+
+
+int capture_get_data(CaptureDevice* device, void** buf, uint32_t* stride);
 
 /**
  * @brief                          Destroys and frees the memory of a capture device

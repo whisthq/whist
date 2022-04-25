@@ -372,7 +372,7 @@ typedef enum CodecType {
  * @brief           Enum indicating whether we are using the Nvidia or X11 capture device. If we
  * discover a third option for capturing, update this enum and the CaptureDevice struct below.
  */
-typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
+typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE, WESTON_DEVICE, FILE_DEVICE } CaptureDeviceType;
 
 /**
  * @brief   Client init message.
@@ -613,6 +613,10 @@ typedef struct BitArray {
     unsigned char* array;  // pointer to array containing bits
     unsigned int numBits;  // number of bits in array
 } BitArray;
+
+
+/** @brief the kind of desktop environment */
+typedef enum { DESKTOP_X11, DESKTOP_WESTON, DESKTOP_WIN32 } DesktopType;
 
 /*
 ============================

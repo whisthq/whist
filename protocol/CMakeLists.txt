@@ -347,6 +347,7 @@ set(PLATFORM_INDEPENDENT_LIBS   whistCore
     whistVideo
     whistClipboard
     whistCursor
+    whistDesktop
     whistFile
     whistNetwork
     whistLogging
@@ -431,6 +432,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile 
         whistVideo
         whistFile
         whistClipboard
+        whistDesktop
         whistCursor
         whistInput
         whistNetwork

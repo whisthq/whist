@@ -10,6 +10,7 @@ extern "C" {
 #define LODEPNG_NO_COMPILE_CPP
 #include <whist/utils/lodepng.h>
 #include "cursor.h"
+#include "x11_cursor.h"
 }
 #include <deque>
 
@@ -138,3 +139,23 @@ const WhistCursorInfo* whist_cursor_cache_check(WhistCursorCache* cache, uint32_
     cache->cursor_cache[hash].most_recent_cache_access_index = cache->next_cache_access_index++;
     return cache->cursor_cache[hash].cursor_info;
 }
+
+extern "C" {
+WhistCursorManager* whist_cursor_capture_init(WhistCursorKind kind, void *args)
+{
+	switch (kind) {
+	case WHIST_CURSOR_X11:
+		return x11_cursor_new(args);
+#if 0
+	case WHIST_CURSOR_WIN32:
+		return win32_cursor_new(args);
+	case WHIST_CURSOR_WESTON:
+		return weston_cursor_new(args);
+#endif
+	default:
+		FATAL_ASSERT("unknown cursor type");
+		return NULL;
+	}
+}
+}
+

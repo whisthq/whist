@@ -43,10 +43,30 @@ Defines
 ============================
 */
 
+
 // MAXLENs are the max length of the string they represent, _without_ the null character.
 // Therefore, whenever arrays are created or length of the string is compared, we should be
 // comparing to *MAXLEN + 1
 #define WINDOW_NAME_MAXLEN 127
+
+typedef struct WhistWindowManager WhistWindowManager;
+
+typedef bool (*get_focused_window_name_cb)(WhistWindowManager* manager, char** name_return);
+typedef bool (*is_focused_window_fullscreen_cb)(WhistWindowManager* manager);
+typedef void (*get_valid_windows_cb)(WhistWindowManager* manager, LinkedList* window_list);
+
+typedef WhistWindow (*get_active_window_cb)(WhistWindowManager* manager);
+
+/** @brief abstract window lister and manager */
+struct WhistWindowManager {
+	get_focused_window_name_cb get_focused_window_name;
+	is_focused_window_fullscreen_cb is_focused_window_fullscreen;
+	get_valid_windows_cb get_valid_windows;
+
+	get_active_window_cb get_active_window;
+};
+
+WhistWindowManager* window_manager_get(DesktopType kind, void *args);
 
 /*
 ============================
@@ -54,11 +74,13 @@ Public Functions
 ============================
 */
 
+
+
 /**
  * @brief                          Initialize window info getter
  *
  */
-void init_window_info_getter(void);
+void init_window_info_getter(WhistWindowManager *manager);
 
 /**
  * @brief                          Get the name of the focused window.
@@ -85,7 +107,7 @@ bool is_focused_window_fullscreen(void);
  * @brief                          Destroy window info getter
  *
  */
-void destroy_window_info_getter(void);
+void destroy_window_info_getter(WhistWindowManager *manager);
 
 /**
  * @brief                          Get a linked list of windows we should stream
@@ -96,7 +118,7 @@ void destroy_window_info_getter(void);
  * @param window_list              Linked list to append the window list into
  *
  */
-void get_valid_windows(CaptureDevice* capture_device, LinkedList* window_list);
+void get_valid_windows(WhistWindowManager *manager, LinkedList* window_list);
 
 /**
  * @brief                          Fill WhistWindowData* struct with x/y/w/h/etc. of whist_window
@@ -105,7 +127,7 @@ void get_valid_windows(CaptureDevice* capture_device, LinkedList* window_list);
  *
  * @param whist_window             The WhistWindow to fill attributes for
  */
-void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_window);
+void get_window_attributes(WhistWindowManager *manager, WhistWindow* whist_window);
 
 /**
  * @brief                          Return the active window, either using NET_ACTIVE_WINDOW atom
@@ -116,7 +138,7 @@ void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_win
  * @returns                        WhistWindow struct representing the active window
  *
  */
-WhistWindow get_active_window(CaptureDevice* capture_device);
+WhistWindow get_active_window(WhistWindowManager *manager);
 // TODO: replace with a function that doesn't just return the raw string?
 // or explicitly make one for Window (private) and one for WhistWindow (public)
 // char* get_window_name(CaptureDevice* capture_device, WhistWindow whist_window);
@@ -132,7 +154,7 @@ WhistWindow get_active_window(CaptureDevice* capture_device);
  * @returns                        whether or not whist_window is resizable
  *
  */
-bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window);
+bool is_window_resizable(WhistWindowManager *manager, WhistWindow whist_window);
 
 /**
  * @brief                          Move the window to (x, y) and resize it to (width, height). This
@@ -152,7 +174,7 @@ bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window
  * @param height                   Desired height
  *
  */
-void move_resize_window(CaptureDevice* capture_device, WhistWindow whist_window, int x, int y,
+void move_resize_window(WhistWindowManager *manager, WhistWindow whist_window, int x, int y,
                         int width, int height);
 
 /**
@@ -163,7 +185,7 @@ void move_resize_window(CaptureDevice* capture_device, WhistWindow whist_window,
  * @param whist_window             WhistWindow to close
  *
  */
-void close_window(CaptureDevice* capture_device, WhistWindow whist_window);
+void close_window(WhistWindowManager *manager, WhistWindow whist_window);
 
 /**
  * @brief                          Minimize the given window
@@ -173,7 +195,7 @@ void close_window(CaptureDevice* capture_device, WhistWindow whist_window);
  * @param whist_window             WhistWindow to minimize
  *
  */
-void minimize_window(CaptureDevice* capture_device, WhistWindow whist_window);
+void minimize_window(WhistWindowManager *manager, WhistWindow whist_window);
 
 /**
  * @brief                          Maximize the given window
@@ -183,7 +205,7 @@ void minimize_window(CaptureDevice* capture_device, WhistWindow whist_window);
  * @param whist_window             WhistWindow to maximize
  *
  */
-void maximize_window(CaptureDevice* capture_device, WhistWindow whist_window);
+void maximize_window(WhistWindowManager *manager, WhistWindow whist_window);
 
 /**
  * @brief                          Fullscreen the given window
@@ -193,7 +215,7 @@ void maximize_window(CaptureDevice* capture_device, WhistWindow whist_window);
  * @param whist_window             WhistWindow to fullscreen
  *
  */
-void fullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window);
+void fullscreen_window(WhistWindowManager *manager, WhistWindow whist_window);
 
 /**
  * @brief                          Bring given window to top
@@ -203,7 +225,7 @@ void fullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window);
  * @param whist_window             WhistWindow to bring to top
  *
  */
-void bring_window_to_top(CaptureDevice* capture_device, WhistWindow whist_window);
+void bring_window_to_top(WhistWindowManager *manager, WhistWindow whist_window);
 
 /**
  * @brief                          Unminimize the given window
@@ -213,7 +235,7 @@ void bring_window_to_top(CaptureDevice* capture_device, WhistWindow whist_window
  * @param whist_window             WhistWindow to unminimize
  *
  */
-void unminimize_window(CaptureDevice* capture_device, WhistWindow whist_window);
+void unminimize_window(WhistWindowManager *manager, WhistWindow whist_window);
 
 /**
  * @brief                          Unfullscreen the given window
@@ -223,6 +245,6 @@ void unminimize_window(CaptureDevice* capture_device, WhistWindow whist_window);
  * @param whist_window             WhistWindow to unfullscreen
  *
  */
-void unfullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window);
+void unfullscreen_window(WhistWindowManager *manager, WhistWindow whist_window);
 
 #endif  // WINDOW_INFO_H

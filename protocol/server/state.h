@@ -32,8 +32,10 @@ Includes
 
 #include <whist/core/whist.h>
 #include <whist/input/input.h>
+#include <whist/desktop/desktop.h>
 #include <whist/logging/error_monitor.h>
 #include <whist/video/transfercapture.h>
+#include <whist/video/capture/capture.h>
 #include <whist/logging/log_statistic.h>
 #include "whist/video/ltr.h"
 #include "client.h"
@@ -55,6 +57,7 @@ struct _whist_server_config {
     char hex_aes_private_key[33];
     char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
     int begin_time_to_exit;
+    bool weston_mode;
 };
 
 typedef struct _whist_server_config whist_server_config;
@@ -87,6 +90,8 @@ typedef struct WhistServerState {
     volatile bool update_encoder;
 
     InputDevice* input_device;
+    CaptureDevice capture_device;
+    DesktopEnv* desktop;
 
     // Whether the stream needs to be restarted with new parameter sets
     // and an intra frame.

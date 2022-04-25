@@ -21,24 +21,26 @@ Includes
 #include "capture.h"
 #include "x11capture.h"
 #include "nvidiacapture.h"
+#include "filecapture.h"
+#include "westoncapture.h"
+
 #include <whist/utils/window_info.h>
+
+
 
 /*
 ============================
 Private Functions
 ============================
 */
-static void get_wh(CaptureDevice* device, int* w, int* h);
-static bool is_same_wh(CaptureDevice* device);
-static void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height,
-                                  uint32_t dpi);
-static int32_t multithreaded_nvidia_device_manager(void* opaque);
+//static int32_t multithreaded_nvidia_device_manager(void* opaque);
 
 /*
 ============================
 Private Function Implementations
 ============================
 */
+#if 0
 static int32_t multithreaded_nvidia_device_manager(void* opaque) {
     /*
         Multithreaded function to asynchronously destroy and create the nvidia capture device when
@@ -86,119 +88,16 @@ static int32_t multithreaded_nvidia_device_manager(void* opaque) {
     }
     return 0;
 }
+#endif
 
-static void get_wh(CaptureDevice* device, int* w, int* h) {
-    /*
-        Get the width and height of the display associated with device, and store them in w and h,
-        respectively.
 
-        Arguments:
-            device (CaptureDevice*): device containing the display whose dimensions we are getting
-            w (int*): pointer to store width
-            h (int*): pointer to store hight
-    */
-    if (!device) return;
-
-    XWindowAttributes window_attributes;
-    if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
-        *w = 0;
-        *h = 0;
-        LOG_ERROR("Error while getting window attributes");
-        return;
-    }
-    *w = window_attributes.width;
-    *h = window_attributes.height;
-}
-
-static bool is_same_wh(CaptureDevice* device) {
-    /*
-        Determine whether or not the device's width and height agree width actual display width and
-        height.
-
-        Arguments:
-            device (CaptureDevice*): capture device to query
-
-        Returns:
-            (bool): true if width and height agree, false otherwise
-    */
-
-    int w, h;
-    get_wh(device, &w, &h);
-    return device->width == w && device->height == h;
-}
-
-static void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height,
-                                  uint32_t dpi) {
-    /*
-       Using XRandR, try updating the device's display to the given width, height, and DPI. Even if
-       this fails to set the dimensions, device->width and device->height will always equal the
-       actual dimensions of the screen.
-
-        Arguments:
-            device (CaptureDevice*): pointer to the device whose window we're resizing
-            width (uint32_t): desired width
-            height (uint32_t): desired height
-            dpi (uint32_t): desired DPI
-    */
-
-    char cmd[1024];
-
-    // Update the device's width/height
-    device->width = width;
-    device->height = height;
-
-    // If the device's width/height must be updated
-    if (!is_same_wh(device)) {
-        char modename[128];
-
-        snprintf(modename, sizeof(modename), "Whist-%dx%d", width, height);
-
-        char* display_name;
-        runcmd("xrandr --current | grep \" connected\"", &display_name);
-        *strchr(display_name, ' ') = '\0';
-
-        snprintf(cmd, sizeof(cmd), "xrandr --delmode %s %s", display_name, modename);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
-        runcmd(cmd, NULL);
-        double pixel_clock = 60.0 * (width + 24) * (height + 24);
-        snprintf(cmd, sizeof(cmd), "xrandr --newmode %s %.2f %d %d %d %d %d %d %d %d +hsync +vsync",
-                 modename, pixel_clock / 1000000.0, width, width + 8, width + 16, width + 24,
-                 height, height + 8, height + 16, height + 24);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --addmode %s %s", display_name, modename);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
-        runcmd(cmd, NULL);
-
-        free(display_name);
-
-        // If it's still not the correct dimensions
-        if (!is_same_wh(device)) {
-            LOG_ERROR("Could not force monitor to a given width/height. Tried to set to %dx%d",
-                      width, height);
-            // Get the width/height that the device actually is though
-            get_wh(device, &device->width, &device->height);
-        }
-    }
-
-    // This script must be built in to the Mandelbox. It writes new DPI for X11 and
-    // AwesomeWM, and uses SIGHUP to XSettingsd to trigger application and window
-    // manager refreshes to use the new DPI.
-    static uint32_t last_set_dpi = -1;
-    if (dpi != last_set_dpi) {
-        snprintf(cmd, sizeof(cmd), "/usr/share/whist/update-whist-dpi.sh %d", dpi);
-        runcmd(cmd, NULL);
-        last_set_dpi = dpi;
-    }
-}
 
 /*
 ============================
 Public Function Implementations
 ============================
 */
-int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
+int create_capture_device(CaptureDevice* device, CaptureDeviceType captureType, void* data, uint32_t width, uint32_t height, uint32_t dpi) {
     /*
        Initialize the capture device at device with the given width, height and DPI. We use Nvidia
        whenever possible, and fall back to X11 when not. See nvidiacapture.c and x11capture.c for
@@ -245,18 +144,64 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
         height = MAX_SCREEN_HEIGHT;
     }
 
-    // attempt to set display width, height, and DPI
-    device->display = XOpenDisplay(NULL);
-    if (!device->display) {
-        LOG_ERROR("ERROR: CreateCaptureDevice display did not open");
-        return -1;
+    CaptureDeviceImpl* impl = device->impl;
+    uint32_t current_width, current_height, current_dpi;
+
+    if (!impl)
+    {
+		switch (captureType)
+		{
+		case X11_DEVICE:
+		    device->active_capture_device = X11_DEVICE;
+		    device->impl = impl = create_x11_capture_device(&device->infos, data);
+		    if (!impl) {
+		    	LOG_ERROR("Failed to create X11 capture device!");
+		        return -1;
+		    }
+
+			break;
+		case FILE_DEVICE:
+		    device->active_capture_device = FILE_DEVICE;
+		    device->impl = impl = create_file_capture_device(&device->infos, data);
+		    if (!impl) {
+		    	LOG_ERROR("Failed to create X11 capture device!");
+		        return -1;
+		    }
+
+			break;
+		case WESTON_DEVICE:
+		    device->active_capture_device = WESTON_DEVICE;
+		    device->impl = impl = create_weston_capture_device(&device->infos, data);
+		    if (!impl) {
+		    	LOG_ERROR("Failed to create weston capture device!");
+		        return -1;
+		    }
+		    break;
+		case NVIDIA_DEVICE:
+		default:
+			break;
+		}
+
+	    if (impl->init(impl, width, height, dpi) < 0) {
+	    	LOG_ERROR("Failed to initialize capture device!");
+	    	return -1;
+	    }
+
     }
-    device->root = DefaultRootWindow(device->display);
 
-    try_update_dimensions(device, width, height, dpi);
+#if 0
+    if (impl->get_dimensions(impl, &current_width, &current_height, &current_dpi) < 0)
+    	return -1;
 
+    bool same_dpi = (!current_dpi || current_dpi != dpi);
+    if (current_width != width || current_height != height || !same_dpi)
+    {
+    	impl->update_dimensions(impl, width, height, dpi);
+    }
+#endif
+
+#if 0
     // if we can create the nvidia capture device, do so
-
     bool res;
     if (USING_NVIDIA_ENCODE) {
         // cuda_init the encoder context
@@ -286,19 +231,12 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
                                                      "multithreaded_nvidia_manager", device);
         whist_post_semaphore(device->nvidia_device_semaphore);
     }
+
     device->id = id;
     id++;
+#endif
 
-    // Create the X11 capture device; when the nvidia manager thread finishes creation, active
-    // capture device will change
-    device->active_capture_device = X11_DEVICE;
-    device->x11_capture_device = create_x11_capture_device(width, height, dpi);
-    if (device->x11_capture_device) {
-        return 0;
-    } else {
-        LOG_ERROR("Failed to create X11 capture device!");
-        return -1;
-    }
+    return 0;
 }
 
 int capture_screen(CaptureDevice* device) {
@@ -318,6 +256,7 @@ int capture_screen(CaptureDevice* device) {
         return -1;
     }
 
+    /* TODO:
     LinkedList window_list;
     linked_list_init(&window_list);
     get_valid_windows(device, &window_list);
@@ -334,6 +273,10 @@ int capture_screen(CaptureDevice* device) {
         device->window_data[i] = *w;
         i++;
     }
+	*/
+
+
+#if 0
     switch (device->active_capture_device) {
         case NVIDIA_DEVICE: {
             static CUcontext current_context;
@@ -388,6 +331,12 @@ int capture_screen(CaptureDevice* device) {
             LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
             return -1;
     }
+#endif
+
+    CaptureDeviceImpl* impl= device->impl;
+    int ret = impl->capture_screen(impl);
+    impl->capture_get_data(impl, &device->frame_data, &device->infos.pitch);
+    return ret;
 }
 
 bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
@@ -410,6 +359,9 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
         LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
         return false;
     }
+#if 0
+    try_update_dimensions(device, width, height, dpi);
+
     if (USING_NVIDIA_CAPTURE) {
         // If a nvidia capture device creation is in progress, then we should wait for it.
         // Otherwise nvidia drivers will fail/crash.
@@ -429,15 +381,10 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
             device->nvidia_context_is_stale = false;
         }
     }
-    try_update_dimensions(device, width, height, dpi);
-    if (USING_NVIDIA_CAPTURE) {
-        // destroy the device
-        destroy_nvidia_capture_device(device->nvidia_capture_device);
-        device->nvidia_capture_device = NULL;
-        device->active_capture_device = X11_DEVICE;
-        whist_post_semaphore(device->nvidia_device_semaphore);
-    }
-    return reconfigure_x11_capture_device(device->x11_capture_device, width, height, dpi);
+
+#endif
+
+    return device->impl->reconfigure(device->impl, width, height, dpi) >= 0;
 }
 
 void destroy_capture_device(CaptureDevice* device) {
@@ -451,6 +398,7 @@ void destroy_capture_device(CaptureDevice* device) {
         // nothing to do!
         return;
     }
+#if 0
     if (USING_NVIDIA_CAPTURE) {
         // tell the nvidia thread to stop
         device->pending_destruction = true;
@@ -470,12 +418,15 @@ void destroy_capture_device(CaptureDevice* device) {
         destroy_x11_capture_device(device->x11_capture_device);
     }
     XCloseDisplay(device->display);
+#endif
 }
 
 int transfer_screen(CaptureDevice* device) {
+#if 0
     if (device->last_capture_device == X11_DEVICE) {
         device->frame_data = device->x11_capture_device->frame_data;
         device->pitch = device->x11_capture_device->pitch;
     }
+#endif
     return 0;
 }

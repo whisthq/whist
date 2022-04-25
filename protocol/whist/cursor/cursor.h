@@ -117,15 +117,39 @@ Public Functions
 ============================
 */
 
+typedef struct WhistCursorManager WhistCursorManager;
+
+/** @brief */
+typedef enum {
+	WHIST_CURSOR_X11,
+	WHIST_CURSOR_WESTON,
+	WHIST_CURSOR_WIN32
+} WhistCursorKind;
+
+typedef WhistCursorInfo* (*whist_cursor_capture_cb)(WhistCursorManager* cursor);
+typedef void (*whist_cursor_uninit_cb)(WhistCursorManager* cursor);
+typedef WhistMouseMode (*whist_cursor_get_latest_mouse_mode_cb)(WhistCursorManager* cursor);
+
+
+/** @brief */
+struct WhistCursorManager {
+	WhistCursorKind kind;
+
+	whist_cursor_capture_cb capture;
+	whist_cursor_get_latest_mouse_mode_cb get_latest_mouse_mode;
+	whist_cursor_uninit_cb uninit;
+};
+
+
 /**
  * @brief                          Initialize cursor capturing
  */
-void whist_cursor_capture_init(void);
+WhistCursorManager* whist_cursor_capture_init(WhistCursorKind kind, void *args);
 
 /**
  * @brief                          Shut down cursor capturing
  */
-void whist_cursor_capture_destroy(void);
+void whist_cursor_capture_destroy(WhistCursorManager* cursor);
 
 /**
  * @brief                          Returns the size of the WhistCursorInfo struct
@@ -154,7 +178,9 @@ uint8_t* whist_cursor_info_to_rgba(const WhistCursorInfo* info);
  *                                 WhistCursorInfo struct, which must be freed
  *                                 by the caller.
  */
-WhistCursorInfo* whist_cursor_capture(void);
+//WhistCursorInfo* whist_cursor_capture(void);
+
+
 
 /**
  * @brief                          Convert a cursor type to a string name

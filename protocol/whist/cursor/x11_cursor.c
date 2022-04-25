@@ -25,6 +25,7 @@ Includes
 #include <fcntl.h>
 
 #include "cursor_internal.h"
+#include "x11_cursor.h"
 
 static Display* disp = NULL;
 
@@ -92,26 +93,22 @@ static const WhistCursorType gtk_index_to_cursor_type[NUM_GTK_CURSORS] = {
     WHIST_CURSOR_ZOOM_OUT,
 };
 
+typedef struct {
+	WhistCursorManager base;
+
+	Display* disp;
+	WhistTimer timer;
+    WhistMouseMode mode;
+    bool first_run;
+
+} X11CursorManager;
+
 /*
 ============================
 Public Function Implementations
 ============================
 */
 
-void whist_cursor_capture_init(void) {
-    if (disp == NULL) {
-        disp = XOpenDisplay(NULL);
-    } else {
-        LOG_ERROR("Cursor capture already initialized");
-    }
-}
-
-void whist_cursor_capture_destroy(void) {
-    if (disp != NULL) {
-        XCloseDisplay(disp);
-        disp = NULL;
-    }
-}
 
 /**
  * @brief                   Get a WhistCursorType corresponding to the captured
@@ -188,50 +185,54 @@ static WhistCursorType get_cursor_type(XFixesCursorImage* cursor_image) {
     return gtk_index_to_cursor_type[index];
 }
 
-static WhistMouseMode get_latest_mouse_mode(void) {
+
+static WhistMouseMode x11_cursor_get_latest_mouse_mode(WhistCursorManager* cursor) {
+	X11CursorManager* x11cursor = (X11CursorManager*)cursor;
+
 #define POINTER_LOCK_UPDATE_TRIGGER_FILE "/home/whist/.teleport/pointer-lock-update"
-    static WhistMouseMode mode = MOUSE_MODE_NORMAL;
-    static WhistTimer timer;
-    static bool first_run = true;
-    if (first_run) {
-        start_timer(&timer);
-        first_run = false;
+    if (x11cursor->first_run) {
+        start_timer(&x11cursor->timer);
+        x11cursor->first_run = false;
     }
 
     // This happens in the video capture loop, but takes negligible time
-    if (get_timer(&timer) > 20.0 / MS_IN_SECOND) {
+    if (get_timer(&x11cursor->timer) > 20.0 / MS_IN_SECOND) {
         if (!access(POINTER_LOCK_UPDATE_TRIGGER_FILE, R_OK)) {
             int fd = open(POINTER_LOCK_UPDATE_TRIGGER_FILE, O_RDONLY);
             char pointer_locked[2] = {0};
             read(fd, pointer_locked, 1);
             close(fd);
             if (pointer_locked[0] == '1') {
-                mode = MOUSE_MODE_RELATIVE;
+                x11cursor->mode = MOUSE_MODE_RELATIVE;
             } else if (pointer_locked[0] == '0') {
-                mode = MOUSE_MODE_NORMAL;
+            	x11cursor->mode = MOUSE_MODE_NORMAL;
             } else {
                 LOG_ERROR("Invalid pointer lock state");
             }
             remove(POINTER_LOCK_UPDATE_TRIGGER_FILE);
         }
-        start_timer(&timer);
+        start_timer(&x11cursor->timer);
     }
 
-    return mode;
+    return x11cursor->mode;
 }
 
-WhistCursorInfo* whist_cursor_capture(void) {
+static WhistCursorInfo* x11_cursor_capture(WhistCursorManager* manager) {
+	X11CursorManager* x11cursor = (X11CursorManager*)manager;
+    WhistCursorInfo* image = NULL;
     WhistCursorInfo* cursor_info;
-    if (disp) {
-        WhistMouseMode mode = get_latest_mouse_mode();
 
-        XFixesCursorImage* cursor_image = XFixesGetCursorImage(disp);
+    if (x11cursor->disp) {
+        XFixesCursorImage* cursor_image = XFixesGetCursorImage(x11cursor->disp);
+        WhistMouseMode mode = manager->get_latest_mouse_mode(manager);
+
         if (cursor_image->width > MAX_CURSOR_WIDTH || cursor_image->height > MAX_CURSOR_HEIGHT) {
             LOG_WARNING("Cursor is too large; rejecting capture: %hux%hu", cursor_image->width,
                         cursor_image->height);
             XFree(cursor_image);
             return whist_cursor_info_from_type(WHIST_CURSOR_ARROW, mode);
         }
+
 
         WhistCursorType cursor_type = get_cursor_type(cursor_image);
         if (cursor_type == WHIST_CURSOR_PNG) {
@@ -257,4 +258,31 @@ WhistCursorInfo* whist_cursor_capture(void) {
     }
 
     return cursor_info;
+}
+
+static void x11_cursor_uninit(WhistCursorManager* cursor) {
+	X11CursorManager* x11cursor = (X11CursorManager*)cursor;
+	XCloseDisplay(x11cursor->disp);
+	free(x11cursor);
+}
+
+WhistCursorManager* x11_cursor_new(void *args)
+{
+	X11CursorManager* ret = safe_zalloc(sizeof(*ret));
+	WhistCursorManager* cursor = &ret->base;
+
+	ret->disp = XOpenDisplay(NULL); // TODO: take the display from args
+	if (!ret->disp) {
+		FATAL_ASSERT("unable to open display");
+	}
+
+	ret->first_run = true;
+	ret->mode = MOUSE_MODE_NORMAL;
+
+	cursor->kind = WHIST_CURSOR_X11;
+	cursor->capture = x11_cursor_capture;
+	cursor->get_latest_mouse_mode = x11_cursor_get_latest_mouse_mode;
+	cursor->uninit = x11_cursor_uninit;
+
+	return cursor;
 }

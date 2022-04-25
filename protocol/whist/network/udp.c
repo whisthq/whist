@@ -1320,7 +1320,8 @@ void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int 
 
 void udp_reset_duplicate_packet_counter(SocketContext* socket_context, WhistPacketType type) {
     UDPContext* context = (UDPContext*)socket_context->context;
-    context->num_duplicate_packets[type] = 0;
+    if (context)
+    	context->num_duplicate_packets[type] = 0;
 }
 
 int udp_get_num_indices(SocketContext* socket_context, WhistPacketType type, int packet_id) {

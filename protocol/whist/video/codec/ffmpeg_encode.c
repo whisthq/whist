@@ -425,8 +425,7 @@ static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_wid
 
     // format
     filter_contexts[1] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[1], "format");
-    av_opt_set(filter_contexts[1], "pix_fmts", av_get_pix_fmt_name(out_format),
-               AV_OPT_SEARCH_CHILDREN);
+    av_opt_set(filter_contexts[1], "pix_fmts", av_get_pix_fmt_name(out_format), AV_OPT_SEARCH_CHILDREN);
     if (avfilter_init_str(filter_contexts[1], NULL) < 0) {
         LOG_WARNING("Unable to initialize format filter");
         destroy_ffmpeg_encoder(encoder);

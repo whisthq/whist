@@ -49,7 +49,6 @@ InputDevice* create_input_device(InputDeviceType kind, void* data) {
 #if OS_IS(OS_LINUX)
         case WHIST_INPUT_DEVICE_XTEST:
             return xtest_create_input_device(data);
-
         case WHIST_INPUT_DEVICE_UINPUT:
             return uinput_create_input_device(data);
         case WHIST_INPUT_DEVICE_WESTON:

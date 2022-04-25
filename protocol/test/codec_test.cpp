@@ -36,7 +36,7 @@ static void test_write_image(uint8_t *data, int width, int height, int pitch, in
 
 static int test_read_image(const uint8_t *data, int width, int height, int pitch, bool rgb) {
     // Read back the number used to create the image, which might be somewhat
-    // fuzzy since it has been through and encode/decode at unknown quality.
+    // fuzzy since it has been through an encode/decode at unknown quality.
     int block_y = height / 4;
     int block_x = width / 4;
     int value = 0;
@@ -241,8 +241,10 @@ TEST_F(CodecTest, CaptureMP4Test) {
 
     int width = 1280;
     int height = 720;
+    void* cap_data;
+    uint32_t cap_stride;
 
-    ret = create_capture_device(&cap, width, height, 96);
+    ret = create_capture_device(&cap, FILE_DEVICE, (void*)"assets/100-frames-h264.mp4", width, height, 96);
     EXPECT_EQ(ret, 0);
 
     for (int frame = 0; frame < 20; frame++) {
@@ -260,8 +262,11 @@ TEST_F(CodecTest, CaptureMP4Test) {
         ret = transfer_screen(&cap);
         EXPECT_EQ(ret, 0);
 
+        ret = capture_get_data(&cap, &cap_data, &cap_stride);
+        EXPECT_EQ(ret, 0);
+
         int value =
-            test_read_image((const uint8_t *)cap.frame_data, width, height, cap.pitch, false);
+            test_read_image((const uint8_t *)cap_data, width, height, cap_stride, false);
         EXPECT_EQ(value, frame);
     }
 
@@ -277,8 +282,10 @@ TEST_F(CodecTest, CaptureJPEGTest) {
 
     int width = 640;
     int height = 480;
+    void* cap_data;
+    uint32_t cap_stride;
 
-    ret = create_capture_device(&cap, width, height, 96);
+    ret = create_capture_device(&cap, FILE_DEVICE, (void*)"assets/1729.jpeg", width, height, 96);
     EXPECT_EQ(ret, 0);
 
     for (int frame = 0; frame < 4; frame++) {
@@ -288,8 +295,10 @@ TEST_F(CodecTest, CaptureJPEGTest) {
         ret = transfer_screen(&cap);
         EXPECT_EQ(ret, 0);
 
+        capture_get_data(&cap, &cap_data, &cap_stride);
+
         int value =
-            test_read_image((const uint8_t *)cap.frame_data, width, height, cap.pitch, false);
+            test_read_image((const uint8_t *)cap.frame_data, width, height, cap_stride, false);
         EXPECT_EQ(value, 1729);
     }
 

@@ -1,15 +1,26 @@
 #include "input.h"
 #include "input_internal.h"
 
+#include <linux/input-event-codes.h>
+
 /*
 ============================
 Custom Types
 ============================
 */
 
+
 typedef struct {
     InputDevice base;
+    void *whiston;
 } InputDeviceWeston;
+
+/*                    implemented in westoncapture.c                           */
+void whiston_inject_mouse_position(void *whiston, int x, int y);
+void whiston_inject_mouse_buttons(void *opaque, int button, bool pressed);
+
+
+/* =========================================================================== */
 
 static void weston_destroy_input_device(InputDeviceWeston* input_device) {}
 
@@ -40,11 +51,30 @@ static int weston_emit_key_event(InputDeviceWeston* input_device, WhistKeycode w
 
 static int weston_emit_mouse_motion_event(InputDeviceWeston* input_device, int32_t x, int32_t y,
                                           int relative) {
+	whiston_inject_mouse_position(input_device->whiston, x, y);
     return 0;
 }
 
 static int weston_emit_mouse_button_event(InputDeviceWeston* input_device, WhistMouseButton button,
                                           int pressed) {
+	int weston_button = 0;
+	switch (button) {
+	case MOUSE_L:
+		weston_button = BTN_LEFT;
+		break;
+	case MOUSE_MIDDLE:
+		weston_button = BTN_MIDDLE;
+		break;
+	case MOUSE_R:
+		weston_button = BTN_RIGHT;
+		break;
+	case MOUSE_X1:
+	case MOUSE_X2:
+	default:
+		break;
+	}
+
+	whiston_inject_mouse_buttons(input_device->whiston, weston_button, pressed);
     return 0;
 }
 
@@ -67,7 +97,7 @@ static int weston_emit_multigesture_event(InputDeviceWeston* input_device, float
     UNUSED(gesture_type);
     UNUSED(active_gesture);
 
-    LOG_WARNING("Multigesture events not implemented for XTest driver! ");
+    LOG_WARNING("Multigesture events not implemented for Weston driver! ");
     return -1;
 }
 
@@ -75,6 +105,7 @@ InputDevice* weston_create_input_device(void* data) {
     LOG_INFO("creating weston driver");
 
     InputDeviceWeston* ret = safe_zalloc(sizeof(*ret));
+    ret->whiston = data;
 
     InputDevice* base = &ret->base;
     base->device_type = WHIST_INPUT_DEVICE_WESTON;

@@ -1,7 +1,7 @@
 add_library(whistCursor STATIC cursor.cpp cursor_internal.c)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_sources(whistCursor PRIVATE linux_cursor_capture.c)
+    target_sources(whistCursor PRIVATE x11_cursor.c)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(whistCursor PRIVATE windows_cursor_capture.c)
     set_property(TARGET whistCursor PROPERTY

@@ -337,6 +337,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
         LOG_ERROR("Tried to video_encoder_encode with a NULL encoder!");
         return -1;
     }
+
     switch (encoder->active_encoder) {
         case NVIDIA_ENCODER:
 #if OS_IS(OS_LINUX)
@@ -395,6 +396,12 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
         LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
     }
+
+    if (encoder->ffmpeg_encoder) {
+    	/* TODO: effectively reconfigure */
+    	return true;
+    }
+
     return false;
 }
 

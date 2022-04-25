@@ -1,0 +1,22 @@
+<protocol name="whiston">
+
+  <interface name="whiston" version="1">
+    <request name="take_shot">
+      <arg name="output" type="object" interface="wl_output"/>
+      <arg name="buffer" type="object" interface="wl_buffer"/>
+    </request>
+    <event name="done">
+    </event>
+    
+    <request name="mouse_pos">
+    	<arg name="x" type="fixed"/>
+    	<arg name="y" type="fixed"/>
+    </request>
+    
+    <request name="mouse_buttons">
+    	<arg name="button" type="uint"/>
+    	<arg name="state" type="uint" enum="wl_pointer.button_state"/>
+    </request>
+  </interface>
+
+</protocol>

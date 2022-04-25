@@ -140,7 +140,10 @@ int32_t multithreaded_handle_dbus(void* opaque) {
 
     // Private connection to prevent interference with other clients when
     // this connection becomes a monitor and starts erroring on message sends.
-    DBusConnection* conn = dbus_connection_open_private(dbus_addr, &error);
+    DBusConnection* conn = NULL;
+
+    if (dbus_addr)
+    	conn = dbus_connection_open_private(dbus_addr, &error);
 
     if (conn == NULL) {
         LOG_ERROR("Failed to connect to D-Bus: %s", error.message);

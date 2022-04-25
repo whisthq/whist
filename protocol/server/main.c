@@ -17,6 +17,9 @@ Includes
 ============================
 */
 
+#include <X11/Xlib.h>
+#include <whist/desktop/desktop.h>
+
 #include "state.h"
 #include "parse_args.h"
 #include "handle_client_message.h"
@@ -55,6 +58,9 @@ Private Functions
 void graceful_exit(WhistServerState* state);
 #if OS_IS(OS_LINUX)
 int xioerror_handler(Display* d);
+#endif
+
+#ifdef __linux__
 void sig_handler(int sig_num);
 #endif
 int main(int argc, char* argv[]);
@@ -89,7 +95,9 @@ void graceful_exit(WhistServerState* state) {
     }
 }
 
+
 #if OS_IS(OS_LINUX)
+#if 0
 int xioerror_handler(Display* d) {
     /*
         When X display is destroyed, intercept XIOError in order to
@@ -107,6 +115,7 @@ int xioerror_handler(Display* d) {
 
     return 0;
 }
+#endif
 
 void sig_handler(int sig_num) {
     /*
@@ -148,6 +157,7 @@ static bool get_whist_tcp_client_messages(WhistServerState* state) {
     return ret;
 }
 
+#if 0
 static void create_and_send_tcp_wmsg(WhistServerMessageType message_type, char* payload) {
     /*
         Create and send a TCP wmsg according to the given payload, and then
@@ -242,6 +252,8 @@ static void send_complete_file_drop_message(FileTransferType transfer_type) {
         LOG_WARNING("Failed to broadcast server message of type SMESSAGE_FILE_GROUP_END.");
     }
 }
+#endif
+
 
 static int multithreaded_sync_tcp_packets(void* opaque) {
     /*
@@ -257,8 +269,8 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
 
     LOG_INFO("multithreaded_sync_tcp_packets running on Thread %lu", whist_get_thread_id(NULL));
 
-    init_clipboard_synchronizer(false);
-    init_file_synchronizer((FILE_TRANSFER_SERVER_DROP | FILE_TRANSFER_SERVER_UPLOAD));
+    //init_clipboard_synchronizer(false);
+    //init_file_synchronizer((FILE_TRANSFER_SERVER_DROP | FILE_TRANSFER_SERVER_UPLOAD));
 
     // Hold a client active lock
     ClientLock* client_lock = client_active_lock(state->client);
@@ -277,6 +289,7 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
 
         // SEND TCP PACKET HANDLERS:
 
+#if 0
         // GET CLIPBOARD HANDLER
         // If the clipboard has a new available chunk, we should send it over to the
         // client
@@ -323,7 +336,7 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
             // Free file chunk
             deallocate_region(file_chunk);
         }
-
+#endif
         // Sleep for a small duration to avoid busy looping when idle
         // 100us is just a low enough number to not affect the latency significantly. And it is also
         // reduces CPU usage significantly.
@@ -342,7 +355,25 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
     return 0;
 }
 
+#ifdef _WIN32
+#define DEFAULT_INPUT_TYPE WHIST_INPUT_DEVICE_WIN32
+#define DEFAULT_CAPTURE_TYPE NVIDIA_DEVICE
+#else
+#define DEFAULT_INPUT_TYPE /*WHIST_INPUT_DEVICE_UINPUT*/WHIST_INPUT_DEVICE_XTEST
+#define DEFAULT_CAPTURE_TYPE X11_DEVICE
+#endif /* _WIN32 */
+
 static void whist_server_state_init(WhistServerState* state, whist_server_config* config) {
+	CaptureDeviceType capture_type = DEFAULT_CAPTURE_TYPE;
+    InputDeviceType input_type = DEFAULT_INPUT_TYPE;
+    void *capture_data = ":20";
+
+    if (config->weston_mode) {
+    	input_type = WHIST_INPUT_DEVICE_WESTON;
+    	capture_type = WESTON_DEVICE;
+    	capture_data = "wayland-whist";
+    }
+
     memset(state, 0, sizeof(*state));
     state->config = config;
     state->client_os = WHIST_UNKNOWN_OS;
@@ -362,22 +393,29 @@ static void whist_server_state_init(WhistServerState* state, whist_server_config
     srand((unsigned int)time(NULL));
     server_state.connection_id = rand();
 
-    server_state.input_device = create_input_device(INPUT_TYPE, NULL);
+	if (create_capture_device(&state->capture_device, capture_type, capture_data, /*1920, 980,*/ 1024, 800, /*96*/0) < 0) {
+		LOG_FATAL("unable to create capture device");
+	}
+
+    server_state.input_device = create_input_device(input_type, state->capture_device.impl);
     if (!server_state.input_device) {
         LOG_FATAL("Failed to create input device.");
     }
 
     server_state.client = init_client();
+
 }
+
 
 int main(int argc, char* argv[]) {
     whist_server_config config = {0};
 
     int ret = server_parse_args(&config, argc, argv);
-    if (ret == -1) {
+    switch (ret) {
+    case -1:
         // invalid usage
         return -1;
-    } else if (ret == 1) {
+    case 1:
         // --help or --version
         return 0;
     }
@@ -386,6 +424,8 @@ int main(int argc, char* argv[]) {
 
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
+
+    LOG_INFO("Server protocol started.");
     whist_server_state_init(&server_state, &config);
 
     // Initialize the error monitor, and tell it we are the server.
@@ -406,7 +446,7 @@ int main(int argc, char* argv[]) {
         LOG_FATAL("Establishing SIGTERM signal handler failed.");
     }
 
-    XSetIOErrorHandler(xioerror_handler);
+    // XSetIOErrorHandler(xioerror_handler);
 #endif
 
     WhistTimer startup_time;
@@ -440,7 +480,7 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Receiving packets...");
 
-    init_window_info_getter();
+    //init_window_info_getter();
 
     WhistTimer window_name_timer;
     start_timer(&window_name_timer);
@@ -468,6 +508,8 @@ int main(int argc, char* argv[]) {
 
     // Whether or not the client connected at least once
     bool client_connected_once = false;
+    server_state.desktop = desktop_create(DESKTOP_X11, ":20");
+    WhistWindowManager* wm = server_state.desktop->windows_handler;
 
     while (!server_state.exiting) {
         // Client management code
@@ -532,137 +574,141 @@ int main(int argc, char* argv[]) {
             start_timer(&cpu_usage_statistics_timer);
         }
 
-        if (get_timer(&window_fullscreen_timer) > 50.0 / MS_IN_SECOND) {
-            // This is the cached fullscreen state. We only send state change events
-            // to the client if the fullscreen value has changed.
-            // TODO: Move static variable into client variable, so that it can clear on reactivation
-            static bool cur_fullscreen = false;
-            bool fullscreen = is_focused_window_fullscreen();
-            if (fullscreen != cur_fullscreen) {
-                if (fullscreen) {
-                    LOG_INFO("Window is now fullscreen. Broadcasting fullscreen message.");
-                } else {
-                    LOG_INFO("Window is no longer fullscreen. Broadcasting fullscreen message.");
-                }
-                WhistServerMessage wsmsg = {0};
-                wsmsg.type = SMESSAGE_FULLSCREEN;
-                wsmsg.fullscreen = (int)fullscreen;
-                if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, &wsmsg,
-                                         sizeof(WhistServerMessage)) == 0) {
-                    LOG_INFO("Sent fullscreen message!");
-                    cur_fullscreen = fullscreen;
-                } else {
-                    LOG_ERROR("Failed to broadcast fullscreen message.");
-                }
-            }
-            start_timer(&window_fullscreen_timer);
-        }
 
-        if (get_timer(&window_name_timer) > 50.0 / MS_IN_SECOND) {
-            char* name = NULL;
-            bool new_window_name = get_focused_window_name(&name);
-            if (name != NULL &&
-                (server_state.client_joined_after_window_name_broadcast || new_window_name)) {
-                LOG_INFO("%sBroadcasting window title message.",
-                         new_window_name ? "Window title changed. " : "");
-                static char wsmsg_buf[sizeof(WhistServerMessage) + WINDOW_NAME_MAXLEN + 1];
-                WhistServerMessage* wsmsg = (void*)wsmsg_buf;
-                wsmsg->type = SMESSAGE_WINDOW_TITLE;
-                strncpy(wsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
-                if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
-                                         (int)(sizeof(WhistServerMessage) + strlen(name) + 1)) ==
-                    0) {
-                    LOG_INFO("Sent window title message!");
-                    server_state.client_joined_after_window_name_broadcast = false;
-                } else {
-                    LOG_WARNING("Failed to broadcast window title message.");
-                }
-            }
-            start_timer(&window_name_timer);
-        }
-
-#if !OS_IS(OS_WIN32)
-#define URI_HANDLER_FILE "/home/whist/.teleport/handled-uri"
-#define HANDLED_URI_MAXLEN 4096
-        if (get_timer(&uri_handler_timer) > 50.0 / MS_IN_SECOND) {
-            if (!access(URI_HANDLER_FILE, R_OK)) {
-                // If the handler file exists, read it and delete the file
-                int fd = open(URI_HANDLER_FILE, O_RDONLY);
-                char handled_uri[HANDLED_URI_MAXLEN + 1] = {0};
-                ssize_t bytes = read(fd, &handled_uri, HANDLED_URI_MAXLEN);
-                if (bytes > 0) {
-                    size_t wsmsg_size = sizeof(WhistServerMessage) + bytes + 1;
-                    WhistServerMessage* wsmsg = safe_malloc(wsmsg_size);
-                    memset(wsmsg, 0, sizeof(*wsmsg));
-                    wsmsg->type = SMESSAGE_OPEN_URI;
-                    memcpy(&wsmsg->requested_uri, handled_uri, bytes + 1);
-                    if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
-                                             (int)wsmsg_size) < 0) {
-                        LOG_WARNING("Failed to broadcast open URI message.");
+        if (!config.weston_mode) {
+            if (get_timer(&window_fullscreen_timer) > 50.0 / MS_IN_SECOND) {
+                // This is the cached fullscreen state. We only send state change events
+                // to the client if the fullscreen value has changed.
+                // TODO: Move static variable into client variable, so that it can clear on reactivation
+                static bool cur_fullscreen = false;
+                bool fullscreen = wm->is_focused_window_fullscreen(wm);
+                if (fullscreen != cur_fullscreen) {
+                    if (fullscreen) {
+                        LOG_INFO("Window is now fullscreen. Broadcasting fullscreen message.");
                     } else {
-                        LOG_INFO("Sent open URI message!");
+                        LOG_INFO("Window is no longer fullscreen. Broadcasting fullscreen message.");
                     }
-                    free(wsmsg);
-                } else {
-                    LOG_WARNING("Unable to read URI handler file: %d", errno);
+                    WhistServerMessage wsmsg = {0};
+                    wsmsg.type = SMESSAGE_FULLSCREEN;
+                    wsmsg.fullscreen = (int)fullscreen;
+                    if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, &wsmsg,
+                                             sizeof(WhistServerMessage)) == 0) {
+                        LOG_INFO("Sent fullscreen message!");
+                        cur_fullscreen = fullscreen;
+                    } else {
+                        LOG_ERROR("Failed to broadcast fullscreen message.");
+                    }
                 }
-                close(fd);
-                remove(URI_HANDLER_FILE);
+                start_timer(&window_fullscreen_timer);
             }
 
-            start_timer(&uri_handler_timer);
-        }
-
-#define FILE_DOWNLOAD_TRIGGER_FILE "/home/whist/.teleport/downloaded-file"
-#define FILE_DOWNLOADS_PREFIX "/home/whist/Downloads"
-#define DOWNLOADED_FILENAME_MAXLEN 4096
-        if (get_timer(&downloaded_file_timer) > 50.0 / MS_IN_SECOND) {
-            if (!access(FILE_DOWNLOAD_TRIGGER_FILE, R_OK)) {
-                // If the trigger file exists, read it and delete the file
-                int fd = open(FILE_DOWNLOAD_TRIGGER_FILE, O_RDONLY);
-                char downloaded_filename[DOWNLOADED_FILENAME_MAXLEN + 1] = {0};
-                ssize_t bytes = read(fd, &downloaded_filename, DOWNLOADED_FILENAME_MAXLEN);
-                if (bytes > 0 && strchr(downloaded_filename, '/') == NULL) {
-                    // Begin the file transfer to the client if a file was triggered and
-                    // the filename doesn't include a / (this prevents escalation outside the
-                    // Downloads directory)
-                    char* filename = safe_malloc(strlen(FILE_DOWNLOADS_PREFIX) + 1 +
-                                                 strlen(downloaded_filename) + 1);
-                    snprintf(filename,
-                             strlen(FILE_DOWNLOADS_PREFIX) + 1 + strlen(downloaded_filename) + 1,
-                             "%s/%s", FILE_DOWNLOADS_PREFIX, downloaded_filename);
-                    file_synchronizer_set_file_reading_basic_metadata(
-                        filename, FILE_TRANSFER_CLIENT_DOWNLOAD, NULL);
-                    file_synchronizer_end_type_group(FILE_TRANSFER_CLIENT_DOWNLOAD);
-                    free(filename);
-                } else {
-                    LOG_WARNING("Unable to read downloaded file trigger file: %d", errno);
+            if (get_timer(&window_name_timer) > 50.0 / MS_IN_SECOND) {
+                char* name = NULL;
+                bool new_window_name = wm->get_focused_window_name(wm, &name);
+                if (name != NULL &&
+                    (server_state.client_joined_after_window_name_broadcast || new_window_name)) {
+                    LOG_INFO("%sBroadcasting window title message.",
+                             new_window_name ? "Window title changed. " : "");
+                    static char wsmsg_buf[sizeof(WhistServerMessage) + WINDOW_NAME_MAXLEN + 1];
+                    WhistServerMessage* wsmsg = (void*)wsmsg_buf;
+                    wsmsg->type = SMESSAGE_WINDOW_TITLE;
+                    strncpy(wsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
+                    if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
+                                             (int)(sizeof(WhistServerMessage) + strlen(name) + 1)) ==
+                        0) {
+                        LOG_INFO("Sent window title message!");
+                        server_state.client_joined_after_window_name_broadcast = false;
+                    } else {
+                        LOG_WARNING("Failed to broadcast window title message.");
+                    }
                 }
-                close(fd);
-                remove(FILE_DOWNLOAD_TRIGGER_FILE);
+                start_timer(&window_name_timer);
             }
 
-            start_timer(&downloaded_file_timer);
-        }
-
-#define FILE_UPLOAD_TRIGGER_FILE "/home/whist/.teleport/uploaded-file"
-        if (get_timer(&uploaded_file_timer) > 50.0 / MS_IN_SECOND) {
-            if (!access(FILE_UPLOAD_TRIGGER_FILE, R_OK)) {
-                // If trigger file exists, request upload from client then delete the file
-                WhistServerMessage wsmsg = {0};
-                wsmsg.type = SMESSAGE_INITIATE_UPLOAD;
-                if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, &wsmsg,
-                                         sizeof(WhistServerMessage)) == 0) {
-                    LOG_INFO("Sent initiate upload message!");
-                } else {
-                    LOG_ERROR("Failed to broadcast initiate upload message.");
+    #ifndef _WIN32
+    #define URI_HANDLER_FILE "/home/whist/.teleport/handled-uri"
+    #define HANDLED_URI_MAXLEN 4096
+            if (get_timer(&uri_handler_timer) > 50.0 / MS_IN_SECOND) {
+                if (!access(URI_HANDLER_FILE, R_OK)) {
+                    // If the handler file exists, read it and delete the file
+                    int fd = open(URI_HANDLER_FILE, O_RDONLY);
+                    char handled_uri[HANDLED_URI_MAXLEN + 1] = {0};
+                    ssize_t bytes = read(fd, &handled_uri, HANDLED_URI_MAXLEN);
+                    if (bytes > 0) {
+                        size_t wsmsg_size = sizeof(WhistServerMessage) + bytes + 1;
+                        WhistServerMessage* wsmsg = safe_malloc(wsmsg_size);
+                        memset(wsmsg, 0, sizeof(*wsmsg));
+                        wsmsg->type = SMESSAGE_OPEN_URI;
+                        memcpy(&wsmsg->requested_uri, handled_uri, bytes + 1);
+                        if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
+                                                 (int)wsmsg_size) < 0) {
+                            LOG_WARNING("Failed to broadcast open URI message.");
+                        } else {
+                            LOG_INFO("Sent open URI message!");
+                        }
+                        free(wsmsg);
+                    } else {
+                        LOG_WARNING("Unable to read URI handler file: %d", errno);
+                    }
+                    close(fd);
+                    remove(URI_HANDLER_FILE);
                 }
-                remove(FILE_UPLOAD_TRIGGER_FILE);
+
+                start_timer(&uri_handler_timer);
             }
-            start_timer(&uploaded_file_timer);
-        }
+
+    #define FILE_DOWNLOAD_TRIGGER_FILE "/home/whist/.teleport/downloaded-file"
+    #define FILE_DOWNLOADS_PREFIX "/home/whist/Downloads"
+    #define DOWNLOADED_FILENAME_MAXLEN 4096
+            if (get_timer(&downloaded_file_timer) > 50.0 / MS_IN_SECOND) {
+                if (!access(FILE_DOWNLOAD_TRIGGER_FILE, R_OK)) {
+                    // If the trigger file exists, read it and delete the file
+                    int fd = open(FILE_DOWNLOAD_TRIGGER_FILE, O_RDONLY);
+                    char downloaded_filename[DOWNLOADED_FILENAME_MAXLEN + 1] = {0};
+                    ssize_t bytes = read(fd, &downloaded_filename, DOWNLOADED_FILENAME_MAXLEN);
+                    if (bytes > 0 && strchr(downloaded_filename, '/') == NULL) {
+                        // Begin the file transfer to the client if a file was triggered and
+                        // the filename doesn't include a / (this prevents escalation outside the
+                        // Downloads directory)
+                        char* filename = safe_malloc(strlen(FILE_DOWNLOADS_PREFIX) + 1 +
+                                                     strlen(downloaded_filename) + 1);
+                        snprintf(filename,
+                                 strlen(FILE_DOWNLOADS_PREFIX) + 1 + strlen(downloaded_filename) + 1,
+                                 "%s/%s", FILE_DOWNLOADS_PREFIX, downloaded_filename);
+                        file_synchronizer_set_file_reading_basic_metadata(
+                            filename, FILE_TRANSFER_CLIENT_DOWNLOAD, NULL);
+                        file_synchronizer_end_type_group(FILE_TRANSFER_CLIENT_DOWNLOAD);
+                        free(filename);
+                    } else {
+                        LOG_WARNING("Unable to read downloaded file trigger file: %d", errno);
+                    }
+                    close(fd);
+                    remove(FILE_DOWNLOAD_TRIGGER_FILE);
+                }
+
+                start_timer(&downloaded_file_timer);
+            }
+
+    #define FILE_UPLOAD_TRIGGER_FILE "/home/whist/.teleport/uploaded-file"
+            if (get_timer(&uploaded_file_timer) > 50.0 / MS_IN_SECOND) {
+                if (!access(FILE_UPLOAD_TRIGGER_FILE, R_OK)) {
+                    // If trigger file exists, request upload from client then delete the file
+                    WhistServerMessage wsmsg = {0};
+                    wsmsg.type = SMESSAGE_INITIATE_UPLOAD;
+                    if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, &wsmsg,
+                                             sizeof(WhistServerMessage)) == 0) {
+                        LOG_INFO("Sent initiate upload message!");
+                    } else {
+                        LOG_ERROR("Failed to broadcast initiate upload message.");
+                    }
+                    remove(FILE_UPLOAD_TRIGGER_FILE);
+                }
+                start_timer(&uploaded_file_timer);
+            }
 
 #endif  // Not Windows
+
+        } /* weston_mode */
     }
 
     if (!client_connected_once) {
@@ -684,7 +730,7 @@ int main(int argc, char* argv[]) {
     destroy_input_device(server_state.input_device);
     server_state.input_device = NULL;
 
-    destroy_window_info_getter();
+    //TODO: destroy_window_info_getter();
 
     whist_wait_thread(send_video_thread, NULL);
     whist_wait_thread(send_audio_thread, NULL);
