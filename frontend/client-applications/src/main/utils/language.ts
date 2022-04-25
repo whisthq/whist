@@ -72,29 +72,42 @@ const parseUserLanguagesRaw = () => {
   }
 }
 
+const macRawLanguageToServerFormat = (language: string) => {
+  if (language.includes("-")) {
+    // Check if the language is in the [language designator]-[script designator] format
+    // or the [language designator]-[script designator]_[region designator] format
+    return matchServerLanguageWithScriptFormat(language)
+  } else if (language.split("_").length === 2) {
+    return matchServerLanguageWithRegionFormat(language)
+  } else {
+    return matchServerLanguageFormat(language)
+  }
+}
+
+const linuxRawLanguageToServerFormat = (language: string) => {
+  // If the client is running on Linux, the language is already in the format required by the server
+  return language
+}
+
+const windowsRawLanguageToServerFormat = (language: string) => {
+  if (language.split("_").length === 2) {
+    return matchServerLanguageWithRegionFormat(language)
+  } else {
+    return matchServerLanguageFormat(language)
+  }
+}
+
 export const getUserLanguages = () => {
   const systemLanguages = parseUserLanguagesRaw()
     .split(":")
     .map((currentElement: string) => {
-      // Remove encoding
-      const language = currentElement.split(".")[0]
+      const language = currentElement.split(".")[0] // Remove encoding
       if (currentPlatform === "darwin") {
-        // Check if a script is present
-        if (language.includes("-")) {
-          return matchServerLanguageWithScriptFormat(language)
-        } else if (language.split("_").length === 2) {
-          return matchServerLanguageWithRegionFormat(language)
-        } else {
-          return matchServerLanguageFormat(language)
-        }
+        return macRawLanguageToServerFormat(language)
       } else if (currentPlatform === "linux") {
-        return language
+        return linuxRawLanguageToServerFormat(language)
       } else {
-        if (language.split("_").length === 2) {
-          return matchServerLanguageWithRegionFormat(language)
-        } else {
-          return matchServerLanguageFormat(language)
-        }
+        return windowsRawLanguageToServerFormat(language)
       }
     })
 
