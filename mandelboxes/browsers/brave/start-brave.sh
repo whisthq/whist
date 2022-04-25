@@ -47,17 +47,14 @@ fi
 # simply not improving performance:
 # "--enable-zero-copy" --> causes visual glitches when using Nvidia Capture
 # "--disable-frame-rate-limit" --> significantly degrades frame rate on YouTube
-# "--disable-features=UseChromeOSDirectVideoDecoder" --> did not make a difference
-# "--ignore-gpu-blocklist" --> did not make a difference
-# "--disable-software-rasterizer" --> did not make a difference
-
-
-
-#   "--ignore-gpu-blocklist"
-# "--disable-gpu-vsync" --> NEED TO CHECK THE EFFECT IT HAD
-#   "--enable-drdc"
-#  "--enable-raw-draw"
-#  "--enable-quic"
+# "--disable-features=UseChromeOSDirectVideoDecoder" --> had no impact
+# "--ignore-gpu-blocklist" --> had no impact
+# "--disable-software-rasterizer" --> had no impact
+# "--ignore-gpu-blocklist" --> had no impact
+# "--disable-gpu-vsync" --> had no impact
+# "--enable-drdc" --> had no impact
+# "--enable-raw-draw" --> not well supported on Linux yet
+# "--enable-quic" --> had no impact
 #
 features="VaapiVideoDecoder,VaapiVideoEncoder,Vulkan,CanvasOopRasterization,OverlayScrollbar,ParallelDownloading"
 flags=(
