@@ -197,7 +197,7 @@ static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEven
 }
 
 static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEvent* event) {
-    int data_len = 0;
+    size_t data_len = 0;
     if (event->file_list) {
         data_len = strlen((const char*)event->file_list) + 1;
     }

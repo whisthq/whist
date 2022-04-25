@@ -296,7 +296,8 @@ static int handle_file_drag_message(WhistClientMessage *wcmsg) {
     if (wcmsg->file_drag_data.end_drag) {
         file_drag_update(false, 0, 0, NULL);
     } else if (wcmsg->file_drag_data.start_drag) {
-        file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, wcmsg->file_drag_data.file_list);
+        file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y,
+                         wcmsg->file_drag_data.file_list);
     } else {
         file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, NULL);
     }

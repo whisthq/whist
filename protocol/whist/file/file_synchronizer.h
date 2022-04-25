@@ -230,7 +230,6 @@ void reset_all_transferring_files(void);
  */
 void file_synchronizer_cancel_user_file_upload(void);
 
-
 /**
  * @brief                          Adds an entry to indicate the end of a group of the
  *                                 same type of file that may need to be handled
@@ -252,7 +251,7 @@ void file_synchronizer_end_type_group(FileTransferType transfer_type);
  *
  */
 bool file_synchronizer_handle_type_group_end(TransferringFile* transferring_file,
-                                             FileGroupEnd *group_end_info);
+                                             FileGroupEnd* group_end_info);
 
 /**
  * @brief                          Cleanup the file synchronizer

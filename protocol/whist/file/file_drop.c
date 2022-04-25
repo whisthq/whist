@@ -201,8 +201,7 @@ void xdnd_send_position(int x, int y) {
     position_message.format = 32;
     position_message.data.l[0] = our_window;
     position_message.data.l[1] = 0;
-    position_message.data.l[2] =
-        (x << 16) | y;
+    position_message.data.l[2] = (x << 16) | y;
     position_message.data.l[3] =
         CurrentTime;  // Our data is not time dependent, so send a generic timestamp;
     position_message.data.l[4] = XA_XdndActionCopy;
@@ -223,9 +222,8 @@ void xdnd_send_selection_notify(char* xdnd_file_list, XEvent selection_request_e
     s.xselection.time = selection_request_event.xselectionrequest.time;
     s.xselection.property = selection_request_property;
 
-    XChangeProperty(display, requestor_window, selection_request_property, XA_text_uri_list,
-                    8, PropModeReplace, (unsigned char*)xdnd_file_list,
-                    strlen(xdnd_file_list));
+    XChangeProperty(display, requestor_window, selection_request_property, XA_text_uri_list, 8,
+                    PropModeReplace, (unsigned char*)xdnd_file_list, strlen(xdnd_file_list));
 
     XSendEvent(display, requestor_window, True, 0, &s);
 }
@@ -240,8 +238,7 @@ void xdnd_send_drop(void) {
     m.format = 32;
     m.data.l[0] = our_window;
     m.data.l[1] = 0;
-    m.data.l[2] =
-        CurrentTime;  // Our data is not time dependent, so send a generic timestamp;
+    m.data.l[2] = CurrentTime;  // Our data is not time dependent, so send a generic timestamp;
     m.data.l[3] = 0;
     m.data.l[4] = 0;
 
@@ -324,7 +321,8 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
         WhistTimer fuse_ready_wait_timer;
         start_timer(&fuse_ready_wait_timer);
         char fuse_ready_path[128];
-        snprintf(fuse_ready_path, 128, "/home/whist/.teleport/drag-drop/fuse_ready/%d", drop_file->id);
+        snprintf(fuse_ready_path, 128, "/home/whist/.teleport/drag-drop/fuse_ready/%d",
+                 drop_file->id);
         while (access(fuse_ready_path, F_OK) != 0 &&
                get_timer(&fuse_ready_wait_timer) < 200.0 / MS_IN_SECOND) {
             whist_sleep(50);
@@ -335,15 +333,16 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
         //     action will be taken in the meantime, the active X11 window may send SelectionRequest
         //     messages - process and respond to these
         const char* fuse_directory = "/home/whist/drag-drop/";
-        int fuse_path_maxlen =
-            strlen(fuse_directory) + 20 + strlen(drop_file->filename) + 1;  // have enough space for int
+        int fuse_path_maxlen = strlen(fuse_directory) + 20 + strlen(drop_file->filename) +
+                               1;  // have enough space for int
         char* fuse_path = safe_malloc(fuse_path_maxlen);
         memset(fuse_path, 0, fuse_path_maxlen);
         snprintf(fuse_path, fuse_path_maxlen, "%s%d/%s", fuse_directory, drop_file->id,
                  drop_file->filename);
 
         // Create the file URL to send as part of the SelectionNotify event to the active X11 window
-        int xdnd_file_url_len = 7 + strlen(fuse_path) + 1;  // +7 for 'file://'; +1 for null terminator
+        int xdnd_file_url_len =
+            7 + strlen(fuse_path) + 1;  // +7 for 'file://'; +1 for null terminator
 
         file_uri_list_strlen += xdnd_file_url_len;
         if (file_uri_list) {
@@ -442,7 +441,8 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
 
     if (!accepted_drop) {
         LOG_WARNING(
-            "XDND exchange for %d prepared files was rejected by target and completed unsuccessfully",
+            "XDND exchange for %d prepared files was rejected by target and completed "
+            "unsuccessfully",
             num_files);
     }
 
@@ -571,7 +571,6 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
 
     static bool active_file_drag = false;
 
-
     if (is_dragging) {
         if (!file_list && !xdnd_file_list) {
             return -1;
@@ -589,7 +588,8 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
                 char* file_path_end = malloc(file_path_end_size);
                 memset(file_path_end, 0, file_path_end_size);
                 safe_strncpy(file_path_end, drag_path_middle, strlen(drag_path_middle) + 1);
-                safe_strncpy(file_path_end + strlen(drag_path_middle), file_list_token, strlen(file_list_token) + 1);
+                safe_strncpy(file_path_end + strlen(drag_path_middle), file_list_token,
+                             strlen(file_list_token) + 1);
 
                 int drag_path_size = strlen(drag_path_template) + file_path_end_size + 2;
                 char* drag_path = malloc(drag_path_size);
@@ -598,7 +598,8 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
                 free(file_path_end);
 
                 if (xdnd_file_list) {
-                    xdnd_file_list = safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
+                    xdnd_file_list =
+                        safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
                     xdnd_file_list[xdnd_file_list_len - 1] = '\n';
                 } else {
                     xdnd_file_list = safe_malloc(drag_path_size);
@@ -648,8 +649,8 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
             // drag-and-droppable content, then we will need to
             //     request XdndTypeList and call
             //     XChangeProperty(disp, w, XdndTypeList, XA_ATOM, 32, PropModeReplace, (unsigned
-            //     char*)&targets[0], targets.size()); beforehand. Since we only support one type right now,
-            //     we can skip this step in the XDND exchange.
+            //     char*)&targets[0], targets.size()); beforehand. Since we only support one type
+            //     right now, we can skip this step in the XDND exchange.
         }
 
         // XDND 4 - Send XdndPosition to active X11 window
@@ -665,8 +666,8 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
                 //     the active X11 window with all of the information about the drop.
                 xdnd_send_selection_notify(xdnd_file_list, e);
             } else if (e.type == ClientMessage && e.xclient.message_type == XA_XdndFinished) {
-                // The active X11 window has indicated that it is done with the drag and drop sequence,
-                // so we can break
+                // The active X11 window has indicated that it is done with the drag and drop
+                // sequence, so we can break
                 xdnd_send_leave();
             }
         } while (XPending(display));
@@ -674,8 +675,8 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
         if (active_file_drag) {
             // DRAG ENDS
 
-            // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate that
-            // the XDND communication sequence is complete
+            // XDND 7 - Once we are done, we send active X11 window an XdndLeave message to indicate
+            // that the XDND communication sequence is complete
             xdnd_send_leave();
 
             free(xdnd_file_list);

@@ -185,7 +185,7 @@ static void push_drag_end_event(WhistFrontend *frontend) {
     SDL_PushEvent(&event);
 }
 
-static void push_drag_start_event(WhistFrontend *frontend, char* file_list) {
+static void push_drag_start_event(WhistFrontend *frontend, char *file_list) {
     SDLFrontendContext *context = frontend->context;
     FileDragState *state = context->file_drag_data;
 
@@ -267,18 +267,23 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
                                             state->mouse_down = true;
 
                                             if ([[pb types] containsObject:NSFilenamesPboardType]) {
-                                                NSArray *files = [pb propertyListForType:NSFilenamesPboardType];
-                                                int numberOfFiles = [files count];
+                                                NSArray *files =
+                                                    [pb propertyListForType:NSFilenamesPboardType];
+                                                int number_of_files = [files count];
                                                 NSString *file_list = [NSString string];
                                                 int i = 0;
-                                                for (NSString* file in files) {
-                                                    file_list = [file_list stringByAppendingString:[file lastPathComponent]];
-                                                    if (i < numberOfFiles - 1) {
-                                                        file_list = [file_list stringByAppendingString:@"\n"];
+                                                for (NSString *file in files) {
+                                                    file_list =
+                                                        [file_list stringByAppendingString:
+                                                                       [file lastPathComponent]];
+                                                    if (i < number_of_files - 1) {
+                                                        file_list = [file_list
+                                                            stringByAppendingString:@"\n"];
                                                     }
                                                     i++;
                                                 }
-                                                push_drag_start_event(frontend, (char*)[file_list UTF8String]);
+                                                push_drag_start_event(
+                                                    frontend, (char *)[file_list UTF8String]);
                                             }
                                         } else if (state->mouse_down) {
                                             // We are continuing to drag our file from its

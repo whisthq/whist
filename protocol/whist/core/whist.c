@@ -329,9 +329,9 @@ int get_wcmsg_size(WhistClientMessage *wcmsg) {
         //     if there is file_list data. Therefore, if we are not using the
         //     file_list member, don't add anything extra to the payload (leave
         //     the length of file_list at 0 instead of adding the null-terminator 1).
-        int addon = 0;
-        if (strlen((const char*)&wcmsg->file_drag_data.file_list) > 0) {
-            addon = strlen((const char*)&wcmsg->file_drag_data.file_list) + 1;
+        size_t addon = 0;
+        if (strlen((const char *)&wcmsg->file_drag_data.file_list) > 0) {
+            addon = strlen((const char *)&wcmsg->file_drag_data.file_list) + 1;
         }
         return (int)(sizeof(*wcmsg) + addon);
     } else if (wcmsg->type == MESSAGE_OPEN_URL) {

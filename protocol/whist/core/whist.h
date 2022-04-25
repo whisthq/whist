@@ -634,9 +634,9 @@ typedef enum WhistClientMessageType {
 
     MESSAGE_OPEN_URL = 117,
 
-    CMESSAGE_FILE_METADATA = 119,  ///< file metadata
-    CMESSAGE_FILE_DATA = 120,      ///< file chunk
-    CMESSAGE_FILE_GROUP_END = 121, ///< file type group end
+    CMESSAGE_FILE_METADATA = 119,   ///< file metadata
+    CMESSAGE_FILE_DATA = 120,       ///< file chunk
+    CMESSAGE_FILE_GROUP_END = 121,  ///< file type group end
 
     MESSAGE_FRAME_ACK = 122,  ///< Frame has been received.
 
@@ -743,8 +743,8 @@ typedef struct WhistClientMessage {
             bool start_drag;
             bool end_drag;
             char file_list[0];
-        } file_drag_data;            // CMESSAGE_FILE_DRAG
-        char urls_to_open[0];        // MESSAGE_OPEN_URL
+        } file_drag_data;      // CMESSAGE_FILE_DRAG
+        char urls_to_open[0];  // MESSAGE_OPEN_URL
     };
 } WhistClientMessage;
 
