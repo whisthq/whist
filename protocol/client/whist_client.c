@@ -503,14 +503,20 @@ int whist_client_main(int argc, const char* argv[]) {
             send_server_quit_messages(3);
         }
 
-        // Destroy the network system
+        // Destroy the packet receivers,
+        // So we end communication with the server
         destroy_packet_synchronizers();
+
+        // Destroy the renderer,
+        // Which may have been viewing into the packet buffer
+        destroy_renderer(whist_renderer);
+
+        // Destroy the networking peripherals
         destroy_file_synchronizer();
         destroy_clipboard_synchronizer();
-        close_connections();
 
-        // Destroy the renderer
-        destroy_renderer(whist_renderer);
+        // Close the connections, destroying the packet buffers
+        close_connections();
 
         // Mark as disconnected
         connected = false;
