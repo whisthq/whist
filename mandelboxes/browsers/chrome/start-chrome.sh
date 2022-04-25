@@ -111,13 +111,18 @@ flags+=("$INITIAL_URL")
 
 # OS-specific provisions
 if [[ "$CLIENT_OS" == "darwin" ]]; then
-  # Edit the Chrome Preferences Config file to set the fonts based on the client's OS
+  # Edit the Chrome Preferences Config file to use the default Mac fonts
   echo {} | \
     jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
     > /home/whist/.config/google-chrome/Default/Preferences
 
   # Disable smooth scrolling, which we handle via uinput instead
   flags+=("--disable-smooth-scrolling")
+elif [[ "$CLIENT_OS" == "win32" ]]; then
+  # Edit the Chrome Preferences Config file to use the default Windows fonts
+  echo {} | \
+    jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}' \
+    > /home/whist/.config/google-chrome/Default/Preferences
 fi
 
 # Load D-Bus configurations; necessary for Chrome
