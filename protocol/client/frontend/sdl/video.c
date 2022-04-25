@@ -64,6 +64,134 @@ void sdl_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {
     SDL_RenderClear(context->renderer);
 }
 
+static SDL_PixelFormatEnum sdl_get_pixel_format(enum AVPixelFormat pixfmt) {
+    switch (pixfmt) {
+        case AV_PIX_FMT_NV12:
+        case AV_PIX_FMT_D3D11:
+        case AV_PIX_FMT_VIDEOTOOLBOX:
+            // Hardware formats all use NV12 internally.
+            return SDL_PIXELFORMAT_NV12;
+        case AV_PIX_FMT_YUV420P:
+            return SDL_PIXELFORMAT_IYUV;
+        default:
+            return SDL_PIXELFORMAT_UNKNOWN;
+    }
+}
+
+WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
+    SDLFrontendContext* context = frontend->context;
+    int res;
+
+    SDL_PixelFormatEnum format = sdl_get_pixel_format(frame->format);
+    if (format == SDL_PIXELFORMAT_UNKNOWN) {
+        LOG_ERROR("Invalid pixel format %s given to SDL renderer.",
+                  av_get_pix_fmt_name(frame->format));
+        return WHIST_ERROR_INVALID_ARGUMENT;
+    }
+
+    // Formats we support for texture import to SDL.
+    bool import_texture =
+        (frame->format == AV_PIX_FMT_VIDEOTOOLBOX || frame->format == AV_PIX_FMT_D3D11);
+
+    if (import_texture || format != context->video.texture_format) {
+        // When importing we will make a new SDL texture referring to
+        // the imported one, so the old texture should be destroyed.
+        // When uploading this is only needed if the format changes.
+        if (context->video.texture) {
+            SDL_DestroyTexture(context->video.texture);
+            context->video.texture = NULL;
+        }
+#ifdef _WIN32
+        if (import_texture) {
+            // The D3D11 SDL render path is entirely asynchronous, with
+            // no synchronisation points at all.  Since video decode
+            // happens on another thread we need to ensure that the
+            // render involving the previous frame has actually
+            // completed before we free it, since that will allow the
+            // texture to be reused by the decoder.
+            sdl_d3d11_wait(context);
+        }
+#endif
+        av_frame_unref(context->video.frame_reference);
+    }
+
+    if (import_texture) {
+        if (context->video.frame_reference == NULL) {
+            context->video.frame_reference = av_frame_alloc();
+        }
+        av_frame_ref(context->video.frame_reference, frame);
+
+        if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
+            // This is a pointer to the CVPixelBuffer containing the
+            // frame data in GPU memory.
+            void* handle = frame->data[3];
+
+            context->video.texture =
+                SDL_CreateTextureFromHandle(context->renderer, format, SDL_TEXTUREACCESS_STATIC,
+                                            frame->width, frame->height, handle);
+            if (context->video.texture == NULL) {
+                LOG_ERROR("Failed to import Core Video texture: %s.", SDL_GetError());
+                return WHIST_ERROR_EXTERNAL;
+            }
+        } else if (frame->format == AV_PIX_FMT_D3D11) {
+#ifdef _WIN32
+            context->video.texture = sdl_d3d11_create_texture(context, frame);
+            if (context->video.texture == NULL) {
+                LOG_ERROR("Failed to import D3D11 texture.");
+                return WHIST_ERROR_EXTERNAL;
+            }
+#else
+            LOG_FATAL("D3D11 support requires Windows.");
+#endif
+        }
+    } else {
+        if (context->video.texture == NULL) {
+            // Create new video texture.
+            context->video.texture =
+                SDL_CreateTexture(context->renderer, format, SDL_TEXTUREACCESS_STREAMING,
+                                  MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+            if (context->video.texture == NULL) {
+                LOG_ERROR("Failed to create %s video texture: %s.",
+                          av_get_pix_fmt_name(frame->format), SDL_GetError());
+                return WHIST_ERROR_EXTERNAL;
+            }
+
+            LOG_INFO("Using %s video texture.", av_get_pix_fmt_name(frame->format));
+            context->video.texture_format = format;
+        }
+
+        // The texture object we allocate is larger than the frame, so
+        // we only copy the valid section of the frame into the texture.
+        SDL_Rect texture_rect = {
+            .x = 0,
+            .y = 0,
+            .w = frame->width,
+            .h = frame->height,
+        };
+        if (frame->format == AV_PIX_FMT_NV12) {
+            res = SDL_UpdateNVTexture(context->video.texture, &texture_rect, frame->data[0],
+                                      frame->linesize[0], frame->data[1], frame->linesize[1]);
+        } else if (frame->format == AV_PIX_FMT_YUV420P) {
+            res = SDL_UpdateYUVTexture(context->video.texture, &texture_rect, frame->data[0],
+                                       frame->linesize[0], frame->data[1], frame->linesize[1],
+                                       frame->data[2], frame->linesize[2]);
+        } else {
+            LOG_FATAL("Invalid format %s for texture update.", av_get_pix_fmt_name(frame->format));
+        }
+
+        if (res < 0) {
+            LOG_ERROR("Failed to update texture from %s frame: %s.",
+                      av_get_pix_fmt_name(frame->format), SDL_GetError());
+            return WHIST_ERROR_EXTERNAL;
+        }
+    }
+
+    context->video.frame_width = frame->width;
+    context->video.frame_height = frame->height;
+
+    return WHIST_SUCCESS;
+}
+
 // On macOS & Windows, SDL outputs the texture with the last pixel on the bottom and
 // right sides without data, rendering it green (NV12 color format). We're not sure
 // why that is the case, but in the meantime, clipping that pixel makes the visual
@@ -74,34 +202,14 @@ void sdl_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {
 #define CLIPPED_PIXELS 0
 #endif
 
-void sdl_paint_avframe(WhistFrontend* frontend, AVFrame* frame, int output_width,
-                       int output_height) {
+void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
     SDLFrontendContext* context = frontend->context;
-    // The texture object we allocate is larger than the frame,
-    // so we only copy the valid section of the frame into the texture.
-    SDL_Rect texture_rect = {
-        .x = 0,
-        .y = 0,
-        .w = frame->width,
-        .h = frame->height,
-    };
-
-    // Update the SDLTexture with the given nvdata
     int res;
-    if (frame->format == AV_PIX_FMT_NV12) {
-        // A normal NV12 frame in CPU memory.
-        res = SDL_UpdateNVTexture(context->texture, &texture_rect, frame->data[0],
-                                  frame->linesize[0], frame->data[1], frame->linesize[1]);
-    } else if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
-        // A CVPixelBufferRef containing both planes in GPU memory.
-        res = SDL_UpdateNVTexture(context->texture, &texture_rect, frame->data[3], frame->width,
-                                  frame->data[3], frame->width);
-    } else {
-        LOG_ERROR("Unsupported frame format: %s", av_get_pix_fmt_name(frame->format));
-        return;
-    }
-    if (res < 0) {
-        LOG_ERROR("Failed to update texture: %s", SDL_GetError());
+
+    if (context->video.texture == NULL) {
+        // No texture to render - this can happen at startup if no video
+        // has been decoded yet.  Do nothing here, since the screen was
+        // cleared to a solid colour anyway.
         return;
     }
 
@@ -110,10 +218,13 @@ void sdl_paint_avframe(WhistFrontend* frontend, AVFrame* frame, int output_width
     SDL_Rect output_rect = {
         .x = 0,
         .y = 0,
-        .w = min(output_width, texture_rect.w) - CLIPPED_PIXELS,
-        .h = min(output_height, texture_rect.h) - CLIPPED_PIXELS,
+        .w = min(output_width, context->video.frame_width) - CLIPPED_PIXELS,
+        .h = min(output_height, context->video.frame_height) - CLIPPED_PIXELS,
     };
-    SDL_RenderCopy(context->renderer, context->texture, &output_rect, NULL);
+    res = SDL_RenderCopy(context->renderer, context->video.texture, &output_rect, NULL);
+    if (res < 0) {
+        LOG_WARNING("Failed to render texture: %s.", SDL_GetError());
+    }
 
     if (!context->video_has_rendered) {
         context->video_has_rendered = true;

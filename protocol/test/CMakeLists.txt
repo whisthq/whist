@@ -101,6 +101,7 @@ else()
         ../client/frontend/sdl/sdl.c
         ../client/frontend/sdl/video.c
         ../client/frontend/sdl/window.c
+        $<$<PLATFORM_ID:Windows>:../client/frontend/sdl/d3d11.c>
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp

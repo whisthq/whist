@@ -37,9 +37,8 @@ static volatile bool pending_render = false;
 
 static volatile bool prev_insufficient_bandwidth = false;
 
-// NV12 framebuffer update
-static bool pending_nv12data = false;
-static AVFrame* pending_nv12_frame;
+// Video frame update.
+static AVFrame* pending_video_frame;
 
 // for cursor update. The value is writen by the video render thread, and taken away by the main
 // thread.
@@ -107,7 +106,7 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
     // only called once.
     pending_cursor_info = NULL;
 
-    pending_nv12data = false;
+    pending_video_frame = NULL;
     pending_render = false;
 
     // After creating the window, we will grab DPI-adjusted dimensions in real
@@ -124,6 +123,8 @@ void destroy_sdl(WhistFrontend* frontend) {
         free((WhistRGBColor*)native_window_color);
         native_window_color = NULL;
     }
+
+    av_frame_free(&pending_video_frame);
 
     LOG_INFO("Destroying SDL");
 
@@ -210,16 +211,12 @@ void sdl_update_framebuffer(AVFrame* frame) {
     if ((frame->width < 0 || frame->width > MAX_SCREEN_WIDTH) ||
         (frame->height < 0 || frame->height > MAX_SCREEN_HEIGHT)) {
         LOG_ERROR("Invalid Dimensions! %dx%d. nv12 update dropped", frame->width, frame->height);
-    } else if (frame->format != AV_PIX_FMT_VIDEOTOOLBOX &&
-               frame->format != WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT) {
-        LOG_ERROR("Invalid format %s for NV12 update.", av_get_pix_fmt_name(frame->format));
     } else {
-        // Free the previous frame, if there was one.
-        if (pending_nv12_frame) {
-            av_frame_free(&pending_nv12_frame);
+        if (pending_video_frame) {
+            // Free a previous undisplayed frame.
+            av_frame_free(&pending_video_frame);
         }
-        pending_nv12_frame = frame;
-        pending_nv12data = true;
+        pending_video_frame = frame;
     }
 
     whist_unlock_mutex(frontend_render_mutex);
@@ -457,22 +454,17 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
 
-    // If any overlays need to be updated make sure a background is rendered
-    if (insufficient_bandwidth) {
-        pending_nv12data = true;
+    // If there is a new video frame then update the frontend texture
+    // with it.
+    if (pending_video_frame) {
+        whist_frontend_update_video(frontend, pending_video_frame);
+
+        // If the frontend needs to take a reference to the frame data
+        // then it has done so, so we can free this frame immediately.
+        av_frame_free(&pending_video_frame);
     }
 
-    // Render the nv12data, if any exists
-    if (pending_nv12data) {
-        AVFrame* frame = pending_nv12_frame;
-        if (frame) {
-            whist_frontend_paint_avframe(frontend, frame, output_width, output_height);
-
-            // No longer pending nv12 data
-            pending_nv12data = false;
-        }
-        // TODO: Should we do something else if no frame?
-    }
+    whist_frontend_paint_video(frontend, output_width, output_height);
 
     if (insufficient_bandwidth) {
         render_insufficient_bandwidth(frontend);

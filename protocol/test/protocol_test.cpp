@@ -133,6 +133,13 @@ TEST_F(ProtocolTest, InitSDL) {
     check_stdout_line(::testing::HasSubstr("Using renderer: "));
 
 #ifdef _WIN32
+    // We get one line about the D3D11 device from the renderer, which
+    // can be success or an error message.  For this test we don't care
+    // which of those it is, but we need to consume the message here.
+    check_stdout_line(::testing::HasSubstr("device"));
+#endif
+
+#ifdef _WIN32
     check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
 #elif defined(__linux__)
     check_stdout_line(::testing::HasSubstr("Not implemented on X11"));

@@ -166,6 +166,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     target_sources(WhistClient PRIVATE
         frontend/sdl/native_windows.c
+        frontend/sdl/d3d11.c
     )
 
     set_property(TARGET WhistClient PROPERTY
