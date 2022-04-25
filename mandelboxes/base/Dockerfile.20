@@ -720,7 +720,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     fonts-noto-ui-core \
     fonts-noto-ui-extra \
     fonts-noto-unhinted \
-    ttf-mscorefonts-installer \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
