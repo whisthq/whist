@@ -1,5 +1,6 @@
 import { execCommand } from "@app/main/utils/execCommand"
 import { matchServerLanguageWithRegionFormat } from "@app/main/utils/matchServerLanguages"
+import { windowsKey } from "@app/main/utils/windowsRegistry"
 
 const getLocaleMacAndLinux = () => {
   // This function will get the user locale on Mac/Linux clients
@@ -23,12 +24,9 @@ const getLocaleMacAndLinux = () => {
 const getLocaleWindows = () => {
   // This function will get the user locale on Windows clients
   const userLocales: { [key: string]: string } = {}
-  const userLocaleRaw = execCommand(
-    'reg query "HKCU\\Control Panel\\International" /v LocaleName | findstr /c:"LocaleName"',
-    ".",
-    {},
-    "pipe"
-  )
+  const userLocaleRaw: string =
+    windowsKey("Control Panel\\International").getValue("LocaleName") ?? ""
+
   // Remove all new-lines and split over spaces to select last word (containing the locale)
   const parsedUserLocale = userLocaleRaw
     .toString()

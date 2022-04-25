@@ -13,26 +13,7 @@ import {
   MAX_KEY_REPEAT_WINDOWS,
   MIN_INTIAL_REPEAT_WINDOWS,
 } from "@app/constants/keyRepeat"
-
-const win =
-  process.platform === "win32" ? require("windows-registry-napi") : undefined
-
-const windowsKey = () => {
-  /*
-  Creates a Windows Registry Key object
-
-  Returns:
-   key (Key): Windows Registry Key
-*/
-  if (process.platform !== "win32")
-    throw new Error(`process.platform ${process.platform} is not win32`)
-
-  return new win.Key(
-    win.windef.HKEY.HKEY_CURRENT_USER,
-    "Control Panel\\Keyboard",
-    win.windef.KEY_ACCESS.KEY_ALL_ACCESS
-  )
-}
+import { windowsKey } from "@app/main/utils/windowsRegistry"
 
 const windowsInitialRepeatRaw = () => {
   /*
@@ -44,7 +25,8 @@ const windowsInitialRepeatRaw = () => {
   if (process.platform !== "win32")
     throw new Error(`process.platform ${process.platform} is not win32`)
 
-  const initialRepeat = windowsKey().getValue("KeyboardDelay") ?? undefined
+  const initialRepeat =
+    windowsKey("Control Panel\\Keyboard").getValue("KeyboardDelay") ?? undefined
   if (initialRepeat === undefined) return MIN_INTIAL_REPEAT_WINDOWS
 
   return parseInt(initialRepeat)
@@ -60,7 +42,8 @@ const windowsRepeatRaw = () => {
   if (process.platform !== "win32")
     throw new Error(`process.platform ${process.platform} is not win32`)
 
-  const repeat = windowsKey().getValue("KeyboardSpeed") ?? undefined
+  const repeat =
+    windowsKey("Control Panel\\Keyboard").getValue("KeyboardSpeed") ?? undefined
   if (repeat === undefined) return MAX_KEY_REPEAT_WINDOWS
 
   return parseInt(repeat)
