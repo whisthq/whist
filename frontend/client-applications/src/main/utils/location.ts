@@ -115,7 +115,11 @@ const getGeolocation = async () => {
   const response = await fetch(
     `http://api.ipstack.com/check?access_key=${IPSTACK_API_KEY}&format=1`
   )
-  const json = await response.json()
+
+  const json = (await response.json()) as {
+    longitude: number
+    latitude: number
+  }
 
   return {
     longitude: json.longitude.toFixed(7),
