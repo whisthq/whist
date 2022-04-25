@@ -4,6 +4,7 @@
 # enable Sentry bash error handler, which will catch errors if `set -e` is set in a Bash script, we
 # we can simply call the bash hook directly.
 if [[ ! -z "${SENTRY_ENV}" ]]; then
+  export SENTRY_ENVIRONMENT=${SENTRY_ENV}
   eval "$(sentry-cli bash-hook)"
 else
   echo "Sentry environment not set, skipping Sentry error handler"
