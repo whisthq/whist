@@ -4,7 +4,7 @@ import {
   searchLanguageWithoutRegion,
   searchLanguageWithRegion,
   searchLanguageWithScript,
-} from "@app/main/utils/serverLanguages"
+} from "@app/main/utils/matchServerLanguages"
 import _ from "lodash"
 const currentPlatform = process.platform
 

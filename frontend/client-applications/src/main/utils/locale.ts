@@ -1,5 +1,5 @@
 import { execCommand } from "@app/main/utils/execCommand"
-import { searchLanguageWithRegion } from "@app/main/utils/serverLanguages"
+import { searchLanguageWithRegion } from "@app/main/utils/matchServerLanguages"
 
 const getLocaleMacAndLinux = () => {
   // This function will get the user locale on Mac/Linux clients
