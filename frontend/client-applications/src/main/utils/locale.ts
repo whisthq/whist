@@ -1,5 +1,5 @@
 import { execCommand } from "@app/main/utils/execCommand"
-import { searchLanguageWithRegion } from "@app/main/utils/matchServerLanguages"
+import { matchServerLanguageWithRegionFormat } from "@app/main/utils/matchServerLanguages"
 
 const getLocaleMacAndLinux = () => {
   // This function will get the user locale on Mac/Linux clients
@@ -35,7 +35,7 @@ const getLocaleWindows = () => {
     .replace(/(\r\n|\n|\r)/gm, "")
     .split(" ")
   // Extract locale, transform them into the `language_region` format
-  const windowsLocale = searchLanguageWithRegion(
+  const windowsLocale = matchServerLanguageWithRegionFormat(
     parsedUserLocale[parsedUserLocale.length - 1].split("-").join("_")
   )
   if (windowsLocale !== "") {

@@ -12,7 +12,7 @@ export const caseInsensitiveLanguageSearch = (language: string) => {
 }
 
 // Check if a language in the form [language designator] is available on the mandelbox
-export const searchLanguageWithoutRegion = (language: string) => {
+export const matchServerLanguageFormat = (language: string) => {
   // Check if the language can be found (using a case insensitive search). If not, check
   // if the language can be found after adding the default region name
   return (
@@ -27,16 +27,16 @@ export const searchLanguageWithoutRegion = (language: string) => {
 }
 
 // Check if a language in the form [language designator]_[region designator] is available on the mandelbox
-export const searchLanguageWithRegion = (language: string) => {
+export const matchServerLanguageWithRegionFormat = (language: string) => {
   // Check if the language can be found (using a case insensitive search). If not found, check if the language
   // can be found after removing the region or after replacing the region with the default one
   return (
     caseInsensitiveLanguageSearch(language) ??
-    searchLanguageWithoutRegion(language.split("_")[0])
+    matchServerLanguageFormat(language.split("_")[0])
   )
 }
 
-export const searchLanguageWithScript = (language: string) => {
+export const matchServerLanguageWithScriptFormat = (language: string) => {
   const languageAndScript = language.split("-")
   if (languageAndScript[1].split("_").length === 1) {
     // Handle the [language designator]-[script designator] case. No region has been provided
@@ -44,10 +44,12 @@ export const searchLanguageWithScript = (language: string) => {
     // to Taiwan (or Hong Kong), otherwise the default region will use the Simplified script
     if (languageAndScript[1].includes("Hant")) {
       // Add default region for Traditional Chinese script
-      return searchLanguageWithRegion(languageAndScript[0] + "_" + "TW")
+      return matchServerLanguageWithRegionFormat(
+        languageAndScript[0] + "_" + "TW"
+      )
     } else {
       // Remove the script and find a best match for the language
-      return searchLanguageWithoutRegion(languageAndScript[0])
+      return matchServerLanguageFormat(languageAndScript[0])
     }
   } else if (languageAndScript[1].split("_").length === 2) {
     // Handle the [language designator]-[script designator]_[region designator] case
@@ -59,18 +61,24 @@ export const searchLanguageWithScript = (language: string) => {
       !languageAndScript[1].split("_")[1].includes("TW")
     ) {
       // Search using "TW" as the region, instead of the one detected
-      return searchLanguageWithRegion(languageAndScript[0] + "_" + "TW")
+      return matchServerLanguageWithRegionFormat(
+        languageAndScript[0] + "_" + "TW"
+      )
     } else if (
       languageAndScript[1].includes("Hans") &&
       !languageAndScript[1].split("_")[1].includes("CN") &&
       !languageAndScript[1].split("_")[1].includes("SG")
     ) {
       // Search using "TW" as the region, instead of the one detected
-      return searchLanguageWithRegion(languageAndScript[0] + "_" + "CN")
+      return matchServerLanguageWithRegionFormat(
+        languageAndScript[0] + "_" + "CN"
+      )
     } else {
       // Remove the script and find a best match for the language
       const regionName = languageAndScript[1].split("_")[1]
-      return searchLanguageWithRegion(languageAndScript[0] + "_" + regionName)
+      return matchServerLanguageWithRegionFormat(
+        languageAndScript[0] + "_" + regionName
+      )
     }
   }
   return ""

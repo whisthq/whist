@@ -1,9 +1,9 @@
 import { browserSupportedLanguages } from "@app/constants/mandelboxLanguages"
 import { execCommand } from "@app/main/utils/execCommand"
 import {
-  searchLanguageWithoutRegion,
-  searchLanguageWithRegion,
-  searchLanguageWithScript,
+  matchServerLanguageFormat,
+  matchServerLanguageWithRegionFormat,
+  matchServerLanguageWithScriptFormat,
 } from "@app/main/utils/matchServerLanguages"
 import _ from "lodash"
 const currentPlatform = process.platform
@@ -81,19 +81,19 @@ export const getUserLanguages = () => {
       if (currentPlatform === "darwin") {
         // Check if a script is present
         if (language.includes("-")) {
-          return searchLanguageWithScript(language)
+          return matchServerLanguageWithScriptFormat(language)
         } else if (language.split("_").length === 2) {
-          return searchLanguageWithRegion(language)
+          return matchServerLanguageWithRegionFormat(language)
         } else {
-          return searchLanguageWithoutRegion(language)
+          return matchServerLanguageFormat(language)
         }
       } else if (currentPlatform === "linux") {
         return language
       } else {
         if (language.split("_").length === 2) {
-          return searchLanguageWithRegion(language)
+          return matchServerLanguageWithRegionFormat(language)
         } else {
-          return searchLanguageWithoutRegion(language)
+          return matchServerLanguageFormat(language)
         }
       }
     })
