@@ -137,6 +137,17 @@ void whist_frontend_set_window_fullscreen(WhistFrontend* frontend, bool fullscre
     frontend->call->set_window_fullscreen(frontend, fullscreen);
 }
 
+void whist_frontend_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
+                                     enum AVPixelFormat* format) {
+    FRONTEND_ENTRY();
+    frontend->call->get_video_device(frontend, device, format);
+}
+
+WhistStatus whist_frontend_update_video(WhistFrontend* frontend, AVFrame* frame) {
+    FRONTEND_ENTRY();
+    return frontend->call->update_video(frontend, frame);
+}
+
 void whist_frontend_paint_png(WhistFrontend* frontend, const char* filename, int output_width,
                               int output_height, int x, int y) {
     FRONTEND_ENTRY();
@@ -148,10 +159,9 @@ void whist_frontend_paint_solid(WhistFrontend* frontend, const WhistRGBColor* co
     frontend->call->paint_solid(frontend, color);
 }
 
-void whist_frontend_paint_avframe(WhistFrontend* frontend, AVFrame* frame, int output_width,
-                                  int output_height) {
+void whist_frontend_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
     FRONTEND_ENTRY();
-    frontend->call->paint_avframe(frontend, frame, output_width, output_height);
+    frontend->call->paint_video(frontend, output_width, output_height);
 }
 
 void whist_frontend_render(WhistFrontend* frontend) {

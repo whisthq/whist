@@ -56,10 +56,9 @@ Custom Types
 struct VideoContext {
     // Variables needed for rendering
     VideoDecoder* decoder;
-    struct SwsContext* sws;
 
     // Stores metadata from the last rendered frame,
-    // So that we know if the encoder/sws and such must
+    // So that we know if the encoder and such must
     // be reinitialized to a new width/height/codec
     int last_frame_width;
     int last_frame_height;
@@ -92,19 +91,6 @@ Private Functions
 static void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame);
 
 /**
- * @brief                          Updates the sws context of the video_context,
- *                                 so that it can convert the format of the capture image
- *                                 to the format that SDL will use to render.
- *                                 If the formats already align,
- *                                 video_context.sws will be set to NULL
- *
- * @param video_context            The video context being used
- *
- * @param frame                    Current input frame to determine necessary scaling for.
- */
-static void update_sws_context(VideoContext* video_context, const AVFrame* frame);
-
-/**
  * @brief                          Destroys an ffmpeg decoder on another thread
  *
  * @param opaque                   The VideoDecoder* to destroy
@@ -122,12 +108,21 @@ VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial
     memset(video_context, 0, sizeof(*video_context));
 
     video_context->has_video_rendered_yet = false;
-    video_context->sws = NULL;
     video_context->render_context = NULL;
     video_context->frontend = frontend;
     video_context->pending_render_context = false;
-    VideoDecoder* decoder =
-        create_video_decoder(initial_width, initial_height, use_hardware_decode, CODEC_TYPE_H264);
+
+    VideoDecoderParams params = {
+        .codec_type = CODEC_TYPE_H264,
+        .width = initial_width,
+        .height = initial_height,
+        .hardware_decode = use_hardware_decode,
+    };
+    if (use_hardware_decode) {
+        whist_frontend_get_video_device(frontend, &params.hardware_device,
+                                        &params.hardware_output_format);
+    }
+    VideoDecoder* decoder = video_decoder_create(&params);
     if (!decoder) {
         LOG_FATAL("ERROR: Decoder could not be created!");
     }
@@ -150,12 +145,6 @@ void destroy_video(VideoContext* video_context) {
             multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context->decoder);
         whist_detach_thread(destroy_decoder_thread);
         video_context->decoder = NULL;
-    }
-
-    // Destroy the sws context, if any exists
-    if (video_context->sws) {
-        sws_freeContext(video_context->sws);
-        video_context->sws = NULL;
     }
 
     // Free the video context
@@ -313,28 +302,12 @@ int render_video(VideoContext* video_context) {
         AVFrame* frame = av_frame_alloc();
         FATAL_ASSERT(frame);
 
-        // Fill our local frame with the correct data, which will be a
-        // reference to the decoded frame if formats make that possible
-        // or a new frame made with swscale if not.
-        if (decoded_frame_data.using_hw) {
-            av_frame_ref(frame, decoded_frame_data.decoded_frame);
-        } else {
-            // Update the scaler context with the properties of the next
-            // frame, or destroy the scaler context if no scale will be
-            // needed.
-            update_sws_context(video_context, decoded_frame_data.decoded_frame);
+        // Fill the frame for the renderer with references to the
+        // decoded frame data.
+        av_frame_ref(frame, decoded_frame_data.decoded_frame);
 
-            if (video_context->sws) {
-                // Convert from the decoded frame into our target frame.
-                sws_scale_frame(video_context->sws, frame, decoded_frame_data.decoded_frame);
-            } else {
-                // No conversion required.
-                av_frame_ref(frame, decoded_frame_data.decoded_frame);
-            }
-        }
-
-        // Free the decoded frame.  We have either copied the data to
-        // our own frame or made another reference to it.
+        // Free the decoded frame.  We have another reference to the
+        // data inside it.
         video_decoder_free_decoded_frame(&decoded_frame_data);
 
         // Update the window titlebar color
@@ -423,8 +396,18 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
         video_context->decoder = NULL;
     }
 
-    VideoDecoder* decoder =
-        create_video_decoder(frame->width, frame->height, use_hardware_decode, frame->codec_type);
+    VideoDecoderParams params = {
+        .codec_type = frame->codec_type,
+        .width = frame->width,
+        .height = frame->height,
+        .hardware_decode = use_hardware_decode,
+    };
+    if (use_hardware_decode) {
+        whist_frontend_get_video_device(video_context->frontend, &params.hardware_device,
+                                        &params.hardware_output_format);
+    }
+
+    VideoDecoder* decoder = video_decoder_create(&params);
     if (!decoder) {
         LOG_FATAL("ERROR: Decoder could not be created!");
     }
@@ -433,40 +416,6 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
     video_context->last_frame_width = frame->width;
     video_context->last_frame_height = frame->height;
     video_context->last_frame_codec = frame->codec_type;
-}
-
-void update_sws_context(VideoContext* video_context, const AVFrame* frame) {
-    static enum AVPixelFormat cached_format = AV_PIX_FMT_NONE;
-    static int cached_width = -1;
-    static int cached_height = -1;
-
-    // If the cache missed, reconstruct the sws and static avimage
-    if (frame->format != cached_format || frame->width != cached_width ||
-        frame->height != cached_height) {
-        cached_format = frame->format;
-        cached_width = frame->width;
-        cached_height = frame->height;
-
-        // No matter what, we now should destroy the old context if it exists
-        if (video_context->sws) {
-            sws_freeContext(video_context->sws);
-            video_context->sws = NULL;
-        }
-
-        if (frame->format == WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT) {
-            // If the pixel format already matches, we require no pixel format conversion,
-            // we can just pass directly to the renderer!
-            LOG_INFO("The input format is already correct, no sws needed!");
-        } else {
-            // We need to create a new context to handle the pixel fmt conversion
-            LOG_INFO("Creating sws context to convert from %s to %s",
-                     av_get_pix_fmt_name(frame->format),
-                     av_get_pix_fmt_name(WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT));
-            video_context->sws = sws_getContext(
-                frame->width, frame->height, frame->format, frame->width, frame->height,
-                WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-        }
-    }
 }
 
 int32_t multithreaded_destroy_decoder(void* opaque) {

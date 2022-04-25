@@ -17,6 +17,44 @@ COMMAND_LINE_STRING_OPTION(sdl_render_driver, 0, "sdl-render-driver", 16,
                            "Set hint for the SDL render driver type; this may be ignored if "
                            "the given driver does not work (SDL frontend only).")
 
+static void sdl_init_video_device(SDLFrontendContext* context) {
+    // Defaults: no special device, all video must be downloaded to CPU
+    // memory and then uploaded again.
+    context->video.decode_device = NULL;
+    context->video.decode_format = AV_PIX_FMT_NONE;
+
+#ifdef _WIN32
+    if (!strcmp(context->render_driver_name, "direct3d11")) {
+        sdl_d3d11_init(context);
+    }
+#endif  // _WIN32
+
+#ifdef __APPLE__
+    if (!strcmp(context->render_driver_name, "metal")) {
+        // No device required; renderer can use Core Video pixel buffers
+        // from Video Toolbox directly as textures.
+        context->video.decode_format = AV_PIX_FMT_VIDEOTOOLBOX;
+    }
+#endif  // __APPLE__
+
+    // More:
+    // * OpenGL on Linux can work with VAAPI via DRM.
+    // * D3D9 can work with DXVA2.
+    // * Nvidia devices can work with NVDEC.
+}
+
+void sdl_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
+                          enum AVPixelFormat* format) {
+    SDLFrontendContext* context = frontend->context;
+
+    if (device) {
+        *device = context->video.decode_device;
+    }
+    if (format) {
+        *format = context->video.decode_format;
+    }
+}
+
 static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 
 // TODO: We could factor this out to initialize by component -- e.g. audio, window, renderer, etc.
@@ -62,6 +100,11 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
         // textures that we use, so performance with it is terrible.)
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");
     }
+
+#ifndef NDEBUG
+    // Enable the D3D11 debug layer in debug builds.
+    SDL_SetHint(SDL_HINT_RENDER_DIRECT3D11_DEBUG, "1");
+#endif
 #endif  // _WIN32
 
     // Allow the screensaver to activate while the frontend is running
@@ -154,18 +197,13 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
         return WHIST_ERROR_UNKNOWN;
     }
     LOG_INFO("Using renderer: %s", info.name);
+    context->render_driver_name = info.name;
+
+    sdl_init_video_device(context);
 
     frontend->call->paint_solid(frontend, color);
     frontend->call->render(frontend);
     frontend->call->set_titlebar_color(frontend, color);
-
-    context->texture =
-        SDL_CreateTexture(context->renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
-                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-    if (context->texture == NULL) {
-        LOG_ERROR("Could not create texture: %s", SDL_GetError());
-        return WHIST_ERROR_UNKNOWN;
-    }
 
     // TODO: Rebuild this functionality.
     // if (icon_png_filename != NULL) {
@@ -203,15 +241,21 @@ void sdl_destroy(WhistFrontend* frontend) {
         return;
     }
 
-    if (context->texture != NULL) {
-        SDL_DestroyTexture(context->texture);
-        context->texture = NULL;
+    if (context->video.texture != NULL) {
+        SDL_DestroyTexture(context->video.texture);
+        context->video.texture = NULL;
     }
+    av_buffer_unref(&context->video.decode_device);
+    av_frame_free(&context->video.frame_reference);
 
     if (context->renderer != NULL) {
         SDL_DestroyRenderer(context->renderer);
         context->renderer = NULL;
     }
+
+#ifdef _WIN32
+    sdl_d3d11_destroy(context);
+#endif
 
     if (context->window != NULL) {
         LOG_INFO("Destroying window");

@@ -13,11 +13,68 @@
 #include "../api.h"
 #include "../frontend.h"
 
+typedef struct SDLFrontendVideoContext {
+    /**
+     * Platform-specific private data associated with the renderer.
+     */
+    void* private_data;
+    /**
+     * Video device compatible with the renderer.
+     *
+     * If set, decode must happen on this device for video textures to
+     * be used directly in rendering.
+     */
+    AVBufferRef* decode_device;
+    /**
+     * Video format supported natively.
+     *
+     * If set, the decode format in which the renderer can accept
+     * textures to be used directly.
+     */
+    enum AVPixelFormat decode_format;
+    /**
+     * The current video texture.
+     *
+     * When the video is updated this either copies the frame data to
+     * the existing texture (if the data is in CPU memory), or it
+     * destroys the existing texture and creates a new one corresponding
+     * the frame (if the data is already in GPU memroy).
+     */
+    SDL_Texture* texture;
+    /**
+     * The format of the current video texture.
+     */
+    SDL_PixelFormatEnum texture_format;
+    /**
+     * The width of the frame in the current video texture.
+     */
+    int frame_width;
+    /**
+     * The height of the frame in the current video texture.
+     */
+    int frame_height;
+    /**
+     * A reference to the current video frame data.
+     *
+     * If the frame is in GPU memory then this reference exists to stop
+     * the decoder from reusing the frame.  If frames are in CPU memory
+     * then this is not used, because the data is all copied.
+     */
+    AVFrame* frame_reference;
+} SDLFrontendVideoContext;
+
 typedef struct SDLFrontendContext {
     SDL_AudioDeviceID audio_device;
     SDL_Window* window;
     SDL_Renderer* renderer;
-    SDL_Texture* texture;
+    /**
+     * Name of the render driver.
+     */
+    const char* render_driver_name;
+    /**
+     * Video rendering state.
+     */
+    SDLFrontendVideoContext video;
     struct {
         WhistCursorState state;
         struct {
@@ -38,5 +95,11 @@ typedef struct SDLFrontendContext {
 #define SDL_COMMON_HEADER_ENTRY(return_type, name, ...) return_type sdl_##name(__VA_ARGS__);
 FRONTEND_API(SDL_COMMON_HEADER_ENTRY)
 #undef SDL_COMMON_HEADER_ENTRY
+
+// D3D11 helper functions (Windows only).
+void sdl_d3d11_wait(SDLFrontendContext* context);
+SDL_Texture* sdl_d3d11_create_texture(SDLFrontendContext* context, AVFrame* frame);
+WhistStatus sdl_d3d11_init(SDLFrontendContext* context);
+void sdl_d3d11_destroy(SDLFrontendContext* context);
 
 #endif  // WHIST_CLIENT_FRONTEND_SDL_COMMON_H
