@@ -352,7 +352,6 @@ def write_leveldb_data_to_files(base_path, data):
             with open(os.path.join(dir_path, "LOCK"), "w"):
                 pass
 
-    subprocess.run(["chown", "-R", "ubuntu", base_path])
     subprocess.run(["chmod", "-R", "777", base_path])
 
 
