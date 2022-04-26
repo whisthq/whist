@@ -128,7 +128,7 @@ module.exports = {
     }
 
     execCommand(
-      `cmake --build ${cmakeBuildDir} -j --target WhistClient`,
+      `cmake --build ${cmakeBuildDir} -j 2 --target WhistClient`,
       protocolSourceDir
     )
 
