@@ -82,10 +82,10 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     }
 
     if (width == 0) {
-        width = display_info.w / 2;
+        width = display_info.w;
     }
     if (height == 0) {
-        height = display_info.h / 2;
+        height = display_info.h;
     }
 
     if (skip_taskbar) {
