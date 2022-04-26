@@ -6,7 +6,7 @@ FROM whist/build-assets:$BuildAssetPackage as build-assets
 # Whist Chromium Extension Build Stage
 #########################################################
 
-FROM ubuntu:20.04 as whist-teleport-chrome-extension
+FROM ubuntu:22.04 as whist-teleport-chrome-extension
 
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 

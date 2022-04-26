@@ -9,7 +9,7 @@
   "devDependencies": {
     "@types/chrome": "^0.0.181",
     "@types/simple-peer": "^9.6.1",
-    "copy-webpack-plugin": "^7.0.0",
+    "copy-webpack-plugin": "^10.0.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",
     "path-browserify": "^1.0.1",
@@ -17,7 +17,7 @@
     "process": "^0.11.10",
     "simple-peer": "^9.9.3",
     "tailwindcss": "^3.0.23",
-    "ts-loader": "^8.0.17",
+    "ts-loader": "^9.0.0",
     "typescript": "^4.1.5",
     "webpack": "^5.68.0",
     "webpack-cli": "^4.5.0",
@@ -30,13 +30,13 @@
     "format-check": "prettier --check . --ignore-path .gitignore"
   },
   "dependencies": {
-    "@types/react": "^17.0.40",
-    "@types/react-dom": "^17.0.13",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
     "@types/react-helmet": "^6.1.5",
     "autoprefixer": "^10.4.4",
     "postcss": "^8.4.12",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
     "react-helmet": "^6.1.0"
   }
 }

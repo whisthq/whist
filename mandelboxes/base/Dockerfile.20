@@ -19,7 +19,7 @@ FROM whist/build-assets:$BuildAssetPackage as build-assets
 # - Configure and build libinput
 # EXPOSES .deb build of libinput for later stages
 #########################################################
-FROM ubuntu:20.04 as libinput-build
+FROM ubuntu:22.04 as libinput-build
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -93,7 +93,7 @@ RUN dpkg-deb --build libinput-whist
 # - Configure and build xf86-input-libinput
 # EXPOSES build of xf86-input-libinput
 ####################################################################
-FROM ubuntu:20.04 as xf86-input-libinput-build
+FROM ubuntu:22.04 as xf86-input-libinput-build
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -167,7 +167,7 @@ RUN dpkg-deb --build xf86-input-libinput-whist
 # - Install its contents into an output directory
 # EXPOSES the grid driver
 #############################################################
-FROM ubuntu:20.04 as nvidia-grid-driver
+FROM ubuntu:22.04 as nvidia-grid-driver
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -231,7 +231,7 @@ RUN mkdir /dist/etc && \
 #   events
 # EXPOSES the teleport fuse service
 ###################################################################
-FROM ubuntu:20.04 as whist-teleport-drag-drop
+FROM ubuntu:22.04 as whist-teleport-drag-drop
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -274,7 +274,7 @@ RUN cd /whist-teleport-drag-drop/src \
 #   only taking up one Docker layer in whist-base
 # EXPOSES the hydraulic-squash directory
 ###############################################################
-FROM ubuntu:20.04 as hydraulic-press
+FROM ubuntu:22.04 as hydraulic-press
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -428,7 +428,7 @@ COPY --chown=root:root --chmod=600 main/whist-main.service $HYDRAULIC_ROOT/etc/s
 #   our base mandelbox image
 # EXPOSES all of whist-base as the final image
 #############################################################
-FROM ubuntu:20.04 as whist-base
+FROM ubuntu:22.04 as whist-base
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
