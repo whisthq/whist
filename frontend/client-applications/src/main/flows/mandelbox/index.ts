@@ -94,6 +94,7 @@ export default flow(
             ...(Object.keys(t.userLocale).length > 0 && {
               user_locale: t.userLocale,
             }),
+            client_os: process.platform,
           }), // Data to send through the JSON transport
         }))
       )

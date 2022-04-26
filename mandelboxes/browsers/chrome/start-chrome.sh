@@ -30,7 +30,6 @@ fi
 # Set the Chrome language
 echo {} | jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'", "selected_languages": "'"${BROWSER_LANGUAGES}"'"}' > /home/whist/.config/google-chrome/Default/Preferences
 
-
 # Notes on Chromium flags:
 #
 # The following flags are currently unsupported on Linux, but desirable. Once they are
@@ -73,7 +72,6 @@ flags=(
   "--enable-gpu-rasterization"
   "--enable-gpu-compositing"
   "--double-buffer-compositing"
-  "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
   "--disable-font-subpixel-positioning"
   "--disable-gpu-process-crash-limit"
   "--no-default-browser-check"
@@ -110,6 +108,25 @@ fi
 # empty, Chrome will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.
 flags+=("$INITIAL_URL")
+
+# OS-specific provisions
+if [[ "$CLIENT_OS" == "darwin" ]]; then
+  # Edit the Chrome Preferences Config file to use the default Mac fonts
+  echo {} | \
+    jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
+    > /home/whist/.config/google-chrome/Default/Preferences
+
+  # Disable smooth scrolling, which we handle via uinput instead
+  flags+=("--disable-smooth-scrolling")
+elif [[ "$CLIENT_OS" == "linux" ]]; then
+  # Disable smooth scrolling, which we handle via uinput instead
+  flags+=("--disable-smooth-scrolling")
+else
+  # Edit the Chrome Preferences Config file to use the default Windows/Ubuntu fonts
+  echo {} | \
+    jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}' \
+    > /home/whist/.config/google-chrome/Default/Preferences
+fi
 
 # Load D-Bus configurations; necessary for Chrome
 # The -10 comes from the display ID
