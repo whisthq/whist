@@ -35,6 +35,9 @@ bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
                     event->type = FRONTEND_EVENT_MOUSE_LEAVE;
                     break;
                 }
+// Note: We investigated adding the following events on Windows as
+// well, but it would require significant work for minimal gain. As
+// such, we only handle occlusion on macOS.
 #ifdef __APPLE__
                 case SDL_WINDOWEVENT_OCCLUDED:
                 case SDL_WINDOWEVENT_UNOCCLUDED:
