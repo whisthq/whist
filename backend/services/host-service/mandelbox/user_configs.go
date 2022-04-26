@@ -15,10 +15,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
-	"github.com/whisthq/whist/backend/services/metadata"
 	types "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -31,11 +29,8 @@ const (
 	// unpacked user configs.
 	UnpackedConfigsDirectoryName = "unpacked_configs/"
 
-	// UserConfigS3Bucket is the name of the S3 bucket that contains the encrypted user configs.
-	UserConfigS3Bucket = "fractal-user-app-configs"
-
 	// EncryptedArchiveFilename is the name of the encrypted user config file.
-	EncryptedArchiveFilename = "fractal-app-config.tar.lz4.enc"
+	EncryptedArchiveFilename = "whist-app-config.tar.lz4.enc"
 )
 
 // ConfigEncryptionInfo defines the information we want from the client-app to
@@ -114,9 +109,14 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		return utils.MakeError("Error backing up user configs for user %s for mandelbox %s: error creating s3 client: %s", userID, mandelboxID, err)
 	}
 
-	uploadResult, err := configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKey(hash(configToken)), encryptedConfig)
+	uploadResult, err := configutils.UploadFileToBucket(s3Client, configutils.GetConfigBucket(), mandelbox.getS3ConfigKey(hash(configToken)), encryptedConfig)
 	if err != nil {
 		return utils.MakeError("Error uploading encrypted config for user %s for mandelbox %s to s3: %s", userID, mandelboxID, err)
+	}
+
+	// Update user's most recently config version with the current token
+	if err := configutils.UpdateMostRecentToken(s3Client, userID, hash(configToken)); err != nil {
+		return utils.MakeError("Error updating most recently used token for user %s for mandelbox %s: %s", userID, mandelboxID, err)
 	}
 
 	logger.Infof("Successfully saved config version %s for user %s for mandelbox %s", *uploadResult.VersionID, userID, mandelboxID)
@@ -195,12 +195,12 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// At this point, we are still waiting on the client-app to get the user's
 	// config encryption token. Instead of waiting, we want to speculatively
 	// download a config that we think is the most likely to be the one we need.
-	predictedConfigObj, err := mandelbox.predictConfigToDownload(s3Client)
+	predictedConfigKey, err := mandelbox.predictConfigToDownload(s3Client)
 	if err != nil {
 		errorChan <- utils.MakeError("Error retrieving existing configs for user %s from S3 for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
 		return
 	}
-	if predictedConfigObj == nil {
+	if predictedConfigKey == "" {
 		logger.Warningf("There are no existing configs in s3 for user %s for mandelbox %s", mandelbox.GetUserID(), mandelbox.GetID())
 		return
 	}
@@ -212,14 +212,14 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// grow in size, if we see users alternating between encryption tokens
 	// frequently (which should never happen with the current setup).
 	// (https://github.com/whisthq/whist/issues/5287)
-	predictedConfigHeadObj, err := configutils.GetHeadObject(s3Client, UserConfigS3Bucket, *predictedConfigObj.Key)
+	predictedConfigHeadObj, err := configutils.GetHeadObject(s3Client, configutils.GetConfigBucket(), predictedConfigKey)
 	if err != nil {
-		errorChan <- utils.MakeError("Could not get head object for predicted key %s for user %s for mandelbox %s: %s", *predictedConfigObj.Key, mandelbox.GetUserID(), mandelbox.GetID(), err)
+		errorChan <- utils.MakeError("Could not get head object for predicted key %s for user %s for mandelbox %s: %s", predictedConfigKey, mandelbox.GetUserID(), mandelbox.GetID(), err)
 		return
 	}
-	predictedConfigBuf, err := mandelbox.downloadUserConfig(s3Client, *predictedConfigObj.Key, predictedConfigHeadObj)
+	predictedConfigBuf, err := mandelbox.downloadUserConfig(s3Client, predictedConfigKey, predictedConfigHeadObj)
 	if err != nil {
-		errorChan <- utils.MakeError("Error downloading predicted config %s for user %s and mandelbox %s: %s", *predictedConfigObj.Key, mandelbox.GetUserID(), mandelbox.GetID(), err)
+		errorChan <- utils.MakeError("Error downloading predicted config %s for user %s and mandelbox %s: %s", predictedConfigKey, mandelbox.GetUserID(), mandelbox.GetID(), err)
 		return
 	}
 
@@ -232,7 +232,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 
 	// Now we compare the config that we speculatively downloaded to the one we
 	// know we need based on the token that came back from the client-app.
-	correctConfigKey, correctHeadObject, err := mandelbox.determineCorrectConfigKey(s3Client, *predictedConfigObj.Key, predictedConfigHeadObj, encryptionInfo)
+	correctConfigKey, correctHeadObject, err := mandelbox.determineCorrectConfigKey(s3Client, predictedConfigKey, predictedConfigHeadObj, encryptionInfo)
 	if err != nil {
 		errorChan <- utils.MakeError("Could not determine correct config key for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
 		return
@@ -246,7 +246,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	}
 
 	// Do some basic sanity checks
-	if correctConfigKey != mandelbox.getS3ConfigKey(hash(encryptionInfo.Token)) && correctConfigKey != path.Join(mandelbox.getS3ConfigKeyPrefix(), EncryptedArchiveFilename) {
+	if correctConfigKey != mandelbox.getS3ConfigKey(hash(encryptionInfo.Token)) && correctConfigKey != path.Join(mandelbox.getS3ConfigKeyPrefix(hash(encryptionInfo.Token)), EncryptedArchiveFilename) {
 		// If not one of those file paths, then we're about to try to decrypt the wrong file.
 		errorChan <- utils.MakeError("Corrected config key %s for user %s for mandelbox %s does not match any expected format (prefix/filename or prefix/token/filename)!", correctConfigKey, mandelbox.GetUserID(), mandelbox.GetID())
 		return
@@ -254,10 +254,10 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 
 	// If we need to, download the correct config archive from S3
 	var correctConfigBuf []byte
-	if correctConfigKey != *predictedConfigObj.Key {
+	if correctConfigKey != predictedConfigKey {
 		correctConfigBuf, err = mandelbox.downloadUserConfig(s3Client, correctConfigKey, correctHeadObject)
 		if err != nil {
-			errorChan <- utils.MakeError("Error downloading corrected config %s for user %s and mandelbox %s: %s", *predictedConfigObj.Key, mandelbox.GetUserID(), mandelbox.GetID(), err)
+			errorChan <- utils.MakeError("Error downloading corrected config %s for user %s and mandelbox %s: %s", predictedConfigKey, mandelbox.GetUserID(), mandelbox.GetID(), err)
 			return
 		}
 	} else {
@@ -281,23 +281,23 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 
 // predictConfigToDownload guesses which config is the most likely to be the
 // one we need to download, given the user's config encryption token.
-func (mandelbox *mandelboxData) predictConfigToDownload(s3Client *s3.Client) (*s3types.Object, error) {
+func (mandelbox *mandelboxData) predictConfigToDownload(s3Client *s3.Client) (string, error) {
 	// We use the simple guess that the most recently-modified config is the one
 	// that we need.
-	return configutils.GetMostRecentMatchingKey(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKeyPrefix(), EncryptedArchiveFilename)
+	return mandelbox.GetMostRecentMatchingKey(s3Client)
 }
 
 // getS3ConfigKeyPrefix returns the name of the S3 key to the encrypted user
 // config file, up to the app name. This does not include the suffix
-// (`EncryptedArchiveFileName`) or the token hash that comes before it.
-func (mandelbox *mandelboxData) getS3ConfigKeyPrefix() string {
-	return path.Join(string(mandelbox.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(mandelbox.GetAppName()))
+// (`EncryptedArchiveFileName`).
+func (mandelbox *mandelboxData) getS3ConfigKeyPrefix(tokenHash string) string {
+	return path.Join(tokenHash, string(mandelbox.GetUserID()), string(mandelbox.GetAppName()))
 }
 
 // getS3ConfigPath returns the full key name of the S3 key to encrypted user
 // config file. Note that this includes the hash of the user config.
 func (mandelbox *mandelboxData) getS3ConfigKey(tokenHash string) string {
-	return path.Join(mandelbox.getS3ConfigKeyPrefix(), "/", tokenHash, "/", EncryptedArchiveFilename)
+	return path.Join(mandelbox.getS3ConfigKeyPrefix(tokenHash), EncryptedArchiveFilename)
 }
 
 // downloadUserConfig downloads a given user config from S3 into an in-memory
@@ -326,7 +326,7 @@ func (mandelbox *mandelboxData) downloadUserConfig(s3Client *s3.Client, key stri
 		// Download file into a pre-allocated in-memory buffer
 		// This should be okay as we don't expect configs to be very large
 		buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
-		numBytes, err := configutils.DownloadObjectToBuffer(s3Client, UserConfigS3Bucket, key, buf)
+		numBytes, err := configutils.DownloadObjectToBuffer(s3Client, configutils.GetConfigBucket(), key, buf)
 		if err != nil {
 			return nil, utils.MakeError("Could not download object for key %s (version %s) for mandelbox %s: %s", key, *headObject.VersionId, mandelbox.GetID(), err)
 		}
@@ -395,7 +395,7 @@ func (mandelbox *mandelboxData) determineCorrectConfigKey(s3client *s3.Client, p
 
 	// If there is a config in s3 that contains the token hash, that's the one we desire.
 	desiredKey := mandelbox.getS3ConfigKey(tokenHash)
-	desiredHead, err := configutils.GetHeadObject(s3client, UserConfigS3Bucket, desiredKey)
+	desiredHead, err := configutils.GetHeadObject(s3client, configutils.GetConfigBucket(), desiredKey)
 	if err == nil {
 		logger.Warningf("Predicted key %s to download configs for user %s for mandelbox %s were replaced with corrected key %s", predictedKey, mandelbox.GetUserID(), mandelbox.GetID(), desiredKey)
 		return desiredKey, desiredHead, nil
@@ -519,4 +519,21 @@ func (mandelbox *mandelboxData) GetSavedExtensions() []string {
 func (mandelbox *mandelboxData) WriteSavedExtensions(extensions []string) error {
 	savedConfigsDir := path.Join(mandelbox.GetUserConfigDir(), UnpackedConfigsDirectoryName)
 	return configutils.SaveImportedExtensions(savedConfigsDir, extensions)
+}
+
+// GetMostRecentMatchingKey returns the S3 key of the user's most
+// recently used config file.
+func (mandelbox *mandelboxData) GetMostRecentMatchingKey(client *s3.Client) (string, error) {
+	recentToken, err := configutils.GetMostRecentToken(client, mandelbox.userID)
+	if err != nil {
+		return "", utils.MakeError("failed to get most recent matching config token: %v", err)
+	}
+
+	// Use the HeadObject to tell if the object exists
+	recentConfigPath := mandelbox.getS3ConfigKey(recentToken)
+	_, err = configutils.GetHeadObject(client, configutils.GetConfigBucket(), recentConfigPath)
+	if err != nil {
+		return "", utils.MakeError("failed to get most recent matching config head object: %v", err)
+	}
+	return recentConfigPath, nil
 }
