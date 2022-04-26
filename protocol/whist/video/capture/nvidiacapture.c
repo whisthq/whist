@@ -156,6 +156,8 @@ NvidiaCaptureDevice* create_nvidia_capture_device(void) {
     create_capture_params.frameSize = frame_size;
     create_capture_params.bRoundFrameSize = NVFBC_TRUE;
     create_capture_params.eTrackingType = NVFBC_TRACKING_DEFAULT;
+    // Set to FALSE to avoid NVFBC_ERR_MUST_RECREATE error
+    create_capture_params.bDisableAutoModesetRecovery = NVFBC_FALSE;
 
     status = device->p_fbc_fn.nvFBCCreateCaptureSession(device->fbc_handle, &create_capture_params);
     if (status != NVFBC_SUCCESS) {
