@@ -273,7 +273,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 	// Verify if there are lingering instances and notify.
 	if len(lingeringInstances) > 0 {
-		logger.Errorf("There are %v lingering instances on %v. Investigate immediately! Their IDs are %v", len(lingeringInstances), event.Region, lingeringIDs)
+		logger.Errorf("There are %v lingering instances on %v. Investigate immediately! Their IDs are %s", len(lingeringInstances), event.Region, utils.PrintSlice(lingeringIDs))
 
 	} else {
 		logger.Info("There are no lingering instances in %v.", event.Region)
@@ -610,13 +610,17 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	)
 
 	// Populate availableRegions
-	for _, enabledRegion := range GetEnabledRegions() {
-		for _, requestedRegion := range requestedRegions {
+	for _, requestedRegion := range requestedRegions {
+		var regionFound bool
+		for _, enabledRegion := range GetEnabledRegions() {
 			if enabledRegion == requestedRegion {
 				availableRegions = append(availableRegions, requestedRegion)
-			} else {
-				unavailableRegions = append(unavailableRegions, requestedRegion)
+				regionFound = true
 			}
+		}
+
+		if !regionFound {
+			unavailableRegions = append(unavailableRegions, requestedRegion)
 		}
 	}
 
@@ -624,14 +628,14 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// but could still be allocated to a region that is relatively close.
 	if len(unavailableRegions) != 0 && len(unavailableRegions) != len(requestedRegions) {
 		if metadata.GetAppEnvironment() == metadata.EnvProd {
-			logger.Errorf("User %v requested access to the following unavailable regions (in order of proximity) %v. Trying to find instance on remaining available regions %v.", unsafeEmail, unavailableRegions, availableRegions)
+			logger.Errorf("User %s requested access to the following unavailable regions: %s. Trying to find instance on remaining available regions.", unsafeEmail, utils.PrintSlice(unavailableRegions))
 		}
 	}
 
 	// The user requested access to only unavailable regions. The last resort is to default to us-east-1.
 	if len(unavailableRegions) == len(requestedRegions) {
 		if metadata.GetAppEnvironment() == metadata.EnvProd {
-			logger.Errorf("User %v requested access to only unavailable regions (in order of proximity) %v. Defaulting to us-east-1.", unsafeEmail, unavailableRegions)
+			logger.Errorf("User %s requested access to only unavailable regions: %s. Defaulting to us-east-1.", unsafeEmail, utils.PrintSlice(unavailableRegions))
 		}
 		availableRegions = []string{"us-east-1"}
 	}
