@@ -295,6 +295,12 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
             }
         }
 
+        // Sometimes a older packet could be received after catching up to a I/LTR frame.
+        // In such cases, ignore that packet.
+        if (segment_id <= ring_buffer->last_rendered_id) {
+            return !ringbuffer_overflowed;
+        }
+
         // Initialize the frame now, so that it can hold the packet we just received
         int num_original_packets = num_indices - num_fec_indices;
         init_frame(ring_buffer, segment_id, num_original_packets, num_fec_indices,
