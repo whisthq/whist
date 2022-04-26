@@ -159,6 +159,20 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 	}
 
 	desiredFreeMandelboxesPerRegion = mandelboxRegionMap
+
+	// Get the most recent client app version from the config database
+	version, err := dbclient.GetClientAppVersion(ctx, client)
+	if err != nil {
+		logger.Errorf("Failed to query client app version. Err: %v", err)
+		return
+	}
+
+	if version == (subscriptions.ClientAppVersion{}) {
+		logger.Errorf("Got an empty client app version")
+		return
+	}
+
+	clientAppVersion = version
 }
 
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing

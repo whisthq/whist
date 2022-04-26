@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-version"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
@@ -662,7 +663,8 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			return utils.MakeError("Image not found on %v.", event.Region)
 		}
 
-		mandelboxRequest.CommitHash = string(imageResult[0].ClientSHA)
+		// mandelboxRequest.CommitHash = string(imageResult[0].ClientSHA)
+		mandelboxRequest.CommitHash = metadata.GetGitCommit()
 	}
 
 	// This is the "main" loop that does all the work and tries to find an instance for a user. first, it will iterate
@@ -724,8 +726,34 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return err
 	}
 
-	// There are instances with capacity available, but none of them with the desired commit hash
-	if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
+	var (
+		// The parsed version from the config database
+		currentVersion *version.Version
+		// The parsed version from the request
+		requestVersion *version.Version
+		// whether the client app has an outdated version
+		isOutdatedClient bool
+	)
+
+	currentVersion, err = version.NewVersion(utils.Sprintf("%v.%v.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro))
+	if err != nil {
+		logger.Errorf("Failed parsing client app version from config. Err: %v", err)
+	}
+
+	requestVersion, err = version.NewVersion(mandelboxRequest.Version)
+	if err != nil {
+		logger.Errorf("Failed parsing client app version from request. Err: %v", err)
+	}
+
+	if currentVersion != nil && requestVersion != nil {
+		isOutdatedClient = requestVersion.LessThan(currentVersion)
+	}
+
+	// There are instances with capacity available, but none of them with the desired commit hash.
+	// We only consider this error in cases when the client app has a version greater or equal than
+	// the one in the config database. This is because when the client version is lesser (outdated client),
+	// it will automatically update itself to the most recent version and send another request.
+	if assignedInstance.ClientSHA != mandelboxRequest.CommitHash && !isOutdatedClient {
 		err := utils.MakeError("found instance with capacity but it has a different commit hash %v than frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: COMMIT_HASH_MISMATCH,

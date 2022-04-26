@@ -158,7 +158,7 @@ func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
 
 	configSubscriptions := []HasuraSubscription{
 		{
-			Query: QueryClientAppVersionChange,
+			Query: QueryClientAppVersion,
 			Variables: map[string]interface{}{
 				"id": graphql.Int(versionID),
 			},

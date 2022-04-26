@@ -5,6 +5,7 @@ import (
 
 	"github.com/whisthq/whist/backend/services/constants"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -22,6 +23,9 @@ var (
 	desiredFreeMandelboxesPerRegion = map[string]int{
 		"us-east-1": 2,
 	}
+	// clientAppVersion represents the current version of the client app
+	// (e.g. "2.6.13").
+	clientAppVersion subscriptions.ClientAppVersion
 )
 
 const (
