@@ -5,12 +5,15 @@
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 WHIST_PRIVATE_DIR=/usr/share/whist/private
 SENTRY_ENV_FILENAME=$WHIST_PRIVATE_DIR/sentry_env
-if [ -f "$SENTRY_ENV_FILENAME" ] && [ "$LOCAL_CLIENT" == "false" ]; then
-  export SENTRY_ENVIRONMENT=${SENTRY_ENV}
-  eval "$(sentry-cli bash-hook)"
-else
-  echo "Sentry environment not set, skipping Sentry error handler"
-fi
+case $(cat $SENTRY_ENV_FILENAME) in
+  dev|staging|prod)
+    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    eval "$(sentry-cli bash-hook)"
+    ;;
+  *)
+    echo "Sentry environment not set, skipping Sentry error handler"
+    ;;
+esac
 
 # Exit on subcommand errors
 set -Eeuo pipefail

@@ -1,14 +1,16 @@
 #!/bin/bash
 
-# This script runs in userspace, where SENTRY_ENV is already set via `./run-as-whist-user.sh`. To
-# enable Sentry bash error handler, which will catch errors if `set -e` is set in a Bash script, we
-# we can simply call the bash hook directly.
-if [[ ! -z "${SENTRY_ENV}" ]]; then
-  export SENTRY_ENVIRONMENT=${SENTRY_ENV}
-  eval "$(sentry-cli bash-hook)"
-else
-  echo "Sentry environment not set, skipping Sentry error handler"
-fi
+# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+# This is called via `./run-as-whist-user.sh`, which passes sentry environment in.
+case $(cat "$SENTRY_ENVIRONMENT") in
+  dev|staging|prod)
+    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    eval "$(sentry-cli bash-hook)"
+    ;;
+  *)
+    echo "Sentry environment not set, skipping Sentry error handler"
+    ;;
+esac
 
 # Exit on subcommand errors
 set -Eeuo pipefail
@@ -54,6 +56,7 @@ fi
 # "--enable-drdc" --> had no impact
 # "--enable-raw-draw" --> not well supported on Linux yet
 # "--enable-quic" --> had no impact
+# "--enable-lazy-image-loading" --> had no impact
 #
 features="VaapiVideoDecoder,VaapiVideoEncoder,Vulkan,CanvasOopRasterization,OverlayScrollbar,ParallelDownloading"
 flags=(
@@ -64,9 +67,8 @@ flags=(
   "--enable-accelerated-video-decode"
   "--enable-accelerated-mjpeg-decode"
   "--enable-accelerated-2d-canvas"
-  "--enable-lazy-image-loading"
-  "--enable-gpu-compositing"
   "--enable-gpu-rasterization"
+  "--enable-gpu-compositing"
   "--double-buffer-compositing"
   "--disable-smooth-scrolling" # We handle smooth scrolling ourselves via uinput
   "--disable-font-subpixel-positioning"
