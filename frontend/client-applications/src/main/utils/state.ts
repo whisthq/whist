@@ -14,6 +14,8 @@ import {
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated } from "@app/main/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
+import { getUserLanguages } from "@app/main/utils/language"
+import { getUserLocale } from "@app/main/utils/locale"
 import { getInstalledBrowsers } from "@app/main/utils/importer"
 import { getGeolocation } from "./location"
 
@@ -55,6 +57,8 @@ const darkMode = withAppActivated(of(nativeTheme.shouldUseDarkColors))
 const timezone = of(Intl.DateTimeFormat().resolvedOptions().timeZone)
 const keyRepeat = of(getKeyRepeat())
 const initialKeyRepeat = of(getInitialKeyRepeat())
+const userLanguages = of(getUserLanguages())
+const userLocale = of(getUserLocale())
 
 // Keep track of what browsers are installed
 const browsers = of(getInstalledBrowsers())
@@ -72,4 +76,6 @@ export {
   initialKeyRepeat,
   browsers,
   geolocation,
+  userLanguages,
+  userLocale,
 }

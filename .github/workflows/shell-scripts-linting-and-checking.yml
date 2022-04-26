@@ -70,4 +70,4 @@ jobs:
             --exclude-codes="protocol/build_protocol_targets.sh:SC2046,SC2086 protocol/lint-cmake.sh:SC2086 \
             mandelboxes/base/display/whist-display.sh:SC2154 mandelboxes/base/utils/run-as-whist-user.sh:SC1004 \
             mandelboxes/development/client/run-whist-client.sh:SC2086 mandelboxes/base/main/run-whist-server.sh:SC2086,SC2046 \
-            protocol/test/helpers/setup/apply_network_conditions.sh:SC2162"
+            protocol/test/helpers/setup/apply_network_conditions.sh:SC2162 mandelboxes/base/main/run-whist-application.sh:SC2086"

@@ -27,6 +27,9 @@ if [[ -n $WHIST_CHROME_SINGLETON_LOCK ]]; then
   rm -f $GOOGLE_CHROME_SINGLETON_LOCK
 fi
 
+# Set the Chrome language
+echo {} | jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'", "selected_languages": "'"${BROWSER_LANGUAGES}"'"}' > /home/whist/.config/google-chrome/Default/Preferences
+
 
 # Notes on Chromium flags:
 #

@@ -33,6 +33,10 @@ export USER_AGENT=$USER_AGENT
 export KIOSK_MODE=$KIOSK_MODE
 export LONGITUDE=$LONGITUDE
 export LATITUDE=$LATITUDE
+# Set the locale (the line below exports all the locale environment variables)
+export ${USER_LOCALE?}
+export LANGUAGE=$SYSTEM_LANGUAGES
+export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
 
 # Explicitly export the fonts path, so that the
 # application can find the fonts. Per: https://askubuntu.com/questions/492033/fontconfig-error-cannot-load-default-config-file

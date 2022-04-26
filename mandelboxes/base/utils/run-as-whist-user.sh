@@ -28,6 +28,9 @@ INITIAL_URL=""
 USER_AGENT=""
 LATITUDE=""
 LONGITUDE=""
+USER_LOCALE=""
+SYSTEM_LANGUAGES="en_US"
+BROWSER_LANGUAGES="en-US,en"
 KIOSK_MODE=false
 
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
@@ -42,6 +45,16 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     DESIRED_TIMEZONE="$(jq -rc '.desired_timezone' < $WHIST_JSON_FILE)"
     # Set the system-wide timezone
     timedatectl set-timezone "$DESIRED_TIMEZONE"
+  fi
+  if [ "$( jq -rc 'has("user_locale")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    USER_LOCALE="$(jq -rc '.user_locale | to_entries[] | "\(.key)=\(.value)"' < $WHIST_JSON_FILE)"
+    USER_LOCALE="${USER_LOCALE//$'\n'/ }"
+  fi
+  if [ "$( jq -rc 'has("system_languages")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    SYSTEM_LANGUAGES="$(jq -rc '.system_languages' < $WHIST_JSON_FILE)"
+  fi
+  if [ "$( jq -rc 'has("browser_languages")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    BROWSER_LANGUAGES="$(jq -rc '.browser_languages' < $WHIST_JSON_FILE)"
   fi
   if [ "$( jq -rc 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
@@ -144,8 +157,12 @@ export KIOSK_MODE=$KIOSK_MODE
 export LONGITUDE=$LONGITUDE
 export LATITUDE=$LATITUDE
 export SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-}
+export USER_LOCALE=$USER_LOCALE
+export SYSTEM_LANGUAGES=$SYSTEM_LANGUAGES
+export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
 
-exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE -c \
+
+exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,SYSTEM_LANGUAGES,BROWSER_LANGUAGES -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
