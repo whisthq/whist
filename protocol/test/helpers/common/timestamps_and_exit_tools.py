@@ -147,6 +147,6 @@ def exit_with_error(error_message, timestamps=None):
 
     # In case of errors, the instances used in the test were likely not shut down properly, so we need to do so manually.
     print("If running locally, don't forget to remove leftover instances with the command below:")
-    printgreen("`python3 -m helpers.aws.remove_leftover_instances`")
+    printblue("python3 -m helpers.aws.remove_leftover_instances")
 
     sys.exit(-1)
