@@ -753,12 +753,17 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// We only consider this error in cases when the client app has a version greater or equal than
 	// the one in the config database. This is because when the client version is lesser (outdated client),
 	// it will automatically update itself to the most recent version and send another request.
-	if assignedInstance.ClientSHA != mandelboxRequest.CommitHash && !isOutdatedClient {
-		err := utils.MakeError("found instance with capacity but it has a different commit hash %v than frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+	if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
+		var msg error
+		if !isOutdatedClient {
+			msg = utils.MakeError("found instance with capacity but it has a different commit hash %v than frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+		}
+
+		// Regardless if we log the error, its necessary to return an appropiate response.
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: COMMIT_HASH_MISMATCH,
-		}, err)
-		return err
+		}, msg)
+		return msg
 	}
 
 	mandelboxID, err := uuid.NewRandom()
