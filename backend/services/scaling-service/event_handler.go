@@ -168,7 +168,7 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 }
 
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
-	if metadata.IsLocalEnv() {
+	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infof("Running in localenv so not performing deploy actions.")
 		return
 	}
