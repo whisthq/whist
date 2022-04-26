@@ -44,7 +44,7 @@ fi
 # https://nira.com/chrome-flags/
 # https://bbs.archlinux.org/viewtopic.php?id=244031&p=25
 #
-# We intentionally disable/don't set the following flags, as they were either causing issues, or 
+# We intentionally disable/don't set the following flags, as they were either causing issues, or
 # simply not improving performance:
 # "--enable-zero-copy" --> causes visual glitches when using Nvidia Capture
 # "--disable-frame-rate-limit" --> significantly degrades frame rate on YouTube
