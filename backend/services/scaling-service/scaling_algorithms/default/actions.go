@@ -663,8 +663,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			return utils.MakeError("Image not found on %v.", event.Region)
 		}
 
-		// mandelboxRequest.CommitHash = string(imageResult[0].ClientSHA)
-		mandelboxRequest.CommitHash = metadata.GetGitCommit()
+		mandelboxRequest.CommitHash = string(imageResult[0].ClientSHA)
 	}
 
 	// This is the "main" loop that does all the work and tries to find an instance for a user. first, it will iterate
