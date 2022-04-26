@@ -1,3 +1,5 @@
+// Copyright (c) 2022-2023 Whist Technologies, Inc.
+
 package main
 
 import (

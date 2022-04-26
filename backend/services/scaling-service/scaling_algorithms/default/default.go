@@ -1,3 +1,12 @@
+// Copyright (c) 2022-2023 Whist Technologies, Inc.
+
+/*
+Package default_algorithm includes the implementation of the main scaling algorithm.
+It handles the scaling of instances by computing mandelbox capacity for each instance
+and determining the overall availability on each region according to a "buffer" set by
+the config database.
+*/
+
 package scaling_algorithms
 
 import (
