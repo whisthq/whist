@@ -59,9 +59,14 @@ class CaptureStdoutFixture : public ::testing::Test {
         std::ifstream file(filename.c_str());
 
         size_t matcher_idx = 0;
+        bool output_to_stderr = ::testing::Test::HasFailure();
 
         std::string line;
         while (std::getline(file, line)) {
+            if (output_to_stderr) {
+                fprintf(stderr, "%s\n", line.c_str());
+            }
+
             bool async_matcher_hit = false;
             for (size_t async_idx = 0; async_idx < async_line_matchers.size(); async_idx++) {
                 if (Matches(async_line_matchers[async_idx])(line)) {
