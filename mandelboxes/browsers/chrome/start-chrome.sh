@@ -118,6 +118,9 @@ if [[ "$CLIENT_OS" == "darwin" ]]; then
 
   # Disable smooth scrolling, which we handle via uinput instead
   flags+=("--disable-smooth-scrolling")
+elif [[ "$CLIENT_OS" == "linux" ]]; then
+  # Disable smooth scrolling, which we handle via uinput instead
+  flags+=("--disable-smooth-scrolling")
 else
   # Edit the Chrome Preferences Config file to use the default Windows/Ubuntu fonts
   echo {} | \

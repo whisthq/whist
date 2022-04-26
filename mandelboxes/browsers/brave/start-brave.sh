@@ -115,7 +115,10 @@ if [[ "$CLIENT_OS" == "darwin" ]]; then
   echo {} | \
     jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
     > /home/whist/.config/BraveSoftware/Brave-Browser/Default/Preferences
-
+  
+  # Disable smooth scrolling, which we handle via uinput instead
+  flags+=("--disable-smooth-scrolling")
+elif [[ "$CLIENT_OS" == "linux" ]]; then
   # Disable smooth scrolling, which we handle via uinput instead
   flags+=("--disable-smooth-scrolling")
 else
