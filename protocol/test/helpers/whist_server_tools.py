@@ -17,6 +17,9 @@ from helpers.setup.instance_setup_tools import (
     prepare_instance_for_host_setup,
 )
 
+from protocol.test.helpers.common.git_tools import get_remote_whist_github_sha, get_whist_github_sha
+from protocol.test.helpers.common.timestamps_and_exit_tools import exit_with_error
+
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
@@ -85,6 +88,14 @@ def server_setup_process(args_dict):
         clone_whist_repository(github_token, hs_process, pexpect_prompt_server, running_in_ci)
     else:
         print("Skipping git clone whisthq/whist repository on server instance.")
+
+    # Ensure that the commit hash on server matches the one on the runner
+    server_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt_server, running_in_ci)
+    local_sha = get_whist_github_sha(running_in_ci)
+    if server_sha != local_sha:
+        exit_with_error(
+            f"Commit mismatch between server instance ({server_sha}) and github runner ({local_sha})"
+        )
 
     if skip_host_setup == "false":
         run_host_setup(
