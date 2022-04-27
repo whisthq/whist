@@ -53,6 +53,12 @@ type Mandelbox interface {
 	GetSessionID() types.SessionID
 	SetSessionID(session types.SessionID)
 
+	// The connected status indicates if a user successfully connected
+	// to the mandelbox or not. Its helpful when deciding if we should
+	// log some errors, backup configs, etc.
+	GetConnectedStatus() bool
+	SetConnectedStatus(bool)
+
 	GetHostPort(mandelboxPort uint16, protocol portbindings.TransportProtocol) (uint16, error)
 	GetIdentifyingHostPort() (uint16, error)
 
@@ -218,14 +224,19 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		mandelbox.cleanResourceMappingDir()
 		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.GetID())
 
-		// Backup and clean user config directory.
-		err := mandelbox.BackupUserConfigs()
-		if err != nil {
-			logger.Errorf("Error backing up user configs for MandelboxID %s. Error: %s", mandelbox.GetID(), err)
+		// Only try to backup user configs if the mandelbox was successfully connected to
+		if mandelbox.GetConnectedStatus() {
+			// Backup and clean user config directory.
+			err := mandelbox.BackupUserConfigs()
+			if err != nil {
+				logger.Errorf("Error backing up user configs for MandelboxID %s. Error: %s", mandelbox.GetID(), err)
+			} else {
+				logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.GetID())
+			}
+			mandelbox.cleanUserConfigDir()
 		} else {
-			logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.GetID())
+			logger.Infof("User failed to connect to mandelbox, so not trying to backup configs.")
 		}
-		mandelbox.cleanUserConfigDir()
 
 		// Remove mandelbox from the database altogether, once again excluding warmups
 		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
@@ -254,12 +265,13 @@ type mandelboxData struct {
 	// We use rwlock to protect all the below fields.
 	rwlock sync.RWMutex
 
-	dockerID  types.DockerID
-	appName   types.AppName
-	userID    types.UserID
-	sessionID types.SessionID
-	tty       ttys.TTY
-	gpuIndex  gpus.Index
+	dockerID        types.DockerID
+	appName         types.AppName
+	userID          types.UserID
+	sessionID       types.SessionID
+	connectedStatus bool
+	tty             ttys.TTY
+	gpuIndex        gpus.Index
 
 	configEncryptionToken types.ConfigEncryptionToken
 	clientAppAccessToken  types.ClientAppAccessToken
@@ -304,6 +316,20 @@ func (mandelbox *mandelboxData) SetSessionID(session types.SessionID) {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	mandelbox.sessionID = session
+}
+
+// GetConnectedStatus indicates if the user connected successfully to the mandelbox or not.
+func (mandelbox *mandelboxData) GetConnectedStatus() bool {
+	mandelbox.rwlock.RLock()
+	defer mandelbox.rwlock.RUnlock()
+	return mandelbox.connectedStatus
+}
+
+// SetConnectedStatus sets the connected status.
+func (mandelbox *mandelboxData) SetConnectedStatus(status bool) {
+	mandelbox.rwlock.RLock()
+	defer mandelbox.rwlock.RUnlock()
+	mandelbox.connectedStatus = status
 }
 
 // GetConfigEncryptionToken returns the config encryption token.
@@ -482,7 +508,8 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 		err := uinputdevices.SendDeviceFDsOverSocket(mandelbox.ctx, goroutineTracker, devices, socketPath)
 		if err != nil {
 			placeholderUUID := types.MandelboxID(utils.PlaceholderWarmupUUID())
-			if mandelbox.GetID() == placeholderUUID && strings.Contains(err.Error(), "use of closed network connection") {
+			if mandelbox.GetID() == placeholderUUID && strings.Contains(err.Error(), "use of closed network connection") ||
+				!mandelbox.GetConnectedStatus() {
 				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
 			} else {
 				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
