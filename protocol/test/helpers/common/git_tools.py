@@ -97,10 +97,10 @@ def get_remote_whist_github_sha(pexpect_process, pexpect_prompt, running_in_ci):
             empty string (str)
     """
 
-    pexpect_process.sendline("git rev-parse HEAD")
+    pexpect_process.sendline("cd ~/whist && git rev-parse HEAD")
     stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=True)
-    if len(stdout) != 1 or len(stdout[0]) != GITHUB_SHA_LEN:
+    if len(stdout) != 2 or len(stdout[-1]) != GITHUB_SHA_LEN:
         print(stdout)
         printred("Could not get the Github SHA of the commit checked out on the remote instance")
         return ""
-    return stdout[0]
+    return stdout[-1]
