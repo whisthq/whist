@@ -19,7 +19,6 @@ export interface StateIPC {
   isDefaultBrowser: boolean
   restoreLastSession: boolean
   otherBrowserWindows: string[][]
-  allowNonUSServers: boolean
   platform: string
   regions: AWSRegion[]
   trigger: Trigger // Renderer triggers like button clicks

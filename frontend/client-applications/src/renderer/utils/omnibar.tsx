@@ -9,7 +9,6 @@ import Rewind from "@app/components/icons/rewind"
 import Signal from "@app/components/icons/signal"
 import Download from "@app/components/icons/download"
 import Duplicate from "@app/components/icons/duplicate"
-import Location from "@app/components/icons/location"
 import Toggle from "@app/components/toggle"
 
 import { StateIPC } from "@app/@types/state"
@@ -140,25 +139,6 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
             })
           }}
           default={mainState.restoreLastSession}
-        />
-      ),
-      onClick: () => {},
-    },
-    {
-      icon: Location,
-      text: "Connect to Whist Servers Outside the US",
-      keywords: [""],
-      rightElement: (
-        <Toggle
-          onChecked={(checked: boolean) => {
-            setMainState({
-              trigger: {
-                name: WhistTrigger.allowNonUSServers,
-                payload: { allow: checked },
-              },
-            })
-          }}
-          default={mainState.allowNonUSServers}
         />
       ),
       onClick: () => {},

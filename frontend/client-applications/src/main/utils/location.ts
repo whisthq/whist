@@ -11,6 +11,7 @@ import find from "lodash.find"
 import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
 import { persistGet } from "@app/main/utils/persist"
+import { timezones } from "@app/constants/location"
 
 const IPSTACK_API_KEY = "f3e4e15355710b759775d121e243e39b"
 
@@ -127,4 +128,18 @@ const getGeolocation = async () => {
   }
 }
 
-export { sortRegionByProximity, closestRegionHasChanged, getGeolocation }
+const getCountry = () => {
+  const timezone =
+    Intl.DateTimeFormat()?.resolvedOptions()?.timeZone ?? undefined
+
+  if (timezone === undefined) return undefined
+
+  return timezones[timezone].c[0]
+}
+
+export {
+  sortRegionByProximity,
+  closestRegionHasChanged,
+  getGeolocation,
+  getCountry,
+}
