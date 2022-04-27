@@ -144,4 +144,9 @@ def exit_with_error(error_message, timestamps=None):
         printred(error_message)
     if timestamps is not None:
         timestamps.print_timestamps()
+
+    # In case of errors, the instances used in the test were likely not shut down properly, so we need to do so manually.
+    print("If running locally, don't forget to remove leftover instances with the command below:")
+    printblue("python3 -m helpers.aws.remove_leftover_instances")
+
     sys.exit(-1)

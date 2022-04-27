@@ -58,6 +58,99 @@ def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
     return target_ami
 
 
+def get_subnet_id(boto3client: botocore.client, subnet_name: str):
+    """
+    Search for a subnet with a specified name, and, if one is found, return the subnet id.
+
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        subnet_name (str): The name of the subnet to search for
+
+    Returns:
+        On success:
+            subnet_id (str): The ID of the subnet with the specified name
+        On failure:
+            empty string
+    """
+    try:
+        subnets = boto3client.describe_subnets()
+    except botocore.exceptions.ClientError as e:
+        print(e)
+        printred(
+            f"Caught Boto3 client exception. Could not find Subnet ID for subnet '{subnet_name}'"
+        )
+        return ""
+    desired_subnet_tag = dict(
+        {
+            "Key": "Name",
+            "Value": subnet_name,
+        }
+    )
+    if "Subnets" not in subnets:
+        printred(f"Could not find Subnet ID for subnet '{subnet_name}'")
+        return ""
+
+    subnet_ids = list(
+        filter(
+            lambda subnet: "Tags" in subnet and desired_subnet_tag in subnet["Tags"],
+            subnets["Subnets"],
+        )
+    )
+    if len(subnet_ids) == 0:
+        printred(f"Could not find Subnet ID for subnet '{subnet_name}'")
+        return ""
+    elif len(subnet_ids) > 1:
+        printyellow(
+            f"Warning, found {len(subnet_ids)} matching subnet ids for subnet {subnet_name}. Using the first one"
+        )
+
+    return subnet_ids[0]["SubnetId"]
+
+
+def get_security_group_id(boto3client: botocore.client, security_group_name: str):
+    """
+    Search for a security group with a specified name, and, if one is found, return the security group id.
+
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        security_group_name (str): The name of the security group to search for
+
+    Returns:
+        On success:
+            security_group_id (str): The ID of the security group with the specified name
+        On failure:
+            empty string
+    """
+    try:
+        security_groups = boto3client.describe_security_groups()
+    except botocore.exceptions.ClientError as e:
+        print(e)
+        printred(
+            f"Caught Boto3 client exception. Could not find security group id for security group '{security_group_name}'"
+        )
+        return ""
+    desired_sec_group_tag = dict({"Key": "Name", "Value": security_group_name})
+    if "SecurityGroups" not in security_groups:
+        printred(f"Could not find security group ID for security group '{security_group_name}'")
+        return ""
+
+    sec_groups_ids = list(
+        filter(
+            lambda sec_group: "Tags" in sec_group and desired_sec_group_tag in sec_group["Tags"],
+            security_groups["SecurityGroups"],
+        )
+    )
+    if len(sec_groups_ids) == 0:
+        printred(f"Could not find security group ID for security group '{security_group_name}'")
+        return ""
+    elif len(sec_groups_ids) > 1:
+        printyellow(
+            f"Warning, found {len(sec_groups_ids)} matching security group ids for {security_group_name}. Using the first one"
+        )
+
+    return sec_groups_ids[0]["GroupId"]
+
+
 def create_ec2_instance(
     boto3client: botocore.client,
     region_name: str,
@@ -85,6 +178,9 @@ def create_ec2_instance(
     branch_name = get_whist_branch_name(running_in_ci)
     instance_name = f"protocol-e2e-benchmarking-{branch_name}"
 
+    subnet_id = get_subnet_id(boto3client, "DefaultSubnetdev")
+    security_group_id = get_security_group_id(boto3client, "MandelboxesSecurityGroupdev")
+
     kwargs = {
         "BlockDeviceMappings": [
             {
@@ -104,8 +200,8 @@ def create_ec2_instance(
                 ],
             },
         ],
-        "SubnetId": "subnet-02865ffebdb591468",  # (DefaultSubnetdev)
-        "SecurityGroupIds": ["sg-01fb458379935c191"],  # (MandelboxesSecurityGroup)
+        "SubnetId": subnet_id,  # (DefaultSubnetdev)
+        "SecurityGroupIds": [security_group_id],  # (MandelboxesSecurityGroupdev)
         "InstanceInitiatedShutdownBehavior": "terminate",
         "KeyName": key_name,  # needs to be the same that's loaded on the client calling this function
     }
