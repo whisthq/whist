@@ -59,7 +59,7 @@ export const whistError = {
   },
   [REGION_NOT_ENABLED]: {
     title: "You are in a region that is not currently supported by Whist :(",
-    text: "If you are located in North America, this may be our mistake.",
+    text: "Shoot us an email at support@whist.com and we'll enable Whist for your region promptly.",
   },
   [USER_ALREADY_ACTIVE]: {
     title: "You are connected to Whist on another device :(",

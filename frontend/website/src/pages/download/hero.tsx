@@ -42,7 +42,7 @@ const Hero = () => {
           <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-3xl m-auto">
             In order to use Whist, you must have{" "}
             <span className="text-blue-light">macOS 10.13+</span> and be{" "}
-            <span className="text-blue-light">located in North America</span>.
+            <span className="text-blue-light">located in North America, Europe or Australia</span>.
             If you do not meet these requirements, please{" "}
             <button
               onClick={() => setOpen(true)}

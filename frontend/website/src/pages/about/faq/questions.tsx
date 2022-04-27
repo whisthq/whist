@@ -89,7 +89,7 @@ const faqs = [
     id: 7,
     question: "How does Whist make money?",
     answer:
-      "A Whist subscription is $9/mo. We are not an advertising business and will never sell your data.",
+      "A Whist subscription is $25/mo. We are not an advertising business and will never sell your data.",
   },
 ]
 
