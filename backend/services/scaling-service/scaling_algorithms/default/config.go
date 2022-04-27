@@ -129,7 +129,6 @@ func GetEnabledRegions() []string {
 	default:
 		enabledRedions = []string{
 			"us-east-1",
-			"us-east-2",
 		}
 	}
 
