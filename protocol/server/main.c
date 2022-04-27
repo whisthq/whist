@@ -233,12 +233,11 @@ static void send_complete_file_drop_message(FileTransferType transfer_type) {
             transfer_type (FileTransferType): group end type
     */
 
-    // Alloc wcmsg
-    WhistServerMessage wsmsg = {0};
-
-    // Build wcmsg
-    wsmsg.type = SMESSAGE_FILE_GROUP_END;
-    wsmsg.file_group_end.transfer_type = transfer_type;
+    // Alloc and build wcmsg
+    WhistServerMessage wsmsg = {
+        .type = SMESSAGE_FILE_GROUP_END,
+        .file_group_end.transfer_type = transfer_type,
+    };
 
     // Send wcmsg
     if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)(&wsmsg),
