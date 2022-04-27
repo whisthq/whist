@@ -195,6 +195,10 @@ static void push_drag_start_event(WhistFrontend *frontend, char *file_list) {
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = false;
     drag_event->file_list = strdup(file_list);
+    if (!drag_event->file_list) {
+        // strdup failed
+        return;
+    }
     event.user.data1 = drag_event;
     SDL_PushEvent(&event);
 }

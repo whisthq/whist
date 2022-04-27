@@ -201,7 +201,7 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
     if (event->file_list) {
         data_len = strlen((const char*)event->file_list) + 1;
     }
-    WhistClientMessage* msg = malloc(sizeof(WhistClientMessage) + data_len);
+    WhistClientMessage* msg = safe_malloc(sizeof(WhistClientMessage) + data_len);
     memset(msg, 0, sizeof(WhistClientMessage) + data_len);
     msg->type = CMESSAGE_FILE_DRAG;
 
@@ -214,7 +214,10 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
         msg->file_drag_data.start_drag = false;
         msg->file_drag_data.end_drag = true;
     } else if (event->file_list) {
-        // When file_list is set, the drag is starting
+        // When file_list is set, the drag is starting.
+        //     This means that file_list is only sent with the message to the
+        //     server on the drag starting message. All other messages don't
+        //     have a file list and only send coordinates.
         safe_strncpy(msg->file_drag_data.file_list, event->file_list, data_len);
         msg->file_drag_data.start_drag = true;
         msg->file_drag_data.end_drag = false;
