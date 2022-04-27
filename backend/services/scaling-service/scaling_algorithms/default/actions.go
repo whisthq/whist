@@ -507,6 +507,9 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	// version is the entry we receive from the config database
 	version := clientVersion.(subscriptions.ClientAppVersion)
 
+	// Update the internal version with the new one from the database
+	updateClientVersion(version)
+
 	var (
 		commitHash string
 		newImage   subscriptions.Image
@@ -734,7 +737,8 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		isOutdatedClient bool
 	)
 
-	currentVersion, err = version.NewVersion(utils.Sprintf("%v.%v.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro))
+	clientVersion := getClientVersion()
+	currentVersion, err = version.NewVersion(utils.Sprintf("%v.%v.%v", clientVersion.Major, clientVersion.Minor, clientVersion.Micro))
 	if err != nil {
 		logger.Errorf("Failed parsing client app version from config. Err: %v", err)
 	}

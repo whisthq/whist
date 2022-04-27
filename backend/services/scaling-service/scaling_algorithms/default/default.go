@@ -172,7 +172,9 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 		return
 	}
 
-	clientAppVersion = version
+	logger.Infof("Before updating %v", getClientVersion())
+	updateClientVersion(version)
+	logger.Infof("After updating %v", getClientVersion())
 }
 
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing

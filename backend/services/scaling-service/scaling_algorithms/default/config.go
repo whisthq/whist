@@ -1,6 +1,7 @@
 package scaling_algorithms
 
 import (
+	"sync"
 	"time"
 
 	"github.com/whisthq/whist/backend/services/constants"
@@ -25,7 +26,9 @@ var (
 	}
 	// clientAppVersion represents the current version of the client app
 	// (e.g. "2.6.13").
-	clientAppVersion subscriptions.ClientAppVersion
+	clientAppVersion *subscriptions.ClientAppVersion
+	// A lock to update the version once it gets switched on the database
+	versionLock = &sync.Mutex{}
 )
 
 const (
@@ -126,8 +129,27 @@ func GetEnabledRegions() []string {
 	default:
 		enabledRedions = []string{
 			"us-east-1",
+			"us-east-2",
 		}
 	}
 
 	return enabledRedions
+}
+
+// getClientVersion gets a lock on the frontend version and returns it. Its necessary
+// to grab a lock because multiple scaling algorithms read and update it.
+func getClientVersion() *subscriptions.ClientAppVersion {
+	versionLock.Lock()
+	defer versionLock.Unlock()
+
+	return clientAppVersion
+}
+
+// updateClientVersion gets a lock on the frontend version and updates it. Its necessary
+// to grab a lock because multiple scaling algorithms read and update it.
+func updateClientVersion(newVersion subscriptions.ClientAppVersion) {
+	versionLock.Lock()
+	defer versionLock.Unlock()
+
+	clientAppVersion = &newVersion
 }
