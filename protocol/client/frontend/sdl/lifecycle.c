@@ -3,12 +3,6 @@
 #include <whist/utils/atomic.h>
 #include <whist/utils/command_line.h>
 
-/*
-============================
-Command-line options
-============================
-*/
-
 static bool skip_taskbar;
 static char* icon_png_filename;
 COMMAND_LINE_BOOL_OPTION(
@@ -18,11 +12,10 @@ COMMAND_LINE_STRING_OPTION(
     icon_png_filename, 0, "sdl-icon", WHIST_ARGS_MAXLEN,
     "Set the protocol window icon from a 64x64 pixel png file (SDL frontend only).")
 
-/*
-============================
-Public Function Implementations
-============================
-*/
+static const char* sdl_render_driver;
+COMMAND_LINE_STRING_OPTION(sdl_render_driver, 0, "sdl-render-driver", 16,
+                           "Set hint for the SDL render driver type; this may be ignored if "
+                           "the given driver does not work (SDL frontend only).")
 
 static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 
@@ -54,15 +47,21 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
 
+    if (sdl_render_driver) {
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, sdl_render_driver);
+    }
+
 #ifdef _WIN32
     // Tell Windows that the content we're rendering is aware of the system's set DPI.
     // Note: This fails on subsequent calls, but that's just a no-op so it's fine.
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 
-    // Ensure that Windows uses the D3D11 driver rather than D3D9.
-    // (The D3D9 driver does work, but it does not support the NV12
-    // textures that we use, so performance with it is terrible.)
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");
+    if (!sdl_render_driver) {
+        // Ensure that Windows uses the D3D11 driver rather than D3D9.
+        // (The D3D9 driver does work, but it does not support the NV12
+        // textures that we use, so performance with it is terrible.)
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");
+    }
 #endif  // _WIN32
 
     // Allow the screensaver to activate while the frontend is running
