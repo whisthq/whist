@@ -1,4 +1,4 @@
-import { browserSupportedLanguages } from "@app/constants/mandelboxLanguages"
+import { browserSupportedLanguages } from "@app/constants/languages"
 import { execCommand } from "@app/main/utils/execCommand"
 import {
   matchServerLanguageFormat,

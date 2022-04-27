@@ -144,25 +144,6 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
       ),
       onClick: () => {},
     },
-    {
-      icon: Location,
-      text: "Connect to Whist Servers Outside the US",
-      keywords: [""],
-      rightElement: (
-        <Toggle
-          onChecked={(checked: boolean) => {
-            setMainState({
-              trigger: {
-                name: WhistTrigger.allowNonUSServers,
-                payload: { allow: checked },
-              },
-            })
-          }}
-          default={mainState.allowNonUSServers}
-        />
-      ),
-      onClick: () => {},
-    },
   ]
 }
 

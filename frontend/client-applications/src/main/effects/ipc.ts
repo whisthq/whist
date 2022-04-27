@@ -23,7 +23,6 @@ import { fromTrigger } from "@app/main/utils/flows"
 import { appEnvironment } from "../../../config/configs"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
-  ALLOW_NON_US_SERVERS,
   RESTORE_LAST_SESSION,
   WHIST_IS_DEFAULT_BROWSER,
 } from "@app/constants/store"
@@ -89,10 +88,6 @@ const subscribed = combineLatest(
       restoreLastSession: fromTrigger(WhistTrigger.storeDidChange).pipe(
         map(() => persistGet(RESTORE_LAST_SESSION) ?? false),
         startWith(persistGet(RESTORE_LAST_SESSION) ?? false)
-      ),
-      allowNonUSServers: fromTrigger(WhistTrigger.storeDidChange).pipe(
-        map(() => persistGet(ALLOW_NON_US_SERVERS) ?? false),
-        startWith(persistGet(ALLOW_NON_US_SERVERS) ?? false)
       ),
       otherBrowserWindows: merge(
         fromTrigger(WhistTrigger.getOtherBrowserWindows).pipe(

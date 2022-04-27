@@ -30,6 +30,6 @@ if (require.main === module) {
 
   start({
     SHOW_PROTOCOL_LOGS: argv.showProtocolLogs,
-    DEVELOPMENT_ENV: argv.useLocalServer ? "local" : "dev",
+    DEVELOPMENT_ENV: "prod",
   })
 }

@@ -16,7 +16,6 @@ import {
   RESTORE_LAST_SESSION,
   WHIST_IS_DEFAULT_BROWSER,
   ONBOARDED,
-  ALLOW_NON_US_SERVERS,
   GEOLOCATION,
 } from "@app/constants/store"
 import { geolocation } from "@app/main/utils/state"
@@ -71,15 +70,8 @@ fromTrigger(WhistTrigger.protocolConnection)
     if (!((persistGet(ONBOARDED) as boolean) ?? false)) {
       persistSet(ONBOARDED, true)
       persistSet(RESTORE_LAST_SESSION, true)
-      persistSet(ALLOW_NON_US_SERVERS, false)
     }
   })
-
-fromTrigger(WhistTrigger.allowNonUSServers).subscribe(
-  (body: { allow: boolean }) => {
-    persistSet(ALLOW_NON_US_SERVERS, body.allow)
-  }
-)
 
 geolocation.subscribe((location: any) => {
   if (location !== undefined) persistSet(GEOLOCATION, location)

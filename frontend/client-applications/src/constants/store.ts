@@ -4,7 +4,6 @@ export const WHIST_IS_DEFAULT_BROWSER = "data.whistIsDefaultBrowser"
 export const EXIT_TYPEFORM_SUBMITTED = "data.exitTypeformSubmitted"
 export const AWS_REGIONS_SORTED_BY_PROXIMITY =
   "data.awsRegionsSortedByProximity"
-export const ALLOW_NON_US_SERVERS = "data.allowNonUSServers"
 export const GEOLOCATION = "data.geolocation"
 
 export const CACHED_ACCESS_TOKEN = "auth.accessToken"
