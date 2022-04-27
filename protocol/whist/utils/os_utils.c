@@ -14,6 +14,7 @@ Includes
 
 #include "os_utils.h"
 #include <whist/core/whist.h>
+#include <whist/utils/atomic.h>
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
 #endif
@@ -91,6 +92,7 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
 #define NUM_APPLE_KEYBOARD_MAPPINGS \
     ((int)sizeof(apple_keyboard_mappings) / (int)sizeof(apple_keyboard_mappings[0]))
 #endif
+static WhistKeyboardLayout current_layout = {WHIST_KB_DEFAULT_LAYOUT, ""};
 
 #ifdef __linux__
 
@@ -160,19 +162,19 @@ WhistKeyboardLayout get_keyboard_layout(void) {
     safe_strncpy(old_layout, layout, sizeof(layout));
 #elif __linux__
     // Convenience function to check compatibility and intitialize the xkb lib
-    Display* dpy = XkbOpenDisplay(NULL, NULL, NULL, NULL, NULL, NULL);
+    Display *dpy = XkbOpenDisplay(NULL, NULL, NULL, NULL, NULL, NULL);
 
     if (dpy == NULL) {
         return whist_layout;
     }
 
-    XkbDescRec* kbd_desc_ptr = XkbAllocKeyboard();
+    XkbDescRec *kbd_desc_ptr = XkbAllocKeyboard();
 
     kbd_desc_ptr->dpy = dpy;
 
     XkbGetNames(dpy, XkbSymbolsNameMask, kbd_desc_ptr);
 
-    char* symbols = XGetAtomName(dpy, kbd_desc_ptr->names->symbols);
+    char *symbols = XGetAtomName(dpy, kbd_desc_ptr->names->symbols);
 
     XkbStateRec xkb_state;
     XkbGetState(dpy, XkbUseCoreKbd, &xkb_state);
@@ -181,7 +183,7 @@ WhistKeyboardLayout get_keyboard_layout(void) {
     int current_group_num = (int)xkb_state.group;
 
     char delims[] = "+_:(";
-    char* tok = strtok(symbols, delims);
+    char *tok = strtok(symbols, delims);
 
     int valid_token_count = 0;
     int found = 0;
@@ -215,25 +217,10 @@ WhistKeyboardLayout get_keyboard_layout(void) {
     return whist_layout;
 }
 
-void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
-    static WhistKeyboardLayout current_layout = {WHIST_KB_DEFAULT_LAYOUT, ""};
-
-    if (requested_layout.layout_name[WHIST_KB_LAYOUT_NAME_MAX_LENGTH - 1] != '\0') {
-        LOG_ERROR("Could not set layout name! last character was not NULL!");
-        return;
-    }
-
-    // Don't set the keyboard if nothing changed
-    if (memcmp(&current_layout, &requested_layout, sizeof(WhistKeyboardLayout)) == 0) {
-        return;
-    }
-
-    // Otherwise, copy into current_layout and handle the new current_layout
-    memcpy(&current_layout, &requested_layout, sizeof(WhistKeyboardLayout));
-    LOG_INFO("Current layout: %s; Additional Command: %s", current_layout.layout_name,
-             current_layout.additional_command);
-
+static int set_keyboard_layout_thread(void *arg) {
 #ifdef __linux__
+    atomic_int *in_progress = (atomic_int *)arg;
+    FATAL_ASSERT(atomic_load(in_progress) == 1);
     char cmd_buf[1024];
     int bytes_written;
     // first, run the additional command
@@ -250,9 +237,45 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
         LOG_DEBUG("Running %s", cmd_buf);
         runcmd(cmd_buf, NULL);
     }
+    atomic_store(in_progress, 0);
+    return 0;
 #else
     LOG_FATAL("Unimplemented on Mac/Windows!");
 #endif
+}
+
+void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
+    static atomic_int in_progress = ATOMIC_VAR_INIT(0);
+    static WhistThread thread = NULL;
+
+    if (requested_layout.layout_name[WHIST_KB_LAYOUT_NAME_MAX_LENGTH - 1] != '\0') {
+        LOG_ERROR("Could not set layout name! last character was not NULL!");
+        return;
+    }
+
+    // Don't set the keyboard if nothing changed
+    if (memcmp(&current_layout, &requested_layout, sizeof(WhistKeyboardLayout)) == 0) {
+        return;
+    }
+
+    int expected = 0;
+    if (!atomic_compare_exchange_strong(&in_progress, &expected, 1)) {
+        LOG_WARNING("Could not set the keyboard layout now. Previous layout set is in progress");
+        return;
+    }
+
+    // Otherwise, copy into current_layout and handle the new current_layout
+    memcpy(&current_layout, &requested_layout, sizeof(WhistKeyboardLayout));
+    LOG_INFO("Current layout: %s; Additional Command: %s", current_layout.layout_name,
+             current_layout.additional_command);
+
+    if (thread != NULL) {
+        SDL_WaitThread(thread, NULL);
+        thread = NULL;
+    }
+
+    thread = whist_create_thread(set_keyboard_layout_thread, "set_keyboard_layout_thread",
+                                 (void *)&in_progress);
 }
 
 #ifndef __APPLE__
