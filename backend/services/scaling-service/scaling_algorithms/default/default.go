@@ -172,9 +172,10 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 		return
 	}
 
-	logger.Infof("Before updating %v", getClientVersion())
-	updateClientVersion(version)
-	logger.Infof("After updating %v", getClientVersion())
+	// Set the scaling algorithm's internal version to the one received
+	// from the config database. The scaling service uses this value for
+	// checking if the incoming requests are coming from an outdated frontend.
+	updateFrontendVersion(version)
 }
 
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing

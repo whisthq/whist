@@ -135,18 +135,23 @@ func GetEnabledRegions() []string {
 	return enabledRedions
 }
 
-// getClientVersion gets a lock on the frontend version and returns it. Its necessary
-// to grab a lock because multiple scaling algorithms read and update it.
-func getClientVersion() *subscriptions.ClientAppVersion {
+// getFrontendVersion returns the current version of the frontend, which is initially
+// populated from the config database. This value is used by the scaling algorithm to
+// determine if the incoming requests come from an outdated frontend, and is part of
+// common configuration values shared by the scaling algorithms. Its necessary to grab
+// a lock because multiple scaling algorithms read and update it.
+func getFrontendVersion() *subscriptions.ClientAppVersion {
 	versionLock.Lock()
 	defer versionLock.Unlock()
 
 	return clientAppVersion
 }
 
-// updateClientVersion gets a lock on the frontend version and updates it. Its necessary
-// to grab a lock because multiple scaling algorithms read and update it.
-func updateClientVersion(newVersion subscriptions.ClientAppVersion) {
+// updateFrontendVersion updates the frontend version. It does not update the value in the config database,
+// only the configuration variable defined in this file shared between scaling algorithms. This function is
+// only used when starting the scaling algorithm, and when the CI has updated the config database.
+// Its necessary to grab a lock because multiple scaling algorithms read and update it.
+func updateFrontendVersion(newVersion subscriptions.ClientAppVersion) {
 	versionLock.Lock()
 	defer versionLock.Unlock()
 
