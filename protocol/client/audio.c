@@ -42,13 +42,23 @@ Defines
 
 // The size of the frontend audio queue that we're aiming for
 // In frames
-#define AUDIO_QUEUE_TARGET_SIZE 8
+#define AUDIO_QUEUE_TARGET_SIZE_0 8
 // The total size of audio-queue and userspace buffer to overflow at
 // In frames
-#define AUDIO_BUFFER_OVERFLOW_SIZE 20
+#define AUDIO_BUFFER_OVERFLOW_SIZE_0 20
 
 // The time per size sample
-#define AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS 100
+#define AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS_0 100
+
+#define scaling_speed 1.2
+
+int AUDIO_QUEUE_TARGET_SIZE = AUDIO_QUEUE_TARGET_SIZE_0;
+int AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0;
+int AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS = AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS_0;
+
+double scaling_factor = 1.0;
+
+
 // The number of samples we use for average estimation
 #define AUDIO_BUFSIZE_NUM_SAMPLES 10
 // Acceptable size discrepancy that the average sample size could have
@@ -109,9 +119,11 @@ struct AudioContext {
     AudioState audio_state;
     // Overflow state
     bool is_overflowing;
-    // Buffer for the audio buffering state
+    // Buffer for the audio buffering states
     int audio_buffering_buffer_size;
-    uint8_t audio_buffering_buffer[DECODED_BYTES_PER_FRAME * (AUDIO_QUEUE_TARGET_SIZE + 1)];
+    uint8_t audio_buffering_buffer [DECODED_BYTES_PER_FRAME * (999 + 1)];
+
+    WhistTimer time_since_init_timer;
 };
 
 /*
@@ -179,6 +191,8 @@ AudioContext* init_audio(WhistFrontend* frontend) {
     audio_context->adjust_command = NOOP_FRAME;
     start_timer(&audio_context->size_sample_timer);
     audio_context->sample_index = 0;
+
+    start_timer(&audio_context->time_since_init_timer);
 
     // Return the audio context
     return audio_context;
