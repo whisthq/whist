@@ -532,7 +532,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
     double latency_threshold_decrease_state;
     double latency_threshold_hold_state;
 #define LATENCY_MULTIPLIER_BURST_MODE 2.0
-#define LATENCY_MULTIPLIER_NORMAL_MODE 1.5
+#define LATENCY_MULTIPLIER_NORMAL_MODE 1.3
 #define LATENCY_MULTIPLIER_HOLD_STATE 1.1
     // Using a higher latency threshold for burst mode, as sending packets in a burst can
     // momentarily cause congestion that will get cleared up immediately.

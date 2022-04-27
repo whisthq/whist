@@ -545,15 +545,16 @@ int32_t multithreaded_send_video(void* opaque) {
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 #endif
 
-// When SAVE_VIDEO_OUTPUT is enabled the encoded video output is stored as per the filepath passed
-// to fopen(). This is primarily used for debugging the protocol testing framework, where the client
-// also runs in cloud. The saved h264 file can be transferred to the laptop and can be converted to
-// mp4 using the ffmpeg command below.
-// "ffmpeg -i output.h264 -c copy output.mp4"
-// The mp4 output can be played in VLC media player (or any other player of your choice)
-#if SAVE_VIDEO_OUTPUT
-    FILE* fp = fopen("/var/log/whist/output.h264", "wb");
-#endif
+    // When SAVE_VIDEO_OUTPUT is enabled the encoded video output is stored as per the filepath
+    // passed to fopen(). This is primarily used for debugging the protocol testing framework, where
+    // the client also runs in cloud. The saved h264 file can be transferred to the laptop and can
+    // be converted to mp4 using the ffmpeg command below. "ffmpeg -i output.h264 -c copy
+    // output.mp4" The mp4 output can be played in VLC media player (or any other player of your
+    // choice)
+    FILE* fp;
+    if (SAVE_VIDEO_OUTPUT) {
+        fp = fopen("/var/log/whist/output.h264", "wb");
+    }
 
     // Capture Device
     CaptureDevice rdevice;
@@ -863,11 +864,12 @@ int32_t multithreaded_send_video(void* opaque) {
                                   encoder->encoded_frame_size);
                         continue;
                     } else {
-#if SAVE_VIDEO_OUTPUT
-                        for (int i = 0; i < encoder->num_packets; i++) {
-                            fwrite(encoder->packets[i].data, encoder->packets[i].size, 1, fp);
+                        if (SAVE_VIDEO_OUTPUT) {
+                            for (int i = 0; i < encoder->num_packets; i++) {
+                                fwrite(encoder->packets[i]->data, encoder->packets[i]->size, 1, fp);
+                            }
+                            fflush(fp);
                         }
-#endif
                         send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
                                               encoder, id, client_input_timestamp,
                                               server_timestamp);
@@ -893,9 +895,9 @@ int32_t multithreaded_send_video(void* opaque) {
 
     whist_cursor_capture_destroy();
 
-#if SAVE_VIDEO_OUTPUT
-    fclose(fp);
-#endif
+    if (SAVE_VIDEO_OUTPUT) {
+        fclose(fp);
+    }
     // Post this to unblock `multithreaded_send_video_packets()` semaphore waits
     run_multithreaded_send_video_packets = false;
     whist_post_semaphore(producer);
