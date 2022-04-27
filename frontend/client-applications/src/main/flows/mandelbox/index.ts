@@ -83,15 +83,15 @@ export default flow(
               local_client: true,
             }),
             user_agent: getUserAgent(), // This spoofs user agent on server-side Chrome to match the current OS
-            longitude: t.geolocation.longitude,
-            latitude: t.geolocation.latitude,
-            ...(t.userLanguages.systemLanguages.length > 0 && {
-              system_languages: t.userLanguages.systemLanguages,
+            longitude: t.geolocation?.longitude,
+            latitude: t.geolocation?.latitude,
+            ...(t.userLanguages?.systemLanguages?.length > 0 && {
+              system_languages: t.userLanguages?.systemLanguages,
             }),
-            ...(t.userLanguages.browserLanguages.length > 0 && {
-              browser_languages: t.userLanguages.browserLanguages,
+            ...(t.userLanguages?.browserLanguages?.length > 0 && {
+              browser_languages: t.userLanguages?.browserLanguages,
             }),
-            ...(Object.keys(t.userLocale).length > 0 && {
+            ...(Object.keys(t.userLocale ?? {})?.length > 0 && {
               user_locale: t.userLocale,
             }),
             client_os: process.platform,
