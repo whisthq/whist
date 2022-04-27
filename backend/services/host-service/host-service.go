@@ -439,9 +439,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		select {
 		case transportRequest := <-jsonChan:
 			req = transportRequest
+			mandelbox.SetConnectedStatus(true)
 		case <-time.After(1 * time.Minute):
 			// Clean up the mandelbox if the time out limit is reached
-			logAndReturnError("Timed out waiting for config encryption token for user %s for mandelbox %s", mandelbox.GetUserID(), mandelbox.GetID())
+			logAndReturnError("User %v failed to connect to mandelbox %v due to config token time out. Not performing user-specific cleanup.", mandelbox.GetUserID(), mandelbox.GetID())
+			mandelbox.SetConnectedStatus(false)
 			return
 		}
 	}
