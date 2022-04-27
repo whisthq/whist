@@ -129,9 +129,10 @@ const getGeolocation = async () => {
 }
 
 const getCountry = () => {
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const timezone =
+    Intl.DateTimeFormat()?.resolvedOptions()?.timeZone ?? undefined
 
-  if (timezone === "" || !timezone) return undefined
+  if (timezone === undefined) return undefined
 
   return timezones[timezone].c[0]
 }

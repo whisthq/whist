@@ -16,6 +16,7 @@ export default flow("awsPingFlow", (trigger) => {
   )
 
   const currentCountry = getCountry()
+  // Temporary hack to prevent US users from getting connected to ca-central-1
   const nonUSRegionsAllowed = currentCountry !== "US"
 
   const pingedRegions = trigger.pipe(
