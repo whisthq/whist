@@ -112,9 +112,9 @@ typedef struct {
 // Size of the UDPPacket header, excluding the payload
 #define UDPNETWORKPACKET_HEADER_SIZE ((int)(offsetof(UDPNetworkPacket, payload)))
 // How often to ping
-#define UDP_PING_INTERVAL_SEC 0.025
+#define UDP_PING_INTERVAL_SEC 0.01
 // How long to go without a pong, before the connection is marked as lost
-#define UDP_PONG_TIMEOUT_SEC 5.0
+#define UDP_PONG_TIMEOUT_SEC 2.5
 // How often to print ping logs
 #define UDP_PING_LOG_INTERVAL_SEC 1.0
 #define MAX_GROUP_STATS 8
@@ -227,7 +227,7 @@ typedef struct {
 // The amount to weigh a older pings' latency,
 // on the ewma latency value
 #define PING_LAMBDA_SHORT_TERM 0.9
-#define PING_LAMBDA_LONG_TERM 0.995
+#define PING_LAMBDA_LONG_TERM 0.999
 
 // How often should the client send connection attempts
 #define CONNECTION_ATTEMPT_INTERVAL_MS 5
