@@ -2,8 +2,8 @@
 
 import os, sys, subprocess
 
-from protocol.test.helpers.common.ssh_tools import wait_until_cmd_done
-from protocol.test.helpers.common.timestamps_and_exit_tools import printred
+from helpers.common.ssh_tools import wait_until_cmd_done
+from helpers.common.timestamps_and_exit_tools import printred
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
