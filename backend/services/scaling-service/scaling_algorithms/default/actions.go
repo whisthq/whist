@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	hashicorp "github.com/hashicorp/go-version"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
@@ -506,6 +507,11 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	// version is the entry we receive from the config database
 	version := clientVersion.(subscriptions.ClientAppVersion)
 
+	// Update the internal version with the new one received from the database.
+	// This function updates the value inside the config file, so we can keep  track
+	// of the current version locally, it does not update the value in the database.
+	setFrontendVersion(version)
+
 	var (
 		commitHash string
 		newImage   subscriptions.Image
@@ -724,13 +730,52 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return err
 	}
 
-	// There are instances with capacity available, but none of them with the desired commit hash
+	var (
+		// The parsed version from the config
+		parsedFrontendVersion *hashicorp.Version
+		// The parsed version from the request
+		parsedRequestVersion *hashicorp.Version
+		// whether the client app has an outdated version
+		isOutdatedClient bool
+	)
+
+	// Get the version we keep locally for comparing the incoming request value.
+	frontendVersion := getFrontendVersion()
+
+	// Parse the version with the `hashicorp/go-version` package so we can compare.
+	parsedFrontendVersion, err = hashicorp.NewVersion(utils.Sprintf("%v.%v.%v", frontendVersion.Major, frontendVersion.Minor, frontendVersion.Micro))
+	if err != nil {
+		logger.Errorf("Failed parsing client app version from scaling algorithm config. Err: %v", err)
+	}
+
+	// Parse the version we got in the request.
+	parsedRequestVersion, err = hashicorp.NewVersion(mandelboxRequest.Version)
+	if err != nil {
+		logger.Errorf("Failed parsing client app version from request. Err: %v", err)
+	}
+
+	// Compare the request version with the one from the config. If the
+	// version from the request is less than the one we have locally, it
+	// means the request comes from an outdated frontend application.
+	if parsedFrontendVersion != nil && parsedRequestVersion != nil {
+		isOutdatedClient = parsedRequestVersion.LessThan(parsedFrontendVersion)
+	}
+
+	// There are instances with capacity available, but none of them with the desired commit hash.
+	// We only consider this error in cases when the client app has a version greater or equal than
+	// the one in the config database. This is because when the client version is lesser (outdated client),
+	// it will automatically update itself to the most recent version and send another request.
 	if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
-		err := utils.MakeError("found instance with capacity but it has a different commit hash %v than frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+		var msg error
+		if !isOutdatedClient {
+			msg = utils.MakeError("found instance with capacity but it has a different commit hash %v than frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+		}
+
+		// Regardless if we log the error, its necessary to return an appropiate response.
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: COMMIT_HASH_MISMATCH,
-		}, err)
-		return err
+		}, msg)
+		return msg
 	}
 
 	mandelboxID, err := uuid.NewRandom()

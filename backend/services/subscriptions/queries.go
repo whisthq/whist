@@ -125,8 +125,8 @@ var QueryLatestImage struct {
 	WhistImages `graphql:"whist_images(where: {provider: {_eq: $provider}, _and: {region: {_eq: $region}}}, order_by: {updated_at: desc})"`
 }
 
-// QueryClientAppVersionChange returns the most recent change on the `desktop_app_version` config database table.
-var QueryClientAppVersionChange struct {
+// QueryClientAppVersionChange returns the latest value on the `desktop_app_version` config database table.
+var QueryClientAppVersion struct {
 	WhistClientAppVersions `graphql:"desktop_app_version(where: {id: {_eq: $id}})"`
 }
 

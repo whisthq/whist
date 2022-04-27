@@ -64,8 +64,9 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 type MandelboxAssignRequest struct {
 	Regions    []string           `json:"regions"`
 	CommitHash string             `json:"client_commit_hash"`
-	SessionID  int64              `json:"session_id"`
 	UserEmail  string             `json:"user_email"`
+	Version    string             `json:"version"`
+	SessionID  int64              `json:"session_id"`
 	UserID     types.UserID       // The userID is obtained from the access token
 	ResultChan chan RequestResult // Channel to pass the request result between goroutines
 }

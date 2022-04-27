@@ -1,10 +1,12 @@
 package scaling_algorithms
 
 import (
+	"sync"
 	"time"
 
 	"github.com/whisthq/whist/backend/services/constants"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -22,6 +24,11 @@ var (
 	desiredFreeMandelboxesPerRegion = map[string]int{
 		"us-east-1": 2,
 	}
+	// clientAppVersion represents the current version of the client app
+	// (e.g. "2.6.13").
+	clientAppVersion *subscriptions.ClientAppVersion
+	// A lock to update the version once it gets switched on the database
+	versionLock = &sync.Mutex{}
 )
 
 const (
@@ -126,4 +133,27 @@ func GetEnabledRegions() []string {
 	}
 
 	return enabledRedions
+}
+
+// getFrontendVersion returns the current version of the frontend, which is initially
+// populated from the config database. This value is used by the scaling algorithm to
+// determine if the incoming requests come from an outdated frontend, and is part of
+// common configuration values shared by the scaling algorithms. Its necessary to grab
+// a lock because multiple scaling algorithms read and update it.
+func getFrontendVersion() *subscriptions.ClientAppVersion {
+	versionLock.Lock()
+	defer versionLock.Unlock()
+
+	return clientAppVersion
+}
+
+// setFrontendVersion sets the frontend version we track locally. It does not update the value in the config database,
+// only the configuration variable defined in this file shared between scaling algorithms. This function is only used
+// when starting the scaling algorithm, and when the CI has updated the config database. Its necessary to grab a lock
+// because multiple scaling algorithms read and update it.
+func setFrontendVersion(newVersion subscriptions.ClientAppVersion) {
+	versionLock.Lock()
+	defer versionLock.Unlock()
+
+	clientAppVersion = &newVersion
 }
