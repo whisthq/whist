@@ -147,11 +147,11 @@ func getFrontendVersion() *subscriptions.ClientAppVersion {
 	return clientAppVersion
 }
 
-// updateFrontendVersion updates the frontend version. It does not update the value in the config database,
-// only the configuration variable defined in this file shared between scaling algorithms. This function is
-// only used when starting the scaling algorithm, and when the CI has updated the config database.
-// Its necessary to grab a lock because multiple scaling algorithms read and update it.
-func updateFrontendVersion(newVersion subscriptions.ClientAppVersion) {
+// setFrontendVersion sets the frontend version we track locally. It does not update the value in the config database,
+// only the configuration variable defined in this file shared between scaling algorithms. This function is only used
+// when starting the scaling algorithm, and when the CI has updated the config database. Its necessary to grab a lock
+// because multiple scaling algorithms read and update it.
+func setFrontendVersion(newVersion subscriptions.ClientAppVersion) {
 	versionLock.Lock()
 	defer versionLock.Unlock()
 

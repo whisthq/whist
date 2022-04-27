@@ -175,7 +175,7 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 	// Set the scaling algorithm's internal version to the one received
 	// from the config database. The scaling service uses this value for
 	// checking if the incoming requests are coming from an outdated frontend.
-	updateFrontendVersion(version)
+	setFrontendVersion(version)
 }
 
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing

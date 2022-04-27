@@ -510,7 +510,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	// Update the internal version with the new one received from the database.
 	// This function updates the value inside the config file, so we can keep  track
 	// of the current version locally, it does not update the value in the database.
-	updateFrontendVersion(version)
+	setFrontendVersion(version)
 
 	var (
 		commitHash string
