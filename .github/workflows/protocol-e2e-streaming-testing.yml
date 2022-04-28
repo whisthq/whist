@@ -61,6 +61,18 @@ jobs:
           known_hosts: unnecessary # Note, this is not secure and discouraged, but tolerable here given the instance is deleted after the test
           if_key_exists: fail
 
+      # The next two steps are acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
+      - name: Get branch name (merge)
+        if: ${{ always() && (github.event_name != 'pull_request') }}
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+      - name: Get branch name (pull request)
+        if: ${{ always() && (github.event_name == 'pull_request') }}
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+
+      - name: Get commit SHA
+        run: echo "GITHUB_COMMIT_HASH=$(echo ${{ github.event.after }})" >> $GITHUB_ENV
+
       - name: Install End-to-End Streaming Test Dependencies
         run: pip install boto3 paramiko numpy pytablewriter
 
@@ -178,15 +190,6 @@ jobs:
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
-
-      # Steps below acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
-      - name: Get branch name (merge)
-        if: ${{ always() && (github.event_name != 'pull_request') }}
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-
-      - name: Get branch name (pull request)
-        if: ${{ always() && (github.event_name == 'pull_request') }}
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
 
       # need one more section like this to ensure the S3 command works in case of failure/timeout of the Python script above
       - name: Upload logs to S3 for debugging purposes
