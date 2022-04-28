@@ -170,10 +170,13 @@ typedef struct FileDragState {
     int change_count;
     bool active;
     WhistTimer sent_drag_move_event_timer;
+    int position_x;
+    int position_y;
 } FileDragState;
 
 static bool mouse_in_window(WhistFrontend* frontend) {
     SDLFrontendContext *context = frontend->context;
+    FileDragState *state = context->file_drag_data;
 
     int window_x, window_y, mouse_x, mouse_y;
     int window_w, window_h;
@@ -181,6 +184,9 @@ static bool mouse_in_window(WhistFrontend* frontend) {
     SDL_GetWindowSize(context->window, &window_w, &window_h);
     // Mouse is not active in window - so we must use the global mouse and manually transform
     SDL_GetGlobalMouseState(&mouse_x, &mouse_y);
+
+    state->position_x = mouse_x - window_x;
+    state->position_y = mouse_y - window_y;
 
     // If the mouse is in the window
     if (mouse_x >= window_x && mouse_x <= window_x + window_w && mouse_y >= window_y &&
@@ -242,8 +248,8 @@ static void push_drag_event(WhistFrontend *frontend) {
     FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = false;
-    drag_event->position.x = mouse_x - window_x;
-    drag_event->position.y = mouse_y - window_y;
+    drag_event->position.x = state->position_x;
+    drag_event->position.y = state->position_y;
     event.user.data1 = drag_event;
     SDL_PushEvent(&event);
 }
@@ -279,7 +285,7 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
                                         NSPasteboard *pb =
                                             [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
                                         int change_count = (int)[pb changeCount];
-                                        if (mouse_in_window()) {
+                                        if (mouse_in_window(frontend)) {
                                             if (change_count > state->change_count) {
                                                 // If a new file has been loaded, mark as mouse
                                                 // down and update changecount
@@ -302,16 +308,16 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
                                                         }
                                                         i++;
                                                     }
-                                                }
-                                                push_drag_start_event(
+                                                    push_drag_start_event(
                                                         frontend, (char *)[file_list UTF8String]);
+                                                }
                                             } else if (state->mouse_down) {
                                                 // We are continuing to drag our file from its
                                                 // original mousedown selection
                                                 push_drag_event(frontend);
                                             }
                                         } else if (state->active) {
-                                            push_end_event(frontend);
+                                            push_drag_end_event(frontend);
                                         }
                                       }];
 
