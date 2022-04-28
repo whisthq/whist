@@ -52,7 +52,8 @@ export const mandelboxCreateErrorCommitHash = (
 export const mandelboxRequest = async (
   accessToken: string,
   regions: AWSRegion[],
-  userEmail: string
+  userEmail: string,
+  version: string
 ) =>
   post({
     endpoint: "/mandelbox/assign",
@@ -62,6 +63,6 @@ export const mandelboxRequest = async (
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
       session_id: sessionID,
       user_email: userEmail,
-      version: process.env.npm_package_version,
+      version: version,
     },
   })

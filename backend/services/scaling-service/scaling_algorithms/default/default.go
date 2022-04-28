@@ -103,10 +103,22 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
-	var (
-		configs map[string]string
-		err     error
-	)
+	// Get the most recent client app version from the config database
+	version, err := dbclient.GetClientAppVersion(ctx, client)
+	if err != nil {
+		logger.Errorf("Failed to query client app version. Err: %v", err)
+	}
+
+	if version == (subscriptions.ClientAppVersion{}) {
+		logger.Errorf("Got an empty client app version")
+	}
+
+	// Set the scaling algorithm's internal version to the one received
+	// from the config database. The scaling service uses this value for
+	// checking if the incoming requests are coming from an outdated frontend.
+	setFrontendVersion(version)
+
+	var configs map[string]string
 
 	switch metadata.GetAppEnvironmentLowercase() {
 	case string(metadata.EnvDev):
@@ -160,22 +172,6 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 
 	desiredFreeMandelboxesPerRegion = mandelboxRegionMap
 
-	// Get the most recent client app version from the config database
-	version, err := dbclient.GetClientAppVersion(ctx, client)
-	if err != nil {
-		logger.Errorf("Failed to query client app version. Err: %v", err)
-		return
-	}
-
-	if version == (subscriptions.ClientAppVersion{}) {
-		logger.Errorf("Got an empty client app version")
-		return
-	}
-
-	// Set the scaling algorithm's internal version to the one received
-	// from the config database. The scaling service uses this value for
-	// checking if the incoming requests are coming from an outdated frontend.
-	setFrontendVersion(version)
 }
 
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing

@@ -20,12 +20,13 @@ export default flow<{
   accessToken: string
   userEmail: string
   regions: AWSRegion[]
+  version: string
 }>("mandelboxCreateFlow", (trigger) => {
   const create = fork(
     trigger.pipe(
       switchMap((t) =>
         t.regions.length > 0
-          ? from(mandelboxRequest(t.accessToken, t.regions, t.userEmail))
+          ? from(mandelboxRequest(t.accessToken, t.regions, t.userEmail, t.version))
           : of({})
       )
     ),
