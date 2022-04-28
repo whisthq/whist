@@ -112,9 +112,9 @@ typedef struct {
 // Size of the UDPPacket header, excluding the payload
 #define UDPNETWORKPACKET_HEADER_SIZE ((int)(offsetof(UDPNetworkPacket, payload)))
 // How often to ping
-#define UDP_PING_INTERVAL_SEC 0.025
+#define UDP_PING_INTERVAL_SEC 0.01
 // How long to go without a pong, before the connection is marked as lost
-#define UDP_PONG_TIMEOUT_SEC 5.0
+#define UDP_PONG_TIMEOUT_SEC 2.5
 // How often to print ping logs
 #define UDP_PING_LOG_INTERVAL_SEC 1.0
 #define MAX_GROUP_STATS 8
@@ -227,7 +227,7 @@ typedef struct {
 // The amount to weigh a older pings' latency,
 // on the ewma latency value
 #define PING_LAMBDA_SHORT_TERM 0.9
-#define PING_LAMBDA_LONG_TERM 0.995
+#define PING_LAMBDA_LONG_TERM 0.999
 
 // How often should the client send connection attempts
 #define CONNECTION_ATTEMPT_INTERVAL_MS 5
@@ -588,7 +588,7 @@ static bool udp_update(void* raw_context) {
     }
     double last_recv = get_timer(&last_recv_timer);
     if (last_recv * MS_IN_SECOND > 5.0) {
-        LOG_WARNING_RATE_LIMITED(60, 4, "Time between recv() calls is too long: %fms",
+        LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
                                  last_recv * MS_IN_SECOND);
     }
     UDPPacket udp_packet;
@@ -1958,7 +1958,8 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
     if (LOG_VIDEO || LOG_AUDIO || LOG_NETWORKING ||
         id % max((int)(UDP_PING_LOG_INTERVAL_SEC / (double)UDP_PING_INTERVAL_SEC), 1) == 0 ||
         ping_time > 2.0 * context->long_term_latency) {
-        LOG_INFO(
+        LOG_INFO_RATE_LIMITED(
+            1, 5,
             "Pong %d received: took %.2fms, long term latency %.2fms, short term latency %.2fms",
             id, ping_time * MS_IN_SECOND, context->long_term_latency * MS_IN_SECOND,
             context->short_term_latency * MS_IN_SECOND);
