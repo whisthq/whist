@@ -47,24 +47,70 @@ Defines
 // In frames
 #define AUDIO_BUFFER_OVERFLOW_SIZE_0 20
 
-// The time per size sample
-#define AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS_0 100
-
-#define scaling_speed 1.2
-
 int AUDIO_QUEUE_TARGET_SIZE = AUDIO_QUEUE_TARGET_SIZE_0;
 int AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0;
-int AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS = AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS_0;
 
-double scaling_factor = 1.0;
-
+// The time per size sample
+#define AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS 20
 
 // The number of samples we use for average estimation
-#define AUDIO_BUFSIZE_NUM_SAMPLES 10
+#define AUDIO_BUFSIZE_NUM_SAMPLES 50
+
 // Acceptable size discrepancy that the average sample size could have
 // [AUDIO_QUEUE_TARGET_SIZE-AUDIO_ACCEPTABLE_DELTA, AUDIO_QUEUE_TARGET_SIZE+AUDIO_ACCEPTABLE_DELTA]
 #define AUDIO_ACCEPTABLE_DELTA 1.2
 
+
+#define scale_each_time 1.2
+double scale_factor = 1.0;
+
+WhistTimer my_timer;
+double cool_down;
+double last_running_low_time;
+int running_low_cnt=0;
+
+int dynamic_scaling_reinit()
+{
+    start_timer(&my_timer);
+    cool_down=10.0;
+    last_running_low_time=get_timer(&my_timer);
+    running_low_cnt=0;
+
+    return 0;
+}
+
+int handle_dynamic_scaling_increase(double device_queue_len)
+{
+    double current_time=get_timer(&my_timer);
+
+    //if it hasn't running low for 30s, reset counter
+    if(current_time - last_running_low_time>30)
+    {
+        running_low_cnt = 0;
+        last_running_low_time = current_time;
+        return 0;
+    }
+
+    if(device_queue_len<2.0  && current_time >cool_down)
+    {
+        running_low_cnt++;
+        last_running_low_time = current_time;
+        cool_down = 5.0;
+
+        if(running_low_cnt >=3)
+        {
+            running_low_cnt=0;
+            cool_down = 10.0;
+            scale_factor *= scale_each_time;
+
+            AUDIO_QUEUE_TARGET_SIZE= AUDIO_QUEUE_TARGET_SIZE_0 * scale_factor;
+            AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0 * scale_factor;
+            
+        }
+    }
+
+    return 0;
+}
 /*
 ============================
 Custom Types
@@ -119,11 +165,10 @@ struct AudioContext {
     AudioState audio_state;
     // Overflow state
     bool is_overflowing;
-    // Buffer for the audio buffering states
+    // Buffer for the audio buffering state
     int audio_buffering_buffer_size;
     uint8_t audio_buffering_buffer [DECODED_BYTES_PER_FRAME * (999 + 1)];
 
-    WhistTimer time_since_init_timer;
 };
 
 /*
@@ -192,7 +237,7 @@ AudioContext* init_audio(WhistFrontend* frontend) {
     start_timer(&audio_context->size_sample_timer);
     audio_context->sample_index = 0;
 
-    start_timer(&audio_context->time_since_init_timer);
+    dynamic_scaling_reinit();
 
     // Return the audio context
     return audio_context;
@@ -228,8 +273,14 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
 
     // Every sample freq ms of playtime, record an audio sample
     if (audio_context->audio_state == PLAYING) {
+
         if (get_timer(&audio_context->size_sample_timer) * MS_IN_SECOND >
             AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS) {
+            
+            static int log_cnt=0;
+            log_cnt++;
+            if(log_cnt%5==0) fprintf(stderr,"current: %.2d %.2f\n", num_frames_buffered, audio_device_size/(double)DECODED_BYTES_PER_FRAME);
+
             // Record the sample and reset the timer
             audio_context->samples[audio_context->sample_index] =
                 audio_size / (double)DECODED_BYTES_PER_FRAME;
@@ -240,32 +291,56 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
                          audio_size / (double)DECODED_BYTES_PER_FRAME,
                          audio_device_size / (double)DECODED_BYTES_PER_FRAME, num_frames_buffered);
             }
-
-            // If we've sampled numsamples time, act on the average size
-            if (audio_context->sample_index == AUDIO_BUFSIZE_NUM_SAMPLES) {
-                audio_context->sample_index = 0;
+            
+            if(audio_context->sample_index >= 10)
+            {
+                int sample_count= audio_context->sample_index;
                 // Calculate the new average, in fractional frames
                 double avg_sample = 0.0;
-                for (int i = 0; i < AUDIO_BUFSIZE_NUM_SAMPLES; i++) {
+                for (int i = 0; i < sample_count; i++) {
                     avg_sample += audio_context->samples[i];
                 }
-                avg_sample /= AUDIO_BUFSIZE_NUM_SAMPLES;
-                if (LOG_AUDIO) {
-                    LOG_INFO("Audio Buffer Average Size: %.2f", avg_sample);
+
+                avg_sample /= sample_count;
+
+                double distant = fabs(avg_sample - AUDIO_QUEUE_TARGET_SIZE);
+                double num_samples_needed= AUDIO_BUFSIZE_NUM_SAMPLES;
+                if(distant > 4.0 )
+                {   
+                    // make the required delta smaller if distant is too 
+                    num_samples_needed /=  (distant/4.0);
                 }
-                // Check for size-target discrepancy
-                if (avg_sample < AUDIO_QUEUE_TARGET_SIZE - AUDIO_ACCEPTABLE_DELTA) {
-                    if (LOG_AUDIO) {
-                        LOG_INFO("Duping a frame to catch-up");
+
+                if(sample_count >= num_samples_needed )
+                {
+                    audio_context->sample_index =0 ;
+                    // Check for size-target discrepancy
+                    if (avg_sample < AUDIO_QUEUE_TARGET_SIZE - AUDIO_ACCEPTABLE_DELTA) {
+                        fprintf(stderr,"dup a frame, %d %.2f %d\n", sample_count, avg_sample, AUDIO_QUEUE_TARGET_SIZE);
+                        if (LOG_AUDIO) {
+                            LOG_INFO("Duping a frame to catch-up");
+                        }
+                        audio_context->adjust_command = DUP_FRAME;
                     }
-                    audio_context->adjust_command = DUP_FRAME;
-                }
-                if (avg_sample > AUDIO_QUEUE_TARGET_SIZE + AUDIO_ACCEPTABLE_DELTA) {
-                    if (LOG_AUDIO) {
-                        LOG_INFO("Droping a frame to catch-up");
+                    if (avg_sample > AUDIO_QUEUE_TARGET_SIZE + AUDIO_ACCEPTABLE_DELTA) {
+                        fprintf(stderr,"drop a frame, %d %.2f %d\n", sample_count, avg_sample, AUDIO_QUEUE_TARGET_SIZE);
+                        if (LOG_AUDIO) {
+                            LOG_INFO("Droping a frame to catch-up");
+                        }
+                        audio_context->adjust_command = DROP_FRAME;
                     }
-                    audio_context->adjust_command = DROP_FRAME;
                 }
+                // always clear if num sample is full
+                else if (audio_context->sample_index == AUDIO_BUFSIZE_NUM_SAMPLES) {
+                    audio_context->sample_index = 0;
+                    if (LOG_AUDIO) {
+                        LOG_INFO("Audio Buffer Average Size: %.2f", avg_sample);
+                    }
+
+                }
+
+
+
             }
         }
     } else {
@@ -278,6 +353,7 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
         audio_size > AUDIO_BUFFER_OVERFLOW_SIZE * DECODED_BYTES_PER_FRAME) {
         LOG_WARNING("Audio Buffer overflowing (%.2f Frames)! Force-dropping Frames",
                     audio_size / (double)DECODED_BYTES_PER_FRAME);
+        fprintf(stderr, "audio buffer overflowing!!!!!\n");
         audio_context->is_overflowing = true;
     }
 
@@ -403,6 +479,7 @@ void render_audio(AudioContext* audio_context) {
                 if (audio_context->audio_state != BUFFERING &&
                     safe_get_audio_queue(audio_context) == 0) {
                     LOG_WARNING("Audio Device is dry, will start to buffer");
+                    fprintf(stderr,"device buffer dry !!!\n");
                     audio_context->audio_state = BUFFERING;
                 }
 

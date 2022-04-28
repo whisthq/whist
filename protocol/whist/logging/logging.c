@@ -50,6 +50,14 @@ format strings.
 #include "logging.h"
 #include "error_monitor.h"
 
+// disable logs after some limits are hit, helpful for debug
+// if SUPRESS_LOG_AFTER <=0, this feature is disabled
+// if this code cause real trouble in future, feel free to remove.
+#define SUPRESS_LOG_AFTER 300
+// num of logs printed so far, should be okay without mutex only for debug
+static int g_log_cnt = 0;
+
+
 static void init_backtrace_handler(void);
 
 // TAG Strings
@@ -418,6 +426,23 @@ static void logger_queue_multiple_lines(unsigned int level, char* message) {
 // external use for it then it could be made public as well.
 static void whist_log_vprintf(unsigned int level, const char* file_name, const char* function,
                               int line_number, const char* fmt_str, va_list args) {
+    
+    // if enabled, supress log after some num of logs are printed
+    if (SUPRESS_LOG_AFTER > 0) {
+        // increase counter of current log printed
+        g_log_cnt++;
+
+        // empahse on the log has been supressed
+        if (g_log_cnt > SUPRESS_LOG_AFTER && g_log_cnt <= SUPRESS_LOG_AFTER + 5) {
+            fprintf(stderr, "normal logs are supressed from now on!!!\n");
+        }
+
+        // skip log when we have printed enough
+        if (g_log_cnt > SUPRESS_LOG_AFTER) {
+            return;
+        }
+    }
+
     char stack_buffer[512];
     char* heap_buffer = NULL;
     char* buffer = stack_buffer;
