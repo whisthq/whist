@@ -6,7 +6,6 @@ import {
   matchServerLanguageWithScriptFormat,
 } from "@app/main/utils/matchServerLanguages"
 import uniq from "lodash.uniq"
-import { windowsKey } from "@app/main/utils/windowsRegistry"
 const currentPlatform = process.platform
 
 const getMacLanguageRaw = () => {
@@ -44,10 +43,13 @@ const getLinuxLanguageRaw = () => {
 
 const getWindowsLanguageRaw = () => {
   // This function will return the language in the Windows client format
-  const languagesRaw: string =
-    windowsKey("Control Panel\\International\\User Profile").getValue(
-      "Languages"
-    ) ?? ""
+  // We cannot grab the registry below using the windows-registry-napi package, because it does not support the REG_MULTI_SZ type.
+  const languagesRaw = execCommand(
+    'reg query "HKCU\\Control Panel\\International\\User Profile" /v Languages | findstr /c:"Languages"',
+    ".",
+    {},
+    "pipe"
+  )
   // Remove all new-lines and split over spaces to select last word (containing the languages)
   const parsedLanguagesRaw = languagesRaw
     .toString()
