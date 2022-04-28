@@ -2,7 +2,7 @@
 # be committed to git history
 node_modules/
 build/
-src/config.json
+config.json
 
 # yarn errors will appear here during development, we don't need to track this
 yarn-error.log

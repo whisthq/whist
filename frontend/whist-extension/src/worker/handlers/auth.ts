@@ -42,6 +42,7 @@ const initGoogleAuthHandler = () => {
   */
 
   ipcMessage(openGoogleAuth).subscribe(() => {
+    console.log("Opening", authPortalURL())
     chrome.identity.launchWebAuthFlow(
       {
         url: authPortalURL(),

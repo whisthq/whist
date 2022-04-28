@@ -1,14 +1,14 @@
-import { AUTH_TAB, LOGGED_IN_TAB } from "@app/constants/tabs"
+import { authTab, loggedInTab } from "@app/constants/tabs"
 
 const createAuthTab = () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL(`src/tabs.html?show=${AUTH_TAB}`),
+    url: chrome.runtime.getURL(`src/tabs.html?show=${authTab}`),
   })
 }
 
 const createLoggedInTab = () => {
   chrome.tabs.create({
-    url: chrome.runtime.getURL(`src/tabs.html?show=${LOGGED_IN_TAB}`),
+    url: chrome.runtime.getURL(`src/tabs.html?show=${loggedInTab}`),
   })
 }
 
