@@ -63,7 +63,7 @@ jobs:
 
       # Steps to detect branch acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
       - name: Get branch name and commit SHA
-        if: always() && (github.event_name != 'pull_request') }}
+        if: always()
         run: |
           if [[ ${{ github.event_name }} == 'pull_request' ]]; then
             echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
