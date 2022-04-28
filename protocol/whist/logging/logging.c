@@ -57,7 +57,6 @@ format strings.
 // num of logs printed so far, should be okay without mutex only for debug
 static int g_log_cnt = 0;
 
-
 static void init_backtrace_handler(void);
 
 // TAG Strings
@@ -426,7 +425,6 @@ static void logger_queue_multiple_lines(unsigned int level, char* message) {
 // external use for it then it could be made public as well.
 static void whist_log_vprintf(unsigned int level, const char* file_name, const char* function,
                               int line_number, const char* fmt_str, va_list args) {
-    
     // if enabled, supress log after some num of logs are printed
     if (SUPRESS_LOG_AFTER > 0) {
         // increase counter of current log printed
