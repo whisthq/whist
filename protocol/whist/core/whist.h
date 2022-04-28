@@ -561,6 +561,16 @@ typedef enum WhistOSType {
 } WhistOSType;
 
 /**
+ * @brief   Drag state
+ * @details An enum of drag states
+ */
+typedef enum WhistDragState {
+    START_DRAG = 0,
+    IN_DRAG = 1,
+    END_DRAG = 2,
+} WhistDragState;
+
+/**
  * @brief   Multigesture message.
  * @details Message from multigesture event on touchpad.
  */
@@ -573,6 +583,17 @@ typedef struct WhistMultigestureMessage {
     bool active_gesture;                 ///< Whether this multigesture is already active.
     WhistMultigestureType gesture_type;  ///< Multigesture type
 } WhistMultigestureMessage;
+
+/**
+ * @brief   File drag message.
+ * @details Message from file drag update event.
+ */
+typedef struct {
+    int x;
+    int y;
+    DragState drag_state;
+    char file_list[0]; // Should only have contents when drag_state is START_DRAG
+} WhistFileDragData;
 
 /**
  * @brief   Client init message.
@@ -737,13 +758,7 @@ typedef struct WhistClientMessage {
         ClipboardData clipboard;     // CMESSAGE_CLIPBOARD
         FileMetadata file_metadata;  // CMESSAGE_FILE_METADATA
         FileData file;               // CMESSAGE_FILE_DATA
-        struct {
-            int x;
-            int y;
-            bool start_drag;
-            bool end_drag;
-            char file_list[0];
-        } file_drag_data;      // CMESSAGE_FILE_DRAG
+        WhistFileDragData file_drag_data;  // CMESSAGE_FILE_DRAG
         char urls_to_open[0];  // MESSAGE_OPEN_URL
     };
 } WhistClientMessage;

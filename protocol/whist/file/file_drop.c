@@ -80,9 +80,9 @@ static Atom XA_XdndDrop;        // NOLINT
 static Atom XA_XdndFinished;    // NOLINT
 
 static Display* display = NULL;
-Window our_window;
-Window active_window;
-WhistMutex xdnd_mutex;
+static Window our_window;
+static Window active_window;
+static WhistMutex xdnd_mutex;
 
 /*
 ============================
@@ -136,15 +136,23 @@ Private Function Implementations
 
 int xdnd_own_and_send_enter(void) {
     int revert;
-    if (!display || !active_window || !our_window) {
-        // Get our window and active X11 window
+
+    if (!display) {
+        return -1;
+    }
+
+    // Get our window and active X11 window
+    if (!our_window) {
         unsigned long color = BlackPixel(display, DefaultScreen(display));
         our_window =
             XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1, 1, 0, color, color);
+    }
+    if (!active_window) {
         XGetInputFocus(display, &active_window, &revert);
     }
 
-    if (!display || !active_window || !our_window) {
+    // If the windows still don't exist
+    if (!active_window || !our_window) {
         return -1;
     }
 
@@ -354,8 +362,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
 
         char* new_file_uri_position = file_uri_list + file_uri_list_strlen - xdnd_file_url_len;
         memset(new_file_uri_position, 0, xdnd_file_url_len);
-        safe_strncpy(new_file_uri_position, "file://", 8);
-        safe_strncpy(new_file_uri_position + 7, fuse_path, strlen(fuse_path) + 1);
+        snprintf(new_file_uri_position, xdnd_file_url_len, "file://%s", fuse_path);
 
         free(fuse_path);
 
@@ -551,10 +558,12 @@ void destroy_file_drop_handler(void) {
         Clean up the file drop handler
     */
 
+    // Destroys all windows and display
     if (display != NULL) {
         XCloseDisplay(display);
         display = NULL;
     }
+
     whist_destroy_mutex(xdnd_mutex);
 }
 
