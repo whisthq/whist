@@ -293,7 +293,7 @@ static int handle_file_drag_message(WhistClientMessage *wcmsg) {
             (int): Returns -1 on failure, 0 on success
     */
 
-    switch (file_drag_data.drag_state) {
+    switch (wcmsg->file_drag_data.drag_state) {
         case START_DRAG: {
             file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y,
                          wcmsg->file_drag_data.file_list);
