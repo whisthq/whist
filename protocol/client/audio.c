@@ -332,8 +332,8 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
             static int log_cnt = 0;
             log_cnt++;
             if (log_cnt % 5 == 0)
-                fprintf(stderr, "current: %.2d %.2f %.2f\n", num_frames_buffered, device_queue_len,
-                        scale_factor);
+                fprintf(stderr, "current queue_len= %d %.2f scale_factor=%.2f\n",
+                        num_frames_buffered, device_queue_len, scale_factor);
 
             // Record the sample and reset the timer
             audio_context->samples[audio_context->sample_index] =
