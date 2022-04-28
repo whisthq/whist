@@ -331,9 +331,9 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
             AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS) {
             static int log_cnt = 0;
             log_cnt++;
-            if (log_cnt % 5 == 0)
-                fprintf(stderr, "current queue_len: %d %.2f  scale_factor=%.2f\n",
-                        num_frames_buffered, device_queue_len, scale_factor);
+            if (log_cnt % 1 == 0)
+                fprintf(stderr, "current queue_len: %d %.2f  scale_factor=%.2f %d\n",
+                        num_frames_buffered, device_queue_len, scale_factor, audio_context->audio_state);
 
             // Record the sample and reset the timer
             audio_context->samples[audio_context->sample_index] =
@@ -463,8 +463,23 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     // Mark the command as consumed
     audio_context->adjust_command = NOOP_FRAME;
 }
+static void check_buffer_dry(AudioContext* audio_context)
+{
+        // If the audio device runs dry, begin buffering
+        // Buffering check prevents spamming this log
+        if (audio_context->audio_state != BUFFERING &&
+            safe_get_audio_queue(audio_context) == 0) {
+            LOG_WARNING("Audio Device is dry, will start to buffer");
+            fprintf(stderr, "device buffer dry !!!\n");
+            audio_context->audio_state = BUFFERING;
+        }
+}
 
 void render_audio(AudioContext* audio_context) {
+    
+    if (whist_frontend_audio_is_open(audio_context->target_frontend)) {
+        check_buffer_dry(audio_context);
+    }
     if (audio_context->pending_render_context) {
         if (LOG_AUDIO) {
             LOG_INFO("Rendering Audio");
@@ -523,14 +538,7 @@ void render_audio(AudioContext* audio_context) {
                 audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
                 decoded_data_size = audio_decoder_get_frame_data_size(audio_context->audio_decoder);
 
-                // If the audio device runs dry, begin buffering
-                // Buffering check prevents spamming this log
-                if (audio_context->audio_state != BUFFERING &&
-                    safe_get_audio_queue(audio_context) == 0) {
-                    LOG_WARNING("Audio Device is dry, will start to buffer");
-                    fprintf(stderr, "device buffer dry !!!\n");
-                    audio_context->audio_state = BUFFERING;
-                }
+                check_buffer_dry(audio_context);
 
                 // If we're buffering, then buffer
                 if (audio_context->audio_state == BUFFERING) {
