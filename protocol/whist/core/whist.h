@@ -591,7 +591,7 @@ typedef struct WhistMultigestureMessage {
 typedef struct {
     int x;
     int y;
-    DragState drag_state;
+    WhistDragState drag_state;
     char file_list[0]; // Should only have contents when drag_state is START_DRAG
 } WhistFileDragData;
 

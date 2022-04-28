@@ -169,7 +169,27 @@ typedef struct FileDragState {
     bool mouse_down;
     int change_count;
     bool active;
+    WhistTimer sent_drag_move_event_timer;
 } FileDragState;
+
+static bool mouse_in_window(WhistFrontend* frontend) {
+    SDLFrontendContext *context = frontend->context;
+
+    int window_x, window_y, mouse_x, mouse_y;
+    int window_w, window_h;
+    SDL_GetWindowPosition(context->window, &window_x, &window_y);
+    SDL_GetWindowSize(context->window, &window_w, &window_h);
+    // Mouse is not active in window - so we must use the global mouse and manually transform
+    SDL_GetGlobalMouseState(&mouse_x, &mouse_y);
+
+    // If the mouse is in the window
+    if (mouse_x >= window_x && mouse_x <= window_x + window_w && mouse_y >= window_y &&
+        mouse_y <= window_y + window_h) {
+        return true;
+    }
+
+    return false;
+}
 
 static void push_drag_end_event(WhistFrontend *frontend) {
     SDLFrontendContext *context = frontend->context;
@@ -201,36 +221,31 @@ static void push_drag_start_event(WhistFrontend *frontend, char *file_list) {
     }
     event.user.data1 = drag_event;
     SDL_PushEvent(&event);
+
+    start_timer(&state->sent_drag_move_event_timer);
 }
 
 static void push_drag_event(WhistFrontend *frontend) {
     SDLFrontendContext *context = frontend->context;
     FileDragState *state = context->file_drag_data;
 
-    int window_x, window_y, mouse_x, mouse_y;
-    int window_w, window_h;
-    SDL_GetWindowPosition(context->window, &window_x, &window_y);
-    SDL_GetWindowSize(context->window, &window_w, &window_h);
-    // Mouse is not active in window - so we must use the global mouse and manually transform
-    SDL_GetGlobalMouseState(&mouse_x, &mouse_y);
+    state->active = true;
 
-    // If the mouse is in the window
-    if (mouse_x >= window_x && mouse_x <= window_x + window_w && mouse_y >= window_y &&
-        mouse_y <= window_y + window_h) {
-        state->active = true;
-
-        SDL_Event event = {0};
-        event.type = context->file_drag_event_id;
-        FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
-        memset(drag_event, 0, sizeof(FrontendFileDragEvent));
-        drag_event->end_drag = false;
-        drag_event->position.x = mouse_x - window_x;
-        drag_event->position.y = mouse_y - window_y;
-        event.user.data1 = drag_event;
-        SDL_PushEvent(&event);
-    } else if (state->active) {
-        push_drag_end_event(frontend);
+    // Only send a drag event every 5 ms
+    if (get_timer(&state->sent_drag_move_event_timer) < 5) {
+        return;
     }
+    start_timer(&state->sent_drag_move_event_timer);
+
+    SDL_Event event = {0};
+    event.type = context->file_drag_event_id;
+    FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
+    memset(drag_event, 0, sizeof(FrontendFileDragEvent));
+    drag_event->end_drag = false;
+    drag_event->position.x = mouse_x - window_x;
+    drag_event->position.y = mouse_y - window_y;
+    event.user.data1 = drag_event;
+    SDL_PushEvent(&event);
 }
 
 void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
@@ -264,35 +279,39 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
                                         NSPasteboard *pb =
                                             [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
                                         int change_count = (int)[pb changeCount];
-                                        if (change_count > state->change_count) {
-                                            // If a new file has been loaded, mark as mouse
-                                            // down and update changecount
-                                            state->change_count = change_count;
-                                            state->mouse_down = true;
+                                        if (mouse_in_window()) {
+                                            if (change_count > state->change_count) {
+                                                // If a new file has been loaded, mark as mouse
+                                                // down and update changecount
+                                                state->change_count = change_count;
+                                                state->mouse_down = true;
 
-                                            if ([[pb types] containsObject:NSFilenamesPboardType]) {
-                                                NSArray *files =
-                                                    [pb propertyListForType:NSFilenamesPboardType];
-                                                int number_of_files = [files count];
-                                                NSString *file_list = [NSString string];
-                                                int i = 0;
-                                                for (NSString *file in files) {
-                                                    file_list =
-                                                        [file_list stringByAppendingString:
-                                                                       [file lastPathComponent]];
-                                                    if (i < number_of_files - 1) {
-                                                        file_list = [file_list
-                                                            stringByAppendingString:@"\n"];
+                                                if ([[pb types] containsObject:NSFilenamesPboardType]) {
+                                                    NSArray *files =
+                                                        [pb propertyListForType:NSFilenamesPboardType];
+                                                    int number_of_files = [files count];
+                                                    NSString* file_list = [NSString string];
+                                                    int i = 0;
+                                                    for (NSString *file in files) {
+                                                        file_list =
+                                                            [file_list stringByAppendingString:
+                                                                           [file lastPathComponent]];
+                                                        if (i < number_of_files - 1) {
+                                                            file_list = [file_list
+                                                                stringByAppendingString:@"\n"];
+                                                        }
+                                                        i++;
                                                     }
-                                                    i++;
                                                 }
                                                 push_drag_start_event(
-                                                    frontend, (char *)[file_list UTF8String]);
+                                                        frontend, (char *)[file_list UTF8String]);
+                                            } else if (state->mouse_down) {
+                                                // We are continuing to drag our file from its
+                                                // original mousedown selection
+                                                push_drag_event(frontend);
                                             }
-                                        } else if (state->mouse_down) {
-                                            // We are continuing to drag our file from its
-                                            // original mousedown selection
-                                            push_drag_event(frontend);
+                                        } else if (state->active) {
+                                            push_end_event(frontend);
                                         }
                                       }];
 
