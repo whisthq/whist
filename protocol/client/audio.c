@@ -61,28 +61,86 @@ int AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0;
 #define AUDIO_ACCEPTABLE_DELTA 1.2
 
 
-#define scale_each_time 1.2
-double scale_factor = 1.0;
+#define scale_each_time 1.5
+#define init_scale_factor 1.0
+#define scale_max 4.0
+double scale_factor = init_scale_factor;
+
+
+double danger_threshold = 2.0;
+double safe_threshold =4.0;
 
 WhistTimer my_timer;
 double cool_down;
 double last_running_low_time;
 int running_low_cnt=0;
+int cool_down_large =8.0;
+int cool_down_small =4.0;
 
-int dynamic_scaling_reinit()
+double scale_down_last_check_time;
+double running_min;
+double inf=99999.0;
+
+
+int adjust_to_scale_factor(double current_time)
 {
-    start_timer(&my_timer);
-    cool_down=10.0;
-    last_running_low_time=get_timer(&my_timer);
-    running_low_cnt=0;
+    AUDIO_QUEUE_TARGET_SIZE= AUDIO_QUEUE_TARGET_SIZE_0 * scale_factor;
+    AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0 * scale_factor;
+
+    running_low_cnt = 0;
+    last_running_low_time =current_time;
+    scale_down_last_check_time = current_time;
+    running_min = inf;
+    cool_down = cool_down_small;
 
     return 0;
 }
 
-int handle_dynamic_scaling_increase(double device_queue_len)
+int dynamic_scaling_reinit()
 {
+    //scale_factor= init_scale_factor;
+    start_timer(&my_timer);
     double current_time=get_timer(&my_timer);
+    adjust_to_scale_factor(current_time);
 
+    cool_down= cool_down_large;
+    return 0;
+}
+
+int handle_scale_down(double device_queue_len,double current_time)
+{
+    // maintain the running min
+    if(device_queue_len < running_min)
+    {
+        running_min = device_queue_len;
+    }
+
+    // if we observered a value below the safe_threadhold , reset the timer and running mean,
+    // so that we can re-measure from scratch
+    if(running_min < safe_threshold)
+    {
+        scale_down_last_check_time = current_time;
+        running_min = inf;
+    }
+
+    // if the running min has been above safe thres_hold,  we decrease queue len according to the threshold 
+    if(running_min> safe_threshold  && running_min < inf -1 && current_time - scale_down_last_check_time >45.0 )
+    {
+        double adjust= running_min -safe_threshold;
+        double new_scale_factor= ( AUDIO_QUEUE_TARGET_SIZE - adjust)/ AUDIO_QUEUE_TARGET_SIZE_0 ;
+        if(new_scale_factor < 0.8 ) new_scale_factor=0.8;
+
+        //TODO: make sure scale down doesn't cause overflow
+        scale_factor= new_scale_factor;
+        adjust_to_scale_factor(current_time);
+
+        return 0;
+    }
+    return 0;
+}
+
+int handle_scale_up(double device_queue_len,double current_time)
+{
     //if it hasn't running low for 30s, reset counter
     if(current_time - last_running_low_time>30)
     {
@@ -91,23 +149,28 @@ int handle_dynamic_scaling_increase(double device_queue_len)
         return 0;
     }
 
-    if(device_queue_len<2.0  && current_time >cool_down)
+    if(device_queue_len<danger_threshold  && current_time -last_running_low_time >cool_down)
     {
         running_low_cnt++;
         last_running_low_time = current_time;
-        cool_down = 5.0;
+        cool_down = cool_down_small;
 
         if(running_low_cnt >=3)
         {
-            running_low_cnt=0;
-            cool_down = 10.0;
             scale_factor *= scale_each_time;
-
-            AUDIO_QUEUE_TARGET_SIZE= AUDIO_QUEUE_TARGET_SIZE_0 * scale_factor;
-            AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0 * scale_factor;
-            
+            if(scale_factor > scale_max) scale_factor = scale_max;
+            adjust_to_scale_factor(current_time);
         }
     }
+    return 0;
+}
+
+int handle_dynamic_scaling(double device_queue_len)
+{
+    double current_time=get_timer(&my_timer);
+    // scale down and scale up are pretty much indepent
+    handle_scale_down(device_queue_len, current_time);
+    handle_scale_up(device_queue_len, current_time);
 
     return 0;
 }
@@ -274,12 +337,16 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     // Every sample freq ms of playtime, record an audio sample
     if (audio_context->audio_state == PLAYING) {
 
+        double device_queue_len =  audio_device_size/(double)DECODED_BYTES_PER_FRAME;
+        
+        handle_dynamic_scaling(device_queue_len);
+
         if (get_timer(&audio_context->size_sample_timer) * MS_IN_SECOND >
             AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS) {
             
             static int log_cnt=0;
             log_cnt++;
-            if(log_cnt%5==0) fprintf(stderr,"current: %.2d %.2f\n", num_frames_buffered, audio_device_size/(double)DECODED_BYTES_PER_FRAME);
+            if(log_cnt%5==0) fprintf(stderr,"current: %.2d %.2f %.2f\n", num_frames_buffered, device_queue_len,scale_factor);
 
             // Record the sample and reset the timer
             audio_context->samples[audio_context->sample_index] =
@@ -305,10 +372,10 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
 
                 double distant = fabs(avg_sample - AUDIO_QUEUE_TARGET_SIZE);
                 double num_samples_needed= AUDIO_BUFSIZE_NUM_SAMPLES;
-                if(distant > 4.0 )
+                if(distant > 3 * AUDIO_ACCEPTABLE_DELTA  )
                 {   
                     // make the required delta smaller if distant is too 
-                    num_samples_needed /=  (distant/4.0);
+                    num_samples_needed /=  (distant/3 * AUDIO_ACCEPTABLE_DELTA);
                 }
 
                 if(sample_count >= num_samples_needed )
