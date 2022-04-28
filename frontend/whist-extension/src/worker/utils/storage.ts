@@ -1,3 +1,5 @@
+import { fromEventPattern } from "rxjs"
+
 const setStorage = (key: string, value: string) => {
   return new Promise<void>((resolve) => {
     chrome.storage.sync.set({ [key]: value }, () => {
@@ -14,4 +16,13 @@ const getStorage = (key: string) => {
   })
 }
 
-export { setStorage, getStorage }
+const storageDidChange = fromEventPattern(
+  (handler: any) => chrome.storage.onChanged.addListener(handler),
+  (handler: any) => chrome.storage.onChanged.removeListener(handler),
+  (changes: object, areaName: string) => ({
+    changes,
+    areaName,
+  })
+)
+
+export { getStorage, setStorage, storageDidChange }

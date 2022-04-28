@@ -1,4 +1,5 @@
 import { fromEventPattern } from "rxjs"
+import { filter } from "rxjs/operators"
 
 const message = fromEventPattern(
   (handler: any) => chrome.runtime.onMessage.addListener(handler),
@@ -10,4 +11,7 @@ const message = fromEventPattern(
   })
 )
 
-export { message }
+const ipcMessage = (name: string) =>
+  message.pipe(filter(({ request }) => request === name))
+
+export { ipcMessage }

@@ -1,6 +1,6 @@
 import React from "react"
 
-import { openGoogleAuth } from "@app/tabs/utils/auth"
+import { openGoogleAuth } from "@app/constants/messaging"
 
 const LoginTitle = () => (
   <div
@@ -41,7 +41,9 @@ export default () => {
           <LoginSubtitle />
         </div>
         <div className="mt-16">
-          <LoginButton login={openGoogleAuth} />
+          <LoginButton
+            login={() => chrome.runtime.sendMessage(openGoogleAuth)}
+          />
         </div>
       </div>
     </div>

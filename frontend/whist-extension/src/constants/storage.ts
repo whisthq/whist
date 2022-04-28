@@ -1,2 +1,2 @@
-export const CACHED_AUTH_INFO = "CACHED_AUTH_INFO"
+export const cachedAuthInfo = "cachedAuthInfo"
 export const CACHED_CONFIG_TOKEN = "CACHED_CONFIG_TOKEN"
