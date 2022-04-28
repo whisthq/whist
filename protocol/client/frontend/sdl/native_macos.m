@@ -235,13 +235,13 @@ static void push_drag_event(WhistFrontend *frontend) {
     SDLFrontendContext *context = frontend->context;
     FileDragState *state = context->file_drag_data;
 
-    state->active = true;
-
-    // Only send a drag event every 5 ms
-    if (get_timer(&state->sent_drag_move_event_timer) < 5) {
+    // Send a drag event at most every 5 ms
+    if (state->active && get_timer(&state->sent_drag_move_event_timer) * MS_IN_SECOND < 5) {
         return;
     }
     start_timer(&state->sent_drag_move_event_timer);
+
+    state->active = true;
 
     SDL_Event event = {0};
     event.type = context->file_drag_event_id;
