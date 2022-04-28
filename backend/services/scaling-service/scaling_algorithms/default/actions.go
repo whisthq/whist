@@ -743,7 +743,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	frontendVersion := getFrontendVersion()
 
 	// Parse the version with the `hashicorp/go-version` package so we can compare.
-	parsedFrontendVersion, err = hashicorp.NewVersion(utils.Sprintf("%v.%v.%v", frontendVersion.Major, frontendVersion.Minor, frontendVersion.Micro))
+	parsedFrontendVersion, err = hashicorp.NewVersion(frontendVersion)
 	if err != nil {
 		logger.Errorf("Failed parsing client app version from scaling algorithm config. Err: %v", err)
 	}

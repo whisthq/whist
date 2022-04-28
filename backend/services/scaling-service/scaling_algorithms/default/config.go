@@ -140,11 +140,26 @@ func GetEnabledRegions() []string {
 // determine if the incoming requests come from an outdated frontend, and is part of
 // common configuration values shared by the scaling algorithms. Its necessary to grab
 // a lock because multiple scaling algorithms read and update it.
-func getFrontendVersion() *subscriptions.ClientAppVersion {
+func getFrontendVersion() string {
 	versionLock.Lock()
 	defer versionLock.Unlock()
 
-	return clientAppVersion
+	var version string
+
+	if clientAppVersion == nil {
+		return ""
+	}
+
+	switch metadata.GetAppEnvironment() {
+	case metadata.EnvDev:
+		version = utils.Sprintf("%v.%v.%v-dev-rc.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro, clientAppVersion.DevRC)
+	case metadata.EnvStaging:
+		version = utils.Sprintf("%v.%v.%v-staging-rc.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro, clientAppVersion.StagingRC)
+	default:
+		version = utils.Sprintf("%v.%v.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro)
+	}
+
+	return version
 }
 
 // setFrontendVersion sets the frontend version we track locally. It does not update the value in the config database,

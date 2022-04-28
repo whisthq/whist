@@ -1,4 +1,4 @@
-import { screen } from "electron"
+import { app, screen } from "electron"
 
 import { merge, Observable, of } from "rxjs"
 import {
@@ -58,6 +58,7 @@ export default flow(
           accessToken: t.accessToken,
           userEmail: t.userEmail,
           regions: t.regions.map((r) => r.region),
+          version: app.getVersion(),
         }))
       )
     )
