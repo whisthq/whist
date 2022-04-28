@@ -22,6 +22,7 @@ import {
   WindowHashSupport,
   WindowHashRestoreTabs,
   WindowHashImportOnboarding,
+  WindowHashUpdate,
 } from "@app/constants/windows"
 import {
   createAuthWindow,
@@ -202,6 +203,7 @@ withAppActivated(
   destroyElectronWindow(WindowHashImportLoading)
   destroyElectronWindow(WindowHashOnboarding)
   destroyElectronWindow(WindowHashImport)
+  destroyElectronWindow(WindowHashUpdate)
 })
 
 // When the protocol disconnects, destroy the omnibar
