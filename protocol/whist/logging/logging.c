@@ -50,10 +50,14 @@ format strings.
 #include "logging.h"
 #include "error_monitor.h"
 
+#ifndef NDEBUG
 // disable logs after some limits are hit, helpful for debug
 // if SUPRESS_LOG_AFTER <=0, this feature is disabled
 // if this code cause real trouble in future, feel free to remove.
 #define SUPRESS_LOG_AFTER 300
+#else
+#define SUPRESS_LOG_AFTER 0
+#endif
 // num of logs printed so far, should be okay without mutex only for debug
 static int g_log_cnt = 0;
 
