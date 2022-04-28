@@ -110,7 +110,9 @@ fi
 flags+=("$INITIAL_URL")
 
 # OS-specific provisions
-if [[ "$CLIENT_OS" == "darwin" ]]; then
+# If no CLIENT_OS is passed (i.e. we're testing locally), assume macOS
+# and disable smooth scrolling.
+if [[ "$CLIENT_OS" == "darwin" || "$CLIENT_OS" == "" ]]; then
   # Edit the Brave Preferences Config file to use the default Mac fonts
   echo {} | \
     jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
