@@ -74,7 +74,7 @@ WhistTimer my_timer;
 double cool_down;
 double last_running_low_time;
 int running_low_cnt=0;
-int cool_down_large =8.0;
+int cool_down_large =5.0;
 int cool_down_small =4.0;
 
 double scale_down_last_check_time;
@@ -82,7 +82,7 @@ double running_min;
 double inf=99999.0;
 
 
-int adjust_to_scale_factor(double current_time)
+static int adjust_to_scale_factor(double current_time)
 {
     AUDIO_QUEUE_TARGET_SIZE= AUDIO_QUEUE_TARGET_SIZE_0 * scale_factor;
     AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0 * scale_factor;
@@ -96,7 +96,7 @@ int adjust_to_scale_factor(double current_time)
     return 0;
 }
 
-int dynamic_scaling_reinit()
+static int dynamic_scaling_reinit()
 {
     //scale_factor= init_scale_factor;
     start_timer(&my_timer);
@@ -107,7 +107,7 @@ int dynamic_scaling_reinit()
     return 0;
 }
 
-int handle_scale_down(double device_queue_len,double current_time)
+static int handle_scale_down(double device_queue_len,double current_time)
 {
     // maintain the running min
     if(device_queue_len < running_min)
@@ -139,7 +139,7 @@ int handle_scale_down(double device_queue_len,double current_time)
     return 0;
 }
 
-int handle_scale_up(double device_queue_len,double current_time)
+static int handle_scale_up(double device_queue_len,double current_time)
 {
     //if it hasn't running low for 30s, reset counter
     if(current_time - last_running_low_time>30)
@@ -165,7 +165,7 @@ int handle_scale_up(double device_queue_len,double current_time)
     return 0;
 }
 
-int handle_dynamic_scaling(double device_queue_len)
+static int handle_dynamic_scaling(double device_queue_len)
 {
     double current_time=get_timer(&my_timer);
     // scale down and scale up are pretty much indepent
@@ -359,7 +359,7 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
                          audio_device_size / (double)DECODED_BYTES_PER_FRAME, num_frames_buffered);
             }
             
-            if(audio_context->sample_index >= 10)
+            if(audio_context->sample_index >= 7)
             {
                 int sample_count= audio_context->sample_index;
                 // Calculate the new average, in fractional frames
