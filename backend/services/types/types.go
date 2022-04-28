@@ -17,9 +17,9 @@ import (
 // of type safety, including making sure we never switch Docker and Whist
 // IDs, for instance.
 
-// A MandelboxID is a random string that the scaling service creates for each
-// mandelbox. We need some sort of identifier for each mandelbox, and we need
-// it _before_ Docker gives us back the runtime Docker ID for the mandelbox.
+// A MandelboxID is a random string created for each mandelbox. We need some
+// sort of identifier for each mandelbox, and we need it _before_ Docker
+// gives us back the runtime Docker ID for the mandelbox.
 type MandelboxID uuid.UUID
 
 // A DockerID is provided by Docker at mandelbox creation time.
@@ -41,6 +41,9 @@ type ConfigEncryptionToken string
 
 // ClientAppAccessToken is defined as its own type for similar reasons.
 type ClientAppAccessToken string
+
+// AESKey is defined as its own type for similar reasons.
+type AESKey string
 
 // JSONData is defined as its own type for similar reasons.
 type JSONData string

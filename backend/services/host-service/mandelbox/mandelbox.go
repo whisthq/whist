@@ -84,6 +84,12 @@ type Mandelbox interface {
 	GetClientAppAccessToken() types.ClientAppAccessToken
 	SetClientAppAccessToken(types.ClientAppAccessToken)
 
+	// Methods for getting and registering the AES key for the mandelbox.
+	// Its necessary to do so because the key has to be passed at container
+	// launch and returned to the frontend.
+	GetAESKey() types.AESKey
+	SetAESKey(types.AESKey)
+
 	// AssignPortBindings is used to request port bindings on the host for
 	// mandelboxes. We allocate the host ports to be bound so the Docker runtime
 	// can actually bind them into the mandelbox.
@@ -275,6 +281,7 @@ type mandelboxData struct {
 
 	configEncryptionToken types.ConfigEncryptionToken
 	clientAppAccessToken  types.ClientAppAccessToken
+	aesKey                types.AESKey
 
 	uinputDevices        *uinputdevices.UinputDevices
 	uinputDeviceMappings []dockercontainer.DeviceMapping
@@ -344,6 +351,20 @@ func (mandelbox *mandelboxData) SetConfigEncryptionToken(token types.ConfigEncry
 	mandelbox.rwlock.Lock()
 	defer mandelbox.rwlock.Unlock()
 	mandelbox.configEncryptionToken = token
+}
+
+// GetAESKey returns the AES key.
+func (mandelbox *mandelboxData) GetAESKey() types.AESKey {
+	mandelbox.rwlock.RLock()
+	defer mandelbox.rwlock.RUnlock()
+	return mandelbox.aesKey
+}
+
+// SetAESKey sets the AES key.
+func (mandelbox *mandelboxData) SetAESKey(aesKey types.AESKey) {
+	mandelbox.rwlock.Lock()
+	defer mandelbox.rwlock.Unlock()
+	mandelbox.aesKey = aesKey
 }
 
 // GetClientAppAccessToken returns the client app access token.
