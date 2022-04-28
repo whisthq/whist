@@ -83,7 +83,7 @@ withAppActivated(
   )
 ).subscribe(([, p]: [any, ChildProcess]) => {
   const msElapsed = Date.now() - sessionID
-  const delay = Math.max(0, 4000 - msElapsed)
+  const delay = Math.max(0, 3000 - msElapsed)
 
   setTimeout(() => {
     destroyProtocol(p)
