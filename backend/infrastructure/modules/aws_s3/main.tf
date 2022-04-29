@@ -1,3 +1,33 @@
+# ------------------------------ Buckets for Windows Electron application ------------------------------ #
+
+# Buckets for storing the Windows Electron application, per environment
+resource "aws_s3_bucket" "whist-electron-windows" {
+  bucket = "whist-electron-windows-${var.env}"
+
+  tags = {
+    Name      = "whist-electron-windows-${var.env}"
+    Env       = var.env
+    Terraform = true
+  }
+}
+
+# Bucket for storing the base Windows Electron application. On Windows, we need to
+# manually codesign the application which a user downloads with a physical USB dongle
+# (EV Codesigning Certificate). Therefore, we create an extra bucket, where we store a
+# version of the `prod` application which gets codesigned manually and which users
+# download from the Whist website. This application autoamtically autoupdates to the
+# content of the `prod` bucket.
+resource "aws_s3_bucket" "whist-electron-windows-base" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = "whist-electron-windows-base"
+
+  tags = {
+    Name      = "whist-electron-windows-base"
+    Env       = var.env
+    Terraform = true
+  }
+}
+
 # ------------------------------ Buckets for user app configs ------------------------------ #
 
 # Buckets for storing user configurations, per environment
