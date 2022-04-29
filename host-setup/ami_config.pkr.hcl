@@ -106,7 +106,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   # We manually loop over all availabilitiy zones for the given region in CI, so that we can try all AZes
   # in case there is no capacity in a given AZ.
-  availability_zone = "us-east-1a"
+  availability_zone = "${var.availability_zone}"
 
   # spot_instance_types is a list of acceptable instance types to run your build on. We will request a spot
   # instance using the max price of spot_price and the allocation strategy of "lowest price". Your instance
