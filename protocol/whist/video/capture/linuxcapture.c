@@ -340,6 +340,8 @@ int capture_screen(CaptureDevice* device) {
                     device->frame_data = device->nvidia_capture_device->p_gpu_texture;
                     // GPU captures need the pitch to just be width
                     device->pitch = device->width;
+                    // Capture the corner color, using X11
+                    device->corner_color = x11_get_corner_color(device->x11_capture_device);
                     return ret;
                 } else {
                     LOG_ERROR(

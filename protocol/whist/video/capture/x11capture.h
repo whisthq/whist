@@ -74,8 +74,17 @@ bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, ui
                                     uint32_t dpi);
 
 /**
- * @brief           Capture the screen with given device. Afterwards, the frame capture is stored in
- * frame_data.
+ * @brief           Capture the corner color with the given capture device.
+ *
+ * @param device    Device to use for corner color capture capture
+ *
+ * @returns         The color of the corner
+ */
+WhistRGBColor x11_get_corner_color(X11CaptureDevice* device);
+
+/**
+ * @brief           Capture the screen with given capture device.
+ *                  Afterwards, the frame capture is stored in frame_data.
  *
  * @param device    Device to use for screen captures
  *

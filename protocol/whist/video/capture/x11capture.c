@@ -141,6 +141,39 @@ bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, ui
     return true;
 }
 
+WhistRGBColor x11_get_corner_color(X11CaptureDevice* device) {
+    FATAL_ASSERT(device != NULL);
+
+    // Lock the display
+    XLockDisplay(device->display);
+    // Capture the 1x1 corner image
+    XImage* corner_image = XGetImage(device->display, device->root, 0, 0, 1, 1, AllPlanes, ZPixmap);
+    if (corner_image == NULL) {
+        LOG_ERROR("XGetImage returned (null)");
+        XUnlockDisplay(device->display);
+        WhistRGBColor ret = {0};
+        return ret;
+    }
+    // Extract the top-left color out of the image
+    XColor c;
+    c.pixel = XGetPixel(corner_image, 0, 0);
+    XQueryColor(device->display, DefaultColormap(device->display, XDefaultScreen(device->display)),
+                &c);
+    // Free the image and unlock the display
+    XFree(corner_image);
+    XUnlockDisplay(device->display);
+
+    WhistRGBColor ret;
+    // Color format is r/g/b 0x0000-0xffff
+    // We just need the leading byte
+    ret.red = c.red >> 8;
+    ret.green = c.green >> 8;
+    ret.blue = c.blue >> 8;
+
+    // Return the corner color
+    return ret;
+}
+
 int x11_capture_screen(X11CaptureDevice* device) {
     /*
         Capture the screen using our X11 device. TODO: needs more documentation, I (Serina) am not
@@ -152,11 +185,8 @@ int x11_capture_screen(X11CaptureDevice* device) {
         Returns:
             (int): 0 on success, -1 on failure
     */
-    if (!device) {
-        LOG_ERROR(
-            "Tried to call x11_capture_screen with a NULL X11CaptureDevice! We shouldn't do this!");
-        return -1;
-    }
+
+    FATAL_ASSERT(device != NULL);
 
     int accumulated_frames = 0;
     while (XPending(device->display)) {
@@ -165,39 +195,47 @@ int x11_capture_screen(X11CaptureDevice* device) {
         XEvent ev;
         XNextEvent(device->display, &ev);
         if (ev.type == device->event + XDamageNotify) {
-            // accumulated_frames will eventually be the number of damage events (accumulated
-            // frames)
+            // accumulated_frames will eventually be the number of damage events
+            // (accumulated frames)
             accumulated_frames++;
         }
     }
     // Don't Lock and UnLock Display unneccesarily, if there are no frames to capture
-    if (accumulated_frames == 0) return 0;
+    if (accumulated_frames == 0) {
+        return 0;
+    }
 
     device->first = true;
     XLockDisplay(device->display);
     if (accumulated_frames || device->first) {
         device->first = false;
 
+        // Mark the damage as consumed,
+        // since we'll be capturing the screen now
         XDamageSubtract(device->display, device->damage, None, None);
 
         XWindowAttributes window_attributes;
         if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
+            // If we couldn't get window attributes, exit
             LOG_ERROR("Couldn't get window width and height!");
             accumulated_frames = -1;
         } else if (device->width != window_attributes.width ||
                    device->height != window_attributes.height) {
+            // If window attributes width/height doesn't match, exit
             LOG_ERROR("Wrong width/height!");
             accumulated_frames = -1;
         } else {
+            // If we could get window attributes, and width/height matches,
+            // Then get the image
             XErrorHandler prev_handler = XSetErrorHandler(handler);
             if (!XShmGetImage(device->display, device->root, device->image, 0, 0, AllPlanes)) {
                 LOG_ERROR("Error while capturing the screen");
                 accumulated_frames = -1;
             } else {
+                // Get the X11 pitch (Bytes per row) of the image
                 device->pitch = device->image->bytes_per_line;
-            }
-            if (accumulated_frames != -1) {
-                // get the color
+
+                // Get the top-left corner color
                 XColor c;
                 c.pixel = XGetPixel(device->image, 0, 0);
                 XQueryColor(device->display,
@@ -211,6 +249,7 @@ int x11_capture_screen(X11CaptureDevice* device) {
             XSetErrorHandler(prev_handler);
         }
     }
+
     XUnlockDisplay(device->display);
     return accumulated_frames;
 }
