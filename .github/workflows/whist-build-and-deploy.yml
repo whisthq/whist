@@ -865,7 +865,7 @@ jobs:
 
       # (builds the branch that it is run on automatically, so prod if running on push to prod)
       - name: Publish the Windows Electron Application
-        if: false && runner.os == 'Windows'
+        if: runner.os == 'Windows'
         working-directory: frontend/client-applications
         env:
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
@@ -904,14 +904,18 @@ jobs:
 
         # Each final build has an internal build id and debug id. Sentry will use these
         # IDs to match the debug symbols with the build that crashed to build the backtrace
-      - name: Copy Client debug symbols to sentry
-        if: runner.os == 'macOS'
+      - name: Copy Client debug symbols to Sentry
+        if: runner.os == 'macOS' || runner.os == 'Windows'
         working-directory: frontend/client-applications
         env:
           SENTRY_ORG: whist
           SENTRY_PROJECT: protocol
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        shell: bash --noprofile --norc -eo pipefail {0}
         run: |
+
+          if 
+
           curl -sL https://sentry.io/get-cli/ | bash
           sentry-cli upload-dif WhistProtocolClient/build/WhistClient
           sentry-cli upload-dif WhistProtocolClient/debugSymbols/WhistClient.debug
