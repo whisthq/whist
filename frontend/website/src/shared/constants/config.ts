@@ -7,9 +7,9 @@ const environment: WhistEnvironment = {
     sentry_env: "dev",
     client_download_urls: {
       macOS_x64:
-        "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
+        "https://whist-electron-macos-x64-dev.s3.amazonaws.com/Whist.dmg",
       macOS_arm64:
-        "https://fractal-chromium-macos-arm64-dev.s3.amazonaws.com/Whist.dmg",
+        "https://whist-electron-macos-arm64-dev.s3.amazonaws.com/Whist.dmg",
       Windows:
         "https://whist-electron-windows-dev.s3.amazonaws.com/Whist.exe",
     },
@@ -18,9 +18,9 @@ const environment: WhistEnvironment = {
     sentry_env: "staging",
     client_download_urls: {
       macOS_x64:
-        "https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg",
+        "https://whist-electron-macos-x64-staging.s3.amazonaws.com/Whist.dmg",
       macOS_arm64:
-        "https://fractal-chromium-macos-arm64-staging.s3.amazonaws.com/Whist.dmg",
+        "https://whist-electron-macos-arm64-staging.s3.amazonaws.com/Whist.dmg",
       Windows:
         "https://whist-electron-windows-staging.s3.amazonaws.com/Whist.exe",
     },
@@ -29,9 +29,9 @@ const environment: WhistEnvironment = {
     sentry_env: "prod",
     client_download_urls: {
       macOS_x64:
-        "https://fractal-chromium-macos-prod.s3.amazonaws.com/Whist.dmg",
+        "https://whist-electron-macos-x64-prod.s3.amazonaws.com/Whist.dmg",
       macOS_arm64:
-        "https://fractal-chromium-macos-arm64-prod.s3.amazonaws.com/Whist.dmg",
+        "https://whist-electron-macos-arm64-prod.s3.amazonaws.com/Whist.dmg",
       Windows:
         "https://whist-electron-windows-base.s3.amazonaws.com/Whist.exe",
     },

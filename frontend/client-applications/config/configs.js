@@ -47,7 +47,7 @@ const configs = {
     },
     deployEnv: "dev",
     clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
+      MacOS: "https://whist-electron-macos-x64-dev.s3.amazonaws.com/Whist.dmg",
       Windows: "https://whist-electron-windows-dev.s3.amazonaws.com/Whist.exe",
     },
     title: "Whist (local)",
@@ -72,7 +72,7 @@ const configs = {
     },
     deployEnv: "dev",
     clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
+      MacOS: "https://whist-electron-macos-x64-dev.s3.amazonaws.com/Whist.dmg",
       Windows: "https://whist-electron-windows-dev.s3.amazonaws.com/Whist.exe",
     },
     title: "Whist (development)",
@@ -98,7 +98,7 @@ const configs = {
     deployEnv: "staging",
     clientDownloadURLs: {
       MacOS:
-        "https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg",
+        "https://whist-electron-macos-x64-staging.s3.amazonaws.com/Whist.dmg",
       Windows:
         "https://whist-electron-windows-staging.s3.amazonaws.com/Whist.exe",
     },
@@ -124,7 +124,7 @@ const configs = {
     },
     deployEnv: "prod",
     clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Whist.dmg",
+      MacOS: "https://whist-electron-macos-x64-prod.s3.amazonaws.com/Whist.dmg",
       Windows: "https://whist-electron-windows-prod.s3.amazonaws.com/Whist.exe",
     },
     title: "Whist",
