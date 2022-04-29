@@ -80,8 +80,8 @@ double running_min;
 double inf = 99999.0;
 
 static int adjust_to_scale_factor(double current_time) {
-    AUDIO_QUEUE_TARGET_SIZE = AUDIO_QUEUE_TARGET_SIZE_0 * scale_factor;
-    AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0 * scale_factor;
+    AUDIO_QUEUE_TARGET_SIZE = AUDIO_QUEUE_TARGET_SIZE_0 * scale_factor + 0.5;
+    AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0 * scale_factor + 0.5;
 
     running_low_cnt = 0;
     last_running_low_time = current_time;
@@ -121,7 +121,7 @@ static int handle_scale_down(double device_queue_len, double current_time) {
         current_time - scale_down_last_check_time > 45.0) {
         double adjust = running_min - safe_threshold;
         double new_scale_factor = (AUDIO_QUEUE_TARGET_SIZE - adjust) / AUDIO_QUEUE_TARGET_SIZE_0;
-        if (new_scale_factor < 0.8) new_scale_factor = 0.8;
+        if (new_scale_factor < 1.0) new_scale_factor = 1.0;
 
         // TODO: make sure scale down doesn't cause overflow
         scale_factor = new_scale_factor;
