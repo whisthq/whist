@@ -86,11 +86,13 @@ int file_drop_mark_ready(int id);
  *
  * @param y                        Drag location y-coordinate
  *
- * @param file_list                A list of '\n'-separated filenames to be dragged.
+ * @param drag_group_id            Group ID of file being dragged
+ *
+ * @param filename                 Filename of a file being dragged.
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int file_drag_update(bool is_dragging, int x, int y, char* file_list);
+int file_drag_update(bool is_dragging, int x, int y, int drag_group_id, char* filename);
 
 /**
  * @brief                          Clean up the file drop handler

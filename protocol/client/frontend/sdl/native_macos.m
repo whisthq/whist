@@ -207,11 +207,12 @@ static void push_drag_end_event(WhistFrontend *frontend) {
     FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = true;
+    drag_event->group_id = state->change_count; // use change count as group ID
     event.user.data1 = drag_event;
     SDL_PushEvent(&event);
 }
 
-static void push_drag_start_event(WhistFrontend *frontend, char *file_list) {
+static void push_drag_start_event(WhistFrontend *frontend, char *filename) {
     SDLFrontendContext *context = frontend->context;
     FileDragState *state = context->file_drag_data;
 
@@ -220,9 +221,9 @@ static void push_drag_start_event(WhistFrontend *frontend, char *file_list) {
     FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = false;
-    drag_event->file_list = strdup(file_list);
+    drag_event->filename = strdup(filename);
     drag_event->group_id = state->change_count; // use change count as group ID
-    if (!drag_event->file_list) {
+    if (!drag_event->filename) {
         // strdup failed
         return;
     }
@@ -251,6 +252,7 @@ static void push_drag_event(WhistFrontend *frontend) {
     drag_event->end_drag = false;
     drag_event->position.x = state->position_x;
     drag_event->position.y = state->position_y;
+    drag_event->group_id = state->change_count; // use change count as group ID
     event.user.data1 = drag_event;
     SDL_PushEvent(&event);
 }
@@ -296,22 +298,10 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
                                                 if ([[pb types] containsObject:NSFilenamesPboardType]) {
                                                     NSArray *files =
                                                         [pb propertyListForType:NSFilenamesPboardType];
-                                                    // int number_of_files = [files count];
-                                                    // NSString* file_list = [NSString string];
-                                                    // int i = 0;
                                                     for (NSString *file in files) {
-                                                        // file_list =
-                                                        //     [file_list stringByAppendingString:
-                                                        //                    [file lastPathComponent]];
-                                                        // if (i < number_of_files - 1) {
-                                                        //     file_list = [file_list
-                                                        //         stringByAppendingString:@"\n"];
-                                                        // }
-                                                        // i++;
-                                                        push_drag_start_event(frontend, (char *)[file UTF8String]);
+                                                        push_drag_start_event(frontend,
+                                                            (char *)[[file lastPathComponent] UTF8String]);
                                                     }
-                                                    // push_drag_start_event(
-                                                    //     frontend, (char *)[file_list UTF8String]);
                                                 }
                                             } else if (state->mouse_down) {
                                                 // We are continuing to drag our file from its

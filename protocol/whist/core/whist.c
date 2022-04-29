@@ -326,12 +326,12 @@ int get_wcmsg_size(WhistClientMessage *wcmsg) {
     } else if (wcmsg->type == CMESSAGE_FILE_DRAG) {
         // When the payload is larger than sizeof(WhistClientMessage), we send
         //     the packet via TCP. We only want to send this message via TCP
-        //     if there is file_list data. Therefore, if we are not using the
-        //     file_list member, don't add anything extra to the payload (leave
-        //     the length of file_list at 0 instead of adding the null-terminator 1).
+        //     if there is filename data. Therefore, if we are not using the
+        //     filename member, don't add anything extra to the payload (leave
+        //     the length of filename at 0 instead of adding the null-terminator 1).
         size_t addon = 0;
-        if (strlen((const char *)&wcmsg->file_drag_data.file_list) > 0) {
-            addon = strlen((const char *)&wcmsg->file_drag_data.file_list) + 1;
+        if (strlen((const char *)&wcmsg->file_drag_data.filename) > 0) {
+            addon = strlen((const char *)&wcmsg->file_drag_data.filename) + 1;
         }
         return (int)(sizeof(*wcmsg) + addon);
     } else if (wcmsg->type == MESSAGE_OPEN_URL) {

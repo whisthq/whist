@@ -96,8 +96,8 @@ typedef struct FrontendFileDragEvent {
     } position;
     int group_id;
     bool end_drag;
-    char* file_list;  // '\n'-separated list of files being dragged,
-                      // must be freed by handler, if not NULL
+    char* filename;  // File being dragged (multiple files should
+                     //     be sent in multiple messages)
 } FrontendFileDragEvent;
 
 typedef struct FrontendQuitEvent {
