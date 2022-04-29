@@ -46,6 +46,7 @@ import (
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
+	"github.com/whisthq/whist/backend/services/host-service/mandelbox/gpus"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/metadata/aws"
@@ -117,7 +118,15 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 }
 
 func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient) {
+	availableGPUs := gpus.GetRemainingGPUs()
+
 	// Start zygotes we have available and register to database
+	for i := 0; i < availableGPUs; i++ {
+		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient)
+		logger.Infof("%v", zygote.GetID())
+		// Add to database
+	}
+
 }
 
 // Handle tasks to be completed when a mandelbox dies

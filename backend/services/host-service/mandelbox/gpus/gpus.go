@@ -109,11 +109,13 @@ func Free(index Index, mandelboxID types.MandelboxID) error {
 }
 
 // GetRemainingGPUs will return the number of remaining free GPUs on the instance.
-func GetRemainingGPUs() (int, error) {
-	metrics, err := metrics.GetLatest()
-	if len(err) != 0 {
-		return 0, utils.MakeError("failed to get latest metrics. Err: %v", err)
+func GetRemainingGPUs() int {
+	var usedGPUs int
+	for _, gpu := range gpuMetadata {
+		if len(gpu.assignedMandelboxes) > 0 {
+			usedGPUs++
+		}
 	}
 
-	return metrics.NumberOfGPUs - len(gpuMetadata), nil
+	return len(gpuMetadata) - usedGPUs
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
+	"github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
@@ -32,7 +33,7 @@ import (
 // StartMandelboxSpinUp will create and start a mandelbox, doing all the steps that can be done without the user's config token.
 // Once the mandelbox is started, it effectively waits an infinite time until a user gets assigned to it and the remaining
 // steps can continue.
-func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient) {
+func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient) mandelbox.Mandelbox {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
@@ -115,7 +116,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	err := preCreateGroup.Wait()
 	if err != nil {
 		logAndReturnError(err.Error())
-		return
+		return nil
 	}
 
 	// We need to compute the Docker image to use for this mandelbox. In local
@@ -244,7 +245,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	dockerBody, err := dockerClient.ContainerCreate(mandelbox.GetContext(), &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, mandelboxName)
 	if err != nil {
 		logAndReturnError("Error running `create` for %s:\n%s", mandelbox.GetID(), err)
-		return
+		return nil
 	}
 
 	logger.Infof("SpinUpMandelbox(): Value returned from ContainerCreate: %#v", dockerBody)
@@ -298,12 +299,13 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	err = postCreateGroup.Wait()
 	if err != nil {
 		logAndReturnError(err.Error())
-		return
+		return nil
 	}
 
 	// Mark mandelbox creation as successful, preventing cleanup on function
 	// termination.
 	createFailed = false
+	return mandelbox
 }
 
 // FinishMandelboxSpinUp runs when a user gets assigned to a waiting mandelbox. This function does all the remaining steps in
