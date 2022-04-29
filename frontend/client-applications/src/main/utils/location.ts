@@ -7,6 +7,7 @@
 import fetch from "node-fetch"
 import sortBy from "lodash.sortby"
 import find from "lodash.find"
+import ping from "ping"
 
 import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
@@ -30,10 +31,9 @@ const whistPingTime = async (host: string, numberPings: number) => {
   // Create list of Promises, where each Promise resolves to a ping time
   const pingResults = [] as number[]
   for (let i = 0; i < numberPings; i += 1) {
-    const startTime = Date.now()
     try {
-      await fetch(host)
-      pingResults.push(Date.now() - startTime)
+      const result = await ping.promise.probe(host)
+      pingResults.push(result.time as number)
     } catch (err) {
       console.error(err)
     }
@@ -51,15 +51,11 @@ const pingLoop = (regions: AWSRegion[]) => {
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < regions.length; i += 1) {
     const region = regions[i]
-    const randomHash = Math.floor(Math.random() * Math.pow(2, 52)).toString(36)
-    const endpoint = `/ping?cache_buster=${randomHash}`
 
     pingResultPromises.push(
-      whistPingTime(`https://ec2.${region}.amazonaws.com${endpoint}`, 6).then(
-        (pingTime) => {
-          return { region, pingTime }
-        }
-      )
+      whistPingTime(`ec2.${region}.amazonaws.com`, 6).then((pingTime) => {
+        return { region, pingTime }
+      })
     )
   }
   return pingResultPromises

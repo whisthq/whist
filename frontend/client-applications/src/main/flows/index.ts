@@ -57,9 +57,7 @@ import {
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
 
 // AWS ping flow
-const awsPing = awsPingFlow(
-  merge(of(null), fromTrigger(WhistTrigger.startNetworkAnalysis))
-)
+const awsPing = awsPingFlow(of(undefined))
 
 const loggedInAuth = authFlow(
   emitOnSignal(

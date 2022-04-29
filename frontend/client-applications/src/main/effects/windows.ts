@@ -1,6 +1,6 @@
 import { BrowserWindow } from "electron"
 import { of } from "rxjs"
-import { filter, withLatestFrom, map, mapTo, startWith } from "rxjs/operators"
+import { filter, withLatestFrom, map } from "rxjs/operators"
 import * as Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -50,7 +50,6 @@ import {
   ONBOARDED,
 } from "@app/constants/store"
 import { NO_PAYMENT_ERROR } from "@app/constants/error"
-import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import {
   destroyElectronWindow,
   hideElectronWindow,
@@ -83,19 +82,11 @@ withAppActivated(fromTrigger(WhistTrigger.showAuthWindow)).subscribe(() => {
 untilUpdateAvailable(
   withAppActivated(
     fromTrigger(WhistTrigger.mandelboxFlowStart).pipe(
-      withLatestFrom(
-        fromTrigger(WhistTrigger.beginImport).pipe(
-          mapTo(true),
-          startWith(false)
-        ),
-        fromTrigger(WhistTrigger.protocolConnection)
-      ),
-      map((x) => ({ import: x[1], connected: x[2] }))
+      withLatestFrom(fromTrigger(WhistTrigger.protocolConnection)),
+      map((x) => ({ connected: x[1] }))
     )
   )
-).subscribe((args: { import: boolean; connected: boolean }) => {
-  if (!args.import) networkAnalyze()
-
+).subscribe((args: { connected: boolean }) => {
   args.connected ? createImportLoadingWindow() : createLaunchLoadingWindow()
 
   destroyElectronWindow(WindowHashPayment)
