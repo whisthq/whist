@@ -126,20 +126,10 @@ resource "aws_s3_bucket_public_access_block" "whist-terraform-state" {
 
 # ------------------------------ Configure server side encryption ------------------------------ #
 
-# Chromium MacOS buckets encryption
+# macOS Electron application buckets encryption
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-macos-arm64-encryption" {
-  bucket = aws_s3_bucket.whist-chromium-macos-arm64.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-macos-encryption" {
-  bucket = aws_s3_bucket.whist-chromium-macos.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-electron-macos-arm64-encryption" {
+  bucket = aws_s3_bucket.whist-electron-macos-arm64.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -148,7 +138,17 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-ma
   }
 }
 
-# Windows Electron buckets encryption
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-electron-macos-x64-encryption" {
+  bucket = aws_s3_bucket.whist-electron-macos-x64.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Windows Electron application buckets encryption
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-electron-windows-encryption" {
   bucket = aws_s3_bucket.whist-electron-windows.id
