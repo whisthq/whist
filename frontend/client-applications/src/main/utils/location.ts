@@ -31,7 +31,6 @@ const whistPingTime = async (host: string, numberPings: number) => {
   // Create list of Promises, where each Promise resolves to a ping time
   const pingResults = [] as number[]
   for (let i = 0; i < numberPings; i += 1) {
-    const startTime = Date.now()
     try {
       const result = await ping.promise.probe(host)
       if ((result.time ?? undefined) !== undefined)
@@ -53,15 +52,11 @@ const pingLoop = (regions: AWSRegion[]) => {
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < regions.length; i += 1) {
     const region = regions[i]
-    const randomHash = Math.floor(Math.random() * Math.pow(2, 52)).toString(36)
-    const endpoint = `/ping?cache_buster=${randomHash}`
 
     pingResultPromises.push(
-      whistPingTime(`https://ec2.${region}.amazonaws.com${endpoint}`, 6).then(
-        (pingTime) => {
-          return { region, pingTime }
-        }
-      )
+      whistPingTime(`ec2.${region}.amazonaws.com`, 6).then((pingTime) => {
+        return { region, pingTime }
+      })
     )
   }
   return pingResultPromises
