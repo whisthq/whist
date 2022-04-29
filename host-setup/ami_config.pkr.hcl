@@ -126,8 +126,9 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   iam_instance_profile = "PackerAMIBuilder" # This is the IAM role we configured for Packer in AWS
   shutdown_behavior    = "terminate"        # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
 
-  # The VPC where the Packer Builer will run. This VPC needs to be configured to run mandelboxes, so we use MainVPCdev
+  # The VPC where the Packer Builer will run. This VPC needs to be configured to run mandelboxes, so we use MainVPCdev and the associated MandelboxesSecurityGroupdev
   vpc_id = "vpc-03a7ed0d3076fa64c"
+  security_group_id = "sg-01fb458379935c191"
 
   /* Block Device configuration */
 
