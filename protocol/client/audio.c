@@ -331,9 +331,9 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
             AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS) {
             static int log_cnt = 0;
             log_cnt++;
-            if (log_cnt % 1 == 0)
-                fprintf(stderr, "current queue_len: %d %.2f  scale_factor=%.2f %d\n",
-                        num_frames_buffered, device_queue_len, scale_factor, audio_context->audio_state);
+            if (log_cnt % 5 == 0)
+                fprintf(stderr, "queue_len: %d %.2f  state=%d  scale_factor=%.2f\n",
+                        num_frames_buffered, device_queue_len, audio_context->audio_state, scale_factor);
 
             // Record the sample and reset the timer
             audio_context->samples[audio_context->sample_index] =
