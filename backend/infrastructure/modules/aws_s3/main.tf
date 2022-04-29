@@ -1,3 +1,27 @@
+# ------------------------------ Buckets for Chromium MacOS builds ------------------------------ #
+
+# Bucket for storing Chromium builds for MacOS Arm64
+resource "aws_s3_bucket" "whist-chromium-macos-arm64" {
+  bucket = "whist-chromium-macos-arm64-${var.env}"
+
+  tags = {
+    Name        = "whist-chromium-macos-arm64-${var.env}"
+    Env         = var.env
+    Terraform   = true
+  }
+}
+
+# Bucket for storing Chromium builds for MacOS
+resource "aws_s3_bucket" "whist-chromium-macos" {
+  bucket = "whist-chromium-macos-${var.env}"
+
+  tags = {
+    Name        = "whist-chromium-macos-${var.env}"
+    Env         = var.env
+    Terraform   = true
+  }
+}
+
 # ------------------------------ Buckets for Windows Electron application ------------------------------ #
 
 # Buckets for storing the Windows Electron application, per environment
