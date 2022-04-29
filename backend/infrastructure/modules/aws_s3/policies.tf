@@ -162,7 +162,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-electron-wi
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-electron-windows-base-encryption" {
-  bucket = aws_s3_bucket.whist-electron-windows-base.id
+  bucket = aws_s3_bucket.whist-electron-windows-base[0].id
 
   rule {
     apply_server_side_encryption_by_default {
