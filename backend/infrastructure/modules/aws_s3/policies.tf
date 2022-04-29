@@ -162,6 +162,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-electron-wi
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-electron-windows-base-encryption" {
+  count  = var.env == "dev" ? 1 : 0
   bucket = aws_s3_bucket.whist-electron-windows-base[0].id
 
   rule {

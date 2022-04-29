@@ -5,9 +5,9 @@ resource "aws_s3_bucket" "whist-electron-macos-arm64" {
   bucket = "whist-electron-macos-arm64-${var.env}"
 
   tags = {
-    Name        = "whist-electron-macos-arm64-${var.env}"
-    Env         = var.env
-    Terraform   = true
+    Name      = "whist-electron-macos-arm64-${var.env}"
+    Env       = var.env
+    Terraform = true
   }
 }
 
@@ -16,9 +16,9 @@ resource "aws_s3_bucket" "whist-electron-macos-x64" {
   bucket = "whist-electron-macos-x64-${var.env}"
 
   tags = {
-    Name        = "whist-electron-macos-x64-${var.env}"
-    Env         = var.env
-    Terraform   = true
+    Name      = "whist-electron-macos-x64-${var.env}"
+    Env       = var.env
+    Terraform = true
   }
 }
 
