@@ -215,6 +215,22 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
   }
 
+  # This statement adds permissions for Packer to interface with the KMS encryption system, for 
+  # Packer to configure KMS encryption on the Packer builder instances
+  statement {
+    sid = "PackerKMSAccess"
+    actions = [
+      "kms:CreateGrant",
+      "kms:DescribeKey",
+      "kms:ReEncrypt",
+      "kms:GenerateDataKey"
+    ]
+    effect = "Allow"
+    resources = [
+      "*",
+    ]
+  }
+
   # This statement adds permissions to run EC2 instances, both regular
   # and Spot instances
   statement {
