@@ -7,6 +7,7 @@
 import fetch from "node-fetch"
 import sortBy from "lodash.sortby"
 import find from "lodash.find"
+import ping from "ping"
 
 import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
@@ -32,8 +33,9 @@ const whistPingTime = async (host: string, numberPings: number) => {
   for (let i = 0; i < numberPings; i += 1) {
     const startTime = Date.now()
     try {
-      await fetch(host)
-      pingResults.push(Date.now() - startTime)
+      const result = await ping.promise.probe(host)
+      if ((result.time ?? undefined) !== undefined)
+        pingResults.push(result.time as number)
     } catch (err) {
       console.error(err)
     }
