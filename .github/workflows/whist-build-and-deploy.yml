@@ -877,9 +877,9 @@ jobs:
           call yarn cache clean
           call yarn install
           call yarn package:publish ^
-          --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' ^
-          --environment='${{ needs.whist-publish-build-config.outputs.branch }}' ^
-          --commit='${{ github.sha }}'
+          --version=${{ needs.client-applications-retrieve-version-number.outputs.release_version }} ^
+          --environment=${{ needs.whist-publish-build-config.outputs.branch }} ^
+          --commit=${{ github.sha }}
 
       # (builds the branch that it is run on automatically, so prod if running on push to prod)
       - name: Publish the MacOS Electron Application
@@ -898,9 +898,9 @@ jobs:
           yarn cache clean
           yarn install
           yarn package:publish \
-          --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
-          --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
-          --commit='${{ github.sha }}'
+          --version=${{ needs.client-applications-retrieve-version-number.outputs.release_version }} \
+          --environment=${{ needs.whist-publish-build-config.outputs.branch }} \
+          --commit=${{ github.sha }}
 
         # Each final build has an internal build id and debug id. Sentry will use these
         # IDs to match the debug symbols with the build that crashed to build the backtrace
