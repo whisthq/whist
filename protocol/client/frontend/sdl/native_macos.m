@@ -174,7 +174,7 @@ typedef struct FileDragState {
     int position_y;
 } FileDragState;
 
-static bool mouse_in_window(WhistFrontend* frontend) {
+static bool mouse_in_window(WhistFrontend *frontend) {
     SDLFrontendContext *context = frontend->context;
     FileDragState *state = context->file_drag_data;
 
@@ -207,7 +207,7 @@ static void push_drag_end_event(WhistFrontend *frontend) {
     FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = true;
-    drag_event->group_id = state->change_count; // use change count as group ID
+    drag_event->group_id = state->change_count;  // use change count as group ID
     event.user.data1 = drag_event;
     SDL_PushEvent(&event);
 }
@@ -222,7 +222,7 @@ static void push_drag_start_event(WhistFrontend *frontend, char *filename) {
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = false;
     drag_event->filename = strdup(filename);
-    drag_event->group_id = state->change_count; // use change count as group ID
+    drag_event->group_id = state->change_count;  // use change count as group ID
     if (!drag_event->filename) {
         // strdup failed
         return;
@@ -252,7 +252,7 @@ static void push_drag_event(WhistFrontend *frontend) {
     drag_event->end_drag = false;
     drag_event->position.x = state->position_x;
     drag_event->position.y = state->position_y;
-    drag_event->group_id = state->change_count; // use change count as group ID
+    drag_event->group_id = state->change_count;  // use change count as group ID
     event.user.data1 = drag_event;
     SDL_PushEvent(&event);
 }
@@ -295,12 +295,15 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
                                                 state->change_count = change_count;
                                                 state->mouse_down = true;
 
-                                                if ([[pb types] containsObject:NSFilenamesPboardType]) {
-                                                    NSArray *files =
-                                                        [pb propertyListForType:NSFilenamesPboardType];
+                                                if ([[pb types]
+                                                        containsObject:NSFilenamesPboardType]) {
+                                                    NSArray *files = [pb
+                                                        propertyListForType:NSFilenamesPboardType];
                                                     for (NSString *file in files) {
-                                                        push_drag_start_event(frontend,
-                                                            (char *)[[file lastPathComponent] UTF8String]);
+                                                        push_drag_start_event(
+                                                            frontend,
+                                                            (char *)[[file lastPathComponent]
+                                                                UTF8String]);
                                                     }
                                                 }
                                             } else if (state->mouse_down) {

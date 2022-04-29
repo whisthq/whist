@@ -608,7 +608,8 @@ int file_drag_update(bool is_dragging, int x, int y, int drag_group_id, char* fi
             }
 
             if (strchr(filename, '\n')) {
-                LOG_WARNING("Dragging filename contains newline, which is not permitted for URI list");
+                LOG_WARNING(
+                    "Dragging filename contains newline, which is not permitted for URI list");
                 return -1;
             }
 
@@ -621,8 +622,7 @@ int file_drag_update(bool is_dragging, int x, int y, int drag_group_id, char* fi
             drag_path_size = strlen(drag_path) + 1;
 
             if (xdnd_file_list) {
-                xdnd_file_list =
-                    safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
+                xdnd_file_list = safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
                 xdnd_file_list[xdnd_file_list_len - 1] = '\n';
             } else {
                 xdnd_file_list = safe_malloc(drag_path_size);

@@ -592,8 +592,8 @@ typedef struct {
     int x;
     int y;
     WhistDragState drag_state;
-    int group_id; // This should be ascending with each new drag group
-    char filename[0]; // Should only have contents when drag_state is START_DRAG
+    int group_id;      // This should be ascending with each new drag group
+    char filename[0];  // Should only have contents when drag_state is START_DRAG
 } WhistFileDragData;
 
 /**
@@ -756,11 +756,11 @@ typedef struct WhistClientMessage {
     // Any type of message that has an additional `data[]` (or equivalent)
     //     member at the end should be a part of this union
     union {
-        ClipboardData clipboard;     // CMESSAGE_CLIPBOARD
-        FileMetadata file_metadata;  // CMESSAGE_FILE_METADATA
-        FileData file;               // CMESSAGE_FILE_DATA
+        ClipboardData clipboard;           // CMESSAGE_CLIPBOARD
+        FileMetadata file_metadata;        // CMESSAGE_FILE_METADATA
+        FileData file;                     // CMESSAGE_FILE_DATA
         WhistFileDragData file_drag_data;  // CMESSAGE_FILE_DRAG
-        char urls_to_open[0];  // MESSAGE_OPEN_URL
+        char urls_to_open[0];              // MESSAGE_OPEN_URL
     };
 } WhistClientMessage;
 
