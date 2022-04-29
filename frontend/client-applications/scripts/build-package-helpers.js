@@ -50,7 +50,7 @@ const getMacOSArchConfig = () => {
     x86_64: {
       electronBuilderFlag: "--x64",
       electronBuilderInstallAppDepsFlag: "--arch x64",
-      publishS3BucketInfix: "",
+      publishS3BucketInfix: "-x64",
       cmakeArguments: "-D MACOS_TARGET_ARCHITECTURE=x86_64",
     },
     arm64: {
@@ -66,13 +66,13 @@ const getMacOSArchConfig = () => {
 const getPublishS3BucketName = (environment) => {
   switch (process.platform) {
     case "darwin":
-      return `fractal-chromium-macos${
+      return `whist-electron-macos${
         getMacOSArchConfig().publishS3BucketInfix
       }-${environment}`
     case "win32":
-      return `fractal-chromium-windows-${environment}`
+      return `whist-electron-windows-${environment}`
     case "linux":
-      return `fractal-chromium-ubuntu-${environment}`
+      return `whist-electron-ubuntu-${environment}`
   }
 }
 

@@ -10,10 +10,6 @@ export type WhistConfig = {
     GOOGLE_CLIENT_ID: string | undefined
     GOOGLE_ANALYTICS_TRACKING_CODES: string[]
   }
-  clientDownloadURLs: {
-    MacOS: string | undefined
-    Windows: string | undefined
-  }
 }
 
 export type WhistEnvironment = {

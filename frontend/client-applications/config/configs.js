@@ -46,11 +46,6 @@ const configs = {
       apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "dev",
-    clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
-      Windows:
-        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.exe",
-    },
     title: "Whist (local)",
   },
   DEVELOPMENT: {
@@ -72,11 +67,6 @@ const configs = {
       apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "dev",
-    clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
-      Windows:
-        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.exe",
-    },
     title: "Whist (development)",
   },
   STAGING: {
@@ -98,12 +88,6 @@ const configs = {
       apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "staging",
-    clientDownloadURLs: {
-      MacOS:
-        "https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg",
-      Windows:
-        "https://fractal-chromium-windows-staging.s3.amazonaws.com/Whist.exe",
-    },
     title: "Whist (staging)",
   },
   PRODUCTION: {
@@ -125,11 +109,6 @@ const configs = {
       apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "prod",
-    clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Whist.dmg",
-      Windows:
-        "https://fractal-chromium-windows-base.s3.amazonaws.com/Whist.exe",
-    },
     title: "Whist",
   },
 }

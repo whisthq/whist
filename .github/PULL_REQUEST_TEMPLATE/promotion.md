@@ -4,10 +4,17 @@
 
 In order for this PR to be merged, all of the following items need to be tested and checked. Make sure to perform these tests from the correct packaged app (on the `dev` > `staging` promotion, use the `dev` app, and on the `staging` > `prod` promotion, use the `staging` app). Everyone is encouraged to do these tests, the more people that test the better! If you don't have them already installed, you can download the applications from the following links:
 
-- [macOS X86_64 Application (Dev)](https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg)
-- [macOS X86_64 Application (Staging)](https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg)
-- [macOS ARM64 Application (Dev)](https://fractal-chromium-macos-arm64-dev.s3.amazonaws.com/Whist.dmg)
-- [macOS ARM64 Application (Staging)](https://fractal-chromium-macos-arm64-staging.s3.amazonaws.com/Whist.dmg)
+### `dev`
+
+- [macOS (X86_64) Application (Dev)](https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg)
+- [macOS (ARM64) Application (Dev)](https://fractal-chromium-macos-arm64-dev.s3.amazonaws.com/Whist.dmg)
+- [Windows Application (Dev)](https://whist-electron-windows-dev.s3.amazonaws.com/Whist.exe)
+
+### `staging`
+
+- [macOS (X86_64) Application (Staging)](https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg)
+- [macOS (ARM64) Application (Staging)](https://fractal-chromium-macos-arm64-staging.s3.amazonaws.com/Whist.dmg)
+- [Windows Application (Staging)](https://whist-electron-windows-staging.s3.amazonaws.com/Whist.exe)
 
 **Checklist**
 
