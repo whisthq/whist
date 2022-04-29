@@ -29,7 +29,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func CreateMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+// StartMandelboxSpinUp will create and start a mandelbox, doing all the steps that can be done without the user's config token.
+// Once the mandelbox is started, it effectively waits an infinite time until a user gets assigned to it and the remaining
+// steps can continue.
+func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
@@ -168,6 +171,7 @@ func CreateMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	tmpfs["/run"] = "size=52428800"
 	tmpfs["/run/lock"] = "size=52428800"
 
+	// TODO: figure out how to bind the server logs without the session id.
 	// Sanitize the received session ID. First, verify that the sessionID is a valid timestamp string.
 	// If not, use a new timestamp.
 	// _, err = strconv.ParseInt(mandelboxSubscription.SessionID, 10, 64)
@@ -267,13 +271,9 @@ func CreateMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			return utils.MakeError("Error writing mandelbox params: %s", err)
 		}
 
-		// Let server protocol wait 30 seconds by default before client connects.
-		// However, in a local environment, we set the default to an effectively
-		// infinite value.
-		protocolTimeout := 30
-		if metadata.IsLocalEnv() {
-			protocolTimeout = -1
-		}
+		// Set the protocol timeout to an effectively infinite value, because the
+		// mandelbox will be waiting for a user to get assigned to it.
+		protocolTimeout := -1
 
 		if err := mandelbox.WriteProtocolTimeout(protocolTimeout); err != nil {
 			return utils.MakeError("Error writing protocol timeout: %s", err)
@@ -306,8 +306,9 @@ func CreateMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	createFailed = false
 }
 
-// SpinUpMandelbox is the request used to create a mandelbox on this host.
-func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+// FinishMandelboxSpinUp runs when a user gets assigned to a waiting mandelbox. This function does all the remaining steps in
+// the spinup process that require a config token.
+func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)

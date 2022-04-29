@@ -277,7 +277,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 			}
 
 			go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
-			go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
+			go FinishMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
 
 			// Check that response is as expected
 			result := <-testJSONTransportRequest.resultChan

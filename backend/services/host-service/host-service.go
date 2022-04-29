@@ -116,6 +116,10 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 	globalCancel()
 }
 
+func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient) {
+	// Start zygotes we have available and register to database
+}
+
 // Handle tasks to be completed when a mandelbox dies
 func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex, dockerClient dockerclient.CommonAPIClient) {
 	// Exit if we are not dealing with a Whist mandelbox, or if it has already
@@ -463,6 +467,9 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 	needToReinitDockerEventStream := false
 	dockerevents, dockererrs := dockerClient.Events(dockerContext, eventOptions)
 	logger.Info("Initialized docker event stream.")
+
+	SpinUpMandelboxes(globalCtx, globalCancel, goroutineTracker, dockerClient)
+
 	logger.Info("Entering event loop...")
 
 	// The actual event loop
@@ -543,7 +550,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 					// Launch both the JSON transport handler and the SpinUpMandelbox goroutines.
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
-					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, &subscriptionEvent, transportRequestMap, transportMapLock)
+					go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, &subscriptionEvent, transportRequestMap, transportMapLock)
 				}
 			default:
 				if serverevent != nil {
@@ -557,7 +564,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			switch subscriptionEvent := subscriptionEvent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxEvent:
-				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient,
+				go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient,
 					subscriptionEvent, transportRequestMap, transportMapLock)
 
 			case *subscriptions.InstanceEvent:
