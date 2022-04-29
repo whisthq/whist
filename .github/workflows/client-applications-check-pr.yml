@@ -122,7 +122,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build the Windows Electron Application
-        if: false && runner.os == 'Windows'
+        if: runner.os == 'Windows'
         working-directory: frontend/client-applications
         env:
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
