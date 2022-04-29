@@ -3,6 +3,8 @@ package scaling_algorithms
 import (
 	"reflect"
 	"testing"
+
+	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms"
 )
 
 func TestCreateEventChans(t *testing.T) {
@@ -11,19 +13,19 @@ func TestCreateEventChans(t *testing.T) {
 
 	// Send and receive some test events
 	// to confirm the channels were created
-	instanceEvent := ScalingEvent{
+	instanceEvent := scaling_algorithms.ScalingEvent{
 		Data:   "test-data-instance-event",
 		Region: "test-region",
 	}
 	testAlgo.InstanceEventChan <- instanceEvent
 
-	imageEvent := ScalingEvent{
+	imageEvent := scaling_algorithms.ScalingEvent{
 		Data:   12345,
 		Region: "test-region",
 	}
 	testAlgo.ImageEventChan <- imageEvent
 
-	scheduledEvent := ScalingEvent{
+	scheduledEvent := scaling_algorithms.ScalingEvent{
 		Data:   true,
 		Region: "test-region",
 	}

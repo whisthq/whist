@@ -11,12 +11,12 @@ with Stripe to create new subscriptions.
 The scaling service is an event-driven component, so most of its logic is handled using
 go channels, in reaction to external events. It has many layers, the bottom layer being
 the event handler which only passes the events to the corresponding channels. The layer
-on top of it are the many scaling algorithms which are sub-processes for each availability
-region on the backend. The code is written in an extensible way so it is possible to write
-and integrate a new scaling algorithm with a different behaviour easily. As such, most of
+on top of it includes the many scaling algorithms which are sub-processes for each region
+on the backend. The code is written in an extensible way so it is possible to write and
+integrate a new scaling algorithm with a different behaviour easily. As such, most of
 the code is inside the scaling algorithm implementations.
 
-The top-most layer are the "hosts handlers" which are a collection of methods responsible
+The top-most layer has the "hosts handlers" which are a collection of methods responsible
 of calling a cloud provider (e.g. AWS, Azure, Google Cloud) API and starting an instance
 (cloud-compute resource configured to run a Whist container). This code is abstracted in
 an interface so that support for a new cloud provider is easily added. The code in the
@@ -39,7 +39,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
-	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
+	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms" // Import as algos, short for scaling_algorithms
+	defaultAlgo "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -108,9 +109,9 @@ func main() {
 	algorithmByRegionMap := &sync.Map{}
 
 	// Load default scaling algorithm for all enabled regions.
-	for _, region := range algos.GetEnabledRegions() {
+	for _, region := range defaultAlgo.GetEnabledRegions() {
 		name := utils.Sprintf("default-sa-%s", region)
-		algorithmByRegionMap.Store(name, &algos.DefaultScalingAlgorithm{
+		algorithmByRegionMap.Store(name, &defaultAlgo.DefaultScalingAlgorithm{
 			Region: region,
 		})
 	}
@@ -192,6 +193,8 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 	s.StartAsync()
 }
 
+// StartDeploy reads the `images.json` file which is written by the Github
+// deploy workflow, and sends the event to the appropiate channel.
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infof("Running in localenv so not performing deploy actions.")
@@ -217,6 +220,8 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 	}
 }
 
+// getRegionImageMap tries to read and parse the contents of the `images.json` file
+// which is written by the Github deploy workflow.
 func getRegionImageMap() (map[string]interface{}, error) {
 	var regionImageMap map[string]interface{}
 
@@ -307,7 +312,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
 				switch algorithm := algorithm.(type) {
-				case *algos.DefaultScalingAlgorithm:
+				case *defaultAlgo.DefaultScalingAlgorithm:
 					algorithm.InstanceEventChan <- scalingEvent
 				}
 			case *subscriptions.ClientAppVersionEvent:
@@ -349,7 +354,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 					algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
 					switch algorithm := algorithm.(type) {
-					case *algos.DefaultScalingAlgorithm:
+					case *defaultAlgo.DefaultScalingAlgorithm:
 						algorithm.ClientAppVersionChan <- scalingEvent
 					}
 				}
@@ -368,11 +373,11 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 			// Start scaling algorithm based on region
 			logger.Infof("Received scheduled event. %v", scheduledEvent)
 
-			for _, region := range algos.GetEnabledRegions() {
+			for _, region := range defaultAlgo.GetEnabledRegions() {
 				scheduledEvent.Region = region
 				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
 				switch algorithm := algorithm.(type) {
-				case *algos.DefaultScalingAlgorithm:
+				case *defaultAlgo.DefaultScalingAlgorithm:
 					algorithm.ScheduledEventChan <- scheduledEvent
 				}
 			}
@@ -381,7 +386,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 
 			algorithm := getScalingAlgorithm(algorithmByRegion, serverEvent)
 			switch algorithm := algorithm.(type) {
-			case *algos.DefaultScalingAlgorithm:
+			case *defaultAlgo.DefaultScalingAlgorithm:
 				algorithm.ServerEventChan <- serverEvent
 			}
 

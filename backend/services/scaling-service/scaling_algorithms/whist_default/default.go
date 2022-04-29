@@ -1,7 +1,7 @@
 // Copyright (c) 2022-2023 Whist Technologies, Inc.
 
 /*
-Package default_algorithm includes the implementation of the main scaling algorithm.
+Package scaling_algorithms includes the implementation of the main scaling algorithm.
 It handles the scaling of instances by computing mandelbox capacity for each instance
 and determining the overall availability on each region according to a "buffer" set by
 the config database.
@@ -19,29 +19,11 @@ import (
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
 	aws "github.com/whisthq/whist/backend/services/scaling-service/hosts/aws"
+	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
-
-// ScalingAlgorithm is the basic abstraction of the scaling service
-// that receives a stream of events and makes calls to the host handler.
-type ScalingAlgorithm interface {
-	ProcessEvents(context.Context, *sync.WaitGroup)
-	CreateEventChans()
-	CreateGraphQLClient(subscriptions.WhistGraphQLClient)
-	CreateDBClient(dbclient.WhistDBClient)
-	GetConfig(subscriptions.WhistGraphQLClient)
-}
-
-// ScalingEvent is an event that contains all the relevant information
-// to make scaling decisions.
-type ScalingEvent struct {
-	ID     string
-	Type   interface{} // The type of event (database, timing, etc.)
-	Data   interface{} // Data relevant to the event
-	Region string      // Region where the scaling will be performed
-}
 
 // DefaultScalingAlgorithm abstracts the shared functionalities to be used
 // by all of the different, region-based scaling algorithms.
@@ -50,11 +32,11 @@ type DefaultScalingAlgorithm struct {
 	GraphQLClient          subscriptions.WhistGraphQLClient
 	DBClient               dbclient.WhistDBClient
 	Region                 string
-	InstanceEventChan      chan ScalingEvent
-	ImageEventChan         chan ScalingEvent
-	ClientAppVersionChan   chan ScalingEvent
-	ScheduledEventChan     chan ScalingEvent
-	ServerEventChan        chan ScalingEvent
+	InstanceEventChan      chan scaling_algorithms.ScalingEvent
+	ImageEventChan         chan scaling_algorithms.ScalingEvent
+	ClientAppVersionChan   chan scaling_algorithms.ScalingEvent
+	ScheduledEventChan     chan scaling_algorithms.ScalingEvent
+	ServerEventChan        chan scaling_algorithms.ScalingEvent
 	SyncChan               chan bool                      // This channel is used to sync actions
 	protectedFromScaleDown map[string]subscriptions.Image // Use a map to keep track of images that should not be scaled down
 	protectedMapLock       sync.Mutex
@@ -65,19 +47,19 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	// TODO: Only use one chan for database events and
 	// one for scheduled events
 	if s.InstanceEventChan == nil {
-		s.InstanceEventChan = make(chan ScalingEvent, 100)
+		s.InstanceEventChan = make(chan scaling_algorithms.ScalingEvent, 100)
 	}
 	if s.ImageEventChan == nil {
-		s.ImageEventChan = make(chan ScalingEvent, 100)
+		s.ImageEventChan = make(chan scaling_algorithms.ScalingEvent, 100)
 	}
 	if s.ClientAppVersionChan == nil {
-		s.ClientAppVersionChan = make(chan ScalingEvent, 100)
+		s.ClientAppVersionChan = make(chan scaling_algorithms.ScalingEvent, 100)
 	}
 	if s.ScheduledEventChan == nil {
-		s.ScheduledEventChan = make(chan ScalingEvent, 100)
+		s.ScheduledEventChan = make(chan scaling_algorithms.ScalingEvent, 100)
 	}
 	if s.ServerEventChan == nil {
-		s.ServerEventChan = make(chan ScalingEvent, 100)
+		s.ServerEventChan = make(chan scaling_algorithms.ScalingEvent, 100)
 	}
 	if s.SyncChan == nil {
 		s.SyncChan = make(chan bool)

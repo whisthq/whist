@@ -1,5 +1,19 @@
 // Copyright (c) 2022-2023 Whist Technologies, Inc.
 
+/*
+This file contains the code related to starting the scaling service's HTTP server,
+and functions for handling the different types of requests. The implementation is
+simple, but it has features that make it more robust in case of misuse or attacks
+(such as rate limiting, read and write time outs).
+
+The request handlers are responsible for authentication, verification, parsing, etc.
+and perform minimal processing of the data. After doing so they send the event through
+the server's channel so the event handler can send it to the scaling algorithms in turn.
+
+Some of the logic and types are found on the `httputils` package, which is shared between
+scaling service and host service.
+*/
+
 package main
 
 import (
@@ -22,6 +36,8 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// mandelboxAssignHandler is the http handler for any requests to the `/assign` endpoint. It authenticates
+// the request, verifies the type, and parses the body. After that it sends it to the server events channel.
 func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
 	err := verifyRequestType(w, req, http.MethodPost)
@@ -96,7 +112,9 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Setup a config databse GraphQL client to get the Stripe configurations
+	// Setup a config database GraphQL client to get the Stripe configurations.
+	// The client is simply passed to the payments client, no database operations
+	// are done here.
 	useConfigDB := true
 
 	configGraphqlClient := &subscriptions.GraphQLClient{}
@@ -245,6 +263,8 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 	return nil
 }
 
+// StartHTTPServer will start the server with the necessary configurations and
+// assign the handlers to each endpoint.
 func StartHTTPServer(events chan algos.ScalingEvent) {
 	logger.Infof("Starting HTTP server...")
 
