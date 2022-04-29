@@ -94,6 +94,7 @@ typedef struct FrontendFileDragEvent {
         int x;
         int y;
     } position;
+    int group_id;
     bool end_drag;
     char* file_list;  // '\n'-separated list of files being dragged,
                       // must be freed by handler, if not NULL

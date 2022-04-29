@@ -379,7 +379,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     int retval = 0;
 
     // Just in case a drag end event was sent before
-    file_drag_update(false, 0, 0, NULL);
+    file_drag_update(false, 0, 0, 0, NULL);
     if (!file_uri_list) {
         retval = -1;
         goto reset_file_drop_statics;
@@ -567,7 +567,9 @@ void destroy_file_drop_handler(void) {
     whist_destroy_mutex(xdnd_mutex);
 }
 
-int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
+// int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
+int file_drag_update(bool is_dragging, int x, int y, int drag_group_id, char* file_list) {
+    // TODO: rename file_list to filename
     /*
         Update the file drag indicator
     */
@@ -580,54 +582,95 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
 
     static bool active_file_drag = false;
 
+    static int curr_drag_group_id = 0;
+    static int curr_drag_file_id = 0;
+
     if (is_dragging) {
         if (!file_list && !xdnd_file_list) {
             return -1;
         }
-        // When drag first begins, peer should send a file_list of filenames being dragged
-        if (file_list) {
-            const char* delimiter = "\n";
-            char* strtok_context = NULL;
-            char* file_list_token = strtok_r(file_list, delimiter, &strtok_context);
-            char drag_path_middle[64];
-            int id = 0;
-            while (file_list_token) {
-                snprintf(drag_path_middle, 64, drag_path_middle_template, id);
-                int file_path_end_size = strlen(drag_path_middle) + strlen(file_list_token) + 1;
-                char* file_path_end = malloc(file_path_end_size);
-                memset(file_path_end, 0, file_path_end_size);
-                safe_strncpy(file_path_end, drag_path_middle, strlen(drag_path_middle) + 1);
-                safe_strncpy(file_path_end + strlen(drag_path_middle), file_list_token,
-                             strlen(file_list_token) + 1);
 
-                int drag_path_size = strlen(drag_path_template) + file_path_end_size + 2;
-                char* drag_path = malloc(drag_path_size);
-                snprintf(drag_path, drag_path_size, drag_path_template, file_path_end);
-
-                free(file_path_end);
-
-                if (xdnd_file_list) {
-                    xdnd_file_list =
-                        safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
-                    xdnd_file_list[xdnd_file_list_len - 1] = '\n';
-                } else {
-                    xdnd_file_list = safe_malloc(drag_path_size);
-                }
-
-                safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path, strlen(drag_path) + 1);
-
-                free(drag_path);
-
-                file_list_token = strtok_r(NULL, delimiter, &strtok_context);
-                xdnd_file_list_len += drag_path_size;
-                id++;
+        // When drag first begins, peer should send a series of filenames being dragged
+        char drag_path_middle[64];
+        if (filename) {
+            if (drag_group_id != curr_drag_group_id) {
+                // Reset all statics in case they haven't been reset already
+                file_drag_update(false, 0, 0, 0, NULL);
+                curr_drag_group_id = drag_group_id;
+                curr_drag_file_id = 0;
             }
 
-            if (!xdnd_file_list) {
-                LOG_WARNING("There is no file list for the drag start event");
-                return -1;
+            snprintf(drag_path_middle, 64, drag_path_middle_template, drag_file_id);
+            int file_path_end_size = strlen(drag_path_middle) + strlen(file_list) + 1;
+            char* file_path_end = safe_malloc(file_path_end_size);
+            memset(file_path_end, 0, file_path_end_size);
+            safe_strncpy(file_path_end, drag_path_middle, strlen(drag_path_middle) + 1);
+            safe_strncpy(file_path_end + strlen(drag_path_middle), file_list,
+                         strlen(file_list) + 1);
+
+            int drag_path_size = strlen(drag_path_template) + file_path_end_size + 2;
+            char* drag_path = malloc(drag_path_size);
+            snprintf(drag_path, drag_path_size, drag_path_template, file_path_end);
+
+            free(file_path_end);
+
+            if (xdnd_file_list) {
+                xdnd_file_list =
+                    safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
+                xdnd_file_list[xdnd_file_list_len - 1] = '\n';
+            } else {
+                xdnd_file_list = safe_malloc(drag_path_size);
             }
+
+            safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path, strlen(drag_path) + 1);
+
+            free(drag_path);
+
+            xdnd_file_list_len += drag_path_size;
+            drag_file_id++;
+
+            return 0;
         }
+
+        // // When drag first begins, peer should send a file_list of filenames being dragged
+        // if (file_list) {
+        //     const char* delimiter = "\n";
+        //     char* strtok_context = NULL;
+        //     char* file_list_token = strtok_r(file_list, delimiter, &strtok_context);
+        //     char drag_path_middle[64];
+        //     int id = 0;
+        //     while (file_list_token) {
+        //         snprintf(drag_path_middle, 64, drag_path_middle_template, id);
+        //         int file_path_end_size = strlen(drag_path_middle) + strlen(file_list_token) + 1;
+        //         char* file_path_end = malloc(file_path_end_size);
+        //         memset(file_path_end, 0, file_path_end_size);
+        //         safe_strncpy(file_path_end, drag_path_middle, strlen(drag_path_middle) + 1);
+        //         safe_strncpy(file_path_end + strlen(drag_path_middle), file_list_token,
+        //                      strlen(file_list_token) + 1);
+
+        //         int drag_path_size = strlen(drag_path_template) + file_path_end_size + 2;
+        //         char* drag_path = malloc(drag_path_size);
+        //         snprintf(drag_path, drag_path_size, drag_path_template, file_path_end);
+
+        //         free(file_path_end);
+
+        //         if (xdnd_file_list) {
+        //             xdnd_file_list =
+        //                 safe_realloc(xdnd_file_list, xdnd_file_list_len + drag_path_size);
+        //             xdnd_file_list[xdnd_file_list_len - 1] = '\n';
+        //         } else {
+        //             xdnd_file_list = safe_malloc(drag_path_size);
+        //         }
+
+        //         safe_strncpy(xdnd_file_list + xdnd_file_list_len, drag_path, strlen(drag_path) + 1);
+
+        //         free(drag_path);
+
+        //         file_list_token = strtok_r(NULL, delimiter, &strtok_context);
+        //         xdnd_file_list_len += drag_path_size;
+        //         id++;
+        //     }
+        // }
     }
 
     whist_lock_mutex(xdnd_mutex);
@@ -638,6 +681,11 @@ int file_drag_update(bool is_dragging, int x, int y, char* file_list) {
     XSync(display, True);
 
     if (is_dragging) {
+        if (!xdnd_file_list) {
+            LOG_WARNING("There is no file list for the drag start event");
+            return -1;
+        }
+
         if (!active_file_drag) {
             // DRAG BEGINS
 

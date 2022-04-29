@@ -592,6 +592,7 @@ typedef struct {
     int x;
     int y;
     WhistDragState drag_state;
+    int group_id;
     char file_list[0]; // Should only have contents when drag_state is START_DRAG
 } WhistFileDragData;
 

@@ -296,15 +296,15 @@ static int handle_file_drag_message(WhistClientMessage *wcmsg) {
     switch (wcmsg->file_drag_data.drag_state) {
         case START_DRAG: {
             file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y,
-                         wcmsg->file_drag_data.file_list);
+                         wcmsg->file_drag_data.group_id, wcmsg->file_drag_data.file_list);
             break;
         }
         case IN_DRAG: {
-            file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, NULL);
+            file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, 0, NULL);
             break;
         }
         case END_DRAG: {
-            file_drag_update(false, 0, 0, NULL);
+            file_drag_update(false, 0, 0, 0, NULL);
             break;
         }
     }

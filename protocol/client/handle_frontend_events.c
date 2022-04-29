@@ -217,12 +217,15 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
         //     This means that file_list is only sent with the message to the
         //     server on the drag starting message. All other messages don't
         //     have a file list and only send coordinates.
+        // safe_strncpy(msg->file_drag_data.file_list, event->file_list, data_len);
         safe_strncpy(msg->file_drag_data.file_list, event->file_list, data_len);
         msg->file_drag_data.drag_state = START_DRAG;
     } else {
         // In all other cases, the drag is in the middle of moving
         msg->file_drag_data.drag_state = IN_DRAG;
     }
+
+    msg->file_drag_data.group_id = event->group_id;
 
     int dpi = whist_frontend_get_window_dpi(frontend);
     msg->file_drag_data.x = event->position.x * dpi / 96;
