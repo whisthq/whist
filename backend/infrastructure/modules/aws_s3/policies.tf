@@ -27,6 +27,7 @@ resource "aws_s3_bucket_public_access_block" "whist-electron-windows" {
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-electron-windows-base" {
+  count                   = var.env == "prod" ? 1 : 0
   bucket                  = aws_s3_bucket.whist-electron-windows-base.id
   block_public_acls       = false
   block_public_policy     = false

@@ -39,7 +39,7 @@ resource "aws_s3_bucket" "whist-electron-windows" {
 # manually codesign the application which a user downloads with a physical USB dongle
 # (EV Codesigning Certificate). Therefore, we create an extra bucket, where we store a
 # version of the `prod` application which gets codesigned manually and which users
-# download from the Whist website. This application autoamtically autoupdates to the
+# download from the Whist website. This application automatically autoupdates to the
 # content of the `prod` bucket.
 resource "aws_s3_bucket" "whist-electron-windows-base" {
   count  = var.env == "prod" ? 1 : 0
