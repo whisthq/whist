@@ -1,22 +1,22 @@
-# ------------------------------ Buckets for Chromium MacOS builds ------------------------------ #
+# ------------------------------ Buckets for macOS Electron application ------------------------------ #
 
-# Bucket for storing Chromium builds for MacOS Arm64
-resource "aws_s3_bucket" "whist-chromium-macos-arm64" {
-  bucket = "whist-chromium-macos-arm64-${var.env}"
+# Bucket for storing Chromium builds for MacOS (arm64)
+resource "aws_s3_bucket" "whist-electron-macos-arm64" {
+  bucket = "whist-electron-macos-arm64-${var.env}"
 
   tags = {
-    Name        = "whist-chromium-macos-arm64-${var.env}"
+    Name        = "whist-electron-macos-arm64-${var.env}"
     Env         = var.env
     Terraform   = true
   }
 }
 
-# Bucket for storing Chromium builds for MacOS
-resource "aws_s3_bucket" "whist-chromium-macos" {
-  bucket = "whist-chromium-macos-${var.env}"
+# Bucket for storing Chromium builds for MacOS (x64)
+resource "aws_s3_bucket" "whist-electron-macos-x86" {
+  bucket = "whist-electron-macos-x64-${var.env}"
 
   tags = {
-    Name        = "whist-chromium-macos-${var.env}"
+    Name        = "whist-electron-macos-x64-${var.env}"
     Env         = var.env
     Terraform   = true
   }
