@@ -4,7 +4,6 @@
  * @brief This file contains miscellaneous effects that deal with monitoring/logging the app
  */
 
-import { merge } from "rxjs"
 import * as Sentry from "@sentry/electron"
 
 import config from "@app/config/environment"
@@ -23,9 +22,6 @@ if (appEnvironment === WhistEnvironments.PRODUCTION) {
   })
 }
 
-merge(
-  fromTrigger(WhistTrigger.startNetworkAnalysis),
-  fromTrigger(WhistTrigger.awsPingRefresh)
-).subscribe(() => {
+fromTrigger(WhistTrigger.startNetworkAnalysis).subscribe(() => {
   networkAnalyze()
 })
