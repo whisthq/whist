@@ -99,7 +99,8 @@ const configs = {
     clientDownloadURLs: {
       MacOS:
         "https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg",
-      Windows: "https://whist-electron-windows-staging.s3.amazonaws.com/Whist.exe",
+      Windows:
+        "https://whist-electron-windows-staging.s3.amazonaws.com/Whist.exe",
     },
     title: "Whist (staging)",
   },
