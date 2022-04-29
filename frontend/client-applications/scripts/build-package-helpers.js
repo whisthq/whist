@@ -66,7 +66,7 @@ const getMacOSArchConfig = () => {
 const getPublishS3BucketName = (environment) => {
   switch (process.platform) {
     case "darwin":
-      return `whist-chromium-macos${
+      return `whist-electron-macos${
         getMacOSArchConfig().publishS3BucketInfix
       }-${environment}`
     case "win32":
