@@ -42,7 +42,7 @@ resource "aws_s3_bucket" "whist-electron-windows" {
 # download from the Whist website. This application automatically autoupdates to the
 # content of the `prod` bucket.
 resource "aws_s3_bucket" "whist-electron-windows-base" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = "whist-electron-windows-base"
 
   tags = {
