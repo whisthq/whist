@@ -88,8 +88,11 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   access_key  = "${var.access_key}"
   secret_key  = "${var.secret_key}"
   region      = "us-east-1" # The source AWS region where the Packer Builder will run
-  max_retries = 5           # Retry up to 5 times using exponential backoff if Packer fails to connect to AWS, in case of throttling/transient failures
-
+  
+  # The max_retries is automatically set by Packer for longer-than-expected AWS tasks, which can sometime happen on AWS's side. This 
+  # defaults to 40, which should be plenty, but if you need it to be longer for whatever reason, you can set it here.
+  # max_retries = 50
+  
   /* Run configuration */
 
   # This filter populates the `source_ami` variable with the AMI ID of the source AMI deefined in `filters`
