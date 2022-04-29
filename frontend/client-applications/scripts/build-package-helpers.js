@@ -70,9 +70,9 @@ const getPublishS3BucketName = (environment) => {
         getMacOSArchConfig().publishS3BucketInfix
       }-${environment}`
     case "win32":
-      return `fractal-chromium-windows-${environment}`
+      return `whist-electron-windows-${environment}`
     case "linux":
-      return `fractal-chromium-ubuntu-${environment}`
+      return `whist-electron-ubuntu-${environment}`
   }
 }
 

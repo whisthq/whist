@@ -11,7 +11,7 @@ const environment: WhistEnvironment = {
       macOS_arm64:
         "https://fractal-chromium-macos-arm64-dev.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.exe",
+        "https://whist-electron-windows-dev.s3.amazonaws.com/Whist.exe",
     },
   },
   staging: {
@@ -22,7 +22,7 @@ const environment: WhistEnvironment = {
       macOS_arm64:
         "https://fractal-chromium-macos-arm64-staging.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-staging.s3.amazonaws.com/Whist.exe",
+        "https://whist-electron-windows-staging.s3.amazonaws.com/Whist.exe",
     },
   },
   prod: {
@@ -33,7 +33,7 @@ const environment: WhistEnvironment = {
       macOS_arm64:
         "https://fractal-chromium-macos-arm64-prod.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-base.s3.amazonaws.com/Whist.exe",
+        "https://whist-electron-windows-base.s3.amazonaws.com/Whist.exe",
     },
   },
 }
