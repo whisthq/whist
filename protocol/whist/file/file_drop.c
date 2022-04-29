@@ -325,7 +325,7 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     XClientMessageEvent m;
 
     if (drop_file) {
-        if (strchr(drop_file->filename, "\n")) {
+        if (strchr(drop_file->filename, '\n')) {
             LOG_WARNING("Dropping filename contains newline, which is not permitted for URI list");
             return -1;
         }
@@ -607,7 +607,7 @@ int file_drag_update(bool is_dragging, int x, int y, int drag_group_id, char* fi
                 return 0;
             }
 
-            if (strchr(filename, "\n")) {
+            if (strchr(filename, '\n')) {
                 LOG_WARNING("Dragging filename contains newline, which is not permitted for URI list");
                 return -1;
             }
