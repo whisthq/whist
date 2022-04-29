@@ -904,21 +904,31 @@ jobs:
 
         # Each final build has an internal build id and debug id. Sentry will use these
         # IDs to match the debug symbols with the build that crashed to build the backtrace
-      - name: Copy Client debug symbols to Sentry
-        if: runner.os == 'macOS' || runner.os == 'Windows'
+      - name: Copy Client debug symbols to Sentry, on macOS
+        if: runner.os == 'macOS'
         working-directory: frontend/client-applications
         env:
           SENTRY_ORG: whist
           SENTRY_PROJECT: protocol
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        shell: bash --noprofile --norc -eo pipefail {0}
         run: |
-
-          if 
-
           curl -sL https://sentry.io/get-cli/ | bash
           sentry-cli upload-dif WhistProtocolClient/build/WhistClient
           sentry-cli upload-dif WhistProtocolClient/debugSymbols/WhistClient.debug
+
+        # Each final build has an internal build id and debug id. Sentry will use these
+        # IDs to match the debug symbols with the build that crashed to build the backtrace
+      - name: Copy Client debug symbols to Sentry, on Windows
+        if: runner.os == 'Windows'
+        working-directory: frontend/client-applications
+        env:
+          SENTRY_ORG: whist
+          SENTRY_PROJECT: protocol
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+          sentry-cli upload-dif WhistProtocolClient\build\WhistClient
+          sentry-cli upload-dif WhistProtocolClient\debugSymbols\WhistClient.debug
 
   #######################################################################################
   #######################################################################################
