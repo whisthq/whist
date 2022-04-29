@@ -2,7 +2,7 @@ const execCommand = require("./execCommand").execCommand
 const helpers = require("./helpers")
 
 if (require.main === module) {
-  const env = process.env.WHIST_ENV ?? "prod"
+  const env = process.env.WHIST_ENV ?? "dev"
 
   console.log(
     `Creating config JSON file for ${env}. For a different environment, set the WHIST_ENV environment variable`

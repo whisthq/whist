@@ -6,14 +6,16 @@ import { getStorage } from "@app/worker/utils/storage"
 
 import { cachedAuthInfo } from "@app/constants/storage"
 
-const getCachedAuthInfo = async () => {
-  const _authInfo = (await getStorage(cachedAuthInfo)) as any
+import { AuthInfo } from "@app/@types/auth"
 
-  if (_authInfo === undefined) return {}
-  return JSON.parse(JSON.stringify(_authInfo))
+const getCachedAuthInfo = async () => {
+  const authInfo = (await getStorage(cachedAuthInfo)) as any
+
+  if (authInfo === undefined) return {}
+  return JSON.parse(JSON.stringify(authInfo))
 }
 
-const refreshAuthInfo = async (authInfo: any) => {
+const refreshAuthInfo = async (authInfo: AuthInfo) => {
   const response = await requestAuthInfoRefresh(authInfo?.refreshToken)
   const json = await response.json()
   return parseAuthInfo(json)

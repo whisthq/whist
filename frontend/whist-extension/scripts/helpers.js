@@ -9,7 +9,8 @@ module.exports = {
   createConfigJSON: (env) => {
     if (env === "dev") return config.dev
     if (env === "staging") return config.staging
-    return config.prod
+    if (env === "prod") return config.prod
+    return config.dev
   },
   buildTailwind: () => {
     console.log("Building CSS with tailwind...")

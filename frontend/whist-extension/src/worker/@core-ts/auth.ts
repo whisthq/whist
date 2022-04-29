@@ -4,6 +4,8 @@ import { config } from "@app/constants/app"
 
 const redirectURL = chrome.identity.getRedirectURL("auth0")
 
+console.log("redirect url is", redirectURL)
+
 export const authPortalURL = () => {
   return [
     `https://${config.AUTH_DOMAIN_URL}/authorize`,
