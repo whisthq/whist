@@ -12,7 +12,7 @@ resource "aws_s3_bucket" "whist-electron-macos-arm64" {
 }
 
 # Bucket for storing Chromium builds for MacOS (x64)
-resource "aws_s3_bucket" "whist-electron-macos-x86" {
+resource "aws_s3_bucket" "whist-electron-macos-x64" {
   bucket = "whist-electron-macos-x64-${var.env}"
 
   tags = {
