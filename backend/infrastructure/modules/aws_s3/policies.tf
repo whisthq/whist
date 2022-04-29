@@ -8,7 +8,7 @@ resource "aws_s3_bucket_public_access_block" "whist-electron-macos-arm64" {
   ignore_public_acls      = false
 }
 
-resource "aws_s3_bucket_public_access_block" "whist-chromium-macos-x64" {
+resource "aws_s3_bucket_public_access_block" "whist-electron-macos-x64" {
   bucket                  = aws_s3_bucket.whist-electron-macos-x64.id
   block_public_acls       = false
   block_public_policy     = false
