@@ -683,6 +683,7 @@ int32_t multithreaded_send_video(void* opaque) {
                 wsmsg.window_data.id = devices[last_created_device_index].device->id;
                 wsmsg.window_data.width = -1;
                 wsmsg.window_data.height = -1;
+                LOG_INFO("Window deleted with ID %d", wsmsg.window_data.id);
                 // destroy the last capture device and encoder if needed
                 destroy_capture_device(devices[last_created_device_index].device);
                 destroy_video_encoder(devices[last_created_device_index].encoder);
@@ -705,6 +706,7 @@ int32_t multithreaded_send_video(void* opaque) {
             wsmsg.window_data.id = current_device.device->id;
             wsmsg.window_data.width = current_device.device->width;
             wsmsg.window_data.height = current_device.device->height;
+            LOG_INFO("Window created with ID %d", wsmsg.window_data.id);
             state->stream_needs_restart = true;
         }
 
@@ -770,6 +772,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // Accumulated_frames is equal to how many frames have passed since the
         // last call to CaptureScreen
         int accumulated_frames = 0;
+        // TODO: do this for each active window
         if ((!state->stop_streaming || state->stream_needs_restart)) {
             start_timer(&statistics_timer);
             accumulated_frames = capture_screen(current_device.device);
@@ -914,14 +917,14 @@ int32_t multithreaded_send_video(void* opaque) {
                     if (current_device.encoder->encoded_frame_size >
                         (int)MAX_VIDEOFRAME_DATA_SIZE) {
                         // Please make MAX_VIDEOFRAME_DATA_SIZE larger if this error happens
-                        LOG_ERROR("Frame of size %d bytes is too large! Dropping Frame.",
+                        LOG_ERROR("Frame of size %zu bytes is too large! Dropping Frame.",
                                   current_device.encoder->encoded_frame_size);
                         continue;
                     } else {
                         if (SAVE_VIDEO_OUTPUT) {
                             for (int i = 0; i < current_device.encoder->num_packets; i++) {
-                                fwrite(current_device.encoder->packets[i].data,
-                                       current_device.encoder->packets[i].size, 1, fp);
+                                fwrite(current_device.encoder->packets[i]->data,
+                                       current_device.encoder->packets[i]->size, 1, fp);
                             }
                             fflush(fp);
                         }
@@ -934,7 +937,7 @@ int32_t multithreaded_send_video(void* opaque) {
                                              current_device.encoder->encoded_frame_size);
                         log_double_statistic(VIDEO_FRAME_PROCESSING_TIME,
                                              get_timer(&server_frame_timer) * 1000);
-                        if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(encoder->frame_type))
+                        if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(current_device.encoder->frame_type))
                             log_double_statistic(VIDEO_NUM_RECOVERY_FRAMES, 1.0);
                     }
                 }

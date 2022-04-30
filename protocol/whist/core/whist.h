@@ -66,7 +66,6 @@ Includes
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
 #include <whist/utils/os_utils.h>
-#include <whist/video/capture/capture.h>
 
 /*
 ============================
@@ -788,7 +787,27 @@ typedef enum WhistServerMessageType {
     SMESSAGE_QUIT = 100,
 } WhistServerMessageType;
 
+// TODO: this should go in a separate file 
+typedef enum WindowMessageType {
+    // tell the client to open a new window
+    WINDOW_CREATE,
+    // tell the server or client to close a window
+    WINDOW_DELETE,
+    // tell the server to resize a window
+    WINDOW_RESIZE,
+    // tell the server to switch active window
+    WINDOW_ACTIVE
+} WindowMessageType;
+
+typedef struct WindowMessage {
+    WindowMessageType type;
+    int id;
+    int width;
+    int height;
+} WindowMessage;
+
 /**
+ *
  * @brief   Server message.
  * @details Message from a Whist server to a Whist client.
  */

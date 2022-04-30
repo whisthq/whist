@@ -39,24 +39,6 @@ typedef struct WhistWindow {
 #endif
 } WhistWindow;
 
-// TODO: this should go in a separate file 
-typedef enum WindowMessageType {
-    // tell the client to open a new window
-    WINDOW_CREATE;
-    // tell the server or client to close a window
-    WINDOW_DELETE;
-    // tell the server to resize a window
-    WINDOW_RESIZE;
-    // tell the server to switch active window
-    WINDOW_ACTIVE;
-}
-
-typedef struct WindowMessage {
-    WindowMessageType type;
-    int id;
-    int width;
-    int height;
-} WindowMessage;
 
 typedef struct CaptureDevice {
     int id;
