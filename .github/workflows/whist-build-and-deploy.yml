@@ -928,6 +928,7 @@ jobs:
           SENTRY_ORG: whist
           SENTRY_PROJECT: protocol
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           # We specify INSTALL_DIR first, so the sentry-cli script doesn't try to call `sudo`
           export INSTALL_DIR=$GITHUB_WORKSPACE
