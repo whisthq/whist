@@ -72,8 +72,8 @@ WhistTimer my_timer;
 double cool_down;
 double last_running_low_time;
 int running_low_cnt = 0;
-int cool_down_large = 5.0;
-int cool_down_small = 4.0;
+double cool_down_large = 4.0;
+double cool_down_small = 1.5;
 
 double scale_down_last_check_time;
 double running_min;
