@@ -929,6 +929,8 @@ jobs:
           SENTRY_PROJECT: protocol
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
+          REM We specify INSTALL_DIR first, so the sentry-cli script doesn't try to call `sudo`
+          export INSTALL_DIR=$GITHUB_WORKSPACE
           curl -sL https://sentry.io/get-cli/ | bash
           sentry-cli upload-dif WhistProtocolClient\build\WhistClient
           sentry-cli upload-dif WhistProtocolClient\debugSymbols\WhistClient.debug
