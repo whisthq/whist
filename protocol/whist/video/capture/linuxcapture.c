@@ -331,17 +331,21 @@ int capture_screen(CaptureDevice* device) {
                 nvidia_bind_context(device->nvidia_capture_device);
                 device->nvidia_context_is_stale = false;
             }
+            // Capture the corner color, using X11
+            // We get the corner color, before screen capture, so that
+            // the corner capture doesn't add latency (It takes 0.2-0.3ms to execute)
+            device->corner_color = x11_get_corner_color(device->x11_capture_device);
+            // Capture the screen using Nvidia
             int ret = nvidia_capture_screen(device->nvidia_capture_device);
             if (LOG_VIDEO && ret > 0) LOG_INFO("Captured with Nvidia!");
             if (ret >= 0) {
                 if (device->width == device->nvidia_capture_device->width &&
                     device->height == device->nvidia_capture_device->height) {
+                    // Get framebuffer data and return the accumulated frames
                     device->last_capture_device = NVIDIA_DEVICE;
                     device->frame_data = device->nvidia_capture_device->p_gpu_texture;
                     // GPU captures need the pitch to just be width
                     device->pitch = device->width;
-                    // Capture the corner color, using X11
-                    device->corner_color = x11_get_corner_color(device->x11_capture_device);
                     return ret;
                 } else {
                     LOG_ERROR(
