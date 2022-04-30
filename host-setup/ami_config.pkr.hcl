@@ -88,8 +88,11 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   access_key  = "${var.access_key}"
   secret_key  = "${var.secret_key}"
   region      = "us-east-1" # The source AWS region where the Packer Builder will run
-  max_retries = 5           # Retry up to 5 times using exponential backoff if Packer fails to connect to AWS, in case of throttling/transient failures
-
+  
+  # The max_retries is automatically set by Packer for longer-than-expected AWS tasks, which can sometime happen on AWS's side. This 
+  # defaults to 40, which should be plenty, but if you need it to be longer for whatever reason, you can set it here.
+  # max_retries = 50
+  
   /* Run configuration */
 
   # This filter populates the `source_ami` variable with the AMI ID of the source AMI deefined in `filters`
@@ -114,7 +117,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   # used in place of instance_type. You may only set either spot_instance_types or instance_type, not both. 
   # This feature exists to help prevent situations where a Packer build fails because a particular availability
   # zone does not have capacity for the specific instance_type requested in instance_type.
-  spot_instance_types = ["g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge", "g4dn.8xlarge", "g4dn.16xlarge"]
+  spot_instance_types = ["g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge", "g4dn.8xlarge", "g4dn.12xlarge", "g4dn.16xlarge"]
 
   # We do not set spot_price (string), so that it defaults to a maximum price equal to the on demand price 
   # of the instance. In the situation where the current Amazon-set spot price exceeds the value set in this
@@ -126,18 +129,11 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   iam_instance_profile = "PackerAMIBuilder" # This is the IAM role we configured for Packer in AWS
   shutdown_behavior    = "terminate"        # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
 
-  # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
-  vpc_id = "vpc-34aded4e"
-
-  # This filter ensures Packer will pick a subnet which was configured for Packer by looking for the tag
-  # Purpose: packer. If no subnet with this tag is found in `region`, Packer will fail.
-  subnet_filter {
-    filters = {
-      "tag:Purpose" : "packer"
-    }
-    most_free = true # The Subnet with the most free IPv4 addresses will be used if multiple Subnets matches the filter.
-    random    = true # A random Subnet will be used if multiple Subnets matches the filter. most_free have precendence over this.
-  }
+  # The VPC where the Packer Builer will run. This VPC needs to be configured to run mandelboxes, so we use 
+  # MainVPCdev and the associated DefaultSubnetdev and MandelboxesSecurityGroupdev
+  vpc_id = "vpc-03a7ed0d3076fa64c"
+  subnet_id = "subnet-02865ffebdb591468"
+  security_group_id = "sg-01fb458379935c191"
 
   /* Block Device configuration */
 
