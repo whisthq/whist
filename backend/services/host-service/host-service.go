@@ -46,7 +46,6 @@ import (
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
-	"github.com/whisthq/whist/backend/services/host-service/mandelbox/gpus"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/metadata/aws"
@@ -117,15 +116,16 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 	globalCancel()
 }
 
-func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, instanceID string) {
-	// Get the number of GPUs available and start a mandelbox for each.
-	availableGPUs := gpus.GetRemainingGPUs()
+func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, instanceID string, instanceCapacity int32) {
+	if metadata.IsLocalEnvWithoutDB() {
+		return
+	}
 
-	// Start all waiting mandelboxes we can (i.e. as many as we have hardware capacity for) and register to database
-	// with the "WAITING" status.
-	for i := 0; i < availableGPUs; i++ {
+	// Start all waiting mandelboxes we can (i.e. as many as we have capacity for) and register to database
+	// with the "WAITING" status. The instance capacity is determined by the scaling service for each instance type.
+	for i := int32(0); i < instanceCapacity; i++ {
 		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient)
-		err := dbdriver.CreateMandelbox(zygote.GetID(), zygote.GetAppName(), instanceID, zygote.GetSessionID())
+		err := dbdriver.CreateMandelbox(zygote.GetID(), zygote.GetAppName(), instanceID)
 		if err != nil {
 			logger.Errorf("Failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
 		}
@@ -322,6 +322,9 @@ func main() {
 		// Cancel the global context, if it hasn't already been cancelled.
 		globalCancel()
 
+		// Clean all the waiting mandelboxes so they don't block the shut down.
+		mandelboxData.StopWaitingMandelboxes()
+
 		// Wait for all goroutines to stop, so we can run the rest of the cleanup
 		// process.
 		utils.WaitWithDebugPrints(&goroutineTracker, 2*time.Minute, 2)
@@ -402,6 +405,18 @@ func main() {
 		}
 	}
 
+	// Start database subscription client
+	instanceID, err := aws.GetInstanceID()
+	if err != nil {
+		logger.Errorf("Can't get AWS Instance Name. Error: %s", err)
+		metrics.Increment("ErrorRate")
+	}
+
+	capacity, err := dbdriver.GetInstanceCapacity(string(instanceID))
+	if err != nil {
+		logger.Errorf("Failed to get capacity of instance %v. Err: %s", instanceID, err)
+	}
+
 	// Now we start all the goroutines that actually do work.
 
 	// Start the HTTP server and listen for events
@@ -410,12 +425,6 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
-	// Start database subscription client
-	instanceID, err := aws.GetInstanceID()
-	if err != nil {
-		logger.Errorf("Can't get AWS Instance Name to start database subscriptions. Error: %s", err)
-		metrics.Increment("ErrorRate")
-	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 	// It's not necessary to subscribe to the config database
 	// in the host service
@@ -432,7 +441,7 @@ func main() {
 	// mandelboxes up to the point where we need a config token, and register them to the database.
 	// The scaling service will handling assigning users to this instance and will update the
 	// database row to assign the user to a waiting mandelbox.
-	SpinUpMandelboxes(globalCtx, globalCancel, &goroutineTracker, dockerClient, string(instanceID))
+	SpinUpMandelboxes(globalCtx, globalCancel, &goroutineTracker, dockerClient, string(instanceID), capacity)
 
 	// Start main event loop. Note that we don't track this goroutine, but
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it

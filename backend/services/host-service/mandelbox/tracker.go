@@ -56,3 +56,17 @@ func LookUpByMandelboxID(mandelboxID types.MandelboxID) (Mandelbox, error) {
 	}
 	return nil, utils.MakeError("Couldn't find Mandelbox with MandelboxID %s", mandelboxID)
 }
+
+// StopWaitingMandelboxes will stop all mandelboxes to which users never
+// connected. This function should only be called once the global context
+// gets cancelled.
+func StopWaitingMandelboxes() {
+	trackerLock.RLock()
+	defer trackerLock.RUnlock()
+
+	for _, v := range tracker {
+		if !v.GetConnectedStatus() {
+			v.Close()
+		}
+	}
+}

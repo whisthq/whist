@@ -114,6 +114,9 @@ type Mandelbox interface {
 	// are ready to be initialized.
 	MarkParamsReady() error
 
+	// WriteSessionID writes the session ID to a file so it can be used for logging.
+	WriteSessionID() error
+
 	// WriteJSONData writes arbitrary data from JSON Transport endpoint for
 	// mandelbox internals.
 	WriteJSONData(types.JSONData) error
@@ -241,7 +244,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 			}
 			mandelbox.cleanUserConfigDir()
 		} else {
-			logger.Infof("User failed to connect to mandelbox, so not trying to backup configs.")
+			logger.Infof("No users connected to the mandelbox, so not trying to backup configs.")
 		}
 
 		// Remove mandelbox from the database altogether, once again excluding warmups

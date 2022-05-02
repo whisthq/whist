@@ -54,7 +54,8 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		}
 	}()
 
-	// replace chrome by brave here to test Brave -- note that the host-service is designed to only be able to launch one app across our whole backend
+	// Replace "chrome" by "brave" (or some other container we support) to test a different app. Note that the Whist
+	// backend is designed to only ever deploy the same application everywhere, which we hardcode here.
 	var AppName mandelboxtypes.AppName = "chrome"
 	mandelbox.SetAppName(AppName)
 
@@ -171,17 +172,12 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	tmpfs["/run"] = "size=52428800"
 	tmpfs["/run/lock"] = "size=52428800"
 
-	// Create the session ID here because we need it for volume bindings. It will be registered to the database
-	// and then sent to the client app by the scaling service.
-	sessionID := time.Now().UnixMilli()
-	mandelbox.SetSessionID(mandelboxtypes.SessionID(utils.Sprintf("%v", sessionID)))
-
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 			path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings", ":", "/whist", "resourceMappings"),
 			path.Join(utils.TempDir, mandelbox.GetID().String(), "sockets", ":", "tmp", "sockets"),
-			path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), string(mandelbox.GetSessionID()), ":", "var", "log", "whist"),
+			path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), ":", "var", "log", "whist"),
 			"/run/udev/data:/run/udev/data:ro",
 			path.Join(utils.WhistDir, mandelbox.GetID().String(), "userConfigs", "unpacked_configs", ":", "/whist", "userConfigs", ":rshared"),
 		},
@@ -323,7 +319,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		return
 	}
 
-	// TODO: figure out how to get the mandelbox object here
 	mandelbox, err := mandelboxData.LookUpByMandelboxID(mandelboxSubscription.ID)
 	if err != nil {
 		logAndReturnError("Did not find existing mandelbox with ID %v", mandelboxSubscription.ID)
@@ -359,7 +354,9 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	sendEncryptionInfoChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs(globalCtx, globalCancel, goroutineTracker)
 	defer close(sendEncryptionInfoChan)
 
+	// Set the session id and write the `session_id` file
 	mandelbox.SetSessionID(mandelboxtypes.SessionID(mandelboxSubscription.SessionID))
+	mandelbox.WriteSessionID()
 
 	err = mandelbox.MarkParamsReady()
 	if err != nil {

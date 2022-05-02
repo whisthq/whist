@@ -165,6 +165,24 @@ func RegisterInstance() error {
 	return nil
 }
 
+// GetInstanceCapacity will get the capacity of this instance as established
+// by the scaling service. This value will be used for deciding how many
+// mandelboxes to create when starting the host service.
+func GetInstanceCapacity(instanceID string) (int32, error) {
+	q := queries.NewQuerier(dbpool)
+
+	rows, err := q.FindInstanceByID(context.Background(), string(instanceID))
+	if err != nil {
+		return -1, utils.MakeError("Error running query for instance. Err: %s", err)
+	}
+
+	if len(rows) == 0 {
+		return -1, utils.MakeError("Existing row for this instance not found in the database.")
+	}
+
+	return rows[0].RemainingCapacity, nil
+}
+
 // MarkDraining marks this instance as draining, causing the backend (i.e. scaling-service)
 // to stop assigning new mandelboxes to this instance.
 func markDraining() error {

@@ -799,7 +799,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		App:        string(waitingMandelbox.App),
 		InstanceID: assignedInstance.ID,
 		UserID:     mandelboxRequest.UserID,
-		SessionID:  string(waitingMandelbox.SessionID),
+		SessionID:  utils.Sprintf("%v", mandelboxRequest.SessionID),
 		Status:     "ALLOCATED",
 		CreatedAt:  waitingMandelbox.CreatedAt,
 	}
@@ -840,7 +840,6 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 		IP:          ip.String(),
 		MandelboxID: types.MandelboxID(mandelboxID),
-		SessionID:   types.SessionID(waitingMandelbox.SessionID),
 	}, nil)
 
 	return nil
