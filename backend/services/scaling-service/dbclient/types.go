@@ -41,9 +41,9 @@ type whist_instances_set_input struct {
 	UpdatedAt         time.Time      `json:"updated_at"`
 }
 
-// whist_mandelboxes_insert_input is a type for used for the GraphQL mutations
-// that insert to the `whist.mandelboxes` database table.
-type whist_mandelboxes_insert_input struct {
+// whist_mandelboxes_set_input is a type for used for the GraphQL mutations
+// that update a row on the `whist.mandelboxes` database table.
+type whist_mandelboxes_set_input struct {
 	ID         graphql.String `json:"id"`
 	App        graphql.String `json:"app"`
 	InstanceID graphql.String `json:"instance_id"`

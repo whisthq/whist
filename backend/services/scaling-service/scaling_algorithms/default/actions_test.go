@@ -237,6 +237,13 @@ func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLCli
 	}
 	return len(testMandelboxes), nil
 }
+func (db *mockDBClient) QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistMandelboxes, error) {
+	return subscriptions.WhistMandelboxes{}, nil
+}
+
+func (db *mockDBClient) UpdateMandelbox(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Mandelbox) (int, error) {
+	return 0, nil
+}
 
 // mockHostHandler is used to test all interactions with cloud providers
 type mockHostHandler struct{}
@@ -772,7 +779,6 @@ func TestMandelboxAssign(t *testing.T) {
 			testAssignRequest := &httputils.MandelboxAssignRequest{
 				Regions:    []string{"us-east-1", "us-west-1"},
 				CommitHash: tt.clientSHA,
-				SessionID:  1234567890,
 				UserEmail:  "user@whist.com",
 			}
 			testAssignRequest.CreateResultChan()

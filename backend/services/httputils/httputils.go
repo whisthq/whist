@@ -66,7 +66,6 @@ type MandelboxAssignRequest struct {
 	CommitHash string             `json:"client_commit_hash"`
 	UserEmail  string             `json:"user_email"`
 	Version    string             `json:"version"`
-	SessionID  int64              `json:"session_id"`
 	UserID     types.UserID       // The userID is obtained from the access token
 	ResultChan chan RequestResult // Channel to pass the request result between goroutines
 }
@@ -74,6 +73,7 @@ type MandelboxAssignRequest struct {
 type MandelboxAssignRequestResult struct {
 	IP          string            `json:"ip"`
 	MandelboxID types.MandelboxID `json:"mandelbox_id"`
+	SessionID   types.SessionID   `json:"session_id"`
 	Error       string            `json:"error"`
 }
 
