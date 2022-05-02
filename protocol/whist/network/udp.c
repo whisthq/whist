@@ -1177,6 +1177,23 @@ int udp_get_num_pending_frames(SocketContext* socket_context, WhistPacketType ty
         // The only pending packet is in the pending packet buffer
         return context->has_pending_packet[(int)type] ? 1 : 0;
     } else {
+        if(type == PACKET_AUDIO)
+        {
+            // for audio get more accurate num of frames inside ringbuffer
+            int start= max(ring_buffer->min_id, ring_buffer->last_rendered_id);
+            int end =ring_buffer->max_id;
+            int cnt=0;
+            // TODO: inefficient code
+            for(int i=start;i<=end;i++)
+            {
+                FrameData* frame = get_frame_at_id(ring_buffer, i);
+                if (i != frame->id) {
+                    continue;
+                }
+                cnt++;
+            }
+            return cnt;
+        }
         // All frames are pending,
         int num_pending_frames = ring_buffer->max_id - ring_buffer->min_id + 1;
         // But if we've rendered, only frames after the last render ID are pending render
