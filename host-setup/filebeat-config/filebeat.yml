@@ -47,25 +47,33 @@ processors:
       # https://www.elastic.co/guide/en/beats/filebeat/current/add-fields.html
       target: "" # having an empty string as target lets us put the fields at the root.
       fields:
-        environment: local-dev
+        environment: localdev
         component: mandelbox
   - rename:
       fields:
         - from: "agent"
           to: "filebeat_agent"
       ignore_missing: true
+  # https://www.elastic.co/guide/en/beats/filebeat/current/dissect.html
+  # We use the dissect processor to parse out the metadata for logs based on file-path.
+  # Logs are mounted from mandelboxes onto host through bind mounts declared by the host service.
+  # We have a dissect processor for ephemeral storage paths and for regular paths.
   - dissect:
-      # https://www.elastic.co/guide/en/beats/filebeat/current/dissect.html
-      # We use the dissect processor to parse out the metadata for logs based on file-path.
-      # Logs are mounted from mandelboxes onto host through bind mounts declared by the host service.
-      # A filepath looks like below:
+      # A filepath for EBS storage looks like below:
       # /whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/protocol-out.log
       tokenizer: "/whist/temp/logs/%{container_id}/%{session_id}/%{sub_component}-%{log_level}.log"
       field: "log.file.path"
       target_prefix: ""
       # setting ignore_failure to false will stop execution of subsequent processors if dissect errors out for some reason.
       ignore_failure: true
-
+  - dissect:
+      # A filepath for ephemeral storage looks like below:
+      # /ephemeral/whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/protocol-out.log
+      tokenizer: "/ephemeral/whist/temp/logs/%{container_id}/%{session_id}/%{sub_component}-%{log_level}.log"
+      field: "log.file.path"
+      target_prefix: ""
+      # setting ignore_failure to false will stop execution of subsequent processors if dissect errors out for some reason.
+      ignore_failure: true
   # This allows us to add metadata about the specific cloud provider Filebeat is running on.
   # https://www.elastic.co/guide/en/beats/filebeat/current/add-cloud-metadata.html
   - add_cloud_metadata:
