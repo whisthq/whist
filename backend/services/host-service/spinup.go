@@ -17,7 +17,6 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
-	"github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
@@ -33,7 +32,7 @@ import (
 // StartMandelboxSpinUp will create and start a mandelbox, doing all the steps that can be done without the user's config token.
 // Once the mandelbox is started, it effectively waits an infinite time until a user gets assigned to it and the remaining
 // steps can continue.
-func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient) mandelbox.Mandelbox {
+func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient) mandelboxData.Mandelbox {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
@@ -172,24 +171,17 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	tmpfs["/run"] = "size=52428800"
 	tmpfs["/run/lock"] = "size=52428800"
 
-	// TODO: figure out how to bind the server logs without the session id.
-	// Sanitize the received session ID. First, verify that the sessionID is a valid timestamp string.
-	// If not, use a new timestamp.
-	// _, err = strconv.ParseInt(mandelboxSubscription.SessionID, 10, 64)
-	// if err != nil {
-	// 	sessionID := strconv.FormatInt(time.Now().UnixMilli(), 10)
-	// 	logger.Warningf("Malformed session ID: %v Using new session ID: %v", mandelboxSubscription.SessionID, sessionID)
-	// 	mandelboxSubscription.SessionID = sessionID
-	// }
-
-	// mandelbox.SetSessionID(mandelboxtypes.SessionID(mandelboxSubscription.SessionID))
+	// Create the session ID here because we need it for volume bindings. It will be registered to the database
+	// and then sent to the client app by the scaling service.
+	sessionID := time.Now().UnixMilli()
+	mandelbox.SetSessionID(mandelboxtypes.SessionID(utils.Sprintf("%v", sessionID)))
 
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 			path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings", ":", "/whist", "resourceMappings"),
 			path.Join(utils.TempDir, mandelbox.GetID().String(), "sockets", ":", "tmp", "sockets"),
-			// path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), mandelboxSubscription.SessionID, ":", "var", "log", "whist"),
+			path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), string(mandelbox.GetSessionID()), ":", "var", "log", "whist"),
 			"/run/udev/data:/run/udev/data:ro",
 			path.Join(utils.WhistDir, mandelbox.GetID().String(), "userConfigs", "unpacked_configs", ":", "/whist", "userConfigs", ":rshared"),
 		},

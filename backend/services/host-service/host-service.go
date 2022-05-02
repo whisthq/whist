@@ -117,14 +117,18 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 	globalCancel()
 }
 
-func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient) {
+func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, instanceID string) {
+	// Get the number of GPUs available and start a mandelbox for each.
 	availableGPUs := gpus.GetRemainingGPUs()
 
-	// Start zygotes we have available and register to database
+	// Start all waiting mandelboxes we can (i.e. as many as we have hardware capacity for) and register to database
+	// with the "WAITING" status.
 	for i := 0; i < availableGPUs; i++ {
 		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient)
-		logger.Infof("%v", zygote.GetID())
-		// Add to database
+		err := dbdriver.CreateMandelbox(zygote.GetID(), zygote.GetAppName(), instanceID, zygote.GetSessionID())
+		if err != nil {
+			logger.Errorf("Failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
+		}
 	}
 
 }
@@ -424,6 +428,12 @@ func main() {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
 	}
 
+	// Start warming up as many instances as we have capacity for. This will effectively create
+	// mandelboxes up to the point where we need a config token, and register them to the database.
+	// The scaling service will handling assigning users to this instance and will update the
+	// database row to assign the user to a waiting mandelbox.
+	SpinUpMandelboxes(globalCtx, globalCancel, &goroutineTracker, dockerClient, string(instanceID))
+
 	// Start main event loop. Note that we don't track this goroutine, but
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it
 	// needs to stay alive after the global context is cancelled, so we can
@@ -476,8 +486,6 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 	needToReinitDockerEventStream := false
 	dockerevents, dockererrs := dockerClient.Events(dockerContext, eventOptions)
 	logger.Info("Initialized docker event stream.")
-
-	SpinUpMandelboxes(globalCtx, globalCancel, goroutineTracker, dockerClient)
 
 	logger.Info("Entering event loop...")
 
