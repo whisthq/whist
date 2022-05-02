@@ -93,13 +93,6 @@ pull_docker_images &
 # Based on initialization commands in https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-initialize.html
 # Changes:
 #   - changed blocksize to 1M from 128k because optimal dd blocksize is 1M according to above link
-# Other possibilities (TODO):
-#   - make host fs read-only via /etc/fstab so we can compress the host even more, and don't have to worry about warming up writes
-#     - https://sites.google.com/site/linuxpendrive/rorootfs
-#     - https://www.onlogic.com/company/io-hub/how-to-build-a-read-only-linux-system/
-#     - (didn't read but in open tabs) https://help.ubuntu.com/community/aufsRootFileSystemOnUsbFlash
-#   - make the AMI as small as possible as well
-#   - experiment with iodepth, more fio workers, etc. (`offset_increment` with multiple jobs)
 fio --filename=/dev/nvme0n1 --rw=read --bs=1M --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
 
 wait
