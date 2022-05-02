@@ -557,7 +557,7 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
 
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(frame->format);
     if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL) {
-        if (decoder->params.hardware_output_format == frame->format) {
+        if (0 && decoder->params.hardware_output_format == frame->format) {
             // The caller supports dealing with the hardware frame
             // directly, so just return it.
             decoder->decoded_frame = frame;
