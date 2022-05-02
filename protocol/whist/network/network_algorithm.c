@@ -136,9 +136,9 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
 #define DECREASE_RATIO 0.95
 #define BANDWITH_USED_THRESHOLD 0.95
 // Higher value will mean increased latency. Lower value will increase false positives for
-// congestion. Right now set to 50ms based on tradeoff between acceptable E2E latency vs false
+// congestion. Right now set to 30ms based on tradeoff between acceptable E2E latency vs false
 // positives.
-#define MIN_LATENCY_THRESHOLD_SEC 0.05  // 50ms
+#define MIN_LATENCY_THRESHOLD_SEC 0.03  // 30ms
     if (incoming_bitrate <= 0) {
         // Not enough data to take any decision. Let the bits start flowing.
         return false;
