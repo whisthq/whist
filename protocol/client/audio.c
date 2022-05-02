@@ -93,7 +93,7 @@ static int adjust_to_scale_factor(double current_time) {
 }
 
 static int dynamic_scaling_reinit() {
-    // scale_factor= init_scale_factor;
+    scale_factor= init_scale_factor;
     start_timer(&my_timer);
     double current_time = get_timer(&my_timer);
     adjust_to_scale_factor(current_time);
@@ -119,6 +119,9 @@ static int handle_scale_down(double device_queue_len, double current_time) {
     // threshold
     if (running_min > safe_threshold && running_min < inf - 1 &&
         current_time - scale_down_last_check_time > 45.0) {
+        if(running_min > AUDIO_QUEUE_TARGET_SIZE) {
+            running_min = AUDIO_QUEUE_TARGET_SIZE;
+        }
         double adjust = running_min - safe_threshold;
         double new_scale_factor = (AUDIO_QUEUE_TARGET_SIZE - adjust) / AUDIO_QUEUE_TARGET_SIZE_0;
         if (new_scale_factor < 1.0) new_scale_factor = 1.0;
@@ -477,9 +480,11 @@ static void check_buffer_dry(AudioContext* audio_context)
 
 void render_audio(AudioContext* audio_context) {
     
+    //TODO: this is not enough
     if (whist_frontend_audio_is_open(audio_context->target_frontend)) {
         check_buffer_dry(audio_context);
     }
+
     if (audio_context->pending_render_context) {
         if (LOG_AUDIO) {
             LOG_INFO("Rendering Audio");
