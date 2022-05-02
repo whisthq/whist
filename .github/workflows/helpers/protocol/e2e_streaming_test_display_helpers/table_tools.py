@@ -250,8 +250,12 @@ def generate_comparison_table(
         None
     """
 
-    client_table_entries, server_table_entries = compute_deltas(
-        client_metrics, server_metrics, compared_client_metrics, compared_server_metrics
+    client_table_entries, server_table_entries, test_result = compute_deltas(
+        client_metrics,
+        server_metrics,
+        compared_client_metrics,
+        compared_server_metrics,
+        most_interesting_metrics,
     )
 
     table_entries = [
@@ -275,6 +279,7 @@ def generate_comparison_table(
             for row in item["metrics"]
             if row[0] in most_interesting_metrics
         ]
+
         table_entries.insert(0, {"name": "MOST INTERESTING", "metrics": interesting_metrics})
 
         # Generate tables for most interesting metrics, client metrics, and server metrics
@@ -306,3 +311,5 @@ def generate_comparison_table(
         print("\n")
         print("</details>")
         print("\n")
+
+    return test_result

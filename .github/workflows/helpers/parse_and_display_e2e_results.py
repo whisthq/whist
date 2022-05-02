@@ -141,11 +141,7 @@ if __name__ == "__main__":
     most_interesting_metrics = {
         "VIDEO_FPS_RENDERED",
         "VIDEO_END_TO_END_LATENCY",
-        "MAX_VIDEO_END_TO_END_LATENCY",
         "VIDEO_FRAME_SATD",
-        "MAX_VIDEO_FRAME_SATD",
-        "AUDIO_FPS_SKIPPED",
-        "MAX_AUDIO_FPS_SKIPPED",
     }
 
     # Find the path to the folder with the most recent E2E protocol logs
@@ -233,25 +229,6 @@ if __name__ == "__main__":
         experiments.append(experiment_entry)
         print("\t+ Adding empty entry for failed/skipped experiment")
 
-    with open(f"streaming_e2e_test_results_0.md", "w") as summary_file:
-        summary_file.write("### Experiments Summary\n\n")
-
-        summary_file.write("<details>\n")
-        summary_file.write("<summary>Expand Summary</summary>\n\n\n")
-
-        for i, experiment in enumerate(experiments):
-            outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
-            if experiment["dirname"] is not None:
-                summary_file.write(
-                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
-                )
-            else:
-                summary_file.write(
-                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Logs not available.\n"
-                )
-
-        summary_file.write("\n\n</details>\n\n")
-
     for i, compared_branch_name in enumerate(compared_branch_names):
         print(f"Comparing to branch {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
@@ -318,7 +295,7 @@ if __name__ == "__main__":
                     os.path.join(".", compared_branch_name)
                 )
 
-                generate_comparison_table(
+                test_result = generate_comparison_table(
                     results_file,
                     experiment["experiment_metadata"],
                     compared_experiment_metadata,
@@ -329,6 +306,9 @@ if __name__ == "__main__":
                     compared_client_metrics,
                     compared_server_metrics,
                 )
+                if test_result != "success" and compared_branch_name == "dev":
+                    print("Experiment " + str(j + 1) + " is not a success")
+                    e2e_script_outcomes[j] = test_result
 
             else:
                 generate_results_table(
@@ -343,6 +323,24 @@ if __name__ == "__main__":
 
         results_file.close()
 
+    with open(f"streaming_e2e_test_results_0.md", "w") as summary_file:
+        summary_file.write("### Experiments Summary\n\n")
+
+        summary_file.write("<details>\n")
+        summary_file.write("<summary>Expand Summary</summary>\n\n\n")
+
+        for i, experiment in enumerate(experiments):
+            outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
+            if experiment["dirname"] is not None:
+                summary_file.write(
+                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
+                )
+            else:
+                summary_file.write(
+                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Logs not available.\n"
+                )
+
+        summary_file.write("\n\n</details>\n\n")
     #######################################################################################
 
     if (
@@ -369,7 +367,8 @@ if __name__ == "__main__":
 
     gist_url = create_github_gist_post(github_gist_token, title, files_list)
 
-    test_outcome = ":white_check_mark: All experiments succeeded!"
+    success_outcome = ":white_check_mark: All experiments succeeded!"
+    test_outcome = success_outcome
     for outcome in e2e_script_outcomes:
         if outcome != "success":
             test_outcome = ":x: " + str(outcome)
@@ -377,7 +376,7 @@ if __name__ == "__main__":
     # Post updates to Slack channel if desired
     if slack_webhook and post_results_on_slack and github_run_id:
         link_to_runner_logs = f"https://github.com/whisthq/whist/actions/runs/{github_run_id}"
-        if test_outcome == ":white_check_mark: All experiments succeeded!":
+        if test_outcome == success_outcome:
             body = f"Whist daily E2E test for branch `{current_branch_name}` completed successfully. See results: {gist_url} (<{link_to_runner_logs} | see logs>)"
         else:
             body = f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {gist_url}"
@@ -402,3 +401,6 @@ if __name__ == "__main__":
                 title=title,
                 update_date=True,
             )
+
+    if test_outcome != success_outcome:
+        sys.exit(-1)

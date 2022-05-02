@@ -116,7 +116,11 @@ def extract_metrics(client_log_file, server_log_file):
 
 
 def compute_deltas(
-    client_dictionary, server_dictionary, compared_client_dictionary, compared_server_dictionary
+    client_dictionary,
+    server_dictionary,
+    compared_client_dictionary,
+    compared_server_dictionary,
+    most_interesting_metrics,
 ):
     """
     Give the metric values for two runs, augment the client/server dictionaries of the current
@@ -143,6 +147,8 @@ def compute_deltas(
     metrics_dictionaries = [client_dictionary, server_dictionary]
     compared_dictionaries = [compared_client_dictionary, compared_server_dictionary]
     table_entries = []
+
+    test_result = "success"
 
     for dictionary, compared_dictionary in zip(metrics_dictionaries, compared_dictionaries):
         # Augment experiment dictionary with metrics from experiment we are comparing to
@@ -207,13 +213,15 @@ def compute_deltas(
                 and dictionary[k]["delta_pctg"] != "nan"
                 and dictionary[k]["delta_pctg"] != "N/A"
             ):
-                if dictionary[k]["delta"] > 0:
-                    emoji_delta = "⬆️"
+                if abs(dictionary[k]["delta_pctg"]) > 0.2:
+                    if k in most_interesting_metrics:
+                        test_result = "failure"
+                    emoji_delta = "❌"
                 else:
-                    emoji_delta = "⬇️"
+                    emoji_delta = "✅"
 
             new_entry.append(emoji_delta)
             new_table_entries.append(new_entry)
         table_entries.append(new_table_entries)
 
-    return table_entries
+    return table_entries[0], table_entries[1], test_result
