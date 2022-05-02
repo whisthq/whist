@@ -2,6 +2,12 @@
 #include "capture/capture.h"
 
 int transfer_capture(CaptureDevice* device, VideoEncoder* encoder, bool* force_iframe) {
+    if (device == NULL) {
+        LOG_ERROR("device is null");
+    }
+    if (encoder == NULL) {
+        LOG_ERROR("encoder is null");
+    }
     if (device->width != encoder->in_width || device->height != encoder->in_height) {
         LOG_ERROR(
             "Tried to pass in a captured frame of dimension %dx%d, "

@@ -573,7 +573,7 @@ int32_t multithreaded_send_video(void* opaque) {
         devices[i].encoder = NULL;
     }
 
-    DeviceEncoder current_device = devices[0];
+    int current_device_index = 0;
     int last_created_device_index = -1;
 
     whist_cursor_capture_init();
@@ -658,8 +658,8 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // If we got an update device request, we should update the device
         if (state->update_device) {
-            update_current_device(state, &statistics_timer, current_device.device,
-                                  current_device.encoder, true_width, true_height);
+            update_current_device(state, &statistics_timer, devices[current_device_index].device,
+                                  devices[current_device_index].encoder, true_width, true_height);
             state->stream_needs_restart = true;
         }
 
@@ -668,8 +668,10 @@ int32_t multithreaded_send_video(void* opaque) {
         bool has_device = false;
         for (int i = 0; i < MAX_WINDOWS; i++) {
             if (device_has_window(devices[i].device, active_window)) {
-                current_device = devices[i];
+                LOG_INFO("Found device %d for active window", i);
+                current_device_index = i;
                 has_device = true;
+                break;
             }
         }
         if (!has_device) {
@@ -695,18 +697,19 @@ int32_t multithreaded_send_video(void* opaque) {
                                   &devices[last_created_device_index].rdevice,
                                   &devices[last_created_device_index].encoder, active_window,
                                   true_width, true_height) < 0) {
-                continue;
+                LOG_ERROR("Device creation failed!");
             }
-            LOG_INFO("Created device for window %lu", active_window.window);
-            current_device = devices[last_created_device_index];
+            LOG_INFO("Created device for window %lu, index %d", active_window.window, last_created_device_index);
+            current_device_index = last_created_device_index;
             // TODO: send this msg to the client and handle
             WhistServerMessage wsmsg = {0};
             wsmsg.type = SMESSAGE_WINDOW;
             wsmsg.window_data.type = WINDOW_CREATE;
-            wsmsg.window_data.id = current_device.device->id;
-            wsmsg.window_data.width = current_device.device->width;
-            wsmsg.window_data.height = current_device.device->height;
+            wsmsg.window_data.id = devices[current_device_index].device->id;
+            wsmsg.window_data.width = devices[current_device_index].device->width;
+            wsmsg.window_data.height = devices[current_device_index].device->height;
             LOG_INFO("Window created with ID %d", wsmsg.window_data.id);
+            send_packet(&state->client->udp_context, PACKET_MESSAGE, &wsmsg, sizeof(WhistServerMessage), 1, false);
             state->stream_needs_restart = true;
         }
 
@@ -732,8 +735,8 @@ int32_t multithreaded_send_video(void* opaque) {
                 (double)network_settings.burst_bitrate / network_settings.video_bitrate;
             int vbv_size =
                 (VBV_IN_SEC_BY_BURST_BITRATE_RATIO * video_bitrate * burst_bitrate_ratio);
-            current_device.encoder =
-                update_video_encoder(state, current_device.encoder, current_device.device,
+            devices[current_device_index].encoder =
+                update_video_encoder(state, devices[current_device_index].encoder, devices[current_device_index].device,
                                      video_bitrate, video_codec, video_fps, vbv_size);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
@@ -775,7 +778,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // TODO: do this for each active window
         if ((!state->stop_streaming || state->stream_needs_restart)) {
             start_timer(&statistics_timer);
-            accumulated_frames = capture_screen(current_device.device);
+            accumulated_frames = capture_screen(devices[current_device_index].device);
             if (accumulated_frames > 1) {
                 log_double_statistic(VIDEO_FRAMES_SKIPPED_IN_CAPTURE, (accumulated_frames - 1));
                 if (LOG_VIDEO) {
@@ -785,7 +788,7 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             // If capture screen failed, we should try again
             if (accumulated_frames < 0) {
-                retry_capture_screen(state, current_device.device, current_device.encoder);
+                retry_capture_screen(state, devices[current_device_index].device, devices[current_device_index].encoder);
                 continue;
             }
             // Immediately bring consecutives to 0, when a new frame is captured
@@ -847,7 +850,7 @@ int32_t multithreaded_send_video(void* opaque) {
                 // This function will try to CUDA/OpenGL optimize the transfer by
                 // only passing a GPU reference rather than copy to/from the CPU
                 start_timer(&statistics_timer);
-                if (transfer_capture(current_device.device, current_device.encoder, &state->stream_needs_restart) != 0) {
+                if (transfer_capture(devices[current_device_index].device, devices[current_device_index].encoder, &state->stream_needs_restart) != 0) {
                     // if there was a failure, exit
                     LOG_ERROR("transfer_capture failed! Exiting!");
                     state->exiting = true;
@@ -877,11 +880,11 @@ int32_t multithreaded_send_video(void* opaque) {
                                  ltr_action.long_term_frame_index);
                     }
 
-                    video_encoder_set_ltr_action(current_device.encoder, &ltr_action);
+                    video_encoder_set_ltr_action(devices[current_device_index].encoder, &ltr_action);
                     frame_type = ltr_action.frame_type;
                 } else {
                     if (state->stream_needs_restart || state->stream_needs_recovery) {
-                        video_encoder_set_iframe(current_device.encoder);
+                        video_encoder_set_iframe(devices[current_device_index].encoder);
                         frame_type = VIDEO_FRAME_TYPE_INTRA;
                     } else {
                         frame_type = VIDEO_FRAME_TYPE_NORMAL;
@@ -892,7 +895,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
                 start_timer(&statistics_timer);
 
-                int res = video_encoder_encode(current_device.encoder);
+                int res = video_encoder_encode(devices[current_device_index].encoder);
                 if (res < 0) {
                     // bad boy error
                     LOG_ERROR("Error encoding video frame!");
@@ -908,36 +911,36 @@ int32_t multithreaded_send_video(void* opaque) {
                     // Ensure that the encoder actually generated the
                     // frame type we expected.  If it didn't then
                     // something has gone horribly wrong.
-                    FATAL_ASSERT(current_device.encoder->frame_type == frame_type);
+                    FATAL_ASSERT(devices[current_device_index].encoder->frame_type == frame_type);
                 }
                 log_double_statistic(VIDEO_ENCODE_TIME,
                                      get_timer(&statistics_timer) * MS_IN_SECOND);
 
-                if (current_device.encoder->encoded_frame_size != 0) {
-                    if (current_device.encoder->encoded_frame_size >
+                if (devices[current_device_index].encoder->encoded_frame_size != 0) {
+                    if (devices[current_device_index].encoder->encoded_frame_size >
                         (int)MAX_VIDEOFRAME_DATA_SIZE) {
                         // Please make MAX_VIDEOFRAME_DATA_SIZE larger if this error happens
                         LOG_ERROR("Frame of size %zu bytes is too large! Dropping Frame.",
-                                  current_device.encoder->encoded_frame_size);
+                                  devices[current_device_index].encoder->encoded_frame_size);
                         continue;
                     } else {
                         if (SAVE_VIDEO_OUTPUT) {
-                            for (int i = 0; i < current_device.encoder->num_packets; i++) {
-                                fwrite(current_device.encoder->packets[i]->data,
-                                       current_device.encoder->packets[i]->size, 1, fp);
+                            for (int i = 0; i < devices[current_device_index].encoder->num_packets; i++) {
+                                fwrite(devices[current_device_index].encoder->packets[i]->data,
+                                       devices[current_device_index].encoder->packets[i]->size, 1, fp);
                             }
                             fflush(fp);
                         }
                         send_populated_frames(state, &statistics_timer, &server_frame_timer,
-                                              current_device.device, current_device.encoder, id,
+                                              devices[current_device_index].device, devices[current_device_index].encoder, id,
                                               client_input_timestamp, server_timestamp);
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
                         log_double_statistic(VIDEO_FRAME_SIZE,
-                                             current_device.encoder->encoded_frame_size);
+                                             devices[current_device_index].encoder->encoded_frame_size);
                         log_double_statistic(VIDEO_FRAME_PROCESSING_TIME,
                                              get_timer(&server_frame_timer) * 1000);
-                        if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(current_device.encoder->frame_type))
+                        if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(devices[current_device_index].encoder->frame_type))
                             log_double_statistic(VIDEO_NUM_RECOVERY_FRAMES, 1.0);
                     }
                 }
