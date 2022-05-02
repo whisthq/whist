@@ -88,6 +88,7 @@ static char* new_tab_urls;
 
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
+extern int create_window_id;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
@@ -495,6 +496,13 @@ int whist_client_main(int argc, const char* argv[]) {
             // Check if file upload has been initiated and initiated selection dialog if so
             if (upload_initiated) {
                 initiate_file_upload();
+            }
+
+            if (create_window_id != -1) {
+                WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
+                WhistFrontend* new_frontend = whist_frontend_create("sdl");
+                whist_frontend_init(new_frontend, 720, 720, "second window", &background_color);
+                create_window_id = -1;
             }
         }
 

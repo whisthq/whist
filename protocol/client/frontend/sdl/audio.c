@@ -3,7 +3,11 @@
 void sdl_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigned int channels) {
     SDLFrontendContext* context = frontend->context;
     // Verify that the device does not already exist.
-    FATAL_ASSERT(context->audio_device == 0);
+    // Serina: just return if device already exsits
+    if (context->audio_device == 0) {
+        return;
+    }
+    // FATAL_ASSERT(context->audio_device == 0);
     SDL_AudioSpec desired_spec = {
         .freq = frequency,
         .format = AUDIO_F32SYS,

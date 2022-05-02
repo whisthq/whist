@@ -146,7 +146,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     window_flags |= SDL_WINDOW_RESIZABLE;
     // Avoid glitchy-looking titlebar-content combinations while the
     // window is loading, and glitches caused by early user interaction.
-    window_flags |= SDL_WINDOW_HIDDEN;
+    // window_flags |= SDL_WINDOW_HIDDEN;
     if (start_maximized) {
         window_flags |= SDL_WINDOW_MAXIMIZED;
     }
@@ -172,7 +172,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 
     context->audio_device = 0;
     context->key_state = SDL_GetKeyboardState(&context->key_count);
-    context->file_drag_event_id = SDL_RegisterEvents(1);
+    // context->file_drag_event_id = SDL_RegisterEvents(1);
     context->video_has_rendered = false;
     context->window_has_shown = false;
 

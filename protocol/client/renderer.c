@@ -116,8 +116,10 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
         whist_renderer->run_renderer_threads = true;
         whist_renderer->video_thread = whist_create_thread(
             multithreaded_video_renderer, "multithreaded_video_renderer", whist_renderer);
+        /*
         whist_renderer->audio_thread = whist_create_thread(
             multithreaded_audio_renderer, "multithreaded_audio_renderer", whist_renderer);
+            */
     }
 
     // Return the struct

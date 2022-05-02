@@ -36,6 +36,7 @@ Includes
 
 bool client_exiting = false;
 bool upload_initiated = false;
+int create_window_id = -1;
 extern int audio_frequency;
 
 /*
@@ -54,7 +55,10 @@ static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
 static int handle_file_group_end_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_window_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+/*
 static int handle_capture_created_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+*/
 
 /*
 ============================
@@ -105,9 +109,22 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
             return -1;
     }
 }
-
 static int handle_window_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
-    // TODO: no-op
+    WindowMessage window_data = wsmsg->window_data;
+    static bool initial_window_created = false;
+    if (window_data.type == WINDOW_CREATE) {
+        // create a new window
+        /*
+        WhistFrontend* frontend = whist_frontend_create("sdl");
+        whist_frontend_init(frontend, window_data.width, window_data.height, "second window", &background_color);
+        LOG_INFO("Created second window %d x %d", window_data.width, window_data.height);
+        */
+        if (initial_window_created) {
+            create_window_id = window_data.id;
+        } else {
+            initial_window_created = true;
+        }
+    }
     return 0;
 }
 
@@ -316,11 +333,5 @@ static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
 
     upload_initiated = true;
     LOG_INFO("Received upload trigger from server");
-    return 0;
-}
-
-static int handle_capture_created_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
-    LOG_INFO("Server has created capture device");
-    // sdl_show_window();
     return 0;
 }
