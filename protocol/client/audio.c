@@ -47,8 +47,8 @@ Defines
 // In frames
 #define AUDIO_BUFFER_OVERFLOW_SIZE_0 20
 
-int AUDIO_QUEUE_TARGET_SIZE = AUDIO_QUEUE_TARGET_SIZE_0;
-int AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0;
+double AUDIO_QUEUE_TARGET_SIZE = AUDIO_QUEUE_TARGET_SIZE_0;
+double AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0;
 
 // The time per size sample
 #define AUDIO_BUFSIZE_SAMPLE_FREQUENCY_MS 20
@@ -62,7 +62,7 @@ int AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0;
 
 #define scale_each_time 1.5
 #define init_scale_factor 1.0
-#define scale_max 4.0
+#define scale_max 6.0
 double scale_factor = init_scale_factor;
 
 double danger_threshold = 2.0;
@@ -80,8 +80,8 @@ double running_min;
 double inf = 99999.0;
 
 static int adjust_to_scale_factor(double current_time) {
-    AUDIO_QUEUE_TARGET_SIZE = AUDIO_QUEUE_TARGET_SIZE_0 * scale_factor + 0.5;
-    AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0 * scale_factor + 0.5;
+    AUDIO_QUEUE_TARGET_SIZE = AUDIO_QUEUE_TARGET_SIZE_0 * scale_factor;
+    AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0 * scale_factor;
 
     running_low_cnt = 0;
     last_running_low_time = current_time;
@@ -367,7 +367,7 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
                     audio_context->sample_index = 0;
                     // Check for size-target discrepancy
                     if (avg_sample < AUDIO_QUEUE_TARGET_SIZE - AUDIO_ACCEPTABLE_DELTA) {
-                        fprintf(stderr, "dup a frame, %d %.2f %d\n", sample_count, avg_sample,
+                        fprintf(stderr, "dup a frame, %d %.2f %f\n", sample_count, avg_sample,
                                 AUDIO_QUEUE_TARGET_SIZE);
                         if (LOG_AUDIO) {
                             LOG_INFO("Duping a frame to catch-up");
@@ -375,7 +375,7 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
                         audio_context->adjust_command = DUP_FRAME;
                     }
                     if (avg_sample > AUDIO_QUEUE_TARGET_SIZE + AUDIO_ACCEPTABLE_DELTA) {
-                        fprintf(stderr, "drop a frame, %d %.2f %d\n", sample_count, avg_sample,
+                        fprintf(stderr, "drop a frame, %d %.2f %f\n", sample_count, avg_sample,
                                 AUDIO_QUEUE_TARGET_SIZE);
                         if (LOG_AUDIO) {
                             LOG_INFO("Droping a frame to catch-up");
