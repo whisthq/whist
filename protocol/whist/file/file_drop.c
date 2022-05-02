@@ -336,6 +336,11 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
         char fuse_ready_path[128];
         snprintf(fuse_ready_path, 128, "/home/whist/.teleport/drag-drop/fuse_ready/%d",
                  drop_file->id);
+        // We continue anyway even if the ready path is not found in 200ms because the XDND
+        //     protocol will deal with it and reject the drop at that point if the file still
+        //     doesn't exist by the time the actual drop is happening, so it's really not worth
+        //     bothering with error handling here for the chance that the drop will still go
+        //     through.
         while (access(fuse_ready_path, F_OK) != 0 &&
                get_timer(&fuse_ready_wait_timer) < 200.0 / MS_IN_SECOND) {
             whist_sleep(50);
@@ -405,8 +410,8 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
         return -1;
     }
 
-    // XDND 3 - TODO: related to the above TODO, if we support more than 3 types of
-    // drag-and-droppable content, then we will need to
+    // XDND 3 - TODO: If we support more than 3 types of
+    //     drag-and-droppable content, then we will need to
     //     request XdndTypeList and call
     //     XChangeProperty(disp, w, XdndTypeList, XA_ATOM, 32, PropModeReplace, (unsigned
     //     char*)&targets[0], targets.size()); beforehand. Since we only support one type right now,
@@ -420,6 +425,13 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     XEvent e;
     bool accepted_drop = false;
     // Wait for up to 2 seconds for the XDND exchange to successfully complete, and then abort.
+    // Per the XDND protocol:
+    //     "If the source doesn't receive the expected XdndStatus within a reasonable amount of
+    //     time,
+    //      it should send XdndLeave. While waiting for XdndStatus, the source can block, but it
+    //      must at least process SelectionRequest events so the target can examine the data."
+    // 2.0 seconds has been long enough when tested, but extensive testing of an appropriate time
+    //      has not been done.
     while (get_timer(&active_window_response_loop_timer) < 2.0) {
         XNextEvent(display, &e);
 
@@ -668,8 +680,8 @@ int file_drag_update(bool is_dragging, int x, int y, int drag_group_id, char* fi
             }
             active_file_drag = true;
 
-            // XDND 3 - TODO: related to the above TODO, if we support more than 3 types of
-            // drag-and-droppable content, then we will need to
+            // XDND 3 - TODO: if we support more than 3 types of
+            //     drag-and-droppable content, then we will need to
             //     request XdndTypeList and call
             //     XChangeProperty(disp, w, XdndTypeList, XA_ATOM, 32, PropModeReplace, (unsigned
             //     char*)&targets[0], targets.size()); beforehand. Since we only support one type

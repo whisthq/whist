@@ -178,6 +178,12 @@ static bool mouse_in_window(WhistFrontend *frontend) {
     SDLFrontendContext *context = frontend->context;
     FileDragState *state = context->file_drag_data;
 
+    // If window is minimized or not visible, then the mouse is definitely not in window
+    //     TODO: return false for drags over occluded parts of an unoccluded window
+    if (SDL_GetWindowFlags(context->window) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_OCCLUDED)) {
+        return false;
+    }
+
     int window_x, window_y, mouse_x, mouse_y;
     int window_w, window_h;
     SDL_GetWindowPosition(context->window, &window_x, &window_y);
@@ -237,8 +243,8 @@ static void push_drag_event(WhistFrontend *frontend) {
     SDLFrontendContext *context = frontend->context;
     FileDragState *state = context->file_drag_data;
 
-    // Send a drag event at most every 5 ms
-    if (state->active && get_timer(&state->sent_drag_move_event_timer) * MS_IN_SECOND < 5) {
+    // Send a drag event at most every 15 ms
+    if (state->active && get_timer(&state->sent_drag_move_event_timer) * MS_IN_SECOND < 15) {
         return;
     }
     start_timer(&state->sent_drag_move_event_timer);
