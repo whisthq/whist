@@ -89,9 +89,11 @@ else
 fi
 
 # Pull Docker images and warmup entire disk in parallel.
-# TODO: warmup the necessary files instead of the full disk.
 pull_docker_images &
-fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
+# Based on initialization commands in https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-initialize.html
+# Changes:
+#   - changed blocksize to 1M from 128k because optimal dd blocksize is 1M according to above link
+fio --filename=/dev/nvme0n1 --rw=read --bs=1M --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
 
 wait
 

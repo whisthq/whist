@@ -139,7 +139,9 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   launch_block_device_mappings {
     device_name           = "/dev/sda1"
-    volume_size           = 8    # GB, assumes we use g4dn.2xlarge (2 mandelboxes maximum) - as small as possible to save on cost/warmup time, but large-enough to run Ubuntu + the mandelboxes
+    volume_size           = 8     # GB, assumes we use g4dn.2xlarge (2 mandelboxes maximum) - as small as possible to save on cost/warmup time, but large-enough to run Ubuntu + the mandelboxes. In practice, this is limited by the Ubuntu base AMI that we build off.
+    throughput            = 750   # For throughput and IOPS, we strike a balance between the cost of additional throughput (over the base of 125 MiB/s) and decreasing warmup time.
+    iops                  = 3000  # IOPS defaults to 3000. This value does not need to be increased unless we increase throughput over 750 (since throughput is capped at IOPS/4).
     volume_type           = "gp3" # Options are gp2 and gp3. gp3 is the newer, more performant and cheaper AWS block volume
     delete_on_termination = true  # This ensures that the EBS volume of the EC2 instance(s) using the AMI Packer creates get deleted when the instance gets deleted
     encrypted             = true  # This ensures that the EBS volumes are encrypted with the default KMS key (We can use only the default key since we copy between AWS regions)
