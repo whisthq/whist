@@ -20,6 +20,7 @@ Includes
 
 #include <whist/core/whist.h>
 #include <whist/utils/color.h>
+#include <whist/utils/linked_list.h>
 #ifdef __linux__
 #include <X11/Xlib.h>
 #include "nvidiacapture.h"
@@ -32,12 +33,22 @@ Custom Types
 ============================
 */
 
-// TODO: more members needed?
+// TODO: more members needed? merge with windowdata?
 typedef struct WhistWindow {
+    LINKED_LIST_HEADER;
 #ifdef __linux__
     Window window;
 #endif
 } WhistWindow;
+
+typedef struct WhistWindowData {
+    int id;
+    int width;
+    int height;
+    int x;
+    int y;
+    WhistRGBColor corner_color;
+} WhistWindowData;
 
 
 typedef struct CaptureDevice {
@@ -46,8 +57,8 @@ typedef struct CaptureDevice {
     int height;
     int pitch;
     void* frame_data;
+    WhistWindowData window_data[MAX_WINDOWS];
     WhistRGBColor corner_color;
-    WhistWindow active_window;
     void* internal;
 
 #ifdef __linux__
@@ -85,7 +96,7 @@ Public Functions
  *
  * @returns                        0 if succeeded, else -1
  */
-int create_capture_device(CaptureDevice* device, WhistWindow window, uint32_t width, uint32_t height, uint32_t dpi);
+int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
 
 /**
  * @brief                          Tries to reconfigure the capture device
@@ -111,7 +122,7 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
  *
  * @returns                        Number of frames since last capture if succeeded, else -1
  */
-int capture_screen(CaptureDevice* device);
+int capture_screen(CaptureDevice* device, LinkedList* window_list);
 
 /**
  * @brief                          Transfers screen capture to CPU buffer
@@ -147,8 +158,8 @@ void file_capture_set_input_filename(const char* filename);
  * 
  * @returns A WhistWindow struct with the current window
  */
-WhistWindow get_active_window(void);
+void get_active_window(WhistWindow* active_window);
 
-bool device_has_window(CaptureDevice* device, WhistWindow window);
+void get_valid_windows(LinkedList* list);
 
 #endif  // VIDEO_CAPTURE_H

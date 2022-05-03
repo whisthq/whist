@@ -25,7 +25,6 @@ Includes
 #include <string.h>
 #include <sys/shm.h>
 #include <X11/Xutil.h>
-#include <X11/Xatom.h>
 
 /*
 ============================
@@ -74,6 +73,57 @@ char* get_window_name(Display* d, Window w) {
     }
 }
 
+void x11_get_valid_windows(LinkedList* list) {
+    static Display* display = NULL;
+    static Window root = 0;
+    static Window curr;
+    if (!display) {
+        display = XOpenDisplay(NULL);
+    }
+    if (!root) {
+        root = DefaultRootWindow(display);
+        curr = root;
+    }
+    Window parent;
+    Window* children;
+    unsigned int nchildren;
+    XQueryTree(display, curr, &root, &parent, &children, &nchildren);
+    // check the dimensions of each window
+    XWindowAttributes attr;
+    XGetWindowAttributes(display, curr, &attr);
+    if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH && attr.height >= MIN_SCREEN_HEIGHT && *get_window_name(display, curr) != '\0') {
+        LOG_INFO("Valid window %s has %d children, position %d, %d, dimensions %d x %d", get_window_name(display, curr),
+                 nchildren, attr.x, attr.y, attr.width, attr.height);
+        WhistWindow* valid_window = safe_malloc(sizeof(WhistWindow));
+        valid_window->window = curr;
+        linked_list_add_tail(list, valid_window);
+    }
+        
+    if (nchildren != 0) {
+        for (unsigned int i = 0; i < nchildren; i++) {
+            curr = children[i];
+            x11_get_valid_windows(list);
+        }
+    }
+}
+
+void x11_get_window_attributes(Window w, WhistWindowData* d) {
+    static Display* display = NULL;
+    static Window root = 0;
+    if (!display) {
+        display = XOpenDisplay(NULL);
+    }
+    if (!root) {
+        root = DefaultRootWindow(display);
+    }
+    XWindowAttributes attr;
+    XGetWindowAttributes(display, w, &attr);
+    d->width = attr.width;
+    d->height = attr.height;
+    d->x = attr.x;
+    d->y = attr.y;
+}
+
 void log_tree(X11CaptureDevice* device, Window w) {
     Window curr = w;
     Window root;
@@ -82,8 +132,10 @@ void log_tree(X11CaptureDevice* device, Window w) {
     unsigned int nchildren;
 
     XQueryTree(device->display, curr, &root, &parent, &children, &nchildren);
-    LOG_INFO("Current window %s has %d children", get_window_name(device->display, curr),
-             nchildren);
+    XWindowAttributes attr;
+    XGetWindowAttributes(device->display, curr, &attr);
+    LOG_INFO("Current window %s has %d children, position %d, %d, dimensions %d x %d", get_window_name(device->display, curr),
+             nchildren, attr.x, attr.y, attr.width, attr.height);
     if (nchildren != 0) {
         for (unsigned int i = 0; i < nchildren; i++) {
             LOG_INFO("Child %d name is %s", i, get_window_name(device->display, children[i]));
@@ -137,7 +189,7 @@ Window x11_get_active_window() {
 Public Function Implementations
 ============================
 */
-X11CaptureDevice* create_x11_capture_device(Window active_window, uint32_t width, uint32_t height, uint32_t dpi) {
+X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi) {
     /*
         Create an X11 device that will capture a screen of the specified width, height, and DPI
        using the X11 API.
@@ -160,22 +212,12 @@ X11CaptureDevice* create_x11_capture_device(Window active_window, uint32_t width
         LOG_ERROR("ERROR: create_x11_capture_device display did not open");
         return NULL;
     }
-    // get the root window
     device->root = DefaultRootWindow(device->display);
-    // get the active window
-    // device->active = x11_get_active_window();
-    device->active = active_window;
-    // logging for the active window
-    XWindowAttributes attr;
-    XGetWindowAttributes(device->display, device->active, &attr);
-    LOG_INFO("Active window width/height: %d %d", attr.width, attr.height);
-    log_tree(device, device->active);
-    // set remaining device parameters
-    device->width = attr.width;
-    device->height = attr.height;
+    device->width = width;
+    device->height = height;
     int damage_event, damage_error;
     XDamageQueryExtension(device->display, &damage_event, &damage_error);
-    device->damage = XDamageCreate(device->display, device->active, XDamageReportRawRectangles);
+    device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
     device->event = damage_event;
 
     if (!reconfigure_x11_capture_device(device, width, height, dpi)) {
@@ -194,7 +236,7 @@ bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, ui
     device->width = width;
     device->height = height;
     XWindowAttributes window_attributes;
-    if (!XGetWindowAttributes(device->display, device->active, &window_attributes)) {
+    if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
         LOG_ERROR("Error while getting window attributes");
         return false;
     }
@@ -258,37 +300,6 @@ int x11_capture_screen(X11CaptureDevice* device) {
             accumulated_frames++;
         }
     }
-
-    /*
-    // check if the focused window has changed; if so, change damage
-    static bool first = true;
-    static Window curr_active;
-    if (first) {
-        curr_active = device->active;
-        first = false;
-    }
-    Window active_window = x11_get_active_window();
-    if (active_window != curr_active) {
-        LOG_INFO("Focused window changed");
-        log_tree(device, active_window);
-        XWindowAttributes attr;
-        XGetWindowAttributes(device->display, active_window, &attr);
-        LOG_INFO("Active width/height: %d %d", attr.width, attr.height);
-        curr_active = active_window;
-        device->root = focus;
-        device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
-
-        XLockDisplay(device->display);
-        XMoveResizeWindow(device->display, device->root, 0, 0, device->width, device->height);
-        XRaiseWindow(device->display, device->root);
-        XWindowAttributes attr;
-        XGetWindowAttributes(device->display, device->root, &attr);
-        LOG_INFO("Focus width/height: %d %d", attr.width, attr.height);
-        XUnlockDisplay(device->display);
-        return 0;
-    }
-    */
-
     // Don't Lock and UnLock Display unneccesarily, if there are no frames to capture
     if (accumulated_frames == 0) return 0;
 
@@ -300,17 +311,16 @@ int x11_capture_screen(X11CaptureDevice* device) {
         XDamageSubtract(device->display, device->damage, None, None);
 
         XWindowAttributes window_attributes;
-        if (!XGetWindowAttributes(device->display, device->active, &window_attributes)) {
+        if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
             LOG_ERROR("Couldn't get window width and height!");
             accumulated_frames = -1;
         } else if (device->width != window_attributes.width ||
                    device->height != window_attributes.height) {
-            LOG_ERROR("Wrong width/height! Expected %d %d but got %d %d", device->width,
-                      device->height, window_attributes.width, window_attributes.height);
+            LOG_ERROR("Wrong width/height!");
             accumulated_frames = -1;
         } else {
             XErrorHandler prev_handler = XSetErrorHandler(handler);
-            if (!XShmGetImage(device->display, device->active, device->image, 0, 0, AllPlanes)) {
+            if (!XShmGetImage(device->display, device->root, device->image, 0, 0, AllPlanes)) {
                 LOG_ERROR("Error while capturing the screen");
                 accumulated_frames = -1;
             } else {

@@ -138,6 +138,8 @@ Defines
 // Used to throttle resize event spam.
 #define WINDOW_RESIZE_MESSAGE_INTERVAL 200
 
+#define MAX_WINDOWS 2
+
 #define MAX_VIDEO_PACKETS 500
 // Maximum allowed FEC ratio. Used for allocation of static buffers
 // Don't let this get too close to 1, e.g. 0.99, or memory usage will explode

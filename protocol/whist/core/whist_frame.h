@@ -20,6 +20,8 @@ typedef struct VideoFrame {
     VideoFrameType frame_type;
     uint32_t frame_id;
 
+    WhistWindowData window_data[MAX_WINDOWS];
+
     bool has_cursor;
     bool is_empty_frame;     // indicates whether this frame is identical to the one last sent
     bool is_window_visible;  // indicates whether the client app is visible. If the client realizes

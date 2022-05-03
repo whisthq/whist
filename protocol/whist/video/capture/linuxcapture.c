@@ -197,7 +197,7 @@ static void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_
 Public Function Implementations
 ============================
 */
-int create_capture_device(CaptureDevice* device, WhistWindow window, uint32_t width, uint32_t height, uint32_t dpi) {
+int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
     /*
        Initialize the capture device at device with the given width, height and DPI. We use Nvidia
        whenever possible, and fall back to X11 when not. See nvidiacapture.c and x11capture.c for
@@ -285,14 +285,13 @@ int create_capture_device(CaptureDevice* device, WhistWindow window, uint32_t wi
                                                      "multithreaded_nvidia_manager", device);
         whist_post_semaphore(device->nvidia_device_semaphore);
     }
-    device->active_window = window;
     device->id = id;
     id++;
 
     // Create the X11 capture device; when the nvidia manager thread finishes creation, active
     // capture device will change
     device->active_capture_device = X11_DEVICE;
-    device->x11_capture_device = create_x11_capture_device(window.window, width, height, dpi);
+    device->x11_capture_device = create_x11_capture_device(width, height, dpi);
     if (device->x11_capture_device) {
         return 0;
     } else {
@@ -301,7 +300,7 @@ int create_capture_device(CaptureDevice* device, WhistWindow window, uint32_t wi
     }
 }
 
-int capture_screen(CaptureDevice* device) {
+int capture_screen(CaptureDevice* device, LinkedList* window_list) {
     /*
         Capture the screen that device is attached to. If using Nvidia, since we can't specify what
        display Nvidia should be using, we need to confirm that the Nvidia device's dimensions match
@@ -316,6 +315,17 @@ int capture_screen(CaptureDevice* device) {
     if (!device) {
         LOG_ERROR("Tried to call capture_screen with a NULL CaptureDevice! We shouldn't do this!");
         return -1;
+    }
+    // clear window data from previous pass
+    for (int i = 0; i < MAX_WINDOWS; i++) {
+        device->window_data[i].id = -1;
+    }
+    // get x,y,w,h of all windows
+    // TODO: get corner color somehow
+    int i = 0;
+    linked_list_for_each(window_list, WhistWindow, w) {
+        get_window_attributes(w, &device->window_data[i]);
+        i++;
     }
     switch (device->active_capture_device) {
         case NVIDIA_DEVICE: {
@@ -366,21 +376,6 @@ int capture_screen(CaptureDevice* device) {
                 device->corner_color = device->x11_capture_device->corner_color;
             }
             return ret;
-        default:
-            LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
-            return -1;
-    }
-}
-
-bool device_has_window(CaptureDevice* device, WhistWindow window) {
-    if (device == NULL) {
-        return false;
-    }
-    switch (device->active_capture_device) {
-        case NVIDIA_DEVICE:
-            return false;
-        case X11_DEVICE:
-            return device->x11_capture_device->active == window.window;
         default:
             LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
             return -1;
@@ -477,10 +472,20 @@ int transfer_screen(CaptureDevice* device) {
     return 0;
 }
 
-WhistWindow get_active_window() {
+/*
+ * Return a linked list of WhistWindows we should capture
+ */
+void get_valid_windows(LinkedList* list) {
+    x11_get_valid_windows(list);
+}
+
+void get_active_window(WhistWindow* active_window) {
     Window w = x11_get_active_window();
-    WhistWindow a = {0};
-    a.window = w;
-    // do whatever other setup we'd need
-    return a;
+    active_window->window = w;
+    // any other setup?
+}
+
+void get_window_attributes(WhistWindow* w, WhistWindowData* d) {
+    d->id = (int)w->window;
+    x11_get_window_attributes(w->window, d);
 }
