@@ -43,6 +43,8 @@ struct WhistRenderer {
     WhistSemaphore video_semaphore;
     WhistSemaphore audio_semaphore;
 
+    WhistMutex audio_mutex;
+
     WhistThread video_thread;
     WhistThread audio_thread;
 };
@@ -334,26 +336,36 @@ int32_t multithreaded_audio_renderer(void* opaque) {
 
     while (true) {
         // Wait until we're told to render on this thread
-        whist_wait_semaphore(whist_renderer->audio_semaphore);
 
-        // If this thread should no longer exist, exit accordingly
-        if (!whist_renderer->run_renderer_threads) {
-            break;
+        if(whist_semaphore_value(whist_renderer->audio_semaphore) >0 )
+        {
+            whist_wait_semaphore(whist_renderer->audio_semaphore);
+
+            // If this thread should no longer exist, exit accordingly
+            if (!whist_renderer->run_renderer_threads) {
+                break;
+            }
+
+            // Don't render if video hasn't rendered yet
+            // This is because it feels weird when audio is played to the loading screen
+            if (!whist_renderer->has_video_rendered_yet) {
+                continue;
+            }
+
+            // Refresh the audio device, if a new audio device update is pending
+            if (pending_audio_device_update()) {
+                refresh_audio_device(whist_renderer->audio_context);
+            }
+
+            // Render the audio
+            render_audio(whist_renderer->audio_context);
         }
-
-        // Don't render if video hasn't rendered yet
-        // This is because it feels weird when audio is played to the loading screen
-        if (!whist_renderer->has_video_rendered_yet) {
-            continue;
+        else
+        {
+            // dirty code just for POC
+            render_audio_empty_loop(whist_renderer->audio_context);
+            whist_sleep(2);
         }
-
-        // Refresh the audio device, if a new audio device update is pending
-        if (pending_audio_device_update()) {
-            refresh_audio_device(whist_renderer->audio_context);
-        }
-
-        // Render the audio
-        render_audio(whist_renderer->audio_context);
     }
 
     return 0;

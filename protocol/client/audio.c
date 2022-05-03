@@ -478,12 +478,14 @@ static void check_buffer_dry(AudioContext* audio_context)
         }
 }
 
-void render_audio(AudioContext* audio_context) {
+void render_audio_empty_loop(AudioContext* audio_context) {
     
     //TODO: this is not enough
     if (whist_frontend_audio_is_open(audio_context->target_frontend)) {
         check_buffer_dry(audio_context);
     }
+}
+void render_audio(AudioContext* audio_context) {
 
     if (audio_context->pending_render_context) {
         if (LOG_AUDIO) {

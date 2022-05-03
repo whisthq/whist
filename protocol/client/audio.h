@@ -83,6 +83,7 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame);
  *                                 independently of the rest of the functions
  */
 void render_audio(AudioContext* audio_context);
+void render_audio_empty_loop(AudioContext* audio_context);
 
 /**
  * @brief                          Destroy the audio context
