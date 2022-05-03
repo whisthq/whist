@@ -63,13 +63,13 @@ double AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0;
 #define AUDIO_ACCEPTABLE_DELTA 1.2
 
 #define scale_each_time 1.5
-#define init_scale_factor 1.0
-#define scale_max 1.5
+#define init_scale_factor 1.3
+#define scale_max 5.0
 double scale_factor = init_scale_factor;
 
 const double insert_empty_frame_threshold =3;
 double danger_threshold = 4.0;
-double safe_threshold = 5.0;
+double safe_threshold = 6.0;
 
 WhistTimer my_timer;
 double cool_down;
@@ -482,7 +482,7 @@ static void check_buffer_dry(AudioContext* audio_context)
         
         if(safe_get_audio_queue(audio_context) ==0)
         {
-            fprintf(stderr,"oops!!!!\n");
+            //fprintf(stderr,"oops!!!!\n");
         }
         else while(audio_context->audio_state == BUFFERING && safe_get_audio_queue(audio_context) *1.0 /DECODED_BYTES_PER_FRAME  < insert_empty_frame_threshold )
         {
