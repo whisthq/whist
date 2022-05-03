@@ -1563,7 +1563,6 @@ TEST_F(ProtocolTest, RingBufferTest) {
     EXPECT_EQ(video_buffer->max_id, max_id);
     EXPECT_EQ(video_buffer->min_id, min_id);
     // Check packets and frames received
-    EXPECT_EQ(video_buffer->num_packets_received, (num_frames * (num_frames + 1)) / 2);
     EXPECT_EQ(video_buffer->frames_received, num_frames);
     for (int id = min_id; id < max_id + 1; id++) {
         int expected_indices = id - (min_id - 1);

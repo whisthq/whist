@@ -101,12 +101,7 @@ typedef struct RingBuffer {
     int currently_rendering_id;
     FrameData currently_rendering_frame;
 
-    // *** START OF BITRATE STAT CALCULATIONS ***
-    WhistTimer network_statistics_timer;
     int num_packets_nacked;
-    int num_packets_received;
-    int num_frames_rendered;
-    // *** END OF BITRATE STAT CALCULATIONS ***
 
     // Data ranges for frames
     int frames_received;
