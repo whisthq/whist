@@ -262,16 +262,16 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     // Check whether or not we're overflowing the audio buffer
     if (!audio_context->is_overflowing &&
         audio_size > AUDIO_BUFFER_OVERFLOW_SIZE * DECODED_BYTES_PER_FRAME) {
-        LOG_WARNING("Audio Buffer overflowing (%.2f Frames)! Force-dropping Frames",
-                    audio_size / (double)DECODED_BYTES_PER_FRAME);
+        // LOG_WARNING("Audio Buffer overflowing (%.2f Frames)! Force-dropping Frames",
+                    // audio_size / (double)DECODED_BYTES_PER_FRAME);
         audio_context->is_overflowing = true;
     }
 
     // If we've returned back to normal, disable overflowing state
     if (audio_context->is_overflowing &&
         audio_size < (AUDIO_QUEUE_TARGET_SIZE + 1) * DECODED_BYTES_PER_FRAME) {
-        LOG_WARNING("Done dropping audio overflow frames (Buffer size: %.2f)",
-                    audio_size / (double)DECODED_BYTES_PER_FRAME);
+        // LOG_WARNING("Done dropping audio overflow frames (Buffer size: %.2f)",
+                    // audio_size / (double)DECODED_BYTES_PER_FRAME);
         audio_context->is_overflowing = false;
     }
 

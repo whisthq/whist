@@ -53,6 +53,11 @@ void sdl_resize_window(WhistFrontend* frontend, int width, int height) {
     SDL_SetWindowSize(context->window, width, height);
 }
 
+void sdl_set_window_pos(WhistFrontend* frontend, int x, int y) {
+    SDLFrontendContext* context = frontend->context;
+    SDL_SetWindowPosition(context->window, x, y);
+}
+
 void sdl_set_titlebar_color(WhistFrontend* frontend, const WhistRGBColor* color) {
     SDLFrontendContext* context = frontend->context;
     sdl_native_set_titlebar_color(context->window, color);

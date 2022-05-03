@@ -47,6 +47,11 @@ COMMAND_LINE_BOOL_OPTION(use_hardware_decode, 0, "hardware-decode",
 // Number of videoframes to have in the ringbuffer
 #define RECV_FRAMES_BUFFER_SIZE 275
 
+extern volatile int output_x;
+extern volatile int output_y;
+extern volatile int output_width;
+extern volatile int output_height;
+
 /*
 ============================
 Custom Types
@@ -237,6 +242,11 @@ int render_video(VideoContext* video_context) {
                 return -1;
             }
 
+            output_x = frame->window_data[0].x;
+            output_y = frame->window_data[0].y;
+            output_width = frame->window_data[0].width;
+            output_height = frame->window_data[0].height;
+            LOG_INFO("window 0 at (%d, %d) %d x %d", output_x, output_y, output_width, output_height);
             window_color = frame->corner_color;
 
             WhistCursorInfo* frame_cursor_image = get_frame_cursor_info(frame);

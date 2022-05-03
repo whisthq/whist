@@ -60,8 +60,8 @@ Includes
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
 
-extern volatile int output_width;
-extern volatile int output_height;
+extern volatile int display_width;
+extern volatile int display_height;
 static char* program_name;
 static char* server_ip;
 static char* user_email;
@@ -89,6 +89,8 @@ static char* new_tab_urls;
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
 extern int create_window_id;
+extern int new_window_height;
+extern int new_window_width;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
@@ -340,14 +342,14 @@ int whist_client_main(int argc, const char* argv[]) {
             whist_sleep(1000);
         } else {
             // Only initialize this once.
-            frontend = init_sdl(output_width, output_height, program_name);
+            frontend = init_sdl(display_width, display_height, program_name);
         }
 
         // The lines below may be called multiple times,
         // Please ensure they get destroyed properly
 
         // Initialize audio and video renderer system
-        WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
+        WhistRenderer* whist_renderer = init_renderer(frontend, display_width, display_height);
 
         // Initialize the clipboard and file synchronizers. This must happen before we start
         // the udp/tcp threads
@@ -498,11 +500,15 @@ int whist_client_main(int argc, const char* argv[]) {
                 initiate_file_upload();
             }
 
-            if (create_window_id != -1) {
+            if (create_window_id != -1 && new_window_width != -1 && new_window_height != -1) {
                 WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
-                WhistFrontend* new_frontend = whist_frontend_create("sdl");
-                whist_frontend_init(new_frontend, 720, 720, "second window", &background_color);
+                frontend = whist_frontend_create("sdl");
+                whist_frontend_init(frontend, new_window_width, new_window_height, "second window", &background_color);
+                whist_renderer = init_renderer(frontend, new_window_width, new_window_height);
+                LOG_INFO("Creating new window %d x %d", new_window_width, new_window_height);
                 create_window_id = -1;
+                new_window_width = -1;
+                new_window_height = -1;
             }
         }
 

@@ -35,8 +35,12 @@ Globals
 ============================
 */
 
+volatile int output_x;
+volatile int output_y;
 volatile int output_width;
 volatile int output_height;
+volatile int display_width;
+volatile int display_height;
 volatile bool insufficient_bandwidth;
 
 /*
@@ -115,7 +119,7 @@ NetworkSettings get_default_network_settings(int width, int height, int screen_d
 }
 
 NetworkSettings get_starting_network_settings(void) {
-    return get_default_network_settings(output_width, output_height, dpi);
+    return get_default_network_settings(display_width, display_height, dpi);
 }
 
 void network_algo_set_dpi(int new_dpi) { dpi = new_dpi; }
