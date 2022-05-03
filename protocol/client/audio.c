@@ -63,8 +63,9 @@ double AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0;
 #define AUDIO_ACCEPTABLE_DELTA 1.2
 
 #define scale_each_time 1.5
-#define init_scale_factor 1.3
-#define scale_max 5.0
+#define scale_max 6.0
+#define scale_min 1.3
+#define init_scale_factor scale_min
 double scale_factor = init_scale_factor;
 
 const double insert_empty_frame_threshold =3;
@@ -127,7 +128,7 @@ static int handle_scale_down(double device_queue_len, double current_time) {
         }
         double adjust = running_min - safe_threshold;
         double new_scale_factor = (AUDIO_QUEUE_TARGET_SIZE - adjust) / AUDIO_QUEUE_TARGET_SIZE_0;
-        if (new_scale_factor < 1.0) new_scale_factor = 1.0;
+        if (new_scale_factor < scale_min) new_scale_factor = scale_min;
 
         // TODO: make sure scale down doesn't cause overflow
         scale_factor = new_scale_factor;
