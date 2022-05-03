@@ -177,6 +177,13 @@ static void handle_gesture_event(FrontendGestureEvent* event) {
 }
 
 static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEvent* event) {
+    if (event->end_drop) {
+        // If end_drop is set, this indicates the end of a series of file drop events
+        //     corresponding to a single drop.
+        file_synchronizer_end_type_group(FILE_TRANSFER_SERVER_DROP);
+        return;
+    }
+
     FileEventInfo drop_info;
     int dpi = whist_frontend_get_window_dpi(frontend);
 
@@ -190,15 +197,45 @@ static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEven
 }
 
 static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEvent* event) {
-    if (event->end_drag == true) {
-        // Handle the drag end case (this either means the drag has ended or the drag has
-        // left the window)
-        return;
+    size_t data_len = 0;
+    if (event->filename) {
+        data_len = strlen((const char*)event->filename) + 1;
     }
+    WhistClientMessage* msg = safe_malloc(sizeof(WhistClientMessage) + data_len);
+    memset(msg, 0, sizeof(WhistClientMessage) + data_len);
+    msg->type = CMESSAGE_FILE_DRAG;
 
     // The event->position.{x,y} values are in screen coordinates, so we
     // would need to multiply by output_{width,height} and divide by
     // window_{width,height} to know where to draw the file drag overlay
+    if (event->end_drag) {
+        // Handle the drag end case (this either means the drag has ended or the drag has
+        // left the window)
+        msg->file_drag_data.drag_state = END_DRAG;
+    } else if (event->filename) {
+        // When filename is set, the drag is starting.
+        //     This means that filename is only sent with the message to the
+        //     server on the drag starting message. All other messages don't
+        //     have a file list and only send coordinates.
+        safe_strncpy(msg->file_drag_data.filename, event->filename, data_len);
+        msg->file_drag_data.drag_state = START_DRAG;
+    } else {
+        // In all other cases, the drag is in the middle of moving
+        msg->file_drag_data.drag_state = IN_DRAG;
+    }
+
+    msg->file_drag_data.group_id = event->group_id;
+
+    int dpi = whist_frontend_get_window_dpi(frontend);
+    msg->file_drag_data.x = event->position.x * dpi / 96;
+    msg->file_drag_data.y = event->position.y * dpi / 96;
+
+    if (event->filename) {
+        free(event->filename);
+    }
+
+    send_wcmsg(msg);
+    free(msg);
 }
 
 static void handle_quit_event(FrontendQuitEvent* event) {

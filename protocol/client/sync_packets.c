@@ -204,6 +204,27 @@ static void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char*
     deallocate_region(wcmsg_tcp);
 }
 
+static void send_complete_file_drop_message(FileTransferType transfer_type) {
+    /*
+        Create and send a file drop complete message
+
+        Arguments:
+            transfer_type (FileTransferType): group end type
+    */
+
+    LOG_INFO("send_complete_file_drop_message");
+
+    // Alloc wcmsg
+    WhistClientMessage wcmsg = {0};
+
+    // Build wcmsg
+    wcmsg.type = CMESSAGE_FILE_GROUP_END;
+    wcmsg.file_group_end.transfer_type = transfer_type;
+
+    // Send wcmsg
+    send_wcmsg(&wcmsg);
+}
+
 #define SYNC_TCP_LOOP_TARGET_PERIOD_MS 25.0
 static int multithreaded_sync_tcp_packets(void* opaque) {
     /*
@@ -256,9 +277,15 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         // READ FILE HANDLER
         FileData* file_chunk;
         FileMetadata* file_metadata;
+        FileGroupEnd file_group_end;
         // Iterate through all file indexes and try to read next chunk to send
         LinkedList* transferring_files = file_synchronizer_get_transferring_files();
         linked_list_for_each(transferring_files, TransferringFile, transferring_file) {
+            if (file_synchronizer_handle_type_group_end(transferring_file, &file_group_end)) {
+                // Returns true when the TransferringFile was a type group end indicator
+                send_complete_file_drop_message(file_group_end.transfer_type);
+                continue;
+            }
             file_synchronizer_read_next_file_chunk(transferring_file, &file_chunk);
             if (file_chunk == NULL) {
                 // If chunk cannot be read, then try opening the file

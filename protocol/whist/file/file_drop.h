@@ -54,11 +54,11 @@ int drop_file_into_active_window(TransferringFile* drop_file);
  *                                 and write necesary metadata (for example, the file size)
  *                                 to the metadata file.
  *
- * @param id                      The unique ID for the file transfer
- * @param file_metadata           The metadata for the file being transferred
+ * @param id                       The unique ID for the file transfer
+ * @param file_metadata            The metadata for the file being transferred
  *
- * @returns                      Returns the path to the file data directory on success,
- *                                NULL on failure
+ * @returns                        Returns the path to the file data directory on success,
+ *                                 NULL on failure
  *
  * @note                          This is only for servers running a parallel FUSE filesystem
  */
@@ -72,9 +72,27 @@ const char* file_drop_prepare(int id, FileMetadata* file_metadata);
  *
  * @returns                        Returns -1 on failure, 0 on success
  *
- * @note                          This is only for servers running a parallel FUSE filesystem
+ * @note                           This is only for servers running a parallel FUSE filesystem
  */
 int file_drop_mark_ready(int id);
+
+/**
+ * @brief                          Updates the active drag location and information for a
+ *                                 file or set of files being dragged.
+ *
+ * @param is_dragging              Whether a file is still being dragged
+ *
+ * @param x                        Drag location x-coordinate
+ *
+ * @param y                        Drag location y-coordinate
+ *
+ * @param drag_group_id            Group ID of file being dragged
+ *
+ * @param filename                 Filename of a file being dragged.
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
+int file_drag_update(bool is_dragging, int x, int y, int drag_group_id, char* filename);
 
 /**
  * @brief                          Clean up the file drop handler

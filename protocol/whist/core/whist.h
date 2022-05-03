@@ -561,6 +561,16 @@ typedef enum WhistOSType {
 } WhistOSType;
 
 /**
+ * @brief   Drag state
+ * @details An enum of drag states
+ */
+typedef enum WhistDragState {
+    START_DRAG = 0,
+    IN_DRAG = 1,
+    END_DRAG = 2,
+} WhistDragState;
+
+/**
  * @brief   Multigesture message.
  * @details Message from multigesture event on touchpad.
  */
@@ -573,6 +583,18 @@ typedef struct WhistMultigestureMessage {
     bool active_gesture;                 ///< Whether this multigesture is already active.
     WhistMultigestureType gesture_type;  ///< Multigesture type
 } WhistMultigestureMessage;
+
+/**
+ * @brief   File drag message.
+ * @details Message from file drag update event.
+ */
+typedef struct {
+    int x;
+    int y;
+    WhistDragState drag_state;
+    int group_id;      // This should be ascending with each new drag group
+    char filename[0];  // Should only have contents when drag_state is START_DRAG
+} WhistFileDragData;
 
 /**
  * @brief   Client init message.
@@ -634,12 +656,15 @@ typedef enum WhistClientMessageType {
 
     MESSAGE_OPEN_URL = 117,
 
-    CMESSAGE_FILE_METADATA = 119,  ///< file metadata
-    CMESSAGE_FILE_DATA = 120,      ///< file chunk
+    CMESSAGE_FILE_METADATA = 119,   ///< file metadata
+    CMESSAGE_FILE_DATA = 120,       ///< file chunk
+    CMESSAGE_FILE_GROUP_END = 121,  ///< file type group end
 
-    MESSAGE_FRAME_ACK = 121,  ///< Frame has been received.
+    MESSAGE_FRAME_ACK = 122,  ///< Frame has been received.
 
-    MESSAGE_FILE_UPLOAD_CANCEL = 122,  ///< User has hit cancel on file upload dialog
+    MESSAGE_FILE_UPLOAD_CANCEL = 123,  ///< User has hit cancel on file upload dialog
+
+    CMESSAGE_FILE_DRAG = 124,
 
     CMESSAGE_QUIT = 999,
 } WhistClientMessageType;
@@ -723,15 +748,19 @@ typedef struct WhistClientMessage {
 
         // MESSAGE_FRAME_ACK
         WhistFrameAckMessage frame_ack;
+
+        // CMESSAGE_END_FILE_GROUP
+        FileGroupEnd file_group_end;
     };
 
     // Any type of message that has an additional `data[]` (or equivalent)
     //     member at the end should be a part of this union
     union {
-        ClipboardData clipboard;     // CMESSAGE_CLIPBOARD
-        FileMetadata file_metadata;  // CMESSAGE_FILE_METADATA
-        FileData file;               // CMESSAGE_FILE_DATA
-        char urls_to_open[0];        // MESSAGE_OPEN_URL
+        ClipboardData clipboard;           // CMESSAGE_CLIPBOARD
+        FileMetadata file_metadata;        // CMESSAGE_FILE_METADATA
+        FileData file;                     // CMESSAGE_FILE_DATA
+        WhistFileDragData file_drag_data;  // CMESSAGE_FILE_DRAG
+        char urls_to_open[0];              // MESSAGE_OPEN_URL
     };
 } WhistClientMessage;
 
@@ -750,8 +779,10 @@ typedef enum WhistServerMessageType {
     SMESSAGE_FULLSCREEN = 8,
     SMESSAGE_FILE_METADATA = 9,
     SMESSAGE_FILE_DATA = 10,
-    SMESSAGE_NOTIFICATION = 11,
-    SMESSAGE_INITIATE_UPLOAD = 12,
+    SMESSAGE_FILE_GROUP_END = 11,
+    SMESSAGE_NOTIFICATION = 12,
+    SMESSAGE_INITIATE_UPLOAD = 13,
+    SMESSAGE_FILE_DRAG = 14,
     SMESSAGE_QUIT = 100,
 } WhistServerMessageType;
 
@@ -770,6 +801,7 @@ typedef struct WhistServerMessage {
         ClipboardData clipboard;
         FileMetadata file_metadata;
         FileData file;
+        FileGroupEnd file_group_end;
         char window_title[0];
         char requested_uri[0];
         WhistNotification notif;

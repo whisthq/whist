@@ -51,6 +51,7 @@ static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size)
 static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_file_group_end_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 
@@ -90,6 +91,8 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
             return handle_file_chunk_message(wsmsg, wsmsg_size);
         case SMESSAGE_FILE_METADATA:
             return handle_file_metadata_message(wsmsg, wsmsg_size);
+        case SMESSAGE_FILE_GROUP_END:
+            return handle_file_group_end_message(wsmsg, wsmsg_size);
         case SMESSAGE_NOTIFICATION:
             return handle_notification_message(wsmsg, wsmsg_size);
         case SMESSAGE_INITIATE_UPLOAD:
@@ -250,6 +253,22 @@ static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
     */
 
     file_synchronizer_write_file_chunk(&wsmsg->file);
+
+    return 0;
+}
+
+static int handle_file_group_end_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+    /*
+        Handle a file group end message.
+
+        Arguments:
+            wsmsg (WhistServerMessage*): message packet from client
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
+    // This is a no-op for now, but should be filled if it becomes relevant for handling
+    // multiple files transferred in a group.
 
     return 0;
 }

@@ -25,6 +25,7 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
 #include "whist/core/features.h"
+#include <whist/file/file_drop.h>
 #include "state.h"
 #include "client.h"
 #include "handle_client_message.h"
@@ -45,6 +46,8 @@ static int handle_quit_message(WhistServerState *state, WhistClientMessage *wcms
 static int handle_init_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_file_metadata_message(WhistClientMessage *wcmsg);
 static int handle_file_chunk_message(WhistClientMessage *wcmsg);
+static int handle_file_group_end_message(WhistClientMessage *wcmsg);
+static int handle_file_drag_message(WhistClientMessage *wcmsg);
 static int handle_open_urls_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_frame_ack_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_file_upload_cancel_message(WhistServerState *, WhistClientMessage *wcmsg);
@@ -91,6 +94,10 @@ int handle_client_message(WhistServerState *state, WhistClientMessage *wcmsg) {
             return handle_file_metadata_message(wcmsg);
         case CMESSAGE_FILE_DATA:
             return handle_file_chunk_message(wcmsg);
+        case CMESSAGE_FILE_GROUP_END:
+            return handle_file_group_end_message(wcmsg);
+        case CMESSAGE_FILE_DRAG:
+            return handle_file_drag_message(wcmsg);
         case CMESSAGE_QUIT:
             return handle_quit_message(state, wcmsg);
         case CMESSAGE_INIT:
@@ -255,6 +262,52 @@ static int handle_file_chunk_message(WhistClientMessage *wcmsg) {
     */
 
     file_synchronizer_write_file_chunk(&wcmsg->file);
+
+    return 0;
+}
+
+static int handle_file_group_end_message(WhistClientMessage *wcmsg) {
+    /*
+        Handle a file group end message.
+
+        Arguments:
+            wcmsg (WhistClientMessage*): message packet from client
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
+    if (wcmsg->file_group_end.transfer_type == FILE_TRANSFER_SERVER_DROP) {
+        drop_file_into_active_window(NULL);
+    }
+
+    return 0;
+}
+
+static int handle_file_drag_message(WhistClientMessage *wcmsg) {
+    /*
+        Handle a file drag message.
+
+        Arguments:
+            wcmsg (WhistClientMessage*): message packet from client
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
+    switch (wcmsg->file_drag_data.drag_state) {
+        case START_DRAG: {
+            file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y,
+                             wcmsg->file_drag_data.group_id, wcmsg->file_drag_data.filename);
+            break;
+        }
+        case IN_DRAG: {
+            file_drag_update(true, wcmsg->file_drag_data.x, wcmsg->file_drag_data.y, 0, NULL);
+            break;
+        }
+        case END_DRAG: {
+            file_drag_update(false, 0, 0, 0, NULL);
+            break;
+        }
+    }
 
     return 0;
 }

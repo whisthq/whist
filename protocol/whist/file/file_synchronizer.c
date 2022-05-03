@@ -206,7 +206,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     // reset_transferring_file when either the last chunk is written or the files are all reset
     TransferringFile* active_file = (TransferringFile*)malloc(sizeof(TransferringFile));
     memset(active_file, 0, sizeof(TransferringFile));
-    linked_list_add_head(&transferring_files, active_file);
+    linked_list_add_tail(&transferring_files, active_file);
 
     LOG_INFO("Opening global file id %d for writing", file_metadata->global_file_id);
 
@@ -366,10 +366,10 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
     LOG_INFO("Setting file metadata for read file id %lu", global_file_id);
 
     // Create a new transferring file entry and add it to our list - this is eventually freed in
-    // reset_transferring_file when either the last chunk is written or the files are all reset
+    // reset_transferring_file when either the last chunk is read or the files are all reset
     TransferringFile* active_file = (TransferringFile*)malloc(sizeof(TransferringFile));
     memset(active_file, 0, sizeof(TransferringFile));
-    linked_list_add_head(&transferring_files, active_file);
+    linked_list_add_tail(&transferring_files, active_file);
 
     // Set global identifier
     active_file->global_file_id = global_file_id++;
@@ -535,6 +535,47 @@ void file_synchronizer_cancel_user_file_upload(void) {
     FILE* fptr = fopen("/home/whist/.teleport/uploaded-file-cancel", "w");
     fprintf(fptr, "cancel-trigger");
     fclose(fptr);
+}
+
+void file_synchronizer_end_type_group(FileTransferType transfer_type) {
+    /*
+        Add an entry to the TransferringFile list that indicates the end of a group
+        of `transfer_type` files.
+    */
+
+    whist_lock_mutex(file_synchrony_update_mutex);
+    // Create a new transferring file entry and add it to our list - this is eventually freed in
+    // reset_transferring_file when this TransferringFile is encountered and handled.
+    TransferringFile* group_marker = (TransferringFile*)malloc(sizeof(TransferringFile));
+    memset(group_marker, 0, sizeof(TransferringFile));
+    linked_list_add_tail(&transferring_files, group_marker);
+
+    group_marker->transfer_type = transfer_type;
+    group_marker->group_end = true;
+    // NOTE: It is important to make sure that these values do not affect global synchrony
+    //     since they are not of any importance for synchrony purposes.
+    group_marker->global_file_id = -1;
+    group_marker->id = -1;
+    whist_unlock_mutex(file_synchrony_update_mutex);
+}
+
+bool file_synchronizer_handle_type_group_end(TransferringFile* active_file,
+                                             FileGroupEnd* group_end_info) {
+    /*
+        If `active_file` is a group end indicator, populate the `group_end_info`
+        pointer and reset the entry.
+    */
+
+    if (!active_file->group_end) {
+        return false;
+    }
+
+    if (group_end_info) {
+        group_end_info->transfer_type = active_file->transfer_type;
+    }
+    reset_transferring_file(active_file);
+
+    return true;
 }
 
 void destroy_file_synchronizer(void) {
