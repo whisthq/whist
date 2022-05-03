@@ -9,17 +9,71 @@ typedef struct WhistFrontend WhistFrontend;
 
 typedef enum FrontendEventType {
     FRONTEND_EVENT_UNHANDLED = 0,
+    /**
+     * Resize event.
+     *
+     * The output window has been resized, so anything which draws to
+     * the window should adjust to use the new size.
+     */
     FRONTEND_EVENT_RESIZE,
+    /**
+     * Visibility change event.
+     *
+     * When not visible, nothing needs to be drawn to the window.
+     */
     FRONTEND_EVENT_VISIBILITY,
+    /**
+     * Audio device update event.
+     *
+     * An audio device has been added or removed, so if audio is playing
+     * then the device state will need to be refreshed.
+     */
     FRONTEND_EVENT_AUDIO_UPDATE,
+    /**
+     * Key press event.
+     *
+     * A key have been either pressed or released.
+     */
     FRONTEND_EVENT_KEYPRESS,
+    /**
+     * Mouse motion event.
+     */
     FRONTEND_EVENT_MOUSE_MOTION,
+    /**
+     * Mouse button event.
+     *
+     * A mouse button was either pressed or released.
+     */
     FRONTEND_EVENT_MOUSE_BUTTON,
+    /**
+     * Mouse wheel event.
+     */
     FRONTEND_EVENT_MOUSE_WHEEL,
+    /**
+     * Mouse leave event.
+     *
+     * The mouse has left the output window.
+     */
     FRONTEND_EVENT_MOUSE_LEAVE,
+    /**
+     * Gesture event.
+     */
     FRONTEND_EVENT_GESTURE,
+    /**
+     * File drag event.
+     *
+     *  A file is being dragged over the window.
+     */
     FRONTEND_EVENT_FILE_DRAG,
+    /**
+     * File drop event.
+     */
     FRONTEND_EVENT_FILE_DROP,
+    /**
+     * Quit event.
+     *
+     * The user or OS indicated that the application should quit.
+     */
     FRONTEND_EVENT_QUIT,
 } FrontendEventType;
 
