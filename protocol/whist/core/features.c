@@ -39,11 +39,6 @@ static WhistFeatureDescriptor feature_list[] = {
         .enabled = true,
         .name = "long-term reference frames",
     },
-    {
-        .feature = WHIST_FEATURE_WHIST_CONGESTION_CONTROL,
-        .enabled = true,
-        .name = "Whist Congestion Control",
-    },
 };
 
 static const WhistFeatureDescriptor *get_feature_descriptor(WhistFeature feature) {
