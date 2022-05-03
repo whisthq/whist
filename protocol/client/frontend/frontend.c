@@ -1,5 +1,6 @@
 #include "frontend.h"
 #include "sdl/sdl.h"
+#include "virtual/virtual.h"
 #include <whist/core/whist.h>
 #include <whist/utils/atomic.h>
 
@@ -16,9 +17,8 @@ WhistFrontend* whist_frontend_create(const char* type) {
     const WhistFrontendFunctionTable* table = NULL;
     if (strcmp(type, "sdl") == 0) {
         table = sdl_get_function_table();
-    } else if (strcmp(type, "external") == 0) {
-        LOG_WARNING("External frontend not implemented yet");
-        return NULL;
+    } else if (strcmp(type, "virtual") == 0) {
+        table = virtual_get_function_table();
     } else {
         LOG_ERROR("Invalid frontend type: %s", type);
         return NULL;

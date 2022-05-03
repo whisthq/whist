@@ -43,6 +43,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/frontend/sdl/events.c
         ../client/frontend/sdl/lifecycle.c
         ../client/frontend/sdl/sdl.c
+        ../client/frontend/virtual/virtual.c
+        ../client/frontend/virtual/impl.c
         ../client/frontend/sdl/video.c
         ../client/frontend/sdl/window.c
 
@@ -99,6 +101,8 @@ else()
         ../client/frontend/sdl/events.c
         ../client/frontend/sdl/lifecycle.c
         ../client/frontend/sdl/sdl.c
+        ../client/frontend/virtual/virtual.c
+        ../client/frontend/virtual/impl.c
         ../client/frontend/sdl/video.c
         ../client/frontend/sdl/window.c
         $<$<PLATFORM_ID:Windows>:../client/frontend/sdl/d3d11.c>
