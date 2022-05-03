@@ -117,7 +117,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 }
 
 func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, instanceID string, instanceCapacity int32) {
-	if metadata.IsLocalEnvWithoutDB() {
+	if metadata.IsLocalEnvWithoutDB() && !metadata.IsRunningInCI() {
 		return
 	}
 
