@@ -67,8 +67,9 @@ double AUDIO_BUFFER_OVERFLOW_SIZE = AUDIO_BUFFER_OVERFLOW_SIZE_0;
 #define scale_max 1.5
 double scale_factor = init_scale_factor;
 
-double danger_threshold = 6.5;
-double safe_threshold = 8.0;
+const double insert_empty_frame_threshold =3;
+double danger_threshold = 4.0;
+double safe_threshold = 5.0;
 
 WhistTimer my_timer;
 double cool_down;
@@ -473,7 +474,7 @@ static void check_buffer_dry(AudioContext* audio_context)
         // If the audio device runs dry, begin buffering
         // Buffering check prevents spamming this log
         if (audio_context->audio_state != BUFFERING &&
-            safe_get_audio_queue(audio_context) *1.0/DECODED_BYTES_PER_FRAME <  5) {
+            safe_get_audio_queue(audio_context) *1.0/DECODED_BYTES_PER_FRAME <  insert_empty_frame_threshold) {
             LOG_WARNING("Audio Device is dry, will start to buffer");
             fprintf(stderr, "device buffer dry !!!\n");
             audio_context->audio_state = BUFFERING;
@@ -483,7 +484,7 @@ static void check_buffer_dry(AudioContext* audio_context)
         {
             fprintf(stderr,"oops!!!!\n");
         }
-        else while(audio_context->audio_state == BUFFERING && safe_get_audio_queue(audio_context) *1.0 /DECODED_BYTES_PER_FRAME  <5)
+        else while(audio_context->audio_state == BUFFERING && safe_get_audio_queue(audio_context) *1.0 /DECODED_BYTES_PER_FRAME  < insert_empty_frame_threshold )
         {
             AudioFrame* audio_frame = (AudioFrame*)empty_frame;
             if (audio_decoder_send_packets(audio_context->audio_decoder, audio_frame->data,
