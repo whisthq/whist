@@ -91,13 +91,13 @@ void virtual_paint_video(WhistFrontend* frontend, int output_width, int output_h
 void virtual_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
                               enum AVPixelFormat* format) {
     *device = NULL;
-    if (__APPLE__) {
-        // for now i'm going to assume this always works
-        *format = AV_PIX_FMT_VIDEOTOOLBOX;
-    } else {
-        *format = AV_PIX_FMT_NONE;
-        // todo: figure out d3d11 here potentially
-    }
+#if defined(__APPLE__)
+    // for now i'm going to assume this always works
+    *format = AV_PIX_FMT_VIDEOTOOLBOX;
+#else
+    *format = AV_PIX_FMT_NONE;
+    // todo: figure out d3d11 here potentially
+#endif  // __APPLE__
 }
 
 void virtual_render(WhistFrontend* frontend) {}
