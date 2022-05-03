@@ -169,6 +169,10 @@ func RegisterInstance() error {
 // by the scaling service. This value will be used for deciding how many
 // mandelboxes to create when starting the host service.
 func GetInstanceCapacity(instanceID string) (int32, error) {
+	if !enabled {
+		return 0, nil
+	}
+
 	q := queries.NewQuerier(dbpool)
 
 	rows, err := q.FindInstanceByID(context.Background(), string(instanceID))

@@ -37,7 +37,7 @@ const (
 // CreateMandelbox inserts a new row to the database with the necessary fields. It sets the
 // status of the mandelbox to WAITING, which meand that the mandelbox is waiting for a user
 // to get assigned to the instance.
-func CreateMandelbox(id types.MandelboxID, app types.AppName, instanceID string) error {
+func CreateMandelbox(id types.MandelboxID, app string, instanceID string) error {
 	if !enabled {
 		return nil
 	}
@@ -51,7 +51,7 @@ func CreateMandelbox(id types.MandelboxID, app types.AppName, instanceID string)
 			Status: pgtype.Present,
 		},
 		App: pgtype.Varchar{
-			String: string(app),
+			String: app,
 			Status: pgtype.Present,
 		},
 		InstanceID: pgtype.Varchar{

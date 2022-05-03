@@ -125,7 +125,7 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 	// with the "WAITING" status. The instance capacity is determined by the scaling service for each instance type.
 	for i := int32(0); i < instanceCapacity; i++ {
 		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient)
-		err := dbdriver.CreateMandelbox(zygote.GetID(), zygote.GetAppName(), instanceID)
+		err := dbdriver.CreateMandelbox(zygote.GetID(), strings.ToUpper(string(zygote.GetAppName())), instanceID)
 		if err != nil {
 			logger.Errorf("Failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
 		}
@@ -550,7 +550,12 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					// If running on a local environment, disable any pubsub logic. We have to create a subscription request
 					// that mocks the Hasura subscription event. Doing this avoids the need of setting up a Hasura server and
 					// postgres database on the development instance.
-					jsonReq := serverevent
+
+					// Start spinning up a mandelbox so developers can connect to it. Since
+					// the mandelbox ID is not known beforehand, modify the server event
+					// to use the ID from the newly created mandelbox.
+					zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient)
+					serverevent.MandelboxID = zygote.GetID()
 
 					userID, err := metadata.GetUserID()
 					if err != nil {
@@ -563,11 +568,12 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 						logger.Errorf("Error getting instance name from AWS, %v", err)
 						metrics.Increment("ErrorRate")
 					}
+
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{
 						InstanceID: string(instanceID),
-						ID:         jsonReq.MandelboxID,
-						SessionID:  "1234",
+						ID:         zygote.GetID(),
+						SessionID:  utils.Sprintf("%v", time.Now().UnixMilli()),
 						UserID:     userID,
 					}
 					subscriptionEvent := subscriptions.MandelboxEvent{
