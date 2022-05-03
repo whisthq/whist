@@ -338,6 +338,13 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	mandelbox.AssignToUser(mandelboxSubscription.UserID)
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
 
+	err = mandelbox.MarkParamsReady()
+	if err != nil {
+		logAndReturnError("Error marking mandelbox %s as ready to start A/V + display: %s", mandelboxSubscription.ID, err)
+		return
+	}
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s params as ready. A/V and display services can soon start.", mandelboxSubscription.ID)
+
 	// Request port bindings for the mandelbox.
 	var (
 		hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
@@ -357,13 +364,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	// Set the session id and write the `session_id` file
 	mandelbox.SetSessionID(mandelboxtypes.SessionID(mandelboxSubscription.SessionID))
 	mandelbox.WriteSessionID()
-
-	err = mandelbox.MarkParamsReady()
-	if err != nil {
-		logAndReturnError("Error marking mandelbox %s as ready to start A/V + display: %s", mandelboxSubscription.ID, err)
-		return
-	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s params as ready. A/V and display services can soon start.", mandelboxSubscription.ID)
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
