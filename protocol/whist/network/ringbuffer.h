@@ -259,17 +259,6 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
                                               NetworkSettings* network_settings);
 
 /**
- * @brief                         Get network statistics from the ringbuffer
- *
- * @param ring_buffer             The ringbuffer to get network statistics from
- *
- * @note                          Statistics will be taken from the time between the current time,
- *                                and the last call to get_network_statistics
- *                                (Or, from init_ring_buffer, on the first call)
- */
-NetworkStatistics get_network_statistics(RingBuffer* ring_buffer);
-
-/**
  * @brief Destroy the ringbuffer and all associated memory
  *
  * @param ring_buffer Ring buffer to destroy

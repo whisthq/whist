@@ -71,17 +71,6 @@ Public Functions
 */
 
 /**
- * @brief               This function will calculate what network settings
- *                      are desired, in response to any network statistics given
- *
- * @param stats         A struct containing any information we might need
- *                      when deciding what bitrate we want
- *
- * @returns             A network settings struct
- */
-NetworkSettings get_desired_network_settings(NetworkStatistics stats);
-
-/**
  * @brief               This function will estimate the new bitrate based on whist congestion
  *                      control algo
  *

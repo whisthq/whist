@@ -1992,7 +1992,6 @@ TEST_F(ProtocolTest, WCCTest) {
     output_width = 1920;
     output_height = 1080;
     network_algo_set_dpi(192);
-    whist_set_feature(WHIST_FEATURE_WHIST_CONGESTION_CONTROL, true);
     NetworkSettings network_settings = get_starting_network_settings();
     int expected_video_bitrate = output_width * output_height * STARTING_BITRATE_PER_PIXEL;
     EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
