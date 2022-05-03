@@ -153,24 +153,6 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 				t.Errorf("GPU index %s written to file is not a valid int: %v.", string(gpuFileContents), err)
 			}
 
-			paramsReadyFile := path.Join(resourceMappingDir, ".paramsReady")
-			paramsReadyFileContents, err := ioutil.ReadFile(paramsReadyFile)
-			if err != nil {
-				t.Fatalf("Failed to read resource file %s: %v", paramsReadyFile, err)
-			}
-			if string(paramsReadyFileContents) != ".paramsReady" {
-				t.Errorf("Params ready file contains invalid contents: %s", string(paramsReadyFileContents))
-			}
-
-			configReadyFile := path.Join(resourceMappingDir, ".configReady")
-			configReadyFileContents, err := ioutil.ReadFile(configReadyFile)
-			if err != nil {
-				t.Fatalf("Failed to read resource file %s: %v", configReadyFile, err)
-			}
-			if string(configReadyFileContents) != ".configReady" {
-				t.Errorf("Config ready file contains invalid contents: %s", string(configReadyFileContents))
-			}
-
 			// Verify that the mandelbox has the connected status to false
 			if testMandelbox.GetConnectedStatus() {
 				t.Errorf("Mandelbox has invalid connected status: got true, want false")
@@ -256,6 +238,27 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 			spinUpResult, ok := result.Result.(JSONTransportRequestResult)
 			if !ok {
 				t.Fatalf("Expected instance of SpinUpMandelboxRequestResult, got: %v", result.Result)
+			}
+
+			// Check that all resource mapping files were written correctly
+			resourceMappingDir := path.Join(utils.WhistDir, testMandelbox.GetID().String(), "mandelboxResourceMappings")
+
+			paramsReadyFile := path.Join(resourceMappingDir, ".paramsReady")
+			paramsReadyFileContents, err := ioutil.ReadFile(paramsReadyFile)
+			if err != nil {
+				t.Fatalf("Failed to read resource file %s: %v", paramsReadyFile, err)
+			}
+			if string(paramsReadyFileContents) != ".paramsReady" {
+				t.Errorf("Params ready file contains invalid contents: %s", string(paramsReadyFileContents))
+			}
+
+			configReadyFile := path.Join(resourceMappingDir, ".configReady")
+			configReadyFileContents, err := ioutil.ReadFile(configReadyFile)
+			if err != nil {
+				t.Fatalf("Failed to read resource file %s: %v", configReadyFile, err)
+			}
+			if string(configReadyFileContents) != ".configReady" {
+				t.Errorf("Config ready file contains invalid contents: %s", string(configReadyFileContents))
 			}
 
 			// Verify config json was written correctly
