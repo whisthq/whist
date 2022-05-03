@@ -801,6 +801,16 @@ typedef enum WindowMessageType {
     WINDOW_ACTIVE
 } WindowMessageType;
 
+typedef struct WhistWindowData {
+    unsigned long id;
+    int width;
+    int height;
+    int x;
+    int y;
+    WhistRGBColor corner_color;
+} WhistWindowData;
+
+
 typedef struct WindowMessage {
     WindowMessageType type;
     int id;

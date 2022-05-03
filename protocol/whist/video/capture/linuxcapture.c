@@ -32,6 +32,7 @@ static bool is_same_wh(CaptureDevice* device);
 static void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height,
                                   uint32_t dpi);
 static int32_t multithreaded_nvidia_device_manager(void* opaque);
+void get_window_attributes(WhistWindow* w, WhistWindowData* d);
 
 /*
 ============================
@@ -318,7 +319,7 @@ int capture_screen(CaptureDevice* device, LinkedList* window_list) {
     }
     // clear window data from previous pass
     for (int i = 0; i < MAX_WINDOWS; i++) {
-        device->window_data[i].id = -1;
+        device->window_data[i].id = 0;
     }
     // get x,y,w,h of all windows
     // TODO: get corner color somehow
@@ -486,6 +487,6 @@ void get_active_window(WhistWindow* active_window) {
 }
 
 void get_window_attributes(WhistWindow* w, WhistWindowData* d) {
-    d->id = (int)w->window;
+    d->id = (unsigned long)w->window;
     x11_get_window_attributes(w->window, d);
 }

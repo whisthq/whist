@@ -96,4 +96,6 @@ Window x11_get_active_window(void);
 
 void x11_get_valid_windows(LinkedList* list);
 
+void x11_get_window_attributes(Window w, WhistWindowData* d);
+
 #endif  // CAPTURE_X11CAPTURE_H

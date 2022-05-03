@@ -41,16 +41,6 @@ typedef struct WhistWindow {
 #endif
 } WhistWindow;
 
-typedef struct WhistWindowData {
-    int id;
-    int width;
-    int height;
-    int x;
-    int y;
-    WhistRGBColor corner_color;
-} WhistWindowData;
-
-
 typedef struct CaptureDevice {
     int id;
     int width;

@@ -187,7 +187,7 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
     frame->codec_type = encoder->codec_type;
     frame->is_empty_frame = false;
     frame->is_window_visible = true;
-    frame->window_data = device->window_data;
+    memcpy(frame->window_data, device->window_data, sizeof(WhistWindowData) * MAX_WINDOWS);
     frame->corner_color = device->corner_color;
     frame->server_timestamp = server_timestamp;
     frame->client_input_timestamp = client_input_timestamp;
@@ -725,7 +725,7 @@ int32_t multithreaded_send_video(void* opaque) {
             }
         }
         if (!window_found) {
-            LOG_INFO("Adding window %d to window list", active_window->window);
+            LOG_INFO("Adding window %lu to window list", active_window->window);
             linked_list_add_tail(&window_list, active_window);
         } else {
             free(active_window);
@@ -744,7 +744,7 @@ int32_t multithreaded_send_video(void* opaque) {
         int accumulated_frames = 0;
         if ((!state->stop_streaming || state->stream_needs_restart)) {
             start_timer(&statistics_timer);
-            accumulated_frames = capture_screen(device);
+            accumulated_frames = capture_screen(device, &window_list);
             if (accumulated_frames > 1) {
                 log_double_statistic(VIDEO_FRAMES_SKIPPED_IN_CAPTURE, (accumulated_frames - 1));
                 if (LOG_VIDEO) {
