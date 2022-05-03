@@ -124,7 +124,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 			}
 
 			// Check that all resource mapping files were written correctly
-			resourceMappingDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "mandelboxResourceMappings")
+			resourceMappingDir := path.Join(utils.WhistDir, testMandelbox.GetID().String(), "mandelboxResourceMappings")
 
 			hostPortFile := path.Join(resourceMappingDir, "hostPort_for_my_32262_tcp")
 			hostPortFileContents, err := ioutil.ReadFile(hostPortFile)
@@ -193,9 +193,21 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			goroutineTracker := sync.WaitGroup{}
 
+			var (
+				instanceID    aws.InstanceID
+				testMandelbox mandelbox.Mandelbox
+			)
+
+			// Get the test mandelbox for each app
+			if browserImage == "browsers/chrome" {
+				testMandelbox = testMandelboxChrome
+			} else {
+				testMandelbox = testMandelboxBrave
+			}
+
 			// Defer the wait first since deferred functions are executed in LIFO order.
 			defer goroutineTracker.Wait()
-			defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+			defer cancelMandelboxContextByID(testMandelbox.GetID())
 			defer cancel()
 
 			// We always want to start with a clean slate
@@ -203,21 +215,9 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 			initializeFilesystem(cancel)
 			defer uninitializeFilesystem()
 
-			var (
-				instanceID    aws.InstanceID
-				testMandelbox mandelbox.Mandelbox
-			)
-
 			instanceID, err := aws.GetInstanceID()
 			if err != nil {
 				logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
-			}
-
-			// Get the test mandelbox for each app
-			if browserImage == "browsers/chrome" {
-				testMandelbox = testMandelboxChrome
-			} else {
-				testMandelbox = testMandelboxBrave
 			}
 
 			testMandelboxInfo := subscriptions.Mandelbox{
