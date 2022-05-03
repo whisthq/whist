@@ -511,7 +511,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             send_network_settings = whist_congestion_controller(
                 curr_group_stats, prev_group_stats, get_incoming_bitrate(context),
                 get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
-                                        context->short_term_latency),
+                                      context->short_term_latency),
                 context->short_term_latency, context->long_term_latency,
                 &context->network_settings);
         }
