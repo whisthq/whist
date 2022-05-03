@@ -261,9 +261,6 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 				t.Errorf("Config ready file contains invalid contents: %s", string(configReadyFileContents))
 			}
 
-			// Verify config json was written correctly
-			resourceMappingDir := path.Join(utils.WhistDir, testMandelbox.GetID().String(), "mandelboxResourceMappings")
-
 			var jsonData map[string]interface{}
 			jsonFile := path.Join(resourceMappingDir, "config.json")
 			jsonFileContents, err := ioutil.ReadFile(jsonFile)
