@@ -28,18 +28,13 @@ All the below items need to be tested and checked for this promotion to be merge
 
 #### Frontend
 
+- [ ] Sign in to Whist works
+- [ ] Importing browser settins from Brave & Chrome works
 - [ ] Going to Google Maps correctly shows the user's approximate location
 - [ ] User local settings for language, dark mode, DPI, keyboard repeat, etc. are properly set
+- [ ] Accessing and updating the Stripe subscription from the omnibar works
+- [ ] Live chat support with Intercom from the omnibar works
 - [ ] Sign out button on omnibar works
-
-
-auth works
-importer works
-links redirection work
-intercom live chat works
-omnibar works
-stripe subscription works
-file upload/download works
 
 #### Backend
 
@@ -54,6 +49,7 @@ file upload/download works
 - [ ] Whist successfully receives smooth scrolling and pinch-to-zoom input (i.e. on Figma)
 - [ ] CPU usage is low (below 30%)
 - [ ] RAM usage is low (below 150 MB)
+- [ ] Redirecting Zoom/Spotify/Discord from Whist to local is seamless
 
 #### Display
 
@@ -67,6 +63,8 @@ file upload/download works
 - [ ] Copy text from local clipboard to Whist
 - [ ] Copy image from Whist to local clipboard
 - [ ] Copy image from local clipboard to Whist
+- [ ] Upload a file from local to Whist
+- [ ] Download a file from Whist to local
 - [ ] Drag-and-drop an image from local to Whist
 
 #### Analytics
