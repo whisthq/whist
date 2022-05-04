@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2022 Whist Technologies, Inc.
- * @file os_utils.c
+ * @file os_utils.cpp
 ============================
 Usage
 ============================
@@ -12,8 +12,14 @@ Includes
 ============================
 */
 
+extern "C" {
 #include "os_utils.h"
 #include <whist/core/whist.h>
+}
+#include <roapi.h>
+#include <NotificationActivationCallback.h>
+#include <windows.ui.notifications.h>
+
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
 #endif
@@ -255,10 +261,72 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
 #endif
 }
 
-#ifndef __APPLE__
+#ifdef _WIN32
+
+#include <atlbase.h>
+#include <atlconv.h>
+#include <string>
+
+using namespace ABI::Windows::Data::Xml::Dom;
+using namespace ABI::Windows::UI::Notifications;
+
+/*
+struct callback : winrt::implements<callback, INotificationActivationCallback>
+{
+    HRESULT __stdcall Activate(
+        LPCWSTR app,
+        LPCWSTR args,
+        [[maybe_unused]] NOTIFICATION_USER_INPUT_DATA const* data,
+        [[maybe_unused]] ULONG count) noexcept final
+    {
+        try
+        {
+            std::wcout << this_app_name << L" has been called back from a notification." << std::endl;
+            std::wcout << L"Value of the 'app' parameter is '" << app << L"'." << std::endl;
+            std::wcout << L"Value of the 'args' parameter is '" << args << L"'." << std::endl;
+            return S_OK;
+        }
+        catch (...)
+        {
+            return winrt::to_hresult();
+        }
+    }
+};
+*/
 
 int display_notification(WhistNotification notif) {
-    LOG_WARNING("Notification display not implemented on this OS");
+    // Construct the toast template
+    XmlDocument doc;
+    doc.LoadXml(
+    L"<toast>\
+        <visual>\
+            <binding template=\"ToastGeneric\">\
+                <text></text>\
+                <text></text>\
+            </binding>\
+        </visual>\
+    </toast>");
+
+    // Populate with notification title and text
+    std::wstring l_title = std::wstring(CA2W(std::string(notif.title).c_str()));
+    std::wstring l_message = std::wstring(CA2W(std::string(notif.message).c_str()));
+    doc.SelectSingleNode(L"//text[1]").InnerText(l_title.c_str());
+    doc.SelectSingleNode(L"//text[2]").InnerText(l_message.c_str());
+
+    // Construct the notification
+    ToastNotification notif{ doc };
+
+    // Display the notification, using the AUMID
+    ToastNotificationManager::CreateToastNotifier(L"Whist.WhistApp1011").Show(notif);
+    return 0;
+}
+
+#endif
+
+#ifdef __linux__
+
+int display_notification(WhistNotification notif) {
+    LOG_WARNING("Notification display not implemented on Linux");
     return -1;
 }
 

@@ -12,7 +12,7 @@ add_library(whistUtils STATIC
         rwlock.c
         color.c
         threads.c
-        os_utils.c
+        os_utils.cpp
         linked_list.c
         queue.c
         command_line.c
