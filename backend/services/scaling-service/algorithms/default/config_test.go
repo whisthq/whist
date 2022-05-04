@@ -1,4 +1,4 @@
-package scaling_algorithms
+package algorithms
 
 import (
 	"reflect"

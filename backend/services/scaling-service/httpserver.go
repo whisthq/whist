@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Whist Technologies, Inc.
+// Copyright (c) 2021-2022 Whist Technologies, Inc.
 
 /*
 This file contains the code related to starting the scaling service's HTTP server,

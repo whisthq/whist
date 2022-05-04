@@ -1,4 +1,4 @@
-package scaling_algorithms
+package algorithms
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	hashicorp "github.com/hashicorp/go-version"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
-	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms"
-	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
+	"github.com/whisthq/whist/backend/services/scaling-service/algorithms"
+	"github.com/whisthq/whist/backend/services/scaling-service/algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -21,7 +21,7 @@ import (
 // on the database. Its purpose is to verify and wait until the instance is terminated from the
 // cloud provider and removed from the database, if it doesn't it takes the necessary steps to
 // notify and ensure the database and the cloud provider don't get out of sync.
-func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, event scaling_algorithms.ScalingEvent, instance subscriptions.Instance) error {
+func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, event algorithms.ScalingEvent, instance subscriptions.Instance) error {
 	logger.Infof("Starting verify scale down action for event: %v", event)
 	defer logger.Infof("Finished verify scale down action for event: %v.", event)
 
@@ -83,7 +83,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 
 // VerifyCapacity is a scaling action which checks the database to verify if we have the desired
 // capacity (instance buffer). This action is run at the end of the other actions.
-func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, event scaling_algorithms.ScalingEvent) error {
+func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, event algorithms.ScalingEvent) error {
 	logger.Infof("Starting verify capacity action for event: %v", event)
 	defer logger.Infof("Finished verify capacity action for event: %v", event)
 
@@ -138,7 +138,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 // ScaleDownIfNecessary is a scaling action which runs every 10 minutes and scales down free and
 // lingering instances, respecting the buffer defined for each region. Free instances will be
 // marked as draining, and lingering instances will be terminated and removed from the database.
-func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, event scaling_algorithms.ScalingEvent) error {
+func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, event algorithms.ScalingEvent) error {
 	logger.Infof("Starting scale down action for event: %v", event)
 	defer logger.Infof("Finished scale down action for event: %v", event)
 
@@ -306,7 +306,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 // ScaleUpIfNecessary is a scaling action that launched the received number of instances on
 // the cloud provider and registers them on the database with the initial values.
-func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event scaling_algorithms.ScalingEvent, image subscriptions.Image) error {
+func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event algorithms.ScalingEvent, image subscriptions.Image) error {
 	logger.Infof("Starting scale up action for event: %v", event)
 	defer logger.Infof("Finished scale up action for event: %v", event)
 
@@ -368,7 +368,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 // UpgradeImage is a scaling action which runs when a new version is deployed. Its responsible of
 // starting a buffer of instances with the new image and scaling down instances with the previous
 // image.
-func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event scaling_algorithms.ScalingEvent, imageID interface{}) error {
+func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event algorithms.ScalingEvent, imageID interface{}) error {
 	logger.Infof("Starting upgrade image action for event: %v", event)
 	defer logger.Infof("Finished upgrade image action for event: %v", event)
 
@@ -486,7 +486,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 // SwapOverImages is a scaling action that will switch the current image on the given region.
 // To the latest one. This is done separately to avoid having downtimes during deploys, since
 // we have to wait until the frontend has updated its version on the config database.
-func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, event scaling_algorithms.ScalingEvent, clientVersion interface{}) error {
+func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, event algorithms.ScalingEvent, clientVersion interface{}) error {
 	// Block until the image upgrade has finished successfully.
 	// We time out here in case something went wrong with the
 	// upgrade image action, in which case we roll back the new version.
@@ -585,7 +585,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 
 // MandelboxAssign is the action responsible for assigning an instance to a user,
 // and scaling as necessary to satisfy demand.
-func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, event scaling_algorithms.ScalingEvent) error {
+func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, event algorithms.ScalingEvent) error {
 	logger.Infof("Starting mandelbox assign action for event: %v", event)
 	defer logger.Infof("Finished mandelbox assign action for event: %v", event)
 

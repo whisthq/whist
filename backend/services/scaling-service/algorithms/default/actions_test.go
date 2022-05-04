@@ -1,4 +1,4 @@
-package scaling_algorithms
+package algorithms
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/algorithms"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 )
@@ -355,7 +356,7 @@ func TestVerifyInstanceScaleDown(t *testing.T) {
 
 	// For this test, we start with a test instance that is draining. It should be
 	// removed, and another instance should be started to match required capacity.
-	err := testAlgorithm.VerifyInstanceScaleDown(context, ScalingEvent{Region: "test-region"}, subscriptions.Instance{
+	err := testAlgorithm.VerifyInstanceScaleDown(context, algorithms.ScalingEvent{Region: "test-region"}, subscriptions.Instance{
 		ID: "test-verify-scale-down-instance",
 	})
 	if err != nil {
@@ -405,7 +406,7 @@ func TestVerifyCapacity(t *testing.T) {
 
 	// For this test, we will start with no capacity to check if
 	// the function properly starts instances.
-	err := testAlgorithm.VerifyCapacity(context, ScalingEvent{Region: "test-region"})
+	err := testAlgorithm.VerifyCapacity(context, algorithms.ScalingEvent{Region: "test-region"})
 	if err != nil {
 		t.Errorf("Failed while testing verify capacity action. Err: %v", err)
 	}
@@ -483,7 +484,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 
 	// For this test, we start with more instances than desired, so we can check
 	// if the scale down correctly terminates free instances.
-	err := testAlgorithm.ScaleDownIfNecessary(context, ScalingEvent{Region: "test-region"})
+	err := testAlgorithm.ScaleDownIfNecessary(context, algorithms.ScalingEvent{Region: "test-region"})
 	if err != nil {
 		t.Errorf("Failed while testing scale down action. Err: %v", err)
 	}
@@ -550,7 +551,7 @@ func TestScaleUpIfNecessary(t *testing.T) {
 
 	// For this test, try to scale up instances and check if they are
 	// successfully added to the database with the correct data.
-	err := testAlgorithm.ScaleUpIfNecessary(testInstancesToScale, context, ScalingEvent{Region: "test-region"}, subscriptions.Image{
+	err := testAlgorithm.ScaleUpIfNecessary(testInstancesToScale, context, algorithms.ScalingEvent{Region: "test-region"}, subscriptions.Image{
 		ImageID:   "test-image-id-scale-up",
 		ClientSHA: "test-sha-dev",
 	})
@@ -641,7 +642,7 @@ func TestDeploy(t *testing.T) {
 
 		// For this test, start an image upgrade, check that instances with the new image
 		// are created and that old instances are left untouched.
-		err := testAlgorithm.UpgradeImage(context, ScalingEvent{Region: "test-region"}, "test-image-id-new")
+		err := testAlgorithm.UpgradeImage(context, algorithms.ScalingEvent{Region: "test-region"}, "test-image-id-new")
 		if err != nil {
 			t.Errorf("Failed while testing scale up action. Err: %v", err)
 		}
@@ -651,7 +652,7 @@ func TestDeploy(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
-		err := testAlgorithm.SwapOverImages(context, ScalingEvent{Region: "test-region"}, testVersion)
+		err := testAlgorithm.SwapOverImages(context, algorithms.ScalingEvent{Region: "test-region"}, testVersion)
 		if err != nil {
 			t.Errorf("Failed to swapover images. Err: %v", err)
 		}
@@ -812,7 +813,7 @@ func TestMandelboxAssign(t *testing.T) {
 			go func() {
 				defer wg.Done()
 
-				err := testAlgorithm.MandelboxAssign(context, ScalingEvent{Data: testAssignRequest})
+				err := testAlgorithm.MandelboxAssign(context, algorithms.ScalingEvent{Data: testAssignRequest})
 				errorChan <- err
 			}()
 

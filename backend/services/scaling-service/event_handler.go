@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Whist Technologies, Inc.
+// Copyright (c) 2021-2022 Whist Technologies, Inc.
 
 /*
 The scaling service is a server responsible of managing the state of the backend.
