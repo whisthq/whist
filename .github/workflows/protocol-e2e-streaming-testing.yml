@@ -62,7 +62,7 @@ jobs:
           if_key_exists: fail
 
       # Steps to detect branch acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
-      - name: Get branch name
+      - name: Get branch name and commit SHA
         if: always()
         run: |
           if [[ ${{ github.event_name }} == 'pull_request' ]]; then
@@ -70,6 +70,7 @@ jobs:
           else
             echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
           fi
+          echo "GITHUB_COMMIT_HASH=$(echo ${{ github.event.after }})" >> $GITHUB_ENV
 
       - name: Install End-to-End Streaming Test Dependencies
         run: pip install boto3 paramiko numpy pytablewriter
