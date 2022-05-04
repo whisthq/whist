@@ -808,6 +808,7 @@ typedef struct WhistWindowData {
     int x;
     int y;
     WhistRGBColor corner_color;
+    bool is_resizable;
 } WhistWindowData;
 
 

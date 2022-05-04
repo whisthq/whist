@@ -85,15 +85,17 @@ void destroy_window_info_getter(void);
 
 // Added functions for multiwindow
 void get_valid_windows(CaptureDevice* capture_device, LinkedList* list);
-void get_window_attributes(CaptureDevice* capture_device, Window w, WhistWindowData* d);
+void get_window_attributes(CaptureDevice* capture_device, WhistWindow whist_window, WhistWindowData* d);
 Window get_active_window(CaptureDevice* capture_device);
-char* get_window_name(CaptureDevice* capture_device, Window w);
-bool is_window_resizable(CaptureDevice* capture_device, Window w);
-void move_resize_window(CaptureDevice* device, WhistWindow w, int x, int y, int width, int height);
-void close_window(CaptureDevice* device, WhistWindow w);
-void minimize_window(CaptureDevice* capture_device, Window w);
-void maximize_window(CaptureDevice* capture_device, Window w);
-void fullscreen_window(CaptureDevice* capture_device, Window w);
-void bring_window_to_top(CaptureDevice* capture_device, Window w);
+// TODO: replace with a function that doesn't just return the raw string?
+// or explicitly make one for Window (private) and one for WhistWindow (publi)
+// char* get_window_name(CaptureDevice* capture_device, WhistWindow whist_window);
+bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window);
+void move_resize_window(CaptureDevice* device, WhistWindow whist_window, int x, int y, int width, int height);
+void close_window(CaptureDevice* device, WhistWindow whist_window);
+void minimize_window(CaptureDevice* capture_device, WhistWindow whist_window);
+void maximize_window(CaptureDevice* capture_device, WhistWindow whist_window);
+void fullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window);
+void bring_window_to_top(CaptureDevice* capture_device, WhistWindow whist_window);
 
 #endif  // WINDOW_INFO_H

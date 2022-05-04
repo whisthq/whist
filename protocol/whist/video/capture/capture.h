@@ -112,7 +112,7 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
  *
  * @returns                        Number of frames since last capture if succeeded, else -1
  */
-int capture_screen(CaptureDevice* device, LinkedList* window_list);
+int capture_screen(CaptureDevice* device);
 
 /**
  * @brief                          Transfers screen capture to CPU buffer

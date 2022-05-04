@@ -21,6 +21,7 @@ Includes
 #include "capture.h"
 #include "x11capture.h"
 #include "nvidiacapture.h"
+#include <whist/utils/window_info.h>
 
 /*
 ============================
@@ -32,7 +33,6 @@ static bool is_same_wh(CaptureDevice* device);
 static void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height,
                                   uint32_t dpi);
 static int32_t multithreaded_nvidia_device_manager(void* opaque);
-void get_window_attributes(WhistWindow* w, WhistWindowData* d);
 
 /*
 ============================
@@ -301,7 +301,7 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     }
 }
 
-int capture_screen(CaptureDevice* device, LinkedList* window_list) {
+int capture_screen(CaptureDevice* device) {
     /*
         Capture the screen that device is attached to. If using Nvidia, since we can't specify what
        display Nvidia should be using, we need to confirm that the Nvidia device's dimensions match
@@ -317,6 +317,9 @@ int capture_screen(CaptureDevice* device, LinkedList* window_list) {
         LOG_ERROR("Tried to call capture_screen with a NULL CaptureDevice! We shouldn't do this!");
         return -1;
     }
+
+    LinkedList window_list;
+    get_valid_windows(device, &window_list);
     // clear window data from previous pass
     for (int i = 0; i < MAX_WINDOWS; i++) {
         device->window_data[i].id = 0;
@@ -324,8 +327,12 @@ int capture_screen(CaptureDevice* device, LinkedList* window_list) {
     // get x,y,w,h of all windows
     // TODO: get corner color somehow
     int i = 0;
-    linked_list_for_each(window_list, WhistWindow, w) {
-        get_window_attributes(w, &device->window_data[i]);
+    linked_list_for_each(&window_list, WhistWindow, w) {
+        if (i >= MAX_WINDOWS) {
+            break;
+        }
+        device->window_data[i].id = (unsigned long) w->window;
+        get_window_attributes(device, *w, &device->window_data[i]);
         i++;
     }
     switch (device->active_capture_device) {

@@ -566,8 +566,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
     VideoEncoder* encoder = NULL;
 
-    LinkedList window_list;
-
     WhistTimer world_timer;
     start_timer(&world_timer);
 
@@ -600,9 +598,6 @@ int32_t multithreaded_send_video(void* opaque) {
     int previous_connection_id = -1;
     bool initialized_network_settings = false;
     ClientLock* client_lock = client_active_lock(state->client);
-    // get preliminary list of windows
-    get_valid_windows(&window_list);
-    LOG_INFO("Found %d valid windows", linked_list_size(&window_list));
 
     // The video loop
     while (client_lock != NULL) {
@@ -713,24 +708,6 @@ int32_t multithreaded_send_video(void* opaque) {
             state->stream_needs_recovery = true;
         }
 
-        // get the active window
-        // if it doesn't live in window_list, add it to the list
-        WhistWindow* active_window = safe_malloc(sizeof(WhistWindow));
-        get_active_window(active_window);
-        bool window_found = false;
-        linked_list_for_each(&window_list, WhistWindow, open_window) {
-            if (open_window->window == active_window->window) {
-                window_found = true;
-                break;
-            }
-        }
-        if (!window_found) {
-            LOG_INFO("Adding window %lu to window list", active_window->window);
-            linked_list_add_tail(&window_list, active_window);
-        } else {
-            free(active_window);
-        }
-
         // SENDING LOGIC:
         // first, we call capture_screen, which returns how many frames have passed since the last
         // call to capture_screen, If we are using Nvidia, the captured frame is also
@@ -744,7 +721,7 @@ int32_t multithreaded_send_video(void* opaque) {
         int accumulated_frames = 0;
         if ((!state->stop_streaming || state->stream_needs_restart)) {
             start_timer(&statistics_timer);
-            accumulated_frames = capture_screen(device, &window_list);
+            accumulated_frames = capture_screen(device);
             if (accumulated_frames > 1) {
                 log_double_statistic(VIDEO_FRAMES_SKIPPED_IN_CAPTURE, (accumulated_frames - 1));
                 if (LOG_VIDEO) {

@@ -32,6 +32,8 @@ static bool last_window_name_valid;
 bool x11_get_window_property(X11CaptureDevice* device, Window w, Atom property, Atom req_type, unsigned long* nitems_return, unsigned char** prop_return);
 void send_message_to_root(X11CaptureDevice* device, XEvent* event_send);
 XEvent create_change_state_message(X11CaptureDevice* device, Window w, long action, Atom property1, Atom property2);
+char* get_window_name(X11CaptureDevice* device, Window w);
+void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window curr);
 
 void init_window_info_getter(void) {
     if (display == NULL) {
@@ -40,9 +42,7 @@ void init_window_info_getter(void) {
     last_window_name_valid = false;
 }
 
-void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
-    X11CaptureDevice* device = capture_device->device;
-    static Window curr = device->root;
+void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window curr) {
     Window parent;
     Window* children;
     unsigned int nchildren;
@@ -50,8 +50,8 @@ void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
     // check the dimensions of each window
     XWindowAttributes attr;
     XGetWindowAttributes(device->display, curr, &attr);
-    if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH && attr.height >= MIN_SCREEN_HEIGHT && *get_window_name(display, curr) != '\0') {
-        LOG_INFO("Valid window %s has %d children, position %d, %d, dimensions %d x %d", get_window_name(device->display, curr),
+    if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH && attr.height >= MIN_SCREEN_HEIGHT && *get_window_name(device, curr) != '\0') {
+        LOG_INFO("Valid window %s has %d children, position %d, %d, dimensions %d x %d", get_window_name(device, curr),
                  nchildren, attr.x, attr.y, attr.width, attr.height);
         WhistWindow* valid_window = safe_malloc(sizeof(WhistWindow));
         valid_window->window = curr;
@@ -60,14 +60,19 @@ void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
         
     if (nchildren != 0) {
         for (unsigned int i = 0; i < nchildren; i++) {
-            curr = children[i];
-            x11_get_valid_windows(list);
+            get_valid_windows_helper(device, list, children[i]);
         }
     }
 }
 
-void get_window_attributes(CaptureDevice* capture_device, Window w, WhistWindowData* d) {
-    X11CaptureDevice* device = capture_device->device;
+void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
+    X11CaptureDevice* device = capture_device->x11_capture_device;
+    get_valid_windows_helper(device, list, device->root);
+}
+
+void get_window_attributes(CaptureDevice* capture_device, WhistWindow whist_window, WhistWindowData* d) {
+    Window w = whist_window.window;
+    X11CaptureDevice* device = capture_device->x11_capture_device;
     XWindowAttributes attr;
     XGetWindowAttributes(device->display, w, &attr);
     d->width = attr.width;
@@ -96,7 +101,7 @@ bool x11_get_window_property(X11CaptureDevice* device, Window w, Atom property, 
 }
 
 Window get_active_window(CaptureDevice* capture_device) {
-    X11CaptureDevice* device = capture_device->device;
+    X11CaptureDevice* device = capture_device->x11_capture_device;
     INIT_ATOM(device, net_active_window, "_NET_ACTIVE_WINDOW");
     static unsigned long nitems;
     static unsigned char* result; // window stored here
@@ -118,9 +123,8 @@ Window get_active_window(CaptureDevice* capture_device) {
     }
 }
 
-// utf-8 string
-char* get_window_name(CaptureDevice* capture_device, Window w) {
-    X11CaptureDevice* device = capture_device->device;
+// utf-8 string; helper (processed by something like get_focused_window_name with the last_valid_title and everything)
+char* get_window_name(X11CaptureDevice* device, Window w) {
     // first try using EWMH
     INIT_ATOM(device, net_wm_name, "_NET_WM_NAME");
     INIT_ATOM(device, utf8_string, "UTF8_STRING");
@@ -152,8 +156,9 @@ char* get_window_name(CaptureDevice* capture_device, Window w) {
     }
 }
 
-bool is_window_resizable(CaptureDevice* capture_device, Window w) {
-    X11CaptureDevice* device = capture_device->device;
+bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window) {
+    Window w = whist_window.window;
+    X11CaptureDevice* device = capture_device->x11_capture_device;
     INIT_ATOM(device, net_wm_allowed_actions, "_NET_WM_ALLOWED_ACTIONS");
     INIT_ATOM(device, atom_array, "ATOM[]");
     INIT_ATOM(device, net_wm_action_resize, "_NET_WM_ACTION_RESIZE");
@@ -163,7 +168,7 @@ bool is_window_resizable(CaptureDevice* capture_device, Window w) {
     if (x11_get_window_property(device, w, net_wm_allowed_actions, atom_array, &nitems, &actions)) {
         Atom* allowed_actions = (Atom*)actions;
         // check if one of the actions is net_wm_action_resize
-        for (int i = 0; i < nitems; i++) {
+        for (int i = 0; i < (int) nitems; i++) {
             if (allowed_actions[i] == net_wm_action_resize) {
                 return true;
             }
@@ -183,8 +188,9 @@ void send_message_to_root(X11CaptureDevice* device, XEvent* event_send) {
             event_send);
 }
 
-void move_resize_window(CaptureDevice* device, WhistWindow w, int x, int y, int width, int height) {
-    X11CaptureDevice* device = capture_device->device;
+void move_resize_window(CaptureDevice* capture_device, WhistWindow whist_window, int x, int y, int width, int height) {
+    Window w = whist_window.window;
+    X11CaptureDevice* device = capture_device->x11_capture_device;
     INIT_ATOM(device, net_moveresize_window, "_NET_MOVERESIZE_WINDOW");
     static long gravity_flags = 15 << 8; // sets gravity to 0, x/y/w/h to 1, source to 0
 
@@ -204,8 +210,9 @@ void move_resize_window(CaptureDevice* device, WhistWindow w, int x, int y, int 
     send_message_to_root(device, &xevent);
 }
 
-void close_window(CaptureDevice* device, WhistWindow w) {
-    X11CaptureDevice* device = capture_device->device;
+void close_window(CaptureDevice* capture_device, WhistWindow whist_window) {
+    Window w = whist_window.window;
+    X11CaptureDevice* device = capture_device->x11_capture_device;
     INIT_ATOM(device, net_close_window, "_NET_CLOSE_WINDOW");
 
     XEvent xevent = {0};
@@ -244,16 +251,18 @@ XEvent create_change_state_message(X11CaptureDevice* device, Window w, long acti
     return xevent;
 }
 
-void minimize_window(CaptureDevice* capture_device, Window w) {
-    X11CaptureDevice* device = capture_device->device;
+void minimize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
+    Window w = whist_window.window;
+    X11CaptureDevice* device = capture_device->x11_capture_device;
     INIT_ATOM(device, net_wm_state_hidden, "_NET_WM_STATE_HIDDEN");
 
     XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_ADD, net_wm_state_hidden, 0);
     send_message_to_root(device, &xevent);
 }
 
-void maximize_window(CaptureDevice* capture_device, Window w) {
-    X11CaptureDevice* device = capture_device->device;
+void maximize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
+    Window w = whist_window.window;
+    X11CaptureDevice* device = capture_device->x11_capture_device;
     INIT_ATOM(device, net_wm_state_maximized_vert, "_NET_WM_STATE_MAXIMIZED_VERT");
     INIT_ATOM(device, net_wm_state_maximized_horz, "_NET_WM_STATE_MAXIMIZED_HORZ");
 
@@ -261,19 +270,21 @@ void maximize_window(CaptureDevice* capture_device, Window w) {
     send_message_to_root(device, &xevent);
 }
 
-void fullscreen_window(CaptureDevice* capture_device, Window w) {
-    X11CaptureDevice* device = capture_device->device;
+void fullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window) {
+    Window w = whist_window.window;
+    X11CaptureDevice* device = capture_device->x11_capture_device;
     INIT_ATOM(device, net_wm_state_fullscreen, "_NET_WM_STATE_FULLSCREEN");
     
-    XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_ADD, net_wm_state_fullscreen);
+    XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_ADD, net_wm_state_fullscreen, 0);
     send_message_to_root(device, &xevent);
 }
 
-void bring_window_to_top(CaptureDevice* capture_device, Window w) {
-    X11CaptureDevice* device = capture_device->device;
+void bring_window_to_top(CaptureDevice* capture_device, WhistWindow whist_window) {
+    Window w = whist_window.window;
+    X11CaptureDevice* device = capture_device->x11_capture_device;
     INIT_ATOM(device, net_wm_state_above, "_NET_WM_STATE_ABOVE");
 
-    XEvent event = create_change_state_message(device, w, _NET_WM_STATE_ADD, net_wm_state_above);
+    XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_ADD, net_wm_state_above, 0);
     send_message_to_root(device, &xevent);
 }
 
