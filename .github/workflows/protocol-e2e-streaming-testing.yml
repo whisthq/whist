@@ -61,9 +61,6 @@ jobs:
           known_hosts: unnecessary # Note, this is not secure and discouraged, but tolerable here given the instance is deleted after the test
           if_key_exists: fail
 
-      - name: Print Github Context for debugging purposes
-        run: echo "$GITHUB_CONTEXT"
-
       # Steps to detect branch acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
       - name: Get branch name and commit SHA
         if: always()
