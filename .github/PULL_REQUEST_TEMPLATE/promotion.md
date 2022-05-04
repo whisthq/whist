@@ -25,16 +25,24 @@ All the below items need to be tested and checked for this promotion to be merge
 - [ ] Whist successfully auto-updates
 - [ ] Whist successfully launches
 - [ ] Whist successfully plays audio
-- [ ] Whist successfully receives smooth scrolling and pinch-to-zoom input (i.e. on Figma)
-- [ ] Typing "where am I" in Google shows that I'm connected to the closest datacenter
-- [ ] 
-- [ ] User sessions are successfully stored across Whist sessions
+
+#### Frontend
+
+- [ ] Going to Google Maps correctly shows the user's approximate location
+- [ ] User local settings for language, dark mode, DPI, keyboard repeat, etc. are properly set
 - [ ] Sign out button on omnibar works
+
+#### Backend
+
+- [ ] Startup time for Whist is <15 seconds
+- [ ] Typing "where am I" in Google shows that I'm connected to the closest datacenter
+- [ ] User sessions are successfully stored across Whist sessions
 
 #### Streaming
 
 - [ ] Do 30 seconds of TypeRacer without no repeated characters, lag, etc.
 - [ ] Watch a 1 minute YouTube video with no video or audio stutters
+- [ ] Whist successfully receives smooth scrolling and pinch-to-zoom input (i.e. on Figma)
 - [ ] CPU usage is low (below 30%)
 - [ ] RAM usage is low (below 150 MB)
 
