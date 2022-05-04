@@ -143,13 +143,4 @@ void destroy_capture_device(CaptureDevice* device);
  */
 void file_capture_set_input_filename(const char* filename);
 
-/**
- * @brief Get the current active window
- * 
- * @returns A WhistWindow struct with the current window
- */
-void get_active_window(WhistWindow* active_window);
-
-void get_valid_windows(LinkedList* list);
-
 #endif  // VIDEO_CAPTURE_H

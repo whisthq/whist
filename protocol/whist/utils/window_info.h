@@ -9,6 +9,9 @@
 Usage
 ============================
 
+// TODO: integrate the old get_focused_window_name with new code
+// we'll use CaptureDevice instead of a global window_info_getter
+
 init_window_info_getter();
 
 char name[WINDOW_NAME_MAXLEN + 1];
@@ -28,6 +31,7 @@ Includes
 */
 
 #include <whist/core/whist.h>
+#include <whist/video/capture/capture.h>
 
 /*
 ============================
@@ -78,5 +82,18 @@ bool is_focused_window_fullscreen(void);
  *
  */
 void destroy_window_info_getter(void);
+
+// Added functions for multiwindow
+void get_valid_windows(CaptureDevice* capture_device, LinkedList* list);
+void get_window_attributes(CaptureDevice* capture_device, Window w, WhistWindowData* d);
+Window get_active_window(CaptureDevice* capture_device);
+char* get_window_name(CaptureDevice* capture_device, Window w);
+bool is_window_resizable(CaptureDevice* capture_device, Window w);
+void move_resize_window(CaptureDevice* device, WhistWindow w, int x, int y, int width, int height);
+void close_window(CaptureDevice* device, WhistWindow w);
+void minimize_window(CaptureDevice* capture_device, Window w);
+void maximize_window(CaptureDevice* capture_device, Window w);
+void fullscreen_window(CaptureDevice* capture_device, Window w);
+void bring_window_to_top(CaptureDevice* capture_device, Window w);
 
 #endif  // WINDOW_INFO_H

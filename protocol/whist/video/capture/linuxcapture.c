@@ -472,21 +472,3 @@ int transfer_screen(CaptureDevice* device) {
     }
     return 0;
 }
-
-/*
- * Return a linked list of WhistWindows we should capture
- */
-void get_valid_windows(LinkedList* list) {
-    x11_get_valid_windows(list);
-}
-
-void get_active_window(WhistWindow* active_window) {
-    Window w = x11_get_active_window();
-    active_window->window = w;
-    // any other setup?
-}
-
-void get_window_attributes(WhistWindow* w, WhistWindowData* d) {
-    d->id = (unsigned long)w->window;
-    x11_get_window_attributes(w->window, d);
-}

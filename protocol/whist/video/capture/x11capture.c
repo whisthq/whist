@@ -56,23 +56,6 @@ int handler(Display* d, XErrorEvent* a) {
     return 0;
 }
 
-char* get_window_name(Display* d, Window w) {
-    XTextProperty prop;
-    Status s = XGetWMName(d, w, &prop);
-    if (s) {
-        int count = 0;
-        char** list = NULL;
-        int result = XmbTextPropertyToTextList(d, &prop, &list, &count);
-        if (count && result == Success) {
-            return list[0];
-        } else {
-            return "";
-        }
-    } else {
-        return "";
-    }
-}
-
 void x11_get_valid_windows(LinkedList* list) {
     static Display* display = NULL;
     static Window root = 0;
@@ -140,46 +123,6 @@ void log_tree(X11CaptureDevice* device, Window w) {
         for (unsigned int i = 0; i < nchildren; i++) {
             LOG_INFO("Child %d name is %s", i, get_window_name(device->display, children[i]));
             log_tree(device, children[i]);
-        }
-    }
-}
-
-Window x11_get_active_window() {
-    static Display* display = NULL;
-    static Window root = 0;
-    if (!display) {
-        display = XOpenDisplay(NULL);
-    }
-    if (!root) {
-        root = DefaultRootWindow(display);
-    }
-    static bool atom_set = false;
-    static Atom net_active_window;
-    if (!atom_set) {
-        net_active_window = XInternAtom(display, "_NET_ACTIVE_WINDOW", False);
-        atom_set = true;
-    }
-    static Atom actual_type;
-    static int actual_format;
-    static unsigned long nitems, bytes_after;
-    static char* result;
-    if (XGetWindowProperty(display, root, net_active_window, 0, LONG_MAX / 4, False,
-                           AnyPropertyType, &actual_type, &actual_format, &nitems, &bytes_after,
-                           (unsigned char**)&result) == Success &&
-        *(unsigned long*)result != 0) {
-        Window active_window = (Window) * (unsigned long*)result;
-        // XFree(result);
-        return active_window;
-    } else {
-        // revert to XGetInputFocus
-        Window focus;
-        int revert;
-        XGetInputFocus(display, &focus, &revert);
-        if (focus != PointerRoot) {
-            return focus;
-        } else {
-            LOG_INFO("No active window found, setting root as active");
-            return root;
         }
     }
 }
