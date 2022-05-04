@@ -33,7 +33,7 @@
     {
       matchPaths: ["backend/infrastructure/"],
       groupName: "backend/infrastructure",
-    },    
+    },
     {
       matchPaths: ["backend/services/"],
       groupName: "backend/services",
