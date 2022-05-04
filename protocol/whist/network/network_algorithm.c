@@ -363,17 +363,15 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         } else {
             insufficient_bandwidth = false;
         }
-        if (new_bitrate > max_bitrate) {
+        burst_mode = false;
+
+        if (new_bitrate >= max_bitrate) {
             network_settings->saturate_bandwidth = false;
             LOG_INFO("Reached the maximum bitrate limit : %d bps", max_bitrate);
             new_bitrate = max_bitrate;
-        }
-        // If the bitrate is high enough and is reaching convergence, then switch to burst mode for
-        // reduced latency.
-        if (new_bitrate > STARTING_BITRATE && !network_settings->saturate_bandwidth) {
+            // More bandwidth than max_bitrate could be available. Switch to burst mode for reduced
+            // latency
             burst_mode = true;
-        } else {
-            burst_mode = false;
         }
 
         int burst_bitrate = new_bitrate;
@@ -394,12 +392,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         // earlier.
         LOG_INFO("Switch off saturate bandwidth");
         network_settings->saturate_bandwidth = false;
-        if (network_settings->video_bitrate > STARTING_BITRATE) {
-            burst_mode = true;
-            network_settings->burst_bitrate = network_settings->video_bitrate * BURST_BITRATE_RATIO;
-            LOG_INFO("Switching to burst mode, burst_bitrate = %d",
-                     network_settings->burst_bitrate);
-        }
         return true;
     }
     if (!network_settings->saturate_bandwidth) {
