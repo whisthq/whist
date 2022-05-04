@@ -9,7 +9,7 @@ import {
   parseAuthInfo,
 } from "@app/worker/@core-ts/auth"
 import { setStorage } from "@app/worker/utils/storage"
-import { createAuthTab } from "@app/worker/utils/tabs"
+import { createAuthTab, createLoggedInTab } from "@app/worker/utils/tabs"
 
 import { cachedAuthInfo } from "@app/constants/storage"
 import { openGoogleAuth } from "@app/constants/messaging"
@@ -22,6 +22,9 @@ const initWhistAuthHandler = async () => {
   */
 
   const authInfo = await getCachedAuthInfo()
+
+  console.log("The auth info is", authInfo)
+
   const wasAuthed = !isEmpty(authInfo) && authInfo?.refreshToken !== undefined
   const refreshedAuthInfo = refreshAuthInfo(authInfo)
 
@@ -42,7 +45,6 @@ const initGoogleAuthHandler = () => {
   */
 
   ipcMessage(openGoogleAuth).subscribe(() => {
-    console.log("Opening", authPortalURL())
     chrome.identity.launchWebAuthFlow(
       {
         url: authPortalURL(),
@@ -52,8 +54,12 @@ const initGoogleAuthHandler = () => {
         const response = (await authInfoCallbackRequest(callbackUrl)) as any
         const authInfo = parseAuthInfo(response)
 
-        if (!has(authInfo, "error"))
+        console.log("caching", authInfo)
+
+        if (!has(authInfo, "error")) {
           setStorage(cachedAuthInfo, JSON.stringify(authInfo))
+          createLoggedInTab()
+        }
 
         // TODO: Show user a message on error
       }

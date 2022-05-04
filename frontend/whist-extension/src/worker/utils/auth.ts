@@ -11,6 +11,8 @@ import { AuthInfo } from "@app/@types/auth"
 const getCachedAuthInfo = async () => {
   const authInfo = (await getStorage(cachedAuthInfo)) as any
 
+  console.log("retrieved", authInfo)
+
   if (authInfo === undefined) return {}
   return JSON.parse(JSON.stringify(authInfo))
 }

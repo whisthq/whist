@@ -79,6 +79,9 @@ export const parseAuthInfo = (res: {
 
   try {
     const accessToken = res?.json?.access_token
+
+    console.log(res)
+
     const decodedAccessToken = jwtDecode(accessToken ?? "") as any
     const decodedIdToken = jwtDecode(res?.json?.id_token ?? "") as any
     const userEmail = decodedIdToken?.email
