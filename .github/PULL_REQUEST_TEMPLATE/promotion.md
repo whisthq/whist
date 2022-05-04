@@ -32,6 +32,15 @@ All the below items need to be tested and checked for this promotion to be merge
 - [ ] User local settings for language, dark mode, DPI, keyboard repeat, etc. are properly set
 - [ ] Sign out button on omnibar works
 
+
+auth works
+importer works
+links redirection work
+intercom live chat works
+omnibar works
+stripe subscription works
+file upload/download works
+
 #### Backend
 
 - [ ] Startup time for Whist is <15 seconds
