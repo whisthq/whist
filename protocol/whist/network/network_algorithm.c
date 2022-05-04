@@ -338,7 +338,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
                           min(DECREASE_RATIO, 1.0 - (0.5 * packet_loss_ratio));
             network_settings->saturate_bandwidth = true;
         }
-        network_settings->congestion_detected = true;
         start_timer(&last_decrease_timer);
     }
     if (new_bitrate != network_settings->video_bitrate) {
@@ -393,9 +392,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         LOG_INFO("Switch off saturate bandwidth");
         network_settings->saturate_bandwidth = false;
         return true;
-    }
-    if (!network_settings->saturate_bandwidth) {
-        network_settings->congestion_detected = false;
     }
 
     return false;
