@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "private": true,
   "devDependencies": {
-    "@types/chrome": "^0.0.183",
+    "@types/chrome": "^0.0.184",
     "@types/simple-peer": "^9.6.1",
     "copy-webpack-plugin": "^7.0.0",
     "file-loader": "^6.2.0",
