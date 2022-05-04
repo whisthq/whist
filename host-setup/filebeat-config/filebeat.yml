@@ -41,6 +41,9 @@ filebeat.inputs:
   - type: filestream
     id: whist-userdata-filestream
     paths:
+      # This path corresponds to the logs of the userdata script which runs at instance launch,
+      # as defined by the AWS docs:
+      # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html#user-data-shell-scripts
       - /var/log/cloud-init-output.log
     fields:
       logzio_codec: plain
@@ -94,7 +97,7 @@ processors:
     else:
     # Userdata processors
       - add_fields:
-        tagret: ""
+        target: ""
         fields:
           environment: localdev
           component: userdata

@@ -165,6 +165,9 @@ EOF
   echo "================================================"
 
   sudo apt-get install -y lsof jq tar lz4 fio nvme-cli zfsutils-linux
+  
+  # Install sentry-cli for the userdata script
+  sudo curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.0.4" bash }}
 
   echo "================================================"
   echo "Disabling Automatic Package Upgrades..."
