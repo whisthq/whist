@@ -29,13 +29,18 @@ static void sdl_init_video_device(SDLFrontendContext* context) {
     }
 #endif  // _WIN32
 
-#ifdef __APPLE__
-    if (!strcmp(context->render_driver_name, "metal")) {
+    // Texture sharing between Core Video decode and Metal rendering on
+    // macOS.
+    bool allow_metal_texture_sharing = true;
+#ifdef __aarch64__
+    // Disabled on ARM due to freeze issues (still enabled on x86).
+    allow_metal_texture_sharing = false;
+#endif
+    if (allow_metal_texture_sharing && !strcmp(context->render_driver_name, "metal")) {
         // No device required; renderer can use Core Video pixel buffers
         // from Video Toolbox directly as textures.
         context->video.decode_format = AV_PIX_FMT_VIDEOTOOLBOX;
     }
-#endif  // __APPLE__
 
     // More:
     // * OpenGL on Linux can work with VAAPI via DRM.
