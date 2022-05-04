@@ -97,10 +97,10 @@ processors:
     else:
     # Userdata processors
       - add_fields:
-        target: ""
-        fields:
-          environment: localdev
-          component: userdata
+          target: ""
+          fields:
+            environment: localdev
+            component: userdata
       
   # Global processors
   - rename:
