@@ -67,10 +67,11 @@ jobs:
         run: |
           if [[ ${{ github.event_name }} == 'pull_request' ]]; then
             echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+            echo "GITHUB_COMMIT_HASH=$(echo ${{ github.event.after }})" >> $GITHUB_ENV
           else
             echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+            echo "GITHUB_COMMIT_HASH=$(echo ${GITHUB_SHA})" >> $GITHUB_ENV
           fi
-          echo "GITHUB_COMMIT_HASH=$(echo ${{ github.event.after }})" >> $GITHUB_ENV
 
       - name: Install End-to-End Streaming Test Dependencies
         run: pip install boto3 paramiko numpy pytablewriter
