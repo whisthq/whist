@@ -171,10 +171,6 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     reset_ring_buffer(ring_buffer);
     // reset bitrate stat variables
     ring_buffer->num_packets_nacked = 0;
-    ring_buffer->num_packets_received = 0;
-    ring_buffer->num_frames_rendered = 0;
-
-    start_timer(&ring_buffer->network_statistics_timer);
 
     // Nack bandwidth tracking
     ring_buffer->burst_counter = 0;
@@ -212,8 +208,6 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
     FATAL_ASSERT(segment_size <= MAX_PACKET_SEGMENT_SIZE);
 
     FrameData* frame_data = get_frame_at_id(ring_buffer, segment_id);
-
-    ring_buffer->num_packets_received++;
 
     // Whether or not the ringbuffer overflowed, which controls the return value
     bool ringbuffer_overflowed = false;
@@ -366,8 +360,8 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
             !segment->is_a_duplicate) {
             LOG_ERROR(
                 "We received a video packet (ID %d / index %d) twice, but we had never nacked for "
-                "it?",
-                segment_id, segment_index);
+                "it? is_a_nack = %d, num_entire_frame_nacked = %d",
+                segment_id, segment_index, segment->is_a_nack, frame_data->num_entire_frame_nacked);
             return !ringbuffer_overflowed;
         }
         return !ringbuffer_overflowed;
@@ -565,9 +559,6 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
     ring_buffer->currently_rendering_frame.frame_buffer =
         get_framebuffer(ring_buffer, &ring_buffer->currently_rendering_frame);
 
-    // Track for statistics
-    ring_buffer->num_frames_rendered++;
-
     // Return the currently rendering frame
     return &ring_buffer->currently_rendering_frame;
 }
@@ -637,6 +628,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
     // Track NACKing statistics
     if (get_timer(&ring_buffer->last_nack_statistics_timer) > NACK_STATISTICS_SEC) {
         LOG_INFO("Current Latency: %fms", latency * MS_IN_SECOND);
+        LOG_INFO("Num NACKS sent: %d", ring_buffer->num_packets_nacked);
         // The ratio of NACKs that actually helped recovered data
         double nack_efficiency;
         if (ring_buffer->num_nacks_received == 0) {
@@ -658,6 +650,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
             LOG_INFO("NACKing was saturated: %d times", ring_buffer->num_times_nacking_saturated);
         }
         ring_buffer->num_nacks_received = 0;
+        ring_buffer->num_packets_nacked = 0;
         ring_buffer->num_original_packets_received = 0;
         ring_buffer->num_unnecessary_original_packets_received = 0;
         ring_buffer->num_unnecessary_nacks_received = 0;
@@ -799,8 +792,11 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
     // Confirm that the frame is uninitialized
     FATAL_ASSERT(frame_data->packet_buffer == NULL);
     unsigned char num_entire_frame_nacked = 0;
-    if (frame_data->entire_frame_nacked_id == id)
+    WhistTimer last_frame_nack_timer = {0};
+    if (frame_data->entire_frame_nacked_id == id) {
         num_entire_frame_nacked = frame_data->num_entire_frame_nacked;
+        last_frame_nack_timer = frame_data->last_frame_nack_timer;
+    }
     // Initialize new framedata
     memset(frame_data, 0, sizeof(*frame_data));
     frame_data->id = id;
@@ -811,10 +807,11 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
     // If the entire frame was nacked already, then set the packet nack counters and timers
     // appropriately
     if (num_entire_frame_nacked) {
+        frame_data->num_entire_frame_nacked = num_entire_frame_nacked;
         memset(frame_data->num_times_index_nacked, num_entire_frame_nacked,
                num_original_indices + num_fec_indices);
         for (int i = 0; i < num_original_indices + num_fec_indices; i++) {
-            frame_data->last_nacked_timer[i] = frame_data->last_frame_nack_timer;
+            frame_data->last_nacked_timer[i] = last_frame_nack_timer;
         }
     }
     start_timer(&frame_data->frame_creation_timer);
