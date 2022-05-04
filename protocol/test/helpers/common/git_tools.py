@@ -66,9 +66,8 @@ def get_whist_github_sha(running_in_ci):
     github_sha = ""
 
     if running_in_ci:
-        # In GitHub Actions, the commit SHA automatically exists as the environment
-        # variable GITHUB_SHA
-        github_sha = os.getenv("GITHUB_SHA")
+        # In CI, we save the commit hash in the variable GITHUB_COMMIT_HASH
+        github_sha = os.getenv("GITHUB_COMMIT_HASH")
     else:
         # Locally, we can find the branch using the 'git rev-parse HEAD' command.
         subproc_handle = subprocess.Popen("git rev-parse HEAD", shell=True, stdout=subprocess.PIPE)
