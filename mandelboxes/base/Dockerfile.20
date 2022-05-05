@@ -745,7 +745,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 COPY --from=build-assets fonts/* /usr/local/share/fonts/
 
 # Install WhiteSur cursor and icons, for macOS-like theming
-RUN git clone https://github.com/vinceliuice/Mojave-gtk-theme.git && cd Mojave-gtk-theme && /bin/bash install.sh && rm -rf /Mojave-gtk-theme
+RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git && cd WhiteSur-gtk-theme && /bin/bash install.sh && rm -rf /WhiteSur-gtk-theme
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh --bold && rm -rf /WhiteSur-icon-theme
 
