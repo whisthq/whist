@@ -88,9 +88,6 @@ static char* new_tab_urls;
 
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
-extern int create_window_id;
-extern int new_window_height;
-extern int new_window_width;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
@@ -500,16 +497,6 @@ int whist_client_main(int argc, const char* argv[]) {
                 initiate_file_upload();
             }
 
-            if (create_window_id != -1 && new_window_width != -1 && new_window_height != -1) {
-                WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
-                frontend = whist_frontend_create("sdl");
-                whist_frontend_init(frontend, new_window_width, new_window_height, "second window", &background_color);
-                whist_renderer = init_renderer(frontend, new_window_width, new_window_height);
-                LOG_INFO("Creating new window %d x %d", new_window_width, new_window_height);
-                create_window_id = -1;
-                new_window_width = -1;
-                new_window_height = -1;
-            }
         }
 
         LOG_INFO("Disconnecting...");
