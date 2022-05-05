@@ -702,16 +702,16 @@ ENV DISPLAY :10
 
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    unzip \
     awesome \
     awesome-extra \
     lxappearance \
     gtk-chtheme \
+    gtk2-engines-murrine \
+    gtk2-engines-pixbuf \
     libglib2.0-dev-bin \
     libglib2.0-dev \
     libxml2-utils \
-    gtk2-engines-murrine \
-    gtk2-engines-pixbuf \
-    unzip \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
