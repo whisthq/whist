@@ -45,6 +45,7 @@ Includes
 #include "network.h"
 #include "video.h"
 #include "state.h"
+#include <whist/utils/window_info.h>
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
@@ -599,6 +600,14 @@ int32_t multithreaded_send_video(void* opaque) {
     bool initialized_network_settings = false;
     ClientLock* client_lock = client_active_lock(state->client);
 
+    WhistWindow chrome_window;
+    WhistTimer window_test_timer;
+    bool unfullscreened = false;
+    bool moved = false;
+    bool minimized = false;
+    bool unminimized = false;
+    bool closed = false;
+
     // The video loop
     while (client_lock != NULL) {
         // Refresh the client activation lock, to let the client (re/de)activate if it's trying to
@@ -684,6 +693,38 @@ int32_t multithreaded_send_video(void* opaque) {
                                            video_fps, vbv_size);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
+        }
+
+        // if we have a device and chrome_window is not set, make it the active window
+        if (device != NULL && chrome_window.window == 0) {
+            chrome_window = get_active_window(device);
+            LOG_INFO("Found active window %lu", chrome_window.window);
+            start_timer(&window_test_timer);
+        }
+
+        if (get_timer(&window_test_timer) > 5) {
+            if (!unfullscreened) {
+                LOG_INFO("Unfullscreening");
+                unfullscreen_window(device, chrome_window);
+                unfullscreened = true;
+            } else if (!moved) {
+                LOG_INFO("Moving");
+                move_resize_window(device, chrome_window, 200, 200, 720, 720);
+                moved = true;
+            } else if (!minimized) {
+                LOG_INFO("Minimizing");
+                minimize_window(device, chrome_window);
+                minimized = true;
+            } else if (!unminimized) {
+                LOG_INFO("Unminimizing");
+                unminimize_window(device, chrome_window);
+                unminimized = true;
+            } else if (!closed) {
+                LOG_INFO("Closing");
+                close_window(device, chrome_window);
+                closed = true;
+            }
+            start_timer(&window_test_timer);
         }
 
         if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
