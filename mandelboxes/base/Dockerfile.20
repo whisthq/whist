@@ -748,6 +748,13 @@ COPY --from=build-assets fonts/* /usr/local/share/fonts/
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh --bold && rm -rf /WhiteSur-icon-theme
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 
+
+RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git && cd WhiteSur-gtk-theme && /bin/bash install.sh && rm-rf /WhiteSur-gtk-theme
+
+
+
+
+
 #########################
 # Audio
 #########################
