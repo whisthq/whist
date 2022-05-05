@@ -705,12 +705,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     awesome \
     awesome-extra \
     lxappearance \
-    materia-gtk-theme \
-    yaru-theme-gtk \
     gtk-chtheme \
+    libglib2.0-dev-bin \
+    libglib2.0-dev \
+    libxml2-utils \
     gtk2-engines-murrine \
-    unzip \
     gtk2-engines-pixbuf \
+    unzip \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -744,8 +745,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 COPY --from=build-assets fonts/* /usr/local/share/fonts/
 
 # Install WhiteSur cursor and icons, for macOS-like theming
+RUN git clone https://github.com/vinceliuice/Mojave-gtk-theme.git && cd Mojave-gtk-theme && /bin/bash install.sh && rm -rf /Mojave-gtk-theme
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
-RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
+RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh --bold && rm -rf /WhiteSur-icon-theme
 
 #########################
 # Audio
