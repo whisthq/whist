@@ -9,7 +9,7 @@
 
 #define LIB_ENCODEAPI_NAME "libnvidia-encode.so.1"
 
-#define WHIST_PRESET NV_ENC_PRESET_P2_GUID
+#define WHIST_PRESET NV_ENC_PRESET_P7_GUID
 #define WHIST_TUNING NV_ENC_TUNING_INFO_LOW_LATENCY
 
 static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, int vbv_size,
