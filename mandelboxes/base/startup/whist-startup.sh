@@ -25,6 +25,39 @@ block-until-file-exists.sh $WHIST_MAPPINGS_DIR/.paramsReady >&1
 # Register TTY once it was assigned via writing to a file by Whist Host Service
 ASSIGNED_TTY=$(cat $WHIST_MAPPINGS_DIR/tty)
 
+# Get the session id from the file written by the host service
+SESSION_ID=$(cat $WHIST_MAPPINGS_DIR/session_id)
+
+# Create a directory with the session id where the service
+# logs will be sent to. We need this path structure so the
+# session id can be parsed by filebeat.
+mkdir "/var/log/whist/$SESSION_ID/"
+
+# Modify the output configurations from each whist service 
+# to include the session id on its path.
+
+cat > /etc/systemd/system/whist-display.service.d/output.conf << EOF
+[Service]
+StandardOutput=file:/var/log/whist/$SESSION_ID/display-out.log
+StandardError=file:/var/log/whist/$SESSION_ID/display-err.log
+EOF
+
+cat > /etc/systemd/system/whist-audio.service.d/output.conf << EOF
+[Service]
+StandardOutput=file:/var/log/whist/$SESSION_ID/audio-out.log
+StandardError=file:/var/log/whist/$SESSION_ID/audio-err.log
+EOF
+
+cat > /etc/systemd/system/whist-main.service.d/output.conf << EOF
+[Service]
+StandardOutput=file:/var/log/whist/$SESSION_ID/protocol-out.log
+StandardError=file:/var/log/whist/$SESSION_ID/protocol-err.log
+EOF
+
+echo "Replaced placeholder session id on unit files with $SESSION_ID"
+
+systemctl daemon reload
+
 # Create a TTY within the mandelbox so we don't have to hook it up to one of the host's.
 # Also, create the device /dev/dri/card0 which is needed for GPU acceleration. Note that
 # this CANNOT be done in the Dockerfile because it affects /dev/, so we have to do it here.
