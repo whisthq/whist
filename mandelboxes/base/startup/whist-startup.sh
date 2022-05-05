@@ -33,7 +33,7 @@ SESSION_ID=$(cat $WHIST_MAPPINGS_DIR/session_id)
 # session id can be parsed by filebeat.
 mkdir "/var/log/whist/$SESSION_ID/"
 
-# Modify the output configurations from each whist service 
+# Modify the output configurations from each whist service
 # to include the session id on its path.
 
 cat > /etc/systemd/system/whist-display.service.d/output.conf << EOF
