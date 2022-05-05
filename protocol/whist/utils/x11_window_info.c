@@ -45,6 +45,7 @@ void init_window_info_getter(void) {
 }
 
 void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window curr) {
+    LOG_DEBUG("Current window %lu", curr);
     Window parent;
     Window* children;
     unsigned int nchildren;
@@ -137,6 +138,7 @@ char* get_window_name(X11CaptureDevice* device, Window w) {
     static unsigned char* name;  // name stored here
 
     if (x11_get_window_property(device, w, net_wm_name, utf8_string, &nitems, &name)) {
+        LOG_INFO("Window name %s", name);
         return (char*)name;
     } else {
         // fall back to XGetWMName
