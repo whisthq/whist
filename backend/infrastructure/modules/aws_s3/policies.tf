@@ -319,3 +319,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecyc
     }
   }
 }
+
+# ------------------------------ Lifecycle policies for protocol E2E logs bucket  --------------------- #
+resource "aws_s3_bucket_lifecycle_configuration" "whist-e2e-protocol-test-logs-lifecycle" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-e2e-protocol-test-logs[0].id
+
+  # Remove logs older than 7 days
+  rule {
+    id = "removeObsoleteLogs"
+    status = "Enabled"
+    
+    expiration {
+      days = 7
+    }
+  }
+}
