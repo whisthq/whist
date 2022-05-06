@@ -67,7 +67,7 @@ jobs:
         run: |
           if [[ ${{ github.event_name }} == 'pull_request' ]]; then
             echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-            echo "GITHUB_COMMIT_HASH=$(echo ${{ github.event.after }})" >> $GITHUB_ENV
+            echo "GITHUB_COMMIT_HASH=$(echo ${{ github.event.pull_request.head.sha }})" >> $GITHUB_ENV
           else
             echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
             echo "GITHUB_COMMIT_HASH=$(echo ${GITHUB_SHA})" >> $GITHUB_ENV

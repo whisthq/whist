@@ -69,6 +69,7 @@ def logs_contain_errors(logs_root_dir, verbose=False):
 def download_latest_logs(
     branch_name,
     before_timestamp,
+    logs_expiration_days,
     network_conditions,
     network_conditions_matching_way,
     testing_url,
@@ -90,6 +91,8 @@ def download_latest_logs(
         branch_name (str):  The name of the Whist branch whose logs we will download
         before_timestamp (datetime):    The earliest timestamp such that if a run started at that time,
                                         we don't want to consider its logs
+        logs_expiration_days (int): The number of days after which existing logs are considered obsolete
+                                    and should not be considered for comparisons
         network_conditions (str):   The network conditions of the run that we just completed.
         network_conditions_matching_way (str):  A parameter that controls what kind of matching we
                                                 need to do on the S3 logs wrt network conditions
@@ -116,6 +119,8 @@ def download_latest_logs(
 
     local_timezone = int(time.timezone / 3600.0)
     before_timestamp = before_timestamp + timedelta(hours=local_timezone)
+    # Compute oldest allowed timestamp. Any logs created before then will be discarded.
+    oldest_allowed_timestamp = before_timestamp + timedelta(days=logs_expiration_days)
 
     result = client.list_objects(
         Bucket="whist-e2e-protocol-test-logs", Prefix=f"{branch_name}/", Delimiter="/"
@@ -135,7 +140,15 @@ def download_latest_logs(
         subfolder_date = datetime.strptime(subfolder_name, "%Y_%m_%d@%H-%M-%S")
         if subfolder_date >= before_timestamp:
             counter += 1
-            reason_for_discarding.append((subfolder_date, "logs with timestamp in future"))
+            reason_for_discarding.append(
+                (subfolder_date, "logs created at a time >= the current run's start time")
+            )
+            continue
+        elif subfolder_date < oldest_allowed_timestamp:
+            counter += 1
+            reason_for_discarding.append(
+                (subfolder_date, f"logs older than {logs_expiration_days} days")
+            )
             continue
 
         for obj in bucket.objects.filter(Prefix=f"{branch_name}/{subfolder_name}"):
@@ -206,5 +219,5 @@ def download_latest_logs(
         assert counter == len(reason_for_discarding) + 1
         for i in range(len(reason_for_discarding)):
             print(
-                f"\t {i + 1}° most recent logs (time: {reason_for_discarding[i][0]}) discarded due to {reason_for_discarding[i][1]}"
+                f"\t {i + 1}° most recent logs (time: {reason_for_discarding[i][0]}) discarded. Reason: {reason_for_discarding[i][1]}"
             )

@@ -90,6 +90,14 @@ parser.add_argument(
     default="false",
 )
 
+parser.add_argument(
+    "--logs-expiration-days",
+    help="The number of days after which logs from previous runs become obsolete and should not be considered \
+    for performance comparisons",
+    type=int,
+    default=7,
+)
+
 
 if __name__ == "__main__":
     # Get script arguments
@@ -97,6 +105,7 @@ if __name__ == "__main__":
     post_results_on_slack = args.post_results_on_slack == "true"
     e2e_script_outcomes = args.e2e_script_outcomes
     network_conditions_matching_way = args.network_conditions_matching_way
+    logs_expiration_days = args.logs_expiration_days
     logs_root_dir = args.perf_logs_path
     compared_branch_names = list(
         dict.fromkeys(args.compared_branch_names)
@@ -262,6 +271,7 @@ if __name__ == "__main__":
                 download_latest_logs(
                     compared_branch_name,
                     datetime.strptime(test_start_time, "%Y_%m_%d@%H-%M-%S"),
+                    logs_expiration_days,
                     experiment["network_conditions"],
                     network_conditions_matching_way,
                     testing_url,
@@ -282,8 +292,7 @@ if __name__ == "__main__":
                     compared_server_log_path
                 ):
                     print(
-                        f"Could not parse {compared_branch_name} client/server logs. Unable to compare performance results \
-                        to latest {compared_branch_name} measurements."
+                        f"Could not parse {compared_branch_name} client/server logs. Unable to compare performance results to latest {compared_branch_name} measurements."
                     )
                 else:
                     # Extract the metric values and save them in a dictionary
