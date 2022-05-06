@@ -509,18 +509,6 @@ func hash(token types.ConfigEncryptionToken) string {
 	return base32.StdEncoding.EncodeToString(hash[:])
 }
 
-// GetSavedExtensions returns the extensions that are saved in the config.
-func (mandelbox *mandelboxData) GetSavedExtensions() []string {
-	savedConfigsDir := path.Join(mandelbox.GetUserConfigDir(), UnpackedConfigsDirectoryName)
-	return configutils.GetImportedExtensions(savedConfigsDir)
-}
-
-// WriteSavedExtensions updates the extensions that are saved in the config.
-func (mandelbox *mandelboxData) WriteSavedExtensions(extensions []string) error {
-	savedConfigsDir := path.Join(mandelbox.GetUserConfigDir(), UnpackedConfigsDirectoryName)
-	return configutils.SaveImportedExtensions(savedConfigsDir, extensions)
-}
-
 // GetMostRecentMatchingKey returns the S3 key of the user's most
 // recently used config file.
 func (mandelbox *mandelboxData) GetMostRecentMatchingKey(client *s3.Client) (string, error) {
