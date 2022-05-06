@@ -271,8 +271,8 @@ def test_create_bookmark_file(browser, browser_bookmark_path):
 
 
 extensions = [
-    ["testextension"],
-    ["testextension1,testextension2"],
+    "testextension",
+    "testextension1,testextension2",
 ]
 
 
