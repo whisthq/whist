@@ -11,6 +11,7 @@ from helpers.common.git_tools import (
 from helpers.common.pexpect_tools import (
     expression_in_pexpect_output,
     wait_until_cmd_done,
+    get_command_exit_code,
 )
 
 from helpers.common.ssh_tools import (
@@ -27,6 +28,8 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 HOST_SETUP_MAX_RETRIES = 5
 HOST_SETUP_TIMEOUT_SECONDS = 5 * 60  # 5 mins
+TIMEOUT_EXIT_CODE = 124
+TIMEOUT_KILL_EXIT_CODE = 137
 
 
 def prepare_instance_for_host_setup(pexpect_process, pexpect_prompt, running_in_ci):
@@ -222,6 +225,10 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, runnin
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
+    git_clone_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci)
+    if git_clone_exit_code != 0:
+        exit_with_error("git clone failed!")
+
     print("Finished downloading whisthq/whist on EC2 instance")
 
 
@@ -248,10 +255,9 @@ def run_host_setup(
     """
 
     success_msg = "Install complete. If you set this machine up for local development, please 'sudo reboot' before continuing."
-    timeout_msg = f"host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s"
     lock_error_msg = "E: Could not get lock"
     dpkg_config_error = "E: dpkg was interrupted, you must manually run 'sudo dpkg --configure -a' to correct the problem."
-    command = f"cd ~/whist/host-setup && timeout {HOST_SETUP_TIMEOUT_SECONDS} ./setup_host.sh --localdevelopment || echo '{timeout_msg}' | tee ~/host_setup.log"
+    command = f"cd ~/whist/host-setup && timeout {HOST_SETUP_TIMEOUT_SECONDS} ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
 
     for retry in range(HOST_SETUP_MAX_RETRIES):
         print(
@@ -276,10 +282,17 @@ def run_host_setup(
             printyellow("Host setup failed due to dpkg interruption error. Reconfiguring dpkg....")
             pexpect_process.sendline("sudo dpkg --configure -a")
             wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-        elif expression_in_pexpect_output(timeout_msg, host_setup_output):
-            printyellow("Host setup timed out or failed for unknown!")
         else:
-            printyellow("Host setup failed for unknown reason!")
+            host_setup_exit_code = get_command_exit_code(
+                pexpect_process, pexpect_prompt, running_in_ci
+            )
+            if (
+                host_setup_exit_code == TIMEOUT_EXIT_CODE
+                or host_setup_exit_code == TIMEOUT_KILL_EXIT_CODE
+            ):
+                printyellow(f"Host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s!")
+            else:
+                printyellow("Host setup failed for unspecified reason (check the logs)!")
 
         if retry == HOST_SETUP_MAX_RETRIES - 1:
             exit_with_error(f"Host setup failed {HOST_SETUP_MAX_RETRIES} times. Giving up now!")

@@ -79,3 +79,10 @@ def expression_in_pexpect_output(expression, pexpect_output):
         A boolean indicating whether the expression was found.
     """
     return any(expression in item for item in pexpect_output if isinstance(item, str))
+
+
+def get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci):
+    pexpect_process.sendline("echo $?")
+    output = wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=True)
+    print(output)
+    return int(output[0])
