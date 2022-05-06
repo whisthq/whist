@@ -159,9 +159,20 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     context->cursor.last_visible_position.y = 0;
     context->cursor.handle = NULL;
     
-    static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
+    // create dummy window
+    SDLWindowContext* dummy_window = safe_malloc(sizeof(SDLWindowContext));
+    dummy_context->to_be_created = true;
+    dummy_context->x = SDL_WINDOWPOS_CENTERED;
+    dummy_context->y = SDL_WINDOWPOS_CENTERED;
+    dummy_context->width = width;
+    dummy_context->height = height;
+    dummy_context->title = "Dummy";
+    dummy_context->color = {17, 24, 39};
+    dummy_context->is_fullscreen = false;
+    dummy_context->is_resizable = false;
+    context->windows[0] = dummy_window;
     // create a dummy window to get resolution
-    sdl_create_window(frontend, 0, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, "Dummy", &background_color, false, false);
+    sdl_create_window(frontend, 0);
 
     sdl_init_video_device(context);
 
@@ -203,7 +214,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
             return WHIST_ERROR_ALREADY_SET;
         }
     } else {
-        context->windows[id] = safe_malloc(sizeof(SDLWindowContext));
+        LOG_ERROR("Tried to create a window with ID %d, but found no SDLWindowContext");
     }
 
     context->windows[id]->to_be_created = false;

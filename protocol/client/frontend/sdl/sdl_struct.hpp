@@ -71,7 +71,7 @@ typedef struct SDLWindowContext {
     int width;
     int height;
     char* title;
-    WhistRGBColor* color;
+    WhistRGBColor color;
     bool is_fullscreen;
     bool is_resizable;
 } SDLWindowContext;
