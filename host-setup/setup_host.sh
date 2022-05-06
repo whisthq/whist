@@ -98,7 +98,7 @@ common_steps () {
     stable"
   sudo apt-get update -y
   sudo apt-get install -y docker-ce docker-ce-cli
-  
+
   # Note that this version is hardcoded because breaking changes from containerd.io completely break our
   # AMIs. This package version should be updated periodically, and the higher verison should be tested thoroughly
   sudo apt-get install -y containerd.io=1.5.11-1
