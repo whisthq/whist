@@ -40,17 +40,12 @@ pull_docker_images() {
   echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
 
   # Pull Docker images for Chrome and Brave directly to the ephemeral volume
+  # Replace `chrome` to pull the image of a different browser.
   pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/chrome"
   pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
 
-  pull_image_base_brave="ghcr.io/whisthq/$GIT_BRANCH/browsers/brave"
-  pull_image_brave="$pull_image_base_brave:$GIT_HASH"
-
   docker pull "$pull_image_chrome"
   docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
-
-  docker pull "$pull_image_brave"
-  docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
 
   echo "Finished pulling images"
 }
@@ -100,11 +95,13 @@ else
 fi
 
 # Pull Docker images and warmup entire disk in parallel.
-pull_docker_images
+pull_docker_images &
 # Based on initialization commands in https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-initialize.html
 # Changes:
 #   - changed blocksize to 1M from 128k because optimal dd blocksize is 1M according to above link
-fio --filename=/dev/nvme0n1 --rw=read --bs=1M --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
+fio --filename=/dev/nvme0n1 --rw=read --bs=1M --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
+
+wait
 
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
