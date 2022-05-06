@@ -101,7 +101,7 @@ common_steps () {
 
   # Note that this version is hardcoded because breaking changes from containerd.io completely break our
   # AMIs. This package version should be updated periodically, and the higher verison should be tested thoroughly
-  sudo apt-get install -y containerd.io=1.5.11-1
+  sudo apt-get install --allow-downgrades -y containerd.io=1.5.11-1
 
   # Attempt to Add Docker group, but allow failure with "||:" in case it already exists
   sudo groupadd docker ||:
