@@ -166,9 +166,6 @@ EOF
 
   sudo apt-get install -y lsof jq tar lz4 fio nvme-cli zfsutils-linux
 
-  # Install sentry-cli for the userdata script
-  sudo curl -sL https://sentry.io/get-cli/ | bash
-
   echo "================================================"
   echo "Disabling Automatic Package Upgrades..."
   echo "================================================"
@@ -220,13 +217,13 @@ EOF
   # Logz.io (if that workflow is going to be easier for you).
 
   wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key add -
-  echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+  echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
 
   # The command above will add a duplicate package source link to the /etc/apt/sources.list.d/elastic-7.x.list
   # file if the link already exists (for example if we had run the host-setup before on the same machine). This
   # will cause warning messages, and occasional misconfigurations. The instruction below fixes the problem by
   # removing the duplicates.
-  awk '!seen[$0]++' /etc/apt/sources.list.d/elastic-8.x.list | sudo tee /etc/apt/sources.list.d/elastic-8.x.list
+  awk '!seen[$0]++' /etc/apt/sources.list.d/elastic-7.x.list | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
 
   # Install filebeat via apt
   sudo apt-get update -y
@@ -335,7 +332,7 @@ local_development_steps () {
 }
 
 ####################################################
-# Deployment Images Steps
+# Deplomeny Images Steps
 ####################################################
 
 # `deployment_setup_steps` contains the commands that are specific to setting

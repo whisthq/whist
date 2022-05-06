@@ -67,7 +67,6 @@ PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
 BROWSER_DATA_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_browser_data_file
 USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
-SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/whist/server.log
 TELEPORT_LOG_FILENAME=/usr/share/whist/teleport-drag-drop.log
@@ -107,13 +106,6 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
   TIMEOUT=$(cat $TIMEOUT_FILENAME)
   export TIMEOUT
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
-fi
-
-# Send in session id, if set
-if [ -f "$SESSION_ID_FILENAME" ]; then
-  SESSION_ID=$(cat $SESSION_ID_FILENAME)
-  export SESSION_ID
-  OPTIONS="$OPTIONS --session-id=$SESSION_ID"
 fi
 
 # We use named pipe redirection for consistency with our WhistServer launch setup

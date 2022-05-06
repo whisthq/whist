@@ -1,20 +1,5 @@
 #!/bin/bash
 
-# Populate env vars used by this script
-USERDATA_ENV=/usr/share/whist/app_env.env
-eval "$(cat "$USERDATA_ENV")"
-
-# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
-case "$GIT_BRANCH" in
-  dev|staging|prod)
-    export SENTRY_DSN="$SENTRY_DSN"
-    eval "$(sentry-cli bash-hook)"
-    ;;
-  *)
-    echo "Sentry environment not set, skipping Sentry error handler"
-    ;;
-esac
-
 # Note: all commands here are run with the `root` user. It is not necessary to use sudo.
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html#user-data-shell-scripts
 if [ "$EUID" -ne 0 ]; then
@@ -36,6 +21,9 @@ echo "Whist EC2 userdata started"
 #  be pulled to the Docker data-root directory.
 # Args: none
 pull_docker_images() {
+  # Populate env vars
+  eval "$(cat "$USERDATA_ENV")"
+
   # Login with docker
   echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
 
@@ -62,6 +50,7 @@ cd /home/ubuntu
 EPHEMERAL_DEVICE_PATH=$(nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == "Amazon EC2 NVMe Instance Storage")) | max_by(.PhysicalSize) | .DevicePath')
 EPHEMERAL_FS_PATH=/ephemeral
 MAX_CONCURRENT_DOWNLOADS=8
+USERDATA_ENV=/usr/share/whist/app_env.env
 
 # We use ephemeral storage if it exists on our host instances to avoid needing to warm up the filesystem,
 # speeding up instance launch time. We move the docker data directory to the ephemeral volume, and then
@@ -100,11 +89,13 @@ else
 fi
 
 # Pull Docker images and warmup entire disk in parallel.
-pull_docker_images
+pull_docker_images &
 # Based on initialization commands in https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-initialize.html
 # Changes:
 #   - changed blocksize to 1M from 128k because optimal dd blocksize is 1M according to above link
-fio --filename=/dev/nvme0n1 --rw=read --bs=1M --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
+fio --filename=/dev/nvme0n1 --rw=read --bs=1M --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
+
+wait
 
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
