@@ -277,7 +277,7 @@ def run_host_setup(
             pexpect_process.sendline("sudo dpkg --configure -a")
             wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         elif expression_in_pexpect_output(timeout_msg, host_setup_output):
-            printyellow("Host setup timed out!")
+            printyellow("Host setup timed out or failed for unknown!")
         else:
             printyellow("Host setup failed for unknown reason!")
 
