@@ -280,7 +280,7 @@ def run_host_setup(
             printyellow("Host setup failed to grab the necessary apt/dpkg locks.")
         elif expression_in_pexpect_output(dpkg_config_error, host_setup_output):
             printyellow("Host setup failed due to dpkg interruption error. Reconfiguring dpkg....")
-            pexpect_process.sendline("sudo dpkg --configure -a")
+            pexpect_process.sendline("sudo dpkg --force-confdef --configure -a ")
             wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         else:
             host_setup_exit_code = get_command_exit_code(
