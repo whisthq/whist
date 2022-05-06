@@ -1,7 +1,6 @@
 ############################# Input #############################
 filebeat.inputs:
-  - type: filestream
-    id: whist-mandelbox-filestream
+  - type: log
     paths:
       - /whist/temp/logs/*/*/*.log
       - /ephemeral/whist/temp/logs/*/*/*.log
