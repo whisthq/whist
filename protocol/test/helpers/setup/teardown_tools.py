@@ -7,9 +7,12 @@ from helpers.whist_server_tools import (
     shutdown_and_wait_server_exit,
 )
 
+from helpers.common.pexpect_tools import (
+    wait_until_cmd_done,
+)
+
 from helpers.common.ssh_tools import (
     attempt_ssh_connection,
-    wait_until_cmd_done,
 )
 
 from helpers.common.timestamps_and_exit_tools import (

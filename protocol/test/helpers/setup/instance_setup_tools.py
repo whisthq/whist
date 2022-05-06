@@ -8,9 +8,12 @@ from helpers.common.git_tools import (
     get_whist_branch_name,
 )
 
-from helpers.common.ssh_tools import (
+from helpers.common.pexpect_tools import (
     expression_in_pexpect_output,
     wait_until_cmd_done,
+)
+
+from helpers.common.ssh_tools import (
     wait_for_apt_locks,
 )
 
@@ -247,6 +250,7 @@ def run_host_setup(
     success_msg = "Install complete. If you set this machine up for local development, please 'sudo reboot' before continuing."
     timeout_msg = f"host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s"
     lock_error_msg = "E: Could not get lock"
+    dpkg_config_error = "E: dpkg was interrupted, you must manually run 'sudo dpkg --configure -a' to correct the problem."
     command = f"cd ~/whist/host-setup && timeout {HOST_SETUP_TIMEOUT_SECONDS} ./setup_host.sh --localdevelopment || echo '{timeout_msg}' | tee ~/host_setup.log"
 
     for retry in range(HOST_SETUP_MAX_RETRIES):
@@ -268,6 +272,10 @@ def run_host_setup(
             break
         elif expression_in_pexpect_output(lock_error_msg, host_setup_output):
             printyellow("Host setup failed to grab the necessary apt/dpkg locks.")
+        elif expression_in_pexpect_output(dpkg_config_error, host_setup_output):
+            printyellow("Host setup failed due to dpkg interruption error. Reconfiguring dpkg....")
+            pexpect_process.sendline("sudo dpkg --configure -a")
+            wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         elif expression_in_pexpect_output(timeout_msg, host_setup_output):
             printyellow("Host setup timed out!")
         else:

@@ -6,9 +6,12 @@ from helpers.setup.network_tools import (
     restore_network_conditions,
 )
 
+from helpers.common.pexpect_tools import (
+    wait_until_cmd_done,
+)
+
 from helpers.common.ssh_tools import (
     attempt_ssh_connection,
-    wait_until_cmd_done,
     reboot_instance,
 )
 

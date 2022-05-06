@@ -2,10 +2,13 @@
 
 import os, sys
 
-from helpers.common.ssh_tools import (
-    attempt_ssh_connection,
+from helpers.common.pexpect_tools import (
     expression_in_pexpect_output,
     wait_until_cmd_done,
+)
+
+from helpers.common.ssh_tools import (
+    attempt_ssh_connection,
     reboot_instance,
 )
 
