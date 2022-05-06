@@ -167,11 +167,11 @@ EOF
   sudo apt-get install -y lsof jq tar lz4 fio nvme-cli zfsutils-linux
 
   # Install or update sentry-cli for the userdata script
-  # We need to explicitly check if sentry-cli is already installed, because the installation script available at https://sentry.io/get-cli/
-  # will throw an error if we call it on a machine with sentry-cli already installed.
-  # If the install directory is not set, set it to a default
+  
   SENTRY_INSTALL_PATH="/usr/local/bin/sentry-cli"
   if [ -f "$SENTRY_INSTALL_PATH" ]; then
+    # We need to explicitly check if sentry-cli is already installed, because the installation script available at https://sentry.io/get-cli/
+    # will throw an error if we call it on a machine with sentry-cli already installed. See: https://github.com/getsentry/sentry-cli/issues/174
     echo "sentry-cli is already installed. Checking for updates..."
     sudo sentry-cli update
   else
