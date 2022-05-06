@@ -1,4 +1,4 @@
-package generic
+package global
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 
 // MandelboxAssign is the action responsible for assigning an instance to a user,
 // and scaling as necessary to satisfy demand.
-func (s *GenericScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, event algorithms.ScalingEvent) error {
+func (s *GlobalScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, event algorithms.ScalingEvent) error {
 	logger.Infof("Starting mandelbox assign action for event: %v", event)
 	defer logger.Infof("Finished mandelbox assign action for event: %v", event)
 

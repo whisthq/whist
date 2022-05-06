@@ -1,4 +1,4 @@
-package generic
+package global
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 // on the database. Its purpose is to verify and wait until the instance is terminated from the
 // cloud provider and removed from the database, if it doesn't it takes the necessary steps to
 // notify and ensure the database and the cloud provider don't get out of sync.
-func (s *GenericScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, event algorithms.ScalingEvent, instance subscriptions.Instance) error {
+func (s *GlobalScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, event algorithms.ScalingEvent, instance subscriptions.Instance) error {
 	logger.Infof("Starting verify scale down action for event: %v", event)
 	defer logger.Infof("Finished verify scale down action for event: %v.", event)
 
@@ -76,7 +76,7 @@ func (s *GenericScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 
 // VerifyCapacity is a scaling action which checks the database to verify if we have the desired
 // capacity (instance buffer). This action is run at the end of the other actions.
-func (s *GenericScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, event algorithms.ScalingEvent) error {
+func (s *GlobalScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, event algorithms.ScalingEvent) error {
 	logger.Infof("Starting verify capacity action for event: %v", event)
 	defer logger.Infof("Finished verify capacity action for event: %v", event)
 

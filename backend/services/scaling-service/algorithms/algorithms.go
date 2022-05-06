@@ -15,11 +15,11 @@ behaviour than the one in the default scaling algorithm.
 
 The currently implemented algorithms are:
 
-- Default scaling algorithm:
+- Global scaling algorithm:
 
 	It handles the scaling of instances by computing mandelbox capacity for each instance
 	and determining the overall availability on each region according to a "buffer" set by
-	the config database.
+	the config database. It applies the same scaling rules to all regions across the world.
 */
 
 package algorithms

@@ -1,4 +1,4 @@
-package generic
+package global
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 // ScaleDownIfNecessary is a scaling action which runs every 10 minutes and scales down free and
 // lingering instances, respecting the buffer defined for each region. Free instances will be
 // marked as draining, and lingering instances will be terminated and removed from the database.
-func (s *GenericScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, event algorithms.ScalingEvent) error {
+func (s *GlobalScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, event algorithms.ScalingEvent) error {
 	logger.Infof("Starting scale down action for event: %v", event)
 	defer logger.Infof("Finished scale down action for event: %v", event)
 
@@ -182,7 +182,7 @@ func (s *GenericScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 // ScaleUpIfNecessary is a scaling action that launched the received number of instances on
 // the cloud provider and registers them on the database with the initial values.
-func (s *GenericScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event algorithms.ScalingEvent, image subscriptions.Image) error {
+func (s *GlobalScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event algorithms.ScalingEvent, image subscriptions.Image) error {
 	logger.Infof("Starting scale up action for event: %v", event)
 	defer logger.Infof("Finished scale up action for event: %v", event)
 

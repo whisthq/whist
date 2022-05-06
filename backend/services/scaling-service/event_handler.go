@@ -39,7 +39,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/algorithms"
-	"github.com/whisthq/whist/backend/services/scaling-service/algorithms/generic"
+	"github.com/whisthq/whist/backend/services/scaling-service/algorithms/global"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -109,9 +109,9 @@ func main() {
 	algorithmByRegionMap := &sync.Map{}
 
 	// Load default scaling algorithm for all enabled regions.
-	for _, region := range generic.GetEnabledRegions() {
+	for _, region := range global.GetEnabledRegions() {
 		name := utils.Sprintf("default-sa-%s", region)
-		algorithmByRegionMap.Store(name, &generic.GenericScalingAlgorithm{
+		algorithmByRegionMap.Store(name, &global.GlobalScalingAlgorithm{
 			Region: region,
 		})
 	}
@@ -312,7 +312,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
 				switch algorithm := algorithm.(type) {
-				case *generic.GenericScalingAlgorithm:
+				case *global.GlobalScalingAlgorithm:
 					algorithm.InstanceEventChan <- scalingEvent
 				}
 			case *subscriptions.ClientAppVersionEvent:
@@ -354,7 +354,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 					algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
 					switch algorithm := algorithm.(type) {
-					case *generic.GenericScalingAlgorithm:
+					case *global.GlobalScalingAlgorithm:
 						algorithm.ClientAppVersionChan <- scalingEvent
 					}
 				}
@@ -373,11 +373,11 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 			// Start scaling algorithm based on region
 			logger.Infof("Received scheduled event. %v", scheduledEvent)
 
-			for _, region := range generic.GetEnabledRegions() {
+			for _, region := range global.GetEnabledRegions() {
 				scheduledEvent.Region = region
 				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
 				switch algorithm := algorithm.(type) {
-				case *generic.GenericScalingAlgorithm:
+				case *global.GlobalScalingAlgorithm:
 					algorithm.ScheduledEventChan <- scheduledEvent
 				}
 			}
@@ -386,7 +386,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 
 			algorithm := getScalingAlgorithm(algorithmByRegion, serverEvent)
 			switch algorithm := algorithm.(type) {
-			case *generic.GenericScalingAlgorithm:
+			case *global.GlobalScalingAlgorithm:
 				algorithm.ServerEventChan <- serverEvent
 			}
 

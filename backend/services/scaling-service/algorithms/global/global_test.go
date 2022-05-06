@@ -1,4 +1,4 @@
-package generic
+package global
 
 import (
 	"context"
@@ -17,7 +17,7 @@ var (
 	testInstances   subscriptions.WhistInstances
 	testImages      subscriptions.WhistImages
 	testMandelboxes subscriptions.WhistMandelboxes
-	testAlgorithm   *GenericScalingAlgorithm
+	testAlgorithm   *GlobalScalingAlgorithm
 	testLock        sync.Mutex
 )
 
@@ -291,7 +291,7 @@ func (mg *mockGraphQLClient) Mutate(context.Context, subscriptions.GraphQLQuery,
 
 func setup() {
 	// Create and initialize a test scaling algorithm
-	testAlgorithm = &GenericScalingAlgorithm{
+	testAlgorithm = &GlobalScalingAlgorithm{
 		Region: "test-region",
 		Host:   &mockHostHandler{},
 	}
@@ -314,7 +314,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestCreateEventChans(t *testing.T) {
-	testAlgo := GenericScalingAlgorithm{}
+	testAlgo := GlobalScalingAlgorithm{}
 	testAlgo.CreateEventChans()
 
 	// Send and receive some test events

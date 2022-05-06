@@ -14,7 +14,7 @@ The event handler can be seen as the main process in the scaling-service. It is 
 
 #### Scaling Algorithm
 
-Scaling algorithms are abstracted on the `ScalingAlgorithm` interface, which has generic methods that every scaling algorithm will need. The intention behind making a simple interface is that each scaling algorithm can be extended as necessary to perform different scaling strategies, so that they can be swaped by the event handler with ease.
+Scaling algorithms are abstracted on the `ScalingAlgorithm` interface, which has global methods that every scaling algorithm will need. The intention behind making a simple interface is that each scaling algorithm can be extended as necessary to perform different scaling strategies, so that they can be swaped by the event handler with ease.
 
 Overall, a scaling algorithm has the following structure:
 

@@ -1,4 +1,4 @@
-package generic
+package global
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 // UpgradeImage is a scaling action which runs when a new version is deployed. Its responsible of
 // starting a buffer of instances with the new image and scaling down instances with the previous
 // image.
-func (s *GenericScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event algorithms.ScalingEvent, imageID interface{}) error {
+func (s *GlobalScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event algorithms.ScalingEvent, imageID interface{}) error {
 	logger.Infof("Starting upgrade image action for event: %v", event)
 	defer logger.Infof("Finished upgrade image action for event: %v", event)
 
@@ -134,7 +134,7 @@ func (s *GenericScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 // SwapOverImages is a scaling action that will switch the current image on the given region.
 // To the latest one. This is done separately to avoid having downtimes during deploys, since
 // we have to wait until the frontend has updated its version on the config database.
-func (s *GenericScalingAlgorithm) SwapOverImages(scalingCtx context.Context, event algorithms.ScalingEvent, clientVersion interface{}) error {
+func (s *GlobalScalingAlgorithm) SwapOverImages(scalingCtx context.Context, event algorithms.ScalingEvent, clientVersion interface{}) error {
 	// Block until the image upgrade has finished successfully.
 	// We time out here in case something went wrong with the
 	// upgrade image action, in which case we roll back the new version.

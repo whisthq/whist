@@ -1,4 +1,4 @@
-package generic
+package global
 
 import (
 	"context"
@@ -16,9 +16,9 @@ import (
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
-// GenericScalingAlgorithm abstracts the shared functionalities to be used
+// GlobalScalingAlgorithm abstracts the shared functionalities to be used
 // by all of the different, region-based scaling algorithms.
-type GenericScalingAlgorithm struct {
+type GlobalScalingAlgorithm struct {
 	Host                   hosts.HostHandler
 	GraphQLClient          subscriptions.WhistGraphQLClient
 	DBClient               dbclient.WhistDBClient
@@ -34,7 +34,7 @@ type GenericScalingAlgorithm struct {
 }
 
 // CreateEventChans creates the event channels if they don't alredy exist.
-func (s *GenericScalingAlgorithm) CreateEventChans() {
+func (s *GlobalScalingAlgorithm) CreateEventChans() {
 	// TODO: Only use one chan for database events and
 	// one for scheduled events
 	if s.InstanceEventChan == nil {
@@ -58,14 +58,14 @@ func (s *GenericScalingAlgorithm) CreateEventChans() {
 }
 
 // CreateGraphQLClient sets the graphqlClient to be used by the DBClient for queries and mutations.
-func (s *GenericScalingAlgorithm) CreateGraphQLClient(client subscriptions.WhistGraphQLClient) {
+func (s *GlobalScalingAlgorithm) CreateGraphQLClient(client subscriptions.WhistGraphQLClient) {
 	if s.GraphQLClient == nil {
 		s.GraphQLClient = client
 	}
 }
 
 // CreateDBClient sets the DBClient to be used when interacting with the database.
-func (s *GenericScalingAlgorithm) CreateDBClient(dbClient dbclient.WhistDBClient) {
+func (s *GlobalScalingAlgorithm) CreateDBClient(dbClient dbclient.WhistDBClient) {
 	if s.DBClient == nil {
 		s.DBClient = dbClient
 	}
@@ -74,7 +74,7 @@ func (s *GenericScalingAlgorithm) CreateDBClient(dbClient dbclient.WhistDBClient
 // GetConfig will query the configuration database and populate the configuration variables
 // according to the environment the scaling service is running in. It's necessary to perform
 // the query before starting to receive any scaling events.
-func (s *GenericScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLClient) {
+func (s *GlobalScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLClient) {
 	// If on local env, use default configurations
 	if metadata.IsLocalEnvWithoutDB() {
 		logger.Infof("Running on localdev, using default scaling algorithm configurations...")
@@ -159,7 +159,7 @@ func (s *GenericScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing
 // events and executing the appropiate scaling actions. This function is specific for each region
 // scaling algorithm to be able to implement different strategies on each region.
-func (s *GenericScalingAlgorithm) ProcessEvents(globalCtx context.Context, goroutineTracker *sync.WaitGroup) {
+func (s *GlobalScalingAlgorithm) ProcessEvents(globalCtx context.Context, goroutineTracker *sync.WaitGroup) {
 	if s.Host == nil {
 		// TODO when multi-cloud support is introduced, figure out a way to
 		// decide which host to use. For now default to AWS.
