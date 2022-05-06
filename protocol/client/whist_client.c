@@ -60,8 +60,8 @@ Includes
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
 
-extern volatile int display_width;
-extern volatile int display_height;
+extern volatile int output_width;
+extern volatile int output_height;
 static char* program_name;
 static char* server_ip;
 static char* user_email;
@@ -339,14 +339,14 @@ int whist_client_main(int argc, const char* argv[]) {
             whist_sleep(1000);
         } else {
             // Only initialize this once.
-            frontend = init_sdl(display_width, display_height, program_name);
+            frontend = init_sdl(output_width, output_height, program_name);
         }
 
         // The lines below may be called multiple times,
         // Please ensure they get destroyed properly
 
         // Initialize audio and video renderer system
-        WhistRenderer* whist_renderer = init_renderer(frontend, display_width, display_height);
+        WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
 
         // Initialize the clipboard and file synchronizers. This must happen before we start
         // the udp/tcp threads

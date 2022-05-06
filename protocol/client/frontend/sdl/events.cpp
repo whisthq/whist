@@ -1,4 +1,4 @@
-#include "common.h"
+#include "sdl_struct.hpp"
 
 bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
     SDLFrontendContext* context = frontend->context;

@@ -38,8 +38,8 @@ Bad Globals [TODO: Remove these or give them `static`!]
 // Taken from main.c
 volatile char client_binary_aes_private_key[16];
 volatile char client_hex_aes_private_key[33];
-extern int display_width;
-extern int display_height;
+extern int output_width;
+extern int output_height;
 extern int override_bitrate;
 extern SocketContext packet_udp_context;
 
@@ -101,10 +101,10 @@ static WhistStatus set_port_mapping(const WhistCommandLineOption *opt, const cha
     return WHIST_SUCCESS;
 }
 
-COMMAND_LINE_INT_OPTION(display_width, 'w', "width", MIN_SCREEN_WIDTH, MAX_SCREEN_WIDTH,
+COMMAND_LINE_INT_OPTION(output_width, 'w', "width", MIN_SCREEN_WIDTH, MAX_SCREEN_WIDTH,
                         "Set the width for the windowed-mode window, "
                         "if both width and height are specified.")
-COMMAND_LINE_INT_OPTION(display_height, 'h', "height", MIN_SCREEN_HEIGHT, MAX_SCREEN_HEIGHT,
+COMMAND_LINE_INT_OPTION(output_height, 'h', "height", MIN_SCREEN_HEIGHT, MAX_SCREEN_HEIGHT,
                         "Set the height for the windowed-mode window, "
                         "if both width and height are specified.")
 COMMAND_LINE_INT_OPTION(override_bitrate, 'o', "override-bitrate", 1, INT_MAX,
@@ -387,8 +387,8 @@ void send_message_dimensions(WhistFrontend *frontend) {
     // can change native dimensions for monitor
     WhistClientMessage wcmsg = {0};
     wcmsg.type = MESSAGE_DIMENSIONS;
-    wcmsg.dimensions.width = display_width;
-    wcmsg.dimensions.height = display_height;
+    wcmsg.dimensions.width = output_width;
+    wcmsg.dimensions.height = output_height;
     wcmsg.dimensions.dpi = whist_frontend_get_window_dpi(frontend);
 
     LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d", wcmsg.dimensions.width,

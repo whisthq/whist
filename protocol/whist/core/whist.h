@@ -801,13 +801,15 @@ typedef enum WindowMessageType {
     WINDOW_ACTIVE
 } WindowMessageType;
 
+// TODO: figure out how to pass window titles :(
 typedef struct WhistWindowData {
     unsigned long id;
-    int width;
-    int height;
     int x;
     int y;
+    int width;
+    int height;
     WhistRGBColor corner_color;
+    bool is_fullscreen;
     bool is_resizable;
 } WhistWindowData;
 

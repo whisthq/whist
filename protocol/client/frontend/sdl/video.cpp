@@ -1,6 +1,9 @@
-#include "common.h"
+extern "C" {
 #include "native.h"
 #include <whist/utils/lodepng.h>
+}
+
+#include "sdl_struct.hpp"
 
 // Little-endian RGBA masks
 #define RGBA_R 0xff000000
@@ -202,7 +205,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
 #define CLIPPED_PIXELS 0
 #endif
 
-void sdl_paint_video(WhistFrontend* frontend, int output_x, int output_y, int output_width, int output_height) {
+void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
     SDLFrontendContext* context = frontend->context;
     int res;
 
@@ -216,8 +219,8 @@ void sdl_paint_video(WhistFrontend* frontend, int output_x, int output_y, int ou
     // Take the subsection of texture that should be rendered to screen,
     // and draw it on the renderer
     SDL_Rect output_rect = {
-        .x = output_x,
-        .y = output_y,
+        .x = 0,
+        .y = 0,
         .w = min(output_width, context->video.frame_width) - CLIPPED_PIXELS,
         .h = min(output_height, context->video.frame_height) - CLIPPED_PIXELS,
     };

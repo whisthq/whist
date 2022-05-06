@@ -242,11 +242,9 @@ int render_video(VideoContext* video_context) {
                 return -1;
             }
 
-            output_x = frame->window_data[0].x;
-            output_y = frame->window_data[0].y;
-            output_width = frame->window_data[0].width;
-            output_height = frame->window_data[0].height;
-            LOG_INFO("window 0 at (%d, %d) %d x %d", output_x, output_y, output_width, output_height);
+            // pass window_data to the frontend to determine what windows to create and destroy
+            whist_frontend_update_windows(video_context->frontend, frame->window_data);
+            // LOG_INFO("window 0 at (%d, %d) %d x %d", output_x, output_y, output_width, output_height);
             window_color = frame->corner_color;
 
             WhistCursorInfo* frame_cursor_image = get_frame_cursor_info(frame);

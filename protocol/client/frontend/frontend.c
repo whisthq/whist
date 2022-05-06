@@ -159,9 +159,9 @@ void whist_frontend_paint_solid(WhistFrontend* frontend, const WhistRGBColor* co
     frontend->call->paint_solid(frontend, color);
 }
 
-void whist_frontend_paint_video(WhistFrontend* frontend, int output_x, int output_y, int output_width, int output_height) {
+void whist_frontend_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
     FRONTEND_ENTRY();
-    frontend->call->paint_video(frontend, output_x, output_y, output_width, output_height);
+    frontend->call->paint_video(frontend, output_width, output_height);
 }
 
 void whist_frontend_render(WhistFrontend* frontend) {
@@ -172,11 +172,6 @@ void whist_frontend_render(WhistFrontend* frontend) {
 void whist_frontend_resize_window(WhistFrontend* frontend, int width, int height) {
     FRONTEND_ENTRY();
     frontend->call->resize_window(frontend, width, height);
-}
-
-void whist_frontend_set_window_pos(WhistFrontend* frontend, int x, int y) {
-    FRONTEND_ENTRY();
-    frontend->call->set_window_pos(frontend, x, y);
 }
 
 void whist_frontend_set_titlebar_color(WhistFrontend* frontend, const WhistRGBColor* color) {

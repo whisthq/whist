@@ -1,4 +1,4 @@
-#include "common.h"
+#include "sdl_struct.hpp"
 #include "native.h"
 
 void sdl_get_window_pixel_size(WhistFrontend* frontend, int* width, int* height) {
@@ -51,11 +51,6 @@ void sdl_restore_window(WhistFrontend* frontend) {
 void sdl_resize_window(WhistFrontend* frontend, int width, int height) {
     SDLFrontendContext* context = frontend->context;
     SDL_SetWindowSize(context->window, width, height);
-}
-
-void sdl_set_window_pos(WhistFrontend* frontend, int x, int y) {
-    SDLFrontendContext* context = frontend->context;
-    SDL_SetWindowPosition(context->window, x, y);
 }
 
 void sdl_set_titlebar_color(WhistFrontend* frontend, const WhistRGBColor* color) {

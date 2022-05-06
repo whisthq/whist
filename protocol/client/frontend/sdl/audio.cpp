@@ -1,4 +1,4 @@
-#include "common.h"
+#include "sdl_struct.hpp"
 
 void sdl_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigned int channels) {
     SDLFrontendContext* context = frontend->context;

@@ -27,12 +27,8 @@ Includes
 #include <whist/utils/color.h>
 #include "client_utils.h"
 
-extern volatile int output_x;
-extern volatile int output_y;
 extern volatile int output_width;
 extern volatile int output_height;
-extern volatile int display_width;
-extern volatile int display_height;
 extern volatile bool insufficient_bandwidth;
 
 static WhistMutex frontend_render_mutex;
@@ -122,8 +118,11 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
     // pixels
     int w, h;
     whist_frontend_get_window_pixel_size(frontend, &w, &h);
-    display_width = w;
-    display_height = h;
+    output_width = w;
+    output_height = h;
+
+    // Destroy the dummy window in preparation for the actual window
+    whist_frontend_destroy_window(frontend, 0);
     return frontend;
 }
 
@@ -200,13 +199,11 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
     }
 #endif
 
-    /*
     // Update output width / output height
     if (current_width != output_width || current_height != output_height) {
         output_width = current_width;
         output_height = current_height;
     }
-    */
 
     whist_lock_mutex(window_resize_mutex);
     pending_resize_message = true;
@@ -336,6 +333,10 @@ void sdl_set_fullscreen(bool is_fullscreen) {
 }
 
 void sdl_update_pending_tasks(WhistFrontend* frontend) {
+    // destroy and create any windows as needed
+    whist_frontend_update_windows(frontend);
+
+    // TODO: make each of these functions into one iterating over all windows
     // Handle any pending window title updates
     if (should_update_window_title) {
         if (window_title) {
@@ -352,7 +353,7 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
     if (fullscreen_trigger) {
         whist_frontend_set_window_fullscreen(frontend, fullscreen_value);
         fullscreen_trigger = false;
-    } 
+    }
 
     // Handle any pending window titlebar color events
     if (native_window_color_update && native_window_color) {
@@ -475,7 +476,7 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
         av_frame_free(&pending_video_frame);
     }
 
-    whist_frontend_paint_video(frontend, output_x, output_y, output_width, output_height);
+    whist_frontend_paint_video(frontend, output_width, output_height);
 
     if (insufficient_bandwidth) {
         render_insufficient_bandwidth(frontend);

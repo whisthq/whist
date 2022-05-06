@@ -20,7 +20,6 @@
     GENERATOR(void, restore_window, WhistFrontend* frontend)                                       \
     GENERATOR(void, set_window_fullscreen, WhistFrontend* frontend, bool fullscreen)               \
     GENERATOR(void, resize_window, WhistFrontend* frontend, int width, int height)                 \
-    GENERATOR(void, set_window_pos, WhistFrontend* frontend, int x, int y) \
     GENERATOR(bool, poll_event, WhistFrontend* frontend, WhistFrontendEvent* event)                \
     GENERATOR(void, set_cursor, WhistFrontend* frontend, WhistCursorInfo* cursor)                  \
     GENERATOR(void, get_keyboard_state, WhistFrontend* frontend, const uint8_t** key_state,        \
@@ -31,7 +30,7 @@
     GENERATOR(void, paint_png, WhistFrontend* frontend, const char* filename, int output_width,    \
               int output_height, int x, int y)                                                     \
     GENERATOR(void, paint_solid, WhistFrontend* frontend, const WhistRGBColor* color)              \
-    GENERATOR(void, paint_video, WhistFrontend* frontend, int output_x, int output_y, int output_width, int output_height)     \
+    GENERATOR(void, paint_video, WhistFrontend* frontend, int output_width, int output_height)     \
     GENERATOR(void, render, WhistFrontend* frontend)                                               \
     GENERATOR(void, set_titlebar_color, WhistFrontend* frontend, const WhistRGBColor* color)       \
     GENERATOR(void, declare_user_activity, WhistFrontend* frontend)
