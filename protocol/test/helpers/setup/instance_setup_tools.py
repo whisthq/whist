@@ -235,10 +235,10 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, runnin
         if git_clone_exit_code == 0:
             break
         elif expression_in_pexpect_output(branch_not_found_error, git_clone_stdout):
-            printyellow(
+            # If branch does not exist, trigger fatal error.
+            exit_with_error(
                 f"Branch {branch_name} not found in the whisthq/whist repository. Maybe it has already been merged?"
             )
-            break
 
     if git_clone_exit_code != 0:
         exit_with_error(f"git clone failed {SETUP_MAX_RETRIES}! Giving up now.")
