@@ -223,10 +223,18 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, runnin
     )
 
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-
+    git_clone_stdout = wait_until_cmd_done(
+        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+    )
     git_clone_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci)
+
+    branch_not_found_error = f"fatal: Remote branch {branch_name} not found in upstream origin"
+
     if git_clone_exit_code != 0:
+        if expression_in_pexpect_output(branch_not_found_error, git_clone_stdout):
+            printyellow(
+                f"Branch {branch_name} not found in the whisthq/whist repository. Maybe it has already been merged?"
+            )
         exit_with_error("git clone failed!")
 
     print("Finished downloading whisthq/whist on EC2 instance")
