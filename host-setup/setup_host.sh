@@ -167,7 +167,7 @@ EOF
   sudo apt-get install -y lsof jq tar lz4 fio nvme-cli zfsutils-linux
 
   # Install or update sentry-cli for the userdata script
-  
+
   SENTRY_INSTALL_PATH="/usr/local/bin/sentry-cli"
   if [ -f "$SENTRY_INSTALL_PATH" ]; then
     # We need to explicitly check if sentry-cli is already installed, because the installation script available at https://sentry.io/get-cli/
@@ -178,7 +178,7 @@ EOF
     echo "Installing sentry-cli..."
     sudo curl -sL https://sentry.io/get-cli/ | bash
   fi
-  
+
   echo "================================================"
   echo "Disabling Automatic Package Upgrades..."
   echo "================================================"
