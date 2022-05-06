@@ -110,7 +110,7 @@ def client_setup_process(args_dict):
         local_sha = get_whist_github_sha(running_in_ci)
         if client_sha != local_sha:
             exit_with_error(
-                f"Commit mismatch between client instance ({client_sha}) and github runner ({local_sha})"
+                f"Commit mismatch between client instance ({client_sha}) and E2E runner ({local_sha})"
             )
 
         if skip_host_setup == "false":
