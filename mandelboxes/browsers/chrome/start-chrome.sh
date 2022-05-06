@@ -140,7 +140,7 @@ echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Start lowercase-files script
 # This allows chromium themes to work more consistently
-/usr/bin/lowercase-chromium-files "google-chrome" &
+# /usr/bin/lowercase-chromium-files "google-chrome" &
 
 # Start Chrome with the KDE desktop environment
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
