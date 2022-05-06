@@ -431,24 +431,26 @@ static void whist_log_vprintf(unsigned int level, const char* file_name, const c
     // size of the heap buffer - if this is not true then that section
     // will be dropped but the rest should still be logged.
 
-    ret = current_time_str(buffer + position, remaining_size);
-    if (ret > 0 && ret <= remaining_size) {
-        position += ret;
-        remaining_size -= ret;
-    }
+    if (level != METRIC_LEVEL) {
+        ret = current_time_str(buffer + position, remaining_size);
+        if (ret > 0 && ret <= remaining_size) {
+            position += ret;
+            remaining_size -= ret;
+        }
 
-    const char* tag;
-    if (level < (int)ARRAY_LENGTH(tag_strings)) {
-        tag = tag_strings[level];
-    } else {
-        tag = "INVALID";
-    }
+        const char* tag;
+        if (level < (int)ARRAY_LENGTH(tag_strings)) {
+            tag = tag_strings[level];
+        } else {
+            tag = "INVALID";
+        }
 
-    ret = snprintf(buffer + position, remaining_size, LOG_CONTEXT_FORMAT, tag, file_name, function,
-                   line_number);
-    if (ret > 0 && ret <= remaining_size) {
-        position += ret;
-        remaining_size -= ret;
+        ret = snprintf(buffer + position, remaining_size, LOG_CONTEXT_FORMAT, tag, file_name,
+                       function, line_number);
+        if (ret > 0 && ret <= remaining_size) {
+            position += ret;
+            remaining_size -= ret;
+        }
     }
 
     va_list args2;
