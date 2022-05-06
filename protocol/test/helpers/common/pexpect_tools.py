@@ -82,6 +82,19 @@ def expression_in_pexpect_output(expression, pexpect_output):
 
 
 def get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci):
+    """
+    This function is used to get the exit code of the last command that was run on a shell
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process monitoring the execution of the process
+                                                    on the remote machine
+        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
+                                execute a new command
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+
+    Returns:
+        exit_code (int):    The exit code of the last command that ran in the shell
+    """
     pexpect_process.sendline("echo $?")
     output = wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=True)
     return int(output[1])
