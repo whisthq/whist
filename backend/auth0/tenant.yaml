@@ -39,7 +39,7 @@ clients:
   - name: Whist
     allowed_clients: []
     app_type: native
-    callbacks: @@WHIST_ELECTRON_APP_CALLBACK@@
+    callbacks: @@ALLOWED_AUTH0_CALLBACKS@@
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
