@@ -27,8 +27,8 @@ import (
 	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/algorithms"
 	"github.com/whisthq/whist/backend/services/scaling-service/payments"
-	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -38,7 +38,7 @@ import (
 
 // mandelboxAssignHandler is the http handler for any requests to the `/assign` endpoint. It authenticates
 // the request, verifies the type, and parses the body. After that it sends it to the server events channel.
-func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
+func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algorithms.ScalingEvent) {
 	// Verify that we got a POST request
 	err := verifyRequestType(w, req, http.MethodPost)
 	if err != nil {
@@ -57,7 +57,7 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	// Once we have authenticated and validated the request send it to the scaling
 	// algorithm for processing. Mandelbox assign is region-agnostic so we don't need
 	// to specify a region on the event. The event handler will select the default region automatically.
-	events <- algos.ScalingEvent{
+	events <- algorithms.ScalingEvent{
 		ID:   uuid.NewString(),
 		Type: "SERVER_MANDELBOX_ASSIGN_EVENT",
 		Data: &reqdata,
@@ -265,10 +265,10 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 
 // StartHTTPServer will start the server with the necessary configurations and
 // assign the handlers to each endpoint.
-func StartHTTPServer(events chan algos.ScalingEvent) {
+func StartHTTPServer(events chan algorithms.ScalingEvent) {
 	logger.Infof("Starting HTTP server...")
 
-	createHandler := func(f func(http.ResponseWriter, *http.Request, chan<- algos.ScalingEvent)) func(http.ResponseWriter, *http.Request) {
+	createHandler := func(f func(http.ResponseWriter, *http.Request, chan<- algorithms.ScalingEvent)) func(http.ResponseWriter, *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
 			f(w, r, events)
 		}

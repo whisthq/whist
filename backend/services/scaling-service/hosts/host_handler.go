@@ -1,3 +1,12 @@
+// Copyright (c) 2021-2022 Whist Technologies, Inc.
+
+/*
+Package hosts defines an interface that abstracts any actions that call a cloud
+provider API to start, stop and wait for instances that run Whist. Any implementation
+for a different cloud provider should be defined as a subpackage athat implements the
+main HostHandler interface.
+*/
+
 package hosts
 
 import (

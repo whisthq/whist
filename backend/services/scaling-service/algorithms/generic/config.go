@@ -1,4 +1,4 @@
-package algorithms
+package generic
 
 import (
 	"sync"

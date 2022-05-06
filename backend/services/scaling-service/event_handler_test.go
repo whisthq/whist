@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/hasura/go-graphql-client"
-	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms"
-	defaultAlgo "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
+	"github.com/whisthq/whist/backend/services/scaling-service/algorithms"
+	"github.com/whisthq/whist/backend/services/scaling-service/algorithms/generic"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 )
@@ -137,7 +137,7 @@ func TestStartDatabaseSubscriptions(t *testing.T) {
 }
 
 func TestStartSchedulerEvents(t *testing.T) {
-	scheduledEvents := make(chan algos.ScalingEvent)
+	scheduledEvents := make(chan algorithms.ScalingEvent)
 	after := time.Duration(1 * time.Second)
 	StartSchedulerEvents(scheduledEvents, 1, after)
 
@@ -146,7 +146,7 @@ func TestStartSchedulerEvents(t *testing.T) {
 	select {
 	case event := <-scheduledEvents:
 		event.ID = utils.PlaceholderTestUUID().String()
-		testEvent := algos.ScalingEvent{
+		testEvent := algorithms.ScalingEvent{
 			ID:   utils.PlaceholderTestUUID().String(),
 			Type: "SCHEDULED_SCALE_DOWN_EVENT",
 		}
@@ -180,14 +180,14 @@ func TestStartDeploy(t *testing.T) {
 	}
 
 	// Call StartDeploy function
-	scheduledEvents := make(chan algos.ScalingEvent, 100)
+	scheduledEvents := make(chan algorithms.ScalingEvent, 100)
 	StartDeploy(scheduledEvents)
 
 	// Verify that event has contents of file
 	select {
 	case event := <-scheduledEvents:
 		event.ID = utils.PlaceholderTestUUID().String()
-		testEvent := algos.ScalingEvent{
+		testEvent := algorithms.ScalingEvent{
 			ID:   utils.PlaceholderTestUUID().String(),
 			Data: imageRegionMap,
 			Type: "SCHEDULED_IMAGE_UPGRADE_EVENT",
@@ -207,19 +207,19 @@ func TestGetScalingAlgorithm(t *testing.T) {
 	testRegions := []string{
 		"us-east-1-test",
 	}
-	testAlgorithm := &defaultAlgo.DefaultScalingAlgorithm{
+	testAlgorithm := &generic.GenericScalingAlgorithm{
 		Region: "us-east-1-test",
 	}
 
 	// Load default scaling algorithm for all enabled regions.
 	for _, region := range testRegions {
 		name := utils.Sprintf("default-sa-%s", region)
-		algorithmByRegionMap.Store(name, &defaultAlgo.DefaultScalingAlgorithm{
+		algorithmByRegionMap.Store(name, &generic.GenericScalingAlgorithm{
 			Region: region,
 		})
 	}
 
-	algorithm := getScalingAlgorithm(algorithmByRegionMap, algos.ScalingEvent{
+	algorithm := getScalingAlgorithm(algorithmByRegionMap, algorithms.ScalingEvent{
 		Region: "us-east-1-test",
 	})
 

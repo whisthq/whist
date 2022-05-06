@@ -38,9 +38,9 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/algorithms"
+	"github.com/whisthq/whist/backend/services/scaling-service/algorithms/generic"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
-	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms" // Import as algos, short for scaling_algorithms
-	defaultAlgo "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -60,12 +60,12 @@ func main() {
 		subscriptionClient  subscriptions.WhistSubscriptionClient // The subscription client to subscribe to the Hasura server
 		configClient        subscriptions.WhistSubscriptionClient // The subscriptions client to subscribe to the config Hasura server
 		subscriptionEvents  chan subscriptions.SubscriptionEvent  // Channel to process database subscription events
-		scheduledEvents     chan algos.ScalingEvent               // Channel to process scheduled events
+		scheduledEvents     chan algorithms.ScalingEvent          // Channel to process scheduled events
 
 	)
 
 	// Start HTTP Server for assigning mandelboxes
-	serverEvents := make(chan algos.ScalingEvent, 100)
+	serverEvents := make(chan algorithms.ScalingEvent, 100)
 	StartHTTPServer(serverEvents)
 
 	// Start GraphQL client for queries/mutations
@@ -94,7 +94,7 @@ func main() {
 	dbClient = &dbclient.DBClient{}
 
 	// Start scheduler and setup scheduler event chan
-	scheduledEvents = make(chan algos.ScalingEvent, 100)
+	scheduledEvents = make(chan algorithms.ScalingEvent, 100)
 
 	// Set to run every 10 minutes, starting 10 minutes from now
 	start := time.Duration(10 * time.Minute)
@@ -109,16 +109,16 @@ func main() {
 	algorithmByRegionMap := &sync.Map{}
 
 	// Load default scaling algorithm for all enabled regions.
-	for _, region := range defaultAlgo.GetEnabledRegions() {
+	for _, region := range generic.GetEnabledRegions() {
 		name := utils.Sprintf("default-sa-%s", region)
-		algorithmByRegionMap.Store(name, &defaultAlgo.DefaultScalingAlgorithm{
+		algorithmByRegionMap.Store(name, &generic.GenericScalingAlgorithm{
 			Region: region,
 		})
 	}
 
 	// Instantiate scaling algorithms on allowed regions
 	algorithmByRegionMap.Range(func(key, value interface{}) bool {
-		scalingAlgorithm := value.(algos.ScalingAlgorithm)
+		scalingAlgorithm := value.(algorithms.ScalingAlgorithm)
 		scalingAlgorithm.CreateEventChans()
 		scalingAlgorithm.CreateGraphQLClient(graphqlClient)
 		scalingAlgorithm.CreateDBClient(dbClient)
@@ -172,14 +172,14 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 // StartSchedulerEvents starts the scheduler and its events without blocking the main thread.
 // `interval` sets the time when the event will run in minutes (i.e. every 10 minutes), and `start`
 // sets the time when the first event will happen (i.e. 10 minutes from now).
-func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval interface{}, start time.Duration) {
+func StartSchedulerEvents(scheduledEvents chan algorithms.ScalingEvent, interval interface{}, start time.Duration) {
 	s := gocron.NewScheduler(time.UTC)
 
 	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
 	t := time.Now().Add(start)
 	s.Every(interval).Minutes().StartAt(t).Do(func() {
 		// Send into scheduling channel
-		scheduledEvents <- algos.ScalingEvent{
+		scheduledEvents <- algorithms.ScalingEvent{
 			// Create a UUID so we can identify and search this event on our logs
 			ID: uuid.NewString(),
 			// We set the event type to SCHEDULED_SCALE_DOWN_EVENT
@@ -195,7 +195,7 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 
 // StartDeploy reads the `images.json` file which is written by the Github
 // deploy workflow, and sends the event to the appropiate channel.
-func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
+func StartDeploy(scheduledEvents chan algorithms.ScalingEvent) {
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infof("Running in localenv so not performing deploy actions.")
 		return
@@ -208,7 +208,7 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 	}
 
 	// Send image upgrade event to scheduled chan.
-	scheduledEvents <- algos.ScalingEvent{
+	scheduledEvents <- algorithms.ScalingEvent{
 		// Create a UUID so we can identify and search this event on our logs
 		ID: uuid.NewString(),
 		// We set the event type to SCHEDULED_IMAGE_UPGRADE_EVENT
@@ -249,7 +249,7 @@ func getRegionImageMap() (map[string]interface{}, error) {
 }
 
 // getScalingAlgorithm is a helper function that returns the scaling algorithm from the sync map.
-func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.ScalingEvent) algos.ScalingAlgorithm {
+func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algorithms.ScalingEvent) algorithms.ScalingAlgorithm {
 	// Try to get the scaling algorithm on the region the scaling event was requested.
 	// If no region is specified, use the default region.
 	// TODO: figure out how to get non-default scaling algorihtms.
@@ -270,7 +270,7 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 
 	algorithm, ok := algorithmByRegion.Load(name)
 	if ok {
-		return algorithm.(algos.ScalingAlgorithm)
+		return algorithm.(algorithms.ScalingAlgorithm)
 	}
 
 	logger.Warningf("Failed to get scaling algorithm in %v", scalingEvent.Region)
@@ -280,8 +280,8 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 
 // eventLoop is the main loop of the scaling service which will receive events from different sources
 // and send them to the appropiate channels.
-func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serverEvents <-chan algos.ScalingEvent, subscriptionEvents <-chan subscriptions.SubscriptionEvent,
-	scheduledEvents <-chan algos.ScalingEvent, algorithmByRegion *sync.Map, configClient subscriptions.WhistSubscriptionClient) {
+func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serverEvents <-chan algorithms.ScalingEvent, subscriptionEvents <-chan subscriptions.SubscriptionEvent,
+	scheduledEvents <-chan algorithms.ScalingEvent, algorithmByRegion *sync.Map, configClient subscriptions.WhistSubscriptionClient) {
 
 	for {
 		select {
@@ -291,7 +291,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 			switch subscriptionEvent := subscriptionEvent.(type) {
 
 			case *subscriptions.InstanceEvent:
-				var scalingEvent algos.ScalingEvent
+				var scalingEvent algorithms.ScalingEvent
 
 				// We set the event type to DATABASE_INSTANCE_EVENT
 				// here so that we have more information about the event.
@@ -312,12 +312,12 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
 				switch algorithm := algorithm.(type) {
-				case *defaultAlgo.DefaultScalingAlgorithm:
+				case *generic.GenericScalingAlgorithm:
 					algorithm.InstanceEventChan <- scalingEvent
 				}
 			case *subscriptions.ClientAppVersionEvent:
 				var (
-					scalingEvent algos.ScalingEvent
+					scalingEvent algorithms.ScalingEvent
 					version      subscriptions.ClientAppVersion
 				)
 
@@ -354,7 +354,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 					algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
 					switch algorithm := algorithm.(type) {
-					case *defaultAlgo.DefaultScalingAlgorithm:
+					case *generic.GenericScalingAlgorithm:
 						algorithm.ClientAppVersionChan <- scalingEvent
 					}
 				}
@@ -373,11 +373,11 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 			// Start scaling algorithm based on region
 			logger.Infof("Received scheduled event. %v", scheduledEvent)
 
-			for _, region := range defaultAlgo.GetEnabledRegions() {
+			for _, region := range generic.GetEnabledRegions() {
 				scheduledEvent.Region = region
 				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
 				switch algorithm := algorithm.(type) {
-				case *defaultAlgo.DefaultScalingAlgorithm:
+				case *generic.GenericScalingAlgorithm:
 					algorithm.ScheduledEventChan <- scheduledEvent
 				}
 			}
@@ -386,7 +386,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 
 			algorithm := getScalingAlgorithm(algorithmByRegion, serverEvent)
 			switch algorithm := algorithm.(type) {
-			case *defaultAlgo.DefaultScalingAlgorithm:
+			case *generic.GenericScalingAlgorithm:
 				algorithm.ServerEventChan <- serverEvent
 			}
 
