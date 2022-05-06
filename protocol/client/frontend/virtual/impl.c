@@ -1,4 +1,5 @@
 #include "common.h"
+#include "interface.h"
 
 WhistStatus virtual_init(WhistFrontend* frontend, int width, int height, const char* title,
                          const WhistRGBColor* color) {
@@ -84,7 +85,10 @@ void virtual_paint_png(WhistFrontend* frontend, const char* filename, int output
 
 void virtual_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {}
 
-WhistStatus virtual_update_video(WhistFrontend* frontend, AVFrame* frame) { return WHIST_SUCCESS; }
+WhistStatus virtual_update_video(WhistFrontend* frontend, AVFrame* frame) {
+    virtual_interface_send_frame(frame);
+    return WHIST_SUCCESS;
+}
 
 void virtual_paint_video(WhistFrontend* frontend, int output_width, int output_height) {}
 

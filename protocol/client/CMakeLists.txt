@@ -22,6 +22,7 @@ set(WHIST_CLIENT_DEPENDS
         frontend/sdl/window.cpp
         frontend/virtual/virtual.c
         frontend/virtual/impl.c
+        frontend/virtual/interface.c
 )
 
 if(CLIENT_SHARED_LIB)
