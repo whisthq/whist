@@ -5,6 +5,10 @@
     GENERATOR(WhistStatus, init, WhistFrontend* frontend, int width, int height,                   \
               const char* title, const WhistRGBColor* color)                                       \
     GENERATOR(void, destroy, WhistFrontend* frontend)                                              \
+    GENERATOR(WhistStatus, create_window, WhistFrontend* frontend, int id) \
+    GENERATOR(void, destroy_window, WhistFrontend* frontend, int id) \
+    GENERATOR(void, update_window_data, WhistFrontend* frontend, WhistWindowData* window_data) \
+    GENERATOR(void, update_windows, WhistFrontend* frontend) \
     GENERATOR(void, open_audio, WhistFrontend* frontend, unsigned int frequency,                   \
               unsigned int channels)                                                               \
     GENERATOR(bool, audio_is_open, WhistFrontend* frontend)                                        \

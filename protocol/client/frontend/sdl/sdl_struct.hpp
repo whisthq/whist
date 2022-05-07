@@ -29,15 +29,6 @@ typedef struct SDLFrontendVideoContext {
      */
     enum AVPixelFormat decode_format;
     /**
-     * The current video texture.
-     *
-     * When the video is updated this either copies the frame data to
-     * the existing texture (if the data is in CPU memory), or it
-     * destroys the existing texture and creates a new one corresponding
-     * the frame (if the data is already in GPU memroy).
-     */
-    SDL_Texture* texture;
-    /**
      * The format of the current video texture.
      */
     SDL_PixelFormatEnum texture_format;
@@ -61,10 +52,24 @@ typedef struct SDLFrontendVideoContext {
 
 // All the information needed for the frontend to render a specific window
 typedef struct SDLWindowContext {
+    // flags for Whist
     bool to_be_created;
     bool to_be_destroyed;
+    // TODO: are these needed now that we only open windows on demand?
+    bool video_has_rendered;
+    bool window_has_shown;
+    // window specific data
     SDL_Window* window;
     SDL_Renderer* renderer;
+    /**
+     * The current video texture.
+     *
+     * When the video is updated this either copies the frame data to
+     * the existing texture (if the data is in CPU memory), or it
+     * destroys the existing texture and creates a new one corresponding
+     * the frame (if the data is already in GPU memroy).
+     */
+    SDL_Texture* texture;;
     // TODO: dump this into a WhistWindowData
     int x;
     int y;
@@ -101,8 +106,6 @@ typedef struct SDLFrontendContext {
     int key_count;
     uint32_t file_drag_event_id;
     void* file_drag_data;
-    bool video_has_rendered;
-    bool window_has_shown;
 } SDLFrontendContext;
 
 #endif // WHIST_CLIENT_FRONTEND_SDL_STRUCT_H

@@ -290,9 +290,16 @@ void sdl_destroy_window(WhistFrontend* frontend, int id) {
     SDLFrontendContext* context = frontend->context;
     if (context->windows.contains(id)) {
         SDLWindowContext* window_context = context->windows[id];
+        // destroy video texture
+        if (window_context->texture != NULL) {
+            SDL_DestroyTexture(window_context->texture);
+            window_context->texture = NULL;
+        }
+        // destroy renderer
         if (window_context->renderer != NULL) {
             SDL_DestroyRenderer(window_context->renderer);
         }
+        // destroy window
         if (window_context->window != NULL) {
             LOG_INFO("Destroying window with ID %d", id);
             SDL_DestroyWindow(window_context->window);
@@ -359,28 +366,16 @@ void sdl_destroy(WhistFrontend* frontend) {
     if (!context) {
         return;
     }
-
-    if (context->video.texture != NULL) {
-        SDL_DestroyTexture(context->video.texture);
-        context->video.texture = NULL;
+    // destroy all windows
+    for (const auto& [id, window_context] : context->windows) {
+        sdl_destroy_window(frontend, id);
     }
     av_buffer_unref(&context->video.decode_device);
     av_frame_free(&context->video.frame_reference);
 
-    if (context->renderer != NULL) {
-        SDL_DestroyRenderer(context->renderer);
-        context->renderer = NULL;
-    }
-
 #ifdef _WIN32
     sdl_d3d11_destroy(context);
 #endif
-
-    if (context->window != NULL) {
-        LOG_INFO("Destroying window");
-        SDL_DestroyWindow(context->window);
-        context->window = NULL;
-    }
 
     sdl_native_destroy_external_drag_handler(frontend);
 

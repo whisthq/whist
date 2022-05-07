@@ -55,6 +55,26 @@ void whist_frontend_destroy(WhistFrontend* frontend) {
     free(frontend);
 }
 
+WhistStatus whist_frontend_create_window(WhistFrontend* frontend, int id) {
+    FRONTEND_ENTRY();
+    return frontend->call->create_window(frontend, id);
+}
+
+void whist_frontend_destroy_window(WhistFrontend* frontend, int id) {
+    FRONTEND_ENTRY();
+    frontend->call->destroy_window(frontend, id);
+}
+
+void whist_frontend_update_window_data(WhistFrontend* frontend, WhistWindowData* window_data) {
+    FRONTEND_ENTRY();
+    frontend->call->update_window_data(frontend, id);
+}
+
+void whist_frontend_update_windows(WhistFrontend* frontend) {
+    FRONTEND_ENTRY();
+    frontend->call->update_windows(frontend, id);
+}
+
 void whist_frontend_open_audio(WhistFrontend* frontend, unsigned int frequency,
                                unsigned int channels) {
     FRONTEND_ENTRY();
