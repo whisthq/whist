@@ -143,7 +143,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         // Not enough data to take any decision. Let the bits start flowing.
         return false;
     }
-
+    const int verbose_log=1;
     static WhistTimer overuse_timer;
     static WhistTimer last_update_timer;
     static WhistTimer last_decrease_timer;
@@ -246,14 +246,17 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
     // +-------------+-----------+------------+--------+
     if (overuse_detector_signal == OVERUSE_SIGNAL) {
         delay_controller_state = DELAY_CONTROLLER_DECREASE;
+        if(verbose_log) fprintf(stderr,"!!!! overuse\n");
     } else if (overuse_detector_signal == NORMAL_SIGNAL) {
         if (delay_controller_state == DELAY_CONTROLLER_HOLD) {
             delay_controller_state = DELAY_CONTROLLER_INCREASE;
         } else if (delay_controller_state == DELAY_CONTROLLER_DECREASE) {
             delay_controller_state = DELAY_CONTROLLER_HOLD;
         }
+        if(verbose_log) fprintf(stderr,"!!!! normal_singal\n");
     } else if (overuse_detector_signal == UNDERUSE_SIGNAL) {
         delay_controller_state = DELAY_CONTROLLER_HOLD;
+        if(verbose_log) fprintf(stderr,"!!!! underuse\n");
     }
 
     // If the latency suddenly increases, then it might mean congestion due to longer queue length.
@@ -279,8 +282,9 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
 
     if (short_term_latency > latency_threshold_decrease_state) {
         delay_controller_state = DELAY_CONTROLLER_DECREASE;
-    } else if (short_term_latency > latency_threshold_hold_state) {
+    } else if (short_term_latency > latency_threshold_hold_state && delay_controller_state == DELAY_CONTROLLER_INCREASE) {
         delay_controller_state = DELAY_CONTROLLER_HOLD;
+        if(verbose_log) fprintf(stderr,"!!!! change to hold\n");
     }
 
     // Delay-based controller selects based on overuse signal
