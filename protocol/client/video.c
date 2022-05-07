@@ -243,7 +243,7 @@ int render_video(VideoContext* video_context) {
             }
 
             // pass window_data to the frontend to determine what windows to create and destroy
-            whist_frontend_update_windows(video_context->frontend, frame->window_data);
+            whist_frontend_update_window_data(video_context->frontend, frame->window_data);
             // LOG_INFO("window 0 at (%d, %d) %d x %d", output_x, output_y, output_width, output_height);
             window_color = frame->corner_color;
 

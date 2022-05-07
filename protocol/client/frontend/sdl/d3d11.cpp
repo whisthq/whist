@@ -4,6 +4,7 @@
  * @brief D3D11 helper functons for SDL client frontend.
  */
 
+extern "C" {
 #ifdef _WIN32
 #define COBJMACROS
 #include <libavutil/hwcontext_d3d11va.h>
@@ -11,8 +12,10 @@
 #include <dxgi1_3.h>
 #include <dxgidebug.h>
 #endif
+}
 
 #include "common.h"
+#include "sdl_struct.hpp"
 
 typedef struct SDLRenderD3D11Context {
     /**
@@ -37,8 +40,8 @@ typedef struct SDLRenderD3D11Context {
     ID3D11DeviceContext *video_context;
 } SDLRenderD3D11Context;
 
-void sdl_d3d11_wait(SDLFrontendContext *context) {
-    SDLRenderD3D11Context *d3d11 = context->video.private_data;
+void sdl_d3d11_wait(void *context) {
+    SDLRenderD3D11Context *d3d11 = ((SDLFrontendContext*) context)->video.private_data;
     HRESULT hr;
 
     D3D11_QUERY_DESC desc = {
@@ -73,8 +76,9 @@ void sdl_d3d11_wait(SDLFrontendContext *context) {
     ID3D11Query_Release(query);
 }
 
-SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *frame) {
-    SDLRenderD3D11Context *d3d11 = context->video.private_data;
+// TODO: either make this only make a texture with the first window or figure something else out
+SDL_Texture *sdl_d3d11_create_texture(void *context, AVFrame *frame) {
+    SDLRenderD3D11Context *d3d11 = ((SDLFrontendContext*) context)->video.private_data;
 
     // This is a pointer to a texture, but it exists on the video decode
     // device rather than the render device.  Make a new reference on
@@ -127,7 +131,8 @@ SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *fram
     int texture_height = FFALIGN(frame->height, 16);
 
     SDL_Texture *sdl_texture;
-    sdl_texture = SDL_CreateTextureFromHandle(context->renderer, SDL_PIXELFORMAT_NV12,
+    // TODO: FIX THIS and determine which renderer we should use
+    sdl_texture = SDL_CreateTextureFromHandle(((SDLFrontendContext*) context)->windows[0]->renderer, SDL_PIXELFORMAT_NV12,
                                               SDL_TEXTUREACCESS_STATIC, texture_width,
                                               texture_height, &d3d11_handle);
     if (sdl_texture == NULL) {
@@ -141,14 +146,15 @@ SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *fram
     return sdl_texture;
 }
 
-WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
+// TODO: FIX RENDERER CHOICE HERE TOO
+WhistStatus sdl_d3d11_init(void *context) {
     int err;
     HRESULT hr;
 
     SDLRenderD3D11Context *d3d11 = safe_zalloc(sizeof(*d3d11));
-    context->video.private_data = d3d11;
+    ((SDLFrontendContext*) context)->video.private_data = d3d11;
 
-    d3d11->render_device = SDL_RenderGetD3D11Device(context->renderer);
+    d3d11->render_device = SDL_RenderGetD3D11Device(((SDLFrontendContext*) context)->windows[0]->renderer);
     if (d3d11->render_device == NULL) {
         LOG_WARNING("Failed to fetch D3D11 device: %s.", SDL_GetError());
         return WHIST_ERROR_NOT_FOUND;
@@ -215,8 +221,8 @@ WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
     return WHIST_SUCCESS;
 }
 
-void sdl_d3d11_destroy(SDLFrontendContext *context) {
-    SDLRenderD3D11Context *d3d11 = context->video.private_data;
+void sdl_d3d11_destroy(void *context) {
+    SDLRenderD3D11Context *d3d11 = ((SDLFrontendContext*) context)->video.private_data;
 
     if (!d3d11) {
         // Nothing to do (init probably failed).

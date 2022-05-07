@@ -18,9 +18,9 @@ FRONTEND_API(SDL_COMMON_HEADER_ENTRY)
 #undef SDL_COMMON_HEADER_ENTRY
 
 // D3D11 helper functions (Windows only).
-void sdl_d3d11_wait(SDLFrontendContext* context);
-SDL_Texture* sdl_d3d11_create_texture(SDLFrontendContext* context, AVFrame* frame);
-WhistStatus sdl_d3d11_init(SDLFrontendContext* context);
-void sdl_d3d11_destroy(SDLFrontendContext* context);
+void sdl_d3d11_wait(void* context);
+SDL_Texture* sdl_d3d11_create_texture(void* context, AVFrame* frame);
+WhistStatus sdl_d3d11_init(void* context);
+void sdl_d3d11_destroy(void* context);
 
 #endif  // WHIST_CLIENT_FRONTEND_SDL_COMMON_H

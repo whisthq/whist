@@ -67,12 +67,12 @@ void whist_frontend_destroy_window(WhistFrontend* frontend, int id) {
 
 void whist_frontend_update_window_data(WhistFrontend* frontend, WhistWindowData* window_data) {
     FRONTEND_ENTRY();
-    frontend->call->update_window_data(frontend, id);
+    frontend->call->update_window_data(frontend, window_data);
 }
 
 void whist_frontend_update_windows(WhistFrontend* frontend) {
     FRONTEND_ENTRY();
-    frontend->call->update_windows(frontend, id);
+    frontend->call->update_windows(frontend);
 }
 
 void whist_frontend_open_audio(WhistFrontend* frontend, unsigned int frequency,

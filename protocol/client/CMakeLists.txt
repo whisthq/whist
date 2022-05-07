@@ -14,12 +14,12 @@ set(WHIST_CLIENT_DEPENDS
         sync_packets.c
         renderer.c
         frontend/frontend.c
-        frontend/sdl/audio.c
-        frontend/sdl/events.c
-        frontend/sdl/lifecycle.c
+        frontend/sdl/audio.cpp
+        frontend/sdl/events.cpp
+        frontend/sdl/lifecycle.cpp
         frontend/sdl/sdl.c
-        frontend/sdl/video.c
-        frontend/sdl/window.c
+        frontend/sdl/video.cpp
+        frontend/sdl/window.cpp
         frontend/virtual/virtual.c
         frontend/virtual/impl.c
 )
@@ -168,7 +168,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     target_sources(WhistClient PRIVATE
         frontend/sdl/native_windows.c
-        frontend/sdl/d3d11.c
+        frontend/sdl/d3d11.cpp
     )
 
     set_property(TARGET WhistClient PROPERTY

@@ -29,10 +29,6 @@ typedef struct SDLFrontendVideoContext {
      */
     enum AVPixelFormat decode_format;
     /**
-     * The format of the current video texture.
-     */
-    SDL_PixelFormatEnum texture_format;
-    /**
      * The width of the frame in the current video texture.
      */
     int frame_width;
@@ -70,6 +66,10 @@ typedef struct SDLWindowContext {
      * the frame (if the data is already in GPU memroy).
      */
     SDL_Texture* texture;;
+    /**
+     * The format of the current video texture.
+     */
+    SDL_PixelFormatEnum texture_format;
     // TODO: dump this into a WhistWindowData
     int x;
     int y;
