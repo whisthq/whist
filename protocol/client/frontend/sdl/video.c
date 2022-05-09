@@ -192,11 +192,11 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
     return WHIST_SUCCESS;
 }
 
-// On macOS & Windows, SDL outputs the texture with the last pixel on the bottom and
+// On macOS, SDL outputs the texture with the last pixel on the bottom and
 // right sides without data, rendering it green (NV12 color format). We're not sure
 // why that is the case, but in the meantime, clipping that pixel makes the visual
 // look seamless.
-#if defined(__APPLE__) || defined(_WIN32)
+#if defined(__APPLE__)
 #define CLIPPED_PIXELS 1
 #else
 #define CLIPPED_PIXELS 0
