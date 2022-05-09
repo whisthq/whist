@@ -357,11 +357,12 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
         }
         // The only way it should possible to receive a packet twice, is if nacking got involved
         if (type == PACKET_VIDEO && frame_data->num_times_index_nacked[segment_index] == 0 &&
-            !segment->is_a_duplicate) {
+            !segment->is_a_duplicate && segment->is_a_nack) {
             LOG_ERROR(
                 "We received a video packet (ID %d / index %d) twice, but we had never nacked for "
-                "it? is_a_nack = %d, num_entire_frame_nacked = %d",
-                segment_id, segment_index, segment->is_a_nack, frame_data->num_entire_frame_nacked);
+                "it? num_entire_frame_nacked = %d, currently_rendering_id = %d",
+                segment_id, segment_index, frame_data->num_entire_frame_nacked,
+                ring_buffer->currently_rendering_id);
             return !ringbuffer_overflowed;
         }
         return !ringbuffer_overflowed;
