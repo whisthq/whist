@@ -143,7 +143,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         // Not enough data to take any decision. Let the bits start flowing.
         return false;
     }
-
     static WhistTimer overuse_timer;
     static WhistTimer last_update_timer;
     static WhistTimer last_decrease_timer;
@@ -279,7 +278,8 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
 
     if (short_term_latency > latency_threshold_decrease_state) {
         delay_controller_state = DELAY_CONTROLLER_DECREASE;
-    } else if (short_term_latency > latency_threshold_hold_state) {
+    } else if (short_term_latency > latency_threshold_hold_state &&
+               delay_controller_state == DELAY_CONTROLLER_INCREASE) {
         delay_controller_state = DELAY_CONTROLLER_HOLD;
     }
 
