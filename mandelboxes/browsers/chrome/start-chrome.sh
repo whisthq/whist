@@ -140,6 +140,8 @@ echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Start lowercase-files script
 # This allows chromium themes to work more consistently
+# TODO: Re-enable this once we've found a way for this to enable Chrome themes
+# without breaking extension importing
 # /usr/bin/lowercase-chromium-files "google-chrome" &
 
 # Start Chrome with the KDE desktop environment
