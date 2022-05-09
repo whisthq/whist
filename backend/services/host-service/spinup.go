@@ -144,7 +144,6 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	exposedPorts[dockernat.Port("32263/udp")] = struct{}{}
 	exposedPorts[dockernat.Port("32273/tcp")] = struct{}{}
 
-	// TODO: also keep track of aes key
 	aesKey := utils.RandHex(16)
 	mandelbox.SetAESKey(mandelboxtypes.AESKey(aesKey))
 	envs := []string{

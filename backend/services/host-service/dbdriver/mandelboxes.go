@@ -35,7 +35,7 @@ const (
 )
 
 // CreateMandelbox inserts a new row to the database with the necessary fields. It sets the
-// status of the mandelbox to WAITING, which meand that the mandelbox is waiting for a user
+// status of the mandelbox to WAITING, which means that the mandelbox is waiting for a user
 // to get assigned to the instance.
 func CreateMandelbox(id types.MandelboxID, app string, instanceID string) error {
 	if !enabled {
