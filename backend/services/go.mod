@@ -6,10 +6,10 @@ require (
 	github.com/MicahParks/keyfunc v1.1.0
 	github.com/NVIDIA/go-nvml v0.11.6-0
 	github.com/aws/aws-sdk-go-v2 v1.16.3
-	github.com/aws/aws-sdk-go-v2/config v1.15.4
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.8
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.38.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.8
+	github.com/aws/aws-sdk-go-v2/config v1.15.5
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.10
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.40.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.9
 	github.com/aws/smithy-go v1.11.2
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/docker/docker v20.10.14+incompatible
@@ -22,16 +22,16 @@ require (
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/hasura/go-graphql-client v0.6.5
-	github.com/jackc/pgconn v1.12.0
+	github.com/hasura/go-graphql-client v0.7.0
+	github.com/jackc/pgconn v1.12.1
 	github.com/jackc/pgtype v1.11.0
-	github.com/jackc/pgx/v4 v4.16.0
+	github.com/jackc/pgx/v4 v4.16.1
 	github.com/lithammer/shortuuid/v3 v3.0.7
 	github.com/logzio/logzio-go v1.0.4
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pierrec/lz4/v4 v4.1.14
 	github.com/shirou/gopsutil/v3 v3.22.4
-	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
+	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 )
@@ -80,7 +80,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/stripe/stripe-go/v72 v72.104.0
+	github.com/stripe/stripe-go/v72 v72.106.0
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
