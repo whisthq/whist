@@ -46,6 +46,7 @@ echo "Xft.dpi: $WHIST_DPI" | xrdb -merge
 cat << EOF > /home/whist/.xsettingsd
 Xft/DPI $((1024*WHIST_DPI))
 Gtk/CursorThemeSize $((24*WHIST_DPI/96))
+Gtk/DecorationLayout "maximize:"
 EOF
 
 echo "$WHIST_DPI" > $WHIST_DPI_CACHE_FILE

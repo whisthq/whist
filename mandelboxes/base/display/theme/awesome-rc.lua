@@ -356,6 +356,7 @@ ensure_client_is_not_offscreen = function (c)
     c.shape = gears.shape.rectangle
     c.border_width = 0
     c:geometry(awful.screen.focused().workarea)
+    c.maximized = false
     return
   end
 
