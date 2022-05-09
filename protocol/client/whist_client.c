@@ -292,7 +292,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // Set error monitor username based on email from parsed arguments.
     whist_error_monitor_set_username(user_email);
 
-    print_system_info();
+    // print_system_info();
     LOG_INFO("Whist client revision %s", whist_git_revision());
 
     client_exiting = false;

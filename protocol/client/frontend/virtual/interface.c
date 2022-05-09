@@ -30,8 +30,6 @@ void virtual_interface_free_frame_ref(void* frame_ref) {
 }
 
 void virtual_interface_send_frame(AVFrame* frame) {
-    LOG_INFO("Sending frame @ %p", frame);
-
     if (!connected) return;
 
     whist_lock_mutex(lock);
