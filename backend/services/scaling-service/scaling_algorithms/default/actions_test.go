@@ -13,6 +13,7 @@ import (
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/utils"
 )
 
 var (
@@ -236,6 +237,13 @@ func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLCli
 		})
 	}
 	return len(testMandelboxes), nil
+}
+func (db *mockDBClient) QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistMandelboxes, error) {
+	return testMandelboxes, nil
+}
+
+func (db *mockDBClient) UpdateMandelbox(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Mandelbox) (int, error) {
+	return 0, nil
 }
 
 // mockHostHandler is used to test all interactions with cloud providers
@@ -769,11 +777,31 @@ func TestMandelboxAssign(t *testing.T) {
 				},
 			}
 
+			testMandelboxes = subscriptions.WhistMandelboxes{
+				struct {
+					ID         graphql.String `graphql:"id"`
+					App        graphql.String `graphql:"app"`
+					InstanceID graphql.String `graphql:"instance_id"`
+					UserID     graphql.String `graphql:"user_id"`
+					SessionID  graphql.String `graphql:"session_id"`
+					Status     graphql.String `graphql:"status"`
+					CreatedAt  time.Time      `graphql:"created_at"`
+				}{
+					ID:         graphql.String(uuid.NewString()),
+					App:        "CHROME",
+					InstanceID: "test-instance-id",
+					UserID:     "test-user-id",
+					SessionID:  graphql.String(utils.Sprintf("%v", time.Now().UnixMilli())),
+					Status:     "WAITING",
+					CreatedAt:  time.Now(),
+				},
+			}
+
 			testAssignRequest := &httputils.MandelboxAssignRequest{
 				Regions:    []string{"us-east-1", "us-west-1"},
 				CommitHash: tt.clientSHA,
-				SessionID:  1234567890,
 				UserEmail:  "user@whist.com",
+				Version:    "2.13.2",
 			}
 			testAssignRequest.CreateResultChan()
 

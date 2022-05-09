@@ -27,15 +27,65 @@ type MandelboxStatus string
 
 // These represent the currently-defined statuses for mandelboxes.
 const (
+	MandelboxStatusWaiting    MandelboxStatus = "WAITING"
 	MandelboxStatusAllocated  MandelboxStatus = "ALLOCATED"
 	MandelboxStatusConnecting MandelboxStatus = "CONNECTING"
 	MandelboxStatusRunning    MandelboxStatus = "RUNNING"
 	MandelboxStatusDying      MandelboxStatus = "DYING"
 )
 
-// VerifyAllocatedMandelbox verifies that this host-service is indeed expecting
-// the provided mandelbox for the given user, and if found marks it as
-// connecting.
+// CreateMandelbox inserts a new row to the database with the necessary fields. It sets the
+// status of the mandelbox to WAITING, which means that the mandelbox is waiting for a user
+// to get assigned to the instance.
+func CreateMandelbox(id types.MandelboxID, app string, instanceID string) error {
+	if !enabled {
+		return nil
+	}
+	if dbpool == nil {
+		return utils.MakeError("VerifyAllocatedMandelbox() called but dbdriver is not initialized!")
+	}
+
+	insertParams := queries.CreateMandelboxParams{
+		ID: pgtype.Varchar{
+			String: id.String(),
+			Status: pgtype.Present,
+		},
+		App: pgtype.Varchar{
+			String: app,
+			Status: pgtype.Present,
+		},
+		InstanceID: pgtype.Varchar{
+			String: instanceID,
+			Status: pgtype.Present,
+		},
+		UserID: pgtype.Varchar{
+			// The user ID will be filled in by the scaling service
+			// once a user gets assigned to this instance.
+			Status: pgtype.Null,
+		},
+		SessionID: pgtype.Varchar{
+			Status: pgtype.Null,
+		},
+		Status: pgtype.Varchar{
+			String: string(MandelboxStatusWaiting),
+			Status: pgtype.Present,
+		},
+		CreatedAt: pgtype.Timestamptz{
+			Time:   time.Now(),
+			Status: pgtype.Present,
+		},
+	}
+	q := queries.NewQuerier(dbpool)
+	mandelboxResult, err := q.CreateMandelbox(context.Background(), insertParams)
+	if err != nil {
+		return utils.MakeError("failed to insert mandelbox %v to database. Err: %v", id, err)
+	} else if mandelboxResult.RowsAffected() == 0 {
+		return utils.MakeError("couldn't insert mandelbox %v: inserted 0 rows to database.", id)
+	}
+
+	return nil
+}
+
 func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID) error {
 	if !enabled {
 		return nil

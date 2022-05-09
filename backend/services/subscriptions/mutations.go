@@ -37,11 +37,11 @@ var InsertImages struct {
 	} `graphql:"insert_whist_images(objects: $objects)"`
 }
 
-// InsertMandelboxes inserts multiple mandelboxes to the database.
-var InsertMandelboxes struct {
+// UpdateMandelbox updates the row of a mandelbox on the database.
+var UpdateMandelbox struct {
 	MutationResponse struct {
 		AffectedRows graphql.Int `graphql:"affected_rows"`
-	} `graphql:"insert_whist_mandelboxes(objects: $objects)"`
+	} `graphql:"update_whist_mandelboxes(where: {id: {_eq: $id}}, _set: $changes)"`
 }
 
 // UpdateImage updates the row of an image to the given values.

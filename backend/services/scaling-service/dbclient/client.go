@@ -21,7 +21,8 @@ type WhistDBClient interface {
 	QueryImage(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistImages, error)
 	InsertImages(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Image) (int, error)
 	UpdateImage(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Image) (int, error)
-	InsertMandelboxes(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Mandelbox) (int, error)
+	QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistMandelboxes, error)
+	UpdateMandelbox(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Mandelbox) (int, error)
 }
 
 // DBClient implements `WhistDBClient`, it is the default database
