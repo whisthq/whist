@@ -439,6 +439,10 @@ def get_client_and_instances(
     )
     if client_instance_id == "":
         printyellow(f"Creating/starting new instance on {region_name} for the client failed!")
+        # Terminate or stop server AWS instance
+        terminate_or_stop_aws_instance(
+            boto3client, server_instance_id, server_instance_id != existing_server_instance_id
+        )
         return None
 
     return boto3client, server_instance_id, client_instance_id
