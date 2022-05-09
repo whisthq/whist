@@ -46,6 +46,6 @@ endif()
 
 # For now, log everything.
 add_compile_definitions(LOG_LEVEL=5
-                        $<$<CONFIG:DEBUG>:LOG_VIDEO=true>
-                        $<$<CONFIG:METRICS>:LOG_VIDEO=true>
+                        $<$<CONFIG:Debug>:LOG_VIDEO=true>
+                        $<$<CONFIG:Metrics>:LOG_VIDEO=true>
                         __ROOT_FILE__="${PROJECT_SOURCE_DIR}")
