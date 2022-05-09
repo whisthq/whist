@@ -170,6 +170,19 @@ EOF
 
   sudo apt-get install -y lsof jq tar lz4 fio nvme-cli zfsutils-linux
 
+  # Install or update sentry-cli for the userdata script
+
+  SENTRY_INSTALL_PATH="/usr/local/bin/sentry-cli"
+  if [ -f "$SENTRY_INSTALL_PATH" ]; then
+    # We need to explicitly check if sentry-cli is already installed, because the installation script available at https://sentry.io/get-cli/
+    # will throw an error if we call it on a machine with sentry-cli already installed. See: https://github.com/getsentry/sentry-cli/issues/174
+    echo "sentry-cli is already installed. Checking for updates..."
+    sudo sentry-cli update
+  else
+    echo "Installing sentry-cli..."
+    sudo curl -sL https://sentry.io/get-cli/ | bash
+  fi
+
   echo "================================================"
   echo "Disabling Automatic Package Upgrades..."
   echo "================================================"
@@ -221,13 +234,13 @@ EOF
   # Logz.io (if that workflow is going to be easier for you).
 
   wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key add -
-  echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+  echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
 
   # The command above will add a duplicate package source link to the /etc/apt/sources.list.d/elastic-7.x.list
   # file if the link already exists (for example if we had run the host-setup before on the same machine). This
   # will cause warning messages, and occasional misconfigurations. The instruction below fixes the problem by
   # removing the duplicates.
-  awk '!seen[$0]++' /etc/apt/sources.list.d/elastic-7.x.list | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
+  awk '!seen[$0]++' /etc/apt/sources.list.d/elastic-8.x.list | sudo tee /etc/apt/sources.list.d/elastic-8.x.list
 
   # Install filebeat via apt
   sudo apt-get update -y
@@ -336,7 +349,7 @@ local_development_steps () {
 }
 
 ####################################################
-# Deplomeny Images Steps
+# Deployment Images Steps
 ####################################################
 
 # `deployment_setup_steps` contains the commands that are specific to setting

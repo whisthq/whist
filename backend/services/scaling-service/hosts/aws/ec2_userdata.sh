@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Populate env vars used by this script
+USERDATA_ENV=/usr/share/whist/app_env.env
+eval "$(cat "$USERDATA_ENV")"
+
+# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+case "$GIT_BRANCH" in
+  dev|staging|prod)
+    export SENTRY_DSN="$SENTRY_DSN"
+    eval "$(sentry-cli bash-hook)"
+    ;;
+  *)
+    echo "Sentry environment not set, skipping Sentry error handler"
+    ;;
+esac
+
 # Note: all commands here are run with the `root` user. It is not necessary to use sudo.
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html#user-data-shell-scripts
 if [ "$EUID" -ne 0 ]; then
@@ -21,24 +36,16 @@ echo "Whist EC2 userdata started"
 #  be pulled to the Docker data-root directory.
 # Args: none
 pull_docker_images() {
-  # Populate env vars
-  eval "$(cat "$USERDATA_ENV")"
-
   # Login with docker
   echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
 
   # Pull Docker images for Chrome and Brave directly to the ephemeral volume
+  # Replace `chrome` to pull the image of a different browser.
   pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/chrome"
   pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
 
-  pull_image_base_brave="ghcr.io/whisthq/$GIT_BRANCH/browsers/brave"
-  pull_image_brave="$pull_image_base_brave:$GIT_HASH"
-
   docker pull "$pull_image_chrome"
   docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
-
-  docker pull "$pull_image_brave"
-  docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
 
   echo "Finished pulling images"
 }
@@ -50,7 +57,6 @@ cd /home/ubuntu
 EPHEMERAL_DEVICE_PATH=$(nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == "Amazon EC2 NVMe Instance Storage")) | max_by(.PhysicalSize) | .DevicePath')
 EPHEMERAL_FS_PATH=/ephemeral
 MAX_CONCURRENT_DOWNLOADS=8
-USERDATA_ENV=/usr/share/whist/app_env.env
 
 # We use ephemeral storage if it exists on our host instances to avoid needing to warm up the filesystem,
 # speeding up instance launch time. We move the docker data directory to the ephemeral volume, and then
