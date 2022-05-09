@@ -56,7 +56,7 @@ EOF
 
 echo "Replaced placeholder session id on unit files with $SESSION_ID"
 
-systemctl daemon reload
+systemctl daemon-reload
 
 # Create a TTY within the mandelbox so we don't have to hook it up to one of the host's.
 # Also, create the device /dev/dri/card0 which is needed for GPU acceleration. Note that
