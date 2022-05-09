@@ -93,10 +93,13 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
     bool import_texture =
         (frame->format == AV_PIX_FMT_VIDEOTOOLBOX || frame->format == AV_PIX_FMT_D3D11);
 
-    if (import_texture || format != context->video.texture_format) {
+    if (import_texture || format != context->video.texture_format ||
+        frame->width != context->video.frame_width ||
+        frame->height != context->video.frame_height) {
         // When importing we will make a new SDL texture referring to
         // the imported one, so the old texture should be destroyed.
-        // When uploading this is only needed if the format changes.
+        // When uploading this is only needed if the format or
+        // dimensions change.
         if (context->video.texture) {
             SDL_DestroyTexture(context->video.texture);
             context->video.texture = NULL;
@@ -149,7 +152,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
             // Create new video texture.
             context->video.texture =
                 SDL_CreateTexture(context->renderer, format, SDL_TEXTUREACCESS_STREAMING,
-                                  MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+                                  frame->width, frame->height);
             if (context->video.texture == NULL) {
                 LOG_ERROR("Failed to create %s video texture: %s.",
                           av_get_pix_fmt_name(frame->format), SDL_GetError());
@@ -192,16 +195,6 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
     return WHIST_SUCCESS;
 }
 
-// On macOS, SDL outputs the texture with the last pixel on the bottom and
-// right sides without data, rendering it green (NV12 color format). We're not sure
-// why that is the case, but in the meantime, clipping that pixel makes the visual
-// look seamless.
-#if defined(__APPLE__)
-#define CLIPPED_PIXELS 1
-#else
-#define CLIPPED_PIXELS 0
-#endif
-
 void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
     SDLFrontendContext* context = frontend->context;
     int res;
@@ -218,8 +211,8 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
     SDL_Rect output_rect = {
         .x = 0,
         .y = 0,
-        .w = min(output_width, context->video.frame_width) - CLIPPED_PIXELS,
-        .h = min(output_height, context->video.frame_height) - CLIPPED_PIXELS,
+        .w = min(output_width, context->video.frame_width),
+        .h = min(output_height, context->video.frame_height),
     };
     res = SDL_RenderCopy(context->renderer, context->video.texture, &output_rect, NULL);
     if (res < 0) {
