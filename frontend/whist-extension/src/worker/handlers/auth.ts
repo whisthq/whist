@@ -23,8 +23,6 @@ const initWhistAuthHandler = async () => {
 
   const authInfo = await getCachedAuthInfo()
 
-  console.log("The auth info is", authInfo)
-
   const wasAuthed = !isEmpty(authInfo) && authInfo?.refreshToken !== undefined
   const refreshedAuthInfo = refreshAuthInfo(authInfo)
 
@@ -53,8 +51,6 @@ const initGoogleAuthHandler = () => {
       async (callbackUrl) => {
         const response = (await authInfoCallbackRequest(callbackUrl)) as any
         const authInfo = parseAuthInfo(response)
-
-        console.log("caching", authInfo)
 
         if (!has(authInfo, "error")) {
           setStorage(cachedAuthInfo, JSON.stringify(authInfo))

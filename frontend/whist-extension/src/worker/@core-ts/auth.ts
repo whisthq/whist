@@ -63,10 +63,8 @@ export const authInfoCallbackRequest = async (
 }
 
 export const parseAuthInfo = (res: {
-  json?: {
-    id_token?: string
-    access_token?: string
-  }
+  id_token?: string
+  access_token?: string
 }) => {
   /*
   Description:
@@ -78,12 +76,9 @@ export const parseAuthInfo = (res: {
   */
 
   try {
-    const accessToken = res?.json?.access_token
-
-    console.log(res)
-
+    const accessToken = res?.access_token
     const decodedAccessToken = jwtDecode(accessToken ?? "") as any
-    const decodedIdToken = jwtDecode(res?.json?.id_token ?? "") as any
+    const decodedIdToken = jwtDecode(res?.id_token ?? "") as any
     const userEmail = decodedIdToken?.email
     const subscriptionStatus =
       decodedAccessToken["https://api.fractal.co/subscription_status"]
