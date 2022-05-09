@@ -79,8 +79,10 @@ parser.add_argument(
 
 parser.add_argument(
     "--region-name",
-    help="The AWS region to use for testing. If you are looking to re-use an instance for the client and/or server, \
-    the instance(s) must live on the region passed to this parameter.",
+    help="The AWS region to use for testing. Passing an empty string will let the script run the test on any \
+    region with space available for the new instance(s). If you are looking to re-use an instance for the client \
+    and/or server, the instance(s) must live on the region passed to this parameter. If you pass an empty string, \
+    the key-pair that you pass must be valid on all AWS regions.",
     type=str,
     choices=[
         "us-east-1",
