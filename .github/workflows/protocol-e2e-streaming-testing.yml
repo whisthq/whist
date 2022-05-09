@@ -33,8 +33,10 @@ jobs:
     name: "Protocol Streaming End-to-End Test"
     runs-on: ubuntu-20.04
     env:
-      CLIENT_INSTANCE_ID: "i-0f198404fc63b3b3f"
-      SERVER_INSTANCE_ID: "i-0d215f4e50a4313ff"
+      CLIENT_INSTANCE_ID: ""
+      SERVER_INSTANCE_ID: ""
+      #CLIENT_INSTANCE_ID: "i-0f198404fc63b3b3f"
+      #SERVER_INSTANCE_ID: "i-0d215f4e50a4313ff"
 
     steps:
       - name: Checkout Git Repository
@@ -77,12 +79,12 @@ jobs:
         run: pip install boto3 paramiko numpy pytablewriter
 
       # Prevent two instances of this workflow from running the steps below simultaneously
-      - name: Turnstyle
-        uses: rpadaki/turnstyle@v1.1
-        with:
-          same-branch-only: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Turnstyle
+      #   uses: rpadaki/turnstyle@v1.1
+      #   with:
+      #     same-branch-only: false
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under
       # Key Pairs, where the SSH key is defined. Other possible flags:
