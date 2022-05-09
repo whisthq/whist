@@ -93,8 +93,8 @@ jobs:
       # --cmake-build-type, defaults to `Metrics`
       # --region-name, defaults to `us-east-1`
       # --use-two-instances, defaults to `false`
-      # --use-existing-server-instance, defaults to `` (empty string)
-      # --use-existing-client-instance, defaults to `` (empty string)
+      # --existing-server-instance-id, defaults to `` (empty string)
+      # --existing-client-instance-id, defaults to `` (empty string)
       # --aws-credentials-filepath, defaults to `~/.aws/credentials`
       # --network-conditions [bandwidth range],[packet delay range],[packet drop range],[qdisc packet limit range],[interval of change range]
 
@@ -108,8 +108,8 @@ jobs:
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
             --use-two-instances=true \
-            --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
-            --use-existing-server-instance "$SERVER_INSTANCE_ID" \
+            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
+            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
             --leave-instances-on=true
           # Update SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "SERVER_INSTANCE_ID=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
@@ -124,8 +124,8 @@ jobs:
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
             --use-two-instances=true \
-            --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
-            --use-existing-server-instance "$SERVER_INSTANCE_ID" \
+            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
+            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
@@ -143,8 +143,8 @@ jobs:
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
             --use-two-instances=true \
-            --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
-            --use-existing-server-instance "$SERVER_INSTANCE_ID" \
+            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
+            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
@@ -162,8 +162,8 @@ jobs:
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
             --use-two-instances=true \
-            --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
-            --use-existing-server-instance "$SERVER_INSTANCE_ID" \
+            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
+            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
             --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
@@ -181,8 +181,8 @@ jobs:
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
             --use-two-instances=true \
-            --use-existing-client-instance "$CLIENT_INSTANCE_ID" \
-            --use-existing-server-instance "$SERVER_INSTANCE_ID" \
+            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
+            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
             --leave-instances-on=false \
             --skip-host-setup=true \
             --skip-git-clone=true \
