@@ -5,13 +5,13 @@
 
 # add_database_hasura will add the database given by the arguments
 # to Hasura as a data source.
-# Args: 
+# Args:
 # $1: Hasura metadata URL, accesible locally
 # $2: Database connection string, inside Docker network
 add_database_hasura() {
-curl -X POST $1 \
--H "Content-Type: application/json" \
---data-binary @- << EOF
+  curl -X POST "$1" \
+    -H "Content-Type: application/json" \
+    --data-binary @- << EOF
 {
   "type": "pg_add_source",
   "args": {
@@ -38,15 +38,15 @@ EOF
 
 # wait_database_ready tries to connect to the database
 # using psql, or retries if it's not available.
-# Args: 
+# Args:
 # $1: Postgres connection string
 wait_database_ready() {
-cmds="\q"
-while ! (psql "$1" <<< $cmds) &> /dev/null
-do
-  echo "Connection failed. Retrying in 2 seconds..."
-  sleep 2
-done
+  cmds="\q"
+  while ! (psql "$1" <<< $cmds) &> /dev/null
+  do
+    echo "Connection failed. Retrying in 2 seconds..."
+    sleep 2
+  done
 }
 
 set -Eeuo pipefail
