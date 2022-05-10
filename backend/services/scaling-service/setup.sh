@@ -1,9 +1,7 @@
-# !/bin/bash
+#!/bin/bash
 
 # Setup local database and Hasura servers for local scaling service testing.
-# To run this script, the Heroku CLI myst be installed and logged into your account.
-
-# set -Eeuo pipefail
+# To run this script, the Heroku CLI must be installed and logged into your account.
 
 # add_database_hasura will add the database given by the arguments
 # to Hasura as a data source.
@@ -38,13 +36,36 @@ curl -X POST $1 \
 EOF
 }
 
+# wait_database_ready tries to connect to the database
+# using psql, or retries if it's not available.
+# Args: 
+# $1: Postgres connection string
+wait_database_ready() {
+cmds="\q"
+while ! (psql "$1" <<< $cmds) &> /dev/null
+do
+  echo "Connection failed. Retrying in 2 seconds..."
+  sleep 2
+done
+}
+
+set -Eeuo pipefail
+
+# Allow passing `--down` to spin down the docker-compose stack, instead of
+# having to cd into this directory and manually run the command.
+if [[ $* =~ [:space:]*--down[:space:]* ]]; then
+  echo "Running \"docker-compose down\"."
+  docker-compose down
+  exit 0
+fi
+
 # PostgreSQL strings used for connecting to the databse on the host machine.
 LOCAL_WHIST_PGSTRING="postgres://postgres:whistpass@localhost:5432/postgres"
 LOCAL_CONFIG_PGSTRING="postgres://postgres:whistpass@localhost:9999/postgres"
 
 # PostgreSQL strings used for connecting to the database inside the Docker network.
 DOCKER_WHIST_PGSTRING="postgres://postgres:whistpass@postgres:5432/postgres"
-DOCKER_CONFIG_PGSTRING="postgres://postgres:whistpass@postgres-config:9999/postgres"
+DOCKER_CONFIG_PGSTRING="postgres://postgres:whistpass@postgres-config:5432/postgres"
 
 # URLs to make calls to the Hasura API.
 LOCAL_WHIST_URL="http://localhost:8080/v1/metadata"
@@ -57,6 +78,11 @@ DEV_CONFIG_DATABASE=$(heroku config:get HEROKU_POSTGRESQL_MAROON_URL -a whist-de
 # Start Hasura and Postgres databases.
 docker-compose up -d
 
+echo "Waiting for databases to be ready..."
+wait_database_ready "$LOCAL_WHIST_PGSTRING" &
+wait_database_ready "$LOCAL_CONFIG_PGSTRING" &
+wait
+
 echo "Setting up local databases..."
 pg_dump --no-owner --no-privileges --schema-only "$DEV_CONFIG_DATABASE" > config_schema.sql
 psql "$LOCAL_CONFIG_PGSTRING" < config_schema.sql
@@ -66,21 +92,24 @@ echo "Adding databases to Hasura servers..."
 add_database_hasura "$LOCAL_WHIST_URL" "$DOCKER_WHIST_PGSTRING"
 add_database_hasura "$LOCAL_CONFIG_URL" "$DOCKER_CONFIG_PGSTRING"
 
-# echo "Populating test config values..."
-# psql "$LOCAL_WHIST_PGSTRING"
-# psql <<EOF
-#   \x
-#   INSERT INTO dev(key, value)
-#   VALUES
-#       ("DESIRED_FREE_MANDELBOXES_US_EAST_1", "2")
-#       ("", "")
-#       ("", "")
-#       ("", "")
-# EOF
+echo "Populating config database..."
+psql "$LOCAL_CONFIG_PGSTRING" <<EOF
+\x
+INSERT INTO dev VALUES
+    ('DESIRED_FREE_MANDELBOXES_US_EAST_1', '2');
 
+INSERT INTO desktop_app_version(id, major, minor, micro, dev_rc, staging_rc, dev_commit_hash, staging_commit_hash, prod_commit_hash)
+    VALUES
+        (1, 2, 6, 15, 0, 0, 'dummy_commit_hash', 'dummy_commit_hash', 'dummy_commit_hash');
+EOF
 
+echo ""
 echo "Cleaning up..."
 rm config_schema.sql
 
-echo "Your machine is ready to run the scaling service! You can run make run_scaling_service_localdevwithdb now to start developing."
+green="\e[0;92m"
+reset="\e[0m"
+
+echo -e "${green}Your machine is ready to run the scaling service! You can run make run_scaling_service_localdevwithdb now to start developing."
 echo "Make sure to visit http://localhost:8080 and http://localhost:8082 to track the tables/relationships in the Hasura console."
+echo -e "In the future, simply run docker-compose up and the Hasura servers will be ready to use.${reset}"
