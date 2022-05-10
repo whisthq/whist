@@ -7,7 +7,12 @@ resource "aws_vpc" "MainVPC" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  tags = {
+  tags = var.env == "dev" ? {
+    Name      = "MainVPC${var.env}"
+    Env       = var.env
+    Terraform = true
+    Packer    = true
+  } : {
     Name      = "MainVPC${var.env}"
     Env       = var.env
     Terraform = true
@@ -23,7 +28,13 @@ resource "aws_subnet" "DefaultSubnet" {
   cidr_block              = var.cidr_block
   map_public_ip_on_launch = true
 
-  tags = {
+  tags = var.env == "dev" ? {
+    Name        = "DefaultSubnet${var.env}"
+    Description = "Default subnet for the MainVPC."
+    Env         = var.env
+    Terraform   = true
+    Packer      = true
+  } : {
     Name        = "DefaultSubnet${var.env}"
     Description = "Default subnet for the MainVPC."
     Env         = var.env
