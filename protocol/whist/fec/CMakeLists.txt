@@ -5,6 +5,7 @@ add_library(whistFEC STATIC
         lugi_rs_extra.c
         rs_wrapper.c
         fec.c
+        fec_controller.cpp
         )
 
 target_link_libraries(whistFEC whistFEC_cm256)

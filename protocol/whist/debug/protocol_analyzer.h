@@ -21,6 +21,7 @@ Includes
 
 #include <whist/network/network.h>
 #include <whist/network/ringbuffer.h>
+#include <whist/fec/fec_controller.h>
 
 /*
 ============================
@@ -72,6 +73,13 @@ void whist_analyzer_record_fec_used(int type, int id);
 
 // record a stream_reset, with the id as greatest_faild_id
 void whist_analyzer_record_stream_reset(int type, int id);
+
+// record current fec info
+void whist_analyzer_record_current_fec_info(int type, FECInfo *fec_info);
+
+// record current congestion control info
+void whist_analyzer_record_current_cc_info(int type, double packet_loss, double latency,
+                                           int bitrate, int incoming_bitrate);
 
 // only expose this function to c++
 #ifdef __cplusplus

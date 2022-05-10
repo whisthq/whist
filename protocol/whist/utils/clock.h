@@ -125,6 +125,17 @@ int current_time_str(char* buffer, size_t size);
  */
 timestamp_us current_time_us(void);
 
+/**
+ * @brief                          Get a comparable time in sec, which the meaning of time elapsed
+ *                                 since the process start.
+ *
+ * @returns                        Time in sec.
+ * @note                           Call this function after process start to init. First call inits
+ *                                 the timer inside and returns 0, others calls returns the time
+ *                                 since first call.
+ */
+double time_since_start(void);
+
 /** @} */
 
 #endif /* WHIST_UTILS_CLOCK_H */

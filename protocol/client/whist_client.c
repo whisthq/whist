@@ -47,6 +47,7 @@ Includes
 #include "renderer.h"
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
+#include <whist/fec/fec_controller.h>
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -391,6 +392,9 @@ int whist_client_main(int argc, const char* argv[]) {
         double connect_to_server_time = get_timer(&handshake_time);
         LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
         LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
+
+        // init or re-init the fec controller
+        fec_controller_init(time_since_start());
 
         // Create threads to receive udp/tcp packets and handle them as needed
         // Pass the whist_renderer so that udp packets can be fed into it

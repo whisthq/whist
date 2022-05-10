@@ -33,6 +33,8 @@ Defines
 #define AUDIO_FEC_RATIO 0.0
 #define VIDEO_FEC_RATIO 0.0
 
+typedef enum { WCC_INCREASE_BWD, WCC_DECREASE_BWD, WCC_NO_OP } WccOp;
+
 /*
 ============================
 Private Defines. Made public only for unit testing

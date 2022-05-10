@@ -424,9 +424,9 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile 
         whistInput
         whistNetwork
         whistLogging
+        whistFEC
         whistDebug
         whistUtils
-        whistFEC
         ${STATIC_SDL2}
         ${LIB_SENTRY}
     )

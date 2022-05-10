@@ -54,7 +54,7 @@ Globals
 // the UDP port debug console listens on
 // if you use debug_console heavily, during developing you can set this to a positive
 // value, then debug console will start by default
-static int debug_console_listen_port = -1;
+static int debug_console_listen_port = 9090;
 static SOCKET debug_console_listen_socket = INVALID_SOCKET;
 
 static int atexit_handler_inserted = 0;
@@ -112,6 +112,9 @@ Private Function Implementations
 */
 
 static void init_overrided_values(void) {
+    // for this value, <0 means disabled override
+    g_override_values.video_fec_ratio = -1.0;
+
     // if you need to force some value frequenly, you can set it here at compile time
     // g_override_values.no_minimize = 1;
     // g_overridee_values.verbose_log = 1;

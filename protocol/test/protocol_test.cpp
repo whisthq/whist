@@ -56,6 +56,7 @@ extern "C" {
 #include <whist/utils/command_line.h>
 #include <whist/fec/fec.h>
 #include <whist/fec/rs_wrapper.h>
+#include <whist/fec/fec_controller.h>
 #include "whist/utils/string_buffer.h"
 
 #include "whist/core/error_codes.h"
@@ -1989,6 +1990,8 @@ TEST_F(ProtocolTest, QueueTest) {
 }
 
 TEST_F(ProtocolTest, WCCTest) {
+    fec_controller_init(time_since_start());
+
     output_width = 1920;
     output_height = 1080;
     network_algo_set_dpi(192);

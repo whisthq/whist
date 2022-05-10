@@ -94,7 +94,10 @@ Public Function Implementations
 
 int init_fec(void) { return init_rs_wrapper(); }
 
-// num_fec_packets / (num_fec_packets + num_indices) = context->fec_packet_ratio
+double fec_ratio_to_fec_factor(double fec_ratio) { return 1.0 / (1.0 - fec_ratio); }
+
+double fec_factor_to_fec_ratio(double fec_times) { return (fec_times - 1.0) / fec_times; }
+
 // a / (a + b) = c
 // a = ac + bc
 // a(1-c) = bc
@@ -148,11 +151,26 @@ void fec_encoder_register_buffer(FECEncoder* fec_encoder, void* buffer, int buff
         return;
     }
 
+    // calculate the number of segments needed
+    int num_of_segments_needed = 0;
+    while (remaining_buffer_size > 0) {
+        int current_buffer_size =
+            min(remaining_buffer_size, fec_encoder->max_buffer_size - FEC_HEADER_SIZE);
+        num_of_segments_needed++;
+        remaining_buffer_size -= current_buffer_size;
+    }
+    FATAL_ASSERT(num_of_segments_needed == fec_encoder->num_real_buffers);
+    FATAL_ASSERT(remaining_buffer_size == 0);
+
+    remaining_buffer_size = buffer_size;
+
+    // evenly distribute the segment sizes
+    int expected_buffer_size = int_div_roundup(buffer_size, num_of_segments_needed);
+
     while (remaining_buffer_size > 0) {
         // If the buffer we were given is larger than max_buffer_size,
         // Then we split it up
-        int current_buffer_size =
-            min(remaining_buffer_size, fec_encoder->max_buffer_size - FEC_HEADER_SIZE);
+        int current_buffer_size = min(remaining_buffer_size, expected_buffer_size);
 
         // Check that we're not about to accept too many buffers,
         // and then pass the buffer segment into the list of buffer segments
