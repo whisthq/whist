@@ -1,4 +1,12 @@
-package hosts
+// Copyright (c) 2021-2022 Whist Technologies, Inc.
+
+/*
+Package aws implements the HostHandler interface and defines all necessary methods
+that launch, wait and manage instances using the EC2 service.
+This package uses the official AWS SDK for Go (https://github.com/aws/aws-sdk-go-v2).
+*/
+
+package aws
 
 import (
 	"context"

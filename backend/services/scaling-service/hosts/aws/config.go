@@ -1,4 +1,4 @@
-package hosts
+package aws
 
 import ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
