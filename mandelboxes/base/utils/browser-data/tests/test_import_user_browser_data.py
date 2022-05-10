@@ -372,8 +372,6 @@ leveldb_files = [
 @pytest.mark.parametrize("data_json,base_path,expected_files", leveldb_files)
 def test_write_leveldb_files(data_json, base_path, expected_files):
     base_path = os.path.expanduser(base_path)
-    os.makedirs(base_path, exist_ok=True)
-
     write_leveldb_data_to_files(base_path, data_json)
 
     # Check that the correct directory exists
@@ -383,3 +381,14 @@ def test_write_leveldb_files(data_json, base_path, expected_files):
         assert os.path.isfile(os.path.join(base_path, file_name))
         with open(os.path.join(base_path, file_name), "rb") as file:
             assert file.read() == file_content
+
+    # Check that LOG and LOCK files were successfully created in base dir
+    assert os.path.isfile(os.path.join(base_path, "LOG"))
+    assert os.path.isfile(os.path.join(base_path, "LOCK"))
+
+    # Check that LOG and LOCK files were successfully created in each subdir
+    assert os.path.isfile(os.path.join(base_path, "nested/LOG"))
+    assert os.path.isfile(os.path.join(base_path, "nested/LOCK"))
+
+    assert os.path.isfile(os.path.join(base_path, "nested/again/LOG"))
+    assert os.path.isfile(os.path.join(base_path, "nested/again/LOCK"))
