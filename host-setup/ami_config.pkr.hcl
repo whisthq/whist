@@ -26,7 +26,7 @@ variable "ami_name" {
   default = ""
 }
 
-variable "availability_zone" {
+variable "initial_region" {
   type    = string
   default = ""
 }
@@ -64,8 +64,6 @@ variable "mandelbox_logz_shipping_token" {
 
 /* 
  * Packer Builder configuration, using the variables from the `variable` configurations defined above.
- * Note that we manually specify availability_zone so that we can manually loop over all AZes Packer is 
- * configured for (i.e. zones with a subnet with tag `Purpose: packer`) in the `region`. 
 **/
 
 source "amazon-ebs" "Whist_AWS_AMI_Builder" {
@@ -87,7 +85,11 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   access_key  = "${var.access_key}"
   secret_key  = "${var.secret_key}"
-  region      = "us-east-1" # The source AWS region where the Packer Builder will run
+
+  # The source AWS region where the Packer Builder will run in. Since we specify this and manually
+  # loop over regions as needed (in case of insufficientCapacity errors), we don't need to specify
+  # an availability zone. Packer will chose the best availability zone for us.
+  region = "${var.initial_region}"
   
   # The max_retries is automatically set by Packer for longer-than-expected AWS tasks, which can sometime happen on AWS's side. This 
   # defaults to 40, which should be plenty, but if you need it to be longer for whatever reason, you can set it here.
@@ -107,10 +109,6 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   }
   associate_public_ip_address = true # Make new instances with this AMI get assigned a public IP address (necessary for SSH communication)
 
-  # We manually loop over all availabilitiy zones for the given region in CI, so that we can try all AZes
-  # in case there is no capacity in a given AZ.
-  availability_zone = "${var.availability_zone}"
-
   # spot_instance_types is a list of acceptable instance types to run your build on. We will request a spot
   # instance using the max price of spot_price and the allocation strategy of "lowest price". Your instance
   # will be launched on an instance type of the lowest available price that you have in your list. This is 
@@ -129,11 +127,19 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   iam_instance_profile = "PackerAMIBuilder" # This is the IAM role we configured for Packer in AWS
   shutdown_behavior    = "terminate"        # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
 
-  # The VPC where the Packer Builer will run. This VPC needs to be configured to run mandelboxes, so we use 
-  # MainVPCdev and the associated DefaultSubnetdev and MandelboxesSecurityGroupdev
-  vpc_id = "vpc-03a7ed0d3076fa64c"
-  subnet_id = "subnet-02865ffebdb591468"
-  security_group_id = "sg-01fb458379935c191"
+  # NOTE: This will fail unless exactly one Subnet is returned. Any filter described in the 
+  # docs for DescribeSubnets is valid.
+  # https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html
+  #
+  # This should return the subnet_id for DefaultSubnetdev, for any AWS region. We don't specify 
+  # the vpc_id since Packer can infer it automatically from the subnet_id. It should be MainVPCdev.
+  subnet_filter {
+    filters = {
+      "tag:Packer" = true
+    }
+    most_free = true
+    random = false
+  }
 
   /* Block Device configuration */
 
@@ -158,7 +164,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   run_tag {
     key   = "AMI Initial Region"
-    value = "us-east-1"
+    value = "${var.initial_region}"
   }
 
   run_tag {
