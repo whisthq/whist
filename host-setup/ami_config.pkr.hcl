@@ -164,7 +164,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   run_tag {
     key   = "AMI Initial Region"
-    value = "us-east-1"
+    value = "${var.initial_region}"
   }
 
   run_tag {
