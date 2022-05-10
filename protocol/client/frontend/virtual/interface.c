@@ -24,6 +24,15 @@ void* virtual_interface_get_handle_from_frame_ref(void* frame_ref) {
     return frame->data[3];
 }
 
+void virtual_interface_get_frame_ref_nv12_data(void* frame_ref, uint8_t*** data, int** linesize,
+                                               int* width, int* height) {
+    AVFrame* frame = frame_ref;
+    *data = frame->data;
+    *linesize = frame->linesize;
+    *width = frame->width;
+    *height = frame->height;
+}
+
 void virtual_interface_free_frame_ref(void* frame_ref) {
     AVFrame* frame = frame_ref;
     av_frame_free(&frame);

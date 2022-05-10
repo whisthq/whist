@@ -5,8 +5,8 @@ WhistStatus virtual_init(WhistFrontend* frontend, int width, int height, const c
                          const WhistRGBColor* color) {
     frontend->context = safe_malloc(sizeof(VirtualFrontendContext));
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
-    context->width = width ? width : 640;
-    context->height = height ? height : 480;
+    context->width = width ? width : 1920;
+    context->height = height ? height : 1080;
     context->dpi = 192;
     return WHIST_SUCCESS;
 }
@@ -96,8 +96,8 @@ void virtual_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
                               enum AVPixelFormat* format) {
     *device = NULL;
 #if defined(__APPLE__)
-    // for now i'm going to assume this always works
-    *format = AV_PIX_FMT_VIDEOTOOLBOX;
+        // AV_PIX_FMT_VIDEOTOOLBOX works but chrome doesn't know how to render it
+        *format = AV_PIX_FMT_NONE;
 #else
     *format = AV_PIX_FMT_NONE;
     // todo: figure out d3d11 here potentially
