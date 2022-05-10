@@ -131,23 +131,23 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   # docs for DescribeSubnets is valid.
   # https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html
   #
-  # This should return DefaultSubnetdev, for any AWS region. We don't specify the vpc_id since
-  # Packer can infer it automatically from the subnet_id. It should be MainVPCdev.
-  "subnet_filter": {
-    "filters": {
-      "tag:Packer": "True"
-    },
-    "most_free": true,
-    "random": false
+  # This should return the subnet_id for DefaultSubnetdev, for any AWS region. We don't specify 
+  # the vpc_id since Packer can infer it automatically from the subnet_id. It should be MainVPCdev.
+  subnet_filter {
+    filters = {
+      "tag:Packer" = true
+    }
+    most_free = true
+    random = false
   }
 
   # Any filter described in the docs for DescribeSecurityGroups is valid.
   # https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html
   #
-  # This should return MandelboxesSecurityGroupdev, for any AWS region
-  "security_group_filter": {
-    "filters": {
-      "group-name": "MandelboxesSecurityGroupdev"
+  # This should return the security_group_id for MandelboxesSecurityGroupdev, for any AWS region
+  security_group_filter {
+    filters = {
+      "group-name" = "MandelboxesSecurityGroupdev"
     }
   }
 
