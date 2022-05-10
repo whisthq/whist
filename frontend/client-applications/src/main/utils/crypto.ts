@@ -391,6 +391,18 @@ const getLocalStorageDir = (browser: InstalledBrowser): string[] => {
   )
 }
 
+const getExtensionStateDir = (browser: InstalledBrowser): string[] => {
+  const browserDirectories = getBrowserDefaultDirectory(browser)
+  return browserDirectories.map((dir) => path.join(dir, "Extension State"))
+}
+
+const getExtensionSettingsDir = (browser: InstalledBrowser): string[] => {
+  const browserDirectories = getBrowserDefaultDirectory(browser)
+  return browserDirectories.map((dir) =>
+    path.join(dir, "Local Extension Settings")
+  )
+}
+
 const createLocalCopy = (cookieFile: string): string => {
   if (fs.existsSync(cookieFile)) {
     const tmpFile = tmp.fileSync({ postfix: ".sqlite" })
@@ -543,37 +555,81 @@ const getBookmarksFromFile = (browser: InstalledBrowser): string => {
   }
 }
 
-const getLocalStorageFromFile = (browser: InstalledBrowser): string => {
-  const localStorageDir = expandPaths(getLocalStorageDir(browser))
-
+const readNestedLevelDbDir = async (
+  dirPath: string,
+  prefix: string
+): Promise<LocalStorageMap> => {
   try {
-    // We are only interested in .ldb, .log, CURRENT, and MANIFEST files
-    const relevantFiles = fs
-      .readdirSync(localStorageDir, { withFileTypes: true })
-      .filter(
-        (dirent) =>
-          dirent.isFile() &&
-          (path.extname(dirent.name) === ".ldb" ||
-            path.extname(dirent.name) === ".log" ||
-            dirent.name === "CURRENT" ||
-            dirent.name.startsWith("MANIFEST"))
-      )
-      .map((dirent) => dirent.name)
-
+    const relevantFiles: string[] = []
     const data: LocalStorageMap = {}
+
+    fs.readdirSync(dirPath, { withFileTypes: true }).forEach((dirent) => {
+      void (async () => {
+        if (dirent.isDirectory()) {
+          Object.assign(
+            data,
+            await readNestedLevelDbDir(
+              path.join(dirPath, dirent.name),
+              prefix === "" ? dirent.name : path.join(prefix, dirent.name)
+            )
+          )
+          return
+        }
+
+        if (!dirent.isFile()) {
+          return
+        }
+
+        // We are only interested in .ldb, .log, CURRENT, and MANIFEST files
+        if (
+          path.extname(dirent.name) === ".ldb" ||
+          path.extname(dirent.name) === ".log" ||
+          dirent.name === "CURRENT" ||
+          dirent.name.startsWith("MANIFEST")
+        ) {
+          relevantFiles.push(dirent.name)
+        }
+      })()
+    })
+
     for (const file of relevantFiles) {
-      const filePath = path.join(localStorageDir, file)
+      const filePath = path.join(dirPath, file)
+      const fileKey = prefix === "" ? file : path.join(prefix, file)
       const fileData = fs.readFileSync(filePath)
 
       // Base64 encode the binary file data so we can pass as JSON
-      data[file] = fileData.toString("base64")
+      data[fileKey] = fileData.toString("base64")
     }
 
-    return JSON.stringify(data)
+    return data
   } catch (err) {
     console.error("Could not get local storage from files. Error:", err)
-    return ""
+    return {}
   }
+}
+
+const getLocalStorageFromFiles = async (
+  browser: InstalledBrowser
+): Promise<string> => {
+  const localStorageDir = expandPaths(getLocalStorageDir(browser))
+  const data = await readNestedLevelDbDir(localStorageDir, "")
+  return JSON.stringify(data)
+}
+
+const getExtensionStateFromFiles = async (
+  browser: InstalledBrowser
+): Promise<string> => {
+  const extensionStateDir = expandPaths(getExtensionStateDir(browser))
+  const data = await readNestedLevelDbDir(extensionStateDir, "")
+  return JSON.stringify(data)
+}
+
+const getExtensionSettingsFromFiles = async (
+  browser: InstalledBrowser
+): Promise<string> => {
+  const extensionSettingsDir = expandPaths(getExtensionSettingsDir(browser))
+  const data = await readNestedLevelDbDir(extensionSettingsDir, "")
+  return JSON.stringify(data)
 }
 
 const getExtensionIDs = (browser: InstalledBrowser): string => {
@@ -613,6 +669,8 @@ export {
   decryptCookies,
   getBookmarksFromFile,
   getExtensionIDs,
-  getLocalStorageFromFile,
+  getLocalStorageFromFiles,
+  getExtensionSettingsFromFiles,
+  getExtensionStateFromFiles,
   getPreferencesFromFile,
 }

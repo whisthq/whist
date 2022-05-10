@@ -8,86 +8,12 @@ import {
   decryptCookies,
   getBookmarksFromFile,
   getExtensionIDs,
-  getLocalStorageFromFile,
+  getLocalStorageFromFiles,
+  getExtensionSettingsFromFiles,
+  getExtensionStateFromFiles,
   getPreferencesFromFile,
 } from "@app/main/utils/crypto"
 
-const readNestedLevelDbDir = async (
-  dirPath: string,
-  prefix: string
-): Promise<LocalStorageMap> => {
-  try {
-    const relevantFiles: string[] = []
-    const data: LocalStorageMap = {}
-
-    fs.readdirSync(dirPath, { withFileTypes: true }).forEach((dirent) => {
-      void (async () => {
-        if (dirent.isDirectory()) {
-          Object.assign(
-            data,
-            await readNestedLevelDbDir(
-              path.join(dirPath, dirent.name),
-              prefix === "" ? dirent.name : path.join(prefix, dirent.name)
-            )
-          )
-          return
-        }
-
-        if (!dirent.isFile()) {
-          return
-        }
-
-        // We are only interested in .ldb, .log, CURRENT, and MANIFEST files
-        if (
-          path.extname(dirent.name) === ".ldb" ||
-          path.extname(dirent.name) === ".log" ||
-          dirent.name === "CURRENT" ||
-          dirent.name.startsWith("MANIFEST")
-        ) {
-          relevantFiles.push(dirent.name)
-        }
-      })()
-    })
-
-    for (const file of relevantFiles) {
-      const filePath = path.join(dirPath, file)
-      const fileKey = prefix === "" ? file : path.join(prefix, file)
-      const fileData = fs.readFileSync(filePath)
-
-      // Base64 encode the binary file data so we can pass as JSON
-      data[fileKey] = fileData.toString("base64")
-    }
-
-    return data
-  } catch (err) {
-    console.error("Could not get local storage from files. Error:", err)
-    return {}
-  }
-}
-
-const getLocalStorageFromFiles = async (
-  browser: InstalledBrowser
-): Promise<string> => {
-  const localStorageDir = expandPaths(getLocalStorageDir(browser))
-  const data = await readNestedLevelDbDir(localStorageDir, "")
-  return JSON.stringify(data)
-}
-
-const getExtensionStateFromFiles = async (
-  browser: InstalledBrowser
-): Promise<string> => {
-  const extensionStateDir = expandPaths(getExtensionStateDir(browser))
-  const data = await readNestedLevelDbDir(extensionStateDir, "")
-  return JSON.stringify(data)
-}
-
-const getExtensionSettingsFromFiles = async (
-  browser: InstalledBrowser
-): Promise<string> => {
-  const extensionSettingsDir = expandPaths(getExtensionSettingsDir(browser))
-  const data = await readNestedLevelDbDir(extensionSettingsDir, "")
-  return JSON.stringify(data)
-}
 
 const getInstalledBrowsers = () => {
   return Object.keys(
@@ -181,12 +107,8 @@ const getLocalStorage = async (
     return undefined
   }
 
-<<<<<<< HEAD
-  const localStorage = getLocalStorageFromFile(browser)
-=======
   const localStorage = await getLocalStorageFromFiles(browser)
 
->>>>>>> 13a6c1dac (add await)
   if (localStorage.length === 0) return undefined
 
   return localStorage
