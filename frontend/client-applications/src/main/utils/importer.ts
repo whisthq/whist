@@ -14,7 +14,6 @@ import {
   getPreferencesFromFile,
 } from "@app/main/utils/crypto"
 
-
 const getInstalledBrowsers = () => {
   return Object.keys(
     pickBy(
