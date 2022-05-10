@@ -229,7 +229,7 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
     wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
 
     # Check the log to see if WhistServer shut down gracefully or if there was a server hang
-    pexpect_process.sendline("tail /var/log/whist/protocol-out.log")
+    pexpect_process.sendline("tail /usr/share/whist/server.log")
     server_mandelbox_output = wait_until_cmd_done(
         pexpect_process, ":/#", running_in_ci=True, return_output=True
     )

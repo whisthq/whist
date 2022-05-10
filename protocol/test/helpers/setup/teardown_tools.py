@@ -9,6 +9,7 @@ from helpers.whist_server_tools import (
 
 from helpers.common.pexpect_tools import (
     wait_until_cmd_done,
+    get_command_exit_code,
 )
 
 from helpers.common.ssh_tools import (
@@ -17,6 +18,7 @@ from helpers.common.ssh_tools import (
 
 from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
+    printyellow,
 )
 
 from helpers.aws.boto3_tools import (
@@ -30,6 +32,52 @@ from helpers.setup.network_tools import (
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
+SESSION_ID_LEN = 13
+
+
+def get_session_id(pexpect_process, role, session_id_filename="/whist/resourceMappings/session_id"):
+    """
+    Get the protocol session id (if it is set)
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn):  Server/client pexpect process - MUST BE AFTER DOCKER COMMAND WAS RUN - otherwise
+                                                    behavior is undefined
+        role (str): Controls whether to extract the `server` logs or the `client` logs
+        session_id_filename (str): The path to the file on the Docker container with the protocol session id
+
+    Returns:
+        On success:
+            session_id (str): The protocol session id
+        On failure:
+            empty string
+    """
+
+    pexpect_prompt = ":/#"  # Special shell prompt in Docker
+    # We set running_in_ci=True because the Docker bash does not print in color
+    # (check wait_until_cmd_done docstring for more details about handling color bash stdout)
+    running_in_ci = True
+
+    # Check if the session_id file exists
+    pexpect_process.sendline(f"test -f {session_id_filename}")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci=running_in_ci)
+    session_id_is_set = get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci) == 0
+
+    if not session_id_is_set:
+        print(f"{role} session id is not set")
+        return ""
+
+    pexpect_process.sendline(f'echo "$(cat {session_id_filename})"')
+    session_id_output = wait_until_cmd_done(
+        pexpect_process, pexpect_prompt, running_in_ci=running_in_ci, return_output=True
+    )
+    if len(session_id_output) != 3 or len(session_id_output[1]) != SESSION_ID_LEN:
+        print(session_id_output)
+        printyellow(f"Could not parse the {role} session id!")
+        return ""
+
+    print(f"{role} session ID: {session_id_output[1]}")
+    return session_id_output[1]
+
 
 def extract_logs_from_mandelbox(
     pexpect_process,
@@ -41,6 +89,7 @@ def extract_logs_from_mandelbox(
     timeout_value,
     perf_logs_folder_name,
     log_grabber_log,
+    session_id,
     running_in_ci,
     role,
 ):
@@ -66,6 +115,7 @@ def extract_logs_from_mandelbox(
                                         where to store the logs
         log_grabber_log (file): The file (already opened) to use for logging the terminal output from
                                 the shell process used to download the logs
+        session_id (str): The protocol session id (if set), or an empty string (otherwise)
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
         role (str): Controls whether to extract the `server` logs or the `client` logs
 
@@ -81,15 +131,15 @@ def extract_logs_from_mandelbox(
         "/usr/share/whist/teleport.log",
         "/usr/share/whist/display.log",
         # Var Logs!
-        "/var/log/whist/audio-err.log",
-        "/var/log/whist/audio-out.log",
-        "/var/log/whist/display-err.log",
-        "/var/log/whist/display-out.log",
+        os.path.join("/var/log/whist", session_id, "audio-err.log"),
+        os.path.join("/var/log/whist", session_id, "audio-out.log"),
+        os.path.join("/var/log/whist", session_id, "display-err.log"),
+        os.path.join("/var/log/whist", session_id, "display-out.log"),
         "/var/log/whist/entry-err.log",
         "/var/log/whist/entry-out.log",
         "/var/log/whist/update_xorg_conf-err.log",
         "/var/log/whist/update_xorg_conf-out.log",
-        "/var/log/whist/protocol-err.log",
+        os.path.join("/var/log/whist", session_id, "protocol-err.log"),
         # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
         "/var/log/whist/simulated_scrolling.log",
     ]
@@ -235,7 +285,12 @@ def complete_experiment_and_save_results(
 
     timestamps.add_event("Restoring un-degraded network conditions")
 
-    # 2- Quit the server and check whether it shuts down gracefully or whether it hangs
+    # 2 - Extracting the session IDs, if they are set
+    server_session_id = get_session_id(server_mandelbox_pexpect_process, "server")
+    client_session_id = get_session_id(client_mandelbox_pexpect_process, "client")
+    timestamps.add_event("Extracting protocol session IDs")
+
+    # 3- Quit the server and check whether it shuts down gracefully or whether it hangs
     server_hang_detected = False
     server_shutdown_desired_message = "Both whist-application and WhistServer have exited."
     if shutdown_and_wait_server_exit(
@@ -248,7 +303,7 @@ def complete_experiment_and_save_results(
 
     timestamps.add_event("Shutting down the server and checking for potential server hang")
 
-    # 3- Extract the client/server protocol logs from the two Docker containers
+    # 4- Extract the client/server protocol logs from the two Docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
 
     log_grabber_server_process = attempt_ssh_connection(
@@ -281,6 +336,7 @@ def complete_experiment_and_save_results(
         aws_timeout_seconds,
         perf_logs_folder_name,
         server_log,
+        server_session_id,
         running_in_ci,
         role="server",
     )
@@ -294,13 +350,14 @@ def complete_experiment_and_save_results(
         aws_timeout_seconds,
         perf_logs_folder_name,
         client_log,
+        client_session_id,
         running_in_ci,
         role="client",
     )
 
     timestamps.add_event("Extracting the mandelbox logs")
 
-    # 4- Clean up the instance(s) by stopping all docker containers and quitting the host-service.
+    # 5- Clean up the instance(s) by stopping all docker containers and quitting the host-service.
     # Exit the server/client mandelboxes
     server_mandelbox_pexpect_process.sendline("exit")
     wait_until_cmd_done(server_mandelbox_pexpect_process, pexpect_prompt_server, running_in_ci)
@@ -329,13 +386,13 @@ def complete_experiment_and_save_results(
     if use_two_instances:
         log_grabber_client_process.kill(0)
 
-    # 5- Close all the log files
+    # 6- Close all the log files
     server_log.close()
     client_log.close()
 
     timestamps.add_event("Stopping all containers and closing connections to the instance(s)")
 
-    # 6- Stop or terminate the AWS EC2 instance(s)
+    # 7- Stop or terminate the AWS EC2 instance(s)
     if leave_instances_on == "false":
         # Terminate or stop AWS instance(s)
         terminate_or_stop_aws_instance(
@@ -358,10 +415,10 @@ def complete_experiment_and_save_results(
 
     timestamps.add_event("Stopping/terminating instance(s)")
 
-    # 7- Delete the cleanup todo-list, because we already completed it.
+    # 8- Delete the cleanup todo-list, because we already completed it.
     # os.remove("instances_to_remove.txt")
 
-    # 8- Check if either of the WhistServer/WhistClient failed to start, or whether the client failed
+    # 9- Check if either of the WhistServer/WhistClient failed to start, or whether the client failed
     # to connect to the server. If so, add the error to the metadata, and exit with an error code (-1).
 
     # The server_metrics_file (server.log) and the client_metrics_file (client.log) fail to exist if
@@ -380,14 +437,14 @@ def complete_experiment_and_save_results(
         server_hang_detected and not experiment_metadata["server_failure"]
     )
 
-    # 9- Update metadata file with any new metadata that we added
+    # 10- Update metadata file with any new metadata that we added
     with open(metadata_filename, "w") as metadata_file:
         json.dump(experiment_metadata, metadata_file)
 
-    # 10- Print time breakdown of the experiment
+    # 11- Print time breakdown of the experiment
     timestamps.print_timestamps()
 
-    # 10- Print error message and exit with error if needed
+    # 12- Print error message and exit with error if needed
     for cause, message in {
         "server_failure": "Failed to run WhistServer",
         "client_failure": "Failed to run WhistClient",
