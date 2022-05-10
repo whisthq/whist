@@ -98,7 +98,7 @@ jobs:
           data["destination_regions"] = ["us-east-1"]
 
           # List all AWS regions we support
-          aws_regions = [
+          supported_aws_regions = [
             "us-east-1",
             "us-east-2",
             "us-west-1",
@@ -127,7 +127,7 @@ jobs:
           # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
           # regions). We could eventually also manually loop over availability zones, but this is probably not necessary as 
           # Packer will attempt to autoassign the most optimal availibity zone for the Packer instance.
-          for aws_region in aws_regions:
+          for aws_region in supported_aws_regions:
             data["initial_region"] = aws_region
 
             # Write the generated Packer variables to a file

@@ -496,7 +496,7 @@ jobs:
           data["ami_name"] = f"whist-ami-${{ needs.whist-publish-build-config.outputs.branch }}-${{ github.sha }}-{date_str}"
 
           # List all AWS regions we support
-          aws_regions = [
+          supported_aws_regions = [
             "us-east-1",
             "us-east-2",
             "us-west-1",
@@ -527,7 +527,7 @@ jobs:
           # all regions we support, defined as a string of comma-separated values (no spaces) as required by Packer.
           if data["git_branch"] == "prod":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}"
-            data["destination_regions"] = aws_regions
+            data["destination_regions"] = supported_aws_regions
           elif data["git_branch"] == "staging":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_STAGING }}"
             data["destination_regions"] = ["us-east-1"]
@@ -541,7 +541,7 @@ jobs:
           # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
           # regions). We could eventually also manually loop over availability zones, but this is probably not necessary as 
           # Packer will attempt to autoassign the most optimal availibity zone for the Packer instance.
-          for aws_region in aws_regions:
+          for aws_region in supported_aws_regions:
             data["initial_region"] = aws_region
 
             # Write the generated Packer variables to a file
