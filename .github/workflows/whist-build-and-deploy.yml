@@ -523,8 +523,7 @@ jobs:
 
           # Set Logz.io shipping token and regions to which to deploy the new AMI based on the environment.
           # For internal environments (dev, staging), we only clone our new AMI to us-east-1 and us-west-1, to save on
-          # costs since we don't have/need test users in other regions. data["destination_regions"] should be a list of
-          # all regions we support, defined as a string of comma-separated values (no spaces) as required by Packer.
+          # costs since we don't have/need test users in other regions.
           if data["git_branch"] == "prod":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}"
             data["destination_regions"] = supported_aws_regions
@@ -560,7 +559,7 @@ jobs:
             # If you need to debug Packer, add `PACKER_LOG=1` before `packer build ...` in the subprocess.run command
             subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
-            # If Packer succeeds, it will create `manifest.json`, which is our cue to stop trying other AZes
+            # If Packer succeeds, it will create `manifest.json`, which is our cue to stop trying other regions
             if os.path.exists("manifest.json"):
               print("Packer succeeded, exiting AWS Regions zones loop...")
               break

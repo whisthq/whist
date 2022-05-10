@@ -93,8 +93,7 @@ jobs:
           data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
 
           # For testing, we only clone our new AMI  to one region, us-east-1, to save time in CI. In deployments,
-          # data["destination_regions"] should be a list of all AWS regions we support, defined as a string of 
-          # comma-separated values (no spaces) as required by Packer
+          # data["destination_regions"] should be a list of all AWS regions we support
           data["destination_regions"] = ["us-east-1"]
 
           # List all AWS regions we support
@@ -146,12 +145,12 @@ jobs:
             # If you need to debug Packer, add `PACKER_LOG=1` before `packer build ...` in the subprocess.run command
             subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
-            # If Packer succeeds, it will create `manifest.json`, which is our cue to stop trying other AZes
+            # If Packer succeeds, it will create `manifest.json`, which is our cue to stop trying other regions
             if os.path.exists("manifest.json"):
               print("Packer succeeded, exiting AWS Regions zones loop...")
               break
             
-          # Assert that `manifest.json` exists after looping over all Aws Regions to fail the workflow in the event that 
+          # Assert that `manifest.json` exists after looping over all AWS Regions to fail the workflow in the event that 
           # we couldn't get capacity in any of the AWS regions
           assert os.path.exists("manifest.json")
 
