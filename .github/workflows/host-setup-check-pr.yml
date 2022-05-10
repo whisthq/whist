@@ -93,21 +93,40 @@ jobs:
           data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
 
           # For testing, we only clone our new AMI  to one region, us-east-1, to save time in CI. In deployments,
-          # data["destination_regions"] should be a list of all regions we support, defined as a string of comma-separated
+          # data["destination_regions"] should be a list of all AWS regions, defined as a string of comma-separated
           # values (no spaces) as required by Packer
           data["destination_regions"] = ["us-east-1"]
 
-          # Packer isn't able to loop over Availability Zones (AZes) by itself. This means that if we specify
-          # us-east-1 as the region (which has availability zones `a` through `f`), Packer will randomly
-          # pick one and attempt to run there, failing if there is no capacity in that AZ (even if there
-          # is capacity in other AZes). To work around this, we need to loop over all AZs ourselves, until
-          # one of them has capacity (only returning an error if there is no capacity in any of the AZes).
-          # We go alphabetically, since earlier AZes are larger and more likely to have capacity.
-          #
-          # TODO: Re-enable looping over regions (disabled after converting to Terraform VPC, for simplicity
-          # and because that feature did not seem to make Packer succeed meaningfully more when capacity is scarce)
-          for a_zone in ["us-east-1a"]:
-            data["availability_zone"] = a_zone
+          # Packer isn't able to loop over AWS Regions by itself.To work around this, we need to loop over all AWS regions
+          # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
+          # regions). We could eventually also manually loop over availability zones, but this is probably not necessary as 
+          # Packer will attempt to autoassign the most optimal availibity zone for the Packer instance.
+          aws_regions = [
+            "us-east-1",
+            "us-east-2",
+            "us-west-1",
+            "us-west-2",
+            "ca-central-1",
+            "sa-east-1",
+            "eu-north-1",
+            "eu-south-1",
+            "eu-west-1",
+            "eu-west-2",
+            "eu-west-3",
+            "eu-central-1",
+            "me-south-1",
+            "ap-east-1",
+            "ap-south-1",
+            "ap-southeast-1",
+            "ap-southeast-2",
+            "ap-southeast-3",
+            "ap-northeast-1",
+            "ap-northeast-2",
+            "ap-northeast-3",
+            "af-south-1",
+          ]
+          for aws_region in aws_regions:
+            data["initial_region"] = aws_region
 
             # Write the generated Packer variables to a file
             fp = open("packer_vars.json", "w")
@@ -127,11 +146,11 @@ jobs:
 
             # If Packer succeeds, it will create `manifest.json`, which is our cue to stop trying other AZes
             if os.path.exists("manifest.json"):
-              print("Packer succeeded, exiting availability zones loop...")
+              print("Packer succeeded, exiting AWS Regions zones loop...")
               break
             
           # Assert that `manifest.json` exists after looping over all AZes to fail the workflow in the event that 
-          # we couldn't get capacity in any of the availability zones
+          # we couldn't get capacity in any of the AWS regions
           assert os.path.exists("manifest.json")
 
           # Print Packer output for debugging purposes, since this data is used in the next step of the 
