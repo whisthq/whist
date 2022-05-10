@@ -129,35 +129,29 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   iam_instance_profile = "PackerAMIBuilder" # This is the IAM role we configured for Packer in AWS
   shutdown_behavior    = "terminate"        # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
 
-
-
-  # The VPC where the Packer Builer will run. This VPC needs to be configured to run mandelboxes, so we use 
-  # MainVPCdev and the associated DefaultSubnetdev and MandelboxesSecurityGroupdev
-  vpc_id = "vpc-03a7ed0d3076fa64c"
-  subnet_id = "subnet-02865ffebdb591468"
-
-
-
-
+  # NOTE: This will fail unless exactly one Subnet is returned. Any filter described in the 
+  # docs for DescribeSubnets is valid.
+  # https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html
+  #
+  # This should return DefaultSubnetdev, for any AWS region. We don't specify the vpc_id since
+  # Packer can infer it automatically from the subnet_id. It should be MainVPCdev.
   "subnet_filter": {
     "filters": {
-      "tag:Class": "build"
+      "tag:Packer": "True"
     },
     "most_free": true,
     "random": false
   }
 
-
-
   # Any filter described in the docs for DescribeSecurityGroups is valid.
   # https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html
+  #
+  # This should return MandelboxesSecurityGroupdev, for any AWS region
   "security_group_filter": {
     "filters": {
       "group-name": "MandelboxesSecurityGroupdev"
     }
   }
-
-
 
   /* Block Device configuration */
 
