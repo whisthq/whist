@@ -315,16 +315,14 @@ def complete_experiment_and_save_results(
         running_in_ci,
     )
 
-    log_grabber_client_process = log_grabber_server_process
-    if use_two_instances:
-        log_grabber_client_process = attempt_ssh_connection(
-            client_ssh_cmd,
-            aws_timeout_seconds,
-            client_log,
-            pexpect_prompt_client,
-            ssh_connection_retries,
-            running_in_ci,
-        )
+    log_grabber_client_process = attempt_ssh_connection(
+        client_ssh_cmd,
+        aws_timeout_seconds,
+        client_log,
+        pexpect_prompt_client,
+        ssh_connection_retries,
+        running_in_ci,
+    )
 
     extract_logs_from_mandelbox(
         log_grabber_server_process,
@@ -383,8 +381,7 @@ def complete_experiment_and_save_results(
     server_mandelbox_pexpect_process.kill(0)
     client_mandelbox_pexpect_process.kill(0)
     log_grabber_server_process.kill(0)
-    if use_two_instances:
-        log_grabber_client_process.kill(0)
+    log_grabber_client_process.kill(0)
 
     # 6- Close all the log files
     server_log.close()
