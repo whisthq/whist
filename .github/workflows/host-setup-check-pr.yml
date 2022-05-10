@@ -97,10 +97,7 @@ jobs:
           # values (no spaces) as required by Packer
           data["destination_regions"] = ["us-east-1"]
 
-          # Packer isn't able to loop over AWS Regions by itself.To work around this, we need to loop over all AWS regions
-          # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
-          # regions). We could eventually also manually loop over availability zones, but this is probably not necessary as 
-          # Packer will attempt to autoassign the most optimal availibity zone for the Packer instance.
+          # List all AWS regions we support
           aws_regions = [
             "us-east-1",
             "us-east-2",
@@ -125,6 +122,11 @@ jobs:
             "ap-northeast-3",
             "af-south-1",
           ]
+
+          # Packer isn't able to loop over AWS Regions by itself.To work around this, we need to loop over all AWS regions
+          # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
+          # regions). We could eventually also manually loop over availability zones, but this is probably not necessary as 
+          # Packer will attempt to autoassign the most optimal availibity zone for the Packer instance.
           for aws_region in aws_regions:
             data["initial_region"] = aws_region
 
@@ -149,7 +151,7 @@ jobs:
               print("Packer succeeded, exiting AWS Regions zones loop...")
               break
             
-          # Assert that `manifest.json` exists after looping over all AZes to fail the workflow in the event that 
+          # Assert that `manifest.json` exists after looping over all Aws Regions to fail the workflow in the event that 
           # we couldn't get capacity in any of the AWS regions
           assert os.path.exists("manifest.json")
 
