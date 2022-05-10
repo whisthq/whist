@@ -270,14 +270,20 @@ def test_create_bookmark_file(browser, browser_bookmark_path):
     os.remove(bookmark_file)
 
 
-def test_extension_file():
-    extension = "not_real_extension"
-    create_extension_files(extension, "./tests/install-extension.sh")
+extensions = [
+    "testextension",
+    "testextension1,testextension2",
+]
+
+
+@pytest.mark.parametrize("extensions", extensions)
+def test_extension_file(extensions):
+    create_extension_files(extensions)
 
     # Check if file is created from script
-    assert os.path.isfile(f"./{extension}.json")
-
-    os.remove(f"./{extension}.json")
+    for extension in extensions.split(","):
+        assert os.path.isfile(f"/opt/google/chrome/extensions/{extension}.json")
+        os.remove(f"/opt/google/chrome/extensions/{extension}.json")
 
 
 browser_preferences = [

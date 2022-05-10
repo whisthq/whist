@@ -86,9 +86,6 @@ RUN mkdir -p /home/whist/.config/google-chrome \
     && touch /home/whist/.config/google-chrome/'First Run' \
     && chown whist:whist /home/whist/.config/google-chrome{,/'First Run'}
 
-# Script to install Chrome extensions
-COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh
-
 # Install Whist wrapper script to run Google Chrome into /usr/bin
 ENV WHIST_DEST_BROWSER="chrome"
 COPY start-chrome.sh /usr/bin/start-chrome

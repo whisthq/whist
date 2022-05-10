@@ -136,12 +136,6 @@ type Mandelbox interface {
 	// Backup the user configs to S3
 	BackupUserConfigs() error
 
-	// Gets the previously imported extensions saved in the user configs.
-	GetSavedExtensions() []string
-
-	// Writes the given extensions to user configs.
-	WriteSavedExtensions([]string) error
-
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context
 

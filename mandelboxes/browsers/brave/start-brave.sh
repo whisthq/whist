@@ -140,7 +140,9 @@ echo "loaded d-bus address in start-brave.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Start lowercase-files script
 # This allows chromium themes to work more consistently
-/usr/bin/lowercase-chromium-files "BraveSoftware" &
+# TODO: Re-enable this once we've found a way for this to enable Chrome themes
+# without breaking extension importing
+# /usr/bin/lowercase-chromium-files "BraveSoftware" &
 
 # Start Brave with the KDE desktop environment
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround brave://flags features

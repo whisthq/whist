@@ -130,7 +130,6 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 			logger.Errorf("Failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
 		}
 	}
-
 }
 
 // Handle tasks to be completed when a mandelbox dies

@@ -276,19 +276,30 @@ def create_bookmark_file(target_browser_name, bookmarks_json, custom_bookmark_fi
         json.dump(bookmarks_json, browser_bookmark_file)
 
 
-def create_extension_files(extensions, custom_script=None):
+def create_extension_file(base_path, extension):
+    # Create directories if it does not exist
+    if not os.path.exists(base_path):
+        os.makedirs(base_path)
+
+    with open(os.path.join(base_path, extension + ".json"), "w") as extension_file:
+        extension_file.write(
+            '{"external_update_url": "https://clients2.google.com/service/update2/crx"}'
+        )
+
+
+def create_extension_files(extensions, custom_path=None):
     """
     Creates extension files with the help of a given script
     Args:
         extensions (str): comma separated list of extensions in a form of a string
-        custom_script (str): [optional] script that helps create extension file
+        custom_path (str): [optional] path to target browser extension file directory
     """
-    # Use custom script path if not None
-    extension_install_script = custom_script if custom_script else "/usr/bin/install-extension.sh"
+    # Use custom path if not None
+    extension_install_path = custom_path if custom_path else "/opt/google/chrome/extensions"
 
     # Install extensions one by one
     for extension in extensions.split(","):
-        subprocess.run([extension_install_script, extension])
+        create_extension_file(extension_install_path, extension)
 
 
 def create_preferences_file(target_browser_name, preferences, custom_preferences_file_path=None):

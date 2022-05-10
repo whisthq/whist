@@ -4,7 +4,6 @@ import (
 	"context"
 	"path"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -409,17 +408,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		logger.Error(err)
 	}
 
-	// Read any existing imported extensions
-	savedExtensions := mandelbox.GetSavedExtensions()
-
-	// If the new request contains additional imported extensions, add them to the existing list
-	if len(req.Extensions) > 0 {
-		savedExtensions = configutils.UpdateImportedExtensions(savedExtensions, req.Extensions)
-		if err = mandelbox.WriteSavedExtensions(savedExtensions); err != nil {
-			logger.Errorf("Error writing imported extensions for mandelbox %s: %s", mandelbox.GetID(), err)
-		}
-	}
-
 	// Unmarshal bookmarks into proper format
 	var importedBookmarks configutils.Bookmarks
 	if len(req.BookmarksJSON) > 0 {
@@ -435,7 +423,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	err = mandelbox.WriteUserInitialBrowserData(mandelboxData.BrowserData{
 		CookiesJSON:  req.CookiesJSON,
 		Bookmarks:    &importedBookmarks,
-		Extensions:   mandelboxtypes.Extensions(strings.Join(savedExtensions, ",")),
+		Extensions:   req.Extensions,
 		Preferences:  req.Preferences,
 		LocalStorage: req.LocalStorageJSON,
 	})
