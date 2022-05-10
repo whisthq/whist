@@ -141,16 +141,6 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
     random = false
   }
 
-  # Any filter described in the docs for DescribeSecurityGroups is valid.
-  # https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html
-  #
-  # This should return the security_group_id for MandelboxesSecurityGroupdev, for any AWS region
-  security_group_filter {
-    filters = {
-      "group-name" = "MandelboxesSecurityGroupdev"
-    }
-  }
-
   /* Block Device configuration */
 
   launch_block_device_mappings {
