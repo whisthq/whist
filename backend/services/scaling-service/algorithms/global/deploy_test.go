@@ -128,3 +128,41 @@ func TestDeploy(t *testing.T) {
 		t.Errorf("Swapover did not insert the correct images to database. Expected %v, got %v", expectedImages, testImages)
 	}
 }
+
+// Helper functions
+
+// We need to use a custom compare function to compare protectedFromScaleDown maps
+// because the `UpdatedAt` is a timestamp set with `time.Now`.
+func compareProtectedMaps(a map[string]subscriptions.Image, b map[string]subscriptions.Image) bool {
+	var equal bool
+
+	if (len(a) == 0) && (len(b) == 0) {
+		equal = true
+	}
+
+	for k, v := range a {
+		for s, i := range b {
+			if k != s {
+				break
+			}
+			i.UpdatedAt = v.UpdatedAt
+			equal = reflect.DeepEqual(v, i)
+		}
+	}
+
+	return equal
+}
+
+// We need to use a custom compare function to compare WhistImages objects
+// because the `UpdatedAt` is a timestamp set with `time.Now`.
+func compareWhistImages(a subscriptions.WhistImages, b subscriptions.WhistImages) bool {
+	var equal bool
+	for _, v := range a {
+		for _, i := range b {
+			i.UpdatedAt = v.UpdatedAt
+			equal = reflect.DeepEqual(v, i)
+		}
+	}
+
+	return equal
+}

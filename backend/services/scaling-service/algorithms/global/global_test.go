@@ -236,6 +236,14 @@ func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLCli
 	return len(testMandelboxes), nil
 }
 
+func (db *mockDBClient) QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistMandelboxes, error) {
+	return testMandelboxes, nil
+}
+
+func (db *mockDBClient) UpdateMandelbox(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Mandelbox) (int, error) {
+	return 0, nil
+}
+
 // mockHostHandler is used to test all interactions with cloud providers
 type mockHostHandler struct{}
 

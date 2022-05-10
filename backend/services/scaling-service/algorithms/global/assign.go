@@ -3,7 +3,6 @@ package global
 import (
 	"context"
 	"net"
-	"time"
 
 	"github.com/google/uuid"
 	hashicorp "github.com/hashicorp/go-version"
@@ -213,25 +212,34 @@ func (s *GlobalScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, eve
 		return msg
 	}
 
-	mandelboxID, err := uuid.NewRandom()
+	// Try to find a mandelbox in the WAITING status in the assigned instance.
+	mandelboxResult, err := s.DBClient.QueryMandelbox(scalingCtx, s.GraphQLClient, assignedInstance.ID, "WAITING")
 	if err != nil {
-		return utils.MakeError("failed to create a mandelbox id. Err: %v", err)
+		return utils.MakeError("failed to query database for mandelbox on instance %s. Err: %v", assignedInstance.ID, err)
 	}
 
-	mandelboxesForDb := []subscriptions.Mandelbox{
-		{
-			ID:         types.MandelboxID(mandelboxID),
-			App:        "CHROME",
-			InstanceID: assignedInstance.ID,
-			UserID:     mandelboxRequest.UserID,
-			SessionID:  utils.Sprintf("%v", mandelboxRequest.SessionID),
-			Status:     "ALLOCATED",
-			CreatedAt:  time.Now(),
-		},
+	if len(mandelboxResult) == 0 {
+		return utils.MakeError("failed to find a waiting mandelbox even though the instance %v had sufficient capacity.", assignedInstance.ID)
 	}
 
-	// Allocate mandelbox on database, this will start the mandelbox inside the assigned instance
-	affectedRows, err := s.DBClient.InsertMandelboxes(scalingCtx, s.GraphQLClient, mandelboxesForDb)
+	waitingMandelbox := mandelboxResult[0]
+	mandelboxID, err := uuid.Parse(string(waitingMandelbox.ID))
+	if err != nil {
+		return utils.MakeError("failed to parse mandelbox id for instance %v. Err: %v", assignedInstance.ID, err)
+	}
+
+	mandelboxForDb := subscriptions.Mandelbox{
+		ID:         types.MandelboxID(mandelboxID),
+		App:        string(waitingMandelbox.App),
+		InstanceID: assignedInstance.ID,
+		UserID:     mandelboxRequest.UserID,
+		SessionID:  utils.Sprintf("%v", mandelboxRequest.SessionID),
+		Status:     "ALLOCATED",
+		CreatedAt:  waitingMandelbox.CreatedAt,
+	}
+
+	// Allocate mandelbox on database so the host service can start downloading user configs
+	affectedRows, err := s.DBClient.UpdateMandelbox(scalingCtx, s.GraphQLClient, mandelboxForDb)
 	if err != nil {
 		return utils.MakeError("error while inserting mandelbox to database. Err: %v", err)
 	}
