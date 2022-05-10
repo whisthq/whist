@@ -93,8 +93,8 @@ jobs:
           data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
 
           # For testing, we only clone our new AMI  to one region, us-east-1, to save time in CI. In deployments,
-          # data["destination_regions"] should be a list of all AWS regions, defined as a string of comma-separated
-          # values (no spaces) as required by Packer
+          # data["destination_regions"] should be a list of all AWS regions we support, defined as a string of 
+          # comma-separated values (no spaces) as required by Packer
           data["destination_regions"] = ["us-east-1"]
 
           # List all AWS regions we support
@@ -123,7 +123,7 @@ jobs:
             "af-south-1",
           ]
 
-          # Packer isn't able to loop over AWS Regions by itself.To work around this, we need to loop over all AWS regions
+          # Packer isn't able to loop over AWS Regions by itself. To work around this, we need to loop over all AWS regions
           # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
           # regions). We could eventually also manually loop over availability zones, but this is probably not necessary as 
           # Packer will attempt to autoassign the most optimal availibity zone for the Packer instance.

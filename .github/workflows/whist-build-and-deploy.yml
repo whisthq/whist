@@ -537,7 +537,7 @@ jobs:
           else:
             raise Exception(f"Invalid environment/git branch: {data['git_branch']}")
 
-          # Packer isn't able to loop over AWS Regions by itself.To work around this, we need to loop over all AWS regions
+          # Packer isn't able to loop over AWS Regions by itself. To work around this, we need to loop over all AWS regions
           # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
           # regions). We could eventually also manually loop over availability zones, but this is probably not necessary as 
           # Packer will attempt to autoassign the most optimal availibity zone for the Packer instance.
