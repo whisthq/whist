@@ -283,9 +283,13 @@ def run_host_setup(
         host_setup_output = wait_until_cmd_done(
             pexpect_process, pexpect_prompt, running_in_ci, return_output=True
         )
+        host_setup_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci)
 
         # 3 - Check if the setup succeeded or report reason for failure
-        if expression_in_pexpect_output(success_msg, host_setup_output):
+        if (
+            expression_in_pexpect_output(success_msg, host_setup_output)
+            or host_setup_exit_code == 0
+        ):
             print("Finished running the host setup script on the EC2 instance")
             break
         elif expression_in_pexpect_output(lock_error_msg, host_setup_output):
@@ -294,17 +298,13 @@ def run_host_setup(
             printyellow("Host setup failed due to dpkg interruption error. Reconfiguring dpkg....")
             pexpect_process.sendline("sudo dpkg --force-confdef --configure -a ")
             wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        elif (
+            host_setup_exit_code == TIMEOUT_EXIT_CODE
+            or host_setup_exit_code == TIMEOUT_KILL_EXIT_CODE
+        ):
+            printyellow(f"Host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s!")
         else:
-            host_setup_exit_code = get_command_exit_code(
-                pexpect_process, pexpect_prompt, running_in_ci
-            )
-            if (
-                host_setup_exit_code == TIMEOUT_EXIT_CODE
-                or host_setup_exit_code == TIMEOUT_KILL_EXIT_CODE
-            ):
-                printyellow(f"Host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s!")
-            else:
-                printyellow("Host setup failed for unspecified reason (check the logs)!")
+            printyellow("Host setup failed for unspecified reason (check the logs)!")
 
         if retry == SETUP_MAX_RETRIES - 1:
             exit_with_error(f"Host setup failed {SETUP_MAX_RETRIES} times. Giving up now!")
