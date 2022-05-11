@@ -748,12 +748,9 @@ COPY --from=build-assets fonts/* /usr/local/share/fonts/
 
 
 RUN \
-    mkdir -p /home/whist/.themes \
+    mkdir -p /usr/share/themes \
     && git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git && cd WhiteSur-gtk-theme \
-    && /bin/bash install.sh 
-    
-    
-#--dest /home/whist/.themes 
+    && /bin/bash install.sh --dest /usr/share/themes
 
 #&& rm -rf /WhiteSur-gtk-theme
 
