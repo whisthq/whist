@@ -171,7 +171,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device(void) {
      */
     NVFBC_TOCUDA_SETUP_PARAMS setup_params = {0};
     setup_params.dwVersion = NVFBC_TOCUDA_SETUP_PARAMS_VER;
-    setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
+    setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_BGRA;
 
     status = device->p_fbc_fn.nvFBCToCudaSetUp(device->fbc_handle, &setup_params);
     if (status != NVFBC_SUCCESS) {
