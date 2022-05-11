@@ -750,7 +750,8 @@ RUN mkdir -p /home/whist/.themes \
     && wget -q https://github.com/vinceliuice/WhiteSur-gtk-theme/archive/refs/tags/2022-02-21.tar.gz \
     && tar -xzf 2022-02-21.tar.gz \
     && cd WhiteSur-gtk-theme-2022-02-21/release \
-    && tar -xzf WhiteSur-light-40-0.tar.xz -C /home/whist/.themes \
+    && tar -xf WhiteSur-light-40-0.tar.xz \
+    && mv WhiteSur-light /home/whist/.themes \
     && cd ../.. && rm -rf WhiteSur-gtk-theme-2022-02-21 2022-02-21.tar.gz
 
 # Install WhiteSur cursor and icons, for macOS-like theming
