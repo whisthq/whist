@@ -4,7 +4,7 @@ import os, sys, json, time, argparse, multiprocessing
 import boto3
 
 from helpers.aws.boto3_tools import (
-    create_or_start_aws_instance,
+    get_client_and_instances,
     get_instance_ip,
 )
 
@@ -79,8 +79,10 @@ parser.add_argument(
 
 parser.add_argument(
     "--region-name",
-    help="The AWS region to use for testing. If you are looking to re-use an instance for the client and/or server, \
-    the instance(s) must live on the region passed to this parameter.",
+    help="The AWS region to use for testing. Passing an empty string will let the script run the test on any \
+    region with space available for the new instance(s). If you are looking to re-use an instance for the client \
+    and/or server, the instance(s) must live on the region passed to this parameter. If you pass an empty string, \
+    the key-pair that you pass must be valid on all AWS regions.",
     type=str,
     choices=[
         "us-east-1",
@@ -105,11 +107,11 @@ parser.add_argument(
         "eu-north-1",
         "sa-east-1",
     ],
-    default="us-east-1",
+    default="",
 )
 
 parser.add_argument(
-    "--use-existing-server-instance",
+    "--existing-server-instance-id",
     help="The instance ID of an existing instance to use for the Whist server during the E2E test. You can only \
     pass a value to this parameter if you passed `true` to --use-two-instances. Otherwise, the server will be \
     installed and run on the same instance as the client. The instance will be stopped upon completion. \
@@ -120,7 +122,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--use-existing-client-instance",
+    "--existing-client-instance-id",
     help="The instance ID of an existing instance to use for the Whist dev client during the E2E test. If the flag \
     --use-two-instances=false is used (or if the flag --use-two-instances is not used), the Whist server will also \
     run on this instance. The instance will be stopped upon completion. If left empty, a clean new instance will \
@@ -252,9 +254,9 @@ if __name__ == "__main__":
     ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
     testing_url = args.testing_url
-    region_name = args.region_name
-    use_existing_client_instance = args.use_existing_client_instance
-    use_existing_server_instance = args.use_existing_server_instance
+    desired_region_name = args.region_name
+    existing_client_instance_id = args.existing_client_instance_id
+    existing_server_instance_id = args.existing_server_instance_id
     skip_git_clone = args.skip_git_clone
     skip_host_setup = args.skip_host_setup
     network_conditions = args.network_conditions
@@ -271,9 +273,9 @@ if __name__ == "__main__":
     testing_time = max(args.testing_time, simulate_scrolling * 25)
 
     # 2 - Perform a sanity check on the arguments and load the SSH key from file
-    if use_existing_client_instance != "" and not use_two_instances:
+    if existing_client_instance_id != "" and not use_two_instances:
         exit_with_error(
-            "Error: the `use-two-instances` flag is set to `false` but a non-empty instance ID was passed with the `use-existing-client-instance` flag.",
+            "Error: the `use-two-instances` flag is set to `false` but a non-empty instance ID was passed with the `existing-client-instance-id` flag.",
             timestamps=timestamps,
         )
     if not os.path.isfile(ssh_key_path):
@@ -314,22 +316,35 @@ if __name__ == "__main__":
     timestamps.add_event("Initialization")
 
     # 4 - Create a boto3 client, connect to the EC2 console, and create or start the instance(s).
-    boto3client = boto3.client("ec2", region_name=region_name)
-    server_instance_id = create_or_start_aws_instance(
-        boto3client, region_name, use_existing_server_instance, ssh_key_name, running_in_ci
+    ec2_region_names = (
+        [region["RegionName"] for region in boto3.client("ec2").describe_regions()["Regions"]]
+        if desired_region_name == ""
+        else desired_region_name
     )
-    if server_instance_id == "":
-        exit_with_error("Creating new instance for the server failed!", timestamps=timestamps)
-    client_instance_id = (
-        create_or_start_aws_instance(
-            boto3client, region_name, use_existing_client_instance, ssh_key_name, running_in_ci
+
+    boto3client = None
+    server_instance_id = ""
+    client_instance_id = ""
+    region_name = desired_region_name
+
+    for region in ec2_region_names:
+        result = get_client_and_instances(
+            region,
+            ssh_key_name,
+            running_in_ci,
+            use_two_instances,
+            existing_server_instance_id,
+            existing_client_instance_id,
         )
-        if use_two_instances
-        else server_instance_id
-    )
-    if client_instance_id == "":
+        if result is not None:
+            boto3client, server_instance_id, client_instance_id = result
+            region_name = region
+            break
+
+    if not boto3client or server_instance_id == "" or client_instance_id == "" or region_name == "":
         exit_with_error(
-            "Creating/starting new instance for the client failed!", timestamps=timestamps
+            f"Could not start / create the test AWS instance(s) on any of the following regions: {','.join(ec2_region_names)}",
+            timestamps=timestamps,
         )
 
     # 5 - Create a todo-list of EC2 cleanup steps we need to do at the end of the test.
@@ -338,7 +353,7 @@ if __name__ == "__main__":
     instances_to_be_terminated = []
     instances_to_be_stopped = []
 
-    if server_instance_id != use_existing_server_instance:
+    if server_instance_id != existing_server_instance_id:
         instances_to_be_terminated.append(server_instance_id)
         # Turning off skipping git clone and host setup if we created a new instance
         skip_git_clone = "false"
@@ -347,7 +362,7 @@ if __name__ == "__main__":
         instances_to_be_stopped.append(server_instance_id)
 
     if client_instance_id != server_instance_id:
-        if client_instance_id != use_existing_client_instance:
+        if client_instance_id != existing_client_instance_id:
             instances_to_be_terminated.append(client_instance_id)
             # Turning off skipping git clone and host setup if we created a new instance
             skip_git_clone = "false"
@@ -560,7 +575,7 @@ if __name__ == "__main__":
         server_cmd,
         server_log,
         server_metrics_file,
-        use_existing_server_instance,
+        existing_server_instance_id,
         server_pexpect_process,
         server_hs_process,
         pexpect_prompt_server,
@@ -570,7 +585,7 @@ if __name__ == "__main__":
         client_cmd,
         client_log,
         client_metrics_file,
-        use_existing_client_instance,
+        existing_client_instance_id,
         client_pexpect_process,
         client_hs_process,
         pexpect_prompt_client,

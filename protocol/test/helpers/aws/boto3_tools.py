@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os, sys, time
+import boto3
 import botocore
 from operator import itemgetter
 
@@ -391,6 +392,60 @@ def create_or_start_aws_instance(
     wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
 
     return instance_id
+
+
+def get_client_and_instances(
+    region_name,
+    ssh_key_name,
+    running_in_ci,
+    use_two_instances,
+    existing_server_instance_id,
+    existing_client_instance_id,
+):
+    """
+    Get a Boto3 client and start/create instances in a given AWS region
+
+    Args:
+        region_name (str): The name of the region of interest (e.g. "us-east-1")
+        ssh_key_name (str): The name of the AWS key to use for connecting to the instance(s)
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        use_two_instances (bool): A boolean indicating whether we are running the E2E test using one or two instances
+        existing_server_instance_id (str): The ID of an existing instance to reuse for the server in the E2E test
+        existing_client_instance_id (str): The ID of an existing instance to reuse for the client in the E2E test
+
+    Returns:
+        On success:
+            boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+            server_instance_id (str): The ID of the AWS instance to be used for the server
+            client_instance_id (str): The ID of the AWS instance to be used for the client
+        On failure:
+            None
+    """
+    boto3client = boto3.client("ec2", region_name=region_name)
+
+    server_instance_id = create_or_start_aws_instance(
+        boto3client, region_name, existing_server_instance_id, ssh_key_name, running_in_ci
+    )
+    if server_instance_id == "":
+        printyellow(f"Creating new instance on {region_name} for the server failed!")
+        return None
+
+    client_instance_id = (
+        create_or_start_aws_instance(
+            boto3client, region_name, existing_client_instance_id, ssh_key_name, running_in_ci
+        )
+        if use_two_instances
+        else server_instance_id
+    )
+    if client_instance_id == "":
+        printyellow(f"Creating/starting new instance on {region_name} for the client failed!")
+        # Terminate or stop server AWS instance
+        terminate_or_stop_aws_instance(
+            boto3client, server_instance_id, server_instance_id != existing_server_instance_id
+        )
+        return None
+
+    return boto3client, server_instance_id, client_instance_id
 
 
 def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
