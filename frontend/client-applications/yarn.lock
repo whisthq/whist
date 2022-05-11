@@ -1413,15 +1413,17 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
-"@m-lab/ndt7@^0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@m-lab/ndt7/-/ndt7-0.0.5.tgz#9e41000159e8433992a78a07670fd5c093eb8bba"
-  integrity sha512-x7C6wcQgM/lc3t6PdmxVsbYtCvwnyYfi3BawwkbRUrujJ/e6qR6JirJTHZ5FBL/1eXpKsa/3KxmDXT7BXlZN0g==
+"@m-lab/ndt7@^0.0.6":
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/@m-lab/ndt7/-/ndt7-0.0.6.tgz#844da956dcadf1a03b0f76c11833922b8ee67741"
+  integrity sha512-vOnbJETYUqg8Tj6V3tLshj7Nch4SmuJGPVmedIkC7V/x7LTWNHU98RdYcZbbhMWoPOrqGwhOylkqZZtjXdi0BA==
   dependencies:
-    isomorphic-ws "^4.0.1"
     node-fetch "^2.6.0"
     workerjs "^0.1.1"
-    ws "^7.3.0"
+    ws "^8.5.0"
+  optionalDependencies:
+    bufferutil "^4.0.6"
+    utf-8-validate "^5.0.8"
 
 "@malept/cross-spawn-promise@^1.1.0":
   version "1.1.1"
@@ -3162,7 +3164,7 @@ buffer@^5.1.0, buffer@^5.5.0:
     base64-js "^1.3.1"
     ieee754 "^1.1.13"
 
-bufferutil@^4.0.2:
+bufferutil@^4.0.2, bufferutil@^4.0.6:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/bufferutil/-/bufferutil-4.0.6.tgz#ebd6c67c7922a0e902f053e5d8be5ec850e48433"
   integrity sha512-jduaYOYtnio4aIAyc6UbvPCVcgq7nYpVnucyxr6eCYg/Woad9Hf/oxxBRDnGGjPfjUm6j5O/uBWhIu4iLebFaw==
@@ -4195,10 +4197,10 @@ electron-updater@5.0.1:
     lodash.isequal "^4.5.0"
     semver "^7.3.5"
 
-electron@18.2.0:
-  version "18.2.0"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-18.2.0.tgz#a0cbf8d5d1a1e9d1c195d86cd6937e721ed60fec"
-  integrity sha512-AN+CKalzA57beuvuI90PVgW/yj6zjw7rpb1h8FvIwBJ3toDC3x0Plfzbzh4Ondecbjci7pSg/NA5ngOk804WIQ==
+electron@18.2.2:
+  version "18.2.2"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-18.2.2.tgz#5b1cd0efb14302fe3b658ec88f5624c1e9c3e1b4"
+  integrity sha512-o9/9+ntxZ0RoVtllH1e9FDLiCLVg00EO8AJZoCR1cVt7l7AVpRgynZdSczaUtTb9XJpWv7U02R6hoWALl55opQ==
   dependencies:
     "@electron/get" "^1.13.0"
     "@types/node" "^16.11.26"
@@ -5916,11 +5918,6 @@ isexe@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/isexe/-/isexe-2.0.0.tgz#e8fbf374dc556ff8947a10dcb0572d633f2cfa10"
   integrity sha1-6PvzdNxVb/iUehDcsFctYz8s+hA=
-
-isomorphic-ws@^4.0.1:
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/isomorphic-ws/-/isomorphic-ws-4.0.1.tgz#55fd4cd6c5e6491e76dc125938dd863f5cd4f2dc"
-  integrity sha512-BhBvN2MBpWTaSHdWRb/bwdZJ1WaehQ2L1KngkCkfLUGF0mAWAT1sQUQacEmQ0jXkFw/czDXPNQSL5u2/Krsz1w==
 
 isstream@~0.1.2:
   version "0.1.2"
@@ -9473,7 +9470,7 @@ usocket@^0.3.0:
     nan "^2.14.2"
     node-gyp "^7.1.2"
 
-utf-8-validate@^5.0.3:
+utf-8-validate@^5.0.3, utf-8-validate@^5.0.8:
   version "5.0.9"
   resolved "https://registry.yarnpkg.com/utf-8-validate/-/utf-8-validate-5.0.9.tgz#ba16a822fbeedff1a58918f2a6a6b36387493ea3"
   integrity sha512-Yek7dAy0v3Kl0orwMlvi7TPtiCNrdfHNd7Gcc/pLq4BLXqfAmd0J7OWMizUQnTTJsyjKn02mU7anqwfmUP4J8Q==
@@ -9675,6 +9672,11 @@ ws@^7.3.0:
   version "7.5.7"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.7.tgz#9e0ac77ee50af70d58326ecff7e85eb3fa375e67"
   integrity sha512-KMvVuFzpKBuiIXW3E4u3mySRO2/mCHSyZDJQM5NQ9Q9KHWHWh0NHgfbRMLLrceUK5qAL4ytALJbpRMjixFZh8A==
+
+ws@^8.5.0:
+  version "8.6.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.6.0.tgz#e5e9f1d9e7ff88083d0c0dd8281ea662a42c9c23"
+  integrity sha512-AzmM3aH3gk0aX7/rZLYvjdvZooofDu3fFOzGqcSnQ1tOcTWwhM/o+q++E8mAyVVIyUdajrkzWUGftaVSDLn1bw==
 
 xdg-basedir@^4.0.0:
   version "4.0.0"
