@@ -356,9 +356,9 @@ leveldb_files = [
             "binary.bin": "AAECAwQFBgcICQoLDA0ODw==",
             "text.txt": "dGVzdDE=",
             "nested/text.txt": "dGVzdDI=",
-            "nested/nested/text.txt": "dGVzdDM=",
+            "nested/again/text.txt": "dGVzdDM=",
         },
-        "~/.config/temp/google-chrome/Default/Local Storage/leveldb",
+        "~/.config/temp/test/google-chrome/Default/Local Storage/leveldb",
         {
             "text.txt": b"test1",
             "binary.bin": b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
