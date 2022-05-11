@@ -703,6 +703,7 @@ ENV DISPLAY :10
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
     unzip \
+    xz-utils \
     awesome \
     awesome-extra \
     lxappearance \
