@@ -40,7 +40,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 
 	for _, instanceRow := range instanceResult {
 		// Check if lingering instance is safe to terminate
-		if len(instanceRow.Mandelboxes) > 0 {
+		if instanceRow.RemainingCapacity == 0 {
 			logger.Infof("Not scaling down draining instance because it has active associated mandelboxes.")
 			return nil
 		}
@@ -194,10 +194,10 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// 3. If the instance does not have the latest image, and is not running any mandelboxes, add to the
 	// list that will be scaled down.
 	for _, dbInstance := range allActive {
-		if len(dbInstance.Mandelboxes) > 0 {
+		if dbInstance.RemainingCapacity == 0 {
 			// Don't scale down any instance that has running
 			// mandelboxes, regardless of the image it uses
-			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", dbInstance.ID, len(dbInstance.Mandelboxes))
+			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", dbInstance.ID, dbInstance.RemainingCapacity)
 			continue
 		}
 
@@ -262,13 +262,13 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			CreatedAt:         dbInstance.CreatedAt,
 			UpdatedAt:         dbInstance.UpdatedAt,
 		}
-		// Check if lingering instance is free from mandelboxes
-		if len(dbInstance.Mandelboxes) == 0 {
+		// Check if lingering instance has any running mandelboxes
+		if dbInstance.RemainingCapacity == 0 {
+			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
+			logger.Warningf("Instance %v has associated mandelboxes and is marked as Draining.", instance.ID)
+		} else {
 			lingeringInstances = append(lingeringInstances, instance)
 			lingeringIDs = append(lingeringIDs, string(instance.ID))
-		} else {
-			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
-			logger.Warningf("Instance %v has %v associated mandelboxes and is marked as Draining.", instance.ID, len(dbInstance.Mandelboxes))
 		}
 	}
 
