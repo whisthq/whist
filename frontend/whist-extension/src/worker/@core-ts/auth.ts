@@ -4,8 +4,6 @@ import { config } from "@app/constants/app"
 
 const redirectURL = chrome.identity.getRedirectURL("auth0")
 
-console.log("redirect url is", redirectURL)
-
 export const authPortalURL = () => {
   return [
     `https://${config.AUTH_DOMAIN_URL}/authorize`,
@@ -29,7 +27,7 @@ export const authInfoCallbackRequest = async (
 ) => {
   /*
   Description:
-    Given a callback URL, generates an {email, accessToken, refreshToken} response
+    Given a callback URL, generates an { email, accessToken, refreshToken } response
   Arguments:
     callbackURL (string): Callback URL
   Returns:

@@ -1,3 +1,4 @@
+import { ContentScriptMessageType } from "@app/constants/messaging"
 import { fromEventPattern } from "rxjs"
 import { filter } from "rxjs/operators"
 
@@ -11,7 +12,7 @@ const message = fromEventPattern(
   })
 )
 
-const ipcMessage = (name: string) =>
-  message.pipe(filter(({ request }) => request === name))
+const ipcMessage = (type: ContentScriptMessageType) =>
+  message.pipe(filter(({ request }) => request.type === type))
 
 export { ipcMessage }

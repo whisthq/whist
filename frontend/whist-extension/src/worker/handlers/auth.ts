@@ -11,8 +11,8 @@ import {
 import { setStorage } from "@app/worker/utils/storage"
 import { createAuthTab, createLoggedInTab } from "@app/worker/utils/tabs"
 
-import { cachedAuthInfo } from "@app/constants/storage"
-import { openGoogleAuth } from "@app/constants/messaging"
+import { Storage } from "@app/constants/storage"
+import { ContentScriptMessageType } from "@app/constants/messaging"
 
 const initWhistAuthHandler = async () => {
   /*
@@ -33,7 +33,10 @@ const initWhistAuthHandler = async () => {
   }
 
   // Otherwise, store the refreshed auth tokens
-  await setStorage(cachedAuthInfo, JSON.stringify(refreshedAuthInfo))
+  setStorage(Storage.AUTH_INFO, JSON.stringify(refreshedAuthInfo))
+
+  // Tell the application that auth succeeded
+  chrome.runtime.sendMessage({ type: ContentScriptMessageType.AUTH_SUCCESS })
 }
 
 const initGoogleAuthHandler = () => {
@@ -42,7 +45,7 @@ const initGoogleAuthHandler = () => {
       Opens the Google auth window when requested by the user
   */
 
-  ipcMessage(openGoogleAuth).subscribe(() => {
+  ipcMessage(ContentScriptMessageType.OPEN_GOOGLE_AUTH).subscribe(() => {
     chrome.identity.launchWebAuthFlow(
       {
         url: authPortalURL(),
@@ -53,8 +56,13 @@ const initGoogleAuthHandler = () => {
         const authInfo = parseAuthInfo(response)
 
         if (!has(authInfo, "error")) {
-          setStorage(cachedAuthInfo, JSON.stringify(authInfo))
+          setStorage(Storage.AUTH_INFO, JSON.stringify(authInfo))
           createLoggedInTab()
+
+          // Tell the application that auth succeeded
+          chrome.runtime.sendMessage({
+            type: ContentScriptMessageType.AUTH_SUCCESS,
+          })
         }
 
         // TODO: Show user a message on error

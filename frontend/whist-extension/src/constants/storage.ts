@@ -1,2 +1,4 @@
-export const cachedAuthInfo = "cachedAuthInfo"
-export const cachedConfigToken = "cachedConfigToken"
+export enum Storage {
+  AUTH_INFO = "AUTH_INFO",
+  CONFIG_TOKEN = "CONFIG_TOKEN",
+}

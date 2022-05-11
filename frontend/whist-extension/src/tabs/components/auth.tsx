@@ -1,6 +1,6 @@
 import React from "react"
 
-import { openGoogleAuth } from "@app/constants/messaging"
+import { ContentScriptMessageType } from "@app/constants/messaging"
 
 const LoginTitle = () => (
   <div
@@ -42,7 +42,11 @@ export default () => {
         </div>
         <div className="mt-16">
           <LoginButton
-            login={() => chrome.runtime.sendMessage(openGoogleAuth)}
+            login={() =>
+              chrome.runtime.sendMessage({
+                type: ContentScriptMessageType.OPEN_GOOGLE_AUTH,
+              })
+            }
           />
         </div>
       </div>

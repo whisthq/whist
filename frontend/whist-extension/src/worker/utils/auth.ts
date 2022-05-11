@@ -4,14 +4,12 @@ import {
 } from "@app/worker/@core-ts/auth"
 import { getStorage } from "@app/worker/utils/storage"
 
-import { cachedAuthInfo } from "@app/constants/storage"
+import { Storage } from "@app/constants/storage"
 
 import { AuthInfo } from "@app/@types/auth"
 
 const getCachedAuthInfo = async () => {
-  const authInfo = (await getStorage(cachedAuthInfo)) as any
-
-  console.log("retrieved", authInfo)
+  const authInfo = (await getStorage(Storage.AUTH_INFO)) as any
 
   if (authInfo === undefined) return {}
   return JSON.parse(JSON.stringify(authInfo))

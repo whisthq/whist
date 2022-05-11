@@ -27,6 +27,19 @@ module.exports = {
       animation: {
         "fade-in-up": "fade-in-up 1s ease-out forwards",
       },
+      colors: {
+        transparent: "transparent",
+        current: "currentColor",
+        blue: {
+          DEFAULT: "#0092FF",
+          light: "#71D9FF",
+          dark: "#0000CE",
+        },
+        gray: {
+          800: "#363641",
+          900: "#202124",
+        },
+      },
     },
   },
 }

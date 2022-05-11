@@ -11,4 +11,5 @@ set -Eeuo pipefail
 # gsettings set org.freedesktop.ibus.general preload-engines "['xkb:us::eng', 'anthy', 'pinyin', 'hangul', 'Unikey']"
 gsettings set org.freedesktop.ibus.general.hotkey triggers "[]"
 gsettings set org.freedesktop.ibus.engine.hangul initial-input-mode 'hangul'
+
 ibus-daemon -drx
