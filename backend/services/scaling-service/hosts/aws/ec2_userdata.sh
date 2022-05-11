@@ -4,17 +4,6 @@
 USERDATA_ENV=/usr/share/whist/app_env.env
 eval "$(cat "$USERDATA_ENV")"
 
-# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
-case "$GIT_BRANCH" in
-  dev|staging|prod)
-    export SENTRY_DSN="$SENTRY_DSN"
-    eval "$(sentry-cli bash-hook)"
-    ;;
-  *)
-    echo "Sentry environment not set, skipping Sentry error handler"
-    ;;
-esac
-
 # Note: all commands here are run with the `root` user. It is not necessary to use sudo.
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html#user-data-shell-scripts
 if [ "$EUID" -ne 0 ]; then
