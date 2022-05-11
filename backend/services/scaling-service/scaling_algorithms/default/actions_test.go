@@ -331,8 +331,9 @@ func TestVerifyInstanceScaleDown(t *testing.T) {
 	// mocking database functions.
 	testInstances = subscriptions.WhistInstances{
 		{
-			ID:       "test-verify-scale-down-instance",
-			Provider: "AWS",
+			ID:                "test-verify-scale-down-instance",
+			Provider:          "AWS",
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 	}
 
