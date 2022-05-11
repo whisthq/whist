@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/docker/go-connections/nat"
+	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/httputils"
@@ -36,8 +37,9 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	dockerClient := mockClient{
 		browserImage: "browsers/chrome",
 	}
-
-	testMandelbox := StartMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient)
+	mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
+	var appName mandelboxtypes.AppName = "chrome"
+	testMandelbox := StartMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxID, appName)
 
 	// Check that container would have been started
 	if !dockerClient.started {
@@ -198,8 +200,11 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 		browserImage: "browsers/chrome",
 	}
 
+	mandelboxSubscription := testMandelboxDBEvent.Mandelboxes[0]
+
 	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
-	go FinishMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
+	req, _ := getAppName(mandelboxSubscription, testTransportRequestMap, testmux)
+	go FinishMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxSubscription, testTransportRequestMap, testmux, req)
 
 	// Check that response is as expected
 	result := <-testJSONTransportRequest.resultChan
