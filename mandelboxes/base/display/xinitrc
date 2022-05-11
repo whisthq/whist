@@ -33,6 +33,9 @@ echo "playerctld daemon started as PID: $playerctld_pid"
 # but not in-between as this can lead to a race condition between AwesomeWM and DPI setting
 /usr/share/whist/update-whist-dpi.sh
 
+# Set the GTK theme
+gsettings_theme_result=$($RUN_AS_WHIST "gsettings set org.gnome.desktop.interface gtk-theme WhiteSur")
+
 # Start D-Bus
 dbus_result=$($RUN_AS_WHIST "dbus-launch --sh-syntax --exit-with-x11")
 
