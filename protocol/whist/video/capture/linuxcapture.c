@@ -21,6 +21,7 @@ Includes
 #include "capture.h"
 #include "x11capture.h"
 #include "nvidiacapture.h"
+#include <whist/utils/window_info.h>
 
 /*
 ============================
@@ -212,6 +213,7 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
         Returns:
             (int): 0 on success, -1 on failure
     */
+    static int id = 1;
     // make sure we can create the device
     if (device == NULL) {
         LOG_ERROR("NULL device was passed into create_capture_device");
@@ -284,6 +286,8 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
                                                      "multithreaded_nvidia_manager", device);
         whist_post_semaphore(device->nvidia_device_semaphore);
     }
+    device->id = id;
+    id++;
 
     // Create the X11 capture device; when the nvidia manager thread finishes creation, active
     // capture device will change
@@ -312,6 +316,24 @@ int capture_screen(CaptureDevice* device) {
     if (!device) {
         LOG_ERROR("Tried to call capture_screen with a NULL CaptureDevice! We shouldn't do this!");
         return -1;
+    }
+
+    LinkedList window_list;
+    get_valid_windows(device, &window_list);
+    // clear window data from previous pass
+    for (int i = 0; i < MAX_WINDOWS; i++) {
+        device->window_data[i].id = 0;
+    }
+    // get x,y,w,h of all windows
+    // TODO: get corner color somehow
+    int i = 0;
+    linked_list_for_each(&window_list, WhistWindow, w) {
+        if (i >= MAX_WINDOWS) {
+            break;
+        }
+        device->window_data[i].id = (unsigned long)w->window;
+        get_window_attributes(device, *w, &device->window_data[i]);
+        i++;
     }
     switch (device->active_capture_device) {
         case NVIDIA_DEVICE: {
