@@ -1,8 +1,8 @@
 extern "C" {
 #include "native.h"
-#include <whist/utils/lodepng.h>
 }
 
+#include <whist/utils/lodepng.h>
 #include "sdl_struct.hpp"
 
 // Little-endian RGBA masks
@@ -13,7 +13,7 @@ extern "C" {
 
 void sdl_paint_png(WhistFrontend* frontend, const char* filename, int output_width,
                    int output_height, int x, int y) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     unsigned int w, h;
     uint8_t* image;
 
@@ -31,39 +31,48 @@ void sdl_paint_png(WhistFrontend* frontend, const char* filename, int output_wid
         free(image);
         return;
     }
+    for (const auto& pair : context->windows) {
+        SDLWindowContext* window_context = pair.second;
+        SDL_Texture* texture =
+            SDL_CreateTextureFromSurface(window_context->renderer, surface);
+        if (texture == NULL) {
+            LOG_ERROR("Failed to create texture from PNG: %s", SDL_GetError());
+            return;
+        }
 
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(context->renderer, surface);
+        // TODO: Formalize window position constants.
+        if (x == -1) {
+            // Center horizontally
+            x = (output_width - w) / 2;
+        }
+        if (y == -1) {
+            // Place at bottom
+            y = output_height - h;
+        }
+        SDL_Rect rect = {x, y, (int)w, (int)h};
+        SDL_RenderCopy(window_context->renderer, texture, NULL, &rect);
+
+        SDL_DestroyTexture(texture);
+    }
     SDL_FreeSurface(surface);
     free(image);
-    if (texture == NULL) {
-        LOG_ERROR("Failed to create texture from PNG: %s", SDL_GetError());
-        return;
-    }
-
-    // TODO: Formalize window position constants.
-    if (x == -1) {
-        // Center horizontally
-        x = (output_width - w) / 2;
-    }
-    if (y == -1) {
-        // Place at bottom
-        y = output_height - h;
-    }
-    SDL_Rect rect = {x, y, w, h};
-    SDL_RenderCopy(context->renderer, texture, NULL, &rect);
-
-    SDL_DestroyTexture(texture);
 }
 
-void sdl_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen) {
-    SDLFrontendContext* context = frontend->context;
-    SDL_SetWindowFullscreen(context->window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+void sdl_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen) {
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+    if (context->windows.find(id) == context->windows.end()) {
+        LOG_ERROR("No window with ID %d!", id);
+        return;
+    }
+    SDL_SetWindowFullscreen(context->windows[id]->window,
+                            fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
 
 void sdl_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
 
-    for (const auto& [id, window_context] : context->windows) {
+    for (const auto& pair : context->windows) {
+        SDLWindowContext* window_context = pair.second;
         SDL_SetRenderDrawColor(window_context->renderer, color->red, color->green, color->blue,
                                SDL_ALPHA_OPAQUE);
         SDL_RenderClear(window_context->renderer);
@@ -85,22 +94,24 @@ static SDL_PixelFormatEnum sdl_get_pixel_format(enum AVPixelFormat pixfmt) {
 }
 
 WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     int res;
 
-    SDL_PixelFormatEnum format = sdl_get_pixel_format(frame->format);
+    SDL_PixelFormatEnum format = sdl_get_pixel_format((AVPixelFormat)frame->format);
     if (format == SDL_PIXELFORMAT_UNKNOWN) {
         LOG_ERROR("Invalid pixel format %s given to SDL renderer.",
-                  av_get_pix_fmt_name(frame->format));
+                  av_get_pix_fmt_name((AVPixelFormat)frame->format));
         return WHIST_ERROR_INVALID_ARGUMENT;
     }
 
     // Formats we support for texture import to SDL.
     bool import_texture =
         (frame->format == AV_PIX_FMT_VIDEOTOOLBOX || frame->format == AV_PIX_FMT_D3D11);
-    // TODO: for now I've wrapped the logic in a loop, but we should only be importing the first texture and blitting the rest
+    // TODO: for now I've wrapped the logic in a loop, but we should only be importing the first
+    // texture and blitting the rest
 
-    for (const auto& [id, window_context] : context->windows) {
+    for (const auto& pair : context->windows) {
+        SDLWindowContext* window_context = pair.second;
         if (import_texture || format != window_context->texture_format) {
             // When importing we will make a new SDL texture referring to
             // the imported one, so the old texture should be destroyed.
@@ -134,9 +145,9 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                 // frame data in GPU memory.
                 void* handle = frame->data[3];
 
-                window_context->texture =
-                    SDL_CreateTextureFromHandle(window_context->renderer, format, SDL_TEXTUREACCESS_STATIC,
-                            frame->width, frame->height, handle);
+                window_context->texture = SDL_CreateTextureFromHandle(
+                    window_context->renderer, format, SDL_TEXTUREACCESS_STATIC, frame->width,
+                    frame->height, handle);
                 if (window_context->texture == NULL) {
                     LOG_ERROR("Failed to import Core Video texture: %s.", SDL_GetError());
                     return WHIST_ERROR_EXTERNAL;
@@ -157,14 +168,15 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                 // Create new video texture.
                 window_context->texture =
                     SDL_CreateTexture(window_context->renderer, format, SDL_TEXTUREACCESS_STREAMING,
-                            MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+                                      MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
                 if (window_context->texture == NULL) {
                     LOG_ERROR("Failed to create %s video texture: %s.",
-                            av_get_pix_fmt_name(frame->format), SDL_GetError());
+                              av_get_pix_fmt_name((AVPixelFormat)frame->format), SDL_GetError());
                     return WHIST_ERROR_EXTERNAL;
                 }
 
-                LOG_INFO("Using %s video texture.", av_get_pix_fmt_name(frame->format));
+                LOG_INFO("Using %s video texture.",
+                         av_get_pix_fmt_name((AVPixelFormat)frame->format));
                 window_context->texture_format = format;
             }
 
@@ -178,18 +190,19 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
             };
             if (frame->format == AV_PIX_FMT_NV12) {
                 res = SDL_UpdateNVTexture(window_context->texture, &texture_rect, frame->data[0],
-                        frame->linesize[0], frame->data[1], frame->linesize[1]);
+                                          frame->linesize[0], frame->data[1], frame->linesize[1]);
             } else if (frame->format == AV_PIX_FMT_YUV420P) {
                 res = SDL_UpdateYUVTexture(window_context->texture, &texture_rect, frame->data[0],
-                        frame->linesize[0], frame->data[1], frame->linesize[1],
-                        frame->data[2], frame->linesize[2]);
+                                           frame->linesize[0], frame->data[1], frame->linesize[1],
+                                           frame->data[2], frame->linesize[2]);
             } else {
-                LOG_FATAL("Invalid format %s for texture update.", av_get_pix_fmt_name(frame->format));
+                LOG_FATAL("Invalid format %s for texture update.",
+                          av_get_pix_fmt_name((AVPixelFormat)frame->format));
             }
 
             if (res < 0) {
                 LOG_ERROR("Failed to update texture from %s frame: %s.",
-                        av_get_pix_fmt_name(frame->format), SDL_GetError());
+                          av_get_pix_fmt_name((AVPixelFormat)frame->format), SDL_GetError());
                 return WHIST_ERROR_EXTERNAL;
             }
         }
@@ -212,10 +225,11 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
 #endif
 
 void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     int res;
 
-    for (const auto& [id, window_context] : context->windows) {
+    for (const auto& pair : context->windows) {
+        SDLWindowContext* window_context = pair.second;
         if (window_context->texture == NULL) {
             // No texture to render - this can happen at startup if no video
             // has been decoded yet.  Do nothing here, since the screen was
@@ -243,9 +257,10 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
 }
 
 void sdl_render(WhistFrontend* frontend) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
 
-    for (const auto& [id, window_context] : context->windows) {
+    for (const auto& pair : context->windows) {
+        SDLWindowContext* window_context = pair.second;
         SDL_RenderPresent(window_context->renderer);
 
         // TODO: necessary if we only show windows on demand?
@@ -259,7 +274,7 @@ void sdl_render(WhistFrontend* frontend) {
 void sdl_declare_user_activity(WhistFrontend* frontend) { sdl_native_declare_user_activity(); }
 
 void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (cursor == NULL || cursor->hash == context->cursor.hash) {
         return;
     }
@@ -268,9 +283,9 @@ void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
         if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
             SDL_GetGlobalMouseState(&context->cursor.last_visible_position.x,
                                     &context->cursor.last_visible_position.y);
-            SDL_SetRelativeMouseMode(true);
+            SDL_SetRelativeMouseMode((SDL_bool) true);
         } else {
-            SDL_SetRelativeMouseMode(false);
+            SDL_SetRelativeMouseMode((SDL_bool) false);
             SDL_WarpMouseGlobal(context->cursor.last_visible_position.x,
                                 context->cursor.last_visible_position.y);
         }

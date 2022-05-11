@@ -256,7 +256,8 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
 
     switch (event->type) {
         case FRONTEND_EVENT_RESIZE: {
-            sdl_renderer_resize_window(frontend, event->resize.width, event->resize.height);
+                                        // TODO: fix
+            // sdl_renderer_resize_window(frontend, event->resize.width, event->resize.height);
             break;
         }
         case FRONTEND_EVENT_VISIBILITY: {

@@ -117,7 +117,7 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
     int w, h;
-    whist_frontend_get_window_pixel_size(frontend, &w, &h);
+    whist_frontend_get_window_pixel_size(frontend, 0, &w, &h);
     output_width = w;
     output_height = h;
 
@@ -149,12 +149,12 @@ WhistTimer window_resize_timer;
 // pending_resize_message should be set to true if sdl event handler was not able to process resize
 // event due to throttling, so the main loop should process it
 volatile bool pending_resize_message = false;
-void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) {
+void sdl_renderer_resize_window(WhistFrontend* frontend, int id, int width, int height) {
     // Try to make pixel width and height conform to certain desirable dimensions
     int current_width, current_height;
-    whist_frontend_get_window_pixel_size(frontend, &current_width, &current_height);
+    whist_frontend_get_window_pixel_size(frontend, id, &current_width, &current_height);
 
-    LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
+    LOG_INFO("Received resize event for Window %d, %dx%d, currently %dx%d", id, width, height, current_width,
              current_height);
 
 #ifndef __linux__
@@ -185,11 +185,11 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
 
             // The default DPI (no scaling) is 96, hence this magic number to divide by the scaling
             // factor
-            whist_frontend_resize_window(frontend, desired_width * 96 / dpi,
+            whist_frontend_resize_window(frontend, id, desired_width * 96 / dpi,
                                          desired_height * 96 / dpi);
             LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
                      desired_width, desired_height);
-            whist_frontend_get_window_pixel_size(frontend, &current_width, &current_height);
+            whist_frontend_get_window_pixel_size(frontend, id, &current_width, &current_height);
 
             if (current_width != desired_width || current_height != desired_height) {
                 LOG_WARNING("Failed to force resize -- got %dx%d instead of desired %dx%d",
@@ -337,6 +337,7 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
     whist_frontend_update_windows(frontend);
 
     // TODO: make each of these functions into one iterating over all windows
+    /*
     // Handle any pending window title updates
     if (should_update_window_title) {
         if (window_title) {
@@ -348,18 +349,23 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
         }
         should_update_window_title = false;
     }
+    */
 
+    /*
     // Handle any pending fullscreen events
     if (fullscreen_trigger) {
         whist_frontend_set_window_fullscreen(frontend, fullscreen_value);
         fullscreen_trigger = false;
     }
+    */
 
+    /*
     // Handle any pending window titlebar color events
     if (native_window_color_update && native_window_color) {
         whist_frontend_set_titlebar_color(frontend, (WhistRGBColor*)native_window_color);
         native_window_color_update = false;
     }
+    */
 
     // Check if a pending window resize message should be sent to server
     whist_lock_mutex(window_resize_mutex);

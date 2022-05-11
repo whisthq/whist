@@ -1,13 +1,11 @@
 #ifndef WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 #define WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 
-extern "C" {
-    // check if I need these
+#include <map>
+// check if I need these
 #include <whist/core/whist.h>
 #include "../api.h"
 #include "../frontend.h"
-}
-#include <map>
 
 typedef struct SDLFrontendVideoContext {
     /**
@@ -75,7 +73,7 @@ typedef struct SDLWindowContext {
     int y;
     int width;
     int height;
-    char* title;
+    const char* title;
     WhistRGBColor color;
     bool is_fullscreen;
     bool is_resizable;

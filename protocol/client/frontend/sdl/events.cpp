@@ -1,7 +1,7 @@
 #include "sdl_struct.hpp"
 
 bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*) frontend->context;
     if (!event) {
         return SDL_PollEvent(NULL) != 0;
     }
@@ -69,7 +69,7 @@ bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
             event->type = FRONTEND_EVENT_KEYPRESS;
             event->keypress.code = (WhistKeycode)sdl_event.key.keysym.scancode;
             event->keypress.pressed = (sdl_event.type == SDL_KEYDOWN);
-            event->keypress.mod = sdl_event.key.keysym.mod;
+            event->keypress.mod = (WhistKeymod)sdl_event.key.keysym.mod;
             break;
         }
         case SDL_MOUSEMOTION: {
@@ -84,13 +84,13 @@ bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
         case SDL_MOUSEBUTTONUP:
         case SDL_MOUSEBUTTONDOWN: {
             event->type = FRONTEND_EVENT_MOUSE_BUTTON;
-            event->mouse_button.button = sdl_event.button.button;
+            event->mouse_button.button = (WhistMouseButton)sdl_event.button.button;
             event->mouse_button.pressed = (sdl_event.type == SDL_MOUSEBUTTONDOWN);
             if (event->mouse_button.button == MOUSE_L) {
                 // Capture the mouse while the left mouse button is pressed.
                 // This lets SDL track the mouse position even when the drag
                 // extends outside the window.
-                SDL_CaptureMouse(event->mouse_button.pressed);
+                SDL_CaptureMouse((SDL_bool)event->mouse_button.pressed);
             }
             break;
         }
@@ -134,9 +134,9 @@ bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
             event->file_drop.filename = strdup(sdl_event.drop.file);
             SDL_free(sdl_event.drop.file);
             // Get the global mouse position of the drop event.
-            SDL_CaptureMouse(true);
+            SDL_CaptureMouse((SDL_bool)true);
             SDL_GetMouseState(&event->file_drop.position.x, &event->file_drop.position.y);
-            SDL_CaptureMouse(false);
+            SDL_CaptureMouse((SDL_bool)false);
             break;
         }
         case SDL_DROPCOMPLETE: {
@@ -160,7 +160,7 @@ bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
 
 void sdl_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,
                             int* mod_state) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
 
     // We could technically call SDL_PumpEvents here, but it's not needed unless we
     // find that it gives a latency or performance improvement.

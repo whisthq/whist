@@ -162,6 +162,7 @@ void sdl_native_declare_user_activity(void) {
     }
 }
 
+/*
 typedef struct FileDragState {
     id left_mouse_drag_listener;
     id left_mouse_up_listener;
@@ -264,17 +265,15 @@ static void push_drag_event(WhistFrontend *frontend) {
 }
 
 void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
-    /*
-        Initializes global event handlers for left mouse down dragged
-        and left mouse up events. The drag board change count changes
-        when a new file is being dragged. However, it is tricky to detect
-        continual drags of files because a user can drag something that
-        is not a file (like a highlight for example) and the drag board
-        change count will stay the same. Thus we need a way to determine if
-        the current drag event corresponds to a new, picked file. We do this
-        by monitoring when the mouse up event occurs which signals that the user
-        is finished dragging the file in question.
-    */
+    //    Initializes global event handlers for left mouse down dragged
+    //    and left mouse up events. The drag board change count changes
+    //    when a new file is being dragged. However, it is tricky to detect
+    //    continual drags of files because a user can drag something that
+    //    is not a file (like a highlight for example) and the drag board
+    //    change count will stay the same. Thus we need a way to determine if
+    //    the current drag event corresponds to a new, picked file. We do this
+    //    by monitoring when the mouse up event occurs which signals that the user
+    //    is finished dragging the file in question.
     SDLFrontendContext *context = frontend->context;
     context->file_drag_data = safe_malloc(sizeof(FileDragState));
     FileDragState *state = context->file_drag_data;
@@ -339,10 +338,8 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
 }
 
 void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
-    /*
-        NSEvent event listeners are removed by passing in their ids
-        to the removeMonitor call
-    */
+    //    NSEvent event listeners are removed by passing in their ids
+    //    to the removeMonitor call
     SDLFrontendContext *context = frontend->context;
     FileDragState *state = context->file_drag_data;
 
@@ -365,3 +362,4 @@ void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
     context->file_drag_data = NULL;
     free(state);
 }
+*/

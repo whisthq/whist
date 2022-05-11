@@ -58,7 +58,7 @@ void destroy_sdl(WhistFrontend* frontend);
  *                                 to update the internal rendering dimensions.
  *                                 This function will also sync the server to those dimensions.
  */
-void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height);
+void sdl_renderer_resize_window(WhistFrontend* frontend, int id, int width, int height);
 
 /**
  * @brief                          Updates the framebuffer to a loading screen image.

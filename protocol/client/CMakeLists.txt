@@ -20,8 +20,8 @@ set(WHIST_CLIENT_DEPENDS
         frontend/sdl/sdl.c
         frontend/sdl/video.cpp
         frontend/sdl/window.cpp
-        frontend/virtual/virtual.c
-        frontend/virtual/impl.c
+        # frontend/virtual/virtual.c
+        # frontend/virtual/impl.c
 )
 
 if(CLIENT_SHARED_LIB)

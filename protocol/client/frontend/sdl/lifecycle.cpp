@@ -1,9 +1,9 @@
 extern "C" {
 #include "native.h"
-#include <whist/utils/atomic.h>
 #include <whist/utils/command_line.h>
 }
 
+#include <whist/utils/atomic.h>
 #include "sdl_struct.hpp"
 
 static bool skip_taskbar;
@@ -53,7 +53,7 @@ static void sdl_init_video_device(SDLFrontendContext* context) {
 
 void sdl_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
                           enum AVPixelFormat* format) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*) frontend->context;
 
     if (device) {
         *device = context->video.decode_device;
@@ -118,8 +118,6 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // Allow the screensaver to activate while the frontend is running
     SDL_EnableScreenSaver();
 
-    bool start_maximized = (width == 0 && height == 0);
-
     // Grab the default display dimensions. If width or height are 0, then
     // we'll set that dimension to half of the display's dimension. If the
     // window starts maximized and the user then unmaximizes (double click
@@ -143,15 +141,13 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
         sdl_native_hide_taskbar();
     }
 
-    SDLFrontendContext* context = safe_malloc(sizeof(SDLFrontendContext));
+    SDLFrontendContext* context = (SDLFrontendContext*) safe_malloc(sizeof(SDLFrontendContext));
     memset(context, 0, sizeof(SDLFrontendContext));
     frontend->context = context;
 
     context->audio_device = 0;
     context->key_state = SDL_GetKeyboardState(&context->key_count);
     // context->file_drag_event_id = SDL_RegisterEvents(1);
-    context->video_has_rendered = false;
-    context->window_has_shown = false;
 
     context->cursor.state = CURSOR_STATE_VISIBLE;
     context->cursor.hash = 0;
@@ -160,7 +156,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     context->cursor.handle = NULL;
     
     // create dummy window
-    SDLWindowContext* dummy_window = safe_malloc(sizeof(SDLWindowContext));
+    SDLWindowContext* dummy_context = (SDLWindowContext*) safe_malloc(sizeof(SDLWindowContext));
     dummy_context->to_be_created = true;
     dummy_context->x = SDL_WINDOWPOS_CENTERED;
     dummy_context->y = SDL_WINDOWPOS_CENTERED;
@@ -170,7 +166,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     dummy_context->color = {17, 24, 39};
     dummy_context->is_fullscreen = false;
     dummy_context->is_resizable = false;
-    context->windows[0] = dummy_window;
+    context->windows[0] = dummy_context;
     // create a dummy window to get resolution
     sdl_create_window(frontend, 0);
 
@@ -202,19 +198,19 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 }
 
 WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*) frontend->context;
 
     // Create a window and renderer with the given parameters, add it to context->windows
     
     // If the id is already present in windows, LOG_ERROR
-    if (context->windows.contains(id)) {
+    if (context->windows.find(id) != context->windows.end()) {
         if (!context->windows[id]->to_be_created) {
             LOG_ERROR("Tried to make a window with duplicate ID %d!", id);
             // IDK what this means but it looks legit
             return WHIST_ERROR_ALREADY_SET;
         }
     } else {
-        LOG_ERROR("Tried to create a window with ID %d, but found no SDLWindowContext");
+        LOG_ERROR("Tried to create a window with ID %d, but found no SDLWindowContext", id);
     }
 
     context->windows[id]->to_be_created = false;
@@ -227,17 +223,14 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     // Avoid glitchy-looking titlebar-content combinations while the
     // window is loading, and glitches caused by early user interaction.
     window_flags |= SDL_WINDOW_HIDDEN;
-    if (start_maximized) {
-        window_flags |= SDL_WINDOW_MAXIMIZED;
-    }
     if (skip_taskbar) {
         // Hide the taskbar on Windows/Linux
         window_flags |= SDL_WINDOW_SKIP_TASKBAR;
     }
 
-    if (title == NULL) {
+    if (context->windows[id]->title == NULL) {
         // Default window title is "Whist"
-        title = "Whist";
+        context->windows[id]->title = "Whist";
     }
     
     // Renderer flags
@@ -255,7 +248,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
         return WHIST_ERROR_UNKNOWN;
     }
 
-    context->windows[id]->renderer = SDL_CreateRenderer(new_window->window, -1, renderer_flags);
+    context->windows[id]->renderer = SDL_CreateRenderer(context->windows[id]->window, -1, renderer_flags);
     if (context->windows[id]->renderer == NULL) {
         LOG_ERROR("Could not create renderer: %s", SDL_GetError());
         return WHIST_ERROR_UNKNOWN;
@@ -284,11 +277,12 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     // Safe to set these post-initialization.
     sdl_native_init_window_options(context->windows[id]->window);
     SDL_SetWindowMinimumSize(context->windows[id]->window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
+    return WHIST_SUCCESS;
 }
 
 void sdl_destroy_window(WhistFrontend* frontend, int id) {
-    SDLFrontendContext* context = frontend->context;
-    if (context->windows.contains(id)) {
+    SDLFrontendContext* context = (SDLFrontendContext*) frontend->context;
+    if (context->windows.find(id) != context->windows.end()) {
         SDLWindowContext* window_context = context->windows[id];
         // destroy video texture
         if (window_context->texture != NULL) {
@@ -316,18 +310,19 @@ void sdl_destroy_window(WhistFrontend* frontend, int id) {
 // any new windows will be marked as to_be_created
 // any old windows not included in window_data will be marked as to_be_destroyed
 void sdl_update_window_data(WhistFrontend* frontend, WhistWindowData* window_data) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*) frontend->context;
 
     // mark all windows as to be destroyed
-    for (const auto& [id, window_context] : context->windows) {
+    for (const auto& pair : context->windows) {
+        SDLWindowContext* window_context = pair.second;
         window_context->to_be_destroyed = true;
     }
     for (int i = 0; i < MAX_WINDOWS; i++) {
         int id = window_data[i].id;
         if (id != 0) {
-            if (!context->windows.contains(id)) {
+            if (context->windows.find(id) != context->windows.end()) {
                 // malloc a new SDLWindowContext but DON'T CREATE THE ACTUAL WIDNOW
-                context->windows[id] = safe_malloc(sizeof(SDLWindowContext));
+                context->windows[id] = (SDLWindowContext*) safe_malloc(sizeof(SDLWindowContext));
                 context->windows[id]->to_be_created = true;
             }
             // ideally we would memcpy, except WhistWindowdata has ID.
@@ -336,8 +331,8 @@ void sdl_update_window_data(WhistFrontend* frontend, WhistWindowData* window_dat
             context->windows[id]->y = window_data[i].y;
             context->windows[id]->width = window_data[i].width;
             context->windows[id]->height = window_data[i].height;
-            context->windows[id]->title = window_data[i].title;
-            context->windows[id]->color = window_data[i].color;
+            context->windows[id]->title = ""; // window_data[i].title;
+            context->windows[id]->color = window_data[i].corner_color;
             context->windows[id]->is_fullscreen = window_data[i].is_fullscreen;
             context->windows[id]->is_resizable = window_data[i].is_resizable;
             context->windows[id]->to_be_destroyed = false;
@@ -347,10 +342,12 @@ void sdl_update_window_data(WhistFrontend* frontend, WhistWindowData* window_dat
 
 // TODO: better name needed
 void sdl_update_windows(WhistFrontend* frontend) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*) frontend->context;
 
     // destroy to be destroyed windows
-    for (const auto& [id, window_context] : context->windows) {
+    for (const auto& pair : context->windows) {
+        int id = pair.first;
+        SDLWindowContext* window_context = pair.second;
         if (window_context->to_be_destroyed) {
             sdl_destroy_window(frontend, id);
         }
@@ -361,13 +358,14 @@ void sdl_update_windows(WhistFrontend* frontend) {
 }
 
 void sdl_destroy(WhistFrontend* frontend) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*) frontend->context;
 
     if (!context) {
         return;
     }
     // destroy all windows
-    for (const auto& [id, window_context] : context->windows) {
+    for (const auto& pair : context->windows) {
+        int id = pair.first;
         sdl_destroy_window(frontend, id);
     }
     av_buffer_unref(&context->video.decode_device);

@@ -256,10 +256,13 @@ static void send_new_tab_urls_if_needed(WhistFrontend* frontend) {
         free((void*)new_tab_urls);
         new_tab_urls = NULL;
 
+        // TODO: commented out for now
+        /*
         // Unmimimize the window if needed
         if (!whist_frontend_is_window_visible(frontend)) {
             whist_frontend_restore_window(frontend);
         }
+        */
     }
 }
 
@@ -463,6 +466,8 @@ int whist_client_main(int argc, const char* argv[]) {
                 start_timer(&keyboard_sync_timer);
             }
 
+            // TODO: monitor removed for now
+            /*
             if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
                 static int cached_display_index = -1;
                 int current_display_index;
@@ -481,6 +486,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
                 start_timer(&monitor_change_timer);
             }
+            */
 
             // Check if the window is minimized or occluded.
             if (!whist_frontend_is_window_visible(frontend)) {
