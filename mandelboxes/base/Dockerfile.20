@@ -747,7 +747,7 @@ COPY --from=build-assets fonts/* /usr/local/share/fonts/
 # Install WhiteSur GTK theme, for macOS-like theming
 RUN mkdir -p /home/whist/.themes \
     && wget -q https://github.com/vinceliuice/WhiteSur-gtk-theme/releases/tag/2022-02-21 \
-    && tar -xzf ./WhiteSur-gtk-theme-2022-02-21.tar.gz \
+    && tar -xzf WhiteSur-gtk-theme-2022-02-21.tar.gz \
     && cd ./WhiteSur-gtk-theme-2022-02-21/release \
     && tar -xzf WhiteSur-light-40-0.tar.gz -C /home/whist/.themes \
     && cd ../.. && rm -rf WhiteSur-gtk-theme-2022-02-21 WhiteSur-gtk-theme-2022-02-21.tar.gz
