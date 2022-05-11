@@ -292,17 +292,13 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 
 // FinishMandelboxSpinUp runs when a user gets assigned to a waiting mandelbox. This function does all the remaining steps in
 // the spinup process that require a config token.
-func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxSubscription subscriptions.Mandelbox, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex, req *JSONTransportRequest) {
 
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
 		metrics.Increment("ErrorRate")
 	}
-
-	// mandelboxSubscription is the pubsub event received from Hasura.
-	mandelboxSubscription := sub.Mandelboxes[0]
-	req, _ := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
 
