@@ -139,6 +139,8 @@ github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.1 h1:C21IDZCm9Yu5xqjb3fKmxDoYvJXt
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.1/go.mod h1:l/BbcfqDCT3hePawhy4ZRtewjtdkl6GWtd9/U+1penQ=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.40.0 h1:QZHnwlJbt+M6/h7yzw081WkOk5cSmt8tJNXUnLpT1SY=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.40.0/go.mod h1:KOy1O7Fc2+GRgsbn/Kjr15vYDVXMEQALBaPRia3twSY=
+github.com/aws/aws-sdk-go-v2/service/ec2 v1.42.0 h1:OcHzxJvMXTvp4bd9OmYMiY9IzXTFgNsklOSD8Aejo14=
+github.com/aws/aws-sdk-go-v2/service/ec2 v1.42.0/go.mod h1:KOy1O7Fc2+GRgsbn/Kjr15vYDVXMEQALBaPRia3twSY=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.1 h1:T4pFel53bkHjL2mMo+4DKE6r6AuoZnM0fg7k1/ratr4=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.1/go.mod h1:GeUru+8VzrTXV/83XyMJ80KpH8xO89VPoUileyNQ+tc=
 github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.5 h1:9LSZqt4v1JiehyZTrQnRFf2mY/awmyYNNY/b7zqtduU=
@@ -1038,6 +1040,8 @@ github.com/stretchr/testify v1.7.1 h1:5TQK59W5E3v0r2duFAb7P95B6hEeOyEnHRa8MjYSMT
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stripe/stripe-go/v72 v72.106.0 h1:DsGgphJXNI3zHn64Xmc+rfabN1IDqQUvjIWejccVZN4=
 github.com/stripe/stripe-go/v72 v72.106.0/go.mod h1:QwqJQtduHubZht9mek5sds9CtQcKFdsykV9ZepRWwo0=
+github.com/stripe/stripe-go/v72 v72.107.0 h1:munfcQGG/STMSzdu55Q12vYCCNwWC5sZcpKsnCNa1FA=
+github.com/stripe/stripe-go/v72 v72.107.0/go.mod h1:QwqJQtduHubZht9mek5sds9CtQcKFdsykV9ZepRWwo0=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
