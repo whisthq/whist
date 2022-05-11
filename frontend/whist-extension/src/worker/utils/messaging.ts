@@ -1,6 +1,6 @@
 import { ContentScriptMessageType } from "@app/constants/messaging"
 import { fromEventPattern } from "rxjs"
-import { filter } from "rxjs/operators"
+import { filter, map } from "rxjs/operators"
 
 const message = fromEventPattern(
   (handler: any) => chrome.runtime.onMessage.addListener(handler),
@@ -13,6 +13,9 @@ const message = fromEventPattern(
 )
 
 const ipcMessage = (type: ContentScriptMessageType) =>
-  message.pipe(filter(({ request }) => request.type === type))
+  message.pipe(
+    filter(({ request }) => request.type === type),
+    map((args: { type: ContentScriptMessageType; value?: any }) => args?.value)
+  )
 
 export { ipcMessage }

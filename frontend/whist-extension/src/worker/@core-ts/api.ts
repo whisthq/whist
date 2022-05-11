@@ -1,10 +1,10 @@
-const post = async (args: {
+const httpConfig = (method: string) => async (args: {
   body: object
   url: string
   accessToken?: string
 }) => {
   const response = await fetch(args.url, {
-    method: "POST",
+    method,
     headers: {
       "Content-Type": "application/json",
       ...(args.accessToken !== undefined && {
@@ -22,4 +22,7 @@ const post = async (args: {
   }
 }
 
-export { post }
+const post = httpConfig("POST")
+const put = httpConfig("PUT")
+
+export { post, put }

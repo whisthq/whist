@@ -1,0 +1,140 @@
+/**
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file region.ts
+ * @brief This file contains utility functions for finding the closest AWS region.
+ */
+
+import sortBy from "lodash.sortby"
+import find from "lodash.find"
+import ping from "ping"
+
+import { AWSRegion } from "@app/@types/aws"
+import { getStorage } from "@app/worker/utils/storage"
+
+import { timezones } from "@app/constants/location"
+import { Storage } from "@app/constants/storage"
+
+const IPSTACK_API_KEY = "f3e4e15355710b759775d121e243e39b"
+
+const whistPingTime = async (host: string, numberPings: number) => {
+  /*
+    Description:
+        Measures the average ping time (in ms) to ping a host (IP address or URL)
+
+    Arguments:
+        url (string): IP address or URL
+        numberPings (number): Number of times to ping the host
+    Returns:
+        (number): Average ping time to ping host (in ms)
+    */
+
+  // Create list of Promises, where each Promise resolves to a ping time
+  const pingResults = [] as number[]
+  for (let i = 0; i < numberPings; i += 1) {
+    try {
+      const result = await ping.promise.probe(host)
+      if ((result.time ?? undefined) !== undefined)
+        pingResults.push(result.time as number)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  // Resolve list of Promises synchronously to get a list of ping outputs
+  if (pingResults.length > 0)
+    return pingResults.reduce((a, b) => Math.min(a, b))
+  return undefined
+}
+
+const pingLoop = (regions: AWSRegion[]) => {
+  // Ping each region and find the closest region by lowest ping time
+  const pingResultPromises = []
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < regions.length; i += 1) {
+    const region = regions[i]
+
+    pingResultPromises.push(
+      whistPingTime(`ec2.${region}.amazonaws.com`, 6).then((pingTime) => {
+        return { region, pingTime }
+      })
+    )
+  }
+  return pingResultPromises
+}
+
+const getSortedAWSRegions = async (regions: AWSRegion[]) => {
+  /*
+  Description:
+      Pulls AWS regions from SQL and pings each region, and sorts regions
+      by shortest ping time
+
+  Arguments:
+      (AWSRegion[]): Unsorted array of regions
+  Returns:
+      (AWSRegion[]): Sorted array of regions
+  */
+  const pingResults = await Promise.all(pingLoop(regions))
+  const sortedResults = sortBy(pingResults, ["pingTime"])
+  return sortedResults.map((r) => r.region)
+}
+
+const closestRegionHasChanged = async (
+  regions: Array<{ region: AWSRegion; pingTime: number }>
+) => {
+  const previousCachedRegions = (await getStorage(
+    Storage.CLOSEST_AWS_REGIONS
+  )) as Array<{ region: AWSRegion }>
+
+  const previousClosestRegion = previousCachedRegions?.[0]?.region
+  const currentClosestRegion = regions?.[0]?.region
+
+  if (previousClosestRegion === undefined || currentClosestRegion === undefined)
+    return false
+
+  // If the cached closest AWS region and new closest AWS region are the same, don't do anything
+  if (previousClosestRegion === currentClosestRegion) return false
+
+  // If the difference in ping time to the cached closest AWS region vs. ping time
+  // to the new closest AWS region is less than 25ms, don't do anything
+  const previousClosestRegionPingTime =
+    find(regions, (r: any) => r.region === previousClosestRegion)?.pingTime ?? 0
+
+  const currentClosestRegionPingTime = regions?.[0]?.pingTime
+
+  if (previousClosestRegionPingTime - currentClosestRegionPingTime < 25)
+    return false
+
+  return true
+}
+
+const getGeolocation = async () => {
+  const response = await fetch(
+    `http://api.ipstack.com/check?access_key=${IPSTACK_API_KEY}&format=1`
+  )
+
+  const json = (await response.json()) as {
+    longitude: number
+    latitude: number
+  }
+
+  return {
+    longitude: json.longitude.toFixed(7),
+    latitude: json.latitude.toFixed(7),
+  }
+}
+
+const getCountry = () => {
+  const timezone =
+    Intl.DateTimeFormat()?.resolvedOptions()?.timeZone ?? undefined
+
+  if (timezone === undefined) return undefined
+
+  return timezones[timezone].c[0]
+}
+
+export {
+  getSortedAWSRegions,
+  closestRegionHasChanged,
+  getGeolocation,
+  getCountry,
+}

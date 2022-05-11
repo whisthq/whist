@@ -36,7 +36,10 @@ const initWhistAuthHandler = async () => {
   setStorage(Storage.AUTH_INFO, JSON.stringify(refreshedAuthInfo))
 
   // Tell the application that auth succeeded
-  chrome.runtime.sendMessage({ type: ContentScriptMessageType.AUTH_SUCCESS })
+  chrome.runtime.sendMessage({
+    type: ContentScriptMessageType.AUTH_SUCCESS,
+    value: refreshedAuthInfo,
+  })
 }
 
 const initGoogleAuthHandler = () => {
