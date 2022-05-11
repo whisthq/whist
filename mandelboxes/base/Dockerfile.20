@@ -635,7 +635,6 @@ RUN \
     && chown -vR whist:whist /home/whist \
     && chown root:root /run/user \
     && mkdir -p /usr/share/whist/private \
-    && mkdir -p /home/whist/.themes \
     # Set /usr/share/whist to root-only
     && chgrp root -R /usr/share/whist \
     && chown root:root /usr/share/whist \
@@ -746,7 +745,16 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 COPY --from=build-assets fonts/* /usr/local/share/fonts/
 
 # Install WhiteSur cursor and icons, for macOS-like theming
-RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git && cd WhiteSur-gtk-theme && /bin/bash install.sh --dest /home/whist/.themes && rm -rf /WhiteSur-gtk-theme
+
+
+RUN \
+    mkdir -p /home/whist/.themes \
+    && git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git && cd WhiteSur-gtk-theme \
+    && echo "Made it here" \
+    && /bin/bash install.sh --dest /home/whist/.themes && rm -rf /WhiteSur-gtk-theme
+
+
+
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh --bold && rm -rf /WhiteSur-icon-theme
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 
