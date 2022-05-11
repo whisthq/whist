@@ -330,6 +330,38 @@ def create_preferences_file(target_browser_name, preferences, custom_preferences
         browser_preferences_file.write(preferences)
 
 
+def write_leveldb_data_to_files(base_path, data):
+    for filename, contents in data.items():
+        filepath = os.path.join(base_path, filename)
+
+        # Create all directories in the path
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+        with open(filepath, "wb") as leveldb_file:
+            # Decode the base64 string back to raw bytes
+            content_bytes = base64.b64decode(contents)
+            leveldb_file.write(content_bytes)
+
+    # Create the empty LOG and LOCK files in each directory
+    for root, dirs, _ in os.walk(base_path):
+        for dir in dirs:
+            dir_path = os.path.join(root, dir)
+            with open(os.path.join(dir_path, "LOG"), "w"):
+                pass
+
+            with open(os.path.join(dir_path, "LOCK"), "w"):
+                pass
+
+    # Create LOG and LOCK files in base directory too
+    with open(os.path.join(base_path, "LOG"), "w"):
+        pass
+
+    with open(os.path.join(base_path, "LOCK"), "w"):
+        pass
+
+    subprocess.run(["chmod", "-R", "777", base_path])
+
+
 def create_local_storage_files(
     target_browser_name, local_storage_json, custom_local_storage_file_path=None
 ):
@@ -362,21 +394,77 @@ def create_local_storage_files(
     os.chmod(path, 0o777)
 
     # Write localstorage data to corresponding files
-    for filename, contents in local_storage.items():
-        with open(os.path.join(path, filename), "wb") as local_storage_file:
-            # Decode the base64 string back to raw bytes
-            content_bytes = base64.b64decode(contents)
-            local_storage_file.write(content_bytes)
+    write_leveldb_data_to_files(path, local_storage)
 
-    # Create the empty LOG and LOCK files
-    with open(os.path.join(path, "LOG"), "w"):
-        pass
 
-    with open(os.path.join(path, "LOCK"), "w"):
-        pass
+def create_extension_settings_files(
+    target_browser_name, extension_settings_json, custom_extension_settings_file_path=None
+):
+    """
+    Create extension settings files for target browser
+    Args:
+        target_browser_name (str): the name of the browser we will import cookies to
+        extension_settings_json (str): extension settings data in json string format
+        custom_extension_settings_file_path (str): [optional] path to target browser extension settings directory
+    """
+    # Unmarshal json string to dict of filename to contents
+    extension_settings = json.loads(extension_settings_json)
 
-    subprocess.run(["chown", "-R", "ubuntu", path])
-    subprocess.run(["chmod", "-R", "777", path])
+    extension_settings_paths = []
+    if custom_extension_settings_file_path:
+        extension_settings_paths.append(custom_extension_settings_file_path)
+    else:
+        extension_settings_paths = [
+            os.path.join(directory, "Local Extension Settings")
+            for directory in get_browser_default_dir(target_browser_name)
+        ]
+
+    path = os.path.expanduser(extension_settings_paths[0])
+
+    # Remove existing leveldb directory if it exists and create new one
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+    os.makedirs(path)
+    os.chmod(path, 0o777)
+
+    # Write localstorage data to corresponding files
+    write_leveldb_data_to_files(path, extension_settings)
+
+
+def create_extension_state_files(
+    target_browser_name, extension_state_json, custom_extension_state_file_path=None
+):
+    """
+    Create extension state files for target browser
+    Args:
+        target_browser_name (str): the name of the browser we will import cookies to
+        extension_state_json (str): extension state data in json string format
+        custom_extension_state_file_path (str): [optional] path to target browser extension state directory
+    """
+    # Unmarshal json string to dict of filename to contents
+    extension_state = json.loads(extension_state_json)
+
+    extension_state_paths = []
+    if custom_extension_state_file_path:
+        extension_state_paths.append(custom_extension_state_file_path)
+    else:
+        extension_state_paths = [
+            os.path.join(directory, "Extension state")
+            for directory in get_browser_default_dir(target_browser_name)
+        ]
+
+    path = os.path.expanduser(extension_state_paths[0])
+
+    # Remove existing leveldb directory if it exists and create new one
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+    os.makedirs(path)
+    os.chmod(path, 0o777)
+
+    # Write localstorage data to corresponding files
+    write_leveldb_data_to_files(path, extension_state)
 
 
 if __name__ == "__main__":
@@ -409,6 +497,15 @@ if __name__ == "__main__":
 
                 if "local_storage" in browser_data and len(browser_data["local_storage"]) > 0:
                     create_local_storage_files(browser, browser_data["local_storage"])
+
+                if (
+                    "extension_settings" in browser_data
+                    and len(browser_data["extension_settings"]) > 0
+                ):
+                    create_extension_settings_files(browser, browser_data["extension_settings"])
+
+                if "extension_state" in browser_data and len(browser_data["extension_state"]) > 0:
+                    create_extension_state_files(browser, browser_data["extension_state"])
         else:
             print(
                 "Can't import user browser data because browser data file {} does not exist or it is empty".format(

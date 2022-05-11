@@ -30,6 +30,10 @@ type BrowserData struct {
 	Preferences types.Preferences `json:"preferences,omitempty"`
 	// LocalStorage is the user's local storage files as a JSON string
 	LocalStorage types.LocalStorage `json:"local_storage,omitempty"`
+	// ExtensionSettings is the user's extension settings as a JSON string
+	ExtensionSettings types.ExtensionSettings `json:"extension_settings,omitempty"`
+	// ExtensionState is the user's extension state as a JSON string
+	ExtensionState types.ExtensionState `json:"extension_state,omitempty"`
 }
 
 // WriteUserInitialBrowserData writes the user's initial browser data received

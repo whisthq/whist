@@ -8,7 +8,9 @@ import {
   decryptCookies,
   getBookmarksFromFile,
   getExtensionIDs,
-  getLocalStorageFromFile,
+  getLocalStorageFromFiles,
+  getExtensionSettingsFromFiles,
+  getExtensionStateFromFiles,
   getPreferencesFromFile,
 } from "@app/main/utils/crypto"
 
@@ -104,7 +106,8 @@ const getLocalStorage = async (
     return undefined
   }
 
-  const localStorage = getLocalStorageFromFile(browser)
+  const localStorage = await getLocalStorageFromFiles(browser)
+
   if (localStorage.length === 0) return undefined
 
   return localStorage
@@ -139,6 +142,60 @@ const getPreferences = async (
   return preferences
 }
 
+const getExtensionState = async (
+  browser: InstalledBrowser
+): Promise<string | undefined> => {
+  // If no browser is requested or the browser is not recognized, don't run anything
+  if (
+    browser === undefined ||
+    !Object.values(InstalledBrowser).includes(browser)
+  )
+    return undefined
+
+  // For now we only want to get local storage for browsers that are compatible
+  // with chrome extensions ie brave/chrome/chromium
+  if (
+    browser !== InstalledBrowser.CHROME &&
+    browser !== InstalledBrowser.BRAVE &&
+    browser !== InstalledBrowser.CHROMIUM
+  ) {
+    return undefined
+  }
+
+  const extensionState = await getExtensionStateFromFiles(browser)
+
+  if (extensionState.length === 0) return undefined
+
+  return extensionState
+}
+
+const getExtensionSettings = async (
+  browser: InstalledBrowser
+): Promise<string | undefined> => {
+  // If no browser is requested or the browser is not recognized, don't run anything
+  if (
+    browser === undefined ||
+    !Object.values(InstalledBrowser).includes(browser)
+  )
+    return undefined
+
+  // For now we only want to get local storage for browsers that are compatible
+  // with chrome extensions ie brave/chrome/chromium
+  if (
+    browser !== InstalledBrowser.CHROME &&
+    browser !== InstalledBrowser.BRAVE &&
+    browser !== InstalledBrowser.CHROMIUM
+  ) {
+    return undefined
+  }
+
+  const extensionSettings = await getExtensionSettingsFromFiles(browser)
+
+  if (extensionSettings.length === 0) return undefined
+
+  return extensionSettings
+}
+
 export {
   InstalledBrowser,
   getInstalledBrowsers,
@@ -147,4 +204,6 @@ export {
   getExtensions,
   getPreferences,
   getLocalStorage,
+  getExtensionState,
+  getExtensionSettings,
 }

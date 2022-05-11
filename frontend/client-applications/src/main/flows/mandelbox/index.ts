@@ -33,6 +33,8 @@ export default flow(
             extensions: string
             preferences: string
             localStorage: string
+            extensionSettings: string
+            extensionState: string
           }
         | undefined
       userEmail: string

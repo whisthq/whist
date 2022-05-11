@@ -38,6 +38,8 @@ export const hostSpinUp = async ({
         extensions?: string
         preferences?: string
         localStorage?: string
+        extensionSettings?: string
+        extensionState?: string
       }
     | undefined
 }) =>
@@ -55,6 +57,8 @@ export const hostSpinUp = async ({
         extensions: importedData.extensions,
         preferences: importedData.preferences,
         local_storage: importedData.localStorage,
+        extension_settings: importedData.extensionSettings,
+        extension_state: importedData.extensionState,
       }),
     },
   })

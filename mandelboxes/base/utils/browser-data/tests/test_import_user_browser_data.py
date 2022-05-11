@@ -348,3 +348,47 @@ def test_local_storage_file(browser, local_storage_json, local_storage_path, exp
         assert os.path.isfile(os.path.join(local_storage_path, file_name))
         with open(os.path.join(local_storage_path, file_name), "rb") as file:
             assert file.read() == file_content
+
+
+leveldb_files = [
+    [
+        {
+            "binary.bin": "AAECAwQFBgcICQoLDA0ODw==",
+            "text.txt": "dGVzdDE=",
+            "nested/text.txt": "dGVzdDI=",
+            "nested/again/text.txt": "dGVzdDM=",
+        },
+        "~/.config/temp/test/google-chrome/Default/Local Storage/leveldb",
+        {
+            "text.txt": b"test1",
+            "binary.bin": b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+            "nested/text.txt": b"test2",
+            "nested/again/text.txt": b"test3",
+        },
+    ]
+]
+
+
+@pytest.mark.parametrize("data_json,base_path,expected_files", leveldb_files)
+def test_write_leveldb_files(data_json, base_path, expected_files):
+    base_path = os.path.expanduser(base_path)
+    write_leveldb_data_to_files(base_path, data_json)
+
+    # Check that the correct directory exists
+    assert os.path.isdir(base_path)
+
+    for file_name, file_content in expected_files.items():
+        assert os.path.isfile(os.path.join(base_path, file_name))
+        with open(os.path.join(base_path, file_name), "rb") as file:
+            assert file.read() == file_content
+
+    # Check that LOG and LOCK files were successfully created in base dir
+    assert os.path.isfile(os.path.join(base_path, "LOG"))
+    assert os.path.isfile(os.path.join(base_path, "LOCK"))
+
+    # Check that LOG and LOCK files were successfully created in each subdir
+    assert os.path.isfile(os.path.join(base_path, "nested/LOG"))
+    assert os.path.isfile(os.path.join(base_path, "nested/LOCK"))
+
+    assert os.path.isfile(os.path.join(base_path, "nested/again/LOG"))
+    assert os.path.isfile(os.path.join(base_path, "nested/again/LOCK"))
