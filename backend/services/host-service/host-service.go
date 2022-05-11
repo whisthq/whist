@@ -591,7 +591,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					req, appName := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
 
 					// For local development, we start and finish the mandelbox spin up back to back
-					go StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName)
+					StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName)
 					go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxSubscription, transportRequestMap, transportMapLock, req)
 				}
 			default:
