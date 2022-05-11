@@ -83,7 +83,9 @@ Defines
 // Various control flags
 #define USING_FFMPEG_IFRAME_FLAG false
 // Toggle verbose logs
+#ifndef LOG_VIDEO
 #define LOG_VIDEO false
+#endif
 #define LOG_AUDIO false
 #define LOG_NACKING false
 #define LOG_NETWORKING false

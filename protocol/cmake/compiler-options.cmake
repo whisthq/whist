@@ -46,4 +46,5 @@ endif()
 
 # For now, log everything.
 add_compile_definitions(LOG_LEVEL=5
+                        $<$<CONFIG:Debug>:LOG_VIDEO=true>
                         __ROOT_FILE__="${PROJECT_SOURCE_DIR}")
