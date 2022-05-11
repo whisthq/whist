@@ -89,7 +89,6 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // Initialize the renderer
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
-    SDL_SetHint(SDL_HINT_MAC_USE_WINDOW_STYLE_FULL_SIZE_CONTENT_VIEW, "1");
 
     if (sdl_render_driver) {
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, sdl_render_driver);
