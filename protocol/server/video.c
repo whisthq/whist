@@ -40,11 +40,13 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/network/network_algorithm.h>
 #include <whist/network/throttle.h>
+#include <whist/utils/linked_list.h>
 #include "whist/core/features.h"
 #include "client.h"
 #include "network.h"
 #include "video.h"
 #include "state.h"
+#include <whist/utils/window_info.h>
 
 #if OS_IS(OS_WIN32)
 #pragma comment(lib, "ws2_32.lib")
@@ -187,6 +189,7 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
     frame->codec_type = encoder->codec_type;
     frame->is_empty_frame = false;
     frame->is_window_visible = true;
+    memcpy(frame->window_data, device->window_data, sizeof(WhistWindowData) * MAX_WINDOWS);
     frame->corner_color = device->corner_color;
     frame->server_timestamp = server_timestamp;
     frame->client_input_timestamp = client_input_timestamp;
