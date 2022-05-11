@@ -352,6 +352,13 @@ def write_leveldb_data_to_files(base_path, data):
             with open(os.path.join(dir_path, "LOCK"), "w"):
                 pass
 
+    # Create LOG and LOCK files in base directory too
+    with open(os.path.join(base_path, "LOG"), "w"):
+        pass
+
+    with open(os.path.join(base_path, "LOCK"), "w"):
+        pass
+
     subprocess.run(["chmod", "-R", "777", base_path])
 
 
