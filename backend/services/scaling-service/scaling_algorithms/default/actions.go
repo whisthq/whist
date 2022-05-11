@@ -265,7 +265,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		// Check if lingering instance has any running mandelboxes
 		if dbInstance.RemainingCapacity == 0 {
 			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
-			logger.Warningf("Instance %v has associated mandelboxes and is marked as Draining.", instance.ID, dbInstance.RemainingCapacity)
+			logger.Warningf("Instance %v has associated mandelboxes and is marked as Draining.", instance.ID)
 		} else {
 			lingeringInstances = append(lingeringInstances, instance)
 			lingeringIDs = append(lingeringIDs, string(instance.ID))
