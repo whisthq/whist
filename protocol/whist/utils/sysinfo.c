@@ -462,25 +462,16 @@ void print_hard_drive_info(void) {
 double get_cpu_usage(void) {
     char* cpu_usage = NULL;
     double cpu_usage_pct = -1.0;
-#if defined(__linux__)
+#ifndef _WIN32
     // Format: %Cpu(s):  1.6 us,  1.6 sy,  0.0 ni, 96.9 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
-    int res = runcmd("top -b -n 1 | grep 'Cpu(s):'", &cpu_usage);
+    int res = runcmd("ps -A -o \%cpu | awk '{s+=$1} END {print s}'", &cpu_usage);
+    LOG_INFO("cpu_usage: %s, strlen(cpu_usage): %lu", cpu_usage, strlen(cpu_usage));
     cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
-
-    // Extract number indicating percentage of idle time
-    int start_index = 0, end_index = 0;
-    for (int i = 0; i < 3; i++) {
-        while (cpu_usage[start_index] != ',') start_index++;
-        start_index++;
-    }
-    start_index++;
-    end_index = start_index;
-    while (cpu_usage[end_index] != ' ') end_index++;
-    cpu_usage[end_index] = '\0';
+    LOG_INFO("cpu_usage: %s, strlen(cpu_usage): %lu", cpu_usage, strlen(cpu_usage));
 
     // Compute percentage of non-idle CPU time
-    double cpu_idle_pct = atof(&cpu_usage[start_index]);
-    cpu_usage_pct = 100.00 - cpu_idle_pct;
+    cpu_usage_pct = atof(cpu_usage);
+    LOG_INFO("CPU usage in percentage: %f", cpu_usage_pct);
 #else
     LOG_WARNING("get_cpu_usage() not implemented for this platform");
 #endif
