@@ -422,7 +422,10 @@ int whist_client_main(int argc, const char* argv[]) {
             }
 
             // This might hang for a long time
-            if (!handle_frontend_events(frontend)) {
+            // The 50ms timeout is chosen to match other checks in this
+            // loop, though when video is running it will almost always
+            // be interrupted before it reaches the timeout.
+            if (!handle_frontend_events(frontend, 50)) {
                 // unable to handle event
                 exit_code = WHIST_EXIT_FAILURE;
                 break;
@@ -480,16 +483,6 @@ int whist_client_main(int argc, const char* argv[]) {
                 }
 
                 start_timer(&monitor_change_timer);
-            }
-
-            // Check if the window is minimized or occluded.
-            if (!whist_frontend_is_window_visible(frontend)) {
-                // If it is, we can sleep for a good while to keep CPU usage very low.
-                whist_sleep(10);
-            } else {
-                // Otherwise, we sleep for a much shorter time to stay responsive,
-                // but we still don't let the loop be tight (in order to improve battery life)
-                whist_usleep(0.25 * US_IN_MS);
             }
 
             // Check if file upload has been initiated and initiated selection dialog if so

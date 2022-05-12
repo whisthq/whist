@@ -214,6 +214,8 @@ void sdl_update_framebuffer(AVFrame* frame) {
     }
 
     whist_unlock_mutex(frontend_render_mutex);
+
+    whist_frontend_interrupt(event_frontend);
 }
 
 void sdl_render_framebuffer(void) {

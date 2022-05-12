@@ -63,13 +63,23 @@ Public Function Implementations
 ============================
 */
 
-bool handle_frontend_events(WhistFrontend* frontend) {
+bool handle_frontend_events(WhistFrontend* frontend, int timeout_ms) {
     WhistFrontendEvent event;
-    while (whist_frontend_poll_event(frontend, &event)) {
+
+    // Wait for up to the timeout until we get an event.
+    bool got_event = whist_frontend_wait_event(frontend, &event, timeout_ms);
+    if (!got_event) {
+        // No events within the timeout.
+        return true;
+    }
+    // Handle that event then fetch and handle any more events which are
+    // available without waiting further.
+    do {
         if (handle_frontend_event(frontend, &event) != 0) {
             return false;
         }
-    }
+        got_event = whist_frontend_poll_event(frontend, &event);
+    } while (got_event);
 
     // After handle_sdl_event potentially captures a mouse motion,
     // We throttle it down to only update once every 0.5ms
@@ -288,8 +298,8 @@ static void handle_quit_event(FrontendQuitEvent* event) {
 }
 
 static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
-    if (event->type != FRONTEND_EVENT_MOUSE_WHEEL && active_momentum_scroll) {
-        // Cancel momentum scrolls on non-wheel events
+    if (event->type != FRONTEND_EVENT_MOUSE_WHEEL && event->type != FRONTEND_EVENT_INTERRUPT) {
+        // Cancel momentum scrolls on external non-wheel events.
         active_momentum_scroll = false;
     }
 
@@ -352,6 +362,7 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
             handle_quit_event(&event->quit);
             break;
         }
+        case FRONTEND_EVENT_INTERRUPT:
         case FRONTEND_EVENT_UNHANDLED: {
             break;
         }
