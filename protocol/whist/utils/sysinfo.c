@@ -487,7 +487,9 @@ double get_cpu_usage(void) {
             if (token) {
                 LOG_INFO("token: %s", token);
                 cpu_in_use_time += atoi(token);
-                if (i == 3) cpu_idle_time = atoi(token);
+                if (i == 3) {
+                    cpu_idle_time = atoi(token);
+                }
                 i++;
             }
         }
@@ -495,7 +497,7 @@ double get_cpu_usage(void) {
         size_t cpu_idle_delta = cpu_idle_time - last_cpu_idle_time;
         size_t cpu_used = cpu_in_use_delta - cpu_idle_delta;
 
-        cpu_usage_pct = 100.0 * cpu_used * 100.0 / cpu_in_use_delta;
+        cpu_usage_pct = 100.0 * cpu_used / cpu_in_use_delta;
         LOG_INFO("cpu_usage_pct: %f\n", cpu_usage_pct);
         last_cpu_idle_time = cpu_idle_time;
         last_cpu_in_use_time = cpu_in_use_time;
