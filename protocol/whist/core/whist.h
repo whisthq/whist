@@ -109,7 +109,7 @@ Defines
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
 #define INPUT_DRIVER UINPUT_INPUT_DRIVER
-#define USING_NVIDIA_CAPTURE true
+#define USING_NVIDIA_CAPTURE false
 #define USING_NVIDIA_ENCODE true
 
 #endif
@@ -139,6 +139,8 @@ Defines
 // Milliseconds between sending resize events from client to server
 // Used to throttle resize event spam.
 #define WINDOW_RESIZE_MESSAGE_INTERVAL 200
+
+#define MAX_WINDOWS 2
 
 #define MAX_VIDEO_PACKETS 500
 // Maximum allowed FEC ratio. Used for allocation of static buffers
@@ -779,6 +781,7 @@ typedef enum WhistServerMessageType {
     SMESSAGE_INIT_REPLY = 3,
     SMESSAGE_CLIPBOARD = 4,
     SMESSAGE_WINDOW_TITLE = 5,
+    SMESSAGE_WINDOW = 6,
     SMESSAGE_OPEN_URI = 7,
     SMESSAGE_FULLSCREEN = 8,
     SMESSAGE_FILE_METADATA = 9,
@@ -790,7 +793,20 @@ typedef enum WhistServerMessageType {
     SMESSAGE_QUIT = 100,
 } WhistServerMessageType;
 
+// TODO: implement window title passing without wasting bandwidth
+typedef struct WhistWindowData {
+    unsigned long id;
+    int x;
+    int y;
+    int width;
+    int height;
+    WhistRGBColor corner_color;
+    bool is_fullscreen;
+    bool is_resizable;
+} WhistWindowData;
+
 /**
+ *
  * @brief   Server message.
  * @details Message from a Whist server to a Whist client.
  */
