@@ -1,7 +1,7 @@
-import { initWhistAuthHandler, initGoogleAuthHandler } from "./handlers/auth"
-import { initMandelboxAssign } from "./handlers/mandelbox"
-import { initAWSRegionPing } from "./handlers/location"
-import { initHostSpinUp } from "./handlers/host"
+import { initWhistAuthHandler, initGoogleAuthHandler } from "./auth"
+import { initMandelboxAssign } from "./mandelbox"
+import { initHostSpinUp } from "./host"
+import { initAWSRegionPing } from "./location"
 
 // Auth handling on every launch
 initWhistAuthHandler()
@@ -9,7 +9,7 @@ initWhistAuthHandler()
 // Opens Google auth window
 initGoogleAuthHandler()
 
-// Finds the closest AWS regions
+// Ping all AWS regions
 initAWSRegionPing()
 
 // Sends mandelbox assign request

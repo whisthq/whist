@@ -32,3 +32,4 @@ declare module "*.css" {
 }
 
 declare module "rxjs"
+declare module "ping.js"

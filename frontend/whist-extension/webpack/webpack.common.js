@@ -10,6 +10,7 @@ module.exports = {
   entry: {
     worker: path.join(srcDir, "worker", "index.ts"),
     tabs: path.join(srcDir, "tabs", "index.tsx"),
+    content: path.join(srcDir, "content", "index.ts"),
   },
   output: {
     path: outDir,

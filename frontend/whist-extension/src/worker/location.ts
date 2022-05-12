@@ -1,7 +1,8 @@
-import { getCountry, getSortedAWSRegions } from "@app/worker/utils/location"
+import { getCountry, getSortedAWSRegions } from "@app/utils/location"
 
-import { ContentScriptMessageType } from "@app/constants/messaging"
+import { WorkerMessageType } from "@app/constants/messaging"
 import { regions } from "@app/constants/location"
+import { createEvent } from "@app/utils/events"
 
 const initAWSRegionPing = async () => {
   const country = getCountry()
@@ -16,10 +17,7 @@ const initAWSRegionPing = async () => {
       .map((region) => region.name)
   )
 
-  chrome.runtime.sendMessage({
-    type: ContentScriptMessageType.CLOSEST_AWS_REGIONS,
-    value: sortedRegions,
-  })
+  createEvent(WorkerMessageType.CLOSEST_AWS_REGIONS, sortedRegions)
 }
 
 export { initAWSRegionPing }

@@ -1,5 +1,7 @@
 import jwtDecode from "jwt-decode"
 
+import { post } from "@app/@core-ts/api"
+
 import { config } from "@app/constants/app"
 
 const redirectURL = chrome.identity.getRedirectURL("auth0")
@@ -40,43 +42,41 @@ export const authInfoCallbackRequest = async (
     const url = new URL(callbackURL)
     const code = url.searchParams.get("code")
 
-    const response = await fetch(
-      `https://${config.AUTH_DOMAIN_URL}/oauth/token`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          grant_type: "authorization_code",
-          client_id: config.AUTH_CLIENT_ID,
-          code,
-          redirect_uri: redirectURL,
-        }),
-      }
-    )
+    const response = await post({
+      url: `https://${config.AUTH_DOMAIN_URL}/oauth/token`,
+      body: {
+        grant_type: "authorization_code",
+        client_id: config.AUTH_CLIENT_ID,
+        code,
+        redirect_uri: redirectURL,
+      },
+    })
 
-    return await response.json()
+    return response
   } catch (err) {
     return
   }
 }
 
 export const parseAuthInfo = (res: {
-  id_token?: string
-  access_token?: string
+  json: {
+    id_token?: string
+    access_token?: string
+  }
 }) => {
   /*
   Description:
-    Helper function that takes an Auth0 response and extracts a {email, sub, accessToken, refreshToken} object
+    Helper function that takes an Auth0 response and extracts a {email, sub, accessToken} object
   Arguments:
     Response (Record): Auth0 response object
   Returns:
-    {email, sub, accessToken, refreshToken, subscriptionStatus}
+    {email, sub, accessToken, subscriptionStatus}
   */
 
   try {
-    const accessToken = res?.access_token
+    const accessToken = res?.json.access_token
     const decodedAccessToken = jwtDecode(accessToken ?? "") as any
-    const decodedIdToken = jwtDecode(res?.id_token ?? "") as any
+    const decodedIdToken = jwtDecode(res?.json.id_token ?? "") as any
     const userEmail = decodedIdToken?.email
     const subscriptionStatus =
       decodedAccessToken["https://api.fractal.co/subscription_status"]

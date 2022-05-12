@@ -22,8 +22,14 @@ if (require.main === module) {
     .option("commit", {
       description: "Set the commit hash of the current branch",
       type: "string",
-      requiresArg: false,
-      demandOption: true,
+      requiresArg: true,
+      demandOption: false,
+    })
+    .option("version", {
+      description: "Set the commit hash of the current branch",
+      type: "string",
+      requiresArg: true,
+      demandOption: false,
     })
     .help().argv
 

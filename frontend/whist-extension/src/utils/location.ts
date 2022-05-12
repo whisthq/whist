@@ -6,15 +6,16 @@
 
 import sortBy from "lodash.sortby"
 import find from "lodash.find"
-import ping from "ping"
+// import Ping from "ping.js"
 
-import { AWSRegion } from "@app/@types/aws"
-import { getStorage } from "@app/worker/utils/storage"
+import { AWSRegion } from "@app/constants/location"
+import { getStorage } from "@app/utils/storage"
 
 import { timezones } from "@app/constants/location"
 import { Storage } from "@app/constants/storage"
 
 const IPSTACK_API_KEY = "f3e4e15355710b759775d121e243e39b"
+// const p = new Ping()
 
 const whistPingTime = async (host: string, numberPings: number) => {
   /*
@@ -32,9 +33,9 @@ const whistPingTime = async (host: string, numberPings: number) => {
   const pingResults = [] as number[]
   for (let i = 0; i < numberPings; i += 1) {
     try {
-      const result = await ping.promise.probe(host)
-      if ((result.time ?? undefined) !== undefined)
-        pingResults.push(result.time as number)
+      const start = Date.now()
+      await fetch(host)
+      pingResults.push(Date.now() - start)
     } catch (err) {
       console.error(err)
     }
@@ -54,9 +55,11 @@ const pingLoop = (regions: AWSRegion[]) => {
     const region = regions[i]
 
     pingResultPromises.push(
-      whistPingTime(`ec2.${region}.amazonaws.com`, 6).then((pingTime) => {
-        return { region, pingTime }
-      })
+      whistPingTime(`http://ec2.${region}.amazonaws.com/ping`, 6).then(
+        (pingTime) => {
+          return { region, pingTime }
+        }
+      )
     )
   }
   return pingResultPromises
@@ -75,6 +78,7 @@ const getSortedAWSRegions = async (regions: AWSRegion[]) => {
   */
   const pingResults = await Promise.all(pingLoop(regions))
   const sortedResults = sortBy(pingResults, ["pingTime"])
+  console.log("Results are", sortedResults)
   return sortedResults.map((r) => r.region)
 }
 

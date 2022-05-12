@@ -5,7 +5,7 @@
  */
 
 import { AsyncReturnType } from "@app/@types/api"
-import { put } from "@app/worker/@core-ts/api"
+import { put } from "@app/@core-ts/api"
 
 import { hostServicePort } from "@app/constants/host"
 
@@ -72,6 +72,3 @@ export const hostSpinUpSuccess = (res: HostSpinUpResponse) => {
     false
   )
 }
-
-export const hostSpinUpError = (res: HostSpinUpResponse) =>
-  !hostSpinUpSuccess(res)

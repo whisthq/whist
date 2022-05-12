@@ -1,5 +1,5 @@
 {
-  "name": "Cloud Tab",
+  "name": "Whist Tab",
   "version": "1.0.0",
   "manifest_version": 3,
   "description": "Whist extension to create cloud tabs",
@@ -7,6 +7,13 @@
   "background": {
     "service_worker": "src/worker.js"
   },
-  "permissions": ["tabs", "identity", "storage", "history"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "permissions": ["history", "identity", "scripting", "storage", "tabs"],
   "host_permissions": ["*://*/*"]
 }

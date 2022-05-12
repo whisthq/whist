@@ -3,9 +3,9 @@
  * @file mandelbox.ts
  * @brief This file contains utility functions interacting with the scaling service to create mandelboxes.
  */
-import { post } from "@app/worker/@core-ts/api"
+import { post } from "@app/@core-ts/api"
 
-import { AWSRegion } from "@app/@types/aws"
+import { AWSRegion } from "@app/constants/location"
 import { AsyncReturnType } from "@app/@types/api"
 import { config, sessionID } from "@app/constants/app"
 

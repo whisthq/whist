@@ -1,15 +1,15 @@
 import { zip } from "rxjs"
 
-import { ipcMessage } from "@app/worker/utils/messaging"
+import { createEvent, fromEvent } from "@app/utils/events"
 
-import { getStorage } from "@app/worker/utils/storage"
-import { generateRandomConfigToken } from "@app/worker/@core-ts/auth"
+import { getStorage } from "@app/utils/storage"
+import { generateRandomConfigToken } from "@app/@core-ts/auth"
 
-import { ContentScriptMessageType } from "@app/constants/messaging"
+import { WorkerMessageType } from "@app/constants/messaging"
 import { Storage } from "@app/constants/storage"
-import { hostSpinUp, hostSpinUpSuccess } from "@app/worker/utils/host"
-import { AuthInfo } from "@app/@types/auth"
-import { MandelboxInfo } from "@app/@types/mandelbox"
+import { hostSpinUp, hostSpinUpSuccess } from "@app/utils/host"
+import { AuthInfo } from "@app/@types/payload"
+import { MandelboxInfo } from "@app/@types/payload"
 
 const getConfigToken = async () => {
   const cachedConfigToken =
@@ -22,10 +22,12 @@ const getConfigToken = async () => {
 
 const initHostSpinUp = () => {
   zip(
-    ipcMessage(ContentScriptMessageType.AUTH_SUCCESS),
-    ipcMessage(ContentScriptMessageType.MANDELBOX_ASSIGN_SUCCESS)
+    fromEvent(WorkerMessageType.AUTH_SUCCESS),
+    fromEvent(WorkerMessageType.MANDELBOX_ASSIGN_SUCCESS)
   ).subscribe(async ([auth, mandelbox]: [AuthInfo, MandelboxInfo]) => {
+    console.log("Host spin up", auth, mandelbox)
     const { configToken, isNew } = await getConfigToken()
+
     const response = await hostSpinUp({
       ip: mandelbox.ip,
       config_encryption_token: configToken,
@@ -36,17 +38,16 @@ const initHostSpinUp = () => {
       importedData: undefined,
     })
 
+    console.log("host response was", response)
+
     if (!hostSpinUpSuccess(response)) return
 
-    chrome.runtime.sendMessage({
-      type: ContentScriptMessageType.HOST_SPINUP_SUCCESS,
-      value: {
-        secret: response.json?.result?.aes_key,
-        ports: {
-          port_32262: response.json?.result?.port_32262,
-          port_32263: response.json?.result?.port_32263,
-          port_32273: response.json?.result?.port_32273,
-        },
+    createEvent(WorkerMessageType.HOST_SPINUP_SUCCESS, {
+      secret: response.json?.result?.aes_key,
+      ports: {
+        port_32262: response.json?.result?.port_32262,
+        port_32263: response.json?.result?.port_32263,
+        port_32273: response.json?.result?.port_32273,
       },
     })
   })

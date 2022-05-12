@@ -1,18 +1,22 @@
 import has from "lodash.has"
 import isEmpty from "lodash.isempty"
 
-import { ipcMessage } from "@app/worker/utils/messaging"
-import { getCachedAuthInfo, refreshAuthInfo } from "@app/worker/utils/auth"
+import { ipcMessage } from "@app/utils/messaging"
+import { getCachedAuthInfo, refreshAuthInfo } from "@app/utils/auth"
 import {
   authPortalURL,
   authInfoCallbackRequest,
   parseAuthInfo,
-} from "@app/worker/@core-ts/auth"
-import { setStorage } from "@app/worker/utils/storage"
-import { createAuthTab, createLoggedInTab } from "@app/worker/utils/tabs"
+} from "@app/@core-ts/auth"
+import { setStorage } from "@app/utils/storage"
+import { createAuthTab, createLoggedInTab } from "@app/utils/tabs"
+import { createEvent } from "@app/utils/events"
 
 import { Storage } from "@app/constants/storage"
-import { ContentScriptMessageType } from "@app/constants/messaging"
+import {
+  WorkerMessageType,
+  ContentScriptMessageType,
+} from "@app/constants/messaging"
 
 const initWhistAuthHandler = async () => {
   /*
@@ -22,9 +26,8 @@ const initWhistAuthHandler = async () => {
   */
 
   const authInfo = await getCachedAuthInfo()
-
+  const refreshedAuthInfo = await refreshAuthInfo(authInfo)
   const wasAuthed = !isEmpty(authInfo) && authInfo?.refreshToken !== undefined
-  const refreshedAuthInfo = refreshAuthInfo(authInfo)
 
   // If the auth credentials are invalid, open a login page
   if (!wasAuthed || has(refreshedAuthInfo, "error")) {
@@ -36,10 +39,7 @@ const initWhistAuthHandler = async () => {
   setStorage(Storage.AUTH_INFO, JSON.stringify(refreshedAuthInfo))
 
   // Tell the application that auth succeeded
-  chrome.runtime.sendMessage({
-    type: ContentScriptMessageType.AUTH_SUCCESS,
-    value: refreshedAuthInfo,
-  })
+  createEvent(WorkerMessageType.AUTH_SUCCESS, refreshedAuthInfo)
 }
 
 const initGoogleAuthHandler = () => {
@@ -57,15 +57,19 @@ const initGoogleAuthHandler = () => {
       async (callbackUrl) => {
         const response = (await authInfoCallbackRequest(callbackUrl)) as any
         const authInfo = parseAuthInfo(response)
+        const refreshToken = response?.json.refresh_token
+
+        console.log("storing", authInfo, response)
 
         if (!has(authInfo, "error")) {
-          setStorage(Storage.AUTH_INFO, JSON.stringify(authInfo))
+          setStorage(
+            Storage.AUTH_INFO,
+            JSON.stringify({ ...authInfo, refreshToken })
+          )
           createLoggedInTab()
 
           // Tell the application that auth succeeded
-          chrome.runtime.sendMessage({
-            type: ContentScriptMessageType.AUTH_SUCCESS,
-          })
+          createEvent(WorkerMessageType.AUTH_SUCCESS, authInfo)
         }
 
         // TODO: Show user a message on error

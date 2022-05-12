@@ -1,3 +1,9 @@
+export type AuthInfo = {
+  userEmail: string
+  accessToken: string
+  refreshToken: string
+}
+
 export type MandelboxInfo = {
   ip: string
   mandelboxID: string
