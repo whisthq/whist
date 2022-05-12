@@ -755,8 +755,8 @@ RUN mkdir -p /home/whist/.themes \
     && tar -xf WhiteSur-dark-40-0.tar.xz \
     # We copy the themes to both usr/share/themes (root-path) and /home/whist/.themes (user-path)
     # since we're not sure which one will be used.
-    && cp WhiteSur-light WhiteSur-dark /usr/share/themes \
-    && cp WhiteSur-light WhiteSur-dark /home/whist/.themes \
+    && cp -r WhiteSur-light WhiteSur-dark /usr/share/themes \
+    && cp -r WhiteSur-light WhiteSur-dark /home/whist/.themes \
     && cd ../.. && rm -rf WhiteSur-gtk-theme-2022-02-21 2022-02-21.tar.gz
 
 # Install WhiteSur cursor and icons, for macOS-like theming. These get installed to the root path,
