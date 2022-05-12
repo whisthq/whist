@@ -39,14 +39,14 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/sync_packets.c
         ../client/renderer.c
         ../client/frontend/frontend.c
-        ../client/frontend/sdl/audio.c
-        ../client/frontend/sdl/events.c
-        ../client/frontend/sdl/lifecycle.c
+        ../client/frontend/sdl/audio.cpp
+        ../client/frontend/sdl/events.cpp
+        ../client/frontend/sdl/lifecycle.cpp
         ../client/frontend/sdl/sdl.c
         ../client/frontend/virtual/virtual.c
         ../client/frontend/virtual/impl.c
-        ../client/frontend/sdl/video.c
-        ../client/frontend/sdl/window.c
+        ../client/frontend/sdl/video.cpp
+        ../client/frontend/sdl/window.cpp
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp
@@ -97,15 +97,15 @@ else()
         ../client/sync_packets.c
         ../client/renderer.c
         ../client/frontend/frontend.c
-        ../client/frontend/sdl/audio.c
-        ../client/frontend/sdl/events.c
-        ../client/frontend/sdl/lifecycle.c
+        ../client/frontend/sdl/audio.cpp
+        ../client/frontend/sdl/events.cpp
+        ../client/frontend/sdl/lifecycle.cpp
         ../client/frontend/sdl/sdl.c
         ../client/frontend/virtual/virtual.c
         ../client/frontend/virtual/impl.c
-        ../client/frontend/sdl/video.c
-        ../client/frontend/sdl/window.c
-        $<$<PLATFORM_ID:Windows>:../client/frontend/sdl/d3d11.c>
+        ../client/frontend/sdl/video.cpp
+        ../client/frontend/sdl/window.cpp
+        $<$<PLATFORM_ID:Windows>:../client/frontend/sdl/d3d11.cpp>
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp
@@ -139,7 +139,7 @@ target_link_libraries(${PROTOCOL_TEST_BINARY}
 # Link macOS-specific files and libraries
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
-        ../client/frontend/sdl/native_macos.m
+        ../client/frontend/sdl/native_macos.mm
         ../client/notif_utils/display_notifs_mac.m
     )
     target_link_libraries(${PROTOCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})

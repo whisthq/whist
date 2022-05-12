@@ -1,8 +1,12 @@
+extern "C" {
 #include "native.h"
 #include <SDL2/SDL_syswm.h>
 #include <Cocoa/Cocoa.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include <VideoToolbox/VideoToolbox.h>
+}
+
+#include "sdl_struct.hpp"
 
 void sdl_native_hide_taskbar(void) {
     /*
@@ -175,8 +179,8 @@ typedef struct FileDragState {
 } FileDragState;
 
 static bool mouse_in_window(WhistFrontend *frontend) {
-    SDLFrontendContext *context = frontend->context;
-    FileDragState *state = context->file_drag_data;
+    SDLFrontendContext *context = (SDLFrontendContext*)frontend->context;
+    FileDragState *state = (FileDragState*)context->file_drag_data;
 
     // If window is minimized or not visible, then the mouse is definitely not in window
     //     TODO: return false for drags over occluded parts of an unoccluded window
@@ -204,13 +208,13 @@ static bool mouse_in_window(WhistFrontend *frontend) {
 }
 
 static void push_drag_end_event(WhistFrontend *frontend) {
-    SDLFrontendContext *context = frontend->context;
-    FileDragState *state = context->file_drag_data;
+    SDLFrontendContext *context = (SDLFrontendContext*)frontend->context;
+    FileDragState *state = (FileDragState*)context->file_drag_data;
     state->active = false;
 
     SDL_Event event = {0};
     event.type = context->file_drag_event_id;
-    FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
+    FrontendFileDragEvent *drag_event = (FrontendFileDragEvent*)safe_malloc(sizeof(FrontendFileDragEvent));
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = true;
     drag_event->group_id = state->change_count;  // use change count as group ID
@@ -219,12 +223,12 @@ static void push_drag_end_event(WhistFrontend *frontend) {
 }
 
 static void push_drag_start_event(WhistFrontend *frontend, char *filename) {
-    SDLFrontendContext *context = frontend->context;
-    FileDragState *state = context->file_drag_data;
+    SDLFrontendContext *context = (SDLFrontendContext*)frontend->context;
+    FileDragState *state = (FileDragState*)context->file_drag_data;
 
     SDL_Event event = {0};
     event.type = context->file_drag_event_id;
-    FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
+    FrontendFileDragEvent *drag_event = (FrontendFileDragEvent*)safe_malloc(sizeof(FrontendFileDragEvent));
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = false;
     drag_event->filename = strdup(filename);
@@ -240,8 +244,8 @@ static void push_drag_start_event(WhistFrontend *frontend, char *filename) {
 }
 
 static void push_drag_event(WhistFrontend *frontend) {
-    SDLFrontendContext *context = frontend->context;
-    FileDragState *state = context->file_drag_data;
+    SDLFrontendContext *context = (SDLFrontendContext*)frontend->context;
+    FileDragState *state = (FileDragState*)context->file_drag_data;
 
     // Send a drag event at most every 15 ms
     if (state->active && get_timer(&state->sent_drag_move_event_timer) * MS_IN_SECOND < 15) {
@@ -253,7 +257,7 @@ static void push_drag_event(WhistFrontend *frontend) {
 
     SDL_Event event = {0};
     event.type = context->file_drag_event_id;
-    FrontendFileDragEvent *drag_event = safe_malloc(sizeof(FrontendFileDragEvent));
+    FrontendFileDragEvent *drag_event = (FrontendFileDragEvent*)safe_malloc(sizeof(FrontendFileDragEvent));
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = false;
     drag_event->position.x = state->position_x;
@@ -275,9 +279,9 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
         by monitoring when the mouse up event occurs which signals that the user
         is finished dragging the file in question.
     */
-    SDLFrontendContext *context = frontend->context;
+    SDLFrontendContext *context = (SDLFrontendContext*)frontend->context;
     context->file_drag_data = safe_malloc(sizeof(FileDragState));
-    FileDragState *state = context->file_drag_data;
+    FileDragState *state = (FileDragState*)context->file_drag_data;
     memset(state, 0, sizeof(FileDragState));
 
     // Initialize change count since global drag board change count starts incrementing at system
@@ -343,8 +347,8 @@ void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
         NSEvent event listeners are removed by passing in their ids
         to the removeMonitor call
     */
-    SDLFrontendContext *context = frontend->context;
-    FileDragState *state = context->file_drag_data;
+    SDLFrontendContext *context = (SDLFrontendContext*)frontend->context;
+    FileDragState *state = (FileDragState*)context->file_drag_data;
 
     if (state == NULL) {
         return;

@@ -1,7 +1,11 @@
+extern "C" {
 #include "common.h"
 #include "native.h"
-#include <whist/utils/atomic.h>
 #include <whist/utils/command_line.h>
+}
+
+#include "sdl_struct.hpp"
+#include <whist/utils/atomic.h>
 
 static bool skip_taskbar;
 static char* icon_png_filename;
@@ -50,7 +54,7 @@ static void sdl_init_video_device(SDLFrontendContext* context) {
 
 void sdl_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
                           enum AVPixelFormat* format) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
 
     if (device) {
         *device = context->video.decode_device;
@@ -166,7 +170,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
         renderer_flags |= SDL_RENDERER_PRESENTVSYNC;
     }
 
-    SDLFrontendContext* context = safe_malloc(sizeof(SDLFrontendContext));
+    SDLFrontendContext* context = (SDLFrontendContext*) safe_malloc(sizeof(SDLFrontendContext));
     memset(context, 0, sizeof(SDLFrontendContext));
     frontend->context = context;
 
@@ -241,7 +245,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 }
 
 void sdl_destroy(WhistFrontend* frontend) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
 
     if (!context) {
         return;

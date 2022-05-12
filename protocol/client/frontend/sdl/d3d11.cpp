@@ -4,6 +4,7 @@
  * @brief D3D11 helper functons for SDL client frontend.
  */
 
+extern "C" {
 #ifdef _WIN32
 #define COBJMACROS
 #include <libavutil/hwcontext_d3d11va.h>
@@ -13,6 +14,9 @@
 #endif
 
 #include "common.h"
+}
+
+#include "sdl_struct.hpp"
 
 typedef struct SDLRenderD3D11Context {
     /**
@@ -37,8 +41,8 @@ typedef struct SDLRenderD3D11Context {
     ID3D11DeviceContext *video_context;
 } SDLRenderD3D11Context;
 
-void sdl_d3d11_wait(SDLFrontendContext *context) {
-    SDLRenderD3D11Context *d3d11 = context->video.private_data;
+void sdl_d3d11_wait(void* context) {
+    SDLRenderD3D11Context *d3d11 = ((SDLFrontendContext*) context)->video.private_data;
     HRESULT hr;
 
     D3D11_QUERY_DESC desc = {
@@ -73,8 +77,8 @@ void sdl_d3d11_wait(SDLFrontendContext *context) {
     ID3D11Query_Release(query);
 }
 
-SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *frame) {
-    SDLRenderD3D11Context *d3d11 = context->video.private_data;
+SDL_Texture *sdl_d3d11_create_texture(void* context, AVFrame *frame) {
+    SDLRenderD3D11Context *d3d11 = ((SDLFrontendContext*) context)->video.private_data;
 
     // This is a pointer to a texture, but it exists on the video decode
     // device rather than the render device.  Make a new reference on
@@ -141,7 +145,7 @@ SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *fram
     return sdl_texture;
 }
 
-WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
+WhistStatus sdl_d3d11_init(void* context) {
     int err;
     HRESULT hr;
 
@@ -215,8 +219,8 @@ WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
     return WHIST_SUCCESS;
 }
 
-void sdl_d3d11_destroy(SDLFrontendContext *context) {
-    SDLRenderD3D11Context *d3d11 = context->video.private_data;
+void sdl_d3d11_destroy(void* context) {
+    SDLRenderD3D11Context *d3d11 = ((SDLFrontendContext*) context)->video.private_data;
 
     if (!d3d11) {
         // Nothing to do (init probably failed).
