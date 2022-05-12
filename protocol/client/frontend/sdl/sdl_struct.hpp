@@ -67,6 +67,10 @@ typedef struct SDLFrontendContext {
      * Video rendering state.
      */
     SDLFrontendVideoContext video;
+    /**
+     * Event ID used for internal events;
+     */
+    uint32_t internal_event_id;
     struct {
         WhistCursorState state;
         struct {
@@ -78,7 +82,6 @@ typedef struct SDLFrontendContext {
     } cursor;
     const uint8_t* key_state;
     int key_count;
-    uint32_t file_drag_event_id;
     void* file_drag_data;
     bool video_has_rendered;
     bool window_has_shown;

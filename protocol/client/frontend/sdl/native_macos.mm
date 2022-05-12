@@ -214,8 +214,9 @@ static void push_drag_end_event(WhistFrontend *frontend) {
     state->active = false;
 
     SDL_Event event = {0};
-    event.type = context->file_drag_event_id;
-    FrontendFileDragEvent *drag_event = (FrontendFileDragEvent*)safe_malloc(sizeof(FrontendFileDragEvent));
+    event.type = context->internal_event_id;
+    event.user.code = SDL_FRONTEND_EVENT_FILE_DRAG;
+    FrontendFileDragEvent *drag_event = (FrontendFileDragEvent*)safe_malloc(sizeof(*drag_event));
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = true;
     drag_event->group_id = state->change_count;  // use change count as group ID
@@ -228,8 +229,9 @@ static void push_drag_start_event(WhistFrontend *frontend, char *filename) {
     FileDragState *state = (FileDragState*)context->file_drag_data;
 
     SDL_Event event = {0};
-    event.type = context->file_drag_event_id;
-    FrontendFileDragEvent *drag_event = (FrontendFileDragEvent*)safe_malloc(sizeof(FrontendFileDragEvent));
+    event.type = context->internal_event_id;
+    event.user.code = SDL_FRONTEND_EVENT_FILE_DRAG;
+    FrontendFileDragEvent *drag_event = (FrontendFileDragEvent*)safe_malloc(sizeof(*drag_event));
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = false;
     drag_event->filename = strdup(filename);
@@ -257,8 +259,9 @@ static void push_drag_event(WhistFrontend *frontend) {
     state->active = true;
 
     SDL_Event event = {0};
-    event.type = context->file_drag_event_id;
-    FrontendFileDragEvent *drag_event = (FrontendFileDragEvent*)safe_malloc(sizeof(FrontendFileDragEvent));
+    event.type = context->internal_event_id;
+    event.user.code = SDL_FRONTEND_EVENT_FILE_DRAG;
+    FrontendFileDragEvent *drag_event = (FrontendFileDragEvent*)safe_malloc(sizeof(*drag_event));
     memset(drag_event, 0, sizeof(FrontendFileDragEvent));
     drag_event->end_drag = false;
     drag_event->position.x = state->position_x;
