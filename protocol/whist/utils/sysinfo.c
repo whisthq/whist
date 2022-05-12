@@ -460,7 +460,7 @@ void print_hard_drive_info(void) {
 }
 
 #ifdef __linux__
-size_t lastSum, lastIdle;
+size_t last_cpu_in_use_time, last_cpu_idle_time;
 #endif
 
 double get_cpu_usage(void) {
@@ -468,28 +468,39 @@ double get_cpu_usage(void) {
     double cpu_usage_pct = -1.0;
 #ifdef __APPLE__
     int res = runcmd("ps -A -o \%cpu | awk '{s+=$1} END {print s}'", &cpu_usage);
-    cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
-    cpu_usage_pct = atof(cpu_usage);
-#elif __linux__
-    int res = runcmd("cat /proc/stat", &cpu_usage);
-    cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
-
-    const char separator[2] = " ";
-    int i = 0;
-    size_t sum = 0, idle = 0;
-
-    char* token = strtok(cpu_usage, separator);
-    while (token != NULL) {
-        token = strtok(NULL, separator);
-        if (token != NULL) {
-            sum += atoi(token);
-            if (i == 3) idle = atoi(token);
-            i++;
-        }
+    if (res != -1) {
+        cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
+        cpu_usage_pct = atof(cpu_usage);
     }
-    cpu_usage_pct = 100 - (idle - lastIdle) * 100.0 / (sum - lastSum);
-    lastIdle = idle;
-    lastSum = sum;
+#elif __linux__
+    int res = runcmd("head -n 1 /proc/stat", &cpu_usage);
+    if (res != -1) {
+        cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
+
+        const char* separator = " ";
+        int i = 0;
+        size_t cpu_in_use_time = 0, cpu_idle_time = 0;
+
+        char* token = strtok(cpu_usage, separator);
+        while (token) {
+            token = strtok(NULL, separator);
+            if (token) {
+                LOG_INFO("token: %s", token);
+                cpu_in_use_time += atoi(token);
+                if (i == 3) cpu_idle_time = atoi(token);
+                i++;
+            }
+        }
+        size_t cpu_in_use_delta = cpu_in_use_time - last_cpu_in_use_time;
+        size_t cpu_idle_delta = cpu_idle_time - last_cpu_idle_time;
+        size_t cpu_used = cpu_in_use_delta - cpu_idle_delta;
+
+        cpu_usage_pct = 100.0 * cpu_used * 100.0 / cpu_in_use_delta;
+        LOG_INFO("cpu_usage_pct: %f\n", cpu_usage_pct);
+        last_cpu_idle_time = cpu_idle_time;
+        last_cpu_in_use_time = cpu_in_use_time;
+    }
+
 #else  // _WIN32
     LOG_WARNING("get_cpu_usage() not implemented for this platform");
 #endif
