@@ -60,6 +60,11 @@ func LookUpByMandelboxID(mandelboxID types.MandelboxID) (Mandelbox, error) {
 	return nil, utils.MakeError("Couldn't find Mandelbox with MandelboxID %s", mandelboxID)
 }
 
+// GetMandelboxCount gets the current number of mandelboxes on the instance.
+func GetMandelboxCount() int32 {
+	return int32(len(tracker))
+}
+
 // StopWaitingMandelboxes will stop all mandelboxes to which users never
 // connected. This function should only be called once the global context
 // gets cancelled.

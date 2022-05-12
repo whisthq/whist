@@ -603,8 +603,24 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					subscriptionEvent, transportRequestMap, transportMapLock)
 
 			case *subscriptions.InstanceEvent:
-				// Don't do this in a separate goroutine, since there's no reason to.
-				drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
+				if len(subscriptionEvent.Instances) == 0 {
+					break
+				}
+				instance := subscriptionEvent.Instances[0]
+
+				// If the status of the instance changes to "DRAINING", cancel the global context and exit.
+				if instance.Status == string(dbdriver.InstanceStatusDraining) {
+					// Don't do this in a separate goroutine, since there's no reason to.
+					drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
+					break
+				}
+
+				// If the remaining capacity field changes, check how many mandelboxes are currently
+				// running and start mandelbox zygotes as necessary.
+				if int32(instance.RemainingCapacity) != mandelboxData.GetMandelboxCount() {
+					newWaitingMandelboxes := int32(instance.RemainingCapacity) - mandelboxData.GetMandelboxCount()
+					SpinUpMandelboxes(globalCtx, globalCancel, goroutineTracker, dockerClient, instance.ID, newWaitingMandelboxes)
+				}
 
 			default:
 				if subscriptionEvent != nil {
