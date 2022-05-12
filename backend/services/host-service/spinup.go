@@ -55,7 +55,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 
 	// Replace "chrome" by "brave" (or some other container we support) to test a different app. Note that the Whist
 	// backend is designed to only ever deploy the same application everywhere, which we hardcode here.
-	var AppName mandelboxtypes.AppName = "chrome"
+	var AppName mandelboxtypes.AppName = "browsers/chrome"
 	mandelbox.SetAppName(AppName)
 
 	// Do all startup tasks that can be done before Docker container creation in
