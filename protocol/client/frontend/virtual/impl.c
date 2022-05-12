@@ -70,6 +70,12 @@ void virtual_resize_window(WhistFrontend* frontend, int width, int height) {
 
 bool virtual_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) { return false; }
 
+bool virtual_wait_event(WhistFrontend* frontend, WhistFrontendEvent* event, int timeout_ms) {
+    return false;
+}
+
+void virtual_interrupt(WhistFrontend* frontend) {}
+
 void virtual_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {}
 
 void virtual_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,

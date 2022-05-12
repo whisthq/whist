@@ -52,6 +52,10 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 free(user_event->data1);
                 break;
             }
+            case SDL_FRONTEND_EVENT_INTERRUPT: {
+                event->type = FRONTEND_EVENT_INTERRUPT;
+                return true;
+            }
             default: {
                 // Warn about unhandled user events, because we should
                 // not have sent an event we are not going to handle.
@@ -198,13 +202,10 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
 }
 
 bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
-    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (!event) {
         return SDL_PollEvent(NULL) != 0;
     }
 
-    // We cannot use SDL_WaitEventTimeout here, because
-    // Linux seems to treat a 1ms timeout as an infinite timeout
     SDL_Event sdl_event;
     if (!SDL_PollEvent(&sdl_event)) {
         return false;
@@ -217,6 +218,53 @@ bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
     }
 
     return true;
+}
+
+bool sdl_wait_event(WhistFrontend* frontend, WhistFrontendEvent* event, int timeout_ms) {
+    WhistTimer timer;
+    start_timer(&timer);
+    int current_timeout_ms = timeout_ms;
+
+    bool got_event;
+    while (1) {
+        SDL_Event sdl_event;
+        int res;
+        if (timeout_ms == 0) {
+            // Even if timeout is zero, we still want to drain all
+            // pending events.
+            res = SDL_PollEvent(&sdl_event);
+        } else {
+            res = SDL_WaitEventTimeout(&sdl_event, current_timeout_ms);
+        }
+        if (res == 0) {
+            return false;
+        }
+        got_event = sdl_handle_event(frontend, event, &sdl_event);
+        if (got_event) {
+            break;
+        }
+
+        int elapsed_ms = (int)(get_timer(&timer) * MS_IN_SECOND);
+        if (elapsed_ms >= timeout_ms) {
+            current_timeout_ms = 0;
+        } else {
+            current_timeout_ms = timeout_ms - elapsed_ms;
+        }
+    }
+
+    return true;
+}
+
+void sdl_interrupt(WhistFrontend* frontend) {
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+    SDL_Event event = {
+        .user =
+            {
+                .type = context->internal_event_id,
+                .code = SDL_FRONTEND_EVENT_INTERRUPT,
+            },
+    };
+    SDL_PushEvent(&event);
 }
 
 void sdl_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,

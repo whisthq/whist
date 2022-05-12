@@ -116,6 +116,16 @@ bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* even
     return frontend->call->poll_event(frontend, event);
 }
 
+bool whist_frontend_wait_event(WhistFrontend* frontend, WhistFrontendEvent* event, int timeout_ms) {
+    FRONTEND_ENTRY();
+    return frontend->call->wait_event(frontend, event, timeout_ms);
+}
+
+void whist_frontend_interrupt(WhistFrontend* frontend) {
+    FRONTEND_ENTRY();
+    frontend->call->interrupt(frontend);
+}
+
 void whist_frontend_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
     FRONTEND_ENTRY();
     frontend->call->set_cursor(frontend, cursor);

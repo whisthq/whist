@@ -75,6 +75,15 @@ typedef enum FrontendEventType {
      * The user or OS indicated that the application should quit.
      */
     FRONTEND_EVENT_QUIT,
+    /**
+     * Interrupt event.
+     *
+     * Used to interrupt the main thread while it is waiting for events
+     * when there is some external work for it to do.  This is triggered
+     * by calling the whist_frontend_interrupt() function from another
+     * thread.
+     */
+    FRONTEND_EVENT_INTERRUPT,
 } FrontendEventType;
 
 typedef struct FrontendKeypressEvent {

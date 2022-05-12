@@ -53,6 +53,10 @@ enum {
      * receiver will need to free after use.
      */
     SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE,
+    /**
+     * Internal interrupt from whist_frontend_interrupt().
+     */
+    SDL_FRONTEND_EVENT_INTERRUPT,
 };
 
 #endif  // WHIST_CLIENT_FRONTEND_SDL_COMMON_H
