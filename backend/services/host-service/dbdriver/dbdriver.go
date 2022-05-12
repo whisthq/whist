@@ -72,13 +72,6 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 		}
 	}()
 
-	// Start a goroutine that removes stale mandelboxes.
-	goroutineTracker.Add(1)
-	go func() {
-		defer goroutineTracker.Done()
-		removeStaleMandelboxesGoroutine(globalCtx)
-	}()
-
 	return nil
 }
 
