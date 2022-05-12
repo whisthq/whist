@@ -34,7 +34,7 @@ echo "playerctld daemon started as PID: $playerctld_pid"
 /usr/share/whist/update-whist-dpi.sh
 
 # Set the GTK theme
-gsettings_theme_result=$($RUN_AS_WHIST "gsettings set org.gnome.desktop.interface gtk-theme WhiteSur")
+gsettings_theme_result=$($RUN_AS_WHIST "gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-light")
 
 # Start D-Bus
 dbus_result=$($RUN_AS_WHIST "dbus-launch --sh-syntax --exit-with-x11")
