@@ -1,3 +1,6 @@
 # -- THEME AUTO-WRITTEN DO NOT EDIT
-include "/usr/share/themes/Materia-light/gtk-2.0/gtkrc"
+include "/usr/share/themes/WhiteSur-light/gtk-2.0/gtkrc"
+include "/usr/share/themes/WhiteSur-dark/gtk-2.0/gtkrc"
+include "/home/whist/.themes/WhiteSur-light/gtk-2.0/gtkrc"
+include "/home/whist/.themes/WhiteSur-dark/gtk-2.0/gtkrc"
 # -- THEME AUTO-WRITTEN DO NOT EDIT

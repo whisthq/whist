@@ -42,9 +42,14 @@ if [[ -f "$WHIST_DPI_CACHE_FILE" ]]; then
 fi
 
 # https://unix.stackexchange.com/a/640599
+# https://wiki.archlinux.org/title/font_configuration
 echo "Xft.dpi: $WHIST_DPI" | xrdb -merge
 cat << EOF > /home/whist/.xsettingsd
 Xft/DPI $((1024*WHIST_DPI))
+Xft/Antialias 1
+Xft/Hinting 1
+Xft/HintStyle "hintslight"
+Xft/RGBA "rgb"
 Gtk/CursorThemeSize $((24*WHIST_DPI/96))
 EOF
 
