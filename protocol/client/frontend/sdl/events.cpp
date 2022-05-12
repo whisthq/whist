@@ -27,6 +27,12 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 free(user_event->data1);
                 return true;
             }
+            case SDL_FRONTEND_EVENT_FULLSCREEN: {
+                bool fullscreen = (intptr_t)user_event->data1;
+                SDL_SetWindowFullscreen(context->window,
+                                        fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+                break;
+            }
             default: {
                 // Warn about unhandled user events, because we should
                 // not have sent an event we are not going to handle.

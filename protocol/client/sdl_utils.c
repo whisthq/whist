@@ -58,9 +58,8 @@ static volatile bool native_window_color_update = false;
 static volatile char* window_title = NULL;
 static volatile bool should_update_window_title = false;
 
-// Full Screen Update
-static volatile bool fullscreen_trigger = false;
-static volatile bool fullscreen_value = false;
+// Frontend instance used for delivering cross-thread events.
+static WhistFrontend* event_frontend;
 
 static const char* frontend_type;
 COMMAND_LINE_STRING_OPTION(frontend_type, 'f', "frontend", WHIST_ARGS_MAXLEN,
@@ -120,6 +119,9 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
     whist_frontend_get_window_pixel_size(frontend, &w, &h);
     output_width = w;
     output_height = h;
+
+    event_frontend = frontend;
+
     return frontend;
 }
 
@@ -325,8 +327,7 @@ void sdl_set_window_title(const char* requested_window_title) {
 }
 
 void sdl_set_fullscreen(bool is_fullscreen) {
-    fullscreen_trigger = true;
-    fullscreen_value = is_fullscreen;
+    whist_frontend_set_window_fullscreen(event_frontend, is_fullscreen);
 }
 
 void sdl_update_pending_tasks(WhistFrontend* frontend) {
@@ -340,12 +341,6 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
             LOG_ERROR("Window Title should not be null!");
         }
         should_update_window_title = false;
-    }
-
-    // Handle any pending fullscreen events
-    if (fullscreen_trigger) {
-        whist_frontend_set_window_fullscreen(frontend, fullscreen_value);
-        fullscreen_trigger = false;
     }
 
     // Handle any pending window titlebar color events
@@ -373,8 +368,7 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
                                   bool* native_window_color_is_null_ptr,
                                   WhistRGBColor* native_window_color_ptr,
                                   bool* native_window_color_update_ptr, char* window_title_ptr,
-                                  bool* should_update_window_title_ptr,
-                                  bool* fullscreen_trigger_ptr, bool* fullscreen_value_ptr) {
+                                  bool* should_update_window_title_ptr) {
     /*
       This function sets the variables pointed to by each of the non-NULL parameters (with the
       exception of native_window_color_is_null_ptr, which has a slightly different purpose) with the
@@ -421,13 +415,6 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
 
     if (should_update_window_title_ptr) {
         *should_update_window_title_ptr = should_update_window_title;
-    }
-
-    if (fullscreen_trigger_ptr) {
-        *fullscreen_trigger_ptr = fullscreen_trigger;
-    }
-    if (fullscreen_value_ptr) {
-        *fullscreen_value_ptr = fullscreen_value;
     }
 }
 

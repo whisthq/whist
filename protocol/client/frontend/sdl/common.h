@@ -32,6 +32,13 @@ enum {
      * receiver will need to free after use.
      */
     SDL_FRONTEND_EVENT_FILE_DRAG,
+    /**
+     * Fullscreen event.
+     *
+     * data1 contains a boolean cast to a pointer indicating whether we
+     * want to enter (true) or exit (false) fullscreen mode.
+     */
+    SDL_FRONTEND_EVENT_FULLSCREEN,
 };
 
 #endif  // WHIST_CLIENT_FRONTEND_SDL_COMMON_H

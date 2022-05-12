@@ -213,8 +213,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
         // Check Whist resize procedure (rounding)
         bool pending_resize_message;
-        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
-                                     NULL);
+        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL);
         EXPECT_FALSE(pending_resize_message);
 
         sdl_renderer_resize_window(frontend, width, height);
@@ -240,13 +239,11 @@ TEST_F(ProtocolTest, InitSDL) {
                 adjusted_height);
         check_stdout_line(::testing::HasSubstr(buffer));
 
-        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
-                                     NULL);
+        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL);
         EXPECT_TRUE(pending_resize_message);
         sdl_update_pending_tasks(frontend);
 
-        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
-                                     NULL);
+        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL);
         EXPECT_FALSE(pending_resize_message);
 
         // New dimensions should ensure width is a multiple of 8 and height is a even number
@@ -266,8 +263,7 @@ TEST_F(ProtocolTest, InitSDL) {
         c.blue = (uint8_t)uniform_0_255(gen);
 
         bool native_window_color_update;
-        sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL,
-                                     NULL, NULL);
+        sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL);
 
         EXPECT_FALSE(native_window_color_update);
         sdl_render_window_titlebar_color(c);
@@ -275,7 +271,7 @@ TEST_F(ProtocolTest, InitSDL) {
         WhistRGBColor new_color;
         bool native_window_color_is_null;
         sdl_utils_check_private_vars(NULL, &native_window_color_is_null, &new_color,
-                                     &native_window_color_update, NULL, NULL, NULL, NULL);
+                                     &native_window_color_update, NULL, NULL);
 
         EXPECT_FALSE(native_window_color_is_null);
         EXPECT_TRUE(native_window_color_update);
@@ -295,8 +291,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
         sdl_update_pending_tasks(frontend);
 
-        sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL,
-                                     NULL, NULL);
+        sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL);
 
         EXPECT_FALSE(native_window_color_update);
     }
@@ -308,14 +303,13 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_EQ(title_len, 150);
         bool should_update_window_title;
 
-        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
-                                     NULL, NULL);
+        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title);
         EXPECT_FALSE(should_update_window_title);
 
         sdl_set_window_title(changed_title);
         char* window_title = (char*)calloc(2048, sizeof(char));
         sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, window_title,
-                                     &should_update_window_title, NULL, NULL);
+                                     &should_update_window_title);
         EXPECT_TRUE(should_update_window_title);
         EXPECT_EQ(strcmp(changed_title, window_title), 0);
 
@@ -323,8 +317,7 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_FALSE(strcmp(old_title, changed_title) == 0);
 
         sdl_update_pending_tasks(frontend);
-        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
-                                     NULL, NULL);
+        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title);
 
         EXPECT_FALSE(should_update_window_title);
         const char* changed_title2 = SDL_GetWindowTitle(new_window);
@@ -337,28 +330,17 @@ TEST_F(ProtocolTest, InitSDL) {
     {
         whist_frontend_get_window_pixel_size(frontend, &width, &height);
 
-        bool fullscreen_trigger, fullscreen_value;
-        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, NULL, &fullscreen_trigger,
-                                     &fullscreen_value);
-        EXPECT_FALSE(fullscreen_value);
         sdl_set_fullscreen(true);
-
-        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, NULL, &fullscreen_trigger,
-                                     &fullscreen_value);
-
-        EXPECT_TRUE(fullscreen_value);
-        EXPECT_TRUE(fullscreen_trigger);
 
         // nothing changed yet
         whist_frontend_get_window_pixel_size(frontend, &measured_width, &measured_height);
         EXPECT_EQ(measured_width, width);
         EXPECT_EQ(measured_height, height);
 
-        sdl_update_pending_tasks(frontend);
-
-        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, NULL, &fullscreen_trigger,
-                                     &fullscreen_value);
-        EXPECT_FALSE(fullscreen_trigger);
+        // Empty the event queue, including the fullscreen event.
+        WhistFrontendEvent ignored;
+        while (whist_frontend_poll_event(frontend, &ignored))
+            ;
 
         // TODO: Check that the window is fullscreen by checking the window attributes.
         //       We used to do this by comparing the window size to the screen size,
