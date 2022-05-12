@@ -342,6 +342,7 @@ func TestGetAppNameEmpty(t *testing.T) {
 		SessionID:  "1234567890",
 		Status:     "ALLOCATED",
 		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 	// Should default name to browsers/chrome
 	_, appName := getAppName(testMandelboxSubscription, testTransportRequestMap, testmux)
@@ -365,6 +366,7 @@ func TestGetAppNameNoRequest(t *testing.T) {
 		SessionID:  "1234567890",
 		Status:     "ALLOCATED",
 		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	// Will take 1 minute to resolve and return nil request
@@ -400,6 +402,7 @@ func TestGetAppName(t *testing.T) {
 			SessionID:  "1234567890",
 			Status:     "ALLOCATED",
 			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		}
 
 		// getAppName should get an appName that matches AppName in testJSONTransportRequest
