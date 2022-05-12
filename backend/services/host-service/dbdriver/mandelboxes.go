@@ -74,6 +74,10 @@ func CreateMandelbox(id types.MandelboxID, app string, instanceID string) error 
 			Time:   time.Now(),
 			Status: pgtype.Present,
 		},
+		UpdatedAt: pgtype.Timestamptz{
+			Time:   time.Now(),
+			Status: pgtype.Present,
+		},
 	}
 	q := queries.NewQuerier(dbpool)
 	mandelboxResult, err := q.CreateMandelbox(context.Background(), insertParams)
@@ -127,10 +131,18 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 
 	// Mark the mandelbox as connecting. We can't just use WriteMandelboxStatus
 	// since we want to do it in a single transaction.
-	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
-		String: string(MandelboxStatusConnecting),
-		Status: pgtype.Present,
-	}, mandelboxID.String())
+	params := queries.WriteMandelboxStatusParams{
+		Status: pgtype.Varchar{
+			String: string(MandelboxStatusConnecting),
+			Status: pgtype.Present,
+		},
+		UpdatedAt: pgtype.Timestamptz{
+			Time:   time.Now(),
+			Status: pgtype.Present,
+		},
+		MandelboxID: mandelboxID.String(),
+	}
+	result, err := q.WriteMandelboxStatus(context.Background(), params)
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `whist.mandelboxes`: %s", MandelboxStatusConnecting, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
@@ -154,10 +166,19 @@ func WriteMandelboxStatus(mandelboxID types.MandelboxID, status MandelboxStatus)
 	}
 
 	q := queries.NewQuerier(dbpool)
-	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
-		String: string(status),
-		Status: pgtype.Present,
-	}, mandelboxID.String())
+	params := queries.WriteMandelboxStatusParams{
+		Status: pgtype.Varchar{
+			String: string(status),
+			Status: pgtype.Present,
+		},
+		UpdatedAt: pgtype.Timestamptz{
+			Time:   time.Now(),
+			Status: pgtype.Present,
+		},
+		MandelboxID: mandelboxID.String(),
+	}
+
+	result, err := q.WriteMandelboxStatus(context.Background(), params)
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `whist.mandelboxes`: %s", status, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {

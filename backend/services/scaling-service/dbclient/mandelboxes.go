@@ -33,6 +33,7 @@ func (client *DBClient) UpdateMandelbox(scalingCtx context.Context, graphQLClien
 		SessionID:  graphql.String(updateParams.SessionID),
 		Status:     graphql.String(updateParams.Status),
 		CreatedAt:  updateParams.CreatedAt,
+		UpdatedAt:  updateParams.UpdatedAt,
 	}
 
 	mutationParams := map[string]interface{}{

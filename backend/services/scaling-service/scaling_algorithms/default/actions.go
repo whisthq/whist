@@ -802,6 +802,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		SessionID:  utils.Sprintf("%v", mandelboxRequest.SessionID),
 		Status:     "ALLOCATED",
 		CreatedAt:  waitingMandelbox.CreatedAt,
+		UpdatedAt:  time.Now(),
 	}
 
 	// Allocate mandelbox on database so the host service can start downloading user configs

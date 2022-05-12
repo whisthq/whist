@@ -40,6 +40,7 @@ type WhistMandelboxes []struct {
 	SessionID  graphql.String `graphql:"session_id"`
 	Status     graphql.String `graphql:"status"`
 	CreatedAt  time.Time      `graphql:"created_at"`
+	UpdatedAt  time.Time      `graphql:"updated_at"`
 }
 
 // WhistImages is the mapping of the `whist.images` table. This type interacts directly
