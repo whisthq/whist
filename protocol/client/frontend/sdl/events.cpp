@@ -1,5 +1,6 @@
 extern "C" {
 #include "common.h"
+#include "native.h"
 }
 
 #include "sdl_struct.hpp"
@@ -42,6 +43,12 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 } else {
                     SDL_SetWindowTitle(context->window, title);
                 }
+                free(user_event->data1);
+                break;
+            }
+            case SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE: {
+                const WhistRGBColor* color = (const WhistRGBColor*)user_event->data1;
+                sdl_native_set_titlebar_color(context->window, color);
                 free(user_event->data1);
                 break;
             }

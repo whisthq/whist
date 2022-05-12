@@ -64,5 +64,13 @@ void sdl_resize_window(WhistFrontend* frontend, int width, int height) {
 
 void sdl_set_titlebar_color(WhistFrontend* frontend, const WhistRGBColor* color) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    sdl_native_set_titlebar_color(context->window, color);
+    SDL_Event event = {
+        .user =
+            {
+                .type = context->internal_event_id,
+                .code = SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE,
+                .data1 = (void*)color,
+            },
+    };
+    SDL_PushEvent(&event);
 }

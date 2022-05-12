@@ -146,12 +146,6 @@ TEST_F(ProtocolTest, InitSDL) {
     check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
 #endif
 
-#ifdef _WIN32
-    check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
-#elif defined(__linux__)
-    check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
-#endif
-
     // Check that the initial title was set appropriately
     const char* title = SDL_GetWindowTitle(new_window);
     EXPECT_EQ(strcmp(title, very_long_title), 0);
@@ -213,7 +207,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
         // Check Whist resize procedure (rounding)
         bool pending_resize_message;
-        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL);
+        sdl_utils_check_private_vars(&pending_resize_message);
         EXPECT_FALSE(pending_resize_message);
 
         sdl_renderer_resize_window(frontend, width, height);
@@ -239,11 +233,11 @@ TEST_F(ProtocolTest, InitSDL) {
                 adjusted_height);
         check_stdout_line(::testing::HasSubstr(buffer));
 
-        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL);
+        sdl_utils_check_private_vars(&pending_resize_message);
         EXPECT_TRUE(pending_resize_message);
         sdl_update_pending_tasks(frontend);
 
-        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL);
+        sdl_utils_check_private_vars(&pending_resize_message);
         EXPECT_FALSE(pending_resize_message);
 
         // New dimensions should ensure width is a multiple of 8 and height is a even number
@@ -262,38 +256,20 @@ TEST_F(ProtocolTest, InitSDL) {
         c.green = (uint8_t)uniform_0_255(gen);
         c.blue = (uint8_t)uniform_0_255(gen);
 
-        bool native_window_color_update;
-        sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update);
-
-        EXPECT_FALSE(native_window_color_update);
         sdl_render_window_titlebar_color(c);
 
-        WhistRGBColor new_color;
-        bool native_window_color_is_null;
-        sdl_utils_check_private_vars(NULL, &native_window_color_is_null, &new_color,
-                                     &native_window_color_update);
-
-        EXPECT_FALSE(native_window_color_is_null);
-        EXPECT_TRUE(native_window_color_update);
-        EXPECT_TRUE(new_color.red == c.red);
-        EXPECT_TRUE(new_color.blue == c.blue);
-        EXPECT_TRUE(new_color.green == c.green);
-
-        whist_frontend_set_titlebar_color(frontend, &c);
+        // Empty the event queue, including the titlebar color update event.
+        WhistFrontendEvent ignored;
+        while (whist_frontend_poll_event(frontend, &ignored))
+            ;
 
 #ifdef _WIN32
         check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
-        check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
 #elif defined(__linux__)
-        check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
         check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
 #endif
 
-        sdl_update_pending_tasks(frontend);
-
-        sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update);
-
-        EXPECT_FALSE(native_window_color_update);
+        // TODO: Confirm that the colour has actually changed.
     }
 
     //  Window title

@@ -50,10 +50,6 @@ static WhistMutex pending_cursor_info_mutex;
 // The background color for the loading screen
 static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
 
-// Window Color Update
-static volatile WhistRGBColor* native_window_color = NULL;
-static volatile bool native_window_color_update = false;
-
 // Frontend instance used for delivering cross-thread events.
 static WhistFrontend* event_frontend;
 
@@ -122,11 +118,6 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
 }
 
 void destroy_sdl(WhistFrontend* frontend) {
-    if (native_window_color) {
-        free((WhistRGBColor*)native_window_color);
-        native_window_color = NULL;
-    }
-
     av_frame_free(&pending_video_frame);
 
     LOG_INFO("Destroying SDL");
@@ -285,25 +276,12 @@ void sdl_render_window_titlebar_color(WhistRGBColor color) {
     /*
       Update window titlebar color using the colors of the new frame
      */
-    WhistRGBColor* current_color = (WhistRGBColor*)native_window_color;
-    if (current_color != NULL) {
-        if (current_color->red != color.red || current_color->green != color.green ||
-            current_color->blue != color.blue) {
-            // delete the old color we were using
-            free(current_color);
-
-            // make the new color and signal that we're ready to update
-            WhistRGBColor* new_native_window_color = safe_malloc(sizeof(WhistRGBColor));
-            *new_native_window_color = color;
-            native_window_color = new_native_window_color;
-            native_window_color_update = true;
-        }
-    } else {
-        // make the new color and signal that we're ready to update
-        WhistRGBColor* new_native_window_color = safe_malloc(sizeof(WhistRGBColor));
-        *new_native_window_color = color;
-        native_window_color = new_native_window_color;
-        native_window_color_update = true;
+    static WhistRGBColor current_color = {0, 0, 0};
+    if (memcmp(&current_color, &color, sizeof(color))) {
+        WhistRGBColor* new_color = safe_malloc(sizeof(color));
+        *new_color = color;
+        whist_frontend_set_titlebar_color(event_frontend, new_color);
+        current_color = color;
     }
 }
 
@@ -320,12 +298,6 @@ void sdl_set_fullscreen(bool is_fullscreen) {
 }
 
 void sdl_update_pending_tasks(WhistFrontend* frontend) {
-    // Handle any pending window titlebar color events
-    if (native_window_color_update && native_window_color) {
-        whist_frontend_set_titlebar_color(frontend, (WhistRGBColor*)native_window_color);
-        native_window_color_update = false;
-    }
-
     // Check if a pending window resize message should be sent to server
     whist_lock_mutex(window_resize_mutex);
     if (pending_resize_message &&
@@ -341,10 +313,7 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
     sdl_present_pending_framebuffer(frontend);
 }
 
-void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
-                                  bool* native_window_color_is_null_ptr,
-                                  WhistRGBColor* native_window_color_ptr,
-                                  bool* native_window_color_update_ptr) {
+void sdl_utils_check_private_vars(bool* pending_resize_message_ptr) {
     /*
       This function sets the variables pointed to by each of the non-NULL parameters (with the
       exception of native_window_color_is_null_ptr, which has a slightly different purpose) with the
@@ -361,21 +330,6 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
         } else {
             *pending_resize_message_ptr = pending_resize_message;
         }
-    }
-
-    if (native_window_color_is_null_ptr && native_window_color_ptr) {
-        if (!native_window_color) {
-            *native_window_color_is_null_ptr = true;
-        } else {
-            *native_window_color_is_null_ptr = false;
-            native_window_color_ptr->red = native_window_color->red;
-            native_window_color_ptr->green = native_window_color->green;
-            native_window_color_ptr->blue = native_window_color->blue;
-        }
-    }
-
-    if (native_window_color_update_ptr) {
-        *native_window_color_update_ptr = native_window_color_update;
     }
 }
 

@@ -46,6 +46,13 @@ enum {
      * need to free after tuse.
      */
     SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE,
+    /**
+     * Window title bar colour change.
+     *
+     * data1 contains a pointer to a WhistRGBColor object, which the
+     * receiver will need to free after use.
+     */
+    SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE,
 };
 
 #endif  // WHIST_CLIENT_FRONTEND_SDL_COMMON_H
