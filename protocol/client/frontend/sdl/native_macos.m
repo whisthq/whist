@@ -162,6 +162,12 @@ void sdl_native_declare_user_activity(void) {
     }
 }
 
+void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
+    return;
+}
+void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
+    return;
+}
 /*
 typedef struct FileDragState {
     id left_mouse_drag_listener;

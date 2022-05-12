@@ -43,8 +43,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/frontend/sdl/events.cpp
         ../client/frontend/sdl/lifecycle.cpp
         ../client/frontend/sdl/sdl.c
-        # ../client/frontend/virtual/virtual.c
-        # ../client/frontend/virtual/impl.c
+        ../client/frontend/virtual/virtual.c
+        ../client/frontend/virtual/impl.c
         ../client/frontend/sdl/video.cpp
         ../client/frontend/sdl/window.cpp
 

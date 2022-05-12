@@ -1,4 +1,5 @@
 extern "C" {
+#include "common.h"
 #include "native.h"
 }
 

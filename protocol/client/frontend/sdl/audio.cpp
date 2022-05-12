@@ -1,3 +1,7 @@
+extern "C" {
+#include "common.h"
+#include <whist/core/whist.h>
+}
 #include "sdl_struct.hpp"
 
 void sdl_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigned int channels) {

@@ -1,5 +1,9 @@
 #include "sdl_struct.hpp"
+
+extern "C" {
+#include "common.h"
 #include "native.h"
+}
 
 bool context_has_window(SDLFrontendContext* context, int id);
 
@@ -26,7 +30,7 @@ WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* i
     if (context_has_window(context, id)) {
         int ret = SDL_GetWindowDisplayIndex(context->windows[id]->window);
         if (ret < 0) {
-            LOG_ERROR("Could not get window display index - %s", SDL_GetError());
+            // LOG_ERROR("Could not get window display index - %s", SDL_GetError());
             return WHIST_ERROR_UNKNOWN;
         }
         if (index != NULL) {
