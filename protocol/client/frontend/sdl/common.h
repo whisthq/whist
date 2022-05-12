@@ -39,6 +39,13 @@ enum {
      * want to enter (true) or exit (false) fullscreen mode.
      */
     SDL_FRONTEND_EVENT_FULLSCREEN,
+    /**
+     * Window title change event.
+     *
+     * data1 contains a pointer to a string, which the receiver will
+     * need to free after tuse.
+     */
+    SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE,
 };
 
 #endif  // WHIST_CLIENT_FRONTEND_SDL_COMMON_H

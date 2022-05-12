@@ -33,6 +33,18 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                                         fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
                 break;
             }
+            case SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE: {
+                const char* title = (const char*)user_event->data1;
+                if (context->window == NULL) {
+                    LOG_WARNING(
+                        "Window title change event ignored "
+                        "because there is no window.");
+                } else {
+                    SDL_SetWindowTitle(context->window, title);
+                }
+                free(user_event->data1);
+                break;
+            }
             default: {
                 // Warn about unhandled user events, because we should
                 // not have sent an event we are not going to handle.

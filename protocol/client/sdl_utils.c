@@ -54,10 +54,6 @@ static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks 
 static volatile WhistRGBColor* native_window_color = NULL;
 static volatile bool native_window_color_update = false;
 
-// Window Title Update
-static volatile char* window_title = NULL;
-static volatile bool should_update_window_title = false;
-
 // Frontend instance used for delivering cross-thread events.
 static WhistFrontend* event_frontend;
 
@@ -312,18 +308,11 @@ void sdl_render_window_titlebar_color(WhistRGBColor color) {
 }
 
 void sdl_set_window_title(const char* requested_window_title) {
-    if (should_update_window_title) {
-        LOG_WARNING(
-            "Failed to update window title, as the previous window title update is still pending");
-        return;
-    }
-
     size_t len = strlen(requested_window_title) + 1;
     char* new_window_title = safe_malloc(len);
     safe_strncpy(new_window_title, requested_window_title, len);
-    window_title = new_window_title;
 
-    should_update_window_title = true;
+    whist_frontend_set_title(event_frontend, new_window_title);
 }
 
 void sdl_set_fullscreen(bool is_fullscreen) {
@@ -331,18 +320,6 @@ void sdl_set_fullscreen(bool is_fullscreen) {
 }
 
 void sdl_update_pending_tasks(WhistFrontend* frontend) {
-    // Handle any pending window title updates
-    if (should_update_window_title) {
-        if (window_title) {
-            whist_frontend_set_title(frontend, (const char*)window_title);
-            free((void*)window_title);
-            window_title = NULL;
-        } else {
-            LOG_ERROR("Window Title should not be null!");
-        }
-        should_update_window_title = false;
-    }
-
     // Handle any pending window titlebar color events
     if (native_window_color_update && native_window_color) {
         whist_frontend_set_titlebar_color(frontend, (WhistRGBColor*)native_window_color);
@@ -367,8 +344,7 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
 void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
                                   bool* native_window_color_is_null_ptr,
                                   WhistRGBColor* native_window_color_ptr,
-                                  bool* native_window_color_update_ptr, char* window_title_ptr,
-                                  bool* should_update_window_title_ptr) {
+                                  bool* native_window_color_update_ptr) {
     /*
       This function sets the variables pointed to by each of the non-NULL parameters (with the
       exception of native_window_color_is_null_ptr, which has a slightly different purpose) with the
@@ -400,21 +376,6 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
 
     if (native_window_color_update_ptr) {
         *native_window_color_update_ptr = native_window_color_update;
-    }
-
-    if (window_title_ptr) {
-        size_t len = 0;
-        // While loop needed for string copy because window_title is volatile
-        while (window_title && window_title[len] != '\0') {
-            window_title_ptr[len] = window_title[len];
-            len += 1;
-        }
-        len += 1;
-        window_title_ptr[len] = '\0';
-    }
-
-    if (should_update_window_title_ptr) {
-        *should_update_window_title_ptr = should_update_window_title;
     }
 }
 

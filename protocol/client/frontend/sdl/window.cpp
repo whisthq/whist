@@ -40,10 +40,15 @@ bool sdl_is_window_visible(WhistFrontend* frontend) {
 
 WhistStatus sdl_set_title(WhistFrontend* frontend, const char* title) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (context->window == NULL) {
-        return WHIST_ERROR_NOT_FOUND;
-    }
-    SDL_SetWindowTitle(context->window, title);
+    SDL_Event event = {
+        .user =
+            {
+                .type = context->internal_event_id,
+                .code = SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE,
+                .data1 = (void*)title,
+            },
+    };
+    SDL_PushEvent(&event);
     return WHIST_SUCCESS;
 }
 

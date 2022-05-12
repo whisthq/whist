@@ -179,17 +179,10 @@ void sdl_update_pending_tasks(WhistFrontend* frontend);
  *
  * @param native_window_color_update_ptr   If non-NULL, the function will save the value of
  * native_window_color_update in the variable pointed to by this pointer.
- *
- * @param window_title_ptr   If non-NULL, the function will save the value of window_title in the
- * variable pointed to by this pointer.
- *
- * @param should_update_window_title_ptr   If non-NULL, the function will save the value of
- * should_update_window_title in the variable pointed to by this pointer.
  */
 void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
                                   bool* native_window_color_is_null_ptr,
                                   WhistRGBColor* native_window_color_ptr,
-                                  bool* native_window_color_update_ptr, char* window_title_ptr,
-                                  bool* should_update_window_title_ptr);
+                                  bool* native_window_color_update_ptr);
 
 #endif  // WHIST_SDL_UTILS_H
