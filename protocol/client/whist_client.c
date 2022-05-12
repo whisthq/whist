@@ -417,7 +417,9 @@ int whist_client_main(int argc, const char* argv[]) {
             // because getting cpu usage statistics is expensive.
             if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) > 1) {
                 double cpu_usage = get_cpu_usage();
-                log_double_statistic(CLIENT_CPU_USAGE, cpu_usage);
+                if (cpu_usage != -1) {
+                    log_double_statistic(CLIENT_CPU_USAGE, cpu_usage);
+                }
                 start_timer(&cpu_usage_statistics_timer);
             }
 
