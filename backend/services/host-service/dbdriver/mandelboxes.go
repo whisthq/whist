@@ -266,7 +266,7 @@ func removeStaleMandelboxesGoroutine(globalCtx context.Context) {
 		select {
 		case <-globalCtx.Done():
 			// Remove allocated stale mandelboxes one last time
-			if err := removeStaleMandelboxes(10*time.Second, 90*time.Second); err != nil {
+			if err := removeStaleMandelboxes(1*time.Minute, 2*time.Minute); err != nil {
 				logger.Error(err)
 			}
 
@@ -274,7 +274,7 @@ func removeStaleMandelboxesGoroutine(globalCtx context.Context) {
 			return
 
 		case <-timerChan:
-			if err := removeStaleMandelboxes(10*time.Second, 90*time.Second); err != nil {
+			if err := removeStaleMandelboxes(1*time.Minute, 2*time.Minute); err != nil {
 				logger.Error(err)
 			}
 		}

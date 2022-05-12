@@ -2,9 +2,12 @@ package mandelbox // import "github.com/whisthq/whist/backend/services/host-serv
 
 import (
 	"sync"
+	"time"
 
+	dockerclient "github.com/docker/docker/client"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // This file contains the code to track all Mandelboxes. We _need to_ do this
@@ -60,12 +63,22 @@ func LookUpByMandelboxID(mandelboxID types.MandelboxID) (Mandelbox, error) {
 // StopWaitingMandelboxes will stop all mandelboxes to which users never
 // connected. This function should only be called once the global context
 // gets cancelled.
-func StopWaitingMandelboxes() {
+func StopWaitingMandelboxes(dockerClient dockerclient.CommonAPIClient) {
+	logger.Infof("Cleaning up mandelboxes that were never connected to.")
 	trackerLock.RLock()
 	defer trackerLock.RUnlock()
 
 	for _, v := range tracker {
 		if !v.GetConnectedStatus() {
+			// Gracefully shut down the mandelbox Docker container
+			stopTimeout := 30 * time.Second
+			err := dockerClient.ContainerStop(v.GetContext(), string(v.GetDockerID()), &stopTimeout)
+
+			if err != nil {
+				logger.Errorf("Failed to gracefully stop mandelbox docker container.")
+			}
+
+			// Now cancel the mandelbox context
 			v.Close()
 		}
 	}
