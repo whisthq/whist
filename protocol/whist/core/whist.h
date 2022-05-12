@@ -154,9 +154,11 @@ Defines
 
 // 16:10 is the Mac aspect ratio, but we set the minimum screen to
 // 500x500 since these are the Chrome minimum dimensions
+// Maximum width/height is constrained by the NVENC H.264 encoder,
+// if using a different encoder these could be set higher.
 #define MIN_SCREEN_WIDTH 500
 #define MIN_SCREEN_HEIGHT 500
-#define MAX_SCREEN_WIDTH 8192
+#define MAX_SCREEN_WIDTH 4096
 #define MAX_SCREEN_HEIGHT 4096
 
 // Set max FPS to 60, or 16ms
