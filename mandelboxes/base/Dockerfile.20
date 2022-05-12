@@ -762,9 +762,9 @@ RUN mkdir -p /home/whist/.themes \
 # Install WhiteSur cursor and icons, for macOS-like theming. These get installed to the root path,
 # which is /usr/share/icons
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme \
-    && /bin/bash install.sh --bold \
-    && rm -rf /WhiteSur-icon-theme \
-    && git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors \
+    && /bin/bash install.sh --bold && rm -rf /WhiteSur-icon-theme
+
+RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors \
     && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 
 #########################
