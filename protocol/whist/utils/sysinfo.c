@@ -459,20 +459,38 @@ void print_hard_drive_info(void) {
              total_space / BYTES_IN_GB, available_space / BYTES_IN_GB);
 }
 
+#ifdef __linux__
+size_t lastSum, lastIdle;
+#endif
+
 double get_cpu_usage(void) {
     char* cpu_usage = NULL;
     double cpu_usage_pct = -1.0;
-#ifndef _WIN32
-    // Format: %Cpu(s):  1.6 us,  1.6 sy,  0.0 ni, 96.9 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+#ifdef __APPLE__
     int res = runcmd("ps -A -o \%cpu | awk '{s+=$1} END {print s}'", &cpu_usage);
-    LOG_INFO("cpu_usage: %s, strlen(cpu_usage): %lu", cpu_usage, strlen(cpu_usage));
     cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
-    LOG_INFO("cpu_usage: %s, strlen(cpu_usage): %lu", cpu_usage, strlen(cpu_usage));
-
-    // Compute percentage of non-idle CPU time
     cpu_usage_pct = atof(cpu_usage);
-    LOG_INFO("CPU usage in percentage: %f", cpu_usage_pct);
-#else
+#elif __linux__
+    int res = runcmd("cat /proc/stat", &cpu_usage);
+    cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
+
+    const char separator[2] = " ";
+    int i = 0;
+    size_t sum = 0, idle = 0;
+
+    char* token = strtok(cpu_usage, separator);
+    while (token != NULL) {
+        token = strtok(NULL, separator);
+        if (token != NULL) {
+            sum += atoi(token);
+            if (i == 3) idle = atoi(token);
+            i++;
+        }
+    }
+    cpu_usage_pct = 100 - (idle - lastIdle) * 100.0 / (sum - lastSum);
+    lastIdle = idle;
+    lastSum = sum;
+#else  // _WIN32
     LOG_WARNING("get_cpu_usage() not implemented for this platform");
 #endif
     free(cpu_usage);
