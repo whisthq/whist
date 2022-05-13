@@ -479,7 +479,7 @@ double get_cpu_usage(void) {
     if (fp && fgets(cpu_usage, 1000, fp)) {
         cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
 
-        // Block below aknowledged to https://rosettacode.org/wiki/Category:C and
+        // Block below aknowledged to https://rosettacode.org/wiki/Linux_CPU_utilization#C.2B.2B and
         // https://www.idnt.net/en-US/kb/941772
         const char* separator = " ";
         int i = 0;
