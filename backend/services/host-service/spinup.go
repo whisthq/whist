@@ -255,7 +255,10 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 
 		// Let server protocol wait 30 seconds by default before client connects.
 		// However, in a local environment, we set the default to an effectively
-		// infinite value.
+		// infinite value. This timeout will be passed to the protocol server, which
+		// starts until the user configs are fully loaded. This means that zygote
+		// mandelboxes will wait forever until a user connects, and once it does, the
+		// server timeout takes care of exiting correctly if a client disconnects.
 		protocolTimeout := 30
 		if metadata.IsLocalEnv() {
 			protocolTimeout = -1
