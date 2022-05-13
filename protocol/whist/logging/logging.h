@@ -150,7 +150,10 @@ typedef struct {
 // For example :
 // LOG_METRIC("\"Latency\" : %d", latency);
 #if LOG_LEVEL >= METRIC_LEVEL
-#define LOG_METRIC(message, ...) LOG_MESSAGE(METRIC, message, ##__VA_ARGS__)
+#define LOG_METRIC(message, ...)                                                           \
+    do {                                                                                   \
+        whist_log_printf(METRIC_LEVEL, NULL, NULL, 0, "{ " message " }\n", ##__VA_ARGS__); \
+    } while (0)
 #else
 #define LOG_METRIC(message, ...)
 #endif

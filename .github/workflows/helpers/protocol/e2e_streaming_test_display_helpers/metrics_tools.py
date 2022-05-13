@@ -31,7 +31,7 @@ def extract_metrics(client_log_file, server_log_file):
         new_experiment_metrics = {}
         with open(log_file, "r") as f:
             for line in f.readlines():
-                if "METRIC" in line:
+                if line.startswith("{"):
                     count = 0
                     normal_sum = 0.0
                     min_val = np.inf
