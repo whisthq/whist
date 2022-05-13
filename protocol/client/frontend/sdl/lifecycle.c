@@ -227,6 +227,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // Safe to set these post-initialization.
     sdl_native_init_window_options(context->window);
     SDL_SetWindowMinimumSize(context->window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
+    SDL_SetWindowMaximumSize(context->window, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
 
     while (SDL_PollEvent(&event)) {
         // Pump the event loop until the window fully finishes loading.
