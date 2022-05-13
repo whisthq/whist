@@ -460,7 +460,7 @@ void print_hard_drive_info(void) {
 }
 
 #ifdef __linux__
-unsigned long last_cpu_in_use_time, last_cpu_idle_time;
+long long last_cpu_in_use_time, last_cpu_idle_time;
 #endif
 
 double get_cpu_usage(void) {
@@ -483,15 +483,15 @@ double get_cpu_usage(void) {
         // https://www.idnt.net/en-US/kb/941772
         const char* separator = " ";
         int i = 0;
-        unsigned long cpu_in_use_time = 0, cpu_idle_time = 0;
+        long long cpu_in_use_time = 0, cpu_idle_time = 0;
 
         char* token = strtok(cpu_usage, separator);
         while (token) {
             token = strtok(NULL, separator);
             if (token) {
-                cpu_in_use_time += strtoul(token, NULL, 0);
+                cpu_in_use_time += strtoll(token, NULL, 0);
                 if (i == 3) {
-                    cpu_idle_time = strtoul(token, NULL, 0);
+                    cpu_idle_time = strtoll(token, NULL, 0);
                 }
                 i++;
             }
