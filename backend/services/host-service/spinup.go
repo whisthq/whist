@@ -13,7 +13,6 @@ import (
 	dockerclient "github.com/docker/docker/client"
 	dockernat "github.com/docker/go-connections/nat"
 	dockerunits "github.com/docker/go-units"
-	"github.com/google/uuid"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
@@ -31,14 +30,13 @@ import (
 // StartMandelboxSpinUp will create and start a mandelbox, doing all the steps that can be done without the user's config token.
 // Once the mandelbox is started, it effectively waits an infinite time until a user gets assigned to it and the remaining
 // steps can continue.
-func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient) mandelboxData.Mandelbox {
+func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName) mandelboxData.Mandelbox {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
 		metrics.Increment("ErrorRate")
 	}
 
-	mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
 	mandelbox := mandelboxData.New(context.Background(), goroutineTracker, mandelboxID)
 	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", mandelbox.GetID())
 
@@ -53,10 +51,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		}
 	}()
 
-	// Replace "chrome" by "brave" (or some other container we support) to test a different app. Note that the Whist
-	// backend is designed to only ever deploy the same application everywhere, which we hardcode here.
-	var AppName mandelboxtypes.AppName = "browsers/chrome"
-	mandelbox.SetAppName(AppName)
+	mandelbox.SetAppName(appName)
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
@@ -128,13 +123,13 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	if metadata.IsLocalEnv() {
 
 		regexes := []string{
-			string(AppName) + ":current-build",
-			string(AppName),
+			string(appName) + ":current-build",
+			string(appName),
 		}
 
 		image = dockerImageFromRegexes(globalCtx, dockerClient, regexes)
 	} else {
-		image = utils.Sprintf("ghcr.io/whisthq/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
+		image = utils.Sprintf("ghcr.io/whisthq/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), appName)
 	}
 
 	// We now create the underlying Docker container for this mandelbox.
@@ -224,7 +219,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			"apparmor:mandelbox-apparmor-profile",
 		},
 	}
-	mandelboxName := utils.Sprintf("%s-%s", AppName, mandelboxID)
+	mandelboxName := utils.Sprintf("%s-%s", appName, mandelboxID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 	mandelboxName = re.ReplaceAllString(mandelboxName, "-")
 
@@ -248,7 +243,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			return utils.MakeError("Error registering mandelbox creation with runtime ID %s: %s", dockerID, err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with runtime ID %s and AppName %s", dockerID, AppName)
+		logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with runtime ID %s and AppName %s", dockerID, appName)
 		return nil
 	})
 
@@ -296,17 +291,13 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 
 // FinishMandelboxSpinUp runs when a user gets assigned to a waiting mandelbox. This function does all the remaining steps in
 // the spinup process that require a config token.
-func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxSubscription subscriptions.Mandelbox, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex, req *JSONTransportRequest) {
 
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
 		metrics.Increment("ErrorRate")
 	}
-
-	// mandelboxSubscription is the pubsub event received from Hasura.
-	mandelboxSubscription := sub.Mandelboxes[0]
-	req, _ := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
 

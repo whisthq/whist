@@ -41,6 +41,7 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 
+	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/httputils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
@@ -124,11 +125,16 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 	// Start all waiting mandelboxes we can (i.e. as many as we have capacity for) and register to database
 	// with the "WAITING" status. The instance capacity is determined by the scaling service for each instance type.
 	for i := int32(0); i < instanceCapacity; i++ {
-		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient)
-		appString := strings.Split(string(zygote.GetAppName()), "/")
-		appName := strings.ToUpper(appString[1])
+		mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
+		// Replace "chrome" by "brave" (or some other container we support) to test a different app. Note that the Whist
+		// backend is designed to only ever deploy the same application everywhere, which we hardcode here.
+		var appName mandelboxtypes.AppName = "browsers/chrome"
+		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName)
 
-		err := dbdriver.CreateMandelbox(zygote.GetID(), appName, instanceID)
+		// We have to parse the appname before writing to the database.
+		appString := strings.Split(string(zygote.GetAppName()), "/")
+		appNameForDb := strings.ToUpper(appString[1])
+		err := dbdriver.CreateMandelbox(zygote.GetID(), appNameForDb, instanceID)
 		if err != nil {
 			logger.Errorf("Failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
 		}
@@ -553,12 +559,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					// If running on a local environment, disable any pubsub logic. We have to create a subscription request
 					// that mocks the Hasura subscription event. Doing this avoids the need of setting up a Hasura server and
 					// postgres database on the development instance.
-
-					// Start spinning up a mandelbox so developers can connect to it. Since
-					// the mandelbox ID is not known beforehand, modify the server event
-					// to use the ID from the newly created mandelbox.
-					zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient)
-					serverevent.MandelboxID = zygote.GetID()
+					jsonReq := serverevent
 
 					userID, err := metadata.GetUserID()
 					if err != nil {
@@ -575,17 +576,23 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{
 						InstanceID: string(instanceID),
-						ID:         zygote.GetID(),
+						ID:         jsonReq.MandelboxID,
 						SessionID:  utils.Sprintf("%v", time.Now().UnixMilli()),
 						UserID:     userID,
 					}
 					subscriptionEvent := subscriptions.MandelboxEvent{
 						Mandelboxes: []subscriptions.Mandelbox{mandelbox},
 					}
+					// mandelboxSubscription is the pubsub event received from Hasura.
+					mandelboxSubscription := subscriptionEvent.Mandelboxes[0]
 
-					// Launch both the JSON transport handler and the SpinUpMandelbox goroutines.
+					// Launch the JSON transport handler to be able to call getAppName and obtain appName and req, needed to spin up the mandelbox.
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
-					go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, &subscriptionEvent, transportRequestMap, transportMapLock)
+					req, appName := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
+
+					// For local development, we start and finish the mandelbox spin up back to back
+					StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName)
+					go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxSubscription, transportRequestMap, transportMapLock, req)
 				}
 			default:
 				if serverevent != nil {
@@ -599,8 +606,10 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			switch subscriptionEvent := subscriptionEvent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxEvent:
+				mandelboxSubscription := subscriptionEvent.Mandelboxes[0]
+				req, _ := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
 				go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient,
-					subscriptionEvent, transportRequestMap, transportMapLock)
+					mandelboxSubscription, transportRequestMap, transportMapLock, req)
 
 			case *subscriptions.InstanceEvent:
 				if len(subscriptionEvent.Instances) == 0 {
