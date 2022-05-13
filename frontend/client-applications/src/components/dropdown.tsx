@@ -52,8 +52,8 @@ const Dropdown = (props: {
       </div>
       <div className={classNames(value === undefined ? "opacity-40" : "")}>
         {loading ? (
-          <div className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light rounded py-4 font-bold cursor-pointer">
-            <div className="w-5 h-5 mx-auto">
+          <div className="mt-4 px-12 w-96 mx-auto py-4 text-gray-300 text-gray-900 bg-blue-light rounded py-4 font-bold cursor-pointer">
+            <div className="w-5 h-5 mx-auto text-gray-300">
               <Spinner />
             </div>
           </div>
@@ -62,7 +62,7 @@ const Dropdown = (props: {
             <input
               type="submit"
               value="Continue"
-              className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light rounded py-4 font-bold cursor-pointer"
+              className="mt-4 px-12 w-96 mx-auto py-4 text-gray-300 text-gray-900 bg-blue-light rounded py-4 font-bold cursor-pointer"
             />
           </>
         )}
