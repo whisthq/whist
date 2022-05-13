@@ -253,9 +253,16 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			return utils.MakeError("Error writing mandelbox params: %s", err)
 		}
 
-		// Set the protocol timeout to an effectively infinite value, because the
-		// mandelbox will be waiting for a user to get assigned to it.
-		protocolTimeout := -1
+		// Let server protocol wait 30 seconds by default before client connects.
+		// However, in a local environment, we set the default to an effectively
+		// infinite value. This timeout will be passed to the protocol server, which
+		// starts until the user configs are fully loaded. This means that zygote
+		// mandelboxes will wait forever until a user connects, and once it does, the
+		// server timeout takes care of exiting correctly if a client disconnects.
+		protocolTimeout := 30
+		if metadata.IsLocalEnv() {
+			protocolTimeout = -1
+		}
 
 		if err := mandelbox.WriteProtocolTimeout(protocolTimeout); err != nil {
 			return utils.MakeError("Error writing protocol timeout: %s", err)
