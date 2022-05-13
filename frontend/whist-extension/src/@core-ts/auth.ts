@@ -4,22 +4,17 @@ import { post } from "@app/@core-ts/api"
 
 import { config } from "@app/constants/app"
 
+chrome.storage.local.clear()
+
 const redirectURL = chrome.identity.getRedirectURL("auth0")
 
 export const authPortalURL = () => {
   return [
     `https://${config.AUTH_DOMAIN_URL}/authorize`,
     `?audience=${config.AUTH_API_IDENTIFIER}`,
-    // We need to request the admin scope here. If the user is enabled for the admin scope
-    // (e.g. marked as a developer in Auth0), then the returned JWT token will be granted
-    // the admin scope, thus bypassing Stripe checks and granting additional privileges in
-    // the webserver. If the user is not enabled for the admin scope, then the JWT token
-    // will be generated but will not have the admin scope, as documented by Auth0 in
-    // https://auth0.com/docs/scopes#requested-scopes-versus-granted-scopes
     `&client_id=${config.AUTH_CLIENT_ID}`,
     `&redirect_uri=${redirectURL}`,
-    `&connection=google-oauth2`,
-    "&scope=openid profile offline_access email admin",
+    "&scope=openid profile offline_access email",
     "&response_type=code",
   ].join("")
 }
@@ -37,10 +32,16 @@ export const authInfoCallbackRequest = async (
   */
 
   if (callbackURL === undefined) return
-
   try {
     const url = new URL(callbackURL)
     const code = url.searchParams.get("code")
+
+    console.log("Body is", {
+      grant_type: "authorization_code",
+      client_id: config.AUTH_CLIENT_ID,
+      code: url.searchParams.get("code"),
+      redirect_uri: redirectURL,
+    })
 
     const response = await post({
       url: `https://${config.AUTH_DOMAIN_URL}/oauth/token`,
