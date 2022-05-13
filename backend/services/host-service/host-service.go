@@ -125,7 +125,10 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 	// with the "WAITING" status. The instance capacity is determined by the scaling service for each instance type.
 	for i := int32(0); i < instanceCapacity; i++ {
 		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient)
-		err := dbdriver.CreateMandelbox(zygote.GetID(), strings.ToUpper(string(zygote.GetAppName())), instanceID)
+		appString := strings.Split(string(zygote.GetAppName()), "/")
+		appName := strings.ToUpper(appString[1])
+
+		err := dbdriver.CreateMandelbox(zygote.GetID(), appName, instanceID)
 		if err != nil {
 			logger.Errorf("Failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
 		}
@@ -321,9 +324,6 @@ func main() {
 		// Cancel the global context, if it hasn't already been cancelled.
 		globalCancel()
 
-		// Clean all the waiting mandelboxes so they don't block the shut down.
-		mandelboxData.StopWaitingMandelboxes()
-
 		// Wait for all goroutines to stop, so we can run the rest of the cleanup
 		// process.
 		utils.WaitWithDebugPrints(&goroutineTracker, 2*time.Minute, 2)
@@ -389,6 +389,10 @@ func main() {
 	if err != nil {
 		logger.Panic(globalCancel, err)
 	}
+
+	// Clean all the waiting mandelboxes so they don't block the shut down.
+	// when this function exits.
+	defer mandelboxData.StopWaitingMandelboxes(dockerClient)
 
 	if err := dbdriver.RegisterInstance(); err != nil {
 		// If the instance starts up and sees its status as unresponsive or
@@ -599,8 +603,24 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					subscriptionEvent, transportRequestMap, transportMapLock)
 
 			case *subscriptions.InstanceEvent:
-				// Don't do this in a separate goroutine, since there's no reason to.
-				drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
+				if len(subscriptionEvent.Instances) == 0 {
+					break
+				}
+				instance := subscriptionEvent.Instances[0]
+
+				// If the status of the instance changes to "DRAINING", cancel the global context and exit.
+				if instance.Status == string(dbdriver.InstanceStatusDraining) {
+					// Don't do this in a separate goroutine, since there's no reason to.
+					drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
+					break
+				}
+
+				// If the remaining capacity field changes, check how many mandelboxes are currently
+				// running and start mandelbox zygotes as necessary.
+				if int32(instance.RemainingCapacity) != mandelboxData.GetMandelboxCount() {
+					newWaitingMandelboxes := int32(instance.RemainingCapacity) - mandelboxData.GetMandelboxCount()
+					SpinUpMandelboxes(globalCtx, globalCancel, goroutineTracker, dockerClient, instance.ID, newWaitingMandelboxes)
+				}
 
 			default:
 				if subscriptionEvent != nil {

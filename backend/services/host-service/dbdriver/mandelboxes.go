@@ -74,6 +74,10 @@ func CreateMandelbox(id types.MandelboxID, app string, instanceID string) error 
 			Time:   time.Now(),
 			Status: pgtype.Present,
 		},
+		UpdatedAt: pgtype.Timestamptz{
+			Time:   time.Now(),
+			Status: pgtype.Present,
+		},
 	}
 	q := queries.NewQuerier(dbpool)
 	mandelboxResult, err := q.CreateMandelbox(context.Background(), insertParams)
@@ -127,10 +131,18 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 
 	// Mark the mandelbox as connecting. We can't just use WriteMandelboxStatus
 	// since we want to do it in a single transaction.
-	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
-		String: string(MandelboxStatusConnecting),
-		Status: pgtype.Present,
-	}, mandelboxID.String())
+	params := queries.WriteMandelboxStatusParams{
+		Status: pgtype.Varchar{
+			String: string(MandelboxStatusConnecting),
+			Status: pgtype.Present,
+		},
+		UpdatedAt: pgtype.Timestamptz{
+			Time:   time.Now(),
+			Status: pgtype.Present,
+		},
+		MandelboxID: mandelboxID.String(),
+	}
+	result, err := q.WriteMandelboxStatus(context.Background(), params)
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `whist.mandelboxes`: %s", MandelboxStatusConnecting, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
@@ -154,10 +166,19 @@ func WriteMandelboxStatus(mandelboxID types.MandelboxID, status MandelboxStatus)
 	}
 
 	q := queries.NewQuerier(dbpool)
-	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
-		String: string(status),
-		Status: pgtype.Present,
-	}, mandelboxID.String())
+	params := queries.WriteMandelboxStatusParams{
+		Status: pgtype.Varchar{
+			String: string(status),
+			Status: pgtype.Present,
+		},
+		UpdatedAt: pgtype.Timestamptz{
+			Time:   time.Now(),
+			Status: pgtype.Present,
+		},
+		MandelboxID: mandelboxID.String(),
+	}
+
+	result, err := q.WriteMandelboxStatus(context.Background(), params)
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `whist.mandelboxes`: %s", status, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
@@ -247,6 +268,16 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 		// We avoid logging this every time to avoid polluting the logs.
 		logger.Infof("Removed %v stale mandelboxes", result.RowsAffected())
 		metrics.Add("CleanedStaleMandelboxes", result.RowsAffected())
+
+		// Update the remaining capacity to account for the removed stale mandelboxes.
+		instanceResult, err := q.UpdateInstanceCapacity(context.Background(), int32(result.RowsAffected()), string(instanceID))
+		if err != nil {
+			return utils.MakeError("couldn't increment instance capacity after cleaning stale mandelboxes. Err: %v", err)
+		}
+
+		if instanceResult.RowsAffected() != 0 {
+			logger.Infof("Updated capacity of %v instances.", instanceResult.RowsAffected())
+		}
 	}
 
 	return nil

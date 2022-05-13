@@ -20,6 +20,7 @@ type FindMandelboxByIDRow struct {
 	SessionID  pgtype.Varchar     `json:"session_id"`
 	Status     pgtype.Varchar     `json:"status"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
 // FindMandelboxByID implements Querier.FindMandelboxByID.
@@ -33,7 +34,7 @@ func (q *DBQuerier) FindMandelboxByID(ctx context.Context, mandelboxID string) (
 	items := []FindMandelboxByIDRow{}
 	for rows.Next() {
 		var item FindMandelboxByIDRow
-		if err := rows.Scan(&item.ID, &item.App, &item.InstanceID, &item.UserID, &item.SessionID, &item.Status, &item.CreatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.App, &item.InstanceID, &item.UserID, &item.SessionID, &item.Status, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan FindMandelboxByID row: %w", err)
 		}
 		items = append(items, item)
@@ -59,7 +60,7 @@ func (q *DBQuerier) FindMandelboxByIDScan(results pgx.BatchResults) ([]FindMande
 	items := []FindMandelboxByIDRow{}
 	for rows.Next() {
 		var item FindMandelboxByIDRow
-		if err := rows.Scan(&item.ID, &item.App, &item.InstanceID, &item.UserID, &item.SessionID, &item.Status, &item.CreatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.App, &item.InstanceID, &item.UserID, &item.SessionID, &item.Status, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan FindMandelboxByIDBatch row: %w", err)
 		}
 		items = append(items, item)

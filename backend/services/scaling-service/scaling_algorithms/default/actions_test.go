@@ -226,6 +226,7 @@ func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLCli
 			SessionID  graphql.String `graphql:"session_id"`
 			Status     graphql.String `graphql:"status"`
 			CreatedAt  time.Time      `graphql:"created_at"`
+			UpdatedAt  time.Time      `graphql:"updated_at"`
 		}{
 			ID:         graphql.String(mandelbox.ID.String()),
 			App:        graphql.String(mandelbox.App),
@@ -234,6 +235,7 @@ func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLCli
 			SessionID:  graphql.String(mandelbox.SessionID),
 			Status:     graphql.String(mandelbox.Status),
 			CreatedAt:  mandelbox.CreatedAt,
+			UpdatedAt:  mandelbox.UpdatedAt,
 		})
 	}
 	return len(testMandelboxes), nil
@@ -787,6 +789,7 @@ func TestMandelboxAssign(t *testing.T) {
 					SessionID  graphql.String `graphql:"session_id"`
 					Status     graphql.String `graphql:"status"`
 					CreatedAt  time.Time      `graphql:"created_at"`
+					UpdatedAt  time.Time      `graphql:"updated_at"`
 				}{
 					ID:         graphql.String(uuid.NewString()),
 					App:        "CHROME",
@@ -795,6 +798,7 @@ func TestMandelboxAssign(t *testing.T) {
 					SessionID:  graphql.String(utils.Sprintf("%v", time.Now().UnixMilli())),
 					Status:     "WAITING",
 					CreatedAt:  time.Now(),
+					UpdatedAt:  time.Now(),
 				},
 			}
 

@@ -51,6 +51,7 @@ type whist_mandelboxes_set_input struct {
 	SessionID  graphql.String `json:"session_id"`
 	Status     graphql.String `json:"status"`
 	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
 }
 
 // whist_images_insert_input is a type for used for the GraphQL mutations

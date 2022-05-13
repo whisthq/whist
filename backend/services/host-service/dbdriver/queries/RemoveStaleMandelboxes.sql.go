@@ -15,10 +15,10 @@ const removeStaleMandelboxesSQL = `DELETE FROM whist.mandelboxes
     instance_id = $1
     AND (
       (status = $2
-        AND created_at < $3)
+        AND updated_at < $3)
       OR (
       (status = $4
-        AND created_at < $5)
+        AND updated_at < $5)
       )
     );`
 

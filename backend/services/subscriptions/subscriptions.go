@@ -24,14 +24,13 @@ func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interfa
 		instance = result.Instances[0]
 	}
 
-	if (variables["id"] == nil) || (variables["status"] == nil) {
+	if variables["id"] == nil {
 		return false
 	}
 
 	id := string(variables["id"].(graphql.String))
-	status := string(variables["status"].(graphql.String))
 
-	return (instance.ID == id) && (instance.Status == status)
+	return (instance.ID == id)
 }
 
 // InstancesStatusHandler handles events from the Hasura subscription which
@@ -111,10 +110,9 @@ func ClientAppVersionHandler(event SubscriptionEvent, variables map[string]inter
 func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClient) {
 	hostSubscriptions := []HasuraSubscription{
 		{
-			Query: QueryInstanceByIdWithStatus,
+			Query: QueryInstanceById,
 			Variables: map[string]interface{}{
-				"id":     graphql.String(instanceID),
-				"status": graphql.String("DRAINING"),
+				"id": graphql.String(instanceID),
 			},
 			Result:  InstanceEvent{[]Instance{}},
 			Handler: InstanceStatusHandler,

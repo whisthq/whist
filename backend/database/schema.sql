@@ -87,7 +87,8 @@ CREATE TABLE whist.mandelboxes (
     user_id character varying,
     session_id character varying,
     status character varying NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 

@@ -4,9 +4,9 @@ DELETE FROM whist.mandelboxes
     instance_id = pggen.arg('instanceID')
     AND (
       (status = pggen.arg('allocatedStatus')
-        AND created_at < pggen.arg('allocatedCreationTimeThreshold'))
+        AND updated_at < pggen.arg('allocatedCreationTimeThreshold'))
       OR (
       (status = pggen.arg('connectingStatus')
-        AND created_at < pggen.arg('connectingCreationTimeThreshold'))
+        AND updated_at < pggen.arg('connectingCreationTimeThreshold'))
       )
     );

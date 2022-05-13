@@ -39,9 +39,11 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	for _, instanceRow := range instanceResult {
-		// Check if lingering instance is safe to terminate
-		if instanceRow.RemainingCapacity == 0 {
-			logger.Infof("Not scaling down draining instance because it has active associated mandelboxes.")
+		// Compute how many mandelboxes are running on the instance. We use the current remaining capacity
+		// and the total capacity of the instance type to check if it has running mandelboxes.
+		usage := instanceCapacity[string(instanceRow.Type)] - int(instanceRow.RemainingCapacity)
+		if usage > 0 {
+			logger.Infof("Not scaling down draining instance because it has %v running mandelboxes.", usage)
 			return nil
 		}
 	}
@@ -194,10 +196,13 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// 3. If the instance does not have the latest image, and is not running any mandelboxes, add to the
 	// list that will be scaled down.
 	for _, dbInstance := range allActive {
-		if dbInstance.RemainingCapacity == 0 {
+		// Compute how many mandelboxes are running on the instance. We use the current remaining capacity
+		// and the total capacity of the instance type to check if it has running mandelboxes.
+		usage := instanceCapacity[string(dbInstance.Type)] - int(dbInstance.RemainingCapacity)
+		if usage > 0 {
 			// Don't scale down any instance that has running
 			// mandelboxes, regardless of the image it uses
-			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", dbInstance.ID, dbInstance.RemainingCapacity)
+			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", dbInstance.ID, usage)
 			continue
 		}
 
@@ -802,6 +807,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		SessionID:  utils.Sprintf("%v", mandelboxRequest.SessionID),
 		Status:     "ALLOCATED",
 		CreatedAt:  waitingMandelbox.CreatedAt,
+		UpdatedAt:  time.Now(),
 	}
 
 	// Allocate mandelbox on database so the host service can start downloading user configs

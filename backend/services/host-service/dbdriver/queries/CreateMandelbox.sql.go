@@ -86,10 +86,10 @@ type Querier interface {
 	// WriteInstanceStatusScan scans the result of an executed WriteInstanceStatusBatch query.
 	WriteInstanceStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	WriteMandelboxStatus(ctx context.Context, status pgtype.Varchar, mandelboxID string) (pgconn.CommandTag, error)
+	WriteMandelboxStatus(ctx context.Context, params WriteMandelboxStatusParams) (pgconn.CommandTag, error)
 	// WriteMandelboxStatusBatch enqueues a WriteMandelboxStatus query into batch to be executed
 	// later by the batch.
-	WriteMandelboxStatusBatch(batch genericBatch, status pgtype.Varchar, mandelboxID string)
+	WriteMandelboxStatusBatch(batch genericBatch, params WriteMandelboxStatusParams)
 	// WriteMandelboxStatusScan scans the result of an executed WriteMandelboxStatusBatch query.
 	WriteMandelboxStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 }
@@ -240,8 +240,8 @@ func (tr *typeResolver) setValue(vt pgtype.ValueTranscoder, val interface{}) pgt
 	return vt
 }
 
-const createMandelboxSQL = `INSERT INTO whist.mandelboxes (id, app, instance_id, user_id, session_id, status, created_at) 
-VALUES($1, $2, $3, $4, $5, $6, $7);`
+const createMandelboxSQL = `INSERT INTO whist.mandelboxes (id, app, instance_id, user_id, session_id, status, created_at, updated_at) 
+VALUES($1, $2, $3, $4, $5, $6, $7, $8);`
 
 type CreateMandelboxParams struct {
 	ID         pgtype.Varchar
@@ -251,12 +251,13 @@ type CreateMandelboxParams struct {
 	SessionID  pgtype.Varchar
 	Status     pgtype.Varchar
 	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
 }
 
 // CreateMandelbox implements Querier.CreateMandelbox.
 func (q *DBQuerier) CreateMandelbox(ctx context.Context, params CreateMandelboxParams) (pgconn.CommandTag, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "CreateMandelbox")
-	cmdTag, err := q.conn.Exec(ctx, createMandelboxSQL, params.ID, params.App, params.InstanceID, params.UserID, params.SessionID, params.Status, params.CreatedAt)
+	cmdTag, err := q.conn.Exec(ctx, createMandelboxSQL, params.ID, params.App, params.InstanceID, params.UserID, params.SessionID, params.Status, params.CreatedAt, params.UpdatedAt)
 	if err != nil {
 		return cmdTag, fmt.Errorf("exec query CreateMandelbox: %w", err)
 	}
@@ -265,7 +266,7 @@ func (q *DBQuerier) CreateMandelbox(ctx context.Context, params CreateMandelboxP
 
 // CreateMandelboxBatch implements Querier.CreateMandelboxBatch.
 func (q *DBQuerier) CreateMandelboxBatch(batch genericBatch, params CreateMandelboxParams) {
-	batch.Queue(createMandelboxSQL, params.ID, params.App, params.InstanceID, params.UserID, params.SessionID, params.Status, params.CreatedAt)
+	batch.Queue(createMandelboxSQL, params.ID, params.App, params.InstanceID, params.UserID, params.SessionID, params.Status, params.CreatedAt, params.UpdatedAt)
 }
 
 // CreateMandelboxScan implements Querier.CreateMandelboxScan.

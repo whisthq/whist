@@ -98,9 +98,7 @@ func TestInstanceStatusHandler(t *testing.T) {
 	}{
 		{"Empty event", InstanceEvent{Instances: []Instance{}}, false},
 		{"Wrong status event", InstanceEvent{
-			Instances: []Instance{
-				{ID: "test-instance-id", Status: "PRE_CONNECTION"},
-			},
+			Instances: []Instance{{ID: ""}},
 		}, false},
 		{"Correct status event", InstanceEvent{
 			Instances: []Instance{
@@ -175,8 +173,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"id":     graphql.String(instanceID),
-		"status": graphql.String("DRAINING"),
+		"id": graphql.String(instanceID),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription

@@ -43,6 +43,7 @@ type Mandelbox struct {
 	SessionID  string            `json:"session_id"`  // ID of the session which is assigned to the mandelbox
 	Status     string            `json:"status"`      // Current status of the mandelbox
 	CreatedAt  time.Time         `json:"created_at"`  // Timestamp when the mandelbox was created
+	UpdatedAt  time.Time         `json:"updated_at"`  // Timestamp when the mandelbox was last updated
 }
 
 // Image is a custom type to represent an image. We use the cloud provider
