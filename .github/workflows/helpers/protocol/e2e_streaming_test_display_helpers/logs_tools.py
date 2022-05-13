@@ -120,7 +120,7 @@ def download_latest_logs(
     local_timezone = int(time.timezone / 3600.0)
     before_timestamp = before_timestamp + timedelta(hours=local_timezone)
     # Compute oldest allowed timestamp. Any logs created before then will be discarded.
-    oldest_allowed_timestamp = before_timestamp + timedelta(days=logs_expiration_days)
+    oldest_allowed_timestamp = before_timestamp - timedelta(days=logs_expiration_days)
 
     result = client.list_objects(
         Bucket="whist-e2e-protocol-test-logs", Prefix=f"{branch_name}/", Delimiter="/"
