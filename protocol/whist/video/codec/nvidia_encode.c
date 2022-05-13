@@ -362,10 +362,45 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         // memcpy input data
         // the encoder buffer might have a different pitch, so we have to copy row by row
         for (int i = 0; i < encoder->registered_resource.height; i++) {
-            memcpy((char*)lock_params.bufferDataPtr + i * lock_params.pitch,
-                   (char*)encoder->registered_resource.texture_pointer +
-                       i * encoder->registered_resource.pitch,
-                   min(encoder->registered_resource.pitch, (int)lock_params.pitch));
+#define CLIP(X) ( (X) > 255 ? 255 : (X) < 0 ? 0 : X)
+
+// BT 601 Studio swing
+#define RGB2Y(R, G, B) CLIP(( (  66 * (R) + 129 * (G) +  25 * (B) + 128) >> 8) +  16)
+#define RGB2U(R, G, B) CLIP(( ( -38 * (R) -  74 * (G) + 112 * (B) + 128) >> 8) + 128)
+#define RGB2V(R, G, B) CLIP(( ( 112 * (R) -  94 * (G) -  18 * (B) + 128) >> 8) + 128)
+
+// BT 601 Full swing
+#define CRGB2Y(R, G, B) CLIP((19595 * R + 38470 * G + 7471 * B ) >> 16)
+#define CRGB2Cb(R, G, B) CLIP((36962 * (B - CLIP((19595 * R + 38470 * G + 7471 * B ) >> 16) ) >> 16) + 128)
+#define CRGB2Cr(R, G, B) CLIP((46727 * (R - CLIP((19595 * R + 38470 * G + 7471 * B ) >> 16) ) >> 16) + 128)
+
+// BT 709 Studio swing
+#define RGB2Y_709(R, G, B) CLIP(((((int)(0.2126 * R + 0.7152 * G + 0.0722 * B ) * 219) + 128) >> 8 ) +  16)
+#define RGB2U_709(R, G, B) CLIP(((((int)(-0.1146 * R - 0.3854 * G + 0.5 * B ) * 224) + 128) >> 8 ) +  128)
+#define RGB2V_709(R, G, B) CLIP(((((int)(0.5 * R - 0.4542 * G - 0.0458 * B ) * 224) + 128) >> 8 ) +  128)
+
+            for (int j = 0; j < encoder->registered_resource.width; j++) {
+                uint8_t *rgba_ptr = (uint8_t *)encoder->registered_resource.texture_pointer +
+                       (i * encoder->registered_resource.pitch) + (j*4);
+                uint8_t r = rgba_ptr[2];
+                uint8_t g = rgba_ptr[1];
+                uint8_t b = rgba_ptr[0];
+                uint8_t *y_ptr = (uint8_t *)lock_params.bufferDataPtr +
+                       (i * lock_params.pitch) + j;
+                *y_ptr = RGB2Y(r, g, b);
+                if (i % 2 == 0 && j % 2 == 0) {
+                    uint8_t *v_ptr = (uint8_t *)lock_params.bufferDataPtr + (encoder->registered_resource.height * lock_params.pitch) +
+                        ((i / 2) * (lock_params.pitch / 2)) + (j / 2);
+                    uint8_t *u_ptr = v_ptr + ((encoder->registered_resource.height / 2) * (lock_params.pitch / 2));
+                    *u_ptr = RGB2U(r, g, b);
+                    *v_ptr = RGB2V(r, g, b);
+                }
+
+            }
+            // memcpy((char*)lock_params.bufferDataPtr + i * lock_params.pitch,
+            //        (char*)encoder->registered_resource.texture_pointer +
+            //            i * encoder->registered_resource.pitch,
+            //        min(encoder->registered_resource.pitch, (int)lock_params.pitch));
         }
         status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder,
                                                           lock_params.inputBuffer);
@@ -426,7 +461,8 @@ static int register_resource(NvidiaEncoder* encoder, RegisteredResource* resourc
             input_params.version = NV_ENC_CREATE_INPUT_BUFFER_VER;
             input_params.width = resource_to_register->width;
             input_params.height = resource_to_register->height;
-            input_params.bufferFmt = NV_ENC_BUFFER_FORMAT_ARGB;
+            // input_params.bufferFmt = NV_ENC_BUFFER_FORMAT_ARGB;
+            input_params.bufferFmt = NV_ENC_BUFFER_FORMAT_YV12;
             // input_params.pSysMemBuffer = resource_to_register->texture_pointer;
             int status = encoder->p_enc_fn.nvEncCreateInputBuffer(encoder->internal_nvidia_encoder,
                                                                   &input_params);
