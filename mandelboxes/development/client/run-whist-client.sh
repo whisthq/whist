@@ -68,7 +68,7 @@ fi
 
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
 # Timeout will turn off the client once we are done gathering metrics data. This value here should match the one in the protocol/test/streaming_e2e_tester.py file
-timeout 240s /usr/share/whist/WhistClient $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
+timeout 240s /usr/share/whist/WhistClient $OPTIONS &> >(tee $PROTOCOL_LOG_FILENAME) &
 whist_client_pid=$!
 
 # TODO: once our mandelboxes have bash 5.1 we will be able to deduce _which_

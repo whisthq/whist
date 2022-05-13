@@ -2,7 +2,7 @@
 
 import os, sys, subprocess
 
-from helpers.common.ssh_tools import wait_until_cmd_done
+from helpers.common.pexpect_tools import wait_until_cmd_done
 from helpers.common.timestamps_and_exit_tools import printred
 
 # Add the current directory to the path no matter where this is called from
@@ -99,8 +99,11 @@ def get_remote_whist_github_sha(pexpect_process, pexpect_prompt, running_in_ci):
 
     pexpect_process.sendline("cd ~/whist && git rev-parse HEAD")
     stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=True)
-    if len(stdout) != 2 or len(stdout[-1]) != GITHUB_SHA_LEN:
+    stdout_expected_len = (
+        2 if running_in_ci else 3
+    )  # if running outside of CI, additional formatting characters will be added
+    if len(stdout) != stdout_expected_len or len(stdout[1]) != GITHUB_SHA_LEN:
         print(stdout)
         printred("Could not get the Github SHA of the commit checked out on the remote instance")
         return ""
-    return stdout[-1]
+    return stdout[1]

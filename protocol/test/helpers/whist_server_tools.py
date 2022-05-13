@@ -2,10 +2,13 @@
 
 import os, sys
 
-from helpers.common.ssh_tools import (
-    attempt_ssh_connection,
+from helpers.common.pexpect_tools import (
     expression_in_pexpect_output,
     wait_until_cmd_done,
+)
+
+from helpers.common.ssh_tools import (
+    attempt_ssh_connection,
     reboot_instance,
 )
 
@@ -94,7 +97,7 @@ def server_setup_process(args_dict):
     local_sha = get_whist_github_sha(running_in_ci)
     if server_sha != local_sha:
         exit_with_error(
-            f"Commit mismatch between server instance ({server_sha}) and github runner ({local_sha})"
+            f"Commit mismatch between server instance ({server_sha}) and E2E runner ({local_sha})"
         )
 
     if skip_host_setup == "false":
@@ -226,7 +229,7 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
     wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
 
     # Check the log to see if WhistServer shut down gracefully or if there was a server hang
-    pexpect_process.sendline("tail /var/log/whist/protocol-out.log")
+    pexpect_process.sendline("tail /usr/share/whist/server.log")
     server_mandelbox_output = wait_until_cmd_done(
         pexpect_process, ":/#", running_in_ci=True, return_output=True
     )

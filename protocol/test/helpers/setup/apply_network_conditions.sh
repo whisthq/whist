@@ -10,9 +10,9 @@ set -Eeuo pipefail
 #                   It specifies the maximum bandwidth to be allowed in the network
 # -p <packet drop %>: this argument can be a single value (<packet drop %>) or a range (<min packet drop %>,<max packet drop %>).
 #                     It specifies the percentage of packets that should be randomly dropped by the network.
-# -q <queue length (ms)>: this argument can be a single value (<queue length (ms)>) or a range (<min queue length (ms)>,<max queue length (ms)>).
+# -q <queue length (ms)>: this argument can be a single value (<queue length (ms)>) or a range (<min queue length (ms)>,<max queue length (ms)>).
 #                         It specifies the delay that each incoming/outcoming packet should incur due to simulated time spent in packet queues.
-# -l <qdisc packet limit>: this argument can be a single value (<qdisc packet limit>) or a range (<min qdisc packet limit>,<max qdisc packet limit>).
+# -l <qdisc packet limit>: this argument can be a single value (<qdisc packet limit>) or a range (<min qdisc packet limit>,<max qdisc packet limit>).
 #                         It specifies the maximum number of packets the qdisc may hold queued at a time.
 # -i <interval (ms)>: this argument can be a single value (<interval (ms)>) or a range (<min interval (ms)>,<max interval (ms)>).
 #                     It specifies the frequency at which the network conditions should change. If a range is passed, we set the network conditions,
