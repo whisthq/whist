@@ -460,7 +460,7 @@ void print_hard_drive_info(void) {
 }
 
 #ifdef __linux__
-size_t last_cpu_in_use_time, last_cpu_idle_time;
+unsigned long last_cpu_in_use_time, last_cpu_idle_time;
 #endif
 
 double get_cpu_usage(void) {
@@ -473,23 +473,25 @@ double get_cpu_usage(void) {
         cpu_usage_pct = atof(cpu_usage);
     }
 #elif __linux__
-    int res = runcmd("head -n 1 /proc/stat", &cpu_usage);
-    if (res != -1) {
+    FILE* fp = fopen("/proc/stat", "r");
+    // Read up to 1000 chars from the first line of "/proc/stat". This should be enough to get all
+    // the usage data.
+    if (fp && fgets(cpu_usage, 1000, fp)) {
         cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
 
-        // Block below aknowledged to https://rosettacode.org/wiki/Linux_CPU_utilization#C.2B.2B and
+        // Block below aknowledged to https://rosettacode.org/wiki/Category:C and
         // https://www.idnt.net/en-US/kb/941772
         const char* separator = " ";
         int i = 0;
-        size_t cpu_in_use_time = 0, cpu_idle_time = 0;
+        unsigned long cpu_in_use_time = 0, cpu_idle_time = 0;
 
         char* token = strtok(cpu_usage, separator);
         while (token) {
             token = strtok(NULL, separator);
             if (token) {
-                cpu_in_use_time += atoi(token);
+                cpu_in_use_time += strtoul(token, NULL, 0);
                 if (i == 3) {
-                    cpu_idle_time = atoi(token);
+                    cpu_idle_time = strtoul(token, NULL, 0);
                 }
                 i++;
             }
@@ -502,7 +504,7 @@ double get_cpu_usage(void) {
         last_cpu_idle_time = cpu_idle_time;
         last_cpu_in_use_time = cpu_in_use_time;
     }
-
+    fclose(fp);
 #else  // _WIN32
     LOG_WARNING("get_cpu_usage() not implemented for this platform");
 #endif
