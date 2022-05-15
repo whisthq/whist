@@ -1,6 +1,7 @@
 #ifndef WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 #define WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 
+#include <map>
 #include <whist/core/whist.h>
 #include "../api.h"
 #include "../frontend.h"
@@ -25,19 +26,6 @@ typedef struct SDLFrontendVideoContext {
      */
     enum AVPixelFormat decode_format;
     /**
-     * The current video texture.
-     *
-     * When the video is updated this either copies the frame data to
-     * the existing texture (if the data is in CPU memory), or it
-     * destroys the existing texture and creates a new one corresponding
-     * the frame (if the data is already in GPU memroy).
-     */
-    SDL_Texture* texture;
-    /**
-     * The format of the current video texture.
-     */
-    SDL_PixelFormatEnum texture_format;
-    /**
      * The width of the frame in the current video texture.
      */
     int frame_width;
@@ -55,10 +43,46 @@ typedef struct SDLFrontendVideoContext {
     AVFrame* frame_reference;
 } SDLFrontendVideoContext;
 
-typedef struct SDLFrontendContext {
-    SDL_AudioDeviceID audio_device;
+// All the information needed for the frontend to render a specific window
+typedef struct SDLWindowContext {
+    // flags for Whist
+    bool to_be_created;
+    bool to_be_destroyed;
+    // TODO: are these needed now that we only open windows on demand?
+    bool video_has_rendered;
+    bool window_has_shown;
+    // window specific data
+    Uint32 window_id; // the SDL window ID for SDL window events
     SDL_Window* window;
     SDL_Renderer* renderer;
+    /**
+     * The current video texture.
+     *
+     * When the video is updated this either copies the frame data to
+     * the existing texture (if the data is in CPU memory), or it
+     * destroys the existing texture and creates a new one corresponding
+     * the frame (if the data is already in GPU memroy).
+     */
+    SDL_Texture* texture;;
+    /**
+     * The format of the current video texture.
+     */
+    SDL_PixelFormatEnum texture_format;
+    // TODO: dump this into a WhistWindowData
+    int x;
+    int y;
+    int width;
+    int height;
+    const char* title;
+    WhistRGBColor color;
+    bool is_fullscreen;
+    bool is_resizable;
+} SDLWindowContext;
+
+typedef struct SDLFrontendContext {
+    SDL_AudioDeviceID audio_device;
+
+    std::map<int, SDLWindowContext*> windows;
     /**
      * Name of the render driver.
      */
@@ -83,8 +107,6 @@ typedef struct SDLFrontendContext {
     const uint8_t* key_state;
     int key_count;
     void* file_drag_data;
-    bool video_has_rendered;
-    bool window_has_shown;
 } SDLFrontendContext;
 
 // D3D11 helper functions (Windows only).

@@ -312,7 +312,7 @@ int render_video(VideoContext* video_context) {
         video_decoder_free_decoded_frame(&decoded_frame_data);
 
         // Update the window titlebar color
-        sdl_render_window_titlebar_color(window_color);
+        sdl_render_window_titlebar_color(0, window_color);
 
         // Render the decoded frame
         sdl_update_framebuffer(frame);

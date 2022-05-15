@@ -254,7 +254,7 @@ static void send_new_tab_urls_if_needed(WhistFrontend* frontend) {
 
         // Unmimimize the window if needed
         if (!whist_frontend_is_window_visible(frontend)) {
-            whist_frontend_restore_window(frontend);
+            whist_frontend_restore_window(frontend, 0);
         }
     }
 }

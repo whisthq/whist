@@ -129,7 +129,7 @@ void sdl_present_pending_cursor(WhistFrontend* frontend);
  *
  * @note                           This function is virtually instantaneous
  */
-void sdl_render_window_titlebar_color(WhistRGBColor color);
+void sdl_render_window_titlebar_color(int id, WhistRGBColor color);
 
 /**
  * @brief                          Update the title of the window
@@ -138,7 +138,7 @@ void sdl_render_window_titlebar_color(WhistRGBColor color);
  *
  * @note                           This function is virtually instantaneous
  */
-void sdl_set_window_title(const char* window_title);
+void sdl_set_window_title(int id, const char* window_title);
 
 /**
  * @brief                          Update the window's fullscreen state
@@ -148,7 +148,7 @@ void sdl_set_window_title(const char* window_title);
  *
  * @note                           This function is virtually instantaneous
  */
-void sdl_set_fullscreen(bool is_fullscreen);
+void sdl_set_fullscreen(int id, bool is_fullscreen);
 
 /**
  * Display a notification with the frontend.

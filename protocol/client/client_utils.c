@@ -337,7 +337,7 @@ int update_mouse_motion(WhistFrontend *frontend) {
 
     if (mouse_state.update) {
         int x, y, x_nonrel, y_nonrel, virtual_width, virtual_height;
-        whist_frontend_get_window_virtual_size(frontend, &virtual_width, &virtual_height);
+        whist_frontend_get_window_virtual_size(frontend, 0, &virtual_width, &virtual_height);
 
         // Calculate x location of mouse cursor
         x_nonrel = mouse_state.x_nonrel * MOUSE_SCALING_FACTOR / virtual_width;

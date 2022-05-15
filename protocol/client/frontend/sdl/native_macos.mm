@@ -184,26 +184,30 @@ static bool mouse_in_window(WhistFrontend *frontend) {
     SDLFrontendContext *context = (SDLFrontendContext*)frontend->context;
     FileDragState *state = (FileDragState*)context->file_drag_data;
 
-    // If window is minimized or not visible, then the mouse is definitely not in window
-    //     TODO: return false for drags over occluded parts of an unoccluded window
-    if (SDL_GetWindowFlags(context->window) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_OCCLUDED)) {
-        return false;
-    }
+    for (const auto& pair : context->windows) {
+        SDLWindowContext* window_context = pair.second;
 
-    int window_x, window_y, mouse_x, mouse_y;
-    int window_w, window_h;
-    SDL_GetWindowPosition(context->window, &window_x, &window_y);
-    SDL_GetWindowSize(context->window, &window_w, &window_h);
-    // Mouse is not active in window - so we must use the global mouse and manually transform
-    SDL_GetGlobalMouseState(&mouse_x, &mouse_y);
+        // If window is minimized or not visible, then the mouse is definitely not in window
+        //     TODO: return false for drags over occluded parts of an unoccluded window
+        if (SDL_GetWindowFlags(window_context->window) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_OCCLUDED)) {
+            continue;
+        }
 
-    state->position_x = mouse_x - window_x;
-    state->position_y = mouse_y - window_y;
+        int window_x, window_y, mouse_x, mouse_y;
+        int window_w, window_h;
+        SDL_GetWindowPosition(window_context->window, &window_x, &window_y);
+        SDL_GetWindowSize(window_context->window, &window_w, &window_h);
+        // Mouse is not active in window - so we must use the global mouse and manually transform
+        SDL_GetGlobalMouseState(&mouse_x, &mouse_y);
 
-    // If the mouse is in the window
-    if (mouse_x >= window_x && mouse_x <= window_x + window_w && mouse_y >= window_y &&
-        mouse_y <= window_y + window_h) {
-        return true;
+        state->position_x = mouse_x - window_x;
+        state->position_y = mouse_y - window_y;
+
+        // If the mouse is in the window
+        if (mouse_x >= window_x && mouse_x <= window_x + window_w && mouse_y >= window_y &&
+                mouse_y <= window_y + window_h) {
+            return true;
+        }
     }
 
     return false;
@@ -273,17 +277,15 @@ static void push_drag_event(WhistFrontend *frontend) {
 }
 
 void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
-    /*
-        Initializes global event handlers for left mouse down dragged
-        and left mouse up events. The drag board change count changes
-        when a new file is being dragged. However, it is tricky to detect
-        continual drags of files because a user can drag something that
-        is not a file (like a highlight for example) and the drag board
-        change count will stay the same. Thus we need a way to determine if
-        the current drag event corresponds to a new, picked file. We do this
-        by monitoring when the mouse up event occurs which signals that the user
-        is finished dragging the file in question.
-    */
+//        Initializes global event handlers for left mouse down dragged
+//        and left mouse up events. The drag board change count changes
+//        when a new file is being dragged. However, it is tricky to detect
+//        continual drags of files because a user can drag something that
+//        is not a file (like a highlight for example) and the drag board
+//        change count will stay the same. Thus we need a way to determine if
+//        the current drag event corresponds to a new, picked file. We do this
+//        by monitoring when the mouse up event occurs which signals that the user
+//        is finished dragging the file in question.
     SDLFrontendContext *context = (SDLFrontendContext*)frontend->context;
     context->file_drag_data = safe_malloc(sizeof(FileDragState));
     FileDragState *state = (FileDragState*)context->file_drag_data;
@@ -348,10 +350,8 @@ void sdl_native_init_external_drag_handler(WhistFrontend *frontend) {
 }
 
 void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
-    /*
-        NSEvent event listeners are removed by passing in their ids
-        to the removeMonitor call
-    */
+//        NSEvent event listeners are removed by passing in their ids
+//        to the removeMonitor call
     SDLFrontendContext *context = (SDLFrontendContext*)frontend->context;
     FileDragState *state = (FileDragState*)context->file_drag_data;
 

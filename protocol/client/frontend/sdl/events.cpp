@@ -5,6 +5,21 @@ extern "C" {
 
 #include "sdl_struct.hpp"
 
+// HELPER
+// TODO: needs better name
+// returns the ID of the window with given SDLWindowID
+int get_window_id_from_sdl_id(SDLFrontendContext* context, Uint32 sdl_id) {
+    for (const auto& pair : context->windows) {
+        int id = pair.first;
+        SDLWindowContext* window_context = pair.second;
+        if (window_context->window_id == sdl_id) {
+            return id;
+        }
+    }
+    LOG_ERROR("Found no window with SDL window ID %d", sdl_id);
+    return 0;
+}
+
 /**
  * Handle an SDL event.
  *
@@ -21,6 +36,8 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
 
     if (sdl_event->type == context->internal_event_id) {
         const SDL_UserEvent* user_event = &sdl_event->user;
+        int frontend_window_id = get_window_id_from_sdl_id(context, user_event->windowID);
+        SDL_Window* window = context->windows[frontend_window_id]->window;
         switch (user_event->code) {
             case SDL_FRONTEND_EVENT_FILE_DRAG: {
                 event->type = FRONTEND_EVENT_FILE_DRAG;
@@ -30,25 +47,25 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
             }
             case SDL_FRONTEND_EVENT_FULLSCREEN: {
                 bool fullscreen = (intptr_t)user_event->data1;
-                SDL_SetWindowFullscreen(context->window,
+                SDL_SetWindowFullscreen(window,
                                         fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
                 break;
             }
             case SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE: {
                 const char* title = (const char*)user_event->data1;
-                if (context->window == NULL) {
+                if (window == NULL) {
                     LOG_WARNING(
                         "Window title change event ignored "
                         "because there is no window.");
                 } else {
-                    SDL_SetWindowTitle(context->window, title);
+                    SDL_SetWindowTitle(window, title);
                 }
                 free(user_event->data1);
                 break;
             }
             case SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE: {
                 const WhistRGBColor* color = (const WhistRGBColor*)user_event->data1;
-                sdl_native_set_titlebar_color(context->window, color);
+                sdl_native_set_titlebar_color(window, color);
                 free(user_event->data1);
                 break;
             }
