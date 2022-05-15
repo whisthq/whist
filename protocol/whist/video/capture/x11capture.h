@@ -52,6 +52,20 @@ typedef struct X11CaptureDevice {
     int event;
     bool first;
     WhistRGBColor corner_color;
+    Atom _NET_ACTIVE_WINDOW;
+    Atom _NET_WM_STATE_HIDDEN;
+    Atom _NET_WM_STATE_MAXIMIZED_VERT;
+    Atom _NET_WM_STATE_MAXIMIZED_HORZ;
+    Atom _NET_WM_STATE_FULLSCREEN;
+    Atom _NET_WM_STATE_ABOVE;
+    Atom _NET_MOVERESIZE_WINDOW;
+    Atom _NET_CLOSE_WINDOW;
+    Atom _NET_WM_ALLOWED_ACTIONS;
+    Atom ATOM_ARRAY;
+    Atom _NET_WM_ACTION_RESIZE;
+    Atom _NET_WM_NAME;
+    Atom UTF8_STRING;
+    Atom _NET_WM_STATE;
 } X11CaptureDevice;
 
 /*

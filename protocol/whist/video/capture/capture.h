@@ -47,7 +47,6 @@ typedef struct CaptureDevice {
     int height;
     int pitch;
     void* frame_data;
-    WhistWindowData window_data[MAX_WINDOWS];
     WhistRGBColor corner_color;
     void* internal;
 
