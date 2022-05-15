@@ -170,7 +170,7 @@ static int handle_window_title_message(WhistServerMessage *wsmsg, size_t wsmsg_s
 
     LOG_INFO("Received window title message from server!");
 
-    sdl_set_window_title((char *)wsmsg->window_title);
+    sdl_set_window_title(0, (char *)wsmsg->window_title);
 
     return 0;
 }
@@ -222,7 +222,7 @@ static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
 
     LOG_INFO("Received fullscreen message from the server! Value: %d", wsmsg->fullscreen);
 
-    sdl_set_fullscreen(wsmsg->fullscreen);
+    sdl_set_fullscreen(0, wsmsg->fullscreen);
 
     return 0;
 }

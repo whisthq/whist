@@ -118,30 +118,36 @@ void sdl_present_pending_cursor(WhistFrontend* frontend);
 /**
  * @brief                          Update the color of the window's titlebar
  *
+ * @param id                       The window ID to set the color for
+ *
  * @param color                    The color to set the titlebar too
  *
  * @note                           This function is virtually instantaneous
  */
-void sdl_render_window_titlebar_color(WhistRGBColor color);
+void sdl_render_window_titlebar_color(int id, WhistRGBColor color);
 
 /**
  * @brief                          Update the title of the window
+ *
+ * @param id                       The window ID to set change the title of
  *
  * @param window_title             The string to set the window's title to
  *
  * @note                           This function is virtually instantaneous
  */
-void sdl_set_window_title(const char* window_title);
+void sdl_set_window_title(int id, const char* window_title);
 
 /**
  * @brief                          Update the window's fullscreen state
+ *
+ * @param id                       The window ID to change fullscreen status of
  *
  * @param is_fullscreen            If True, the window will become fullscreen
  *                                 If False, the window will return to windowed mode
  *
  * @note                           This function is virtually instantaneous
  */
-void sdl_set_fullscreen(bool is_fullscreen);
+void sdl_set_fullscreen(int id, bool is_fullscreen);
 
 /**
  * Display a notification with the frontend.

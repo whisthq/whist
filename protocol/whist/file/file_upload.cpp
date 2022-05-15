@@ -1,7 +1,7 @@
 #include <stddef.h>
+#include <whist/core/whist.h>
 extern "C" {
 #include "file_upload.h"
-#include <whist/core/whist.h>
 }
 
 #if OS_IS(OS_WIN32)

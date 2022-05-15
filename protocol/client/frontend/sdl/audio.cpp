@@ -1,3 +1,4 @@
+#include <whist/core/whist.h>
 extern "C" {
 #include "common.h"
 }

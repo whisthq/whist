@@ -12,6 +12,7 @@ Includes
 #include <fstream>
 
 #include <assert.h>
+#include <whist/core/whist.h>
 extern "C" {
 #include "protocol_analyzer.h"
 #include <whist/network/network.h>
@@ -219,8 +220,8 @@ struct ProtocolAnalyzer {
 
         FrameLevelInfo &info = type_level_infos[type].frames[id];
         info.segments[index].size = segment.segment_size;
-        info.max_segment_size = max(info.max_segment_size, segment.segment_size);
-        info.min_segment_size = min(info.min_segment_size, segment.segment_size);
+        info.max_segment_size = max(info.max_segment_size, (int)segment.segment_size);
+        info.min_segment_size = min(info.min_segment_size, (int)segment.segment_size);
         if (is_first_segment) {
             info.current_fec_info = type_level_infos[type].current_fec_info;
             info.current_cc_info = type_level_infos[type].current_cc_info;

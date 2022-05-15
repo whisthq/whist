@@ -11,8 +11,9 @@
 #include <algorithm>
 #include <string>
 
-extern "C" {
 #include <whist/core/whist.h>
+
+extern "C" {
 #include <whist/utils/clock.h>
 #include <whist/network/network_algorithm.h>
 #include <whist/fec/fec.h>
