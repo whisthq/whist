@@ -334,6 +334,15 @@ void sdl_destroy(WhistFrontend* frontend) {
     if (context == NULL) {
         return;
     }
+    // destroy all windows
+    for (const auto& pair : context->windows) {
+        int id = pair.first;
+        SDLWindowContext* window_context = pair.second;
+        sdl_destroy_window(frontend, id);
+        if (window_context->renderer != NULL) {
+            SDL_DestroyRenderer(window_context->renderer);
+            window_context->renderer = NULL;
+        }
 
     // Destroy all the windows
     while (!context->windows.empty()) {

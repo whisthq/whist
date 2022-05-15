@@ -67,9 +67,13 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
 
 void sdl_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+    if (!context->windows.contains(id)) {
+        LOG_FATAL("No window with ID %d!", id);
+    }
     SDL_Event event = {
         .user =
             {
+                .windowID = context->windows[id]->window_id,
                 .type = context->internal_event_id,
                 .timestamp = 0,
                 .code = SDL_FRONTEND_EVENT_FULLSCREEN,
@@ -235,6 +239,16 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
 
     return WHIST_SUCCESS;
 }
+
+// On macOS & Windows, SDL outputs the texture with the last pixel on the bottom and
+// right sides without data, rendering it green (NV12 color format). We're not sure
+// why that is the case, but in the meantime, clipping that pixel makes the visual
+// look seamless.
+#if defined(__APPLE__) || defined(_WIN32)
+#define CLIPPED_PIXELS 1
+#else
+#define CLIPPED_PIXELS 0
+#endif
 
 void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
     /*

@@ -6,6 +6,21 @@ extern "C" {
 
 #include "sdl_struct.hpp"
 
+// HELPER
+// TODO: needs better name
+// returns the ID of the window with given SDLWindowID
+int get_window_id_from_sdl_id(SDLFrontendContext* context, Uint32 sdl_id) {
+    for (const auto& pair : context->windows) {
+        int id = pair.first;
+        SDLWindowContext* window_context = pair.second;
+        if (window_context->window_id == sdl_id) {
+            return id;
+        }
+    }
+    LOG_ERROR("Found no window with SDL window ID %d", sdl_id);
+    return 0;
+}
+
 /**
  * Handle an SDL event.
  *
@@ -22,6 +37,8 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
 
     if (sdl_event->type == context->internal_event_id) {
         const SDL_UserEvent* user_event = &sdl_event->user;
+        int frontend_window_id = get_window_id_from_sdl_id(context, user_event->windowID);
+        SDL_Window* window = context->windows[frontend_window_id]->window;
         switch (user_event->code) {
             case SDL_FRONTEND_EVENT_FILE_DRAG: {
                 event->type = FRONTEND_EVENT_FILE_DRAG;

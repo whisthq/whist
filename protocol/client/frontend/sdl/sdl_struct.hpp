@@ -1,6 +1,7 @@
 #ifndef WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 #define WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 
+#include <map>
 #include <whist/core/whist.h>
 
 extern "C" {
