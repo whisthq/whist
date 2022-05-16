@@ -1,9 +1,11 @@
 extern "C" {
 #include "common.h"
 #include "native.h"
+// Load lodepng with c linkage
+#define LODEPNG_NO_COMPILE_CPP
+#include <whist/utils/lodepng.h>
 }
 #include "sdl_struct.hpp"
-#include <whist/utils/lodepng.h>
 
 // Little-endian RGBA masks
 #define RGBA_R 0xff000000
