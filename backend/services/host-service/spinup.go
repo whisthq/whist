@@ -272,6 +272,13 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		return nil
 	})
 
+	err = mandelbox.MarkParamsReady()
+	if err != nil {
+		logAndReturnError("Error marking mandelbox %s as ready to start A/V + display: %s", mandelboxID, err)
+		return nil
+	}
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s params as ready. A/V and display services can soon start.", mandelboxID)
+
 	// Start Docker container
 	postCreateGroup.Go(func() error {
 		err = dockerClient.ContainerStart(mandelbox.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
@@ -333,13 +340,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 
 	mandelbox.AssignToUser(mandelboxSubscription.UserID)
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
-
-	err = mandelbox.MarkParamsReady()
-	if err != nil {
-		logAndReturnError("Error marking mandelbox %s as ready to start A/V + display: %s", mandelboxSubscription.ID, err)
-		return
-	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s params as ready. A/V and display services can soon start.", mandelboxSubscription.ID)
 
 	// Request port bindings for the mandelbox.
 	var (
