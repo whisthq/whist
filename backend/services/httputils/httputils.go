@@ -156,7 +156,7 @@ func EnableCORS(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWr
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
 		rw.Header().Set("Access-Control-Allow-Headers", "Origin Accept Content-Type X-Requested-With")
-		rw.Header().Set("Access-Control-Allow-Methods", "GET POST PUT HEAD OPTIONS")
+		rw.Header().Set("Access-Control-Allow-Methods", "POST PUT OPTIONS")
 
 		if r.Method == http.MethodOptions {
 			http.Error(rw, "No Content", http.StatusNoContent)
