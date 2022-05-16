@@ -61,11 +61,11 @@ Public Function Implementations
 ============================
 */
 
-#define INIT_ATOM(DEVICE, ATOM_VAR, NAME)                    \
+#define INIT_ATOM(DEVICE, ATOM_VAR, NAME)                        \
     DEVICE->ATOM_VAR = XInternAtom(DEVICE->display, NAME, True); \
-    if (DEVICE->ATOM_VAR == None) { \
+    if (DEVICE->ATOM_VAR == None) {                              \
         LOG_FATAL("XInternAtom failed to return atom %s", NAME); \
-    } \
+    }
 
 void init_atoms(X11CaptureDevice* device) {
     // Initialize all atoms for the device->display we need

@@ -140,7 +140,7 @@ void get_window_attributes(CaptureDevice* capture_device, WhistWindow whist_wind
     X11CaptureDevice* device = capture_device->x11_capture_device;
     XWindowAttributes attr;
     if (!XGetWindowAttributes(device->display, w, &attr)) {
-        LOG_ERROR("Failed to get window %d attributes!", w);
+        LOG_ERROR("Failed to get window %lu attributes!", w);
         d->width = -1;
         d->height = -1;
         d->x = -1;
@@ -159,8 +159,8 @@ WhistWindow get_active_window(CaptureDevice* capture_device) {
     static unsigned long nitems;
     static unsigned char* result;  // window stored here
 
-    if (x11_get_window_property(device, device->root, device->_NET_ACTIVE_WINDOW, AnyPropertyType, &nitems,
-                                &result) &&
+    if (x11_get_window_property(device, device->root, device->_NET_ACTIVE_WINDOW, AnyPropertyType,
+                                &nitems, &result) &&
         *(unsigned long*)result != 0) {
         Window active_window = (Window) * (unsigned long*)result;
         // XFree(result);
@@ -187,7 +187,7 @@ void minimize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
     XEvent xevent =
         create_change_state_message(device, w, _NET_WM_STATE_ADD, device->_NET_WM_STATE_HIDDEN, 0);
     if (!send_message_to_root(device, &xevent)) {
-        LOG_ERROR("Failed to send message to minimize window %d", w);
+        LOG_ERROR("Failed to send message to minimize window %lu", w);
     }
 }
 
@@ -197,10 +197,10 @@ void unminimize_window(CaptureDevice* capture_device, WhistWindow whist_window) 
     Window w = whist_window.window;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
-    XEvent xevent =
-        create_change_state_message(device, w, _NET_WM_STATE_REMOVE, device->_NET_WM_STATE_HIDDEN, 0);
+    XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_REMOVE,
+                                                device->_NET_WM_STATE_HIDDEN, 0);
     if (!send_message_to_root(device, &xevent)) {
-        LOG_ERROR("Failed to send message to unminimize window %d", w);
+        LOG_ERROR("Failed to send message to unminimize window %lu", w);
     }
 }
 
@@ -208,10 +208,11 @@ void maximize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
     Window w = whist_window.window;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
-    XEvent xevent = create_change_state_message(
-        device, w, _NET_WM_STATE_ADD, device->_NET_WM_STATE_MAXIMIZED_VERT, device->_NET_WM_STATE_MAXIMIZED_HORZ);
+    XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_ADD,
+                                                device->_NET_WM_STATE_MAXIMIZED_VERT,
+                                                device->_NET_WM_STATE_MAXIMIZED_HORZ);
     if (!send_message_to_root(device, &xevent)) {
-        LOG_ERROR("Failed to send message to maximize window %d", w);
+        LOG_ERROR("Failed to send message to maximize window %lu", w);
     }
 }
 
@@ -219,10 +220,10 @@ void fullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window) 
     Window w = whist_window.window;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
-    XEvent xevent =
-        create_change_state_message(device, w, _NET_WM_STATE_ADD, device->_NET_WM_STATE_FULLSCREEN, 0);
+    XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_ADD,
+                                                device->_NET_WM_STATE_FULLSCREEN, 0);
     if (!send_message_to_root(device, &xevent)) {
-        LOG_ERROR("Failed to send message to fullscreen window %d", w);
+        LOG_ERROR("Failed to send message to fullscreen window %lu", w);
     }
 }
 
@@ -230,10 +231,10 @@ void unfullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window
     Window w = whist_window.window;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
-    XEvent xevent =
-        create_change_state_message(device, w, _NET_WM_STATE_REMOVE, device->_NET_WM_STATE_FULLSCREEN, 0);
+    XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_REMOVE,
+                                                device->_NET_WM_STATE_FULLSCREEN, 0);
     if (!send_message_to_root(device, &xevent)) {
-        LOG_ERROR("Failed to send message to unfullscreen window %d", w);
+        LOG_ERROR("Failed to send message to unfullscreen window %lu", w);
     }
 }
 
@@ -244,7 +245,7 @@ void bring_window_to_top(CaptureDevice* capture_device, WhistWindow whist_window
     XEvent xevent =
         create_change_state_message(device, w, _NET_WM_STATE_ADD, device->_NET_WM_STATE_ABOVE, 0);
     if (!send_message_to_root(device, &xevent)) {
-        LOG_ERROR("Failed to send message to bring window %d to top", w);
+        LOG_ERROR("Failed to send message to bring window %lu to top", w);
     }
 }
 
@@ -388,7 +389,7 @@ void move_resize_window(CaptureDevice* capture_device, WhistWindow whist_window,
     xclient.data.l[4] = height;
     xevent.xclient = xclient;
     if (!send_message_to_root(device, &xevent)) {
-        LOG_ERROR("Failed to send message to rezise window %d", w);
+        LOG_ERROR("Failed to send message to rezise window %lu", w);
     }
 }
 
@@ -410,7 +411,7 @@ void close_window(CaptureDevice* capture_device, WhistWindow whist_window) {
     xclient.data.l[4] = 0;
     xevent.xclient = xclient;
     if (!send_message_to_root(device, &xevent)) {
-        LOG_ERROR("Failed to send message to close window %d", w);
+        LOG_ERROR("Failed to send message to close window %lu", w);
     }
 }
 
@@ -420,7 +421,8 @@ bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window
     static unsigned long nitems;
     static unsigned char* actions;  // name stored here
 
-    if (x11_get_window_property(device, w, device->_NET_WM_ALLOWED_ACTIONS, device->ATOM_ARRAY, &nitems, &actions)) {
+    if (x11_get_window_property(device, w, device->_NET_WM_ALLOWED_ACTIONS, device->ATOM_ARRAY,
+                                &nitems, &actions)) {
         Atom* allowed_actions = (Atom*)actions;
         // check if one of the actions is net_wm_action_resize
         for (int i = 0; i < (int)nitems; i++) {
@@ -486,7 +488,8 @@ char* get_window_name(X11CaptureDevice* device, Window w) {
     static unsigned long nitems;
     static unsigned char* name;  // name stored here
 
-    if (x11_get_window_property(device, w, device->_NET_WM_NAME, device->UTF8_STRING, &nitems, &name)) {
+    if (x11_get_window_property(device, w, device->_NET_WM_NAME, device->UTF8_STRING, &nitems,
+                                &name)) {
         LOG_INFO("Window name %s", name);
         return (char*)name;
     } else {
@@ -515,7 +518,7 @@ char* get_window_name(X11CaptureDevice* device, Window w) {
 // HELPER
 bool send_message_to_root(X11CaptureDevice* device, XEvent* event_send) {
     return (XSendEvent(device->display, device->root, False,
-               SubstructureNotifyMask | SubstructureRedirectMask, event_send) == Success);
+                       SubstructureNotifyMask | SubstructureRedirectMask, event_send) == Success);
 }
 
 // HELPER
