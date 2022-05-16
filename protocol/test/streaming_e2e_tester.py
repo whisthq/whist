@@ -277,7 +277,7 @@ if __name__ == "__main__":
         existing_server_instance_id != "" or existing_client_instance_id != ""
     ) and desired_region_name == "":
         exit_with_error(
-            "A valid region must be passed to the `desired-region-name` flag when reusing existing instances.",
+            "A valid region must be passed to the `region-name` flag when reusing existing instances.",
             timestamps=timestamps,
         )
     if existing_client_instance_id != "" and not use_two_instances:
@@ -326,7 +326,7 @@ if __name__ == "__main__":
     ec2_region_names = (
         [region["RegionName"] for region in boto3.client("ec2").describe_regions()["Regions"]]
         if desired_region_name == ""
-        else desired_region_name
+        else [desired_region_name]
     )
 
     boto3client = None
