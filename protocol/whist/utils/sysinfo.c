@@ -485,8 +485,6 @@ double get_cpu_usage(void) {
         if (fp && fgets(cpu_usage, 1000, fp)) {
             cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
 
-            // Block below aknowledged to https://rosettacode.org/wiki/Linux_CPU_utilization#C.2B.2B
-            // and https://www.idnt.net/en-US/kb/941772
             const char* separator = " ";
             int i = 0;
             long long total_proc_time = 0;
@@ -507,7 +505,7 @@ double get_cpu_usage(void) {
                 }
             }
             long long time_elapsed = uptime - (start_time / ticks_per_second);
-            cpu_usage_pct = (double)100 * ((total_proc_time / ticks_per_second) / seconds);
+            cpu_usage_pct = (double) 100 * ((total_proc_time / ticks_per_second) / time_elapsed);
         }
         fclose(fp);
     }
