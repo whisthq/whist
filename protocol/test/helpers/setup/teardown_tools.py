@@ -295,7 +295,7 @@ def complete_experiment_and_save_results(
     server_hang_detected = False
     server_shutdown_desired_message = "Both whist-application and WhistServer have exited."
     if shutdown_and_wait_server_exit(
-        server_mandelbox_pexpect_process, server_shutdown_desired_message
+        server_mandelbox_pexpect_process, server_session_id, server_shutdown_desired_message
     ):
         print("Server has exited gracefully.")
     else:

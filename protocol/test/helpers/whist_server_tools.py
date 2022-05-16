@@ -205,13 +205,14 @@ def run_server_on_instance(pexpect_process):
     return server_docker_id, json_data
 
 
-def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
+def shutdown_and_wait_server_exit(pexpect_process, session_id, exit_confirm_exp):
     """
     Initiate shutdown and wait for server exit to see if the server hangs or exits gracefully
 
     Args:
         pexpect_process (pexpect.pty_spawn.spawn):  Server pexpect process - MUST BE AFTER DOCKER COMMAND WAS RUN - otherwise
                                                     behavior is undefined
+        session_id (str): The protocol session id (if set), or an empty string (otherwise)
         exit_confirm_exp (str): Target expression to expect on a graceful server exit
 
     Returns:
@@ -229,7 +230,8 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp):
     wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
 
     # Check the log to see if WhistServer shut down gracefully or if there was a server hang
-    pexpect_process.sendline("tail /usr/share/whist/server.log")
+    server_log_filepath = os.path.join("/var/log/whist", session_id, "protocol-out.log")
+    pexpect_process.sendline(f"tail {server_log_filepath}")
     server_mandelbox_output = wait_until_cmd_done(
         pexpect_process, ":/#", running_in_ci=True, return_output=True
     )
