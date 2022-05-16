@@ -44,8 +44,6 @@ Includes
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/syscall.h>
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
 #include <libavcodec/avcodec.h>
@@ -57,6 +55,13 @@ Includes
 #include <libavutil/hwcontext.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
+
+// Must be defined after libav,
+// since it temporarily uses min/max internally
+#ifndef _WIN32
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
 
 #include <whist/core/whist_memory.h>
 #include <whist/utils/threads.h>

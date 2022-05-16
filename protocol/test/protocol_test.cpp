@@ -37,6 +37,7 @@ extern "C" {
 #include <client/audio.h>
 #include <client/frontend/frontend.h>
 #include <client/frontend/sdl/common.h>
+#include <client/frontend/sdl/sdl_struct.hpp>
 
 #ifndef __APPLE__
 #include "server/state.h"
