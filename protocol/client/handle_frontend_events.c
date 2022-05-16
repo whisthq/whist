@@ -145,12 +145,51 @@ static void handle_mouse_wheel_event(FrontendMouseWheelEvent* event) {
         return;
     }
 
-    WhistClientMessage msg = {0};
-    msg.type = MESSAGE_MOUSE_WHEEL;
-    msg.mouseWheel.x = event->delta.x;
-    msg.mouseWheel.y = event->delta.y;
-    msg.mouseWheel.precise_x = event->precise_delta.x;
-    msg.mouseWheel.precise_y = event->precise_delta.y;
+    // On Linux, Chrome scrolls much less than on other platforms when
+    // the mouse wheel is turned.  So, if we want the client to appear
+    // the same as Chrome on the host platform we need to modify the
+    // scroll amount.
+
+    // On Windows and Linux when a mouse wheel with discrete steps is
+    // turned the OS returns the number of notches it moved by.  This
+    // can then be mapped to an amount to scroll by.  For a wheel
+    // without steps (or a different input, like a scroll gesture on a
+    // touchpad), a turn gets mapped to a fraction in 120ths of that,
+    // but the top-level units stay the same.  So, to get the Windows
+    // client behaviour right with a Linux server we multiply the scroll
+    // amount by a constant to make the size of the scroll event which
+    // will be generated on the server.  The constant here is 1.9
+    // (rounded to 2 when dealing with discrete scroll only), which
+    // comes from other people fixing this up to get the Windows scroll
+    // speed on Linux Chrome natively; see a Chrome extension doing
+    // this at <https://github.com/Dedas/linux-scroll-speed-fix>.  If
+    // Chrome ever changes this behaviour to make the platforms match
+    // then we will need to adjust the value here.
+
+    // On macOS, the OS returns values which indicate an exact number of
+    // pixels to scroll rather than anything derived from mouse wheel
+    // steps.  In our SDL code this is already mapped to a number in
+    // wheel steps which matches what needs to be given to Linux Chrome,
+    // so we don't modify the value further here.
+
+    WhistClientMessage msg = {
+        .type = MESSAGE_MOUSE_WHEEL,
+        .mouseWheel =
+            {
+#ifdef _WIN32
+                .x = 2 * event->delta.x,
+                .y = 2 * event->delta.y,
+                .precise_x = 1.9f * event->precise_delta.x,
+                .precise_y = 1.9f * event->precise_delta.y,
+#else
+                .x = event->delta.x,
+                .y = event->delta.y,
+                .precise_x = event->precise_delta.x,
+                .precise_y = event->precise_delta.y,
+#endif
+            },
+    };
+
     send_wcmsg(&msg);
 }
 
