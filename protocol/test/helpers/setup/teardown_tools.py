@@ -140,6 +140,7 @@ def extract_logs_from_mandelbox(
         "/var/log/whist/update_xorg_conf-err.log",
         "/var/log/whist/update_xorg_conf-out.log",
         os.path.join("/var/log/whist", session_id, "protocol-err.log"),
+        os.path.join("/var/log/whist", session_id, "protocol-out.log"),
         # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
         "/var/log/whist/simulated_scrolling.log",
     ]
