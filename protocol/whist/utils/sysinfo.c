@@ -506,7 +506,7 @@ double get_cpu_usage(void) {
                     i++;
                 }
             }
-            long long time_elapsed = seconds = uptime - (start_time / ticks_per_second);
+            long long time_elapsed = uptime - (start_time / ticks_per_second);
             cpu_usage_pct = (double)100 * ((total_proc_time / ticks_per_second) / seconds);
         }
         fclose(fp);
