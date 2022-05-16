@@ -280,10 +280,11 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}
 
+	jsonTransportHandler := httputils.EnableCORS(createHandler(processJSONDataRequest))
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
-	mux.HandleFunc("/json_transport", createHandler(processJSONDataRequest))
+	mux.HandleFunc("/json_transport", jsonTransportHandler)
 
 	// Create the server itself
 	server := &http.Server{

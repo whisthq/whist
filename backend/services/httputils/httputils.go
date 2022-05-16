@@ -151,6 +151,14 @@ func VerifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 	return nil
 }
 
+// EnableCORS is a middleware that sets the Access control header to accept requests from all origins.
+func EnableCORS(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		f(rw, r)
+	})
+}
+
 // Creates a TLS certificate/private key pair for secure communication with the Whist frontend
 func InitializeTLS(privatekeyPath string, certPath string) error {
 	// Create a self-signed passwordless certificate
