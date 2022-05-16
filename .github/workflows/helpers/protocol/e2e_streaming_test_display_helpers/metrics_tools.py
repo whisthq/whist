@@ -38,7 +38,7 @@ def extract_metrics(client_log_file, server_log_file):
                     max_val = -np.inf
                     metric_name = ""
 
-                    l = line.strip().split()
+                    l = line.replace("{", "").replace("}", "").strip().split()
 
                     # For regular metrics, l has the following format:
                     # [..., "<metric_name>", ":", "<local_average>,", "COUNT:", "<count>"]
