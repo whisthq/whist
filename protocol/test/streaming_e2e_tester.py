@@ -273,6 +273,13 @@ if __name__ == "__main__":
     testing_time = max(args.testing_time, simulate_scrolling * 25)
 
     # 2 - Perform a sanity check on the arguments and load the SSH key from file
+    if (
+        existing_server_instance_id != "" or existing_client_instance_id != ""
+    ) and desired_region_name == "":
+        exit_with_error(
+            "A valid region must be passed to the `desired-region-name` flag when reusing existing instances.",
+            timestamps=timestamps,
+        )
     if existing_client_instance_id != "" and not use_two_instances:
         exit_with_error(
             "Error: the `use-two-instances` flag is set to `false` but a non-empty instance ID was passed with the `existing-client-instance-id` flag.",
