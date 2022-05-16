@@ -473,13 +473,14 @@ double get_cpu_usage(void) {
         cpu_usage_pct = atof(cpu_usage);
     }
 #elif __linux__
-    ticks_per_second == 0 ? sysconf(_SC_CLK_TCK) : ticks_per_second;
+    ticks_per_second = ticks_per_second == 0 ? sysconf(_SC_CLK_TCK) : ticks_per_second;
 
     struct sysinfo s_info;
     int error = sysinfo(&s_info);
     if (error == 0) {
         long uptime = s_info.uptime;
         FILE* fp = fopen("/proc/self/stat", "r");
+        cpu_usage = (char*) calloc(1001, sizeof(char));
         // Read up to 1000 chars from the first line of "/proc/stat". This should be enough to get
         // all the usage data.
         if (fp && fgets(cpu_usage, 1000, fp)) {
