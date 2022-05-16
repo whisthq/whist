@@ -460,7 +460,7 @@ void print_hard_drive_info(void) {
 }
 
 #ifdef __linux__
-long long last_cpu_in_use_time, last_cpu_idle_time;
+long ticks_per_second;
 #endif
 
 double get_cpu_usage(void) {
@@ -473,38 +473,45 @@ double get_cpu_usage(void) {
         cpu_usage_pct = atof(cpu_usage);
     }
 #elif __linux__
-    FILE* fp = fopen("/proc/stat", "r");
-    // Read up to 1000 chars from the first line of "/proc/stat". This should be enough to get all
-    // the usage data.
-    if (fp && fgets(cpu_usage, 1000, fp)) {
-        cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
+    ticks_per_second == 0 ? sysconf(_SC_CLK_TCK) : ticks_per_second;
 
-        // Block below aknowledged to https://rosettacode.org/wiki/Linux_CPU_utilization#C.2B.2B and
-        // https://www.idnt.net/en-US/kb/941772
-        const char* separator = " ";
-        int i = 0;
-        long long cpu_in_use_time = 0, cpu_idle_time = 0;
+    struct sysinfo s_info;
+    int error = sysinfo(&s_info);
+    if (error == 0) {
+        long uptime = s_info.uptime;
+        FILE* fp = fopen("/proc/self/stat", "r");
+        // Read up to 1000 chars from the first line of "/proc/stat". This should be enough to get
+        // all the usage data.
+        if (fp && fgets(cpu_usage, 1000, fp)) {
+            cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
 
-        char* token = strtok(cpu_usage, separator);
-        while (token) {
-            token = strtok(NULL, separator);
-            if (token) {
-                cpu_in_use_time += strtoll(token, NULL, 0);
-                if (i == 3) {
-                    cpu_idle_time = strtoll(token, NULL, 0);
+            // Block below aknowledged to https://rosettacode.org/wiki/Linux_CPU_utilization#C.2B.2B
+            // and https://www.idnt.net/en-US/kb/941772
+            const char* separator = " ";
+            int i = 0;
+            long long total_proc_time = 0;
+            long long start_time = 0;
+
+            char* token = strtok(cpu_usage, separator);
+            while (token) {
+                token = strtok(NULL, separator);
+                if (token) {
+                    if (i >= 13 && i <= 16) {
+                        // user time, kernel time, children process user time, children process
+                        // kernel time
+                        total_proc_time += strtoll(token, NULL, 0);
+                    } else if (i == 21) {
+                        start_time = strtoll(token, NULL, 0);
+                    }
+                    i++;
                 }
-                i++;
             }
+            long long time_elapsed = seconds = uptime - (start_time / ticks_per_second);
+            cpu_usage_pct = (double)100 * ((total_proc_time / ticks_per_second) / seconds);
         }
-        size_t cpu_in_use_delta = cpu_in_use_time - last_cpu_in_use_time;
-        size_t cpu_idle_delta = cpu_idle_time - last_cpu_idle_time;
-        size_t cpu_used = cpu_in_use_delta - cpu_idle_delta;
-
-        cpu_usage_pct = 100.0 * cpu_used / cpu_in_use_delta;
-        last_cpu_idle_time = cpu_idle_time;
-        last_cpu_in_use_time = cpu_in_use_time;
+        fclose(fp);
     }
-    fclose(fp);
+
 #else  // _WIN32
     LOG_WARNING("get_cpu_usage() not implemented for this platform");
 #endif
