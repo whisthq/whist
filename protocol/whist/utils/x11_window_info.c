@@ -287,39 +287,35 @@ bool get_focused_window_name(char** name_return) {
     // https://gist.github.com/kui/2622504
     XTextProperty prop;
     Status s;
+    int count = 0;
 
     XLockDisplay(display);
     s = XGetWMName(display, w, &prop);
     if (s) {
-        int count = 0, result;
+        int result;
         char** list = NULL;
         result = XmbTextPropertyToTextList(display, &prop, &list, &count);
-        XUnlockDisplay(display);
-        if (!count) {
-            // no window title found
-            return false;
-        }
-        if (result == Success) {
-            static char cur_window_name[WINDOW_NAME_MAXLEN + 1];
-            safe_strncpy(cur_window_name, list[0], WINDOW_NAME_MAXLEN + 1);
-            // trim down any dangling utf8 multi-byte characters
-            trim_utf8_string(cur_window_name);
-            XFreeStringList(list);
-            bool same_string =
-                !last_window_name_valid || strcmp(last_window_name, cur_window_name) == 0;
-            safe_strncpy(last_window_name, cur_window_name, WINDOW_NAME_MAXLEN + 1);
-            last_window_name_valid = true;
-            *name_return = cur_window_name;
-            return !same_string;
-        } else {
-            LOG_ERROR("XmbTextPropertyToTextList failed to convert window name to string");
-        }
     } else {
-        XUnlockDisplay(display);
-        // If XGetWName returns 0, it's because the window has no name. In Chrome, this is the
-        // case with pop-up windows, which is why we mark this as LOG_INFO rather than a
-        // LOG_ERROR.
-        LOG_INFO("Focused window %lu has no name", w);
+        LOG_INFO("Focused window %lu has no name");
+    }
+    XUnlockDisplay(display);
+    if (!count) {
+        return false;
+    }
+    if (result == Success) {
+        static char cur_window_name[WINDOW_NAME_MAXLEN + 1];
+        safe_strncpy(cur_window_name, list[0], WINDOW_NAME_MAXLEN + 1);
+        // trim down any dangling utf8 multi-byte characters
+        trim_utf8_string(cur_window_name);
+        XFreeStringList(list);
+        bool same_string =
+            !last_window_name_valid || strcmp(last_window_name, cur_window_name) == 0;
+        safe_strncpy(last_window_name, cur_window_name, WINDOW_NAME_MAXLEN + 1);
+        last_window_name_valid = true;
+        *name_return = cur_window_name;
+        return !same_string;
+    } else {
+        LOG_ERROR("XmbTextPropertyToTextList failed to convert window name to string");
     }
     return false;
 }
@@ -492,26 +488,25 @@ char* get_window_name(X11CaptureDevice* device, Window w) {
                                 &name)) {
         LOG_INFO("Window name %s", name);
         return (char*)name;
-    } else {
-        // fall back to XGetWMName
-        XTextProperty prop;
-        // unclear if needed
-        XLockDisplay(device->display);
-        Status s = XGetWMName(device->display, w, &prop);
-        if (s) {
-            int count = 0;
-            char** list = NULL;
-            int result = XmbTextPropertyToTextList(device->display, &prop, &list, &count);
-            XUnlockDisplay(device->display);
-            if (count && result == Success) {
-                return list[0];
-            } else {
-                return "";
-            }
+    }
+    // fall back to XGetWMName
+    XTextProperty prop;
+    // unclear if needed
+    XLockDisplay(device->display);
+    Status s = XGetWMName(device->display, w, &prop);
+    if (s) {
+        int count = 0;
+        char** list = NULL;
+        int result = XmbTextPropertyToTextList(device->display, &prop, &list, &count);
+        XUnlockDisplay(device->display);
+        if (count && result == Success) {
+            return list[0];
         } else {
-            XUnlockDisplay(device->display);
             return "";
         }
+    } else {
+        XUnlockDisplay(device->display);
+        return "";
     }
 }
 
