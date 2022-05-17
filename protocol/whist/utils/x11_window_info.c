@@ -287,16 +287,15 @@ bool get_focused_window_name(char** name_return) {
     // https://gist.github.com/kui/2622504
     XTextProperty prop;
     Status s;
-    int count = 0;
+    int count = 0, result;
+    char** list = NULL;
 
     XLockDisplay(display);
     s = XGetWMName(display, w, &prop);
     if (s) {
-        int result;
-        char** list = NULL;
         result = XmbTextPropertyToTextList(display, &prop, &list, &count);
     } else {
-        LOG_INFO("Focused window %lu has no name");
+        LOG_INFO("Focused window %lu has no name", w);
     }
     XUnlockDisplay(display);
     if (!count) {
