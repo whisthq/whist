@@ -32,7 +32,7 @@ run_with_timeout () {
     child=$!
     # Avoid default notification in non-interactive shell for SIGTERM
     trap -- "" SIGTERM
-    ( sleep $time
+    ( sleep "$time"
     kill $child 2> /dev/null ) &
     wait $child
   )
