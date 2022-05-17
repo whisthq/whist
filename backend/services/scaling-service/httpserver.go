@@ -261,7 +261,7 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	limiter := rate.NewLimiter(rate.Every(interval), burst)
 
 	// Create the final assign handler, with the necessary middleware
-	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, createHandler(mandelboxAssignHandler)))
+	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, httputils.EnableCORS(createHandler(mandelboxAssignHandler))))
 
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
