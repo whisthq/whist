@@ -24,28 +24,28 @@ echo "Whist EC2 userdata started"
 # Usage: run_with_timeout N cmd args...
 #    or: run_with_timeout cmd args...
 # In the second case, cmd cannot be a number and the timeout will be 10 seconds.
-run_with_timeout () { 
-    local time=10
-    if [[ $1 =~ ^[0-9]+$ ]]; then time=$1; shift; fi
-    # Run in a subshell to avoid job control messages
-    ( "$@" &
-      child=$!
-      # Avoid default notification in non-interactive shell for SIGTERM
-      trap -- "" SIGTERM
-      ( sleep $time
-        kill $child 2> /dev/null ) &
-      wait $child
-    )
+run_with_timeout () {
+  local time=10
+  if [[ $1 =~ ^[0-9]+$ ]]; then time=$1; shift; fi
+  # Run in a subshell to avoid job control messages
+  ( "$@" &
+    child=$!
+    # Avoid default notification in non-interactive shell for SIGTERM
+    trap -- "" SIGTERM
+    ( sleep $time
+    kill $child 2> /dev/null ) &
+    wait $child
+  )
 }
 
 # `retry_docker_pull` will keep retrying until it successfully pulls the
 # images.
 retry_docker_pull() {
-    until pull_docker_images
-    do
-        echo "Retrying pulling of docker images..."
-        sleep 1
-    done
+  until pull_docker_images
+  do
+    echo "Retrying pulling of docker images..."
+    sleep 1
+  done
 }
 
 # `pull_docker_images` contains the commands and setup necessary
