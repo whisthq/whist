@@ -131,6 +131,13 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 		var appName mandelboxtypes.AppName = "browsers/chrome"
 		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName)
 
+		// If we fail to create a zygote mandelbox, it indicates a problem with the instance, or the Docker
+		// images. Its not safe to assign users to it, so we cancel the global context and shut down the instance
+		if zygote == nil {
+			globalCancel()
+			return
+		}
+
 		// We have to parse the appname before writing to the database.
 		appString := strings.Split(string(zygote.GetAppName()), "/")
 		appNameForDb := strings.ToUpper(appString[1])
