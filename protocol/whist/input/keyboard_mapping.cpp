@@ -22,7 +22,6 @@ update_mapped_keyboard_state(input_device, WHIST_APPLE, keyboard_state);
 #include <unordered_map>
 #include <set>
 
-using namespace std;
 #define hmap unordered_map
 
 extern "C" {
@@ -30,6 +29,8 @@ extern "C" {
 #include "keyboard_mapping.h"
 #include "input.h"
 }
+
+using namespace std;
 
 #define LOG_KEYBOARD false
 

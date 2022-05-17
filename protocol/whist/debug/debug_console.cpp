@@ -10,7 +10,6 @@ Includes
 #include <sstream>
 #include <iostream>
 #include <fstream>
-using namespace std;
 
 #include <assert.h>
 extern "C" {
@@ -27,6 +26,8 @@ extern "C" {
 Defines
 ============================
 */
+
+using namespace std;
 
 #ifdef _WIN32
 #define strtok_r strtok_s

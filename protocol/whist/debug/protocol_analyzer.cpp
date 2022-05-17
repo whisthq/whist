@@ -10,7 +10,6 @@ Includes
 #include <sstream>
 #include <iostream>
 #include <fstream>
-using namespace std;
 
 #include <assert.h>
 extern "C" {
@@ -26,6 +25,8 @@ extern "C" {
 Defines
 ============================
 */
+
+using namespace std;
 
 #ifndef NDEBUG
 // make sure protocol analyzer is only enabled for DEBUG build
