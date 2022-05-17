@@ -40,7 +40,7 @@ typedef struct {
     int height;
 
     // The gpu texture of the most recently captured frame
-    void* p_gpu_texture;
+    CUdeviceptr p_gpu_texture;
 
     // Internal Nvidia API structs
     NVFBC_SESSION_HANDLE fbc_handle;

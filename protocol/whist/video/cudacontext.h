@@ -32,6 +32,10 @@ typedef CUresult (*CUCTXPUSHCURRENTPROC)(CUcontext ctx);
 extern CUCTXPUSHCURRENTPROC cu_ctx_push_current_ptr;
 typedef CUresult (*CUCTXSYNCHRONIZEPROC)(void);
 extern CUCTXSYNCHRONIZEPROC cu_ctx_synchronize_ptr;
+typedef CUresult (*CUCMEMALLOCPROC)(CUdeviceptr* dptr, size_t bytesize);
+extern CUCMEMALLOCPROC cu_mem_alloc_ptr;
+typedef CUresult (*CUMEMFREEPROC)(CUdeviceptr dptr);
+extern CUMEMFREEPROC cu_mem_free_ptr;
 
 /*
 ============================

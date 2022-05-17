@@ -6,6 +6,7 @@
 
 #include <dlfcn.h>
 #include <string.h>
+#include <npp.h>
 
 #define LIB_ENCODEAPI_NAME "libnvidia-encode.so.1"
 
@@ -409,7 +410,7 @@ static int register_resource(NvidiaEncoder* encoder, RegisteredResource* resourc
             register_params.height = resource_to_register->height;
             register_params.pitch = resource_to_register->pitch;
             register_params.resourceToRegister = resource_to_register->texture_pointer;
-            register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
+            register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_YV12;
 
             int status = encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder,
                                                                  &register_params);
