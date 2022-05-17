@@ -140,6 +140,7 @@ def extract_logs_from_mandelbox(
         "/var/log/whist/update_xorg_conf-err.log",
         "/var/log/whist/update_xorg_conf-out.log",
         os.path.join("/var/log/whist", session_id, "protocol-err.log"),
+        os.path.join("/var/log/whist", session_id, "protocol-out.log"),
         # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
         "/var/log/whist/simulated_scrolling.log",
     ]
@@ -294,7 +295,7 @@ def complete_experiment_and_save_results(
     server_hang_detected = False
     server_shutdown_desired_message = "Both whist-application and WhistServer have exited."
     if shutdown_and_wait_server_exit(
-        server_mandelbox_pexpect_process, server_shutdown_desired_message
+        server_mandelbox_pexpect_process, server_session_id, server_shutdown_desired_message
     ):
         print("Server has exited gracefully.")
     else:

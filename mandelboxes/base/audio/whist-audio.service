@@ -10,6 +10,9 @@ User=root
 Type=forking
 ExecStart=/usr/share/whist/run-pulseaudio.sh
 PIDFile=/usr/share/whist/whist-audio-pid
+# The paths below will be modified by whist-startup.sh to include the session id
+# on the path, as following:
+# Standard{Output,Error}=file:/var/log/whist/<session_id>/audio-{err,out}.log
 StandardOutput=file:/var/log/whist/audio-out.log
 StandardError=file:/var/log/whist/audio-err.log
 

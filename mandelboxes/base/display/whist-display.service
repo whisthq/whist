@@ -9,6 +9,9 @@ User=root
 Type=forking
 EnvironmentFile=/usr/share/whist/whist-display-config.env
 ExecStart=/usr/share/whist/whist-display.sh
+# The paths below will be modified by whist-startup.sh to include the session id
+# on the path, as following:
+# Standard{Output,Error}=file:/var/log/whist/<session_id>/display-{err,out}.log
 StandardOutput=file:/var/log/whist/display-out.log
 StandardError=file:/var/log/whist/display-err.log
 PIDFile=/usr/share/whist/xinit-pid
