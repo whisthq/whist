@@ -344,13 +344,6 @@ COPY display/xinitrc $HYDRAULIC_ROOT/root/.xinitrc
 COPY --chown=root:root --chmod=600 display/whist-display.service $HYDRAULIC_ROOT/etc/systemd/system
 COPY --chmod=550 display/whist-display.sh $HYDRAULIC_ROOT/usr/share/whist/whist-display.sh
 
-# Create a systemd "drop-in" directory to override configurations without editing
-# the unit files directly. This will be used to include the session id on the service
-# output path. Its necessary to do this manually since the host service doesn't add
-# the session id as part of its volume path, so we have to change it inside the mandelbox.
-# We do this for all services that launch after startup (display, audio, main).
-RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-display.service.d/
-
 # I-Bus launcher script
 COPY --chmod=555 display/run_ibus.sh $HYDRAULIC_ROOT/home/whist/run_ibus.sh
 
@@ -382,8 +375,6 @@ COPY audio/pulse-client.conf $HYDRAULIC_ROOT/etc/pulse/client.conf
 COPY audio/pulse-default.pa $HYDRAULIC_ROOT/etc/pulse/default.pa
 COPY audio/pulse-daemon.conf $HYDRAULIC_ROOT/etc/pulse/daemon.conf
 COPY --chown=root:root --chmod=600 audio/whist-audio.service $HYDRAULIC_ROOT/etc/systemd/system
-
-RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-audio.service.d/
 
 #########################
 # Startup
@@ -427,8 +418,6 @@ COPY --chmod=555 teleport/uri-handler/whist-teleport-uri-handler.sh $HYDRAULIC_R
 # Service which launches the server protocol and application
 COPY --chmod=550 main/run-whist-server.sh $HYDRAULIC_ROOT/usr/share/whist/run-whist-server.sh
 COPY --chown=root:root --chmod=600 main/whist-main.service $HYDRAULIC_ROOT/etc/systemd/system
-
-RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-main.service.d/
 
 ################ STAGE 6: whist-base ######################
 # - Copy and install libinput from libinput-build
