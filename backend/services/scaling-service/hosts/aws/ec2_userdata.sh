@@ -20,6 +20,34 @@ echo "Whist EC2 userdata started"
 # Pull Docker images
 ####################################################
 
+# https://stackoverflow.com/questions/24412721/elegant-solution-to-implement-timeout-for-bash-commands-and-functions/24413646?noredirect=1#24413646
+# Usage: run_with_timeout N cmd args...
+#    or: run_with_timeout cmd args...
+# In the second case, cmd cannot be a number and the timeout will be 10 seconds.
+run_with_timeout () { 
+    local time=10
+    if [[ $1 =~ ^[0-9]+$ ]]; then time=$1; shift; fi
+    # Run in a subshell to avoid job control messages
+    ( "$@" &
+      child=$!
+      # Avoid default notification in non-interactive shell for SIGTERM
+      trap -- "" SIGTERM
+      ( sleep $time
+        kill $child 2> /dev/null ) &
+      wait $child
+    )
+}
+
+# `retry_docker_pull` will keep retrying until it successfully pulls the
+# images.
+retry_docker_pull() {
+    until pull_docker_images
+    do
+        echo "Retrying pulling of docker images..."
+        sleep 1
+    done
+}
+
 # `pull_docker_images` contains the commands and setup necessary
 #  for pulling the Whist Chrome and Brave Docker images. They will
 #  be pulled to the Docker data-root directory.
@@ -28,15 +56,13 @@ pull_docker_images() {
   # Login with docker
   echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
 
-  # Pull Docker images for Chrome and Brave directly to the ephemeral volume
+  # Pull Docker images for Chrome directly to the ephemeral volume
   # Replace `chrome` to pull the image of a different browser.
   pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/chrome"
   pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
 
   docker pull "$pull_image_chrome"
   docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
-
-  echo "Finished pulling images"
 }
 
 cd /home/ubuntu
@@ -84,7 +110,7 @@ else
 fi
 
 # Pull Docker images and warmup entire disk in parallel.
-pull_docker_images &
+run_with_timeout 90 retry_docker_pull &
 # Based on initialization commands in https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-initialize.html
 # Changes:
 #   - changed blocksize to 1M from 128k because optimal dd blocksize is 1M according to above link
