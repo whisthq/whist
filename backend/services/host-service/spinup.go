@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha1"
 	"path"
 	"regexp"
 	"sync"
@@ -52,6 +53,17 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	}()
 
 	mandelbox.SetAppName(appName)
+
+	// Generate a random hash to set as the server-side session id.
+	// This session ID is used for tagging the mandelbox logs but
+	// will be reconciled with the client-side session id once a
+	// user connects to the mandelbox.
+	randBytes := make([]byte, 64)
+	hash := sha1.New()
+	hash.Write(randBytes)
+	sessionID := utils.Sprintf("%x", hash.Sum(nil))
+	logger.Infof("Server side session ID set to %s", sessionID)
+	mandelbox.SetSessionID(mandelboxtypes.SessionID(sessionID))
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
@@ -170,8 +182,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 			path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings", ":", "/whist", "resourceMappings"),
 			path.Join(utils.TempDir, mandelbox.GetID().String(), "sockets", ":", "tmp", "sockets"),
-			path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), ":", "var", "log", "whist"),
-			"/run/udev/data:/run/udev/data:ro",
+			path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), string(mandelbox.GetSessionID()), ":", "var", "log", "whist"), "/run/udev/data:/run/udev/data:ro",
 			path.Join(utils.WhistDir, mandelbox.GetID().String(), "userConfigs", "unpacked_configs", ":", "/whist", "userConfigs", ":rshared"),
 		},
 		PortBindings: natPortBindings,
@@ -340,6 +351,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 
 	mandelbox.AssignToUser(mandelboxSubscription.UserID)
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
+	logger.Infof("Client-side session id is %s, server-side session id is %s", mandelboxSubscription.SessionID, mandelbox.GetSessionID())
 
 	// Request port bindings for the mandelbox.
 	var (
@@ -356,10 +368,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	// Begin loading user configs in parallel with the rest of the mandelbox startup procedure.
 	sendEncryptionInfoChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs(globalCtx, globalCancel, goroutineTracker)
 	defer close(sendEncryptionInfoChan)
-
-	// Set the session id and write the `session_id` file
-	mandelbox.SetSessionID(mandelboxtypes.SessionID(mandelboxSubscription.SessionID))
-	mandelbox.WriteSessionID()
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 

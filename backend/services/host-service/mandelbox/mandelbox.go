@@ -114,9 +114,6 @@ type Mandelbox interface {
 	// are ready to be initialized.
 	MarkParamsReady() error
 
-	// WriteSessionID writes the session ID to a file so it can be used for logging.
-	WriteSessionID() error
-
 	// WriteJSONData writes arbitrary data from JSON Transport endpoint for
 	// mandelbox internals.
 	WriteJSONData(types.JSONData) error
