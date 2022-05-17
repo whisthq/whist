@@ -62,10 +62,8 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	hash := sha1.New()
 	hash.Write(randBytes)
 	sessionID := utils.Sprintf("%x", hash.Sum(nil))
-	logger.Infof("Server side session ID set to %s, type %T", sessionID, sessionID)
 
 	mandelbox.SetSessionID(mandelboxtypes.SessionID(sessionID))
-	logger.Infof("Session id is now %s, type %T", mandelbox.GetSessionID(), mandelbox.GetSessionID())
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
