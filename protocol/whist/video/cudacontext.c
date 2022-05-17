@@ -50,6 +50,8 @@ CUCTXGETCURRENTPROC cu_ctx_get_current_ptr = NULL;
 CUCTXPUSHCURRENTPROC cu_ctx_push_current_ptr = NULL;
 CUCTXPOPCURRENTPROC cu_ctx_pop_current_ptr = NULL;
 CUCTXSYNCHRONIZEPROC cu_ctx_synchronize_ptr = NULL;
+CUCMEMALLOCPROC cu_mem_alloc_ptr = NULL;
+CUMEMFREEPROC cu_mem_free_ptr = NULL;
 
 /*
 ============================
@@ -128,6 +130,16 @@ static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
     cu_ctx_synchronize_ptr = (CUCTXSYNCHRONIZEPROC)dlsym(lib_cuda, "cuCtxSynchronize");
     if (cu_ctx_synchronize_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'cuCtxSychronizeCurrent'\n");
+        return NVFBC_FALSE;
+    }
+    cu_mem_alloc_ptr = (CUCMEMALLOCPROC)dlsym(lib_cuda, "cuMemAlloc_v2");
+    if (cu_mem_alloc_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuMemAlloc_v2'\n");
+        return NVFBC_FALSE;
+    }
+    cu_mem_free_ptr = (CUMEMFREEPROC)dlsym(lib_cuda, "cuMemFree_v2");
+    if (cu_mem_free_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuMemFree_v2'\n");
         return NVFBC_FALSE;
     }
     return NVFBC_TRUE;

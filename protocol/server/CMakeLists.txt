@@ -105,6 +105,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ${X11_Xext_LIB}
             ${X11_Xtst_LIB}
             ${DBUS_LIBRARIES}
+            nppc_static
+            nppicc_static
+            culibos
+            cudart
             GL
             asound
             m

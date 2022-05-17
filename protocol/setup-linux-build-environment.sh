@@ -36,4 +36,5 @@ sudo apt-get install --no-install-recommends -y \
   libasound2-dev \
   libxdamage-dev \
   libcurl4-openssl-dev \
+  nvidia-cuda-toolkit \
   zlib1g-dev

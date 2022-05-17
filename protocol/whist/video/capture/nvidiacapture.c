@@ -21,6 +21,7 @@ Includes
 #include <stdint.h>
 #include <dlfcn.h>
 #include <string.h>
+#include <npp.h>
 
 #include "../cudacontext.h"
 #include "x11capture.h"
@@ -171,11 +172,20 @@ NvidiaCaptureDevice* create_nvidia_capture_device(void) {
      */
     NVFBC_TOCUDA_SETUP_PARAMS setup_params = {0};
     setup_params.dwVersion = NVFBC_TOCUDA_SETUP_PARAMS_VER;
-    setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
+    setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_BGRA;
 
     status = device->p_fbc_fn.nvFBCToCudaSetUp(device->fbc_handle, &setup_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        destroy_nvidia_capture_device(device);
+        return NULL;
+    }
+
+    // Allocate a buffer for YUV420.
+    CUresult res =
+        cu_mem_alloc_ptr(&device->p_gpu_texture, (device->width * device->height * 3) / 2);
+    if (res != CUDA_SUCCESS) {
+        LOG_ERROR("YUV buffer allocation failed %d", res);
         destroy_nvidia_capture_device(device);
         return NULL;
     }
@@ -253,6 +263,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 
     NVFBC_TOCUDA_GRAB_FRAME_PARAMS grab_params = {0};
     NVFBC_FRAME_GRAB_INFO frame_info = {0};
+    void* p_rgb_texture = NULL;
 
     grab_params.dwVersion = NVFBC_TOCUDA_GRAB_FRAME_PARAMS_VER;
 
@@ -269,7 +280,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
      */
     grab_params.pFrameGrabInfo = &frame_info;
 
-    grab_params.pCUDADeviceBuffer = &device->p_gpu_texture;
+    grab_params.pCUDADeviceBuffer = &p_rgb_texture;
 
     /*
      * This structure will contain information about the encoding of
@@ -303,6 +314,29 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     // If the frame isn't new, just return 0
     if (!frame_info.bIsNewFrame) {
         return 0;
+    }
+
+    NppiSize roi;
+    roi.width = frame_info.dwWidth;
+    roi.height = frame_info.dwHeight;
+    Npp8u* dst[3];
+    int dst_step[3];
+    size_t luma_size = frame_info.dwWidth * frame_info.dwHeight;
+    size_t chroma_size = ((frame_info.dwWidth + 1) / 2) * ((frame_info.dwHeight + 1) / 2);
+    dst[0] = (Npp8u*)device->p_gpu_texture;
+    dst_step[0] = frame_info.dwWidth;
+    dst[1] = dst[0] + luma_size + chroma_size;
+    dst[2] = dst[0] + luma_size;
+    dst_step[1] = dst_step[2] = (frame_info.dwWidth + 1) / 2;
+    // The below function uses BT.601 studio swing for YUV conversion. Precisely,
+    // Npp32f nY  =  0.257F * R + 0.504F * G + 0.098F * B + 16.0F;
+    // Npp32f nCb = -0.148F * R - 0.291F * G + 0.439F * B + 128.0F;
+    // Npp32f nCr =  0.439F * R - 0.368F * G - 0.071F * B + 128.0F;
+    NppStatus npp_status =
+        nppiBGRToYCbCr420_8u_AC4P3R(p_rgb_texture, frame_info.dwWidth * 4, dst, dst_step, roi);
+    if (npp_status != NPP_NO_ERROR) {
+        LOG_ERROR("RGB to YUV conversion failed %d", npp_status);
+        return -1;
     }
 
     // Set the device to use the newly captured width/height
@@ -356,6 +390,13 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCDestroyHandle(device->fbc_handle, &destroy_handle_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+    }
+
+    if (device->p_gpu_texture) {
+        CUresult res = cu_mem_free_ptr(device->p_gpu_texture);
+        if (res != CUDA_SUCCESS) {
+            LOG_ERROR("YUV buffer free failed %d", res);
+        }
     }
     free(device);
 }
