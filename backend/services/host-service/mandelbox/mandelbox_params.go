@@ -36,18 +36,17 @@ func (mandelbox *mandelboxData) WriteMandelboxParams() error {
 		return err
 	}
 
-	// Write server side Session ID. Note that we use `mandelbox.GetSessionID()` instead of `mandelbox.sessionID` for
-	// the locking.
-	if err := mandelbox.writeResourceMappingToFile("session_id", utils.Sprintf("%s", mandelbox.GetSessionID())); err != nil {
-		// Don't need to wrap err here because it already contains the relevant info
-		return err
-	}
-
 	return nil
 }
 
 func (mandelbox *mandelboxData) WriteProtocolTimeout(seconds int) error {
 	return mandelbox.writeResourceMappingToFile("timeout", utils.Sprintf("%v", seconds))
+}
+
+// WriteSessionID writes the session id received from the client to a file,
+// so it can be used for logging inside the mandelbox.
+func (mandelbox *mandelboxData) WriteSessionID() error {
+	return mandelbox.writeResourceMappingToFile("session_id", utils.Sprintf("%v", mandelbox.GetSessionID()))
 }
 
 // WriteJSONData writes the data received through JSON transport
