@@ -634,7 +634,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					break
 				}
 
-				logger.Infof("Instance has a remaning capacity of %v, current number of mandelboxes are %v", instance.RemainingCapacity, mandelboxData.GetMandelboxCount())
+				logger.Infof("Instance has a remaining capacity of %v, current number of mandelboxes are %v", instance.RemainingCapacity, mandelboxData.GetMandelboxCount())
 				// If the remaining capacity field changes, check how many mandelboxes are currently
 				// running and start mandelbox zygotes as necessary.
 				if int32(instance.RemainingCapacity) != mandelboxData.GetMandelboxCount() {
