@@ -238,7 +238,10 @@ static WhistStatus call_option_handler(const WhistCommandLineOption *opt, bool i
         else
             printf(" with no value.\n");
     }
-
+    if ((opt->flags & WHIST_OPTION_REQUIRED_ARGUMENT) && value == NULL) {
+        LOG_WARNING("Argument value missing");
+        return WHIST_ERROR_INVALID_ARGUMENT;
+    }
     WhistStatus ret = opt->handler(opt, value);
     if (ret != WHIST_SUCCESS) {
         if (is_short)
