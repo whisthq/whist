@@ -62,6 +62,7 @@ func LookUpByMandelboxID(mandelboxID types.MandelboxID) (Mandelbox, error) {
 
 // GetMandelboxCount gets the current number of mandelboxes on the instance.
 func GetMandelboxCount() int32 {
+	logger.Infof("Mandelbox tracker has length of %v, with value %v", len(tracker), tracker)
 	return int32(len(tracker))
 }
 
