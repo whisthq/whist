@@ -287,7 +287,8 @@ bool get_focused_window_name(char** name_return) {
     // https://gist.github.com/kui/2622504
     XTextProperty prop;
     Status s;
-    int count = 0, result;
+    int count = 0;
+    int result = 0;
     char** list = NULL;
 
     XLockDisplay(display);
