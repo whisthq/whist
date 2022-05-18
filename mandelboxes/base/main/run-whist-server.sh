@@ -19,6 +19,7 @@ esac
 set -Eeuo pipefail
 
 ### SET CLIENT SESSION ID ON SERVER LOGS ###
+WHIST_MAPPINGS_DIR=/whist/resourceMappings/
 block-until-file-exists.sh $WHIST_MAPPINGS_DIR/session_id >&1
 
 # Get the session id from the file written by the host service
@@ -42,7 +43,6 @@ systemctl daemon-reload
 ### BEGIN USER CONFIG RETRIEVE ###
 
 # Begin wait loop to get userConfigs
-WHIST_MAPPINGS_DIR=/whist/resourceMappings/
 USER_CONFIGS_DIR=/whist/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
 
@@ -130,7 +130,7 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
-# Send in server-side session id, if set
+# Send in client session id, if set
 if [ -f "$SESSION_ID_FILENAME" ]; then
   SESSION_ID=$(cat $SESSION_ID_FILENAME)
   export SESSION_ID
