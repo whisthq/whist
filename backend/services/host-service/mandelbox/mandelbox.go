@@ -241,6 +241,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 			logger.Infof("No users connected to the mandelbox, so not trying to backup configs.")
 		}
 
+		logger.Infof("Removing mandelbox %v from database.", mandelbox.GetID())
 		// Remove mandelbox from the database altogether, once again excluding warmups
 		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
 			if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
