@@ -35,6 +35,8 @@ const InternetNotification = (props: {
   })
 
   if (
+    props.networkInfo?.downloadMbps !== undefined &&
+    props.networkInfo?.downloadMbps > 0 &&
     props.networkInfo?.downloadMbps < MIN_ACCEPTABLE_DOWNLOAD_MBPS &&
     !loading
   ) {
@@ -51,7 +53,11 @@ const InternetNotification = (props: {
     )
   }
 
-  if (props.networkInfo?.ping > MAX_ACCEPTABLE_PING_MS && !loading) {
+  if (
+    props.networkInfo?.ping !== undefined &&
+    props.networkInfo?.ping > MAX_ACCEPTABLE_PING_MS &&
+    !loading
+  ) {
     return (
       <div className="w-full flex space-x-3 justify-center">
         <div className="w-3 h-3 relative text-red-400">
@@ -65,7 +71,11 @@ const InternetNotification = (props: {
     )
   }
 
-  if (props.networkInfo?.jitter > MAX_ACCEPTABLE_JITTER_MS && !loading) {
+  if (
+    props.networkInfo?.jitter !== undefined &&
+    props.networkInfo?.jitter > MAX_ACCEPTABLE_JITTER_MS &&
+    !loading
+  ) {
     return (
       <div className="w-full flex space-x-3 justify-center">
         <div className="w-3 h-3 relative text-red-400">
@@ -83,7 +93,7 @@ const InternetNotification = (props: {
     return (
       <div className="w-full flex space-x-3 justify-center">
         <div className="w-3 h-3 relative top-0.5">
-          <Spinner />
+          <Spinner color="white" />
         </div>
         <div>Testing your Internet connection</div>
       </div>
