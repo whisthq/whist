@@ -21,7 +21,7 @@ set -Eeuo pipefail
 ### BEGIN USER CONFIG RETRIEVE ###
 
 # Begin wait loop to get userConfigs
-WHIST_MAPPINGS_DIR=/whist/resourceMappings
+WHIST_MAPPINGS_DIR=/whist/resourceMappings/
 USER_CONFIGS_DIR=/whist/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
 
@@ -109,7 +109,7 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
-# Send in session id, if set
+# Send in client session id, if set
 if [ -f "$SESSION_ID_FILENAME" ]; then
   SESSION_ID=$(cat $SESSION_ID_FILENAME)
   export SESSION_ID

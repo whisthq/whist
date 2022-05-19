@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha1"
 	"path"
 	"regexp"
 	"sync"
@@ -52,6 +53,14 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	}()
 
 	mandelbox.SetAppName(appName)
+
+	// Generate a random hash to set as the server-side session id.
+	// This session ID is used for the mandelbox services that start
+	// before assigning a user.
+	randBytes := make([]byte, 64)
+	hash := sha1.New()
+	hash.Write(randBytes)
+	serverSessionID := utils.Sprintf("%x", hash.Sum(nil))
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
@@ -170,8 +179,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 			path.Join(utils.WhistDir, mandelbox.GetID().String(), "mandelboxResourceMappings", ":", "/whist", "resourceMappings"),
 			path.Join(utils.TempDir, mandelbox.GetID().String(), "sockets", ":", "tmp", "sockets"),
-			path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), ":", "var", "log", "whist"),
-			"/run/udev/data:/run/udev/data:ro",
+			path.Join(utils.TempDir, "logs", mandelbox.GetID().String(), serverSessionID, ":", "var", "log", "whist"), "/run/udev/data:/run/udev/data:ro",
 			path.Join(utils.WhistDir, mandelbox.GetID().String(), "userConfigs", "unpacked_configs", ":", "/whist", "userConfigs", ":rshared"),
 		},
 		PortBindings: natPortBindings,
@@ -272,6 +280,13 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		return nil
 	})
 
+	err = mandelbox.MarkParamsReady()
+	if err != nil {
+		logAndReturnError("Error marking mandelbox %s as ready to start A/V + display: %s", mandelboxID, err)
+		return nil
+	}
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s params as ready. A/V and display services can soon start.", mandelboxID)
+
 	// Start Docker container
 	postCreateGroup.Go(func() error {
 		err = dockerClient.ContainerStart(mandelbox.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
@@ -334,12 +349,9 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	mandelbox.AssignToUser(mandelboxSubscription.UserID)
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
 
-	err = mandelbox.MarkParamsReady()
-	if err != nil {
-		logAndReturnError("Error marking mandelbox %s as ready to start A/V + display: %s", mandelboxSubscription.ID, err)
-		return
-	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s params as ready. A/V and display services can soon start.", mandelboxSubscription.ID)
+	mandelbox.SetSessionID(mandelboxtypes.SessionID(mandelboxSubscription.SessionID))
+	mandelbox.WriteSessionID()
+	logger.Infof("SpinUpMandelbox(): Successfully wrote client session id file with content %s", mandelbox.GetSessionID())
 
 	// Request port bindings for the mandelbox.
 	var (
@@ -356,10 +368,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	// Begin loading user configs in parallel with the rest of the mandelbox startup procedure.
 	sendEncryptionInfoChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs(globalCtx, globalCancel, goroutineTracker)
 	defer close(sendEncryptionInfoChan)
-
-	// Set the session id and write the `session_id` file
-	mandelbox.SetSessionID(mandelboxtypes.SessionID(mandelboxSubscription.SessionID))
-	mandelbox.WriteSessionID()
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 

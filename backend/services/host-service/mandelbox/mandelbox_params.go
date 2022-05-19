@@ -43,6 +43,8 @@ func (mandelbox *mandelboxData) WriteProtocolTimeout(seconds int) error {
 	return mandelbox.writeResourceMappingToFile("timeout", utils.Sprintf("%v", seconds))
 }
 
+// WriteSessionID writes the session id received from the client to a file,
+// so it can be used for logging inside the mandelbox.
 func (mandelbox *mandelboxData) WriteSessionID() error {
 	return mandelbox.writeResourceMappingToFile("session_id", utils.Sprintf("%v", mandelbox.GetSessionID()))
 }
