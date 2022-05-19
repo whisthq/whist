@@ -29,7 +29,7 @@ All the below items need to be tested and checked for this promotion to be merge
 #### Frontend
 
 - [ ] Sign in to Whist works
-- [ ] Importing browser settins from Brave & Chrome works
+- [ ] Importing browser settings from Brave & Chrome works
 - [ ] Going to Google Maps correctly shows the user's approximate location
 - [ ] User local settings for language, dark mode, DPI, keyboard repeat, etc. are properly set
 - [ ] Accessing and updating the Stripe subscription from the omnibar works
