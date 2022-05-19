@@ -1,13 +1,17 @@
+extern "C" {
 #include "common.h"
+}
+
+#include "sdl_struct.hpp"
 
 void sdl_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigned int channels) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     // Verify that the device does not already exist.
     FATAL_ASSERT(context->audio_device == 0);
     SDL_AudioSpec desired_spec = {
-        .freq = frequency,
+        .freq = (int)frequency,
         .format = AUDIO_F32SYS,
-        .channels = channels,
+        .channels = (Uint8)channels,
         // Must be a power of two. The value doesn't matter since
         // it only affects the size of the callback buffer, which
         // we don't use.
@@ -33,12 +37,12 @@ void sdl_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigned in
 }
 
 bool sdl_audio_is_open(WhistFrontend* frontend) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     return context->audio_device != 0;
 }
 
 void sdl_close_audio(WhistFrontend* frontend) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (frontend->call->audio_is_open(frontend)) {
         SDL_CloseAudioDevice(context->audio_device);
         context->audio_device = 0;
@@ -46,7 +50,7 @@ void sdl_close_audio(WhistFrontend* frontend) {
 }
 
 WhistStatus sdl_queue_audio(WhistFrontend* frontend, const uint8_t* data, size_t size) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (!frontend->call->audio_is_open(frontend)) {
         return WHIST_ERROR_NOT_FOUND;
     }
@@ -58,7 +62,7 @@ WhistStatus sdl_queue_audio(WhistFrontend* frontend, const uint8_t* data, size_t
 }
 
 size_t sdl_get_audio_buffer_size(WhistFrontend* frontend) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (!frontend->call->audio_is_open(frontend)) {
         return 0;
     }

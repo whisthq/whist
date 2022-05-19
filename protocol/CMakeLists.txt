@@ -66,7 +66,7 @@ set(META_AUTHOR_ORGANIZATION "Whist")
 set(META_AUTHOR_DOMAIN       "https://github.com/whisthq/whist")
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 
 # verbose cmake outputs, useful for debugging CMake issues such as linking
 set(CMAKE_VERBOSE_MAKEFILE OFF)

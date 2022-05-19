@@ -1,6 +1,11 @@
+extern "C" {
 #include "common.h"
 #include "native.h"
+// Load lodepng with c linkage
+#define LODEPNG_NO_COMPILE_CPP
 #include <whist/utils/lodepng.h>
+}
+#include "sdl_struct.hpp"
 
 // Little-endian RGBA masks
 #define RGBA_R 0xff000000
@@ -10,7 +15,7 @@
 
 void sdl_paint_png(WhistFrontend* frontend, const char* filename, int output_width,
                    int output_height, int x, int y) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     unsigned int w, h;
     uint8_t* image;
 
@@ -46,19 +51,19 @@ void sdl_paint_png(WhistFrontend* frontend, const char* filename, int output_wid
         // Place at bottom
         y = output_height - h;
     }
-    SDL_Rect rect = {x, y, w, h};
+    SDL_Rect rect = {x, y, (int)w, (int)h};
     SDL_RenderCopy(context->renderer, texture, NULL, &rect);
 
     SDL_DestroyTexture(texture);
 }
 
 void sdl_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     SDL_SetWindowFullscreen(context->window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
 
 void sdl_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     SDL_SetRenderDrawColor(context->renderer, color->red, color->green, color->blue,
                            SDL_ALPHA_OPAQUE);
     SDL_RenderClear(context->renderer);
@@ -79,13 +84,13 @@ static SDL_PixelFormatEnum sdl_get_pixel_format(enum AVPixelFormat pixfmt) {
 }
 
 WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     int res;
 
-    SDL_PixelFormatEnum format = sdl_get_pixel_format(frame->format);
+    SDL_PixelFormatEnum format = sdl_get_pixel_format((AVPixelFormat) frame->format);
     if (format == SDL_PIXELFORMAT_UNKNOWN) {
         LOG_ERROR("Invalid pixel format %s given to SDL renderer.",
-                  av_get_pix_fmt_name(frame->format));
+                  av_get_pix_fmt_name((AVPixelFormat) frame->format));
         return WHIST_ERROR_INVALID_ARGUMENT;
     }
 
@@ -155,11 +160,11 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                                   frame->width, frame->height);
             if (context->video.texture == NULL) {
                 LOG_ERROR("Failed to create %s video texture: %s.",
-                          av_get_pix_fmt_name(frame->format), SDL_GetError());
+                          av_get_pix_fmt_name((AVPixelFormat) frame->format), SDL_GetError());
                 return WHIST_ERROR_EXTERNAL;
             }
 
-            LOG_INFO("Using %s video texture.", av_get_pix_fmt_name(frame->format));
+            LOG_INFO("Using %s video texture.", av_get_pix_fmt_name((AVPixelFormat) frame->format));
             context->video.texture_format = format;
         }
 
@@ -179,12 +184,12 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                                        frame->linesize[0], frame->data[1], frame->linesize[1],
                                        frame->data[2], frame->linesize[2]);
         } else {
-            LOG_FATAL("Invalid format %s for texture update.", av_get_pix_fmt_name(frame->format));
+            LOG_FATAL("Invalid format %s for texture update.", av_get_pix_fmt_name((AVPixelFormat) frame->format));
         }
 
         if (res < 0) {
             LOG_ERROR("Failed to update texture from %s frame: %s.",
-                      av_get_pix_fmt_name(frame->format), SDL_GetError());
+                      av_get_pix_fmt_name((AVPixelFormat) frame->format), SDL_GetError());
             return WHIST_ERROR_EXTERNAL;
         }
     }
@@ -196,7 +201,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
 }
 
 void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     int res;
 
     if (context->video.texture == NULL) {
@@ -225,7 +230,7 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
 }
 
 void sdl_render(WhistFrontend* frontend) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
 
     SDL_RenderPresent(context->renderer);
 
@@ -238,7 +243,7 @@ void sdl_render(WhistFrontend* frontend) {
 void sdl_declare_user_activity(WhistFrontend* frontend) { sdl_native_declare_user_activity(); }
 
 void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
-    SDLFrontendContext* context = frontend->context;
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (cursor == NULL || cursor->hash == context->cursor.hash) {
         return;
     }
@@ -247,9 +252,9 @@ void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
         if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
             SDL_GetGlobalMouseState(&context->cursor.last_visible_position.x,
                                     &context->cursor.last_visible_position.y);
-            SDL_SetRelativeMouseMode(true);
+            SDL_SetRelativeMouseMode((SDL_bool) true);
         } else {
-            SDL_SetRelativeMouseMode(false);
+            SDL_SetRelativeMouseMode((SDL_bool) false);
             SDL_WarpMouseGlobal(context->cursor.last_visible_position.x,
                                 context->cursor.last_visible_position.y);
         }

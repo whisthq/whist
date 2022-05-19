@@ -4,15 +4,16 @@
  * @brief D3D11 helper functons for SDL client frontend.
  */
 
-#ifdef _WIN32
-#define COBJMACROS
-#include <libavutil/hwcontext_d3d11va.h>
 #include <d3d11_1.h>
 #include <dxgi1_3.h>
 #include <dxgidebug.h>
-#endif
 
+extern "C" {
+#include <libavutil/hwcontext_d3d11va.h>
 #include "common.h"
+}
+
+#include "sdl_struct.hpp"
 
 typedef struct SDLRenderD3D11Context {
     /**
@@ -37,8 +38,8 @@ typedef struct SDLRenderD3D11Context {
     ID3D11DeviceContext *video_context;
 } SDLRenderD3D11Context;
 
-void sdl_d3d11_wait(SDLFrontendContext *context) {
-    SDLRenderD3D11Context *d3d11 = context->video.private_data;
+void sdl_d3d11_wait(void* context) {
+    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)((SDLFrontendContext*) context)->video.private_data;
     HRESULT hr;
 
     D3D11_QUERY_DESC desc = {
@@ -46,13 +47,13 @@ void sdl_d3d11_wait(SDLFrontendContext *context) {
         .MiscFlags = 0,
     };
     ID3D11Query *query;
-    hr = ID3D11Device_CreateQuery(d3d11->render_device, &desc, &query);
+    hr = d3d11->render_device->CreateQuery(&desc, &query);
     if (FAILED(hr)) {
         LOG_ERROR("Failed to create query for render completion: %#x.", hr);
         return;
     }
 
-    ID3D11DeviceContext_End(d3d11->render_context, (ID3D11Asynchronous *)query);
+    d3d11->render_context->End((ID3D11Asynchronous *)query);
 
     // Wait for up to 12ms for this to complete.  If it doesn't finish
     // in that time then continue anyway - a visual artifact is possible
@@ -62,7 +63,7 @@ void sdl_d3d11_wait(SDLFrontendContext *context) {
         if (i > 0) {
             Sleep(3);
         }
-        hr = ID3D11DeviceContext_GetData(d3d11->render_context, (ID3D11Asynchronous *)query, &done,
+        hr = d3d11->render_context->GetData((ID3D11Asynchronous *)query, &done,
                                          sizeof(done), 0);
         if (FAILED(hr)) {
             LOG_ERROR("Failed to query render completion: %#x.", hr);
@@ -70,11 +71,12 @@ void sdl_d3d11_wait(SDLFrontendContext *context) {
         }
     }
 
-    ID3D11Query_Release(query);
+    query->Release();
 }
 
-SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *frame) {
-    SDLRenderD3D11Context *d3d11 = context->video.private_data;
+SDL_Texture *sdl_d3d11_create_texture(void* raw_context, AVFrame *frame) {
+    SDLFrontendContext* context = (SDLFrontendContext*)raw_context;
+    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)context->video.private_data;
 
     // This is a pointer to a texture, but it exists on the video decode
     // device rather than the render device.  Make a new reference on
@@ -84,22 +86,22 @@ SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *fram
 
     HRESULT hr;
     IDXGIResource1 *resource;
-    hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGIResource1, (void **)&resource);
+    hr = texture->QueryInterface(&resource);
     if (FAILED(hr)) {
         LOG_ERROR("Failed to get DXGI resource for video texture: %#x.", hr);
         return NULL;
     }
     HANDLE shared_handle;
-    hr = IDXGIResource1_CreateSharedHandle(resource, NULL, DXGI_SHARED_RESOURCE_READ, NULL,
+    hr = resource->CreateSharedHandle(NULL, DXGI_SHARED_RESOURCE_READ, NULL,
                                            &shared_handle);
-    IDXGIResource1_Release(resource);
+    resource->Release();
     if (FAILED(hr)) {
         LOG_ERROR("Failed to create shared handle for video texture: %#x.", hr);
         return NULL;
     }
 
     ID3D11Device1 *device1;
-    hr = ID3D11Device_QueryInterface(d3d11->render_device, &IID_ID3D11Device1, (void **)&device1);
+    hr = d3d11->render_device->QueryInterface(&device1);
     if (FAILED(hr)) {
         LOG_ERROR("Failed to get D3D11 device1 for device: %#x.", hr);
         CloseHandle(shared_handle);
@@ -107,9 +109,9 @@ SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *fram
     }
 
     ID3D11Texture2D *render_texture;
-    hr = ID3D11Device1_OpenSharedResource1(device1, shared_handle, &IID_ID3D11Texture2D,
+    hr = device1->OpenSharedResource1(shared_handle, __uuidof(ID3D11Texture2D),
                                            (void **)&render_texture);
-    ID3D11Device1_Release(device1);
+    device1->Release();
     CloseHandle(shared_handle);
     if (FAILED(hr)) {
         LOG_ERROR("Failed to open shared handle for renderer texture: %#x.", hr);
@@ -136,17 +138,18 @@ SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *fram
 
     // Release the render texture - the SDL texture now contains a
     // reference to it.
-    ID3D11Texture2D_Release(render_texture);
+    render_texture->Release();
 
     return sdl_texture;
 }
 
-WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
+WhistStatus sdl_d3d11_init(void* raw_context) {
+    SDLFrontendContext* context = (SDLFrontendContext*)raw_context;
     int err;
     HRESULT hr;
 
-    SDLRenderD3D11Context *d3d11 = safe_zalloc(sizeof(*d3d11));
-    context->video.private_data = d3d11;
+    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)safe_zalloc(sizeof(*d3d11));
+    context->video.private_data = (void*)d3d11;
 
     d3d11->render_device = SDL_RenderGetD3D11Device(context->renderer);
     if (d3d11->render_device == NULL) {
@@ -154,21 +157,21 @@ WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
         return WHIST_ERROR_NOT_FOUND;
     }
 
-    ID3D11Device_GetImmediateContext(d3d11->render_device, &d3d11->render_context);
+    d3d11->render_device->GetImmediateContext(&d3d11->render_context);
 
     // Make an independent device on the same adapter so that we have a
     // separate immediate context to use on the video thread.
 
     IDXGIDevice *dxgi_device;
-    hr = ID3D11Device_QueryInterface(d3d11->render_device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    hr = d3d11->render_device->QueryInterface(&dxgi_device);
     if (FAILED(hr)) {
         LOG_WARNING("Failed to get DXGI device from D3D11 device: %#x.", hr);
         return WHIST_ERROR_EXTERNAL;
     }
 
     IDXGIAdapter *dxgi_adapter;
-    hr = IDXGIDevice_GetAdapter(dxgi_device, &dxgi_adapter);
-    IDXGIDevice_Release(dxgi_device);
+    hr = dxgi_device->GetAdapter(&dxgi_adapter);
+    dxgi_device->Release();
     if (FAILED(hr)) {
         LOG_WARNING("Failed to get DXGI adapter from DXGI device: %#x.", hr);
         return WHIST_ERROR_EXTERNAL;
@@ -181,7 +184,7 @@ WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
 #endif
     hr = D3D11CreateDevice(dxgi_adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, device_flags, NULL, 0,
                            D3D11_SDK_VERSION, &d3d11->video_device, NULL, &d3d11->video_context);
-    IDXGIAdapter_Release(dxgi_adapter);
+    dxgi_adapter->Release();
     if (FAILED(hr)) {
         LOG_WARNING("Failed to create D3D11 device for video: %#x.", hr);
         return WHIST_ERROR_EXTERNAL;
@@ -194,16 +197,18 @@ WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
     }
 
     AVHWDeviceContext *dev = (AVHWDeviceContext *)dev_ref->data;
-    AVD3D11VADeviceContext *hwctx = dev->hwctx;
+    AVD3D11VADeviceContext *hwctx = (AVD3D11VADeviceContext*)dev->hwctx;
 
-    ID3D11Device_AddRef(d3d11->video_device);
+    d3d11->video_device->AddRef();
     hwctx->device = d3d11->video_device;
-    ID3D11Device_AddRef(d3d11->video_context);
+    d3d11->video_context->AddRef();
     hwctx->device_context = d3d11->video_context;
 
     err = av_hwdevice_ctx_init(dev_ref);
     if (err < 0) {
-        LOG_WARNING("Failed to init D3D11 hardware device for video: %s.", av_err2str(err));
+        char err_buf[1024];
+        av_strerror(err, err_buf, sizeof(err_buf));
+        LOG_WARNING("Failed to init D3D11 hardware device for video: %s.", err_buf);
         av_buffer_unref(&dev_ref);
         return WHIST_ERROR_EXTERNAL;
     }
@@ -215,8 +220,9 @@ WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
     return WHIST_SUCCESS;
 }
 
-void sdl_d3d11_destroy(SDLFrontendContext *context) {
-    SDLRenderD3D11Context *d3d11 = context->video.private_data;
+void sdl_d3d11_destroy(void* raw_context) {
+    SDLFrontendContext* context = (SDLFrontendContext*)raw_context;
+    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)context->video.private_data;
 
     if (!d3d11) {
         // Nothing to do (init probably failed).
@@ -224,20 +230,20 @@ void sdl_d3d11_destroy(SDLFrontendContext *context) {
     }
 
     if (d3d11->render_device) {
-        ID3D11Device_Release(d3d11->render_device);
+        d3d11->render_device->Release();
         d3d11->render_device = NULL;
     }
     if (d3d11->render_context) {
-        ID3D11DeviceContext_Release(d3d11->render_context);
+        d3d11->render_context->Release();
         d3d11->render_context = NULL;
     }
 
     if (d3d11->video_device) {
-        ID3D11Device_Release(d3d11->video_device);
+        d3d11->video_device->Release();
         d3d11->video_device = NULL;
     }
     if (d3d11->video_context) {
-        ID3D11DeviceContext_Release(d3d11->video_context);
+        d3d11->video_context->Release();
         d3d11->video_context = NULL;
     }
 
@@ -245,13 +251,13 @@ void sdl_d3d11_destroy(SDLFrontendContext *context) {
     // In debug mode, enumerate all live D3D11 objects since we should
     // have destroyed them all by now.
     IDXGIDebug *dxgi_debug;
-    HRESULT hr = DXGIGetDebugInterface1(0, &IID_IDXGIDebug, (void **)&dxgi_debug);
+    HRESULT hr = DXGIGetDebugInterface1(0, __uuidof(IDXGIDebug), (void **)&dxgi_debug);
     if (FAILED(hr)) {
         // Ignore - probably missing some debug feature (e.g. being run
         // on a device without the SDK installed).
     } else {
-        IDXGIDebug_ReportLiveObjects(dxgi_debug, DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
-        IDXGIDebug_Release(dxgi_debug);
+        dxgi_debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+        dxgi_debug->Release();
     }
 #endif
 }
