@@ -18,31 +18,10 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-### SET CLIENT SESSION ID ON SERVER LOGS ###
-WHIST_MAPPINGS_DIR=/whist/resourceMappings/
-block-until-file-exists.sh $WHIST_MAPPINGS_DIR/session_id >&1
-
-# Get the session id from the file written by the host service
-SESSION_ID=$(cat $WHIST_MAPPINGS_DIR/session_id)
-
-# Create a directory with the session id where the service
-# logs will be sent to. We need this path structure so the
-# session id can be parsed by filebeat.
-mkdir "/var/log/whist/$SESSION_ID/"
-
-cat > /etc/systemd/system/whist-main.service.d/output.conf << EOF
-[Service]
-StandardOutput=file:/var/log/whist/$SESSION_ID/protocol-out.log
-StandardError=file:/var/log/whist/$SESSION_ID/protocol-err.log
-EOF
-
-echo "Set whist main service unit file to $SESSION_ID"
-
-systemctl daemon-reload
-
 ### BEGIN USER CONFIG RETRIEVE ###
 
 # Begin wait loop to get userConfigs
+WHIST_MAPPINGS_DIR=/whist/resourceMappings/
 USER_CONFIGS_DIR=/whist/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
 

@@ -60,17 +60,33 @@ processors:
   # Logs are mounted from mandelboxes onto host through bind mounts declared by the host service.
   # We have a dissect processor for ephemeral storage paths and for regular paths.
   - dissect:
-      # A filepath for EBS storage looks like below:
-      # /whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/protocol-out.log
-      tokenizer: "/whist/temp/logs/%{container_id}/%{session_id}/%{sub_component}-%{log_level}.log"
+      # A filepath for services that start before assigning a user on EBS storage looks like below:
+      # /whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/display-out.log
+      tokenizer: "/whist/temp/logs/%{container_id}/%{server_session_id}/%{sub_component}-%{log_level}.log"
       field: "log.file.path"
       target_prefix: ""
       # setting ignore_failure to false will stop execution of subsequent processors if dissect errors out for some reason.
       ignore_failure: true
   - dissect:
-      # A filepath for ephemeral storage looks like below:
-      # /ephemeral/whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/protocol-out.log
-      tokenizer: "/ephemeral/whist/temp/logs/%{container_id}/%{session_id}/%{sub_component}-%{log_level}.log"
+      # A filepath for services that start before assigning a user on ephemeral storage looks like below:
+      # /ephemeral/whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/display-out.log
+      tokenizer: "/ephemeral/whist/temp/logs/%{container_id}/%{server_session_id}/%{sub_component}-%{log_level}.log"
+      field: "log.file.path"
+      target_prefix: ""
+      # setting ignore_failure to false will stop execution of subsequent processors if dissect errors out for some reason.
+      ignore_failure: true
+  - dissect:
+      # A filepath for services that start after assigning a user on EBS storage looks like below:
+      # /whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/1652250744/protocol-out.log
+      tokenizer: "/whist/temp/logs/%{container_id}/%{server_session_id}/%{client_session_id}/%{sub_component}-%{log_level}.log"
+      field: "log.file.path"
+      target_prefix: ""
+      # setting ignore_failure to false will stop execution of subsequent processors if dissect errors out for some reason.
+      ignore_failure: true
+  - dissect:
+      # A filepath for services that start after assigning a user on ephemeral storage looks like below:
+      # /ephemeral/whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/1652250744/protocol-out.log
+      tokenizer: "/ephemeral/whist/temp/logs/%{container_id}/%{server_session_id}/%{client_session_id}/%{sub_component}-%{log_level}.log"
       field: "log.file.path"
       target_prefix: ""
       # setting ignore_failure to false will stop execution of subsequent processors if dissect errors out for some reason.
