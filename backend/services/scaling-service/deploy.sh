@@ -62,7 +62,7 @@ deploy_scaling_service() {
   # To get around this, we simply try to push the deploy until it succeeds, up to 5 retries.
   echo "Deploying scaling-service..."
   count=0
-  until $(git push -f heroku-whist-scaling-service deploy-branch:master) || ((count++ >= 5))
+  until git push -f heroku-whist-scaling-service deploy-branch:master || ((count++ >= 5))
   do
     sleep 1
     echo "Failed to deploy to Heroku on attempt #$count of 5, retrying..."
