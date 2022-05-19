@@ -57,9 +57,16 @@ deploy_scaling_service() {
   # necessary since Heroku requires a buildpack for every app
   heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP_NAME" &> /dev/null || true
 
-  # Push deploy directory to Heroku
+  # Push deploy directory to Heroku. Heroku is very bad, and will often fail to accept the deploy with:
+  # error: RPC failed; HTTP 504 curl 22 The requested URL returned error: 504
+  # To get around this, we simply try to push the deploy until it succeeds, up to 5 retries.
   echo "Deploying scaling-service..."
-  git push -f heroku-whist-scaling-service deploy-branch:master
+  count=0
+  until git push -f heroku-whist-scaling-service deploy-branch:master || ((count++ >= 5))
+  do
+    sleep 1
+    echo "Failed to deploy to Heroku on attempt #$count of 5, retrying..."
+  done
 
   # Scale Heroku dyno to start the web process
   heroku ps:scale web=1 -a "$HEROKU_APP_NAME"
