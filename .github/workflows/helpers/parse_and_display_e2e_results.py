@@ -234,15 +234,10 @@ if __name__ == "__main__":
             ] = human_readable_network_conditions
 
         experiments.append(experiment_entry)
-        found_error = client_metrics is None or server_metrics is None
-        if not found_error:
-            print(
-                f"\t+ {short_dirname} with network_conditions: `{human_readable_network_conditions}`"
-            )
-        else:
-            print(
-                f"\t+ {short_dirname} (FAILED) with network_conditions: `{human_readable_network_conditions}`"
-            )
+        failed_notice = " FAILED" if client_metrics is None or server_metrics is None else ""
+        print(
+            f"\t+ Experiment {i+1}{failed_notice}: Timestamp = {short_dirname} Network conditions = `{human_readable_network_conditions}`"
+        )
 
     # Add entries for experiments that failed or were skipped
     for i in range(len(experiments), len(e2e_script_outcomes)):

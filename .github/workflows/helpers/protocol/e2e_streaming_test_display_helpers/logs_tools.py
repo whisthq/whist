@@ -218,11 +218,11 @@ def download_latest_logs(
             )
         else:
             print(
-                f"Using {counter}° most recent logs (time: {subfolder_date}) from branch {branch_name}"
+                f"Comparing to {counter}° most recent {branch_name} logs (timestamp: {subfolder_date})"
             )
         assert counter == len(reason_for_discarding) + 1
         if verbose:
             for i in range(len(reason_for_discarding)):
                 print(
-                    f"\t {i + 1}° most recent logs (time: {reason_for_discarding[i][0]}) discarded. Reason: {reason_for_discarding[i][1]}"
+                    f"\t {i + 1}° most recent {branch_name} logs (time: {reason_for_discarding[i][0]}) discarded. Reason: {reason_for_discarding[i][1]}"
                 )
