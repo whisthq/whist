@@ -62,8 +62,19 @@ func LookUpByMandelboxID(mandelboxID types.MandelboxID) (Mandelbox, error) {
 
 // GetMandelboxCount gets the current number of mandelboxes on the instance.
 func GetMandelboxCount() int32 {
-	logger.Infof("Mandelbox tracker has length of %v, with value %v", len(tracker), tracker)
-	return int32(len(tracker))
+	trackerLock.RLock()
+	defer trackerLock.RUnlock()
+
+	var currentWaitingMandelboxes []types.MandelboxID
+
+	for _, v := range tracker {
+		// Only consider mandelboxes to which users haven't connected yet.
+		if !v.GetConnectedStatus() {
+			currentWaitingMandelboxes = append(currentWaitingMandelboxes, v.GetID())
+		}
+	}
+
+	return int32(len(currentWaitingMandelboxes))
 }
 
 // StopWaitingMandelboxes will stop all mandelboxes to which users never

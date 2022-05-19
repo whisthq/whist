@@ -150,7 +150,6 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 
 // Handle tasks to be completed when a mandelbox dies
 func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex, dockerClient dockerclient.CommonAPIClient) {
-	logger.Infof("Mandelbox %v is dying, trying to clean up and cancel the context.", id)
 	// Exit if we are not dealing with a Whist mandelbox, or if it has already
 	// been closed (via a call to Close() or a context cancellation).
 	mandelbox, err := mandelboxData.LookUpByDockerID(mandelboxtypes.DockerID(id))
@@ -621,7 +620,6 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					mandelboxSubscription, transportRequestMap, transportMapLock, req)
 
 			case *subscriptions.InstanceEvent:
-				logger.Infof("Received an instance event from database, with value %v", subscriptionEvent)
 				if len(subscriptionEvent.Instances) == 0 {
 					break
 				}
@@ -639,7 +637,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 				// running and start mandelbox zygotes as necessary.
 				if int32(instance.RemainingCapacity) != mandelboxData.GetMandelboxCount() {
 					newWaitingMandelboxes := int32(instance.RemainingCapacity) - mandelboxData.GetMandelboxCount()
-					logger.Infof("Will start %v new waiting mandelboxes.", newWaitingMandelboxes)
+					logger.Infof("Starting %v new waiting mandelboxes.", newWaitingMandelboxes)
 					SpinUpMandelboxes(globalCtx, globalCancel, goroutineTracker, dockerClient, instance.ID, newWaitingMandelboxes)
 				}
 
