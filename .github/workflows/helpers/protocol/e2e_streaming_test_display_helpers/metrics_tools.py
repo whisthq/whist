@@ -121,6 +121,7 @@ def compute_deltas(
     compared_client_dictionary,
     compared_server_dictionary,
     most_interesting_metrics,
+    fail_on_20pct_performance_delta=False,
 ):
     """
     Give the metric values for two runs, augment the client/server dictionaries of the current
@@ -139,6 +140,9 @@ def compute_deltas(
                                             for the client from the compared run
         compared_server_dictionary (dict):  The dictionary containing the metrics key-value pairs
                                             for the server from the compared run
+        fail_on_20pct_performance_delta (bool): Whether to trigger an error if any of the most
+                                                interesting metrics shows a performance delta that
+                                                is larger than 20% in absolute value
     Returns:
         table_entries (list):   A list with two sublists. The two sublists contain the entries for
                                 the markdown comparison tables for the client and server, respectively.
@@ -214,7 +218,7 @@ def compute_deltas(
                 and dictionary[k]["delta_pctg"] != "N/A"
             ):
                 if abs(dictionary[k]["delta_pctg"]) > 0.2:
-                    if k in most_interesting_metrics:
+                    if k in most_interesting_metrics and fail_on_20pct_performance_delta:
                         test_result = "failure"
                     emoji_delta = "❌"
                 else:

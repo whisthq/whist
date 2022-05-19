@@ -222,6 +222,7 @@ def generate_comparison_table(
     results_file,
     experiment_metadata,
     compared_experiment_metadata,
+    current_branch_name,
     compared_branch_name,
     most_interesting_metrics,
     client_metrics,
@@ -239,6 +240,7 @@ def generate_comparison_table(
         experiment_metadata (dict): The metadata key-value pairs for the current run
         compared_experiment_metadata (dict):    the metadata key-value pairs for the run we are
                                                 comparing against
+        current_branch_name (str): The name of the current branch
         compared_branch_name (str): The name of the branch that we are comparing against
         most_interesting_metrics (set): list of metrics that we want to display at the top (if found)
         client_metrics (dict):  the client key-value pairs with metrics from the current run
@@ -256,6 +258,9 @@ def generate_comparison_table(
         compared_client_metrics,
         compared_server_metrics,
         most_interesting_metrics,
+        fail_on_20pct_performance_delta=(
+            current_branch_name != "dev" and compared_branch_name == "dev"
+        ),
     )
 
     table_entries = [

@@ -334,6 +334,7 @@ if __name__ == "__main__":
                     results_file,
                     experiment["experiment_metadata"],
                     compared_experiment_metadata,
+                    current_branch_name,
                     compared_branch_name,
                     most_interesting_metrics,
                     experiment["client_metrics"],
