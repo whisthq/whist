@@ -83,6 +83,9 @@ processors:
       target_prefix: ""
       # setting ignore_failure to false will stop execution of subsequent processors if dissect errors out for some reason.
       ignore_failure: true
+      # set overwrite_keys to true so that the client and session id are both parsed, we need to override the previous
+      # dissect processors that don't include both sessions.
+      overwrite_keys: true
   - dissect:
       # A filepath for services that start after assigning a user on ephemeral storage looks like below:
       # /ephemeral/whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/1652250744/protocol-out.log
@@ -91,6 +94,9 @@ processors:
       target_prefix: ""
       # setting ignore_failure to false will stop execution of subsequent processors if dissect errors out for some reason.
       ignore_failure: true
+      # set overwrite_keys to true so that the client and session id are both parsed, we need to override the previous
+      # dissect processors that don't include both sessions.
+      overwrite_keys: true
   # This allows us to add metadata about the specific cloud provider Filebeat is running on.
   # https://www.elastic.co/guide/en/beats/filebeat/current/add-cloud-metadata.html
   - add_cloud_metadata:

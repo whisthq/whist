@@ -109,7 +109,7 @@ def init_scrolling(headers, query_string):
             "bool": {
                 "must": [{"match_all": {}}],
                 "filter": [
-                    {"match_phrase": {"session_id": query_string}},
+                    {"match_phrase": {"client_session_id": query_string}},
                     {
                         "range": {
                             "@timestamp": {
@@ -131,7 +131,7 @@ def init_scrolling(headers, query_string):
     }
 
     response = requests.post(
-        url=LOGZ_IO_SCROLL_URL, data=json.dumps(initial_post_body), headers=headers
+        url=LOGZ_IO_SCROLL_URL, data=json.dumps(initial_post_body), headers=headers, timeout=5
     )
 
     content = response.json()
@@ -144,7 +144,7 @@ def get_logs_page(headers, scroll_id):
     paginate_body = {"scroll_id": scroll_id}
 
     response = requests.post(
-        url=LOGZ_IO_SCROLL_URL, data=json.dumps(paginate_body), headers=headers
+        url=LOGZ_IO_SCROLL_URL, data=json.dumps(paginate_body), headers=headers, timeout=5
     )
 
     content = json.loads(response.json()["hits"])
