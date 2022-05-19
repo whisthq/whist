@@ -24,34 +24,64 @@ Includes
 #include <stdlib.h>
 #include <string.h>
 #include <sys/shm.h>
+#include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
 /*
 ============================
-Private Functions
+Private Functions Declarations
 ============================
 */
-int handler(Display* d, XErrorEvent* a);
+
+/*
+ * @brief           Our custom error handler, that passes to LOG_ERROR
+ *
+ * @param display   The X11 Display
+ *
+ * @param error     The X11 Error Event
+ */
+int handler(Display* display, XErrorEvent* error);
+
+/*
+ * @brief           Initialize the X11 atoms
+ *
+ * @param device    The X11 Device
+ */
+void init_atoms(X11CaptureDevice* device);
 
 /*
 ============================
 Private Function Implementations
 ============================
 */
-int handler(Display* d, XErrorEvent* a) {
-    /*
-        X11 error handler allowing us to integrate x11 errors with our error logging system.
-
-        Arguments:
-            d (Display*): Unused, needed for the right function signature
-            a (XerrorEvent*): error to log
-
-        Returns:
-            (int): always 0
-    */
-
-    LOG_ERROR("X11 Error: %d", a->error_code);
+int handler(Display* display, XErrorEvent* error) {
+    LOG_ERROR("X11 Error: %d", error->error_code);
     return 0;
+}
+
+#define INIT_ATOM(DEVICE, ATOM_VAR, NAME)                        \
+    DEVICE->ATOM_VAR = XInternAtom(DEVICE->display, NAME, True); \
+    if (DEVICE->ATOM_VAR == None) {                              \
+        LOG_FATAL("XInternAtom failed to return atom %s", NAME); \
+    }
+
+void init_atoms(X11CaptureDevice* device) {
+    // Initialize all atoms for the device->display we need
+    // If an XInternAtom call fails, we'll LOG_ERROR and any calls using that atom will do nothing
+    INIT_ATOM(device, _NET_ACTIVE_WINDOW, "_NET_ACTIVE_WINDOW");
+    INIT_ATOM(device, _NET_WM_STATE_HIDDEN, "_NET_WM_STATE_HIDDEN");
+    INIT_ATOM(device, _NET_WM_STATE_MAXIMIZED_VERT, "_NET_WM_STATE_MAXIMIZED_VERT");
+    INIT_ATOM(device, _NET_WM_STATE_MAXIMIZED_HORZ, "_NET_WM_STATE_MAXIMIZED_HORZ");
+    INIT_ATOM(device, _NET_WM_STATE_FULLSCREEN, "_NET_WM_STATE_FULLSCREEN");
+    INIT_ATOM(device, _NET_WM_STATE_ABOVE, "_NET_WM_STATE_ABOVE");
+    INIT_ATOM(device, _NET_MOVERESIZE_WINDOW, "_NET_MOVERESIZE_WINDOW");
+    INIT_ATOM(device, _NET_CLOSE_WINDOW, "_NET_CLOSE_WINDOW");
+    INIT_ATOM(device, _NET_WM_ALLOWED_ACTIONS, "_NET_WM_ALLOWED_ACTIONS");
+    INIT_ATOM(device, ATOM_ARRAY, "ATOM[]");
+    INIT_ATOM(device, _NET_WM_ACTION_RESIZE, "_NET_WM_ACTION_RESIZE");
+    INIT_ATOM(device, _NET_WM_NAME, "_NET_WM_NAME");
+    INIT_ATOM(device, UTF8_STRING, "UTF8_STRING");
+    INIT_ATOM(device, _NET_WM_STATE, "_NET_WM_STATE");
 }
 
 /*
@@ -59,6 +89,7 @@ int handler(Display* d, XErrorEvent* a) {
 Public Function Implementations
 ============================
 */
+
 X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi) {
     /*
         Create an X11 device that will capture a screen of the specified width, height, and DPI
@@ -89,6 +120,9 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     XDamageQueryExtension(device->display, &damage_event, &damage_error);
     device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
     device->event = damage_event;
+    if (!USING_NVIDIA_CAPTURE) {
+        init_atoms(device);
+    }
 
     if (!reconfigure_x11_capture_device(device, width, height, dpi)) {
         return NULL;
