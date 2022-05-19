@@ -120,7 +120,9 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     XDamageQueryExtension(device->display, &damage_event, &damage_error);
     device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
     device->event = damage_event;
-    init_atoms(device);
+    if (!USING_NVIDIA_CAPTURE) {
+        init_atoms(device);
+    }
 
     if (!reconfigure_x11_capture_device(device, width, height, dpi)) {
         return NULL;
