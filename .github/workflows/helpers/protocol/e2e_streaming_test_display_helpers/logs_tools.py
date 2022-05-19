@@ -50,16 +50,16 @@ def logs_contain_errors(logs_root_dir, verbose=False):
 
     if not os.path.isfile(client_log_file) or not os.path.isfile(server_log_file):
         if verbose:
-            print(f"Error, either file {client_log_file} or file {server_log_file} do not exist!")
+            print(f"File {client_log_file} and/or {server_log_file} do not exist!")
         return True
     client_log_num_lines = sum(1 for x in open(client_log_file))
     server_log_num_lines = sum(1 for x in open(server_log_file))
 
+    # When the logging files are too short, this very likely means that the client failed to connect to the server
     if client_log_num_lines < 500 or server_log_num_lines < 500:
         if verbose:
             print(
-                f"Error: client log file {client_log_file} contains {client_log_num_lines} lines and \
-                server log file {server_log_file} contains {server_log_num_lines} lines, one of which is less than 500."
+                f"Warning: client log file {client_log_file} contains {client_log_num_lines} lines and server log file {server_log_file} contains {server_log_num_lines} lines. At least one of them is too short, which likely means the client failed to connect to the server."
             )
         return True
 

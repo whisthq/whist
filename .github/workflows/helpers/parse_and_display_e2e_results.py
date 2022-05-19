@@ -98,11 +98,20 @@ parser.add_argument(
     default=7,
 )
 
+parser.add_argument(
+    "--verbose",
+    help="Whether to print verbose logs (from this script) to stdout for debugging",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
 
 if __name__ == "__main__":
     # Get script arguments
     args = parser.parse_args()
     post_results_on_slack = args.post_results_on_slack == "true"
+    verbose = args.verbose == "true"
     e2e_script_outcomes = args.e2e_script_outcomes
     network_conditions_matching_way = args.network_conditions_matching_way
     logs_expiration_days = args.logs_expiration_days
@@ -174,15 +183,20 @@ if __name__ == "__main__":
             if test_start_time == "":
                 test_start_time = folder_name
     if len(logs_root_dirs) == 0:
-        print("Error: protocol logs not found!")
-        sys.exit(-1)
+        if e2e_script_outcomes[0] != "success":
+            print("No E2E logs found due to errors in the E2E experiments. Exiting.")
+            sys.exit(0)
+        else:
+            print("Error: protocol logs not found!")
+            sys.exit(-1)
 
-    print("Found logs for the following experiments: ")
+    print("Found E2E logs for the following experiments: ")
     experiments = []
     for i, log_dir in enumerate(logs_root_dirs):
 
         client_log_file = os.path.join(log_dir, "client", "client.log")
         server_log_file = os.path.join(log_dir, "server", "server.log")
+        short_dirname = os.path.basename(log_dir)
 
         experiment_metadata = parse_metadata(log_dir)
 
@@ -195,10 +209,11 @@ if __name__ == "__main__":
         client_metrics = None
         server_metrics = None
 
-        if logs_contain_errors(log_dir, verbose=True):
-            print(
-                f"Logs from latest run in folder {log_dir} are incomplete or contain fatal errors. Discarding."
-            )
+        if logs_contain_errors(log_dir, verbose=verbose):
+            if verbose:
+                print(
+                    f"Warning: Logs from folder {short_dirname} are incomplete or contain fatal errors. Discarding."
+                )
         else:
             client_metrics, server_metrics = extract_metrics(client_log_file, server_log_file)
 
@@ -209,7 +224,7 @@ if __name__ == "__main__":
             "network_conditions": "unknown",
             "human_readable_network_conditions": "unknown",
             "outcome": e2e_script_outcomes[i],
-            "dirname": os.path.basename(log_dir),
+            "dirname": short_dirname,
         }
 
         if client_metrics is not None and server_metrics is not None:
@@ -220,9 +235,14 @@ if __name__ == "__main__":
 
         experiments.append(experiment_entry)
         found_error = client_metrics is None or server_metrics is None
-        print(
-            f"\t+ Folder: {log_dir} with network_conditions: {human_readable_network_conditions}. Error: {found_error}"
-        )
+        if not found_error:
+            print(
+                f"\t+ {short_dirname} with network_conditions: `{human_readable_network_conditions}`"
+            )
+        else:
+            print(
+                f"\t+ {short_dirname} (FAILED) with network_conditions: `{human_readable_network_conditions}`"
+            )
 
     # Add entries for experiments that failed or were skipped
     for i in range(len(experiments), len(e2e_script_outcomes)):
@@ -236,10 +256,15 @@ if __name__ == "__main__":
             "dirname": None,
         }
         experiments.append(experiment_entry)
-        print("\t+ Adding empty entry for failed/skipped experiment")
+        print("\t+ Failed/skipped experiment with no logs")
 
     for i, compared_branch_name in enumerate(compared_branch_names):
-        print(f"Comparing to branch {compared_branch_name}")
+        if compared_branch_name == current_branch_name:
+            print(
+                f"\nComparing results to previous commit in current branch ({compared_branch_name})"
+            )
+        else:
+            print(f"\nComparing results to latest values from {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
         results_file = open(f"streaming_e2e_test_results_{i+1}.md", "w")
         results_file.write(f"## Results compared to branch: `{compared_branch_name}`\n")
