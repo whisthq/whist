@@ -40,6 +40,7 @@ def logs_contain_errors(logs_root_dir, verbose=False):
 
     Args:
         logs_root_dir (str):    The path to the folder containing the logs
+        verbose (bool): Whether to print verbose logs to stdout
 
     Returns:
         False if the logs appear not to contain errors, True otherwise
@@ -76,6 +77,7 @@ def download_latest_logs(
     testing_time,
     simulate_scrolling,
     using_two_instances,
+    verbose=False,
 ):
     """
     Download from S3 the most recent logs from a E2E streaming test run. Filter out runs that
@@ -101,6 +103,8 @@ def download_latest_logs(
         simulate_scrolling (int):   The number of rounds of scrolling that was simulated on the client
                                     side in the E2E run that we just completed.
         using_two_instances (bool): Whether the latest E2E run was run using one or two instances
+        verbose (bool): Whether to print verbose logs to stdout
+
     Returns:
         None
     """
@@ -210,14 +214,15 @@ def download_latest_logs(
     if counter > 1:
         if counter > len(folders):
             print(
-                f"Error: could not find any logs from branch {branch_name} with the required properties for comparison."
+                f"Warning: could not find any logs from branch {branch_name} with the required properties for comparison."
             )
         else:
             print(
-                f"Warning, we are attempting to use {counter}° most recent logs (time: {subfolder_date}) from branch {branch_name}"
+                f"Using {counter}° most recent logs (time: {subfolder_date}) from branch {branch_name}"
             )
         assert counter == len(reason_for_discarding) + 1
-        for i in range(len(reason_for_discarding)):
-            print(
-                f"\t {i + 1}° most recent logs (time: {reason_for_discarding[i][0]}) discarded. Reason: {reason_for_discarding[i][1]}"
-            )
+        if verbose:
+            for i in range(len(reason_for_discarding)):
+                print(
+                    f"\t {i + 1}° most recent logs (time: {reason_for_discarding[i][0]}) discarded. Reason: {reason_for_discarding[i][1]}"
+                )

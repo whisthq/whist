@@ -303,6 +303,7 @@ if __name__ == "__main__":
                     testing_time,
                     simulate_scrolling,
                     using_two_instances,
+                    verbose,
                 )
                 compared_client_log_path = os.path.join(
                     ".", compared_branch_name, "client", "client.log"
