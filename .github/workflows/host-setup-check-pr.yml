@@ -37,7 +37,7 @@ jobs:
       ########################## Building Backend Services ######################
 
       - name: Set up Go Environment
-        uses: actions/setup-go@v3.0.0
+        uses: actions/setup-go@v3.1.0
         with:
           go-version: "1.18"
 
