@@ -29,6 +29,7 @@
     {
       matchPaths: ["backend/auth0/"],
       groupName: "backend/auth0",
+      ignoreDeps: ["ie8"], // This package version is specified by Auth0 and cannot be upgraded
     },
     {
       matchPaths: ["backend/infrastructure/"],
