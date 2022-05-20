@@ -41,7 +41,9 @@ disown
 
 ### SET CLIENT SESSION ID ON SERVER LOGS ###
 # Note: Its necessary to this before the `whist-main.service` starts
-# because otherwise we won't be able to modify the logs path.
+# because otherwise we won't be able to modify the logs path. This is
+# the earliest we can get the session id without blocking the other service's
+# startup and the only time we can modify the logs path of the `whist-main.service`.
 WHIST_MAPPINGS_DIR=/whist/resourceMappings/
 block-until-file-exists.sh $WHIST_MAPPINGS_DIR/session_id >&1
 
