@@ -1,0 +1,119 @@
+# workflows/backend-integration-test.yml
+#
+# Backend Integration Test
+# Perform integration test to ensure Whist stack does not get broken
+
+name: "Backend Integration Test"
+
+on:
+  pull_request:
+    paths:
+      # Changes to the backend / host service
+      - "backend/services/**"
+      - "!backend/services/README.md"
+      - "backend/database/schema.sql"
+      # Changes to the mandelboxes
+      - "mandelboxes/**"
+      - "!mandelboxes/README.md"
+      - "!mandelboxes/browsers/brave/**"
+      - "!mandelboxes/development/utils/**"
+      - "!mandelboxes/development/xterm/**"
+      # Changes to the host-setup
+      - "host-setup/**"
+      - "!host-setup/README.md"
+      # Changes to this script
+      - ".github/workflows/backend-integration-test.yml"
+  workflow_dispatch:
+
+# This guarantees that if you push many commits to the same PR, only the latest
+# commit will get run (others get cancelled)
+concurrency:
+  group: backend-integration-test-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  # This job runs a lightweight E2E protocol streaming session between two Docker containers on the same
+  # AWS EC2 instance to test that all components of the Whist stack work as expected.
+  integration-test:
+    name: "Backend Integration Test"
+    runs-on: ubuntu-20.04
+    env:
+      INSTANCE_ID: "i-0d215f4e50a4313ff"
+
+    steps:
+      # Prevent two instances of this workflow from running the steps below simultaneously
+      - name: Turnstyle
+        uses: rpadaki/turnstyle@v1.1
+        with:
+          same-branch-only: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh true
+
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Load the AWS SSH keypair onto the runner, so that it can run remote commands on the AWS EC2 machine
+      # running the streaming end-to-end test. This keypair is defined in AWS and stored as a GitHub Secret.
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          name: id_rsa
+          key: ${{ secrets.PROTOCOL_E2E_SREAMING_TEST_INSTANCE_SSH_KEY }}
+          known_hosts: unnecessary # Note, this is not secure and discouraged, but tolerable here given the instance is deleted after the test
+          if_key_exists: fail
+
+      # Steps to detect branch acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
+      - name: Get branch name and commit SHA
+        if: always()
+        run: |
+          if [[ ${{ github.event_name }} == 'pull_request' ]]; then
+            echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+            echo "GITHUB_COMMIT_HASH=$(echo ${{ github.event.pull_request.head.sha }})" >> $GITHUB_ENV
+          else
+            echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+            echo "GITHUB_COMMIT_HASH=$(echo ${GITHUB_SHA})" >> $GITHUB_ENV
+          fi
+
+      - name: Install Integration Test Dependencies
+        run: pip install boto3 paramiko numpy pytablewriter
+
+      ### Action below will run the integration Test for each new commit to a branch of a PR. ###
+      - name: Run Integration Test
+        working-directory: protocol/test
+        run: |
+          python3 streaming_e2e_tester.py \
+            --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
+            --ssh-key-path "/home/runner/.ssh/id_rsa" \
+            --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
+            --cmake-build-type dev \
+            --testing-time 60 \
+            --region-name us-east-1 \
+            --use-two-instances=false \
+            --existing-server-instance-id "$INSTANCE_ID" \
+            --leave-instances-on=false
+
+      - name: Upload logs to S3 for debugging purposes
+        if: always()
+        working-directory: protocol/test
+        run: |
+          aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/BACKEND_INTEGRATION_TESTS/"${{ env.BRANCH_NAME }}" --recursive
+          echo ""; echo "Download S3 logs with the following commands:"
+          cd perf_logs; for dir in */; do echo "aws s3 cp s3://whist-e2e-protocol-test-logs/BACKEND_INTEGRATION_TESTS/${{ env.BRANCH_NAME }}/$dir $dir --recursive"; done
+
+      - name: Stop or terminate leftover AWS instances
+        if: always()
+        working-directory: protocol/test
+        run: python3 -m helpers.aws.remove_leftover_instances
+
+  #######################################################################################
