@@ -123,22 +123,24 @@ if __name__ == "__main__":
     # Check if the E2E run was skipped or cancelled, in which case we don't have any data to display
     if "success" not in e2e_script_outcomes and "failure" not in e2e_script_outcomes:
         print(f"E2E run was {e2e_script_outcomes[0]}! No results to parse/display.")
-        sys.exit(-1)
+        sys.exit(0)
 
     # Grab environment variables of interest, and check that required ones are set
     if not os.environ.get("GITHUB_REF_NAME"):
         print(
-            "GITHUB_REF_NAME is not set! If running locally, set GITHUB_REF_NAME to the name of the current git branch."
+            "Error: GITHUB_REF_NAME is not set! If running locally, set GITHUB_REF_NAME to the name of the current git branch."
         )
         sys.exit(-1)
     if not os.environ.get("GITHUB_GIST_TOKEN") or not os.environ.get("GITHUB_TOKEN"):
-        print("GITHUB_GIST_TOKEN and GITHUB_TOKEN not set. Cannot post results to Gist/GitHub!")
+        print(
+            "Error: GITHUB_GIST_TOKEN and GITHUB_TOKEN not set. Cannot post results to Gist/GitHub!"
+        )
         sys.exit(-1)
     if not os.environ.get("GITHUB_RUN_ID"):
         print("Not running in CI, so we won't post the results on Slack!")
         if not os.environ.get("SLACK_WEBHOOK"):
             print(
-                "SLACK_WEBHOOK is not set. This means we won't be able to post the results on Slack."
+                "Error: SLACK_WEBHOOK is not set. This means we won't be able to post the results on Slack."
             )
     github_ref_name = os.environ["GITHUB_REF_NAME"]
     github_gist_token = os.environ["GITHUB_GIST_TOKEN"]
@@ -236,7 +238,7 @@ if __name__ == "__main__":
         experiments.append(experiment_entry)
         failed_notice = " FAILED!" if client_metrics is None or server_metrics is None else ":"
         print(
-            f"\t+ Experiment {i+1}({short_dirname}){failed_notice} Network conditions = `{human_readable_network_conditions}`"
+            f"\t+ Experiment {i+1} ({short_dirname}){failed_notice} Network conditions = `{human_readable_network_conditions}`"
         )
 
     # Add entries for experiments that failed or were skipped
@@ -347,7 +349,7 @@ if __name__ == "__main__":
                     compared_client_metrics,
                     compared_server_metrics,
                 )
-                if test_result != "success":
+                if test_result == "success":
                     e2e_script_outcomes[j] = test_result
 
             else:
@@ -409,9 +411,12 @@ if __name__ == "__main__":
 
     success_outcome = ":white_check_mark: All experiments succeeded!"
     test_outcome = success_outcome
-    for outcome in e2e_script_outcomes:
+    error_index = 0
+    for i, outcome in enumerate(e2e_script_outcomes):
         if outcome != "success":
             test_outcome = ":x: " + str(outcome)
+            error_index = i
+            break
 
     # Post updates to Slack channel if desired
     if slack_webhook and post_results_on_slack and github_run_id:
@@ -445,5 +450,8 @@ if __name__ == "__main__":
                 update_date=True,
             )
 
-    if test_outcome != success_outcome:
+    if test_outcome == "failure (performance change on key metric >= 20%)":
+        print(
+            f"\nError: the performance in a key metric in experiment {error_index+1} changed by more than 20% in absolute value!"
+        )
         sys.exit(-1)

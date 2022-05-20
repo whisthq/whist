@@ -219,7 +219,7 @@ def compute_deltas(
             ):
                 if abs(dictionary[k]["delta_pctg"]) > 0.2:
                     if k in most_interesting_metrics and fail_on_20pct_performance_delta:
-                        test_result = "failure"
+                        test_result = "failure (performance change on key metric >= 20%)"
                     emoji_delta = "❌"
                 else:
                     emoji_delta = "✅"
