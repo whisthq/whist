@@ -115,6 +115,8 @@ typedef struct {
 #define UDP_PING_INTERVAL_SEC 0.01
 // How long to go without a pong, before the connection is marked as lost
 #define UDP_PONG_TIMEOUT_SEC 2.5
+// How long to go without a pong, before we signal severe congestion to congestion control
+#define UDP_PONG_CONGESTION_SEC 0.25
 // How often to print ping logs
 #define UDP_PING_LOG_INTERVAL_SEC 1.0
 #define MAX_GROUP_STATS 8
@@ -629,6 +631,11 @@ static bool udp_update(void* raw_context) {
     // *************
 
     if (context->ring_buffers[PACKET_VIDEO] != NULL) {
+        // If no pong is received for UDP_PONG_CONGESTION_SEC, then we signal severe congestion.
+        if (get_timer(&context->last_pong_timer) > UDP_PONG_CONGESTION_SEC &&
+            whist_congestion_controller_handle_severe_congestion(&context->network_settings)) {
+            send_desired_network_settings(context);
+        }
         try_recovering_missing_packets_or_frames(
             context->ring_buffers[PACKET_VIDEO], context->short_term_latency,
             (int)round(context->unordered_packet_info.max_unordered_packets),

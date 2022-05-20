@@ -51,7 +51,6 @@ static NetworkSettings default_network_settings = {
     .desired_codec = CODEC_TYPE_H264,
     .audio_fec_ratio = AUDIO_FEC_RATIO,
     .video_fec_ratio = VIDEO_FEC_RATIO,
-    .fps = 60,
 };
 
 #define DPI_BITRATE_PER_PIXEL 192
@@ -80,6 +79,7 @@ static NetworkSettings default_network_settings = {
 #define STARTING_BURST_BITRATE (STARTING_BITRATE * BURST_BITRATE_RATIO)
 
 static int dpi = -1;
+static WhistTimer last_update_timer;
 
 /*
 ============================
@@ -144,7 +144,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         return false;
     }
     static WhistTimer overuse_timer;
-    static WhistTimer last_update_timer;
     static WhistTimer last_decrease_timer;
     static bool delay_controller_initialized = false;
 
@@ -161,6 +160,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
     }
     int max_bitrate = MAXIMUM_BITRATE;
     int new_bitrate = network_settings->video_bitrate;
+    bool send_network_settings = false;
 
     enum {
         UNDERUSE_SIGNAL,
@@ -383,7 +383,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
             "max_bitrate_available = %d",
             network_settings->video_bitrate, network_settings->burst_bitrate,
             network_settings->saturate_bandwidth, max_bitrate_available);
-        return true;
+        send_network_settings = true;
     } else if (network_settings->saturate_bandwidth && get_timer(&last_update_timer) > 5.0) {
         // Prevent being stuck in saturate_bandwidth loop, without any bitrate update. This can
         // happen when the network bandwidth on this session worsens lesser than
@@ -392,11 +392,26 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         // earlier.
         LOG_INFO("Switch off saturate bandwidth");
         network_settings->saturate_bandwidth = false;
-        return true;
+        send_network_settings = true;
     }
     if (!network_settings->saturate_bandwidth) {
         network_settings->congestion_detected = false;
     }
 
-    return false;
+    return send_network_settings;
+}
+
+// Should be called in times of severe congestion. Right now we are just setting the bitrate to
+// MINIMUM_BITRATE to handle severe congestion.
+bool whist_congestion_controller_handle_severe_congestion(NetworkSettings *network_settings) {
+#define MIN_UPDATE_INTERVAL_SEVERE_CONGESTION_SEC 0.025  // 25ms
+    if (get_timer(&last_update_timer) < MIN_UPDATE_INTERVAL_SEVERE_CONGESTION_SEC) {
+        return false;
+    }
+    network_settings->burst_bitrate = network_settings->video_bitrate = MINIMUM_BITRATE;
+    network_settings->congestion_detected = true;
+    network_settings->saturate_bandwidth = true;
+    LOG_INFO("Severe congestion detected. New bitrate = %d", network_settings->video_bitrate);
+    start_timer(&last_update_timer);
+    return true;
 }

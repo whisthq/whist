@@ -350,21 +350,15 @@ static void send_empty_frame(WhistServerState* state, int id) {
  */
 static VideoEncoder* update_video_encoder(WhistServerState* state, VideoEncoder* encoder,
                                           CaptureDevice* device, int bitrate, CodecType codec,
-                                          int fps, int vbv_size) {
+                                          int vbv_size) {
     // If this is a new update encoder request, log it
     if (!state->pending_encoder) {
         LOG_INFO("Update encoder request received, will update the encoder now!");
     }
 
-    // TODO: Make the encode take in a variable FPS
-    if (fps != MAX_FPS) {
-        LOG_ERROR("Setting FPS to anything but %d is not supported yet!", MAX_FPS);
-    }
-
     // First, try to simply reconfigure the encoder to
     // handle the update_encoder event
     if (encoder != NULL) {
-        // TODO: Use requested_video_fps as well
         if (reconfigure_encoder(encoder, device->width, device->height, bitrate, vbv_size, codec)) {
             // If we could update the encoder in-place, then we're done updating the encoder
             LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d, and Codec %d", device->width,
@@ -397,7 +391,6 @@ static VideoEncoder* update_video_encoder(WhistServerState* state, VideoEncoder*
             // Starting making new encoder. This will set pending_encoder=true, but won't
             // actually update it yet, we'll still use the old one for a bit
 
-            // TODO: Use requested_video_fps
             LOG_INFO(
                 "Creating a new Encoder of dimensions %dx%d using Bitrate: %d, and "
                 "Codec %d",
@@ -662,8 +655,6 @@ int32_t multithreaded_send_video(void* opaque) {
             network_settings.video_bitrate * (1.0 - network_settings.video_fec_ratio);
         FATAL_ASSERT(video_bitrate > 0);
         CodecType video_codec = network_settings.desired_codec;
-        // TODO: Use video_fps instead of max_fps, also see update_video_encoder when doing this
-        int video_fps = network_settings.fps;
 
         if (memcmp(&network_settings, &last_network_settings, sizeof(NetworkSettings)) != 0) {
             // Mark to update the encode, if the network settings have been updated
@@ -678,8 +669,8 @@ int32_t multithreaded_send_video(void* opaque) {
                 (double)network_settings.burst_bitrate / network_settings.video_bitrate;
             int vbv_size =
                 (VBV_IN_SEC_BY_BURST_BITRATE_RATIO * video_bitrate * burst_bitrate_ratio);
-            encoder = update_video_encoder(state, encoder, device, video_bitrate, video_codec,
-                                           video_fps, vbv_size);
+            encoder =
+                update_video_encoder(state, encoder, device, video_bitrate, video_codec, vbv_size);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
         }
