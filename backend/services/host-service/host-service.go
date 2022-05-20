@@ -632,11 +632,12 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					break
 				}
 
-				logger.Infof("Instance has a remaining capacity of %v, current number of mandelboxes are %v", instance.RemainingCapacity, mandelboxData.GetMandelboxCount())
+				logger.Infof("Instance has a remaining capacity of %v, current number of waiting mandelboxes is %v", instance.RemainingCapacity, mandelboxData.GetMandelboxCount())
+
+				newWaitingMandelboxes := int32(instance.RemainingCapacity) - mandelboxData.GetMandelboxCount()
 				// If the remaining capacity field changes, check how many mandelboxes are currently
 				// running and start mandelbox zygotes as necessary.
-				if int32(instance.RemainingCapacity) != mandelboxData.GetMandelboxCount() {
-					newWaitingMandelboxes := int32(instance.RemainingCapacity) - mandelboxData.GetMandelboxCount()
+				if newWaitingMandelboxes > 0 {
 					logger.Infof("Starting %v new waiting mandelboxes.", newWaitingMandelboxes)
 					SpinUpMandelboxes(globalCtx, globalCancel, goroutineTracker, dockerClient, instance.ID, newWaitingMandelboxes)
 				}
