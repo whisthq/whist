@@ -33,7 +33,7 @@ jobs:
             false
           fi
 
-  whist-linting-triling-newlines:
+  whist-linting-trailing-newlines:
     name: Lint Trailing Newlines
     runs-on: ubuntu-20.04
 
