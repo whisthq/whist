@@ -98,11 +98,20 @@ parser.add_argument(
     default=7,
 )
 
+parser.add_argument(
+    "--verbose",
+    help="Whether to print verbose logs (from this script) to stdout for debugging",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
 
 if __name__ == "__main__":
     # Get script arguments
     args = parser.parse_args()
     post_results_on_slack = args.post_results_on_slack == "true"
+    verbose = args.verbose == "true"
     e2e_script_outcomes = args.e2e_script_outcomes
     network_conditions_matching_way = args.network_conditions_matching_way
     logs_expiration_days = args.logs_expiration_days
@@ -114,22 +123,24 @@ if __name__ == "__main__":
     # Check if the E2E run was skipped or cancelled, in which case we don't have any data to display
     if "success" not in e2e_script_outcomes and "failure" not in e2e_script_outcomes:
         print(f"E2E run was {e2e_script_outcomes[0]}! No results to parse/display.")
-        sys.exit(-1)
+        sys.exit(0)
 
     # Grab environment variables of interest, and check that required ones are set
     if not os.environ.get("GITHUB_REF_NAME"):
         print(
-            "GITHUB_REF_NAME is not set! If running locally, set GITHUB_REF_NAME to the name of the current git branch."
+            "Error: GITHUB_REF_NAME is not set! If running locally, set GITHUB_REF_NAME to the name of the current git branch."
         )
         sys.exit(-1)
     if not os.environ.get("GITHUB_GIST_TOKEN") or not os.environ.get("GITHUB_TOKEN"):
-        print("GITHUB_GIST_TOKEN and GITHUB_TOKEN not set. Cannot post results to Gist/GitHub!")
+        print(
+            "Error: GITHUB_GIST_TOKEN and GITHUB_TOKEN not set. Cannot post results to Gist/GitHub!"
+        )
         sys.exit(-1)
     if not os.environ.get("GITHUB_RUN_ID"):
         print("Not running in CI, so we won't post the results on Slack!")
         if not os.environ.get("SLACK_WEBHOOK"):
             print(
-                "SLACK_WEBHOOK is not set. This means we won't be able to post the results on Slack."
+                "Error: SLACK_WEBHOOK is not set. This means we won't be able to post the results on Slack."
             )
     github_ref_name = os.environ["GITHUB_REF_NAME"]
     github_gist_token = os.environ["GITHUB_GIST_TOKEN"]
@@ -174,15 +185,20 @@ if __name__ == "__main__":
             if test_start_time == "":
                 test_start_time = folder_name
     if len(logs_root_dirs) == 0:
-        print("Error: protocol logs not found!")
-        sys.exit(-1)
+        if e2e_script_outcomes[0] != "success":
+            print("No E2E logs found due to errors in the E2E experiments. Exiting.")
+            sys.exit(0)
+        else:
+            print("Error: protocol logs not found!")
+            sys.exit(-1)
 
-    print("Found logs for the following experiments: ")
+    print("Found E2E logs for the following experiments: ")
     experiments = []
     for i, log_dir in enumerate(logs_root_dirs):
 
         client_log_file = os.path.join(log_dir, "client", "client.log")
         server_log_file = os.path.join(log_dir, "server", "server.log")
+        short_dirname = os.path.basename(log_dir)
 
         experiment_metadata = parse_metadata(log_dir)
 
@@ -195,10 +211,11 @@ if __name__ == "__main__":
         client_metrics = None
         server_metrics = None
 
-        if logs_contain_errors(log_dir, verbose=True):
-            print(
-                f"Logs from latest run in folder {log_dir} are incomplete or contain fatal errors. Discarding."
-            )
+        if logs_contain_errors(log_dir, verbose=verbose):
+            if verbose:
+                print(
+                    f"Warning: Logs from folder {short_dirname} are incomplete or contain fatal errors. Discarding."
+                )
         else:
             client_metrics, server_metrics = extract_metrics(client_log_file, server_log_file)
 
@@ -209,7 +226,7 @@ if __name__ == "__main__":
             "network_conditions": "unknown",
             "human_readable_network_conditions": "unknown",
             "outcome": e2e_script_outcomes[i],
-            "dirname": os.path.basename(log_dir),
+            "dirname": short_dirname,
         }
 
         if client_metrics is not None and server_metrics is not None:
@@ -219,9 +236,9 @@ if __name__ == "__main__":
             ] = human_readable_network_conditions
 
         experiments.append(experiment_entry)
-        found_error = client_metrics is None or server_metrics is None
+        failed_notice = " FAILED!" if client_metrics is None or server_metrics is None else ":"
         print(
-            f"\t+ Folder: {log_dir} with network_conditions: {human_readable_network_conditions}. Error: {found_error}"
+            f"\t+ Experiment {i+1} ({short_dirname}){failed_notice} Network conditions = `{human_readable_network_conditions}`"
         )
 
     # Add entries for experiments that failed or were skipped
@@ -236,10 +253,15 @@ if __name__ == "__main__":
             "dirname": None,
         }
         experiments.append(experiment_entry)
-        print("\t+ Adding empty entry for failed/skipped experiment")
+        print("\t+ Failed/skipped experiment with no logs")
 
     for i, compared_branch_name in enumerate(compared_branch_names):
-        print(f"Comparing to branch {compared_branch_name}")
+        if compared_branch_name == current_branch_name:
+            print(
+                f"\nComparing results to previous commit in current branch ({compared_branch_name})"
+            )
+        else:
+            print(f"\nComparing results to latest values from {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
         results_file = open(f"streaming_e2e_test_results_{i+1}.md", "w")
         results_file.write(f"## Results compared to branch: `{compared_branch_name}`\n")
@@ -278,6 +300,7 @@ if __name__ == "__main__":
                     testing_time,
                     simulate_scrolling,
                     using_two_instances,
+                    verbose,
                 )
                 compared_client_log_path = os.path.join(
                     ".", compared_branch_name, "client", "client.log"
@@ -285,29 +308,40 @@ if __name__ == "__main__":
                 compared_server_log_path = os.path.join(
                     ".", compared_branch_name, "server", "server.log"
                 )
-
                 compared_client_metrics = {}
                 compared_server_metrics = {}
-                if not os.path.isfile(compared_client_log_path) or not os.path.isfile(
-                    compared_server_log_path
+                compared_experiment_metadata = parse_metadata(
+                    os.path.join(".", compared_branch_name)
+                )
+
+                if (
+                    not os.path.isfile(compared_client_log_path)
+                    or not os.path.isfile(compared_server_log_path)
+                    or not compared_experiment_metadata
                 ):
                     print(
-                        f"Could not parse {compared_branch_name} client/server logs. Unable to compare performance results to latest {compared_branch_name} measurements."
+                        f"{j+1}. Posting Experiment {j+1} results alone (could not find any logs from branch {compared_branch_name} with the required properties for comparison)"
                     )
                 else:
+                    experiment_start_time = (
+                        compared_experiment_metadata["start_time"]
+                        if compared_experiment_metadata.get("start_time")
+                        else "unknown"
+                    )
+                    print(
+                        f"{j+1}. Comparing Experiment {j+1} results to {compared_branch_name} run with timestamp {experiment_start_time}"
+                    )
+
                     # Extract the metric values and save them in a dictionary
                     compared_client_metrics, compared_server_metrics = extract_metrics(
                         compared_client_log_path, compared_server_log_path
                     )
 
-                compared_experiment_metadata = parse_metadata(
-                    os.path.join(".", compared_branch_name)
-                )
-
                 test_result = generate_comparison_table(
                     results_file,
                     experiment["experiment_metadata"],
                     compared_experiment_metadata,
+                    current_branch_name,
                     compared_branch_name,
                     most_interesting_metrics,
                     experiment["client_metrics"],
@@ -315,8 +349,7 @@ if __name__ == "__main__":
                     compared_client_metrics,
                     compared_server_metrics,
                 )
-                if test_result != "success" and compared_branch_name == "dev":
-                    print("Experiment " + str(j + 1) + " is not a success")
+                if test_result != "success":
                     e2e_script_outcomes[j] = test_result
 
             else:
@@ -378,9 +411,12 @@ if __name__ == "__main__":
 
     success_outcome = ":white_check_mark: All experiments succeeded!"
     test_outcome = success_outcome
-    for outcome in e2e_script_outcomes:
+    error_index = 0
+    for i, outcome in enumerate(e2e_script_outcomes):
         if outcome != "success":
             test_outcome = ":x: " + str(outcome)
+            error_index = i
+            break
 
     # Post updates to Slack channel if desired
     if slack_webhook and post_results_on_slack and github_run_id:
@@ -401,6 +437,9 @@ if __name__ == "__main__":
     else:
         pr_number = associate_branch_to_open_pr(current_branch_name)
         if pr_number != -1:
+            print(
+                f"Posting contents of Gist with performance results as a comment to PR #{pr_number} associated with {current_branch_name}"
+            )
             github_comment_update(
                 github_token,
                 github_repo,
@@ -411,5 +450,8 @@ if __name__ == "__main__":
                 update_date=True,
             )
 
-    if test_outcome != success_outcome:
+    if test_outcome == "failure (performance change on key metric >= 20%)":
+        print(
+            f"\nError: the performance in a key metric in experiment {error_index+1} changed by more than 20% in absolute value!"
+        )
         sys.exit(-1)

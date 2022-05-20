@@ -33,16 +33,17 @@ def create_github_gist_post(github_gist_token, title, files_list):
         files=files_dict,
         description=title,
     )
-    print(f"Posted performance results to secret gist: {gist.html_url}")
+    print(f"\nPosted performance results to secret gist: {gist.html_url}")
     return gist.html_url
 
 
-def associate_branch_to_open_pr(branch_name):
+def associate_branch_to_open_pr(branch_name, verbose=False):
     """
     Check if there is an open PR associated with the specified branch. If so, return the PR number
 
     Args:
         branch_name (str): The name of the branch for which we are looking for an open PR
+        verbose (bool): Whether to print verbose logs to stdout
 
     Returns:
         On success (an open PR is found):
@@ -63,12 +64,13 @@ def associate_branch_to_open_pr(branch_name):
     if len(result) >= 3:
         pr_number, pr_name, pr_branch_name = result[:3]
         if pr_number.isnumeric() and branch_name == pr_branch_name:
-            print(
-                f"Found open PR #{pr_number}: '{pr_name}' associated with branch '{branch_name}'!"
-            )
             return_value = int(pr_number)
+            if verbose:
+                print(
+                    f"Found open PR #{pr_number}: '{pr_name}' associated with branch '{branch_name}'!"
+                )
 
-    if return_value == -1:
+    if return_value == -1 and verbose:
         print(f"Found no open PR associated with branch '{branch_name}'!")
 
     return return_value

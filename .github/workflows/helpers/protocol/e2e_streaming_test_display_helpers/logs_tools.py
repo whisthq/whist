@@ -11,12 +11,13 @@ from datetime import datetime, timedelta
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def parse_metadata(folder_name):
+def parse_metadata(folder_name, verbose=False):
     """
     Obtain the metadata for the E2E streaming test from the experiment_metadata.json file in the logs folder
 
     Args:
         folder_name (str):  The path to the folder containing the logs and the experiment_metadata.json file
+        verbose (bool): Whether to print verbose logs to stdout
 
     Returns:
         On success:
@@ -27,7 +28,8 @@ def parse_metadata(folder_name):
     metadata_filename = os.path.join(folder_name, "experiment_metadata.json")
     experiment_metadata = None
     if not os.path.isfile(metadata_filename):
-        print(f"Metadata file {metadata_filename} does not exist")
+        if verbose:
+            print(f"Metadata file {metadata_filename} does not exist")
     else:
         with open(metadata_filename, "r") as metadata_file:
             experiment_metadata = json.load(metadata_file)
@@ -40,6 +42,7 @@ def logs_contain_errors(logs_root_dir, verbose=False):
 
     Args:
         logs_root_dir (str):    The path to the folder containing the logs
+        verbose (bool): Whether to print verbose logs to stdout
 
     Returns:
         False if the logs appear not to contain errors, True otherwise
@@ -50,16 +53,16 @@ def logs_contain_errors(logs_root_dir, verbose=False):
 
     if not os.path.isfile(client_log_file) or not os.path.isfile(server_log_file):
         if verbose:
-            print(f"Error, either file {client_log_file} or file {server_log_file} do not exist!")
+            print(f"File {client_log_file} and/or {server_log_file} do not exist!")
         return True
     client_log_num_lines = sum(1 for x in open(client_log_file))
     server_log_num_lines = sum(1 for x in open(server_log_file))
 
+    # When the logging files are too short, this very likely means that the client failed to connect to the server
     if client_log_num_lines < 500 or server_log_num_lines < 500:
         if verbose:
             print(
-                f"Error: client log file {client_log_file} contains {client_log_num_lines} lines and \
-                server log file {server_log_file} contains {server_log_num_lines} lines, one of which is less than 500."
+                f"Warning: client log file {client_log_file} contains {client_log_num_lines} lines and server log file {server_log_file} contains {server_log_num_lines} lines. At least one of them is too short, which likely means the client failed to connect to the server."
             )
         return True
 
@@ -76,6 +79,7 @@ def download_latest_logs(
     testing_time,
     simulate_scrolling,
     using_two_instances,
+    verbose=False,
 ):
     """
     Download from S3 the most recent logs from a E2E streaming test run. Filter out runs that
@@ -101,6 +105,8 @@ def download_latest_logs(
         simulate_scrolling (int):   The number of rounds of scrolling that was simulated on the client
                                     side in the E2E run that we just completed.
         using_two_instances (bool): Whether the latest E2E run was run using one or two instances
+        verbose (bool): Whether to print verbose logs to stdout
+
     Returns:
         None
     """
@@ -169,7 +175,9 @@ def download_latest_logs(
             continue
 
         # Get the metadata for the compared run. If it does not exist, continue
-        if not os.path.isfile(exp_meta_path) or not parse_metadata(os.path.join(".", branch_name)):
+        if not os.path.isfile(exp_meta_path) or not parse_metadata(
+            os.path.join(".", branch_name), verbose=False
+        ):
             os.system(
                 f"rm -f {compared_client_log_path} {compared_server_log_path} {exp_meta_path}"
             )
@@ -207,17 +215,18 @@ def download_latest_logs(
         counter += 1
         reason_for_discarding.append((subfolder_date, "network conditions mismatch"))
 
-    if counter > 1:
+    if counter > 1 and verbose:
         if counter > len(folders):
             print(
-                f"Error: could not find any logs from branch {branch_name} with the required properties for comparison."
+                f"Warning: could not find any logs from branch {branch_name} with the required properties for comparison."
             )
         else:
             print(
-                f"Warning, we are attempting to use {counter}° most recent logs (time: {subfolder_date}) from branch {branch_name}"
+                f"Comparing to {counter}° most recent {branch_name} logs (timestamp: {subfolder_date})"
             )
         assert counter == len(reason_for_discarding) + 1
+
         for i in range(len(reason_for_discarding)):
             print(
-                f"\t {i + 1}° most recent logs (time: {reason_for_discarding[i][0]}) discarded. Reason: {reason_for_discarding[i][1]}"
+                f"\t {i + 1}° most recent {branch_name} logs (time: {reason_for_discarding[i][0]}) discarded. Reason: {reason_for_discarding[i][1]}"
             )
