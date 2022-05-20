@@ -28,6 +28,7 @@ Includes
 #include <processthreadsapi.h>
 #include <psapi.h>
 #else
+#include <sys/resource.h>
 #ifdef __APPLE__
 #include <sys/sysctl.h>
 #include <sys/types.h>
