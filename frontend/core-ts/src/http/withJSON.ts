@@ -22,7 +22,7 @@ export const withJSON: ServerDecorator = async (fn, req) => {
   // The json method is still available on the response key,
   // which is holding the original response object, in case
   // the user wants to try for themselves.
-  if (response?.json)
+  if (response?.json!)
     try {
       return { response, json: await response.json() }
     } catch (e) {}
