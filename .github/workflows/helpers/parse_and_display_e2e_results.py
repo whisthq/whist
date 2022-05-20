@@ -432,6 +432,9 @@ if __name__ == "__main__":
     else:
         pr_number = associate_branch_to_open_pr(current_branch_name)
         if pr_number != -1:
+            print(
+                f"Posting contents of Gist with performance results as a comment to PR #{pr_number} associated with {current_branch_name}"
+            )
             github_comment_update(
                 github_token,
                 github_repo,
