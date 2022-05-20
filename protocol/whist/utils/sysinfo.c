@@ -459,61 +459,33 @@ void print_hard_drive_info(void) {
              total_space / BYTES_IN_GB, available_space / BYTES_IN_GB);
 }
 
-#ifdef __linux__
-long ticks_per_second;
+#ifndef _WIN32
+struct rusage prev_rusage;
+bool prev_rusage_initialized;
 #endif
 
-double get_cpu_usage(void) {
-    char* cpu_usage = NULL;
+double get_cpu_usage(double time_elapsed) {
+    // char* cpu_usage = NULL;
     double cpu_usage_pct = -1.0;
-#ifdef __APPLE__
-    int res = runcmd("ps -A -o \%cpu | awk '{s+=$1} END {print s}'", &cpu_usage);
-    if (res != -1) {
-        cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
-        cpu_usage_pct = atof(cpu_usage);
+#ifndef _WIN32
+    if (!prev_rusage_initialized) {
+        getrusage(RUSAGE_SELF, &prev_rusage);
+        prev_rusage_initialized = true;
+    } else {
+        struct rusage current_usage;
+        getrusage(RUSAGE_SELF, &current_usage);
+        double user_time_elapsed =
+            (current_usage.ru_utime.tv_sec - prev_rusage.ru_utime.tv_sec) +
+            (current_usage.ru_utime.tv_usec - prev_rusage.ru_utime.tv_usec) / (double)US_IN_SECOND;
+        double system_time_elapsed =
+            (current_usage.ru_stime.tv_sec - prev_rusage.ru_stime.tv_sec) +
+            (current_usage.ru_stime.tv_usec - prev_rusage.ru_stime.tv_usec) / (double)US_IN_SECOND;
+        cpu_usage_pct = 100.0 * (user_time_elapsed + system_time_elapsed) / time_elapsed;
+        prev_rusage = current_usage;
     }
-#elif __linux__
-    ticks_per_second = ticks_per_second == 0 ? sysconf(_SC_CLK_TCK) : ticks_per_second;
-
-    struct sysinfo s_info;
-    int error = sysinfo(&s_info);
-    if (error == 0) {
-        long uptime = s_info.uptime;
-        FILE* fp = fopen("/proc/self/stat", "r");
-        cpu_usage = (char*) calloc(1001, sizeof(char));
-        // Read up to 1000 chars from the first line of "/proc/stat". This should be enough to get
-        // all the usage data.
-        if (fp && fgets(cpu_usage, 1000, fp)) {
-            cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
-
-            const char* separator = " ";
-            int i = 0;
-            long long total_proc_time = 0;
-            long long start_time = 0;
-
-            char* token = strtok(cpu_usage, separator);
-            while (token) {
-                token = strtok(NULL, separator);
-                if (token) {
-                    if (i >= 13 && i <= 16) {
-                        // user time, kernel time, children process user time, children process
-                        // kernel time
-                        total_proc_time += strtoll(token, NULL, 0);
-                    } else if (i == 21) {
-                        start_time = strtoll(token, NULL, 0);
-                    }
-                    i++;
-                }
-            }
-            long long time_elapsed = uptime - (start_time / ticks_per_second);
-            cpu_usage_pct = (double) 100 * ((total_proc_time / ticks_per_second) / time_elapsed);
-        }
-        fclose(fp);
-    }
-
 #else  // _WIN32
     LOG_WARNING("get_cpu_usage() not implemented for this platform");
 #endif
-    free(cpu_usage);
+    // free(cpu_usage);
     return cpu_usage_pct;
 }

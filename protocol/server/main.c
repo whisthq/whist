@@ -522,9 +522,13 @@ int main(int argc, char* argv[]) {
         // getting cpu usage statistics is expensive.
         // TODO : Do NOT enable this, as it is bottlenecking UDP receive. Change expensive 'top'
         // based logic to simple '/proc/stat' logic for CPU usage.
-        if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) > 1) {
-            double cpu_usage = get_cpu_usage();
-            log_double_statistic(SERVER_CPU_USAGE, cpu_usage);
+        double cpu_timer_time_elapsed = 0;
+        if (LOG_CPU_USAGE &&
+            ((cpu_timer_time_elapsed = get_timer(&cpu_usage_statistics_timer)) > 1)) {
+            double cpu_usage = get_cpu_usage(cpu_timer_time_elapsed);
+            if (cpu_usage != -1) {
+                log_double_statistic(SERVER_CPU_USAGE, cpu_usage);
+            }
             start_timer(&cpu_usage_statistics_timer);
         }
 
