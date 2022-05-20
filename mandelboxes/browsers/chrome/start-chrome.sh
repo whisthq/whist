@@ -25,7 +25,7 @@ WHIST_CLEARED_SINGLETON_LOCK=/home/whist/.config/WhistClearedSingletonLock
 
 if [[ ! -f $WHIST_CLEARED_SINGLETON_LOCK ]]; then
   touch $WHIST_CLEARED_SINGLETON_LOCK
-  rm -f $GOOGLE_CHROME_SINGLETON_LOCK
+  rm -f "$GOOGLE_CHROME_SINGLETON_LOCK"
 fi
 
 DEFAULT_PROFILE=$USER_DATA_DIR/Default
@@ -33,21 +33,21 @@ PREFERENCES=$DEFAULT_PROFILE/Preferences
 PREFERENCES_UPDATE=$DEFAULT_PROFILE/Preferences.update
 # Initialize empty preferences file if one doesn't exist
 if [[ ! -f $PREFERENCES ]]; then
-  mkdir -p $DEFAULT_PROFILE
-  echo {} > $PREFERENCES
+  mkdir -p "$DEFAULT_PROFILE"
+  echo {} > "$PREFERENCES"
 fi
 
-echo {} > $PREFERENCES_UPDATE
+echo {} > "$PREFERENCES_UPDATE"
 
 function add_preferences_jq() {
-  cat $PREFERENCES_UPDATE | jq "$1" > $PREFERENCES_UPDATE.new
-  mv $PREFERENCES_UPDATE.new $PREFERENCES_UPDATE
+  jq "$1" < "$PREFERENCES_UPDATE" > "$PREFERENCES_UPDATE.new"
+  mv "$PREFERENCES_UPDATE.new" "$PREFERENCES_UPDATE"
 }
 
 function commit_preferences() {
-  jq -s '.[0] * .[1]' $PREFERENCES $PREFERENCES_UPDATE > $PREFERENCES.new
-  rm $PREFERENCES_UPDATE
-  mv $PREFERENCES.new $PREFERENCES
+  jq -s '.[0] * .[1]' "$PREFERENCES" "$PREFERENCES_UPDATE" > "$PREFERENCES.new"
+  rm "$PREFERENCES_UPDATE"
+  mv "$PREFERENCES.new" "$PREFERENCES"
 }
 
 # Set the Chrome language
