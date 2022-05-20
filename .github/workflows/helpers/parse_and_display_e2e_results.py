@@ -349,7 +349,7 @@ if __name__ == "__main__":
                     compared_client_metrics,
                     compared_server_metrics,
                 )
-                if test_result == "success":
+                if test_result != "success":
                     e2e_script_outcomes[j] = test_result
 
             else:
