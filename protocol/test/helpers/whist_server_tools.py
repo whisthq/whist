@@ -5,6 +5,7 @@ import os, sys
 from helpers.common.pexpect_tools import (
     expression_in_pexpect_output,
     wait_until_cmd_done,
+    get_command_exit_code,
 )
 
 from helpers.common.ssh_tools import (
