@@ -11,12 +11,13 @@ from datetime import datetime, timedelta
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def parse_metadata(folder_name):
+def parse_metadata(folder_name, verbose=False):
     """
     Obtain the metadata for the E2E streaming test from the experiment_metadata.json file in the logs folder
 
     Args:
         folder_name (str):  The path to the folder containing the logs and the experiment_metadata.json file
+        verbose (bool): Whether to print verbose logs to stdout
 
     Returns:
         On success:
@@ -27,7 +28,8 @@ def parse_metadata(folder_name):
     metadata_filename = os.path.join(folder_name, "experiment_metadata.json")
     experiment_metadata = None
     if not os.path.isfile(metadata_filename):
-        print(f"Metadata file {metadata_filename} does not exist")
+        if verbose:
+            print(f"Metadata file {metadata_filename} does not exist")
     else:
         with open(metadata_filename, "r") as metadata_file:
             experiment_metadata = json.load(metadata_file)
@@ -173,7 +175,9 @@ def download_latest_logs(
             continue
 
         # Get the metadata for the compared run. If it does not exist, continue
-        if not os.path.isfile(exp_meta_path) or not parse_metadata(os.path.join(".", branch_name)):
+        if not os.path.isfile(exp_meta_path) or not parse_metadata(
+            os.path.join(".", branch_name), verbose=False
+        ):
             os.system(
                 f"rm -f {compared_client_log_path} {compared_server_log_path} {exp_meta_path}"
             )
@@ -211,7 +215,7 @@ def download_latest_logs(
         counter += 1
         reason_for_discarding.append((subfolder_date, "network conditions mismatch"))
 
-    if counter > 1:
+    if counter > 1 and verbose:
         if counter > len(folders):
             print(
                 f"Warning: could not find any logs from branch {branch_name} with the required properties for comparison."
@@ -221,8 +225,8 @@ def download_latest_logs(
                 f"Comparing to {counter}° most recent {branch_name} logs (timestamp: {subfolder_date})"
             )
         assert counter == len(reason_for_discarding) + 1
-        if verbose:
-            for i in range(len(reason_for_discarding)):
-                print(
-                    f"\t {i + 1}° most recent {branch_name} logs (time: {reason_for_discarding[i][0]}) discarded. Reason: {reason_for_discarding[i][1]}"
-                )
+
+        for i in range(len(reason_for_discarding)):
+            print(
+                f"\t {i + 1}° most recent {branch_name} logs (time: {reason_for_discarding[i][0]}) discarded. Reason: {reason_for_discarding[i][1]}"
+            )

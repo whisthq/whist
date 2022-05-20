@@ -306,24 +306,34 @@ if __name__ == "__main__":
                 compared_server_log_path = os.path.join(
                     ".", compared_branch_name, "server", "server.log"
                 )
-
                 compared_client_metrics = {}
                 compared_server_metrics = {}
-                if not os.path.isfile(compared_client_log_path) or not os.path.isfile(
-                    compared_server_log_path
+                compared_experiment_metadata = parse_metadata(
+                    os.path.join(".", compared_branch_name)
+                )
+
+                if (
+                    not os.path.isfile(compared_client_log_path)
+                    or not os.path.isfile(compared_server_log_path)
+                    or not compared_experiment_metadata
                 ):
                     print(
-                        f"Could not parse {compared_branch_name} client/server logs. Unable to compare performance results to latest {compared_branch_name} measurements."
+                        f"{j+1}. Posting Experiment {j+1} results alone (could not find any logs from branch {compared_branch_name} with the required properties for comparison)"
                     )
                 else:
+                    experiment_start_time = (
+                        compared_experiment_metadata["start_time"]
+                        if compared_experiment_metadata.get("start_time")
+                        else "unknown"
+                    )
+                    print(
+                        f"{j+1}. Comparing Experiment {j+1} results to {compared_branch_name} run with timestamp {experiment_start_time}"
+                    )
+
                     # Extract the metric values and save them in a dictionary
                     compared_client_metrics, compared_server_metrics = extract_metrics(
                         compared_client_log_path, compared_server_log_path
                     )
-
-                compared_experiment_metadata = parse_metadata(
-                    os.path.join(".", compared_branch_name)
-                )
 
                 test_result = generate_comparison_table(
                     results_file,
@@ -337,8 +347,7 @@ if __name__ == "__main__":
                     compared_client_metrics,
                     compared_server_metrics,
                 )
-                if test_result != "success" and compared_branch_name == "dev":
-                    print("Experiment " + str(j + 1) + " is not a success")
+                if test_result != "success":
                     e2e_script_outcomes[j] = test_result
 
             else:
