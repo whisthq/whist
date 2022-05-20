@@ -2,7 +2,7 @@
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 # This is called via `./run-as-whist-user.sh`, which passes sentry environment in.
-case $(cat "$SENTRY_ENVIRONMENT") in
+case "$SENTRY_ENVIRONMENT" in
   dev|staging|prod)
     export SENTRY_ENVIRONMENT=${SENTRY_ENV}
     eval "$(sentry-cli bash-hook)"
@@ -15,20 +15,43 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-# Under certain (bad) circumstances, SingletonLock might be saved into the user's config. This is an issue,
-# as this prevents Chrome from running forevermore! Hence, we should remove this file when we launch the
-# browser for the first time each session. You can think of this as effectively moving the locking mechansim
-# out of the backed-up Chrome config folder and into a location that will not persist when the instance dies.
-GOOGLE_CHROME_SINGLETON_LOCK=/home/whist/.config/google-chrome/SingletonLock
-WHIST_CHROME_SINGLETON_LOCK=/home/whist/.config/WhistChromeSingletonLock
+USER_DATA_DIR="${1:-$HOME/.config/google-chrome}"
 
-if [[ -n $WHIST_CHROME_SINGLETON_LOCK ]]; then
-  touch $WHIST_CHROME_SINGLETON_LOCK
-  rm -f $GOOGLE_CHROME_SINGLETON_LOCK
+# Under certain (bad) circumstances, SingletonLock might be saved into the user's config. This is an issue,
+# as this prevents Chrome from running forevermore! Hence, we should remove this file before we launch the
+# browser for the first time each session.
+GOOGLE_CHROME_SINGLETON_LOCK=$USER_DATA_DIR/SingletonLock
+WHIST_CLEARED_SINGLETON_LOCK=/home/whist/.config/WhistClearedSingletonLock
+
+if [[ ! -f $WHIST_CLEARED_SINGLETON_LOCK ]]; then
+  touch $WHIST_CLEARED_SINGLETON_LOCK
+  rm -f "$GOOGLE_CHROME_SINGLETON_LOCK"
 fi
 
+DEFAULT_PROFILE=$USER_DATA_DIR/Default
+PREFERENCES=$DEFAULT_PROFILE/Preferences
+PREFERENCES_UPDATE=$DEFAULT_PROFILE/Preferences.update
+# Initialize empty preferences file if one doesn't exist
+if [[ ! -f $PREFERENCES ]]; then
+  mkdir -p "$DEFAULT_PROFILE"
+  echo {} > "$PREFERENCES"
+fi
+
+echo {} > "$PREFERENCES_UPDATE"
+
+function add_preferences_jq() {
+  jq "$1" < "$PREFERENCES_UPDATE" > "$PREFERENCES_UPDATE.new"
+  mv "$PREFERENCES_UPDATE.new" "$PREFERENCES_UPDATE"
+}
+
+function commit_preferences() {
+  jq -s '.[0] * .[1]' "$PREFERENCES" "$PREFERENCES_UPDATE" > "$PREFERENCES.new"
+  rm "$PREFERENCES_UPDATE"
+  mv "$PREFERENCES.new" "$PREFERENCES"
+}
+
 # Set the Chrome language
-echo {} | jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'", "selected_languages": "'"${BROWSER_LANGUAGES}"'"}' > /home/whist/.config/google-chrome/Default/Preferences
+add_preferences_jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'", "selected_languages": "'"${BROWSER_LANGUAGES}"'"}'
 
 # Notes on Chromium flags:
 #
@@ -114,10 +137,7 @@ flags+=("$INITIAL_URL")
 # and disable smooth scrolling.
 if [[ "$CLIENT_OS" == "darwin" || "$CLIENT_OS" == "" ]]; then
   # Edit the Chrome Preferences Config file to use the default Mac fonts
-  echo {} | \
-    jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}' \
-    > /home/whist/.config/google-chrome/Default/Preferences
-
+  add_preferences_jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}'
   # Disable smooth scrolling, which we handle via uinput instead
   flags+=("--disable-smooth-scrolling")
 elif [[ "$CLIENT_OS" == "linux" ]]; then
@@ -125,10 +145,10 @@ elif [[ "$CLIENT_OS" == "linux" ]]; then
   flags+=("--disable-smooth-scrolling")
 else
   # Edit the Chrome Preferences Config file to use the default Windows/Ubuntu fonts
-  echo {} | \
-    jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}' \
-    > /home/whist/.config/google-chrome/Default/Preferences
+  add_preferences_jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}'
 fi
+
+commit_preferences
 
 # Load D-Bus configurations; necessary for Chrome
 # The -10 comes from the display ID
