@@ -774,17 +774,35 @@ static void init_backtrace_handler(void) {
     struct sigaction sa = {0};
     sa.sa_handler = &unix_crash_handler;
     for (int i = 1; i < NSIG; i++) {
-        // TODO: We should gracefully exit on SIGTERM
-        // We do nothing on SIGCHLD, SIGPIPE, and SIGWINCH
-        // We crash on anything else
-        if (i != SIGTERM && i != SIGCHLD && i != SIGPIPE && i != SIGWINCH) {
-            sigaction(i, &sa, NULL);
+        switch (i) {
+            case SIGINT:
+            case SIGTERM: {
+                // TODO: move over the signal handler from
+                // `server/main.c::sig_handler()`, that
+                // gracefully exits the protocol
+                break;
+            }
+            case SIGCHLD:
+            case SIGWINCH: {
+                // Ignore these signals
+                break;
+            }
+            case SIGPIPE: {
+                // Ignore this signal, but make sure to restart it
+                // to return `EPIPE` instead of `EINTR`
+                struct sigaction sa_pipe = {
+                    .sa_handler = SIG_IGN,
+                    .sa_flags = SA_RESTART,
+                };
+                sigaction(i, &sa_pipe, NULL);
+                break;
+            }
+            default: {
+                // Crash handler
+                sigaction(i, &sa, NULL);
+                break;
+            }
         }
     }
-    // Ignore SIGPIPE, just let the syscall return EPIPE
-    sa.sa_handler = SIG_IGN;
-    // Without restarting the syscall, it'll forcefully return EINTR
-    sa.sa_flags = SA_RESTART;
-    sigaction(SIGPIPE, &sa, NULL);
 #endif
 }

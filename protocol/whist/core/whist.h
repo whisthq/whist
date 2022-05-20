@@ -80,8 +80,6 @@ Defines
 
 #define UNUSED(var) (void)(var)
 
-#define CAPTURE_SPECIAL_WINDOWS_KEYS false
-
 #define BASE_UDP_PORT 32263
 #define BASE_TCP_PORT 32273
 
