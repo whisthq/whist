@@ -182,8 +182,19 @@ def build_client_on_instance(
     print(f"Building the dev client mandelbox in {cmake_build_type} mode ...")
     command = f"cd ~/whist/mandelboxes && ./build.sh development/client --{cmake_build_type} | tee ~/client_mandelbox_build.log"
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-    print("Finished building the dev client mandelbox on the EC2 instance")
+    build_client_output = wait_until_cmd_done(
+        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+    )
+    build_client_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci)
+
+    # Check if build succeeded
+    if build_client_exit_code == 0 and expression_in_pexpect_output(
+        "All images built successfully!", build_client_output
+    ):
+        print("Finished building the dev client mandelbox on the EC2 instance")
+    else:
+        # If building the development/client mandelbox fails, trigger a fatal error.
+        exit_with_error("Could not build the development/client mandelbox on the client instance!")
 
 
 def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):

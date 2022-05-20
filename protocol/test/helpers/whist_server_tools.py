@@ -151,8 +151,18 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type, 
     print(f"Building the server mandelbox in {cmake_build_type} mode ...")
     command = f"cd ~/whist/mandelboxes && ./build.sh browsers/chrome --{cmake_build_type} | tee ~/server_mandelbox_build.log"
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-    print("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
+    build_server_output = wait_until_cmd_done(
+        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+    )
+    build_server_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci)
+    # Check if build succeeded
+    if build_server_exit_code == 0 and expression_in_pexpect_output(
+        "All images built successfully!", build_server_output
+    ):
+        print("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
+    else:
+        # If building the browsers/chrome mandelbox fails, trigger a fatal error.
+        exit_with_error("Could not build the browsers/chrome mandelbox on the server instance!")
 
 
 def run_server_on_instance(pexpect_process):
