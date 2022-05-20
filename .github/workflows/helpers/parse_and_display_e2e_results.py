@@ -234,9 +234,9 @@ if __name__ == "__main__":
             ] = human_readable_network_conditions
 
         experiments.append(experiment_entry)
-        failed_notice = " FAILED" if client_metrics is None or server_metrics is None else ""
+        failed_notice = " FAILED!" if client_metrics is None or server_metrics is None else ":"
         print(
-            f"\t+ Experiment {i+1}{failed_notice}: Timestamp = {short_dirname} Network conditions = `{human_readable_network_conditions}`"
+            f"\t+ Experiment {i+1}({short_dirname}){failed_notice} Network conditions = `{human_readable_network_conditions}`"
         )
 
     # Add entries for experiments that failed or were skipped
