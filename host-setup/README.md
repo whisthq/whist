@@ -12,7 +12,7 @@ This folder also contains our configuration files for Filebeat, which we use for
 
 To set up your personal Whist development instance:
 
-- Create an Ubuntu Server 20.04 `g4dn.xlarge` EC2 instance on the AWS region of your choosing (the geographically closest to you), with at least 32 GB of storage (else you will run out of storage for the Whist protocol and base container image).
+- Create an Ubuntu Server 20.04 `g4dn.xlarge` EC2 instance on the AWS region of your choosing (the geographically closest to you), with at least 64 GB of storage (else you will run out of storage for the Whist protocol and base container image).
 
   - Note that the 32 GB of persistent, EBS storage should be in addition to the built-in 125 GB of ephemeral storage! The ephemeral storage will not persist across reboots, so at this moment we do not use it for anything on personal development instances.
 
