@@ -88,7 +88,7 @@ func StopWaitingMandelboxes(dockerClient dockerclient.CommonAPIClient) {
 	for _, v := range tracker {
 		if !v.GetConnectedStatus() {
 			// Gracefully shut down the mandelbox Docker container
-			stopTimeout := 30 * time.Second
+			stopTimeout := 60 * time.Second
 			err := dockerClient.ContainerStop(v.GetContext(), string(v.GetDockerID()), &stopTimeout)
 
 			if err != nil {
