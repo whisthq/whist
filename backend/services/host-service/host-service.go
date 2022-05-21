@@ -314,6 +314,13 @@ func main() {
 	// statements in main().
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
+
+	// Start Docker
+	dockerClient, err := createDockerClient()
+	if err != nil {
+		logger.Panic(globalCancel, err)
+	}
+
 	defer func() {
 		// This function cleanly shuts down the Whist Host-Service. Note that
 		// besides the host machine itself being forcefully shut down, this
@@ -337,6 +344,11 @@ func main() {
 
 		// Cancel the global context, if it hasn't already been cancelled.
 		globalCancel()
+
+		// Clean all the waiting mandelboxes so they don't block the shut down.
+		// when this function exits. Stop after we cancel the global context so
+		// that subscriptions are stopped and we don't trigger any database event.
+		mandelboxData.StopWaitingMandelboxes(dockerClient)
 
 		// Wait for all goroutines to stop, so we can run the rest of the cleanup
 		// process.
@@ -397,16 +409,6 @@ func main() {
 	initializeAppArmor(globalCancel)
 
 	initializeFilesystem(globalCancel)
-
-	// Start Docker
-	dockerClient, err := createDockerClient()
-	if err != nil {
-		logger.Panic(globalCancel, err)
-	}
-
-	// Clean all the waiting mandelboxes so they don't block the shut down.
-	// when this function exits.
-	defer mandelboxData.StopWaitingMandelboxes(dockerClient)
 
 	if err := dbdriver.RegisterInstance(); err != nil {
 		// If the instance starts up and sees its status as unresponsive or
