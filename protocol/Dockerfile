@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 ARG uid
 
 # This Dockerfile is used to build the Whist protocol server for Linux Ubuntu 20.04.
