@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     xz-utils \
     apt-transport-https \
     ca-certificates \
+    libssl-dev \
     gnupg \
     software-properties-common \
     && apt-get autoremove -y \
