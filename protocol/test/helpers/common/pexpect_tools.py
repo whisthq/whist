@@ -44,7 +44,7 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_o
         exit_with_error("Error: pexpect process timed out! Check the logs for troubleshooting.")
     elif result == 2:
         exit_with_error(
-            "Error: pexpect process encountered an unexpected exception! Check the logs for troubleshooting."
+            "Error: pexpect process caught an EOF exception! Check the logs for troubleshooting."
         )
 
     # Clean stdout output and save it in a list, one line per element. We need to do this before calling expect
