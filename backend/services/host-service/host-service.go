@@ -165,11 +165,13 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 	transportMapLock.Unlock()
 
 	// Gracefully shut down the mandelbox Docker container
-	stopTimeout := 30 * time.Second
-	err = dockerClient.ContainerStop(mandelbox.GetContext(), id, &stopTimeout)
+	stopTimeout := 15 * time.Second
+	stopCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
+	err = dockerClient.ContainerStop(stopCtx, id, &stopTimeout)
 	if err != nil {
-		logger.Errorf("Failed to gracefully stop mandelbox docker container.")
+		logger.Errorf("Failed to gracefully stop mandelbox docker container. Err: %v", err)
 		metrics.Increment("ErrorRate")
 	}
 
