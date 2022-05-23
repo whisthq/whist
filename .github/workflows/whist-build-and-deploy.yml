@@ -952,7 +952,8 @@ jobs:
     # Only run client-apps deployment if none of the previous steps failed
     if: |
       always() &&
-      (needs.client-applications-retrieve-version-number.result == 'success')
+      (needs.client-applications-retrieve-version-number.result == 'success') &&
+      (needs.client-applications-publish-build-s3.result == 'success')
 
     steps:
       - name: Checkout Git Repository
