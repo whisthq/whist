@@ -466,7 +466,6 @@ bool prev_rusage_initialized;
 #endif
 
 double get_cpu_usage(double time_elapsed) {
-    // char* cpu_usage = NULL;
     double cpu_usage_pct = -1.0;
 #ifndef _WIN32
     if (!prev_rusage_initialized) {
@@ -487,6 +486,5 @@ double get_cpu_usage(double time_elapsed) {
 #else  // _WIN32
     LOG_WARNING("get_cpu_usage() not implemented for this platform");
 #endif
-    // free(cpu_usage);
     return cpu_usage_pct;
 }
