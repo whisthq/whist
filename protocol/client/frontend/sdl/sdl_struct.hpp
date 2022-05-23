@@ -84,4 +84,53 @@ typedef struct SDLFrontendContext {
     bool window_has_shown;
 } SDLFrontendContext;
 
+// D3D11 helper functions (Windows only).
+
+/**
+ * Wait for asynchronous rendering to finish.
+ *
+ * The D3D11 SDL render path is entirely asynchronous, with no
+ * synchronisation points at all.  If we want to do anything on another
+ * thread (using a different device context), we need some way to ensure
+ * that a render involving a texture has completed before we can touch
+ * it elsewhere.
+ *
+ * @param context  Frontend context containing renderer to wait for.
+ */
+void sdl_d3d11_wait(SDLFrontendContext* context);
+
+/**
+ * Create an SDL texture from a D3D11 texture.
+ *
+ * Moves a D3D11 texture from the decode device to the render device and
+ * wraps it in an SDL texture.  This never copies the actual data.
+ *
+ * @param context  Frontend context containing the devices.
+ * @param frame    Frame containing the D3D11 texture to use.
+ * @return  The new SDL texture.
+ */
+SDL_Texture* sdl_d3d11_create_texture(SDLFrontendContext* context, AVFrame* frame);
+
+/**
+ * Initialise D3D11 devices for render and decode.
+ *
+ * Creates the two connected devices and device contexts to use for
+ * rendering (with SDL) and decoding (with FFmpeg).
+ *
+ * @param context  Frontend context containing the SDL renderer.
+ * @return  Success or error code.  If this fails, rendering will have
+ *          to copy frames rather than using textures directly.
+ */
+WhistStatus sdl_d3d11_init(SDLFrontendContext* context);
+
+/**
+ * Destroy D3D11 devices and clean up.
+ *
+ * In a debug build this also enumerates all live D3D11 objects to
+ * detect memory leaks.
+ *
+ * @param context  Frontend context containing the devices.
+ */
+void sdl_d3d11_destroy(SDLFrontendContext* context);
+
 #endif // WHIST_CLIENT_FRONTEND_SDL_STRUCT_H

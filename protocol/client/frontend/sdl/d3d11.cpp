@@ -38,8 +38,8 @@ typedef struct SDLRenderD3D11Context {
     ID3D11DeviceContext *video_context;
 } SDLRenderD3D11Context;
 
-void sdl_d3d11_wait(void* context) {
-    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)((SDLFrontendContext*) context)->video.private_data;
+void sdl_d3d11_wait(SDLFrontendContext* context) {
+    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)context->video.private_data;
     HRESULT hr;
 
     D3D11_QUERY_DESC desc = {
@@ -74,9 +74,10 @@ void sdl_d3d11_wait(void* context) {
     query->Release();
 }
 
-SDL_Texture *sdl_d3d11_create_texture(void* raw_context, AVFrame *frame) {
-    SDLFrontendContext* context = (SDLFrontendContext*)raw_context;
+SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext* context, AVFrame *frame) {
     SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)context->video.private_data;
+
+    FATAL_ASSERT(frame->format == AV_PIX_FMT_D3D11);
 
     // This is a pointer to a texture, but it exists on the video decode
     // device rather than the render device.  Make a new reference on
@@ -109,8 +110,7 @@ SDL_Texture *sdl_d3d11_create_texture(void* raw_context, AVFrame *frame) {
     }
 
     ID3D11Texture2D *render_texture;
-    hr = device1->OpenSharedResource1(shared_handle, __uuidof(ID3D11Texture2D),
-                                           (void **)&render_texture);
+    hr = device1->OpenSharedResource1(shared_handle, IID_PPV_ARGS(&render_texture));
     device1->Release();
     CloseHandle(shared_handle);
     if (FAILED(hr)) {
@@ -143,8 +143,7 @@ SDL_Texture *sdl_d3d11_create_texture(void* raw_context, AVFrame *frame) {
     return sdl_texture;
 }
 
-WhistStatus sdl_d3d11_init(void* raw_context) {
-    SDLFrontendContext* context = (SDLFrontendContext*)raw_context;
+WhistStatus sdl_d3d11_init(SDLFrontendContext* context) {
     int err;
     HRESULT hr;
 
@@ -220,8 +219,7 @@ WhistStatus sdl_d3d11_init(void* raw_context) {
     return WHIST_SUCCESS;
 }
 
-void sdl_d3d11_destroy(void* raw_context) {
-    SDLFrontendContext* context = (SDLFrontendContext*)raw_context;
+void sdl_d3d11_destroy(SDLFrontendContext* context) {
     SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)context->video.private_data;
 
     if (!d3d11) {
@@ -251,7 +249,7 @@ void sdl_d3d11_destroy(void* raw_context) {
     // In debug mode, enumerate all live D3D11 objects since we should
     // have destroyed them all by now.
     IDXGIDebug *dxgi_debug;
-    HRESULT hr = DXGIGetDebugInterface1(0, __uuidof(IDXGIDebug), (void **)&dxgi_debug);
+    HRESULT hr = DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgi_debug));
     if (FAILED(hr)) {
         // Ignore - probably missing some debug feature (e.g. being run
         // on a device without the SDK installed).
