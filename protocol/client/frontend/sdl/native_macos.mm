@@ -58,9 +58,10 @@ int sdl_native_set_titlebar_color(SDL_Window *window, const WhistRGBColor *color
 
     // Use color space for current monitor for perfect color matching
     [native_window
-        setBackgroundColor:[NSColor colorWithColorSpace:[[native_window screen] colorSpace]
+        setBackgroundColor:[NSColor colorWithColorSpace:[[NSColorSpace alloc] initWithCGColorSpace:CGColorSpaceCreateWithName(kCGColorSpaceSRGB)]
                                              components:&components[0]
                                                   count:4]];
+
     return 0;
 }
 
