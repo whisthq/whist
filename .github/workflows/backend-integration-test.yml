@@ -37,8 +37,6 @@ jobs:
   backend-integration-test:
     name: "Backend Integration Test"
     runs-on: ubuntu-20.04
-    env:
-      INSTANCE_ID: "i-0cbb4d01e2e7ca096"
 
     steps:
       # Prevent two instances of this workflow from running the steps below simultaneously
@@ -98,9 +96,7 @@ jobs:
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
             --cmake-build-type dev \
             --testing-time 60 \
-            --region-name us-east-1 \
             --use-two-instances=false \
-            --existing-server-instance-id "$INSTANCE_ID" \
             --leave-instances-on=false
 
       - name: Upload logs to S3 for debugging purposes
