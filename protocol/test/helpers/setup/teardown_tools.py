@@ -57,6 +57,10 @@ def get_session_id(pexpect_process, role, session_id_filename="/whist/resourceMa
     # (check wait_until_cmd_done docstring for more details about handling color bash stdout)
     running_in_ci = True
 
+    # Clear non-ASCII output in docker shell
+    pexpect_process.sendline(" ")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci=running_in_ci)
+
     # Check if the session_id file exists
     pexpect_process.sendline(f"test -f {session_id_filename}")
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci=running_in_ci)
@@ -142,9 +146,9 @@ def extract_logs_from_mandelbox(
         os.path.join("/var/log/whist", session_id, "protocol-err.log"),
         os.path.join("/var/log/whist", session_id, "protocol-out.log"),
         # Chrome preferences
-        "/home/whist/.config/google-chrome/Preferences",
-        "/home/whist/.config/google-chrome/Preferences.update",
-        "/home/whist/.config/google-chrome/Preferences.new",
+        "/home/whist/.config/google-chrome/Default/Preferences",
+        "/home/whist/.config/google-chrome/Default/Preferences.update",
+        "/home/whist/.config/google-chrome/Default/Preferences.new",
         # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
         "/var/log/whist/simulated_scrolling.log",
     ]

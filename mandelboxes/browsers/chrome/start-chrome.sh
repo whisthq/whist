@@ -34,6 +34,9 @@ PREFERENCES_UPDATE=$DEFAULT_PROFILE/Preferences.update
 # Initialize empty preferences file if one doesn't exist
 if [[ ! -f $PREFERENCES ]]; then
   mkdir -p "$DEFAULT_PROFILE"
+fi
+
+if [[ ! -s $PREFERENCES ]]; then
   echo {} > "$PREFERENCES"
 fi
 
