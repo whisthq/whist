@@ -582,6 +582,7 @@ if __name__ == "__main__":
         server_cmd,
         server_log,
         server_metrics_file,
+        region_name,
         existing_server_instance_id,
         server_pexpect_process,
         server_hs_process,

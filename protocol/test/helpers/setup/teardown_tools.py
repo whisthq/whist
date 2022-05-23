@@ -179,6 +179,7 @@ def complete_experiment_and_save_results(
     server_ssh_cmd,
     server_log,
     server_metrics_file,
+    region_name,
     use_existing_server_instance,
     server_mandelbox_pexpect_process,
     server_hs_process,
@@ -227,6 +228,7 @@ def complete_experiment_and_save_results(
         server_log (file):  The file to be used to dump the server-side monitoring logs
         server_metrics_file (file): The filepath to the file (that we expect to see) containing the server metrics.
                                     We will use this filepath to check that the file exists.
+        region_name (str): The AWS region hosting the EC2 instance(s)
         use_existing_server_instance (str): the ID of the pre-existing AWS EC2 instance that was used to run the test.
                                             This parameter is an empty string if we are not reusing existing instances
         server_mandelbox_pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
@@ -411,6 +413,7 @@ def complete_experiment_and_save_results(
     else:
         # Save instance IDs to file for reuse by later runs
         with open("instances_left_on.txt", "w") as instances_file:
+            instances_file.write(f"{region_name}\n")
             instances_file.write(f"{server_instance_id}\n")
             if client_instance_id != server_instance_id:
                 instances_file.write(f"{client_instance_id}\n")
