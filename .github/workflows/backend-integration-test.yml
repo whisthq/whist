@@ -39,14 +39,6 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      # Prevent two instances of this workflow from running the steps below simultaneously
-      - name: Turnstyle
-        uses: rpadaki/turnstyle@v1.1
-        with:
-          same-branch-only: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Checkout Git Repository
         uses: actions/checkout@v3
 
