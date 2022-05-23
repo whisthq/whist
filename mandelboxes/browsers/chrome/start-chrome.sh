@@ -46,8 +46,8 @@ function add_preferences_jq() {
 
 function commit_preferences_jq() {
   jq -cs '.[0] * .[1]' "$PREFERENCES" "$PREFERENCES_UPDATE" > "$PREFERENCES.new"
-  rm "$PREFERENCES_UPDATE"
-  mv "$PREFERENCES.new" "$PREFERENCES"
+  #rm "$PREFERENCES_UPDATE"
+  #mv "$PREFERENCES.new" "$PREFERENCES"
 }
 
 # Set the Chrome language
