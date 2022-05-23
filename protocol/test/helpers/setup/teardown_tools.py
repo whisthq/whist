@@ -153,7 +153,7 @@ def extract_logs_from_mandelbox(
         logfiles.append("/home/whist/.config/google-chrome/Default/Preferences")
         logfiles.append("/home/whist/.config/google-chrome/Default/Preferences.update"),
         logfiles.append("/home/whist/.config/google-chrome/Default/Preferences.new"),
-    
+
     for file_path in logfiles:
         command = f"docker cp {docker_id}:{file_path} ~/perf_logs/{role}/"
         pexpect_process.sendline(command)
