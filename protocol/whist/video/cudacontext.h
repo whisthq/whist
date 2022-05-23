@@ -36,6 +36,8 @@ typedef CUresult (*CUCMEMALLOCPROC)(CUdeviceptr* dptr, size_t bytesize);
 extern CUCMEMALLOCPROC cu_mem_alloc_ptr;
 typedef CUresult (*CUMEMFREEPROC)(CUdeviceptr dptr);
 extern CUMEMFREEPROC cu_mem_free_ptr;
+typedef CUresult (*CUMEMCPYDTOHV2PROC)(void* dst_host, CUdeviceptr src_device, size_t byte_count);
+extern CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr;
 
 /*
 ============================
