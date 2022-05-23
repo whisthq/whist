@@ -145,7 +145,7 @@ def extract_logs_from_mandelbox(
         "/var/log/whist/update_xorg_conf-out.log",
         os.path.join("/var/log/whist", session_id, "protocol-err.log"),
         os.path.join("/var/log/whist", session_id, "protocol-out.log"),
-        # Chrome preferences
+        # Chrome preferences if they exist (only first file should exist)
         "/home/whist/.config/google-chrome/Default/Preferences",
         "/home/whist/.config/google-chrome/Default/Preferences.update",
         "/home/whist/.config/google-chrome/Default/Preferences.new",
