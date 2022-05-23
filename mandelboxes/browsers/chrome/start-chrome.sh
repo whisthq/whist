@@ -40,12 +40,12 @@ fi
 echo {} > "$PREFERENCES_UPDATE"
 
 function add_preferences_jq() {
-  jq "$1" < "$PREFERENCES_UPDATE" > "$PREFERENCES_UPDATE.new"
+  jq -c "$1" < "$PREFERENCES_UPDATE" > "$PREFERENCES_UPDATE.new"
   mv "$PREFERENCES_UPDATE.new" "$PREFERENCES_UPDATE"
 }
 
-function commit_preferences() {
-  jq -s '.[0] * .[1]' "$PREFERENCES" "$PREFERENCES_UPDATE" > "$PREFERENCES.new"
+function commit_preferences_jq() {
+  jq -cs '.[0] * .[1]' "$PREFERENCES" "$PREFERENCES_UPDATE" > "$PREFERENCES.new"
   rm "$PREFERENCES_UPDATE"
   mv "$PREFERENCES.new" "$PREFERENCES"
 }
@@ -148,7 +148,7 @@ else
   add_preferences_jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}'
 fi
 
-commit_preferences
+commit_preferences_jq
 
 # Load D-Bus configurations; necessary for Chrome
 # The -10 comes from the display ID
