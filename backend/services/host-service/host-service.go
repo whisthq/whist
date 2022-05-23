@@ -165,7 +165,7 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 	transportMapLock.Unlock()
 
 	// Gracefully shut down the mandelbox Docker container
-	stopTimeout := 30 * time.Second
+	stopTimeout := 15 * time.Second
 	stopCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
