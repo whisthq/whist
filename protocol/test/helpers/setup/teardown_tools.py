@@ -57,10 +57,6 @@ def get_session_id(pexpect_process, role, session_id_filename="/whist/resourceMa
     # (check wait_until_cmd_done docstring for more details about handling color bash stdout)
     running_in_ci = True
 
-    # Clear non-ASCII output in docker shell
-    pexpect_process.sendline(" ")
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci=running_in_ci)
-
     # Check if the session_id file exists
     pexpect_process.sendline(f"test -f {session_id_filename}")
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci=running_in_ci)

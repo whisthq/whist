@@ -97,4 +97,15 @@ def get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci):
     """
     pexpect_process.sendline("echo $?")
     output = wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=True)
-    return int(output[1])
+    filtered_output = [
+        x
+        for x in output
+        if "~" not in x
+        and "\\" not in x
+        and "?" not in x
+        and ";" not in x
+        and pexpect_prompt not in x
+    ]
+    if len(filtered_output) == 0 or not filtered_output[-1].isnumeric:
+        return -1
+    return int(filtered_output[-1])
