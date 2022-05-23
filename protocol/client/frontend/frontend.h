@@ -208,5 +208,6 @@ FRONTEND_API(FRONTEND_HEADER_DECLARATION)
 
 WhistFrontend* whist_frontend_create(const char* type);
 unsigned int whist_frontend_get_id(WhistFrontend* frontend);
+const char* whist_frontend_event_type_string(FrontendEventType type);
 
 #endif  // WHIST_CLIENT_FRONTEND_H
