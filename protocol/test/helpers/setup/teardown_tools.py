@@ -144,6 +144,12 @@ def extract_logs_from_mandelbox(
         # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
         "/var/log/whist/simulated_scrolling.log",
     ]
+    if role == "server":
+        # Download Chrome preferences if they exist (only first file should exist)
+        logfiles.append("/home/whist/.config/google-chrome/Default/Preferences")
+        logfiles.append("/home/whist/.config/google-chrome/Default/Preferences.update"),
+        logfiles.append("/home/whist/.config/google-chrome/Default/Preferences.new"),
+
     for file_path in logfiles:
         command = f"docker cp {docker_id}:{file_path} ~/perf_logs/{role}/"
         pexpect_process.sendline(command)
