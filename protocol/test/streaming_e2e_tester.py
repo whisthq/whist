@@ -85,6 +85,7 @@ parser.add_argument(
     the key-pair that you pass must be valid on all AWS regions.",
     type=str,
     choices=[
+        "",
         "us-east-1",
         "us-east-2",
         "us-west-1",
