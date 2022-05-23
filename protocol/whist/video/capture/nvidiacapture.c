@@ -316,6 +316,16 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
         return 0;
     }
 
+    uint8_t top_left_corner[4];
+    CUresult copy_status = cu_memcpy_dtoh_v2_ptr(top_left_corner, (CUdeviceptr)p_rgb_texture, 4);
+    if (copy_status != CUDA_SUCCESS) {
+        LOG_WARNING("Failed to fetch top-left-corner from CUDA RGB texture: %d.", copy_status);
+    } else {
+        device->corner_color.red = top_left_corner[2];
+        device->corner_color.green = top_left_corner[1];
+        device->corner_color.blue = top_left_corner[0];
+    }
+
     NppiSize roi;
     roi.width = frame_info.dwWidth;
     roi.height = frame_info.dwHeight;

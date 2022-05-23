@@ -33,13 +33,11 @@ Defines
 typedef CUresult (*CUINITPROC)(unsigned int flags);
 typedef CUresult (*CUDEVICEGETPROC)(CUdevice* device, int ordinal);
 typedef CUresult (*CUCTXCREATEV2PROC)(CUcontext* pctx, unsigned int flags, CUdevice dev);
-typedef CUresult (*CUMEMCPYDTOHV2PROC)(void* dst_host, CUdeviceptr src_device, size_t byte_count);
 typedef CUresult (*CUCTXDESTROYV2PROC)(CUcontext ctx);
 
 static CUINITPROC cu_init_ptr = NULL;
 static CUDEVICEGETPROC cu_device_get_ptr = NULL;
 static CUCTXCREATEV2PROC cu_ctx_create_v2_ptr = NULL;
-static CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
 static CUCTXDESTROYV2PROC cu_ctx_destroy_v2_ptr = NULL;
 static bool cuda_initialized = false;
 
@@ -52,6 +50,7 @@ CUCTXPOPCURRENTPROC cu_ctx_pop_current_ptr = NULL;
 CUCTXSYNCHRONIZEPROC cu_ctx_synchronize_ptr = NULL;
 CUCMEMALLOCPROC cu_mem_alloc_ptr = NULL;
 CUMEMFREEPROC cu_mem_free_ptr = NULL;
+CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
 
 /*
 ============================

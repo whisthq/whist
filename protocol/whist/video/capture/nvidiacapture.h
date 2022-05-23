@@ -41,6 +41,8 @@ typedef struct {
 
     // The gpu texture of the most recently captured frame
     CUdeviceptr p_gpu_texture;
+    // Colour of the top-left-corner of the texture.
+    WhistRGBColor corner_color;
 
     // Internal Nvidia API structs
     NVFBC_SESSION_HANDLE fbc_handle;
