@@ -9,6 +9,7 @@ import {
   takeUntil,
   switchMap,
 } from "rxjs/operators"
+import { gzipSync, constants } from "zlib"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/main/utils/flows"
@@ -74,31 +75,34 @@ export default flow(
           isNewConfigToken: t.isNewConfigToken,
           mandelboxID: c.mandelboxID,
           importedData: t.importedData,
-          jsonData: JSON.stringify({
-            dark_mode: t.darkMode,
-            desired_timezone: t.timezone,
-            client_dpi: screen.getPrimaryDisplay()?.scaleFactor * 96,
-            restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
-            kiosk_mode: false, // Kiosk mode fullscreens server-side Chrome which we don't want
-            initial_key_repeat: t.initialKeyRepeat,
-            key_repeat: t.keyRepeat,
-            ...(appEnvironment === WhistEnvironments.LOCAL && {
-              local_client: true,
+          jsonData: gzipSync(
+            JSON.stringify({
+              dark_mode: t.darkMode,
+              desired_timezone: t.timezone,
+              client_dpi: screen.getPrimaryDisplay()?.scaleFactor * 96,
+              restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
+              kiosk_mode: false, // Kiosk mode fullscreens server-side Chrome which we don't want
+              initial_key_repeat: t.initialKeyRepeat,
+              key_repeat: t.keyRepeat,
+              ...(appEnvironment === WhistEnvironments.LOCAL && {
+                local_client: true,
+              }),
+              user_agent: getUserAgent(), // This spoofs user agent on server-side Chrome to match the current OS
+              longitude: t.geolocation?.longitude,
+              latitude: t.geolocation?.latitude,
+              ...(t.userLanguages?.systemLanguages?.length > 0 && {
+                system_languages: t.userLanguages?.systemLanguages,
+              }),
+              ...(t.userLanguages?.browserLanguages?.length > 0 && {
+                browser_languages: t.userLanguages?.browserLanguages,
+              }),
+              ...(Object.keys(t.userLocale ?? {})?.length > 0 && {
+                user_locale: t.userLocale,
+              }),
+              client_os: process.platform,
             }),
-            user_agent: getUserAgent(), // This spoofs user agent on server-side Chrome to match the current OS
-            longitude: t.geolocation?.longitude,
-            latitude: t.geolocation?.latitude,
-            ...(t.userLanguages?.systemLanguages?.length > 0 && {
-              system_languages: t.userLanguages?.systemLanguages,
-            }),
-            ...(t.userLanguages?.browserLanguages?.length > 0 && {
-              browser_languages: t.userLanguages?.browserLanguages,
-            }),
-            ...(Object.keys(t.userLocale ?? {})?.length > 0 && {
-              user_locale: t.userLocale,
-            }),
-            client_os: process.platform,
-          }), // Data to send through the JSON transport
+            { level: constants.Z_BEST_COMPRESSION }
+          ).toString("base64"), // Data to send through the JSON transport
         }))
       )
     )
