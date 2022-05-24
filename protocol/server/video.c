@@ -136,6 +136,8 @@ static int32_t create_new_device(WhistServerState* state, WhistTimer* statistics
 
     LOG_INFO("Created a new Capture Device of dimensions %dx%d with DPI %d", (*device)->width,
              (*device)->height, state->client_dpi);
+    // use this device's display for getting and manipulating windows
+    set_window_info_device(*device);
 
     // If an encoder is pending, while capture_device is updating, then we should wait
     // for it to be created
@@ -188,7 +190,7 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
     frame->codec_type = encoder->codec_type;
     frame->is_empty_frame = false;
     frame->is_window_visible = true;
-    memcpy(frame->window_data, device->window_data, sizeof(frame->window_data));
+    memcpy(frame->window_data, device->window_data, sizeof(WhistWindow) * MAX_WINDOWS);
     frame->corner_color = device->corner_color;
     frame->server_timestamp = server_timestamp;
     frame->client_input_timestamp = client_input_timestamp;
