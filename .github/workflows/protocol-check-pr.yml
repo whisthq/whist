@@ -73,11 +73,11 @@ jobs:
       ###################################################################################
       ################################ WINDOWS STEPS START ##############################
 
+      # We hardcode cppcheck version to 2.7, since version 2.8 is broken on Chocolatey starting May 24, 2022
       - name: Install Chocolatey dependencies on Windows GHA Machine
         if: runner.os == 'Windows'
-        uses: crazy-max/ghaction-chocolatey@v1
-        with:
-          args: install cppcheck ninja
+        shell: powershell
+        run: (choco install cppcheck --version 2.7) -and (choco install ninja)
 
       - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
         if: runner.os == 'Windows'
