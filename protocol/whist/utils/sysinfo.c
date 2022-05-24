@@ -461,8 +461,8 @@ void print_hard_drive_info(void) {
 }
 
 #ifndef _WIN32
-struct rusage prev_rusage;
-bool prev_rusage_initialized;
+static struct rusage prev_rusage;
+static bool prev_rusage_initialized;
 #endif
 
 double get_cpu_usage(double time_elapsed) {
