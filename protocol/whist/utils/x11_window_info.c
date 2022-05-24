@@ -138,23 +138,22 @@ void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
 }
 
 // TODO: delete this
-void get_window_attributes(CaptureDevice* capture_device, WhistWindow whist_window,
-                           WhistWindow* d) {
-    Window w = (Window) whist_window.id;
+void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_window) {
+    Window w = (Window) whist_window->id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
     XWindowAttributes attr;
     if (!XGetWindowAttributes(device->display, w, &attr)) {
         LOG_ERROR("Failed to get window %lu attributes!", w);
-        d->width = -1;
-        d->height = -1;
-        d->x = -1;
-        d->y = -1;
+        whist_window->width = -1;
+        whist_window->height = -1;
+        whist_window->x = -1;
+        whist_window->y = -1;
         return;
     }
-    d->width = attr.width;
-    d->height = attr.height;
-    d->x = attr.x;
-    d->y = attr.y;
+    whist_window->width = attr.width;
+    whist_window->height = attr.height;
+    whist_window->x = attr.x;
+    whist_window->y = attr.y;
 }
 
 WhistWindow get_active_window(CaptureDevice* capture_device) {
@@ -453,7 +452,7 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
         valid_window->width = attr.width;
         valid_window->height = attr.height;
         // x/y are relative to parent, so we need to add x/y to parent's x/y
-        XGetWindowAttributes parent_attr;
+        XWindowAttributes parent_attr;
         XGetWindowAttributes(device->display, parent, &parent_attr);
         valid_window->x = attr.x + parent_attr.x;
         valid_window->y = attr.y + parent_attr.y;
