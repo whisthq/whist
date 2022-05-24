@@ -108,8 +108,7 @@ void get_valid_windows(CaptureDevice* capture_device, LinkedList* window_list);
  * @param d                        Struct to fill with window attributes
  *
  */
-void get_window_attributes(CaptureDevice* capture_device, WhistWindow whist_window,
-                           WhistWindowData* d);
+void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_window);
 
 /**
  * @brief                          Return the active window, either using NET_ACTIVE_WINDOW atom
