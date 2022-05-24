@@ -30,6 +30,7 @@ Includes
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
+#include <whist/utils/window_info.h>
 
 /*
 ============================
@@ -51,6 +52,11 @@ static int handle_file_drag_message(WhistClientMessage *wcmsg);
 static int handle_open_urls_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_frame_ack_message(WhistServerState *state, WhistClientMessage *wcmsg);
 static int handle_file_upload_cancel_message(WhistServerState *, WhistClientMessage *wcmsg);
+static int handle_window_move_message(WhistServerState *state, WhistClientMessage *wcmsg);
+static int handle_window_close_message(WhistServerState *state, WhistClientMessage *wcmsg);
+static int handle_window_minimize_message(WhistServerState *state, WhistClientMessage *wcmsg);
+static int handle_window_unminimize_message(WhistServerState *state, WhistClientMessage *wcmsg);
+static int handle_window_resize_message(WhistServerState *state, WhistClientMessage *wcmsg);
 
 /*
 ============================
@@ -108,6 +114,16 @@ int handle_client_message(WhistServerState *state, WhistClientMessage *wcmsg) {
             return handle_frame_ack_message(state, wcmsg);
         case MESSAGE_FILE_UPLOAD_CANCEL:
             return handle_file_upload_cancel_message(state, wcmsg);
+        case MESSAGE_MOVE:
+            return handle_window_move_message(state, wcmsg);
+        case MESSAGE_CLOSE:
+            return handle_window_close_message(state, wcmsg);
+        case MESSAGE_MINIMIZE:
+            return handle_window_minimize_message(state, wcmsg);
+        case MESSAGE_UNMINIMIZE:
+            return handle_window_unminimize_message(state, wcmsg);
+        case MESSAGE_RESIZE:
+            return handle_window_resize_message(state, wcmsg);
         default:
             LOG_ERROR(
                 "Failed to handle message from client: Unknown WhistClientMessage Received "
@@ -418,4 +434,31 @@ static int handle_frame_ack_message(WhistServerState *state, WhistClientMessage 
 static int handle_file_upload_cancel_message(WhistServerState *state, WhistClientMessage *wcmsg) {
     file_synchronizer_cancel_user_file_upload();
     return 0;
+}
+
+static int handle_window_move_message(WhistServerState *state, WhistClientMessage *wcmsg) {
+    WhistWindow w = {0};
+    w.id = wcmsg->window_move.id;
+    move_window(w, wcmsg->window_move.x, wcmsg->window_move.y);
+}
+static int handle_window_close_message(WhistServerState *state, WhistClientMessage *wcmsg) {
+    WhistWindow w = {0};
+    w.id = wcmsg->window_move.id;
+    close_window(w);
+}
+static int handle_window_minimize_message(WhistServerState *state, WhistClientMessage *wcmsg) {
+    WhistWindow w = {0};
+    w.id = wcmsg->window_move.id;
+    minimize_window(w);
+}
+
+static int handle_window_unminimize_message(WhistServerState *state, WhistClientMessage *wcmsg) {
+    WhistWindow w = {0};
+    w.id = wcmsg->window_move.id;
+    unminimize_window(w);
+}
+static int handle_window_resize_message(WhistServerState *state, WhistClientMessage *wcmsg) {
+    WhistWindow w = {0};
+    w.id = wcmsg->window_move.id;
+    resize_window(w, wcmsg->window_resize.width, wcmsg->window_resize.height);
 }

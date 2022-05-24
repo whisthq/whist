@@ -106,9 +106,6 @@ void get_valid_windows(LinkedList* window_list);
  * @param capture_device           Capture device whose display we are using
  *
  * @param whist_window             The WhistWindow to get attributes from
- *
- * @param d                        Struct to fill with window attributes
- *
  */
 void get_window_attributes(WhistWindow* whist_window);
 
@@ -157,8 +154,9 @@ bool is_window_resizable(WhistWindow whist_window);
  * @param height                   Desired height
  *
  */
-void move_resize_window(WhistWindow whist_window, int x, int y,
-                        int width, int height);
+
+void move_window(WhistWindow whist_window, int x, int y);
+void resize_window(WhistWindow whist_window, int width, int height);
 
 /**
  * @brief                          Close the given window

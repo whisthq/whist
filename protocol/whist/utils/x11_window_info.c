@@ -370,12 +370,17 @@ void destroy_window_info_getter(void) {
     }
 }
 
-void move_resize_window(WhistWindow whist_window, int x, int y,
-                        int width, int height) {
-    // note: _NET_MOVERESIZE_WINDOW is not supported
+void move_window(WhistWindow whist_window, int x, int y) {
     Window w = (Window)whist_window.id;
+    // we call get_attributes because X only has MoveResizeWindow, so we need to get the width and height
+    get_window_attributes(&whist_window);
+    XMoveResizeWindow(device->display, w, x, y, whist_window.width, whist_window.height);
+}
 
-    XMoveResizeWindow(device->display, w, x, y, width, height);
+void resize_window(WhistWindow whist_window, int width, int height) {
+    Window w = (Window)whist_window.id;
+    get_window_attributes(&whist_window);
+    XMoveResizeWindow(device->display, w, whist_window.x, whist_window.y, width, height);
 }
 
 void close_window(WhistWindow whist_window) {

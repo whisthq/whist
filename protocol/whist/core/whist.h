@@ -89,9 +89,7 @@ Defines
 // Various control flags
 #define USING_FFMPEG_IFRAME_FLAG false
 // Toggle verbose logs
-#ifndef LOG_VIDEO
 #define LOG_VIDEO false
-#endif
 #define LOG_AUDIO false
 #define LOG_NACKING false
 #define LOG_NETWORKING false
@@ -115,7 +113,7 @@ Defines
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
 #define INPUT_DRIVER UINPUT_INPUT_DRIVER
-#define USING_NVIDIA_CAPTURE true
+#define USING_NVIDIA_CAPTURE false
 #define USING_NVIDIA_ENCODE true
 
 #endif
@@ -659,6 +657,11 @@ typedef enum WhistClientMessageType {
     MESSAGE_MULTIGESTURE = 6,       ///< Gesture Event
     MESSAGE_RELEASE = 7,            ///< Message instructing the host to release all input
                                     ///< that is currently pressed.
+    MESSAGE_MOVE = 8,
+    MESSAGE_CLOSE = 9,
+    MESSAGE_MINIMIZE = 10,
+    MESSAGE_UNMINIMIZE = 11,
+    MESSAGE_RESIZE = 12,
     MESSAGE_STOP_STREAMING = 105,   ///< Message asking server to stop encoding/sending frames
     MESSAGE_START_STREAMING = 106,  ///< Message asking server to resume encoding/sending frames
     MESSAGE_DIMENSIONS = 110,       ///< `dimensions.width` int and `dimensions.height`
@@ -747,6 +750,24 @@ typedef struct WhistClientMessage {
 
         // MESSAGE_MULTIGESTURE
         WhistMultigestureMessage multigesture;  ///< Multigesture message.
+
+        // MESSAGE_MOVE
+        struct {
+            int id;
+            int x;
+            int y;
+        } window_move;
+
+        struct {
+            int id;
+            int width;
+            int height;
+        } window_resize;
+
+        // MESSAGE_CLOSE, MESSAGE_MINIMIZE, and MESSAGE_UNMINIMIZE
+        struct {
+            int id;
+        } window_operation;
 
         // MESSAGE_DIMENSIONS
         struct {
