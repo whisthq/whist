@@ -1373,8 +1373,6 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
     if (connect(context->socket, (struct sockaddr*)&context->connection_addr,
                 sizeof(context->connection_addr)) == -1) {
         LOG_WARNING("Failed to connect()!");
-        LOG_WARNING("ERRNO IS: %d", errno);
-        LOG_WARNING("ERROR IS: %s", strerror(errno));
         closesocket(context->socket);
         return -1;
     }
@@ -1415,8 +1413,6 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
     if (connect(context->socket, (const struct sockaddr*)&context->connection_addr,
                 sizeof(context->connection_addr)) == -1) {
         LOG_WARNING("Failed to connect()!");
-        LOG_WARNING("ERRNO IS: %d", errno);
-        LOG_WARNING("ERROR IS: %s", strerror(errno));
         closesocket(context->socket);
         return -1;
     }
