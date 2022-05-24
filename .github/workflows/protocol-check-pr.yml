@@ -77,7 +77,7 @@ jobs:
       - name: Install Chocolatey dependencies on Windows GHA Machine
         if: runner.os == 'Windows'
         shell: powershell
-        run: choco install cppcheck --version 2.7 && choco install ninja
+        run: (choco install cppcheck --version 2.7) -and (choco install ninja)
 
       - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
         if: runner.os == 'Windows'
