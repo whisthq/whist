@@ -116,6 +116,8 @@ char* get_window_name(X11CaptureDevice* device, Window w);
  */
 void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window curr);
 
+static int handler(Display* disp, XErrorEvent* error);
+
 /*
 ============================
 Public Function Implementations
@@ -131,6 +133,7 @@ void init_window_info_getter(void) {
 
 void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
     X11CaptureDevice* device = capture_device->x11_capture_device;
+    XSetErrorHandler(handler);
     get_valid_windows_helper(device, list, device->root);
 }
 
@@ -426,8 +429,13 @@ Private Function Implementations
 ============================
 */
 
+static int handler(Display* disp, XErrorEvent* error) {
+    LOG_ERROR("X11 Error: %d", error->error_code);
+    return 0;
+}
+
 void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window curr) {
-    LOG_DEBUG("Current window %lu", curr);
+    // LOG_DEBUG("Current window %lu", curr);
     Window parent;
     Window* children;
     unsigned int nchildren;
@@ -438,9 +446,11 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
     char* window_name = get_window_name(device, curr);
     if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH &&
         attr.height >= MIN_SCREEN_HEIGHT && window_name != NULL && *window_name != '\0') {
+        /*
         LOG_DEBUG("Valid window %s has %d children, position %d, %d, dimensions %d x %d",
                   get_window_name(device, curr), nchildren, attr.x, attr.y, attr.width,
                   attr.height);
+                  */
         WhistWindow* valid_window = safe_malloc(sizeof(WhistWindow));
         valid_window->window = curr;
         linked_list_add_tail(list, valid_window);
@@ -475,7 +485,7 @@ char* get_window_name(X11CaptureDevice* device, Window w) {
 
     if (x11_get_window_property(device, w, device->_NET_WM_NAME, device->UTF8_STRING, &nitems,
                                 &name)) {
-        LOG_INFO("Window name %s", name);
+        // LOG_INFO("Window name %s", name);
         return (char*)name;
     }
     // fall back to XGetWMName
