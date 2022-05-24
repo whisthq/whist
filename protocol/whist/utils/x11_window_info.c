@@ -490,7 +490,6 @@ char* get_window_name(X11CaptureDevice* device, Window w) {
 
     if (x11_get_window_property(device, w, device->_NET_WM_NAME, device->UTF8_STRING, &nitems,
                                 &name)) {
-        // LOG_INFO("Window name %s", name);
         return (char*)name;
     }
     // fall back to XGetWMName
