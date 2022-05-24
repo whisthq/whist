@@ -116,7 +116,7 @@ jobs:
             --leave-instances-on=true
           # Update REGION_NAME, SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
-          echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt)" >> $GITHUB_ENV
+          echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
 
       - name: Run End-to-End Streaming Test (S3 video playout - good network)
@@ -137,7 +137,7 @@ jobs:
             --network-conditions 15Mbit-30Mbit,10,None,None,1000-2000
           # Update REGION_NAME, SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
-          echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt)" >> $GITHUB_ENV
+          echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
 
       - name: Run End-to-End Streaming Test (S3 video playout - busy network)
@@ -158,7 +158,7 @@ jobs:
             --network-conditions 10Mbit-20Mbit,10,None,None,100-1000
           # Update REGION_NAME, SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
-          echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt)" >> $GITHUB_ENV
+          echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
 
       - name: Run End-to-End Streaming Test (S3 video playout - low bandwidth 10 Mbps network)
@@ -179,7 +179,7 @@ jobs:
             --network-conditions 10Mbit,10,None,100,None
           # Update REGION_NAME, SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
-          echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt)" >> $GITHUB_ENV
+          echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
 
       - name: Run End-to-End Streaming Test (Aggressive text scrolling - low bandwidth 10 Mbps network)
