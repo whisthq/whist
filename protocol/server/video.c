@@ -188,7 +188,7 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
     frame->codec_type = encoder->codec_type;
     frame->is_empty_frame = false;
     frame->is_window_visible = true;
-    memcpy(frame->window_data, device->window_data, sizeof(WhistWindowData) * MAX_WINDOWS);
+    memcpy(frame->window_data, device->window_data, sizeof(WhistWindow) * MAX_WINDOWS);
     frame->corner_color = device->corner_color;
     frame->server_timestamp = server_timestamp;
     frame->client_input_timestamp = client_input_timestamp;
