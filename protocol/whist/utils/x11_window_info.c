@@ -367,26 +367,10 @@ void destroy_window_info_getter(void) {
 
 void move_resize_window(CaptureDevice* capture_device, WhistWindow whist_window, int x, int y,
                         int width, int height) {
+    // note: _NET_MOVERESIZE_WINDOW is not supported
     Window w = whist_window.window;
     X11CaptureDevice* device = capture_device->x11_capture_device;
-    static long gravity_flags = 15 << 8;  // sets gravity to 0, x/y/w/h to 1, source to 0
-
-    XEvent xevent = {0};
-    XClientMessageEvent xclient = {0};
-    xclient.type = ClientMessage;
-    xclient.window = w;
-    xclient.display = device->display;
-    xclient.message_type = device->_NET_MOVERESIZE_WINDOW;
-    xclient.format = 32;
-    xclient.data.l[0] = gravity_flags;
-    xclient.data.l[1] = x;
-    xclient.data.l[2] = y;
-    xclient.data.l[3] = width;
-    xclient.data.l[4] = height;
-    xevent.xclient = xclient;
-    if (!send_message_to_root(device, &xevent)) {
-        LOG_ERROR("Failed to send message to rezise window %lu", w);
-    }
+    XMoveResizeWindow(device->display, w, x, y, width, height);
 }
 
 void close_window(CaptureDevice* capture_device, WhistWindow whist_window) {
@@ -412,6 +396,9 @@ void close_window(CaptureDevice* capture_device, WhistWindow whist_window) {
 }
 
 bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window) {
+    // for now, because awesome doesn't support _NET_WM_ALLOWED_ACTIONS
+    return true;
+    /*
     Window w = whist_window.window;
     X11CaptureDevice* device = capture_device->x11_capture_device;
     static unsigned long nitems;
@@ -430,6 +417,7 @@ bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window
     }
     LOG_ERROR("Couldn't get allowed actions, assuming window is resizable!");
     return true;
+    */
 }
 
 /*
@@ -447,8 +435,9 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
     // check the dimensions of each window
     XWindowAttributes attr;
     XGetWindowAttributes(device->display, curr, &attr);
+    char* window_name = get_window_name(device, curr);
     if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH &&
-        attr.height >= MIN_SCREEN_HEIGHT && *get_window_name(device, curr) != '\0') {
+        attr.height >= MIN_SCREEN_HEIGHT && window_name != NULL && *window_name != '\0') {
         LOG_DEBUG("Valid window %s has %d children, position %d, %d, dimensions %d x %d",
                   get_window_name(device, curr), nchildren, attr.x, attr.y, attr.width,
                   attr.height);

@@ -74,11 +74,7 @@ void init_atoms(X11CaptureDevice* device) {
     INIT_ATOM(device, _NET_WM_STATE_MAXIMIZED_HORZ, "_NET_WM_STATE_MAXIMIZED_HORZ");
     INIT_ATOM(device, _NET_WM_STATE_FULLSCREEN, "_NET_WM_STATE_FULLSCREEN");
     INIT_ATOM(device, _NET_WM_STATE_ABOVE, "_NET_WM_STATE_ABOVE");
-    INIT_ATOM(device, _NET_MOVERESIZE_WINDOW, "_NET_MOVERESIZE_WINDOW");
     INIT_ATOM(device, _NET_CLOSE_WINDOW, "_NET_CLOSE_WINDOW");
-    INIT_ATOM(device, _NET_WM_ALLOWED_ACTIONS, "_NET_WM_ALLOWED_ACTIONS");
-    INIT_ATOM(device, ATOM_ARRAY, "ATOM[]");
-    INIT_ATOM(device, _NET_WM_ACTION_RESIZE, "_NET_WM_ACTION_RESIZE");
     INIT_ATOM(device, _NET_WM_NAME, "_NET_WM_NAME");
     INIT_ATOM(device, UTF8_STRING, "UTF8_STRING");
     INIT_ATOM(device, _NET_WM_STATE, "_NET_WM_STATE");
@@ -120,9 +116,7 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     XDamageQueryExtension(device->display, &damage_event, &damage_error);
     device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
     device->event = damage_event;
-    if (!USING_NVIDIA_CAPTURE) {
-        init_atoms(device);
-    }
+    init_atoms(device);
 
     if (!reconfigure_x11_capture_device(device, width, height, dpi)) {
         return NULL;

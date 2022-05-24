@@ -319,6 +319,7 @@ int capture_screen(CaptureDevice* device) {
     }
 
     LinkedList window_list;
+    linked_list_init(&window_list);
     get_valid_windows(device, &window_list);
     // clear window data from previous pass
     for (int i = 0; i < MAX_WINDOWS; i++) {
