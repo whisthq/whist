@@ -45,6 +45,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/frontend/sdl/sdl.c
         ../client/frontend/virtual/virtual.c
         ../client/frontend/virtual/impl.c
+        ../client/frontend/virtual/interface.c
         ../client/frontend/sdl/video.cpp
         ../client/frontend/sdl/window.cpp
 
@@ -103,6 +104,7 @@ else()
         ../client/frontend/sdl/sdl.c
         ../client/frontend/virtual/virtual.c
         ../client/frontend/virtual/impl.c
+        ../client/frontend/virtual/interface.c
         ../client/frontend/sdl/video.cpp
         ../client/frontend/sdl/window.cpp
         $<$<PLATFORM_ID:Windows>:../client/frontend/sdl/d3d11.cpp>
