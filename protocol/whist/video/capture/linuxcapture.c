@@ -325,15 +325,13 @@ int capture_screen(CaptureDevice* device) {
     for (int i = 0; i < MAX_WINDOWS; i++) {
         device->window_data[i].id = 0;
     }
-    // get x,y,w,h of all windows
-    // TODO: get corner color somehow
+    // just copy over the first MAX_WINDOW items
     int i = 0;
     linked_list_for_each(&window_list, WhistWindow, w) {
         if (i >= MAX_WINDOWS) {
             break;
         }
-        device->window_data[i].id = (unsigned long)w->window;
-        get_window_attributes(device, *w, &device->window_data[i]);
+        device->window_data[i] = *w;
         i++;
     }
     switch (device->active_capture_device) {

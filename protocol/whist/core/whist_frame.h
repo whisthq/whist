@@ -21,7 +21,7 @@ typedef struct VideoFrame {
     uint32_t frame_id;
 
     // TODO: decide if we want to cap the number of windows or not
-    WhistWindowData window_data[MAX_WINDOWS];
+    WhistWindow window_data[MAX_WINDOWS];
 
     bool has_cursor;
     bool is_empty_frame;     // indicates whether this frame is identical to the one last sent

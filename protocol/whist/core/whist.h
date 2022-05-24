@@ -73,6 +73,7 @@ Includes
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
 #include <whist/utils/os_utils.h>
+#include <whist/utils/linked_list.h>
 
 /*
 ============================
@@ -801,7 +802,8 @@ typedef enum WhistServerMessageType {
 } WhistServerMessageType;
 
 // TODO: implement window title passing without wasting bandwidth
-typedef struct WhistWindowData {
+typedef struct WhistWindow {
+    LINKED_LIST_HEADER;
     unsigned long id;
     int x;
     int y;
@@ -809,8 +811,7 @@ typedef struct WhistWindowData {
     int height;
     WhistRGBColor corner_color;
     bool is_fullscreen;
-    bool is_resizable;
-} WhistWindowData;
+} WhistWindow;
 
 /**
  *

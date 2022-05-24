@@ -33,21 +33,13 @@ Custom Types
 ============================
 */
 
-// TODO: more members needed? merge with windowdata?
-typedef struct WhistWindow {
-    LINKED_LIST_HEADER;
-#ifdef __linux__
-    Window window;
-#endif
-} WhistWindow;
-
 typedef struct CaptureDevice {
     int id;
     int width;
     int height;
     int pitch;
     void* frame_data;
-    WhistWindowData window_data[MAX_WINDOWS];
+    WhistWindow window_data[MAX_WINDOWS];
     WhistRGBColor corner_color;
     void* internal;
 
