@@ -174,7 +174,6 @@ Custom types
  */
 // TODO: audio/video seems too specific
 typedef struct {
-    int fps;
     // Only video bitrate is sent. Audio encoder's bitrate setting doesn't change.
     int video_bitrate;
     // Applicable only for video, as only video is throttled

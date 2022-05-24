@@ -100,6 +100,14 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
                                  NetworkSettings *network_settings);
 
 /**
+ * @param network_settings Pointer to the struct containing previous network_settings. Also the new
+ *                         network settings will be updated in this struct.
+ *
+ * @returns             Whether network_settings struct was updated with new values or not
+ */
+bool whist_congestion_controller_handle_severe_congestion(NetworkSettings *network_settings);
+
+/**
  * @brief               This function will return the default network settings for a given video
  *                      resolution
  *
