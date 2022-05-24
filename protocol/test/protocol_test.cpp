@@ -2590,6 +2590,24 @@ TEST_F(ProtocolTest, StringBufferTest) {
     EXPECT_EQ(buf[5], 'X');
 }
 
+EMBEDDED_OBJECT(embed_test_object)
+
+TEST_F(ProtocolTest, EmbedFileTest) {
+    // The test object is this source file, so create a string and then
+    // we can ensure it is present.
+    const char* str = "this string is unique because of the axolotl";
+    size_t len = strlen(str);
+
+    // Search for the string in the source file.
+    int found = 0;
+    for (size_t k = 0; k < embed_test_object_size - len; k++) {
+        if (!memcmp(&embed_test_object[k], str, len)) {
+            ++found;
+        }
+    }
+    EXPECT_EQ(found, 1);
+}
+
 /*
 ============================
 Run Tests

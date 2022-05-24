@@ -115,6 +115,8 @@ else()
 )
 endif()
 
+# Protocol test file in source form for the embed-file test.
+embed_file(protocol_test.cpp embed_test_object)
 # Client embedded files needed by sdl_utils.c.
 embed_file(../client/images/error_message_500x50.png insufficient_bandwidth_500x50)
 embed_file(../client/images/error_message_750x75.png insufficient_bandwidth_750x75)
