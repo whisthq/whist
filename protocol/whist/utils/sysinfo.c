@@ -460,14 +460,11 @@ void print_hard_drive_info(void) {
              total_space / BYTES_IN_GB, available_space / BYTES_IN_GB);
 }
 
-#ifndef _WIN32
-static struct rusage prev_rusage;
-static bool prev_rusage_initialized;
-#endif
-
 double get_cpu_usage(double time_elapsed) {
     double cpu_usage_pct = -1.0;
 #ifndef _WIN32
+    static struct rusage prev_rusage;
+    static bool prev_rusage_initialized;
     if (!prev_rusage_initialized) {
         getrusage(RUSAGE_SELF, &prev_rusage);
         prev_rusage_initialized = true;
