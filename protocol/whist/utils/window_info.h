@@ -103,10 +103,7 @@ void get_valid_windows(CaptureDevice* capture_device, LinkedList* window_list);
  *
  * @param capture_device           Capture device whose display we are using
  *
- * @param whist_window             The WhistWindow to get attributes from
- *
- * @param d                        Struct to fill with window attributes
- *
+ * @param whist_window             The WhistWindow to fill attributes for
  */
 void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_window);
 
