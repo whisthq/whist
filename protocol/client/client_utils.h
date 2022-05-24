@@ -90,4 +90,6 @@ int update_mouse_motion(WhistFrontend* frontend);
  */
 void send_message_dimensions(WhistFrontend* frontend);
 
+void send_message_resize(WhistFrontend* frontend);
+
 #endif  // CLIENT_UTILS_H

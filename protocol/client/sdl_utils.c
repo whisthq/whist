@@ -29,6 +29,9 @@ Includes
 
 extern volatile int output_width;
 extern volatile int output_height;
+extern volatile int resize_id;
+extern volatile int resize_width;
+extern volatile int resize_height;
 extern volatile bool insufficient_bandwidth;
 
 static WhistMutex frontend_render_mutex;
@@ -135,10 +138,13 @@ WhistTimer window_resize_timer;
 // pending_resize_message should be set to true if sdl event handler was not able to process resize
 // event due to throttling, so the main loop should process it
 volatile bool pending_resize_message = false;
-void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) {
+void sdl_renderer_resize_window(WhistFrontend* frontend, int id, int width, int height) {
+    // Resizes no longer send_message_dimensions to resize the display
+    // so we don't change the output width and height
+
     // Try to make pixel width and height conform to certain desirable dimensions
     int current_width, current_height;
-    whist_frontend_get_window_pixel_size(frontend, 0, &current_width, &current_height);
+    whist_frontend_get_window_pixel_size(frontend, id, &current_width, &current_height);
 
     LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
              current_height);
@@ -180,11 +186,11 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
 
             // The default DPI (no scaling) is 96, hence this magic number to divide by the scaling
             // factor
-            whist_frontend_resize_window(frontend, 0, desired_width * 96 / dpi,
+            whist_frontend_resize_window(frontend, id, desired_width * 96 / dpi,
                                          desired_height * 96 / dpi);
             LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
                      desired_width, desired_height);
-            whist_frontend_get_window_pixel_size(frontend, 0, &current_width, &current_height);
+            whist_frontend_get_window_pixel_size(frontend, id, &current_width, &current_height);
 
             if (current_width != desired_width || current_height != desired_height) {
                 LOG_WARNING("Failed to force resize -- got %dx%d instead of desired %dx%d",
@@ -193,17 +199,16 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
         }
     }
 
-    // Update output width / output height
-    if (current_width != output_width || current_height != output_height) {
-        output_width = current_width;
-        output_height = current_height;
-    }
+    resize_id = id;
+    resize_width = current_width;
+    resize_height = current_height;
 
     whist_lock_mutex(window_resize_mutex);
     pending_resize_message = true;
     whist_unlock_mutex(window_resize_mutex);
 
-    LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, output_width, output_height);
+    LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, current_width, current_height);
+
 }
 
 void sdl_update_framebuffer(AVFrame* frame) {
@@ -319,7 +324,8 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
     if (pending_resize_message &&
         get_timer(&window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
         pending_resize_message = false;
-        send_message_dimensions(frontend);
+        // TODO: Send a resize message
+        send_message_resize(frontend);
         start_timer(&window_resize_timer);
     }
     whist_unlock_mutex(window_resize_mutex);

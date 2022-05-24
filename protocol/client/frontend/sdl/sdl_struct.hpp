@@ -1,7 +1,6 @@
 #ifndef WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 #define WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 
-extern "C" {
 #include <whist/core/whist.h>
 
 extern "C" {
@@ -184,4 +183,4 @@ void sdl_d3d11_destroy_window(SDLFrontendContext* context, int id);
  */
 void sdl_d3d11_destroy(SDLFrontendContext* context);
 
-#endif  // WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
+#endif // WHIST_CLIENT_FRONTEND_SDL_STRUCT_H

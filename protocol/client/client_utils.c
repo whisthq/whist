@@ -40,6 +40,9 @@ volatile char client_binary_aes_private_key[16];
 volatile char client_hex_aes_private_key[33];
 extern int output_width;
 extern int output_height;
+extern int resize_id;
+extern int resize_width;
+extern int resize_height;
 extern int override_bitrate;
 extern SocketContext packet_udp_context;
 
@@ -396,4 +399,16 @@ void send_message_dimensions(WhistFrontend *frontend) {
              wcmsg.dimensions.height, wcmsg.dimensions.dpi);
     send_wcmsg(&wcmsg);
     udp_handle_resize(&packet_udp_context, wcmsg.dimensions.dpi);
+}
+
+void send_message_resize(WhistFrontend* frontend) {
+    UNUSED(frontend);
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_RESIZE;
+    wcmsg.window_resize.id = resize_id;
+    wcmsg.window_resize.width = resize_width;
+    wcmsg.window_resize.height = resize_height;
+
+    LOG_INFO("Sending MESSAGE_RESIZE: ID=%d, output=%dx%d", wcmsg.window_resize.id, wcmsg.window_resize.width, wcmsg.window_resize.height);
+    send_wcmsg(&wcmsg);
 }

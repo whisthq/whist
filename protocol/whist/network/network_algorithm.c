@@ -40,6 +40,9 @@ Globals
 
 volatile int output_width;
 volatile int output_height;
+volatile int resize_id;
+volatile int resize_width;
+volatile int resize_height;
 volatile bool insufficient_bandwidth;
 
 /*
