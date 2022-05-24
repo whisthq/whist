@@ -1,11 +1,12 @@
 #include "common.h"
+#include "interface.h"
 
 WhistStatus virtual_init(WhistFrontend* frontend, int width, int height, const char* title,
                          const WhistRGBColor* color) {
     frontend->context = safe_malloc(sizeof(VirtualFrontendContext));
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
-    context->width = width ? width : 640;
-    context->height = height ? height : 480;
+    context->width = width ? width : 1920;
+    context->height = height ? height : 1080;
     context->dpi = 192;
     return WHIST_SUCCESS;
 }
@@ -84,7 +85,10 @@ void virtual_paint_png(WhistFrontend* frontend, const char* filename, int output
 
 void virtual_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {}
 
-WhistStatus virtual_update_video(WhistFrontend* frontend, AVFrame* frame) { return WHIST_SUCCESS; }
+WhistStatus virtual_update_video(WhistFrontend* frontend, AVFrame* frame) {
+    virtual_interface_send_frame(frame);
+    return WHIST_SUCCESS;
+}
 
 void virtual_paint_video(WhistFrontend* frontend, int output_width, int output_height) {}
 
@@ -92,8 +96,8 @@ void virtual_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
                               enum AVPixelFormat* format) {
     *device = NULL;
 #if defined(__APPLE__)
-    // for now i'm going to assume this always works
-    *format = AV_PIX_FMT_VIDEOTOOLBOX;
+        // AV_PIX_FMT_VIDEOTOOLBOX works but chrome doesn't know how to render it
+        *format = AV_PIX_FMT_NONE;
 #else
     *format = AV_PIX_FMT_NONE;
     // todo: figure out d3d11 here potentially
