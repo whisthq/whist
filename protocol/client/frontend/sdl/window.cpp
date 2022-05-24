@@ -24,6 +24,21 @@ void sdl_get_window_pixel_size(WhistFrontend* frontend, int id, int* width, int*
     }
 }
 
+void sdl_get_window_position(WhistFrontend* frontend, int id, int* x, int* y) {
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+    if (context->windows.contains(id)) {
+        SDL_GetWindowPosition(context->windows[id]->window, x, y);
+    } else {
+        LOG_ERROR("Tried to get window position for window %d, but no such window exists!", id);
+        if (x != NULL) {
+            *x = WHIST_ERROR_NOT_FOUND;
+        }
+        if (y != NULL) {
+            *y = WHIST_ERROR_NOT_FOUND;
+        }
+    }
+}
+
 void sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* width, int* height) {
     /*
      * Get the non-DPI-adjusted width and height of the window with given id. This will be a
@@ -42,6 +57,7 @@ void sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* width, in
         }
     }
 }
+
 
 WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* index) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
@@ -64,6 +80,7 @@ WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* i
         return WHIST_ERROR_NOT_FOUND;
     }
 }
+
 
 int sdl_get_window_dpi(WhistFrontend* frontend) {
     // TODO: changed to only check one window. But in tehory there could be multiple windows on
@@ -146,6 +163,22 @@ void sdl_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor
     SDL_PushEvent(&event);
 }
 
-void sdl_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {
-    sdl_native_display_notification(notif);
+// returns true if at least one window is now visible and false otherwise
+bool sdl_set_window_visibility(WhistFrontend* frontend, int id, bool is_visible) {
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+    if (context->windows.contains(id)) {
+        context->windows[id]->is_visible = is_visible;
+    }
+    if (is_visible) {
+        return true;
+    } else {
+        // check if all windows are invisible
+        for (const auto& pair : context->windows) {
+            SDLWindowContext* window_context = pair.second;
+            if (window_context->is_visible) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

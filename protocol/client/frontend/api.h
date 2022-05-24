@@ -15,6 +15,7 @@
     GENERATOR(size_t, get_audio_buffer_size, WhistFrontend* frontend)                              \
     GENERATOR(void, get_window_pixel_size, WhistFrontend* frontend, int id, int* width,            \
               int* height)                                                                         \
+    GENERATOR(void, get_window_position, WhistFrontend* frontend, int id, int* x, int* y) \
     GENERATOR(void, get_window_virtual_size, WhistFrontend* frontend, int id, int* width,          \
               int* height)                                                                         \
     GENERATOR(WhistStatus, get_window_display_index, WhistFrontend* frontend, int id, int* index)  \
@@ -41,7 +42,7 @@
     GENERATOR(void, render, WhistFrontend* frontend)                                               \
     GENERATOR(void, set_titlebar_color, WhistFrontend* frontend, int id,                           \
               const WhistRGBColor* color)                                                          \
-    GENERATOR(void, display_notification, WhistFrontend* frontend, const WhistNotification* notif) \
-    GENERATOR(void, declare_user_activity, WhistFrontend* frontend)
+    GENERATOR(void, declare_user_activity, WhistFrontend* frontend) \
+    GENERATOR(bool, set_window_visibility, WhistFrontend* frontend, int id, bool is_visible)
 
 #endif  // WHIST_CLIENT_FRONTEND_API_H

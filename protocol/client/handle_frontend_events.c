@@ -118,9 +118,41 @@ static void handle_keypress_event(FrontendKeypressEvent* event) {
     send_wcmsg(&msg);
 }
 
-static void handle_mouse_motion_event(FrontendMouseMotionEvent* event) {
-    mouse_state.x_nonrel = event->absolute.x;
-    mouse_state.y_nonrel = event->absolute.y;
+static void handle_move_event(FrontendMoveEvent* event) {
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_MOVE;
+    msg.window_move.id = event->id;
+    msg.window_move.x = event->x;
+    msg.window_move.y = event->y;
+    send_wcmsg(&msg);
+}
+
+static void handle_close_event(FrontendCloseEvent* event) {
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_CLOSE;
+    msg.window_operation.id = event->id;
+    send_wcmsg(&msg);
+}
+
+static void handle_minimize_event(FrontendMinimizeEvent* event) {
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_MINIMIZE;
+    msg.window_operation.id = event->id;
+    send_wcmsg(&msg);
+}
+
+static void handle_restore_event(FrontendRestoreEvent* event) {
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_UNMINIMIZE;
+    msg.window_operation.id = event->id;
+    send_wcmsg(&msg);
+}
+
+static void handle_mouse_motion_event(WhistFrontend* frontend, FrontendMouseMotionEvent* event) {
+    int window_x, window_y;
+    whist_frontend_get_window_position(event->id, window_x, window_y);
+    mouse_state.x_nonrel = event->absolute.x + window_x;
+    mouse_state.y_nonrel = event->absolute.y + window_y;
     mouse_state.x_rel += event->relative.x;
     mouse_state.y_rel += event->relative.y;
     mouse_state.is_relative = event->relative_mode;
@@ -298,6 +330,8 @@ static void handle_quit_event(FrontendQuitEvent* event) {
 }
 
 static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
+    static bool one_window_visible = false;
+    bool previous_visibility = one_window_visible;
     if (event->type != FRONTEND_EVENT_MOUSE_WHEEL && event->type != FRONTEND_EVENT_INTERRUPT) {
         // Cancel momentum scrolls on external non-wheel events.
         active_momentum_scroll = false;
@@ -305,21 +339,29 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
 
     switch (event->type) {
         case FRONTEND_EVENT_RESIZE: {
-            sdl_renderer_resize_window(frontend, event->resize.width, event->resize.height);
+            sdl_renderer_resize_window(frontend, event->resize.id, event->resize.width, event->resize.height);
             break;
         }
         case FRONTEND_EVENT_VISIBILITY: {
-            if (event->visibility.visible) {
-                LOG_INFO("Window now visible -- start streaming");
-                WhistClientMessage wcmsg = {0};
-                wcmsg.type = MESSAGE_START_STREAMING;
-                send_wcmsg(&wcmsg);
-            } else {
-                LOG_INFO("Window now hidden -- stop streaming");
-                WhistClientMessage wcmsg = {0};
-                wcmsg.type = MESSAGE_STOP_STREAMING;
-                send_wcmsg(&wcmsg);
-            }
+            one_window_visible = whist_frontend_set_window_visibility(frontend, event->visibility.id, event->visibility.visible);
+            break;
+        }
+        case FRONTEND_EVENT_CLOSE: {
+            handle_close_event(&event->close);
+            break;
+        }
+        case FRONTEND_EVENT_MINIMIZE: {
+            one_window_visible = whist_frontend_set_window_visibility(frontend, event->minimize.id, false);
+            handle_minimize_event(&event->minimize);
+            break;
+        }
+        case FRONTEND_EVENT_RESTORE: {
+            one_window_visible = whist_frontend_set_window_visibility(frontend, event->minimize.id, true);
+            handle_restore_event(&event->restore);
+            break;
+        }
+        case FRONTEND_EVENT_MOVE: {
+            handle_move_event(&event->move);
             break;
         }
         case FRONTEND_EVENT_AUDIO_UPDATE: {
@@ -332,7 +374,7 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
             break;
         }
         case FRONTEND_EVENT_MOUSE_MOTION: {
-            handle_mouse_motion_event(&event->mouse_motion);
+            handle_mouse_motion_event(frontend, &event->mouse_motion);
             break;
         }
         case FRONTEND_EVENT_MOUSE_BUTTON: {
@@ -365,6 +407,19 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
         case FRONTEND_EVENT_INTERRUPT:
         case FRONTEND_EVENT_UNHANDLED: {
             break;
+        }
+    }
+    if (one_window_visible != previous_visibility) {
+        if (one_window_visible) {
+            LOG_INFO("Window now visible -- start streaming");
+            WhistClientMessage wcmsg = {0};
+            wcmsg.type = MESSAGE_START_STREAMING;
+            send_wcmsg(&wcmsg);
+        } else {
+            LOG_INFO("Window now hidden -- stop streaming");
+            WhistClientMessage wcmsg = {0};
+            wcmsg.type = MESSAGE_STOP_STREAMING;
+            send_wcmsg(&wcmsg);
         }
     }
     return 0;

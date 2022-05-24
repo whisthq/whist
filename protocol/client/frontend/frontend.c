@@ -97,6 +97,11 @@ void whist_frontend_get_window_pixel_size(WhistFrontend* frontend, int id, int* 
     frontend->call->get_window_pixel_size(frontend, id, width, height);
 }
 
+void whist_frontend_get_window_position(WhistFrontend* frontend, int id, int* x, int* y) {
+    FRONTEND_ENTRY();
+    frontend->call->get_window_position(frontend, id, x, y);
+}
+
 void whist_frontend_get_window_virtual_size(WhistFrontend* frontend, int id, int* width,
                                             int* height) {
     FRONTEND_ENTRY();
@@ -210,6 +215,11 @@ void whist_frontend_display_notification(WhistFrontend* frontend, const WhistNot
 void whist_frontend_declare_user_activity(WhistFrontend* frontend) {
     FRONTEND_ENTRY();
     frontend->call->declare_user_activity(frontend);
+}
+
+bool whist_frontend_set_window_visibility(WhistFrontend* frontend, int id, bool is_visible) {
+    FRONTEND_ENTRY();
+    return frontend->call->set_window_visibility(frontend, id, is_visible);
 }
 
 const char* whist_frontend_event_type_string(FrontendEventType type) {

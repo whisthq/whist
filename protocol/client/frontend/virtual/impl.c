@@ -144,6 +144,11 @@ void virtual_get_window_pixel_size(WhistFrontend* frontend, int id, int* width, 
     *height = context->height;
 }
 
+void virtual_get_window_position(WhistFrontend* frontend, int id, int* x, int* y) {
+    *x = 0;
+    *y = 0;
+}
+
 void virtual_get_window_virtual_size(WhistFrontend* frontend, int id, int* width, int* height) {
     VirtualFrontendContext* context = frontend->context;
     *width = context->width;
@@ -258,3 +263,5 @@ void virtual_declare_user_activity(WhistFrontend* frontend) {}
 WhistStatus virtual_create_window(WhistFrontend* frontend, int id) { return WHIST_SUCCESS; }
 
 void virtual_destroy_window(WhistFrontend* frontend, int id) {}
+
+bool virtual_set_window_visibility(WhistFrontend* frontend, int id, bool is_visible) {return true;}
