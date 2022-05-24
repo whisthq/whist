@@ -148,10 +148,10 @@ WhistStatus whist_frontend_update_video(WhistFrontend* frontend, AVFrame* frame)
     return frontend->call->update_video(frontend, frame);
 }
 
-void whist_frontend_paint_png(WhistFrontend* frontend, const char* filename, int output_width,
-                              int output_height, int x, int y) {
+void whist_frontend_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size,
+                              int output_width, int output_height, int x, int y) {
     FRONTEND_ENTRY();
-    frontend->call->paint_png(frontend, filename, output_width, output_height, x, y);
+    frontend->call->paint_png(frontend, data, data_size, output_width, output_height, x, y);
 }
 
 void whist_frontend_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {

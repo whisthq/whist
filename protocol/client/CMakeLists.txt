@@ -24,6 +24,12 @@ set(WHIST_CLIENT_DEPENDS
         frontend/virtual/impl.c
 )
 
+embed_file(images/error_message_500x50.png insufficient_bandwidth_500x50)
+embed_file(images/error_message_750x75.png insufficient_bandwidth_750x75)
+embed_file(images/error_message_1000x100.png insufficient_bandwidth_1000x100)
+embed_file(images/error_message_1500x150.png insufficient_bandwidth_1500x150)
+list(APPEND WHIST_CLIENT_DEPENDS ${EMBED_FILE_LIST})
+
 if(CLIENT_SHARED_LIB)
   add_library(WhistClient SHARED
     ${WHIST_CLIENT_DEPENDS}

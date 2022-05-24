@@ -13,14 +13,14 @@ extern "C" {
 #define RGBA_B 0x0000ff00
 #define RGBA_A 0x000000ff
 
-void sdl_paint_png(WhistFrontend* frontend, const char* filename, int output_width,
-                   int output_height, int x, int y) {
+void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size,
+                   int output_width, int output_height, int x, int y) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     unsigned int w, h;
     uint8_t* image;
 
     // Decode to 32-bit RGBA
-    unsigned int error = lodepng_decode32_file(&image, &w, &h, filename);
+    unsigned int error = lodepng_decode32(&image, &w, &h, data, data_size);
     if (error) {
         LOG_ERROR("Failed to decode PNG: %s", lodepng_error_text(error));
         return;
