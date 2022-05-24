@@ -185,7 +185,7 @@ WhistWindow get_active_window(CaptureDevice* capture_device) {
 }
 
 void minimize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent =
@@ -198,7 +198,7 @@ void minimize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
 void unminimize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
     // I'm not sure what will happen if you call this on a window that's already not minimized --
     // hopefully a noop
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_REMOVE,
@@ -209,7 +209,7 @@ void unminimize_window(CaptureDevice* capture_device, WhistWindow whist_window) 
 }
 
 void maximize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_ADD,
@@ -221,7 +221,7 @@ void maximize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
 }
 
 void fullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_ADD,
@@ -232,7 +232,7 @@ void fullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window) 
 }
 
 void unfullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_REMOVE,
@@ -243,7 +243,7 @@ void unfullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window
 }
 
 void bring_window_to_top(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent =
@@ -372,13 +372,13 @@ void destroy_window_info_getter(void) {
 void move_resize_window(CaptureDevice* capture_device, WhistWindow whist_window, int x, int y,
                         int width, int height) {
     // note: _NET_MOVERESIZE_WINDOW is not supported
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
     XMoveResizeWindow(device->display, w, x, y, width, height);
 }
 
 void close_window(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent = {0};
@@ -403,7 +403,7 @@ bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window
     // for now, because awesome doesn't support _NET_WM_ALLOWED_ACTIONS
     return true;
     /*
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
     static unsigned long nitems;
     static unsigned char* actions;  // name stored here
