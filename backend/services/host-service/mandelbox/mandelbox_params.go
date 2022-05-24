@@ -52,7 +52,10 @@ func (mandelbox *mandelboxData) WriteSessionID() error {
 // WriteJSONData writes the data received through JSON transport
 // to the config.json file located on the resourceMappingDir.
 func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
-	return mandelbox.writeResourceMappingToFile("config.json", string(data))
+	base64DecodedData, _ := base64.StdEncoding.DecodeString(data)
+	zlibReader, _ := zlib.NewReader(bytes.NewReader(base64DecodedData))
+	gzipDecodedData, _ := ioutil.ReadAll(zlibReader)
+	return mandelbox.writeResourceMappingToFile("config.json", string(gzipDecodedData))
 }
 
 // MarkParamsReady indicates that the mandelbox's services that do NOT depend
