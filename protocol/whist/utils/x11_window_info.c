@@ -139,7 +139,7 @@ void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
 
 // TODO: delete this
 void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_window) {
-    Window w = (Window) whist_window->id;
+    Window w = (Window)whist_window->id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
     XWindowAttributes attr;
     if (!XGetWindowAttributes(device->display, w, &attr)) {
@@ -167,17 +167,17 @@ WhistWindow get_active_window(CaptureDevice* capture_device) {
         *(unsigned long*)result != 0) {
         Window active_window = (Window) * (unsigned long*)result;
         // XFree(result);
-        w.id = (unsigned long) active_window;
+        w.id = (unsigned long)active_window;
     } else {
         // revert to XGetInputFocus
         Window focus;
         int revert;
         XGetInputFocus(device->display, &focus, &revert);
         if (focus != PointerRoot) {
-            w.id = (unsigned long) focus;
+            w.id = (unsigned long)focus;
         } else {
             LOG_INFO("No active window found, setting root as active");
-            w.id = (unsigned long) device->root;
+            w.id = (unsigned long)device->root;
         }
     }
     return w;
@@ -443,12 +443,13 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
     // check the dimensions of each window
     XWindowAttributes attr;
     XGetWindowAttributes(device->display, curr, &attr);
-    LOG_DEBUG("Current window %lu, name %s, position %d, %d, dimensions %d x %d, %d children", curr, window_name, attr.x, attr.y, attr.width, attr.height, nchildren);
+    LOG_DEBUG("Current window %lu, name %s, position %d, %d, dimensions %d x %d, %d children", curr,
+              window_name, attr.x, attr.y, attr.width, attr.height, nchildren);
     if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH &&
         attr.height >= MIN_SCREEN_HEIGHT && window_name != NULL && *window_name != '\0') {
         LOG_DEBUG("Valid window!!");
         WhistWindow* valid_window = safe_malloc(sizeof(WhistWindow));
-        valid_window->id = (unsigned long) curr;
+        valid_window->id = (unsigned long)curr;
         valid_window->width = attr.width;
         valid_window->height = attr.height;
         // x/y are relative to parent, so we need to add x/y to parent's x/y
