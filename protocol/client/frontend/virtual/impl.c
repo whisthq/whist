@@ -96,8 +96,8 @@ void virtual_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
                               enum AVPixelFormat* format) {
     *device = NULL;
 #if defined(__APPLE__)
-        // AV_PIX_FMT_VIDEOTOOLBOX works but chrome doesn't know how to render it
-        *format = AV_PIX_FMT_NONE;
+    // AV_PIX_FMT_VIDEOTOOLBOX works but chrome doesn't know how to render it
+    *format = AV_PIX_FMT_NONE;
 #else
     *format = AV_PIX_FMT_NONE;
     // todo: figure out d3d11 here potentially
