@@ -31,7 +31,6 @@ Includes
 Defines
 ============================
 */
-static const int verbose_log = 1;
 
 typedef enum {
     UDP_WHIST_SEGMENT,
