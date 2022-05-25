@@ -430,7 +430,12 @@ def get_client_and_instances(
     boto3client = boto3.client("ec2", region_name=region_name)
 
     server_instance_id = create_or_start_aws_instance(
-        boto3client, region_name, existing_server_instance_id, ssh_key_name, running_in_ci
+        boto3client,
+        region_name,
+        instances_name_tag,
+        existing_server_instance_id,
+        ssh_key_name,
+        running_in_ci,
     )
     if server_instance_id == "":
         printyellow(f"Creating new instance on {region_name} for the server failed!")
