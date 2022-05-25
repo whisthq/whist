@@ -6,9 +6,9 @@ require (
 	github.com/MicahParks/keyfunc v1.1.0
 	github.com/NVIDIA/go-nvml v0.11.6-0
 	github.com/aws/aws-sdk-go-v2 v1.16.4
-	github.com/aws/aws-sdk-go-v2/config v1.15.7
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.12
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.43.1
+	github.com/aws/aws-sdk-go-v2/config v1.15.8
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.13
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.44.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.10
 	github.com/aws/smithy-go v1.11.2
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
@@ -39,7 +39,7 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.1 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.2 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.3 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.11 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.5 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.11.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.11.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.16.6 // indirect
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/bgentry/testnet v0.0.0-20131107221340-05450cdcf16c // indirect
@@ -80,7 +80,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/stripe/stripe-go/v72 v72.108.0
+	github.com/stripe/stripe-go/v72 v72.110.0
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
