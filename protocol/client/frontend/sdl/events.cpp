@@ -94,7 +94,7 @@ bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
                 // Capture the mouse while the left mouse button is pressed.
                 // This lets SDL track the mouse position even when the drag
                 // extends outside the window.
-                SDL_CaptureMouse((SDL_bool) event->mouse_button.pressed);
+                SDL_CaptureMouse((SDL_bool)event->mouse_button.pressed);
             }
             break;
         }

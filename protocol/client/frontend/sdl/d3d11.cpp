@@ -38,8 +38,8 @@ typedef struct SDLRenderD3D11Context {
     ID3D11DeviceContext *video_context;
 } SDLRenderD3D11Context;
 
-void sdl_d3d11_wait(SDLFrontendContext* context) {
-    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)context->video.private_data;
+void sdl_d3d11_wait(SDLFrontendContext *context) {
+    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context *)context->video.private_data;
     HRESULT hr;
 
     D3D11_QUERY_DESC desc = {
@@ -63,8 +63,7 @@ void sdl_d3d11_wait(SDLFrontendContext* context) {
         if (i > 0) {
             Sleep(3);
         }
-        hr = d3d11->render_context->GetData((ID3D11Asynchronous *)query, &done,
-                                         sizeof(done), 0);
+        hr = d3d11->render_context->GetData((ID3D11Asynchronous *)query, &done, sizeof(done), 0);
         if (FAILED(hr)) {
             LOG_ERROR("Failed to query render completion: %#x.", hr);
             break;
@@ -74,8 +73,8 @@ void sdl_d3d11_wait(SDLFrontendContext* context) {
     query->Release();
 }
 
-SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext* context, AVFrame *frame) {
-    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)context->video.private_data;
+SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *frame) {
+    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context *)context->video.private_data;
 
     FATAL_ASSERT(frame->format == AV_PIX_FMT_D3D11);
 
@@ -93,8 +92,7 @@ SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext* context, AVFrame *fram
         return NULL;
     }
     HANDLE shared_handle;
-    hr = resource->CreateSharedHandle(NULL, DXGI_SHARED_RESOURCE_READ, NULL,
-                                           &shared_handle);
+    hr = resource->CreateSharedHandle(NULL, DXGI_SHARED_RESOURCE_READ, NULL, &shared_handle);
     resource->Release();
     if (FAILED(hr)) {
         LOG_ERROR("Failed to create shared handle for video texture: %#x.", hr);
@@ -143,12 +141,12 @@ SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext* context, AVFrame *fram
     return sdl_texture;
 }
 
-WhistStatus sdl_d3d11_init(SDLFrontendContext* context) {
+WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
     int err;
     HRESULT hr;
 
-    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)safe_zalloc(sizeof(*d3d11));
-    context->video.private_data = (void*)d3d11;
+    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context *)safe_zalloc(sizeof(*d3d11));
+    context->video.private_data = (void *)d3d11;
 
     d3d11->render_device = SDL_RenderGetD3D11Device(context->renderer);
     if (d3d11->render_device == NULL) {
@@ -196,7 +194,7 @@ WhistStatus sdl_d3d11_init(SDLFrontendContext* context) {
     }
 
     AVHWDeviceContext *dev = (AVHWDeviceContext *)dev_ref->data;
-    AVD3D11VADeviceContext *hwctx = (AVD3D11VADeviceContext*)dev->hwctx;
+    AVD3D11VADeviceContext *hwctx = (AVD3D11VADeviceContext *)dev->hwctx;
 
     d3d11->video_device->AddRef();
     hwctx->device = d3d11->video_device;
@@ -219,8 +217,8 @@ WhistStatus sdl_d3d11_init(SDLFrontendContext* context) {
     return WHIST_SUCCESS;
 }
 
-void sdl_d3d11_destroy(SDLFrontendContext* context) {
-    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context*)context->video.private_data;
+void sdl_d3d11_destroy(SDLFrontendContext *context) {
+    SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context *)context->video.private_data;
 
     if (!d3d11) {
         // Nothing to do (init probably failed).

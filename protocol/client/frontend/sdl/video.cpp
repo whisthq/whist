@@ -87,10 +87,10 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     int res;
 
-    SDL_PixelFormatEnum format = sdl_get_pixel_format((AVPixelFormat) frame->format);
+    SDL_PixelFormatEnum format = sdl_get_pixel_format((AVPixelFormat)frame->format);
     if (format == SDL_PIXELFORMAT_UNKNOWN) {
         LOG_ERROR("Invalid pixel format %s given to SDL renderer.",
-                  av_get_pix_fmt_name((AVPixelFormat) frame->format));
+                  av_get_pix_fmt_name((AVPixelFormat)frame->format));
         return WHIST_ERROR_INVALID_ARGUMENT;
     }
 
@@ -160,11 +160,11 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                                   frame->width, frame->height);
             if (context->video.texture == NULL) {
                 LOG_ERROR("Failed to create %s video texture: %s.",
-                          av_get_pix_fmt_name((AVPixelFormat) frame->format), SDL_GetError());
+                          av_get_pix_fmt_name((AVPixelFormat)frame->format), SDL_GetError());
                 return WHIST_ERROR_EXTERNAL;
             }
 
-            LOG_INFO("Using %s video texture.", av_get_pix_fmt_name((AVPixelFormat) frame->format));
+            LOG_INFO("Using %s video texture.", av_get_pix_fmt_name((AVPixelFormat)frame->format));
             context->video.texture_format = format;
         }
 
@@ -184,12 +184,13 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                                        frame->linesize[0], frame->data[1], frame->linesize[1],
                                        frame->data[2], frame->linesize[2]);
         } else {
-            LOG_FATAL("Invalid format %s for texture update.", av_get_pix_fmt_name((AVPixelFormat) frame->format));
+            LOG_FATAL("Invalid format %s for texture update.",
+                      av_get_pix_fmt_name((AVPixelFormat)frame->format));
         }
 
         if (res < 0) {
             LOG_ERROR("Failed to update texture from %s frame: %s.",
-                      av_get_pix_fmt_name((AVPixelFormat) frame->format), SDL_GetError());
+                      av_get_pix_fmt_name((AVPixelFormat)frame->format), SDL_GetError());
             return WHIST_ERROR_EXTERNAL;
         }
     }

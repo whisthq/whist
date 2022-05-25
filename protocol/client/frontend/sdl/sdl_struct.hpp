@@ -133,4 +133,4 @@ WhistStatus sdl_d3d11_init(SDLFrontendContext* context);
  */
 void sdl_d3d11_destroy(SDLFrontendContext* context);
 
-#endif // WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
+#endif  // WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
