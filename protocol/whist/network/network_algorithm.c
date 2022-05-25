@@ -446,8 +446,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
     whist_analyzer_record_current_cc_info(PACKET_VIDEO, packet_loss_ratio, short_term_latency,
                                           network_settings->video_bitrate, incoming_bitrate);
 
-    if (send_network_settings) return send_network_settings;
-
     if (!network_settings->saturate_bandwidth) {
         network_settings->congestion_detected = false;
     }
