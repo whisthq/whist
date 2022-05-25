@@ -18,8 +18,7 @@ Includes
 ============================
 */
 
-extern "C"
-{
+extern "C" {
 #include "audio.h"
 #include "network.h"
 #include <whist/logging/log_statistic.h>
