@@ -18,6 +18,8 @@ Includes
 ============================
 */
 
+extern "C"
+{
 #include "audio.h"
 #include "network.h"
 #include <whist/logging/log_statistic.h>
@@ -26,7 +28,7 @@ Includes
 #include <whist/core/whist_frame.h>
 #include <whist/debug/protocol_analyzer.h>
 #include <whist/debug/debug_console.h>
-
+}
 /*
 ============================
 Defines
@@ -161,7 +163,7 @@ AudioContext* init_audio(WhistFrontend* frontend) {
     LOG_INFO("Initializing audio system targeting frontend %u", whist_frontend_get_id(frontend));
 
     // Allocate the audio context
-    AudioContext* audio_context = safe_malloc(sizeof(*audio_context));
+    AudioContext* audio_context = (AudioContext*)safe_malloc(sizeof(*audio_context));
     memset(audio_context, 0, sizeof(*audio_context));
 
     // Initialize everything

@@ -28,7 +28,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../whist/cursor/cursor_internal.c
 
         # Files needed for Client unit tests
-        ../client/audio.c
+        ../client/audio.cpp
         ../client/client_utils.c
         ../client/whist_client.c
         ../client/network.c
@@ -87,7 +87,7 @@ else()
         ../whist/cursor/cursor_internal.c
 
         # Files needed for Client unit tests
-        ../client/audio.c
+        ../client/audio.cpp
         ../client/client_utils.c
         ../client/whist_client.c
         ../client/network.c
