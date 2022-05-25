@@ -37,6 +37,10 @@ Likewise, for only compiling on arm64 machines, use:
     // Code only compiles on arm64
 #endif
 ```
+ *
+ * TODO: This code currently distinguishes based on operating system and architecture.
+ *       We should eventually separate out decisions based on compiler and available
+ *       standards (e.g. POSIX, C11, C++17, etc.), rather than using OS as a proxy.
  */
 
 /*
