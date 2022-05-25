@@ -89,6 +89,9 @@ Defines
 #ifndef LOG_VIDEO
 #define LOG_VIDEO false
 #endif
+#ifndef LOG_CPU_USAGE
+#define LOG_CPU_USAGE 1
+#endif
 #define LOG_AUDIO false
 #define LOG_NACKING false
 #define LOG_NETWORKING false

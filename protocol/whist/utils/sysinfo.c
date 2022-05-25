@@ -28,6 +28,7 @@ Includes
 #include <processthreadsapi.h>
 #include <psapi.h>
 #else
+#include <sys/resource.h>
 #ifdef __APPLE__
 #include <sys/sysctl.h>
 #include <sys/types.h>
@@ -459,31 +460,28 @@ void print_hard_drive_info(void) {
              total_space / BYTES_IN_GB, available_space / BYTES_IN_GB);
 }
 
-double get_cpu_usage(void) {
-    char* cpu_usage = NULL;
+double get_cpu_usage(double time_elapsed) {
     double cpu_usage_pct = -1.0;
-#if defined(__linux__)
-    // Format: %Cpu(s):  1.6 us,  1.6 sy,  0.0 ni, 96.9 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
-    int res = runcmd("top -b -n 1 | grep 'Cpu(s):'", &cpu_usage);
-    cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
-
-    // Extract number indicating percentage of idle time
-    int start_index = 0, end_index = 0;
-    for (int i = 0; i < 3; i++) {
-        while (cpu_usage[start_index] != ',') start_index++;
-        start_index++;
+#ifndef _WIN32
+    static struct rusage prev_rusage;
+    static bool prev_rusage_initialized;
+    if (!prev_rusage_initialized) {
+        getrusage(RUSAGE_SELF, &prev_rusage);
+        prev_rusage_initialized = true;
+    } else {
+        struct rusage current_usage;
+        getrusage(RUSAGE_SELF, &current_usage);
+        double user_time_elapsed =
+            (current_usage.ru_utime.tv_sec - prev_rusage.ru_utime.tv_sec) +
+            (current_usage.ru_utime.tv_usec - prev_rusage.ru_utime.tv_usec) / (double)US_IN_SECOND;
+        double system_time_elapsed =
+            (current_usage.ru_stime.tv_sec - prev_rusage.ru_stime.tv_sec) +
+            (current_usage.ru_stime.tv_usec - prev_rusage.ru_stime.tv_usec) / (double)US_IN_SECOND;
+        cpu_usage_pct = 100.0 * (user_time_elapsed + system_time_elapsed) / time_elapsed;
+        prev_rusage = current_usage;
     }
-    start_index++;
-    end_index = start_index;
-    while (cpu_usage[end_index] != ' ') end_index++;
-    cpu_usage[end_index] = '\0';
-
-    // Compute percentage of non-idle CPU time
-    double cpu_idle_pct = atof(&cpu_usage[start_index]);
-    cpu_usage_pct = 100.00 - cpu_idle_pct;
-#else
+#else  // _WIN32
     LOG_WARNING("get_cpu_usage() not implemented for this platform");
 #endif
-    free(cpu_usage);
     return cpu_usage_pct;
 }

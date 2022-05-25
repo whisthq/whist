@@ -65,8 +65,9 @@ void print_memory_info(void);
  * @brief                          Get the instantaneous CPU usage in percentage points.
  *                                 The function only supports Linux. On other platforms, it
  *                                 returns -1.
+ * @param time_elapsed             Time elapsed (in s) since last call to this function
  * @returns                        Returns -1 on failure, the CPU usage as a percent on success
  */
-double get_cpu_usage(void);
+double get_cpu_usage(double time_elapsed);
 
 #endif  // SYS_INFO

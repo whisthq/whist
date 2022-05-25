@@ -91,9 +91,6 @@ extern bool upload_initiated;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
-#ifndef LOG_CPU_USAGE
-#define LOG_CPU_USAGE 0
-#endif
 
 // Command-line options.
 
@@ -415,9 +412,14 @@ int whist_client_main(int argc, const char* argv[]) {
 
             // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set
             // because getting cpu usage statistics is expensive.
-            if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) > 1) {
-                double cpu_usage = get_cpu_usage();
-                log_double_statistic(CLIENT_CPU_USAGE, cpu_usage);
+
+            double cpu_timer_time_elapsed = 0;
+            if (LOG_CPU_USAGE &&
+                ((cpu_timer_time_elapsed = get_timer(&cpu_usage_statistics_timer)) > 1)) {
+                double cpu_usage = get_cpu_usage(cpu_timer_time_elapsed);
+                if (cpu_usage != -1) {
+                    log_double_statistic(CLIENT_CPU_USAGE, cpu_usage);
+                }
                 start_timer(&cpu_usage_statistics_timer);
             }
 

@@ -450,7 +450,7 @@ if __name__ == "__main__":
                 update_date=True,
             )
 
-    if test_outcome == "failure (performance change on key metric >= 20%)":
+    if test_outcome == ":x: failure (performance change on key metric >= 20%)":
         print(
             f"\nError: the performance in a key metric in experiment {error_index+1} changed by more than 20% in absolute value!"
         )
