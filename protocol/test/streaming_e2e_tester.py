@@ -25,9 +25,6 @@ from helpers.common.timestamps_and_exit_tools import (
 
 from helpers.common.constants import (
     username,
-    ssh_connection_retries,
-    aws_timeout_seconds,
-    aws_credentials_filepath,
 )
 
 from helpers.setup.instance_setup_tools import (
@@ -411,11 +408,9 @@ if __name__ == "__main__":
     # We pass all parameters and other data to the setup processes via a dictionary
     args_dict = manager.dict(
         {
-            "username": username,
             "server_hostname": server_hostname,
             "client_hostname": client_hostname,
             "ssh_key_path": ssh_key_path,
-            "aws_timeout_seconds": aws_timeout_seconds,
             "server_log_filepath": server_log_filepath,
             "client_log_filepath": client_log_filepath,
             "pexpect_prompt_server": pexpect_prompt_server,
@@ -423,12 +418,10 @@ if __name__ == "__main__":
             "github_token": github_token,
             "use_two_instances": use_two_instances,
             "testing_time": testing_time,
-            "aws_credentials_filepath": aws_credentials_filepath,
             "cmake_build_type": args.cmake_build_type,
             "running_in_ci": running_in_ci,
             "skip_git_clone": skip_git_clone,
             "skip_host_setup": skip_host_setup,
-            "ssh_connection_retries": ssh_connection_retries,
         }
     )
 
@@ -484,19 +477,15 @@ if __name__ == "__main__":
     # Start SSH connection(s) to the EC2 instance(s) to run the host-service commands
     server_hs_process = attempt_ssh_connection(
         server_cmd,
-        aws_timeout_seconds,
         server_log,
         pexpect_prompt_server,
-        ssh_connection_retries,
         running_in_ci,
     )
     client_hs_process = (
         attempt_ssh_connection(
             client_cmd,
-            aws_timeout_seconds,
             client_log,
             pexpect_prompt_client,
-            ssh_connection_retries,
             running_in_ci,
         )
         if use_two_instances
@@ -514,10 +503,8 @@ if __name__ == "__main__":
     # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
     server_pexpect_process = attempt_ssh_connection(
         server_cmd,
-        aws_timeout_seconds,
         server_log,
         pexpect_prompt_server,
-        ssh_connection_retries,
         running_in_ci,
     )
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
@@ -532,10 +519,8 @@ if __name__ == "__main__":
     # client mandelbox on the client instance
     client_pexpect_process = attempt_ssh_connection(
         client_cmd,
-        aws_timeout_seconds,
         client_log,
         pexpect_prompt_client,
-        ssh_connection_retries,
         running_in_ci,
     )
 
@@ -583,9 +568,6 @@ if __name__ == "__main__":
         client_pexpect_process,
         client_hs_process,
         pexpect_prompt_client,
-        aws_timeout_seconds,
-        ssh_connection_retries,
-        username,
         ssh_key_path,
         boto3client,
         running_in_ci,

@@ -28,6 +28,7 @@ from helpers.common.constants import (
     HOST_SETUP_TIMEOUT_SECONDS,
     TIMEOUT_EXIT_CODE,
     TIMEOUT_KILL_EXIT_CODE,
+    aws_credentials_filepath,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -54,7 +55,6 @@ def install_and_configure_aws(
     pexpect_process,
     pexpect_prompt,
     running_in_ci,
-    aws_credentials_filepath=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
 ):
     """
     Install the AWS CLI and configure the AWS credentials on a remote machine by copying them
@@ -66,8 +66,6 @@ def install_and_configure_aws(
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
                         is ready to execute a command
         running_in_ci: A boolean indicating whether this script is currently running in CI
-        aws_credentials_filepath:   The path to the file where AWS stores the credentials on
-                                    the machine where this script is run
 
     Returns:
         True if the AWS installation and configuration succeeded, False otherwise.
@@ -82,12 +80,11 @@ def install_and_configure_aws(
         aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
     else:
         # Extract AWS credentials from aws configuration file on disk
-        aws_credentials_filepath_expanded = os.path.expanduser(aws_credentials_filepath)
-        if not os.path.isfile(aws_credentials_filepath_expanded):
+        if not os.path.isfile(aws_credentials_filepath):
             exit_with_error(
                 f"Could not find local AWS credential file at path {aws_credentials_filepath}!"
             )
-        aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
+        aws_credentials_file = open(aws_credentials_filepath, "r")
 
         # Read the AWS configuration file
         for line in aws_credentials_file.readlines():

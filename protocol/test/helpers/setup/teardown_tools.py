@@ -23,6 +23,8 @@ from helpers.common.timestamps_and_exit_tools import (
 
 from helpers.common.constants import (
     SESSION_ID_LEN,
+    username,
+    aws_timeout_seconds,
 )
 
 from helpers.aws.boto3_tools import (
@@ -86,9 +88,7 @@ def extract_logs_from_mandelbox(
     pexpect_prompt,
     docker_id,
     ssh_key_path,
-    username,
     hostname,
-    timeout_value,
     perf_logs_folder_name,
     log_grabber_log,
     session_id,
@@ -109,10 +109,7 @@ def extract_logs_from_mandelbox(
                             (browsers/chrome or development/client mandelbox) on the remote machine
         ssh_key_path (str): The path (on the machine where this script is run) to the file storing
                             the public RSA key used for SSH connections
-        username (str): The username to be used on the remote machine (default is 'ubuntu')
         hostname (str): The host name of the remote machine where the server/client was running on
-        timeout_value (int):    The amount of time (in seconds) to wait before timing out the attemps to
-                                gain a SSH connection to the remote machine.
         perf_logs_folder_name (str):    The path to the folder (on the machine where this script is run)
                                         where to store the logs
         log_grabber_log (file): The file (already opened) to use for logging the terminal output from
@@ -169,7 +166,9 @@ def extract_logs_from_mandelbox(
         f"scp -r -i {ssh_key_path} {username}@{hostname}:~/perf_logs/{role} {perf_logs_folder_name}"
     )
 
-    local_process = pexpect.spawn(command, timeout=timeout_value, logfile=log_grabber_log.buffer)
+    local_process = pexpect.spawn(
+        command, timeout=aws_timeout_seconds, logfile=log_grabber_log.buffer
+    )
     local_process.expect(["\$", pexpect.EOF])
     local_process.kill(0)
 
@@ -196,9 +195,6 @@ def complete_experiment_and_save_results(
     client_mandelbox_pexpect_process,
     client_hs_process,
     pexpect_prompt_client,
-    aws_timeout_seconds,
-    ssh_connection_retries,
-    username,
     ssh_key_path,
     boto3client,
     running_in_ci,
@@ -254,10 +250,6 @@ def complete_experiment_and_save_results(
                                                         interact with the host-service on the client instance.
         pexpect_prompt_client (str):    The bash prompt printed by the shell on the remote client machine when it is ready
                                         to execute a command
-        aws_timeout_seconds (int):  The amount of time (in seconds) to wait before timing out the attemps to
-                                    gain a SSH connection to the remote machine.
-        ssh_connection_retries (int): The number of times to retry if a SSH connection cannot be immediately established
-        username (str): The username to use when opening a SSH connection to a remote AWS EC2 machine
         ssh_key_path (str): The path (on the machine where this script is run) to the file storing
                             the public RSA key used for SSH connections
         boto3client (botocore.client): The Boto3 client to use to talk to the AWS console
@@ -285,10 +277,8 @@ def complete_experiment_and_save_results(
         # and we cannot exit them until we have copied over the logs
         client_restore_net_process = attempt_ssh_connection(
             client_ssh_cmd,
-            aws_timeout_seconds,
             client_log,
             pexpect_prompt_client,
-            ssh_connection_retries,
             running_in_ci,
         )
         restore_network_conditions(client_restore_net_process, pexpect_prompt_client, running_in_ci)
@@ -319,19 +309,15 @@ def complete_experiment_and_save_results(
 
     log_grabber_server_process = attempt_ssh_connection(
         server_ssh_cmd,
-        aws_timeout_seconds,
         server_log,
         pexpect_prompt_server,
-        ssh_connection_retries,
         running_in_ci,
     )
 
     log_grabber_client_process = attempt_ssh_connection(
         client_ssh_cmd,
-        aws_timeout_seconds,
         client_log,
         pexpect_prompt_client,
-        ssh_connection_retries,
         running_in_ci,
     )
 
@@ -340,9 +326,7 @@ def complete_experiment_and_save_results(
         pexpect_prompt_server,
         server_docker_id,
         ssh_key_path,
-        username,
         server_hostname,
-        aws_timeout_seconds,
         perf_logs_folder_name,
         server_log,
         server_session_id,
@@ -354,9 +338,7 @@ def complete_experiment_and_save_results(
         pexpect_prompt_client,
         client_docker_id,
         ssh_key_path,
-        username,
         client_hostname,
-        aws_timeout_seconds,
         perf_logs_folder_name,
         client_log,
         client_session_id,

@@ -32,6 +32,7 @@ from helpers.common.timestamps_and_exit_tools import (
 
 from helpers.common.constants import (
     MANDELBOX_BUILD_MAX_RETRIES,
+    username,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -57,19 +58,15 @@ def server_setup_process(args_dict):
     Returns:
         None
     """
-    username = args_dict["username"]
     server_hostname = args_dict["server_hostname"]
     ssh_key_path = args_dict["ssh_key_path"]
-    aws_timeout_seconds = args_dict["aws_timeout_seconds"]
     server_log_filepath = args_dict["server_log_filepath"]
     pexpect_prompt_server = args_dict["pexpect_prompt_server"]
     github_token = args_dict["github_token"]
-    aws_credentials_filepath = args_dict["aws_credentials_filepath"]
     cmake_build_type = args_dict["cmake_build_type"]
     running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
-    ssh_connection_retries = args_dict["ssh_connection_retries"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -78,10 +75,8 @@ def server_setup_process(args_dict):
     server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
     hs_process = attempt_ssh_connection(
         server_cmd,
-        aws_timeout_seconds,
         server_log,
         pexpect_prompt_server,
-        ssh_connection_retries,
         running_in_ci,
     )
 
@@ -93,7 +88,6 @@ def server_setup_process(args_dict):
         hs_process,
         pexpect_prompt_server,
         running_in_ci,
-        aws_credentials_filepath,
     )
 
     prune_containers_if_needed(hs_process, pexpect_prompt_server, running_in_ci)
@@ -125,10 +119,8 @@ def server_setup_process(args_dict):
     hs_process = reboot_instance(
         hs_process,
         server_cmd,
-        aws_timeout_seconds,
         server_log,
         pexpect_prompt_server,
-        ssh_connection_retries,
         running_in_ci,
     )
 

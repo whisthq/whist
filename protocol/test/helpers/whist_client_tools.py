@@ -35,6 +35,7 @@ from helpers.common.timestamps_and_exit_tools import (
 
 from helpers.common.constants import (
     MANDELBOX_BUILD_MAX_RETRIES,
+    username,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -63,21 +64,18 @@ def client_setup_process(args_dict):
     Returns:
         None
     """
-    username = args_dict["username"]
+
     client_hostname = args_dict["client_hostname"]
     ssh_key_path = args_dict["ssh_key_path"]
-    aws_timeout_seconds = args_dict["aws_timeout_seconds"]
     client_log_filepath = args_dict["client_log_filepath"]
     pexpect_prompt_client = args_dict["pexpect_prompt_client"]
     github_token = args_dict["github_token"]
     use_two_instances = args_dict["use_two_instances"]
     testing_time = args_dict["testing_time"]
-    aws_credentials_filepath = args_dict["aws_credentials_filepath"]
     cmake_build_type = args_dict["cmake_build_type"]
     running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
-    ssh_connection_retries = args_dict["ssh_connection_retries"]
 
     client_log = open(client_log_filepath, "w")
     client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path}"
@@ -89,10 +87,8 @@ def client_setup_process(args_dict):
         print("Initiating the SETUP SSH connection with the client AWS instance...")
         hs_process = attempt_ssh_connection(
             client_cmd,
-            aws_timeout_seconds,
             client_log,
             pexpect_prompt_client,
-            ssh_connection_retries,
             running_in_ci,
         )
 
@@ -107,7 +103,6 @@ def client_setup_process(args_dict):
             hs_process,
             pexpect_prompt_client,
             running_in_ci,
-            aws_credentials_filepath,
         )
 
         prune_containers_if_needed(hs_process, pexpect_prompt_client, running_in_ci)
@@ -135,10 +130,8 @@ def client_setup_process(args_dict):
         hs_process = reboot_instance(
             hs_process,
             client_cmd,
-            aws_timeout_seconds,
             client_log,
             pexpect_prompt_client,
-            ssh_connection_retries,
             running_in_ci,
         )
 
@@ -148,10 +141,8 @@ def client_setup_process(args_dict):
     print("Initiating the BUILD ssh connection with the client AWS instance...")
     client_pexpect_process = attempt_ssh_connection(
         client_cmd,
-        aws_timeout_seconds,
         client_log,
         pexpect_prompt_client,
-        ssh_connection_retries,
         running_in_ci,
     )
     build_client_on_instance(

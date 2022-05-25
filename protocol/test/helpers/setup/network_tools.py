@@ -11,12 +11,12 @@ from helpers.common.ssh_tools import (
     wait_for_apt_locks,
 )
 
-# Add the current directory to the path no matter where this is called from
-sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
 from helpers.common.constants import (
     N_NETWORK_CONDITION_PARAMETERS,
 )
+
+# Add the current directory to the path no matter where this is called from
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def setup_artificial_network_conditions(
