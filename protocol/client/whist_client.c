@@ -394,7 +394,7 @@ int whist_client_main(int argc, const char* argv[]) {
         LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
 
         // init or re-init the fec controller
-        fec_controller_init(time_since_start());
+        fec_controller_init(get_timestamp_sec());
 
         // Create threads to receive udp/tcp packets and handle them as needed
         // Pass the whist_renderer so that udp packets can be fed into it

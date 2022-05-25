@@ -519,7 +519,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             double packet_loss_ratio = get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
                                                              context->short_term_latency);
             // feed current time and latency info into fec controller
-            double current_time = time_since_start();
+            double current_time = get_timestamp_sec();
             fec_controller_feed_latency(current_time, context->short_term_latency);
             if (verbose_log) {
                 static double last_print_time = 0;
@@ -542,7 +542,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     }
 
     static double last_send_time = 0;
-    double current_time = time_since_start();
+    double current_time = get_timestamp_sec();
     // resend values periodically since UDP packet might get lost
     if (send_network_settings || current_time - last_send_time > 1.0) {
         send_desired_network_settings(context);

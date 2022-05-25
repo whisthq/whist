@@ -122,19 +122,22 @@ int current_time_str(char* buffer, size_t size);
  * @brief                          Returns the number of microseconds elapsed since epoch
  *
  * @returns                        Number of microseconds elapsed since epoch
+ * @note                           This value returned by this function is based on wallclock time,
+ *                                 it's not aim for comparing how much time has pased
  */
 timestamp_us current_time_us(void);
 
 /**
- * @brief                          Get a comparable time in sec, which the meaning of time elapsed
- *                                 since the process start.
+ * @brief                          Get a comparable timestamp in sec.
  *
- * @returns                        Time in sec.
- * @note                           Call this function after process start to init. First call inits
- *                                 the timer inside and returns 0, others calls returns the time
- *                                 since first call.
+ * @returns                        Timestamp in sec.
+ * @note                           The point of this function is to get a comparable timestamp, the
+ *                                 absolute value is not important. But for a well defined behavior:
+ *                                 The first call of this function returns zero, following calls run
+ *                                 the time past in sec since first call.
+ *
  */
-double time_since_start(void);
+double get_timestamp_sec(void);
 
 /** @} */
 

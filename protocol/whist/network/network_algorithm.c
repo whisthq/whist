@@ -417,7 +417,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
 
     if (ENABLE_FEC) {
         // get current time
-        double current_time = time_since_start();
+        double current_time = get_timestamp_sec();
         // feed info to fec controller
         fec_controller_feed_info(current_time, op, packet_loss_ratio, old_bitrate,
                                  network_settings->video_bitrate, MINIMUM_BITRATE);

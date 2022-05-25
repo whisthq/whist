@@ -53,7 +53,7 @@ Public Function Implementations
 */
 
 void whist_init_subsystems(void) {
-    time_since_start();  // init the timer insdie
+    get_timestamp_sec();  // init the timer insdie
     whist_init_multithreading();
     whist_init_logger();
     whist_init_features();

@@ -1990,7 +1990,7 @@ TEST_F(ProtocolTest, QueueTest) {
 }
 
 TEST_F(ProtocolTest, WCCTest) {
-    fec_controller_init(time_since_start());
+    fec_controller_init(get_timestamp_sec());
 
     output_width = 1920;
     output_height = 1080;
