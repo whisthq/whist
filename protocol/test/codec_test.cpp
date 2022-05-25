@@ -154,7 +154,7 @@ TEST_F(CodecTest, DecodeTest) {
 }
 
 // Non-decode (i.e. server) tests only support Linux.
-#if __linux__
+#if OS_IS(OS_LINUX)
 
 // Run frames through an encode-decode pair and check the output.
 TEST_F(CodecTest, EncodeDecodeTest) {
@@ -296,7 +296,7 @@ TEST_F(CodecTest, CaptureJPEGTest) {
     destroy_capture_device(&cap);
 }
 
-#endif /* __linux__ */
+#endif  // Linux
 
 // Test each of the main interactions.
 TEST_F(CodecTest, LTRSimpleTest) {

@@ -12,7 +12,8 @@ sent over the network, while decrypt_packet, which calls decrypt_packet_n, gets
 called on the receiving end to re-obtain the data and process it.
 */
 
-#if defined(_WIN32)
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 #pragma warning(disable : 4706)  // assignment within conditional expression warning
 #endif
 
@@ -433,6 +434,7 @@ static int openssl_callback(const char* str, size_t len, void* opaque) {
     return 0;
 }
 
-#if defined(_WIN32)
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 #pragma warning(default : 4706)
 #endif

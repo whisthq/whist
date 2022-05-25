@@ -322,7 +322,7 @@ void whist_error_monitor_log_breadcrumb(const char *tag, const char *message) {
 
     // In the current sentry-native beta version, breadcrumbs can only be logged
     // from macOS and Linux.
-#ifndef _WIN32
+#if OS_IN(OS_LINUX | OS_MACOS)
     sentry_value_t crumb = sentry_value_new_breadcrumb("default", message);
     sentry_value_set_by_key(crumb, "category", sentry_value_new_string("protocol-logs"));
     sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));

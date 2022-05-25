@@ -14,7 +14,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder, bool* force_i
         return -1;
     }
 
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
     // Handle transfer capture for nvidia capture device
     // check if we need to switch our active encoder
     if (encoder->active_encoder == NVIDIA_ENCODER) {
@@ -57,9 +57,9 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder, bool* force_i
     WhistTimer cpu_transfer_timer;
     start_timer(&cpu_transfer_timer);
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->frame_data, device->pitch)) {
-#else  // __linux
+#elif OS_IS(OS_LINUX)
     if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->x11_capture_device->frame_data,
                                     device->x11_capture_device->pitch)) {
 #endif

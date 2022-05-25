@@ -19,7 +19,7 @@ relate different events across server and client.
 #include "clock.h"
 
 struct WhistTimerInternal {
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     LARGE_INTEGER pc;
 #else
     struct timespec ts;
@@ -28,7 +28,7 @@ struct WhistTimerInternal {
 
 void start_timer(WhistTimer* timer_opaque) {
     struct WhistTimerInternal* timer = (struct WhistTimerInternal*)timer_opaque;
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     QueryPerformanceCounter(&timer->pc);
 #else
     clock_gettime(CLOCK_MONOTONIC, &timer->ts);
@@ -44,7 +44,7 @@ void start_timer(WhistTimer* timer_opaque) {
 
 double get_timer(const WhistTimer* timer_opaque) {
     const struct WhistTimerInternal* timer = (const struct WhistTimerInternal*)timer_opaque;
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     LARGE_INTEGER end;
     LARGE_INTEGER frequency;
     QueryPerformanceFrequency(&frequency);
@@ -65,7 +65,7 @@ double get_timer(const WhistTimer* timer_opaque) {
 
 void adjust_timer(WhistTimer* timer_opaque, int num_seconds) {
     struct WhistTimerInternal* timer = (struct WhistTimerInternal*)timer_opaque;
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     LARGE_INTEGER frequency;
     QueryPerformanceFrequency(&frequency);
     timer->pc.QuadPart += (frequency.QuadPart * num_seconds);
@@ -75,7 +75,7 @@ void adjust_timer(WhistTimer* timer_opaque, int num_seconds) {
 }
 
 int current_time_str(char* buffer, size_t size) {
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     SYSTEMTIME time_now;
     GetSystemTime(&time_now);
     return snprintf(buffer, size, "%04i-%02i-%02iT%02i:%02i:%02i.%06li", time_now.wYear,
@@ -96,7 +96,7 @@ int current_time_str(char* buffer, size_t size) {
 
 timestamp_us current_time_us(void) {
     uint64_t output;
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
 /* Windows epoch starts on 1601-01-01T00:00:00Z. But UNIX/Linux epoch starts on
    1970-01-01T00:00:00Z. To bring Windows time on par Unix epoch, the difference is above start
    times is subtracted */

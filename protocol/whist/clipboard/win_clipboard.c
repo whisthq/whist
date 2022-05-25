@@ -24,9 +24,9 @@ Includes
 ============================
 */
 
-#ifdef _WIN32
-
 #include <whist/core/whist.h>
+
+#if OS_IS(OS_WIN32)
 #include "../utils/png.h"
 #include "clipboard.h"
 #include "clipboard_internal.h"
@@ -427,4 +427,4 @@ void unsafe_set_os_clipboard(ClipboardData* cb) {
     }
 }
 
-#endif  // _WIN32
+#endif  // Windows

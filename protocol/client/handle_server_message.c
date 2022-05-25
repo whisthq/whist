@@ -188,13 +188,13 @@ static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size)
     */
     LOG_INFO("Received Open URI message from the server!");
 
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
 #define OPEN_URI_CMD "cmd /c start \"\""
-#elif __APPLE__
+#elif OS_IS(OS_MACOS)
 #define OPEN_URI_CMD "open"
 #else
 #define OPEN_URI_CMD "xdg-open"
-#endif  // _WIN32
+#endif  // Windows
 // just to be safe from off-by-1 errors
 #define OPEN_URI_CMD_MAXLEN 30
 

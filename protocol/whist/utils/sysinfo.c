@@ -10,6 +10,7 @@ Call the respective functions to log a device's OS, model, CPU, RAM, etc.
 */
 
 #include "sysinfo.h"
+#include <whist/core/platform.h>
 
 /*
 ============================
@@ -17,7 +18,7 @@ Includes
 ============================
 */
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #pragma warning(disable : 4201)
 #include <D3D11.h>
 #include <D3d11_1.h>
@@ -29,7 +30,7 @@ Includes
 #include <psapi.h>
 #else
 #include <sys/resource.h>
-#ifdef __APPLE__
+#if OS_IS(OS_MACOS)
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #else
@@ -44,7 +45,7 @@ Includes
 #include <whist/logging/logging.h>
 
 void print_os_info(void) {
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     char buf[1024];
     char product[256];
     char version[256];
@@ -90,10 +91,10 @@ void print_os_info(void) {
 #endif
 #endif
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     snprintf(buf, sizeof(buf), "%d-bit %s", win_os_bitness, win_os_string);
     LOG_INFO("  OS: %s", buf);
-#elif __APPLE__ || __MACH__
+#elif OS_IS(OS_MACOS)
     char* os_version = NULL;
     runcmd("sw_vers", &os_version);
     char* token = strtok(os_version, "\n");
@@ -102,7 +103,7 @@ void print_os_info(void) {
     LOG_INFO("OS %s", token);
     token = strtok(NULL, "\n");  // Get BuildVersion
     LOG_INFO("OS %s", token);
-#elif __linux__
+#elif OS_IS(OS_LINUX)
     char buf[1024];
     struct utsname uts;
     uname(&uts);
@@ -116,7 +117,7 @@ void print_os_info(void) {
 }
 
 void print_model_info(void) {
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     char* response = NULL;
     int total_sz = runcmd("wmic computersystem get model,manufacturer", &response);
     if (response) {
@@ -149,7 +150,7 @@ void print_model_info(void) {
         LOG_INFO("  Make and Model: %s", make_model);
         free(response);
     }
-#elif __APPLE__
+#elif OS_IS(OS_MACOS)
     size_t len = 0;
     sysctlbyname("hw.model", NULL, &len, NULL, 0);
     if (len) {
@@ -180,7 +181,7 @@ void print_model_info(void) {
 }
 
 void print_monitors(void) {
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     int num_adapters = 0, i = 0, j = 0;
     IDXGIFactory1* factory;
 
@@ -268,7 +269,7 @@ void print_monitors(void) {
 }
 
 void print_ram_info(void) {
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     size_t total_ram;
     size_t total_ram_usage;
     unsigned long long memory_in_kilos = 0;
@@ -286,7 +287,7 @@ void print_ram_info(void) {
     total_ram_usage = total_ram - statex.ullAvailPhys;
 
     // MacOS: use sysctl
-#elif __APPLE__
+#elif OS_IS(OS_MACOS)
     unsigned long long total_ram;
     char* total_ram_usage = NULL;
     char* memsize = NULL;
@@ -307,7 +308,7 @@ void print_ram_info(void) {
     total_ram = info.totalram;
     total_ram_usage = info.totalram - (info.freeram + info.bufferram);
 #endif
-#ifndef __APPLE__
+#if !OS_IS(OS_MACOS)
     LOG_INFO("Total RAM Usage: %.2f GB", total_ram_usage / BYTES_IN_GB);
 #else
     LOG_INFO("Total RAM Usage: %s", total_ram_usage);
@@ -316,7 +317,7 @@ void print_ram_info(void) {
 }
 
 void print_memory_info(void) {
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     DWORD process_id = GetCurrentProcessId();
     HANDLE h_process;
     PROCESS_MEMORY_COUNTERS pmc;
@@ -336,19 +337,19 @@ void print_memory_info(void) {
 }
 // End Print Memory Info
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 // Get __cpuid compiler intrinsic
 #include <intrin.h>
 #endif
 
-#if defined __arm64__ && defined __APPLE__
-#define M1
+#if ARCH_IS(ARCH_ARM_64) && OS_IS(OS_MACOS)
+#define APPLE_SILICON
 #endif
 
-#ifndef M1
+#ifndef APPLE_SILICON
 // On x86 processors, we can use cpuid function call
 static void cpu_id(unsigned i, unsigned regs[4]) {
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     __cpuid((int*)regs, (int)i);
 #else
     asm volatile("cpuid"
@@ -360,7 +361,7 @@ static void cpu_id(unsigned i, unsigned regs[4]) {
 #endif
 
 void print_cpu_info(void) {
-#ifdef M1
+#ifdef APPLE_SILICON
     const char* cpu_vendor = "AppleM1";
     const char* cpu_brand_string = "Apple M1 8-Core @ 3.2GHz";
     unsigned logical = 8;
@@ -428,7 +429,7 @@ void print_cpu_info(void) {
     LOG_INFO("HyperThreaded: %s", (hyper_threads ? "true" : "false"));
 
 // add CPU usage at beginning of Whist
-#ifdef __APPLE__
+#if OS_IS(OS_MACOS)
     char* cpu_usage = NULL;
     runcmd("top -l 1 | grep -E '^CPU'", &cpu_usage);
     cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
@@ -440,7 +441,7 @@ void print_hard_drive_info(void) {
     double used_space;
     double total_space;
     double available_space;
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     ULARGE_INTEGER ltotal_space;
     ULARGE_INTEGER lusable_space;
     ULARGE_INTEGER lfree_space;
@@ -462,7 +463,7 @@ void print_hard_drive_info(void) {
 
 double get_cpu_usage(double time_elapsed) {
     double cpu_usage_pct = -1.0;
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
     static struct rusage prev_rusage;
     static bool prev_rusage_initialized;
     if (!prev_rusage_initialized) {
@@ -480,7 +481,7 @@ double get_cpu_usage(double time_elapsed) {
         cpu_usage_pct = 100.0 * (user_time_elapsed + system_time_elapsed) / time_elapsed;
         prev_rusage = current_usage;
     }
-#else  // _WIN32
+#else  // Not Windows
     LOG_WARNING("get_cpu_usage() not implemented for this platform");
 #endif
     return cpu_usage_pct;

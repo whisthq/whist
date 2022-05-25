@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include "clipboard.h"
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #include <windows.h>
 
 WCHAR* lget_os_clipboard_directory(void);

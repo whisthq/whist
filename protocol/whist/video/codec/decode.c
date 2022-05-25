@@ -12,7 +12,8 @@ frames are eventually moved to the CPU for scaling and color conversion. Create 
 create_video_decoder. To decode a frame, call video_decoder_decode on the decoder and the encoded
 packets. To destroy the decoder when finished, destroy the encoder using video_decoder_decode.
 */
-#if defined(_WIN32)
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 #pragma warning(disable : 4706)  // assignment within conditional warning
 #endif
 
@@ -30,7 +31,7 @@ Includes
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #include <libavutil/hwcontext_d3d11va.h>
 #endif
 
@@ -96,7 +97,7 @@ static enum AVPixelFormat get_format_software(AVCodecContext* avctx,
     return AV_PIX_FMT_NONE;
 }
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 static enum AVPixelFormat get_format_d3d11(AVCodecContext* avctx,
                                            const enum AVPixelFormat* pix_fmts) {
     AVBufferRef* frames_ref = NULL;
@@ -177,14 +178,14 @@ typedef struct {
 // For example, on Windows we try D3D11VA -> DXVA2 -> NVDEC -> software
 // in that order.
 static const HardwareDecodeType hardware_decode_types[] = {
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     {"D3D11VA", AV_HWDEVICE_TYPE_D3D11VA, AV_PIX_FMT_D3D11, &get_format_d3d11},
     {"DXVA2", AV_HWDEVICE_TYPE_DXVA2, AV_PIX_FMT_DXVA2_VLD, NULL},
 #endif
-#if defined(__linux__)
+#if OS_IS(OS_LINUX)
     {"VAAPI", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, NULL},
 #endif
-#if defined(__APPLE__)
+#if OS_IS(OS_MACOS)
     {"VideoToolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, NULL},
 #else
     {"NVDEC", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, NULL},
@@ -617,7 +618,7 @@ void video_decoder_free_decoded_frame(DecodedFrameData* decoded_frame_data) {
     av_frame_free(&decoded_frame_data->decoded_frame);
 }
 
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
 #pragma warning(default : 4706)
 #pragma warning(default : 4100)
 #endif

@@ -21,7 +21,7 @@ Includes
 */
 
 #include <stdint.h>
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #include <windows.h>
 #else
 #include <sys/time.h>

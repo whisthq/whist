@@ -11,12 +11,13 @@
 Includes
 ============================
 */
+#include <whist/core/platform.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #include <process.h>
 #include <shlwapi.h>
 #include <windows.h>
@@ -43,7 +44,7 @@ Includes
 #include <whist/utils/window_info.h>
 #include <whist/utils/sysinfo.h>
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #pragma comment(lib, "ws2_32.lib")
 #endif
 // Linux shouldn't have this

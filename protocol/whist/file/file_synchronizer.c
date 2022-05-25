@@ -28,7 +28,8 @@ if (our_chunk_to_send) {
 destroy_file_synchronizer();
 */
 
-#ifdef _WIN32
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 #pragma warning(disable : 4996)
 #define _CRT_NONSTDC_NO_WARNINGS
 #endif
@@ -184,12 +185,12 @@ void init_file_synchronizer(FileTransferType requested_actions) {
     is_initialized = true;
 }
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 // USERPROFILE concatenates both HOMEDRIVE and HOMEPATH
 #define HOME_ENV_VAR "USERPROFILE"
 #else
 #define HOME_ENV_VAR "HOME"
-#endif  // _WIN32
+#endif  // Windows
 void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     /*
         Open a file for writing based on `file_metadata`

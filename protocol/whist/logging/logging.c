@@ -25,7 +25,8 @@ Note that these macros do not need an additional \n character at the end of your
 format strings.
 */
 
-#ifdef _WIN32
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 #define _NO_CVCONST_H
 #include <Windows.h>
 #include <DbgHelp.h>
@@ -594,7 +595,7 @@ void print_stacktrace(void) {
         fprintf(stdout, "ERROR: No crash handler mutex...\n");
     }
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     unsigned int i;
     void* stack[100];
     unsigned short frames;
@@ -664,7 +665,7 @@ void print_stacktrace(void) {
     }
 }
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 static LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // NOLINT
     fprintf(stdout, "\n");
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
@@ -767,7 +768,7 @@ static void unix_crash_handler(int sig) {
 static void init_backtrace_handler(void) {
     crash_handler_mutex = whist_create_mutex();
     crash_handler_mutex_active = true;
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     SetUnhandledExceptionFilter(windows_exception_handler);
 #else
     // Try to catch all the signals

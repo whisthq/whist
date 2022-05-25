@@ -15,10 +15,10 @@ Includes
 #include "os_utils.h"
 #include <whist/core/whist.h>
 #include <whist/utils/atomic.h>
-#ifdef __APPLE__
+#if OS_IS(OS_MACOS)
 #include <Carbon/Carbon.h>
 #endif
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
 #include <X11/XKBlib.h>
 #endif
 
@@ -30,7 +30,7 @@ Defines
 
 #define WHIST_KB_DEFAULT_LAYOUT "xkb:us::eng"
 
-#ifdef __APPLE__
+#if OS_IS(OS_MACOS)
 
 #define MAX_APPLE_KB_NAME_LENGTH 75
 // If this array gets any longer than 1000 or so,
@@ -94,7 +94,7 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
 #endif
 static WhistKeyboardLayout current_layout = {WHIST_KB_DEFAULT_LAYOUT, ""};
 
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
 
 static const char linux_supported_layouts[][5] = {"us", "it",    "ara", "de", "fr",
                                                   "es", "latam", "il",  "ca", "uk"};
@@ -114,7 +114,7 @@ Public Function Implementations
 WhistKeyboardLayout get_keyboard_layout(void) {
     static WhistKeyboardLayout whist_layout = {0};
 
-#ifdef __APPLE__
+#if OS_IS(OS_MACOS)
     TISInputSourceRef source = TISCopyCurrentKeyboardInputSource();
     // get input source id - kTISPropertyInputSourceID
     // get layout name - kTISPropertyLocalizedName
@@ -160,7 +160,7 @@ WhistKeyboardLayout get_keyboard_layout(void) {
 
     // then copy layout into old_layout
     safe_strncpy(old_layout, layout, sizeof(layout));
-#elif __linux__
+#elif OS_IS(OS_LINUX)
     // Convenience function to check compatibility and intitialize the xkb lib
     Display *dpy = XkbOpenDisplay(NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -209,7 +209,7 @@ WhistKeyboardLayout get_keyboard_layout(void) {
     XFree(symbols);
     XFree(kbd_desc_ptr);
     XCloseDisplay(dpy);
-#elif _WIN32
+#elif OS_IS(OS_WIN32)
     // TODO: Implement on Windows
 #endif
 
@@ -218,7 +218,7 @@ WhistKeyboardLayout get_keyboard_layout(void) {
 }
 
 static int set_keyboard_layout_thread(void *arg) {
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
     atomic_int *in_progress = (atomic_int *)arg;
     FATAL_ASSERT(atomic_load(in_progress) == 1);
     char cmd_buf[1024];
@@ -278,7 +278,7 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
                                  (void *)&in_progress);
 }
 
-#ifndef __APPLE__
+#if !OS_IS(OS_MACOS)
 
 int display_notification(WhistNotification notif) {
     LOG_WARNING("Notification display not implemented on this OS");
@@ -294,7 +294,7 @@ void package_notification(WhistNotification *notif, const char *title, const cha
     safe_strncpy(notif->message, message, MAX_NOTIF_MSG_LEN);
 }
 
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
 void run_as_whist_user(const char *command) {
     // Run a shell command as the whist user
     static char cmd_buf[1024];

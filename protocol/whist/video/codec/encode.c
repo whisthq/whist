@@ -339,7 +339,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
     }
     switch (encoder->active_encoder) {
         case NVIDIA_ENCODER:
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
             encoder->nvidia_encoders[encoder->active_encoder_idx]->ltr_action =
                 encoder->next_ltr_action;
             nvidia_encoder_encode(encoder->nvidia_encoders[encoder->active_encoder_idx]);
@@ -385,7 +385,7 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
     encoder->in_height = height;
     encoder->codec_type = codec;
     if (encoder->nvidia_encoders[encoder->active_encoder_idx]) {
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
         // NOTE: nvidia reconfiguration is currently disabled because it breaks CUDA resource
         // registration somehow.
         return nvidia_reconfigure_encoder(encoder->nvidia_encoders[encoder->active_encoder_idx],
@@ -411,7 +411,7 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
     LOG_INFO("Creating iframe");
     switch (encoder->active_encoder) {
         case NVIDIA_ENCODER:
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
             nvidia_set_iframe(encoder->nvidia_encoders[encoder->active_encoder_idx]);
             return;
 #else
@@ -450,7 +450,7 @@ void destroy_video_encoder(VideoEncoder *encoder) {
     for (int i = 0; i < NUM_ENCODERS; i++) {
         NvidiaEncoder *nvidia_encoder = encoder->nvidia_encoders[i];
         if (nvidia_encoder) {
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
             LOG_INFO("Destroying nvidia encoder...");
             destroy_nvidia_encoder(nvidia_encoder);
             LOG_INFO("Done destroying nvidia encoder!");

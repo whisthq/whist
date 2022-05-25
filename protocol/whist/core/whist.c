@@ -84,7 +84,7 @@ int runcmd(const char *cmdline, char **response) {
             (int): 0 or value of pipe if success, else -1
     */
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     HANDLE h_child_std_in_rd = NULL;
     HANDLE h_child_std_in_wr = NULL;
     HANDLE h_child_std_out_rd = NULL;
@@ -426,7 +426,7 @@ void trim_utf8_string(char *str) {
     // On Windows, utf-8 seems to behave weirdly, causing major issues in the
     // below codepath. Therefore, I've disabled this function on Windows.
     // TODO: Fix this on Windows and re-enable the unit test.
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
     // UTF-8 can use up to 4 bytes per character, so
     // in the malformed case, we would at most need to
     // trim 3 trailing bytes.
@@ -453,7 +453,7 @@ void trim_utf8_string(char *str) {
         str[len - 1] = '\0';
         return;
     }
-#endif  // _WIN32
+#endif  // Not Windows
 }
 
 /* position of bit within character */

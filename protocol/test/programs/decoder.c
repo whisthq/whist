@@ -11,7 +11,8 @@
 #include <SDL2/SDL.h>
 #include <openssl/evp.h>
 
-#ifdef _WIN32
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 #include <libavutil/hwcontext_d3d11va.h>
 #endif
 
@@ -328,7 +329,7 @@ static WhistStatus sdl_get_hardware_device(TestOutput *output) {
     }
     LOG_INFO("SDL renderer is %s.", info.name);
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     if (!strcmp(info.name, "direct3d11")) {
         ID3D11Device *d3d11_device = SDL_RenderGetD3D11Device(output->sdl_renderer);
         if (!d3d11_device) {
@@ -359,7 +360,7 @@ static WhistStatus sdl_get_hardware_device(TestOutput *output) {
     }
 #endif
 
-#ifdef __APPLE__
+#if OS_IS(OS_MACOS)
     if (!strcmp(info.name, "metal")) {
         // No device required; output can use VideoToolbox.
         output->hardware_format = AV_PIX_FMT_VIDEOTOOLBOX;
@@ -378,7 +379,7 @@ static WhistStatus create_sdl(TestOutput *output) {
         return WHIST_ERROR_EXTERNAL;
     }
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     // Ensure that we use D3D11 and enable debug layers.
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");
     SDL_SetHint(SDL_HINT_RENDER_DIRECT3D11_DEBUG, "1");

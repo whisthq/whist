@@ -14,7 +14,7 @@
 
 #include <whist/logging/logging.h>
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #pragma warning(disable : 4996)
 #pragma warning(disable : 4706)
 // Check Later

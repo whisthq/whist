@@ -1,7 +1,7 @@
 #include <whist/core/whist.h>
 #include "file_download.h"
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 
 #include <ShlObj_core.h>
 

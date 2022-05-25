@@ -46,7 +46,7 @@ Public Function Implementations
 
 InputDevice* create_input_device(InputDeviceType kind, void* data) {
     switch (kind) {
-#if defined(__linux__)
+#if OS_IS(OS_LINUX)
         case WHIST_INPUT_DEVICE_XTEST:
             return xtest_create_input_device(data);
 
@@ -56,7 +56,7 @@ InputDevice* create_input_device(InputDeviceType kind, void* data) {
             return weston_create_input_device(data);
 #endif
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
         case WHIST_INPUT_DEVICE_WIN32:
             return win_create_input_device(data);
 #endif

@@ -39,7 +39,7 @@ extern "C" {
 #include <client/frontend/sdl/common.h>
 #include <client/frontend/sdl/sdl_struct.hpp>
 
-#ifndef __APPLE__
+#if !OS_IS(OS_MACOS)
 #include "server/state.h"
 #include "server/parse_args.h"
 #include "server/client.h"
@@ -133,16 +133,16 @@ TEST_F(ProtocolTest, InitSDL) {
 
     check_stdout_line(::testing::HasSubstr("Using renderer: "));
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     // We get one line about the D3D11 device from the renderer, which
     // can be success or an error message.  For this test we don't care
     // which of those it is, but we need to consume the message here.
     check_stdout_line(::testing::HasSubstr("device"));
 #endif
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
-#elif defined(__linux__)
+#elif OS_IS(OS_LINUX)
     check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
 #endif
 
@@ -197,7 +197,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
         whist_frontend_get_window_pixel_size(frontend, &width, &height);
 
-#ifndef __linux__
+#if !OS_IS(OS_LINUX)
         int adjusted_width = width - (width % 8);
         int adjusted_height = height - (height % 2);
 #else
@@ -217,7 +217,7 @@ TEST_F(ProtocolTest, InitSDL) {
         sprintf(buffer, "Received resize event for %dx%d, currently %dx%d", width, height, width,
                 height);
         check_stdout_line(::testing::HasSubstr(buffer));
-#ifndef __linux__
+#if !OS_IS(OS_LINUX)
         memset(buffer, 0, 1000);
         sprintf(buffer, "Forcing a resize from %dx%d to %dx%d", width, height, adjusted_width,
                 adjusted_height);
@@ -263,9 +263,9 @@ TEST_F(ProtocolTest, InitSDL) {
         while (whist_frontend_poll_event(frontend, &ignored))
             ;
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
         check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
-#elif defined(__linux__)
+#elif OS_IS(OS_LINUX)
         check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
 #endif
 
@@ -326,7 +326,7 @@ TEST_F(ProtocolTest, InitSDL) {
 // Not relevant on Windows, and we need pthread_kill() for the test.
 // This should run on macOS, but the CI instances do not run with
 // sufficiently consistent timing for the test to always pass.
-#if !defined(_WIN32) && !defined(__APPLE__)
+#if !OS_IN(OS_WIN32 | OS_MACOS)
 
 typedef struct {
     WhistSemaphore semaphore;
@@ -1052,7 +1052,7 @@ TEST_F(ProtocolTest, FileSynchronizerResetAll) {
  *  images to be read differently, thus causing them to fail
  *  2) These tests on Windows add an additional 3-5 minutes for the Workflow
  */
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
 // Tests that by converting a PNG to a BMP then converting that back
 // to a PNG returns the original image. Note that the test image
 // must be the output of a lodepng encode, as other PNG encoders
@@ -1210,7 +1210,7 @@ TEST_F(ProtocolTest, BitArrayMemCpyTest) {
     }
 }
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
 // This test is disabled on Windows for the time being, since UTF-8
 // seems to behave differently in MSVC, which causes indefinite hanging
 // in our CI. See the implementation of `trim_utf8_string` for a bit
@@ -1254,7 +1254,7 @@ TEST_F(ProtocolTest, Utf8Truncation) {
         free(truncated_buf);
     }
 }
-#endif  // _WIN32
+#endif  // Windows
 
 // Test atomics and threads.
 // This uses four threads operating simultaneously on atomic variables,
@@ -1377,7 +1377,7 @@ TEST_F(ProtocolTest, Atomics) {
     EXPECT_EQ(atomic_load(&atomic_test_xor), 0);
 }
 
-#ifndef __APPLE__
+#if !OS_IS(OS_MACOS)
 int client_test_thread(void* raw_client) {
     Client* client = (Client*)raw_client;
 
@@ -2105,7 +2105,7 @@ TEST_F(ProtocolTest, NotificationDisplayTest) {
     safe_strncpy(notif.message, "Message of Notification Here!", MAX_NOTIF_MSG_LEN);
     int result = display_notification(notif);
 
-#ifdef __APPLE__
+#if OS_IS(OS_MACOS)
     EXPECT_EQ(result, 0);
 #else
     EXPECT_EQ(result, -1);

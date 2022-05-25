@@ -17,11 +17,12 @@ Includes
 ============================
 */
 
+#include <whist/core/platform.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #include <process.h>
 #include <shlwapi.h>
 #include <windows.h>
@@ -45,7 +46,7 @@ Includes
 #include "video.h"
 #include "state.h"
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #pragma comment(lib, "ws2_32.lib")
 #endif
 // Linux shouldn't have this
@@ -533,7 +534,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
     whist_sleep(500);
 
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     // set Windows DPI
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 #endif

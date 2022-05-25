@@ -28,7 +28,7 @@ Defines
 ============================
 */
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #define INPUT_TYPE WHIST_INPUT_DEVICE_WIN32
 #else
 #define INPUT_TYPE WHIST_INPUT_DEVICE_UINPUT
@@ -53,7 +53,7 @@ Private Functions
 */
 
 void graceful_exit(WhistServerState* state);
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
 int xioerror_handler(Display* d);
 void sig_handler(int sig_num);
 #endif
@@ -89,7 +89,7 @@ void graceful_exit(WhistServerState* state) {
     }
 }
 
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
 int xioerror_handler(Display* d) {
     /*
         When X display is destroyed, intercept XIOError in order to
@@ -394,12 +394,12 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Whist server revision %s", whist_git_revision());
     LOG_INFO("Server protocol started.");
 
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 #endif
 
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
     struct sigaction sa = {0};
     sa.sa_handler = sig_handler;
     if (sigaction(SIGTERM, &sa, NULL) == -1) {
@@ -448,7 +448,7 @@ int main(int argc, char* argv[]) {
     WhistTimer cpu_usage_statistics_timer;
     start_timer(&cpu_usage_statistics_timer);
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
     WhistTimer uri_handler_timer;
     start_timer(&uri_handler_timer);
 
@@ -457,7 +457,7 @@ int main(int argc, char* argv[]) {
 
     WhistTimer uploaded_file_timer;
     start_timer(&uploaded_file_timer);
-#endif  // ! _WIN32
+#endif  // Not Windows
 
     // Tracking how long we're willing to attempt to connect
     WhistTimer connection_attempt_timer;
@@ -578,7 +578,7 @@ int main(int argc, char* argv[]) {
             start_timer(&window_name_timer);
         }
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
 #define URI_HANDLER_FILE "/home/whist/.teleport/handled-uri"
 #define HANDLED_URI_MAXLEN 4096
         if (get_timer(&uri_handler_timer) > 50.0 / MS_IN_SECOND) {
@@ -659,7 +659,7 @@ int main(int argc, char* argv[]) {
             start_timer(&uploaded_file_timer);
         }
 
-#endif  // ! _WIN32
+#endif  // Not Windows
     }
 
     if (!client_connected_once) {
