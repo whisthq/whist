@@ -4,7 +4,7 @@
 
 set(WHIST_CLIENT_DEPENDS
         whist_client.c
-        audio.c
+        audio.cpp
         client_utils.c
         network.c
         handle_frontend_events.c
