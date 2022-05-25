@@ -27,9 +27,6 @@ Defines
 */
 using namespace std;
 
-const int verbose_log = 1;
-const double inf = 9999.0;
-
 // Data with timestamp and value
 struct Data {
     double time;
@@ -68,8 +65,8 @@ struct SlidingWindowStat {
         }
         last_sampled_time = current_time;
 
-        if (verbose_log && name == "packet_loss") {
-            fprintf(stderr, "⬛  sampled value=%.2f for %s\n", value * 100.0, name.c_str());
+        if (LOG_FEC_CONTROLLER && name == "packet_loss") {
+            LOG_INFO("[fec_controller]⬛ sampled value=%.2f for %s\n", value * 100.0, name.c_str());
         }
 
         //  maintain the data structure
@@ -248,12 +245,13 @@ struct BaseRatioController {
         double avg_packet_loss = packet_loss_stat.get_avg();
 
         double packet_loss = max_packet_loss;
-        if (verbose_log) {
+        if (LOG_FEC_CONTROLLER) {
             static double last_print_time = 0;
             if (current_time - last_print_time > 1.0) {
                 last_print_time = current_time;
-                fprintf(stderr, "🟨[stat] avg=%.2f max=%.2f size=%d sum=%lld\n", avg_packet_loss,
-                        max_packet_loss, packet_loss_stat.size(), packet_loss_stat.sum);
+                LOG_INFO("🟨 [fec_controller] avg=%.2f max=%.2f size=%d sum=%lld\n",
+                         avg_packet_loss, max_packet_loss, packet_loss_stat.size(),
+                         packet_loss_stat.sum);
             }
         }
 
@@ -327,8 +325,8 @@ struct ExtraRatioController {
             extend_cnt_left = EXTRA_FEC_MAX_EXTEND_CNT;
             // record current time
             last_used_extra_fec_time = current_time;
-            if (verbose_log) {
-                fprintf(stderr, "🟪 [fec_debug] enable extra fec!!!\n");
+            if (LOG_FEC_CONTROLLER) {
+                LOG_INFO("🟪 [fec_controller] enable extra fec!!!\n");
             }
         } else if (extra_fec_in_use) {
             // if we get a WCC_DECREASE_BWD during the protection of extra fec,
@@ -337,8 +335,8 @@ struct ExtraRatioController {
             if (op == WCC_DECREASE_BWD && extend_cnt_left > 0) {
                 extend_cnt_left--;
                 last_used_extra_fec_time = current_time;
-                if (verbose_log) {
-                    fprintf(stderr, "🟪 [fec_debug] refreshed extra fec!!!\n");
+                if (LOG_FEC_CONTROLLER) {
+                    LOG_INFO("🟪 [fec_controller] refreshed extra fec!!!\n");
                 }
             }
 
@@ -347,8 +345,8 @@ struct ExtraRatioController {
             // so we turn of the extra fec, and let base fec react on this later
             if (current_time - last_used_extra_fec_time > EXTRA_FEC_LAST_TIME) {
                 extra_fec_in_use = 0;
-                if (verbose_log) {
-                    fprintf(stderr, "🟪 [fec_debug] disable extra fec!!!\n");
+                if (LOG_FEC_CONTROLLER) {
+                    LOG_INFO("🟪 [fec_controller] disable extra fec!!!\n");
                 }
             }
         }
@@ -419,6 +417,7 @@ void fec_controller_feed_info(double current_time, WccOp op, double packet_loss,
 }
 
 FECInfo fec_controller_get_total_fec_ratio(double current_time, double old_value) {
+    const double inf = 9999.0;
     // min ratio for fec to take effect
     const double FEC_MIN_START = 0.005;  // NOLINT
     // min step for an immediate update of fec value
