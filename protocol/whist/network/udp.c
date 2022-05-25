@@ -210,7 +210,7 @@ typedef struct {
 
     NetworkSettings network_settings;
     WhistMutex congestion_control_mutex;
-    WhistTimer last_network_settings_time;
+    WhistTimer last_network_settings_send_time;
     // Group related stats and variables required for congestion control
     GroupStats group_stats[MAX_GROUP_STATS];
     int prev_group_id;
@@ -485,6 +485,7 @@ static void send_desired_network_settings(UDPContext* context) {
     network_settings_packet.type = UDP_NETWORK_SETTINGS;
     network_settings_packet.udp_network_settings_data.network_settings = context->network_settings;
     udp_send_udp_packet(context, &network_settings_packet);
+    start_timer(&context->last_network_settings_send_time);
 }
 
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
@@ -521,12 +522,12 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             // feed current time and latency info into fec controller
             double current_time = get_timestamp_sec();
             fec_controller_feed_latency(current_time, context->short_term_latency);
-            if (verbose_log) {
-                static double last_print_time = 0;
-                if (current_time - last_print_time > 0.2) {
-                    last_print_time = current_time;
-                    fprintf(
-                        stderr,
+            if (LOG_WCC | LOG_FEC_CONTROLLER) {
+                static double last_log_time = 0;
+                if (current_time - last_log_time > 0.2) {
+                    last_log_time = current_time;
+                    LOG_INFO(
+                        "[wcc][fec_controller]"
                         "loss=%.2f%% short_term_latecny=%.1fms long_term_latency=%.1f inbits=%d\n",
                         packet_loss_ratio * 100, context->short_term_latency * 1000,
                         context->long_term_latency * 1000, incoming_bitrate);
@@ -541,12 +542,10 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         context->curr_group_id = group_id;
     }
 
-    static double last_send_time = 0;
-    double current_time = get_timestamp_sec();
     // resend values periodically since UDP packet might get lost
-    if (send_network_settings || current_time - last_send_time > 1.0) {
+    if (send_network_settings || get_timer(&context->last_network_settings_send_time) > 1.0) {
+        // note: the timer of last send is updated inside
         send_desired_network_settings(context);
-        last_send_time = current_time;
     }
     whist_unlock_mutex(context->congestion_control_mutex);
 }
@@ -1058,7 +1057,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     // Whether or not we've connected, but then lost the connection
     context->connection_lost = false;
     context->unordered_packet_info.max_unordered_packets = 0.0;
-    start_timer(&context->last_network_settings_time);
+    start_timer(&context->last_network_settings_send_time);
 
     // Map Port
     if ((int)((unsigned short)port) != port) {
