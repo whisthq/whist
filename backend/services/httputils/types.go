@@ -23,7 +23,7 @@ type JSONTransportRequest struct {
 	LocalStorageJSON      mandelboxtypes.LocalStorage          `json:"local_storage,omitempty"`        // Local storage provided by the client-app as JSON string
 	ExtensionSettingsJSON mandelboxtypes.ExtensionSettings     `json:"extension_settings,omitempty"`   // Extension settings provided by the client-app as JSON string
 	ExtensionStateJSON    mandelboxtypes.ExtensionState        `json:"extension_state,omitempty"`      // Extension state provided by the client-app as JSON string
-	ResultChan            chan RequestResult                   // Channel to pass the request result between goroutines
+	ResultChan            chan RequestResult                   `json:"-"`                              // Channel to pass the request result between goroutines
 }
 
 // JSONTransportRequestResult defines the data returned by the

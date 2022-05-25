@@ -254,12 +254,6 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	cmd := exec.Command("chown", "-R", "ubuntu", utils.WhistDir)
 	cmd.Run()
 
-	// Create whist-private directory
-	err = os.MkdirAll(utils.WhistPrivateDir, 0777)
-	if err != nil {
-		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistPrivateDir, err)
-	}
-
 	// Create whist temp directory (only let root read and write this, since it
 	// contains logs and uinput sockets).
 	err = os.MkdirAll(utils.TempDir, 0600)

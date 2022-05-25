@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -14,7 +16,6 @@ import (
 	"github.com/whisthq/whist/backend/services/scaling-service/payments"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
 	"github.com/whisthq/whist/backend/services/subscriptions"
-	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 	"golang.org/x/time/rate"
@@ -149,46 +150,68 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	var reqdata httputils.JSONTransportRequest
 	if err := authenticateRequest(w, r, &reqdata); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		http.Error(w, "Invalid access token", http.StatusUnauthorized)
 		return
 	}
 
 	// Send the request to the instance and then return the response
-	url := utils.Sprintf("https://%v:4678/json_transport_request", reqdata.IP)
-	resp, err := http.Post(url, "application/json", r.Body)
+	url := utils.Sprintf("https://%v:4678/json_transport", reqdata.IP)
+	logger.Infof("Reqdata is %v", reqdata)
+
+	jsonBody, err := json.Marshal(reqdata)
+	if err != nil {
+		logger.Errorf("Error marshalling body for host service. Err: %v", err)
+		return
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	hostReq, err := http.NewRequest("PUT", url, bodyReader)
 	if err != nil {
 		logger.Errorf("Failed to send JSON transport request to instance. Err: %v", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
-	logger.Infof("%v", resp)
-	// res.Send(w)
+	res, err := http.DefaultClient.Do(hostReq)
+	if err != nil {
+		logger.Errorf("Failed to send JSON transport request to instance. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	hostBody, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		logger.Errorf("Could not read host response body. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(hostBody)
 }
 
 // authenticateRequest will verify that the access token is valid
 // and will parse the request body and try to unmarshal into a
 // `ServerRequest` type.
 func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) error {
-	accessToken, err := getAccessToken(r)
-	if err != nil {
-		return err
-	}
+	// accessToken, err := getAccessToken(r)
+	// if err != nil {
+	// 	return err
+	// }
 
-	claims, err := auth.ParseToken(accessToken)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-	}
+	// claims, err := auth.ParseToken(accessToken)
+	// if err != nil {
+	// 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	// 	return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+	// }
 
-	_, err = httputils.ParseRequest(w, r, s)
+	_, err := httputils.ParseRequest(w, r, s)
 	if err != nil {
 		return utils.MakeError("Error while parsing request. Err: %v", err)
 	}
 
 	// Add user id to the request. This way we don't expose the
 	// access token to other processes that don't need access to it.
-	s.(*httputils.MandelboxAssignRequest).UserID = types.UserID(claims.Subject)
+	// s.(*httputils.MandelboxAssignRequest).UserID = types.UserID(claims.Subject)
 	return nil
 }
 
