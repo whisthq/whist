@@ -8,6 +8,8 @@ from helpers.setup.network_tools import (
 
 from helpers.common.pexpect_tools import (
     wait_until_cmd_done,
+    expression_in_pexpect_output,
+    get_command_exit_code,
 )
 
 from helpers.common.ssh_tools import (
@@ -22,11 +24,19 @@ from helpers.setup.instance_setup_tools import (
     prune_containers_if_needed,
     prepare_instance_for_host_setup,
 )
-from helpers.common.git_tools import get_remote_whist_github_sha, get_whist_github_sha
-from helpers.common.timestamps_and_exit_tools import exit_with_error
+from helpers.common.git_tools import (
+    get_remote_whist_github_sha,
+    get_whist_github_sha,
+)
+from helpers.common.timestamps_and_exit_tools import (
+    printyellow,
+    exit_with_error,
+)
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
+
+BUILD_MAX_RETRIES = 5  # Max number of times to retry building the client mandelbox (which can fail due to API outages)
 
 
 def client_setup_process(args_dict):
@@ -179,11 +189,34 @@ def build_client_on_instance(
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-    print(f"Building the dev client mandelbox in {cmake_build_type} mode ...")
     command = f"cd ~/whist/mandelboxes && ./build.sh development/client --{cmake_build_type} | tee ~/client_mandelbox_build.log"
-    pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-    print("Finished building the dev client mandelbox on the EC2 instance")
+    success_msg = "All images built successfully!"
+
+    for retry in range(BUILD_MAX_RETRIES):
+        print(
+            f"Building the dev client mandelbox in {cmake_build_type} mode (retry {retry+1}/{BUILD_MAX_RETRIES})..."
+        )
+        pexpect_process.sendline(command)
+        build_client_output = wait_until_cmd_done(
+            pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+        )
+        build_client_exit_code = get_command_exit_code(
+            pexpect_process, pexpect_prompt, running_in_ci
+        )
+
+        # Check if build succeeded
+        if build_client_exit_code == 0 and expression_in_pexpect_output(
+            success_msg, build_client_output
+        ):
+            print("Finished building the dev client mandelbox on the EC2 instance")
+            break
+        else:
+            printyellow("Could not build the development/client mandelbox on the client instance!")
+        if retry == BUILD_MAX_RETRIES - 1:
+            # If building the development/client mandelbox fails too many times, trigger a fatal error.
+            exit_with_error(
+                f"Building the development/client mandelbox failed {BUILD_MAX_RETRIES} times. Giving up now!"
+            )
 
 
 def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):

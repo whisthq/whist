@@ -5,6 +5,7 @@ import os, sys
 from helpers.common.pexpect_tools import (
     expression_in_pexpect_output,
     wait_until_cmd_done,
+    get_command_exit_code,
 )
 
 from helpers.common.ssh_tools import (
@@ -20,11 +21,19 @@ from helpers.setup.instance_setup_tools import (
     prepare_instance_for_host_setup,
 )
 
-from helpers.common.git_tools import get_remote_whist_github_sha, get_whist_github_sha
-from helpers.common.timestamps_and_exit_tools import exit_with_error
+from helpers.common.git_tools import (
+    get_remote_whist_github_sha,
+    get_whist_github_sha,
+)
+from helpers.common.timestamps_and_exit_tools import (
+    printyellow,
+    exit_with_error,
+)
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
+
+BUILD_MAX_RETRIES = 5  # Max number of times to retry building the server mandelbox (which can fail due to API outages)
 
 
 def server_setup_process(args_dict):
@@ -148,11 +157,37 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type, 
     Returns:
         None
     """
-    print(f"Building the server mandelbox in {cmake_build_type} mode ...")
+
     command = f"cd ~/whist/mandelboxes && ./build.sh browsers/chrome --{cmake_build_type} | tee ~/server_mandelbox_build.log"
-    pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-    print("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
+    success_msg = "All images built successfully!"
+
+    for retry in range(BUILD_MAX_RETRIES):
+        print(
+            f"Building the server mandelbox in {cmake_build_type} mode (retry {retry+1}/{BUILD_MAX_RETRIES})..."
+        )
+
+        # Attempt to build the browsers/chrome mandelbox and grab the output + the exit code
+        pexpect_process.sendline(command)
+        build_server_output = wait_until_cmd_done(
+            pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+        )
+        build_server_exit_code = get_command_exit_code(
+            pexpect_process, pexpect_prompt, running_in_ci
+        )
+
+        # Check if the build succeeded
+        if build_server_exit_code == 0 and expression_in_pexpect_output(
+            success_msg, build_server_output
+        ):
+            print("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
+            break
+        else:
+            printyellow("Could not build the browsers/chrome mandelbox on the server instance!")
+        if retry == BUILD_MAX_RETRIES - 1:
+            # If building the browsers/chrome mandelbox fails too many times, trigger a fatal error.
+            exit_with_error(
+                f"Building the browsers/chrome mandelbox failed {BUILD_MAX_RETRIES} times. Giving up now!"
+            )
 
 
 def run_server_on_instance(pexpect_process):
