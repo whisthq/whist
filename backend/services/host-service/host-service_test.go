@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/client"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox"
+	"github.com/whisthq/whist/backend/services/httputils"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -128,12 +129,12 @@ func TestMandelboxDieHandler(t *testing.T) {
 		browserImage: "whisthq",
 	}
 
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
 	testMux := &sync.Mutex{}
 	tracker := &sync.WaitGroup{}
 
 	testMux.Lock()
-	testTransportRequestMap[mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())] = make(chan *JSONTransportRequest)
+	testTransportRequestMap[mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())] = make(chan *httputils.JSONTransportRequest)
 	testMux.Unlock()
 
 	m := mandelbox.New(ctx, tracker, mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))

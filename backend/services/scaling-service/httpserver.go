@@ -68,9 +68,9 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	_, _ = w.Write(buf)
 }
 
-// paymentsHandler handles a payment session request. It verifies the access token,
+// paymentSessionHandler handles a payment session request. It verifies the access token,
 // and then creates a StripeClient to get the URL of a payment session.
-func paymentsHandler(w http.ResponseWriter, req *http.Request) {
+func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
 	// Verify that we got a GET request
 	err := verifyRequestType(w, req, http.MethodGet)
 	if err != nil {
@@ -133,6 +133,27 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(buf)
+}
+
+// processJSONTransportRequest processes an HTTP request to receive data
+// directly from the client app.
+func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
+	// Verify that it is an PUT request
+	if httputils.VerifyRequestType(w, r, http.MethodPut) != nil {
+		return
+	}
+
+	// Verify authorization and unmarshal into the right object type
+	var reqdata httputils.JSONTransportRequest
+	if err := authenticateRequest(w, r, &reqdata); err != nil {
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		return
+	}
+
+	// Send request to queue, then wait for result
+	res := <-reqdata.ResultChan
+
+	res.Send(w)
 }
 
 // authenticateRequest will verify that the access token is valid
@@ -260,13 +281,16 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	burst := 10
 	limiter := rate.NewLimiter(rate.Every(interval), burst)
 
-	// Create the final assign handler, with the necessary middleware
+	// Create the final handlers, with the necessary middleware
 	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, httputils.EnableCORS(createHandler(mandelboxAssignHandler))))
+	jsonTransportHandler := httputils.EnableCORS(processJSONTransportRequest)
+	paymentsHandler := httputils.EnableCORS(paymentSessionHandler)
 
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.Handle("/mandelbox/assign", assignHandler)
+	mux.Handle("/json_transport", http.HandlerFunc(jsonTransportHandler))
 	mux.Handle("/payment_portal_url", http.HandlerFunc(paymentsHandler))
 
 	// The PORT env var will be automatically set by Heroku.

@@ -184,17 +184,17 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	testMandelboxDBEvent := subscriptions.MandelboxEvent{
 		Mandelboxes: []subscriptions.Mandelbox{testMandelboxInfo},
 	}
-	testJSONTransportRequest := JSONTransportRequest{
+	testJSONTransportRequest := httputils.JSONTransportRequest{
 		AppName:               mandelboxtypes.AppName("browsers/chrome"),
 		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           testMandelbox.GetID(),
 		JSONData:              `{"data": "test"}`,
-		resultChan:            make(chan httputils.RequestResult),
+		ResultChan:            make(chan httputils.RequestResult),
 	}
 
 	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
 
 	dockerClient := mockClient{
 		browserImage: "browsers/chrome",
@@ -207,11 +207,11 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	go FinishMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxSubscription, testTransportRequestMap, testmux, req)
 
 	// Check that response is as expected
-	result := <-testJSONTransportRequest.resultChan
+	result := <-testJSONTransportRequest.ResultChan
 	if result.Err != nil {
 		t.Fatalf("SpinUpMandelbox returned with error: %v", result.Err)
 	}
-	spinUpResult, ok := result.Result.(JSONTransportRequestResult)
+	spinUpResult, ok := result.Result.(httputils.JSONTransportRequestResult)
 	if !ok {
 		t.Fatalf("Expected instance of SpinUpMandelboxRequestResult, got: %v", result.Result)
 	}

@@ -149,7 +149,7 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 }
 
 // Handle tasks to be completed when a mandelbox dies
-func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex, dockerClient dockerclient.CommonAPIClient) {
+func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest, transportMapLock *sync.Mutex, dockerClient dockerclient.CommonAPIClient) {
 	// Exit if we are not dealing with a Whist mandelbox, or if it has already
 	// been closed (via a call to Close() or a context cancellation).
 	mandelbox, err := mandelboxData.LookUpByDockerID(mandelboxtypes.DockerID(id))
@@ -508,7 +508,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 	// Note: If a mandelbox suffers a bug, or fails to start correctly
 	// these channels will become a memory leak.
-	transportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+	transportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
 
 	// In the following loop, this var determines whether to re-initialize the
 	// Docker event stream. This is necessary because the Docker event stream
@@ -563,7 +563,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		case serverevent := <-httpServerEvents:
 			switch serverevent := serverevent.(type) {
 			// TODO: actually handle panics in these goroutines
-			case *JSONTransportRequest:
+			case *httputils.JSONTransportRequest:
 				if !metadata.IsLocalEnvWithoutDB() {
 					// Handle JSON transport validation on a separate goroutine
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
