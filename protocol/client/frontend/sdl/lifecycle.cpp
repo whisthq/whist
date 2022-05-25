@@ -170,7 +170,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
         renderer_flags |= SDL_RENDERER_PRESENTVSYNC;
     }
 
-    SDLFrontendContext* context = (SDLFrontendContext*) safe_malloc(sizeof(SDLFrontendContext));
+    SDLFrontendContext* context = (SDLFrontendContext*)safe_malloc(sizeof(SDLFrontendContext));
     memset(context, 0, sizeof(SDLFrontendContext));
     frontend->context = context;
 

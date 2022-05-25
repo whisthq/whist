@@ -14,7 +14,9 @@ file(
   ALL_SOURCE_FILES
   CONFIGURE_DEPENDS
   ${PROJECT_SOURCE_DIR}/client/*.c
+  ${PROJECT_SOURCE_DIR}/client/*.cpp
   ${PROJECT_SOURCE_DIR}/client/*.h
+  ${PROJECT_SOURCE_DIR}/client/*.hpp
   ${PROJECT_SOURCE_DIR}/client/*.m
   ${PROJECT_SOURCE_DIR}/server/*.c
   ${PROJECT_SOURCE_DIR}/server/*.h
@@ -29,7 +31,8 @@ file(
 )
 
 file(GLOB_RECURSE CLIENT_SOURCE_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/client/*.c
-    ${PROJECT_SOURCE_DIR}/client/*.h ${PROJECT_SOURCE_DIR}/client/*.m)
+    ${PROJECT_SOURCE_DIR}/client/*.h ${PROJECT_SOURCE_DIR}/client/*.cpp
+    ${PROJECT_SOURCE_DIR}/client/*.hpp ${PROJECT_SOURCE_DIR}/client/*.m)
 
 file(GLOB_RECURSE SERVER_SOURCE_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/server/*.c
     ${PROJECT_SOURCE_DIR}/server/*.h CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/server/*.m)
