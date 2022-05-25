@@ -137,7 +137,6 @@ void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
     get_valid_windows_helper(device, list, device->root);
 }
 
-// TODO: delete this
 void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_window) {
     Window w = (Window)whist_window->id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
