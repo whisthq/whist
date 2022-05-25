@@ -91,9 +91,6 @@ extern bool upload_initiated;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
-#ifndef LOG_CPU_USAGE
-#define LOG_CPU_USAGE 1
-#endif
 
 // Command-line options.
 

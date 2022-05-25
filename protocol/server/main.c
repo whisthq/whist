@@ -27,9 +27,6 @@ Includes
 Defines
 ============================
 */
-#ifndef LOG_CPU_USAGE
-#define LOG_CPU_USAGE 1
-#endif
 
 #ifdef _WIN32
 #define INPUT_TYPE WHIST_INPUT_DEVICE_WIN32
