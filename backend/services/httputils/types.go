@@ -1,7 +1,6 @@
 package httputils
 
 import (
-	"github.com/whisthq/whist/backend/services/types"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 )
 
@@ -10,6 +9,7 @@ import (
 // JSONTransportRequest defines the (unauthenticated) `json_transport`
 // endpoint.
 type JSONTransportRequest struct {
+	IP                    string                               `json:"ip"`                             // The public IPv4 address of the instance running the mandelbox
 	AppName               mandelboxtypes.AppName               `json:"app_name,omitempty"`             // The app name to spin up (used when running in localdev, but in deployment the app name is set to browsers/chrome).
 	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"`        // User-specific private encryption token
 	JwtAccessToken        string                               `json:"jwt_access_token"`               // User's JWT access token
@@ -54,19 +54,19 @@ func (s *JSONTransportRequest) CreateResultChan() {
 
 // Mandelbox assign request
 type MandelboxAssignRequest struct {
-	Regions    []string           `json:"regions"`
-	CommitHash string             `json:"client_commit_hash"`
-	UserEmail  string             `json:"user_email"`
-	Version    string             `json:"version"`
-	SessionID  int64              `json:"session_id"`
-	UserID     types.UserID       // The userID is obtained from the access token
-	ResultChan chan RequestResult // Channel to pass the request result between goroutines
+	Regions    []string              `json:"regions"`
+	CommitHash string                `json:"client_commit_hash"`
+	UserEmail  string                `json:"user_email"`
+	Version    string                `json:"version"`
+	SessionID  int64                 `json:"session_id"`
+	UserID     mandelboxtypes.UserID // The userID is obtained from the access token
+	ResultChan chan RequestResult    // Channel to pass the request result between goroutines
 }
 
 type MandelboxAssignRequestResult struct {
-	IP          string            `json:"ip"`
-	MandelboxID types.MandelboxID `json:"mandelbox_id"`
-	Error       string            `json:"error"`
+	IP          string                     `json:"ip"`
+	MandelboxID mandelboxtypes.MandelboxID `json:"mandelbox_id"`
+	Error       string                     `json:"error"`
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP

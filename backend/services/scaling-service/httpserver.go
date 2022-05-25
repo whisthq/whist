@@ -75,6 +75,7 @@ func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
 	err := verifyRequestType(w, req, http.MethodGet)
 	if err != nil {
 		// err is already logged
+		http.Error(w, "", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -140,6 +141,7 @@ func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
 func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	// Verify that it is an PUT request
 	if httputils.VerifyRequestType(w, r, http.MethodPut) != nil {
+		http.Error(w, "", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -147,13 +149,21 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	var reqdata httputils.JSONTransportRequest
 	if err := authenticateRequest(w, r, &reqdata); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		http.Error(w, "Invalid access token", http.StatusUnauthorized)
 		return
 	}
 
-	// Send request to queue, then wait for result
-	res := <-reqdata.ResultChan
+	// Send the request to the instance and then return the response
+	url := utils.Sprintf("https://%v:4678/json_transport_request", reqdata.IP)
+	resp, err := http.Post(url, "application/json", r.Body)
+	if err != nil {
+		logger.Errorf("Failed to send JSON transport request to instance. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
 
-	res.Send(w)
+	logger.Infof("%v", resp)
+	// res.Send(w)
 }
 
 // authenticateRequest will verify that the access token is valid
