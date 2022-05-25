@@ -361,7 +361,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         }
     }
 
-    bool need_send = false;
     if (op != WCC_NO_OP) {
         // Till we reach CONVERGENCE_THRESHOLD_LOW of max bitrate in session, bitrate
         // increases will be aggressive
@@ -429,9 +428,9 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         // see if there is a value change
         if (fec_info.total_fec_ratio != network_settings->video_fec_ratio) {
             network_settings->video_fec_ratio = fec_info.total_fec_ratio;
-            need_send = true;
+            send_network_settings = true;
         }
-        if (verbose_log && need_send) {
+        if (verbose_log && send_network_settings) {
             fprintf(stderr,
                     "[fec_debug]New bitrate = %d, burst_bitrate = %d, saturate bandwidth "
                     "= %d, "
@@ -447,7 +446,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
     whist_analyzer_record_current_cc_info(PACKET_VIDEO, packet_loss_ratio, short_term_latency,
                                           network_settings->video_bitrate, incoming_bitrate);
 
-    if (need_send) return need_send;
+    if (send_network_settings) return send_network_settings;
 
     if (!network_settings->saturate_bandwidth) {
         network_settings->congestion_detected = false;
