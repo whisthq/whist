@@ -443,11 +443,8 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
     // check the dimensions of each window
     XWindowAttributes attr;
     XGetWindowAttributes(device->display, curr, &attr);
-    LOG_DEBUG("Current window %lu, name %s, position %d, %d, dimensions %d x %d, %d children", curr,
-              window_name, attr.x, attr.y, attr.width, attr.height, nchildren);
     if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH &&
         attr.height >= MIN_SCREEN_HEIGHT && window_name != NULL && *window_name != '\0') {
-        LOG_DEBUG("Valid window!!");
         WhistWindow* valid_window = safe_malloc(sizeof(WhistWindow));
         valid_window->id = (unsigned long)curr;
         valid_window->width = attr.width;
