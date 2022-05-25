@@ -15,6 +15,17 @@ aws_timeout_seconds = 2400
 # It is created/updated when running `aws configure`"
 aws_credentials_filepath = os.path.join(os.path.expanduser("~"), ".aws", "credentials")
 
+# The Github job name (or None if running locally)
+job_name = os.getenv("GITHUB_JOB")
+# The name to use to tag any new AWS EC2 instance that is created. A suffix with the branch name will be added.
+instances_name_tag = (
+    "protocol-e2e-benchmarking"
+    if job_name == "protocol-streaming-e2e-check-pr"
+    else "backend-integration-test"
+    if job_name == "backend-integration-test"
+    else "manual-e2e-test"
+)
+
 # The expected length of the Github SHA string
 GITHUB_SHA_LEN = 40
 
