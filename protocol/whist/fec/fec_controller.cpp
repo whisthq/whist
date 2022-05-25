@@ -10,7 +10,6 @@
 #include <queue>
 #include <algorithm>
 #include <string>
-using namespace std;
 
 extern "C" {
 #include <whist/core/whist.h>
@@ -26,6 +25,7 @@ extern "C" {
 Defines
 ============================
 */
+using namespace std;
 
 const int verbose_log = 1;
 const double inf = 9999.0;
