@@ -1,6 +1,10 @@
 package mandelbox // import "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 
 import (
+	"bytes"
+	"compress/zlib"
+	"encoding/base64"
+	"io/ioutil"
 	"os"
 	"path"
 
@@ -52,7 +56,7 @@ func (mandelbox *mandelboxData) WriteSessionID() error {
 // WriteJSONData writes the data received through JSON transport
 // to the config.json file located on the resourceMappingDir.
 func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
-	base64DecodedData, _ := base64.StdEncoding.DecodeString(data)
+	base64DecodedData, _ := base64.StdEncoding.DecodeString(string(data))
 	zlibReader, _ := zlib.NewReader(bytes.NewReader(base64DecodedData))
 	gzipDecodedData, _ := ioutil.ReadAll(zlibReader)
 	return mandelbox.writeResourceMappingToFile("config.json", string(gzipDecodedData))
