@@ -78,6 +78,18 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--instances-name-tag",
+    help="The name to use to tag any new AWS EC2 instance that is created. A suffix with the branch name will be added.",
+    type=str,
+    choices=[
+        "protocol-e2e-benchmarking",
+        "backend-integration-test",
+        "manual-e2e-test",  # This will be used when running the E2E script manually, outside of CI
+    ],
+    default="manual-e2e-test",
+)
+
+parser.add_argument(
     "--region-name",
     help="The AWS region to use for testing. Passing an empty string will let the script run the test on any \
     region with space available for the new instance(s). If you are looking to re-use an instance for the client \
@@ -254,6 +266,7 @@ if __name__ == "__main__":
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
     ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
+    instances_name_tag = args.instances_name_tag
     testing_url = args.testing_url
     desired_region_name = args.region_name
     existing_client_instance_id = args.existing_client_instance_id
@@ -343,6 +356,7 @@ if __name__ == "__main__":
             use_two_instances,
             existing_server_instance_id,
             existing_client_instance_id,
+            instances_name_tag,
         )
         if result is not None:
             boto3client, server_instance_id, client_instance_id = result
