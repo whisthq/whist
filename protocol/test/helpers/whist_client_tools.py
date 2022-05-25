@@ -33,10 +33,12 @@ from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
 )
 
+from helpers.common.constants import (
+    MANDELBOX_BUILD_MAX_RETRIES,
+)
+
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
-BUILD_MAX_RETRIES = 5  # Max number of times to retry building the client mandelbox (which can fail due to API outages)
 
 
 def client_setup_process(args_dict):
@@ -192,9 +194,9 @@ def build_client_on_instance(
     command = f"cd ~/whist/mandelboxes && ./build.sh development/client --{cmake_build_type} | tee ~/client_mandelbox_build.log"
     success_msg = "All images built successfully!"
 
-    for retry in range(BUILD_MAX_RETRIES):
+    for retry in range(MANDELBOX_BUILD_MAX_RETRIES):
         print(
-            f"Building the dev client mandelbox in {cmake_build_type} mode (retry {retry+1}/{BUILD_MAX_RETRIES})..."
+            f"Building the dev client mandelbox in {cmake_build_type} mode (retry {retry+1}/{MANDELBOX_BUILD_MAX_RETRIES})..."
         )
         pexpect_process.sendline(command)
         build_client_output = wait_until_cmd_done(
@@ -212,10 +214,10 @@ def build_client_on_instance(
             break
         else:
             printyellow("Could not build the development/client mandelbox on the client instance!")
-        if retry == BUILD_MAX_RETRIES - 1:
+        if retry == MANDELBOX_BUILD_MAX_RETRIES - 1:
             # If building the development/client mandelbox fails too many times, trigger a fatal error.
             exit_with_error(
-                f"Building the development/client mandelbox failed {BUILD_MAX_RETRIES} times. Giving up now!"
+                f"Building the development/client mandelbox failed {MANDELBOX_BUILD_MAX_RETRIES} times. Giving up now!"
             )
 
 

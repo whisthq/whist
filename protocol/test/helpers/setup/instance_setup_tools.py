@@ -23,15 +23,15 @@ from helpers.common.timestamps_and_exit_tools import (
     printyellow,
 )
 
+from helpers.common.constants import (
+    SETUP_MAX_RETRIES,
+    HOST_SETUP_TIMEOUT_SECONDS,
+    TIMEOUT_EXIT_CODE,
+    TIMEOUT_KILL_EXIT_CODE,
+)
+
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
-SETUP_MAX_RETRIES = (
-    5  # Max number of times to retry setup commands that can fail due to API outages
-)
-HOST_SETUP_TIMEOUT_SECONDS = 5 * 60  # 5 mins
-TIMEOUT_EXIT_CODE = 124
-TIMEOUT_KILL_EXIT_CODE = 137
 
 
 def prepare_instance_for_host_setup(pexpect_process, pexpect_prompt, running_in_ci):

@@ -4,12 +4,10 @@ import os, sys, subprocess
 
 from helpers.common.pexpect_tools import wait_until_cmd_done
 from helpers.common.timestamps_and_exit_tools import printred
+from helpers.common.constants import GITHUB_SHA_LEN
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
-# Constants
-GITHUB_SHA_LEN = 40
 
 
 def get_whist_branch_name(running_in_ci):

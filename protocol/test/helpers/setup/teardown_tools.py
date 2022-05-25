@@ -21,6 +21,10 @@ from helpers.common.timestamps_and_exit_tools import (
     printyellow,
 )
 
+from helpers.common.constants import (
+    SESSION_ID_LEN,
+)
+
 from helpers.aws.boto3_tools import (
     terminate_or_stop_aws_instance,
 )
@@ -31,8 +35,6 @@ from helpers.setup.network_tools import (
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
-SESSION_ID_LEN = 13
 
 
 def get_session_id(pexpect_process, role, session_id_filename="/whist/resourceMappings/session_id"):

@@ -30,10 +30,12 @@ from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
 )
 
+from helpers.common.constants import (
+    MANDELBOX_BUILD_MAX_RETRIES,
+)
+
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
-BUILD_MAX_RETRIES = 5  # Max number of times to retry building the server mandelbox (which can fail due to API outages)
 
 
 def server_setup_process(args_dict):
@@ -161,9 +163,9 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type, 
     command = f"cd ~/whist/mandelboxes && ./build.sh browsers/chrome --{cmake_build_type} | tee ~/server_mandelbox_build.log"
     success_msg = "All images built successfully!"
 
-    for retry in range(BUILD_MAX_RETRIES):
+    for retry in range(MANDELBOX_BUILD_MAX_RETRIES):
         print(
-            f"Building the server mandelbox in {cmake_build_type} mode (retry {retry+1}/{BUILD_MAX_RETRIES})..."
+            f"Building the server mandelbox in {cmake_build_type} mode (retry {retry+1}/{MANDELBOX_BUILD_MAX_RETRIES})..."
         )
 
         # Attempt to build the browsers/chrome mandelbox and grab the output + the exit code
@@ -183,10 +185,10 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type, 
             break
         else:
             printyellow("Could not build the browsers/chrome mandelbox on the server instance!")
-        if retry == BUILD_MAX_RETRIES - 1:
+        if retry == MANDELBOX_BUILD_MAX_RETRIES - 1:
             # If building the browsers/chrome mandelbox fails too many times, trigger a fatal error.
             exit_with_error(
-                f"Building the browsers/chrome mandelbox failed {BUILD_MAX_RETRIES} times. Giving up now!"
+                f"Building the browsers/chrome mandelbox failed {MANDELBOX_BUILD_MAX_RETRIES} times. Giving up now!"
             )
 
 

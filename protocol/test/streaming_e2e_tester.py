@@ -23,6 +23,13 @@ from helpers.common.timestamps_and_exit_tools import (
     printyellow,
 )
 
+from helpers.common.constants import (
+    username,
+    ssh_connection_retries,
+    aws_timeout_seconds,
+    aws_credentials_filepath,
+)
+
 from helpers.setup.instance_setup_tools import (
     start_host_service,
 )
@@ -215,15 +222,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--aws-credentials-filepath",
-    help="The path (on the machine running this script) to the file containing the AWS credentials to use \
-    to access the Whist AWS console. The file should contain the access key ID and the secret access key. \
-    It is created/updated when running `aws configure`",
-    type=str,
-    default=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
-)
-
-parser.add_argument(
     "--network-conditions",
     help="The network condition for the experiment. The input is in the form of three comma-separated floats \
     indicating the max bandwidth, delay (in ms), and percentage of packet drops (in the range [0.0,1.0]). \
@@ -232,29 +230,6 @@ parser.add_argument(
     type=str,
     default="normal",
 )
-
-parser.add_argument(
-    "--aws-timeout-seconds",
-    help="The timeout after which we give up on commands that have not finished on a remote AWS EC2 instance. \
-    This value should not be set to less than 40mins (2400s)",
-    type=int,
-    default=2400,
-)
-
-parser.add_argument(
-    "--username",
-    help="The username to use to access the AWS EC2 instance(s)",
-    type=str,
-    default="ubuntu",
-)
-
-parser.add_argument(
-    "--ssh-connection-retries",
-    help="The number of times to retry if a SSH connection is refused or if the connection attempt times out",
-    type=int,
-    default=5,
-)
-
 args = parser.parse_args()
 
 
@@ -274,11 +249,7 @@ if __name__ == "__main__":
     skip_git_clone = args.skip_git_clone
     skip_host_setup = args.skip_host_setup
     network_conditions = args.network_conditions
-    aws_credentials_filepath = args.aws_credentials_filepath
     leave_instances_on = args.leave_instances_on
-    aws_timeout_seconds = args.aws_timeout_seconds
-    username = args.username
-    ssh_connection_retries = args.ssh_connection_retries
     # Convert boolean 'true'/'false' strings to Python booleans
     use_two_instances = args.use_two_instances == "true"
     simulate_scrolling = args.simulate_scrolling
