@@ -33,7 +33,12 @@ Public Functions
  *                                 handles all of the pending events.
  *                                 Calling this function repeatedly is necessary,
  *                                 otherwise "Application not responding" or a Mac beachball
- *                                 may appear.
+ *                                 may appear.  If no events are available immediately, waits
+ *                                 for up to the given timeout for any events to appear.  Once
+ *                                 any event happens it will not deliberately wait longer.
+ *
+ * @param frontend                 The frontend instance.
+ * @param timeout_ms               How long to wait for events before returning anyway.
  *
  * @returns                        True on success,
  *                                 False on failure
@@ -44,7 +49,7 @@ Public Functions
  *                                 To see more information on this issue, and my related rant,
  *                                 go to https://github.com/libsdl-org/SDL/issues/1059
  */
-bool handle_frontend_events(WhistFrontend* frontend);
+bool handle_frontend_events(WhistFrontend* frontend, int timeout_ms);
 
 /**
  * @brief                          The function will let you know if an audio device has

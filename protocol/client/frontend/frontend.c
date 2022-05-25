@@ -116,6 +116,16 @@ bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* even
     return frontend->call->poll_event(frontend, event);
 }
 
+bool whist_frontend_wait_event(WhistFrontend* frontend, WhistFrontendEvent* event, int timeout_ms) {
+    FRONTEND_ENTRY();
+    return frontend->call->wait_event(frontend, event, timeout_ms);
+}
+
+void whist_frontend_interrupt(WhistFrontend* frontend) {
+    FRONTEND_ENTRY();
+    frontend->call->interrupt(frontend);
+}
+
 void whist_frontend_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
     FRONTEND_ENTRY();
     frontend->call->set_cursor(frontend, cursor);
@@ -182,4 +192,28 @@ void whist_frontend_set_titlebar_color(WhistFrontend* frontend, const WhistRGBCo
 void whist_frontend_declare_user_activity(WhistFrontend* frontend) {
     FRONTEND_ENTRY();
     frontend->call->declare_user_activity(frontend);
+}
+
+const char* whist_frontend_event_type_string(FrontendEventType type) {
+    static const char* const types[] = {
+        [FRONTEND_EVENT_UNHANDLED] = "unhandled",
+        [FRONTEND_EVENT_RESIZE] = "resize",
+        [FRONTEND_EVENT_VISIBILITY] = "visibility",
+        [FRONTEND_EVENT_AUDIO_UPDATE] = "audio-update",
+        [FRONTEND_EVENT_KEYPRESS] = "keypress",
+        [FRONTEND_EVENT_MOUSE_MOTION] = "mouse-motion",
+        [FRONTEND_EVENT_MOUSE_BUTTON] = "mouse-button",
+        [FRONTEND_EVENT_MOUSE_WHEEL] = "mouse-wheel",
+        [FRONTEND_EVENT_MOUSE_LEAVE] = "mouse-leave",
+        [FRONTEND_EVENT_GESTURE] = "gesture",
+        [FRONTEND_EVENT_FILE_DRAG] = "file-drag",
+        [FRONTEND_EVENT_FILE_DROP] = "file-drop",
+        [FRONTEND_EVENT_QUIT] = "quit",
+        [FRONTEND_EVENT_INTERRUPT] = "interrupt",
+    };
+    if (type < 0 || (size_t)type >= ARRAY_LENGTH(types)) {
+        return "invalid";
+    } else {
+        return types[type];
+    }
 }

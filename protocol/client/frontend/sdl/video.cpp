@@ -59,7 +59,15 @@ void sdl_paint_png(WhistFrontend* frontend, const char* filename, int output_wid
 
 void sdl_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    SDL_SetWindowFullscreen(context->window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+    SDL_Event event = {
+        .user =
+            {
+                .type = context->internal_event_id,
+                .code = SDL_FRONTEND_EVENT_FULLSCREEN,
+                .data1 = (void*)(intptr_t)fullscreen,
+            },
+    };
+    SDL_PushEvent(&event);
 }
 
 void sdl_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {

@@ -176,7 +176,6 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 
     context->audio_device = 0;
     context->key_state = SDL_GetKeyboardState(&context->key_count);
-    context->file_drag_event_id = SDL_RegisterEvents(1);
     context->video_has_rendered = false;
     context->window_has_shown = false;
 
@@ -185,6 +184,9 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     context->cursor.last_visible_position.x = 0;
     context->cursor.last_visible_position.y = 0;
     context->cursor.handle = NULL;
+
+    context->internal_event_id = SDL_RegisterEvents(1);
+    FATAL_ASSERT(context->internal_event_id != (uint32_t)-1);
 
     context->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width,
                                        height, window_flags);
