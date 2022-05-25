@@ -85,6 +85,7 @@ parser.add_argument(
     the key-pair that you pass must be valid on all AWS regions.",
     type=str,
     choices=[
+        "",
         "us-east-1",
         "us-east-2",
         "us-west-1",
@@ -223,9 +224,9 @@ parser.add_argument(
 parser.add_argument(
     "--aws-timeout-seconds",
     help="The timeout after which we give up on commands that have not finished on a remote AWS EC2 instance. \
-    This value should not be set to less than 20mins (1200s)",
+    This value should not be set to less than 40mins (2400s)",
     type=int,
-    default=1200,
+    default=2400,
 )
 
 parser.add_argument(
@@ -582,6 +583,7 @@ if __name__ == "__main__":
         server_cmd,
         server_log,
         server_metrics_file,
+        region_name,
         existing_server_instance_id,
         server_pexpect_process,
         server_hs_process,
