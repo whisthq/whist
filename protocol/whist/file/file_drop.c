@@ -19,7 +19,7 @@ destroy_file_drop_handler();
 #include <whist/core/whist.h>
 #include "file_drop.h"
 
-#ifndef __linux__
+#if !OS_IS(OS_LINUX)
 
 bool init_file_drop_handler(void) {
     LOG_INFO("File drop handler not supported on this platform");
@@ -50,7 +50,7 @@ int file_drag_update(bool is_dragging, int x, int y, int drag_group_id, char* fi
     return -1;
 }
 
-#elif __linux__
+#elif OS_IS(OS_LINUX)
 
 /*
 ============================
@@ -728,4 +728,4 @@ int file_drag_update(bool is_dragging, int x, int y, int drag_group_id, char* fi
     return 0;
 }
 
-#endif  // __linux__
+#endif  // Linux

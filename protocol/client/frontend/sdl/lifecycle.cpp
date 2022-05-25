@@ -27,19 +27,17 @@ static void sdl_init_video_device(SDLFrontendContext* context) {
     context->video.decode_device = NULL;
     context->video.decode_format = AV_PIX_FMT_NONE;
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     if (!strcmp(context->render_driver_name, "direct3d11")) {
         sdl_d3d11_init(context);
     }
-#endif  // _WIN32
+#endif  // Windows
 
     // Texture sharing between Core Video decode and Metal rendering on
-    // macOS.
-    bool allow_metal_texture_sharing = true;
-#ifdef __aarch64__
-    // Disabled on ARM due to freeze issues (still enabled on x86).
-    allow_metal_texture_sharing = false;
-#endif
+    // macOS. Disabled on ARM due to freeze issues (still enabled on x86).
+
+    bool allow_metal_texture_sharing = !ARCH_IS(ARCH_ARM_64);
+
     if (allow_metal_texture_sharing && !strcmp(context->render_driver_name, "metal")) {
         // No device required; renderer can use Core Video pixel buffers
         // from Video Toolbox directly as textures.
@@ -98,7 +96,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, sdl_render_driver);
     }
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     // Tell Windows that the content we're rendering is aware of the system's set DPI.
     // Note: This fails on subsequent calls, but that's just a no-op so it's fine.
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
@@ -114,7 +112,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // Enable the D3D11 debug layer in debug builds.
     SDL_SetHint(SDL_HINT_RENDER_DIRECT3D11_DEBUG, "1");
 #endif
-#endif  // _WIN32
+#endif  // Windows
 
     // Allow the screensaver to activate while the frontend is running
     SDL_EnableScreenSaver();
@@ -265,7 +263,7 @@ void sdl_destroy(WhistFrontend* frontend) {
         context->renderer = NULL;
     }
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     sdl_d3d11_destroy(context);
 #endif
 

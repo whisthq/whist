@@ -14,15 +14,17 @@ Includes
 ============================
 */
 
+#include "platform.h"
+
 // In order to use accept4 we have to allow non-standard extensions
-#if !defined(_GNU_SOURCE) && defined(__linux__)
+#if !defined(_GNU_SOURCE) && OS_IS(OS_LINUX)
 #define _GNU_SOURCE
 #endif
 
 #include <stdbool.h>
 #include <stdint.h>
 
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
 #define _WINSOCKAPI_
 #include <Audioclient.h>
 #include <avrt.h>
@@ -103,7 +105,7 @@ Defines
 #define XTEST_INPUT_DRIVER 2
 #define UINPUT_INPUT_DRIVER 3
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 
 // possible on windows, so let's do it
 #define USING_SERVERSIDE_SCALE true
@@ -121,7 +123,7 @@ Defines
 #endif
 
 // Create platform-independent POSIX-style functions
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
 #define STDOUT_FILENO _fileno(stdout)
 #define safe_mkdir(dir) _mkdir(dir)
 #define safe_dup(fd) _dup(fd)
@@ -247,20 +249,20 @@ Constants
 #define NS_IN_MS 1000000
 #define BYTES_IN_KILOBYTE 1024
 #define BITS_IN_BYTE 8.0
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #define DEFAULT_DPI 96.0
 #else
 #define DEFAULT_DPI 72.0
 #endif
 
 // noreturn silences warnings if used for a function that should never return
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #define NORETURN __declspec(noreturn)
 #else
 #define NORETURN __attribute__((noreturn))
 #endif
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #define PATH_SEPARATOR '\\'
 #define PATH_JOIN(left, right) left "\\" right
 #else

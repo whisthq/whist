@@ -170,7 +170,7 @@ git difftool -y
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #pragma warning(disable : 4334) /* WHIST: bit shift warning */
 #pragma warning(disable : 4267) /* WHIST: size_t to unsigned conversion */
 #pragma warning(disable : 4805) /* WHIST: implicit conversions */

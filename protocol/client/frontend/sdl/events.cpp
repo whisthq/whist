@@ -81,13 +81,13 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
 // Note: We investigated adding the following events on Windows as
 // well, but it would require significant work for minimal gain. As
 // such, we only handle occlusion on macOS.
-#ifdef __APPLE__
+#if OS_IS(OS_MACOS)
                 case SDL_WINDOWEVENT_OCCLUDED:
                 case SDL_WINDOWEVENT_UNOCCLUDED:
 #else
                 case SDL_WINDOWEVENT_MINIMIZED:
                 case SDL_WINDOWEVENT_RESTORED:
-#endif  // defined(__APPLE__)
+#endif  // macOS
                 {
                     event->type = FRONTEND_EVENT_VISIBILITY;
                     event->visibility.visible =

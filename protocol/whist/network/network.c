@@ -5,7 +5,8 @@
  *        under-the-hood.
  */
 
-#ifdef _WIN32
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
                                          // be at the very top
 #endif
@@ -21,7 +22,7 @@ Includes
 #include <stdio.h>
 #include <fcntl.h>
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
 #include <sys/poll.h>
 #include "curl/curl.h"
 #else
@@ -159,7 +160,7 @@ SOCKET socketp_udp(void) {
     // Create socket
     SOCKET sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
     // Set socket to close on child exec
     // Not necessary for windows because CreateProcessA creates an independent process
     if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
@@ -213,7 +214,7 @@ void set_timeout(SOCKET socket, int timeout_ms) {
 
         // setsockopt(SO_RCVTIMEO) argument is struct timeval on Unices
         // but DWORD in milliseconds on Windows.
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
         DWORD read_timeout = timeout_ms;
 #else
         struct timeval read_timeout = {.tv_sec = timeout_ms / MS_IN_SECOND,
@@ -257,7 +258,7 @@ void whist_init_networking(void) {
     }
 
     // initialize the windows socket library if this is on windows
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         LOG_FATAL("Failed to initialize Winsock with error code: %d.", WSAGetLastError());
@@ -275,7 +276,7 @@ int get_last_network_error(void) {
                 through WSAGetLastError on Windows or errno on Linux
     */
 
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
     return WSAGetLastError();
 #else
     return errno;
@@ -383,7 +384,7 @@ bool handshake_private_key(SOCKET socket, int connection_timeout_ms, const void*
     }
 }
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
 // Receive implementations avoiding EINTR.
 
 // Note that this get_timeout() implementation will not work on Windows
@@ -418,7 +419,7 @@ static int get_timeout(SOCKET socket) {
 #endif
 
 int recv_no_intr(SOCKET sockfd, void* buf, size_t len, int flags) {
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     // EINTR doesn't happen on windows, so just use the system call
     return recv(sockfd, buf, (int)len, flags);
 #else
@@ -484,7 +485,7 @@ int recv_no_intr(SOCKET sockfd, void* buf, size_t len, int flags) {
 // Any changes should be kept in sync between them.
 int recvfrom_no_intr(SOCKET sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
                      socklen_t* addrlen) {
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     // EINTR doesn't happen on windows, so just use the system call
     return recvfrom(sockfd, buf, (int)len, flags, src_addr, addrlen);
 #else

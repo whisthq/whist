@@ -15,7 +15,8 @@ whether you grab them or not. Once you are done, you need to destroy the audio
 device via DestroyAudioDevice.
 */
 
-#ifdef _WIN32
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 
 #include "wasapicapture.h"
 
@@ -217,4 +218,4 @@ void wait_timer(AudioDevice *audio_device) {
     WaitForSingleObject(audio_device->hWakeUp, INFINITE);
 }
 
-#endif  // _WIN32
+#endif  // Windows

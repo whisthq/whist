@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
 #include <sys/types.h>
-#endif  // _WIN32
+#endif  // Not Windows
 
 typedef struct NetworkThrottleContext NetworkThrottleContext;
 

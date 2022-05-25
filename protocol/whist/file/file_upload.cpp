@@ -4,7 +4,7 @@ extern "C" {
 #include <whist/core/whist.h>
 }
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 
 #include <ShObjIdl_core.h>
 

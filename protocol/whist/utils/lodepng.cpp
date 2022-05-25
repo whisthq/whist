@@ -10,8 +10,9 @@
 // causes the linker to fail. To fix this, we prevent redefinition of those globals in
 // the C++ interpretation. This is not wanted/needed on MSVC due to symbol mangling in
 // that case.
-#ifndef _WIN32
+#include <whist/core/platform.h>
+#if !OS_IS(OS_WIN32)
 #define WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
-#endif  // _WIN32
+#endif  // Not Windows
 #define LODEPNG_MAX_ALLOC 100000000
 #include "lodepng.c"

@@ -1,7 +1,7 @@
 #include "threads.h"
 #include <whist/logging/logging.h>
 
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
 // Manual pthread control
 #include <pthread.h>
 #endif
@@ -44,7 +44,7 @@ void whist_wait_thread(WhistThread thread, int *ret) {
 void whist_set_thread_priority(WhistThreadPriority priority) {
     // Add in special case handling when trying to set specifically REALTIME on Linux,
     // As this leads to increased performance
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
     // Use the highest possible priority for _REALTIME
     // (SCHED_RR being higher than any possible nice value, which is SCHED_OTHER)
     if (priority == WHIST_THREAD_PRIORITY_REALTIME) {
@@ -105,12 +105,12 @@ void *whist_get_thread_local_storage(WhistThreadLocalStorageKey key) { return SD
 void whist_sleep(uint32_t ms) { SDL_Delay(ms); }
 
 void whist_usleep(uint32_t us) {
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     // Not sure if this is implemented on Windows, so just fall back to SDL_Delay.
     whist_sleep(us / 1000);
 #else
     usleep(us);
-#endif  // _WIN32
+#endif  // Windows
 }
 
 WhistMutex whist_create_mutex(void) {

@@ -199,7 +199,7 @@ typedef struct LinkedList {
     for (type *item = (type *)(list)->head, *next_ = NULL; \
          (item) && (next_ = (type *)linked_list_next(item)), (item); (item) = next_)
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 // MSVC complains about the unavoidable assignment within the condition.
 // This could be expanded anywhere so suppressing one instance doesn't
 // work; hence switch if off if this header is included.

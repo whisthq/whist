@@ -48,10 +48,10 @@ Includes
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
 
-#ifdef __APPLE__
+#if OS_IS(OS_MACOS)
 #include <mach-o/dyld.h>
 #include <whist/utils/mac_utils.h>
-#endif  // __APPLE__
+#endif  // macOS
 
 // N.B.: Please don't put globals here, since main.c won't be included when the testing suite is
 // used instead
@@ -153,18 +153,18 @@ static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
     // and try to launch.
     //     This should be done first because `execl` won't cleanup any allocated resources.
     // Mac apps also sometimes pass an argument like -psn_0_2126343 to the executable.
-#if defined(_WIN32) || defined(__APPLE__)
+#if OS_IN(OS_WIN32 | OS_MACOS)
     if (argc == 1 || (argc == 2 && !strncmp(argv[1], "-psn_", 5))) {
         // hopefully the app path is not more than 1024 chars long
         char client_app_path[APP_PATH_MAXLEN + 1];
         memset(client_app_path, 0, APP_PATH_MAXLEN + 1);
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
         const char* relative_client_app_path = "/../../Whist.exe";
         char dir_split_char = '\\';
         size_t protocol_path_len;
 
-#elif __APPLE__
+#elif OS_IS(OS_MACOS)
         // This executable is located at
         //    Whist.app/Contents/MacOS/WhistClient
         // We want to reference client app at Whist.app/Contents/MacOS/WhistLauncher
@@ -175,12 +175,12 @@ static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
 
         int relative_client_app_path_len = (int)strlen(relative_client_app_path);
         if (relative_client_app_path_len < APP_PATH_MAXLEN + 1) {
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
             int max_protocol_path_len = APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1;
             // Get the path of the current executable
             int path_read_size = GetModuleFileNameA(NULL, client_app_path, max_protocol_path_len);
             if (path_read_size > 0 && path_read_size < max_protocol_path_len) {
-#elif __APPLE__
+#elif OS_IS(OS_MACOS)
             uint32_t max_protocol_path_len =
                 (uint32_t)(APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1);
             // Get the path of the current executable
@@ -197,12 +197,12 @@ static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
                 if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path,
                                  relative_client_app_path_len + 1)) {
                     LOG_INFO("Client app path: %s", client_app_path);
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
                     // If `_execl` fails, then the program proceeds, else defers to client app
                     if (_execl(client_app_path, "Whist.exe", NULL) < 0) {
                         LOG_INFO("_execl errno: %d errstr: %s", errno, strerror(errno));
                     }
-#elif __APPLE__
+#elif OS_IS(OS_MACOS)
                     // If `execl` fails, then the program proceeds, else defers to client app
                     if (execl(client_app_path, "Whist", NULL) < 0) {
                         LOG_INFO("execl errno: %d errstr: %s", errno, strerror(errno));

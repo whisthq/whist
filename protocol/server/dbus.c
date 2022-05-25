@@ -42,7 +42,7 @@ like GDBus.
 
 #include "dbus.h"
 
-#ifndef __linux__
+#if !OS_IS(OS_LINUX)
 
 DBusHandlerContext* whist_create_dbus_handler(WhistServerState* server_state) {
     LOG_INFO("Cannot initialize D-Bus handler; feature only supported on Linux");
@@ -53,7 +53,7 @@ void whist_destroy_dbus_handler(DBusHandlerContext* ctx) {
     LOG_INFO("Cannot destroy D-Bus handler; feature only supported on Linux");
 }
 
-#elif __linux__
+#else
 
 /*
 ============================
@@ -264,4 +264,4 @@ DBusHandlerResult reply_suppressor(DBusConnection* conn, DBusMessage* msg, void*
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-#endif  // defined(__linux__)
+#endif  // Linux

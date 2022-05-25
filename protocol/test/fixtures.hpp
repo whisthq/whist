@@ -1,11 +1,15 @@
 #ifndef TEST_FIXTURES_HPP
 #define TEST_FIXTURES_HPP
 
-#ifdef _WIN32
+extern "C" {
+#include <whist/core/platform.h>
+}
+
+#if OS_IS(OS_WIN32)
 #ifndef _CRT_SECURE_NO_WARNINGS
 #error "_CRT_SECURE_NO_WARNINGS must be defined to include this file"
 #endif  // _CRT_SECURE_NO_WARNINGS
-#endif  // _WIN32
+#endif  // Windows
 
 #include <iostream>
 #include <fstream>

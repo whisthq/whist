@@ -24,7 +24,8 @@ Includes
 ============================
 */
 
-#ifdef _WIN32
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 #include "wasapicapture.h"
 #else
 #include "alsacapture.h"

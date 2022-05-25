@@ -6,8 +6,10 @@
 #ifndef WHIST_UTILS_THREADS_H
 #define WHIST_UTILS_THREADS_H
 
+#include <whist/core/platform.h>
+
 // So that SDL sees symbols such as memcpy
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #include <windows.h>
 #else
 #include <string.h>

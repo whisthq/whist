@@ -86,9 +86,9 @@ int connect_to_server(const char *server_ip, bool with_stun, const char *user_em
         return -1;
     }
     // Let the server know what OS we are
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     wcmsg.init_message.os = WHIST_WINDOWS;
-#elif defined(__APPLE__)
+#elif OS_IS(OS_MACOS)
     wcmsg.init_message.os = WHIST_APPLE;
 #else
     wcmsg.init_message.os = WHIST_LINUX;

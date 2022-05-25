@@ -84,11 +84,11 @@ Includes
 #include <whist/core/whist.h>
 
 // In order to use accept4 we have to allow non-standard extensions
-#if !defined(_GNU_SOURCE) && defined(__linux__)
+#if !defined(_GNU_SOURCE) && OS_IS(OS_LINUX)
 #define _GNU_SOURCE
 #endif
 
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
 #pragma comment(lib, "ws2_32.lib")
 #include <windows.h>
 #include <winsock2.h>
@@ -110,7 +110,7 @@ Defines
 // The subset of the bitrate that will be audio
 #define AUDIO_BITRATE 128000
 
-#if defined(_WIN32)
+#if OS_IS(OS_WIN32)
 // Note: SOCKET, INVALID_SOCKET, and closesocket are already defined on Windows
 #define WHIST_IOCTL_SOCKET ioctlsocket
 #define WHIST_CLOSE_SOCKET closesocket

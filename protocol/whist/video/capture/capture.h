@@ -21,7 +21,7 @@ Includes
 #include <whist/core/whist.h>
 #include <whist/utils/color.h>
 #include <whist/utils/linked_list.h>
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
 #include <X11/Xlib.h>
 #include "nvidiacapture.h"
 #include "x11capture.h"
@@ -50,7 +50,7 @@ typedef struct CaptureDevice {
     WhistRGBColor corner_color;
     void* internal;
 
-#ifdef __linux__
+#if OS_IS(OS_LINUX)
     CaptureDeviceType active_capture_device;  // the device currently used for capturing
     CaptureDeviceType last_capture_device;  // the device used for the last capture, so we can pick
                                             // the right encoder

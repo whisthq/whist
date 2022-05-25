@@ -143,7 +143,7 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
     LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
              current_height);
 
-#ifndef __linux__
+#if !OS_IS(OS_LINUX)
     int dpi = whist_frontend_get_window_dpi(frontend);
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
@@ -183,7 +183,7 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
             }
         }
     }
-#endif
+#endif  // non-Linux
 
     // Update output width / output height
     if (current_width != output_width || current_height != output_height) {

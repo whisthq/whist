@@ -29,7 +29,7 @@ Defines
 
 using namespace std;
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #define strtok_r strtok_s
 #endif
 

@@ -117,7 +117,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
             SDL_DestroyTexture(context->video.texture);
             context->video.texture = NULL;
         }
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
         if (import_texture) {
             // The D3D11 SDL render path is entirely asynchronous, with
             // no synchronisation points at all.  Since video decode
@@ -150,7 +150,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                 return WHIST_ERROR_EXTERNAL;
             }
         } else if (frame->format == AV_PIX_FMT_D3D11) {
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
             context->video.texture = sdl_d3d11_create_texture(context, frame);
             if (context->video.texture == NULL) {
                 LOG_ERROR("Failed to import D3D11 texture.");
@@ -283,13 +283,13 @@ void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
         // This allows for correct blit-resizing.
         SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
         // Windows SDL cursors don't scale to DPI.
         // TODO: https://github.com/libsdl-org/SDL/pull/4927 may change this.
         const int dpi = 96;
 #else
         const int dpi = sdl_get_window_dpi(frontend);
-#endif  // defined(_WIN32)
+#endif  // Windows
 
         SDL_Surface* scaled = SDL_CreateRGBSurface(
             0, cursor->png_width * 96 / dpi, cursor->png_height * 96 / dpi,

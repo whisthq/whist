@@ -1,4 +1,5 @@
-#ifdef _WIN32
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
                                          // be at the very top
 #endif
@@ -20,7 +21,7 @@ Includes
 #include "whist/core/features.h"
 #include <stddef.h>
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
 #include <fcntl.h>
 #endif
 

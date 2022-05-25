@@ -306,7 +306,7 @@ Includes
 ============================
 */
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
 #include <memoryapi.h>
 #else
 #include <unistd.h>
@@ -342,7 +342,7 @@ static int get_page_size(void) {
             (int): system page size
     */
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     SYSTEM_INFO sys_info;
 
     // Copy the hardware information to the SYSTEM_INFO structure.
@@ -382,7 +382,7 @@ void* allocate_region(size_t region_size) {
     // Round up to the nearest page size
     region_size = region_size + (page_size - (region_size % page_size)) % page_size;
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     void* p = VirtualAlloc(NULL, region_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (p == NULL) {
         LOG_FATAL("Could not VirtualAlloc. Error %x", GetLastError());
@@ -415,11 +415,11 @@ void mark_unused_region(void* region) {
     if (p->size > page_size) {
         char* next_page = (char*)p + page_size;
         size_t advise_size = p->size - page_size;
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
         // Offer the Virtual Memory up so that task manager knows we're not using those pages
         // anymore
         OfferVirtualMemory(next_page, advise_size, VmOfferPriorityNormal);
-#elif __APPLE__
+#elif OS_IS(OS_MACOS)
         // Lets you tell the Apple Task Manager to report correct memory usage
         madvise(next_page, advise_size, MADV_FREE_REUSABLE);
 #else
@@ -443,10 +443,10 @@ void mark_used_region(void* region) {
     if (p->size > page_size) {
         char* next_page = (char*)p + page_size;
         size_t advise_size = p->size - page_size;
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
         // Reclaim the virtual memory for usage again
         ReclaimVirtualMemory(next_page, advise_size);
-#elif __APPLE__
+#elif OS_IS(OS_MACOS)
         // Tell the Apple Task Manager that we'll use this memory again
         // Apparently we can lie to their Task Manager by not calling this
         // Hm.
@@ -500,7 +500,7 @@ void deallocate_region(void* region) {
 
     RegionHeader* p = TO_REGION_HEADER(region);
 
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
     if (VirtualFree(p, 0, MEM_RELEASE) == 0) {
         LOG_FATAL("VirtualFree failed! Error %x", GetLastError());
     }

@@ -173,7 +173,7 @@ int read_piped_arguments(bool run_only_once) {
     bool keep_reading = true;
     bool finished_line = false;
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
     int available_chars;
 #else
     DWORD available_chars;
@@ -198,7 +198,7 @@ int read_piped_arguments(bool run_only_once) {
             whist_sleep(50);
         }
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
         if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
             LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
             free(incoming);
@@ -214,7 +214,8 @@ int read_piped_arguments(bool run_only_once) {
                 available_chars = 1;
             }
         }
-#endif  // _WIN32
+#endif  // Windows
+
         // Reset `incoming` so that it is at the very least initialized.
         memset(incoming, 0, INCOMING_MAXLEN + 1);
         for (int char_idx = 0; char_idx < (int)available_chars; char_idx++) {

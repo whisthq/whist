@@ -1,4 +1,5 @@
-#ifdef _WIN32
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
                                          // be at the very top
 #endif
@@ -15,7 +16,7 @@ Includes
 #include <whist/network/throttle.h>
 #include "whist/core/features.h"
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
 #include <fcntl.h>
 #endif
 
@@ -841,7 +842,7 @@ SOCKET socketp_tcp(void) {
         return INVALID_SOCKET;
     }
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
     // Set socket to close on child exec
     // Not necessary for windows because CreateProcessA creates an independent process
     if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
@@ -865,7 +866,7 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) 
         return INVALID_SOCKET;
     }
 
-#ifndef _WIN32
+#if !OS_IS(OS_WIN32)
     // Set socket to close on child exec
     // Not necessary for windows because CreateProcessA creates an independent process
     if (fcntl(new_socket, F_SETFD, fcntl(new_socket, F_GETFD) | FD_CLOEXEC) < 0) {
