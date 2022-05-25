@@ -18,6 +18,8 @@ Includes
 ============================
 */
 
+#include <algorithm>
+
 extern "C" {
 #include "audio.h"
 #include "network.h"
