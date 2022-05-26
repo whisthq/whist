@@ -157,7 +157,6 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Send the request to the instance and then return the response
 	url := utils.Sprintf("https://%v:4678/json_transport", reqdata.IP)
-	logger.Infof("Reqdata is %v", reqdata)
 
 	jsonBody, err := json.Marshal(reqdata)
 	if err != nil {
