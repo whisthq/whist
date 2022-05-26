@@ -3,14 +3,10 @@ package main
 import (
 	"bytes"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
-	"os/user"
-	"path"
 	"strings"
 	"time"
 
@@ -21,6 +17,7 @@ import (
 	"github.com/whisthq/whist/backend/services/scaling-service/payments"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 	"golang.org/x/time/rate"
@@ -178,9 +175,6 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			VerifyPeerCertificate: verifyPeerCertificate,
-			// We disable the "normal" verification to use our custom
-			// verification function.
 			InsecureSkipVerify: true,
 		},
 	}
@@ -204,96 +198,29 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(hostBody)
 }
 
-// verifyPeerCertificate is a custom certificate validation function that will be used to verify
-// the certificate received from the host service. This is necessary to still have some level of
-// security and to be able to use TLS between the scaling service and host service. This function
-// should be reworked to something more secure in the future.
-func verifyPeerCertificate(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-	roots := x509.NewCertPool()
-	for _, cert := range rawCerts {
-		c, err := x509.ParseCertificate(cert)
-		if err != nil {
-			return utils.MakeError("Failed to parse raw certificate. Err: %s", err)
-		}
-
-		// Check that the certificate was issued by the scaling service.
-		user, err := user.Current()
-		if err != nil {
-			return utils.MakeError("Failed to get hostname. Err: %s", err)
-		}
-		hostname, err := os.Hostname()
-		if err != nil {
-			return utils.MakeError("Failed to get hostname. Err: %s", err)
-		}
-
-		issuer := utils.Sprintf("%s@%s (%s)", user.Username, hostname, user.Name)
-		if c.Issuer.OrganizationalUnit[0] != issuer {
-			return utils.MakeError("Certificate was not issued by scaling service! Dropping request.")
-		}
-
-		roots.AddCert(c)
-	}
-
-	// First we have to read the rootCA certificate and parse it to a valid certificate.
-	getRootCAPath := exec.Command("mkcert", "-CAROOT")
-	rootCAPath, err := getRootCAPath.Output()
-	if err != nil {
-		return utils.MakeError("Failed to get root CA path. Err: %s", err)
-	}
-	rootCARaw, err := os.ReadFile(path.Join(strings.TrimSpace(string(rootCAPath)), "rootCA.pem"))
-	if err != nil {
-		return utils.MakeError("Error reading rootCA.pem file. Err: %s", err)
-	}
-
-	// Append the rootCA certificate to perform the verification. This will check that
-	// the certificate from the peer was signed by the rootCA certificate.
-	ok := roots.AppendCertsFromPEM(rootCARaw)
-	if !ok {
-		return utils.MakeError("Failed to append rootCA certificate to root chain.")
-	}
-
-	// Get the certificate sent by the peer to verify
-	cert, err := x509.ParseCertificate(rawCerts[0])
-	if err != nil {
-		return utils.MakeError("Failed to parse root certificate. Err: %s", err)
-	}
-
-	// Verify that the DNS name is the one we expect.
-	_, err = cert.Verify(x509.VerifyOptions{
-		DNSName: "backend.whist.com",
-		// The roots contain the rootCA certificate to validate we signed this certificate sent by the peer.
-		Roots: roots,
-	})
-	if err != nil {
-		return utils.MakeError("Received an invalid certificate. Err: %s", err)
-	}
-
-	return nil
-}
-
 // authenticateRequest will verify that the access token is valid
 // and will parse the request body and try to unmarshal into a
 // `ServerRequest` type.
 func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) error {
-	// accessToken, err := getAccessToken(r)
-	// if err != nil {
-	// 	return err
-	// }
+	accessToken, err := getAccessToken(r)
+	if err != nil {
+		return err
+	}
 
-	// claims, err := auth.ParseToken(accessToken)
-	// if err != nil {
-	// 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	// 	return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-	// }
+	claims, err := auth.ParseToken(accessToken)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+	}
 
-	_, err := httputils.ParseRequest(w, r, s)
+	_, err = httputils.ParseRequest(w, r, s)
 	if err != nil {
 		return utils.MakeError("Error while parsing request. Err: %v", err)
 	}
 
 	// Add user id to the request. This way we don't expose the
 	// access token to other processes that don't need access to it.
-	// s.(*httputils.MandelboxAssignRequest).UserID = types.UserID(claims.Subject)
+	s.(*httputils.MandelboxAssignRequest).UserID = types.UserID(claims.Subject)
 	return nil
 }
 

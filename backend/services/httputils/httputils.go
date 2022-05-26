@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os/exec"
 
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -127,4 +128,35 @@ func EnableCORS(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWr
 
 		f(rw, r)
 	})
+}
+
+// Creates a TLS certificate/private key pair for secure communication with the Whist frontend
+func InitializeTLS(privatekeyPath string, certPath string) error {
+	// Create a self-signed passwordless certificate
+	// https://unix.stackexchange.com/questions/104171/create-ssl-certificate-non-interactively
+	cmd := exec.Command(
+		"/usr/bin/openssl",
+		"req",
+		"-new",
+		"-newkey",
+		"rsa:4096",
+		"-days",
+		"365",
+		"-nodes",
+		"-x509",
+		"-subj",
+		"/C=US/ST=./L=./O=./CN=.",
+		"-addext", "subjectAltName=IP:127.0.0.1",
+		"-keyout",
+		privatekeyPath,
+		"-out",
+		certPath,
+	)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return utils.MakeError("Unable to create x509 private key/certificate pair. Error: %v, Command output: %s", err, output)
+	}
+
+	logger.Info("Successfully created TLS certificate/private key pair. Certificate path: %s", certPath)
+	return nil
 }

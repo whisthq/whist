@@ -220,6 +220,11 @@ func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.Ser
 func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (<-chan httputils.ServerRequest, error) {
 	logger.Info("Setting up HTTP server.")
 
+	err := httputils.InitializeTLS(privatekeyPath, certPath)
+	if err != nil {
+		return nil, utils.MakeError("Error starting HTTP Server: %v", err)
+	}
+
 	// Buffer up to 100 events so we don't block. This should be mostly
 	// unnecessary, but we want to be able to handle a burst without blocking.
 	events := make(chan httputils.ServerRequest, 100)
