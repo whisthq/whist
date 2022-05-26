@@ -1,5 +1,11 @@
 #include "common.h"
 #include "interface.h"
+#include <whist/utils/queue.h>
+
+// Just chosen a very large number for events queue size. If required we can optimize/reduce it.
+#define MAX_EVENTS_QUEUED 10000
+
+QueueContext* events_queue = NULL;
 
 static WhistMutex lock;
 static AVFrame* pending = NULL;
@@ -7,6 +13,7 @@ static bool connected = false;
 
 void virtual_interface_connect(void) {
     lock = whist_create_mutex();
+    events_queue = fifo_queue_create(sizeof(WhistFrontendEvent), MAX_EVENTS_QUEUED);
     connected = true;
 }
 
@@ -50,4 +57,11 @@ void virtual_interface_send_frame(AVFrame* frame) {
 void virtual_interface_disconnect(void) {
     connected = false;
     whist_destroy_mutex(lock);
+    fifo_queue_destroy(events_queue);
+}
+
+void virtual_interface_send_event(const WhistFrontendEvent* frontend_event) {
+    if (fifo_queue_enqueue_item(events_queue, frontend_event) != 0) {
+        LOG_ERROR("Virtual event queuing failed");
+    }
 }

@@ -38,6 +38,8 @@ extern "C" {
 #include <client/frontend/frontend.h>
 #include <client/frontend/sdl/common.h>
 #include <client/frontend/sdl/sdl_struct.hpp>
+#include <client/frontend/virtual/common.h>
+#include <client/frontend/virtual/interface.h>
 
 #if !OS_IS(OS_MACOS)
 #include "server/state.h"
@@ -1905,6 +1907,7 @@ TEST_F(ProtocolTest, QueueTest) {
     QueueContext* fifo_queue = fifo_queue_create(sizeof(int), 5);
     EXPECT_TRUE(fifo_queue != NULL);
     EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), -1);
+    EXPECT_EQ(fifo_queue_dequeue_item_timeout(fifo_queue, &item, 50), -1);
     item = 1;
     EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
     item = 2;
@@ -1923,19 +1926,63 @@ TEST_F(ProtocolTest, QueueTest) {
     EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), -1);
     EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
     EXPECT_EQ(item, 2);
-    EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(fifo_queue_dequeue_item_timeout(fifo_queue, &item, 100), 0);
     EXPECT_EQ(item, 3);
-    EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(fifo_queue_dequeue_item_timeout(fifo_queue, &item, 100), 0);
     EXPECT_EQ(item, 4);
     EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
     EXPECT_EQ(item, 5);
     EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
     EXPECT_EQ(item, 6);
     EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), -1);
+    int timeout_ms = 500;
+    WhistTimer timer;
+    start_timer(&timer);
+    EXPECT_EQ(fifo_queue_dequeue_item_timeout(fifo_queue, &item, timeout_ms), -1);
+    double time_elapsed = get_timer(&timer);
+    EXPECT_TRUE((time_elapsed * MS_IN_SECOND) > (0.75 * timeout_ms) &&
+                (time_elapsed * MS_IN_SECOND) < (1.25 * timeout_ms));
     EXPECT_EQ(item, 6);
     fifo_queue_destroy(fifo_queue);
     EXPECT_EQ(fifo_queue_dequeue_item(NULL, &item), -1);
     EXPECT_EQ(fifo_queue_enqueue_item(NULL, &item), -1);
+}
+
+int test_virtual_intr(void* arg) {
+#define VIRTUAL_INTERRUPT_MS 500
+    whist_usleep(VIRTUAL_INTERRUPT_MS * US_IN_MS);
+    virtual_interrupt((WhistFrontend*)arg);
+    return 0;
+}
+
+TEST_F(ProtocolTest, VirtualEventTest) {
+    virtual_interface_connect();
+    WhistFrontendEvent sent_event;
+    sent_event.type = FRONTEND_EVENT_RESIZE;  // Can be anything. We just want this to
+                                              // match when we poll it.
+    virtual_interface_send_event(&sent_event);
+    WhistFrontend frontend;
+    virtual_init(&frontend, 0, 0, NULL, NULL);
+    WhistFrontendEvent received_event;
+    EXPECT_EQ(virtual_poll_event(&frontend, &received_event), true);
+    EXPECT_EQ(received_event.type, FRONTEND_EVENT_RESIZE);
+    EXPECT_EQ(virtual_poll_event(&frontend, &received_event), false);
+    sent_event.type = FRONTEND_EVENT_VISIBILITY;
+    virtual_interface_send_event(&sent_event);
+    EXPECT_EQ(virtual_wait_event(&frontend, &received_event, 50), true);
+    EXPECT_EQ(received_event.type, FRONTEND_EVENT_VISIBILITY);
+    EXPECT_EQ(virtual_wait_event(&frontend, &received_event, 50), false);
+    WhistThread thread_context = whist_create_thread(&test_virtual_intr, NULL, &frontend);
+    WhistTimer timer;
+    start_timer(&timer);
+    EXPECT_EQ(virtual_wait_event(&frontend, &received_event, 1000), true);
+    double time_elapsed = get_timer(&timer);
+    EXPECT_TRUE((time_elapsed * MS_IN_SECOND) > (0.75 * VIRTUAL_INTERRUPT_MS) &&
+                (time_elapsed * MS_IN_SECOND) < (1.25 * VIRTUAL_INTERRUPT_MS));
+    EXPECT_EQ(received_event.type, FRONTEND_EVENT_INTERRUPT);
+    whist_wait_thread(thread_context, NULL);
+    virtual_destroy(&frontend);
+    virtual_interface_disconnect();
 }
 
 TEST_F(ProtocolTest, WCCTest) {

@@ -289,6 +289,19 @@ WhistCondition whist_create_cond(void);
 void whist_wait_cond(WhistCondition cond, WhistMutex mutex);
 
 /**
+ * Same as 'whist_wait_cond', but with a timeout
+ *
+ * @param cond   Condition variable to wait for.
+ * @param mutex  Mutex protecting the condition, which must be held by
+ *               the calling thread on entry.
+ * @param timeout_ms The number of ms to wait for.
+ *
+ * @returns True if the conditional variable was woken up by a signal,
+ *          False if the timeout was simply exceeded
+ */
+int whist_timedwait_cond(WhistCondition cond, WhistMutex mutex, uint32_t timeout_ms);
+
+/**
  * @brief Signal to all waiters that a condition may have changed.
  * The cond's mutex must be locked when either changing the predicate of any waiting conds, or
  * during this broadcast. Not doing so can cause a broadcast to fail to wakeup its cond.

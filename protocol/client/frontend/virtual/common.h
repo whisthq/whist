@@ -9,6 +9,7 @@ typedef struct VirtualFrontendContext {
     int width;
     int height;
     int dpi;
+    uint8_t key_state[KEYCODE_UPPERBOUND];
 } VirtualFrontendContext;
 
 #define VIRTUAL_COMMON_HEADER_ENTRY(return_type, name, ...) return_type virtual_##name(__VA_ARGS__);
