@@ -52,7 +52,7 @@ typedef struct SDLWindowContext {
     bool video_has_rendered;
     bool window_has_shown;
     // window specific data
-    Uint32 window_id; // the SDL window ID for SDL window events
+    Uint32 window_id;  // the SDL window ID for SDL window events
     SDL_Window* window;
     SDL_Renderer* renderer;
     /**
@@ -63,7 +63,7 @@ typedef struct SDLWindowContext {
      * destroys the existing texture and creates a new one corresponding
      * the frame (if the data is already in GPU memroy).
      */
-    SDL_Texture* texture;;
+    SDL_Texture* texture;
     /**
      * The format of the current video texture.
      */
@@ -131,10 +131,12 @@ void sdl_d3d11_wait(SDLFrontendContext* context);
  * wraps it in an SDL texture.  This never copies the actual data.
  *
  * @param context  Frontend context containing the devices.
+ * @param renderer The renderer that the texture will be bound to.
  * @param frame    Frame containing the D3D11 texture to use.
  * @return  The new SDL texture.
  */
-SDL_Texture* sdl_d3d11_create_texture(SDLFrontendContext* context, AVFrame* frame);
+SDL_Texture* sdl_d3d11_create_texture(SDLFrontendContext* context, SDL_Renderer* renderer,
+                                      AVFrame* frame);
 
 /**
  * Initialise D3D11 devices for render and decode.

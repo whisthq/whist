@@ -73,7 +73,8 @@ void sdl_d3d11_wait(SDLFrontendContext *context) {
     query->Release();
 }
 
-SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *frame) {
+SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, SDL_Renderer *renderer,
+                                      AVFrame *frame) {
     SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context *)context->video.private_data;
 
     FATAL_ASSERT(frame->format == AV_PIX_FMT_D3D11);
@@ -127,9 +128,9 @@ SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, AVFrame *fram
     int texture_height = FFALIGN(frame->height, 16);
 
     SDL_Texture *sdl_texture;
-    sdl_texture = SDL_CreateTextureFromHandle(context->renderer, SDL_PIXELFORMAT_NV12,
-                                              SDL_TEXTUREACCESS_STATIC, texture_width,
-                                              texture_height, &d3d11_handle);
+    sdl_texture =
+        SDL_CreateTextureFromHandle(renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STATIC,
+                                    texture_width, texture_height, &d3d11_handle);
     if (sdl_texture == NULL) {
         LOG_ERROR("Failed to import video texture: %s.", SDL_GetError());
     }

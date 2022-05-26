@@ -88,6 +88,7 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
         LOG_ERROR("Failed to create frontend");
         return NULL;
     }
+    LOG_DEBUG("Created frontend");
 
     if (whist_frontend_init(frontend, target_output_width, target_output_height, title,
                             &background_color) != WHIST_SUCCESS) {
@@ -95,6 +96,7 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
         LOG_ERROR("Failed to initialize frontend");
         return NULL;
     }
+    LOG_DEBUG("Init frontend");
 
     pending_cursor_info_mutex = whist_create_mutex();
     frontend_render_mutex = whist_create_mutex();
@@ -108,6 +110,7 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
     int w, h;
+    LOG_DEBUG("Getting pixel size");
     whist_frontend_get_window_pixel_size(frontend, 0, &w, &h);
     output_width = w;
     output_height = h;

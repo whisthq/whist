@@ -68,13 +68,16 @@ bool sdl_is_window_visible(WhistFrontend* frontend) {
 WhistStatus sdl_set_title(WhistFrontend* frontend, int id, const char* title) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (context->windows.contains(id)) {
+        LOG_DEBUG("Setting title of window %d, SDL id %d", id, context->windows[id]->window_id);
         SDL_Event event = {
             .user =
                 {
-                    .windowID = context->windows[id]->window_id,
                     .type = context->internal_event_id,
+                    .timestamp = 0,
+                    .windowID = context->windows[id]->window_id,
                     .code = SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE,
                     .data1 = (void*)title,
+                    .data2 = NULL,
                 },
         };
         SDL_PushEvent(&event);
@@ -105,13 +108,17 @@ void sdl_resize_window(WhistFrontend* frontend, int id, int width, int height) {
 void sdl_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor* color) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (context->windows.contains(id)) {
+        LOG_DEBUG("Setting titlebar color of window %d, SDL id %d", id,
+                  context->windows[id]->window_id);
         SDL_Event event = {
             .user =
                 {
-                    .windowID = context->windows[id]->window_id,
                     .type = context->internal_event_id,
+                    .timestamp = 0,
+                    .windowID = context->windows[id]->window_id,
                     .code = SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE,
                     .data1 = (void*)color,
+                    .data2 = NULL,
                 },
         };
         SDL_PushEvent(&event);

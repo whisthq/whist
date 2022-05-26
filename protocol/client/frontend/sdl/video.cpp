@@ -60,6 +60,7 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
 }
 
 void sdl_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen) {
+    LOG_DEBUG("Setting window %d fullscreen", id);
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (!context->windows.contains(id)) {
         LOG_FATAL("No window with ID %d!", id);
@@ -67,10 +68,12 @@ void sdl_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen)
     SDL_Event event = {
         .user =
             {
-                .windowID = context->windows[id]->window_id,
                 .type = context->internal_event_id,
+                .timestamp = 0,
+                .windowID = context->windows[id]->window_id,
                 .code = SDL_FRONTEND_EVENT_FULLSCREEN,
                 .data1 = (void*)(intptr_t)fullscreen,
+                .data2 = NULL,
             },
     };
     SDL_PushEvent(&event);
@@ -87,7 +90,6 @@ void sdl_paint_solid(WhistFrontend* frontend, int id, const WhistRGBColor* color
     } else {
         LOG_FATAL("Tried to paint window %d, but no such window exists!", id);
     }
-
 }
 
 static SDL_PixelFormatEnum sdl_get_pixel_format(enum AVPixelFormat pixfmt) {
@@ -122,6 +124,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
     // TODO: for now I've wrapped the logic in a loop, but we should only be importing the first
     // texture and blitting the rest
     for (const auto& pair : context->windows) {
+        LOG_DEBUG("Copying %d x %d texture for window %d", frame->width, frame->height, pair.first);
         SDLWindowContext* window_context = pair.second;
         if (import_texture || format != window_context->texture_format ||
             frame->width != context->video.frame_width ||
@@ -168,8 +171,9 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                 }
             } else if (frame->format == AV_PIX_FMT_D3D11) {
 #if OS_IS(OS_WIN32)
-                context->video.texture = sdl_d3d11_create_texture(context, frame);
-                if (context->video.texture == NULL) {
+                window_context->texture =
+                    sdl_d3d11_create_texture(context, window_context->renderer, frame);
+                if (window_context->texture == NULL) {
                     LOG_ERROR("Failed to import D3D11 texture.");
                     return WHIST_ERROR_EXTERNAL;
                 }
@@ -177,6 +181,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                 LOG_FATAL("D3D11 support requires Windows.");
 #endif
             }
+            LOG_DEBUG("Uploaded texture");
         } else {
             if (window_context->texture == NULL) {
                 // Create new video texture.
@@ -219,11 +224,11 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                           av_get_pix_fmt_name((AVPixelFormat)frame->format), SDL_GetError());
                 return WHIST_ERROR_EXTERNAL;
             }
+            LOG_DEBUG("Updated software texture");
         }
-
-        context->video.frame_width = frame->width;
-        context->video.frame_height = frame->height;
     }
+    context->video.frame_width = frame->width;
+    context->video.frame_height = frame->height;
 
     return WHIST_SUCCESS;
 }
@@ -243,6 +248,7 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
     int res;
 
     for (const auto& pair : context->windows) {
+        LOG_DEBUG("Painting video for window %d", pair.first);
         SDLWindowContext* window_context = pair.second;
         if (window_context->texture == NULL) {
             // No texture to render - this can happen at startup if no video
@@ -259,6 +265,8 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
             .w = min(window_context->width, context->video.frame_width) - CLIPPED_PIXELS,
             .h = min(window_context->height, context->video.frame_height) - CLIPPED_PIXELS,
         };
+        LOG_DEBUG("Crop rectangle (%d, %d) %d x %d", output_rect.x, output_rect.y, output_rect.w,
+                  output_rect.h);
         res = SDL_RenderCopy(window_context->renderer, window_context->texture, &output_rect, NULL);
         if (res < 0) {
             LOG_WARNING("Failed to render texture: %s.", SDL_GetError());

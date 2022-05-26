@@ -36,8 +36,6 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
 
     if (sdl_event->type == context->internal_event_id) {
         const SDL_UserEvent* user_event = &sdl_event->user;
-        int frontend_window_id = get_window_id_from_sdl_id(context, user_event->windowID);
-        SDL_Window* window = context->windows[frontend_window_id]->window;
         switch (user_event->code) {
             case SDL_FRONTEND_EVENT_FILE_DRAG: {
                 event->type = FRONTEND_EVENT_FILE_DRAG;
@@ -46,12 +44,15 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 return true;
             }
             case SDL_FRONTEND_EVENT_FULLSCREEN: {
+                int frontend_window_id = get_window_id_from_sdl_id(context, user_event->windowID);
+                SDL_Window* window = context->windows[frontend_window_id]->window;
                 bool fullscreen = (intptr_t)user_event->data1;
-                SDL_SetWindowFullscreen(window,
-                                        fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+                SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
                 break;
             }
             case SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE: {
+                int frontend_window_id = get_window_id_from_sdl_id(context, user_event->windowID);
+                SDL_Window* window = context->windows[frontend_window_id]->window;
                 const char* title = (const char*)user_event->data1;
                 if (window == NULL) {
                     LOG_WARNING(
@@ -64,6 +65,8 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 break;
             }
             case SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE: {
+                int frontend_window_id = get_window_id_from_sdl_id(context, user_event->windowID);
+                SDL_Window* window = context->windows[frontend_window_id]->window;
                 const WhistRGBColor* color = (const WhistRGBColor*)user_event->data1;
                 sdl_native_set_titlebar_color(window, color);
                 free(user_event->data1);
