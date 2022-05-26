@@ -1062,7 +1062,6 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     // Whether or not we've connected, but then lost the connection
     context->connection_lost = false;
     context->unordered_packet_info.max_unordered_packets = 0.0;
-    context->fec_controller = create_fec_controller(get_timestamp_sec());
     start_timer(&context->last_network_settings_send_time);
 
     // Map Port
@@ -1102,6 +1101,9 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         context->network_throttler = NULL;
         // Create the client context
         ret = create_udp_client_context(context, destination, port, connection_timeout_ms);
+        if (ret == 0) {
+            context->fec_controller = create_fec_controller(get_timestamp_sec());
+        }
     }
 
     if (ret == 0) {
@@ -1120,7 +1122,6 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         return true;
     } else {
         memset(network_context, 0, sizeof(*network_context));
-        destroy_fec_controller(context->fec_controller);
         free(context);
         return false;
     }
