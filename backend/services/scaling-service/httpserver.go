@@ -33,11 +33,15 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	}
 
 	var reqdata httputils.MandelboxAssignRequest
-	err = authenticateRequest(w, req, &reqdata)
+	claims, err := authenticateRequest(w, req, &reqdata)
 	if err != nil {
 		logger.Errorf("Failed while authenticating request. Err: %v", err)
 		return
 	}
+
+	// Add user id to the request. This way we don't expose the
+	// access token to other processes that don't need access to it.
+	reqdata.UserID = types.UserID(claims.Subject)
 
 	// Once we have authenticated and validated the request send it to the scaling
 	// algorithm for processing. Mandelbox assign is region-agnostic so we don't need
@@ -150,7 +154,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Verify authorization and unmarshal into the right object type
 	var reqdata httputils.JSONTransportRequest
-	if err := authenticateRequest(w, r, &reqdata); err != nil {
+	if _, err := authenticateRequest(w, r, &reqdata); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
@@ -200,27 +204,24 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 // authenticateRequest will verify that the access token is valid
 // and will parse the request body and try to unmarshal into a
 // `ServerRequest` type.
-func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) error {
+func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) (*auth.WhistClaims, error) {
 	accessToken, err := getAccessToken(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	claims, err := auth.ParseToken(accessToken)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+		return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
 	}
 
 	_, err = httputils.ParseRequest(w, r, s)
 	if err != nil {
-		return utils.MakeError("Error while parsing request. Err: %v", err)
+		return nil, utils.MakeError("Error while parsing request. Err: %v", err)
 	}
 
-	// Add user id to the request. This way we don't expose the
-	// access token to other processes that don't need access to it.
-	s.(*httputils.MandelboxAssignRequest).UserID = types.UserID(claims.Subject)
-	return nil
+	return claims, nil
 }
 
 // getAccessToken is a helper function that extracts the access token
