@@ -25,6 +25,7 @@ from helpers.common.timestamps_and_exit_tools import (
 
 from helpers.common.constants import (
     username,
+    running_in_ci,
 )
 
 from helpers.setup.instance_setup_tools import (
@@ -237,7 +238,6 @@ if __name__ == "__main__":
     # Convert boolean 'true'/'false' strings to Python booleans
     use_two_instances = args.use_two_instances == "true"
     simulate_scrolling = args.simulate_scrolling
-    running_in_ci = os.getenv("CI") == "true"
     # Each call to the mouse scrolling simulator script takes a total of 25s to complete, including 5s in-between runs
     testing_time = max(args.testing_time, simulate_scrolling * 25)
 
@@ -281,8 +281,8 @@ if __name__ == "__main__":
         "simulate_scrolling": simulate_scrolling,
         "network_conditions": network_conditions,
         "using_two_instances": use_two_instances,
-        "branch_name": get_whist_branch_name(running_in_ci),
-        "github_sha": get_whist_github_sha(running_in_ci),
+        "branch_name": get_whist_branch_name(),
+        "github_sha": get_whist_github_sha(),
         "server_hang_detected": False,
     }
 
@@ -307,7 +307,6 @@ if __name__ == "__main__":
         result = get_client_and_instances(
             region,
             ssh_key_name,
-            running_in_ci,
             use_two_instances,
             existing_server_instance_id,
             existing_client_instance_id,
@@ -405,7 +404,6 @@ if __name__ == "__main__":
             "use_two_instances": use_two_instances,
             "testing_time": testing_time,
             "cmake_build_type": args.cmake_build_type,
-            "running_in_ci": running_in_ci,
             "skip_git_clone": skip_git_clone,
             "skip_host_setup": skip_host_setup,
         }
@@ -465,14 +463,12 @@ if __name__ == "__main__":
         server_cmd,
         server_log,
         pexpect_prompt_server,
-        running_in_ci,
     )
     client_hs_process = (
         attempt_ssh_connection(
             client_cmd,
             client_log,
             pexpect_prompt_client,
-            running_in_ci,
         )
         if use_two_instances
         else server_hs_process
@@ -491,7 +487,6 @@ if __name__ == "__main__":
         server_cmd,
         server_log,
         pexpect_prompt_server,
-        running_in_ci,
     )
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
     # we need to pass the client for it to connect
@@ -507,7 +502,6 @@ if __name__ == "__main__":
         client_cmd,
         client_log,
         pexpect_prompt_client,
-        running_in_ci,
     )
 
     # Set up the artifical network degradation conditions on the client, if needed
@@ -516,7 +510,6 @@ if __name__ == "__main__":
         pexpect_prompt_client,
         network_conditions,
         testing_time,
-        running_in_ci,
     )
 
     # Run the dev client on the client instance, using the server configs obtained above
@@ -556,7 +549,6 @@ if __name__ == "__main__":
         pexpect_prompt_client,
         ssh_key_path,
         boto3client,
-        running_in_ci,
         use_two_instances,
         leave_instances_on,
         network_conditions,

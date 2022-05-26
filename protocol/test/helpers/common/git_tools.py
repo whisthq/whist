@@ -4,18 +4,18 @@ import os, sys, subprocess
 
 from helpers.common.pexpect_tools import wait_until_cmd_done
 from helpers.common.timestamps_and_exit_tools import printred
-from helpers.common.constants import GITHUB_SHA_LEN
+from helpers.common.constants import GITHUB_SHA_LEN, running_in_ci
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def get_whist_branch_name(running_in_ci):
+def get_whist_branch_name():
     """
     Retrieve the whisthq/whist branch name currently checked out by the folder containing this script.
 
     Args:
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        None
 
     Returns:
         On success:
@@ -48,12 +48,12 @@ def get_whist_branch_name(running_in_ci):
     return branch_name
 
 
-def get_whist_github_sha(running_in_ci):
+def get_whist_github_sha():
     """
     Retrieve the commit hash of the latest commit in the local repository.
 
     Args:
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+        None
 
     Returns:
         On success:
@@ -77,7 +77,7 @@ def get_whist_github_sha(running_in_ci):
     return github_sha
 
 
-def get_remote_whist_github_sha(pexpect_process, pexpect_prompt, running_in_ci):
+def get_remote_whist_github_sha(pexpect_process, pexpect_prompt):
     """
     Retrieve the commit hash of the latest commit in the repository cloned on a remote isntance.
 
@@ -86,7 +86,6 @@ def get_remote_whist_github_sha(pexpect_process, pexpect_prompt, running_in_ci):
                                                     be used to interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
                         is ready to execute a command
-        running_in_ci: A boolean indicating whether this script is currently running in CI
 
     Returns:
         On success:
@@ -96,7 +95,7 @@ def get_remote_whist_github_sha(pexpect_process, pexpect_prompt, running_in_ci):
     """
 
     pexpect_process.sendline("cd ~/whist && git rev-parse HEAD")
-    stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci, return_output=True)
+    stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
     stdout_expected_len = (
         2 if running_in_ci else 3
     )  # if running outside of CI, additional formatting characters will be added

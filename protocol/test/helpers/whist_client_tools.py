@@ -73,7 +73,6 @@ def client_setup_process(args_dict):
     use_two_instances = args_dict["use_two_instances"]
     testing_time = args_dict["testing_time"]
     cmake_build_type = args_dict["cmake_build_type"]
-    running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
 
@@ -89,39 +88,37 @@ def client_setup_process(args_dict):
             client_cmd,
             client_log,
             pexpect_prompt_client,
-            running_in_ci,
         )
 
         # Restore network conditions in case a previous run failed / was canceled before restoring the normal conditions.
-        restore_network_conditions(hs_process, pexpect_prompt_client, running_in_ci)
+        restore_network_conditions(hs_process, pexpect_prompt_client)
 
         print("Running pre-host-setup on the instance...")
-        prepare_instance_for_host_setup(hs_process, pexpect_prompt_client, running_in_ci)
+        prepare_instance_for_host_setup(hs_process, pexpect_prompt_client)
 
         print("Configuring AWS credentials on client instance...")
         install_and_configure_aws(
             hs_process,
             pexpect_prompt_client,
-            running_in_ci,
         )
 
-        prune_containers_if_needed(hs_process, pexpect_prompt_client, running_in_ci)
+        prune_containers_if_needed(hs_process, pexpect_prompt_client)
 
         if skip_git_clone == "false":
-            clone_whist_repository(github_token, hs_process, pexpect_prompt_client, running_in_ci)
+            clone_whist_repository(github_token, hs_process, pexpect_prompt_client)
         else:
             print("Skipping git clone whisthq/whist repository on client instance.")
 
         # Ensure that the commit hash on client matches the one on the runner
-        client_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt_client, running_in_ci)
-        local_sha = get_whist_github_sha(running_in_ci)
+        client_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt_client)
+        local_sha = get_whist_github_sha()
         if client_sha != local_sha:
             exit_with_error(
                 f"Commit mismatch between client instance ({client_sha}) and E2E runner ({local_sha})"
             )
 
         if skip_host_setup == "false":
-            run_host_setup(hs_process, pexpect_prompt_client, running_in_ci)
+            run_host_setup(hs_process, pexpect_prompt_client)
         else:
             print("Skipping host-setup on server instance.")
 
@@ -132,7 +129,6 @@ def client_setup_process(args_dict):
             client_cmd,
             client_log,
             pexpect_prompt_client,
-            running_in_ci,
         )
 
         hs_process.kill(0)
@@ -143,18 +139,15 @@ def client_setup_process(args_dict):
         client_cmd,
         client_log,
         pexpect_prompt_client,
-        running_in_ci,
     )
     build_client_on_instance(
-        client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type, running_in_ci
+        client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type
     )
     client_pexpect_process.kill(0)
     client_log.close()
 
 
-def build_client_on_instance(
-    pexpect_process, pexpect_prompt, testing_time, cmake_build_type, running_in_ci
-):
+def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmake_build_type):
     """
     Build the Whist protocol client (development/client mandelbox) on a remote machine accessible
     via a SSH connection within a pexpect process.
@@ -171,7 +164,6 @@ def build_client_on_instance(
                             (when the client is started) before shutting it down
         cmake_build_type (str): A string identifying whether to build the protocol in release, debug, metrics,
                                 or any other Cmake build mode that will be introduced later.
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
@@ -180,7 +172,7 @@ def build_client_on_instance(
     print(f"Setting the experiment duration to {testing_time}s...")
     command = f"sed -i 's/timeout 240s/timeout {testing_time}s/g' ~/whist/mandelboxes/development/client/run-whist-client.sh"
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     command = f"cd ~/whist/mandelboxes && ./build.sh development/client --{cmake_build_type} | tee ~/client_mandelbox_build.log"
     success_msg = "All images built successfully!"
@@ -191,11 +183,9 @@ def build_client_on_instance(
         )
         pexpect_process.sendline(command)
         build_client_output = wait_until_cmd_done(
-            pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+            pexpect_process, pexpect_prompt, return_output=True
         )
-        build_client_exit_code = get_command_exit_code(
-            pexpect_process, pexpect_prompt, running_in_ci
-        )
+        build_client_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt)
 
         # Check if build succeeded
         if build_client_exit_code == 0 and expression_in_pexpect_output(
@@ -237,9 +227,9 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{json.dumps(json_data)}'"
     pexpect_process.sendline(command)
 
-    # Need to wait for special mandelbox prompt ":/#". running_in_ci must always be set to True in this case.
+    # Need to wait for special mandelbox prompt ":/#". prompt_printed_twice must always be set to False in this case.
     client_mandelbox_output = wait_until_cmd_done(
-        pexpect_process, ":/#", running_in_ci=True, return_output=True
+        pexpect_process, ":/#", prompt_printed_twice=False, return_output=True
     )
     client_docker_id = client_mandelbox_output[-2].replace(" ", "")
     print(f"Whist dev client started on EC2 instance, on Docker container {client_docker_id}!")
@@ -248,6 +238,6 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
         # Launch the script to simulate the scrolling in the background
         command = f"(nohup /usr/share/whist/simulate_mouse_scrolling.sh {simulate_scrolling} > /var/log/whist/simulated_scrolling.log 2>&1 & )"
         pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
+        wait_until_cmd_done(pexpect_process, ":/#", prompt_printed_twice=False)
 
     return client_docker_id

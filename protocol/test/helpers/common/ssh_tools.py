@@ -10,13 +10,14 @@ from helpers.common.pexpect_tools import wait_until_cmd_done
 from helpers.common.constants import (
     ssh_connection_retries,
     aws_timeout_seconds,
+    running_in_ci,
 )
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt, running_in_ci):
+def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
     """
     Attempt to establish a SSH connection to a remote machine. It is normal for the function to
     need several attempts before successfully opening a SSH connection to the remote machine.
@@ -62,7 +63,7 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt, running
             if result_index == 1:
                 child.sendline("yes")
                 child.expect(pexpect_prompt)
-            # Wait for one more print of the prompt if required
+            # Wait for one more print of the prompt if required (ssh shell prompts are printed twice to stdout outside of CI)
             if not running_in_ci:
                 child.expect(pexpect_prompt)
             # Return the pexpect_process handle to the caller
@@ -80,7 +81,7 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt, running
     )
 
 
-def wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci):
+def wait_for_apt_locks(pexpect_process, pexpect_prompt):
     """
     This function is used to prevent lock contention issues between E2E commands that use `apt` or `dpkg`
     and other Linux processes. These issues are especially common on a EC2 instance's first boot.
@@ -95,7 +96,6 @@ def wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci):
                         on the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
                         execute a new command
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
@@ -103,10 +103,10 @@ def wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci):
     pexpect_process.sendline(
         "while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do echo 'Waiting for apt locks...'; sleep 1; done"
     )
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
 
-def reboot_instance(pexpect_process, ssh_cmd, log_file_handle, pexpect_prompt, running_in_ci):
+def reboot_instance(pexpect_process, ssh_cmd, log_file_handle, pexpect_prompt):
     """
     Reboot a remote machine and establish a new SSH connection after the machine comes back up.
 
@@ -119,7 +119,6 @@ def reboot_instance(pexpect_process, ssh_cmd, log_file_handle, pexpect_prompt, r
                                 machine
         pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
                                 execute a command
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         pexpect_process (pexpect.pty_spawn.spawn):  The new Pexpect process created with pexpect.spawn(...) and to
@@ -130,8 +129,6 @@ def reboot_instance(pexpect_process, ssh_cmd, log_file_handle, pexpect_prompt, r
     pexpect_process.kill(0)
 
     # Connect again
-    pexpect_process = attempt_ssh_connection(
-        ssh_cmd, log_file_handle, pexpect_prompt, running_in_ci
-    )
+    pexpect_process = attempt_ssh_connection(ssh_cmd, log_file_handle, pexpect_prompt)
     print("Reboot complete")
     return pexpect_process

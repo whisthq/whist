@@ -20,7 +20,7 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def setup_artificial_network_conditions(
-    pexpect_process, pexpect_prompt, network_conditions, testing_time, running_in_ci
+    pexpect_process, pexpect_prompt, network_conditions, testing_time
 ):
     """
     Set up the network degradation conditions on the client instance. We apply the network settings
@@ -39,7 +39,6 @@ def setup_artificial_network_conditions(
                                     degradation or max_bandwidth, delay, packet drop percentage, with the
                                     three values separated by commas and no space.
         testing_time (int): The duration of the E2E test in seconds
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
@@ -96,20 +95,18 @@ def setup_artificial_network_conditions(
         )
 
         # Wait for apt lock
-        wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+        wait_for_apt_locks(pexpect_process, pexpect_prompt)
 
         # Install ifconfig
         command = "sudo apt-get install -y net-tools"
         pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
         # Get network interface names (excluding loopback)
         command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
         pexpect_process.sendline(command)
 
-        ifconfig_output = wait_until_cmd_done(
-            pexpect_process, pexpect_prompt, running_in_ci, return_output=True
-        )
+        ifconfig_output = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
 
         blacklisted_expressions = [
             pexpect_prompt,
@@ -131,10 +128,10 @@ def setup_artificial_network_conditions(
         # add 2 more seconds to testing_time to account for time spent in this script before test actually starts
         command = f"( nohup ~/whist/protocol/test/helpers/setup/apply_network_conditions.sh -d {','.join(network_devices)} -t {testing_time+2} {degradations_command} > ~/network_conditions.log 2>&1 & )"
         pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
 
-def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
+def restore_network_conditions(pexpect_process, pexpect_prompt):
     """
     Restore network conditions to factory ones. This function is idempotent and is safe to run even
     if no network degradation was initially applied.
@@ -147,7 +144,6 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
                                                     interact with the remote machine
         pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
                                 ready to execute a command
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
@@ -158,9 +154,7 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
     # Cannot use wait_until_cmd_done because we need to handle clase where ifconfig is not installed
     pexpect_process.sendline(command)
 
-    ifconfig_output = wait_until_cmd_done(
-        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
-    )
+    ifconfig_output = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
 
     # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know
     # that no network degradations have been applied to the machine.
@@ -175,7 +169,7 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
     # Stop the process applying the artificial network conditions, in case it's still running
     command = "killall -9 -v apply_network_conditions.sh"
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     # Get names of network devices
     blacklisted_expressions = [pexpect_prompt, "docker", "veth", "ifb", "ifconfig", "\\", "~", ";"]
@@ -200,4 +194,4 @@ def restore_network_conditions(pexpect_process, pexpect_prompt, running_in_ci):
     # Execute all commands:
     for command in commands:
         pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt)

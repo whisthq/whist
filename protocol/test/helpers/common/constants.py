@@ -46,3 +46,6 @@ SESSION_ID_LEN = 13
 
 # Max number of times to retry building the client / server mandelboxes (which can fail due to API outages)
 MANDELBOX_BUILD_MAX_RETRIES = 5
+
+# Whether the E2E script is running in CI vs on a local machine
+running_in_ci = os.getenv("CI") == "true"

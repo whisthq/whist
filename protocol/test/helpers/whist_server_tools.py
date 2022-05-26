@@ -64,7 +64,6 @@ def server_setup_process(args_dict):
     pexpect_prompt_server = args_dict["pexpect_prompt_server"]
     github_token = args_dict["github_token"]
     cmake_build_type = args_dict["cmake_build_type"]
-    running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
 
@@ -77,29 +76,27 @@ def server_setup_process(args_dict):
         server_cmd,
         server_log,
         pexpect_prompt_server,
-        running_in_ci,
     )
 
     print("Running pre-host-setup on the instance...")
-    prepare_instance_for_host_setup(hs_process, pexpect_prompt_server, running_in_ci)
+    prepare_instance_for_host_setup(hs_process, pexpect_prompt_server)
 
     print("Configuring AWS credentials on server instance...")
     install_and_configure_aws(
         hs_process,
         pexpect_prompt_server,
-        running_in_ci,
     )
 
-    prune_containers_if_needed(hs_process, pexpect_prompt_server, running_in_ci)
+    prune_containers_if_needed(hs_process, pexpect_prompt_server)
 
     if skip_git_clone == "false":
-        clone_whist_repository(github_token, hs_process, pexpect_prompt_server, running_in_ci)
+        clone_whist_repository(github_token, hs_process, pexpect_prompt_server)
     else:
         print("Skipping git clone whisthq/whist repository on server instance.")
 
     # Ensure that the commit hash on server matches the one on the runner
-    server_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt_server, running_in_ci)
-    local_sha = get_whist_github_sha(running_in_ci)
+    server_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt_server)
+    local_sha = get_whist_github_sha()
     if server_sha != local_sha:
         exit_with_error(
             f"Commit mismatch between server instance ({server_sha}) and E2E runner ({local_sha})"
@@ -109,7 +106,6 @@ def server_setup_process(args_dict):
         run_host_setup(
             hs_process,
             pexpect_prompt_server,
-            running_in_ci,
         )
     else:
         print("Skipping host setup on server instance.")
@@ -121,17 +117,16 @@ def server_setup_process(args_dict):
         server_cmd,
         server_log,
         pexpect_prompt_server,
-        running_in_ci,
     )
 
     # Build the protocol server
-    build_server_on_instance(hs_process, pexpect_prompt_server, cmake_build_type, running_in_ci)
+    build_server_on_instance(hs_process, pexpect_prompt_server, cmake_build_type)
 
     hs_process.kill(0)
     server_log.close()
 
 
-def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type, running_in_ci):
+def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type):
     """
     Build the Whist server (browsers/chrome mandelbox) on a remote machine accessible via a SSH
     connection within a pexpect process.
@@ -146,7 +141,6 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type, 
                                 it is ready to execute a command
         cmake_build_type (str): A string identifying whether to build the protocol in release,
                                 debug, metrics, or any other Cmake build mode that will be introduced later.
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
@@ -163,11 +157,9 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type, 
         # Attempt to build the browsers/chrome mandelbox and grab the output + the exit code
         pexpect_process.sendline(command)
         build_server_output = wait_until_cmd_done(
-            pexpect_process, pexpect_prompt, running_in_ci, return_output=True
+            pexpect_process, pexpect_prompt, return_output=True
         )
-        build_server_exit_code = get_command_exit_code(
-            pexpect_process, pexpect_prompt, running_in_ci
-        )
+        build_server_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt)
 
         # Check if the build succeeded
         if build_server_exit_code == 0 and expression_in_pexpect_output(
@@ -206,9 +198,9 @@ def run_server_on_instance(pexpect_process):
     """
     command = "cd ~/whist/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
     pexpect_process.sendline(command)
-    # Need to wait for special mandelbox prompt ":/#". running_in_ci must always be set to True in this case.
+    # Need to wait for special mandelbox prompt ":/#". prompt_printed_twice must always be set to False in this case.
     server_mandelbox_output = wait_until_cmd_done(
-        pexpect_process, ":/#", running_in_ci=True, return_output=True
+        pexpect_process, ":/#", prompt_printed_twice=False, return_output=True
     )
     server_docker_id = server_mandelbox_output[-2].replace(" ", "")
     print(f"Whist Server started on EC2 instance, on Docker container {server_docker_id}!")
@@ -250,19 +242,19 @@ def shutdown_and_wait_server_exit(pexpect_process, session_id, exit_confirm_exp)
     # Shut down Chrome
     pexpect_process.sendline("pkill chrome")
 
-    # We set running_in_ci=True because the Docker bash does not print in color
+    # We set prompt_printed_twice=False because the Docker bash does not print in color
     # (check wait_until_cmd_done docstring for more details about handling color bash stdout)
-    wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
+    wait_until_cmd_done(pexpect_process, ":/#", prompt_printed_twice=False)
 
     # Give WhistServer 20s to shutdown properly
     pexpect_process.sendline("sleep 20")
-    wait_until_cmd_done(pexpect_process, ":/#", running_in_ci=True)
+    wait_until_cmd_done(pexpect_process, ":/#", prompt_printed_twice=False)
 
     # Check the log to see if WhistServer shut down gracefully or if there was a server hang
     server_log_filepath = os.path.join("/var/log/whist", session_id, "protocol-out.log")
     pexpect_process.sendline(f"tail {server_log_filepath}")
     server_mandelbox_output = wait_until_cmd_done(
-        pexpect_process, ":/#", running_in_ci=True, return_output=True
+        pexpect_process, ":/#", prompt_printed_twice=False, return_output=True
     )
     server_has_exited = expression_in_pexpect_output(exit_confirm_exp, server_mandelbox_output)
 

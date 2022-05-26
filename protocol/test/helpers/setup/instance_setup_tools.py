@@ -29,32 +29,32 @@ from helpers.common.constants import (
     TIMEOUT_EXIT_CODE,
     TIMEOUT_KILL_EXIT_CODE,
     aws_credentials_filepath,
+    running_in_ci,
 )
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def prepare_instance_for_host_setup(pexpect_process, pexpect_prompt, running_in_ci):
+def prepare_instance_for_host_setup(pexpect_process, pexpect_prompt):
     # Set dkpg frontend as non-interactive to avoid irrelevant warnings
     pexpect_process.sendline(
         "echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections"
     )
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     # Wait for dpkg / apt locks
-    wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+    wait_for_apt_locks(pexpect_process, pexpect_prompt)
     # Clean, upgrade and update all the apt lists
     pexpect_process.sendline(
         "sudo apt-get clean -y && sudo apt-get upgrade -y && sudo apt-get update -y"
     )
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
 
 def install_and_configure_aws(
     pexpect_process,
     pexpect_prompt,
-    running_in_ci,
 ):
     """
     Install the AWS CLI and configure the AWS credentials on a remote machine by copying them
@@ -65,7 +65,6 @@ def install_and_configure_aws(
                                                     to interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
                         is ready to execute a command
-        running_in_ci: A boolean indicating whether this script is currently running in CI
 
     Returns:
         True if the AWS installation and configuration succeeded, False otherwise.
@@ -105,17 +104,16 @@ def install_and_configure_aws(
         exit_with_error(f"Could not obtain the AWS credentials!")
 
     # Wait for apt locks
-    wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+    wait_for_apt_locks(pexpect_process, pexpect_prompt)
 
     # Step 2: Install the AWS CLI if it's not already there
     pexpect_process.sendline("sudo apt-get -y update")
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
     # Check if the AWS CLI is installed, and install it if not.
     pexpect_process.sendline("aws -v")
     stdout = wait_until_cmd_done(
         pexpect_process,
         pexpect_prompt,
-        running_in_ci,
         return_output=True,
     )
     # Check if the message below, indicating that aws is not installed, is present in the output.
@@ -125,13 +123,12 @@ def install_and_configure_aws(
         print("Installing AWS-CLI using apt-get")
 
         # Wait for apt locks
-        wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+        wait_for_apt_locks(pexpect_process, pexpect_prompt)
 
         pexpect_process.sendline("sudo apt-get install -y awscli")
         stdout = wait_until_cmd_done(
             pexpect_process,
             pexpect_prompt,
-            running_in_ci,
             return_output=True,
         )
 
@@ -147,14 +144,12 @@ def install_and_configure_aws(
             print("Installing AWS-CLI from source")
 
             # Wait for apt locks
-            wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+            wait_for_apt_locks(pexpect_process, pexpect_prompt)
 
             # Download the unzip program
             command = "sudo apt-get install -y unzip"
             pexpect_process.sendline(command)
-            stdout = wait_until_cmd_done(
-                pexpect_process, pexpect_prompt, running_in_ci, return_output=True
-            )
+            stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
             error_msg = "E: Package 'unzip' has no installation candidate"
 
             if expression_in_pexpect_output(error_msg, stdout):
@@ -176,7 +171,7 @@ def install_and_configure_aws(
 
             for command in install_commands:
                 pexpect_process.sendline(command)
-                wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+                wait_until_cmd_done(pexpect_process, pexpect_prompt)
             print("AWS CLI installed manually")
     else:
         print("AWS CLI is already installed")
@@ -184,15 +179,15 @@ def install_and_configure_aws(
     # Step 3: Set the AWS credentials
     access_key_cmd = f"aws configure set aws_access_key_id {aws_access_key_id}"
     pexpect_process.sendline(access_key_cmd)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
     secret_access_key_cmd = f"aws configure set aws_secret_access_key {aws_secret_access_key}"
     pexpect_process.sendline(secret_access_key_cmd)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     print("AWS configuration is now complete!")
 
 
-def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, running_in_ci):
+def clone_whist_repository(github_token, pexpect_process, pexpect_prompt):
     """
     Clone the Whist repository on a remote machine, and check out the same branch used locally
     on the machine where this script is run.
@@ -203,12 +198,11 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, runnin
                                                     interact with the remote machine
         pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
                         ready to execute a command
-        running_in_ci: A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
     """
-    branch_name = get_whist_branch_name(running_in_ci)
+    branch_name = get_whist_branch_name()
     git_clone_exit_code = 1
 
     for retry in range(SETUP_MAX_RETRIES):
@@ -224,10 +218,8 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, runnin
             + "@github.com/whisthq/whist.git | tee ~/github_log.log"
         )
         pexpect_process.sendline(command)
-        git_clone_stdout = wait_until_cmd_done(
-            pexpect_process, pexpect_prompt, running_in_ci, return_output=True
-        )
-        git_clone_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci)
+        git_clone_stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
+        git_clone_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt)
         branch_not_found_error = f"fatal: Remote branch {branch_name} not found in upstream origin"
         if git_clone_exit_code == 0:
             break
@@ -246,7 +238,6 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt, runnin
 def run_host_setup(
     pexpect_process,
     pexpect_prompt,
-    running_in_ci,
 ):
     """
     Run Whist's host setup on a remote machine accessible via a SSH connection within a pexpect process.
@@ -259,7 +250,6 @@ def run_host_setup(
                                                     be used to interact with the remote machine
         pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
                                 execute a command
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
@@ -273,14 +263,12 @@ def run_host_setup(
     for retry in range(SETUP_MAX_RETRIES):
         print(f"Running the host setup on the instance (retry {retry+1}/{SETUP_MAX_RETRIES})...")
         # 1- Ensure that the apt/dpkg locks are not taken by other processes
-        wait_for_apt_locks(pexpect_process, pexpect_prompt, running_in_ci)
+        wait_for_apt_locks(pexpect_process, pexpect_prompt)
 
         # 2 - Run the host setup command and grab the output
         pexpect_process.sendline(command)
-        host_setup_output = wait_until_cmd_done(
-            pexpect_process, pexpect_prompt, running_in_ci, return_output=True
-        )
-        host_setup_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt, running_in_ci)
+        host_setup_output = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
+        host_setup_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt)
 
         # 3 - Check if the setup succeeded or report reason for failure
         if (
@@ -294,7 +282,7 @@ def run_host_setup(
         elif expression_in_pexpect_output(dpkg_config_error, host_setup_output):
             printyellow("Host setup failed due to dpkg interruption error. Reconfiguring dpkg....")
             pexpect_process.sendline("sudo dpkg --force-confdef --configure -a ")
-            wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+            wait_until_cmd_done(pexpect_process, pexpect_prompt)
         elif (
             host_setup_exit_code == TIMEOUT_EXIT_CODE
             or host_setup_exit_code == TIMEOUT_KILL_EXIT_CODE
@@ -338,7 +326,7 @@ def start_host_service(pexpect_process, pexpect_prompt):
     print("Host service is ready!")
 
 
-def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
+def prune_containers_if_needed(pexpect_process, pexpect_prompt):
     """
     Check whether the remote instance is running out of space (more specifically,
     check if >= 75 % of disk space is used). If the disk is getting full, free some space
@@ -349,16 +337,13 @@ def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
                                                     to interact with the remote machine
         pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
                                 ready to execute a command
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
     """
     # Check if we are running out of space
     pexpect_process.sendline("df -h | grep --color=never /dev/root")
-    space_used_output = wait_until_cmd_done(
-        pexpect_process, pexpect_prompt, running_in_ci, return_output=True
-    )
+    space_used_output = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
     for line in reversed(space_used_output):
         if "/dev/root" in line:
             space_used_output = line.split()
@@ -369,6 +354,6 @@ def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
     if space_used_pctg >= 75:
         print(f"Disk is {space_used_pctg}% full, pruning the docker containers...")
         pexpect_process.sendline("docker system prune -af")
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt)
     else:
         print(f"Disk is {space_used_pctg}% full, no need to prune containers.")
