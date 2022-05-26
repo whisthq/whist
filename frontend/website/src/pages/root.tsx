@@ -12,6 +12,7 @@ import FAQ from "@app/pages/about/faq"
 import Contact from "@app/pages/resources/contact"
 import Download from "@app/pages/download"
 import routes from "@app/shared/constants/routes"
+import URLs from "@app/shared/constants/urls"
 
 const RootApp = () => {
   /*
@@ -36,8 +37,7 @@ const RootApp = () => {
           exact
           path={routes.CAREERS}
           component={() => {
-            window.location.href =
-              "https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9"
+            window.location.href = URLs.NOTION_CAREERS
             return null
           }}
         />
@@ -45,7 +45,7 @@ const RootApp = () => {
           exact
           path={routes.COMMUNITY}
           component={() => {
-            window.location.href = "https://discord.com/invite/HjPpDGvEeA"
+            window.location.href = URLs.DISCORD
             return null
           }}
         />
