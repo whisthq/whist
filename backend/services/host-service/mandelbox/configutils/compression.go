@@ -9,6 +9,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"compress/gzip"
+	"encoding/base64"
 
 	"github.com/pierrec/lz4/v4"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -282,4 +284,32 @@ func ValidateDirectoryContents(oldDir, newDir string) error {
 
 		return nil
 	})
+}
+
+// Extract gzip-compressed binary data (acknowledged to https://gist.github.com/xyproto/f4915d7e208771f3adc4)
+func inflateGzip(w io.Writer, data []byte) error {
+	gr, err := gzip.NewReader(bytes.NewBuffer(data))
+	defer gr.Close()
+	
+	data, err = ioutil.ReadAll(gr)
+	if err != nil {
+		return utils.MakeError("Couldn't extract inflated string from gzip reader: %s", err)
+	}
+	
+	w.Write(data)
+	
+	return nil
+}
+// Inflate a gzip-compressed string (encoded according to base-64 protocol)
+func gzipInflateString(compressedGzipString string) (string, error) {
+	base64DecodedData, err := base64.StdEncoding.DecodeString(compressedGzipString)
+	if err != nil {
+		return utils.MakeError("Couldn't decode received string: %s", err)
+	}
+	var gzipDecodedDataBuffer bytes.Buffer
+	err = inflateGzip(&gzipDecodedDataBuffer, base64DecodedData)
+	if err != nil {
+		return utils.MakeError("Couldn't inflate decoded string: %s", err)
+	}
+	return gzipDecodedDataBuffer.String()
 }
