@@ -93,6 +93,8 @@ Public Functions
  *
  * @param network_settings Pointer to the struct containing previous network_settings. Also the new
  *                         network settings will be updated in this struct.
+ * @param fec_controller The fec controller that will work together with fec to calculate the fec
+ * ratios
  *
  * @returns             Whether network_settings struct was updated with new values or not
  */
