@@ -57,6 +57,12 @@ enum {
      */
     SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE,
     /**
+     * A notification was activated by the user.
+     *
+     * Contains no data.  Future: indicate which notification it was.
+     */
+    SDL_FRONTEND_EVENT_NOTIFICATION_CALLBACK,
+    /**
      * Internal interrupt from whist_frontend_interrupt().
      */
     SDL_FRONTEND_EVENT_INTERRUPT,

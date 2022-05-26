@@ -199,7 +199,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
 
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
-        ../client/frontend/sdl/native_windows.c
+        ../client/frontend/sdl/native_windows.cpp
+        ../client/frontend/sdl/windows_notification_helper.cpp
     )
 
     set_property(TARGET ${PROTOCOL_TEST_BINARY} PROPERTY
