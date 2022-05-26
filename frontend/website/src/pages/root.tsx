@@ -32,6 +32,8 @@ const RootApp = () => {
         <Route exact path={routes.PRIVACY} component={Privacy} />
         <Route exact path={routes.TOS} component={TermsOfService} />
         <Route exact path={routes.LANDING} component={Landing} />
+        <Route exact path={routes.CAREERS} component={() => {window.location.href = 'https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9'; return null;}} />
+        <Route exact path={routes.COMMUNITY} component={() => {window.location.href = 'https://discord.com/invite/HjPpDGvEeA'; return null;}} />
       </Switch>
     </div>
   )

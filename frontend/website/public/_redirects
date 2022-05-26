@@ -6,7 +6,7 @@
 
 # Domain-level redirects
 # HTTP and HTTPS need separate rules if you don’t force_ssl!
-http://careers.whist.com/* https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9 301
-https://careers.whist.com/* https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9 301
-http://community.whist.com/* https://discord.com/invite/HjPpDGvEeA 301
-https://community.whist.com/* https://discord.com/invite/HjPpDGvEeA 301
+http://whist.com/careers https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9 301
+https://whist.com/careers https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9 301
+http://whist.com/community https://discord.com/invite/HjPpDGvEeA 301
+https://whist.com/community https://discord.com/invite/HjPpDGvEeA 301
