@@ -12,6 +12,7 @@ import FAQ from "@app/pages/about/faq"
 import Contact from "@app/pages/resources/contact"
 import Download from "@app/pages/download"
 import routes from "@app/shared/constants/routes"
+import URLs from "@app/shared/constants/urls"
 
 const RootApp = () => {
   /*
@@ -32,6 +33,22 @@ const RootApp = () => {
         <Route exact path={routes.PRIVACY} component={Privacy} />
         <Route exact path={routes.TOS} component={TermsOfService} />
         <Route exact path={routes.LANDING} component={Landing} />
+        <Route
+          exact
+          path={routes.CAREERS}
+          component={() => {
+            window.location.href = URLs.NOTION_CAREERS
+            return null
+          }}
+        />
+        <Route
+          exact
+          path={routes.COMMUNITY}
+          component={() => {
+            window.location.href = URLs.DISCORD
+            return null
+          }}
+        />
       </Switch>
     </div>
   )
