@@ -128,12 +128,12 @@ void init_window_info_getter(void) {
     if (display == NULL) {
         display = XOpenDisplay(NULL);
     }
+    XSetErrorHandler(handler);
     last_window_name_valid = false;
 }
 
 void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
     X11CaptureDevice* device = capture_device->x11_capture_device;
-    XSetErrorHandler(handler);
     get_valid_windows_helper(device, list, device->root);
 }
 
@@ -429,7 +429,14 @@ Private Function Implementations
 */
 
 static int handler(Display* disp, XErrorEvent* error) {
-    LOG_ERROR("X11 Error: %d", error->error_code);
+    // ignore BadWindow because windows can be deleted while calling XQueryTree
+    if (error->error_code == BadWindow) {
+        return 0;
+    }
+    static int buflen = 128;
+    char buffer[buflen];
+    XGetErrorText(disp, error->error_code, buffer, buflen);
+    LOG_ERROR("X11 Error: %d (%s), major opcode %d, minor opcode %d", error->error_code, buffer, error->request_code, error->minor_code);
     return 0;
 }
 
@@ -437,7 +444,7 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
     Window parent;
     Window* children;
     unsigned int nchildren;
-    XQueryTree(device->display, curr, &device->root, &parent, &children, &nchildren);
+    if (XQueryTree(device->display, curr, &device->root, &parent, &children, &nchildren) == Success) {
     char* window_name = get_window_name(device, curr);
     // check the dimensions of each window
     XWindowAttributes attr;
@@ -461,6 +468,7 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
         for (unsigned int i = 0; i < nchildren; i++) {
             get_valid_windows_helper(device, list, children[i]);
         }
+    }
     }
 }
 
