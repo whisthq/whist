@@ -151,6 +151,13 @@ void sdl_set_window_title(const char* window_title);
 void sdl_set_fullscreen(bool is_fullscreen);
 
 /**
+ * Display a notification with the frontend.
+ *
+ * @param notif  Notification to display.
+ */
+void sdl_client_display_notification(const WhistNotification* notif);
+
+/**
  * @brief                          The above functions may be expensive, and thus may
  *                                 have to be queued up. This function executes all of the
  *                                 currently internally queued actions.

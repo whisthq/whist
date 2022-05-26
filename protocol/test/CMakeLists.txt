@@ -142,7 +142,6 @@ target_link_libraries(${PROTOCOL_TEST_BINARY}
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/frontend/sdl/native_macos.mm
-        ../client/notif_utils/display_notifs_mac.m
     )
     target_link_libraries(${PROTOCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
 endif()

@@ -79,4 +79,13 @@ void sdl_native_init_external_drag_handler(WhistFrontend* frontend);
  */
 void sdl_native_destroy_external_drag_handler(WhistFrontend* frontend);
 
+/**
+ * Display a notification.
+ *
+ * This doesn't actually use SDL at all.
+ *
+ * @param notif  Notification to display.
+ */
+void sdl_native_display_notification(const WhistNotification* notif);
+
 #endif  // WHIST_CLIENT_FRONTEND_SDL_NATIVE_H

@@ -4,6 +4,7 @@ extern "C" {
 #include <Cocoa/Cocoa.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include <VideoToolbox/VideoToolbox.h>
+#include <UserNotifications/UserNotifications.h>
 }
 
 #include "sdl_struct.hpp"
@@ -372,4 +373,17 @@ void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
 
     context->file_drag_data = NULL;
     free(state);
+}
+
+void sdl_native_display_notification(const WhistNotification* notif) {
+    NSUserNotification *n = [[NSUserNotification alloc] init];
+
+    const char *title = notif->title, *msg = notif->message;
+    LOG_INFO("Trying to display macOS notification.");
+
+    n.title = [NSString stringWithUTF8String:title];
+    n.informativeText = [NSString stringWithUTF8String:msg];
+    n.soundName = NSUserNotificationDefaultSoundName;
+
+    [NSUserNotificationCenter.defaultUserNotificationCenter deliverNotification:n];
 }

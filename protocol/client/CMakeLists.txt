@@ -153,7 +153,6 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(WhistClient PRIVATE
         frontend/sdl/native_macos.mm
-        notif_utils/display_notifs_mac.m
     )
 
     target_link_libraries(WhistClient ${MAC_SPECIFIC_CLIENT_LIBS})

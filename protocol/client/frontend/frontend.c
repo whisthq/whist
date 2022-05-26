@@ -189,6 +189,11 @@ void whist_frontend_set_titlebar_color(WhistFrontend* frontend, const WhistRGBCo
     frontend->call->set_titlebar_color(frontend, color);
 }
 
+void whist_frontend_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {
+    FRONTEND_ENTRY();
+    frontend->call->display_notification(frontend, notif);
+}
+
 void whist_frontend_declare_user_activity(WhistFrontend* frontend) {
     FRONTEND_ENTRY();
     frontend->call->declare_user_activity(frontend);

@@ -36,6 +36,7 @@
     GENERATOR(void, paint_video, WhistFrontend* frontend, int output_width, int output_height)     \
     GENERATOR(void, render, WhistFrontend* frontend)                                               \
     GENERATOR(void, set_titlebar_color, WhistFrontend* frontend, const WhistRGBColor* color)       \
+    GENERATOR(void, display_notification, WhistFrontend* frontend, const WhistNotification* notif) \
     GENERATOR(void, declare_user_activity, WhistFrontend* frontend)
 
 #endif  // WHIST_CLIENT_FRONTEND_API_H

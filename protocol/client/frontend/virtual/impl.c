@@ -111,4 +111,6 @@ void virtual_render(WhistFrontend* frontend) {}
 
 void virtual_set_titlebar_color(WhistFrontend* frontend, const WhistRGBColor* color) {}
 
+void virtual_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {}
+
 void virtual_declare_user_activity(WhistFrontend* frontend) {}
