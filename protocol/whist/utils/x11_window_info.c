@@ -116,6 +116,8 @@ char* get_window_name(X11CaptureDevice* device, Window w);
  */
 void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window curr);
 
+static int handler(Display* disp, XErrorEvent* error);
+
 /*
 ============================
 Public Function Implementations
@@ -126,6 +128,7 @@ void init_window_info_getter(void) {
     if (display == NULL) {
         display = XOpenDisplay(NULL);
     }
+    XSetErrorHandler(handler);
     last_window_name_valid = false;
 }
 
@@ -134,23 +137,22 @@ void get_valid_windows(CaptureDevice* capture_device, LinkedList* list) {
     get_valid_windows_helper(device, list, device->root);
 }
 
-void get_window_attributes(CaptureDevice* capture_device, WhistWindow whist_window,
-                           WhistWindowData* d) {
-    Window w = whist_window.window;
+void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_window) {
+    Window w = (Window)whist_window->id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
     XWindowAttributes attr;
     if (!XGetWindowAttributes(device->display, w, &attr)) {
         LOG_ERROR("Failed to get window %lu attributes!", w);
-        d->width = -1;
-        d->height = -1;
-        d->x = -1;
-        d->y = -1;
+        whist_window->width = -1;
+        whist_window->height = -1;
+        whist_window->x = -1;
+        whist_window->y = -1;
         return;
     }
-    d->width = attr.width;
-    d->height = attr.height;
-    d->x = attr.x;
-    d->y = attr.y;
+    whist_window->width = attr.width;
+    whist_window->height = attr.height;
+    whist_window->x = attr.x;
+    whist_window->y = attr.y;
 }
 
 WhistWindow get_active_window(CaptureDevice* capture_device) {
@@ -164,24 +166,24 @@ WhistWindow get_active_window(CaptureDevice* capture_device) {
         *(unsigned long*)result != 0) {
         Window active_window = (Window) * (unsigned long*)result;
         // XFree(result);
-        w.window = active_window;
+        w.id = (unsigned long)active_window;
     } else {
         // revert to XGetInputFocus
         Window focus;
         int revert;
         XGetInputFocus(device->display, &focus, &revert);
         if (focus != PointerRoot) {
-            w.window = focus;
+            w.id = (unsigned long)focus;
         } else {
             LOG_INFO("No active window found, setting root as active");
-            w.window = device->root;
+            w.id = (unsigned long)device->root;
         }
     }
     return w;
 }
 
 void minimize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent =
@@ -194,7 +196,7 @@ void minimize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
 void unminimize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
     // I'm not sure what will happen if you call this on a window that's already not minimized --
     // hopefully a noop
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_REMOVE,
@@ -205,7 +207,7 @@ void unminimize_window(CaptureDevice* capture_device, WhistWindow whist_window) 
 }
 
 void maximize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_ADD,
@@ -217,7 +219,7 @@ void maximize_window(CaptureDevice* capture_device, WhistWindow whist_window) {
 }
 
 void fullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_ADD,
@@ -228,7 +230,7 @@ void fullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window) 
 }
 
 void unfullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent = create_change_state_message(device, w, _NET_WM_STATE_REMOVE,
@@ -239,7 +241,7 @@ void unfullscreen_window(CaptureDevice* capture_device, WhistWindow whist_window
 }
 
 void bring_window_to_top(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent =
@@ -367,30 +369,14 @@ void destroy_window_info_getter(void) {
 
 void move_resize_window(CaptureDevice* capture_device, WhistWindow whist_window, int x, int y,
                         int width, int height) {
-    Window w = whist_window.window;
+    // note: _NET_MOVERESIZE_WINDOW is not supported
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
-    static long gravity_flags = 15 << 8;  // sets gravity to 0, x/y/w/h to 1, source to 0
-
-    XEvent xevent = {0};
-    XClientMessageEvent xclient = {0};
-    xclient.type = ClientMessage;
-    xclient.window = w;
-    xclient.display = device->display;
-    xclient.message_type = device->_NET_MOVERESIZE_WINDOW;
-    xclient.format = 32;
-    xclient.data.l[0] = gravity_flags;
-    xclient.data.l[1] = x;
-    xclient.data.l[2] = y;
-    xclient.data.l[3] = width;
-    xclient.data.l[4] = height;
-    xevent.xclient = xclient;
-    if (!send_message_to_root(device, &xevent)) {
-        LOG_ERROR("Failed to send message to rezise window %lu", w);
-    }
+    XMoveResizeWindow(device->display, w, x, y, width, height);
 }
 
 void close_window(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
 
     XEvent xevent = {0};
@@ -412,7 +398,10 @@ void close_window(CaptureDevice* capture_device, WhistWindow whist_window) {
 }
 
 bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window) {
-    Window w = whist_window.window;
+    // for now, because awesome doesn't support _NET_WM_ALLOWED_ACTIONS
+    return true;
+    /*
+    Window w = (Window)whist_window.id;
     X11CaptureDevice* device = capture_device->x11_capture_device;
     static unsigned long nitems;
     static unsigned char* actions;  // name stored here
@@ -430,6 +419,7 @@ bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window
     }
     LOG_ERROR("Couldn't get allowed actions, assuming window is resizable!");
     return true;
+    */
 }
 
 /*
@@ -438,28 +428,48 @@ Private Function Implementations
 ============================
 */
 
+static int handler(Display* disp, XErrorEvent* error) {
+    // ignore BadWindow because windows can be deleted while calling XQueryTree
+    if (error->error_code == BadWindow) {
+        return 0;
+    }
+    static int buflen = 128;
+    char buffer[buflen];
+    XGetErrorText(disp, error->error_code, buffer, buflen);
+    LOG_ERROR("X11 Error: %d (%s), major opcode %d, minor opcode %d", error->error_code, buffer,
+              error->request_code, error->minor_code);
+    return 0;
+}
+
 void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window curr) {
-    LOG_DEBUG("Current window %lu", curr);
     Window parent;
     Window* children;
     unsigned int nchildren;
-    XQueryTree(device->display, curr, &device->root, &parent, &children, &nchildren);
-    // check the dimensions of each window
-    XWindowAttributes attr;
-    XGetWindowAttributes(device->display, curr, &attr);
-    if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH &&
-        attr.height >= MIN_SCREEN_HEIGHT && *get_window_name(device, curr) != '\0') {
-        LOG_DEBUG("Valid window %s has %d children, position %d, %d, dimensions %d x %d",
-                  get_window_name(device, curr), nchildren, attr.x, attr.y, attr.width,
-                  attr.height);
-        WhistWindow* valid_window = safe_malloc(sizeof(WhistWindow));
-        valid_window->window = curr;
-        linked_list_add_tail(list, valid_window);
-    }
+    if (XQueryTree(device->display, curr, &device->root, &parent, &children, &nchildren) ==
+        Success) {
+        char* window_name = get_window_name(device, curr);
+        // check the dimensions of each window
+        XWindowAttributes attr;
+        XGetWindowAttributes(device->display, curr, &attr);
+        if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH &&
+            attr.height >= MIN_SCREEN_HEIGHT && window_name != NULL && *window_name != '\0') {
+            WhistWindow* valid_window = safe_malloc(sizeof(WhistWindow));
+            valid_window->id = (unsigned long)curr;
+            valid_window->width = attr.width;
+            valid_window->height = attr.height;
+            // x/y are relative to parent, so we need to add x/y to parent's x/y
+            XWindowAttributes parent_attr;
+            XGetWindowAttributes(device->display, parent, &parent_attr);
+            valid_window->x = attr.x + parent_attr.x;
+            valid_window->y = attr.y + parent_attr.y;
+            // TODO: is_fullscreen
+            linked_list_add_tail(list, valid_window);
+        }
 
-    if (nchildren != 0) {
-        for (unsigned int i = 0; i < nchildren; i++) {
-            get_valid_windows_helper(device, list, children[i]);
+        if (nchildren != 0) {
+            for (unsigned int i = 0; i < nchildren; i++) {
+                get_valid_windows_helper(device, list, children[i]);
+            }
         }
     }
 }
@@ -486,7 +496,6 @@ char* get_window_name(X11CaptureDevice* device, Window w) {
 
     if (x11_get_window_property(device, w, device->_NET_WM_NAME, device->UTF8_STRING, &nitems,
                                 &name)) {
-        LOG_INFO("Window name %s", name);
         return (char*)name;
     }
     // fall back to XGetWMName
