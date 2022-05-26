@@ -362,61 +362,70 @@ struct ExtraRatioController {
     }
 };
 
-/*
-============================
-Globals
-============================
-*/
-
-// controller for base fec ratio
-static BaseRatioController *g_base_ratio_controller;
-// controller for extra fec ratio
-static ExtraRatioController *g_extra_ratio_controller;
-// another sliding window to calculate latency
-static SlidingWindowStat *g_latency_stat;
+// struct of fec controller
+struct FECController {
+    // controller for base fec ratio
+    BaseRatioController *base_ratio_controller;
+    // controller for extra fec ratio
+    ExtraRatioController *extra_ratio_controller;
+    // another sliding window to calculate latency
+    SlidingWindowStat *latency_stat;
+};
 
 /*
 ============================
 Public Function Implementations
 ============================
 */
-void fec_controller_init(double current_time) {
+
+void *create_fec_controller(double current_time) {
+    FECController *fec_controller = (FECController *)malloc(sizeof(FECController));
+
     // size of sliding window for latency
     const double latency_stat_window = 30.0;
     // sample period for latency
     const double latency_sample_period = 0.3;
 
     // allocation the objects if not done previously
-    if (g_base_ratio_controller == NULL) {
-        g_base_ratio_controller = new BaseRatioController;
-    }
-    if (g_extra_ratio_controller == NULL) {
-        g_extra_ratio_controller = new ExtraRatioController;
-    }
-    if (g_latency_stat == NULL) {
-        g_latency_stat = new SlidingWindowStat;
-    }
+    fec_controller->base_ratio_controller = new BaseRatioController;
+    fec_controller->extra_ratio_controller = new ExtraRatioController;
+    fec_controller->latency_stat = new SlidingWindowStat;
 
     // init the controllers and latency sliding window
-    g_base_ratio_controller->init(current_time);
-    g_extra_ratio_controller->init();
-    g_latency_stat->init("latency", latency_stat_window, latency_sample_period);
+    fec_controller->base_ratio_controller->init(current_time);
+    fec_controller->extra_ratio_controller->init();
+    fec_controller->latency_stat->init("latency", latency_stat_window, latency_sample_period);
+
+    return fec_controller;
 }
 
-void fec_controller_feed_latency(double current_time, double latency) {
-    g_latency_stat->slide_window(current_time);
-    g_latency_stat->insert(current_time, latency * MS_IN_SECOND);
+void destroy_fec_controller(void *controller) {
+    FECController *fec_controller = (FECController *)controller;
+    delete fec_controller->base_ratio_controller;
+    delete fec_controller->extra_ratio_controller;
+    delete fec_controller->latency_stat;
+    free(fec_controller);
 }
 
-void fec_controller_feed_info(double current_time, WccOp op, double packet_loss, int old_bitrate,
-                              int current_bitrate, int min_bitrate) {
-    g_base_ratio_controller->feed_network_info(current_time, packet_loss, current_bitrate,
-                                               min_bitrate, op);
-    g_extra_ratio_controller->fec_control_feed_bandwith_prob_info(current_time, old_bitrate,
-                                                                  current_bitrate, op);
+void fec_controller_feed_latency(void *controller, double current_time, double latency) {
+    FECController *fec_controller = (FECController *)controller;
+    fec_controller->latency_stat->slide_window(current_time);
+    fec_controller->latency_stat->insert(current_time, latency * MS_IN_SECOND);
 }
 
-FECInfo fec_controller_get_total_fec_ratio(double current_time, double old_value) {
+void fec_controller_feed_info(void *controller, double current_time, WccOp op, double packet_loss,
+                              int old_bitrate, int current_bitrate, int min_bitrate) {
+    FECController *fec_controller = (FECController *)controller;
+    fec_controller->base_ratio_controller->feed_network_info(current_time, packet_loss,
+                                                             current_bitrate, min_bitrate, op);
+    fec_controller->extra_ratio_controller->fec_control_feed_bandwith_prob_info(
+        current_time, old_bitrate, current_bitrate, op);
+}
+
+FECInfo fec_controller_get_total_fec_ratio(void *controller, double current_time,
+                                           double old_value) {
+    FECController *fec_controller = (FECController *)controller;
+
     const double inf = 9999.0;
     // min ratio for fec to take effect
     const double FEC_MIN_START = 0.005;  // NOLINT
@@ -424,9 +433,9 @@ FECInfo fec_controller_get_total_fec_ratio(double current_time, double old_value
     const double FEC_MIN_STEP = 0.005;  // NOLINT
 
     // get base_fec_ratio and extra_fec_ratio
-    double base_fec_ratio = g_base_ratio_controller->get_base_fec_ratio(current_time);
+    double base_fec_ratio = fec_controller->base_ratio_controller->get_base_fec_ratio(current_time);
     double extra_fec_ratio =
-        g_extra_ratio_controller->fec_controller_get_extra_fec_ratio(current_time);
+        fec_controller->extra_ratio_controller->fec_controller_get_extra_fec_ratio(current_time);
 
     // get adjusted base_fec_ratio that only acts on the portion that is not extra fec ratio
     double adjusted_base_fec_ratio = (1.0 - extra_fec_ratio) * base_fec_ratio;
@@ -444,8 +453,8 @@ FECInfo fec_controller_get_total_fec_ratio(double current_time, double old_value
 
     // get the 90 percentage max latency
     double latency = inf;
-    if (g_latency_stat->size() > 0) {
-        latency = g_latency_stat->get_i_percentage_max(90);  // get 90 percentage max
+    if (fec_controller->latency_stat->size() > 0) {
+        latency = fec_controller->latency_stat->get_i_percentage_max(90);  // get 90 percentage max
     }
 
     // if lantency lower than this, (almost) disable fec

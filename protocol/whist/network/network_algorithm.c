@@ -132,7 +132,7 @@ void network_algo_set_dpi(int new_dpi) { dpi = new_dpi; }
 bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_group_stats,
                                  int incoming_bitrate, double packet_loss_ratio,
                                  double short_term_latency, double long_term_latency,
-                                 NetworkSettings *network_settings) {
+                                 NetworkSettings *network_settings, void *fec_controller) {
 // Latest delay variation gets this weightage. Older value gets a weightage of (1 - EWMA_FACTOR)
 #define EWMA_FACTOR 0.3
 // Latest max bitrate gets this weightage.
@@ -419,11 +419,11 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         // get current time
         double current_time = get_timestamp_sec();
         // feed info to fec controller
-        fec_controller_feed_info(current_time, op, packet_loss_ratio, old_bitrate,
+        fec_controller_feed_info(fec_controller, current_time, op, packet_loss_ratio, old_bitrate,
                                  network_settings->video_bitrate, MINIMUM_BITRATE);
         // get fec result from fec controller
-        FECInfo fec_info =
-            fec_controller_get_total_fec_ratio(current_time, network_settings->video_fec_ratio);
+        FECInfo fec_info = fec_controller_get_total_fec_ratio(fec_controller, current_time,
+                                                              network_settings->video_fec_ratio);
 
         // see if there is a value change
         if (fec_info.total_fec_ratio != network_settings->video_fec_ratio) {

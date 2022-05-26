@@ -99,7 +99,7 @@ Public Functions
 bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_group_stats,
                                  int incoming_bitrate, double packet_loss_ratio,
                                  double short_term_latency, double long_term_latency,
-                                 NetworkSettings *network_settings);
+                                 NetworkSettings *network_settings, void *fec_controller);
 
 /**
  * @param network_settings Pointer to the struct containing previous network_settings. Also the new

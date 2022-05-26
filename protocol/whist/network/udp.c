@@ -216,6 +216,8 @@ typedef struct {
     int curr_group_id;
     IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS];
     void* nack_queue;
+
+    void* fec_controller;
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -520,7 +522,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                                                              context->short_term_latency);
             // feed current time and latency info into fec controller
             double current_time = get_timestamp_sec();
-            fec_controller_feed_latency(current_time, context->short_term_latency);
+            fec_controller_feed_latency(context->fec_controller, current_time,
+                                        context->short_term_latency);
             if (LOG_WCC | LOG_FEC_CONTROLLER) {
                 static double last_log_time = 0;
                 if (current_time - last_log_time > 0.2) {
@@ -532,10 +535,10 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                         context->long_term_latency * 1000, incoming_bitrate);
                 }
             }
-            send_network_settings =
-                whist_congestion_controller(curr_group_stats, prev_group_stats, incoming_bitrate,
-                                            packet_loss_ratio, context->short_term_latency,
-                                            context->long_term_latency, &context->network_settings);
+            send_network_settings = whist_congestion_controller(
+                curr_group_stats, prev_group_stats, incoming_bitrate, packet_loss_ratio,
+                context->short_term_latency, context->long_term_latency, &context->network_settings,
+                context->fec_controller);
         }
         context->prev_group_id = context->curr_group_id;
         context->curr_group_id = group_id;
@@ -1021,6 +1024,9 @@ static void udp_destroy_socket_context(void* raw_context) {
     whist_destroy_mutex(context->congestion_control_mutex);
 
     closesocket(context->socket);
+    if (context->fec_controller != NULL) {
+        destroy_fec_controller(context->fec_controller);
+    }
     if (context->network_throttler != NULL) {
         network_throttler_destroy(context->network_throttler);
     }
@@ -1056,6 +1062,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     // Whether or not we've connected, but then lost the connection
     context->connection_lost = false;
     context->unordered_packet_info.max_unordered_packets = 0.0;
+    context->fec_controller = create_fec_controller(get_timestamp_sec());
     start_timer(&context->last_network_settings_send_time);
 
     // Map Port
@@ -1113,6 +1120,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         return true;
     } else {
         memset(network_context, 0, sizeof(*network_context));
+        destroy_fec_controller(context->fec_controller);
         free(context);
         return false;
     }
