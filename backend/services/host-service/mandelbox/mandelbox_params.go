@@ -2,8 +2,9 @@ package mandelbox // import "github.com/whisthq/whist/backend/services/host-serv
 
 import (
 	"bytes"
-	"compress/zlib"
+	"compress/gzip"
 	"encoding/base64"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -53,13 +54,36 @@ func (mandelbox *mandelboxData) WriteSessionID() error {
 	return mandelbox.writeResourceMappingToFile("session_id", utils.Sprintf("%v", mandelbox.GetSessionID()))
 }
 
+// Write gunzipped data to a Writer
+func gunzipWrite(w io.Writer, data []byte) error {
+	// Write gzipped data to the client
+	gr, err := gzip.NewReader(bytes.NewBuffer(data))
+	defer gr.Close()
+	data, err = ioutil.ReadAll(gr)
+	if err != nil {
+		return err
+	}
+	w.Write(data)
+	return nil
+}
+
 // WriteJSONData writes the data received through JSON transport
 // to the config.json file located on the resourceMappingDir.
 func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
-	base64DecodedData, _ := base64.StdEncoding.DecodeString(string(data))
-	zlibReader, _ := zlib.NewReader(bytes.NewReader(base64DecodedData))
-	gzipDecodedData, _ := ioutil.ReadAll(zlibReader)
-	return mandelbox.writeResourceMappingToFile("config.json", string(gzipDecodedData))
+	base64DecodedData, err := base64.StdEncoding.DecodeString(string(data))
+	if err != nil {
+		return utils.MakeError("Couldn't decode received JSON Data: %s", err)
+	}
+
+	var gzipDecodedDataBuffer bytes.Buffer
+	err = gunzipWrite(&gzipDecodedDataBuffer, base64DecodedData)
+	if err != nil {
+		return utils.MakeError("Couldn't inflate decoded JSON Data: %s", err)
+	}
+	jsonDataPlainText := gzipDecodedDataBuffer.String()
+	logger.Info("Wrote data \"%s\" to file config.json\n", jsonDataPlainText)
+
+	return mandelbox.writeResourceMappingToFile("config.json", jsonDataPlainText)
 }
 
 // MarkParamsReady indicates that the mandelbox's services that do NOT depend
