@@ -1,13 +1,40 @@
 #include "common.h"
 #include "interface.h"
+#include <whist/utils/queue.h>
+
+extern QueueContext* events_queue;
+
+static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* event) {
+    VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
+    switch (event->type) {
+        case FRONTEND_EVENT_RESIZE: {
+            context->width = event->resize.width;
+            context->height = event->resize.height;
+            break;
+        }
+        case FRONTEND_EVENT_KEYPRESS: {
+            if (event->keypress.code < KEYCODE_UPPERBOUND) {
+                if (event->keypress.pressed) {
+                    context->key_state[event->keypress.code] = 1;
+                } else {
+                    context->key_state[event->keypress.code] = 0;
+                }
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+}
 
 WhistStatus virtual_init(WhistFrontend* frontend, int width, int height, const char* title,
                          const WhistRGBColor* color) {
-    frontend->context = safe_malloc(sizeof(VirtualFrontendContext));
+    frontend->context = safe_zalloc(sizeof(VirtualFrontendContext));
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
     context->width = width ? width : 1920;
     context->height = height ? height : 1080;
-    context->dpi = 192;
+    context->dpi = 96;
     return WHIST_SUCCESS;
 }
 
@@ -63,26 +90,41 @@ void virtual_restore_window(WhistFrontend* frontend) {}
 
 void virtual_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen) {}
 
-void virtual_resize_window(WhistFrontend* frontend, int width, int height) {
-    VirtualFrontendContext* context = frontend->context;
-    context->width = width;
-    context->height = height;
-}
+void virtual_resize_window(WhistFrontend* frontend, int width, int height) {}
 
-bool virtual_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) { return false; }
+bool virtual_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
+    if (fifo_queue_dequeue_item(events_queue, event) == 0) {
+        update_internal_state(frontend, event);
+        return true;
+    } else {
+        return false;
+    }
+}
 
 bool virtual_wait_event(WhistFrontend* frontend, WhistFrontendEvent* event, int timeout_ms) {
-    return false;
+    if (fifo_queue_dequeue_item_timeout(events_queue, event, timeout_ms) == 0) {
+        update_internal_state(frontend, event);
+        return true;
+    } else {
+        return false;
+    }
 }
 
-void virtual_interrupt(WhistFrontend* frontend) {}
+void virtual_interrupt(WhistFrontend* frontend) {
+    WhistFrontendEvent event;
+    event.type = FRONTEND_EVENT_INTERRUPT;
+    if (fifo_queue_enqueue_item(events_queue, &event) != 0) {
+        LOG_ERROR("Virtual frontend interrupt failed");
+    }
+}
 
 void virtual_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {}
 
 void virtual_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,
                                 int* mod_state) {
-    *key_state = NULL;
-    *key_count = 0;
+    VirtualFrontendContext* context = frontend->context;
+    *key_state = context->key_state;
+    *key_count = KEYCODE_UPPERBOUND;
     *mod_state = 0;
 }
 
