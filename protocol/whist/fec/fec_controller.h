@@ -6,7 +6,7 @@
 
 #pragma once
 
-#define ENABLE_FEC false
+#define ENABLE_FEC true
 #define INITIAL_FEC_RATIO 0.05
 
 // return value structure for fec_controller_get_total_fec_ratio()
