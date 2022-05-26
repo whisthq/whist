@@ -2,7 +2,7 @@
 import os
 import sys
 
-from github import Github
+from github import Github, GithubException
 from . import formatters as fmt
 
 # add the current directory to the path no matter where this is called from
@@ -58,7 +58,10 @@ def github_comment_update(
 
     if (not matching_comments or update_date) and create:
         # create a comment if none exist
-        issue.create_comment(body)
+        try:
+            issue.create_comment(body)
+        except GithubException as e:
+            print("Warning, the Github API raised exception", e)
     elif matching_comments and not update_date:
         for comment in matching_comments:
             comment.edit(body)
