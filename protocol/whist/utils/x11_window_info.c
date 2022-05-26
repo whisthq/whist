@@ -436,7 +436,8 @@ static int handler(Display* disp, XErrorEvent* error) {
     static int buflen = 128;
     char buffer[buflen];
     XGetErrorText(disp, error->error_code, buffer, buflen);
-    LOG_ERROR("X11 Error: %d (%s), major opcode %d, minor opcode %d", error->error_code, buffer, error->request_code, error->minor_code);
+    LOG_ERROR("X11 Error: %d (%s), major opcode %d, minor opcode %d", error->error_code, buffer,
+              error->request_code, error->minor_code);
     return 0;
 }
 
@@ -444,31 +445,32 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
     Window parent;
     Window* children;
     unsigned int nchildren;
-    if (XQueryTree(device->display, curr, &device->root, &parent, &children, &nchildren) == Success) {
-    char* window_name = get_window_name(device, curr);
-    // check the dimensions of each window
-    XWindowAttributes attr;
-    XGetWindowAttributes(device->display, curr, &attr);
-    if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH &&
-        attr.height >= MIN_SCREEN_HEIGHT && window_name != NULL && *window_name != '\0') {
-        WhistWindow* valid_window = safe_malloc(sizeof(WhistWindow));
-        valid_window->id = (unsigned long)curr;
-        valid_window->width = attr.width;
-        valid_window->height = attr.height;
-        // x/y are relative to parent, so we need to add x/y to parent's x/y
-        XWindowAttributes parent_attr;
-        XGetWindowAttributes(device->display, parent, &parent_attr);
-        valid_window->x = attr.x + parent_attr.x;
-        valid_window->y = attr.y + parent_attr.y;
-        // TODO: is_fullscreen
-        linked_list_add_tail(list, valid_window);
-    }
-
-    if (nchildren != 0) {
-        for (unsigned int i = 0; i < nchildren; i++) {
-            get_valid_windows_helper(device, list, children[i]);
+    if (XQueryTree(device->display, curr, &device->root, &parent, &children, &nchildren) ==
+        Success) {
+        char* window_name = get_window_name(device, curr);
+        // check the dimensions of each window
+        XWindowAttributes attr;
+        XGetWindowAttributes(device->display, curr, &attr);
+        if (attr.x >= 0 && attr.y >= 0 && attr.width >= MIN_SCREEN_WIDTH &&
+            attr.height >= MIN_SCREEN_HEIGHT && window_name != NULL && *window_name != '\0') {
+            WhistWindow* valid_window = safe_malloc(sizeof(WhistWindow));
+            valid_window->id = (unsigned long)curr;
+            valid_window->width = attr.width;
+            valid_window->height = attr.height;
+            // x/y are relative to parent, so we need to add x/y to parent's x/y
+            XWindowAttributes parent_attr;
+            XGetWindowAttributes(device->display, parent, &parent_attr);
+            valid_window->x = attr.x + parent_attr.x;
+            valid_window->y = attr.y + parent_attr.y;
+            // TODO: is_fullscreen
+            linked_list_add_tail(list, valid_window);
         }
-    }
+
+        if (nchildren != 0) {
+            for (unsigned int i = 0; i < nchildren; i++) {
+                get_valid_windows_helper(device, list, children[i]);
+            }
+        }
     }
 }
 
