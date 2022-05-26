@@ -36,6 +36,15 @@ type BrowserData struct {
 	ExtensionState types.ExtensionState `json:"extension_state,omitempty"`
 }
 
+// UnmarshalBookmarks takes a JSON string containing all the user browser data
+// and unmarshals it into a BrowserData struct, returning the struct
+// and any errors encountered.
+func UnmarshalBrowserData(browser_data types.BrowserData) (BrowserData, error) {
+	var browserDataObj BrowserData
+	err := json.Unmarshal([]byte(browser_data), &browserDataObj)
+	return browserDataObj, err
+}
+
 // WriteUserInitialBrowserData writes the user's initial browser data received
 // through JSON transport on top of the user configs that have already been
 // loaded.

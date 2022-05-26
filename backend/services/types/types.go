@@ -48,6 +48,9 @@ type AESKey string
 // JSONData is defined as its own type for similar reasons.
 type JSONData string
 
+// BrowserData is defined as its own type for similar reasons.
+type BrowserData string
+
 // Cookies is defined as its own type for similar reasons.
 type Cookies string
 

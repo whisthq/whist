@@ -16,13 +16,13 @@ type JSONTransportRequest struct {
 	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id"`                   // MandelboxID, used for the json transport request map
 	IsNewConfigToken      bool                                 `json:"is_new_config_encryption_token"` // Flag indicating we should expect a new config encryption token and to skip config decryption this run
 	JSONData              mandelboxtypes.JSONData              `json:"json_data"`                      // Arbitrary stringified JSON data to pass to mandelbox
-	CookiesJSON           mandelboxtypes.Cookies               `json:"cookies,omitempty"`              // The cookies provided by the client-app as JSON string
+	/*CookiesJSON           mandelboxtypes.Cookies               `json:"cookies,omitempty"`              // The cookies provided by the client-app as JSON string
 	BookmarksJSON         mandelboxtypes.Bookmarks             `json:"bookmarks,omitempty"`            // The bookmarks provided by the client-app as JSON string
 	Extensions            mandelboxtypes.Extensions            `json:"extensions,omitempty"`           // Extensions provided by the client-app
 	Preferences           mandelboxtypes.Preferences           `json:"preferences,omitempty"`          // Preferences provided by the client-app as JSON string
 	LocalStorageJSON      mandelboxtypes.LocalStorage          `json:"local_storage,omitempty"`        // Local storage provided by the client-app as JSON string
 	ExtensionSettingsJSON mandelboxtypes.ExtensionSettings     `json:"extension_settings,omitempty"`   // Extension settings provided by the client-app as JSON string
-	ExtensionStateJSON    mandelboxtypes.ExtensionState        `json:"extension_state,omitempty"`      // Extension state provided by the client-app as JSON string
+	ExtensionStateJSON    mandelboxtypes.ExtensionState        `json:"extension_state,omitempty"`      // Extension state provided by the client-app as JSON string*/
 	ResultChan            chan RequestResult                   `json:"-"`                              // Channel to pass the request result between goroutines
 }
 

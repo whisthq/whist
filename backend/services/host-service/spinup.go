@@ -415,7 +415,24 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		logger.Error(err)
 	}
 
+	var inflatedBrowserData string
+	inflatedBrowserData, err := configutils.gzipInflateString(req.BrowserData)
+	if err != nil {
+		logAndReturnError("Error inflating user browser data in mandelbox %s for user %s: %s", mandelbox.GetID(), mandelbox.GetUserID(), err)
+		return
+	}
+
 	// Unmarshal bookmarks into proper format
+	var browserData browserData
+	if len(inflatedBrowserData) > 0 {
+		browserData, err = mandelbox.UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+		if err != nil {
+			// BrowserData import errors are not fatal
+			logger.Errorf("Error unmarshalling user browser data for mandelbox %s: %s", mandelbox.GetID(), err)
+		}
+	}
+
+	/*// Unmarshal bookmarks into proper format
 	var importedBookmarks configutils.Bookmarks
 	if len(req.BookmarksJSON) > 0 {
 		importedBookmarks, err = configutils.UnmarshalBookmarks(req.BookmarksJSON)
@@ -423,19 +440,23 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 			// Bookmark import errors are not fatal
 			logger.Errorf("Error unmarshalling bookmarks for mandelbox %s: %s", mandelbox.GetID(), err)
 		}
-	}
+	}*/
 
 	// Write the user's initial browser data
 	logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
-	err = mandelbox.WriteUserInitialBrowserData(mandelboxData.BrowserData{
-		CookiesJSON:       req.CookiesJSON,
-		Bookmarks:         &importedBookmarks,
-		Extensions:        req.Extensions,
-		Preferences:       req.Preferences,
-		LocalStorage:      req.LocalStorageJSON,
-		ExtensionSettings: req.ExtensionSettingsJSON,
-		ExtensionState:    req.ExtensionStateJSON,
-	})
+	
+	// err = mandelbox.WriteUserInitialBrowserData(mandelboxData.BrowserData{
+	// 	CookiesJSON:       req.CookiesJSON,
+	// 	Bookmarks:         &importedBookmarks,
+	// 	Extensions:        req.Extensions,
+	// 	Preferences:       req.Preferences,
+	// 	LocalStorage:      req.LocalStorageJSON,
+	// 	ExtensionSettings: req.ExtensionSettingsJSON,
+	// 	ExtensionState:    req.ExtensionStateJSON,
+	// })
+
+	err = mandelbox.WriteUserInitialBrowserData(browserData)
+
 	if err != nil {
 		logger.Errorf("Error writing initial browser data for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelboxSubscription.ID, err)
 	} else {
