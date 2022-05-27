@@ -9,20 +9,6 @@
 #define ENABLE_FEC true
 #define INITIAL_FEC_RATIO 0.05
 
-// return value structure for fec_controller_get_total_fec_ratio()
-typedef struct {
-    // base fec depending on packet loss measuring
-    double base_fec_ratio;
-    // extra fec for protect bandwitdh probing
-    double extra_fec_ratio;
-    // the orignal total_fec_ratio calculated by base_fec_ratio and extra_fec_ratio without adjust
-    double total_fec_ratio_original;
-
-    // the final total_fec_ratio, this is the value actually used for fec. All values above are
-    // exposed to outside just for easier debuging
-    double total_fec_ratio;
-} FECInfo;
-
 /**
  * @brief                          Create FEC Controller
  *
@@ -73,12 +59,12 @@ void fec_controller_feed_info(void* fec_controller, double current_time, WccOp o
  * @param current_time             comparable current_time in sec
  * @param old_value                old value of fec
  *
- * @returns                        total fec ratio, along with a few other values for debug
+ * @returns                        total fec ratio
  *
  * @note                           when old value is not -1, and new calculated value is close
  *                                 enough to the old value, the returned value might just be the
  *                                 old value. This is for avoiding uncessary parameter change
  *                                 sending over the internet.
  */
-FECInfo fec_controller_get_total_fec_ratio(void* fec_controller, double current_time,
-                                           double old_value);
+double fec_controller_get_total_fec_ratio(void* fec_controller, double current_time,
+                                          double old_value);

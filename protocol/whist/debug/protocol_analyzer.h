@@ -75,7 +75,9 @@ void whist_analyzer_record_fec_used(int type, int id);
 void whist_analyzer_record_stream_reset(int type, int id);
 
 // record current fec info
-void whist_analyzer_record_current_fec_info(int type, FECInfo *fec_info);
+void whist_analyzer_record_current_fec_info(int type, double base_fec_ratio, double extra_fec_ratio,
+                                            double total_fec_ratio_original,
+                                            double total_fec_ratio);
 
 // record current congestion control info
 void whist_analyzer_record_current_cc_info(int type, double packet_loss, double latency,

@@ -524,12 +524,12 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             double current_time = get_timestamp_sec();
             fec_controller_feed_latency(context->fec_controller, current_time,
                                         context->short_term_latency);
-            if (LOG_WCC | LOG_FEC_CONTROLLER) {
+            if (LOG_FEC_CONTROLLER) {
                 static double last_log_time = 0;
                 if (current_time - last_log_time > 0.2) {
                     last_log_time = current_time;
                     LOG_INFO(
-                        "[wcc][fec_controller]"
+                        "[fec_controller]"
                         "loss=%.2f%% short_term_latecny=%.1fms long_term_latency=%.1f inbits=%d\n",
                         packet_loss_ratio * 100, context->short_term_latency * 1000,
                         context->long_term_latency * 1000, incoming_bitrate);

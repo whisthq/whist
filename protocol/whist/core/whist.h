@@ -95,7 +95,6 @@ Defines
 #define LOG_LONG_TERM_REFERENCE_FRAMES false
 #define LOG_FEC_ENCODE false
 #define LOG_FEC_DECODE false
-#define LOG_WCC false
 #define LOG_FEC_CONTROLLER false
 
 #define WINAPI_INPUT_DRIVER 1

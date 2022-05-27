@@ -82,6 +82,19 @@ struct CCInfo {
     double latency = -1;
 };
 
+// info related to FEC
+typedef struct {
+    // base fec depending on packet loss measuring
+    double base_fec_ratio;
+    // extra fec for protect bandwitdh probing
+    double extra_fec_ratio;
+    // the orignal total_fec_ratio calculated by base_fec_ratio and extra_fec_ratio without adjust
+    double total_fec_ratio_original;
+    // the final total_fec_ratio, this is the value actually used for fec. All values above are
+    // just for easier debuging
+    double total_fec_ratio;
+} FECInfo;
+
 // FrameLevelInfo
 struct FrameLevelInfo {
     int id = -1;                     // id of frame
@@ -347,8 +360,12 @@ struct ProtocolAnalyzer {
         info2.reset_ringbuffer_from = from_id;
     }
 
-    void record_current_fec_info(int type, FECInfo *fec_info) {
-        type_level_infos[type].current_fec_info = *fec_info;
+    void record_current_fec_info(int type, double base_fec_ratio, double extra_fec_ratio,
+                                 double total_fec_ratio_original, double total_fec_ratio) {
+        type_level_infos[type].current_fec_info.base_fec_ratio = base_fec_ratio;
+        type_level_infos[type].current_fec_info.extra_fec_ratio = extra_fec_ratio;
+        type_level_infos[type].current_fec_info.total_fec_ratio_original = total_fec_ratio_original;
+        type_level_infos[type].current_fec_info.total_fec_ratio = total_fec_ratio;
     }
     void record_current_cc_info(int type, double packet_loss, double latency, int bitrate,
                                 int incoming_bitrate) {
@@ -490,8 +507,11 @@ void whist_analyzer_record_stream_reset(int type, int id) {
 
 void whist_analyzer_record_audio_queue_full(void) { FUNC_WRAPPER(record_audio_queue_full); }
 
-void whist_analyzer_record_current_fec_info(int type, FECInfo *fec_info) {
-    FUNC_WRAPPER(record_current_fec_info, type, fec_info);
+void whist_analyzer_record_current_fec_info(int type, double base_fec_ratio, double extra_fec_ratio,
+                                            double total_fec_ratio_original,
+                                            double total_fec_ratio) {
+    FUNC_WRAPPER(record_current_fec_info, type, base_fec_ratio, extra_fec_ratio,
+                 total_fec_ratio_original, total_fec_ratio);
 }
 
 void whist_analyzer_record_current_cc_info(int type, double packet_loss, double latency,

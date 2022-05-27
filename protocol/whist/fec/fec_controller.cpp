@@ -420,10 +420,19 @@ void fec_controller_feed_info(void *controller, double current_time, WccOp op, d
                                                              current_bitrate, min_bitrate, op);
     fec_controller->extra_ratio_controller->fec_control_feed_bandwith_prob_info(
         current_time, old_bitrate, current_bitrate, op);
+
+    if (LOG_FEC_CONTROLLER) {
+        if (op == WCC_INCREASE_BWD) {
+            LOG_INFO("🟩 [wcc]Bitrate Increase! old_bitrate=%d new_bitrate=%d\n", old_bitrate,
+                     current_bitrate);
+        } else if (op == WCC_DECREASE_BWD) {
+            LOG_INFO("🟥 [wcc]Bitrate Decrease! old_bitrate=%d new_bitrate=%d\n", old_bitrate,
+                     current_bitrate);
+        }
+    }
 }
 
-FECInfo fec_controller_get_total_fec_ratio(void *controller, double current_time,
-                                           double old_value) {
+double fec_controller_get_total_fec_ratio(void *controller, double current_time, double old_value) {
     FECController *fec_controller = (FECController *)controller;
 
     const double inf = 9999.0;
@@ -474,33 +483,39 @@ FECInfo fec_controller_get_total_fec_ratio(void *controller, double current_time
     }
 
     // save orignal value for easier debug
-    double total_fec_ratio_orignal = total_fec_ratio;
+    double total_fec_ratio_original = total_fec_ratio;
     // calculate new value based on latency fix factor
-    total_fec_ratio = total_fec_ratio_orignal * fec_latency_fix_factor;
+    total_fec_ratio = total_fec_ratio_original * fec_latency_fix_factor;
 
     // we punish the ratio to 0.01 at minimum, since retransmission of packet might lose as well,
     // it's helpfull to have some small spare packet
-    if (total_fec_ratio_orignal > 0.01) {
+    if (total_fec_ratio_original > 0.01) {
         total_fec_ratio = max(0.01, total_fec_ratio);
     }
 
     // only update the value if exceed min_step
     if (fabs(total_fec_ratio - old_value) < FEC_MIN_STEP) {
         total_fec_ratio = old_value;
+    } else {
+        // whist_analyzer_record_current_fec_info(PACKET_VIDEO, &fec_info);
+        if (!LOG_FEC_CONTROLLER) {
+            LOG_INFO_RATE_LIMITED(
+                5, 1,
+                "[fec_controller] base_fec_ratio=%.3f "
+                "extra_fec_ratio=%.3f total_fec_ratio_original=%.3f total_fec_ratio=%.3f\n",
+                base_fec_ratio, extra_fec_ratio, total_fec_ratio_original, total_fec_ratio);
+        } else {
+            LOG_INFO(
+                "[fec_controller] base_fec_ratio=%.3f "
+                "extra_fec_ratio=%.3f total_fec_ratio_original=%.3f total_fec_ratio=%.3f\n",
+                base_fec_ratio, extra_fec_ratio, total_fec_ratio_original, total_fec_ratio);
+        }
     }
-
-    // fill the structure of return value
-    FECInfo fec_info;
-    fec_info.base_fec_ratio = base_fec_ratio;
-    fec_info.extra_fec_ratio = extra_fec_ratio;
-    fec_info.total_fec_ratio_original = total_fec_ratio_orignal;
-    fec_info.total_fec_ratio =
-        total_fec_ratio;  // only this value takes effect, other values are for easier debug
 
     // handle fec override by debug console
     if (get_debug_console_override_values()->video_fec_ratio >= 0.0) {
-        fec_info.total_fec_ratio = get_debug_console_override_values()->video_fec_ratio;
+        total_fec_ratio = get_debug_console_override_values()->video_fec_ratio;
     }
 
-    return fec_info;
+    return total_fec_ratio;
 }

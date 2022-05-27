@@ -315,10 +315,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         LOG_INFO("Increase bitrate by %.3f percent", increase_percentage);
         new_bitrate = network_settings->video_bitrate * (1.0 + increase_percentage / 100.0);
         op = WCC_INCREASE_BWD;
-        if (LOG_WCC) {
-            LOG_INFO("🟩 [wcc]Bitrate Increase! old_bitrate=%d new_bitrate=%d\n", old_bitrate,
-                     new_bitrate);
-        }
     } else if ((delay_controller_state == DELAY_CONTROLLER_DECREASE) &&
                get_timer(&last_decrease_timer) > NEW_BITRATE_DURATION_IN_SEC) {
         LOG_INFO(
@@ -355,10 +351,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         network_settings->congestion_detected = true;
         start_timer(&last_decrease_timer);
         op = WCC_DECREASE_BWD;
-        if (LOG_WCC) {
-            LOG_INFO("🟥 [wcc]Bitrate Decrease! old_bitrate=%d new_bitrate=%d\n", old_bitrate,
-                     new_bitrate);
-        }
     }
 
     if (op != WCC_NO_OP) {
@@ -422,26 +414,14 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         fec_controller_feed_info(fec_controller, current_time, op, packet_loss_ratio, old_bitrate,
                                  network_settings->video_bitrate, MINIMUM_BITRATE);
         // get fec result from fec controller
-        FECInfo fec_info = fec_controller_get_total_fec_ratio(fec_controller, current_time,
-                                                              network_settings->video_fec_ratio);
+        double total_fec_ratio = fec_controller_get_total_fec_ratio(
+            fec_controller, current_time, network_settings->video_fec_ratio);
 
         // see if there is a value change
-        if (fec_info.total_fec_ratio != network_settings->video_fec_ratio) {
-            network_settings->video_fec_ratio = fec_info.total_fec_ratio;
+        if (total_fec_ratio != network_settings->video_fec_ratio) {
+            network_settings->video_fec_ratio = total_fec_ratio;
             send_network_settings = true;
         }
-        if (send_network_settings) {
-            LOG_INFO_RATE_LIMITED(
-                2, 1,
-                "[wcc][fec_controller]New bitrate = %d, burst_bitrate = %d, saturate bandwidth "
-                "= %d, max_bitrate_available = %d old_bitrate=%d base_fec_ratio=%.3f "
-                "extra_fec_ratio=%.3f total_fec_ratio_original=%.3f total_fec_ratio=%.3f\n",
-                network_settings->video_bitrate, network_settings->burst_bitrate,
-                network_settings->saturate_bandwidth, max_bitrate_available, old_bitrate,
-                fec_info.base_fec_ratio, fec_info.extra_fec_ratio,
-                fec_info.total_fec_ratio_original, fec_info.total_fec_ratio);
-        }
-        whist_analyzer_record_current_fec_info(PACKET_VIDEO, &fec_info);
     }
     whist_analyzer_record_current_cc_info(PACKET_VIDEO, packet_loss_ratio, short_term_latency,
                                           network_settings->video_bitrate, incoming_bitrate);
