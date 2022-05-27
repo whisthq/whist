@@ -30,7 +30,7 @@ static void sdl_init_video_device(SDLFrontendContext* context) {
 
 #if OS_IS(OS_WIN32)
     if (!strcmp(context->render_driver_name, "direct3d11")) {
-        sdl_d3d11_init(context);
+        sdl_d3d11_init(context, context->windows[0]->renderer);
     }
 #endif  // Windows
 

@@ -138,17 +138,20 @@ void sdl_d3d11_wait(SDLFrontendContext* context);
 SDL_Texture* sdl_d3d11_create_texture(SDLFrontendContext* context, SDL_Renderer* renderer,
                                       AVFrame* frame);
 
+// TODO: Don't create global D3D11 context,
+// With a per-window renderer
 /**
  * Initialise D3D11 devices for render and decode.
  *
  * Creates the two connected devices and device contexts to use for
  * rendering (with SDL) and decoding (with FFmpeg).
  *
- * @param context  Frontend context containing the SDL renderer.
+ * @param context  Frontend context to initialize D3D11 with.
+ * @param renderer The SDL Renderer to use.
  * @return  Success or error code.  If this fails, rendering will have
  *          to copy frames rather than using textures directly.
  */
-WhistStatus sdl_d3d11_init(SDLFrontendContext* context);
+WhistStatus sdl_d3d11_init(SDLFrontendContext* context, SDL_Renderer* renderer);
 
 /**
  * Destroy D3D11 devices and clean up.

@@ -142,14 +142,14 @@ SDL_Texture *sdl_d3d11_create_texture(SDLFrontendContext *context, SDL_Renderer 
     return sdl_texture;
 }
 
-WhistStatus sdl_d3d11_init(SDLFrontendContext *context) {
+WhistStatus sdl_d3d11_init(SDLFrontendContext *context, SDL_Renderer *renderer) {
     int err;
     HRESULT hr;
 
     SDLRenderD3D11Context *d3d11 = (SDLRenderD3D11Context *)safe_zalloc(sizeof(*d3d11));
     context->video.private_data = (void *)d3d11;
 
-    d3d11->render_device = SDL_RenderGetD3D11Device(context->renderer);
+    d3d11->render_device = SDL_RenderGetD3D11Device(renderer);
     if (d3d11->render_device == NULL) {
         LOG_WARNING("Failed to fetch D3D11 device: %s.", SDL_GetError());
         return WHIST_ERROR_NOT_FOUND;
