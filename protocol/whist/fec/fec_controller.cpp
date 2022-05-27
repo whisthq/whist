@@ -250,7 +250,7 @@ struct BaseRatioController {
             static double last_print_time = 0;
             if (current_time - last_print_time > 1.0) {
                 last_print_time = current_time;
-                LOG_INFO("🟨 [FEC_CONTROLLER] avg=%.2f max=%.2f size=%d sum=%lld\n",
+                LOG_INFO("🟨 [FEC_CONTROLLER] avg=%.3f max=%.3f size=%d sum=%lld\n",
                          avg_packet_loss, max_packet_loss, packet_loss_stat.size(),
                          packet_loss_stat.sum);
             }
