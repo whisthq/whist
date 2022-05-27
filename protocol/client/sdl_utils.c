@@ -110,8 +110,8 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
     int w, h;
-    LOG_DEBUG("Getting pixel size");
     whist_frontend_get_window_pixel_size(frontend, 0, &w, &h);
+    LOG_DEBUG("Getting pixel size %d %d", w, h);
     output_width = w;
     output_height = h;
 

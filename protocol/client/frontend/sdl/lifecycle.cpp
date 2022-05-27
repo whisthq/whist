@@ -166,10 +166,6 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // create the main window
     SDLWindowContext* window_context = (SDLWindowContext*)safe_zalloc(sizeof(SDLWindowContext));
     window_context->to_be_created = true;
-    window_context->x = 0;
-    window_context->y = 0;
-    window_context->width = width;
-    window_context->height = height;
     window_context->title = "Dummy";
     window_context->color = {17, 24, 39};
     window_context->is_fullscreen = false;
@@ -309,6 +305,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     // Safe to set these post-initialization.
     sdl_native_init_window_options(window_context->window);
     SDL_SetWindowMinimumSize(window_context->window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
+    SDL_SetWindowMaximumSize(window_context->window, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
     LOG_DEBUG("Created window %d, SDL ID %d, title %s", id, context->windows[id]->window_id,
               context->windows[id]->title);
     return WHIST_SUCCESS;

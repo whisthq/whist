@@ -259,11 +259,18 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
 
         // Take the subsection of texture that should be rendered to screen,
         // and draw it on the renderer
+        LOG_INFO("Width: %d AND %d", window_context->width, context->video.frame_width);
+        window_context->x = 0;
+        window_context->y = 0;
+        window_context->width = context->video.frame_width;
+        window_context->height = context->video.frame_height;
+        window_context->sdl_width = output_width;
+        window_context->sdl_height = output_height;
         SDL_Rect output_rect = {
             .x = window_context->x,
             .y = window_context->y,
-            .w = min(window_context->width, context->video.frame_width) - CLIPPED_PIXELS,
-            .h = min(window_context->height, context->video.frame_height) - CLIPPED_PIXELS,
+            .w = min(window_context->sdl_width, window_context->width) - CLIPPED_PIXELS,
+            .h = min(window_context->sdl_height, window_context->height) - CLIPPED_PIXELS,
         };
         LOG_DEBUG("Crop rectangle (%d, %d) %d x %d", output_rect.x, output_rect.y, output_rect.w,
                   output_rect.h);

@@ -73,6 +73,8 @@ typedef struct SDLWindowContext {
     int y;
     int width;
     int height;
+    int sdl_width;
+    int sdl_height;
     const char* title;
     WhistRGBColor color;
     bool is_fullscreen;
