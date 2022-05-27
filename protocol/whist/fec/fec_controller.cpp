@@ -17,6 +17,7 @@ extern "C" {
 #include <whist/network/network_algorithm.h>
 #include <whist/fec/fec.h>
 #include <whist/debug/debug_console.h>
+#include <whist/debug/protocol_analyzer.h>
 #include "fec_controller.h"
 }
 
@@ -66,7 +67,7 @@ struct SlidingWindowStat {
         last_sampled_time = current_time;
 
         if (LOG_FEC_CONTROLLER && name == "packet_loss") {
-            LOG_INFO("[fec_controller]⬛ sampled value=%.2f for %s\n", value * 100.0, name.c_str());
+            LOG_INFO("⬛ [FEC_CONTROLLER]sampled value=%.2f for %s\n", value * 100.0, name.c_str());
         }
 
         //  maintain the data structure
@@ -249,7 +250,7 @@ struct BaseRatioController {
             static double last_print_time = 0;
             if (current_time - last_print_time > 1.0) {
                 last_print_time = current_time;
-                LOG_INFO("🟨 [fec_controller] avg=%.2f max=%.2f size=%d sum=%lld\n",
+                LOG_INFO("🟨 [FEC_CONTROLLER] avg=%.2f max=%.2f size=%d sum=%lld\n",
                          avg_packet_loss, max_packet_loss, packet_loss_stat.size(),
                          packet_loss_stat.sum);
             }
@@ -326,7 +327,7 @@ struct ExtraRatioController {
             // record current time
             last_used_extra_fec_time = current_time;
             if (LOG_FEC_CONTROLLER) {
-                LOG_INFO("🟪 [fec_controller] enable extra fec!!!\n");
+                LOG_INFO("🟪 [FEC_CONTROLLER] enable extra fec!!! %.3f\n", extra_fec_ratio);
             }
         } else if (extra_fec_in_use) {
             // if we get a WCC_DECREASE_BWD during the protection of extra fec,
@@ -336,7 +337,8 @@ struct ExtraRatioController {
                 extend_cnt_left--;
                 last_used_extra_fec_time = current_time;
                 if (LOG_FEC_CONTROLLER) {
-                    LOG_INFO("🟪 [fec_controller] refreshed extra fec!!!\n");
+                    LOG_INFO("🟪 [FEC_CONTROLLER] refreshed extra fec!!! %.3f\n",
+                             extra_fec_ratio);
                 }
             }
 
@@ -346,7 +348,7 @@ struct ExtraRatioController {
             if (current_time - last_used_extra_fec_time > EXTRA_FEC_LAST_TIME) {
                 extra_fec_in_use = 0;
                 if (LOG_FEC_CONTROLLER) {
-                    LOG_INFO("🟪 [fec_controller] disable extra fec!!!\n");
+                    LOG_INFO("🟪 [FEC_CONTROLLER] disable extra fec!!!\n");
                 }
             }
         }
@@ -414,7 +416,8 @@ void fec_controller_feed_latency(void *controller, double current_time, double l
 }
 
 void fec_controller_feed_info(void *controller, double current_time, WccOp op, double packet_loss,
-                              int old_bitrate, int current_bitrate, int min_bitrate) {
+                              int old_bitrate, int current_bitrate, int min_bitrate,
+                              bool saturate_bandwidth) {
     FECController *fec_controller = (FECController *)controller;
     fec_controller->base_ratio_controller->feed_network_info(current_time, packet_loss,
                                                              current_bitrate, min_bitrate, op);
@@ -423,11 +426,15 @@ void fec_controller_feed_info(void *controller, double current_time, WccOp op, d
 
     if (LOG_FEC_CONTROLLER) {
         if (op == WCC_INCREASE_BWD) {
-            LOG_INFO("🟩 [wcc]Bitrate Increase! old_bitrate=%d new_bitrate=%d\n", old_bitrate,
-                     current_bitrate);
+            LOG_INFO(
+                "🟩 [FEC_CONTROLLER]WCC Bitrate Increase! old_bitrate=%d new_bitrate=%d "
+                "saturate_bandwidth=%d\n",
+                old_bitrate, current_bitrate, saturate_bandwidth);
         } else if (op == WCC_DECREASE_BWD) {
-            LOG_INFO("🟥 [wcc]Bitrate Decrease! old_bitrate=%d new_bitrate=%d\n", old_bitrate,
-                     current_bitrate);
+            LOG_INFO(
+                "🟥 [FEC_CONTROLLER]Bitrate Decrease! old_bitrate=%d new_bitrate=%d\n "
+                "saturate_bandwidth=%d",
+                old_bitrate, current_bitrate, saturate_bandwidth);
         }
     }
 }
@@ -497,18 +504,22 @@ double fec_controller_get_total_fec_ratio(void *controller, double current_time,
     if (fabs(total_fec_ratio - old_value) < FEC_MIN_STEP) {
         total_fec_ratio = old_value;
     } else {
-        // whist_analyzer_record_current_fec_info(PACKET_VIDEO, &fec_info);
+        whist_analyzer_record_current_fec_info(PACKET_VIDEO, base_fec_ratio, extra_fec_ratio,
+                                               total_fec_ratio_original, total_fec_ratio);
         if (!LOG_FEC_CONTROLLER) {
-            LOG_INFO_RATE_LIMITED(
-                5, 1,
-                "[fec_controller] base_fec_ratio=%.3f "
-                "extra_fec_ratio=%.3f total_fec_ratio_original=%.3f total_fec_ratio=%.3f\n",
-                base_fec_ratio, extra_fec_ratio, total_fec_ratio_original, total_fec_ratio);
+            LOG_INFO_RATE_LIMITED(5, 1,
+                                  "[FEC_CONTROLLER] base_fec_ratio=%.3f "
+                                  "extra_fec_ratio=%.3f total_fec_ratio_original=%.3f "
+                                  "total_fec_ratio=%.3f old_value=%.3f\n",
+                                  base_fec_ratio, extra_fec_ratio, total_fec_ratio_original,
+                                  total_fec_ratio, old_value);
         } else {
             LOG_INFO(
-                "[fec_controller] base_fec_ratio=%.3f "
-                "extra_fec_ratio=%.3f total_fec_ratio_original=%.3f total_fec_ratio=%.3f\n",
-                base_fec_ratio, extra_fec_ratio, total_fec_ratio_original, total_fec_ratio);
+                "🔵 [FEC_CONTROLLER] base_fec_ratio=%.3f "
+                "extra_fec_ratio=%.3f total_fec_ratio_original=%.3f total_fec_ratio=%.3f "
+                "old_value=%.3f\n",
+                base_fec_ratio, extra_fec_ratio, total_fec_ratio_original, total_fec_ratio,
+                old_value);
         }
     }
 

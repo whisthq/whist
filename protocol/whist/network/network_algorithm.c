@@ -114,9 +114,7 @@ NetworkSettings get_default_network_settings(int width, int height, int screen_d
     default_network_settings.saturate_bandwidth = true;
     // Whist congestion control increases burst bitrate only after exceeding max bitrate
     default_network_settings.burst_bitrate = default_network_settings.video_bitrate;
-    if (ENABLE_FEC) {
-        default_network_settings.video_fec_ratio = INITIAL_FEC_RATIO;
-    }
+    default_network_settings.video_fec_ratio = ENABLE_FEC ? INITIAL_FEC_RATIO : 0.0;
     return default_network_settings;
 }
 
@@ -412,7 +410,8 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         double current_time = get_timestamp_sec();
         // feed info to fec controller
         fec_controller_feed_info(fec_controller, current_time, op, packet_loss_ratio, old_bitrate,
-                                 network_settings->video_bitrate, MINIMUM_BITRATE);
+                                 network_settings->video_bitrate, MINIMUM_BITRATE,
+                                 network_settings->saturate_bandwidth);
         // get fec result from fec controller
         double total_fec_ratio = fec_controller_get_total_fec_ratio(
             fec_controller, current_time, network_settings->video_fec_ratio);

@@ -529,7 +529,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
                 if (current_time - last_log_time > 0.2) {
                     last_log_time = current_time;
                     LOG_INFO(
-                        "[fec_controller]"
+                        "[FEC_CONTROLLER]"
                         "loss=%.2f%% short_term_latecny=%.1fms long_term_latency=%.1f inbits=%d\n",
                         packet_loss_ratio * 100, context->short_term_latency * 1000,
                         context->long_term_latency * 1000, incoming_bitrate);

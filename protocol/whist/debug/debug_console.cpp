@@ -86,9 +86,9 @@ Public Function Implementations
 DebugConsoleOverrideValues *get_debug_console_override_values() { return &g_override_values; }
 
 int init_debug_console() {
+    init_overrided_values();
     if (debug_console_listen_port == -1) return 0;
 #ifdef USE_DEBUG_CONSOLE  // only enable debug console for debug build
-    init_overrided_values();
     FATAL_ASSERT(create_local_udp_listen_socket(&debug_console_listen_socket,
                                                 debug_console_listen_port, -1) == 0);
     whist_create_thread(debug_console_thread, "MultiThreadedDebugConsole", NULL);

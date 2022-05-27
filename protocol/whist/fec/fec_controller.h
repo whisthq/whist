@@ -47,10 +47,11 @@ void fec_controller_feed_latency(void* fec_controller, double current_time, doub
  * @param old_bitrate              old bitrate suggested by WCC
  * @param current_bitrate          current bitrate suggested by WCC
  * @param min_bitrate              the min bitrate for current resolution and dpi
+ * @param saturate_bandwidth       saturate_bandwidth flag from WCC, only for debug
  */
 void fec_controller_feed_info(void* fec_controller, double current_time, WccOp op,
                               double packet_loss, int old_bitrate, int current_bitrate,
-                              int min_bitrate);
+                              int min_bitrate, bool saturate_bandwidth);
 
 /**
  * @brief                          get the fec ratio computed by fec_controller
