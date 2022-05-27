@@ -21,7 +21,6 @@ Includes
 
 #include <whist/network/network.h>
 #include <whist/network/ringbuffer.h>
-#include <whist/fec/fec_controller.h>
 
 /*
 ============================

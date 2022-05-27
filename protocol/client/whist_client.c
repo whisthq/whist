@@ -47,7 +47,6 @@ Includes
 #include "renderer.h"
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
-#include <whist/fec/fec_controller.h>
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
