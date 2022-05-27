@@ -147,8 +147,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     }
     LOG_DEBUG("Hide taskbar");
 
-    SDLFrontendContext* context = (SDLFrontendContext*)safe_malloc(sizeof(SDLFrontendContext));
-    memset(context, 0, sizeof(SDLFrontendContext));
+    SDLFrontendContext* context = (SDLFrontendContext*)safe_zalloc(sizeof(SDLFrontendContext));
     frontend->context = context;
 
     context->audio_device = 0;
@@ -165,7 +164,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     FATAL_ASSERT(context->internal_event_id != (uint32_t)-1);
     LOG_DEBUG("Created context and register events");
     // create the main window
-    SDLWindowContext* window_context = (SDLWindowContext*)safe_malloc(sizeof(SDLWindowContext));
+    SDLWindowContext* window_context = (SDLWindowContext*)safe_zalloc(sizeof(SDLWindowContext));
     window_context->to_be_created = true;
     window_context->x = 0;
     window_context->y = 0;
