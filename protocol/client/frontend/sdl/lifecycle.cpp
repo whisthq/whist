@@ -166,6 +166,10 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // create the main window
     SDLWindowContext* window_context = (SDLWindowContext*)safe_zalloc(sizeof(SDLWindowContext));
     window_context->to_be_created = true;
+    window_context->x = SDL_WINDOWPOS_CENTERED;
+    window_context->y = SDL_WINDOWPOS_CENTERED;
+    window_context->width = width;
+    window_context->height = height;
     window_context->title = "Dummy";
     window_context->color = {17, 24, 39};
     window_context->is_fullscreen = false;
@@ -218,7 +222,6 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     if (context->windows.contains(id)) {
         if (!context->windows[id]->to_be_created) {
             LOG_ERROR("Tried to make a window with duplicate ID %d!", id);
-            // IDK what this means but it looks legit
             return WHIST_ERROR_ALREADY_SET;
         }
     } else {
