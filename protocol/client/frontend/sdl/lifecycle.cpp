@@ -1,3 +1,4 @@
+#include <whist/core/whist.h>
 extern "C" {
 #include "common.h"
 #include "native.h"
@@ -6,7 +7,6 @@ extern "C" {
 
 #include "sdl_struct.hpp"
 #include <whist/utils/atomic.h>
-#include <vector>
 
 static bool skip_taskbar;
 static char* icon_png_filename;
@@ -114,11 +114,9 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     SDL_SetHint(SDL_HINT_RENDER_DIRECT3D11_DEBUG, "1");
 #endif
 #endif  // Windows
-    LOG_DEBUG("Set hints");
 
     // Allow the screensaver to activate while the frontend is running
     SDL_EnableScreenSaver();
-    LOG_DEBUG("Enabled screensaver");
 
     bool start_maximized = (width == 0 && height == 0);
 
@@ -132,7 +130,6 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
         LOG_ERROR("Could not get display mode: %s", SDL_GetError());
         return WHIST_ERROR_UNKNOWN;
     }
-    LOG_DEBUG("Got desktop display mode");
 
     if (width == 0) {
         width = display_info.w;
@@ -145,9 +142,9 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
         // Hide the taskbar on macOS directly
         sdl_native_hide_taskbar();
     }
-    LOG_DEBUG("Hide taskbar");
 
-    SDLFrontendContext* context = (SDLFrontendContext*)safe_zalloc(sizeof(SDLFrontendContext));
+    // Initialize the SDLFrontendContext
+    SDLFrontendContext* context = new SDLFrontendContext();
     frontend->context = context;
 
     context->audio_device = 0;
@@ -158,25 +155,22 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     context->cursor.last_visible_position.x = 0;
     context->cursor.last_visible_position.y = 0;
     context->cursor.handle = NULL;
-    context->windows = std::map<int, SDLWindowContext*>();
 
     context->internal_event_id = SDL_RegisterEvents(1);
     FATAL_ASSERT(context->internal_event_id != (uint32_t)-1);
-    LOG_DEBUG("Created context and register events");
-    // create the main window
-    SDLWindowContext* window_context = (SDLWindowContext*)safe_zalloc(sizeof(SDLWindowContext));
+
+    // Initialize the default window
+    SDLWindowContext* window_context = new SDLWindowContext();
     window_context->to_be_created = true;
     window_context->x = SDL_WINDOWPOS_CENTERED;
     window_context->y = SDL_WINDOWPOS_CENTERED;
     window_context->width = width;
     window_context->height = height;
-    window_context->title = "Dummy";
+    window_context->title = std::string(title == NULL ? "Whist" : title);
     window_context->color = {17, 24, 39};
     window_context->is_fullscreen = false;
-    window_context->is_resizable = false;
-    LOG_DEBUG("Set window context fields");
+    window_context->is_resizable = true;
     context->windows[0] = window_context;
-    LOG_DEBUG("set context->windows to window_context");
     sdl_create_window(frontend, 0);
 
     // render the newly created window
@@ -231,7 +225,6 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
             id);
         return WHIST_ERROR_NOT_FOUND;
     }
-    LOG_DEBUG("Creating window with ID %d", id);
 
     SDLWindowContext* window_context = context->windows[id];
 
@@ -251,34 +244,26 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
         window_flags |= SDL_WINDOW_SKIP_TASKBAR;
     }
 
-    if (window_context->title == NULL) {
-        // Default window title is "Whist"
-        window_context->title = "Whist";
-    }
-
     // Renderer flags
     uint32_t renderer_flags = 0;
     renderer_flags |= SDL_RENDERER_ACCELERATED;
     if (VSYNC_ON) {
         renderer_flags |= SDL_RENDERER_PRESENTVSYNC;
     }
-    LOG_DEBUG("Set flags");
 
     // Create the window and renderer
     window_context->window =
-        SDL_CreateWindow(window_context->title, window_context->x, window_context->y,
+        SDL_CreateWindow(window_context->title.c_str(), window_context->x, window_context->y,
                          window_context->width, window_context->height, window_flags);
     if (window_context->window == NULL) {
         LOG_ERROR("Could not create window: %s", SDL_GetError());
         return WHIST_ERROR_UNKNOWN;
     }
-    LOG_DEBUG("Created window");
     window_context->window_id = SDL_GetWindowID(window_context->window);
     if (window_context->window_id == 0) {
         LOG_ERROR("Could not get window ID: %s", SDL_GetError());
         return WHIST_ERROR_UNKNOWN;
     }
-    LOG_DEBUG("Got SDL window ID %d", window_context->window_id);
 
     window_context->renderer = SDL_CreateRenderer(window_context->window, -1, renderer_flags);
     if (window_context->renderer == NULL) {
@@ -286,7 +271,6 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
         return WHIST_ERROR_UNKNOWN;
     }
     SDL_SetRenderDrawBlendMode(window_context->renderer, SDL_BLENDMODE_BLEND);
-    LOG_DEBUG("Created renderer");
 
     // Set renderer name if not set
     if (!context->render_driver_name) {
@@ -298,7 +282,6 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
         LOG_INFO("Using renderer: %s", info.name);
         context->render_driver_name = info.name;
     }
-    LOG_DEBUG("Set renderer name");
 
     // We don't need to do this if we don't initialize the window until we get frames from the
     // server window starts solid color
@@ -309,8 +292,6 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     sdl_native_init_window_options(window_context->window);
     SDL_SetWindowMinimumSize(window_context->window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
     SDL_SetWindowMaximumSize(window_context->window, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-    LOG_DEBUG("Created window %d, SDL ID %d, title %s", id, context->windows[id]->window_id,
-              context->windows[id]->title);
     return WHIST_SUCCESS;
 }
 

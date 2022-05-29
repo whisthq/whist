@@ -24,8 +24,8 @@ update_mapped_keyboard_state(input_device, WHIST_APPLE, keyboard_state);
 
 #define hmap unordered_map
 
-extern "C" {
 #include <whist/core/whist.h>
+extern "C" {
 #include "keyboard_mapping.h"
 #include "input.h"
 }

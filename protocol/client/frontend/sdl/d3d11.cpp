@@ -8,6 +8,7 @@
 #include <dxgi1_3.h>
 #include <dxgidebug.h>
 
+#include <whist/core/whist.h>
 extern "C" {
 #include <libavutil/hwcontext_d3d11va.h>
 #include "common.h"

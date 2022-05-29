@@ -14,6 +14,27 @@ Includes
 ============================
 */
 
+#ifdef __cplusplus
+
+// whist.h supports direct cpp inclusion, with internal extern "C"
+// Includers should not wrap whist.h in extern "C"
+#include <vector>
+#include <map>
+#include <string>
+#include <algorithm>
+using std::max;
+using std::min;
+extern "C" {
+
+#else
+
+#ifndef _WIN32
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
+#endif
+
 #include "platform.h"
 
 // In order to use accept4 we have to allow non-standard extensions
@@ -791,5 +812,14 @@ const char* whist_git_revision(void);
 
 // TODO: Resolve circular references
 #include "whist_frame.h"
+
+#ifdef __cplusplus
+}
+#endif
+
+// Included outside of extern "C", since atomic.h supports C++
+// Included after whist.h, since atomic.h needs whist.h
+// TODO: Resolve circular references
+#include <whist/utils/atomic.h>
 
 #endif  // WHIST_H

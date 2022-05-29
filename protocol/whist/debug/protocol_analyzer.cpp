@@ -12,6 +12,7 @@ Includes
 #include <fstream>
 
 #include <assert.h>
+#include <whist/core/whist.h>
 extern "C" {
 #include "protocol_analyzer.h"
 #include <whist/network/network.h>

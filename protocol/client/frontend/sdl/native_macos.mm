@@ -1,3 +1,4 @@
+#include <whist/core/whist.h>
 extern "C" {
 #include "native.h"
 #include <SDL2/SDL_syswm.h>
