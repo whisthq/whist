@@ -290,7 +290,6 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     // Safe to set these post-initialization.
     sdl_native_init_window_options(window_context->window);
     SDL_SetWindowMaximumSize(window_context->window, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-
     return WHIST_SUCCESS;
 }
 

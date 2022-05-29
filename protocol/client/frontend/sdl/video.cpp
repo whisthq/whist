@@ -266,6 +266,9 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
             continue;
         }
 
+        // Take the subsection of texture that should be rendered to screen,
+        // and draw it on the renderer
+        LOG_INFO("Width: %d AND %d", window_context->width, context->video.frame_width);
         // Populate with whole frame, for single-window mode
         window_context->x = 0;
         window_context->y = 0;
