@@ -338,21 +338,20 @@ void sdl_destroy_window(WhistFrontend* frontend, int id) {
 }
 
 void sdl_destroy(WhistFrontend* frontend) {
+    FATAL_ASSERT(frontend != NULL);
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-
-    if (!context) {
+    // Context can be null, if SDL couldn't initialize
+    if (context == NULL) {
         return;
     }
-    // destroy all windows
-    std::vector<int> window_ids;
-    for (const auto& [id, window_context] : context->windows) {
-        window_ids.push_back(id);
+
+    // Destroy all the windows
+    while (!context->windows.empty()) {
+        // Destroying a window erases it from the map, so we can't for-each here
+        sdl_destroy_window(frontend, context->windows.begin()->first);
     }
-    // sdl_destroy_window removes from the map
-    // So, we collect the IDs above, before we start removing
-    for (int id : window_ids) {
-        sdl_destroy_window(frontend, id);
-    }
+
+    // Destroy video objects
     av_buffer_unref(&context->video.decode_device);
     av_frame_free(&context->video.frame_reference);
 
@@ -363,4 +362,5 @@ void sdl_destroy(WhistFrontend* frontend) {
     sdl_native_destroy_external_drag_handler(frontend);
 
     free(context);
+    frontend->context = NULL;
 }
