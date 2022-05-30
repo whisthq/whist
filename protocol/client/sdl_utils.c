@@ -282,6 +282,7 @@ void sdl_render_window_titlebar_color(int id, WhistRGBColor color) {
     if (memcmp(&current_color, &color, sizeof(color))) {
         WhistRGBColor* new_color = safe_malloc(sizeof(color));
         *new_color = color;
+        // whist_frontend_set_titlebar_color is now responsible for free'ing new_color
         whist_frontend_set_titlebar_color(event_frontend, id, new_color);
         current_color = color;
     }
@@ -292,6 +293,7 @@ void sdl_set_window_title(int id, const char* requested_window_title) {
     char* new_window_title = safe_malloc(len);
     safe_strncpy(new_window_title, requested_window_title, len);
 
+    // whist_frontend_set_title is now responsible for free'ing new_window_title
     whist_frontend_set_title(event_frontend, id, new_window_title);
 }
 

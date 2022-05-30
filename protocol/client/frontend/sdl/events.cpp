@@ -10,9 +10,7 @@ extern "C" {
 // TODO: needs better name
 // returns the ID of the window with given SDLWindowID
 int get_window_id_from_sdl_id(SDLFrontendContext* context, Uint32 sdl_id) {
-    for (const auto& pair : context->windows) {
-        int id = pair.first;
-        SDLWindowContext* window_context = pair.second;
+    for (const auto& [id, window_context] : context->windows) {
         if (window_context->window_id == sdl_id) {
             return id;
         }

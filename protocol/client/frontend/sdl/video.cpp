@@ -16,6 +16,9 @@ extern "C" {
 
 void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size, int output_width,
                    int output_height, int x, int y) {
+    /*
+     * Render a PNG to all windows in the frontend
+     */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     unsigned int w, h;
     uint8_t* image;
@@ -34,8 +37,7 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
         free(image);
         return;
     }
-    for (const auto& pair : context->windows) {
-        SDLWindowContext* window_context = pair.second;
+    for (const auto& [window_id, window_context] : context->windows) {
         SDL_Texture* texture = SDL_CreateTextureFromSurface(window_context->renderer, surface);
         if (texture == NULL) {
             LOG_ERROR("Failed to create texture from PNG: %s", SDL_GetError());
@@ -107,6 +109,11 @@ static SDL_PixelFormatEnum sdl_get_pixel_format(enum AVPixelFormat pixfmt) {
 }
 
 WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
+    /*
+     * Copy/upload the video frame texture sent by the server to each window in the frontend.
+     * We currently upload that one texture multiple times, but will transition to more efficient
+     * ways of copying the texture between renderers.
+     */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     int res;
 
@@ -123,8 +130,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
 
     // TODO: for now I've wrapped the logic in a loop, but we should only be importing the first
     // texture and blitting the rest
-    for (const auto& pair : context->windows) {
-        SDLWindowContext* window_context = pair.second;
+    for (const auto& [window_id, window_context] : context->windows) {
         if (import_texture || format != window_context->texture_format ||
             frame->width != context->video.frame_width ||
             frame->height != context->video.frame_height) {
@@ -241,11 +247,14 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
 #endif
 
 void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
+    /*
+     * Copy the appropiate portion of the video frame to each window's renderer texture. Each window
+     * crops only the rectangle determined by its window context's x/y/width/height.
+     */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     int res;
 
-    for (const auto& pair : context->windows) {
-        SDLWindowContext* window_context = pair.second;
+    for (const auto& [window_id, window_context] : context->windows) {
         if (window_context->texture == NULL) {
             // No texture to render - this can happen at startup if no video
             // has been decoded yet.  Do nothing here, since the screen was
@@ -253,9 +262,6 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
             continue;
         }
 
-        // Take the subsection of texture that should be rendered to screen,
-        // and draw it on the renderer
-        LOG_INFO("Width: %d AND %d", window_context->width, context->video.frame_width);
         // Populate with whole frame, for single-window mode
         window_context->x = 0;
         window_context->y = 0;
@@ -283,8 +289,7 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
 void sdl_render(WhistFrontend* frontend) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
 
-    for (const auto& pair : context->windows) {
-        SDLWindowContext* window_context = pair.second;
+    for (const auto& [window_id, window_context] : context->windows) {
         SDL_RenderPresent(window_context->renderer);
 
         // TODO: necessary if we only show windows on demand?

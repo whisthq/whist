@@ -68,6 +68,10 @@ static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 // TODO: We could factor this out to initialize by component -- e.g. audio, window, renderer, etc.
 WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char* title,
                      const WhistRGBColor* color) {
+    /*
+     * Initialize an SDL frontend. Open an initial window with the given dimensions, title, and
+     * titlebar color, and start the video and audio.
+     */
     // Only the first init does anything; subsequent ones update an internal
     // refcount.
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
@@ -184,6 +188,11 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 }
 
 WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
+    /*
+     * Create an SDL window and renderer with the given id, initially hidden until the first render.
+     * This function assumes that the corresponding SDLWindowContext* has already been filled in
+     * with the desired metadata
+     */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
 
     // Create a window and renderer with the given parameters, add it to context->windows
@@ -287,6 +296,9 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
 }
 
 void sdl_destroy_window(WhistFrontend* frontend, int id) {
+    /*
+     * Destroy the window and renderer with given id if it exists.
+     */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (context->windows.contains(id)) {
         SDLWindowContext* window_context = context->windows[id];
@@ -305,8 +317,8 @@ void sdl_destroy_window(WhistFrontend* frontend, int id) {
             SDL_DestroyWindow(window_context->window);
             window_context->window = NULL;
         }
-        free(window_context);
         context->windows.erase(id);
+        delete window_context;
     } else {
         LOG_ERROR("Tried to destroy window with ID %d, but no window with that ID was found!", id);
     }
@@ -336,6 +348,6 @@ void sdl_destroy(WhistFrontend* frontend) {
 
     sdl_native_destroy_external_drag_handler(frontend);
 
-    free(context);
     frontend->context = NULL;
+    delete context;
 }

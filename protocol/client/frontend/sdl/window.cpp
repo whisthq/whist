@@ -7,6 +7,9 @@ extern "C" {
 #include "sdl_struct.hpp"
 
 void sdl_get_window_pixel_size(WhistFrontend* frontend, int id, int* width, int* height) {
+    /*
+     * Get the actual size (DPI-adjusted) of the window with given id.
+     */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (context->windows.contains(id)) {
         SDL_GL_GetDrawableSize(context->windows[id]->window, width, height);
@@ -16,6 +19,10 @@ void sdl_get_window_pixel_size(WhistFrontend* frontend, int id, int* width, int*
 }
 
 void sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* width, int* height) {
+    /*
+     * Get the non-DPI-adjusted width and height of the window with given id. This will be a
+     * fraction of the actual size in high DPI monitors.
+     */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (context->windows.contains(id)) {
         SDL_GetWindowSize(context->windows[id]->window, width, height);
@@ -56,8 +63,7 @@ int sdl_get_window_dpi(WhistFrontend* frontend) {
 bool sdl_is_window_visible(WhistFrontend* frontend) {
     // TODO: changed to check if any window is visible
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    for (const auto& pair : context->windows) {
-        SDLWindowContext* window_context = pair.second;
+    for (const auto& [window_id, window_context] : context->windows) {
         if (!(SDL_GetWindowFlags(window_context->window) &
               (SDL_WINDOW_MINIMIZED | SDL_WINDOW_OCCLUDED))) {
             return true;
@@ -77,10 +83,11 @@ WhistStatus sdl_set_title(WhistFrontend* frontend, int id, const char* title) {
                     .timestamp = 0,
                     .windowID = context->windows[id]->window_id,
                     .code = SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE,
-                    .data1 = (void*)context->windows[id]->title.c_str(),
+                    .data1 = (void*)title,
                     .data2 = NULL,
                 },
         };
+        // NOTE: "title" will be freed when the event is consumed
         SDL_PushEvent(&event);
         return WHIST_SUCCESS;
     } else {
@@ -98,6 +105,10 @@ void sdl_restore_window(WhistFrontend* frontend, int id) {
 }
 
 void sdl_resize_window(WhistFrontend* frontend, int id, int width, int height) {
+    /*
+     * Resize the window with given id. Width and height are given in virtual pixels, not actual
+     * pixels.
+     */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (context->windows.contains(id)) {
         SDL_SetWindowSize(context->windows[id]->window, width, height);
@@ -120,6 +131,7 @@ void sdl_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor
                     .data2 = NULL,
                 },
         };
+        // NOTE: "color" will be freed when the event is consumed
         SDL_PushEvent(&event);
     } else {
         LOG_ERROR("Tried to set titlebar color for window %d, but no such window exists!", id);

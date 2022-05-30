@@ -75,8 +75,10 @@ typedef struct SDLWindowContext {
     // TODO: dump this into a WhistWindowData
     int x;
     int y;
+    // the width and height of the window, as communicated by the server (actual pixels)
     int width;
     int height;
+    // the width and height of the SDL window (actual pixels)
     int sdl_width;
     int sdl_height;
     std::string title;
