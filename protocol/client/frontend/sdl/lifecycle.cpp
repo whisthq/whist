@@ -118,26 +118,6 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // Allow the screensaver to activate while the frontend is running
     SDL_EnableScreenSaver();
 
-    bool start_maximized = (width == 0 && height == 0);
-
-    // Grab the default display dimensions. If width or height are 0, then
-    // we'll set that dimension to half of the display's dimension. If the
-    // window starts maximized and the user then unmaximizes (double click
-    // the titlebar on macOS), then the window will be restored to these
-    // dimensions.
-    SDL_DisplayMode display_info;
-    if (SDL_GetDesktopDisplayMode(0, &display_info) != 0) {
-        LOG_ERROR("Could not get display mode: %s", SDL_GetError());
-        return WHIST_ERROR_UNKNOWN;
-    }
-
-    if (width == 0) {
-        width = display_info.w;
-    }
-    if (height == 0) {
-        height = display_info.h;
-    }
-
     if (skip_taskbar) {
         // Hide the taskbar on macOS directly
         sdl_native_hide_taskbar();
@@ -173,7 +153,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     context->windows[0] = window_context;
     sdl_create_window(frontend, 0);
 
-    // render the newly created window
+    // Render the newly created window
     sdl_render(frontend);
 
     sdl_init_video_device(context);
@@ -189,11 +169,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        // Pump the event loop until the window is actually initialized (mainly macOS).
-    }
-
-    while (SDL_PollEvent(&event)) {
-        // Pump the event loop until the window fully finishes loading.
+        // Pump the event loop until the window fully finishes loading. (mainly MacOS)
     }
 
 #if OS_IS(OS_WIN32)
@@ -244,6 +220,20 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
         window_flags |= SDL_WINDOW_SKIP_TASKBAR;
     }
 
+    // If width or height is 0, update width/height to use the entire display,
+    // And set the MAXIMIZED window flag
+    if (window_context->width == 0 || window_context->height == 0) {
+        SDL_DisplayMode display_info;
+        if (SDL_GetDesktopDisplayMode(0, &display_info) != 0) {
+            LOG_ERROR("Could not get display mode: %s", SDL_GetError());
+            return WHIST_ERROR_UNKNOWN;
+        }
+
+        window_context->width = display_info.w;
+        window_context->height = display_info.h;
+        window_flags |= SDL_WINDOW_MAXIMIZED;
+    }
+
     // Renderer flags
     uint32_t renderer_flags = 0;
     renderer_flags |= SDL_RENDERER_ACCELERATED;
@@ -292,6 +282,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     sdl_native_init_window_options(window_context->window);
     SDL_SetWindowMinimumSize(window_context->window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
     SDL_SetWindowMaximumSize(window_context->window, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+
     return WHIST_SUCCESS;
 }
 
