@@ -804,7 +804,7 @@ typedef enum WhistServerMessageType {
 // TODO: implement window title passing without wasting bandwidth
 typedef struct WhistWindow {
     LINKED_LIST_HEADER;
-    unsigned long id;
+    uint64_t id;
     int x;
     int y;
     int width;
