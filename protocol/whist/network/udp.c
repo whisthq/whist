@@ -520,19 +520,22 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
             int incoming_bitrate = get_incoming_bitrate(context);
             double packet_loss_ratio = get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
                                                              context->short_term_latency);
-            // feed current time and latency info into fec controller
-            double current_time = get_timestamp_sec();
-            fec_controller_feed_latency(context->fec_controller, current_time,
-                                        context->short_term_latency);
-            if (LOG_FEC_CONTROLLER) {
-                static double last_log_time = 0;
-                if (current_time - last_log_time > 0.2) {
-                    last_log_time = current_time;
-                    LOG_INFO(
-                        "[FEC_CONTROLLER]"
-                        "loss=%.2f%% short_term_latecny=%.1fms long_term_latency=%.1f inbits=%d\n",
-                        packet_loss_ratio * 100, context->short_term_latency * 1000,
-                        context->long_term_latency * 1000, incoming_bitrate);
+            if (ENABLE_FEC) {
+                // feed current time and latency info into fec controller
+                double current_time = get_timestamp_sec();
+                fec_controller_feed_latency(context->fec_controller, current_time,
+                                            context->short_term_latency);
+                if (LOG_FEC_CONTROLLER) {
+                    static double last_log_time = 0;
+                    if (current_time - last_log_time > 0.2) {
+                        last_log_time = current_time;
+                        LOG_INFO(
+                            "[FEC_CONTROLLER]"
+                            "loss=%.2f%% short_term_latecny=%.1fms long_term_latency=%.1f "
+                            "inbits=%d\n",
+                            packet_loss_ratio * 100, context->short_term_latency * MS_IN_SECOND,
+                            context->long_term_latency * MS_IN_SECOND, incoming_bitrate);
+                    }
                 }
             }
             send_network_settings = whist_congestion_controller(
