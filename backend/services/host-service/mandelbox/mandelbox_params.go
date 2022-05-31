@@ -1,9 +1,6 @@
 package mandelbox // import "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 
 import (
-	"bytes"
-	"io"
-	"io/ioutil"
 	"os"
 	"path"
 
