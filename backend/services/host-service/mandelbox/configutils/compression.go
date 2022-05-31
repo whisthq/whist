@@ -3,14 +3,14 @@ package configutils // import "github.com/whisthq/whist/backend/services/host-se
 import (
 	"archive/tar"
 	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-	"compress/gzip"
-	"encoding/base64"
 
 	"github.com/pierrec/lz4/v4"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -290,18 +290,19 @@ func ValidateDirectoryContents(oldDir, newDir string) error {
 func inflateGzip(w io.Writer, data []byte) error {
 	gr, err := gzip.NewReader(bytes.NewBuffer(data))
 	defer gr.Close()
-	
+
 	data, err = ioutil.ReadAll(gr)
 	if err != nil {
 		return utils.MakeError("Couldn't extract inflated string from gzip reader: %s", err)
 	}
-	
+
 	w.Write(data)
-	
+
 	return nil
 }
+
 // Inflate a gzip-compressed string (encoded according to base-64 protocol)
-func gzipInflateString(compressedGzipString string) (string, error) {
+func GzipInflateString(compressedGzipString string) (string, error) {
 	base64DecodedData, err := base64.StdEncoding.DecodeString(compressedGzipString)
 	if err != nil {
 		return "", utils.MakeError("Couldn't decode received string: %s", err)

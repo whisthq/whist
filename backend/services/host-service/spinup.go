@@ -23,6 +23,7 @@ import (
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -416,7 +417,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	}
 
 	var inflatedBrowserData string
-	inflatedBrowserData, err := configutils.gzipInflateString(req.BrowserData)
+	inflatedBrowserData, err := configutils.GzipInflateString(req.BrowserData)
 	if err != nil {
 		logAndReturnError("Error inflating user browser data in mandelbox %s for user %s: %s", mandelbox.GetID(), mandelbox.GetUserID(), err)
 		return
@@ -444,7 +445,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 
 	// Write the user's initial browser data
 	logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
-	
+
 	// err = mandelbox.WriteUserInitialBrowserData(mandelboxData.BrowserData{
 	// 	CookiesJSON:       req.CookiesJSON,
 	// 	Bookmarks:         &importedBookmarks,
