@@ -1,10 +1,5 @@
 package configutils
 
-import (
-	"encoding/json"
-
-	"github.com/whisthq/whist/backend/services/types"
-)
 
 // This type defines a standard Chromium Bookmark object
 type Bookmark struct {
