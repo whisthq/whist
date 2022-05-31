@@ -236,16 +236,6 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
     return WHIST_SUCCESS;
 }
 
-// On macOS & Windows, SDL outputs the texture with the last pixel on the bottom and
-// right sides without data, rendering it green (NV12 color format). We're not sure
-// why that is the case, but in the meantime, clipping that pixel makes the visual
-// look seamless.
-#if defined(__APPLE__) || defined(_WIN32)
-#define CLIPPED_PIXELS 1
-#else
-#define CLIPPED_PIXELS 0
-#endif
-
 void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
     /*
      * Copy the appropiate portion of the video frame to each window's renderer texture. Each window
@@ -269,11 +259,12 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
         window_context->height = context->video.frame_height;
         window_context->sdl_width = output_width;
         window_context->sdl_height = output_height;
+        // Take that crop when rendering it out
         SDL_Rect output_rect = {
             .x = window_context->x,
             .y = window_context->y,
-            .w = min(window_context->sdl_width, window_context->width) - CLIPPED_PIXELS,
-            .h = min(window_context->sdl_height, window_context->height) - CLIPPED_PIXELS,
+            .w = min(window_context->sdl_width, window_context->width),
+            .h = min(window_context->sdl_height, window_context->height),
         };
         res = SDL_RenderCopy(window_context->renderer, window_context->texture, &output_rect, NULL);
         if (res < 0) {
