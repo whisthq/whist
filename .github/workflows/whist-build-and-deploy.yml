@@ -933,6 +933,22 @@ jobs:
           D:/a/whist/whist/sentry-cli upload-dif WhistProtocolClient/build/WhistClient
           D:/a/whist/whist/sentry-cli upload-dif WhistProtocolClient/debugSymbols/WhistClient.debug
 
+      - name: Notify Slack on Publishing Client Applications Error
+        if: failure()
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-s3` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
+
   #######################################################################################
   #######################################################################################
 
@@ -1009,22 +1025,6 @@ jobs:
           TITLE = ":electron: Windows & macOS Applications Deployed :electron:"
           BODY = f"Windows & macOS Applications deployed via upload to AWS S3 on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` - You can download them from {WEBSITE_URL} (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
-
-      - name: Notify Slack on Publishing Client Applications Error
-        if: needs.client-applications-publish-build-s3.result == 'failure'
-        shell: python3 {0}
-        run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
-          from notifications.slack_bot import slack_post
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-s3` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
   #######################################################################################
