@@ -51,7 +51,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	// If not, wait until the host service terminates the instance.
 	err = s.Host.WaitForInstanceTermination(scalingCtx, maxWaitTimeTerminated, []string{instance.ID})
 	if err != nil {
-		return utils.MakeError("Instance %v failed to terminate correctly, either it doesn't exist on AWS or the database subscriptions failed. Err: %s", instance.ID, err)
+		return err
 	}
 
 	// Once its terminated, verify that it was removed from the database
@@ -287,10 +287,20 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			return utils.MakeError("failed to terminate lingering instances. Err: %s", err)
 		}
 
+		// Spawn a goroutine to check that each instance terminates properly and is removed from the database.
+		for _, lingeringInstance := range lingeringInstances {
+			go s.VerifyInstanceScaleDown(context.Background(), event, lingeringInstance)
+		}
+
 	} else if !metadata.IsLocalEnv() {
 		logger.Info("There are no lingering instances in %v.", event.Region)
 	} else {
 		logger.Infof("Running on localdev so not spinning down instances.")
+
+		// Spawn a goroutine to check that each instance terminates properly and is removed from the database.
+		for _, lingeringInstance := range lingeringInstances {
+			go s.VerifyInstanceScaleDown(context.Background(), event, lingeringInstance)
+		}
 	}
 
 	// Verify if there are free instances that can be scaled down

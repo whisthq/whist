@@ -239,6 +239,10 @@ func (host *AWSHost) SpinDownInstances(scalingCtx context.Context, instanceIDs [
 
 // WaitForInstanceTermination waits until the given instance has been terminated on AWS.
 func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, maxWaitTime time.Duration, instanceIds []string) error {
+	if metadata.IsLocalEnv() {
+		return nil
+	}
+
 	ctx, cancel := context.WithCancel(scalingCtx)
 	defer cancel()
 
