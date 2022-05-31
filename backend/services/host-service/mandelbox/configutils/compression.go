@@ -311,5 +311,5 @@ func gzipInflateString(compressedGzipString string) (string, error) {
 	if err != nil {
 		return nil, utils.MakeError("Couldn't inflate decoded string: %s", err)
 	}
-	return gzipDecodedDataBuffer.String()
+	return gzipDecodedDataBuffer.String(), nil
 }
