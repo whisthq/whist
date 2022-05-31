@@ -145,10 +145,10 @@ GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
 
   # Install NVIDIA GRID (virtualized GPU) drivers
-  ./get-nvidia-driver-installer.sh
-  sudo chmod +x nvidia-driver-installer.run
-  sudo ./nvidia-driver-installer.run --silent
-  sudo rm nvidia-driver-installer.run
+#  ./get-nvidia-driver-installer.sh
+#  sudo chmod +x nvidia-driver-installer.run
+#  sudo ./nvidia-driver-installer.run --silent
+#  sudo rm nvidia-driver-installer.run
 
   echo "================================================"
   echo "Installing nvidia-docker..."
@@ -164,7 +164,7 @@ EOF
 
   # Install nvidia-docker via apt
   sudo apt-get update -y
-  sudo apt-get install -y nvidia-docker2
+  # sudo apt-get install -y nvidia-docker2
 
   echo "================================================"
   echo "Installing General Utilities..."
@@ -260,23 +260,23 @@ EOF
   # For more information, see the following link:
   # https://download.nvidia.com/XFree86/Linux-x86_64/396.51/README/nvidia-persistenced.html
 
-  cat << EOF | sudo tee /etc/systemd/system/nvidia-persistenced.service > /dev/null
-[Unit]
-Description=NVIDIA Persistence Daemon
-Wants=syslog.target
-[Service]
-Restart=yes
-User=root
-Type=forking
-ExecStart=/usr/bin/nvidia-persistenced -V
-ExecStopPost=/bin/rm -rf /var/run/nvidia-persistenced
-[Install]
-WantedBy=multi-user.target
-EOF
-
-  sudo /bin/systemctl daemon-reload
-  sudo systemctl enable --now nvidia-persistenced.service
-  echo "Enabled NVIDIA Persistence Daemon"
+#    cat << EOF | sudo tee /etc/systemd/system/nvidia-persistenced.service > /dev/null
+# [Unit]
+# Description=NVIDIA Persistence Daemon
+# Wants=syslog.target
+# [Service]
+# Restart=yes
+# User=root
+# Type=forking
+# ExecStart=/usr/bin/nvidia-persistenced -V
+# ExecStopPost=/bin/rm -rf /var/run/nvidia-persistenced
+# [Install]
+# WantedBy=multi-user.target
+# EOF
+# 
+#   sudo /bin/systemctl daemon-reload
+#   sudo systemctl enable --now nvidia-persistenced.service
+#   echo "Enabled NVIDIA Persistence Daemon"
 }
 
 ####################################################

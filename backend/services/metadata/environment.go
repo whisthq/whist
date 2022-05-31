@@ -104,6 +104,18 @@ func IsRunningInCI() bool {
 	}
 }
 
+// IsNonGPU returns true if the host-service is running on a host without
+// a GPU and false otherwise.
+func IsNonGPU() bool {
+	strNonGPU := strings.ToLower(os.Getenv("NOGPU"))
+	switch strNonGPU {
+	case "1", "yes", "true", "on", "yep":
+		return true
+	default:
+		return false
+	}
+}
+
 // GetUserID returns the user ID depending on the environment
 // the host is run.
 func GetUserID() (mandelboxtypes.UserID, error) {

@@ -145,7 +145,7 @@ type RuntimeMetrics struct {
 }
 
 func init() {
-	if !metadata.IsRunningInCI() {
+	if !metadata.IsRunningInCI() && !metadata.IsNonGPU() {
 		err := startCollectionGoroutine(30 * time.Second)
 		if err != nil {
 			// We can safely do a "real" panic in an init function.
