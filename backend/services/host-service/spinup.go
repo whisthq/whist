@@ -416,17 +416,16 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		logger.Error(err)
 	}
 
-	var inflatedBrowserData string
-	inflatedBrowserData, err := configutils.GzipInflateString(req.BrowserData)
+	inflatedBrowserData, err := configutils.GzipInflateString(string(req.BrowserData))
 	if err != nil {
 		logAndReturnError("Error inflating user browser data in mandelbox %s for user %s: %s", mandelbox.GetID(), mandelbox.GetUserID(), err)
 		return
 	}
 
 	// Unmarshal bookmarks into proper format
-	var browserData browserData
+	var browserData mandelboxData.BrowserData
 	if len(inflatedBrowserData) > 0 {
-		browserData, err = mandelbox.UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+		browserData, err = mandelboxData.UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
 		if err != nil {
 			// BrowserData import errors are not fatal
 			logger.Errorf("Error unmarshalling user browser data for mandelbox %s: %s", mandelbox.GetID(), err)
