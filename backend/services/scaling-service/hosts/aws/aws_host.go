@@ -215,7 +215,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 }
 
 // SpinDownInstances is responsible for terminating the instances in `instanceIDs`.
-func (host *AWSHost) SpinDownInstances(scalingCtx context.Context, instanceIDs []string) ([]subscriptions.Instance, error) {
+func (host *AWSHost) SpinDownInstances(scalingCtx context.Context, instanceIDs []string) error {
 	ctx, cancel := context.WithCancel(scalingCtx)
 	defer cancel()
 
@@ -225,25 +225,16 @@ func (host *AWSHost) SpinDownInstances(scalingCtx context.Context, instanceIDs [
 
 	terminateOutput, err := host.EC2.TerminateInstances(ctx, terminateInput)
 
-	// Create slice with created instances
-	var outputInstances []subscriptions.Instance
-
-	for _, outputInstance := range terminateOutput.TerminatingInstances {
-		outputInstances = append(outputInstances, subscriptions.Instance{
-			ID: *outputInstance.InstanceId,
-		})
-	}
-
 	// Verify termination output
 	if len(terminateOutput.TerminatingInstances) != len(instanceIDs) {
-		return outputInstances, utils.MakeError("failed to terminate requested number of instances with parameters: %v. Number of terminated instances: %v",
+		return utils.MakeError("failed to terminate requested number of instances with parameters: %v. Number of terminated instances: %v",
 			terminateInput, len(terminateOutput.TerminatingInstances))
 	}
 
 	if err != nil {
-		return outputInstances, utils.MakeError("error terminating instance with id: %v. Error: %v", instanceIDs, err)
+		return utils.MakeError("error terminating instance with id: %v. Error: %v", instanceIDs, err)
 	}
-	return outputInstances, nil
+	return nil
 }
 
 // WaitForInstanceTermination waits until the given instance has been terminated on AWS.

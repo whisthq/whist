@@ -51,10 +51,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	// If not, wait until the host service terminates the instance.
 	err = s.Host.WaitForInstanceTermination(scalingCtx, maxWaitTimeTerminated, []string{instance.ID})
 	if err != nil {
-		// Err is already wrapped here.
-		// TODO: Notify that the instance didn't terminate itself, should be investigated.
-		message := `Instance %v failed to terminate correctly, either the instance doesn't exist on AWS or something is blocking the shut down procedure.`
-		return utils.MakeError(message, instance.ID)
+		return utils.MakeError("Instance %v failed to terminate correctly, either it doesn't exist on AWS or the database subscriptions failed. Err: %s", instance.ID, err)
 	}
 
 	// Once its terminated, verify that it was removed from the database
@@ -69,7 +66,10 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 		return nil
 	}
 
-	// If instance still exists on the database, delete as it no longer exists on cloud provider
+	// If instance still exists on the database, delete as it no longer exists on cloud provider.
+	// This edge case means something went wrong with shutting down the instance and now the db is
+	// out of sync with the cloud provider. To amend this, delete the instance and its mandelboxes
+	// from the database.
 	logger.Info("Removing instance %v from database as it no longer exists on cloud provider.", instance.ID)
 
 	affectedRows, err := s.DBClient.DeleteInstance(scalingCtx, s.GraphQLClient, instance.ID)
@@ -277,12 +277,20 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		}
 	}
 
-	// Verify if there are lingering instances and notify.
-	if len(lingeringInstances) > 0 {
-		logger.Errorf("There are %v lingering instances on %v. Investigate immediately! Their IDs are %s", len(lingeringInstances), event.Region, utils.PrintSlice(lingeringIDs))
+	// If there are any lingering instances, try to shut them down on AWS. This is a fallback measure for when an instance
+	// fails to receive a drain and shutdown event from the pubsub (i.e. the Hasura server restarted or went down).
+	if len(lingeringInstances) > 0 && !metadata.IsLocalEnv() {
+		logger.Infof("Terminating %v lingering instances in %s", len(lingeringInstances), event.Region)
 
-	} else {
+		err := s.Host.SpinDownInstances(scalingCtx, lingeringIDs)
+		if err != nil {
+			return utils.MakeError("failed to terminate lingering instances. Err: %s", err)
+		}
+
+	} else if !metadata.IsLocalEnv() {
 		logger.Info("There are no lingering instances in %v.", event.Region)
+	} else {
+		logger.Infof("Running on localdev so not spinning down instances.")
 	}
 
 	// Verify if there are free instances that can be scaled down

@@ -271,8 +271,8 @@ func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstan
 	return newInstances, nil
 }
 
-func (mh *mockHostHandler) SpinDownInstances(scalingCtx context.Context, instanceIDs []string) (terminatedInstances []subscriptions.Instance, err error) {
-	return []subscriptions.Instance{}, nil
+func (mh *mockHostHandler) SpinDownInstances(scalingCtx context.Context, instanceIDs []string) error {
+	return nil
 }
 
 func (mh *mockHostHandler) WaitForInstanceTermination(scalingCtx context.Context, maxWaitTime time.Duration, instanceIds []string) error {
