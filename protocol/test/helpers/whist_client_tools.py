@@ -230,7 +230,7 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     zlib_compressor = zlib.compressobj(level=zlib.Z_BEST_COMPRESSION, wbits=16 + zlib.MAX_WBITS)
     compressed_json_data = base64.b64encode(
         zlib_compressor.compress(json.dumps(json_data).encode("utf-8")) + zlib_compressor.flush()
-    )
+    ).decode("utf-8")
 
     command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{compressed_json_data}'"
     pexpect_process.sendline(command)
