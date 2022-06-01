@@ -289,6 +289,9 @@ func ValidateDirectoryContents(oldDir, newDir string) error {
 // Extract gzip-compressed binary data (acknowledged to https://gist.github.com/xyproto/f4915d7e208771f3adc4)
 func inflateGzip(w io.Writer, data []byte) error {
 	gr, err := gzip.NewReader(bytes.NewBuffer(data))
+	if err != nil {
+		return utils.MakeError("Couldn't create gzip reader: %s", err)
+	}
 	defer gr.Close()
 
 	data, err = ioutil.ReadAll(gr)
@@ -304,6 +307,9 @@ func inflateGzip(w io.Writer, data []byte) error {
 // Write gzip-compressed binary data (acknowledged to https://gist.github.com/xyproto/f4915d7e208771f3adc4)
 func deflateGzip(w io.Writer, data []byte) error {
 	gw, err := gzip.NewWriterLevel(w, gzip.BestCompression)
+	if err != nil {
+		return utils.MakeError("Couldn't create gzip writer: %s", err)
+	}
 	defer gw.Close()
 
 	if err != nil {
