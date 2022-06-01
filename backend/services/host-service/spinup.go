@@ -23,7 +23,6 @@ import (
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
-	"github.com/whisthq/whist/backend/services/types"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
