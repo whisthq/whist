@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-import os, sys, json
+import base64
+import os, sys, json, zlib
 
 from helpers.setup.network_tools import (
     restore_network_conditions,
@@ -224,7 +225,14 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
                           (development/client mandelbox) on the remote machine
     """
     print("Running the dev client mandelbox, and connecting to the server!")
-    command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{json.dumps(json_data)}'"
+
+    # Compress JSON data using gunzip
+    zlib_compressor = zlib.compressobj(level=zlib.Z_BEST_COMPRESSION, wbits=16 + zlib.MAX_WBITS)
+    compressed_json_data = base64.b64encode(
+        zlib_compressor.compress(json.dumps(json_data).encode("utf-8")) + zlib_compressor.flush()
+    )
+
+    command = f"cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{compressed_json_data}'"
     pexpect_process.sendline(command)
 
     # Need to wait for special mandelbox prompt ":/#". prompt_printed_twice must always be set to False in this case.
