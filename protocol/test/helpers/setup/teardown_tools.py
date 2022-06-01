@@ -394,7 +394,7 @@ def complete_experiment_and_save_results(
                 client_instance_id,
                 client_instance_id != use_existing_client_instance,
             )
-    else:
+    elif running_in_ci:
         # Save instance IDs to file for reuse by later runs
         with open("instances_left_on.txt", "w") as instances_file:
             instances_file.write(f"{region_name}\n")
@@ -407,7 +407,8 @@ def complete_experiment_and_save_results(
     timestamps.add_event("Stopping/terminating instance(s)")
 
     # 8- Delete the cleanup todo-list, because we already completed it.
-    # os.remove("instances_to_remove.txt")
+    if not running_in_ci:
+        os.remove("instances_to_remove.txt")
 
     # 9- Check if either of the WhistServer/WhistClient failed to start, or whether the client failed
     # to connect to the server. If so, add the error to the metadata, and exit with an error code (-1).
