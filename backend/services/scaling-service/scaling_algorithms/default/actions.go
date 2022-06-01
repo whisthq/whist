@@ -48,36 +48,10 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 		}
 	}
 
-	// If not, wait until the host service terminates the instance.
-	err = s.Host.WaitForInstanceTermination(scalingCtx, maxWaitTimeTerminated, []string{instance.ID})
+	err = s.VerifyInstanceRemoval(scalingCtx, instance)
 	if err != nil {
 		return err
 	}
-
-	// Once its terminated, verify that it was removed from the database
-	instanceResult, err = s.DBClient.QueryInstance(scalingCtx, s.GraphQLClient, instance.ID)
-	if err != nil {
-		return utils.MakeError("failed to query database for instance %v. Error: %v", instance.ID, err)
-	}
-
-	// Verify that instance removed itself from the database
-	if len(instanceResult) == 0 {
-		logger.Info("Instance %v was successfully removed from database.", instance.ID)
-		return nil
-	}
-
-	// If instance still exists on the database, delete as it no longer exists on cloud provider.
-	// This edge case means something went wrong with shutting down the instance and now the db is
-	// out of sync with the cloud provider. To amend this, delete the instance and its mandelboxes
-	// from the database.
-	logger.Info("Removing instance %v from database as it no longer exists on cloud provider.", instance.ID)
-
-	affectedRows, err := s.DBClient.DeleteInstance(scalingCtx, s.GraphQLClient, instance.ID)
-	if err != nil {
-		return utils.MakeError("failed to delete instance %v from database. Error: %v", instance.ID, err)
-	}
-
-	logger.Infof("Deleted %v rows from database.", affectedRows)
 
 	return nil
 }
@@ -133,6 +107,43 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		logger.Infof("Mandelbox capacity %v in %v is enough to satisfy minimum desired capacity of %v.", mandelboxCapacity, event.Region, desiredFreeMandelboxesPerRegion[event.Region])
 	}
 
+	return nil
+}
+
+// VerifyInstanceRemoval is a function to verify that an instance terminates correctly on the cloud provider
+// and to make sure it is removed from the database correctly. This keeps the database and cloud provider in
+// sync.
+func (s *DefaultScalingAlgorithm) VerifyInstanceRemoval(scalingCtx context.Context, instance subscriptions.Instance) error {
+	// Wait until the host service terminates the instance in the cloud provider.
+	err := s.Host.WaitForInstanceTermination(scalingCtx, maxWaitTimeTerminated, []string{instance.ID})
+	if err != nil {
+		return err
+	}
+
+	// Once its terminated, verify that it was removed from the database
+	instanceResult, err := s.DBClient.QueryInstance(scalingCtx, s.GraphQLClient, instance.ID)
+	if err != nil {
+		return utils.MakeError("failed to query database for instance %v. Error: %v", instance.ID, err)
+	}
+
+	// Verify that instance removed itself from the database
+	if len(instanceResult) == 0 {
+		logger.Info("Instance %v was successfully removed from database.", instance.ID)
+		return nil
+	}
+
+	// If instance still exists on the database, delete as it no longer exists on cloud provider.
+	// This edge case means something went wrong with shutting down the instance and now the db is
+	// out of sync with the cloud provider. To amend this, delete the instance and its mandelboxes
+	// from the database.
+	logger.Info("Removing instance %v from database as it no longer exists on cloud provider.", instance.ID)
+
+	affectedRows, err := s.DBClient.DeleteInstance(scalingCtx, s.GraphQLClient, instance.ID)
+	if err != nil {
+		return utils.MakeError("failed to delete instance %v from database. Error: %v", instance.ID, err)
+	}
+
+	logger.Infof("Deleted %v rows from database.", affectedRows)
 	return nil
 }
 
@@ -287,19 +298,25 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			return utils.MakeError("failed to terminate lingering instances. Err: %s", err)
 		}
 
-		// Spawn a goroutine to check that each instance terminates properly and is removed from the database.
+		// Verify that each instance is terminated correctly and is removed from the database
 		for _, lingeringInstance := range lingeringInstances {
-			go s.VerifyInstanceScaleDown(context.Background(), event, lingeringInstance)
+			err = s.VerifyInstanceRemoval(scalingCtx, lingeringInstance)
+			if err != nil {
+				return err
+			}
 		}
 
 	} else if !metadata.IsLocalEnv() {
 		logger.Info("There are no lingering instances in %v.", event.Region)
 	} else {
-		logger.Infof("Running on localdev so not spinning down instances.")
+		logger.Infof("Running on localdev so not spinning down lingering instances.")
 
-		// Spawn a goroutine to check that each instance terminates properly and is removed from the database.
+		// Verify that each instance is terminated correctly and is removed from the database
 		for _, lingeringInstance := range lingeringInstances {
-			go s.VerifyInstanceScaleDown(context.Background(), event, lingeringInstance)
+			err = s.VerifyInstanceRemoval(scalingCtx, lingeringInstance)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
