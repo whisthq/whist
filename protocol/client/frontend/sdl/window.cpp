@@ -74,25 +74,18 @@ bool sdl_is_window_visible(WhistFrontend* frontend) {
 
 WhistStatus sdl_set_title(WhistFrontend* frontend, int id, const char* title) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (context->windows.contains(id)) {
-        context->windows[id]->title = std::string(title);
-        SDL_Event event = {
-            .user =
-                {
-                    .type = context->internal_event_id,
-                    .timestamp = 0,
-                    .windowID = context->windows[id]->window_id,
-                    .code = SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE,
-                    .data1 = (void*)title,
-                    .data2 = NULL,
-                },
-        };
-        // NOTE: "title" will be freed when the event is consumed
-        SDL_PushEvent(&event);
-        return WHIST_SUCCESS;
-    } else {
-        return WHIST_ERROR_NOT_FOUND;
-    }
+    SDL_Event event = {
+        .user =
+            {
+                .type = context->internal_event_id,
+                .timestamp = 0,
+                .code = SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE,
+                .data1 = (void*)title,
+                .data2 = (void*)(intptr_t)id,
+            },
+    };
+    // NOTE: "title" will be freed when the event is consumed
+    SDL_PushEvent(&event);
 }
 
 void sdl_restore_window(WhistFrontend* frontend, int id) {
@@ -119,23 +112,18 @@ void sdl_resize_window(WhistFrontend* frontend, int id, int width, int height) {
 
 void sdl_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor* color) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (context->windows.contains(id)) {
-        SDL_Event event = {
-            .user =
-                {
-                    .type = context->internal_event_id,
-                    .timestamp = 0,
-                    .windowID = context->windows[id]->window_id,
-                    .code = SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE,
-                    .data1 = (void*)color,
-                    .data2 = NULL,
-                },
-        };
-        // NOTE: "color" will be freed when the event is consumed
-        SDL_PushEvent(&event);
-    } else {
-        LOG_ERROR("Tried to set titlebar color for window %d, but no such window exists!", id);
-    }
+    SDL_Event event = {
+        .user =
+            {
+                .type = context->internal_event_id,
+                .timestamp = 0,
+                .code = SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE,
+                .data1 = (void*)color,
+                .data2 = (void*)(intptr_t)id,
+            },
+    };
+    // NOTE: "color" will be freed when the event is consumed
+    SDL_PushEvent(&event);
 }
 
 void sdl_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {

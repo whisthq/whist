@@ -64,18 +64,14 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
 
 void sdl_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (!context->windows.contains(id)) {
-        LOG_FATAL("No window with ID %d!", id);
-    }
     SDL_Event event = {
         .user =
             {
                 .type = context->internal_event_id,
                 .timestamp = 0,
-                .windowID = context->windows[id]->window_id,
                 .code = SDL_FRONTEND_EVENT_FULLSCREEN,
                 .data1 = (void*)(intptr_t)fullscreen,
-                .data2 = NULL,
+                .data2 = (void*)(intptr_t)id,
             },
     };
     SDL_PushEvent(&event);

@@ -6,19 +6,6 @@ extern "C" {
 
 #include "sdl_struct.hpp"
 
-// HELPER
-// TODO: needs better name
-// returns the ID of the window with given SDLWindowID
-int get_window_id_from_sdl_id(SDLFrontendContext* context, Uint32 sdl_id) {
-    for (const auto& [id, window_context] : context->windows) {
-        if (window_context->window_id == sdl_id) {
-            return id;
-        }
-    }
-    LOG_ERROR("Found no window with SDL window ID %d", sdl_id);
-    return 0;
-}
-
 /**
  * Handle an SDL event.
  *
@@ -43,31 +30,49 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 return true;
             }
             case SDL_FRONTEND_EVENT_FULLSCREEN: {
-                int frontend_window_id = get_window_id_from_sdl_id(context, user_event->windowID);
-                SDL_Window* window = context->windows[frontend_window_id]->window;
-                bool fullscreen = (intptr_t)user_event->data1;
-                SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+                int id = (intptr_t)user_event->data2;
+                if (context->windows.contains(id)) {
+                    SDL_Window* window = context->windows[id]->window;
+                    bool fullscreen = (intptr_t)user_event->data1;
+                    SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+                } else {
+                    LOG_WARNING(
+                        "Window fullscreen event ignored because there is no window of id %d", id);
+                }
                 break;
             }
             case SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE: {
-                int frontend_window_id = get_window_id_from_sdl_id(context, user_event->windowID);
-                SDL_Window* window = context->windows[frontend_window_id]->window;
-                const char* title = (const char*)user_event->data1;
-                if (window == NULL) {
-                    LOG_WARNING(
-                        "Window title change event ignored "
-                        "because there is no window.");
+                int id = (intptr_t)user_event->data2;
+                if (context->windows.contains(id)) {
+                    SDL_Window* window = context->windows[id]->window;
+                    const char* title = (const char*)user_event->data1;
+                    if (window == NULL) {
+                        LOG_WARNING(
+                            "Window title change event ignored "
+                            "because there is no window.");
+                    } else {
+                        SDL_SetWindowTitle(window, title);
+                    }
                 } else {
-                    SDL_SetWindowTitle(window, title);
+                    LOG_WARNING(
+                        "Window title change event ignored because there is no window of id %d",
+                        id);
                 }
                 free(user_event->data1);
                 break;
             }
             case SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE: {
-                int frontend_window_id = get_window_id_from_sdl_id(context, user_event->windowID);
-                SDL_Window* window = context->windows[frontend_window_id]->window;
-                const WhistRGBColor* color = (const WhistRGBColor*)user_event->data1;
-                sdl_native_set_titlebar_color(window, color);
+                int id = (intptr_t)user_event->data2;
+                if (context->windows.contains(id)) {
+                    SDL_Window* window = context->windows[id]->window;
+                    const WhistRGBColor* color = (const WhistRGBColor*)user_event->data1;
+                    sdl_native_set_titlebar_color(window, color);
+                } else {
+                    LOG_WARNING(
+                        "Window titlebar color change event ignored because there is no window of "
+                        "id %d",
+                        id);
+                }
                 free(user_event->data1);
                 break;
             }
