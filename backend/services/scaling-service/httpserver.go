@@ -23,6 +23,10 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// The port the host service is listening on. This will be used for
+// redirecting JSON transport requests to the instance.
+const HostServicePort uint16 = 4678
+
 func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
 	err := verifyRequestType(w, req, http.MethodPost)
@@ -160,7 +164,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send the request to the instance and then return the response
-	url := utils.Sprintf("https://%v:4678/json_transport", reqdata.IP)
+	url := utils.Sprintf("https://%s:%v/json_transport", reqdata.IP, HostServicePort)
 
 	jsonBody, err := json.Marshal(reqdata)
 	if err != nil {
