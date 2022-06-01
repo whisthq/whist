@@ -10,6 +10,9 @@ from helpers.common.timestamps_and_exit_tools import (
     printred,
     printyellow,
 )
+from helpers.common.constants import (
+    instances_name_tag,
+)
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -157,10 +160,8 @@ def create_ec2_instance(
     region_name: str,
     instance_type: str,
     instance_AMI: str,
-    instances_name_tag: str,
     key_name: str,
     disk_size: int,
-    running_in_ci: bool,
 ) -> str:
     """
     Creates an AWS EC2 instance of a specific instance type and AMI
@@ -170,15 +171,13 @@ def create_ec2_instance(
         region_name (str): The name of the region of interest (e.g. "us-east-1")
         instance_type (str): The type of instance to create (i.e. g4dn.xlarge)
         instance_AMI (str): The AMI to use for the instance (i.e. ami-0b9c9d7f7f8b8f8b9)
-        instances_name_tag (str): The name tag to use for the new instance (after appending the branch name)
         key_name (str): The name of the AWS key to use for connecting to the instance
         disk_size (int): The size (in GB) of the additional EBS disk volume to attach
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         instance_id (str): The ID of the created instance
     """
-    branch_name = get_whist_branch_name(running_in_ci)
+    branch_name = get_whist_branch_name()
     instance_name = f"{instances_name_tag}-{branch_name}"
 
     subnet_id = get_subnet_id(boto3client, "DefaultSubnetdev")
@@ -337,20 +336,16 @@ def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
     return retval
 
 
-def create_or_start_aws_instance(
-    boto3client, region_name, instances_name_tag, existing_instance_id, ssh_key_name, running_in_ci
-):
+def create_or_start_aws_instance(boto3client, region_name, existing_instance_id, ssh_key_name):
     """
     Connect to an existing instance (if the parameter existing_instance_id is not empty) or create a new one
 
     Args:
         boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
         region_name (str): The name of the region of interest (e.g. "us-east-1")
-        instances_name_tag (str): The name tag to use for the new instance (after appending the branch name)
         existing_instance_id (str): The ID of the instance to connect to, or "" to create a new one
         ssh_key_name (str): The name of the AWS key to use to create a new instance. This parameter is
                             ignored if a valid instance ID is passed to the existing_instance_id parameter.
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         instance_id (str): the ID of the started instance. This can be the existing instance
@@ -380,10 +375,8 @@ def create_or_start_aws_instance(
         region_name=region_name,
         instance_type=instance_type,
         instance_AMI=instance_AMI,
-        instances_name_tag=instances_name_tag,
         key_name=ssh_key_name,
         disk_size=64,  # GB
-        running_in_ci=running_in_ci,
     )
     if instance_id == "":
         print("Creating instance failed, so we don't wait for it to start")
@@ -401,11 +394,9 @@ def create_or_start_aws_instance(
 def get_client_and_instances(
     region_name,
     ssh_key_name,
-    running_in_ci,
     use_two_instances,
     existing_server_instance_id,
     existing_client_instance_id,
-    instances_name_tag,
 ):
     """
     Get a Boto3 client and start/create instances in a given AWS region
@@ -413,11 +404,9 @@ def get_client_and_instances(
     Args:
         region_name (str): The name of the region of interest (e.g. "us-east-1")
         ssh_key_name (str): The name of the AWS key to use for connecting to the instance(s)
-        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
         use_two_instances (bool): A boolean indicating whether we are running the E2E test using one or two instances
         existing_server_instance_id (str): The ID of an existing instance to reuse for the server in the E2E test
         existing_client_instance_id (str): The ID of an existing instance to reuse for the client in the E2E test
-        instances_name_tag (str): The name tag to use (after appending the branch name) if we need to create a new instance
 
     Returns:
         On success:
@@ -432,10 +421,8 @@ def get_client_and_instances(
     server_instance_id = create_or_start_aws_instance(
         boto3client,
         region_name,
-        instances_name_tag,
         existing_server_instance_id,
         ssh_key_name,
-        running_in_ci,
     )
     if server_instance_id == "":
         printyellow(f"Creating new instance on {region_name} for the server failed!")
@@ -445,10 +432,8 @@ def get_client_and_instances(
         create_or_start_aws_instance(
             boto3client,
             region_name,
-            instances_name_tag,
             existing_client_instance_id,
             ssh_key_name,
-            running_in_ci,
         )
         if use_two_instances
         else server_instance_id

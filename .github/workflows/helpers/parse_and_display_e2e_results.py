@@ -413,7 +413,11 @@ if __name__ == "__main__":
     test_outcome = success_outcome
     error_index = 0
     for i, outcome in enumerate(e2e_script_outcomes):
-        if outcome != "success":
+        if outcome == ":x: failure (performance change on key metric >= 20%)":
+            print(
+                f"\Warning: the performance in a key metric in experiment {i+1} changed by more than 20% in absolute value!"
+            )
+        elif outcome != "success":
             test_outcome = ":x: " + str(outcome)
             error_index = i
             break
@@ -449,9 +453,3 @@ if __name__ == "__main__":
                 title=title,
                 update_date=True,
             )
-
-    if test_outcome == ":x: failure (performance change on key metric >= 20%)":
-        print(
-            f"\nError: the performance in a key metric in experiment {error_index+1} changed by more than 20% in absolute value!"
-        )
-        sys.exit(-1)

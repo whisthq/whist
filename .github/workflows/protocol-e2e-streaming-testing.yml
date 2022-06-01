@@ -97,7 +97,6 @@ jobs:
             --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
-            --instances-name-tag "protocol-e2e-benchmarking" \
             --region-name "$REGION_NAME" \
             --use-two-instances=true \
             --leave-instances-on=true
@@ -114,7 +113,6 @@ jobs:
             --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
-            --instances-name-tag "protocol-e2e-benchmarking" \
             --region-name "$REGION_NAME" \
             --use-two-instances=true \
             --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
@@ -136,7 +134,6 @@ jobs:
             --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
-            --instances-name-tag "protocol-e2e-benchmarking" \
             --region-name "$REGION_NAME" \
             --use-two-instances=true \
             --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
@@ -158,7 +155,6 @@ jobs:
             --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
             --ssh-key-path "/home/runner/.ssh/id_rsa" \
             --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
-            --instances-name-tag "protocol-e2e-benchmarking" \
             --region-name "$REGION_NAME" \
             --use-two-instances=true \
             --existing-client-instance-id "$CLIENT_INSTANCE_ID" \

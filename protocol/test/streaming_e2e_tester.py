@@ -23,6 +23,11 @@ from helpers.common.timestamps_and_exit_tools import (
     printyellow,
 )
 
+from helpers.common.constants import (
+    username,
+    running_in_ci,
+)
+
 from helpers.setup.instance_setup_tools import (
     start_host_service,
 )
@@ -75,18 +80,6 @@ parser.add_argument(
     "--github-token",
     help="The GitHub Personal Access Token with permission to fetch the whisthq/whist repository. Required.",
     required=True,
-)
-
-parser.add_argument(
-    "--instances-name-tag",
-    help="The name to use to tag any new AWS EC2 instance that is created. A suffix with the branch name will be added.",
-    type=str,
-    choices=[
-        "protocol-e2e-benchmarking",
-        "backend-integration-test",
-        "manual-e2e-test",  # This will be used when running the E2E script manually, outside of CI
-    ],
-    default="manual-e2e-test",
 )
 
 parser.add_argument(
@@ -215,46 +208,17 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--aws-credentials-filepath",
-    help="The path (on the machine running this script) to the file containing the AWS credentials to use \
-    to access the Whist AWS console. The file should contain the access key ID and the secret access key. \
-    It is created/updated when running `aws configure`",
-    type=str,
-    default=os.path.join(os.path.expanduser("~"), ".aws", "credentials"),
-)
-
-parser.add_argument(
     "--network-conditions",
-    help="The network condition for the experiment. The input is in the form of three comma-separated floats \
-    indicating the max bandwidth, delay (in ms), and percentage of packet drops (in the range [0.0,1.0]). \
-    'normal' will allow the network to run with no degradation. For example, pass --network-conditions \
-    1Mbit,100,0.1 to simulate a bandwidth of 1Mbit/s, 100ms delay and 10 percent probability of packet drop",
+    help="The network conditions for the experiment. The input is in the form of up to five comma-separated values \
+    indicating the max bandwidth, delay (in ms), percentage of packet drops (in the range [0.0,1.0]), queue capacity, \
+    and the interval of change of the network conditions. Each condition can be expressed using a single float (for \
+    conditions that do not change over time) or as a range expressed using a min and max value separated by a hyphen. \
+    `normal` will allow the network to run with no degradation. Passing `None` to one of the five parameters will result \
+    in no limitations being imposed to the corresponding network condition. For more details about the usage of the five \
+    network condition parameters, check out the apply_network_conditions.sh script in protocol/test/helpers/setup.",
     type=str,
     default="normal",
 )
-
-parser.add_argument(
-    "--aws-timeout-seconds",
-    help="The timeout after which we give up on commands that have not finished on a remote AWS EC2 instance. \
-    This value should not be set to less than 40mins (2400s)",
-    type=int,
-    default=2400,
-)
-
-parser.add_argument(
-    "--username",
-    help="The username to use to access the AWS EC2 instance(s)",
-    type=str,
-    default="ubuntu",
-)
-
-parser.add_argument(
-    "--ssh-connection-retries",
-    help="The number of times to retry if a SSH connection is refused or if the connection attempt times out",
-    type=int,
-    default=5,
-)
-
 args = parser.parse_args()
 
 
@@ -266,7 +230,6 @@ if __name__ == "__main__":
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
     ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
-    instances_name_tag = args.instances_name_tag
     testing_url = args.testing_url
     desired_region_name = args.region_name
     existing_client_instance_id = args.existing_client_instance_id
@@ -274,15 +237,10 @@ if __name__ == "__main__":
     skip_git_clone = args.skip_git_clone
     skip_host_setup = args.skip_host_setup
     network_conditions = args.network_conditions
-    aws_credentials_filepath = args.aws_credentials_filepath
     leave_instances_on = args.leave_instances_on
-    aws_timeout_seconds = args.aws_timeout_seconds
-    username = args.username
-    ssh_connection_retries = args.ssh_connection_retries
     # Convert boolean 'true'/'false' strings to Python booleans
     use_two_instances = args.use_two_instances == "true"
     simulate_scrolling = args.simulate_scrolling
-    running_in_ci = os.getenv("CI") == "true"
     # Each call to the mouse scrolling simulator script takes a total of 25s to complete, including 5s in-between runs
     testing_time = max(args.testing_time, simulate_scrolling * 25)
 
@@ -326,8 +284,8 @@ if __name__ == "__main__":
         "simulate_scrolling": simulate_scrolling,
         "network_conditions": network_conditions,
         "using_two_instances": use_two_instances,
-        "branch_name": get_whist_branch_name(running_in_ci),
-        "github_sha": get_whist_github_sha(running_in_ci),
+        "branch_name": get_whist_branch_name(),
+        "github_sha": get_whist_github_sha(),
         "server_hang_detected": False,
     }
 
@@ -352,11 +310,9 @@ if __name__ == "__main__":
         result = get_client_and_instances(
             region,
             ssh_key_name,
-            running_in_ci,
             use_two_instances,
             existing_server_instance_id,
             existing_client_instance_id,
-            instances_name_tag,
         )
         if result is not None:
             boto3client, server_instance_id, client_instance_id = result
@@ -440,11 +396,9 @@ if __name__ == "__main__":
     # We pass all parameters and other data to the setup processes via a dictionary
     args_dict = manager.dict(
         {
-            "username": username,
             "server_hostname": server_hostname,
             "client_hostname": client_hostname,
             "ssh_key_path": ssh_key_path,
-            "aws_timeout_seconds": aws_timeout_seconds,
             "server_log_filepath": server_log_filepath,
             "client_log_filepath": client_log_filepath,
             "pexpect_prompt_server": pexpect_prompt_server,
@@ -452,12 +406,9 @@ if __name__ == "__main__":
             "github_token": github_token,
             "use_two_instances": use_two_instances,
             "testing_time": testing_time,
-            "aws_credentials_filepath": aws_credentials_filepath,
             "cmake_build_type": args.cmake_build_type,
-            "running_in_ci": running_in_ci,
             "skip_git_clone": skip_git_clone,
             "skip_host_setup": skip_host_setup,
-            "ssh_connection_retries": ssh_connection_retries,
         }
     )
 
@@ -513,20 +464,14 @@ if __name__ == "__main__":
     # Start SSH connection(s) to the EC2 instance(s) to run the host-service commands
     server_hs_process = attempt_ssh_connection(
         server_cmd,
-        aws_timeout_seconds,
         server_log,
         pexpect_prompt_server,
-        ssh_connection_retries,
-        running_in_ci,
     )
     client_hs_process = (
         attempt_ssh_connection(
             client_cmd,
-            aws_timeout_seconds,
             client_log,
             pexpect_prompt_client,
-            ssh_connection_retries,
-            running_in_ci,
         )
         if use_two_instances
         else server_hs_process
@@ -543,11 +488,8 @@ if __name__ == "__main__":
     # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
     server_pexpect_process = attempt_ssh_connection(
         server_cmd,
-        aws_timeout_seconds,
         server_log,
         pexpect_prompt_server,
-        ssh_connection_retries,
-        running_in_ci,
     )
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
     # we need to pass the client for it to connect
@@ -561,11 +503,8 @@ if __name__ == "__main__":
     # client mandelbox on the client instance
     client_pexpect_process = attempt_ssh_connection(
         client_cmd,
-        aws_timeout_seconds,
         client_log,
         pexpect_prompt_client,
-        ssh_connection_retries,
-        running_in_ci,
     )
 
     # Set up the artifical network degradation conditions on the client, if needed
@@ -574,7 +513,6 @@ if __name__ == "__main__":
         pexpect_prompt_client,
         network_conditions,
         testing_time,
-        running_in_ci,
     )
 
     # Run the dev client on the client instance, using the server configs obtained above
@@ -612,12 +550,8 @@ if __name__ == "__main__":
         client_pexpect_process,
         client_hs_process,
         pexpect_prompt_client,
-        aws_timeout_seconds,
-        ssh_connection_retries,
-        username,
         ssh_key_path,
         boto3client,
-        running_in_ci,
         use_two_instances,
         leave_instances_on,
         network_conditions,
