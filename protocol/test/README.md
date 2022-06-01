@@ -146,10 +146,9 @@ The E2E test is also used by the [`backend-integration-test.yml`](../../.github/
 
 The code for the E2E test framework is shared between this folder (general components) and the `.github/workflows/helpers/protocol` folders (CI-specific components). When contributing to this project, please keep your work scoped to the right folders and keep the code simple and abstracted. Note that we sometimes modify protocol logs and modify/add network experiments, so please try to keep your work as abstracted as possible to keep the documentation and code in sync.
 
-
 #### E2E Test Instances
 
-When running the E2E locally, any new AWS EC2 instance that is created will be named `manual-e2e-test-<BRANCH NAME>`, and will be accessible using the SSH key pair that you pass as a parameter. 
+When running the E2E locally, any new AWS EC2 instance that is created will be named `manual-e2e-test-<BRANCH NAME>`, and will be accessible using the SSH key pair that you pass as a parameter.
 
 When the E2E is run in CI, new instances will be named either `protocol-e2e-benchmarking-<BRANCH NAME>` (when the [`protocol-e2e-streaming-testing.yml`](../../.github/workflows/protocol-e2e-streaming-testing.yml) workflow is run) or `backend-integration-test-<BRANCH NAME>` (when the [`backend-integration-test.yml`](../../.github/workflows/backend-integration-test.yml) workflow is run). In either case, the instances will be accessible using the key name `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR` and the corresponding certificate `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR.pem`, which is stored on AWS S3 in the `whist-dev-secrets/E2E_test_secrets/` folder.
 
