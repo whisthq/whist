@@ -424,7 +424,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	// Unmarshal bookmarks into proper format
 	var browserData mandelboxData.BrowserData
 	if len(inflatedBrowserData) > 0 {
-		browserData, err = mandelboxData.UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+		browserData, err = mandelboxData.UnmarshalBrowserData(mandelboxtypes.BrowserData(inflatedBrowserData))
 		if err != nil {
 			// BrowserData import errors are not fatal
 			logger.Errorf("Error unmarshalling user browser data for mandelbox %s: %s", mandelbox.GetID(), err)
@@ -433,7 +433,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 
 	// Write the user's initial browser data
 	logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
-
 
 	err = mandelbox.WriteUserInitialBrowserData(browserData)
 
