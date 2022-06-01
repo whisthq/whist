@@ -25,6 +25,7 @@ from helpers.common.constants import (
     SESSION_ID_LEN,
     username,
     aws_timeout_seconds,
+    running_in_ci,
 )
 
 from helpers.aws.boto3_tools import (
