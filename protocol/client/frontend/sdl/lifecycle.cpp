@@ -28,12 +28,6 @@ static void sdl_init_video_device(SDLFrontendContext* context) {
     context->video.decode_device = NULL;
     context->video.decode_format = AV_PIX_FMT_NONE;
 
-#if OS_IS(OS_WIN32)
-    if (!strcmp(context->render_driver_name, "direct3d11")) {
-        sdl_d3d11_init(context, context->windows[0]->renderer);
-    }
-#endif  // Windows
-
     // Texture sharing between Core Video decode and Metal rendering on
     // macOS. Disabled on ARM due to freeze issues (still enabled on x86).
 
@@ -282,6 +276,12 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
         context->render_driver_name = info.name;
     }
 
+#if OS_IS(OS_WIN32)
+    if (!strcmp(context->render_driver_name, "direct3d11")) {
+        sdl_d3d11_create_window(context, id);
+    }
+#endif  // Windows
+
     // We don't need to do this if we don't initialize the window until we get frames from the
     // server window starts solid color
     frontend->call->paint_solid(frontend, id, &window_context->color);
@@ -306,6 +306,12 @@ void sdl_destroy_window(WhistFrontend* frontend, int id) {
             SDL_DestroyTexture(window_context->texture);
             window_context->texture = NULL;
         }
+        // destroy the D3D11 device and context if Windows
+#if OS_IS(OS_WIN32)
+        if (!strcmp(context->render_driver_name, "direct3d11")) {
+            sdl_d3d11_destroy_window(context, id);
+        }
+#endif  // Windows
         // destroy renderer
         if (window_context->renderer != NULL) {
             SDL_DestroyRenderer(window_context->renderer);

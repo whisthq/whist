@@ -24,6 +24,7 @@ Includes
 #include <algorithm>
 using std::max;
 using std::min;
+using std::vector;
 extern "C" {
 
 #else

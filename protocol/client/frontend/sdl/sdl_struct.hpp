@@ -1,8 +1,9 @@
 #ifndef WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 #define WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 
-extern "C" {
 #include <whist/core/whist.h>
+
+extern "C" {
 #include "../api.h"
 #include "../frontend.h"
 }
@@ -12,7 +13,7 @@ extern "C" {
 
 typedef struct SDLFrontendVideoContext {
     /**
-     * Platform-specific private data associated with the renderer.
+     * Platform-specific private data associated with the video decoder.
      */
     void* private_data;
     /**
@@ -49,6 +50,10 @@ typedef struct SDLFrontendVideoContext {
 
 // All the information needed for the frontend to render a specific window
 typedef struct SDLWindowContext {
+    /**
+     * Platform-specific private data associated with the video decoder.
+     */
+    void* private_data;
     // flags for Whist
     bool to_be_created;
     bool to_be_destroyed;
@@ -130,7 +135,7 @@ typedef struct SDLFrontendContext {
  *
  * @param context  Frontend context containing renderer to wait for.
  */
-void sdl_d3d11_wait(SDLFrontendContext* context);
+void sdl_d3d11_wait(SDLWindowContext* window_context);
 
 /**
  * Create an SDL texture from a D3D11 texture.
@@ -139,30 +144,37 @@ void sdl_d3d11_wait(SDLFrontendContext* context);
  * wraps it in an SDL texture.  This never copies the actual data.
  *
  * @param context  Frontend context containing the devices.
- * @param renderer The renderer that the texture will be bound to.
+ * @param window_context The window that the texture will be bound to.
  * @param frame    Frame containing the D3D11 texture to use.
  * @return  The new SDL texture.
  */
-SDL_Texture* sdl_d3d11_create_texture(SDLFrontendContext* context, SDL_Renderer* renderer,
-                                      AVFrame* frame);
+SDL_Texture* sdl_d3d11_create_texture(SDLWindowContext* window_context, AVFrame* frame);
 
-// TODO: Don't create global D3D11 context,
-// With a per-window renderer
 /**
- * Initialise D3D11 devices for render and decode.
+ * Initialise D3D11 device and device context for rendering window id.
+ * All devices and device contexts should use the same adapter.
+ * The first call to this function will also create the video decoder device and context.
  *
- * Creates the two connected devices and device contexts to use for
- * rendering (with SDL) and decoding (with FFmpeg).
+ * Creates the device and device context to use for
+ * rendering (with SDL).
  *
  * @param context  Frontend context to initialize D3D11 with.
- * @param renderer The SDL Renderer to use.
+ * @param id The ID of the window for the device and context.
  * @return  Success or error code.  If this fails, rendering will have
  *          to copy frames rather than using textures directly.
  */
-WhistStatus sdl_d3d11_init(SDLFrontendContext* context, SDL_Renderer* renderer);
+WhistStatus sdl_d3d11_create_window(SDLFrontendContext* context, int id);
 
 /**
- * Destroy D3D11 devices and clean up.
+ * Destroy D3D11 device and context for given window.
+ *
+ * @param context  Frontend context containing the device.
+ * @param id       ID of the window containing the device.
+ */
+void sdl_d3d11_destroy_window(SDLFrontendContext* context, int id);
+
+/**
+ * Destroy D3D11 video device and context and clean up. This device should be the last to go.
  *
  * In a debug build this also enumerates all live D3D11 objects to
  * detect memory leaks.

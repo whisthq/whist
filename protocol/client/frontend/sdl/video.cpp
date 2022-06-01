@@ -151,7 +151,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                 // render involving the previous frame has actually
                 // completed before we free it, since that will allow the
                 // texture to be reused by the decoder.
-                sdl_d3d11_wait(context);
+                sdl_d3d11_wait(window_context);
             }
 #endif  // OS_IS(OS_WIN32)
             av_frame_unref(context->video.frame_reference);
@@ -177,8 +177,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                 }
             } else if (frame->format == AV_PIX_FMT_D3D11) {
 #if OS_IS(OS_WIN32)
-                window_context->texture =
-                    sdl_d3d11_create_texture(context, window_context->renderer, frame);
+                window_context->texture = sdl_d3d11_create_texture(window_context, frame);
                 if (window_context->texture == NULL) {
                     LOG_ERROR("Failed to import D3D11 texture.");
                     return WHIST_ERROR_EXTERNAL;
