@@ -393,6 +393,12 @@ int whist_client_main(int argc, const char* argv[]) {
         // Pass the whist_renderer so that udp packets can be fed into it
         init_packet_synchronizers(whist_renderer);
 
+        // Under some condition, there might not be resize message generated during starup.
+        // In this case, sdl_renderer_resize_window() is not called, causing some internal values
+        // not match with the actual dimensions.
+        // So we manually call it one time during startup
+        sdl_renderer_resize_window(frontend, -1, -1);
+
         // Send our initial width/height/codec to the server,
         // so it can synchronize with us
         send_message_dimensions(frontend);
