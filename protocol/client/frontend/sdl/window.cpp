@@ -58,11 +58,8 @@ WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* i
     } else {
         LOG_ERROR("Tried to get window display index for window %d, but no such window exists!",
                   id);
-        if (width != NULL) {
-            *width = WHIST_ERROR_NOT_FOUND;
-        }
-        if (height != NULL) {
-            *height = WHIST_ERROR_NOT_FOUND;
+        if (index != NULL) {
+            *index = WHIST_ERROR_NOT_FOUND;
         }
         return WHIST_ERROR_NOT_FOUND;
     }
@@ -104,6 +101,7 @@ WhistStatus sdl_set_title(WhistFrontend* frontend, int id, const char* title) {
     };
     // NOTE: "title" will be freed when the event is consumed
     SDL_PushEvent(&event);
+    return WHIST_SUCCESS;
 }
 
 void sdl_restore_window(WhistFrontend* frontend, int id) {

@@ -77,12 +77,14 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 break;
             }
             case SDL_FRONTEND_EVENT_NOTIFICATION_CALLBACK: {
+                SDLWindowContext* window_context = context->windows.begin()->second;
                 // TODO: do something with a notification.  For now,
-                // this just restores the window if it is minimised.
-                uint32_t flags = SDL_GetWindowFlags(context->window);
+                // this just restores the first window if it is minimised.
+                uint32_t flags = SDL_GetWindowFlags(window_context->window);
                 if (flags & SDL_WINDOW_MINIMIZED) {
-                    SDL_RestoreWindow(context->window);
+                    SDL_RestoreWindow(window_context->window);
                 }
+                break;
             }
             case SDL_FRONTEND_EVENT_INTERRUPT: {
                 event->type = FRONTEND_EVENT_INTERRUPT;

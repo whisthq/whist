@@ -39,7 +39,7 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
     }
     for (const auto& [window_id, window_context] : context->windows) {
         // only show PNG if it's smaller than the window
-        if ((w <= window_context->sdl_width) && (h <= window_context->sdl_height)) {
+        if (((int)w <= window_context->sdl_width) && ((int)h <= window_context->sdl_height)) {
             SDL_Texture* texture = SDL_CreateTextureFromSurface(window_context->renderer, surface);
             if (texture == NULL) {
                 LOG_ERROR("Failed to create texture from PNG: %s", SDL_GetError());
