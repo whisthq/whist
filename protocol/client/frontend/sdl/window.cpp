@@ -96,6 +96,8 @@ WhistStatus sdl_set_title(WhistFrontend* frontend, int id, const char* title) {
                 .timestamp = 0,
                 .code = SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE,
                 .data1 = (void*)title,
+                // Cast the data directly into the 8bytes of void*,
+                // So data2 holds the id directly, rather than a pointer to it
                 .data2 = (void*)(intptr_t)id,
             },
     };
@@ -135,6 +137,8 @@ void sdl_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor
                 .timestamp = 0,
                 .code = SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE,
                 .data1 = (void*)color,
+                // Cast the data directly into the 8bytes of void*,
+                // So data2 holds the id directly, rather than a pointer to it
                 .data2 = (void*)(intptr_t)id,
             },
     };

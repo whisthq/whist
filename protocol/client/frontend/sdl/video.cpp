@@ -73,6 +73,8 @@ void sdl_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen)
                 .type = context->internal_event_id,
                 .timestamp = 0,
                 .code = SDL_FRONTEND_EVENT_FULLSCREEN,
+                // Cast the data directly into the 8bytes of void*,
+                // So it holds the data, rather than an actual pointer
                 .data1 = (void*)(intptr_t)fullscreen,
                 .data2 = (void*)(intptr_t)id,
             },
