@@ -15,6 +15,8 @@ import (
 	"testing/iotest"
 	"time"
 
+	mandelbox "github.com/whisthq/whist/backend/services/host-service/mandelbox"
+	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
@@ -28,15 +30,40 @@ type JSONTransportResult struct {
 // TestSpinUpHandler calls processSpinUpMandelboxRequest and checks to see if
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
+
+	bookmarks, err := configutils.UnmarshalBookmarks(mandelboxtypes.Bookmarks("{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}"))
+	if err != nil {
+		t.Fatalf("UnmarshalBookmarks returned an unexpected error: %v", err)
+	}
+
+	browserData := mandelbox.BrowserData{
+		CookiesJSON: "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
+		Bookmarks:   &bookmarks,
+		Extensions:  "not_real_extension_id,not_real_second_extension_id",
+	}
+
+	marshalledBrowserData, err := json.Marshal(browserData)
+	if err != nil {
+		t.Fatalf("could not marshal browser data: %v", err)
+	}
+
+	deflatedBrowserData, err := configutils.GzipDeflateString(string(marshalledBrowserData))
+	if err != nil {
+		t.Fatalf("could not deflate browser data: %v", err)
+	}
+
+	deflatedJSONData, err := configutils.GzipDeflateString(string("test_json_data"))
+	if err != nil {
+		t.Fatalf("could not deflate JSON data: %v", err)
+	}
+
 	testJSONTransportRequest := httputils.JSONTransportRequest{
 		ConfigEncryptionToken: "test_token",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
-		JSONData:              "test_json_data",
-		CookiesJSON:           "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
-		BookmarksJSON:         "{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}",
-		Extensions:            "not_real_extension_id,not_real_second_extension_id",
-		ResultChan:            make(chan httputils.RequestResult),
+		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
+		BrowserData:           mandelboxtypes.BrowserData(deflatedBrowserData),
+		resultChan:            make(chan httputils.RequestResult),
 	}
 
 	testServerQueue := make(chan httputils.ServerRequest)
@@ -125,15 +152,39 @@ func TestHttpServerIntegration(t *testing.T) {
 	// Wait for server startup
 	time.Sleep(5 * time.Second)
 
+	bookmarks, err := configutils.UnmarshalBookmarks(mandelboxtypes.Bookmarks("{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}"))
+	if err != nil {
+		t.Fatalf("UnmarshalBookmarks returned an unexpected error: %v", err)
+	}
+
+	browserData := mandelbox.BrowserData{
+		CookiesJSON: "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
+		Bookmarks:   &bookmarks,
+		Extensions:  "",
+	}
+
+	marshalledBrowserData, err := json.Marshal(browserData)
+	if err != nil {
+		t.Fatalf("could not marshal browser data: %v", err)
+	}
+
+	deflatedBrowserData, err := configutils.GzipDeflateString(string(marshalledBrowserData))
+	if err != nil {
+		t.Fatalf("could not deflate browser data: %v", err)
+	}
+
+	deflatedJSONData, err := configutils.GzipDeflateString(string("test_json_data"))
+	if err != nil {
+		t.Fatalf("could not deflate JSON data: %v", err)
+	}
+
 	testJSONTransportRequest := httputils.JSONTransportRequest{
 		ConfigEncryptionToken: "test_token",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
-		JSONData:              "test_json_data",
-		CookiesJSON:           "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
-		BookmarksJSON:         "{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}",
-		Extensions:            "",
-		ResultChan:            make(chan httputils.RequestResult),
+		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
+		BrowserData:           mandelboxtypes.BrowserData(deflatedBrowserData),
+		resultChan:            make(chan httputils.RequestResult),
 	}
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
 	if err != nil {

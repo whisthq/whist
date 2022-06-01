@@ -301,6 +301,20 @@ func inflateGzip(w io.Writer, data []byte) error {
 	return nil
 }
 
+// Write gzip-compressed binary data (acknowledged to https://gist.github.com/xyproto/f4915d7e208771f3adc4)
+func deflateGzip(w io.Writer, data []byte) error {
+	gw, err := gzip.NewWriterLevel(w, gzip.BestCompression)
+	defer gw.Close()
+
+	if err != nil {
+		return utils.MakeError("Couldn't write deflated string to gzip writer: %s", err)
+	}
+
+	gw.Write(data)
+
+	return nil
+}
+
 // Inflate a gzip-compressed string (encoded according to base-64 protocol)
 func GzipInflateString(compressedGzipString string) (string, error) {
 	if len(compressedGzipString) > 0 {
@@ -317,5 +331,19 @@ func GzipInflateString(compressedGzipString string) (string, error) {
 	} else {
 		return "", nil
 	}
-	
+}
+
+// Inflate a gzip-compressed string (encoded according to base-64 protocol)
+func GzipDeflateString(plaintextString string) (string, error) {
+	if len(plaintextString) > 0 {
+		var gzipBinaryBuffer bytes.Buffer
+		err := deflateGzip(&gzipBinaryBuffer, []byte(plaintextString))
+		if err != nil {
+			return "", utils.MakeError("Couldn't deflate string to be compressed: %s", err)
+		}
+		base64EncodedData := base64.StdEncoding.EncodeToString(gzipBinaryBuffer.Bytes())
+		return base64EncodedData, nil
+	} else {
+		return "", nil
+	}
 }

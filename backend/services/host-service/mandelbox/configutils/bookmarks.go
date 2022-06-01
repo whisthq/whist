@@ -1,5 +1,10 @@
 package configutils
 
+import (
+	"encoding/json"
+
+	"github.com/whisthq/whist/backend/services/types"
+)
 
 // This type defines a standard Chromium Bookmark object
 type Bookmark struct {
@@ -19,4 +24,13 @@ type Bookmarks struct {
 	Roots        map[string]Bookmark `json:"roots,omitempty"`
 	SyncMetadata string              `json:"sync_metadata,omitempty"`
 	Version      int                 `json:"version,omitempty"`
+}
+
+// UnmarshalBookmarks takes a JSON string containing bookmark data
+// and unmarshals it into a Bookmarks struct, returning the struct
+// and any errors encountered.
+func UnmarshalBookmarks(bookmarks types.Bookmarks) (Bookmarks, error) {
+	var bookmarksObj Bookmarks
+	err := json.Unmarshal([]byte(bookmarks), &bookmarksObj)
+	return bookmarksObj, err
 }
