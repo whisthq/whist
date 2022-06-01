@@ -303,14 +303,19 @@ func inflateGzip(w io.Writer, data []byte) error {
 
 // Inflate a gzip-compressed string (encoded according to base-64 protocol)
 func GzipInflateString(compressedGzipString string) (string, error) {
-	base64DecodedData, err := base64.StdEncoding.DecodeString(compressedGzipString)
-	if err != nil {
-		return "", utils.MakeError("Couldn't decode received string: %s", err)
+	if len(compressedGzipString) > 0 {
+		base64DecodedData, err := base64.StdEncoding.DecodeString(compressedGzipString)
+		if err != nil {
+			return "", utils.MakeError("Couldn't decode received string: %s", err)
+		}
+		var gzipDecodedDataBuffer bytes.Buffer
+		err = inflateGzip(&gzipDecodedDataBuffer, base64DecodedData)
+		if err != nil {
+			return "", utils.MakeError("Couldn't inflate decoded string: %s", err)
+		}
+		return gzipDecodedDataBuffer.String(), nil
+	} else {
+		return "", nil
 	}
-	var gzipDecodedDataBuffer bytes.Buffer
-	err = inflateGzip(&gzipDecodedDataBuffer, base64DecodedData)
-	if err != nil {
-		return "", utils.MakeError("Couldn't inflate decoded string: %s", err)
-	}
-	return gzipDecodedDataBuffer.String(), nil
+	
 }
