@@ -2,7 +2,6 @@ package scaling_algorithms
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"reflect"
 	"sync"
@@ -67,6 +66,7 @@ func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, gr
 				Provider:          graphql.String(instance.Provider),
 				ImageID:           graphql.String(instance.ImageID),
 				ClientSHA:         graphql.String(instance.ClientSHA),
+				Region:            graphql.String(instance.Region),
 				Type:              graphql.String(instance.Type),
 				RemainingCapacity: graphql.Int(instance.RemainingCapacity),
 				IPAddress:         instance.IPAddress,
@@ -122,6 +122,7 @@ func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 			Provider:          graphql.String(instance.Provider),
 			ImageID:           graphql.String(instance.ImageID),
 			ClientSHA:         graphql.String(instance.ClientSHA),
+			Region:            graphql.String(instance.Region),
 			Type:              graphql.String(instance.Type),
 			IPAddress:         instance.IPAddress,
 			RemainingCapacity: graphql.Int(instance.RemainingCapacity),
@@ -157,6 +158,7 @@ func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient
 				Provider:          instance.Provider,
 				ImageID:           instance.ImageID,
 				ClientSHA:         graphql.String(instance.ClientSHA),
+				Region:            graphql.String(instance.Region),
 				Type:              instance.Type,
 				IPAddress:         instance.IPAddress,
 				Status:            graphql.String(updateParams.Status),
@@ -180,11 +182,9 @@ func (db *mockDBClient) DeleteInstance(scalingCtx context.Context, graphQLClient
 		}
 	}
 
-	fmt.Printf("Test instances: %v\n", testInstances)
 	// Delete instance from testInstances slice
 	testInstances[i] = testInstances[len(testInstances)-1]
 	testInstances = testInstances[:len(testInstances)-1]
-	fmt.Printf("Test instances: %v\n", testInstances)
 
 	return 0, nil
 }
@@ -307,8 +307,6 @@ func (mh *mockHostHandler) SpinDownInstances(scalingCtx context.Context, instanc
 }
 
 func (mh *mockHostHandler) WaitForInstanceTermination(scalingCtx context.Context, maxWaitTime time.Duration, instanceIds []string) error {
-	// Remove test instances to mock them shutting down
-	testInstances = subscriptions.WhistInstances{}
 	return nil
 }
 
