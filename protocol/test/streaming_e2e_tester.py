@@ -209,10 +209,13 @@ parser.add_argument(
 
 parser.add_argument(
     "--network-conditions",
-    help="The network condition for the experiment. The input is in the form of three comma-separated floats \
-    indicating the max bandwidth, delay (in ms), and percentage of packet drops (in the range [0.0,1.0]). \
-    'normal' will allow the network to run with no degradation. For example, pass --network-conditions \
-    1Mbit,100,0.1 to simulate a bandwidth of 1Mbit/s, 100ms delay and 10 percent probability of packet drop",
+    help="The network conditions for the experiment. The input is in the form of up to five comma-separated values \
+    indicating the max bandwidth, delay (in ms), percentage of packet drops (in the range [0.0,1.0]), queue capacity, \
+    and the interval of change of the network conditions. Each condition can be expressed using a single float (for \
+    conditions that do not change over time) or as a range expressed using a min and max value separated by a hyphen. \
+    `normal` will allow the network to run with no degradation. Passing `None` to one of the five parameters will result \
+    in no limitations being imposed to the corresponding network condition. For more details about the usage of the five \
+    network condition parameters, check out the apply_network_conditions.sh script in protocol/test/helpers/setup.",
     type=str,
     default="normal",
 )

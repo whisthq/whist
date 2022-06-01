@@ -29,7 +29,7 @@ TEST_F(ProtocolTest, ClientParseHelp) {
 
 ## The End-to-End Streaming Test
 
-The End-to-End streaming test is an integration test which is used to test the performance of the Whist streaming protocol in a controlled environment. It is essential to evaluating quantitatively whether the work we do on our streaming algorithm is impactful and works across a wide range of networks.
+The End-to-End streaming test is an integration test with a twofold purpose. First, it ensures that all layers of the Whist stack are able to work together as needed. Second, it tests the performance of the Whist streaming protocol in a controlled environment. It is essential to evaluating quantitatively whether the work we do on our streaming algorithm is impactful and works across a wide range of networks.
 
 Running the E2E script in this folder will allow to run the Whist server and client in a controlled and stable environment, thus it will produce (hopefully) reproducible results. The client and server each live inside a Docker container, and the two containers run on either the same or two separate AWS EC2 instances, depending on the chosen test settings, performing a streaming test for a few minutes before reporting logs. The scripts can be run either from a local machine, or within a CI workflow.
 
@@ -41,11 +41,11 @@ The script's arguments are summarized below. Three of them are required (`--ssh-
 
 ```bash
 usage: streaming_e2e_tester.py [-h] --ssh-key-name SSH_KEY_NAME --ssh-key-path SSH_KEY_PATH --github-token GITHUB_TOKEN
-                               [--region-name {us-east-1,us-east-2,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,ap-northeast-2,ap-southeast-1,ap-southeast-2,ap-southeast-3,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}]
-                               [--use-existing-server-instance USE_EXISTING_SERVER_INSTANCE] [--use-existing-client-instance USE_EXISTING_CLIENT_INSTANCE] [--use-two-instances {false,true}]
-                               [--leave-instances-on {false,true}] [--skip-host-setup {false,true}] [--skip-git-clone {false,true}] [--simulate-scrolling {false,true}] [--testing-url TESTING_URL]
-                               [--testing-time TESTING_TIME] [--cmake-build-type {dev,prod,metrics}] [--aws-credentials-filepath AWS_CREDENTIALS_FILEPATH] [--network-conditions NETWORK_CONDITIONS]
-                               [--aws-timeout-seconds AWS_TIMEOUT_SECONDS] [--username USERNAME] [--ssh-connection-retries SSH_CONNECTION_RETRIES]
+                               [--region-name {,us-east-1,us-east-2,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,ap-northeast-2,ap-southeast-1,ap-southeast-2,ap-southeast-3,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}]
+                               [--existing-server-instance-id EXISTING_SERVER_INSTANCE_ID] [--existing-client-instance-id EXISTING_CLIENT_INSTANCE_ID]
+                               [--use-two-instances {false,true}] [--leave-instances-on {false,true}] [--skip-host-setup {false,true}] [--skip-git-clone {false,true}]
+                               [--simulate-scrolling SIMULATE_SCROLLING] [--testing-url TESTING_URL] [--testing-time TESTING_TIME]
+                               [--cmake-build-type {dev,prod,metrics}] [--network-conditions NETWORK_CONDITIONS]
 
 required arguments:
   --ssh-key-name SSH_KEY_NAME
@@ -61,17 +61,17 @@ required arguments:
 optional arguments:
   -h, --help            show this help message and exit
 
-  --region-name {us-east-1,us-east-2,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,
-                ap-northeast-2, ap-southeast-1,ap-southeast-2,ap-southeast-3,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}
+  --region-name {,us-east-1,us-east-2,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,ap-northeast-2,ap-southeast-1,ap-southeast-2,ap-southeast-3,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}
+                        The AWS region to use for testing. Passing an empty string will let the script run the test on any region with space available for the new
+                        instance(s). If you are looking to re-use an instance for the client and/or server, the instance(s) must live on the region passed to this
+                        parameter. If you pass an empty string, the key-pair that you pass must be valid on all AWS regions.
 
-                        The AWS region to use for testing. If you are looking to re-use an instance for the client and/or server, the instance(s) must live on the region passed to this parameter.
-
-  --use-existing-server-instance USE_EXISTING_SERVER_INSTANCE
+  --existing-server-instance-id EXISTING_SERVER_INSTANCE_ID
                         The instance ID of an existing instance to use for the Whist server during the E2E test. You can only pass a value to this parameter if you passed `true` to --use-two-instances.
                         Otherwise, the server will be installed and run on the same instance as the client. The instance will be stopped upon completion. If left empty (and --use-two-instances=true), a clean
                         new instance will be generated instead, and it will be terminated (instead of being stopped) upon completion of the test.
 
-  --use-existing-client-instance USE_EXISTING_CLIENT_INSTANCE
+  --existing-client-instance-id EXISTING_CLIENT_INSTANCE_ID
                         The instance ID of an existing instance to use for the Whist dev client during the E2E test. If the flag --use-two-instances=false is used (or if the flag --use-two-instances is not
                         used), the Whist server will also run on this instance. The instance will be stopped upon completion. If left empty, a clean new instance will be generated instead, and it will be
                         terminated (instead of being stopped) upon completion of the test.
@@ -103,67 +103,55 @@ optional arguments:
   --cmake-build-type {dev,prod,metrics}
                         The Cmake build type to use when building the protocol.
 
-  --aws-credentials-filepath AWS_CREDENTIALS_FILEPATH
-                        The path (on the machine running this script) to the file containing the AWS credentials to use to access the Whist AWS console. The file should contain the access key id and the
-                        secret access key. It is created/updated when running `aws configure`
-
   --network-conditions NETWORK_CONDITIONS
-                        The network condition for the experiment. The input is in the form of three comma-separated floats indicating the max bandwidth, delay (in ms), and percentage of packet drops (in the
-                        range [0.0,1.0]). 'normal' will allow the network to run with no degradation. For example, pass --network-conditions 1Mbit,100,0.1 to simulate a bandwidth of 1Mbit/s, 100ms delay and
-                        10 percent probability of packet drop.
-
-  --aws-timeout-seconds AWS_TIMEOUT_SECONDS
-                        The timeout after which we give up on commands that have not finished on a remote AWS E2 instance. This value should not be set to less than 20mins (1200s).
-
-  --username USERNAME
-                        The username to use to access the AWS EC2 instance(s)
-
-  --ssh-connection-retries SSH_CONNECTION_RETRIES
-                        The number of times to retry if a SSH connection is refused or if the connection attempt times out
+                        The network conditions for the experiment. The input is in the form of up to five comma-separated values indicating the max bandwidth, delay (in
+                        ms), percentage of packet drops (in the range [0.0,1.0]), queue capacity, and the interval of change of the network conditions. Each condition
+                        can be expressed using a single float (for conditions that do not change over time) or as a range expressed using a min and max value separated
+                        by a hyphen. `normal` will allow the network to run with no degradation. Passing `None` to one of the five parameters will result in no
+                        limitations being imposed to the corresponding network condition. For more details about the usage of the five network condition parameters,
+                        check out the apply_network_conditions.sh script in protocol/test/helpers/setup.
 ```
 
 #### Sample Usage
 
 Here are a few examples of how to use the test framework.
 
-**Run on 1 new instance on `us-east-1`, terminated upon completion**
+**Run E2E on 1 fresh new instance on `us-east-1`, terminated upon completion**
 
 ```bash
 python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here>
 ```
 
-**Run on 2 new instances on `ap-south-2`, simulate scrolling during test, and leave instances on upon completion**
+**Run E2E on 2 new instances on one among ANY REGION available, simulate scrolling during test, and leave instances on upon completion**
 
 ```bash
-python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here --region-name ap-south-2 --simulate-scrolling=10 --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" --leave-instances-on=true>
+python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here --region-name="" --simulate-scrolling=10 --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" --leave-instances-on=true>
 ```
 
-**Run on your development instance on `us-west-` with degraded network (1Mbit/s, 100ms delay, 10% packet drop), and leave instance on upon completion**
+**Run on your development instance on `us-west-1` with degraded network** (Bandwidth: variable between 15Mbit and 30Mbit, Delay: 10 ms, Packet Drops: None, Queue Limit: None, Conditions change over time? Yes, frequency is variable between 1000 ms and 2000 ms)**, and leave instance on upon completion**
 
 ```bash
-python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here --region-name us-west-1 --use-existing-client-instance <your-dev-instance-id> --leave-instances-on=true --skip-host-setup=true --network-conditions 1Mbit,100,0.1
+python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here --region-name us-west-1 --existing-server-instance-id <your-dev-instance-id> --leave-instances-on=true --skip-host-setup=true --network-conditions 15Mbit-30Mbit,10,None,None,1000-2000
 ```
 
 #### Creating New Experiments & Network Conditions
 
-The E2E test framework can run arbitrarily many experiments for any given set of network conditions. To do this, you can pass the `--network-conditions` flag with a comma-separated list of Bandwidth (in Mbps),Delay (in ms),PacketDrop (in percetange, between 0 and 1).
+The E2E test framework can run arbitrarily many experiments for any given set of network conditions. For more details on how to set the network conditions for an experiment, check out file [apply_network_conditions.sh](helpers/setup/apply_network_conditions.sh).
 
-You can see the list of all the experiments we run, and their network conditions, in the `protocol-e2e-streaming-testing.yml`, and you can add your new experiments there if you believe they are representative of a network condition we are not currently testing in CI.
+You can see the list of all the experiments we run, and their network conditions, in the [`protocol-e2e-streaming-testing.yml`](../../.github/workflows/protocol-e2e-streaming-testing.yml), and you can add your new experiments there if you believe they are representative of a network condition we are not currently testing in CI.
+
+The E2E test is also used by the [`backend-integration-test.yml`](../../.github/workflows/backend-integration-test.yml) workflow, which currently does not apply any artificial network conditions on the client instance.
 
 ### Development
 
 The code for the E2E test framework is shared between this folder (general components) and the `.github/workflows/helpers/protocol` folders (CI-specific components). When contributing to this project, please keep your work scoped to the right folders and keep the code simple and abstracted. Note that we sometimes modify protocol logs and modify/add network experiments, so please try to keep your work as abstracted as possible to keep the documentation and code in sync.
 
-As of writing, our CI E2E tests can only run sequentially. To achieve this, we use (Turnstyle)[(https://github.com/rpadaki/turnstyle)]. You can of course run tests on your own development instance irrespective of our CI instances.
 
-#### CI Test Instances
+#### E2E Test Instances
 
-To speed up the testing process in CI, we reuse two AWS EC2 instances dedicated to the E2E tests:
+When running the E2E locally, any new AWS EC2 instance that is created will be named `manual-e2e-test-<BRANCH NAME>`, and will be accessible using the SSH key pair that you pass as a parameter. 
 
-1. `protocol-integration-tester-client` with instance ID: `i-061d322780ae41d19`
-2. `protocol-integration-tester-server` with instance ID: `i-0ceaa243ec8cfc667`
-
-If you need to access the two machines above (i.e. to debug something), you can do so by using the key name `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR` and the corresponding certificate `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR.pem`, which is stored on AWS S3 in the `whist-dev-secrets/E2E_test_secrets/` folder.
+When the E2E is run in CI, new instances will be named either `protocol-e2e-benchmarking-<BRANCH NAME>` (when the [`protocol-e2e-streaming-testing.yml`](../../.github/workflows/protocol-e2e-streaming-testing.yml) workflow is run) or `backend-integration-test-<BRANCH NAME>` (when the [`backend-integration-test.yml`](../../.github/workflows/backend-integration-test.yml) workflow is run). In either case, the instances will be accessible using the key name `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR` and the corresponding certificate `GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR.pem`, which is stored on AWS S3 in the `whist-dev-secrets/E2E_test_secrets/` folder.
 
 ### Deployment
 
