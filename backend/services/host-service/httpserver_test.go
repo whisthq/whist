@@ -22,13 +22,13 @@ import (
 )
 
 type JSONTransportResult struct {
-	Result JSONTransportRequestResult `json:"result"`
+	Result httputils.JSONTransportRequestResult `json:"result"`
 }
 
 // TestSpinUpHandler calls processSpinUpMandelboxRequest and checks to see if
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
-	testJSONTransportRequest := JSONTransportRequest{
+	testJSONTransportRequest := httputils.JSONTransportRequest{
 		ConfigEncryptionToken: "test_token",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
@@ -36,7 +36,7 @@ func TestSpinUpHandler(t *testing.T) {
 		CookiesJSON:           "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
 		BookmarksJSON:         "{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}",
 		Extensions:            "not_real_extension_id,not_real_second_extension_id",
-		resultChan:            make(chan httputils.RequestResult),
+		ResultChan:            make(chan httputils.RequestResult),
 	}
 
 	testServerQueue := make(chan httputils.ServerRequest)
@@ -48,7 +48,7 @@ func TestSpinUpHandler(t *testing.T) {
 		t.Fatalf("error creating json transport request: %v", err)
 	}
 
-	testResult := JSONTransportRequestResult{
+	testResult := httputils.JSONTransportRequestResult{
 		HostPortForTCP32262: 32262,
 		HostPortForUDP32263: 32263,
 		HostPortForTCP32273: 32273,
@@ -82,7 +82,7 @@ func TestSpinUpHandler(t *testing.T) {
 		t.Fatalf("error marshalling json: %v", err)
 	}
 
-	var gotRequestMap JSONTransportRequest
+	var gotRequestMap httputils.JSONTransportRequest
 	err = json.Unmarshal(jsonGotRequest, &gotRequestMap)
 	if err != nil {
 		t.Fatalf("error unmarshalling json: %v", err)
@@ -125,7 +125,7 @@ func TestHttpServerIntegration(t *testing.T) {
 	// Wait for server startup
 	time.Sleep(5 * time.Second)
 
-	testJSONTransportRequest := JSONTransportRequest{
+	testJSONTransportRequest := httputils.JSONTransportRequest{
 		ConfigEncryptionToken: "test_token",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
@@ -133,7 +133,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		CookiesJSON:           "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
 		BookmarksJSON:         "{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}",
 		Extensions:            "",
-		resultChan:            make(chan httputils.RequestResult),
+		ResultChan:            make(chan httputils.RequestResult),
 	}
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
 	if err != nil {
@@ -153,7 +153,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		Transport: tr,
 	}
 
-	testResult := JSONTransportRequestResult{
+	testResult := httputils.JSONTransportRequestResult{
 		HostPortForTCP32262: 32262,
 		HostPortForUDP32263: 32263,
 		HostPortForTCP32273: 32273,
@@ -181,7 +181,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		t.Fatalf("error marshalling json: %v", err)
 	}
 
-	var gotRequestMap JSONTransportRequest
+	var gotRequestMap httputils.JSONTransportRequest
 	err = json.Unmarshal(jsonGotRequest, &gotRequestMap)
 	if err != nil {
 		t.Fatalf("error unmarshalling json: %v", err)
@@ -289,16 +289,16 @@ func TestProcessJSONDataRequestEmptyBody(t *testing.T) {
 
 // TestHandleJSONTransportRequest checks if valid fields will successfully send JSON transport request
 func TestHandleJSONTransportRequest(t *testing.T) {
-	testJSONTransportRequest := JSONTransportRequest{
+	testJSONTransportRequest := httputils.JSONTransportRequest{
 		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
-		resultChan:            make(chan httputils.RequestResult),
+		ResultChan:            make(chan httputils.RequestResult),
 	}
 
 	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
 
 	handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 
@@ -314,12 +314,12 @@ func TestHandleJSONTransportRequest(t *testing.T) {
 func TestGetJSONTransportRequestChannel(t *testing.T) {
 	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
 	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
 
 	// getJSONTransportRequestChannel will create a new JSON transport request channel with the mandelboxID
 	testJsonChan := getJSONTransportRequestChannel(mandelboxID, testTransportRequestMap, testmux)
 
-	if _, ok := interface{}(testJsonChan).(chan *JSONTransportRequest); !ok {
+	if _, ok := interface{}(testJsonChan).(chan *httputils.JSONTransportRequest); !ok {
 		t.Fatalf("error getting json transport request channel")
 	}
 }
@@ -328,11 +328,11 @@ func TestGetJSONTransportRequestChannel(t *testing.T) {
 func TestGetAppNameEmpty(t *testing.T) {
 	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
 	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
 
 	// Assign JSONTRansportRequest
-	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
-	testTransportRequestMap[mandelboxID] <- &JSONTransportRequest{}
+	testTransportRequestMap[mandelboxID] = make(chan *httputils.JSONTransportRequest, 1)
+	testTransportRequestMap[mandelboxID] <- &httputils.JSONTransportRequest{}
 
 	testMandelboxSubscription := subscriptions.Mandelbox{
 		ID:         mandelboxID,
@@ -356,7 +356,7 @@ func TestGetAppNameEmpty(t *testing.T) {
 func TestGetAppNameNoRequest(t *testing.T) {
 	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
 	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
 
 	testMandelboxSubscription := subscriptions.Mandelbox{
 		ID:         mandelboxID,
@@ -382,16 +382,16 @@ func TestGetAppName(t *testing.T) {
 	var appNames = []string{"browsers/chrome", "browsers/brave", "browsers/test"}
 
 	for _, appName := range appNames {
-		testJSONTransportRequest := JSONTransportRequest{
+		testJSONTransportRequest := httputils.JSONTransportRequest{
 			AppName: mandelboxtypes.AppName(appName),
 		}
 
 		mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
 		testmux := &sync.Mutex{}
-		testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+		testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
 
 		// Assign JSONTRansportRequest
-		testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
+		testTransportRequestMap[mandelboxID] = make(chan *httputils.JSONTransportRequest, 1)
 		testTransportRequestMap[mandelboxID] <- &testJSONTransportRequest
 
 		testMandelboxSubscription := subscriptions.Mandelbox{
@@ -447,8 +447,8 @@ func TestVerifyRequestTypeNilRequest(t *testing.T) {
 func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "https://localhost", iotest.ErrReader(errors.New("test error")))
-	testJSONTransportRequest := JSONTransportRequest{
-		resultChan: make(chan httputils.RequestResult),
+	testJSONTransportRequest := httputils.JSONTransportRequest{
+		ResultChan: make(chan httputils.RequestResult),
 	}
 
 	// authenticateAndParseRequest will get an error trying to read request body and will cause an error
@@ -467,8 +467,8 @@ func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
 func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "https://localhost", bytes.NewReader([]byte{}))
-	testJSONTransportRequest := JSONTransportRequest{
-		resultChan: make(chan httputils.RequestResult),
+	testJSONTransportRequest := httputils.JSONTransportRequest{
+		ResultChan: make(chan httputils.RequestResult),
 	}
 
 	// authenticateAndParseRequest will be unable to unmarshal an empty body and will cause an error
@@ -488,9 +488,9 @@ func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
 	res := httptest.NewRecorder()
 
 	// generateTestJSONTransportRequest will give a well formatted request
-	testJSONTransportRequest := JSONTransportRequest{
+	testJSONTransportRequest := httputils.JSONTransportRequest{
 		JSONData:   "test_json_data",
-		resultChan: make(chan httputils.RequestResult),
+		ResultChan: make(chan httputils.RequestResult),
 	}
 
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
@@ -515,10 +515,10 @@ func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
 	res := httptest.NewRecorder()
 
 	// generateTestJSONTransportRequest will give a well formatted request
-	testJSONTransportRequest := JSONTransportRequest{
+	testJSONTransportRequest := httputils.JSONTransportRequest{
 		JwtAccessToken: "test_invalid_jwt_token",
 		JSONData:       "test_json_data",
-		resultChan:     make(chan httputils.RequestResult),
+		ResultChan:     make(chan httputils.RequestResult),
 	}
 
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
@@ -540,7 +540,7 @@ func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
 
 // generateTestJSONTransportRequest takes a request body and creates an
 // HTTP PUT request for /json_transport
-func generateTestJSONTransportRequest(requestBody JSONTransportRequest) (*http.Request, error) {
+func generateTestJSONTransportRequest(requestBody httputils.JSONTransportRequest) (*http.Request, error) {
 	jsonData, err := json.Marshal(requestBody)
 	if err != nil {
 		return nil, utils.MakeError("error marshalling json: %v", err)

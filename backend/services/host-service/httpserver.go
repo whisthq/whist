@@ -33,51 +33,6 @@ func init() {
 	portbindings.Reserve(PortToListen, portbindings.TransportProtocolTCP)
 }
 
-// JSONTransportRequest defines the (unauthenticated) `json_transport`
-// endpoint.
-type JSONTransportRequest struct {
-	AppName               mandelboxtypes.AppName               `json:"app_name,omitempty"`             // The app name to spin up (used when running in localdev, but in deployment the app name is set to browsers/chrome).
-	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"`        // User-specific private encryption token
-	JwtAccessToken        string                               `json:"jwt_access_token"`               // User's JWT access token
-	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id"`                   // MandelboxID, used for the json transport request map
-	IsNewConfigToken      bool                                 `json:"is_new_config_encryption_token"` // Flag indicating we should expect a new config encryption token and to skip config decryption this run
-	JSONData              mandelboxtypes.JSONData              `json:"json_data"`                      // Arbitrary stringified JSON data to pass to mandelbox
-	CookiesJSON           mandelboxtypes.Cookies               `json:"cookies,omitempty"`              // The cookies provided by the client-app as JSON string
-	BookmarksJSON         mandelboxtypes.Bookmarks             `json:"bookmarks,omitempty"`            // The bookmarks provided by the client-app as JSON string
-	Extensions            mandelboxtypes.Extensions            `json:"extensions,omitempty"`           // Extensions provided by the client-app
-	Preferences           mandelboxtypes.Preferences           `json:"preferences,omitempty"`          // Preferences provided by the client-app as JSON string
-	LocalStorageJSON      mandelboxtypes.LocalStorage          `json:"local_storage,omitempty"`        // Local storage provided by the client-app as JSON string
-	ExtensionSettingsJSON mandelboxtypes.ExtensionSettings     `json:"extension_settings,omitempty"`   // Extension settings provided by the client-app as JSON string
-	ExtensionStateJSON    mandelboxtypes.ExtensionState        `json:"extension_state,omitempty"`      // Extension state provided by the client-app as JSON string
-	resultChan            chan httputils.RequestResult         // Channel to pass the request result between goroutines
-}
-
-// JSONTransportRequestResult defines the data returned by the
-// `json_transport` endpoint.
-type JSONTransportRequestResult struct {
-	HostPortForTCP32262 uint16 `json:"port_32262"`
-	HostPortForUDP32263 uint16 `json:"port_32263"`
-	HostPortForTCP32273 uint16 `json:"port_32273"`
-	AesKey              string `json:"aes_key"`
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *JSONTransportRequest) ReturnResult(result interface{}, err error) {
-	s.resultChan <- httputils.RequestResult{
-		Result: result,
-		Err:    err,
-	}
-}
-
-// createResultChan is called to create the Go channel to pass the request
-// result back to the HTTP request handler via ReturnResult.
-func (s *JSONTransportRequest) CreateResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan httputils.RequestResult)
-	}
-}
-
 // processJSONDataRequest processes an HTTP request to receive data
 // directly from the client app. It is handled in host-service.go
 func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<- httputils.ServerRequest) {
@@ -91,7 +46,7 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	}
 
 	// Verify authorization and unmarshal into the right object type
-	var reqdata JSONTransportRequest
+	var reqdata httputils.JSONTransportRequest
 	if err := authenticateRequest(w, r, &reqdata, !metadata.IsLocalEnv()); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		metrics.Increment("FailedRequests")
@@ -101,7 +56,7 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 
 	// Send request to queue, then wait for result
 	queue <- &reqdata
-	res := <-reqdata.resultChan
+	res := <-reqdata.ResultChan
 
 	res.Send(w)
 
@@ -113,9 +68,9 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 
 // handleJSONTransportRequest handles any incoming JSON transport requests. First it validates the JWT, then it verifies if
 // the json data for the particular user exists, and finally it sends the data through the transport request map.
-func handleJSONTransportRequest(serverevent httputils.ServerRequest, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+func handleJSONTransportRequest(serverevent httputils.ServerRequest, transportRequestMap map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest, transportMapLock *sync.Mutex) {
 	// Receive the value of the `json_transport request`
-	req := serverevent.(*JSONTransportRequest)
+	req := serverevent.(*httputils.JSONTransportRequest)
 
 	// First we validate the JWT received from the `json_transport` endpoint
 	// Set up auth
@@ -145,7 +100,7 @@ func handleJSONTransportRequest(serverevent httputils.ServerRequest, transportRe
 	defer transportMapLock.Unlock()
 
 	if transportRequestMap[req.MandelboxID] == nil {
-		transportRequestMap[req.MandelboxID] = make(chan *JSONTransportRequest, 1)
+		transportRequestMap[req.MandelboxID] = make(chan *httputils.JSONTransportRequest, 1)
 	}
 
 	// Send the JSONTransportRequest data through the map's channel and close the channel to
@@ -158,7 +113,7 @@ func handleJSONTransportRequest(serverevent httputils.ServerRequest, transportRe
 // getJSONTransportRequestChannel returns the JSON transport request for the solicited user
 // in a safe way. It also creates the channel in case it doesn't exists for that particular user.
 func getJSONTransportRequestChannel(mandelboxID mandelboxtypes.MandelboxID,
-	transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) chan *JSONTransportRequest {
+	transportRequestMap map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest, transportMapLock *sync.Mutex) chan *httputils.JSONTransportRequest {
 	// Acquire lock on transport requests map
 	transportMapLock.Lock()
 	defer transportMapLock.Unlock()
@@ -166,17 +121,17 @@ func getJSONTransportRequestChannel(mandelboxID mandelboxtypes.MandelboxID,
 	req := transportRequestMap[mandelboxID]
 
 	if req == nil {
-		transportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
+		transportRequestMap[mandelboxID] = make(chan *httputils.JSONTransportRequest, 1)
 	}
 
 	return transportRequestMap[mandelboxID]
 }
 
-func getAppName(mandelboxSubscription subscriptions.Mandelbox, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest,
-	transportMapLock *sync.Mutex) (*JSONTransportRequest, mandelboxtypes.AppName) {
+func getAppName(mandelboxSubscription subscriptions.Mandelbox, transportRequestMap map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest,
+	transportMapLock *sync.Mutex) (*httputils.JSONTransportRequest, mandelboxtypes.AppName) {
 
 	var AppName mandelboxtypes.AppName
-	var req *JSONTransportRequest
+	var req *httputils.JSONTransportRequest
 
 	if metadata.IsLocalEnvWithoutDB() {
 		// Receive the json transport request immediately when running on local env

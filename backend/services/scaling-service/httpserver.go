@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"crypto/tls"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -20,6 +23,10 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// The port the host service is listening on. This will be used for
+// redirecting JSON transport requests to the instance.
+const HostServicePort uint16 = 4678
+
 func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
 	err := verifyRequestType(w, req, http.MethodPost)
@@ -30,11 +37,15 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	}
 
 	var reqdata httputils.MandelboxAssignRequest
-	err = authenticateRequest(w, req, &reqdata)
+	claims, err := authenticateRequest(w, req, &reqdata)
 	if err != nil {
 		logger.Errorf("Failed while authenticating request. Err: %v", err)
 		return
 	}
+
+	// Add user id to the request. This way we don't expose the
+	// access token to other processes that don't need access to it.
+	reqdata.UserID = types.UserID(claims.Subject)
 
 	// Once we have authenticated and validated the request send it to the scaling
 	// algorithm for processing. Mandelbox assign is region-agnostic so we don't need
@@ -68,13 +79,14 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	_, _ = w.Write(buf)
 }
 
-// paymentsHandler handles a payment session request. It verifies the access token,
+// paymentSessionHandler handles a payment session request. It verifies the access token,
 // and then creates a StripeClient to get the URL of a payment session.
-func paymentsHandler(w http.ResponseWriter, req *http.Request) {
+func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
 	// Verify that we got a GET request
 	err := verifyRequestType(w, req, http.MethodGet)
 	if err != nil {
 		// err is already logged
+		http.Error(w, "", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -135,30 +147,85 @@ func paymentsHandler(w http.ResponseWriter, req *http.Request) {
 	_, _ = w.Write(buf)
 }
 
+// processJSONTransportRequest processes an HTTP request to receive data
+// directly from the client app.
+func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
+	// Verify that it is an PUT request
+	if httputils.VerifyRequestType(w, r, http.MethodPut) != nil {
+		http.Error(w, "", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Verify authorization and unmarshal into the right object type
+	var reqdata httputils.JSONTransportRequest
+	if _, err := authenticateRequest(w, r, &reqdata); err != nil {
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		return
+	}
+
+	// Send the request to the instance and then return the response
+	url := utils.Sprintf("https://%s:%v/json_transport", reqdata.IP, HostServicePort)
+
+	jsonBody, err := json.Marshal(reqdata)
+	if err != nil {
+		logger.Errorf("Error marshalling body for host service. Err: %v", err)
+		return
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	hostReq, err := http.NewRequest("PUT", url, bodyReader)
+	if err != nil {
+		logger.Errorf("Failed to send JSON transport request to instance. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	client := &http.Client{Transport: tr}
+
+	res, err := client.Do(hostReq)
+	if err != nil {
+		logger.Errorf("Failed to send JSON transport request to instance. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	hostBody, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		logger.Errorf("Could not read host response body. Err: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(hostBody)
+}
+
 // authenticateRequest will verify that the access token is valid
 // and will parse the request body and try to unmarshal into a
 // `ServerRequest` type.
-func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) error {
+func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) (*auth.WhistClaims, error) {
 	accessToken, err := getAccessToken(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	claims, err := auth.ParseToken(accessToken)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+		return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
 	}
 
 	_, err = httputils.ParseRequest(w, r, s)
 	if err != nil {
-		return utils.MakeError("Error while parsing request. Err: %v", err)
+		return nil, utils.MakeError("Error while parsing request. Err: %v", err)
 	}
 
-	// Add user id to the request. This way we don't expose the
-	// access token to other processes that don't need access to it.
-	s.(*httputils.MandelboxAssignRequest).UserID = types.UserID(claims.Subject)
-	return nil
+	return claims, nil
 }
 
 // getAccessToken is a helper function that extracts the access token
@@ -260,13 +327,16 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	burst := 10
 	limiter := rate.NewLimiter(rate.Every(interval), burst)
 
-	// Create the final assign handler, with the necessary middleware
+	// Create the final handlers, with the necessary middleware
 	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, httputils.EnableCORS(createHandler(mandelboxAssignHandler))))
+	jsonTransportHandler := httputils.EnableCORS(processJSONTransportRequest)
+	paymentsHandler := httputils.EnableCORS(paymentSessionHandler)
 
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.Handle("/mandelbox/assign", assignHandler)
+	mux.Handle("/json_transport", http.HandlerFunc(jsonTransportHandler))
 	mux.Handle("/payment_portal_url", http.HandlerFunc(paymentsHandler))
 
 	// The PORT env var will be automatically set by Heroku.
