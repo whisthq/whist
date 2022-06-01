@@ -17,7 +17,7 @@ extern "C" {
 void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size, int output_width,
                    int output_height, int x, int y) {
     /*
-     * Render a PNG to all windows in the frontend
+     * Render a PNG to all windows in the frontend at position x/y/output_width/output_height
      */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     unsigned int w, h;
@@ -38,25 +38,28 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
         return;
     }
     for (const auto& [window_id, window_context] : context->windows) {
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(window_context->renderer, surface);
-        if (texture == NULL) {
-            LOG_ERROR("Failed to create texture from PNG: %s", SDL_GetError());
-            return;
-        }
+        // only show PNG if it's smaller than the window
+        if ((w <= window_context->sdl_width) && (h <= window_context->sdl_height)) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(window_context->renderer, surface);
+            if (texture == NULL) {
+                LOG_ERROR("Failed to create texture from PNG: %s", SDL_GetError());
+                return;
+            }
 
-        // TODO: Formalize window position constants.
-        if (x == -1) {
-            // Center horizontally
-            x = (output_width - w) / 2;
-        }
-        if (y == -1) {
-            // Place at bottom
-            y = output_height - h;
-        }
-        SDL_Rect rect = {x, y, (int)w, (int)h};
-        SDL_RenderCopy(window_context->renderer, texture, NULL, &rect);
+            // TODO: Formalize window position constants.
+            if (x == -1) {
+                // Center horizontally
+                x = (output_width - w) / 2;
+            }
+            if (y == -1) {
+                // Place at bottom
+                y = output_height - h;
+            }
+            SDL_Rect rect = {x, y, (int)w, (int)h};
+            SDL_RenderCopy(window_context->renderer, texture, NULL, &rect);
 
-        SDL_DestroyTexture(texture);
+            SDL_DestroyTexture(texture);
+        }
     }
     SDL_FreeSurface(surface);
     free(image);

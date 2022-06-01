@@ -15,6 +15,12 @@ void sdl_get_window_pixel_size(WhistFrontend* frontend, int id, int* width, int*
         SDL_GL_GetDrawableSize(context->windows[id]->window, width, height);
     } else {
         LOG_ERROR("Tried to get window pixel size for window %d, but no such window exists!", id);
+        if (width != NULL) {
+            *width = WHIST_ERROR_NOT_FOUND;
+        }
+        if (height != NULL) {
+            *height = WHIST_ERROR_NOT_FOUND;
+        }
     }
 }
 
@@ -28,6 +34,12 @@ void sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* width, in
         SDL_GetWindowSize(context->windows[id]->window, width, height);
     } else {
         LOG_ERROR("Tried to get window virtual size for window %d, but no such window exists!", id);
+        if (width != NULL) {
+            *width = WHIST_ERROR_NOT_FOUND;
+        }
+        if (height != NULL) {
+            *height = WHIST_ERROR_NOT_FOUND;
+        }
     }
 }
 
@@ -46,6 +58,12 @@ WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* i
     } else {
         LOG_ERROR("Tried to get window display index for window %d, but no such window exists!",
                   id);
+        if (width != NULL) {
+            *width = WHIST_ERROR_NOT_FOUND;
+        }
+        if (height != NULL) {
+            *height = WHIST_ERROR_NOT_FOUND;
+        }
         return WHIST_ERROR_NOT_FOUND;
     }
 }

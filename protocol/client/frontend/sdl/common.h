@@ -40,6 +40,7 @@ enum {
      *
      * data1 contains a boolean cast to a pointer indicating whether we
      * want to enter (true) or exit (false) fullscreen mode.
+     * data2 contains an int cast to a pointer indicating the ID of the window to fullscreen.
      */
     SDL_FRONTEND_EVENT_FULLSCREEN,
     /**
@@ -47,6 +48,7 @@ enum {
      *
      * data1 contains a pointer to a string, which the receiver will
      * need to free after tuse.
+     * data2 contains an int cast to a pointer indicating the ID of the window to change
      */
     SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE,
     /**
@@ -54,6 +56,7 @@ enum {
      *
      * data1 contains a pointer to a WhistRGBColor object, which the
      * receiver will need to free after use.
+     * data2 contains an int cast to a pointer indicating the ID of the window to change
      */
     SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE,
     /**
