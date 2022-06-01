@@ -142,7 +142,6 @@ target_link_libraries(${PROTOCOL_TEST_BINARY}
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/frontend/sdl/native_macos.mm
-        ../client/notif_utils/display_notifs_mac.m
     )
     target_link_libraries(${PROTOCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
 endif()
@@ -200,7 +199,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
 
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
-        ../client/frontend/sdl/native_windows.c
+        ../client/frontend/sdl/native_windows.cpp
+        ../client/frontend/sdl/windows_notification_helper.cpp
     )
 
     set_property(TARGET ${PROTOCOL_TEST_BINARY} PROPERTY

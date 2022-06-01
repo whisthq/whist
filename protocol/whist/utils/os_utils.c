@@ -278,15 +278,6 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
                                  (void *)&in_progress);
 }
 
-#if !OS_IS(OS_MACOS)
-
-int display_notification(WhistNotification notif) {
-    LOG_WARNING("Notification display not implemented on this OS");
-    return -1;
-}
-
-#endif
-
 void package_notification(WhistNotification *notif, const char *title, const char *message) {
     // The logic is currently very simple, but this function is factored out in case
     // we would like to add more complicated parsing rules in the future.

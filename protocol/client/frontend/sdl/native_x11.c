@@ -43,3 +43,7 @@ void sdl_native_destroy_external_drag_handler(WhistFrontend* frontend) {
     UNUSED(frontend);
     LOG_INFO("Not implemented on X11");
 }
+
+void sdl_native_display_notification(const WhistNotification* notif) {
+    LOG_INFO("Not implemented on X11");
+}

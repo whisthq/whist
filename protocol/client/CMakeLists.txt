@@ -153,7 +153,6 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(WhistClient PRIVATE
         frontend/sdl/native_macos.mm
-        notif_utils/display_notifs_mac.m
     )
 
     target_link_libraries(WhistClient ${MAC_SPECIFIC_CLIENT_LIBS})
@@ -168,8 +167,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099 ")
 
     target_sources(WhistClient PRIVATE
-        frontend/sdl/native_windows.c
+        frontend/sdl/native_windows.cpp
         frontend/sdl/d3d11.cpp
+        frontend/sdl/windows_notification_helper.cpp
     )
 
     set_property(TARGET WhistClient PROPERTY

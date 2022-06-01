@@ -2098,20 +2098,6 @@ TEST_F(ProtocolTest, PackageNotificationTest) {
     EXPECT_TRUE(strlen(notif.message) < MAX_NOTIF_MSG_LEN);
 }
 
-// Test notification display
-TEST_F(ProtocolTest, NotificationDisplayTest) {
-    WhistNotification notif;
-    safe_strncpy(notif.title, "Title of Notification Here", MAX_NOTIF_TITLE_LEN);
-    safe_strncpy(notif.message, "Message of Notification Here!", MAX_NOTIF_MSG_LEN);
-    int result = display_notification(notif);
-
-#if OS_IS(OS_MACOS)
-    EXPECT_EQ(result, 0);
-#else
-    EXPECT_EQ(result, -1);
-#endif
-}
-
 TEST_F(ProtocolTest, AudioTest) {
     // TODO: I've disabled this test because `WhistFrontend*` is not yet in
     //       a state where we can easily initialize it here without spinning

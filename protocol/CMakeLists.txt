@@ -404,6 +404,8 @@ set(WINDOWS_CORE_LIBS
     shcore
     DbgHelp
     setupapi
+    runtimeobject
+    pathcch
 )
 
 # Client Specific windows libs go here

@@ -299,6 +299,10 @@ void sdl_set_fullscreen(bool is_fullscreen) {
     whist_frontend_set_window_fullscreen(event_frontend, is_fullscreen);
 }
 
+void sdl_client_display_notification(const WhistNotification* notif) {
+    whist_frontend_display_notification(event_frontend, notif);
+}
+
 void sdl_update_pending_tasks(WhistFrontend* frontend) {
     // Check if a pending window resize message should be sent to server
     whist_lock_mutex(window_resize_mutex);

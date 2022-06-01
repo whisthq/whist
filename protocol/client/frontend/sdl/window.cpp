@@ -74,3 +74,7 @@ void sdl_set_titlebar_color(WhistFrontend* frontend, const WhistRGBColor* color)
     };
     SDL_PushEvent(&event);
 }
+
+void sdl_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {
+    sdl_native_display_notification(notif);
+}
