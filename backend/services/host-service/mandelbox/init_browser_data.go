@@ -18,7 +18,7 @@ var (
 	UserInitialBrowserFile      string = "user-initial-file"
 )
 
-// BrowserData is a collection of possible browser datas a user generates
+// BrowserData is a collection of all possible browser data items a user can generate
 type BrowserData struct {
 	// CookieJSON is the user's cookie sqlite3 file in a json string format
 	CookiesJSON types.Cookies `json:"cookiesJSON,omitempty"`
