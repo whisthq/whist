@@ -63,7 +63,7 @@ func TestSpinUpHandler(t *testing.T) {
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
 		BrowserData:           mandelboxtypes.BrowserData(deflatedBrowserData),
-		resultChan:            make(chan httputils.RequestResult),
+		ResultChan:            make(chan httputils.RequestResult),
 	}
 
 	testServerQueue := make(chan httputils.ServerRequest)
@@ -184,7 +184,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
 		BrowserData:           mandelboxtypes.BrowserData(deflatedBrowserData),
-		resultChan:            make(chan httputils.RequestResult),
+		ResultChan:            make(chan httputils.RequestResult),
 	}
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
 	if err != nil {
