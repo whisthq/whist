@@ -187,7 +187,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
                 // Create new video texture.
                 window_context->texture =
                     SDL_CreateTexture(window_context->renderer, format, SDL_TEXTUREACCESS_STREAMING,
-                                      MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+                                      frame->width, frame->height);
                 if (window_context->texture == NULL) {
                     LOG_ERROR("Failed to create %s video texture: %s.",
                               av_get_pix_fmt_name((AVPixelFormat)frame->format), SDL_GetError());
