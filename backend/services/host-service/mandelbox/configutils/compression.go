@@ -333,7 +333,7 @@ func GzipInflateString(compressedGzipString string) (string, error) {
 	}
 }
 
-// Inflate a gzip-compressed string (encoded according to base-64 protocol)
+// Deflate a gzip-compressed string (encoded according to base-64 protocol)
 func GzipDeflateString(plaintextString string) (string, error) {
 	if len(plaintextString) > 0 {
 		var gzipBinaryBuffer bytes.Buffer
