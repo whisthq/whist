@@ -340,11 +340,15 @@ func TestProcessJSONDataRequestEmptyBody(t *testing.T) {
 
 // TestHandleJSONTransportRequest checks if valid fields will successfully send JSON transport request
 func TestHandleJSONTransportRequest(t *testing.T) {
+	deflatedJSONData, err := configutils.GzipDeflateString(string("test_json_data"))
+	if err != nil {
+		t.Fatalf("could not deflate JSON data: %v", err)
+	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
 		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
-		JSONData:              "test_json_data",
+		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
 		ResultChan:            make(chan httputils.RequestResult),
 	}
 
@@ -538,9 +542,14 @@ func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
 	res := httptest.NewRecorder()
 
+	deflatedJSONData, err := configutils.GzipDeflateString(string("test_json_data"))
+	if err != nil {
+		t.Fatalf("could not deflate JSON data: %v", err)
+	}
+
 	// generateTestJSONTransportRequest will give a well formatted request
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		JSONData:   "test_json_data",
+		JSONData:   mandelboxtypes.JSONData(deflatedJSONData),
 		ResultChan: make(chan httputils.RequestResult),
 	}
 
@@ -565,10 +574,15 @@ func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
 func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
 	res := httptest.NewRecorder()
 
+	deflatedJSONData, err := configutils.GzipDeflateString(string("test_json_data"))
+	if err != nil {
+		t.Fatalf("could not deflate JSON data: %v", err)
+	}
+
 	// generateTestJSONTransportRequest will give a well formatted request
 	testJSONTransportRequest := httputils.JSONTransportRequest{
 		JwtAccessToken: "test_invalid_jwt_token",
-		JSONData:       "test_json_data",
+		JSONData:       mandelboxtypes.JSONData(deflatedJSONData),
 		ResultChan:     make(chan httputils.RequestResult),
 	}
 
