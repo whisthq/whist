@@ -183,7 +183,7 @@ func TestUserInitialBrowserParse(t *testing.T) {
 		t.Fatalf("Could not inflate compressed user browser data: %v", err)
 	}
 
-	// Unmarshal bookmarks into proper format
+	// Unmarshal user browser data into proper format
 	unmarshalledBrowserData, err := UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
 	if err != nil {
 		t.Fatalf("Error unmarshalling user browser data: %v", err)
@@ -196,6 +196,35 @@ func TestUserInitialBrowserParse(t *testing.T) {
 	// Set Bookmarks *configutils.Bookmarks address to be the same in the two BrowserData so that the comparison below can succeed
 	// (cmp.Equal does not compare structs recursively)
 	unmarshalledBrowserData.Bookmarks = &expectedBookmarks
+
+	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData, cmpopts.EquateEmpty()) {
+		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
+	}
+}
+
+// TestUserInitialBrowserParseEmpty checks if passing empty browser data will result in an empty browser data struct
+func TestUserInitialBrowserParseEmpty(t *testing.T) {
+	userInitialBrowserData := BrowserData{}
+
+	stringifiedBrowserData, err := json.Marshal(userInitialBrowserData)
+	if err != nil {
+		t.Fatalf("could not marshal empty browser data: %v", err)
+	}
+
+	deflatedBrowserData, err := configutils.GzipDeflateString(string(stringifiedBrowserData))
+	if err != nil {
+		t.Fatalf("could not deflate empty browser data: %v", err)
+	}
+
+	inflatedBrowserData, err := configutils.GzipInflateString(deflatedBrowserData)
+	if err != nil {
+		t.Fatalf("Could not inflate compressed empty user browser data: %v", err)
+	}
+
+	unmarshalledBrowserData, err := UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+	if err != nil {
+		t.Fatalf("Error unmarshalling empty user browser data: %v", err)
+	}
 
 	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData, cmpopts.EquateEmpty()) {
 		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
