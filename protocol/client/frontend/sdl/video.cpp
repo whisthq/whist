@@ -13,8 +13,8 @@ extern "C" {
 #define RGBA_B 0x0000ff00
 #define RGBA_A 0x000000ff
 
-void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size,
-                   int output_width, int output_height, int x, int y) {
+void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size, int output_width,
+                   int output_height, int x, int y) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     unsigned int w, h;
     uint8_t* image;
