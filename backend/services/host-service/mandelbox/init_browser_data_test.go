@@ -189,7 +189,7 @@ func TestUserInitialBrowserParse(t *testing.T) {
 	}
 
 	if !cmp.Equal(*unmarshalledBrowserData.Bookmarks, expectedBookmarks) {
-		t.Fatalf("UnmarshalBrowserData returned Bookmarks %v, expected %v", unmarshalledBrowserData.Bookmarks, expectedBookmarks)
+		t.Fatalf("UnmarshalBrowserData returned Bookmarks %v, expected %v", *unmarshalledBrowserData.Bookmarks, expectedBookmarks)
 	}
 
 	// Set Bookmarks *configutils.Bookmarks address to be the same in the two BrowserData so that the comparison below can succeed
