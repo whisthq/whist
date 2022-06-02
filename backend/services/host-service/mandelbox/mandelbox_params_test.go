@@ -90,6 +90,16 @@ func TestWriteMandelboxJsonData(t *testing.T) {
 	// Explicitly set the result to what we expect
 	testFileContent := utils.Sprintf(`%s`, inflatedJSONData)
 
+	resourceDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "/mandelboxResourceMappings/")
+	jsonDataFile := path.Join(resourceDir, "config.json")
+
+	// Create destination directory if it does not exists
+	if _, err := os.Stat(resourceDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(resourceDir, 0777); err != nil {
+			t.Fatalf("Could not make dir %s. Error: %s", resourceDir, err)
+		}
+	}
+
 	// Write the sample JSON data
 	err = testMbox.WriteJSONData(types.JSONData(deflatedJSONData))
 	if err != nil {
@@ -103,7 +113,7 @@ func TestWriteMandelboxJsonData(t *testing.T) {
 	}
 
 	// Check the contents of the file
-	jsonDataFile := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "/mandelboxResourceMappings/", "config.json")
+	
 
 	matchingFile, err := os.Open(jsonDataFile)
 	if err != nil {
