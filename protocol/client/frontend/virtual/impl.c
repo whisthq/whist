@@ -1,6 +1,9 @@
 #include "common.h"
 #include "interface.h"
 #include <whist/utils/queue.h>
+#include <whist/utils/atomic.h>
+
+static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 
 extern QueueContext* events_queue;
 
@@ -35,6 +38,22 @@ WhistStatus virtual_init(WhistFrontend* frontend, int width, int height, const c
     context->width = width ? width : 1920;
     context->height = height ? height : 1080;
     context->dpi = 96;
+    context->sdl_audio_device = 0;
+
+    // We only need to initialize SDL for the audio system
+    if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+        LOG_ERROR("Could not initialize SDL - %s", SDL_GetError());
+        return WHIST_ERROR_UNKNOWN;
+    }
+
+    // We only need to SDL_Quit once, regardless of the subsystem refcount.
+    // SDL_QuitSubSystem() would require us to register an atexit for each
+    // call.
+    if (atomic_fetch_or(&sdl_atexit_initialized, 1) == 0) {
+        // If we have initialized SDL, then on exit we should clean up.
+        atexit(SDL_Quit);
+    }
+
     return WHIST_SUCCESS;
 }
 
@@ -48,17 +67,70 @@ void virtual_destroy(WhistFrontend* frontend) {
     free(context);
 }
 
-void virtual_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigned int channels) {}
+// We use SDL for the audio system for now. Eventually, we will implement
+// audio using the virtual interface, similar to video.
+void virtual_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigned int channels) {
+    VirtualFrontendContext* context = frontend->context;
+    SDL_AudioSpec desired_spec = {
+        .freq = (int)frequency,
+        .format = AUDIO_F32SYS,
+        .channels = (uint8_t)channels,
+        // Must be a power of two. The value doesn't matter since
+        // it only affects the size of the callback buffer, which
+        // we don't use.
+        .samples = 1024,
+        .callback = NULL,
+        .userdata = NULL,
+    };
+    SDL_AudioSpec obtained_spec;
+    context->sdl_audio_device = SDL_OpenAudioDevice(NULL, 0, &desired_spec, &obtained_spec, 0);
+    if (context->sdl_audio_device == 0) {
+        LOG_ERROR("Could not open audio device - %s", SDL_GetError());
+        return;
+    }
 
-bool virtual_audio_is_open(WhistFrontend* frontend) { return true; }
+    // Verify that the obtained spec matches the desired spec, as
+    // we currently do not perform resampling on ingress.
+    FATAL_ASSERT(obtained_spec.freq == desired_spec.freq);
+    FATAL_ASSERT(obtained_spec.format == desired_spec.format);
+    FATAL_ASSERT(obtained_spec.channels == desired_spec.channels);
 
-void virtual_close_audio(WhistFrontend* frontend) {}
+    // Start the audio device.
+    SDL_PauseAudioDevice(context->sdl_audio_device, 0);
+}
+
+bool virtual_audio_is_open(WhistFrontend* frontend) {
+    VirtualFrontendContext* context = frontend->context;
+    return context->sdl_audio_device != 0;
+}
+
+void virtual_close_audio(WhistFrontend* frontend) {
+    VirtualFrontendContext* context = frontend->context;
+    if (frontend->call->audio_is_open(frontend)) {
+        SDL_CloseAudioDevice(context->sdl_audio_device);
+        context->sdl_audio_device = 0;
+    }
+}
 
 WhistStatus virtual_queue_audio(WhistFrontend* frontend, const uint8_t* data, size_t size) {
+    VirtualFrontendContext* context = frontend->context;
+    if (!frontend->call->audio_is_open(frontend)) {
+        return WHIST_ERROR_NOT_FOUND;
+    }
+    if (SDL_QueueAudio(context->sdl_audio_device, data, (int)size) < 0) {
+        LOG_ERROR("Could not queue audio - %s", SDL_GetError());
+        return WHIST_ERROR_UNKNOWN;
+    }
     return WHIST_SUCCESS;
 }
 
-size_t virtual_get_audio_buffer_size(WhistFrontend* frontend) { return 1; }
+size_t virtual_get_audio_buffer_size(WhistFrontend* frontend) {
+    VirtualFrontendContext* context = frontend->context;
+    if (!frontend->call->audio_is_open(frontend)) {
+        return 0;
+    }
+    return SDL_GetQueuedAudioSize(context->sdl_audio_device);
+}
 
 void virtual_get_window_pixel_size(WhistFrontend* frontend, int* width, int* height) {
     VirtualFrontendContext* context = frontend->context;

@@ -11,7 +11,7 @@ void sdl_open_audio(WhistFrontend* frontend, unsigned int frequency, unsigned in
     SDL_AudioSpec desired_spec = {
         .freq = (int)frequency,
         .format = AUDIO_F32SYS,
-        .channels = (Uint8)channels,
+        .channels = (uint8_t)channels,
         // Must be a power of two. The value doesn't matter since
         // it only affects the size of the callback buffer, which
         // we don't use.
