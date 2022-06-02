@@ -23,9 +23,12 @@ var UpdateInstance struct {
 	} `graphql:"update_whist_instances(where: {id: {_eq: $id}}, _set: $changes)"`
 }
 
-// DeleteInstanceStatusById deletes an instance that matches the given instance_name.
+// DeleteInstanceStatusById deletes an instance with the given id and its mandelboxes from the database.
 var DeleteInstanceById struct {
-	MutationResponse struct {
+	MandelboxesMutationResponse struct {
+		AffectedRows graphql.Int `graphql:"affected_rows"`
+	} `graphql:"delete_whist_mandelboxes(where: {instance_id: {_eq: $id}})"`
+	InstancesMutationResponse struct {
 		AffectedRows graphql.Int `graphql:"affected_rows"`
 	} `graphql:"delete_whist_instances(where: {id: {_eq: $id}})"`
 }

@@ -31,10 +31,20 @@ func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient 
 	testLock.Lock()
 	defer testLock.Unlock()
 
-	return testInstances, nil
+	var result subscriptions.WhistInstances
+	for _, instance := range testInstances {
+		if string(instance.ID) == instanceID {
+			result = append(result, instance)
+		}
+	}
+
+	return result, nil
 }
 
 func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) (subscriptions.WhistInstances, error) {
+	testLock.Lock()
+	defer testLock.Unlock()
+
 	var instancesWithCapacity subscriptions.WhistInstances
 	for _, instance := range testInstances {
 		if string(instance.Region) == region && instance.RemainingCapacity > 0 {
@@ -56,6 +66,7 @@ func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, gr
 				Provider:          graphql.String(instance.Provider),
 				ImageID:           graphql.String(instance.ImageID),
 				ClientSHA:         graphql.String(instance.ClientSHA),
+				Region:            graphql.String(instance.Region),
 				Type:              graphql.String(instance.Type),
 				RemainingCapacity: graphql.Int(instance.RemainingCapacity),
 				IPAddress:         instance.IPAddress,
@@ -70,7 +81,15 @@ func (db *mockDBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Contex
 	testLock.Lock()
 	defer testLock.Unlock()
 
-	return testInstances, nil
+	var result subscriptions.WhistInstances
+	for _, instance := range testInstances {
+		if string(instance.Status) == status &&
+			string(instance.Region) == region {
+			result = append(result, instance)
+		}
+	}
+
+	return result, nil
 }
 
 func (db *mockDBClient) QueryInstancesByImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, imageID string) (subscriptions.WhistInstances, error) {
@@ -103,6 +122,7 @@ func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 			Provider:          graphql.String(instance.Provider),
 			ImageID:           graphql.String(instance.ImageID),
 			ClientSHA:         graphql.String(instance.ClientSHA),
+			Region:            graphql.String(instance.Region),
 			Type:              graphql.String(instance.Type),
 			IPAddress:         instance.IPAddress,
 			RemainingCapacity: graphql.Int(instance.RemainingCapacity),
@@ -138,6 +158,7 @@ func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient
 				Provider:          instance.Provider,
 				ImageID:           instance.ImageID,
 				ClientSHA:         graphql.String(instance.ClientSHA),
+				Region:            graphql.String(instance.Region),
 				Type:              instance.Type,
 				IPAddress:         instance.IPAddress,
 				Status:            graphql.String(updateParams.Status),
@@ -154,7 +175,17 @@ func (db *mockDBClient) DeleteInstance(scalingCtx context.Context, graphQLClient
 	testLock.Lock()
 	defer testLock.Unlock()
 
-	testInstances = subscriptions.WhistInstances{}
+	var i int
+	for index, instance := range testInstances {
+		if string(instance.ID) == instanceID {
+			i = index
+		}
+	}
+
+	// Delete instance from testInstances slice
+	testInstances[i] = testInstances[len(testInstances)-1]
+	testInstances = testInstances[:len(testInstances)-1]
+
 	return 0, nil
 }
 
@@ -271,13 +302,11 @@ func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstan
 	return newInstances, nil
 }
 
-func (mh *mockHostHandler) SpinDownInstances(scalingCtx context.Context, instanceIDs []string) (terminatedInstances []subscriptions.Instance, err error) {
-	return []subscriptions.Instance{}, nil
+func (mh *mockHostHandler) SpinDownInstances(scalingCtx context.Context, instanceIDs []string) error {
+	return nil
 }
 
 func (mh *mockHostHandler) WaitForInstanceTermination(scalingCtx context.Context, maxWaitTime time.Duration, instanceIds []string) error {
-	// Remove test instances to mock them shutting down
-	testInstances = subscriptions.WhistInstances{}
 	return nil
 }
 
@@ -335,6 +364,7 @@ func TestVerifyInstanceScaleDown(t *testing.T) {
 		{
 			ID:                "test-verify-scale-down-instance",
 			Provider:          "AWS",
+			Status:            "DRAINING",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 	}
@@ -444,6 +474,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id",
 			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
+			Region:            "test-region",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
@@ -453,6 +484,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id",
 			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
+			Region:            "test-region",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
@@ -461,7 +493,18 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
 			ClientSHA:         "test-sha-dev",
+			Status:            "DRAINING",
+			Region:            "test-region",
+			Type:              "g4dn.2xlarge",
+			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
+		},
+		{
+			ID:                "test-scale-down-instance-4",
+			Provider:          "AWS",
+			ImageID:           "test-image-id",
+			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
+			Region:            "test-region",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
@@ -499,6 +542,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id",
 			ClientSHA:         "test-sha-dev",
 			Status:            "DRAINING",
+			Region:            "test-region",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
@@ -508,15 +552,17 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			ImageID:           "test-image-id",
 			ClientSHA:         "test-sha-dev",
 			Status:            "DRAINING",
+			Region:            "test-region",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},
 		{
-			ID:                "test-scale-down-instance-3",
+			ID:                "test-scale-down-instance-4",
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
 			ClientSHA:         "test-sha-dev",
 			Status:            "ACTIVE",
+			Region:            "test-region",
 			Type:              "g4dn.2xlarge",
 			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
 		},

@@ -124,5 +124,5 @@ func (client *DBClient) DeleteInstance(scalingCtx context.Context, graphQLClient
 	}
 	err := graphQLClient.Mutate(scalingCtx, deleteMutation, deleteParams)
 
-	return int(deleteMutation.MutationResponse.AffectedRows), err
+	return int(deleteMutation.InstancesMutationResponse.AffectedRows), err
 }

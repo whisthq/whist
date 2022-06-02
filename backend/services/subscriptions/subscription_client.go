@@ -3,6 +3,7 @@ package subscriptions
 import (
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -78,7 +79,8 @@ func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 		OnError(func(sc *graphql.SubscriptionClient, err error) error {
 			logger.Errorf("Error received from Hasura client: %v", err)
 			return err
-		})
+		}).
+		WithRetryTimeout(5 * time.Minute)
 
 	// Use our custom websocket connection
 	sc.WithWebSocket(WhistWebsocketConn)

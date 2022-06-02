@@ -12,7 +12,7 @@ import (
 type HostHandler interface {
 	Initialize(region string) error
 	SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTimeReady time.Duration, image subscriptions.Image) (createdInstances []subscriptions.Instance, err error)
-	SpinDownInstances(scalingCtx context.Context, instanceIDs []string) (terminatedInstances []subscriptions.Instance, err error)
+	SpinDownInstances(scalingCtx context.Context, instanceIDs []string) error
 	WaitForInstanceTermination(context.Context, time.Duration, []string) error
 	WaitForInstanceReady(context.Context, time.Duration, []string) error
 }
