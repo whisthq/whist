@@ -825,7 +825,7 @@ jobs:
 
       - name: Install cmake via Chocolatey on Windows GHA Machine
         if: runner.os == 'Windows'
-        uses: crazy-max/ghaction-chocolatey@v1
+        uses: crazy-max/ghaction-chocolatey@v2
         with:
           args: install cmake --pre --no-progress --installargs 'ADD_CMAKE_TO_PATH=System'
 
