@@ -1,11 +1,14 @@
 package mandelbox
 
 import (
+	"bytes"
 	"os"
 	"path"
 	"testing"
 
+	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -61,6 +64,61 @@ func TestWriteMandelboxParams(t *testing.T) {
 				t.Errorf("Could not read file %s: %v", tt, err)
 			}
 		})
+	}
+}
+
+// TestUserInitialBrowserWrite checks if the browser data is properly created by
+// calling the write function and comparing results with a manually generated cookie file
+func TestWriteMandelboxJsonData(t *testing.T) {
+	testMbox, _, _ := createTestMandelboxData()
+
+	// Reset filesystem now, and at the end of this test
+	testMbox.cleanResourceMappingDir()
+	defer testMbox.cleanResourceMappingDir()
+
+	sampleJsonData := `{"dark_mode":false,"desired_timezone":"America/New_York","client_dpi":192,"restore_last_session":true,"kiosk_mode":false,"initial_key_repeat":300,"key_repeat":30,"local_client":true,"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36","longitude":"103.851959","latitude":"1.290270","system_languages":"en_US","browser_languages":"en-US,en","user_locale":{"LC_COLLATE":"en_US.UTF-8","LC_CTYPE":"en_US.UTF-8","LC_MESSAGES":"en_US.UTF-8","LC_MONETARY":"en_US.UTF-8","LC_NUMERIC":"en_US.UTF-8","LC_TIME":"en_US.UTF-8"},"client_os":"darwin"}`
+	deflatedJSONData, err := configutils.GzipDeflateString(string(sampleJsonData))
+	if err != nil {
+		t.Fatalf("could not deflate string with Gzip: %v", err)
+	}
+
+	inflatedJSONData, err := configutils.GzipInflateString(deflatedJSONData)
+	if err != nil {
+		t.Fatalf("Couldn't inflate string with Gzip: %s", err)
+	}
+
+	// Explicitly set the result to what we expect
+	testFileContent := utils.Sprintf(`%s`, inflatedJSONData)
+
+	// Write the sample JSON data
+	err = testMbox.WriteJSONData(types.JSONData(deflatedJSONData))
+	if err != nil {
+		t.Fatalf("Error writing config.json file for protocol: %v", err)
+	}
+
+	// Check that the file for the JSON data exists
+	err = verifyResourceMappingFileCreation("config.json")
+	if err != nil {
+		t.Errorf("Could not create json data file config.json: %v", err)
+	}
+
+	// Check the contents of the file
+	jsonDataFile := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "/mandelboxResourceMappings/", "config.json")
+
+	matchingFile, err := os.Open(jsonDataFile)
+	if err != nil {
+		t.Fatalf("error opening JSON data file config.json: %v", err)
+	}
+
+	var matchingFileBuf bytes.Buffer
+	_, err = matchingFileBuf.ReadFrom(matchingFile)
+	if err != nil {
+		t.Fatalf("error reading config.json file: %v", err)
+	}
+
+	// Check contents match
+	if string(testFileContent) != matchingFileBuf.String() {
+		t.Fatalf("file contents don't match for file %s: '%s' vs '%s'", jsonDataFile, testFileContent, matchingFileBuf.Bytes())
 	}
 }
 
