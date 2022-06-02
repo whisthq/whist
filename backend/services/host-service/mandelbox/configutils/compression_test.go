@@ -100,3 +100,21 @@ func TestCompressionIntegration(t *testing.T) {
 		t.Fatalf("failed to validate directory contents: %v", err)
 	}
 }
+
+func TestGzipCompression(t *testing.T) {
+	sampleJsonData := `{"dark_mode":false,"desired_timezone":"America/New_York","client_dpi":192,"restore_last_session":true,"kiosk_mode":false,"initial_key_repeat":300,"key_repeat":30,"local_client":true,"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36","longitude":"103.851959","latitude":"1.290270","system_languages":"en_US","browser_languages":"en-US,en","user_locale":{"LC_COLLATE":"en_US.UTF-8","LC_CTYPE":"en_US.UTF-8","LC_MESSAGES":"en_US.UTF-8","LC_MONETARY":"en_US.UTF-8","LC_NUMERIC":"en_US.UTF-8","LC_TIME":"en_US.UTF-8"},"client_os":"darwin"}`
+	deflatedJSONData, err := GzipDeflateString(string(sampleJsonData))
+	if err != nil {
+		t.Fatalf("could not deflate string with Gzip: %v", err)
+	}
+	if len(deflatedJSONData) >= len(sampleJsonData) {
+		t.Fatalf("Gzip compression failed to reduce string length")
+	}
+	inflatedJSONData, err := GzipInflateString(deflatedJSONData)
+	if err != nil {
+		t.Fatalf("Couldn't inflate string with Gzip: %s", err)
+	}
+	if inflatedJSONData != sampleJsonData {
+		t.Fatalf("Inflating deflated Gzip string did not yield original string: %s", err)
+	}
+}
