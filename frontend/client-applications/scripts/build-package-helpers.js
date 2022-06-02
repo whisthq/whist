@@ -165,9 +165,6 @@ module.exports = {
         path.join(protocolTargetBuild, `${newExecutable}${ext}`)
       )
     }
-
-    rimrafSync("images")
-    fse.moveSync(path.join(protocolTargetBuild, "images"), "images")
   },
 
   // Build TailwindCSS
