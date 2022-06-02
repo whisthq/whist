@@ -57,7 +57,6 @@ func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
 	if err != nil {
 		return utils.MakeError("Couldn't inflate JSON Data: %s", err)
 	}
-	logger.Info("Wrote data \"%s\" to file config.json\n", jsonDataPlainText)
 	return mandelbox.writeResourceMappingToFile("config.json", jsonDataPlainText)
 }
 
