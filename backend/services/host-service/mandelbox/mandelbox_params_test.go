@@ -113,8 +113,6 @@ func TestWriteMandelboxJsonData(t *testing.T) {
 	}
 
 	// Check the contents of the file
-	
-
 	matchingFile, err := os.Open(jsonDataFile)
 	if err != nil {
 		t.Fatalf("error opening JSON data file config.json: %v", err)
