@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"os"
 	"path"
+	"reflect"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -188,15 +188,15 @@ func TestUserInitialBrowserParse(t *testing.T) {
 		t.Fatalf("Error unmarshalling user browser data: %v", err)
 	}
 
-	if !cmp.Equal(*unmarshalledBrowserData.Bookmarks, expectedBookmarks) {
-		t.Fatalf("UnmarshalBrowserData returned Bookmarks %v, expected %v", *unmarshalledBrowserData.Bookmarks, expectedBookmarks)
+	if !reflect.DeepEqual(*unmarshalledBrowserData.Bookmarks, expectedBookmarks) {
+		t.Fatalf("UnmarshalBrowserData returned Bookmarks: %v, expected Bookmarks: %v", *unmarshalledBrowserData.Bookmarks, expectedBookmarks)
 	}
 
 	// Set Bookmarks *configutils.Bookmarks address to be the same in the two BrowserData so that the comparison below can succeed
 	// (cmp.Equal does not compare structs recursively)
 	unmarshalledBrowserData.Bookmarks = &expectedBookmarks
 
-	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData) {
+	if !reflect.DeepEqual(unmarshalledBrowserData, userInitialBrowserData) {
 		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
 	}
 }
