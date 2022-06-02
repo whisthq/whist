@@ -153,7 +153,8 @@ func TestHttpServerIntegration(t *testing.T) {
 	// Wait for server startup
 	time.Sleep(5 * time.Second)
 
-	bookmarks, err := configutils.UnmarshalBookmarks(mandelboxtypes.Bookmarks(`{"roots": [{"date_added": 13280861983875934, "children": [{"date_added": 13280861983875934, "url": "http://whist.com", "name": "whist.com"}]}]}`))
+	validBookmarks := `{"roots": {"bookmark_bar": {"children": [{"date_added": "13280861983875934","name": "whist.com","url": "http://whist.com"}],"date_added": "13280861983875934","name": "Bookmark Bar","type": "folder"}}}`
+	bookmarks, err := configutils.UnmarshalBookmarks(mandelboxtypes.Bookmarks(validBookmarks))
 	if err != nil {
 		t.Fatalf("UnmarshalBookmarks returned an unexpected error: %v", err)
 	}
