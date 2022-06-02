@@ -101,7 +101,10 @@ func TestCompressionIntegration(t *testing.T) {
 	}
 }
 
+// TestGzipCompression compresses and decompresses a string using the Gzip
+// protocol and compares the result with the original string.
 func TestGzipCompression(t *testing.T) {
+	// 1. Test compression and decompression of a non-empty string
 	sampleJsonData := `{"dark_mode":false,"desired_timezone":"America/New_York","client_dpi":192,"restore_last_session":true,"kiosk_mode":false,"initial_key_repeat":300,"key_repeat":30,"local_client":true,"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36","longitude":"103.851959","latitude":"1.290270","system_languages":"en_US","browser_languages":"en-US,en","user_locale":{"LC_COLLATE":"en_US.UTF-8","LC_CTYPE":"en_US.UTF-8","LC_MESSAGES":"en_US.UTF-8","LC_MONETARY":"en_US.UTF-8","LC_NUMERIC":"en_US.UTF-8","LC_TIME":"en_US.UTF-8"},"client_os":"darwin"}`
 	deflatedJSONData, err := GzipDeflateString(string(sampleJsonData))
 	if err != nil {
@@ -115,6 +118,23 @@ func TestGzipCompression(t *testing.T) {
 		t.Fatalf("Couldn't inflate string with Gzip: %s", err)
 	}
 	if inflatedJSONData != sampleJsonData {
-		t.Fatalf("Inflating deflated Gzip string did not yield original string: %s", err)
+		t.Fatalf("Inflating Gzip-deflated string did not yield original string: %s", err)
+	}
+
+	// 2. Test compression and decompression of a empty string
+	emptyString := ``
+	deflatedEmptyString, err := GzipDeflateString(string(emptyString))
+	if err != nil {
+		t.Fatalf("could not deflate empty string with Gzip: %v", err)
+	}
+	if len(deflatedEmptyString) != 0 {
+		t.Fatalf("Gzip compression failed when called on empty string")
+	}
+	inflatedEmptyString, err := GzipInflateString(deflatedEmptyString)
+	if err != nil {
+		t.Fatalf("Couldn't inflate empty string with Gzip: %s", err)
+	}
+	if len(inflatedEmptyString) != 0 || inflatedEmptyString != emptyString {
+		t.Fatalf("Inflating Gzip-deflated empty string did not yield an empty string: %s", err)
 	}
 }
