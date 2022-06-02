@@ -31,13 +31,13 @@ type JSONTransportResult struct {
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
 
-	bookmarks, err := configutils.UnmarshalBookmarks(mandelboxtypes.Bookmarks("{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}"))
+	bookmarks, err := configutils.UnmarshalBookmarks(mandelboxtypes.Bookmarks(`{"roots": [{"date_added": 13280861983875934, "children": [{"date_added": 13280861983875934, "url": "http://whist.com", "name": "whist.com"}]}]}`))
 	if err != nil {
 		t.Fatalf("UnmarshalBookmarks returned an unexpected error: %v", err)
 	}
 
 	browserData := mandelbox.BrowserData{
-		CookiesJSON: "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
+		CookiesJSON: `[{"creation_utc": 13280861983875934, "host_key": "whist.com"}]`,
 		Bookmarks:   &bookmarks,
 		Extensions:  "not_real_extension_id,not_real_second_extension_id",
 	}
@@ -152,13 +152,13 @@ func TestHttpServerIntegration(t *testing.T) {
 	// Wait for server startup
 	time.Sleep(5 * time.Second)
 
-	bookmarks, err := configutils.UnmarshalBookmarks(mandelboxtypes.Bookmarks("{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}"))
+	bookmarks, err := configutils.UnmarshalBookmarks(mandelboxtypes.Bookmarks(`{"roots": [{"date_added": 13280861983875934, "children": [{"date_added": 13280861983875934, "url": "http://whist.com", "name": "whist.com"}]}]}`))
 	if err != nil {
 		t.Fatalf("UnmarshalBookmarks returned an unexpected error: %v", err)
 	}
 
 	browserData := mandelbox.BrowserData{
-		CookiesJSON: "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
+		CookiesJSON: `[{"creation_utc": 13280861983875934, "host_key": "whist.com"}]`,
 		Bookmarks:   &bookmarks,
 		Extensions:  "",
 	}
