@@ -2,10 +2,12 @@ package mandelbox
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -93,4 +95,105 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	if matchingFileBuf.String() != "{}" {
 		t.Fatalf("file contents don't match for file %s: '{}' vs '%s'", browserDataFile, matchingFileBuf.Bytes())
 	}
+}
+
+// TestUserInitialBrowserParse checks if the browser data is properly parsed by
+// calling the relevant functions to decompress and umarshall the received data
+// and comparing results with a manually generated browser data struct
+func TestUserInitialBrowserParse(t *testing.T) {
+	// Define browser data
+	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
+	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
+
+	// We will simulate a user with cookies but no bookmarks
+	cookiesJSON := "[" + testCookie1 + "," + testCookie2 + "]"
+	extensions := "not_real_extension_id,not_real_second_extension_id"
+
+	expectedBookmarks := configutils.Bookmarks{
+		Roots: map[string]configutils.Bookmark{
+			"bookmark_bar": {
+				Children: []configutils.Bookmark{
+					{
+						DateAdded:    "1527180903",
+						DateModified: "1527180903",
+						Guid:         "2",
+						Id:           "2",
+						Name:         "😂",
+						Type:         "url",
+						Url:          "https://www.example.com/",
+					},
+					{
+						Children: []configutils.Bookmark{
+							{
+								DateAdded:    "1527180903",
+								DateModified: "1527180903",
+								Guid:         "4",
+								Id:           "4",
+								Name:         "网站",
+								Type:         "url",
+								Url:          "https://www.example.com/",
+							},
+						},
+						DateAdded:    "1527180903",
+						DateModified: "1527180903",
+						Guid:         "3",
+						Id:           "3",
+						Name:         "Nested",
+						Type:         "folder",
+					},
+				},
+				DateAdded:    "1527180903",
+				DateModified: "1527180903",
+				Guid:         "1",
+				Id:           "1",
+				Name:         "Bookmark Bar",
+				Type:         "folder",
+			},
+			"other": {
+				Children:  []configutils.Bookmark{},
+				DateAdded: "12345",
+				Name:      "Other Bookmarks",
+				Type:      "folder",
+			},
+		},
+		SyncMetadata: "adfsd",
+		Version:      1,
+	}
+
+	// Create browser data
+	userInitialBrowserData := BrowserData{
+		CookiesJSON: types.Cookies(cookiesJSON),
+		Bookmarks:   &expectedBookmarks,
+		Extensions:  types.Extensions(extensions),
+	}
+
+	stringifiedBrowserData, err := json.Marshal(userInitialBrowserData)
+	if err != nil {
+		t.Fatalf("could not marshal browser data: %v", err)
+	}
+
+	deflatedBrowserData, err := configutils.GzipDeflateString(string(stringifiedBrowserData))
+	if err != nil {
+		t.Fatalf("could not deflate browser data: %v", err)
+	}
+
+	inflatedBrowserData, err := configutils.GzipInflateString(deflatedBrowserData)
+	if err != nil || len(inflatedBrowserData) == 0 {
+		t.Fatalf("Could not inflate compressed user browser data: %v", err)
+	}
+
+	// Unmarshal bookmarks into proper format
+	unmarshalledBrowserData, err := UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+	if err != nil {
+		t.Fatalf("Error unmarshalling user browser data: %v", err)
+	}
+
+	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData) {
+		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
+	}
+
+	if !cmp.Equal(unmarshalledBrowserData.Bookmarks, expectedBookmarks) {
+		t.Fatalf("UnmarshalBrowserData returned Bookmarks %v, expected %v", unmarshalledBrowserData.Bookmarks, expectedBookmarks)
+	}
+
 }
