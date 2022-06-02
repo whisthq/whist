@@ -463,7 +463,8 @@ void print_hard_drive_info(void) {
 
 double get_cpu_usage(double time_elapsed) {
     double cpu_usage_pct = -1.0;
-#if !OS_IS(OS_WIN32)
+#if OS_IN(OS_MACOS | OS_LINUX)
+    // Use getrusage().
     static struct rusage prev_rusage;
     static bool prev_rusage_initialized;
     if (!prev_rusage_initialized) {
@@ -481,7 +482,30 @@ double get_cpu_usage(double time_elapsed) {
         cpu_usage_pct = 100.0 * (user_time_elapsed + system_time_elapsed) / time_elapsed;
         prev_rusage = current_usage;
     }
-#else  // Not Windows
+#elif OS_IS(OS_WIN32)
+    // Use GetProcessTimes().
+    static double prev_total_time;
+    static bool prev_total_time_initialised;
+
+    FILETIME creation_time, exit_time, kernel_time, user_time;
+    BOOL ret =
+        GetProcessTimes(GetCurrentProcess(), &creation_time, &exit_time, &kernel_time, &user_time);
+    if (ret) {
+        // These clocks run at 10MHz.
+        double total_time =
+            (((uint64_t)kernel_time.dwHighDateTime << 32 | kernel_time.dwLowDateTime) +
+             ((uint64_t)user_time.dwHighDateTime << 32 | user_time.dwLowDateTime)) /
+            10000000.0;
+        if (prev_total_time_initialised) {
+            cpu_usage_pct = 100.0 * (total_time - prev_total_time) / time_elapsed;
+        } else {
+            prev_total_time_initialised = true;
+        }
+        prev_total_time = total_time;
+    } else {
+        LOG_WARNING("GetProcessTimes() failed: %#x.", GetLastError());
+    }
+#else
     LOG_WARNING("get_cpu_usage() not implemented for this platform");
 #endif
     return cpu_usage_pct;
