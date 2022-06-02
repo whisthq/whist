@@ -188,12 +188,15 @@ func TestUserInitialBrowserParse(t *testing.T) {
 		t.Fatalf("Error unmarshalling user browser data: %v", err)
 	}
 
-	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData) {
-		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
-	}
-
-	if !cmp.Equal(unmarshalledBrowserData.Bookmarks, expectedBookmarks) {
+	if !cmp.Equal(*unmarshalledBrowserData.Bookmarks, expectedBookmarks) {
 		t.Fatalf("UnmarshalBrowserData returned Bookmarks %v, expected %v", unmarshalledBrowserData.Bookmarks, expectedBookmarks)
 	}
 
+	// Set Bookmarks *configutils.Bookmarks address to be the same in the two BrowserData so that the comparison below can succeed
+	// (cmp.Equal does not compare structs recursively)
+	unmarshalledBrowserData.Bookmarks = &expectedBookmarks
+
+	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData) {
+		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
+	}
 }
