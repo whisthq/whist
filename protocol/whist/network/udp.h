@@ -134,7 +134,7 @@ Questionable Public Functions, potentially try to remove in future organizations
 int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
 
 /**
- * @brief                          Get the number of consecutive fully received frames of
+ * @brief                          Get the number of fully received frames of
  *                                 the given type are available
  *                                 Use this to figure out how many frames are pending to render
  *

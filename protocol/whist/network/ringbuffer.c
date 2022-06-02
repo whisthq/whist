@@ -10,6 +10,7 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/debug/protocol_analyzer.h>
 #include <whist/debug/debug_console.h>
+#include "whist/logging/logging.h"
 #include "whist/utils/string_buffer.h"
 
 /*
@@ -190,6 +191,8 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     ring_buffer->num_unnecessary_nacks_received = 0;
     ring_buffer->num_times_nacking_saturated = 0;
     start_timer(&ring_buffer->last_nack_statistics_timer);
+
+    ring_buffer->num_pending_ready_frames = 0;
 
     return ring_buffer;
 }
@@ -438,6 +441,7 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
 
     if (is_ready_to_render(ring_buffer, segment_id) && !was_already_ready) {
         ring_buffer->frames_received++;
+        ring_buffer->num_pending_ready_frames++;
     }
 
     return !ringbuffer_overflowed;
@@ -508,6 +512,12 @@ bool is_ready_to_render(RingBuffer* ring_buffer, int id) {
     if (current_frame->id != id) {
         return false;
     }
+
+    if (id <= ring_buffer->currently_rendering_id) {
+        FATAL_ASSERT(current_frame->frame_buffer == NULL);
+        FATAL_ASSERT(get_framebuffer(ring_buffer, current_frame) == NULL);
+    }
+
     // Set the frame buffer so that others can read from it
     current_frame->frame_buffer = get_framebuffer(ring_buffer, current_frame);
     // and if getting a framebuffer out of it is possible
@@ -550,6 +560,7 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
 
     // Move frame from current_frame, to currently_rendering_frame
     FrameData* current_frame = get_frame_at_id(ring_buffer, id);
+    FATAL_ASSERT(current_frame->id == id);
     ring_buffer->currently_rendering_id = id;
     ring_buffer->currently_rendering_frame = *current_frame;
 
@@ -559,6 +570,10 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
     // will be used for packet loss calculation.
     current_frame->packet_buffer = current_frame->fec_frame_buffer = NULL;
     current_frame->fec_decoder = NULL;
+    current_frame->frame_buffer = NULL;
+
+    // once the frame becomes currently rendering, it's no longer considered as pending
+    ring_buffer->num_pending_ready_frames--;
 
     // Set the framebuffer pointer of the currently rendering frame
     ring_buffer->currently_rendering_frame.frame_buffer =
@@ -835,6 +850,17 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
 
 void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
     FATAL_ASSERT(frame_data->packet_buffer != NULL);
+    if (frame_data->frame_buffer != NULL) {
+        frame_data->frame_buffer = NULL;
+        // the special currently_rendering_frame, is not counted as pending.
+        // thus doesn't affect the maintained value here
+        if (frame_data != &ring_buffer->currently_rendering_frame) {
+            // robustness check
+            FATAL_ASSERT(frame_data == get_frame_at_id(ring_buffer, frame_data->id));
+            // decrease the maintained value
+            ring_buffer->num_pending_ready_frames--;
+        }
+    }
     // Free the frame's data
     free_block(ring_buffer->packet_buffer_allocator, frame_data->packet_buffer);
     frame_data->packet_buffer = NULL;
@@ -863,6 +889,12 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     ring_buffer->min_id = -1;
     ring_buffer->frames_received = 0;
     ring_buffer->last_rendered_id = -1;
+
+    // at the moment as num_peidng_ready_frames is added,
+    // the below code is not really necessary,
+    // but it adds robustness, reduced the chance of the value
+    // getting broken in futher commits
+    ring_buffer->num_pending_ready_frames = 0;
 }
 
 // Get a pointer to a framebuffer for that id, if such a framebuffer is possible to construct
@@ -1099,4 +1131,42 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, int max_unordered_pack
 
     // Nacking succeeded
     return true;
+}
+
+int get_num_pending_ready_frames(RingBuffer* ring_buffer) {
+    // if RING_BUFFER_SELF_CHECKING is enabled, check if the maintained value
+    // matches with the calculated value occasionally
+    const int SELF_CHECKING = true;        // NOLINT
+    const int SELF_CHECKING_PERIOD = 100;  // NOLINT
+
+    // only do the check if the range to check is smaller than this value, to avoid spiky compute
+    const int SELF_CHECKING_MAX_RANGE = 50;  // NOLINT
+
+    if (SELF_CHECKING) {
+        if (ring_buffer->min_id == -1 || ring_buffer->max_id == -1) {
+            FATAL_ASSERT(ring_buffer->num_pending_ready_frames == 0);
+        } else {
+            int start = max(ring_buffer->min_id, ring_buffer->last_rendered_id + 1);
+            int end = ring_buffer->max_id;
+
+            if (end - start <= SELF_CHECKING_MAX_RANGE && rand() % SELF_CHECKING_PERIOD == 0) {
+                int cnt = 0;
+                // count the num of ready frames by iterating.
+                // inefficient code, that's the reason we don't check too frequently
+                for (int i = start; i <= end; i++) {
+                    if (is_ready_to_render(ring_buffer, i)) {
+                        cnt++;
+                    }
+                }
+
+                // compare the calculated value with the maintained value
+                FATAL_ASSERT(cnt == ring_buffer->num_pending_ready_frames);
+            }
+        }
+    }
+
+    FATAL_ASSERT(ring_buffer->num_pending_ready_frames >= 0);
+    FATAL_ASSERT(ring_buffer->num_pending_ready_frames <= ring_buffer->ring_buffer_size);
+
+    return ring_buffer->num_pending_ready_frames;
 }

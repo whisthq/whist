@@ -108,6 +108,10 @@ typedef struct RingBuffer {
     int min_id;
     int max_id;
 
+    // a maintained value of ready(fully received) frames inside ringbuffer,
+    // not including the currently rendering frame
+    int num_pending_ready_frames;
+
     // Nack variables
 
     // The next ID that should be rendered, marks
@@ -261,5 +265,16 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
  * @param ring_buffer Ring buffer to destroy
  */
 void destroy_ring_buffer(RingBuffer* ring_buffer);
+
+/**
+ * @brief                          Get the number of fully received frames inside ring buffer, that
+ *                                 is waiting for render.
+ *
+ * @param ring_buffer              Ring buffer to use
+ * @returns                        Num of fully received frames inside ring buffer
+ * @note                           This value by definition doesn't include the currently rendering
+ * frame.
+ */
+int get_num_pending_ready_frames(RingBuffer* ring_buffer);
 
 #endif
