@@ -8,16 +8,16 @@
 # Order is important. The last matching pattern has the most precedence.
 # The folders are ordered as follows:
 
-/.github/                           @philippemnoel @rpadaki @npip99
-/backend/auth0/                     @owenniles @rpadaki @philippemnoel
-/backend/infrastructure/            @philippemnoel @djsavvy @mauaraujo
-/backend/services/                  @djsavvy @rpadaki @mauaraujo
-/frontend/client-applications/      @mingy98 @rpadaki @mauaraujo
-/frontend/core-ts/                  @mingy98 @owenniles @sardination
+/.github/                           @philippemnoel @rpadaki @mauaraujo
+/backend/auth0/                     @philippemnoel @rpadaki @owenniles
+/backend/infrastructure/            @philippemnoel @mauaraujo @gabrieleoliaro
+/backend/services/                  @mauaraujo @rpadaki @gabrieleoliaro
+/frontend/client-applications/      @mingy98 @rpadaki @owenniles
+/frontend/core-ts/                  @mingy98 @rpadaki @owenniles
 /frontend/website/                  @mingy98 @rpadaki @philippemnoel
-/host-setup/                        @rpadaki @djsavvy @philippemnoel
-/mandelboxes/                       @djsavvy @rpadaki @philippemnoel
-/protocol/                          @jkarthic @npip99 @fhvwy @rpadaki @sardination
+/host-setup/                        @rpadaki @mauaraujo @philippemnoel
+/mandelboxes/                       @rpadaki @mauaraujo @philippemnoel
+/protocol/                          @jkarthic @fhvwy @npip99 @rpadaki @sardination
 
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
