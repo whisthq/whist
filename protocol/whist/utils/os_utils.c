@@ -54,7 +54,7 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.keylayout.USExtended", {"xkb:us::eng", ""}},
     {"com.apple.keylayout.US", {"xkb:us::eng", ""}},
     {"com.apple.keylayout.USInternational-PC", {"xkb:us::eng", ""}},
-    {"com.apple.keylayout.Australian", {"xkb:us::eng", ""}},  // Australian keyboard layout is the same as US
+    {"com.apple.keylayout.Australian", {"xkb:us::eng", ""}},  // Same as US
     {"com.apple.keylayout.Italian-Pro", {"xkb:it::ita", ""}},
     {"com.apple.keylayout.Italian", {"xkb:it::ita", ""}},
     {"com.apple.keylayout.Arabic", {"xkb:ara::ara", ""}},
