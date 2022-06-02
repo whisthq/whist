@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -188,7 +189,7 @@ func TestUserInitialBrowserParse(t *testing.T) {
 		t.Fatalf("Error unmarshalling user browser data: %v", err)
 	}
 
-	if !cmp.Equal(*unmarshalledBrowserData.Bookmarks, expectedBookmarks) {
+	if !cmp.Equal(*unmarshalledBrowserData.Bookmarks, expectedBookmarks, cmpopts.EquateEmpty()) {
 		t.Fatalf("UnmarshalBrowserData returned Bookmarks: %v, expected Bookmarks: %v", *unmarshalledBrowserData.Bookmarks, expectedBookmarks)
 	}
 
@@ -196,7 +197,7 @@ func TestUserInitialBrowserParse(t *testing.T) {
 	// (cmp.Equal does not compare structs recursively)
 	unmarshalledBrowserData.Bookmarks = &expectedBookmarks
 
-	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData) {
+	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData, cmpopts.EquateEmpty()) {
 		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
 	}
 }
