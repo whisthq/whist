@@ -51,7 +51,9 @@ export const hostSpinUp = async ({
       is_new_config_encryption_token: is_new_config_encryption_token ?? false,
       jwt_access_token,
       mandelbox_id,
-      json_data,
+      json_data: gzipSync(json_data, {
+        level: constants.Z_BEST_COMPRESSION,
+      }).toString("base64"),
       ...(importedData !== undefined && {
         browser_data: gzipSync(
           JSON.stringify({
