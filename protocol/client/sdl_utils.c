@@ -397,25 +397,52 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
     whist_unlock_mutex(frontend_render_mutex);
 }
 
+EMBEDDED_OBJECT(insufficient_bandwidth_500x50);
+EMBEDDED_OBJECT(insufficient_bandwidth_750x75);
+EMBEDDED_OBJECT(insufficient_bandwidth_1000x100);
+EMBEDDED_OBJECT(insufficient_bandwidth_1500x150);
+
 static void render_insufficient_bandwidth(WhistFrontend* frontend) {
-    const char* filenames[] = {"error_message_500x50.png", "error_message_750x75.png",
-                               "error_message_1000x100.png", "error_message_1500x150.png"};
-    // Width in pixels for the above files. Maintain the below list in ascending order.
-    const int file_widths[] = {500, 750, 1000, 1500};
+    // List of images.  Width must be in ascending order!
+    static const struct {
+        int width;
+        const uint8_t* data;
+        const size_t* size;
+    } images[] = {
+        {
+            500,
+            insufficient_bandwidth_500x50,
+            &insufficient_bandwidth_500x50_size,
+        },
+        {
+            750,
+            insufficient_bandwidth_750x75,
+            &insufficient_bandwidth_750x75_size,
+        },
+        {
+            1000,
+            insufficient_bandwidth_1000x100,
+            &insufficient_bandwidth_1000x100_size,
+        },
+        {
+            1500,
+            insufficient_bandwidth_1500x150,
+            &insufficient_bandwidth_1500x150_size,
+        },
+    };
 #define TARGET_WIDTH_IN_INCHES 5.0
     int chosen_idx = 0;
     int dpi = whist_frontend_get_window_dpi(frontend);
     // Choose an image closest to TARGET_WIDTH_IN_INCHES.
     // And it should be at least TARGET_WIDTH_IN_INCHES.
-    for (int i = 0; i < (int)(sizeof(file_widths) / sizeof(*file_widths)); i++) {
-        double width_in_inches = (double)file_widths[i] / dpi;
+    for (int i = 0; i < (int)ARRAY_LENGTH(images); i++) {
+        double width_in_inches = (double)images[i].width / dpi;
         if (width_in_inches > TARGET_WIDTH_IN_INCHES) {
             chosen_idx = i;
             break;
         }
     }
 
-    char frame_filename[256];
-    snprintf(frame_filename, sizeof(frame_filename), "images/%s", filenames[chosen_idx]);
-    whist_frontend_paint_png(frontend, frame_filename, output_width, output_height, -1, -1);
+    whist_frontend_paint_png(frontend, images[chosen_idx].data, *images[chosen_idx].size,
+                             output_width, output_height, -1, -1);
 }

@@ -30,8 +30,8 @@
     GENERATOR(void, get_video_device, WhistFrontend* frontend, AVBufferRef** device,               \
               enum AVPixelFormat* format)                                                          \
     GENERATOR(WhistStatus, update_video, WhistFrontend* frontend, AVFrame* frame)                  \
-    GENERATOR(void, paint_png, WhistFrontend* frontend, const char* filename, int output_width,    \
-              int output_height, int x, int y)                                                     \
+    GENERATOR(void, paint_png, WhistFrontend* frontend, const uint8_t* data, size_t data_size,     \
+              int output_width, int output_height, int x, int y)                                   \
     GENERATOR(void, paint_solid, WhistFrontend* frontend, const WhistRGBColor* color)              \
     GENERATOR(void, paint_video, WhistFrontend* frontend, int output_width, int output_height)     \
     GENERATOR(void, render, WhistFrontend* frontend)                                               \

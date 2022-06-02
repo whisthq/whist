@@ -238,6 +238,22 @@ Defines
 #error "No constructor function implementation for this compiler."
 #endif
 
+/**
+ * Embedded object declaration.
+ *
+ * Declares the data array and size of an object embedded from a file
+ * by calling embed_file(file_name object_name) in CMake.
+ */
+#ifdef __cplusplus
+#define EMBEDDED_OBJECT(object_name)        \
+    extern "C" const uint8_t object_name[]; \
+    extern "C" const size_t object_name##_size;
+#else
+#define EMBEDDED_OBJECT(object_name)    \
+    extern const uint8_t object_name[]; \
+    extern const size_t object_name##_size;
+#endif
+
 /*
 ============================
 Constants

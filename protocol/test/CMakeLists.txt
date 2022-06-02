@@ -117,6 +117,15 @@ else()
 )
 endif()
 
+# Protocol test file in source form for the embed-file test.
+embed_file(protocol_test.cpp embed_test_object)
+# Client embedded files needed by sdl_utils.c.
+embed_file(../client/images/error_message_500x50.png insufficient_bandwidth_500x50)
+embed_file(../client/images/error_message_750x75.png insufficient_bandwidth_750x75)
+embed_file(../client/images/error_message_1000x100.png insufficient_bandwidth_1000x100)
+embed_file(../client/images/error_message_1500x150.png insufficient_bandwidth_1500x150)
+target_sources(${PROTOCOL_TEST_BINARY} PRIVATE ${EMBED_FILE_LIST})
+
 # Link the GoogleTest library
 target_link_libraries(${PROTOCOL_TEST_BINARY} gtest)
 target_link_libraries(${PROTOCOL_TEST_BINARY} gmock)

@@ -322,6 +322,9 @@ endif()
 
 fetchcontent_makeavailable(googletest)
 
+# Include embed-file function for use in subdirectories.
+include(cmake/embed-file.cmake)
+
 # Tell CMake where to look for includes
 # Use SYSTEM flag to not get warnings from their files
 include_directories(${CMAKE_SOURCE_DIR}) # For #include <whist/**> semantics
