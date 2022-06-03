@@ -122,7 +122,7 @@
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "autoprefixer": "^10.3.1",
-    "electron": "19.0.3",
+    "electron": "19.0.2",
     "electron-builder": "23.0.3",
     "electron-notarize": "github:whisthq/electron-notarize#main",
     "esbuild": "^0.14.0",
