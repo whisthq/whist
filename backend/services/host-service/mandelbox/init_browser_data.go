@@ -87,10 +87,10 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData t
 	}
 
 	// Convert struct into JSON string
-	data, err := json.Marshal(initialBrowserData)
+	data, err := json.Marshal(browserData)
 
 	if err != nil {
-		return utils.MakeError("Could not marshal initialBrowserData: %v", initialBrowserData)
+		return utils.MakeError("Could not marshal browserData: %v", browserData)
 	}
 
 	filePath := path.Join(destDir, UserInitialBrowserFile)

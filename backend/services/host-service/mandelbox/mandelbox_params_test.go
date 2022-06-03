@@ -67,7 +67,7 @@ func TestWriteMandelboxParams(t *testing.T) {
 	}
 }
 
-// TestUserInitialBrowserWrite checks if the browser data is properly created by
+// TestWriteMandelboxJsonData checks if the JSON data is properly created by
 // calling the write function and comparing results with a manually generated cookie file
 func TestWriteMandelboxJsonData(t *testing.T) {
 	testMbox, _, _ := createTestMandelboxData()
