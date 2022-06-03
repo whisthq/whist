@@ -209,10 +209,10 @@ WhistStatus sdl_d3d11_init_decoder(SDLFrontendContext *context, ID3D11Device *re
     AVHWDeviceContext *dev = (AVHWDeviceContext *)dev_ref->data;
     AVD3D11VADeviceContext *hwctx = (AVD3D11VADeviceContext *)dev->hwctx;
 
-    d3d11->render_device->AddRef();
-    hwctx->device = d3d11->render_device;
-    d3d11->render_context->AddRef();
-    hwctx->device_context = d3d11->render_context;
+    d3d11->d3d11_device->AddRef();
+    hwctx->device = d3d11->d3d11_device;
+    d3d11->d3d11_context->AddRef();
+    hwctx->device_context = d3d11->d3d11_context;
 
     err = av_hwdevice_ctx_init(dev_ref);
     if (err < 0) {
@@ -236,6 +236,7 @@ void sdl_d3d11_destroy_window(SDLFrontendContext *context, int id) {
         LOG_ERROR("Tried to destroy D3D11 context for window %d that doesn't exist!", id);
         return;
     }
+    SDLWindowContext* window_context = context->windows[id];
     SDLD3D11Context *d3d11 = (SDLD3D11Context *)window_context->private_data;
 
     if (!d3d11) {
