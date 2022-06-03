@@ -1,6 +1,7 @@
 package scaling_algorithms
 
 import (
+	"math"
 	"sync"
 	"time"
 
@@ -52,7 +53,7 @@ const (
 )
 
 // VCPUsPerMandelbox indicates the number of vCPUs allocated per mandelbox.
-const VCPUsPerMandelbox = 4
+const VCPUsPerMandelbox = 8.0 / 3.0
 
 // A map containing how many GPUs each instance type has.
 var instanceTypeToGPUNum = map[string]int{
@@ -96,7 +97,7 @@ func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]
 		if !ok {
 			continue
 		}
-		capacityMap[instanceType] = utils.Min(gpuNum*constants.MaxMandelboxesPerGPU, vcpuNum/VCPUsPerMandelbox)
+		capacityMap[instanceType] = utils.Min(gpuNum*constants.MaxMandelboxesPerGPU, int(math.Round(float64(vcpuNum)/VCPUsPerMandelbox)))
 	}
 	return capacityMap
 }

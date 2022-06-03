@@ -1,6 +1,7 @@
 package scaling_algorithms
 
 import (
+	"math"
 	"reflect"
 	"testing"
 
@@ -43,8 +44,8 @@ func TestGenerateInstanceCapacityMap(t *testing.T) {
 				"b": 8,
 			},
 			expected: map[string]int{
-				"a": 4 / VCPUsPerMandelbox,
-				"b": 8 / VCPUsPerMandelbox,
+				"a": int(math.Round(4.0 / VCPUsPerMandelbox)),
+				"b": int(math.Round(8.0 / VCPUsPerMandelbox)),
 			},
 		},
 		{
