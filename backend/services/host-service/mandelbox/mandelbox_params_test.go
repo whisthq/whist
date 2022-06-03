@@ -134,17 +134,17 @@ func TestWriteMandelboxParamsErrors(t *testing.T) {
 	}
 
 	err = mandelbox.WriteSessionID()
-	if err != nil {
+	if err == nil {
 		t.Fatalf("Did not get an error when  writing session ID to file with name identical to a folder: %v", err)
 	}
 
 	err = mandelbox.MarkParamsReady()
-	if err != nil {
+	if err == nil {
 		t.Fatalf("Did not get an error when  writing .paramsReady to file with name identical to a folder: %v", err)
 	}
 
 	err = mandelbox.MarkConfigReady()
-	if err != nil {
+	if err == nil {
 		t.Fatalf("Did not get an error when  writing .configReady to file with name identical to a folder: %v", err)
 	}
 }
