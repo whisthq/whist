@@ -144,8 +144,9 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
              current_height);
     //
     int dpi = whist_frontend_get_window_dpi(frontend);
-    int desired_width;
-    int desired_height;
+    // If we're on linux, our desired and current should match up
+    int desired_width = current_width;
+    int desired_height = current_height;
 
 #if !OS_IS(OS_LINUX)
 
