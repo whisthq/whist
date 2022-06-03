@@ -15,48 +15,45 @@ import (
 func TestWriteMandelboxParams(t *testing.T) {
 	mandelbox, cancel, goroutineTracker := createTestMandelboxData()
 
+	// Reset filesystem now, and at the end of this test
+	mandelbox.cleanResourceMappingDir()
+	defer mandelbox.cleanResourceMappingDir()
+
 	// Defer the wait first since deferred functions are executed in LIFO order.
 	defer goroutineTracker.Wait()
 	defer cancel()
 
-	// Attempting to write the mandelbox parameters before having set the port bindings
-	// for port 32262 should trigger an error
-	err := mandelbox.WriteMandelboxParams()
-	if err == nil {
-		t.Errorf("Writing mandelbox params before assigning the port binding for port 32262 should trigger an error (it didn't): %v", err)
-	}
-
-	if err = mandelbox.AssignPortBindings([]portbindings.PortBinding{
+	if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
 		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
 		{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
 		{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
 	}); err != nil {
-		t.Errorf("Error assigning port bindings: %s", err)
+		t.Fatalf("Error assigning port bindings: %s", err)
 	}
 
-	err = mandelbox.WriteMandelboxParams()
+	err := mandelbox.WriteMandelboxParams()
 	if err != nil {
-		t.Errorf("Error writing mandelbox params: %v", err)
+		t.Fatalf("Error writing mandelbox params: %v", err)
 	}
 
 	err = mandelbox.WriteProtocolTimeout(1)
 	if err != nil {
-		t.Errorf("Error writing protocol timeout: %v", err)
+		t.Fatalf("Error writing protocol timeout: %v", err)
 	}
 
 	err = mandelbox.WriteSessionID()
 	if err != nil {
-		t.Errorf("Error writing session ID: %v", err)
+		t.Fatalf("Error writing session ID: %v", err)
 	}
 
 	err = mandelbox.MarkParamsReady()
 	if err != nil {
-		t.Errorf("Error writing .paramsReady: %v", err)
+		t.Fatalf("Error writing .paramsReady: %v", err)
 	}
 
 	err = mandelbox.MarkConfigReady()
 	if err != nil {
-		t.Errorf("Error writing .configReady: %v", err)
+		t.Fatalf("Error writing .configReady: %v", err)
 	}
 
 	var paramsTests = []string{
@@ -74,9 +71,84 @@ func TestWriteMandelboxParams(t *testing.T) {
 
 			err = verifyResourceMappingFileCreation(tt)
 			if err != nil {
-				t.Errorf("Could not read file %s: %v", tt, err)
+				t.Fatalf("Could not read file %s: %v", tt, err)
 			}
 		})
+	}
+}
+
+// TestWriteMandelboxParamsErrors checks that the relevant Mandelbox functions
+// to write parameters return the expected errors when there is some erroneous
+// behavior
+func TestWriteMandelboxParamsErrors(t *testing.T) {
+	mandelbox, cancel, goroutineTracker := createTestMandelboxData()
+
+	// Reset filesystem now, and at the end of this test
+	mandelbox.cleanResourceMappingDir()
+	defer mandelbox.cleanResourceMappingDir()
+
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer goroutineTracker.Wait()
+	defer cancel()
+
+	// Attempting to write the mandelbox parameters before having set the port bindings
+	// for port 32262 should trigger an error
+	err := mandelbox.WriteMandelboxParams()
+	if err == nil {
+		t.Fatalf("Writing mandelbox params before assigning the port binding for port 32262 should trigger an error (it didn't): %v", err)
+	}
+
+	if err = mandelbox.AssignPortBindings([]portbindings.PortBinding{
+		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
+		{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
+		{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
+	}); err != nil {
+		t.Fatalf("Error assigning port bindings: %s", err)
+	}
+
+	// After assigning port bindings, writing mandelbox parameters should succeed
+	err = mandelbox.WriteMandelboxParams()
+	if err != nil {
+		t.Fatalf("Error writing mandelbox params: %v", err)
+	}
+
+	var paramsTests = []string{
+		"hostPort_for_my_32262_tcp",
+		"tty",
+		"gpu_index",
+		"session_id",
+		"timeout",
+		".paramsReady",
+		".configReady",
+	}
+
+	resourceDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "/mandelboxResourceMappings/")
+	for _, filename := range paramsTests {
+		err1 := os.MkdirAll(path.Join(resourceDir, filename), 0777)
+		_, err2 := os.Stat(path.Join(resourceDir, filename))
+		if err1 != nil || err2 != nil {
+			t.Fatalf("Could not create folder needed for test: %v", err)
+		}
+	}
+
+	err = mandelbox.WriteProtocolTimeout(1)
+	if err == nil {
+		t.Fatalf("Did not get an error when writing protocol timeout to file with name identical to a folder: %v", err)
+	}
+
+	err = mandelbox.WriteSessionID()
+	if err != nil {
+		t.Fatalf("Did not get an error when  writing session ID to file with name identical to a folder: %v", err)
+	}
+
+	err = mandelbox.MarkParamsReady()
+	if err != nil {
+		t.Fatalf("Did not get an error when  writing .paramsReady to file with name identical to a folder: %v", err)
+	}
+
+	err = mandelbox.MarkConfigReady()
+	if err != nil {
+		t.Fatalf("Did not get an error when  writing .configReady to file with name identical to a folder: %v", err)
 	}
 }
 
