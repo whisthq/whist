@@ -19,7 +19,14 @@ func TestWriteMandelboxParams(t *testing.T) {
 	defer goroutineTracker.Wait()
 	defer cancel()
 
-	if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
+	// Attempting to write the mandelbox parameters before having set the port bindings
+	// for port 32262 should trigger an error
+	err := mandelbox.WriteMandelboxParams()
+	if err == nil {
+		t.Errorf("Writing mandelbox params before assigning the port binding for port 32262 should trigger an error (it didn't): %v", err)
+	}
+
+	if err = mandelbox.AssignPortBindings([]portbindings.PortBinding{
 		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
 		{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
 		{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
@@ -27,7 +34,7 @@ func TestWriteMandelboxParams(t *testing.T) {
 		t.Errorf("Error assigning port bindings: %s", err)
 	}
 
-	err := mandelbox.WriteMandelboxParams()
+	err = mandelbox.WriteMandelboxParams()
 	if err != nil {
 		t.Errorf("Error writing mandelbox params: %v", err)
 	}
@@ -35,6 +42,11 @@ func TestWriteMandelboxParams(t *testing.T) {
 	err = mandelbox.WriteProtocolTimeout(1)
 	if err != nil {
 		t.Errorf("Error writing protocol timeout: %v", err)
+	}
+
+	err = mandelbox.WriteSessionID()
+	if err != nil {
+		t.Errorf("Error writing session ID: %v", err)
 	}
 
 	err = mandelbox.MarkParamsReady()
@@ -51,6 +63,7 @@ func TestWriteMandelboxParams(t *testing.T) {
 		"hostPort_for_my_32262_tcp",
 		"tty",
 		"gpu_index",
+		"session_id",
 		"timeout",
 		".paramsReady",
 		".configReady",
