@@ -6,7 +6,7 @@
 
 #pragma once
 
-#define ENABLE_FEC true
+#define ENABLE_FEC false
 #define INITIAL_FEC_RATIO 0.05
 
 /**
