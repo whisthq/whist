@@ -560,7 +560,7 @@ int main(int argc, const char **argv) {
             .width = par->width,
             .height = par->height,
             .hardware_decode = hardware,
-            .hardware_output_format = output->hardware_format,
+            .renderer_output_format = output->hardware_format,
             .hardware_device = output->hardware_device,
         };
         video_decoder = video_decoder_create(&video_decoder_params);
@@ -608,7 +608,7 @@ int main(int argc, const char **argv) {
                 continue;
             }
 
-            if (output->download && video_decoder->using_hw) {
+            if (output->download) {
                 dec_err = av_hwframe_transfer_data(frame, video_decoder->decoded_frame, 0);
                 if (dec_err < 0) {
                     LOG_ERROR("Failed to download frame: %d.", dec_err);

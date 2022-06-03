@@ -31,8 +31,8 @@ void* virtual_interface_get_handle_from_frame_ref(void* frame_ref) {
     return frame->data[3];
 }
 
-void virtual_interface_get_frame_ref_nv12_data(void* frame_ref, uint8_t*** data, int** linesize,
-                                               int* width, int* height) {
+void virtual_interface_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data, int** linesize,
+                                              int* width, int* height) {
     AVFrame* frame = frame_ref;
     *data = frame->data;
     *linesize = frame->linesize;

@@ -215,10 +215,9 @@ void virtual_paint_video(WhistFrontend* frontend, int output_width, int output_h
 void virtual_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
                               enum AVPixelFormat* format) {
     *device = NULL;
-    // AV_PIX_FMT_VIDEOTOOLBOX works for macOS, but Chromium doesn't know what to do with it
-    // at this time. Meanwhile, we should eventually figure out D3D11 support and use that foramt
-    // here on Windows.
-    *format = OS_IS(OS_MACOS) ? AV_PIX_FMT_NONE : AV_PIX_FMT_NONE;
+    // AV_PIX_FMT_YUV420P is found to be working on macOS. We should eventually figure out D3D11
+    // support and use that format here on Windows.
+    *format = OS_IS(OS_MACOS) ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_NONE;
 }
 
 void virtual_render(WhistFrontend* frontend) {}

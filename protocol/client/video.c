@@ -117,10 +117,11 @@ VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial
         .width = initial_width,
         .height = initial_height,
         .hardware_decode = use_hardware_decode,
+        .renderer_output_format = AV_PIX_FMT_NONE,
     };
     if (use_hardware_decode) {
         whist_frontend_get_video_device(frontend, &params.hardware_device,
-                                        &params.hardware_output_format);
+                                        &params.renderer_output_format);
     }
     VideoDecoder* decoder = video_decoder_create(&params);
     if (!decoder) {
@@ -401,10 +402,11 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
         .width = frame->width,
         .height = frame->height,
         .hardware_decode = use_hardware_decode,
+        .renderer_output_format = AV_PIX_FMT_NONE,
     };
     if (use_hardware_decode) {
         whist_frontend_get_video_device(video_context->frontend, &params.hardware_device,
-                                        &params.hardware_output_format);
+                                        &params.renderer_output_format);
     }
 
     VideoDecoder* decoder = video_decoder_create(&params);

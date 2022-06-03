@@ -41,8 +41,6 @@ Custom Types
  * @brief       Struct that `get_current_decoded_frame` returns.
  */
 typedef struct DecodedFrameData {
-    // If true, use hw_frame. If false, use sw_frame.
-    bool using_hw;
     AVFrame* decoded_frame;
     enum AVPixelFormat pixel_format;
     int width;
@@ -64,12 +62,12 @@ typedef struct VideoDecoderParams {
     /**
      * Hardware format to use for output.
      *
-     * This indicates that the caller can support this format directly,
-     * so frames of this format should be returned without downloading
+     * This indicates that the caller can render this format directly,
+     * so frames of this format can be returned without downloading
      * them to normal frames in CPU memory.  If unset then all hardware
      * formats will be downloaded.
      */
-    enum AVPixelFormat hardware_output_format;
+    enum AVPixelFormat renderer_output_format;
     /**
      * Hardware device to use.
      *
@@ -95,8 +93,6 @@ typedef struct VideoDecoder {
     AVPacket* packets[MAX_ENCODED_VIDEO_PACKETS];
     enum AVPixelFormat match_fmt;
     enum AVHWDeviceType device_type;
-
-    bool using_hw;
 
     bool received_a_frame;
 
