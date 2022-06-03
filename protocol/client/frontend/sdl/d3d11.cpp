@@ -158,6 +158,7 @@ WhistStatus sdl_d3d11_create_window(SDLFrontendContext *context, int id) {
         sdl_d3d11_init_decoder(context, d3d11->d3d11_device);
         first_call = false;
     }
+    return WHIST_SUCCESS;
 }
 
 // HELPER: initialize the d3d11 decoder device and context. This is called during the first call to
