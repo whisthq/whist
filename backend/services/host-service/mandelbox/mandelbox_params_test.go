@@ -15,8 +15,7 @@ import (
 func TestWriteMandelboxParams(t *testing.T) {
 	mandelbox, cancel, goroutineTracker := createTestMandelboxData()
 
-	// Reset filesystem now, and at the end of this test
-	mandelbox.cleanResourceMappingDir()
+	// Reset filesystem at the end of this test
 	defer mandelbox.cleanResourceMappingDir()
 
 	// Defer the wait first since deferred functions are executed in LIFO order.
@@ -83,8 +82,7 @@ func TestWriteMandelboxParams(t *testing.T) {
 func TestWriteMandelboxParamsErrors(t *testing.T) {
 	mandelbox, cancel, goroutineTracker := createTestMandelboxData()
 
-	// Reset filesystem now, and at the end of this test
-	mandelbox.cleanResourceMappingDir()
+	// Reset filesystem at the end of this test
 	defer mandelbox.cleanResourceMappingDir()
 
 	// Defer the wait first since deferred functions are executed in LIFO order.
