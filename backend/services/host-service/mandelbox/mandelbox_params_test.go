@@ -110,6 +110,8 @@ func TestWriteMandelboxParamsErrors(t *testing.T) {
 		t.Fatalf("Error writing mandelbox params: %v", err)
 	}
 
+	mandelbox.cleanResourceMappingDir()
+
 	var paramsTests = []string{
 		"hostPort_for_my_32262_tcp",
 		"tty",
