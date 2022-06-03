@@ -144,9 +144,6 @@ WhistStatus sdl_d3d11_create_window(SDLFrontendContext *context, int id) {
 
     SDLWindowContext *window_context = context->windows[id];
 
-    int err;
-    HRESULT hr;
-
     SDLD3D11Context *d3d11 = (SDLD3D11Context *)safe_zalloc(sizeof(*d3d11));
     window_context->private_data = (void *)d3d11;
 
@@ -169,7 +166,7 @@ WhistStatus sdl_d3d11_init_decoder(SDLFrontendContext *context, ID3D11Device *re
     int err;
     HRESULT hr;
 
-    SDLD3D11Context *d3d11 = (SDLD3D11Context *)safe_zalloc(sizeof(*d3d11));
+    SDLD3D11Context *d3d11 = (SDLD3D11Context *)safe_zalloc(sizeof(SDLD3D11Context));
     context->video.private_data = (void *)d3d11;
 
     // Make an independent device on the same adapter so that we have a
@@ -196,7 +193,7 @@ WhistStatus sdl_d3d11_init_decoder(SDLFrontendContext *context, ID3D11Device *re
     device_flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
     hr = D3D11CreateDevice(dxgi_adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, device_flags, NULL, 0,
-                           D3D11_SDK_VERSION, &d3d11->render_device, NULL, &d3d11->render_context);
+                           D3D11_SDK_VERSION, &d3d11->d3d11_device, NULL, &d3d11->d3d11_context);
     dxgi_adapter->Release();
     if (FAILED(hr)) {
         LOG_WARNING("Failed to create D3D11 device for video: %#x.", hr);
