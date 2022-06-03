@@ -237,7 +237,7 @@ void sdl_d3d11_destroy_window(SDLFrontendContext *context, int id) {
         LOG_ERROR("Tried to destroy D3D11 context for window %d that doesn't exist!", id);
         return;
     }
-    SDLWindowContext* window_context = context->windows[id];
+    SDLWindowContext *window_context = context->windows[id];
     SDLD3D11Context *d3d11 = (SDLD3D11Context *)window_context->private_data;
 
     if (!d3d11) {
