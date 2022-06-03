@@ -41,7 +41,16 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	// Explicitly set the result to what we expect
 	testFileContent := utils.Sprintf(`{"cookiesJSON":"%s","extensions":"%s"}`, cookiesJSON, extensions)
 
-	if err := testMbox.WriteUserInitialBrowserData(userInitialBrowserData); err != nil {
+	// Write browser data by passing compressed version (as we expect to receive from the client)
+	marshalledBrowserData, err := json.Marshal(userInitialBrowserData)
+	if err != nil {
+		t.Fatalf("could not marshal browser data: %v", err)
+	}
+	deflatedBrowserData, err := configutils.GzipDeflateString(string(marshalledBrowserData))
+	if err != nil {
+		t.Fatalf("could not deflate browser data: %v", err)
+	}
+	if err := testMbox.WriteUserInitialBrowserData(types.BrowserData(deflatedBrowserData)); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
 	}
 
@@ -74,7 +83,15 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	defer os.RemoveAll(testMbox.GetUserConfigDir())
 
 	// Empty browser data will generate an empty json file
-	if err := testMbox.WriteUserInitialBrowserData(BrowserData{}); err != nil {
+	marshalledBrowserData, err := json.Marshal(BrowserData{})
+	if err != nil {
+		t.Fatalf("could not marshal browser data: %v", err)
+	}
+	deflatedBrowserData, err := configutils.GzipDeflateString(string(marshalledBrowserData))
+	if err != nil {
+		t.Fatalf("could not deflate browser data: %v", err)
+	}
+	if err := testMbox.WriteUserInitialBrowserData(types.BrowserData(deflatedBrowserData)); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
 	}
 

@@ -48,7 +48,7 @@ func UnmarshalBrowserData(browser_data types.BrowserData) (BrowserData, error) {
 // WriteUserInitialBrowserData writes the user's initial browser data received
 // through JSON transport on top of the user configs that have already been
 // loaded.
-func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData BrowserData) error {
+func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData types.BrowserData) error {
 	destDir := path.Join(mandelbox.GetUserConfigDir(), UnpackedConfigsDirectoryName)
 
 	// Create destination directory if not exists
@@ -65,9 +65,25 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData B
 		}()
 	}
 
+	// Inflate gzip-compressed user browser data
+	inflatedBrowserData, err := configutils.GzipInflateString(string(initialBrowserData))
+	if err != nil {
+		return utils.MakeError("Error inflating user browser data: %s", err)
+	}
+
+	// Unmarshal bookmarks into proper format
+	var browserData BrowserData
+	if len(inflatedBrowserData) > 0 {
+		browserData, err = UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+		if err != nil {
+			// BrowserData import errors are not fatal
+			logger.Errorf("Error unmarshalling user browser data for mandelbox %s: %s", mandelbox.GetID(), err)
+		}
+	}
+
 	// If bookmarks is empty, we will not write it
-	if initialBrowserData.Bookmarks == nil || len(initialBrowserData.Bookmarks.Roots) == 0 {
-		initialBrowserData.Bookmarks = nil
+	if browserData.Bookmarks == nil || len(browserData.Bookmarks.Roots) == 0 {
+		browserData.Bookmarks = nil
 	}
 
 	// Convert struct into JSON string
