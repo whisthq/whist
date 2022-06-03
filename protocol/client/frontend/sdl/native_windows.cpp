@@ -21,8 +21,6 @@ extern "C" {
 
 #include "windows_notification_helper.h"
 
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
-
 static HWND get_native_window(SDL_Window* window) {
     SDL_SysWMinfo sys_info = {};
     SDL_GetWindowWMInfo(window, &sys_info);
@@ -98,6 +96,8 @@ class DECLSPEC_UUID("2765a8cd-b8d2-430d-b97b-4e778874d032") NotificationActivato
     }
 };
 CoCreatableClass(NotificationActivator);
+
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 
 void sdl_native_display_notification(const WhistNotification* notif) {
     HRESULT hr;
