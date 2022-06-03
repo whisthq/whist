@@ -122,9 +122,8 @@ func TestWriteMandelboxParamsErrors(t *testing.T) {
 
 	resourceDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "/mandelboxResourceMappings/")
 	for _, filename := range paramsTests {
-		err1 := os.MkdirAll(path.Join(resourceDir, filename), 0777)
-		_, err2 := os.Stat(path.Join(resourceDir, filename))
-		if err1 != nil || err2 != nil {
+		err := os.MkdirAll(path.Join(resourceDir, filename), 0777)
+		if err != nil {
 			t.Fatalf("Could not create folder needed for test: %v", err)
 		}
 	}
