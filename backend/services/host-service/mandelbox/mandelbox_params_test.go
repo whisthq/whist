@@ -130,6 +130,24 @@ func TestWriteMandelboxJsonData(t *testing.T) {
 	}
 }
 
+// TestWriteMandelboxJsonData checks that the WriteJSONData returns an error if inflated
+// JSON data is passed
+func TestWriteInflatedMandelboxJsonData(t *testing.T) {
+	testMbox, _, _ := createTestMandelboxData()
+
+	// Reset filesystem now, and at the end of this test
+	testMbox.cleanResourceMappingDir()
+	defer testMbox.cleanResourceMappingDir()
+
+	sampleJsonData := `{"dark_mode":false,"desired_timezone":"America/New_York","client_dpi":192,"restore_last_session":true,"kiosk_mode":false,"initial_key_repeat":300,"key_repeat":30,"local_client":true,"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36","longitude":"103.851959","latitude":"1.290270","system_languages":"en_US","browser_languages":"en-US,en","user_locale":{"LC_COLLATE":"en_US.UTF-8","LC_CTYPE":"en_US.UTF-8","LC_MESSAGES":"en_US.UTF-8","LC_MONETARY":"en_US.UTF-8","LC_NUMERIC":"en_US.UTF-8","LC_TIME":"en_US.UTF-8"},"client_os":"darwin"}`
+
+	// Write the sample JSON data
+	err := testMbox.WriteJSONData(types.JSONData(sampleJsonData))
+	if err == nil {
+		t.Fatalf("Writing already-inflated JSON data should return an error (it didn't): %v", err)
+	}
+}
+
 func verifyResourceMappingFileCreation(file string) error {
 	resourceDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "/mandelboxResourceMappings/")
 	_, err := os.Stat(path.Join(resourceDir, file))
