@@ -2,7 +2,10 @@ import socket
 import sys
 import time
 
-current_milli_time = lambda: int(round(time.time() * 1000))
+
+def current_milli_time():
+    return int(round(time.time() * 1000))
+
 
 # UDP_ports = range(32263, 32273)
 # TCP_ports = range(32273, 32282)
