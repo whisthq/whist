@@ -12,6 +12,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox"
+	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -184,12 +185,16 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	testMandelboxDBEvent := subscriptions.MandelboxEvent{
 		Mandelboxes: []subscriptions.Mandelbox{testMandelboxInfo},
 	}
+	deflatedJSONData, err := configutils.GzipDeflateString(string(`{"data": "test"}`))
+	if err != nil {
+		t.Fatalf("could not deflate JSON data: %v", err)
+	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
 		AppName:               mandelboxtypes.AppName("browsers/chrome"),
 		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           testMandelbox.GetID(),
-		JSONData:              `{"data": "test"}`,
+		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
 		ResultChan:            make(chan httputils.RequestResult),
 	}
 

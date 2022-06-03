@@ -124,7 +124,7 @@ type Mandelbox interface {
 
 	// WriteUserInitialBrowserData adds data from the user's local browser to
 	// their already-downloaded config in the mandelbox.
-	WriteUserInitialBrowserData(initialBrowserData BrowserData) error
+	WriteUserInitialBrowserData(types.BrowserData) error
 
 	// MarkConfigReady tells the protocol inside the mandelbox that it is ready to
 	// start and accept connections.

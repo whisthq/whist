@@ -17,7 +17,6 @@ import (
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
-	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/httputils"
@@ -415,27 +414,11 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		logger.Error(err)
 	}
 
-	// Unmarshal bookmarks into proper format
-	var importedBookmarks configutils.Bookmarks
-	if len(req.BookmarksJSON) > 0 {
-		importedBookmarks, err = configutils.UnmarshalBookmarks(req.BookmarksJSON)
-		if err != nil {
-			// Bookmark import errors are not fatal
-			logger.Errorf("Error unmarshalling bookmarks for mandelbox %s: %s", mandelbox.GetID(), err)
-		}
-	}
-
 	// Write the user's initial browser data
 	logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
-	err = mandelbox.WriteUserInitialBrowserData(mandelboxData.BrowserData{
-		CookiesJSON:       req.CookiesJSON,
-		Bookmarks:         &importedBookmarks,
-		Extensions:        req.Extensions,
-		Preferences:       req.Preferences,
-		LocalStorage:      req.LocalStorageJSON,
-		ExtensionSettings: req.ExtensionSettingsJSON,
-		ExtensionState:    req.ExtensionStateJSON,
-	})
+
+	err = mandelbox.WriteUserInitialBrowserData(req.BrowserData)
+
 	if err != nil {
 		logger.Errorf("Error writing initial browser data for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelboxSubscription.ID, err)
 	} else {

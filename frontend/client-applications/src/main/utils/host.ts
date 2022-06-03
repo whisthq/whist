@@ -7,6 +7,7 @@
 import { AsyncReturnType } from "@app/@types/state"
 import { hostPut } from "@app/main/utils/api"
 import { HostServicePort } from "@app/constants/mandelbox"
+import { gzipSync, constants } from "zlib"
 
 // This file directly interacts with data returned from the scaling service, which
 // has keys labelled in snake_case format. We want to be able to pass
@@ -50,15 +51,22 @@ export const hostSpinUp = async ({
       is_new_config_encryption_token: is_new_config_encryption_token ?? false,
       jwt_access_token,
       mandelbox_id,
-      json_data,
+      json_data: gzipSync(json_data, {
+        level: constants.Z_BEST_COMPRESSION,
+      }).toString("base64"),
       ...(importedData !== undefined && {
-        cookies: importedData.cookies,
-        bookmarks: importedData.bookmarks,
-        extensions: importedData.extensions,
-        preferences: importedData.preferences,
-        local_storage: importedData.localStorage,
-        extension_settings: importedData.extensionSettings,
-        extension_state: importedData.extensionState,
+        browser_data: gzipSync(
+          JSON.stringify({
+            cookies: importedData.cookies,
+            bookmarks: importedData.bookmarks,
+            extensions: importedData.extensions,
+            preferences: importedData.preferences,
+            local_storage: importedData.localStorage,
+            extension_settings: importedData.extensionSettings,
+            extension_state: importedData.extensionState,
+          }),
+          { level: constants.Z_BEST_COMPRESSION }
+        ).toString("base64"),
       }),
     },
   })

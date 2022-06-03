@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	types "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -52,7 +53,11 @@ func (mandelbox *mandelboxData) WriteSessionID() error {
 // WriteJSONData writes the data received through JSON transport
 // to the config.json file located on the resourceMappingDir.
 func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
-	return mandelbox.writeResourceMappingToFile("config.json", string(data))
+	jsonDataPlainText, err := configutils.GzipInflateString(string(data))
+	if err != nil {
+		return utils.MakeError("Couldn't inflate JSON Data: %s", err)
+	}
+	return mandelbox.writeResourceMappingToFile("config.json", jsonDataPlainText)
 }
 
 // MarkParamsReady indicates that the mandelbox's services that do NOT depend
