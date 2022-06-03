@@ -13,16 +13,13 @@ from helpers.common.timestamps_and_exit_tools import (
 from helpers.common.constants import (
     instances_name_tag,
     github_run_id,
+    AMAZON_OWNER_ID,
+    AWS_UBUNTU_2004_AMI,
+    INSTANCE_TYPE,
 )
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
-# Constants
-# We will need to change the owner ID/AMI once AWS' target version of Linux Ubuntu changes
-AMAZON_OWNER_ID = "099720109477"
-AWS_UBUNTU_2004_AMI = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
-INSTANCE_TYPE = "g4dn.xlarge"
 
 
 def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:

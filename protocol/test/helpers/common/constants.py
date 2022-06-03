@@ -15,6 +15,12 @@ aws_timeout_seconds = 2400
 # It is created/updated when running `aws configure`"
 aws_credentials_filepath = os.path.join(os.path.expanduser("~"), ".aws", "credentials")
 
+# AWS constants
+# We will need to change the owner ID/AMI once AWS' target version of Linux Ubuntu changes
+AMAZON_OWNER_ID = "099720109477"
+AWS_UBUNTU_2004_AMI = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
+INSTANCE_TYPE = "g4dn.xlarge"
+
 # The Github job name (or None if running locally)
 job_name = os.getenv("GITHUB_JOB")
 # The name to use to tag any new AWS EC2 instance that is created. A suffix with the branch name will be added.

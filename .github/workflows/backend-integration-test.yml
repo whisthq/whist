@@ -7,6 +7,15 @@ name: "Backend Integration Test"
 
 on:
   pull_request:
+    paths-ignore:
+      # No need to run backend test if E2E is running
+      - "protocol/**"
+      - "!protocol/**/README.md"
+      - ".github/workflows/protocol-e2e-streaming-testing.yml"
+      - "mandelboxes/scripts/copy_protocol_build.sh"
+      - "mandelboxes/development/client/**/"
+      - ".github/workflows/helpers/parse_and_display_e2e_results.py"
+      - ".github/workflows/helpers/protocol/e2e_streaming_test_display_helpers/**"
     paths:
       # Changes to the backend / host service
       - "backend/services/**"
