@@ -77,8 +77,8 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	}
 
 	// Assert aesKey is valid
-	if len(testMandelbox.GetAESKey()) != 32 {
-		t.Errorf("Expected AES key of length 32, got key: %s of length %d", testMandelbox.GetAESKey(), len(testMandelbox.GetAESKey()))
+	if len(testMandelbox.GetPrivateKey()) != 32 {
+		t.Errorf("Expected AES key of length 32, got key: %s of length %d", testMandelbox.GetPrivateKey(), len(testMandelbox.GetPrivateKey()))
 	}
 
 	// Check ports have been exposed correctly
@@ -272,7 +272,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 		t.Errorf("Ports in the json transport response are incorrect")
 	}
 
-	if spinUpResult.AesKey != string(testMandelbox.GetAESKey()) {
-		t.Errorf("AES key from json transport request is incorrect, got %s, expected %v", spinUpResult.AesKey, testMandelbox.GetAESKey())
+	if spinUpResult.AesKey != string(testMandelbox.GetPrivateKey()) {
+		t.Errorf("AES key from json transport request is incorrect, got %s, expected %v", spinUpResult.AesKey, testMandelbox.GetPrivateKey())
 	}
 }
