@@ -32,6 +32,7 @@ var (
 )
 
 const (
+	// The override value used when assigning users in dev, for developer convenience.
 	CLIENT_COMMIT_HASH_DEV_OVERRIDE = "local_dev"
 
 	// These are all the possible reasons we would fail to find an instance for a user
@@ -53,6 +54,7 @@ const (
 // VCPUsPerMandelbox indicates the number of vCPUs allocated per mandelbox.
 const VCPUsPerMandelbox = 4
 
+// A map containing how many GPUs each instance type has.
 var instanceTypeToGPUNum = map[string]int{
 	"g4dn.xlarge":   1,
 	"g4dn.2xlarge":  1,
@@ -62,6 +64,7 @@ var instanceTypeToGPUNum = map[string]int{
 	"g4dn.12xlarge": 4,
 }
 
+// A map containing how many VCPUs each instance type has.
 var instanceTypeToVCPUNum = map[string]int{
 	"g4dn.xlarge":   4,
 	"g4dn.2xlarge":  8,

@@ -26,12 +26,18 @@ import (
 
 // AWSHost implements the HostHandler interface using the AWS sdk.
 type AWSHost struct {
-	Region          string
-	Config          aws.Config
-	EC2             *ec2.Client
-	MainSubnet      ec2Types.Subnet
+	// The AWS region the host is initialized in.
+	Region string
+	// The AWS specific configurations, including credentials.
+	Config aws.Config
+	// The EC2 client used for calling the AWS EC2 service API.
+	EC2 *ec2.Client
+	// The main subnet where the scaling algorithm starts instances.
+	MainSubnet ec2Types.Subnet
+	// The AWS Instance Profile passed to each instance.
 	InstanceProfile string
-	SecurityGroup   ec2Types.SecurityGroup
+	// The Security Group that manages instance ingress and egress rules.
+	SecurityGroup ec2Types.SecurityGroup
 }
 
 //go:embed ec2_userdata.sh

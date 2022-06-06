@@ -30,10 +30,14 @@ type WhistStripeClient interface {
 // StripeClient interacts directly with the official
 // Stripe client.
 type StripeClient struct {
-	key                 string // The secret key to authenticate calls to the Stripe API
-	customerID          string // The Stripe ID of the customer
-	subscriptionStatus  string // The subscription status ("active", "trialing", etc.)
-	monthlyPriceInCents int64  // The desired price in cents for a Whist subscription
+	// The secret key to authenticate calls to the Stripe API
+	key string
+	// The Stripe ID of the customer
+	customerID string
+	// The subscription status ("active", "trialing", etc.)
+	subscriptionStatus string
+	// The desired price in cents for a Whist subscription
+	monthlyPriceInCents int64
 }
 
 // configure will set the fields of the StripeClient to the received values. This method
