@@ -145,9 +145,9 @@ func getFrontendVersion() string {
 
 	switch metadata.GetAppEnvironment() {
 	case metadata.EnvDev:
-		version = utils.Sprintf("%v.%v.%v-dev-rc.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.DevRC)
+		version = utils.Sprintf("%v.%v.%v-dev-rc.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro, clientAppVersion.DevRC)
 	case metadata.EnvStaging:
-		version = utils.Sprintf("%v.%v.%v-staging-rc.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.StagingRC)
+		version = utils.Sprintf("%v.%v.%v-dev-rc.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro, clientAppVersion.StagingRC)
 	default:
 		version = utils.Sprintf("%v.%v.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro)
 	}
