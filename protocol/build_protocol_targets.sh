@@ -16,7 +16,7 @@ USAGE:
 This script builds the specified protocol target(s) inside the protocol-builder
 Docker container.
 The optional argument \`--cmakebuildtype\` can be specified
-to be either \`Debug\` or \`Release\`. It controls the \`CMAKE_BUILD_TYPE\`
+to be either \`Debug\` or \`Metrics\` or \`Release\`. It controls the \`CMAKE_BUILD_TYPE\`
 build parameter. It defaults to \`Debug\`.
 The optional argument \`--nodownloadbinaries\`, when provided, tells \`cmake\`
 not to download the libraries used to build the Whist protocol from S3.
