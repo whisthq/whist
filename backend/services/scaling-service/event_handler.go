@@ -1,3 +1,28 @@
+// Copyright (c) 2021-2022 Whist Technologies, Inc.
+
+/*
+The scaling service is a server responsible of managing the state of the backend.
+It manages the number of instances running by starting and terminating according
+to demand. Additionally, it assigns users to available instances, and registers a
+mandelbox on the database so the host service running on the instance can start it.
+This component is also responsible of validating payments, as well as interacting
+with Stripe to create new subscriptions.
+
+The scaling service is an event-driven component, so most of its logic is handled using
+go channels, in reaction to external events. It has many layers, the bottom layer being
+the event handler which only passes the events to the corresponding channels. The layer
+on top of it includes the many scaling algorithms which are sub-processes for each region
+on the backend. The code is written in an extensible way so it is possible to write and
+integrate a new scaling algorithm with a different behaviour easily. As such, most of
+the code is inside the scaling algorithm implementations.
+
+The top-most layer has the "hosts handlers" which are a collection of methods responsible
+of calling a cloud provider (e.g. AWS, Azure, Google Cloud) API and starting an instance
+(cloud-compute resource configured to run a Whist container). This code is abstracted in
+an interface so that support for a new cloud provider is easily added. The code in the
+algorithms is provider-agnostic, tied only to the necessities of the backend.
+*/
+
 package main
 
 import (
@@ -171,6 +196,8 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 	s.StartAsync()
 }
 
+// StartDeploy reads the `images.json` file which is written by the Github
+// deploy workflow, and sends the event to the appropiate channel.
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infof("Running in localenv so not performing deploy actions.")
@@ -196,6 +223,8 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 	}
 }
 
+// getRegionImageMap tries to read and parse the contents of the `images.json` file
+// which is written by the Github deploy workflow.
 func getRegionImageMap() (map[string]interface{}, error) {
 	var regionImageMap map[string]interface{}
 

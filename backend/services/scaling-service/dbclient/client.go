@@ -1,3 +1,12 @@
+// Copyright (c) 2021-2022 Whist Technologies, Inc.
+
+/*
+Package dbclient abstracts all interactions with the database for any
+scaling algorithm to use. It defines an interface so any consumers of
+this package can perform query, update and delete operations without
+having to use the Hasura client directy.
+*/
+
 package dbclient
 
 import (
@@ -8,8 +17,8 @@ import (
 
 // WhistDBClient is an interface that abstracts all interactions with
 // the database, it includes query, insert, update and delete methods for
-// the `whist.instances` and `whist.images` table. By abstracting the methods
-// we can easily test and mock the scaling algorithm actions.
+// the `whist.instances`, `whist.images` and `whist.mandelboxes` tables. By
+// abstracting the methods we can easily test and mock the scaling algorithm actions.
 type WhistDBClient interface {
 	QueryInstance(context.Context, subscriptions.WhistGraphQLClient, string) (subscriptions.WhistInstances, error)
 	QueryInstanceWithCapacity(context.Context, subscriptions.WhistGraphQLClient, string) (subscriptions.WhistInstances, error)

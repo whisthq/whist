@@ -1,3 +1,9 @@
+/*
+This file implements the HostHandler interface and defines all necessary methods
+that launch, wait and manage instances using the EC2 service.
+The code uses the official AWS SDK for Go (https://github.com/aws/aws-sdk-go-v2).
+*/
+
 package hosts
 
 import (
