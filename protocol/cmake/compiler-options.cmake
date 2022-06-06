@@ -47,4 +47,5 @@ endif()
 
 # For now, log everything.
 add_compile_definitions(LOG_LEVEL=5
+                        $<$<CONFIG:Metrics>:LOG_OPEN_URL=1>
                         __ROOT_FILE__="${PROJECT_SOURCE_DIR}")

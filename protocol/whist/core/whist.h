@@ -115,6 +115,10 @@ Defines
 #ifndef LOG_CPU_USAGE
 #define LOG_CPU_USAGE 1
 #endif
+// Only log URLs passed to the server to open when in debugging mode
+#ifndef LOG_OPEN_URL
+#define LOG_OPEN_URL 0
+#endif
 #define LOG_AUDIO false
 #define LOG_NACKING false
 #define LOG_NETWORKING false

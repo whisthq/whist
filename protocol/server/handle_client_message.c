@@ -372,6 +372,9 @@ static int handle_open_urls_message(WhistServerState *state, WhistClientMessage 
         return -1;
     }
     LOG_INFO("Received URL to open in new tab");
+    if (LOG_OPEN_URL) {
+        LOG_INFO("Received URLs: %s", received_urls);
+    }
 
     // Step 2: Create the command to run on the Mandelbox's terminal to open the received URL in a
     // new tab. To open a new tab with a given url, we can just use the terminal command: `exec
