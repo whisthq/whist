@@ -1,7 +1,7 @@
 // Copyright (c) 2021-2022 Whist Technologies, Inc.
 
 /*
-Package algorithms includes the implementations of all the scaling algorithms used by
+Package scaling_algorithms includes the implementations of all the scaling algorithms used by
 the scaling service.
 
 A scaling algorithm is defined as struct that implements the `ScalingAlgorithm` interface
