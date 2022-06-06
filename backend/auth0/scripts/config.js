@@ -36,7 +36,7 @@ const getConfig = (env) => {
     // Only auto-delete resources on dev
     AUTH0_ALLOW_DELETE: env === "dev",
     AUTH0_KEYWORD_REPLACE_MAPPINGS: {
-      ALLOWED_AUTH0_CALLBACKS: ["http://localhost/callback", "https://*.chromiumapp.org/auth0"],      
+      ALLOWED_AUTH0_CALLBACKS: ["http://localhost/callback"],
       WHIST_AUTHENTICATION_API: "https://api.fractal.co",
       GOOGLE_OAUTH_SECRET: process.env.GOOGLE_OAUTH_SECRET,
       APPLE_OAUTH_SECRET: process.env.APPLE_OAUTH_SECRET,
