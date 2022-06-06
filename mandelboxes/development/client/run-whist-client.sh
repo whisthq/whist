@@ -5,7 +5,6 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-#WHIST_MAPPINGS_DIR=/whist/resourceMappings
 PROTOCOL_LOG_FILENAME=/usr/share/whist/client.log
 SERVER_IP_ADDRESS=127.0.0.1
 SERVER_PORT_MAPPINGS=""
