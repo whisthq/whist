@@ -110,13 +110,13 @@ else
 fi
 
 # Pull Docker images and warmup entire disk in parallel.
-run_with_timeout 90 retry_docker_pull &
+run_with_timeout 120 retry_docker_pull &
 # Based on initialization commands in https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-initialize.html
 # Changes:
 #   - changed blocksize to 1M from 128k because optimal dd blocksize is 1M according to above link
-fio --filename=/dev/nvme0n1 --rw=read --bs=1M --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize &
+fio --filename=/dev/nvme0n1 --rw=read --bs=1M --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
 
-wait
+wait "$!" || echo "WARNING! Failed to pull Docker image. Host service will cause instance to terminate immediately."
 
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
