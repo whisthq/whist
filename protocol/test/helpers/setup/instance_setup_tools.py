@@ -221,13 +221,16 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt):
         git_clone_stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
         git_clone_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt)
         branch_not_found_error = f"fatal: Remote branch {branch_name} not found in upstream origin"
-        if git_clone_exit_code == 0:
+        if git_clone_exit_code != 0 or expression_in_pexpect_output("fatal: ", git_clone_stdout):
+            if expression_in_pexpect_output(branch_not_found_error, git_clone_stdout):
+                # If branch does not exist, trigger fatal error.
+                exit_with_error(
+                    f"Branch {branch_name} not found in the whisthq/whist repository. Maybe it has been merged while the E2E was running?"
+                )
+            else:
+                printyellow(f"Git clone failed!")
+        else:
             break
-        elif expression_in_pexpect_output(branch_not_found_error, git_clone_stdout):
-            # If branch does not exist, trigger fatal error.
-            exit_with_error(
-                f"Branch {branch_name} not found in the whisthq/whist repository. Maybe it has already been merged?"
-            )
 
     if git_clone_exit_code != 0:
         exit_with_error(f"git clone failed {SETUP_MAX_RETRIES}! Giving up now.")
