@@ -41,6 +41,8 @@ Defines
 // so we need to cap the buffer size as such
 #define MAX_BUFFER_SIZE ((1 << (8 * FEC_HEADER_SIZE)) - 1)
 
+static int conservative_decoding_mode = 0;
+
 struct FECEncoder {
     int num_accepted_buffers;
     int num_buffers;
@@ -93,6 +95,8 @@ Public Function Implementations
 */
 
 int init_fec(void) { return init_rs_wrapper(); }
+
+void fec_set_conservative_decode_mode(int enable) { conservative_decoding_mode = enable; }
 
 double fec_ratio_to_fec_factor(double fec_ratio) { return 1.0 / (1.0 - fec_ratio); }
 
@@ -284,6 +288,8 @@ void fec_decoder_register_buffer(FECDecoder* fec_decoder, int index, void* buffe
 
     FATAL_ASSERT(fec_decoder->buffer_sizes[index] == -1);
 
+    if (fec_decoder->num_accepted_real_buffers == fec_decoder->num_real_buffers) return;
+
     // no need to store new buffers anymore if recovery is already done
     if (fec_decoder->recovery_performed) return;
 
@@ -302,6 +308,12 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
     if (rs_wrapper_decode_helper_can_decode(fec_decoder->rs_code) == false) {
         return -1;
     }
+
+    if (conservative_decoding_mode &&
+        fec_decoder->num_accepted_real_buffers != fec_decoder->num_real_buffers) {
+        return -1;
+    }
+
     bool need_recovery = false;
     // For optimization, we only need recovery, if we need to reconstruct a real packet
     if (fec_decoder->num_accepted_real_buffers != fec_decoder->num_real_buffers) {

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#define ENABLE_FEC false
+#define ENABLE_FEC true
 #define INITIAL_FEC_RATIO 0.05
 
 /**
@@ -69,3 +69,6 @@ void fec_controller_feed_info(void* fec_controller, double current_time, WccOp o
  */
 double fec_controller_get_total_fec_ratio(void* fec_controller, double current_time,
                                           double old_value);
+
+void fec_controller_feed_queue_len(void* controller, double current_time, int queue_len);
+bool fec_controller_is_decode_disabled(void* controller);

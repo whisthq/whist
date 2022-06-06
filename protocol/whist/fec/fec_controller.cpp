@@ -364,6 +364,94 @@ struct ExtraRatioController {
     }
 };
 
+class PerformanceController {
+    const int DECODE_DISABLE_THRESHOLD = 100 * 1024;
+    const int DECODE_ENABLE_THRESHOLD = 2 * 1024;
+
+    const int ENCODE_DISABLE_THRESHOLD = 100 * 1024;
+    const double ENCODE_DISABLE_TIME = 1.0;
+    const int ENCODE_DISABLE_THRESHOLD_HARD = 3 * ENCODE_DISABLE_THRESHOLD;
+
+    const int ENCODE_ENABLE_THRESHOLD = ENCODE_DISABLE_THRESHOLD;
+    const double ENCODE_ENABLE_TIME = 5.0;
+
+    const int verbose_log = 1;
+
+    double last_below_encode_disable_threshold_time;
+    double last_above_encode_enable_threshold_time;
+
+    bool disable_decode;
+    bool disable_encode;
+
+   public:
+    void init(double current_time) {
+        disable_decode = 0;
+        disable_encode = 0;
+
+        last_below_encode_disable_threshold_time = current_time;
+        last_above_encode_enable_threshold_time = current_time;
+    }
+
+    void feed_queue_length(double current_time, int queue_len) {
+        if (verbose_log) {
+            static double last_log_time = 0;
+            if (current_time - last_log_time > 0.1) {
+                fprintf(stderr, "<queue_len=%d>\n", queue_len);
+                last_log_time = current_time;
+            }
+        }
+
+        // if the queue len is >= local_disable_threshold, disable fec decode immediately
+        if (queue_len >= DECODE_DISABLE_THRESHOLD) {
+            if (verbose_log && disable_decode == 0) {
+                fprintf(stderr, "decode disabled!!! %d\n", queue_len);
+            }
+            disable_decode = 1;
+        }
+        // if the queue len is <= the local_enable_threshold, re-enable fec decode immediately
+        else if (queue_len <= DECODE_ENABLE_THRESHOLD) {
+            if (verbose_log && disable_decode == 1) {
+                fprintf(stderr, "decode re-enabled!!! %d\n", queue_len);
+            }
+            disable_decode = 0;
+        }
+
+        // record the last time that doesn't satisfy the encode disable threshold
+        if (queue_len <= ENCODE_DISABLE_THRESHOLD) {
+            last_below_encode_disable_threshold_time = current_time;
+        }
+
+        // record the last time that doesn't satisfy the encode enable threshold
+        if (queue_len >= ENCODE_ENABLE_THRESHOLD) {
+            last_above_encode_enable_threshold_time = current_time;
+        }
+
+        // if the queue len:
+        // 1. has hit the hard encode disable threshold, disable fec encode immediately
+        // 2. has satisfy the  "normal" encode disable threshold for a specific period, disable fec
+        // encode
+        if (queue_len >= ENCODE_DISABLE_THRESHOLD_HARD ||
+            current_time - last_below_encode_disable_threshold_time > ENCODE_DISABLE_TIME) {
+            if (verbose_log && disable_encode == 0) {
+                fprintf(stderr, "[[encode]] disabled!!! %d\n", queue_len);
+            }
+            disable_encode = 1;
+        }
+        // if the queue has satisty decode enable threshold for a specific period, re-enable fec
+        // decode
+        else if (current_time - last_above_encode_enable_threshold_time > ENCODE_ENABLE_TIME) {
+            if (verbose_log && disable_encode == 1) {
+                fprintf(stderr, "[[encode]] re-enabled!!! %d\n", queue_len);
+            }
+            disable_encode = 0;
+        }
+    }
+
+    bool is_decode_disabled() { return disable_decode; }
+
+    bool is_encode_disabled() { return disable_encode; }
+};
+
 // struct of fec controller
 struct FECController {
     // controller for base fec ratio
@@ -372,6 +460,7 @@ struct FECController {
     ExtraRatioController *extra_ratio_controller;
     // another sliding window to calculate latency
     SlidingWindowStat *latency_stat;
+    PerformanceController *performance_controller;
 };
 
 /*
@@ -392,11 +481,13 @@ void *create_fec_controller(double current_time) {
     fec_controller->base_ratio_controller = new BaseRatioController;
     fec_controller->extra_ratio_controller = new ExtraRatioController;
     fec_controller->latency_stat = new SlidingWindowStat;
+    fec_controller->performance_controller = new PerformanceController;
 
     // init the controllers and latency sliding window
     fec_controller->base_ratio_controller->init(current_time);
     fec_controller->extra_ratio_controller->init();
     fec_controller->latency_stat->init("latency", latency_stat_window, latency_sample_period);
+    fec_controller->performance_controller->init(current_time);
 
     return fec_controller;
 }
@@ -406,7 +497,18 @@ void destroy_fec_controller(void *controller) {
     delete fec_controller->base_ratio_controller;
     delete fec_controller->extra_ratio_controller;
     delete fec_controller->latency_stat;
+    delete fec_controller->performance_controller;
     free(fec_controller);
+}
+
+void fec_controller_feed_queue_len(void *controller, double current_time, int queue_len) {
+    FECController *fec_controller = (FECController *)controller;
+    fec_controller->performance_controller->feed_queue_length(current_time, queue_len);
+}
+
+bool fec_controller_is_decode_disabled(void *controller) {
+    FECController *fec_controller = (FECController *)controller;
+    return fec_controller->performance_controller->is_decode_disabled();
 }
 
 void fec_controller_feed_latency(void *controller, double current_time, double latency) {
@@ -521,6 +623,10 @@ double fec_controller_get_total_fec_ratio(void *controller, double current_time,
                 base_fec_ratio, extra_fec_ratio, total_fec_ratio_original, total_fec_ratio,
                 old_value);
         }
+    }
+
+    if (fec_controller->performance_controller->is_encode_disabled() == true) {
+        total_fec_ratio = 0.0;
     }
 
     // handle fec override by debug console

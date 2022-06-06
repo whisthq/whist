@@ -599,6 +599,7 @@ static bool udp_update(void* raw_context) {
         LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
                                  last_recv * MS_IN_SECOND);
     }
+
     UDPPacket udp_packet;
     timestamp_us arrival_time;
     int network_payload_size;
@@ -1175,6 +1176,16 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     }
 }
 
+SOCKET udp_get_socket(void* raw_context) {
+    UDPContext* context = raw_context;
+    return context->socket;
+}
+
+void* udp_get_fec_controller(void* raw_context) {
+    UDPContext* context = raw_context;
+    return context->fec_controller;
+}
+
 /*
 ============================
 Questionable Public Function Implementations
@@ -1258,6 +1269,12 @@ void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType typ
     int a = UDP_RECV_BUFFER_SIZE;
     if (setsockopt(context->socket, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof(int)) == -1) {
         LOG_ERROR("Error setting socket opt: %d", get_last_network_error());
+    }
+
+    int b = -1;
+    socklen_t b_len = sizeof(b);
+    if (getsockopt(context->socket, SOL_SOCKET, SO_RCVBUF, &b, &b_len) != -1) {
+        LOG_INFO("actual recv buffer size= %d\n", b);
     }
 }
 
