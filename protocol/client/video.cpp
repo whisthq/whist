@@ -198,6 +198,7 @@ int render_video(VideoContext* video_context) {
     // We make this static so that even if `sdl_render_pending` happens,
     // a later call to render_video can still access the data
     // from the most recently consumed render context.
+    static WhistWindow window_data[MAX_WINDOWS];
     static WhistRGBColor window_color = {};
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
@@ -255,6 +256,7 @@ int render_video(VideoContext* video_context) {
             }
 
             window_color = frame->corner_color;
+            memcpy(window_data, frame->window_data, sizeof(window_data));
 
             if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type)) {
                 whist_cursor_cache_clear(video_context->cursor_cache);
@@ -339,12 +341,12 @@ int render_video(VideoContext* video_context) {
             video_decoder_get_last_decoded_frame(video_context->decoder);
 
         // Make a new frame to give to the renderer.
-        AVFrame* frame = av_frame_alloc();
-        FATAL_ASSERT(frame);
+        AVFrame* av_frame = av_frame_alloc();
+        FATAL_ASSERT(av_frame != NULL);
 
         // Fill the frame for the renderer with references to the
         // decoded frame data.
-        av_frame_ref(frame, decoded_frame_data.decoded_frame);
+        av_frame_ref(av_frame, decoded_frame_data.decoded_frame);
 
         // Free the decoded frame.  We have another reference to the
         // data inside it.
@@ -354,7 +356,34 @@ int render_video(VideoContext* video_context) {
         sdl_render_window_titlebar_color(0, window_color);
 
         // Render the decoded frame
-        sdl_update_framebuffer(frame);
+        int num_windows = 0;
+        while (num_windows < MAX_WINDOWS && (int)window_data[num_windows].id != -1) {
+            num_windows++;
+        }
+        num_windows = 2;
+        window_data[0].id = 0;
+        window_data[0].x = 100;
+        window_data[0].y = 100;
+        window_data[0].width = 600;
+        window_data[0].height = 600;
+        window_data[0].is_fullscreen = false;
+        window_data[1].id = 5;
+        window_data[1].x = 150;
+        window_data[1].y = 150;
+        window_data[1].width = 150;
+        window_data[1].height = 150;
+        window_data[1].is_fullscreen = false;
+        static int tmp = 0;
+        tmp++;
+        if (tmp > 100) {
+            num_windows = 1;
+        }
+        if (tmp > 200) {
+            window_data[1].x = 250;
+            window_data[1].y = 250;
+            num_windows = 2;
+        }
+        sdl_update_framebuffer(av_frame, window_data, num_windows);
 
         // Mark the framebuffer out to render
         sdl_render_framebuffer();

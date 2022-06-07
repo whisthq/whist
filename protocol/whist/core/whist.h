@@ -124,6 +124,9 @@ Defines
 #define XTEST_INPUT_DRIVER 2
 #define UINPUT_INPUT_DRIVER 3
 
+// Whether or not multi-window is being used
+#define USING_MULTI_WINDOW false
+
 #if OS_IS(OS_WIN32)
 
 // possible on windows, so let's do it
@@ -136,9 +139,18 @@ Defines
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
 #define INPUT_DRIVER UINPUT_INPUT_DRIVER
+
+// Serverside nvidia usage
 #define USING_NVIDIA_CAPTURE true
 #define USING_NVIDIA_ENCODE true
 
+#endif
+
+// Whether or not client will use hw copy to SDL
+#if USING_MULTI_WINDOW
+#define USING_CLIENT_HW_COPY false
+#else
+#define USING_CLIENT_HW_COPY true
 #endif
 
 // Create platform-independent POSIX-style functions

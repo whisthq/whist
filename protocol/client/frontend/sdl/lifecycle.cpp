@@ -153,6 +153,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // Initialize the default window
     SDLWindowContext* window_context = new SDLWindowContext();
     window_context->to_be_created = true;
+    window_context->window_id = 0;
     window_context->x = SDL_WINDOWPOS_CENTERED;
     window_context->y = SDL_WINDOWPOS_CENTERED;
     window_context->width = width;
@@ -262,7 +263,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     uint32_t window_flags = 0;
     window_flags |= SDL_WINDOW_ALLOW_HIGHDPI;
     window_flags |= SDL_WINDOW_OPENGL;
-    window_flags |= SDL_WINDOW_RESIZABLE;
+    window_flags |= context->windows[id]->is_resizable ? SDL_WINDOW_RESIZABLE : 0;
     // Avoid glitchy-looking titlebar-content combinations while the
     // window is loading, and glitches caused by early user interaction.
     window_flags |= SDL_WINDOW_HIDDEN;

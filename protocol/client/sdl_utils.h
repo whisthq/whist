@@ -73,11 +73,15 @@ void sdl_update_framebuffer_loading_screen(int idx);
  *                                 The format of this frame must match
  *                                 WHIST_CLIENT_FRAMEBUFFER_PIXEL_FORMAT.
  *
+ * @param window_data              The array of whist windows to render
+ *
+ * @param num_windows              The number of whist windows to render
+ *
  * @note                           The renderer takes ownership of the frame after this
  *                                 call.  If that is not desirable, a copy must be made
  *                                 beforehand.
  */
-void sdl_update_framebuffer(AVFrame* frame);
+void sdl_update_framebuffer(AVFrame* frame, WhistWindow* window_data, int num_windows);
 
 /**
  * @brief                          This will mark the framebuffer as ready-to-render,

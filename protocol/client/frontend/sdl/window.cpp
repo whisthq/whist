@@ -89,6 +89,7 @@ bool sdl_is_any_window_visible(WhistFrontend* frontend) {
 
 WhistStatus sdl_set_title(WhistFrontend* frontend, int id, const char* title) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+#if !USING_MULTI_WINDOW
     SDL_Event event = {
         .user =
             {
@@ -103,6 +104,7 @@ WhistStatus sdl_set_title(WhistFrontend* frontend, int id, const char* title) {
     };
     // NOTE: "title" will be freed when the event is consumed
     SDL_PushEvent(&event);
+#endif
     return WHIST_SUCCESS;
 }
 
@@ -130,6 +132,7 @@ void sdl_resize_window(WhistFrontend* frontend, int id, int width, int height) {
 
 void sdl_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor* color) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+#if !USING_MULTI_WINDOW
     SDL_Event event = {
         .user =
             {
@@ -144,6 +147,7 @@ void sdl_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor
     };
     // NOTE: "color" will be freed when the event is consumed
     SDL_PushEvent(&event);
+#endif
 }
 
 void sdl_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {

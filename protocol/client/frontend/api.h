@@ -5,8 +5,6 @@
     GENERATOR(WhistStatus, init, WhistFrontend* frontend, int width, int height,                   \
               const char* title, const WhistRGBColor* color)                                       \
     GENERATOR(void, destroy, WhistFrontend* frontend)                                              \
-    GENERATOR(WhistStatus, create_window, WhistFrontend* frontend, int id)                         \
-    GENERATOR(void, destroy_window, WhistFrontend* frontend, int id)                               \
     GENERATOR(void, open_audio, WhistFrontend* frontend, unsigned int frequency,                   \
               unsigned int channels)                                                               \
     GENERATOR(bool, audio_is_open, WhistFrontend* frontend)                                        \
@@ -39,7 +37,8 @@
               int* key_count, int* mod_state)                                                      \
     GENERATOR(void, get_video_device, WhistFrontend* frontend, AVBufferRef** device,               \
               enum AVPixelFormat* format)                                                          \
-    GENERATOR(WhistStatus, update_video, WhistFrontend* frontend, AVFrame* frame)                  \
+    GENERATOR(WhistStatus, update_video, WhistFrontend* frontend, AVFrame* frame,                  \
+              WhistWindow* window_data, int num_windows)                                           \
     GENERATOR(void, paint_png, WhistFrontend* frontend, const uint8_t* data, size_t data_size,     \
               int x, int y)                                                                        \
     GENERATOR(void, paint_solid, WhistFrontend* frontend, int id, const WhistRGBColor* color)      \

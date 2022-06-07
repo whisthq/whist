@@ -352,7 +352,10 @@ void virtual_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data
 
 void virtual_paint_solid(WhistFrontend* frontend, int id, const WhistRGBColor* color) {}
 
-WhistStatus virtual_update_video(WhistFrontend* frontend, AVFrame* frame) {
+WhistStatus virtual_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindow* window_data,
+                                 int num_windows) {
+    UNUSED(window_data);
+    UNUSED(num_windows);
     virtual_interface_send_frame(frame);
     return WHIST_SUCCESS;
 }
@@ -378,7 +381,3 @@ void virtual_display_notification(WhistFrontend* frontend, const WhistNotificati
 }
 
 void virtual_declare_user_activity(WhistFrontend* frontend) {}
-
-WhistStatus virtual_create_window(WhistFrontend* frontend, int id) { return WHIST_SUCCESS; }
-
-void virtual_destroy_window(WhistFrontend* frontend, int id) {}

@@ -4,7 +4,7 @@
 #include "whist.h"
 #include <whist/cursor/cursor.h>
 #include <whist/utils/color.h>
-#include "whist/video/video.h"
+#include <whist/video/video.h>
 
 /**
  * @brief   VideoFrame struct.

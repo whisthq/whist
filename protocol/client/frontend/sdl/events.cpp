@@ -276,7 +276,7 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
 }
 
 bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
-    if (!event) {
+    if (event == NULL) {
         return SDL_PollEvent(NULL) != 0;
     }
 
