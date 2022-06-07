@@ -40,7 +40,7 @@ clients:
     allowed_clients: []
     app_type: spa
     callbacks:
-      - https://*.chromiumapp.org/auth0
+      - chrome://welcome
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
