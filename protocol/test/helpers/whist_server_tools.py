@@ -66,6 +66,7 @@ def server_setup_process(args_dict):
     cmake_build_type = args_dict["cmake_build_type"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
+    server_already_running_host_service = args_dict["server_already_running_host_service"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -102,25 +103,26 @@ def server_setup_process(args_dict):
             f"Commit mismatch between server instance ({server_sha}) and E2E runner ({local_sha})"
         )
 
-    if skip_host_setup == "false":
-        run_host_setup(
+    if not server_already_running_host_service:
+        if skip_host_setup == "false":
+            run_host_setup(
+                hs_process,
+                pexpect_prompt_server,
+            )
+        else:
+            print("Skipping host setup on server instance.")
+
+        # Reboot and wait for it to come back up
+        print("Rebooting the server EC2 instance (required after running the host-setup)...")
+        hs_process = reboot_instance(
             hs_process,
+            server_cmd,
+            server_log,
             pexpect_prompt_server,
         )
-    else:
-        print("Skipping host setup on server instance.")
 
-    # Reboot and wait for it to come back up
-    print("Rebooting the server EC2 instance (required after running the host-setup)...")
-    hs_process = reboot_instance(
-        hs_process,
-        server_cmd,
-        server_log,
-        pexpect_prompt_server,
-    )
-
-    # Build the protocol server
-    build_server_on_instance(hs_process, pexpect_prompt_server, cmake_build_type)
+        # Build the protocol server
+        build_server_on_instance(hs_process, pexpect_prompt_server, cmake_build_type)
 
     hs_process.kill(0)
     server_log.close()

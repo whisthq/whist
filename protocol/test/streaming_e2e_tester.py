@@ -220,6 +220,15 @@ parser.add_argument(
     type=str,
     default="normal",
 )
+
+parser.add_argument(
+    "--server-already-running-host-service",
+    help="This option indicates whether the server machine is already running the host service, in which case we should \
+    not run it again, nor we should build the mandelboxes",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
 args = parser.parse_args()
 
 
@@ -248,6 +257,8 @@ if __name__ == "__main__":
     simulate_scrolling = args.simulate_scrolling
     # Each call to the mouse scrolling simulator script takes a total of 25s to complete, including 5s in-between runs
     testing_time = max(args.testing_time, simulate_scrolling * 25)
+
+    server_already_running_host_service = args.server_already_running_host_service == "true"
 
     # 2 - Perform a sanity check on the arguments and load the SSH key from file
     if (
@@ -384,6 +395,7 @@ if __name__ == "__main__":
             "cmake_build_type": args.cmake_build_type,
             "skip_git_clone": skip_git_clone,
             "skip_host_setup": skip_host_setup,
+            "server_already_running_host_service": server_already_running_host_service,
         }
     )
 
@@ -453,7 +465,8 @@ if __name__ == "__main__":
     )
 
     # Launch the host-service on the client and server instance(s)
-    start_host_service(server_hs_process, pexpect_prompt_server)
+    if not server_already_running_host_service:
+        start_host_service(server_hs_process, pexpect_prompt_server)
     if use_two_instances:
         start_host_service(client_hs_process, pexpect_prompt_client)
 
