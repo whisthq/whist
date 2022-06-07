@@ -148,7 +148,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	exposedPorts[dockernat.Port("32273/tcp")] = struct{}{}
 
 	aesKey := utils.RandHex(16)
-	mandelbox.SetAESKey(mandelboxtypes.AESKey(aesKey))
+	mandelbox.SetPrivateKey(mandelboxtypes.PrivateKey(aesKey))
 	envs := []string{
 		utils.Sprintf("WHIST_AES_KEY=%s", aesKey),
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
@@ -463,7 +463,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		HostPortForTCP32262: hostPortForTCP32262,
 		HostPortForUDP32263: hostPortForUDP32263,
 		HostPortForTCP32273: hostPortForTCP32273,
-		AesKey:              string(mandelbox.GetAESKey()),
+		AesKey:              string(mandelbox.GetPrivateKey()),
 	}
 	req.ReturnResult(result, nil)
 	logger.Infof("SpinUpMandelbox(): Finished starting up mandelbox %s", mandelbox.GetID())

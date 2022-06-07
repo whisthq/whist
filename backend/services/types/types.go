@@ -18,7 +18,7 @@ import (
 // IDs, for instance.
 
 // A MandelboxID is a random string created for each mandelbox. We need some
-// sort of identifier for each mandelbox, and we need it _before_ Docker
+// sort of identifier for each mandelbox, and we need it before Docker
 // gives us back the runtime Docker ID for the mandelbox.
 type MandelboxID uuid.UUID
 
@@ -29,48 +29,58 @@ type DockerID string
 // enforce that it is part of a limited set of values.
 type AppName string
 
-// UserID is defined as its own type as well so the compiler can check argument
-// orders, etc. more effectively.
+// UserID is the id assigned to a user by the authentication provider (Auth0).
 type UserID string
 
-// SessionID is defined as its own type for similar reasons.
+// SessionID can be a random hash or a timestamp, depending if it's a server-side
+// session id, or a client-side session id. A server-side session id is created by
+// the host service when starting a waiting mandelbox, and is represented by a random
+// hash. A client-side session id is created by the frontend and is written when a
+// mandelbox gets assigned to a user, it's represented by a Unix timestamp.
 type SessionID string
 
-// ConfigEncryptionToken is defined as its own type for similar reasons.
+// ConfigEncryptionToken is the token used to decrypt the user configurations.
 type ConfigEncryptionToken string
 
-// ClientAppAccessToken is defined as its own type for similar reasons.
+// ClientAppAccessToken is a JWT created by the authentication provider and used to
+// authenticate the user to Whist. It contains custom claims and metadata.
 type ClientAppAccessToken string
 
-// AESKey is defined as its own type for similar reasons.
-type AESKey string
+// PrivateKey is an AES key used for connecting the protocol client to the protocol server
+// running inside a mandelbox. Its purpose is to prevent other users from connecting to a
+// mandelbox that is not assigned to them.
+type PrivateKey string
 
-// JSONData is defined as its own type for similar reasons.
+// JSONData is a set of configurations sent by the frontend that can only be set before launching Chrome.
+// Some examples are timezone, location, dark mode, DPI.
 type JSONData string
 
-// BrowserData is defined as its own type for similar reasons.
+// BrowserData is the collection of data imported from a local Chrome to the Chrome instance running inside the
+// mandelbox. This can be a combination of cookies, extensions, bookmarks, preferences and local storage.
 type BrowserData string
 
-// Cookies is defined as its own type for similar reasons.
+// Cookies is a json file containing user cookies.
 type Cookies string
 
-// Bookmarks is defined as its own type for similar reasons.
+// Bookmarks is a json file containing user bookmarks.
 type Bookmarks string
 
-// Extensions is defined as its own type for similar reasons.
+// Extensions is a comma-separated string containing user extensions.
 type Extensions string
 
-// Preferences is defined as its own type for similar reasons.
+// Preferences is a json file containing user preferences.
 type Preferences string
 
-// LocalStorage is defined as its own type for similar reasons.
+// LocalStorage is a json file containing user local storage.
 type LocalStorage string
 
-// ExtensionSettings is defined as its own type for similar reasons.
+// ExtensionSettings is a json file containing user extension settings.
 type ExtensionSettings string
 
-// ExtensionState is defined as its own type for similar reasons.
+// ExtensionState is a json file containing user extension state.
 type ExtensionState string
+
+// Custom type methods
 
 // String is a utility function to return the string representation of a MandelboxID.
 func (mandelboxID MandelboxID) String() string {
