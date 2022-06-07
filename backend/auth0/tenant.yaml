@@ -36,7 +36,7 @@ resourceServers:
     token_lifetime: 86400
     token_lifetime_for_web: 7200
 clients:
-  - name: Browser Extension
+  - name: Chromium Auth
     allowed_clients: []
     app_type: spa
     callbacks:
@@ -107,7 +107,7 @@ clients:
       rotation_type: non-rotating
     sso_disabled: false
     token_endpoint_auth_method: client_secret_post
-  - name: Whist
+  - name: Electron Auth
     allowed_clients: []
     app_type: native
     callbacks: @@ALLOWED_AUTH0_CALLBACKS@@
