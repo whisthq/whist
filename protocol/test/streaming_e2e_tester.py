@@ -490,6 +490,10 @@ if __name__ == "__main__":
         testing_time,
     )
 
+    # Wait until user input
+    if not running_in_ci:
+        input("Press any key to continue...")
+
     # Run the dev client on the client instance, using the server configs obtained above
     client_docker_id = run_client_on_instance(
         client_pexpect_process, server_configs_data, simulate_scrolling

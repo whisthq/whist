@@ -388,6 +388,9 @@ static int handle_open_urls_message(WhistServerState *state, WhistClientMessage 
     sprintf(command,
             "/usr/share/whist/run-as-whist-user.sh \"exec /usr/bin/whist-open-new-tab %s\"",
             received_urls);
+    if (LOG_OPEN_URL) {
+        LOG_INFO("Running command: %s", command);
+    }
 
     // Step 3: Execute the command created in step 3 in the mandelbox, and save the
     // resulting stdout in the open_urls_result string.
