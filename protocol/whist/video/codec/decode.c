@@ -177,7 +177,7 @@ typedef struct {
 // all hardware methods fail (or if it was requested explicitly).
 // For example, on Windows we try D3D11VA -> DXVA2 -> NVDEC -> software
 // in that order.
-static const HardwareDecodeType hardware_decode_types[] = {
+static HardwareDecodeType hardware_decode_types[] = {
 #if OS_IS(OS_WIN32)
     {"D3D11VA", AV_HWDEVICE_TYPE_D3D11VA, AV_PIX_FMT_D3D11, &get_format_d3d11},
     {"DXVA2", AV_HWDEVICE_TYPE_DXVA2, AV_PIX_FMT_DXVA2_VLD, NULL},
@@ -390,6 +390,13 @@ VideoDecoder* video_decoder_create(const VideoDecoderParams* params) {
 
     decoder->decode_type = 0;
     decoder->received_a_frame = false;
+    // TODO : Add Chromium rendering support in Windows/Linux and remove OS_IS(OS_MACOS) condition
+    if (OS_IS(OS_MACOS) && params->renderer_output_format != AV_PIX_FMT_NONE) {
+        // In MacOS, Chromium rendering uses AV_PIX_FMT_YUV420P format and SDL rendering uses
+        // AV_PIX_FMT_VIDEOTOOLBOX format. And VideoToolBox Hardware decoder is capable of providing
+        // output in both formats. Hence setting the required pixel format.
+        hardware_decode_types[0].pix_fmt = params->renderer_output_format;
+    }
 
     // Try all decoders until we find one that works
     if (try_next_decoder(decoder) != WHIST_SUCCESS) {
@@ -414,7 +421,7 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
         .width = width,
         .height = height,
         .hardware_decode = use_hardware,
-        .hardware_output_format = AV_PIX_FMT_NONE,
+        .renderer_output_format = AV_PIX_FMT_NONE,
 
     };
     return video_decoder_create(&params);
@@ -557,36 +564,30 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
     av_frame_free(&decoder->decoded_frame);
 
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(frame->format);
-    if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL) {
-        if (decoder->params.hardware_output_format == frame->format) {
-            // The caller supports dealing with the hardware frame
-            // directly, so just return it.
-            decoder->decoded_frame = frame;
-            decoder->using_hw = true;
-        } else {
-            // Otherwise, copy the hw data into a new software frame.
-            start_timer(&latency_clock);
-            decoder->decoded_frame = safe_av_frame_alloc();
-            res = av_hwframe_transfer_data(decoder->decoded_frame, frame, 0);
-            av_frame_free(&frame);
-            if (res < 0) {
-                av_frame_free(&decoder->decoded_frame);
-                LOG_WARNING("Failed to av_hwframe_transfer_data, error: %s", av_err2str(res));
-                destroy_video_decoder(decoder);
-                return -1;
-            }
-            log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME, get_timer(&latency_clock) * 1000);
-            decoder->using_hw = false;
+    if (decoder->params.renderer_output_format == frame->format) {
+        // The caller supports dealing with the hardware frame
+        // directly, so just return it.
+        decoder->decoded_frame = frame;
+    } else if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL) {
+        // Otherwise, copy the hw data into a new software frame.
+        start_timer(&latency_clock);
+        decoder->decoded_frame = safe_av_frame_alloc();
+        res = av_hwframe_transfer_data(decoder->decoded_frame, frame, 0);
+        av_frame_free(&frame);
+        if (res < 0) {
+            av_frame_free(&decoder->decoded_frame);
+            LOG_WARNING("Failed to av_hwframe_transfer_data, error: %s", av_err2str(res));
+            destroy_video_decoder(decoder);
+            return -1;
         }
+        log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME, get_timer(&latency_clock) * 1000);
     } else {
         if (decoder->decode_type != software_decode_type) {
             LOG_ERROR("Decoder internally fell back from hardware to software");
             decoder->decode_type = software_decode_type;
         }
-
         // We already have a software frame, so return it.
         decoder->decoded_frame = frame;
-        decoder->using_hw = false;
     }
 
     return 0;
@@ -606,7 +607,6 @@ DecodedFrameData video_decoder_get_last_decoded_frame(VideoDecoder* decoder) {
     av_frame_ref(decoded_frame_data.decoded_frame, decoder->decoded_frame);
 
     // Copy the data into the struct
-    decoded_frame_data.using_hw = decoder->using_hw;
     decoded_frame_data.pixel_format = decoded_frame_data.decoded_frame->format;
     decoded_frame_data.width = decoder->params.width;
     decoded_frame_data.height = decoder->params.height;
