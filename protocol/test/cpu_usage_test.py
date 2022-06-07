@@ -32,11 +32,10 @@ if __name__ == "__main__":
     ]
     safe_urls = " ".join([f"\"{urllib.parse.quote(url, safe=':/=?')}\"" for url in urls_to_open])
 
-    
     print(
         f"Step 1: Create a EC2 instance (for the server) in a region of your choice, then provide the parameters below."
     )
-    
+
     server_instance_id = input("Insert server instance ID: ")
     print(f"\tGot {server_instance_id}")
 
@@ -85,23 +84,28 @@ if __name__ == "__main__":
 
     print()
     print(
-        f"Step 4. Run the actual experiment by executing the commands below, each in a new terminal window. Wait until all processes are prompting you to press a key, and only then press a key at the same time on all terminal windows. In this way, the clients will all connect to the server at the same time."
+        f"Step 4. Run the actual experiment by executing the commands below, each in a new terminal window, one at at time. Wait until a processes is prompting you to press a key before starting the next one. Then, once all are ready, only then press a key at the same time on all terminal windows. In this way, the clients will all connect to the server at the same time."
     )
 
     for i, client_instance_id in enumerate(client_instance_ids):
         print()
-        if i == 0:
-            print(
-                f"python3 streaming_e2e_tester.py --ssh-key-name {ssh_key_name} --ssh-key-path {ssh_key_path} --github-token {github_token} --region-name {region_name} --existing-server-instance-id={server_instance_id} --existing-client-instance-id={client_instance_id} --skip-git-clone=true --skip-host-setup=true --use-two-instances=true --leave-instances-on=true --testing-urls {safe_urls}"
-            )
-        else:
-            print(
-                f"python3 streaming_e2e_tester.py --ssh-key-name {ssh_key_name} --ssh-key-path {ssh_key_path} --github-token {github_token} --region-name {region_name} --existing-server-instance-id={server_instance_id} --existing-client-instance-id={client_instance_id} --skip-git-clone=true --skip-host-setup=true --use-two-instances=true --leave-instances-on=true --server-already-running-host-service=true --testing-urls {safe_urls}"
-            )
+        additional_opts = ""
+        if i != 0:
+            additional_opts = f"{additional_opts} --server-already-running-host-service=true"
+        if i != len(client_instance_ids) - 1:
+            additional_opts = f"{additional_opts} --testing-time={15*60}"
+
+        print(
+            f"python3 streaming_e2e_tester.py --ssh-key-name {ssh_key_name} --ssh-key-path {ssh_key_path} --github-token {github_token} --region-name {region_name} --existing-server-instance-id={server_instance_id} --existing-client-instance-id={client_instance_id} --skip-git-clone=true --skip-host-setup=true --use-two-instances=true --leave-instances-on=true {additional_opts} --testing-urls {safe_urls}"
+        )
+
         print()
 
+    print(f"Step 5: Terminate all client processes as soon as the last one has finished.")
+    print()
+
     input(
-        f"Step 5: Get CPU usage. Press a key when all the {n_mandelboxes} scripts have completed..."
+        f"Step 6: Get CPU usage. Press a key when all the {n_mandelboxes} scripts have completed..."
     )
 
     print("Now run the following command: python3 extract_cpu_usage.py")
