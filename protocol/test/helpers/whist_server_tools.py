@@ -79,31 +79,32 @@ def server_setup_process(args_dict):
         pexpect_prompt_server,
     )
 
-    print("Running pre-host-setup on the instance...")
-    prepare_instance_for_host_setup(hs_process, pexpect_prompt_server)
+    if not server_already_running_host_service:
 
-    print("Configuring AWS credentials on server instance...")
-    install_and_configure_aws(
-        hs_process,
-        pexpect_prompt_server,
-    )
+        print("Running pre-host-setup on the instance...")
+        prepare_instance_for_host_setup(hs_process, pexpect_prompt_server)
 
-    prune_containers_if_needed(hs_process, pexpect_prompt_server)
-
-    if skip_git_clone == "false":
-        clone_whist_repository(github_token, hs_process, pexpect_prompt_server)
-    else:
-        print("Skipping git clone whisthq/whist repository on server instance.")
-
-    # Ensure that the commit hash on server matches the one on the runner
-    server_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt_server)
-    local_sha = get_whist_github_sha()
-    if server_sha != local_sha:
-        exit_with_error(
-            f"Commit mismatch between server instance ({server_sha}) and E2E runner ({local_sha})"
+        print("Configuring AWS credentials on server instance...")
+        install_and_configure_aws(
+            hs_process,
+            pexpect_prompt_server,
         )
 
-    if not server_already_running_host_service:
+        prune_containers_if_needed(hs_process, pexpect_prompt_server)
+
+        if skip_git_clone == "false":
+            clone_whist_repository(github_token, hs_process, pexpect_prompt_server)
+        else:
+            print("Skipping git clone whisthq/whist repository on server instance.")
+
+        # Ensure that the commit hash on server matches the one on the runner
+        server_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt_server)
+        local_sha = get_whist_github_sha()
+        if server_sha != local_sha:
+            exit_with_error(
+                f"Commit mismatch between server instance ({server_sha}) and E2E runner ({local_sha})"
+            )
+
         if skip_host_setup == "false":
             run_host_setup(
                 hs_process,
