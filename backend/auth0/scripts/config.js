@@ -8,7 +8,7 @@
 
 // These don't need to be secrets, they're public values.
 const clientIDs = {
-  dev: "6cd4nskyIHQOePVM6q7FU3x7i5sZLwl1",
+  dev: "zfNXAien2yNOJBKaxcVu7ngWfwr6l2eP",
   staging: "2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5",
   prod: "dnhVmqdHkF1O6aWwakv7jDVMd5Ii6VfX",
 }
