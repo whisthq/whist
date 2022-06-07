@@ -6,4 +6,4 @@ package constants
 // each GPU and still maintain acceptable performance. Note that we are
 // assuming that all GPUs on a mandelbox are uniform (and that we are using
 // only one instance type).
-const MaxMandelboxesPerGPU = 3
+const MaxMandelboxesPerGPU = 10
