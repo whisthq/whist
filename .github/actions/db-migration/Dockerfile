@@ -1,4 +1,4 @@
-FROM python:3.10.4
+FROM python:3.10.5
 
 # Install lsb-release right away, as we need it to create a repository
 # configuration so we can install postgres.
