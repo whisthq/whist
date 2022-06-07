@@ -470,8 +470,6 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
                 get_valid_windows_helper(device, list, children[i]);
             }
         }
-    } else {
-        LOG_INFO("XQueryTree failed!");
     }
 }
 
