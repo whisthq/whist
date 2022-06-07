@@ -158,8 +158,8 @@ connections:
   - name: google-oauth2
     strategy: google-oauth2
     enabled_clients:
-      - Browser Extension
-      - Whist
+      - Chromium Auth
+      - Electron Auth
     is_domain_connection: false
     options:
       email: true
