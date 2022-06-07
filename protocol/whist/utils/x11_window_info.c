@@ -445,8 +445,7 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
     Window parent;
     Window* children;
     unsigned int nchildren;
-    if (XQueryTree(device->display, curr, &device->root, &parent, &children, &nchildren) ==
-        Success) {
+    if (XQueryTree(device->display, curr, &device->root, &parent, &children, &nchildren) != 0) {
         char* window_name = get_window_name(device, curr);
         // check the dimensions of each window
         XWindowAttributes attr;
@@ -471,6 +470,8 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
                 get_valid_windows_helper(device, list, children[i]);
             }
         }
+    } else {
+        LOG_INFO("XQueryTree failed!");
     }
 }
 
