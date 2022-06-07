@@ -104,7 +104,7 @@ if __name__ == "__main__":
             additional_opts = f"{additional_opts} --testing-time={15*60}"
 
         print(
-            f"python3 streaming_e2e_tester.py --ssh-key-name {ssh_key_name} --ssh-key-path {ssh_key_path} --github-token {github_token} --region-name {region_name} --existing-server-instance-id={server_instance_id} --existing-client-instance-id={client_instance_id} --skip-git-clone=true --skip-host-setup=true --use-two-instances=true --leave-instances-on=true --server-already-running-host-service=true {additional_opts} --testing-urls {safe_urls}"
+            f"python3 streaming_e2e_tester.py --ssh-key-name {ssh_key_name} --ssh-key-path {ssh_key_path} --github-token {github_token} --region-name {region_name} --existing-server-instance-id={server_instance_id} --existing-client-instance-id={client_instance_id} --skip-git-clone=false --skip-host-setup=true --use-two-instances=true --leave-instances-on=true --server-already-running-host-service=true {additional_opts} --testing-urls {safe_urls}"
         )
 
         print()
