@@ -809,8 +809,13 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// it will automatically update itself to the most recent version and send another request.
 	if assignedInstance.ClientSHA != mandelboxRequest.CommitHash {
 		var msg error
-		if !isOutdatedClient {
-			msg = utils.MakeError("found instance with capacity but it has a different commit hash %v than frontend with commit hash  %v", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+
+		// Only log the commit mismatch error when running on prod. This is because we only update the full version
+		// (major, minor, micro) on the config database when deploying to prod, so this is only a real error in that case.
+		if metadata.GetAppEnvironment() == metadata.EnvProd && !isOutdatedClient {
+			msg = utils.MakeError("found instance with capacity but it has a different commit hash %v than frontend with commit hash  %v.", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+		} else {
+			logger.Infof("Did not find instance with commit hash %v, but expect frontend to autoupdate and send another request with commit hash %v.", mandelboxRequest.CommitHash, assignedInstance.ClientSHA)
 		}
 
 		// Regardless if we log the error, its necessary to return an appropiate response.
