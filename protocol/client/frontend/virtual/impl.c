@@ -16,7 +16,13 @@ static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* e
             break;
         }
         case FRONTEND_EVENT_KEYPRESS: {
-            if (event->keypress.code < KEYCODE_UPPERBOUND) {
+            // TODO : This code is only a temporary workaround for modifier keys to function
+            // correctly. The real solution should be implemented by fetching the keyboard state
+            // from the OS or Chrome, to get the intended functionality and benefit of sending
+            // keyboard states. This method of maintaining states works only for modifier keys, as
+            // chrome doesn't send "KeyUp" event for other keys during key combinations(such as
+            // Ctrl + C etc.,).
+            if (event->keypress.code >= FK_LCTRL && event->keypress.code <= FK_RGUI) {
                 if (event->keypress.pressed) {
                     context->key_state[event->keypress.code] = 1;
                 } else {
@@ -197,7 +203,22 @@ void virtual_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_sta
     VirtualFrontendContext* context = frontend->context;
     *key_state = context->key_state;
     *key_count = KEYCODE_UPPERBOUND;
-    *mod_state = 0;
+    int actual_mod_state = 0;
+    // Setting the mod_state for GUI keys, CAPS LOCK and NUM LOCK alone as the caller is interested
+    // in only those flags
+    if (context->key_state[FK_LGUI]) {
+        actual_mod_state |= KMOD_LGUI;
+    }
+    if (context->key_state[FK_RGUI]) {
+        actual_mod_state |= KMOD_RGUI;
+    }
+    if (context->key_state[FK_CAPSLOCK]) {
+        actual_mod_state |= KMOD_CAPS;
+    }
+    if (context->key_state[FK_NUMLOCK]) {
+        actual_mod_state |= KMOD_NUM;
+    }
+    *mod_state = actual_mod_state;
 }
 
 void virtual_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size,
