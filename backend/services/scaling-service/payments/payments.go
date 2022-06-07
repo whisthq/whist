@@ -1,3 +1,7 @@
+/*
+Package payments includes all types and functions necessary to validate
+payments using Stripe, and create Stripe checkout sessions.
+*/
 package payments
 
 import (

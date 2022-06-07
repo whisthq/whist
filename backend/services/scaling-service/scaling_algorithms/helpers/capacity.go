@@ -1,3 +1,11 @@
+// Copyright (c) 2021-2022 Whist Technologies, Inc.
+
+/*
+Package helpers contains utility functions that can be shared between actions and
+algorithms that handle sanitizing, parsing and computing values. It also includes
+some functions that make it easier to test the scaling service locally.
+*/
+
 package helpers
 
 import (
