@@ -1,215 +1,80 @@
-/*
-Package whistlogger contains the logic for our custom logging system, including sending events to Logz.io and Sentry.
-*/
-package whistlogger // import "github.com/whisthq/whist/backend/services/whistlogger"
+package whistlogger
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"io/ioutil"
+	"os"
 	"runtime/debug"
-	"time"
 
-	"github.com/getsentry/sentry-go"
-	"github.com/whisthq/whist/backend/services/metadata"
-	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/utils"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
+var logger *zap.Logger
+
 func init() {
-	// Set some options for the Go logging package.
-	log.Default().SetFlags(log.Ldate | log.Lmicroseconds | log.LUTC)
-
-	// The first thing we want to do is to initialize Logz.io and Sentry so that
-	// we can catch any errors that might occur, or logs if we print them.
-	// The credentials for Sentry are hardcoded into the host-service,
-	// and the credentials for Logz.io are written to the environment file used
-	// by host-service systemd service.
-	// It is more likely that Logz.io initialization would fail, so we initialize
-	// Sentry first.
-
-	// Note that according to the Sentry Go documentation, if we run
-	// sentry.CaptureMessage or sentry.CaptureError on separate goroutines, they
-	// can overwrite each other's tags. The thread-safe solution is to use
-	// goroutine-local hubs, but the way to do that would be to use contexts and
-	// add an additional argument to each logging method taking in the current
-	// context. This seems like a lot of work, so we just use a set of global
-	// tags instead, initializing them in InitializeSentry() and not touching
-	// them afterwards. Any mandelbox-specific information (which is what I
-	// imagine we would use local tags for) we just add in the text of the
-	// respective error message sent to Sentry. Alternatively, we might just be
-	// able to use sentry.WithScope(), but that is future work.
-}
-
-func InitHostLogging() {
-	var err error
-	sentryTransport, err = initializeSentry(func(scope *sentry.Scope) {
-		// This function looks repetitive, but we can't refactor its functionality
-		// into a separate function because we want to defer sending the errors
-		// about being unable to set Sentry tags until after we have set all the
-		// ones we can.
-
-		if val, err := aws.GetAmiID(); err != nil {
-			defer Errorf("Unable to set Sentry tag aws.ami-id: %v", err)
-		} else {
-			scope.SetTag("aws.ami-id", string(val))
-			log.Printf("Set Sentry tag aws.ami-id: %s", val)
-		}
-
-		if val, err := aws.GetInstanceID(); err != nil {
-			defer Errorf("Unable to set Sentry tag aws.instance-id: %v", err)
-		} else {
-			scope.SetTag("aws.instance-id", string(val))
-			log.Printf("Set Sentry tag aws.instance-id: %s", val)
-		}
-
-		if val, err := aws.GetInstanceType(); err != nil {
-			defer Errorf("Unable to set Sentry tag aws.instance-type: %v", err)
-		} else {
-			scope.SetTag("aws.instance-type", string(val))
-			log.Printf("Set Sentry tag aws.instance-type: %s", val)
-		}
-
-		if val, err := aws.GetInstanceName(); err != nil {
-			defer Errorf("Unable to set Sentry tag aws.instance-name: %v", err)
-		} else {
-			scope.SetTag("aws.instance-name", string(val))
-			log.Printf("Set Sentry tag aws.instance-name: %s", val)
-		}
-
-		if val, err := aws.GetPlacementRegion(); err != nil {
-			defer Errorf("Unable to set Sentry tag aws.placement-region: %v", err)
-		} else {
-			scope.SetTag("aws.placement-region", string(val))
-			log.Printf("Set Sentry tag aws.placement-region: %s", val)
-		}
-
-		if val, err := aws.GetPublicIpv4(); err != nil {
-			defer Errorf("Unable to set Sentry tag aws.public-ipv4: %v", err)
-		} else {
-			scope.SetTag("aws.public-ipv4", val.String())
-			log.Printf("Set Sentry tag aws.public-ipv4: %s", val)
-		}
+	// First, define our level-handling logic.
+	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= zapcore.ErrorLevel
 	})
-	if err != nil {
-		// Error, don't Panic, since a Sentry outage should not bring down our
-		// entire service.
-		Errorf("Failed to initialize Sentry! Error: %s", err)
-	}
+	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl < zapcore.ErrorLevel
+	})
 
-	instanceID, _ := aws.GetInstanceID()
-	amiID, _ := aws.GetAmiID()
+	debugging := zapcore.AddSync(ioutil.Discard)
+	errors := zapcore.AddSync(ioutil.Discard)
 
-	hostMsg = hostMessage{
-		AWSInstanceID: instanceID,
-		AWSAmiID:      amiID,
-		message: message{
-			Message:      "",
-			Type:         "",
-			Component:    "backend",
-			SubComponent: "host-service",
-			Environment:  metadata.GetAppEnvironment(),
-		},
-	}
+	// High-priority output should go to standard error, and low-priority
+	// output should also go to standard out.
+	consoleDebugging := zapcore.Lock(os.Stdout)
+	consoleErrors := zapcore.Lock(os.Stderr)
 
-	if err != nil {
-		log.Print(utils.ColorRed(utils.Sprintf("Couldn't marshal payload for logz.io. Error: %s", err)))
-		return
-	}
+	sentryAndLogzEncoderConfig := zap.NewProductionEncoderConfig()
+	consoleEncoderConfig := zap.NewDevelopmentEncoderConfig()
 
-	logzioTransport, err = initializeLogzIO()
-	if err != nil {
-		// Error, don't Panic, since a logzio outage should not bring down our
-		// entire service.
-		Errorf("Failed to initialize LogzIO! Error: %s", err)
-	}
-}
+	// Enable colored output on stdout
+	consoleEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
-func InitScalingLogging() {
-	var err error
-	sentryTransport, err = initializeSentry(func(scope *sentry.Scope) {})
-	if err != nil {
-		// Error, don't Panic, since a Sentry outage should not bring down our
-		// entire service.
-		Errorf("Failed to initialize Sentry! Error: %s", err)
-	}
+	sentryAndLogzEncoder := zapcore.NewJSONEncoder(sentryAndLogzEncoderConfig)
+	consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
 
-	scalingMsg = message{
-		Message:      "",
-		Type:         "",
-		Component:    "backend",
-		SubComponent: "scaling-service",
-		Environment:  metadata.GetAppEnvironment(),
-	}
+	// Join the outputs, encoders, and level-handling functions into
+	// zapcore.Cores, then tee the four cores together.
+	core := zapcore.NewTee(
+		zapcore.NewCore(sentryAndLogzEncoder, errors, highPriority),
+		zapcore.NewCore(consoleEncoder, consoleErrors, highPriority),
+		zapcore.NewCore(sentryAndLogzEncoder, debugging, lowPriority),
+		zapcore.NewCore(consoleEncoder, consoleDebugging, lowPriority),
+	)
 
-	logzioTransport, err = initializeLogzIO()
-	if err != nil {
-		// Error, don't Panic, since a logzio outage should not bring down our
-		// entire service.
-		Errorf("Failed to initialize LogzIO! Error: %s", err)
-	}
+	logger = zap.New(core)
 }
 
 // Close flushes all production logging (i.e. Sentry and Logzio).
 func Close() {
 	// Flush buffered logging events before the program terminates.
-	Info("Flushing Sentry...")
-	FlushSentry()
-	Info("Flushing Logzio...")
-	stopAndDrainLogzio()
-}
-
-// Print logs an interface + timestamp, but does not send it to Sentry.
-func Print(v ...interface{}) {
-	str := fmt.Sprint(v...)
-
-	log.Print(str)
-	if logzioTransport != nil {
-		timestamp := fmt.Sprintf("time=%s", time.Now().String())
-		logzioTransport.send(fmt.Sprintf("%s %s", str, timestamp), logzioTypeInfo)
-	}
+	// Info("Flushing Sentry...")
+	// FlushSentry()
+	// Info("Flushing Logzio...")
+	// stopAndDrainLogzio()
+	logger.Sync()
 }
 
 // Info logs some info + timestamp, but does not send it to Sentry.
-func Info(format string, v ...interface{}) {
-	str := fmt.Sprintf(format, v...)
-
-	log.Print(str)
-	if logzioTransport != nil {
-		timestamp := fmt.Sprintf("time=%s", time.Now().String())
-		logzioTransport.send(fmt.Sprintf("%s %s", str, timestamp), logzioTypeInfo)
-	}
-}
-
-// SilentInfo sends info + timestamp directly to Logz.io, bypassing stdout.
-func SilentInfo(format string, v ...interface{}) {
-	str := fmt.Sprintf(format, v...)
-	if logzioTransport != nil {
-		timestamp := fmt.Sprintf("time=%s", time.Now().String())
-		logzioTransport.send(fmt.Sprintf("%s %s", str, timestamp), logzioTypeInfo)
-	}
+func Info(v ...interface{}) {
+	logger.Sugar().Info(v...)
 }
 
 // Error logs an error and sends it to Sentry.
 func Error(err error) {
-	errstr := fmt.Sprintf("ERROR: %s", err)
-	log.Print(utils.ColorRed(errstr))
-	if logzioTransport != nil {
-		logzioTransport.send(errstr, logzioTypeError)
-	}
-	if sentryTransport != nil {
-		sentryTransport.send(err)
-	}
+	logger.Sugar().Error(err)
 }
 
 // Warning logs an error in red text, like Error, but doesn't send it to
 // Sentry.
 func Warning(err error) {
-	str := fmt.Sprintf("WARNING: %s", err)
-	log.Print(utils.ColorRed(str))
-	if logzioTransport != nil {
-		logzioTransport.send(str, logzioTypeWarning)
-	}
+	logger.Sugar().Warn(err)
 }
 
 // Panic sends an error to Sentry and "pretends" to panic on it by printing the
@@ -221,50 +86,42 @@ func Warning(err error) {
 // do so in a useful way. Therefore, passing in a nil `globalCancel` parameter
 // will just panic on `err` instead.
 func Panic(globalCancel context.CancelFunc, err error) {
-	errstr := fmt.Sprintf("PANIC: %s", err)
-	if logzioTransport != nil {
-		logzioTransport.send(errstr, logzioTypeError)
-	}
-	if sentryTransport != nil {
-		sentryTransport.send(err)
-	}
+	// if logzioTransport != nil {
+	// 	logzioTransport.send(errstr, logzioTypeError)
+	// }
+	// if sentryTransport != nil {
+	// 	sentryTransport.send(err)
+	// }
 	PrintStackTrace()
 
 	if globalCancel != nil {
-		log.Print(utils.ColorRed(errstr))
+		Info(err)
 		globalCancel()
 	} else {
 		// If we're truly trying to panic, let's at least flush our logging queues
 		// first so this error actually gets sent.
 		FlushLogzio()
 		FlushSentry()
-		log.Panicf(utils.ColorRed(errstr))
+		logger.Sugar().Panic(err)
 	}
 }
 
 // Infof is identical to Info, since Info already respects printf syntax. We
 // only include Infof for consistency with Errorf, Warningf, and Panicf.
 func Infof(format string, v ...interface{}) {
-	Info(format, v...)
-}
-
-// SilentInfof is identical to SilentInfo, since SilentInfo already respects
-// printf syntax. We only include SilentInfof for consistency with Errorf,
-// Warningf, and Panicf.
-func SilentInfof(format string, v ...interface{}) {
-	Info(format, v...)
+	logger.Sugar().Infof(format, v...)
 }
 
 // Errorf is like Error, but it respects printf syntax, i.e. takes in a format
 // string and arguments, for convenience.
 func Errorf(format string, v ...interface{}) {
-	Error(utils.MakeError(format, v...))
+	logger.Sugar().Errorf(format, v...)
 }
 
 // Warningf is like Warning, but it respects printf syntax, i.e. takes in a format
 // string and arguments, for convenience.
 func Warningf(format string, v ...interface{}) {
-	Warning(utils.MakeError(format, v...))
+	logger.Sugar().Warnf(format, v...)
 }
 
 // Panicf is like Panic, but it respects printf syntax, i.e. takes in a format

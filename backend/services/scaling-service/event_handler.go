@@ -50,7 +50,7 @@ func main() {
 	goroutineTracker := &sync.WaitGroup{}
 
 	// Start Sentry and Logzio
-	logger.InitScalingLogging()
+	// logger.InitScalingLogging()
 
 	var (
 		dbClient            dbclient.WhistDBClient                // The client that abstracts database interactions
@@ -199,10 +199,10 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 // StartDeploy reads the `images.json` file which is written by the Github
 // deploy workflow, and sends the event to the appropiate channel.
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
-	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
-		logger.Infof("Running in localenv so not performing deploy actions.")
-		return
-	}
+	// if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
+	// 	logger.Infof("Running in localenv so not performing deploy actions.")
+	// 	return
+	// }
 
 	regionImageMap, err := getRegionImageMap()
 	if err != nil {

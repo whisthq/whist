@@ -74,7 +74,7 @@ func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 			"headers": map[string]string{
 				"x-hasura-admin-secret": wc.GetParams().AccessKey,
 			},
-		}).WithLog(logger.Print).
+		}).WithLog(logger.Info).
 		WithoutLogTypes(graphql.GQL_CONNECTION_KEEP_ALIVE).
 		OnError(func(sc *graphql.SubscriptionClient, err error) error {
 			logger.Errorf("Error received from Hasura client: %v", err)

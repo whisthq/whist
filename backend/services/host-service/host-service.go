@@ -301,7 +301,7 @@ func uninitializeFilesystem() {
 func main() {
 	// The first thing we want to do is to initialize Logz.io and Sentry so that
 	// we can catch any errors that might occur, or logs if we print them.
-	logger.InitHostLogging()
+	// logger.InitHostLogging()
 
 	// We create a global context (i.e. for the entire host service) that can be
 	// cancelled if the entire program needs to terminate. We also create a
