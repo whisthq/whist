@@ -44,7 +44,7 @@ clients:
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
-    description: The Whist frontend, baked into Brave.
+    description: The Whist frontend, baked into Brave (Chromium).
     grant_types:
       - authorization_code
       - refresh_token
@@ -80,8 +80,8 @@ clients:
     cross_origin_auth: false
     custom_login_page_on: true
     description: >-
-      A service that performs administrative operations on the Fractal
-      webserver(s) on behalf of Fractal developers
+      A service that performs administrative operations on the Whist
+      backend on behalf of Whist developers.
     grant_types:
       - client_credentials
     is_first_party: true
