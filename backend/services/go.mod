@@ -28,7 +28,7 @@ require (
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/lithammer/shortuuid/v3 v3.0.7
 	github.com/logzio/logzio-go v1.0.6
-	github.com/opencontainers/image-spec v1.0.2
+	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/pierrec/lz4/v4 v4.1.14
 	github.com/shirou/gopsutil/v3 v3.22.5
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
@@ -53,7 +53,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.16.6 // indirect
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/bgentry/testnet v0.0.0-20131107221340-05450cdcf16c // indirect
-	github.com/containerd/containerd v1.6.2 // indirect
+	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -73,7 +73,7 @@ require (
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.16.4 // indirect
-	github.com/onsi/gomega v1.15.0 // indirect
+	github.com/onsi/gomega v1.17.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
