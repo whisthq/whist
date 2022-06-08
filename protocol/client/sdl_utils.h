@@ -112,7 +112,7 @@ bool sdl_render_pending(void);
  *
  * @note                           ALL rendering related APIs are only safe inside main thread.
  */
-void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info);
+void sdl_set_cursor_info_as_pending(const WhistCursorInfo* cursor_info);
 
 /**
  * @brief                          Do the rendering job of the pending cursor info, if any.

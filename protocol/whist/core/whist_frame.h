@@ -23,6 +23,14 @@ typedef struct VideoFrame {
     // TODO: decide if we want to cap the number of windows or not
     WhistWindow window_data[MAX_WINDOWS];
 
+    /**
+     * Indicates that the cursor changes on this frame.
+     *
+     * Cursor information follows, which will be one of:
+     * - A cursor ID, to use a standard system cursor.
+     * - A hash, to reuse a previously-cached cursor.
+     * - A complete PNG image to use as the new cursor.
+     */
     bool has_cursor;
     bool is_empty_frame;     // indicates whether this frame is identical to the one last sent
     bool is_window_visible;  // indicates whether the client app is visible. If the client realizes
@@ -73,7 +81,7 @@ typedef struct AudioFrame {
  *                                 the given frame. Pass NULL to embed no cursor whatsoever.
  *                                 Default of a 0'ed VideoFrame* is already a NULL cursor.
  */
-void set_frame_cursor_info(VideoFrame* frame, WhistCursorInfo* cursor);
+void set_frame_cursor_info(VideoFrame* frame, const WhistCursorInfo* cursor);
 
 /**
  * @brief                          Get a pointer to the WhistCursorInfo inside of the VideoFrame*
