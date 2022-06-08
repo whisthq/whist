@@ -10,6 +10,7 @@ Includes
 ============================
 */
 
+#include <stddef.h>
 #include "udp.h"
 #include <whist/utils/aes.h>
 #include <whist/fec/fec.h>
@@ -18,8 +19,9 @@ Includes
 #include <whist/network/ringbuffer.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/network/throttle.h>
-#include "whist/core/features.h"
-#include <stddef.h>
+#include <whist/core/features.h>
+#include <whist/debug/debug_console.h>
+#include <whist/fec/fec_controller.h>
 
 #if !OS_IS(OS_WIN32)
 #include <fcntl.h>
@@ -208,13 +210,15 @@ typedef struct {
 
     NetworkSettings network_settings;
     WhistMutex congestion_control_mutex;
-    WhistTimer last_network_settings_time;
+    WhistTimer last_network_settings_send_time;
     // Group related stats and variables required for congestion control
     GroupStats group_stats[MAX_GROUP_STATS];
     int prev_group_id;
     int curr_group_id;
     IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS];
     void* nack_queue;
+
+    void* fec_controller;
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -483,6 +487,7 @@ static void send_desired_network_settings(UDPContext* context) {
     network_settings_packet.type = UDP_NETWORK_SETTINGS;
     network_settings_packet.udp_network_settings_data.network_settings = context->network_settings;
     udp_send_udp_packet(context, &network_settings_packet);
+    start_timer(&context->last_network_settings_send_time);
 }
 
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
@@ -505,23 +510,47 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         group_stats->departure_time = departure_time;
         group_stats->arrival_time = arrival_time;
     }
+
     if (group_id > context->curr_group_id) {
         if (context->prev_group_id != 0) {
             GroupStats* curr_group_stats =
                 &context->group_stats[context->curr_group_id % MAX_GROUP_STATS];
             GroupStats* prev_group_stats =
                 &context->group_stats[context->prev_group_id % MAX_GROUP_STATS];
+
+            int incoming_bitrate = get_incoming_bitrate(context);
+            double packet_loss_ratio = get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
+                                                             context->short_term_latency);
+            if (ENABLE_FEC) {
+                // feed current time and latency info into fec controller
+                double current_time = get_timestamp_sec();
+                fec_controller_feed_latency(context->fec_controller, current_time,
+                                            context->short_term_latency);
+                if (LOG_FEC_CONTROLLER) {
+                    static double last_log_time = 0;
+                    if (current_time - last_log_time > 0.2) {
+                        last_log_time = current_time;
+                        LOG_INFO(
+                            "[FEC_CONTROLLER]"
+                            "loss=%.2f%% short_term_latecny=%.1fms long_term_latency=%.1f "
+                            "inbits=%d\n",
+                            packet_loss_ratio * 100, context->short_term_latency * MS_IN_SECOND,
+                            context->long_term_latency * MS_IN_SECOND, incoming_bitrate);
+                    }
+                }
+            }
             send_network_settings = whist_congestion_controller(
-                curr_group_stats, prev_group_stats, get_incoming_bitrate(context),
-                get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO],
-                                      context->short_term_latency),
-                context->short_term_latency, context->long_term_latency,
-                &context->network_settings);
+                curr_group_stats, prev_group_stats, incoming_bitrate, packet_loss_ratio,
+                context->short_term_latency, context->long_term_latency, &context->network_settings,
+                context->fec_controller);
         }
         context->prev_group_id = context->curr_group_id;
         context->curr_group_id = group_id;
     }
-    if (send_network_settings) {
+
+    // resend values periodically since UDP packet might get lost
+    if (send_network_settings || get_timer(&context->last_network_settings_send_time) > 1.0) {
+        // note: the timer of last send is updated inside
         send_desired_network_settings(context);
     }
     whist_unlock_mutex(context->congestion_control_mutex);
@@ -999,6 +1028,9 @@ static void udp_destroy_socket_context(void* raw_context) {
     whist_destroy_mutex(context->congestion_control_mutex);
 
     closesocket(context->socket);
+    if (context->fec_controller != NULL) {
+        destroy_fec_controller(context->fec_controller);
+    }
     if (context->network_throttler != NULL) {
         network_throttler_destroy(context->network_throttler);
     }
@@ -1034,7 +1066,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     // Whether or not we've connected, but then lost the connection
     context->connection_lost = false;
     context->unordered_packet_info.max_unordered_packets = 0.0;
-    start_timer(&context->last_network_settings_time);
+    start_timer(&context->last_network_settings_send_time);
 
     // Map Port
     if ((int)((unsigned short)port) != port) {
@@ -1073,6 +1105,9 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         context->network_throttler = NULL;
         // Create the client context
         ret = create_udp_client_context(context, destination, port, connection_timeout_ms);
+        if (ret == 0) {
+            context->fec_controller = create_fec_controller(get_timestamp_sec());
+        }
     }
 
     if (ret == 0) {
@@ -1963,13 +1998,8 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
     UDPContext* context = (UDPContext*)raw_context;
     int burst_bitrate = network_settings.burst_bitrate;
 
-    // double audio_fec_ratio = (double)network_settings.audio_fec_ratio;
-    // double video_fec_ratio = (double)network_settings.video_fec_ratio;
-
-    // temp fix as the FEC parameter synchronization mechanism is broken by WCC
-    // TODO: a better fix
-    double audio_fec_ratio = AUDIO_FEC_RATIO;
-    double video_fec_ratio = VIDEO_FEC_RATIO;
+    double audio_fec_ratio = (double)network_settings.audio_fec_ratio;
+    double video_fec_ratio = (double)network_settings.video_fec_ratio;
 
     // Check bounds
     FATAL_ASSERT(0.0 <= audio_fec_ratio && audio_fec_ratio <= MAX_FEC_RATIO);

@@ -178,4 +178,20 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer);
  */
 void destroy_fec_decoder(FECDecoder* fec_decoder);
 
+/**
+ * @brief                          Conver given fec_ratio to fec_factor
+ *
+ * @returns                        the fec_factor
+ * @note                           1. fec factor is defined as num_fec_packet/num_orignal_packet
+ *                                 2. two fec factors can be meaningfully multiplied together
+ */
+double fec_ratio_to_fec_factor(double fec_ratio);
+
+/**
+ * @brief                          Conver given fec_factor to fec_ratio
+ *
+ * @returns                        the fec_ratio
+ */
+double fec_factor_to_fec_ratio(double fec_times);
+
 #endif

@@ -18,6 +18,7 @@ extern "C" {
 #include <whist/network/udp.h>
 #include <whist/utils/threads.h>
 #include <whist/network/ringbuffer.h>
+#include <whist/fec/fec_controller.h>
 };
 
 /*
@@ -69,12 +70,37 @@ struct SegmentLevelInfo {
 
     // the time we send a nack to server for this segment, also a vector
     vector<Timestamp> nack_time_us;
+
+    int size;  // the size of segment
 };
+
+// info related to congest control
+struct CCInfo {
+    int bitrate = -1;
+    int incoming_bitrate = -1;
+    double packet_loss = -1;
+    double latency = -1;
+};
+
+// info related to FEC
+typedef struct {
+    // base fec depending on packet loss measuring
+    double base_fec_ratio;
+    // extra fec for protect bandwitdh probing
+    double extra_fec_ratio;
+    // the orignal total_fec_ratio calculated by base_fec_ratio and extra_fec_ratio without adjust
+    double total_fec_ratio_original;
+    // the final total_fec_ratio, this is the value actually used for fec. All values above are
+    // just for easier debuging
+    double total_fec_ratio;
+} FECInfo;
 
 // FrameLevelInfo
 struct FrameLevelInfo {
     int id = -1;                     // id of frame
     int type = -1;                   // whether it's audio or video
+    int max_segment_size = -1;       // size of max segment of frame
+    int min_segment_size = 9999;     // size of min segment of frame
     Timestamp ready_time = -1;       // the time when the frame becomes ready
     Timestamp decode_time = -1;      // the time then the frame is feeded into decoder
     Timestamp first_seen_time = -1;  // the first time we see the packet
@@ -119,6 +145,9 @@ struct FrameLevelInfo {
     map<int, SegmentLevelInfo> segments;  // stores segment level info of the frame
 
     string to_string(bool more_format);  // turn the info of frame to a json-like format
+
+    FECInfo current_fec_info;  // FEC info when the frame is first seen
+    CCInfo current_cc_info;    // congestion control info when the frame is first seen
 };
 
 typedef map<int, FrameLevelInfo> FrameMap;
@@ -128,6 +157,10 @@ struct TypeLevelInfo {
     FrameMap frames;
     int current_rending_id;  // currrent_rendering_id inside running buffer
     int pending_rending_id;  // current pending frame waiting to be take out by the decoder
+
+    // temply stores the 2 info at TypeLevel, and pass through to frame level
+    FECInfo current_fec_info;  // current FEC info
+    CCInfo current_cc_info;    // current congestion control info
 };
 
 // we put a duplicate forward declaration before ProtocolAnalyzer, so that we don't need
@@ -179,7 +212,20 @@ struct ProtocolAnalyzer {
 
         clear_old_records(type);
 
+        bool is_first_segment = true;
+        if (type_level_infos[type].frames.find(id) != type_level_infos[type].frames.end()) {
+            is_first_segment = false;
+        }
+
         FrameLevelInfo &info = type_level_infos[type].frames[id];
+        info.segments[index].size = segment.segment_size;
+        info.max_segment_size = max(info.max_segment_size, segment.segment_size);
+        info.min_segment_size = min(info.min_segment_size, segment.segment_size);
+        if (is_first_segment) {
+            info.current_fec_info = type_level_infos[type].current_fec_info;
+            info.current_cc_info = type_level_infos[type].current_cc_info;
+        }
+
         if (segment.is_a_nack) {
             info.nack_cnt++;
         }
@@ -313,8 +359,85 @@ struct ProtocolAnalyzer {
         info1.reset_ringbuffer_to = to_id;
         info2.reset_ringbuffer_from = from_id;
     }
+
+    void record_current_fec_info(int type, double base_fec_ratio, double extra_fec_ratio,
+                                 double total_fec_ratio_original, double total_fec_ratio) {
+        type_level_infos[type].current_fec_info.base_fec_ratio = base_fec_ratio;
+        type_level_infos[type].current_fec_info.extra_fec_ratio = extra_fec_ratio;
+        type_level_infos[type].current_fec_info.total_fec_ratio_original = total_fec_ratio_original;
+        type_level_infos[type].current_fec_info.total_fec_ratio = total_fec_ratio;
+    }
+    void record_current_cc_info(int type, double packet_loss, double latency, int bitrate,
+                                int incoming_bitrate) {
+        type_level_infos[type].current_cc_info.packet_loss = packet_loss;
+        type_level_infos[type].current_cc_info.latency = latency * MS_IN_SECOND;
+        type_level_infos[type].current_cc_info.bitrate = bitrate;
+        type_level_infos[type].current_cc_info.incoming_bitrate = incoming_bitrate;
+    }
 };
 
+// generate distribution info of samples
+struct DistributionStat {
+    const int range_max = 1000;  // max range of value
+    vector<int> cnt_array;       // array to cnt of samples at each value
+    int exceed_range_cnt = 0;    // numer of samples exceeding range
+
+    DistributionStat() { cnt_array = vector<int>(range_max, 0); }
+
+    // insert the sample to it's slot
+    void insert(int value) {
+        if (value < range_max) {
+            cnt_array[value]++;
+        } else {
+            exceed_range_cnt++;
+        }
+    }
+
+    // generate distribution statistic info
+    string get_stat() {
+        stringstream ss;
+        // generate stat for [0,5) [5,10) ... [25,30)
+        for (int i = 0; i < 30; i += 5) {
+            int cnt = 0;
+            for (int j = 0; j < 5; j++) {
+                cnt += cnt_array[i + j];
+            }
+            // use "[" and "]" so that they can be highlight easily by text editor
+            ss << "[" << i + 0 << "," << i + 5 << "]~" << cnt << "  ";
+        }
+        ss << endl;
+        // generate stat for [30,40).....[90,100)
+        for (int i = 30; i < 100; i += 10) {
+            int cnt = 0;
+            for (int j = 0; j < 10; j++) {
+                cnt += cnt_array[i + j];
+            }
+            ss << "[" << i + 0 << "," << i + 10 << "]~" << cnt << "  ";
+        }
+        ss << endl;
+        // [100,150).......[350,400)
+        for (int i = 100; i < 400; i += 50) {
+            int cnt = 0;
+            for (int j = 0; j < 50; j++) {
+                cnt += cnt_array[i + j];
+            }
+            ss << "[" << i + 0 << "," << i + 50 << "]~" << cnt << "  ";
+        }
+        ss << endl;
+        // [400,500) .... [900,1000)
+        for (int i = 400; i < range_max; i += 100) {
+            int cnt = 0;
+            for (int j = 0; j < 100; j++) {
+                cnt += cnt_array[i + j];
+            }
+            ss << "[" << i + 0 << "," << i + 100 << "]~" << cnt << "  ";
+        }
+        ss << endl;
+        // [1000,inf)
+        ss << "[" << range_max << ",inf]~" << exceed_range_cnt << endl;
+        return ss.str();
+    }
+};
 /*
 ============================
 Globals
@@ -384,6 +507,18 @@ void whist_analyzer_record_stream_reset(int type, int id) {
 
 void whist_analyzer_record_audio_queue_full(void) { FUNC_WRAPPER(record_audio_queue_full); }
 
+void whist_analyzer_record_current_fec_info(int type, double base_fec_ratio, double extra_fec_ratio,
+                                            double total_fec_ratio_original,
+                                            double total_fec_ratio) {
+    FUNC_WRAPPER(record_current_fec_info, type, base_fec_ratio, extra_fec_ratio,
+                 total_fec_ratio_original, total_fec_ratio);
+}
+
+void whist_analyzer_record_current_cc_info(int type, double packet_loss, double latency,
+                                           int bitrate, int incoming_bitrate) {
+    FUNC_WRAPPER(record_current_cc_info, type, packet_loss, latency, bitrate, incoming_bitrate);
+}
+
 string whist_analyzer_get_report(int type, int num, int skip, bool more_format) {
     assert(g_analyzer != NULL);
     whist_lock_mutex(g_analyzer->m_mutex);
@@ -443,6 +578,7 @@ string FrameLevelInfo::to_string(bool more_format) {
         ss << "frame_type=" << video_frame_type_to_str(frame_type) << ",";
         // ss << "is_empty=" << is_empty << ",";
     }
+    ss << "segment_size=" << max_segment_size << ",";
     ss << "first_seen=" << time_to_str(first_seen_time, more_format) << ",";
 
     ss << "ready_time=" << time_to_str(ready_time, more_format) << ",";
@@ -620,9 +756,79 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
     int begin_id = range.first->first;  // the id of first frame
     int end_id = -1;                    // the id last frame
 
+    DistributionStat first_seen_to_decode_stat;
+
+    Timestamp last_decode_time = -1;   // help calculate gap
+    DistributionStat decode_gap_stat;  // help gen distribution of gap
+
+    double fec_info_cnt = 0;                          // num of samples with fec info
+    double rough_base_fec_ratio_sum = 0.0;            // for calculate rough avg of base_fec_ratio
+    double rough_extra_fec_ratio_sum = 0.0;           // for calculate rough avg extra_fec_ratio
+    double rough_total_fec_ratio_sum = 0.0;           // for calculate rough avg of total_fec_raito
+    double rough_total_fec_ratio_original_sum = 0.0;  // for cal rough avg of total_fec_raito_origin
+
+    double max_packet_loss = 0.0;
+    double min_packet_loss = 9999;
+
+    double min_latency = 9999;
+    double max_latency = 0;
+    double rough_latency_sum = 0.0;  // for cal rough ave of latency
+    double cc_info_cnt = 0;          // num of frame with congestion control info
+
+    long long total_segments_size = 0;      // accurate value of sum of all segments
+    long long total_fec_segments_size = 0;  // sum of all fec sements
+
+    long long rough_bitrate_sum = 0;  // for cal rough avg of bitrate
+
+    Timestamp begin_ts = -1;  // time of first seen frame
+    Timestamp end_ts = 0;     // time of last seen frame
+
     for (auto it = range.first; it != range.second; it++) {
         end_id = it->first;
         total_seen_cnt++;
+
+        if (it->second.first_seen_time != -1) {
+            if (begin_ts == -1) {
+                begin_ts = it->second.first_seen_time;
+            }
+            end_ts = it->second.first_seen_time;
+        }
+
+        for (auto it2 = it->second.segments.begin(); it2 != it->second.segments.end(); it2++) {
+            total_segments_size += it2->second.size;
+            if (it2->first >= it->second.num_of_packets - it->second.num_of_fec_packets) {
+                total_fec_segments_size += it2->second.size;
+            }
+        }
+
+        if (it->second.current_fec_info.total_fec_ratio != -1) {
+            rough_base_fec_ratio_sum += it->second.current_fec_info.base_fec_ratio;
+            rough_extra_fec_ratio_sum += it->second.current_fec_info.extra_fec_ratio;
+            rough_total_fec_ratio_sum += it->second.current_fec_info.total_fec_ratio;
+            rough_total_fec_ratio_original_sum +=
+                it->second.current_fec_info.total_fec_ratio_original;
+            fec_info_cnt++;
+        }
+
+        if (it->second.current_cc_info.latency != -1) {
+            min_latency = min(min_latency, it->second.current_cc_info.latency);
+            max_latency = max(max_latency, it->second.current_cc_info.latency);
+            max_packet_loss = max(max_packet_loss, it->second.current_cc_info.packet_loss);
+            min_packet_loss = min(min_packet_loss, it->second.current_cc_info.packet_loss);
+            rough_latency_sum += it->second.current_cc_info.latency;
+            FATAL_ASSERT(it->second.current_cc_info.bitrate >= 0);
+            rough_bitrate_sum += it->second.current_cc_info.bitrate;
+            cc_info_cnt++;
+        }
+
+        if (it->second.decode_time != -1) {
+            if (last_decode_time != -1) {
+                Timestamp decode_gap = it->second.decode_time - last_decode_time;
+                int decode_gap_ms = decode_gap / US_IN_MS;
+                decode_gap_stat.insert(decode_gap_ms);
+            }
+            last_decode_time = it->second.decode_time;
+        }
 
         // for estimate packet loss
         if (it->second.type != -1 && it->second.num_of_packets != 1) {
@@ -663,6 +869,8 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
 
         if (it->second.decode_time != -1) {
             first_seen_to_decode += it->second.decode_time - it->second.first_seen_time;
+            first_seen_to_decode_stat.insert((it->second.decode_time - it->second.first_seen_time) /
+                                             US_IN_MS);
             first_seen_to_decode_cnt++;
         } else {
             not_decode_cnt++;
@@ -702,12 +910,53 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
     ss << "frame_skip_times=" << frame_skip_times << endl;
     ss << "num_frames_skiped=" << frame_skip_cnt << endl;
     ss << "ringbuffer_reset_times=" << ringbuffer_reset_times << endl;
+    ss << "fps=" << first_seen_to_decode_cnt / ((end_ts - begin_ts) * 1.0 / US_IN_SECOND) << endl;
 
-    if (type != PACKET_AUDIO)  // the current way of estimasted_network_loss only works with video.
+    if (type == PACKET_VIDEO)  // below info are only for video
     {
         ss << "estimated_network_loss=" << 100.0 - received_segments_nonack * 100.0 / total_segments
            << "%" << endl;
+
+        ss << endl;
+
+        ss << "min_packet_loss=" << min_packet_loss * 100.0 << "%" << endl;
+        ss << "max_packet_loss=" << max_packet_loss * 100.0 << "%" << endl;
+
+        ss << "min_latency=" << min_latency << "ms" << endl;
+        ss << "max_latency=" << max_latency << "ms" << endl;
+        ss << "rough_latency_avg=" << rough_latency_sum / cc_info_cnt << "ms" << endl;
+
+        ss << "rough_expected_bitrate_avg=" << rough_bitrate_sum * 1.0 / cc_info_cnt / 1024
+           << " kbps" << endl;
+        ss << "incoming_bitrate_avg="
+           << total_segments_size * 8.0 / ((end_ts - begin_ts) / US_IN_SECOND) / 1024 << " kbps"
+           << endl;
+
+        ss << endl;
+
+        ss << "rough_base_fec_ratio_avg=" << rough_base_fec_ratio_sum / fec_info_cnt * 100.0 << "%"
+           << endl;
+        ss << "rough_extra_fec_ratio_avg=" << rough_extra_fec_ratio_sum / fec_info_cnt * 100.0
+           << "%" << endl;
+        ss << "rough_toal_fec_ratio_original_avg="
+           << rough_total_fec_ratio_original_sum / fec_info_cnt * 100.0 << "%" << endl;
+        ss << "rough_toal_fec_ratio_avg=" << rough_total_fec_ratio_sum / fec_info_cnt * 100.0 << "%"
+           << endl;
+
+        ss << endl;
+        ss << "actual_fec_overhead_ratio="
+           << (double)total_fec_segments_size / total_segments_size * 100.0 << "%" << endl;
     }
+
+    ss << endl;
+
+    ss << "first_seen_to_decode_distribution_in_ms:" << endl;
+    ss << first_seen_to_decode_stat.get_stat() << endl;
+    // ss << endl;
+
+    ss << "decode_gap_distribution_in_ms:" << endl;
+    ss << decode_gap_stat.get_stat() << endl;
+
 #endif
 
     return ss.str();

@@ -33,6 +33,8 @@ Defines
 #define AUDIO_FEC_RATIO 0.0
 #define VIDEO_FEC_RATIO 0.0
 
+typedef enum { WCC_INCREASE_BWD, WCC_DECREASE_BWD, WCC_NO_OP } WccOp;
+
 /*
 ============================
 Private Defines. Made public only for unit testing
@@ -91,13 +93,15 @@ Public Functions
  *
  * @param network_settings Pointer to the struct containing previous network_settings. Also the new
  *                         network settings will be updated in this struct.
+ * @param fec_controller The fec controller that will work together with fec to calculate the fec
+ * ratios
  *
  * @returns             Whether network_settings struct was updated with new values or not
  */
 bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_group_stats,
                                  int incoming_bitrate, double packet_loss_ratio,
                                  double short_term_latency, double long_term_latency,
-                                 NetworkSettings *network_settings);
+                                 NetworkSettings *network_settings, void *fec_controller);
 
 /**
  * @param network_settings Pointer to the struct containing previous network_settings. Also the new

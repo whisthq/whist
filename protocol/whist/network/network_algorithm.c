@@ -28,6 +28,9 @@ Includes
 #include "network_algorithm.h"
 #include "whist/debug/debug_console.h"
 #include "whist/core/features.h"
+#include <whist/fec/fec_controller.h>
+#include <whist/fec/fec.h>
+#include <whist/debug/protocol_analyzer.h>
 
 /*
 ============================
@@ -111,6 +114,7 @@ NetworkSettings get_default_network_settings(int width, int height, int screen_d
     default_network_settings.saturate_bandwidth = true;
     // Whist congestion control increases burst bitrate only after exceeding max bitrate
     default_network_settings.burst_bitrate = default_network_settings.video_bitrate;
+    default_network_settings.video_fec_ratio = ENABLE_FEC ? INITIAL_FEC_RATIO : 0.0;
     return default_network_settings;
 }
 
@@ -126,7 +130,7 @@ void network_algo_set_dpi(int new_dpi) { dpi = new_dpi; }
 bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_group_stats,
                                  int incoming_bitrate, double packet_loss_ratio,
                                  double short_term_latency, double long_term_latency,
-                                 NetworkSettings *network_settings) {
+                                 NetworkSettings *network_settings, void *fec_controller) {
 // Latest delay variation gets this weightage. Older value gets a weightage of (1 - EWMA_FACTOR)
 #define EWMA_FACTOR 0.3
 // Latest max bitrate gets this weightage.
@@ -283,6 +287,9 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         delay_controller_state = DELAY_CONTROLLER_HOLD;
     }
 
+    WccOp op = WCC_NO_OP;
+    int old_bitrate = network_settings->video_bitrate;
+
     // Delay-based controller selects based on overuse signal
     // It is RECOMMENDED to send the REMB message as soon
     // as congestion is detected, and otherwise at least once every second.
@@ -305,6 +312,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         }
         LOG_INFO("Increase bitrate by %.3f percent", increase_percentage);
         new_bitrate = network_settings->video_bitrate * (1.0 + increase_percentage / 100.0);
+        op = WCC_INCREASE_BWD;
     } else if ((delay_controller_state == DELAY_CONTROLLER_DECREASE) &&
                get_timer(&last_decrease_timer) > NEW_BITRATE_DURATION_IN_SEC) {
         LOG_INFO(
@@ -340,8 +348,10 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         }
         network_settings->congestion_detected = true;
         start_timer(&last_decrease_timer);
+        op = WCC_DECREASE_BWD;
     }
-    if (new_bitrate != network_settings->video_bitrate) {
+
+    if (op != WCC_NO_OP) {
         // Till we reach CONVERGENCE_THRESHOLD_LOW of max bitrate in session, bitrate
         // increases will be aggressive
         if (new_bitrate < max_bitrate_available * CONVERGENCE_THRESHOLD_LOW ||
@@ -394,6 +404,27 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
         network_settings->saturate_bandwidth = false;
         send_network_settings = true;
     }
+
+    if (ENABLE_FEC) {
+        // get current time
+        double current_time = get_timestamp_sec();
+        // feed info to fec controller
+        fec_controller_feed_info(fec_controller, current_time, op, packet_loss_ratio, old_bitrate,
+                                 network_settings->video_bitrate, MINIMUM_BITRATE,
+                                 network_settings->saturate_bandwidth);
+        // get fec result from fec controller
+        double total_fec_ratio = fec_controller_get_total_fec_ratio(
+            fec_controller, current_time, network_settings->video_fec_ratio);
+
+        // see if there is a value change
+        if (total_fec_ratio != network_settings->video_fec_ratio) {
+            network_settings->video_fec_ratio = total_fec_ratio;
+            send_network_settings = true;
+        }
+    }
+    whist_analyzer_record_current_cc_info(PACKET_VIDEO, packet_loss_ratio, short_term_latency,
+                                          network_settings->video_bitrate, incoming_bitrate);
+
     if (!network_settings->saturate_bandwidth) {
         network_settings->congestion_detected = false;
     }

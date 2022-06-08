@@ -115,3 +115,14 @@ timestamp_us current_time_us(void) {
     // Ensure that this cast is correct, uint64_t -> timestamp_us
     return (timestamp_us)output;
 }
+
+double get_timestamp_sec(void) {
+    static WhistTimer timer;
+    static int initalized = 0;
+    if (initalized == 0) {
+        start_timer(&timer);
+        initalized = 1;
+        return 0.0;
+    }
+    return get_timer(&timer);
+}

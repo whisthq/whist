@@ -86,9 +86,9 @@ Public Function Implementations
 DebugConsoleOverrideValues *get_debug_console_override_values() { return &g_override_values; }
 
 int init_debug_console() {
+    init_overrided_values();
     if (debug_console_listen_port == -1) return 0;
 #ifdef USE_DEBUG_CONSOLE  // only enable debug console for debug build
-    init_overrided_values();
     FATAL_ASSERT(create_local_udp_listen_socket(&debug_console_listen_socket,
                                                 debug_console_listen_port, -1) == 0);
     whist_create_thread(debug_console_thread, "MultiThreadedDebugConsole", NULL);
@@ -112,6 +112,9 @@ Private Function Implementations
 */
 
 static void init_overrided_values(void) {
+    // for this value, <0 means disabled override
+    g_override_values.video_fec_ratio = -1.0;
+
     // if you need to force some value frequenly, you can set it here at compile time
     // g_override_values.no_minimize = 1;
     // g_overridee_values.verbose_log = 1;
