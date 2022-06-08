@@ -10,9 +10,7 @@ extern "C" {
 // TODO: needs better name
 // returns the ID of the window with given SDLWindowID
 int get_window_id_from_sdl_id(SDLFrontendContext* context, Uint32 sdl_id) {
-    for (const auto& pair : context->windows) {
-        int id = pair.first;
-        SDLWindowContext* window_context = pair.second;
+    for (const auto& [window_id, window_context] : context->windows) {
         if (window_context->window_id == sdl_id) {
             return id;
         }
@@ -34,6 +32,8 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                              const SDL_Event* sdl_event) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     memset(event, 0, sizeof(WhistFrontendEvent));
+
+    int frontend_window_id = get_window_id_from_sdl_id(context, sdl_event.window.windowID);
 
     if (sdl_event->type == context->internal_event_id) {
         const SDL_UserEvent* user_event = &sdl_event->user;
@@ -118,31 +118,50 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
             switch (sdl_event->window.event) {
                 case SDL_WINDOWEVENT_SIZE_CHANGED: {
                     event->type = FRONTEND_EVENT_RESIZE;
-                    event->resize.width = sdl_event->window.data1;
-                    event->resize.height = sdl_event->window.data2;
+                    event->resize.id = frontend_window_id;
+                    event->resize.width = sdl_event.window.data1;
+                    event->resize.height = sdl_event.window.data2;
                     break;
                 }
                 case SDL_WINDOWEVENT_LEAVE: {
                     event->type = FRONTEND_EVENT_MOUSE_LEAVE;
                     break;
                 }
+                case SDL_WINDOWEVENT_MOVED: {
+                    event->type = FRONTEND_EVENT_MOVE;
+                    event->move.id = frontend_window_id;
+                    event->move.x = sdl_event.window.data1;
+                    event->move.y = sdl_event.window.data2;
+                    break;
+                }
+                case SDL_WINDOWEVENT_CLOSE: {
+                    event->type = FRONTEND_EVENT_CLOSE;
+                    event->close.id = frontend_window_id;
+                    break;
+                                            }
+                case SDL_WINDOWEVENT_MINIMIZED: {
+                    event->type = FRONTEND_EVENT_MINIMIZE;
+                    event->minimize.id = frontend_window_id;
+                    break;
+                                                }
+                case SDL_WINDOWEVENT_RESTORED: {
+                    event->type = FRONTEND_EVENT_RESTORE;
+                    event->restore.id = frontend_window_id;
+                    break;
+                                               }
 // Note: We investigated adding the following events on Windows as
 // well, but it would require significant work for minimal gain. As
 // such, we only handle occlusion on macOS.
 #if OS_IS(OS_MACOS)
                 case SDL_WINDOWEVENT_OCCLUDED:
                 case SDL_WINDOWEVENT_UNOCCLUDED:
-#else
-                case SDL_WINDOWEVENT_MINIMIZED:
-                case SDL_WINDOWEVENT_RESTORED:
-#endif  // macOS
                 {
                     event->type = FRONTEND_EVENT_VISIBILITY;
-                    event->visibility.visible =
-                        (sdl_event->window.event == SDL_WINDOWEVENT_UNOCCLUDED ||
-                         sdl_event->window.event == SDL_WINDOWEVENT_RESTORED);
+                    event->visibility.id = frontend_window_id;
+                    event->visibility.visible = (sdl_event.window.event == SDL_WINDOWEVENT_UNOCCLUDED);
                     break;
                 }
+#endif
                 default: {
                     event->type = FRONTEND_EVENT_UNHANDLED;
                     break;
@@ -165,6 +184,8 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
         }
         case SDL_MOUSEMOTION: {
             event->type = FRONTEND_EVENT_MOUSE_MOTION;
+            // need ID because the x,y are relative to the window
+            event->mouse_motion.id = frontend_window_id;
             event->mouse_motion.absolute.x = sdl_event->motion.x;
             event->mouse_motion.absolute.y = sdl_event->motion.y;
             event->mouse_motion.relative.x = sdl_event->motion.xrel;
