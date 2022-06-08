@@ -294,9 +294,21 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     }
 
     // Create the window and renderer
-    window_context->window =
-        SDL_CreateWindow(window_context->title.c_str(), window_context->x, window_context->y,
-                         window_context->width, window_context->height, window_flags);
+    // On the first window, we don't dpi scale
+    // When USING_MULTIWINDOW is true, following windows will dpi scale
+    if (window_context->window_id == 0) {
+        // In single-window mode, just use x/y/w/h directly
+        window_context->window =
+            SDL_CreateWindow(window_context->title.c_str(), window_context->x, window_context->y,
+                             window_context->width, window_context->height, window_flags);
+    } else {
+        // Otherwise, do dpi scaling and y shift
+        int dpi_scale = window_context->window_id == 0 ? 1 : sdl_get_dpi_scale(frontend);
+        window_context->window = SDL_CreateWindow(
+            window_context->title.c_str(), window_context->x / dpi_scale,
+            window_context->y / dpi_scale + Y_SHIFT, window_context->width / dpi_scale,
+            window_context->height / dpi_scale, window_flags);
+    }
     if (window_context->window == NULL) {
         LOG_ERROR("Could not create window: %s", SDL_GetError());
         return WHIST_ERROR_UNKNOWN;

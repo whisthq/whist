@@ -191,8 +191,16 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
         }
         case SDL_MOUSEMOTION: {
             event->type = FRONTEND_EVENT_MOUSE_MOTION;
+            int y_adjust = 0;
+#if USING_MULTIWINDOW
+            for (const auto& [window_id, window_context] : context->windows) {
+                if (window_context->window_id == sdl_event->window.windowID) {
+                    y_adjust = window_context->y - Y_SHIFT;
+                }
+            }
+#endif
             event->mouse_motion.absolute.x = sdl_event->motion.x;
-            event->mouse_motion.absolute.y = sdl_event->motion.y;
+            event->mouse_motion.absolute.y = sdl_event->motion.y + y_adjust;
             event->mouse_motion.relative.x = sdl_event->motion.xrel;
             event->mouse_motion.relative.y = sdl_event->motion.yrel;
             event->mouse_motion.relative_mode = SDL_GetRelativeMouseMode();

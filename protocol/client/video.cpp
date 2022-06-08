@@ -356,31 +356,46 @@ int render_video(VideoContext* video_context) {
         sdl_render_window_titlebar_color(0, window_color);
 
         // Render the decoded frame
+        /*for(int i = 0; i < MAX_WINDOWS; i++) {
+            LOG_INFO("Window %d: %dx%d (%d,%d)", (int)window_data[i].id, window_data[i].width,
+        window_data[i].height, window_data[i].x, window_data[i].y);
+        }*/
         int num_windows = 0;
         while (num_windows < MAX_WINDOWS && (int)window_data[num_windows].id != -1) {
             num_windows++;
         }
-        num_windows = 2;
+        num_windows = 1;
         window_data[0].id = 0;
-        window_data[0].x = 100;
-        window_data[0].y = 100;
-        window_data[0].width = 600;
-        window_data[0].height = 600;
+        window_data[0].x = 20;
+        window_data[0].y = 20;
+        window_data[0].width = 2780;
+        window_data[0].height = 1494;
+        window_data[0].is_fullscreen = false;
+        window_data[0].id = 0;
+        window_data[0].x = 0;
+        window_data[0].y = 0;
+        window_data[0].width = 2880;
+        window_data[0].height = 1540;
         window_data[0].is_fullscreen = false;
         window_data[1].id = 5;
-        window_data[1].x = 150;
-        window_data[1].y = 150;
-        window_data[1].width = 150;
-        window_data[1].height = 150;
+        window_data[1].x = 167;
+        window_data[1].y = 236;
+        window_data[1].width = 1278;
+        window_data[1].height = 630;
         window_data[1].is_fullscreen = false;
         static int tmp = 0;
         tmp++;
         if (tmp > 100) {
-            num_windows = 1;
+            num_windows = 2;
         }
         if (tmp > 200) {
-            window_data[1].x = 250;
-            window_data[1].y = 250;
+            num_windows = 1;
+        }
+        if (tmp > 300) {
+            window_data[1].x = 1577;
+            window_data[1].y = 476;
+            window_data[1].width = 1176;
+            window_data[1].height = 958;
             num_windows = 2;
         }
         sdl_update_framebuffer(av_frame, window_data, num_windows);

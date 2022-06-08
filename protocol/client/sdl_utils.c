@@ -137,6 +137,10 @@ WhistTimer window_resize_timer;
 // event due to throttling, so the main loop should process it
 volatile bool pending_resize_message = false;
 void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) {
+#if USING_MULTIWINDOW
+    return;
+#endif
+
     // Try to make pixel width and height conform to certain desirable dimensions
     int current_width, current_height;
     whist_frontend_get_window_pixel_size(frontend, 0, &current_width, &current_height);

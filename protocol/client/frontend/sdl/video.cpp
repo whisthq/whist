@@ -67,7 +67,7 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
 
 void sdl_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-#if !USING_MULTI_WINDOW
+#if !USING_MULTIWINDOW
     SDL_Event event = {
         .user =
             {
@@ -128,7 +128,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
         return WHIST_ERROR_INVALID_ARGUMENT;
     }
 
-#if USING_MULTI_WINDOW
+#if USING_MULTIWINDOW
     // Get IDs that are in context->windows, but not in the most recent Frame's window list
     vector<int> remove_ids;
     for (const auto& [window_id, window_context] : context->windows) {
@@ -152,10 +152,9 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
     }
 
     // Loop over the Frame's windows list, and create any uncreated windows
+    int dpi_scale = sdl_get_dpi_scale(frontend);
     for (int i = 0; i < num_windows; i++) {
         int id = window_data[i].id;
-        LOG_INFO("WINDOW %d: %dx%d at (%d,%d)", i, window_data[i].width, window_data[i].height,
-                 window_data[i].x, window_data[i].y);
         // If that window doesn't exist yet,
         if (!context->windows.contains(id)) {
             // Create and populate the window_context
@@ -171,7 +170,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
             window_context->is_fullscreen = window_data[i].is_fullscreen;
             window_context->is_resizable = false;
 
-            // Create the SDL window
+            // Then create the actual SDL window
             context->windows[id] = window_context;
             sdl_create_window(frontend, id);
         } else {
@@ -185,16 +184,23 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
                                                                     ? SDL_WINDOW_FULLSCREEN_DESKTOP
                                                                     : 0);
             }
-            // Update SDL x/y/w/h
-            SDL_GetWindowPosition(window_context->window, &window_context->x, &window_context->y);
-            SDL_GetWindowSize(window_context->window, &window_context->width,
-                              &window_context->height);
-            if (window_context->x != window_data[i].x || window_context->y != window_data[i].y ||
-                window_context->width != window_data[i].width ||
+            // Update SDL x/y/w/h, in pixel coordinates
+            SDL_GL_GetDrawableSize(window_context->window, &window_context->width,
+                                   &window_context->height);
+            if (window_context->width != window_data[i].width ||
                 window_context->height != window_data[i].height) {
-                SDL_SetWindowPosition(window_context->window, window_data[i].x, window_data[i].y);
-                SDL_SetWindowSize(window_context->window, window_data[i].width,
-                                  window_data[i].height);
+                // Set window size, adjusting for DPI scale
+                SDL_SetWindowSize(window_context->window, window_data[i].width / dpi_scale,
+                                  window_data[i].height / dpi_scale);
+            }
+            SDL_GetWindowPosition(window_context->window, &window_context->x, &window_context->y);
+            window_context->y -= Y_SHIFT;
+            window_context->x *= dpi_scale;
+            window_context->y *= dpi_scale;
+            if (window_context->x != window_data[i].x || window_context->y != window_data[i].y) {
+                // Set the window position, adjusting for DPI scale and y-shift
+                SDL_SetWindowPosition(window_context->window, window_data[i].x / dpi_scale,
+                                      window_data[i].y / dpi_scale + Y_SHIFT);
             }
             window_context->x = window_data[i].x;
             window_context->y = window_data[i].y;
@@ -301,8 +307,6 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
                 .w = frame->width,
                 .h = frame->height,
             };
-            LOG_INFO("TEXTURE RECT: %dx%d at (%d,%d)", texture_rect.w, texture_rect.h,
-                     texture_rect.x, texture_rect.y);
             if (frame->format == AV_PIX_FMT_NV12) {
                 res = SDL_UpdateNVTexture(window_context->texture, &texture_rect, frame->data[0],
                                           frame->linesize[0], frame->data[1], frame->linesize[1]);
@@ -344,8 +348,13 @@ void sdl_paint_video(WhistFrontend* frontend) {
             continue;
         }
 
+#if USING_MULTIWINDOW
+        window_context->sdl_width = MAX_SCREEN_WIDTH;
+        window_context->sdl_height = MAX_SCREEN_HEIGHT;
+#else
         window_context->sdl_width = output_width;
         window_context->sdl_height = output_height;
+#endif
         // Take that crop when rendering it out
         SDL_Rect src_rect = {
             .x = window_context->x,
@@ -353,7 +362,6 @@ void sdl_paint_video(WhistFrontend* frontend) {
             .w = min(window_context->sdl_width, window_context->width),
             .h = min(window_context->sdl_height, window_context->height),
         };
-        LOG_INFO("SRC RECT: %dx%d at (%d,%d)", src_rect.w, src_rect.h, src_rect.x, src_rect.y);
         res = SDL_RenderCopy(window_context->renderer, window_context->texture, &src_rect, NULL);
         if (res < 0) {
             LOG_WARNING("Failed to render texture: %s.", SDL_GetError());

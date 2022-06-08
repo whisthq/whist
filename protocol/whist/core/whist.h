@@ -125,7 +125,10 @@ Defines
 #define UINPUT_INPUT_DRIVER 3
 
 // Whether or not multi-window is being used
-#define USING_MULTI_WINDOW false
+#define USING_MULTIWINDOW false
+// The y-shift of the window header, when using multiwindow
+// This represents the side of the window header on mac
+#define Y_SHIFT 55
 
 #if OS_IS(OS_WIN32)
 
@@ -147,7 +150,7 @@ Defines
 #endif
 
 // Whether or not client will use hw copy to SDL
-#if USING_MULTI_WINDOW
+#if USING_MULTIWINDOW
 #define USING_CLIENT_HW_COPY false
 #else
 #define USING_CLIENT_HW_COPY true

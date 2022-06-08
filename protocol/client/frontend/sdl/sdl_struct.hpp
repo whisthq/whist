@@ -205,4 +205,6 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id);
 
 void sdl_destroy_window(WhistFrontend* frontend, int id);
 
+int sdl_get_dpi_scale(WhistFrontend* frontend);
+
 #endif  // WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
