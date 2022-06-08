@@ -148,6 +148,13 @@ static void handle_restore_event(FrontendRestoreEvent* event) {
     send_wcmsg(&msg);
 }
 
+static void handle_focus_event(FrontendFocusEvent* event) {
+    WhistClientMessage msg = {0};
+    msg.type = MESSAGE_FOCUS;
+    msg.window_operation.id = event->id;
+    send_wcmsg(&msg);
+}
+
 static void handle_mouse_motion_event(WhistFrontend* frontend, FrontendMouseMotionEvent* event) {
     int window_x, window_y;
     whist_frontend_get_window_position(event->id, window_x, window_y);
@@ -339,11 +346,13 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
 
     switch (event->type) {
         case FRONTEND_EVENT_RESIZE: {
-            sdl_renderer_resize_window(frontend, event->resize.id, event->resize.width, event->resize.height);
+            sdl_renderer_resize_window(frontend, event->resize.id, event->resize.width,
+                                       event->resize.height);
             break;
         }
         case FRONTEND_EVENT_VISIBILITY: {
-            one_window_visible = whist_frontend_set_window_visibility(frontend, event->visibility.id, event->visibility.visible);
+            one_window_visible = whist_frontend_set_window_visibility(
+                frontend, event->visibility.id, event->visibility.visible);
             break;
         }
         case FRONTEND_EVENT_CLOSE: {
@@ -351,13 +360,19 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
             break;
         }
         case FRONTEND_EVENT_MINIMIZE: {
-            one_window_visible = whist_frontend_set_window_visibility(frontend, event->minimize.id, false);
+            one_window_visible =
+                whist_frontend_set_window_visibility(frontend, event->minimize.id, false);
             handle_minimize_event(&event->minimize);
             break;
         }
         case FRONTEND_EVENT_RESTORE: {
-            one_window_visible = whist_frontend_set_window_visibility(frontend, event->minimize.id, true);
+            one_window_visible =
+                whist_frontend_set_window_visibility(frontend, event->minimize.id, true);
             handle_restore_event(&event->restore);
+            break;
+        }
+        case FRONTEND_EVENT_FOCUS: {
+            handle_focus_event(&event->focus);
             break;
         }
         case FRONTEND_EVENT_MOVE: {

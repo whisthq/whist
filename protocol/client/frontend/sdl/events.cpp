@@ -138,30 +138,35 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                     event->type = FRONTEND_EVENT_CLOSE;
                     event->close.id = frontend_window_id;
                     break;
-                                            }
+                }
                 case SDL_WINDOWEVENT_MINIMIZED: {
                     event->type = FRONTEND_EVENT_MINIMIZE;
                     event->minimize.id = frontend_window_id;
                     break;
-                                                }
+                }
                 case SDL_WINDOWEVENT_RESTORED: {
                     event->type = FRONTEND_EVENT_RESTORE;
                     event->restore.id = frontend_window_id;
                     break;
-                                               }
+                }
 // Note: We investigated adding the following events on Windows as
 // well, but it would require significant work for minimal gain. As
 // such, we only handle occlusion on macOS.
 #if OS_IS(OS_MACOS)
                 case SDL_WINDOWEVENT_OCCLUDED:
-                case SDL_WINDOWEVENT_UNOCCLUDED:
-                {
+                case SDL_WINDOWEVENT_UNOCCLUDED: {
                     event->type = FRONTEND_EVENT_VISIBILITY;
                     event->visibility.id = frontend_window_id;
-                    event->visibility.visible = (sdl_event.window.event == SDL_WINDOWEVENT_UNOCCLUDED);
+                    event->visibility.visible =
+                        (sdl_event.window.event == SDL_WINDOWEVENT_UNOCCLUDED);
                     break;
                 }
 #endif
+                case SDL_WINDOWEVENT_FOCUS_GAINED: {
+                    event->type = FRONTEND_EVENT_FOCUS;
+                    event->focus.id = frontend_window_id;
+                    break;
+                }
                 default: {
                     event->type = FRONTEND_EVENT_UNHANDLED;
                     break;

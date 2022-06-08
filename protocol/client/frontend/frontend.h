@@ -15,6 +15,7 @@ typedef enum FrontendEventType {
     FRONTEND_EVENT_CLOSE,
     FRONTEND_EVENT_MINIMIZE,
     FRONTEND_EVENT_RESTORE,
+    FRONTEND_EVENT_FOCUS,
     FRONTEND_EVENT_VISIBILITY,
     FRONTEND_EVENT_AUDIO_UPDATE,
     FRONTEND_EVENT_KEYPRESS,
@@ -57,6 +58,10 @@ typedef struct FrontendMinimizeEvent {
 typedef struct FrontendRestoreEvent {
     int id;
 } FrontendRestoreEvent;
+
+typedef struct FroentendFocusEvent {
+    int id;
+} FrontendFocusEvent;
 
 typedef struct FrontendVisibilityEvent {
     int id;
@@ -147,6 +152,7 @@ typedef struct WhistFrontendEvent {
         FrontendMoveEvent move;
         FrontendMinimizeEvent minimize;
         FrontendRestoreEvent restore;
+        FrontendFocusEvent focus;
     };
 } WhistFrontendEvent;
 

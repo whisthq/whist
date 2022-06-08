@@ -415,6 +415,7 @@ typedef enum WhistClientMessageType {
     MESSAGE_MINIMIZE = 10,
     MESSAGE_UNMINIMIZE = 11,
     MESSAGE_RESIZE = 12,
+    MESSAGE_FOCUS = 13,
     MESSAGE_STOP_STREAMING = 105,   ///< Message asking server to stop encoding/sending frames
     MESSAGE_START_STREAMING = 106,  ///< Message asking server to resume encoding/sending frames
     MESSAGE_DIMENSIONS = 110,       ///< `dimensions.width` int and `dimensions.height`
@@ -517,7 +518,7 @@ typedef struct WhistClientMessage {
             int height;
         } window_resize;
 
-        // MESSAGE_CLOSE, MESSAGE_MINIMIZE, and MESSAGE_UNMINIMIZE
+        // MESSAGE_CLOSE, MESSAGE_MINIMIZE, MESSAGE_UNMINIMIZE, and MESSAGE_FOCUS
         struct {
             int id;
         } window_operation;
