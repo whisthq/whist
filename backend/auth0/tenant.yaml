@@ -1,9 +1,4 @@
 rules:
-  - name: create-customer
-    script: ./rules/create-customer.js
-    stage: login_success
-    enabled: true
-    order: 1
   - name: add-customer-id-claim
     script: ./rules/add-customer-id-claim.js
     stage: login_success
@@ -14,6 +9,11 @@ rules:
     stage: login_success
     enabled: true
     order: 3
+  - name: create-customer
+    script: ./rules/create-customer.js
+    stage: login_success
+    enabled: true
+    order: 1
 rulesConfigs: []
 hooks: []
 pages:
@@ -22,7 +22,7 @@ pages:
     html: ./pages/login.html
 resourceServers:
   - name: Whist API
-    identifier: "##WHIST_AUTHENTICATION_API##"
+    identifier: https://api.fractal.co
     allow_offline_access: true
     enforce_policies: true
     scopes:
@@ -38,11 +38,11 @@ resourceServers:
 clients:
   - name: Chromium Auth
     allowed_clients: []
+    allowed_origins:
+      - chrome-extension://ahjecglibcdgcpmdpehkgkpkmcapnnle
     app_type: spa
     callbacks:
       - https://fractal-dev.us.auth0.com/callback
-    allowed_origins:
-      - chrome-extension://ahjecglibcdgcpmdpehkgkpkmcapnnle
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
@@ -56,8 +56,7 @@ clients:
       alg: RS256
       lifetime_in_seconds: 36000
       secret_encoded: false
-    logo_uri: >-
-      https://whist-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+    logo_uri: https://whist-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
     native_social_login:
       apple:
         enabled: false
@@ -74,10 +73,12 @@ clients:
       rotation_type: rotating
     sso_disabled: false
     token_endpoint_auth_method: none
+    web_origins: []
   - name: Whist
     allowed_clients: []
     app_type: native
-    callbacks: @@ALLOWED_AUTH0_CALLBACKS@@
+    callbacks:
+      - http://localhost/callback
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
@@ -110,18 +111,6 @@ clients:
     token_endpoint_auth_method: none
 databases: []
 connections:
-  - name: apple
-    strategy: apple
-    enabled_clients: []
-    is_domain_connection: false
-    options:
-      kid: D3T9SSLTY5
-      name: true
-      email: true
-      scope: name email
-      team_id: 757Z8TDNJL
-      client_id: com.whisttechnologies.whistauth
-      app_secret: "##APPLE_OAUTH_SECRET##"
   - name: google-oauth2
     strategy: google-oauth2
     enabled_clients:
@@ -227,7 +216,7 @@ roles:
     description: Whist developers
     permissions:
       - permission_name: admin
-        resource_server_identifier: "##WHIST_AUTHENTICATION_API##"
+        resource_server_identifier: https://api.fractal.co
 branding:
   colors:
     page_background: "#ffffff"
@@ -236,8 +225,7 @@ branding:
 prompts:
   universal_login_experience: new
   identifier_first: true
-migrations:
-  issue_opaque_access_tokens: false
+migrations: {}
 actions: []
 triggers: {}
 organizations: []
