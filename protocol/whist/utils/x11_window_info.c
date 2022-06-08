@@ -252,6 +252,35 @@ void bring_window_to_top(CaptureDevice* capture_device, WhistWindow whist_window
     }
 }
 
+bool is_window_fullscreen(CaptureDevice* capture_device, WhistWindow whist_window) {
+    /*
+     * Query whether the given window is fullscreen or not.
+     *
+     *  Return:
+     *      (bool): 0 if not fullscreen, 1 if fullscreen.
+     *
+     *  Note:
+     *      By "fullscreen", we mean that the window is rendering directly
+     *      to the screen, not through the window manager. Examples include
+     *      fullscreen video playback in a browser, or fullscreen games.
+     */
+
+    Window w = (Window)whist_window.id;
+    X11CaptureDevice* device = capture_device->x11_capture_device;
+    if (x11_get_window_property(device, w, device->_NET_WM_STATE, device->ATOM_ARRAY, &nitems, &states)) {
+        Atom* state_hints = (Atom*)states;
+        for (int i = 0; i < (int)nitems; i++) {
+            if (state_hints[i] == device->_NET_WM_STATE_FULLSCREEN) {
+                return true;
+            }
+        }
+        return false;
+    }
+    LOG_ERROR("Couldn't get states, assuming window is not fullscreen!");
+    return false;
+}
+
+
 // superseded by x11_get_active_window
 static Window get_focused_window(void) {
     Window w;
@@ -462,7 +491,7 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
             XGetWindowAttributes(device->display, parent, &parent_attr);
             valid_window->x = attr.x + parent_attr.x;
             valid_window->y = attr.y + parent_attr.y;
-            // TODO: is_fullscreen
+            valid_window->is_fullscreen = is_window_fullscreen(device, valid_window);
             linked_list_add_tail(list, valid_window);
         }
 
