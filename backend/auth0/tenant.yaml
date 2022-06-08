@@ -72,7 +72,7 @@ clients:
       rotation_type: rotating
     sso_disabled: false
     token_endpoint_auth_method: none
-  - name: Electron Auth
+  - name: Whist
     allowed_clients: []
     app_type: native
     callbacks: @@ALLOWED_AUTH0_CALLBACKS@@
@@ -124,7 +124,7 @@ connections:
     strategy: google-oauth2
     enabled_clients:
       - Chromium Auth
-      - Electron Auth
+      - Whist
     is_domain_connection: false
     options:
       email: true
