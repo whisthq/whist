@@ -612,7 +612,7 @@ static bool confirm_private_key(PrivateKeyData* our_priv_key_data,
 
     if (recv_size == sizeof(PrivateKeyData)) {
         // Make sure that they used the same IV as us
-        if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, HMAC_SIZE) != 0) {
+        if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, IV_SIZE) != 0) {
             LOG_ERROR("Could not confirmPrivateKey: IV is incorrect!");
             return false;
         } else {

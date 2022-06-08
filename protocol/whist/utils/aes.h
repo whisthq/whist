@@ -31,9 +31,10 @@ Defines
 
 // Assertions in aes.c verify that these constants are accurate,
 // prior to any encrypting or decrypting operations
-#define IV_SIZE 16
+#define IV_SIZE 12  // For AES-GCM IV size is 12 by default
 #define KEY_SIZE 16
 #define HMAC_SIZE 16
+#define TAG_SIZE 16
 #define MAX_ENCRYPTION_SIZE_INCREASE 32
 
 /**
@@ -41,12 +42,9 @@ Defines
  *
  */
 typedef struct {
-    // Contains a signature of the iv/cipher_len/the encrypted data
-    char hmac[HMAC_SIZE];
-
-    // Encrypted packet data
-    char iv[IV_SIZE];   // One-time pad for encrypted data
-    int encrypted_len;  // The length of the encrypted segment
+    char iv[IV_SIZE];    // IV used for AES decryption
+    char tag[TAG_SIZE];  // tag used for AES-GCM data integrity
+    int encrypted_len;   // The length of the encrypted segment
 } AESMetadata;
 
 /*

@@ -54,8 +54,7 @@ Private Function Declarations
 */
 
 /**
- * @brief                          AES Encrypt plaintext data, given the iv/key
- *                                 This won't sign the packet, however
+ * @brief                          AES-GCM Encrypt plaintext data, given the iv/key
  *
  * @param ciphertext               Pointer to buffer for receiving ciphertext
  * @param plaintext                Pointer to the plaintext to encrypt
@@ -64,15 +63,16 @@ Private Function Declarations
  *                                   must be KEY_SIZE bytes
  * @param iv                       IV used to seed the AES encryption
  *                                   must be IV_SIZE bytes
+ * @param tag                      tag output for verifying data integrity
  *
  * @returns                        Will return -1 on failure, else will return the
  *                                 length of the encrypted result
  */
 static int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len,
-                       const void* private_key, const void* iv);
+                       const void* private_key, const void* iv, void* tag);
 
 /**
- * @brief                          AES Decrypt ciphertext data, given the iv/key
+ * @brief                          AES Decrypt ciphertext data, given the iv/key and tag
  *
  * @param plaintext_buffer         Pointer to buffer for receiving plaintext
  * @param plaintext_len            The size of the `plaintext` buffer
@@ -82,26 +82,13 @@ static int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_le
  *                                   must be KEY_SIZE bytes
  * @param iv                       IV used to seed the AES encryption
  *                                   must be IV_SIZE bytes
+ * @param tag                      tag value used for verifying data integrity
  *
  * @returns                        Will return the length of the decrypted result,
  *                                 or -1 on failure
  */
 static int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertext,
-                       int ciphertext_len, const void* private_key, const void* iv);
-
-/**
- * @brief                          Get an HMAC from the AES encrypted information
- *
- * @param hash_buffer              This buffer will have HMAC_SIZE bytes written to it
- * @param aes_metadata             AES Metadata about the encrypted packet,
- *                                   where important information will be signed as well
- * @param ciphertext               Pointer to the ciphertext to sign
- * @param ciphertext_len           Length of the ciphertext
- * @param private_key              The shared private key between client and server
- *                                   must be KEY_SIZE bytes
- */
-static void hmac_aes_data(void* hash_buffer, const AESMetadata* aes_metadata,
-                          const void* ciphertext, int ciphertext_len, const void* private_key);
+                       int ciphertext_len, const void* private_key, const void* iv, void* tag);
 
 /**
  * @brief                          Log any OpenSSL errors
@@ -200,12 +187,9 @@ int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, const void* 
     gen_iv(aes_metadata->iv);
 
     // Encrypt the data, and store the length in the metadata
-    int encrypted_len =
-        aes_encrypt(encrypted_data, plaintext_data, plaintext_len, private_key, aes_metadata->iv);
+    int encrypted_len = aes_encrypt(encrypted_data, plaintext_data, plaintext_len, private_key,
+                                    aes_metadata->iv, aes_metadata->tag);
     aes_metadata->encrypted_len = encrypted_len;
-
-    // Hash into the aes metadata's HMAC field
-    hmac_aes_data(aes_metadata->hmac, aes_metadata, encrypted_data, encrypted_len, private_key);
 
     // Return the length of the encrypted buffer
     return encrypted_len;
@@ -218,19 +202,10 @@ int decrypt_packet(void* plaintext_buffer, int plaintext_buffer_len, AESMetadata
         return -1;
     }
 
-    // Get the expected HMAC
-    char expected_hmac[HMAC_SIZE];
-    hmac_aes_data(expected_hmac, &aes_metadata, encrypted_data, encrypted_len, private_key);
-
-    // Verify that HMACs match
-    if (memcmp(aes_metadata.hmac, expected_hmac, sizeof(aes_metadata.hmac)) != 0) {
-        LOG_WARNING("Incorrect hmac!");
-        return -1;
-    }
-
     // Decrypt the packet using the private key, and the metadata's IV
-    int decrypt_len = aes_decrypt(plaintext_buffer, plaintext_buffer_len, encrypted_data,
-                                  aes_metadata.encrypted_len, private_key, aes_metadata.iv);
+    int decrypt_len =
+        aes_decrypt(plaintext_buffer, plaintext_buffer_len, encrypted_data,
+                    aes_metadata.encrypted_len, private_key, aes_metadata.iv, aes_metadata.tag);
 
     // And then returnt he decrypted packet, passing on -1 as well
     return decrypt_len;
@@ -243,9 +218,9 @@ Private Function Implementations
 */
 
 int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, const void* key,
-                const void* iv) {
+                const void* iv, void* tag) {
     EVP_CIPHER_CTX* ctx;
-    const EVP_CIPHER* cipher = EVP_aes_128_cbc();
+    const EVP_CIPHER* cipher = EVP_aes_128_gcm();
 
     int len;
 
@@ -302,6 +277,11 @@ int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, cons
         HANDLE_SSL_ERROR();
     ciphertext_bytes_written += len;
 
+    /* Get the tag */
+    if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag)) {
+        HANDLE_SSL_ERROR();
+    }
+
     // Free the context
     EVP_CIPHER_CTX_free(ctx);
 
@@ -309,9 +289,9 @@ int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, cons
 }
 
 int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertext,
-                int ciphertext_len, const void* key, const void* iv) {
+                int ciphertext_len, const void* key, const void* iv, void* tag) {
     EVP_CIPHER_CTX* ctx;
-    const EVP_CIPHER* cipher = EVP_aes_128_cbc();
+    const EVP_CIPHER* cipher = EVP_aes_128_gcm();
 
     int len;
 
@@ -385,6 +365,11 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
         plaintext_bytes_written += len;
     }
 
+    /* Set expected tag value */
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag)) {
+        HANDLE_SSL_ERROR();
+    }
+
     // Finish decryption
     if (1 != EVP_DecryptFinal_ex(ctx, temporary_buf, &len)) HANDLE_SSL_ERROR();
 
@@ -401,28 +386,6 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
     EVP_CIPHER_CTX_free(ctx);
 
     return plaintext_bytes_written;
-}
-
-void hmac_aes_data(void* hash_buffer, const AESMetadata* aes_metadata, const void* ciphertext,
-                   int ciphertext_len, const void* private_key) {
-    // Use a different private key for HMAC
-    unsigned char hmac_private_key[KEY_SIZE];
-    FATAL_ASSERT(KEY_SIZE == HMAC_SIZE);
-    // This writes HMAC_SIZE bytes, which ends up being KEY_SIZE bytes anyway
-    hmac(hmac_private_key, private_key, KEY_SIZE, DEFAULT_BINARY_PRIVATE_KEY);
-
-    // Contains the concatenated signatures
-    char concatenated_hash[HMAC_SIZE + HMAC_SIZE];
-
-    // Sign aes_metadata into the first HMAC_SIZE-bytes
-    hmac(&concatenated_hash[0], (char*)aes_metadata + sizeof(aes_metadata->hmac),
-         sizeof(*aes_metadata) - sizeof(aes_metadata->hmac), hmac_private_key);
-
-    // Sign the encrypted data into the next HMAC_SIZE-bytes
-    hmac(&concatenated_hash[HMAC_SIZE], ciphertext, ciphertext_len, hmac_private_key);
-
-    // Combine the two into a single hmac
-    hmac(hash_buffer, concatenated_hash, sizeof(concatenated_hash), hmac_private_key);
 }
 
 static void print_ssl_errors(void) { ERR_print_errors_cb(openssl_callback, NULL); }

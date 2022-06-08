@@ -832,7 +832,7 @@ TEST_F(ProtocolTest, BadDecrypt) {
 
     EXPECT_EQ(decrypted_len, -1);
 
-    check_stdout_line(LOG_WARNING_MATCHER);
+    check_stdout_line(::testing::HasSubstr("OpenSSL Error caught"));
 }
 
 /**
