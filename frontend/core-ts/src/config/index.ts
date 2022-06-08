@@ -9,7 +9,7 @@ const configs = {
     },
     auth0: {
       AUTH_DOMAIN_URL: "fractal-dev.us.auth0.com",
-      AUTH_CLIENT_ID: "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", // public; not a secret
+      AUTH_CLIENT_ID: "jqL5eGNERea0JKWAFQN94ggmEnNQNW1j", // public; not a secret
       AUTH_API_IDENTIFIER: "https://api.fractal.co",
     },
   },

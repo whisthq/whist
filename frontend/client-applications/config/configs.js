@@ -42,7 +42,7 @@ const configs = {
     },
     auth0: {
       auth0Domain: "fractal-dev.us.auth0.com",
-      clientId: "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", // public; not a secret
+      clientId: "jqL5eGNERea0JKWAFQN94ggmEnNQNW1j", // public; not a secret
       apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "dev",
@@ -63,7 +63,7 @@ const configs = {
     },
     auth0: {
       auth0Domain: "fractal-dev.us.auth0.com",
-      clientId: "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", // public; not a secret
+      clientId: "jqL5eGNERea0JKWAFQN94ggmEnNQNW1j", // public; not a secret
       apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "dev",
