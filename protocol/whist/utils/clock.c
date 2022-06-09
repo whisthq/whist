@@ -63,6 +63,23 @@ double get_timer(const WhistTimer* timer_opaque) {
     return ret;
 }
 
+double diff_timer(const WhistTimer* start_timer_opaque, const WhistTimer* end_timer_opaque) {
+    const struct WhistTimerInternal* start_timer =
+        (const struct WhistTimerInternal*)start_timer_opaque;
+    const struct WhistTimerInternal* end_timer = (const struct WhistTimerInternal*)end_timer_opaque;
+#if OS_IS(OS_WIN32)
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);
+    double ret = (double)(end_timer->pc.QuadPart - start_timer->pc.QuadPart) / frequency.QuadPart;
+#else
+    double elapsed_time = (end_timer->ts.tv_sec - start_timer->ts.tv_sec) * MS_IN_SECOND;
+    elapsed_time += (end_timer->ts.tv_nsec - start_timer->ts.tv_nsec) / (double)NS_IN_MS;
+
+    double ret = elapsed_time / MS_IN_SECOND;
+#endif
+    return ret;
+}
+
 void adjust_timer(WhistTimer* timer_opaque, int num_seconds) {
     struct WhistTimerInternal* timer = (struct WhistTimerInternal*)timer_opaque;
 #if OS_IS(OS_WIN32)

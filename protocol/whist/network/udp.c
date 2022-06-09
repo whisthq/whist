@@ -417,7 +417,7 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
 static int get_udp_packet_size(UDPPacket* udp_packet);
 
 // TODO: document
-static void udp_update_ping(UDPContext* context);
+static void udp_update_ping(UDPContext* context, WhistTimer* current_time);
 
 /*
 ============================
@@ -581,6 +581,8 @@ static bool udp_update(void* raw_context) {
     if (context->connection_lost) {
         return false;
     }
+    WhistTimer current_time;
+    start_timer(&current_time);
 
     // *************
     // Keep the connection alive and check connection health with pings
@@ -588,7 +590,7 @@ static bool udp_update(void* raw_context) {
 
     // Check if we need to ping
     // This implicitly keeps the connection alive as well
-    udp_update_ping(context);
+    udp_update_ping(context, &current_time);
 
     // udp_update_ping may have detected a newly lost connection
     if (context->connection_lost) {
@@ -603,9 +605,9 @@ static bool udp_update(void* raw_context) {
     if (last_recv_timer.opaque[0] == 0 && last_recv_timer.opaque[1] == 0) {
         start_timer(&last_recv_timer);
     }
-    double last_recv = get_timer(&last_recv_timer);
+    double last_recv = diff_timer(&last_recv_timer, &current_time);
     if (last_recv * MS_IN_SECOND > UDP_RECV_BOTTLENECK_THRESHOLD_MS) {
-        start_timer(&context->last_bottleneck_timer);
+        context->last_bottleneck_timer = current_time;
         LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
                                  last_recv * MS_IN_SECOND);
     }
@@ -615,6 +617,7 @@ static bool udp_update(void* raw_context) {
     bool received_packet =
         udp_get_udp_packet(context, &udp_packet, &arrival_time, &network_payload_size);
     start_timer(&last_recv_timer);
+    current_time = last_recv_timer;
 
     if (received_packet) {
         // if the packet is a whist_segment, store the data to give later via get_packet
@@ -672,14 +675,14 @@ static bool udp_update(void* raw_context) {
 
     if (context->ring_buffers[PACKET_VIDEO] != NULL) {
         // If no pong is received for UDP_PONG_CONGESTION_SEC, then we signal severe congestion.
-        if (get_timer(&context->last_pong_timer) > UDP_PONG_CONGESTION_SEC &&
+        if (diff_timer(&context->last_pong_timer, &current_time) > UDP_PONG_CONGESTION_SEC &&
             whist_congestion_controller_handle_severe_congestion(&context->network_settings)) {
             send_desired_network_settings(context);
         }
         try_recovering_missing_packets_or_frames(
             context->ring_buffers[PACKET_VIDEO], context->short_term_latency,
             (int)round(context->unordered_packet_info.max_unordered_packets),
-            &context->network_settings);
+            &context->network_settings, &current_time);
     }
 
     return true;
@@ -1913,7 +1916,7 @@ void udp_handle_stream_reset(UDPContext* context, WhistPacketType type, int grea
     context->reset_data[type].pending_stream_reset = true;
 }
 
-void udp_update_ping(UDPContext* context) {
+void udp_update_ping(UDPContext* context, WhistTimer* current_time) {
     // The ping id we want to send, if any
     int send_ping_id = -1;
 
@@ -1927,14 +1930,14 @@ void udp_update_ping(UDPContext* context) {
         // we should check for pongs or repings
 
         // If it's been too long since the last pong, give up and mark the connection as lost
-        if (get_timer(&context->last_pong_timer) > UDP_PONG_TIMEOUT_SEC) {
+        if (diff_timer(&context->last_pong_timer, current_time) > UDP_PONG_TIMEOUT_SEC) {
             LOG_WARNING("Server disconnected: No pong response received for %.2f seconds",
-                        get_timer(&context->last_pong_timer));
+                        diff_timer(&context->last_pong_timer, current_time));
             context->connection_lost = true;
         }
         // Progress to to the next ping after UDP_PING_INTERVAL_SEC
-        else if (get_timer(&context->ping_timer[context->last_ping_id % MAX_PINGS_IN_FLIGHT]) >
-                 UDP_PING_INTERVAL_SEC) {
+        else if (diff_timer(&context->ping_timer[context->last_ping_id % MAX_PINGS_IN_FLIGHT],
+                            current_time) > UDP_PING_INTERVAL_SEC) {
             // Mark that we want to send the next ping ID
             send_ping_id = context->last_ping_id + 1;
         }

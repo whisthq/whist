@@ -244,6 +244,7 @@ void reset_stream(RingBuffer* ring_buffer, int id);
  * @param max_unordered_packets    The max number of packets that can arrive out-of-order
  * @param network_settings         NetworkSettings structure containing the current bitrate and
  *                                 burst bitrate
+ * @param current_time             Current time as returned by start_timer()
  *
  * @note                           This will call the lambda nack_packet and request_stream_reset
  *                                 TODO: Just make this return an array of nacked packets,
@@ -251,7 +252,8 @@ void reset_stream(RingBuffer* ring_buffer, int id);
  */
 void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency,
                                               int max_unordered_packets,
-                                              NetworkSettings* network_settings);
+                                              NetworkSettings* network_settings,
+                                              WhistTimer* current_time);
 
 /**
  * @brief Destroy the ringbuffer and all associated memory
