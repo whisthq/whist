@@ -78,8 +78,11 @@ func (lc *sentryCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 }
 
 func (lc *sentryCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
-	// Write to sentry
+	if usingProdLogging() {
+		return nil
+	}
 
+	// Write to sentry
 	sentry.CaptureException(utils.MakeError(ent.Message))
 
 	if ent.Level > zapcore.ErrorLevel {

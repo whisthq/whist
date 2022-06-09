@@ -80,6 +80,10 @@ func (lc *logzioCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 }
 
 func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
+	if usingProdLogging() {
+		return nil
+	}
+
 	buf, err := lc.encoder.EncodeEntry(ent, fields)
 	if err != nil {
 		return err
