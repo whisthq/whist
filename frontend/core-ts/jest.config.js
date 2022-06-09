@@ -11,6 +11,7 @@ module.exports = {
   automock: false,
   clearMocks: true,
   coverageDirectory: "coverage",
+  moduleDirectories: ["node_modules", "src"],
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   modulePathIgnorePatterns: ["dist"],
   testPathIgnorePatterns: ["mocks.ts"],
