@@ -2,7 +2,6 @@ package whistlogger
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"runtime/debug"
 
@@ -15,50 +14,49 @@ var logger *zap.Logger
 
 func init() {
 	// First, define our level-handling logic.
-	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+	onlyErrors := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.ErrorLevel
 	})
-	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl < zapcore.ErrorLevel
+	allLevels := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return true
 	})
-
-	debugging := zapcore.AddSync(ioutil.Discard)
-	errors := zapcore.AddSync(ioutil.Discard)
 
 	// High-priority output should go to standard error, and low-priority
 	// output should also go to standard out.
 	consoleDebugging := zapcore.Lock(os.Stdout)
 	consoleErrors := zapcore.Lock(os.Stderr)
 
-	sentryAndLogzEncoderConfig := zap.NewProductionEncoderConfig()
+	sentryEncoderConfig := NewSentryEncoderConfig()
+	logzEncoderConfig := NewLogzioEncoderConfig()
 	consoleEncoderConfig := zap.NewDevelopmentEncoderConfig()
 
 	// Enable colored output on stdout
 	consoleEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
-	sentryAndLogzEncoder := zapcore.NewJSONEncoder(sentryAndLogzEncoderConfig)
+	sentryEncoder := zapcore.NewJSONEncoder(sentryEncoderConfig)
+	logzEncoder := zapcore.NewJSONEncoder(logzEncoderConfig)
 	consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
+
+	logzCore := NewLogzioCore(logzEncoder, allLevels)
+	sentryCore := NewSentryCore(sentryEncoder, onlyErrors)
 
 	// Join the outputs, encoders, and level-handling functions into
 	// zapcore.Cores, then tee the four cores together.
 	core := zapcore.NewTee(
-		zapcore.NewCore(sentryAndLogzEncoder, errors, highPriority),
-		zapcore.NewCore(consoleEncoder, consoleErrors, highPriority),
-		zapcore.NewCore(sentryAndLogzEncoder, debugging, lowPriority),
-		zapcore.NewCore(consoleEncoder, consoleDebugging, lowPriority),
+		logzCore,
+		sentryCore,
+		zapcore.NewCore(consoleEncoder, consoleErrors, onlyErrors),
+		zapcore.NewCore(consoleEncoder, consoleDebugging, allLevels),
 	)
 
 	logger = zap.New(core)
 }
 
-// Close flushes all production logging (i.e. Sentry and Logzio).
-func Close() {
-	// Flush buffered logging events before the program terminates.
-	// Info("Flushing Sentry...")
-	// FlushSentry()
-	// Info("Flushing Logzio...")
-	// stopAndDrainLogzio()
-	logger.Sync()
+func Sync() {
+	err := logger.Sync()
+	if err != nil {
+		Errorf("failed to drain log queues: %s", err)
+	}
 }
 
 // Info logs some info + timestamp, but does not send it to Sentry.
@@ -100,8 +98,7 @@ func Panic(globalCancel context.CancelFunc, err error) {
 	} else {
 		// If we're truly trying to panic, let's at least flush our logging queues
 		// first so this error actually gets sent.
-		FlushLogzio()
-		FlushSentry()
+		logger.Sync()
 		logger.Sugar().Panic(err)
 	}
 }

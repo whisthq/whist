@@ -369,8 +369,7 @@ func main() {
 
 		// Drain to our remote logging providers, but don't yet stop recording new
 		// events, in case the shutdown fails.
-		logger.FlushLogzio()
-		logger.FlushSentry()
+		logger.Sync()
 
 		logger.Info("Finished host service shutdown procedure. Finally exiting...")
 		if shutdownInstanceOnExit {
@@ -385,9 +384,6 @@ func main() {
 				}
 			}
 		}
-
-		// Shut down the logging infrastructure (including re-draining the queues).
-		logger.Close()
 
 		os.Exit(0)
 	}()
