@@ -98,6 +98,17 @@ void start_timer(WhistTimer* timer);
 double get_timer(const WhistTimer* timer);
 
 /**
+ * @brief                          Get the difference in seconds between two timer values
+ *
+ * @param start_timer              Pointer to the start timer.
+ *
+ * @param end_timer                Pointer to the end timer.
+ *
+ * @return                         Value of (end_timer - start_timer) in seconds
+ */
+double diff_timer(const WhistTimer* start_timer, const WhistTimer* end_timer);
+
+/**
  * @brief                          Add the value of the timer by a configurable number of seconds
  *
  * @param timer                    Pointer to the timer to query.
