@@ -24,16 +24,18 @@ on:
 jobs:
   # This job cross-compiles the Whist Browser to x64 from our NYC office M1 Mac Mini self-hosted runner.
   whist-browser-build-macos:
-    name: "Nightly: macOS (${{ matrix.config.arch}})"
+    name: "Nightly: macOS (${{ matrix.config.target_arch}})"
     runs-on: ${{ matrix.config.runner}}
 
     strategy:
       matrix:
         config:
-          # - arch: "x64"
-          #   runner: [self-hosted, macOS, X64] # TODO: Need to create this runner on MacStadium
-          - arch: "arm64"
-            runner: [self-hosted, macOS, ARM64]
+          - target_arch: "x86_64"
+            target_os: "macOS"
+            runner: macos-11 # We run off of the host GHA machines, but offload the build to EngFlow via Goma            
+          - target_arch: "arm64"
+            target_os: "macOS"
+            runner: macos-11 # We run off of the host GHA machines, but offload the build to EngFlow via Goma
 
     env:
       x64-binary-tar-name: whist-browser-macos-x64.tar.gz
@@ -96,7 +98,8 @@ jobs:
         run: |
           # Set architecture and version
           # TODO: Retrieve version from configDB (can reuse code in whist-build-and-deploy.yml once we are ready)
-          npm config set target_arch=${{ matrix.config.arch }}
+          npm config set target_arch=${{ matrix.config.target_arch }}
+          npm config set target_os=${{ matrix.config.target_os }}
           npm config set version=0.0.0
 
           # Google Auth integration
@@ -151,7 +154,7 @@ jobs:
         run: npm run init
 
       - name: Build Whist Chromium Browser
-        run: npm run build ${{ env.build_type }}
+        run: npm run build ${{ env.build_type }} --brave_use_goma --goma_server_host=humite.goma.engflow.com
 
       - name: Tar & Upload Whist Chromium Browser to AWS S3
         run: |
