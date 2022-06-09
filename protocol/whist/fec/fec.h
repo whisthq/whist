@@ -7,6 +7,7 @@
  * @note See protocol_test.cpp for usage
  */
 #include "rs_common.h"
+#include <stdbool.h>
 /*
 ============================
 Defines
@@ -194,6 +195,6 @@ double fec_ratio_to_fec_factor(double fec_ratio);
  */
 double fec_factor_to_fec_ratio(double fec_times);
 
-void fec_set_conservative_decode_mode(int enable);
+void fec_set_conservative_decode_mode(bool enable);
 
 #endif

@@ -101,15 +101,17 @@ static int multithreaded_sync_udp_packets(void* opaque) {
             continue;
         }
 
-        static double last_log_time = 0;
-        double current_time = get_timestamp_sec();
-        if (current_time - last_log_time > 0.01) {
-            int c;
-            ioctl(udp_socket, FIONREAD, &c);
-            fec_controller_feed_queue_len(fec_controller, current_time, c);
-            bool is_decode_disabled = fec_controller_is_decode_disabled(fec_controller);
-            fec_set_conservative_decode_mode(is_decode_disabled);
-            last_log_time = current_time;
+        if (ENABLE_FEC) {
+            static double last_measure_time = 0;
+            double current_time = get_timestamp_sec();
+            if (current_time - last_measure_time > 0.005) {
+                int c;
+                ioctl(udp_socket, FIONREAD, &c);
+                fec_controller_feed_queue_len(fec_controller, current_time, c);
+                bool is_decode_disabled = fec_controller_is_decode_disabled(fec_controller);
+                fec_set_conservative_decode_mode(is_decode_disabled);
+                last_measure_time = current_time;
+            }
         }
 
         log_double_statistic(NETWORK_READ_PACKET_UDP, get_timer(&statistics_timer) * MS_IN_SECOND);

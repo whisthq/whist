@@ -41,7 +41,7 @@ Defines
 // so we need to cap the buffer size as such
 #define MAX_BUFFER_SIZE ((1 << (8 * FEC_HEADER_SIZE)) - 1)
 
-static int conservative_decoding_mode = 0;
+static bool conservative_decode_mode = 0;
 
 struct FECEncoder {
     int num_accepted_buffers;
@@ -96,7 +96,7 @@ Public Function Implementations
 
 int init_fec(void) { return init_rs_wrapper(); }
 
-void fec_set_conservative_decode_mode(int enable) { conservative_decoding_mode = enable; }
+void fec_set_conservative_decode_mode(bool enable) { conservative_decode_mode = enable; }
 
 double fec_ratio_to_fec_factor(double fec_ratio) { return 1.0 / (1.0 - fec_ratio); }
 
@@ -288,6 +288,7 @@ void fec_decoder_register_buffer(FECDecoder* fec_decoder, int index, void* buffe
 
     FATAL_ASSERT(fec_decoder->buffer_sizes[index] == -1);
 
+    // no need to store new buffer any more if we alreay got all the real buffers
     if (fec_decoder->num_accepted_real_buffers == fec_decoder->num_real_buffers) return;
 
     // no need to store new buffers anymore if recovery is already done
@@ -309,7 +310,9 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
         return -1;
     }
 
-    if (conservative_decoding_mode &&
+    // in this mode we don't do finite field calculated, we only try to reassemble
+    // the data with the real buffers received
+    if (conservative_decode_mode &&
         fec_decoder->num_accepted_real_buffers != fec_decoder->num_real_buffers) {
         return -1;
     }

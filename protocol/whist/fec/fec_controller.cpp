@@ -364,23 +364,38 @@ struct ExtraRatioController {
     }
 };
 
-class PerformanceController {
-    const int DECODE_DISABLE_THRESHOLD = 100 * 1024;
-    const int DECODE_ENABLE_THRESHOLD = 2 * 1024;
+// the controller class to disable fec when performance issue is detected
+class PerformanceBasedController {
+    // threshold to disable fec decode at local side, which is triggered immediately
+    const int DECODE_DISABLE_THRESHOLD = 100 * 1024;  // NOLINT
+    // threshold to (re-)enable fec decode at local side, which is triggered immediately
+    const int DECODE_ENABLE_THRESHOLD = 2 * 1024;  // NOLINT
 
-    const int ENCODE_DISABLE_THRESHOLD = 100 * 1024;
-    const double ENCODE_DISABLE_TIME = 1.0;
-    const int ENCODE_DISABLE_THRESHOLD_HARD = 3 * ENCODE_DISABLE_THRESHOLD;
+    // threshold to inform the remote to disable fec encode
+    const int ENCODE_DISABLE_THRESHOLD = 100 * 1024;  // NOLINT
+    // if the queue len has been larger then the above threshold for this many seconds,
+    // the fec encode disabling is trigger
+    const double ENCODE_DISABLE_TIME = 0.2;  // NOLINT
+    // if the queue is above this threshold, the fec encode disabling is triggered
+    // immediately
+    const int ENCODE_DISABLE_THRESHOLD_HARD = 3 * ENCODE_DISABLE_THRESHOLD;  // NOLINT
 
-    const int ENCODE_ENABLE_THRESHOLD = ENCODE_DISABLE_THRESHOLD;
-    const double ENCODE_ENABLE_TIME = 5.0;
+    // threshold to inform the remote to (re-enable) fec encode
+    const int ENCODE_ENABLE_THRESHOLD = ENCODE_DISABLE_THRESHOLD - 1;  // NOLINT
+    // if the queue len has been lower than the above threshold for this many seconds,
+    // the fec encode re-enabling is riggered
+    const double ENCODE_ENABLE_TIME = 5.0;  // NOLINT
 
     const int verbose_log = 1;
 
+    // the last time the encode_disable threshold is not satisfied
     double last_below_encode_disable_threshold_time;
+    // the last time the encode_enable threshold is not satisfied
     double last_above_encode_enable_threshold_time;
 
+    // disable fec decode, locally at client side
     bool disable_decode;
+    // disable fec encode, remotely for the server side
     bool disable_encode;
 
    public:
@@ -395,8 +410,8 @@ class PerformanceController {
     void feed_queue_length(double current_time, int queue_len) {
         if (verbose_log) {
             static double last_log_time = 0;
-            if (current_time - last_log_time > 0.1) {
-                fprintf(stderr, "<queue_len=%d>\n", queue_len);
+            if (current_time - last_log_time >= 0.1) {
+                LOG_INFO("[FEC_CONTROLLER][PERFORMANCE] udp socket queue_len=%d\n", queue_len);
                 last_log_time = current_time;
             }
         }
@@ -404,14 +419,20 @@ class PerformanceController {
         // if the queue len is >= local_disable_threshold, disable fec decode immediately
         if (queue_len >= DECODE_DISABLE_THRESHOLD) {
             if (verbose_log && disable_decode == 0) {
-                fprintf(stderr, "decode disabled!!! %d\n", queue_len);
+                LOG_INFO(
+                    "[FEC_CONTROLLER][PERFORMANCE] 🟥 decode disabled, current udp "
+                    "queue_len=%d\n",
+                    queue_len);
             }
             disable_decode = 1;
         }
         // if the queue len is <= the local_enable_threshold, re-enable fec decode immediately
         else if (queue_len <= DECODE_ENABLE_THRESHOLD) {
             if (verbose_log && disable_decode == 1) {
-                fprintf(stderr, "decode re-enabled!!! %d\n", queue_len);
+                LOG_INFO(
+                    "[FEC_CONTROLLER][PERFORMANCE] 🟩 decode re-enabled, current udp "
+                    "queue_len=%d\n",
+                    queue_len);
             }
             disable_decode = 0;
         }
@@ -433,7 +454,10 @@ class PerformanceController {
         if (queue_len >= ENCODE_DISABLE_THRESHOLD_HARD ||
             current_time - last_below_encode_disable_threshold_time > ENCODE_DISABLE_TIME) {
             if (verbose_log && disable_encode == 0) {
-                fprintf(stderr, "[[encode]] disabled!!! %d\n", queue_len);
+                LOG_INFO(
+                    "[FEC_CONTROLLER][PERFORMANCE] 🟥🟥 encode disabled, current udp "
+                    "queue_len=%d\n",
+                    queue_len);
             }
             disable_encode = 1;
         }
@@ -441,7 +465,10 @@ class PerformanceController {
         // decode
         else if (current_time - last_above_encode_enable_threshold_time > ENCODE_ENABLE_TIME) {
             if (verbose_log && disable_encode == 1) {
-                fprintf(stderr, "[[encode]] re-enabled!!! %d\n", queue_len);
+                LOG_INFO(
+                    "[FEC_CONTROLLER][PERFORMANCE] 🟩🟩 decode re-enabled, current udp "
+                    "queue_len=%d\n",
+                    queue_len);
             }
             disable_encode = 0;
         }
@@ -460,7 +487,8 @@ struct FECController {
     ExtraRatioController *extra_ratio_controller;
     // another sliding window to calculate latency
     SlidingWindowStat *latency_stat;
-    PerformanceController *performance_controller;
+    // performance based controller to disable fec when performance is poor
+    PerformanceBasedController *performance_controller;
 };
 
 /*
@@ -481,7 +509,7 @@ void *create_fec_controller(double current_time) {
     fec_controller->base_ratio_controller = new BaseRatioController;
     fec_controller->extra_ratio_controller = new ExtraRatioController;
     fec_controller->latency_stat = new SlidingWindowStat;
-    fec_controller->performance_controller = new PerformanceController;
+    fec_controller->performance_controller = new PerformanceBasedController;
 
     // init the controllers and latency sliding window
     fec_controller->base_ratio_controller->init(current_time);
@@ -625,6 +653,7 @@ double fec_controller_get_total_fec_ratio(void *controller, double current_time,
         }
     }
 
+    // disable fec if performance is poor
     if (fec_controller->performance_controller->is_encode_disabled() == true) {
         total_fec_ratio = 0.0;
     }
