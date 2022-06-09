@@ -60,6 +60,7 @@ extern "C" {
 #include <whist/fec/rs_wrapper.h>
 #include <whist/fec/fec_controller.h>
 #include "whist/utils/string_buffer.h"
+#include "whist/utils/buffer.h"
 
 #include "whist/core/error_codes.h"
 #include <whist/core/features.h>
@@ -2549,6 +2550,70 @@ TEST_F(ProtocolTest, EmbedFileTest) {
         }
     }
     EXPECT_EQ(found, 1);
+}
+
+TEST_F(ProtocolTest, ReadWriteBufferSimpleTest) {
+    static const uint8_t test_data[] = {
+        0x12,                                            // Single-byte value.
+        0x34, 0x56,                                      // Two-byte value.
+        0x78, 0x9a, 0xbc,                                // Three-byte value.
+        0x12, 0x34, 0x56, 0x78,                          // Four-byte value.
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,  // Eight-byte value.
+        0xab, 0xcd,                                      // Partial four-byte value.
+    };
+
+    WhistReadBuffer rb;
+    whist_read_buffer_init(&rb, test_data, sizeof(test_data));
+
+    EXPECT_EQ(whist_read_1(&rb), 0x12);
+    EXPECT_EQ(whist_read_2(&rb), 0x5634);
+    EXPECT_EQ(whist_read_3(&rb), 0xbc9a78);
+    EXPECT_EQ(whist_read_4(&rb), 0x78563412);
+    EXPECT_EQ(whist_read_8(&rb), 0x0807060504030201);
+
+    // Reads over the end of the buffer return zero and set the
+    // underflow flag.
+    EXPECT_FALSE(whist_read_buffer_has_underflowed(&rb));
+    EXPECT_EQ(whist_read_4(&rb), 0);
+    EXPECT_TRUE(whist_read_buffer_has_underflowed(&rb));
+
+    uint8_t output[20];
+    output[19] = 0xaa;
+
+    WhistWriteBuffer wb;
+    whist_write_buffer_init(&wb, output, sizeof(output));
+
+    whist_write_1(&wb, 0x12);
+    whist_write_2(&wb, 0x5634);
+    whist_write_3(&wb, 0xbc9a78);
+    whist_write_4(&wb, 0x78563412);
+    whist_write_8(&wb, 0x0807060504030201);
+
+    EXPECT_FALSE(whist_write_buffer_has_overflowed(&wb));
+    whist_write_4(&wb, 0x12345678);
+    EXPECT_TRUE(whist_write_buffer_has_overflowed(&wb));
+
+    EXPECT_EQ(memcmp(output, test_data, 20 - 2), 0);
+    // The last byte should not have been touched.
+    EXPECT_EQ(output[19], 0xaa);
+}
+
+TEST_F(ProtocolTest, ReadWriteBufferLEB128Test) {
+    uint8_t buf[1024];
+
+    WhistWriteBuffer wb;
+    whist_write_buffer_init(&wb, buf, sizeof(buf));
+
+    for (uint64_t i = 0; i < INT64_MAX; i = 2 * i + 1) {
+        whist_write_leb128(&wb, i);
+    }
+
+    WhistReadBuffer rb;
+    whist_read_buffer_init(&rb, buf, whist_write_buffer_bytes_written(&wb));
+
+    for (uint64_t i = 0; i < INT64_MAX; i = 2 * i + 1) {
+        EXPECT_EQ(whist_read_leb128(&rb), i);
+    }
 }
 
 /*
