@@ -40,7 +40,9 @@ clients:
     allowed_clients: []
     app_type: spa
     callbacks:
-      - chrome://welcome
+      - https://fractal-dev.us.auth0.com/callback
+    allowed_origins:
+      - chrome-extension://ahjecglibcdgcpmdpehkgkpkmcapnnle
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
