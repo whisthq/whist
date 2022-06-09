@@ -148,8 +148,8 @@ EOF
   # Note: Remove this part once the kernel has been patched.
   # see https://bugs.launchpad.net/ubuntu/focal/+source/linux-aws-5.13/+bug/1977919
   sudo apt install linux-image-5.13.0-1025-aws
-  sed -i 's/GRUB_DEFAULT=0/GRUB_DEFAULT=Advanced options for Ubuntu>Ubuntu, with Linux 5.13.0-1025-aws/g' /etc/default/grub
-  update-grub
+  sudo sed -i 's/GRUB_DEFAULT=0/GRUB_DEFAULT=Advanced options for Ubuntu>Ubuntu, with Linux 5.13.0-1025-aws/g' /etc/default/grub
+  sudo update-grub
 
   # Install NVIDIA GRID (virtualized GPU) drivers
   ./get-nvidia-driver-installer.sh
