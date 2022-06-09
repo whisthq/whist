@@ -147,7 +147,7 @@ EOF
   # Configure GRUB to use previous stable version of the kernel.
   # Note: Remove this part once the kernel has been patched.
   # see https://bugs.launchpad.net/ubuntu/focal/+source/linux-aws-5.13/+bug/1977919
-  sudo apt install linux-image-5.13.0-1025-aws
+  sudo apt-get install -y linux-image-5.13.0-1025-aws
   sudo sed -i 's/GRUB_DEFAULT=0/GRUB_DEFAULT=Advanced options for Ubuntu>Ubuntu, with Linux 5.13.0-1025-aws/g' /etc/default/grub
   sudo update-grub
 
