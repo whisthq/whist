@@ -84,12 +84,6 @@ func Warning(err error) {
 // do so in a useful way. Therefore, passing in a nil `globalCancel` parameter
 // will just panic on `err` instead.
 func Panic(globalCancel context.CancelFunc, err error) {
-	// if logzioTransport != nil {
-	// 	logzioTransport.send(errstr, logzioTypeError)
-	// }
-	// if sentryTransport != nil {
-	// 	sentryTransport.send(err)
-	// }
 	PrintStackTrace()
 
 	if globalCancel != nil {
