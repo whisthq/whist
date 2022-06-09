@@ -45,6 +45,7 @@
     "@types/lodash.identity": "^3.0.6",
     "@types/node-fetch": "^2.5.12",
     "browser-or-node": "^2.0.0",
+    "eslint-plugin-n": "^15.2.2",
     "jwt-decode": "^3.1.2",
     "lodash.difference": "^4.5.0",
     "lodash.identity": "^3.0.0",
