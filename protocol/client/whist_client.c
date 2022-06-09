@@ -82,7 +82,6 @@ extern volatile bool pending_resize_message;
 extern volatile bool connected;
 
 extern volatile bool client_exiting;
-static int try_amount;
 
 static char* new_tab_urls;
 
@@ -322,90 +321,73 @@ int whist_client_main(int argc, const char* argv[]) {
         }
     }
 
-    // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
-    //  closing and destroying the client.
-    WhistFrontend* frontend = NULL;
-    for (try_amount = 0; try_amount < MAX_INIT_CONNECTION_ATTEMPTS && !client_exiting &&
-                         exit_code == WHIST_EXIT_SUCCESS;
-         try_amount++) {
-        if (try_amount > 0) {
-            LOG_WARNING("Trying to recover the server connection...");
-            // TODO: This is a sleep 1000, but I don't think we should ever show the user
-            // a frozen window for 1 second if we're not connected to the server. Better to
-            // show a "reconnecting" message within the main loop.
-            whist_sleep(1000);
-        } else {
-            // Only initialize this once.
-            frontend = init_sdl(output_width, output_height, program_name);
-        }
+    WhistFrontend* frontend = init_sdl(output_width, output_height, program_name);
 
-        // The lines below may be called multiple times,
-        // Please ensure they get destroyed properly
+#define CONTINUE_MAIN_LOOP(EXITING, CODE) (!(EXITING) && ((CODE) == WHIST_EXIT_SUCCESS))
 
-        // Initialize audio and video renderer system
-        WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
+    bool failed_to_connect = false;
 
-        // Initialize the clipboard and file synchronizers. This must happen before we start
-        // the udp/tcp threads
-        init_clipboard_synchronizer(true);
-        init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
+    // While we can continue with the main loop, we first loop and try to connect to the server.
+    // If we fail to connect, then we wait for a few seconds and try again, and we give up after
+    // a certain number of attempts. If we succeed, then we enter the main event loop until
+    // conditions change; as needed, we either exit the program or re-enter the connection loop.
+    while (CONTINUE_MAIN_LOOP(client_exiting, exit_code)) {
+        WhistRenderer* whist_renderer = NULL;
+        WhistTimer keyboard_sync_timer, monitor_change_timer, new_tab_urls_timer, window_fade_timer,
+            cpu_usage_statistics_timer;
 
-        start_timer(&window_resize_timer);
-        window_resize_mutex = whist_create_mutex();
+        // Connection attempt loop
+        for (int retry_attempt = 0; retry_attempt < MAX_INIT_CONNECTION_ATTEMPTS; ++retry_attempt) {
+            // The following lines must run before connection attempts, but must be cleaned up on
+            // failure
 
-        WhistTimer keyboard_sync_timer, monitor_change_timer;
-        start_timer(&keyboard_sync_timer);
-        start_timer(&monitor_change_timer);
+            whist_renderer = init_renderer(frontend, output_width, output_height);
+            init_clipboard_synchronizer(true);
+            init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
 
-        // Timer ensures we check piped args for potential URLs to open no more than once every
-        // 50ms. This prevents CPU overload.
-        WhistTimer new_tab_urls_timer;
-        start_timer(&new_tab_urls_timer);
+            window_resize_mutex = whist_create_mutex();
+            start_timer(&window_resize_timer);
+            start_timer(&keyboard_sync_timer);
+            start_timer(&monitor_change_timer);
+            start_timer(&new_tab_urls_timer);
+            start_timer(&window_fade_timer);
+            start_timer(&cpu_usage_statistics_timer);
 
-        WhistTimer window_fade_timer;
-        start_timer(&window_fade_timer);
+            WhistTimer handshake_time;
+            start_timer(&handshake_time);  // start timer for measuring handshake time
+            LOG_INFO("Begin measuring handshake");
+            if (connect_to_server(server_ip, using_stun, user_email) == 0) {
+                // Success -- log to METRIC for cross-session tracking and INFO for developer-facing
+                // logging
+                double connect_to_server_time = get_timer(&handshake_time);
+                LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
+                LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
 
-        WhistTimer cpu_usage_statistics_timer;
-        start_timer(&cpu_usage_statistics_timer);
+                connected = true;
+                break;
+            }
 
-        WhistTimer handshake_time;
-        start_timer(&handshake_time);  // start timer for measuring handshake time
-        LOG_INFO("Begin measuring handshake");
-
-        if (connect_to_server(server_ip, using_stun, user_email) != 0) {
             // This must destroy everything initialized above this line
             LOG_WARNING("Failed to connect to server.");
             destroy_file_synchronizer();
             destroy_clipboard_synchronizer();
             destroy_renderer(whist_renderer);
-            continue;
+
+            // Wait before retrying
+            LOG_WARNING("Trying to recover the server connection...");
+            // TODO: This is a sleep 1000, but I don't think we should ever show the user
+            // a frozen window for 1 second if we're not connected to the server. Better to
+            // show a "reconnecting" message within the main loop.
+            whist_sleep(1000);
         }
-        // Reset try counter, because connection succeeded
-        try_amount = 0;
-        connected = true;
 
-        // Log to METRIC for cross-session tracking and INFO for developer-facing logging
-        double connect_to_server_time = get_timer(&handshake_time);
-        LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
-        LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
+        if (!connected) {
+            failed_to_connect = true;
+            break;
+        }
 
-        // Create threads to receive udp/tcp packets and handle them as needed
-        // Pass the whist_renderer so that udp packets can be fed into it
-        init_packet_synchronizers(whist_renderer);
-
-        // Under some condition, there might not be resize message generated during starup.
-        // In this case, sdl_renderer_resize_window() is not called, causing some internal values
-        // not match with the actual dimensions.
-        // So we manually call it one time during startup
-        sdl_renderer_resize_window(frontend, -1, -1);
-
-        // Send our initial width/height/codec to the server,
-        // so it can synchronize with us
-        send_message_dimensions(frontend);
-
-        // This code will run for as long as there are events queued, or once every millisecond if
-        // there are no events queued
-        while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
+        // We now are guaranteed to have a connection to the server
+        while (connected && CONTINUE_MAIN_LOOP(client_exiting, exit_code)) {
             // This should be called BEFORE the call to read_piped_arguments,
             // otherwise one URL may get lost.
             send_new_tab_urls_if_needed(frontend);
@@ -499,10 +481,12 @@ int whist_client_main(int argc, const char* argv[]) {
             }
         }
 
-        LOG_INFO("Disconnecting...");
-        if (client_exiting || exit_code != WHIST_EXIT_SUCCESS ||
-            try_amount + 1 == MAX_INIT_CONNECTION_ATTEMPTS) {
+        if (!CONTINUE_MAIN_LOOP(client_exiting, exit_code)) {
+            LOG_INFO("Disconnecting from server...");
+            // We actually exited the main loop, so signal the server to quit
             send_server_quit_messages(3);
+        } else {
+            LOG_INFO("Reconnection to server...");
         }
 
         // Destroy the packet receivers,
@@ -520,14 +504,18 @@ int whist_client_main(int argc, const char* argv[]) {
         // Close the connections, destroying the packet buffers
         close_connections();
 
-        // Mark as disconnected
         connected = false;
     }
 
-    if (exit_code != WHIST_EXIT_SUCCESS) {
-        if (exit_code == WHIST_EXIT_FAILURE) {
+    switch (exit_code) {
+        case WHIST_EXIT_SUCCESS: {
+            break;
+        }
+        case WHIST_EXIT_FAILURE: {
             LOG_ERROR("Failure in main loop! Exiting with code WHIST_EXIT_FAILURE");
-        } else if (exit_code == WHIST_EXIT_CLI) {
+            break;
+        }
+        case WHIST_EXIT_CLI: {
             // If we're in prod or staging, CLI errors are serious errors since we should always
             // be passing the correct arguments, so we log them as errors to report to Sentry.
             char* environment = get_error_monitor_environment();
@@ -538,20 +526,25 @@ int whist_client_main(int argc, const char* argv[]) {
                 // log them as warnings
                 LOG_WARNING("Failure in main loop! Exiting with code WHIST_EXIT_CLI");
             }
-        } else {
+            break;
+        }
+        default: {
             LOG_ERROR("Failure in main loop! Unhandled exit with unknown exit code: %d", exit_code);
+            break;
         }
     }
 
-    if (try_amount >= 3) {
+    if (failed_to_connect) {
         // we make this a LOG_WARNING so it doesn't clog up Sentry, as this
         // error happens periodically but we have recovery systems in place
         // for streaming interruption/connection loss
-        LOG_WARNING("Failed to connect after three attempts!");
+        LOG_WARNING("Failed to connect after %d attempts!", MAX_INIT_CONNECTION_ATTEMPTS);
+        exit_code = WHIST_EXIT_FAILURE;
     }
 
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
+
     destroy_sdl(frontend);
 
     destroy_statistic_logger();
@@ -567,10 +560,5 @@ int whist_client_main(int argc, const char* argv[]) {
 
     LOG_INFO("Logger has shutdown gracefully");
 
-    if (try_amount >= 3) {
-        // We failed to connect, so return a failure error code
-        return WHIST_EXIT_FAILURE;
-    } else {
-        return exit_code;
-    }
+    return exit_code;
 }
