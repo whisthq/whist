@@ -33,7 +33,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.22.5
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
-	golang.org/x/time v0.0.0-20220411224347-583f2d630306
+	golang.org/x/time v0.0.0-20220609170525-579cf78fd858
 )
 
 require (
@@ -80,7 +80,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/stripe/stripe-go/v72 v72.112.0
+	github.com/stripe/stripe-go/v72 v72.113.0
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
