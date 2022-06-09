@@ -32,6 +32,7 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/rwlock.h>
 #include "whist/core/features.h"
+#include "whist/core/whist.h"
 #include "whist/utils/command_line.h"
 #include "network.h"
 #include "client_utils.h"
@@ -226,10 +227,12 @@ int render_video(VideoContext* video_context) {
             int ret;
             server_timestamp = frame->server_timestamp;
             client_input_timestamp = frame->client_input_timestamp;
+            whist_gpu_lock();
             TIME_RUN(ret = video_decoder_send_packets(
                          video_context->decoder, get_frame_videodata(frame),
                          frame->videodata_length, frame->frame_type == VIDEO_FRAME_TYPE_INTRA),
                      VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
+            whist_gpu_unlock();
             if (ret < 0) {
                 LOG_ERROR("Failed to send packets to decoder, unable to render frame");
                 video_context->pending_render_context = false;

@@ -27,6 +27,7 @@ Includes
 
 #include <whist/utils/color.h>
 #include "client_utils.h"
+#include "whist/core/whist.h"
 
 static WhistMutex frontend_render_mutex;
 
@@ -307,7 +308,9 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
 
     sdl_present_pending_cursor(frontend);
 
+    // whist_gpu_lock();
     sdl_present_pending_framebuffer(frontend);
+    // whist_gpu_unlock();
 }
 
 void sdl_utils_check_private_vars(bool* pending_resize_message_ptr) {
@@ -360,7 +363,9 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
     }
 
     // Wipes the renderer to background color before we present
+    whist_gpu_lock();
     whist_frontend_paint_solid(frontend, &background_color);
+    whist_gpu_unlock();
 
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
@@ -368,14 +373,18 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
     // If there is a new video frame then update the frontend texture
     // with it.
     if (pending_video_frame) {
+        whist_gpu_lock();
         whist_frontend_update_video(frontend, pending_video_frame);
+        whist_gpu_unlock();
 
         // If the frontend needs to take a reference to the frame data
         // then it has done so, so we can free this frame immediately.
         av_frame_free(&pending_video_frame);
     }
 
+    whist_gpu_lock();
     whist_frontend_paint_video(frontend);
+    whist_gpu_unlock();
 
     if (insufficient_bandwidth) {
         render_insufficient_bandwidth(frontend);
@@ -387,7 +396,9 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
     // RenderPresent outside of the mutex, since RenderCopy made a copy anyway
     // and this will take ~8ms if VSYNC is on.
     // (If this causes a bug, feel free to pull back to inside of the mutex)
+    whist_gpu_lock();
     TIME_RUN(whist_frontend_render(frontend), VIDEO_RENDER_TIME, statistics_timer);
+    whist_gpu_unlock();
 
     whist_lock_mutex(frontend_render_mutex);
     pending_render = false;

@@ -87,6 +87,8 @@ Defines
 #define BASE_UDP_PORT 32263
 #define BASE_TCP_PORT 32273
 
+#define FIX_M1_FREEZE_WITH_LOCK true
+
 // Various control flags
 #define USING_FFMPEG_IFRAME_FLAG false
 // Toggle verbose logs
@@ -784,6 +786,9 @@ int int_div_roundup(int a, int b);
  * @returns                        The git commit
  */
 const char* whist_git_revision(void);
+
+void whist_gpu_lock(void);
+void whist_gpu_unlock(void);
 
 // TODO: Resolve circular references
 #include "whist_frame.h"
