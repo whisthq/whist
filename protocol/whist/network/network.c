@@ -547,6 +547,22 @@ int recvfrom_no_intr(SOCKET sockfd, void* buf, size_t len, int flags, struct soc
 #endif
 }
 
+int socket_get_queue_len(SOCKET socket) {
+#if OS_IS(OS_WIN32)
+    unsigned long len;
+    if (ioctlsocket(socket, FIONREAD, &n) != 0) {
+        return 0;
+    }
+    return (int)len;
+#else
+    int len;
+    if (ioctl(socket, FIONREAD, &len) != 0) {
+        return 0;
+    }
+    return len;
+#endif
+}
+
 /*
 ============================
 Private Function Implementations
