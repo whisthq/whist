@@ -1,8 +1,7 @@
 # workflows/whist-browser-build-and-deploy.yml
 #
 # Whist Browser: Build & Deploy
-# Build and deploy the Whist Browser, bundling the Whist monorepo and the Brave Chromium browser for
-# our dev environment, nightly.
+# Build and deploy the Whist Browser, built from our own fork of Brave and our Whist monorepo.
 
 name: "Whist Browser: Build & Deploy"
 
@@ -15,6 +14,7 @@ on:
     branches:
       - prod
       - staging
+      - phil/chromium-macos-ci # TODO: FOR TESTING, DELETE ONCE DONE
     paths-ignore:
       - "README.md"
       - "**/README.md"
@@ -22,9 +22,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  # This job cross-compiles the Whist Browser to x64 from our NYC office M1 Mac Mini self-hosted runner.
-  whist-browser-build-macos:
-    name: "Nightly: macOS (${{ matrix.config.target_arch}})"
+  # This job builds the Whist Browser for a specific OS and architecture by starting the build on the GHA machine
+  # and offloading the build to a Goma cluster via EngFlow.
+  whist-browser-build-and-deploy:
+    name: "Build & Deploy Whist Browser for ${{ matrix.config.target_os }} (${{ matrix.config.target_arch}})"
     runs-on: ${{ matrix.config.runner}}
 
     strategy:
@@ -32,7 +33,7 @@ jobs:
         config:
           - target_arch: "x86_64"
             target_os: "macOS"
-            runner: macos-11 # We run off of the host GHA machines, but offload the build to EngFlow via Goma            
+            runner: macos-11 # We run off of the host GHA machines, but offload the build to EngFlow via Goma
           - target_arch: "arm64"
             target_os: "macOS"
             runner: macos-11 # We run off of the host GHA machines, but offload the build to EngFlow via Goma
@@ -62,20 +63,22 @@ jobs:
 
       # Building Brave/Chromium requires specific Node & npm versions, and Xcode. For full
       # details, see: https://github.com/whisthq/brave-browser#readme
-      - name: Log NodeJS, NPM and Xcode versions
+      - name: Log NodeJS, NPM and Xcode Versions
         run: |
-          echo "NodeJS & npm versions:\n"
+          echo "Verifying NodeJS & NPM versions (need 16.x and 8.x):\n"
           node --version
           npm --version
 
-          echo "Verify that Xcode is installed and up-to-date:\n"
+          echo "Verifying that Xcode is installed and up-to-date (Need 13.x):\n"
           xcode-select --install
           xcodebuild -version
 
-      - name: Initialize the build environment
+      - name: Initialize the Build Environment
+        working-directory: brave-browser
         run: npm install
 
-      - name: Configure build type
+      - name: Configure Build Type
+        working-directory: brave-browser
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
             # Production build, set official build as true and build Chromium as Release
@@ -87,6 +90,94 @@ jobs:
             echo "build_type=Debug" >> $GITHUB_ENV
           fi
 
+      - name: Retrieve Current Whist Browser Version from Config Database
+        run: |
+          BRANCH_NAME="${GITHUB_REF##*/}"
+          ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}'
+
+          # curl GraphQL API to retrieve version number from config database
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
+          --data "{ \"query\": \"query { desktop_app_version { major minor micro dev_rc staging_rc } }\" }" \
+          https://config-database.whist.com/v1/graphql > response.json
+
+          # Check if we actually got back valid JSON. If not, we should throw
+          # a human-readable error because the config DB might be down.
+          if cat response.json | jq -e . > /dev/null 2>&1; then
+            echo "Got some valid JSON from the config DB:"
+            cat response.json
+            echo
+            echo "Continuing..."
+          else
+            echo "Failed to parse the JSON from the config DB. Is it up?" && false
+          fi
+
+          # parse JSON into major.minor.micro-rc
+          MAJOR=$(cat response.json | jq '.data.desktop_app_version[0].major')
+          MINOR=$(cat response.json | jq '.data.desktop_app_version[0].minor')
+          MICRO=$(cat response.json | jq '.data.desktop_app_version[0].micro')
+          DEV_RC=$(cat response.json | jq '.data.desktop_app_version[0].dev_rc')
+          STAGING_RC=$(cat response.json | jq '.data.desktop_app_version[0].staging_rc')
+
+          # remove temporary JSON file
+          rm response.json
+
+          echo "Current `prod` version: $MAJOR.$MINOR.$MICRO"
+          echo "Current `staging` version: $MAJOR.$MINOR.$MICRO-staging-rc.$STAGING_RC"
+          echo "Current `dev` version: $MAJOR.$MINOR.$MICRO-dev-rc.$DEV_RC"
+
+          # if `dev` or `staging`, increment RC by 1, else increment micro by 1 and set RC to 0
+          if [[ "$BRANCH_NAME" == "prod" ]]; then
+            echo 'Using `prod` configuration...'
+            # increment version by 0.0.1
+            NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
+            # set new desktop app version
+            NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
+
+            # store NEW_MICRO in GITHUB_ENV to push to GraphQL API, and reset STAGING_RC and DEV_RC to 0
+            echo "new_micro_version=${NEW_MICRO}" >> $GITHUB_ENV
+            echo "new_staging_rc_version=0" >> $GITHUB_ENV
+            echo "new_dev_rc_version=0" >> $GITHUB_ENV
+          elif [[ "$BRANCH_NAME" == "staging" ]]; then
+            echo 'Using `staging` configuration...'
+            # increment version by staging-rc.1
+            NEW_STAGING_RC=$(echo "print( ${STAGING_RC} + 1)" | python)
+
+            # set temporary variable for upcoming micro version which is 1 ahead of current, since
+            # staging/dev are release candiates (rc) for the next version. We don't push that micro
+            # version to GraphQL in staging/dev, only on prod when it becomes current
+            UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
+            # set new desktop app version
+            NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-staging-rc.${NEW_STAGING_RC}"
+
+            # store NEW_STAGING_RC in GITHUB_ENV to push to GraphQL API
+            echo "new_staging_rc_version=${NEW_STAGING_RC}" >> $GITHUB_ENV
+          elif [[ "$BRANCH_NAME" == "dev" ]]; then
+            echo 'Using `dev` configuration...'
+            # increment version by dev-rc.1
+            NEW_DEV_RC=$(echo "print( ${DEV_RC} + 1)" | python)
+
+            # set temporary variable for upcoming micro version which is 1 ahead of current, since
+            # staging/dev are release candiates (rc) for the next version. We don't push that micro
+            # version to GraphQL in staging/dev, only on prod when it becomes current
+            UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
+            # set new desktop app version [-x64/-arm64] gets appended depending on the OS architecture it is built on
+            NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-dev-rc.${NEW_DEV_RC}"
+
+            # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
+            echo "new_dev_rc_version=${NEW_DEV_RC}" >> $GITHUB_ENV
+          else
+            echo 'Error: Invalid branch' && false
+          fi
+
+          # store new desktop app version as GitHub step output to substitute in GitHub Release tag creation
+          echo "New $BRANCH_NAME version: ${NEW_VERSION}"
+          echo "release_version=${NEW_VERSION}" >> $GITHUB_ENV
+
       # We need to configure build parameters, to build for the proper architecture and with
       # the relevant flags for the selected build type. Note that we cannot/don't want to use
       # a lot of Brave-specific services, which are either omitted or filled-in blank.
@@ -94,13 +185,14 @@ jobs:
       # List of potential flags can be found here:
       # https://github.com/whisthq/brave-core/blob/main/build/commands/lib/config.js#L77
       # https://github.com/brave/brave-core/blob/master/build/commands/scripts/commands.js#L71
-      - name: Configure build parameters
+      - name: Configure Build Parameters
+        working-directory: brave-browser
         run: |
           # Set architecture and version
           # TODO: Retrieve version from configDB (can reuse code in whist-build-and-deploy.yml once we are ready)
           npm config set target_arch=${{ matrix.config.target_arch }}
           npm config set target_os=${{ matrix.config.target_os }}
-          npm config set version=0.0.0
+          npm config set version=${{ env.release_version }}
 
           # Google Auth integration
           # TODO: These GitHub Secrets are currently the values from the Whist Electron Application
@@ -116,10 +208,7 @@ jobs:
           # TODO: Configure update server
           # TODO: Add support for `staging` update server
           npm config set updater_dev_endpoint=https://
-
           npm config set updater_prod_endpoint=https://
-
-
           npm config set updater_prod_endpoint=https://
           npm config set brave_stats_updater_url=https://
 
@@ -151,12 +240,39 @@ jobs:
           npm config set rewards_grant_prod_endpoint=https://
 
       - name: Fetch Chromium Source & Dependencies
+        working-directory: brave-browser
         run: npm run init
 
-      - name: Build Whist Chromium Browser
+      - name: Build Whist Browser
         run: npm run build ${{ env.build_type }} --brave_use_goma --goma_server_host=humite.goma.engflow.com
 
-      - name: Tar & Upload Whist Chromium Browser to AWS S3
+      - name: Update Config Database Version with the New Version
+        run: |
+          BRANCH_NAME="${GITHUB_REF##*/}"
+          ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}'
+
+          # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
+          if [[ "$BRANCH_NAME" == "prod" ]]; then
+            curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, staging_rc: ${{ env.new_staging_rc_version }}, dev_rc: ${{ env.new_dev_rc_version }}, prod_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            https://config-database.whist.com/v1/graphql
+          elif [[ "$BRANCH_NAME" == "staging" ]]; then
+            curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ env.new_staging_rc_version }}, staging_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            https://config-database.whist.com/v1/graphql
+          elif [[ "$BRANCH_NAME" == "dev" ]]; then
+            curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ env.new_dev_rc_version }}, dev_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            https://config-database.whist.com/v1/graphql
+          fi
+
+      - name: Tar & Upload Whist Browser to AWS S3
         run: |
           tar -zcvf "${{ env.${{ matrix.config.arch }}-binary-tar-name }}" "Component_${{ matrix.config.arch }}/Brave Browser" "${{ env.build_type }}.app"
           aws s3 cp "${{ env.${{ matrix.config.arch }}-binary-tar-name }}" "${{ env.${{ matrix.config.arch }}-s3-bucket-uri }}/${{ env.${{ matrix.config.arch }}-binary-tar-name }}"
@@ -164,9 +280,11 @@ jobs:
       ###################################################################################
 
       - name: Checkout whisthq/whist Git Repository
+        if: always()
         uses: actions/checkout@v2
 
       - name: Setup Python-based notifications
+        if: always()
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh
 
@@ -176,7 +294,7 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          BODY = f"@releases :rotating_light: Failed to deploy Whist Chromium Browser (Nightly macOS) to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"@releases :rotating_light: Failed to deploy Whist Chromium Browser to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
       - name: Notify Slack on Success
@@ -185,6 +303,9 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          TITLE = ":brave: Whist Chromium Browser (Nightly macOS) Deployed :brave:"
-          BODY = f"Whist Chromium Browser (Nightly macOS) deployed via upload to AWS S3 (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          TITLE = ":brave: Whist Browser Deployed :brave:"
+          BODY = f"Whist Chromium Browser deployed via upload to AWS S3 (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
+
+    # TODO: Once we fully move off of Electron, we should merge this with the `whist-build-and-deploy` workflow,
+    # and publish GitHub Tags
