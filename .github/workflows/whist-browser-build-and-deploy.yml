@@ -70,7 +70,6 @@ jobs:
           npm --version
 
           echo "Verifying that Xcode is installed and up-to-date (Need 13.x):\n"
-          xcode-select --install
           xcodebuild -version
 
       - name: Initialize the Build Environment
@@ -286,7 +285,7 @@ jobs:
       - name: Setup Python-based notifications
         if: always()
         working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
+        run: ./notifications/setup_notifications.sh true
 
       - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
         if: failure()
