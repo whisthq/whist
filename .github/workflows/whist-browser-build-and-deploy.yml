@@ -120,13 +120,13 @@ jobs:
           # remove temporary JSON file
           rm response.json
 
-          echo "Current `prod` version: $MAJOR.$MINOR.$MICRO"
-          echo "Current `staging` version: $MAJOR.$MINOR.$MICRO-staging-rc.$STAGING_RC"
-          echo "Current `dev` version: $MAJOR.$MINOR.$MICRO-dev-rc.$DEV_RC"
+          echo "Current prod version: $MAJOR.$MINOR.$MICRO"
+          echo "Current staging version: $MAJOR.$MINOR.$MICRO-staging-rc.$STAGING_RC"
+          echo "Current dev version: $MAJOR.$MINOR.$MICRO-dev-rc.$DEV_RC"
 
-          # if `dev` or `staging`, increment RC by 1, else increment micro by 1 and set RC to 0
+          # if dev or staging, increment RC by 1, else increment micro by 1 and set RC to 0
           if [[ "$BRANCH_NAME" == "prod" ]]; then
-            echo 'Using `prod` configuration...'
+            echo 'Using prod configuration...'
             # increment version by 0.0.1
             NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
 
@@ -138,7 +138,7 @@ jobs:
             echo "new_staging_rc_version=0" >> $GITHUB_ENV
             echo "new_dev_rc_version=0" >> $GITHUB_ENV
           elif [[ "$BRANCH_NAME" == "staging" ]]; then
-            echo 'Using `staging` configuration...'
+            echo 'Using staging configuration...'
             # increment version by staging-rc.1
             NEW_STAGING_RC=$(echo "print( ${STAGING_RC} + 1)" | python)
 
@@ -153,7 +153,7 @@ jobs:
             # store NEW_STAGING_RC in GITHUB_ENV to push to GraphQL API
             echo "new_staging_rc_version=${NEW_STAGING_RC}" >> $GITHUB_ENV
           elif [[ "$BRANCH_NAME" == "dev" ]]; then
-            echo 'Using `dev` configuration...'
+            echo 'Using dev configuration...'
             # increment version by dev-rc.1
             NEW_DEV_RC=$(echo "print( ${DEV_RC} + 1)" | python)
 
@@ -202,7 +202,7 @@ jobs:
           npm config set safebrowsing_api_endpoint=https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_GOOGLE_API_KEY }}
 
           # TODO: Configure update server
-          # TODO: Add support for `staging` update server
+          # TODO: Add support for staging update server
           npm config set updater_dev_endpoint=https://
           npm config set updater_prod_endpoint=https://
           npm config set updater_prod_endpoint=https://
@@ -302,5 +302,5 @@ jobs:
           BODY = f"Whist Chromium Browser deployed via upload to AWS S3 (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
-    # TODO: Once we fully move off of Electron, we should merge this with the `whist-build-and-deploy` workflow,
+    # TODO: Once we fully move off of Electron, we should merge this with the whist-build-and-deploy` workflow,
     # and publish GitHub Tags
