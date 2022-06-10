@@ -550,9 +550,10 @@ int recvfrom_no_intr(SOCKET sockfd, void* buf, size_t len, int flags, struct soc
 int socket_get_queue_len(SOCKET socket) {
 #if OS_IS(OS_WIN32)
     unsigned long len;
-    if (ioctlsocket(socket, FIONREAD, &n) != 0) {
+    if (ioctlsocket(socket, FIONREAD, &len) != 0) {
         return 0;
     }
+    FATAL_ASSERT(len >= 0);
     return (int)len;
 #else
     int len;
