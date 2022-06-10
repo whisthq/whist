@@ -223,17 +223,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-de
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-client-shared-lib-encryption" {
-  count  = var.env == "dev" ? 1 : 0
-  bucket = aws_s3_bucket.whist-protocol-client-shared-lib[0].id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
 # Other resources encryption
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-dev-secrets-encryption" {
