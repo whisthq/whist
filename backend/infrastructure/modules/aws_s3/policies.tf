@@ -94,15 +94,6 @@ resource "aws_s3_bucket_public_access_block" "whist-protocol-dependencies" {
   ignore_public_acls      = false
 }
 
-resource "aws_s3_bucket_public_access_block" "whist-protocol-client-shared-lib" {
-  count                   = var.env == "dev" ? 1 : 0
-  bucket                  = aws_s3_bucket.whist-protocol-client-shared-lib[0].id
-  block_public_acls       = false
-  block_public_policy     = false
-  restrict_public_buckets = false
-  ignore_public_acls      = false
-}
-
 # ------------------------------ Policies for other data ------------------------------ #
 
 # Policy for dev secrets

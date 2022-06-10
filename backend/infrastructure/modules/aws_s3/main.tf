@@ -138,18 +138,6 @@ resource "aws_s3_bucket" "whist-protocol-dependencies" {
   }
 }
 
-# Bucket for storing the client protocol shared library (for external bundling, like Chromium)
-resource "aws_s3_bucket" "whist-protocol-client-shared-lib" {
-  count  = var.env == "dev" ? 1 : 0
-  bucket = "whist-protocol-client-shared-lib"
-
-  tags = {
-    Name      = "whist-protocol-client-shared-lib-${var.env}"
-    Env       = var.env
-    Terraform = true
-  }
-}
-
 # ------------------------------ Buckets for other data ------------------------------ #
 
 # Bucket for storing Whist development secrets (Apple codesigning files, etc.)
