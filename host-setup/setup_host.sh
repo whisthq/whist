@@ -125,7 +125,7 @@ common_steps () {
   sudo systemctl stop nvidia-persistenced.service ||:
 
   # Install Linux headers
-  sudo apt-get install -y gcc make "linux-headers-5.13.0-1025-aws"
+  sudo apt-get install -y gcc make "linux-headers-$(uname -r)"
 
   # Blacklist some Linux kernel modules that would block NVIDIA drivers
   idempotent_backup "/etc/modprobe.d/blacklist.conf" "sudo"
@@ -143,12 +143,6 @@ EOF
   cat << EOF | sudo tee --append /etc/default/grub > /dev/null
 GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
-
-  # Configure GRUB to use a stable version of the kernel. This version and the
-  # linux headers should be updated so that the NVIDIA drivers work correctly.
-  sudo apt-get install -y linux-image-5.13.0-1025-aws
-  sudo sed -i 's/GRUB_DEFAULT=0/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 5.13.0-1025-aws"/g' /etc/default/grub
-  sudo update-grub
 
   # Install NVIDIA GRID (virtualized GPU) drivers
   ./get-nvidia-driver-installer.sh
