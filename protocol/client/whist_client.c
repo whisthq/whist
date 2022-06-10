@@ -332,49 +332,28 @@ int whist_client_main(int argc, const char* argv[]) {
     // a certain number of attempts. If we succeed, then we enter the main event loop until
     // conditions change; as needed, we either exit the program or re-enter the connection loop.
     while (CONTINUE_MAIN_LOOP(client_exiting, exit_code)) {
-        WhistRenderer* whist_renderer = NULL;
-        WhistTimer keyboard_sync_timer, monitor_change_timer, new_tab_urls_timer, window_fade_timer,
-            cpu_usage_statistics_timer;
+        WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
+        init_clipboard_synchronizer(true);
+        init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
+        window_resize_mutex = whist_create_mutex();
 
         // Connection attempt loop
         for (int retry_attempt = 0; retry_attempt < MAX_INIT_CONNECTION_ATTEMPTS; ++retry_attempt) {
-            // The following lines must run before connection attempts, but must be cleaned up on
-            // failure
-
-            whist_renderer = init_renderer(frontend, output_width, output_height);
-            init_clipboard_synchronizer(true);
-            init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
-
-            window_resize_mutex = whist_create_mutex();
-            start_timer(&window_resize_timer);
-            start_timer(&keyboard_sync_timer);
-            start_timer(&monitor_change_timer);
-            start_timer(&new_tab_urls_timer);
-            start_timer(&window_fade_timer);
-            start_timer(&cpu_usage_statistics_timer);
-
             WhistTimer handshake_time;
-            start_timer(&handshake_time);  // start timer for measuring handshake time
-            LOG_INFO("Begin measuring handshake");
+            start_timer(&handshake_time);
             if (connect_to_server(server_ip, using_stun, user_email) == 0) {
                 // Success -- log to METRIC for cross-session tracking and INFO for developer-facing
                 // logging
                 double connect_to_server_time = get_timer(&handshake_time);
-                LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
+                LOG_INFO("Server connection took %f ms", connect_to_server_time);
                 LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
 
                 connected = true;
                 break;
             }
-
-            // This must destroy everything initialized above this line
-            LOG_WARNING("Failed to connect to server.");
-            destroy_file_synchronizer();
-            destroy_clipboard_synchronizer();
-            destroy_renderer(whist_renderer);
+            LOG_WARNING("Failed to connect to server, retrying...");
 
             // Wait before retrying
-            LOG_WARNING("Trying to recover the server connection...");
             // TODO: This is a sleep 1000, but I don't think we should ever show the user
             // a frozen window for 1 second if we're not connected to the server. Better to
             // show a "reconnecting" message within the main loop.
@@ -385,6 +364,14 @@ int whist_client_main(int argc, const char* argv[]) {
             failed_to_connect = true;
             break;
         }
+
+        WhistTimer keyboard_sync_timer, monitor_change_timer, new_tab_urls_timer,
+            cpu_usage_statistics_timer;
+        start_timer(&window_resize_timer);
+        start_timer(&keyboard_sync_timer);
+        start_timer(&monitor_change_timer);
+        start_timer(&new_tab_urls_timer);
+        start_timer(&cpu_usage_statistics_timer);
 
         // We now are guaranteed to have a connection to the server
         while (connected && CONTINUE_MAIN_LOOP(client_exiting, exit_code)) {
@@ -486,7 +473,7 @@ int whist_client_main(int argc, const char* argv[]) {
             // We actually exited the main loop, so signal the server to quit
             send_server_quit_messages(3);
         } else {
-            LOG_INFO("Reconnection to server...");
+            LOG_INFO("Reconnecting to server...");
         }
 
         // Destroy the packet receivers,
@@ -547,18 +534,18 @@ int whist_client_main(int argc, const char* argv[]) {
 
     destroy_sdl(frontend);
 
+    LOG_INFO("Client frontend has exited...");
+
     destroy_statistic_logger();
 
-    LOG_INFO("Protocol has shutdown gracefully");
-
     destroy_logger();
+
+    LOG_INFO("Logger has exited...");
 
     // We must call this after destroying the logger so that all
     // error monitor breadcrumbs and events can finish being reported
     // before we close the error monitor.
     whist_error_monitor_shutdown();
-
-    LOG_INFO("Logger has shutdown gracefully");
 
     return exit_code;
 }
