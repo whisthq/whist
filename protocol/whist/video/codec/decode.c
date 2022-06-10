@@ -564,26 +564,21 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
     av_frame_free(&decoder->decoded_frame);
 
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(frame->format);
-    if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL) {
-        if (decoder->params.hardware_output_format == frame->format && USING_CLIENT_HW_COPY) {
-            // The caller supports dealing with the hardware frame
-            // directly, so just return it.
-            decoder->decoded_frame = frame;
-            decoder->using_hw = true;
-        } else {
-            // Otherwise, copy the hw data into a new software frame.
-            start_timer(&latency_clock);
-            decoder->decoded_frame = safe_av_frame_alloc();
-            res = av_hwframe_transfer_data(decoder->decoded_frame, frame, 0);
-            av_frame_free(&frame);
-            if (res < 0) {
-                av_frame_free(&decoder->decoded_frame);
-                LOG_WARNING("Failed to av_hwframe_transfer_data, error: %s", av_err2str(res));
-                destroy_video_decoder(decoder);
-                return -1;
-            }
-            log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME, get_timer(&latency_clock) * 1000);
-            decoder->using_hw = false;
+    if (decoder->params.renderer_output_format == frame->format && USING_CLIENT_HW_COPY) {
+        // The caller supports dealing with the hardware frame
+        // directly, so just return it.
+        decoder->decoded_frame = frame;
+    } else if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL) {
+        // Otherwise, copy the hw data into a new software frame.
+        start_timer(&latency_clock);
+        decoder->decoded_frame = safe_av_frame_alloc();
+        res = av_hwframe_transfer_data(decoder->decoded_frame, frame, 0);
+        av_frame_free(&frame);
+        if (res < 0) {
+            av_frame_free(&decoder->decoded_frame);
+            LOG_WARNING("Failed to av_hwframe_transfer_data, error: %s", av_err2str(res));
+            destroy_video_decoder(decoder);
+            return -1;
         }
         log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME,
                              get_timer(&latency_clock) * MS_IN_SECOND);
