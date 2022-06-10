@@ -13,8 +13,7 @@ extern "C" {
 #define RGBA_B 0x0000ff00
 #define RGBA_A 0x000000ff
 
-void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size, int output_width,
-                   int output_height, int x, int y) {
+void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size, int x, int y) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     unsigned int w, h;
     uint8_t* image;
@@ -41,6 +40,9 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
         LOG_ERROR("Failed to create texture from PNG: %s", SDL_GetError());
         return;
     }
+
+    int output_width, output_height;
+    frontend->call->get_window_pixel_size(frontend, &output_width, &output_height);
 
     // TODO: Formalize window position constants.
     if (x == -1) {
@@ -209,7 +211,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame) {
     return WHIST_SUCCESS;
 }
 
-void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_height) {
+void sdl_paint_video(WhistFrontend* frontend) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     int res;
 
@@ -219,6 +221,9 @@ void sdl_paint_video(WhistFrontend* frontend, int output_width, int output_heigh
         // cleared to a solid colour anyway.
         return;
     }
+
+    int output_width, output_height;
+    frontend->call->get_window_pixel_size(frontend, &output_width, &output_height);
 
     // Take the subsection of texture that should be rendered to screen,
     // and draw it on the renderer

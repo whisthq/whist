@@ -60,9 +60,6 @@ Includes
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
 
-extern volatile int output_width;
-extern volatile int output_height;
-static char* program_name;
 static char* server_ip;
 extern bool using_stun;
 
@@ -94,8 +91,6 @@ extern bool upload_initiated;
 
 COMMAND_LINE_STRING_OPTION(new_tab_urls, 'x', "new-tab-url", MAX_URL_LENGTH* MAX_NEW_TAB_URLS,
                            "URL to open in new tab.")
-COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
-                           "Set the window title.  Default: Whist.")
 COMMAND_LINE_STRING_OPTION(server_ip, 0, "server-ip", IP_MAXLEN, "Set the server IP to connect to.")
 
 static void sync_keyboard_state(WhistFrontend* frontend) {
@@ -428,6 +423,8 @@ int whist_client_main(int argc, const char* argv[]) {
     client_exiting = false;
     WhistExitCode exit_code = WHIST_EXIT_SUCCESS;
 
+    WhistFrontend* frontend = create_frontend();
+
     // Read in any piped arguments. If the arguments are bad, then skip to the destruction phase
     switch (read_piped_arguments(false)) {
         case -2: {
@@ -455,12 +452,12 @@ int whist_client_main(int argc, const char* argv[]) {
         }
     }
 
-    WhistFrontend* frontend = init_sdl(output_width, output_height, program_name);
-
     bool failed_to_connect = false;
 
     while (!client_exiting && (exit_code == WHIST_EXIT_SUCCESS)) {
-        WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
+        int initial_width = 0, initial_height = 0;
+        whist_frontend_get_window_pixel_size(frontend, &initial_width, &initial_height);
+        WhistRenderer* whist_renderer = init_renderer(frontend, initial_width, initial_height);
         init_clipboard_synchronizer(true);
         init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
 
@@ -552,7 +549,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
 
-    destroy_sdl(frontend);
+    destroy_frontend(frontend);
 
     LOG_INFO("Client frontend has exited...");
 

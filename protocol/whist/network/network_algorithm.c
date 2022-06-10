@@ -38,9 +38,9 @@ Globals
 ============================
 */
 
-volatile int output_width;
-volatile int output_height;
-volatile bool insufficient_bandwidth;
+static volatile int network_algo_width;
+static volatile int network_algo_height;
+static volatile bool network_algo_insufficient_bandwidth;
 
 /*
 ============================
@@ -71,11 +71,11 @@ static NetworkSettings default_network_settings = {
 #define DPI_RATIO_EXPONENT 1.6
 
 #define MINIMUM_BITRATE \
-    get_video_bitrate(output_width, output_height, dpi, MINIMUM_BITRATE_PER_PIXEL)
+    get_video_bitrate(network_algo_width, network_algo_height, dpi, MINIMUM_BITRATE_PER_PIXEL)
 #define MAXIMUM_BITRATE \
-    get_video_bitrate(output_width, output_height, dpi, MAXIMUM_BITRATE_PER_PIXEL)
+    get_video_bitrate(network_algo_width, network_algo_height, dpi, MAXIMUM_BITRATE_PER_PIXEL)
 #define STARTING_BITRATE \
-    get_video_bitrate(output_width, output_height, dpi, STARTING_BITRATE_PER_PIXEL)
+    get_video_bitrate(network_algo_width, network_algo_height, dpi, STARTING_BITRATE_PER_PIXEL)
 
 #define MINIMUM_BURST_BITRATE (MINIMUM_BITRATE * BURST_BITRATE_RATIO)
 #define MAXIMUM_BURST_BITRATE (MAXIMUM_BITRATE * BURST_BITRATE_RATIO)
@@ -119,10 +119,17 @@ NetworkSettings get_default_network_settings(int width, int height, int screen_d
 }
 
 NetworkSettings get_starting_network_settings(void) {
-    return get_default_network_settings(output_width, output_height, dpi);
+    return get_default_network_settings(network_algo_width, network_algo_height, dpi);
 }
 
 void network_algo_set_dpi(int new_dpi) { dpi = new_dpi; }
+
+void network_algo_set_dimensions(int width, int height) {
+    network_algo_width = width;
+    network_algo_height = height;
+}
+
+bool network_algo_is_insufficient_bandwidth(void) { return network_algo_insufficient_bandwidth; }
 
 // The theory behind all the code in this function is documented in WCC.md file. Please go thru that
 // document before reviewing this file. Also if you make any modifications to this algo, remember to
@@ -368,10 +375,10 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
             // If we have reached the min_bitrate for two consecutive times, then signal
             // insufficient bandwidth
             if (network_settings->video_bitrate == min_bitrate) {
-                insufficient_bandwidth = true;
+                network_algo_insufficient_bandwidth = true;
             }
         } else {
-            insufficient_bandwidth = false;
+            network_algo_insufficient_bandwidth = false;
         }
         burst_mode = false;
 

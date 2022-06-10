@@ -33,17 +33,10 @@ Public Functions
  * @brief                          Creates the SDL window frontend,
  *                                 with the currently running thread at the owner
  *
- * @param output_width             The width of the SDL window to create, in
- *                                 pixels
- * @param output_height            The height of the SDL window to create, in
- *                                 pixels
- *
- * @param title                    The title of the window
- *
  * @returns                        A handle for the created frontend
  *
  */
-WhistFrontend* init_sdl(int output_width, int output_height, const char* title);
+WhistFrontend* create_frontend(void);
 
 /**
  * @brief                          Destroys an SDL window and associated
@@ -51,7 +44,7 @@ WhistFrontend* init_sdl(int output_width, int output_height, const char* title);
  *
  * @param frontend                 The frontend to be destroyed
  */
-void destroy_sdl(WhistFrontend* frontend);
+void destroy_frontend(WhistFrontend* frontend);
 
 /**
  * @brief                          When the window gets resized, call this function
@@ -165,7 +158,7 @@ void sdl_client_display_notification(const WhistNotification* notif);
  * @param frontend                 The WhistFrontend to use for the actions
  *
  * @note                           This function must be called by the
- *                                 same thread that originally called init_sdl.
+ *                                 same thread that originally called create_frontend.
  *                                 This will also render out any pending framebuffer,
  *                                 thereby setting `sdl_render_pending` to false.
  */

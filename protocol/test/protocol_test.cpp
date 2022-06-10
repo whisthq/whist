@@ -64,8 +64,6 @@ extern "C" {
 #include "whist/core/error_codes.h"
 #include <whist/core/features.h>
 
-extern int output_width;
-extern int output_height;
 extern WhistMutex window_resize_mutex;
 extern volatile char client_hex_aes_private_key[33];
 extern unsigned short port_mappings[USHRT_MAX + 1];
@@ -105,18 +103,7 @@ char* generate_random_string(size_t length) {
  **/
 
 TEST_F(ProtocolTest, InitSDL) {
-    char* very_long_title = generate_random_string(2000);
-    size_t title_len = strlen(very_long_title);
-    EXPECT_EQ(title_len, 2000);
-
-    // These need to be small enough to fit on the screen, but bigger
-    // than our set minima from whist/core/whist.h.
-    int width = 500;
-    int height = 575;
-    EXPECT_GE(width, MIN_SCREEN_WIDTH);
-    EXPECT_GE(height, MIN_SCREEN_HEIGHT);
-
-    WhistFrontend* frontend = init_sdl(width, height, very_long_title);
+    WhistFrontend* frontend = create_frontend();
 
     if (frontend == NULL) {
         // Check if there is no device available to test SDL (e.g. on Ubuntu CI)
@@ -125,7 +112,6 @@ TEST_F(ProtocolTest, InitSDL) {
         if (res == 0) {
             check_stdout_line(
                 ::testing::HasSubstr("Could not initialize SDL - No available video device"));
-            free(very_long_title);
             return;
         }
     }
@@ -151,8 +137,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
     // Check that the initial title was set appropriately
     const char* title = SDL_GetWindowTitle(new_window);
-    EXPECT_EQ(strcmp(title, very_long_title), 0);
-    free(very_long_title);
+    EXPECT_EQ(strcmp(title, "Whist"), 0);
 
     // Check that the screensaver option was enabled
     bool screen_saver_check = SDL_IsScreenSaverEnabled();
@@ -163,14 +148,11 @@ TEST_F(ProtocolTest, InitSDL) {
     uint32_t actual_sdl_flags = SDL_WasInit(desired_sdl_flags);
     EXPECT_EQ(actual_sdl_flags, desired_sdl_flags);
 
-    // Check that the dimensions are the desired ones
     int measured_width, measured_height;
-    whist_frontend_get_window_virtual_size(frontend, &measured_width, &measured_height);
-    EXPECT_EQ(measured_width, width);
-    EXPECT_EQ(measured_height, height);
+    int width, height;
 
     char* very_short_title = generate_random_string(1);
-    title_len = strlen(very_short_title);
+    size_t title_len = strlen(very_short_title);
     EXPECT_EQ(title_len, 1);
     SDL_SetWindowTitle(new_window, very_short_title);
 
@@ -185,10 +167,11 @@ TEST_F(ProtocolTest, InitSDL) {
 
     // Window resize
     {
-        // Swap height and width (pixel form)
-        int temp = width;
-        width = height;
-        height = temp;
+        // Set width and height
+        width = 575;
+        height = 600;
+        EXPECT_GE(width, MIN_SCREEN_WIDTH);
+        EXPECT_GE(height, MIN_SCREEN_HEIGHT);
 
         // Apply window dimension change to SDL window
         SDL_SetWindowSize(new_window, width, height);
@@ -318,7 +301,7 @@ TEST_F(ProtocolTest, InitSDL) {
         //       but this was literally the only place in our codebase where we needed
         //       to compute the screen size, so I opted to remove that function.
     }
-    destroy_sdl(frontend);
+    destroy_frontend(frontend);
     whist_destroy_mutex(window_resize_mutex);
 
     check_stdout_line(::testing::HasSubstr("Destroying SDL"));
@@ -1989,11 +1972,12 @@ TEST_F(ProtocolTest, VirtualEventTest) {
 TEST_F(ProtocolTest, WCCTest) {
     void* fec_controller = create_fec_controller(get_timestamp_sec());
 
-    output_width = 1920;
-    output_height = 1080;
+    const int width = 1920;
+    const int height = 1080;
+    network_algo_set_dimensions(width, height);
     network_algo_set_dpi(192);
     NetworkSettings network_settings = get_starting_network_settings();
-    int expected_video_bitrate = output_width * output_height * STARTING_BITRATE_PER_PIXEL;
+    int expected_video_bitrate = width * height * STARTING_BITRATE_PER_PIXEL;
     EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
     GroupStats curr_group_stats = {0, 0, 0};
     GroupStats prev_group_stats = {0, 0, 0};
@@ -2051,7 +2035,7 @@ TEST_F(ProtocolTest, WCCTest) {
     // Make sure min bitrate is capped
     incoming_bitrate = 1000000;
     packet_loss_ratio = 0.11;
-    expected_video_bitrate = output_width * output_height * MINIMUM_BITRATE_PER_PIXEL;
+    expected_video_bitrate = width * height * MINIMUM_BITRATE_PER_PIXEL;
     whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 1.1 * MS_IN_SECOND));
     whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
                                 packet_loss_ratio, 0.0, 0.0, &network_settings, fec_controller);
@@ -2063,12 +2047,12 @@ TEST_F(ProtocolTest, WCCTest) {
     for (int i = 0; i < 13; i++) {
         incoming_bitrate = network_settings.video_bitrate;
         packet_loss_ratio = 0.0;
-        expected_video_bitrate = output_width * output_height * MINIMUM_BITRATE_PER_PIXEL;
+        expected_video_bitrate = width * height * MINIMUM_BITRATE_PER_PIXEL;
         whist_sleep((uint32_t)(NEW_BITRATE_DURATION_IN_SEC * 1.1 * MS_IN_SECOND));
         whist_congestion_controller(&curr_group_stats, &prev_group_stats, incoming_bitrate,
                                     packet_loss_ratio, 0.0, 0.0, &network_settings, fec_controller);
     }
-    expected_video_bitrate = output_width * output_height * MAXIMUM_BITRATE_PER_PIXEL;
+    expected_video_bitrate = width * height * MAXIMUM_BITRATE_PER_PIXEL;
     EXPECT_EQ(network_settings.video_bitrate, expected_video_bitrate);
     // Make sure the burst bitrate is higher than video bitrate
     EXPECT_GT(network_settings.burst_bitrate, network_settings.video_bitrate);
@@ -2389,17 +2373,9 @@ TEST_F(ProtocolTest, ClientParseArgs) {
         // Set environment to
         "-e",
         "staging",
-        // Set width and height
-        "-w",
-        "500",
-        "-h",
-        "750",
         // Set the icon (using a 64x64 png file)
         "--sdl-icon",
         "assets/icon_dev.png",
-        // Set the protocol window title
-        "-n",
-        "Test Title 1234567890 ?!",
         // Pass URL to open up in new tab
         "-x",
         "https://www.nytimes.com/",
@@ -2455,29 +2431,17 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     EXPECT_STREQ(environment_copy, argv[11]);
     free(environment_copy);
 
-    // Check the width and the height
-    int width = atoi(argv[13]);
-    int height = atoi(argv[15]);
-    EXPECT_EQ(width, output_width);
-    EXPECT_EQ(height, output_height);
-
     // Check that the icon filename was set correctly
     const char* png_icon_filename;
     EXPECT_SUCCESS(whist_option_get_string_value("sdl-icon", &png_icon_filename));
     EXPECT_TRUE(png_icon_filename != NULL);
-    EXPECT_STREQ(png_icon_filename, argv[17]);
-
-    // Check the window title
-    const char* program_name;
-    EXPECT_SUCCESS(whist_option_get_string_value("name", &program_name));
-    EXPECT_TRUE(program_name != NULL);
-    EXPECT_STREQ(program_name, argv[19]);
+    EXPECT_STREQ(png_icon_filename, argv[13]);
 
     // Check that the url was saved properly
     const char* new_tab_url;
     EXPECT_SUCCESS(whist_option_get_string_value("new-tab-url", &new_tab_url));
     EXPECT_TRUE(new_tab_url != NULL);
-    EXPECT_STREQ(new_tab_url, argv[21]);
+    EXPECT_STREQ(new_tab_url, argv[15]);
 
     // Check the additional port mappings
     EXPECT_EQ(port_mappings[8787], 6969);
@@ -2496,8 +2460,8 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     // Check session id
     char* session_id_copy = get_error_monitor_session_id();
     EXPECT_TRUE(session_id_copy != NULL);
-    EXPECT_EQ(strlen(session_id_copy), strlen(argv[25]));
-    EXPECT_EQ(strcmp(session_id_copy, argv[25]), 0);
+    EXPECT_EQ(strlen(session_id_copy), strlen(argv[19]));
+    EXPECT_EQ(strcmp(session_id_copy, argv[19]), 0);
     free(session_id_copy);
 }
 
