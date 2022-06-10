@@ -332,13 +332,14 @@ int whist_client_main(int argc, const char* argv[]) {
     // a certain number of attempts. If we succeed, then we enter the main event loop until
     // conditions change; as needed, we either exit the program or re-enter the connection loop.
     while (CONTINUE_MAIN_LOOP(client_exiting, exit_code)) {
-        WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
-        init_clipboard_synchronizer(true);
-        init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
-        window_resize_mutex = whist_create_mutex();
+        WhistRenderer* whist_renderer = NULL;
 
         // Connection attempt loop
         for (int retry_attempt = 0; retry_attempt < MAX_INIT_CONNECTION_ATTEMPTS; ++retry_attempt) {
+            whist_renderer = init_renderer(frontend, output_width, output_height);
+            init_clipboard_synchronizer(true);
+            init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
+
             WhistTimer handshake_time;
             start_timer(&handshake_time);
             if (connect_to_server(server_ip, using_stun, user_email) == 0) {
@@ -351,7 +352,12 @@ int whist_client_main(int argc, const char* argv[]) {
                 connected = true;
                 break;
             }
+
             LOG_WARNING("Failed to connect to server, retrying...");
+
+            destroy_file_synchronizer();
+            destroy_clipboard_synchronizer();
+            destroy_renderer(whist_renderer);
 
             // Wait before retrying
             // TODO: This is a sleep 1000, but I don't think we should ever show the user
@@ -372,6 +378,8 @@ int whist_client_main(int argc, const char* argv[]) {
         start_timer(&monitor_change_timer);
         start_timer(&new_tab_urls_timer);
         start_timer(&cpu_usage_statistics_timer);
+
+        window_resize_mutex = whist_create_mutex();
 
         // We now are guaranteed to have a connection to the server
         while (connected && CONTINUE_MAIN_LOOP(client_exiting, exit_code)) {
