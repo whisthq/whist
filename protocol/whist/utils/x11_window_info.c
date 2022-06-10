@@ -119,6 +119,8 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
 
 static int handler(Display* disp, XErrorEvent* error);
 
+bool is_window_fullscreen(X11CaptureDevice* device, WhistWindow whist_window);
+
 /*
 ============================
 Public Function Implementations
@@ -149,7 +151,7 @@ void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_win
         whist_window->x = -1;
         whist_window->y = -1;
         return;
-    }
+}
     whist_window->width = attr.width;
     whist_window->height = attr.height;
     whist_window->x = attr.x;
@@ -252,7 +254,7 @@ void bring_window_to_top(CaptureDevice* capture_device, WhistWindow whist_window
     }
 }
 
-bool is_window_fullscreen(CaptureDevice* capture_device, WhistWindow whist_window) {
+bool is_window_fullscreen(X11CaptureDevice* device, WhistWindow whist_window) {
     /*
      * Query whether the given window is fullscreen or not.
      *
@@ -266,7 +268,8 @@ bool is_window_fullscreen(CaptureDevice* capture_device, WhistWindow whist_windo
      */
 
     Window w = (Window)whist_window.id;
-    X11CaptureDevice* device = capture_device->x11_capture_device;
+    static unsigned long nitems;
+    static unsigned char* states;  // name stored here
     if (x11_get_window_property(device, w, device->_NET_WM_STATE, device->ATOM_ARRAY, &nitems, &states)) {
         Atom* state_hints = (Atom*)states;
         for (int i = 0; i < (int)nitems; i++) {
@@ -491,7 +494,7 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
             XGetWindowAttributes(device->display, parent, &parent_attr);
             valid_window->x = attr.x + parent_attr.x;
             valid_window->y = attr.y + parent_attr.y;
-            valid_window->is_fullscreen = is_window_fullscreen(device, valid_window);
+            valid_window->is_fullscreen = is_window_fullscreen(device, *valid_window);
             linked_list_add_tail(list, valid_window);
         }
 

@@ -134,8 +134,6 @@ WhistWindow get_active_window(CaptureDevice* capture_device);
  */
 bool is_window_resizable(CaptureDevice* capture_device, WhistWindow whist_window);
 
-bool is_window_fullscreen(CaptureDevice* capture_device, WhistWindow whist_window);
-
 /**
  * @brief                          Move the window to (x, y) and resize it to (width, height). This
  * only sends a request to the window manager to do so; the window manager can reject the request,
