@@ -833,7 +833,7 @@ TEST_F(ProtocolTest, BadDecrypt) {
 
     EXPECT_EQ(decrypted_len, -1);
 
-    check_stdout_line(LOG_WARNING_MATCHER);
+    check_stdout_line(::testing::HasSubstr("OpenSSL Error caught"));
 }
 
 /**
@@ -1942,7 +1942,7 @@ TEST_F(ProtocolTest, QueueTest) {
     EXPECT_EQ(fifo_queue_dequeue_item_timeout(fifo_queue, &item, timeout_ms), -1);
     double time_elapsed = get_timer(&timer);
     EXPECT_TRUE((time_elapsed * MS_IN_SECOND) > (0.75 * timeout_ms) &&
-                (time_elapsed * MS_IN_SECOND) < (1.25 * timeout_ms));
+                (time_elapsed * MS_IN_SECOND) < (1.5 * timeout_ms));
     EXPECT_EQ(item, 6);
     fifo_queue_destroy(fifo_queue);
     EXPECT_EQ(fifo_queue_dequeue_item(NULL, &item), -1);
