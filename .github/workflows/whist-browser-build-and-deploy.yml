@@ -73,11 +73,9 @@ jobs:
           xcodebuild -version
 
       - name: Initialize the Build Environment
-        working-directory: brave-browser
         run: npm install
 
       - name: Configure Build Type
-        working-directory: brave-browser
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
             # Production build, set official build as true and build Chromium as Release
@@ -185,7 +183,6 @@ jobs:
       # https://github.com/whisthq/brave-core/blob/main/build/commands/lib/config.js#L77
       # https://github.com/brave/brave-core/blob/master/build/commands/scripts/commands.js#L71
       - name: Configure Build Parameters
-        working-directory: brave-browser
         run: |
           # Set architecture and version
           # TODO: Retrieve version from configDB (can reuse code in whist-build-and-deploy.yml once we are ready)
@@ -239,7 +236,6 @@ jobs:
           npm config set rewards_grant_prod_endpoint=https://
 
       - name: Fetch Chromium Source & Dependencies
-        working-directory: brave-browser
         run: npm run init
 
       - name: Build Whist Browser
