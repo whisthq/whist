@@ -2409,9 +2409,6 @@ TEST_F(ProtocolTest, ClientParseArgs) {
         // Set the session id
         "-d",
         "2rhfnq384",
-        // Pass the user's email
-        "-u",
-        "user@whist.com",
     };
     int argc = ARRAY_LENGTH(argv);
     int ret_val = client_parse_args(argc, argv);
@@ -2502,12 +2499,6 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     EXPECT_EQ(strlen(session_id_copy), strlen(argv[25]));
     EXPECT_EQ(strcmp(session_id_copy, argv[25]), 0);
     free(session_id_copy);
-
-    // Check user email
-    const char* user_email;
-    EXPECT_SUCCESS(whist_option_get_string_value("user", &user_email));
-    EXPECT_TRUE(user_email != NULL);
-    EXPECT_STREQ(user_email, argv[27]);
 }
 
 TEST_F(ProtocolTest, ErrorCodes) {

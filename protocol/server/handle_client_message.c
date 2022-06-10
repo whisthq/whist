@@ -345,7 +345,6 @@ static int handle_init_message(WhistServerState *state, WhistClientMessage *cwcm
     ClientInitMessage init_msg = cwcmsg->init_message;
 
     state->client_os = init_msg.os;
-    whist_error_monitor_set_username(init_msg.user_email);
 
     return 0;
 }

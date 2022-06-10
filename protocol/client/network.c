@@ -50,7 +50,7 @@ Public Function Implementations
 ============================
 */
 
-int connect_to_server(const char *server_ip, bool with_stun, const char *user_email) {
+int connect_to_server(const char *server_ip, bool with_stun) {
     LOG_INFO("using stun is %d", with_stun);
 
     // Connect over UDP first,
@@ -77,14 +77,7 @@ int connect_to_server(const char *server_ip, bool with_stun, const char *user_em
     // Construct init packet
     WhistClientMessage wcmsg = {0};
     wcmsg.type = CMESSAGE_INIT;
-    // Copy email
-    if (!safe_strncpy(wcmsg.init_message.user_email, user_email,
-                      sizeof(wcmsg.init_message.user_email))) {
-        LOG_ERROR("User email is too long: %s.\n", user_email);
-        destroy_socket_context(&packet_udp_context);
-        destroy_socket_context(&packet_tcp_context);
-        return -1;
-    }
+
     // Let the server know what OS we are
 #if OS_IS(OS_WIN32)
     wcmsg.init_message.os = WHIST_WINDOWS;

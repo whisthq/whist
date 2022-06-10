@@ -64,7 +64,6 @@ extern volatile int output_width;
 extern volatile int output_height;
 static char* program_name;
 static char* server_ip;
-static char* user_email;
 extern bool using_stun;
 
 // Mouse motion state
@@ -93,8 +92,6 @@ extern bool upload_initiated;
 
 // Command-line options.
 
-COMMAND_LINE_STRING_OPTION(user_email, 'u', "user", WHIST_ARGS_MAXLEN,
-                           "Tell Whist the user's email.  Default: None.")
 COMMAND_LINE_STRING_OPTION(new_tab_urls, 'x', "new-tab-url", MAX_URL_LENGTH* MAX_NEW_TAB_URLS,
                            "URL to open in new tab.")
 COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
@@ -275,7 +272,7 @@ static WhistStatus initialize_connection(void) {
          ++retry_attempt) {
         WhistTimer handshake_time;
         start_timer(&handshake_time);
-        if (connect_to_server(server_ip, using_stun, user_email) == 0) {
+        if (connect_to_server(server_ip, using_stun) == 0) {
             // Success -- log time to metrics and developer logs
             double connect_to_server_time = get_timer(&handshake_time);
             LOG_INFO("Server connection took %f ms", connect_to_server_time);
@@ -424,7 +421,6 @@ int whist_client_main(int argc, const char* argv[]) {
 
     // Initialize logger error monitor
     whist_error_monitor_initialize(true);
-    whist_error_monitor_set_username(user_email);
 
     print_system_info();
     LOG_INFO("Whist client revision %s", whist_git_revision());

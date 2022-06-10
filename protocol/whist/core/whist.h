@@ -342,7 +342,6 @@ typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
  * @details Init packet to be sent from client to server.
  */
 typedef struct ClientInitMessage {
-    char user_email[WHIST_ARGS_MAXLEN + 1];
     WhistOSType os;
 } ClientInitMessage;
 

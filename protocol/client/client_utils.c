@@ -145,9 +145,6 @@ int client_parse_args(int argc, const char *argv[]) {
     memcpy((char *)&client_hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY,
            sizeof(client_hex_aes_private_key));
 
-    // default user email
-    whist_set_single_option("user", "None");
-
     using_piped_arguments = false;
 
     WhistStatus ret = whist_parse_command_line(argc, (const char **)argv, &parse_operand);

@@ -175,22 +175,6 @@ void whist_error_monitor_set_session_id(const char *session_id) {
     safe_strncpy(error_monitor_session_id, session_id, sizeof(error_monitor_session_id));
 }
 
-void whist_error_monitor_set_username(const char *username) {
-    // If we haven't set the environment, we don't want our error monitor.
-    if (!error_monitor_initialized) return;
-
-    // Set the user to username, or remove the user as a default.
-    // Also remove the user if the username is "None".
-    if (username && strcmp(username, "None")) {
-        sentry_value_t user = sentry_value_new_object();
-        sentry_value_set_by_key(user, "email", sentry_value_new_string(username));
-        // Sentry doesn't document it, but this will free user.
-        sentry_set_user(user);
-    } else {
-        sentry_remove_user();
-    }
-}
-
 void whist_error_monitor_set_connection_id(int id) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
@@ -267,9 +251,6 @@ void whist_error_monitor_initialize(bool is_client) {
 
     // Tag all logs with a connection id of "waiting", to be updated once an actual id arrives.
     whist_error_monitor_set_connection_id(-1);
-
-    // Tag all logs with a user of "None", to be updated once an actual username arrives.
-    whist_error_monitor_set_username(NULL);
 
     LOG_INFO("Error monitor initialized!");
 }
