@@ -467,11 +467,9 @@ def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
         try:
             boto3client.terminate_instances(InstanceIds=[instance_id])
         except botocore.exceptions.ClientError as e:
-            printred(
-                f"Caught Boto3 client exception while terminating instance {instance_id}!"
-            )
+            printred(f"Caught Boto3 client exception while terminating instance {instance_id}!")
             print(e)
-            return 
+            return
     else:
         # Stopping the instance and waiting for it to shutdown
         print(f"Testing complete, stopping EC2 instance")
@@ -479,14 +477,11 @@ def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
         try:
             result = stop_instance(boto3client, instance_id)
         except botocore.exceptions.ClientError as e:
-            printred(
-                f"Caught Boto3 client exception while terminating instance {instance_id}!"
-            )
+            printred(f"Caught Boto3 client exception while terminating instance {instance_id}!")
             print(e)
         if result is False:
             printyellow("Error while stopping the EC2 instance!")
             return
-
 
     # Wait for the instance to be terminated
     wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=True)

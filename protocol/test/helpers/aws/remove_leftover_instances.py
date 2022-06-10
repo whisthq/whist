@@ -46,24 +46,26 @@ if __name__ == "__main__":
 
     # Also search for any leftover instances with names suggesting they were created by the latest E2E instance.
     # On CI, we terminate any of these instances automatically. On a normal machine, we ask the user for a confirmation
-    ec2_region_names = [region["RegionName"] for region in boto3.client("ec2").describe_regions()["Regions"]]
+    ec2_region_names = [
+        region["RegionName"] for region in boto3.client("ec2").describe_regions()["Regions"]
+    ]
     for region_name in ec2_region_names:
         branch_name = get_whist_branch_name()
         instance_name = f"{instances_name_tag}-{branch_name}"
-        name_tag_match = [{
-            'Name':'tag:Name', 
-            'Values': [instance_name]}]
+        name_tag_match = [{"Name": "tag:Name", "Values": [instance_name]}]
         boto3client = boto3.client("ec2", region_name=region_name)
         response = boto3client.describe_instances(Filters=name_tag_match)
-    
+
         leftover_instances = []
 
         reservations = response.get("Reservations") if response.get("Reservations") else []
         for reservation in reservations:
             instances = reservation.get("Instances") if reservation.get("Instances") else []
-            instance_ids = [x["InstanceId"] for x in instances if x["State"]["Name"] != 'terminated']
+            instance_ids = [
+                x["InstanceId"] for x in instances if x["State"]["Name"] != "terminated"
+            ]
             leftover_instances = leftover_instances + instance_ids
-        
+
         for instance_id in leftover_instances:
             if running_in_ci:
                 print(f"Terminating instance '{instance_id}' in region '{region_name}' ...")
