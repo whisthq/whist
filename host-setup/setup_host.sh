@@ -145,7 +145,7 @@ GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
 
   # Configure GRUB to use a stable version of the kernel. This version and the
-  # linux headers should be updated so that the Nvidia drivers work correctly.
+  # linux headers should be updated so that the NVIDIA drivers work correctly.
   sudo apt-get install -y linux-image-5.13.0-1025-aws
   sudo sed -i 's/GRUB_DEFAULT=0/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 5.13.0-1025-aws"/g' /etc/default/grub
   sudo update-grub
