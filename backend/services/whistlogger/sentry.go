@@ -2,7 +2,7 @@ package whistlogger // import "github.com/whisthq/whist/backend/services/whistlo
 
 import (
 	"log"
-	"os"
+	"reflect"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -14,17 +14,19 @@ import (
 type sentryCore struct {
 	enabler zapcore.LevelEnabler
 	encoder zapcore.Encoder
+	sender  *sentry.Client
 }
 
 func NewSentryCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
-	sentryDsn := os.Getenv("SENTRY_DSN")
-	err := sentry.Init(sentry.ClientOptions{
+	// sentryDsn := os.Getenv("SENTRY_DSN")
+	sentryDsn := "https://52baabcbf5cb4cd9a83c825ffd55cb4c@o400459.ingest.sentry.io/6144258"
+	sender, err := sentry.NewClient(sentry.ClientOptions{
 		Dsn:         sentryDsn,
 		Release:     metadata.GetGitCommit(),
 		Environment: string(metadata.GetAppEnvironment()),
 	})
 	if err != nil {
-		log.Printf("Error calling Sentry.init: %v", err)
+		log.Printf("Error starting Sentry client: %s", err)
 		return nil
 	}
 	log.Printf("Set Sentry release to git commit hash: %s", metadata.GetGitCommit())
@@ -32,6 +34,7 @@ func NewSentryCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 	lc := &sentryCore{}
 	lc.encoder = encoder
 	lc.enabler = levelEnab
+	lc.sender = sender
 
 	return lc
 }
@@ -83,18 +86,23 @@ func (lc *sentryCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	}
 
 	// Write to sentry
-	sentry.CaptureException(utils.MakeError(ent.Message))
+	err := utils.MakeError(ent.Message)
+	event := sentry.NewEvent()
+	event.Level = sentry.Level(ent.Level.String())
+	event.Exception = append(event.Exception, sentry.Exception{
+		Value:      ent.Message,
+		Type:       reflect.TypeOf(err).String(),
+		Stacktrace: sentry.ExtractStacktrace(err),
+	})
+	event.Timestamp = ent.Time
 
-	if ent.Level > zapcore.ErrorLevel {
-		// Since we may be crashing the program, sync the output.
-		lc.Sync()
-	}
+	lc.sender.CaptureEvent(event, &sentry.EventHint{OriginalException: utils.MakeError(ent.Message)}, sentry.CurrentHub().Scope())
 	return nil
 }
 
 func (lc *sentryCore) Sync() error {
 	//Flush sentry
-	ok := sentry.Flush(5 * time.Second)
+	ok := lc.sender.Flush(5 * time.Second)
 	if !ok {
 		return utils.MakeError("failed to flush Sentry, some events may not have been sent.")
 	}

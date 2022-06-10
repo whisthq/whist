@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"runtime/debug"
+	"strings"
 
 	"github.com/whisthq/whist/backend/services/utils"
 	"go.uber.org/zap"
@@ -24,7 +25,6 @@ func init() {
 	// High-priority output should go to standard error, and low-priority
 	// output should also go to standard out.
 	consoleDebugging := zapcore.Lock(os.Stdout)
-	consoleErrors := zapcore.Lock(os.Stderr)
 
 	sentryEncoderConfig := NewSentryEncoderConfig()
 	logzEncoderConfig := NewLogzioEncoderConfig()
@@ -45,7 +45,6 @@ func init() {
 	core := zapcore.NewTee(
 		logzCore,
 		sentryCore,
-		zapcore.NewCore(consoleEncoder, consoleErrors, onlyErrors),
 		zapcore.NewCore(consoleEncoder, consoleDebugging, allLevels),
 	)
 
@@ -54,7 +53,7 @@ func init() {
 
 func Sync() {
 	err := logger.Sync()
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "sync /dev/stdout: invalid argument") {
 		Errorf("failed to drain log queues: %s", err)
 	}
 }
