@@ -40,11 +40,12 @@ Defines
 // Handles and prints the ssl error,
 // Then returns -1
 // We LOG_INFO to get the line number
-#define HANDLE_SSL_ERROR()                \
-    do {                                  \
-        LOG_INFO("OpenSSL Error caught"); \
-        print_ssl_errors();               \
-        return -1;                        \
+#define HANDLE_SSL_ERROR()                 \
+    do {                                   \
+        LOG_INFO("OpenSSL Error caught");  \
+        print_ssl_errors();                \
+        if (ctx) EVP_CIPHER_CTX_free(ctx); \
+        return -1;                         \
     } while (0)
 
 /*
@@ -162,18 +163,22 @@ void hmac(void* hash, const void* buf, int len, const void* private_key) {
 }
 
 void gen_iv(void* iv) {
-    // Generally vaguely random things,
-    // this doesn't need to be secure or anything,
-    // the IV will be publically visible anyway.
-    // It only needs to be unique on consecutive calls
-    srand((unsigned int)time(NULL) * rand() + rand());
-    (void)rand();
-    srand((unsigned int)time(NULL) * rand() + rand());
-    (void)rand();
-    (void)rand();
+    // IV needs to be counter for AES-GCM
+    static uint64_t lsb = 0;
+    static uint64_t msb = 0;
+    FATAL_ASSERT(sizeof(lsb) + sizeof(msb) >= IV_SIZE);
 
-    for (int i = 0; i < IV_SIZE; i++) {
-        ((unsigned char*)iv)[i] = (unsigned char)rand();
+    int i;
+    for (i = 0; i < (int)min(sizeof(lsb), IV_SIZE); i++) {
+        ((unsigned char*)iv)[i] = (lsb >> (i * (int)BITS_IN_BYTE)) & 0xFF;
+    }
+    for (; i < IV_SIZE; i++) {
+        ((unsigned char*)iv)[i] = (lsb >> ((i - sizeof(lsb)) * (int)BITS_IN_BYTE)) & 0xFF;
+    }
+    lsb++;
+    // Carry it to MSB in case of roll-over
+    if (lsb == 0) {
+        msb++;
     }
 }
 
@@ -189,7 +194,6 @@ int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, const void* 
     // Encrypt the data, and store the length in the metadata
     int encrypted_len = aes_encrypt(encrypted_data, plaintext_data, plaintext_len, private_key,
                                     aes_metadata->iv, aes_metadata->tag);
-    aes_metadata->encrypted_len = encrypted_len;
 
     // Return the length of the encrypted buffer
     return encrypted_len;
@@ -197,15 +201,9 @@ int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, const void* 
 
 int decrypt_packet(void* plaintext_buffer, int plaintext_buffer_len, AESMetadata aes_metadata,
                    const void* encrypted_data, int encrypted_len, const void* private_key) {
-    if (aes_metadata.encrypted_len != encrypted_len) {
-        LOG_WARNING("The received AESMetadata doesn't match the size of the encrypted data");
-        return -1;
-    }
-
     // Decrypt the packet using the private key, and the metadata's IV
-    int decrypt_len =
-        aes_decrypt(plaintext_buffer, plaintext_buffer_len, encrypted_data,
-                    aes_metadata.encrypted_len, private_key, aes_metadata.iv, aes_metadata.tag);
+    int decrypt_len = aes_decrypt(plaintext_buffer, plaintext_buffer_len, encrypted_data,
+                                  encrypted_len, private_key, aes_metadata.iv, aes_metadata.tag);
 
     // And then returnt he decrypted packet, passing on -1 as well
     return decrypt_len;
@@ -219,7 +217,7 @@ Private Function Implementations
 
 int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, const void* key,
                 const void* iv, void* tag) {
-    EVP_CIPHER_CTX* ctx;
+    EVP_CIPHER_CTX* ctx = NULL;
     const EVP_CIPHER* cipher = EVP_aes_128_gcm();
 
     int len;
@@ -234,8 +232,6 @@ int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, cons
     // Verify the constants of aes.h before usage
     FATAL_ASSERT(IV_SIZE == EVP_CIPHER_iv_length(cipher));
     FATAL_ASSERT(KEY_SIZE == EVP_CIPHER_key_length(cipher));
-    int block_size = EVP_CIPHER_block_size(cipher);
-    FATAL_ASSERT(MAX_ENCRYPTION_SIZE_INCREASE >= block_size);
 
     // Initialise the encryption operation.
     if (1 !=
@@ -252,8 +248,9 @@ int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, cons
         Verification that no buffer overflow can happen occurs in the following FATAL_ASSERT
     */
 
-    // Size of the remaining ciphertext buffer, must be >= inl + block_size
-    FATAL_ASSERT(ciphertext_buffer_size - ciphertext_bytes_written >= plaintext_len + block_size);
+    // Size of the remaining ciphertext buffer, must be >= inl + MAX_ENCRYPTION_SIZE_INCREASE
+    FATAL_ASSERT(ciphertext_buffer_size - ciphertext_bytes_written >=
+                 plaintext_len + MAX_ENCRYPTION_SIZE_INCREASE);
 
     // Encrypt
     if (1 != EVP_EncryptUpdate(ctx, (unsigned char*)ciphertext + ciphertext_bytes_written, &len,
@@ -269,8 +266,8 @@ int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, cons
         Verification that no buffer overflow can happen occurs in the following FATAL_ASSERT
     */
 
-    // Size of the remaining ciphertext buffer, must be >= block_size
-    FATAL_ASSERT(ciphertext_buffer_size - ciphertext_bytes_written >= block_size);
+    // Size of the remaining ciphertext buffer, must be >= MAX_ENCRYPTION_SIZE_INCREASE
+    FATAL_ASSERT(ciphertext_buffer_size - ciphertext_bytes_written >= MAX_ENCRYPTION_SIZE_INCREASE);
 
     // Finish encryption
     if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char*)ciphertext + ciphertext_bytes_written, &len))
@@ -278,19 +275,21 @@ int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, cons
     ciphertext_bytes_written += len;
 
     /* Get the tag */
-    if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag)) {
+    if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, TAG_SIZE, tag)) {
         HANDLE_SSL_ERROR();
     }
 
     // Free the context
     EVP_CIPHER_CTX_free(ctx);
 
+    FATAL_ASSERT(ciphertext_bytes_written == plaintext_len);
+
     return ciphertext_bytes_written;
 }
 
 int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertext,
                 int ciphertext_len, const void* key, const void* iv, void* tag) {
-    EVP_CIPHER_CTX* ctx;
+    EVP_CIPHER_CTX* ctx = NULL;
     const EVP_CIPHER* cipher = EVP_aes_128_gcm();
 
     int len;
@@ -304,7 +303,6 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
     // Verify the constants of aes.h before usage
     FATAL_ASSERT(IV_SIZE == EVP_CIPHER_iv_length(cipher));
     FATAL_ASSERT(KEY_SIZE == EVP_CIPHER_key_length(cipher));
-    int block_size = EVP_CIPHER_block_size(cipher);
 
     // Initialize decryption
     if (1 !=
@@ -324,9 +322,10 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
     // The below code will EVP_DecryptUpdate most of the bytes,
     // writing it directly into plaintext_buffer rather than an intermediate buffer
 
-    // Can't set inl to be within block_size of plaintext_len,
+    // Can't set inl to be within MAX_ENCRYPTION_SIZE_INCREASE of plaintext_len,
     // And also can't set inl to be more than ciphertext_len
-    int safe_plaintext_len = min(max(plaintext_len - block_size, 0), ciphertext_len);
+    int safe_plaintext_len =
+        min(max(plaintext_len - MAX_ENCRYPTION_SIZE_INCREASE, 0), ciphertext_len);
     if (safe_plaintext_len > 0) {
         if (1 != EVP_DecryptUpdate(ctx, (unsigned char*)plaintext_buffer, &len,
                                    (const unsigned char*)ciphertext, safe_plaintext_len))
@@ -347,8 +346,8 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
     while (ciphertext_bytes_read < ciphertext_len) {
         // Decrypt into temporary_buf, but not within block_size of the size of temporary_buf,
         // And not more than the # of bytes left in the ciphertext
-        int bytes_to_feed =
-            min(ciphertext_len - ciphertext_bytes_read, (int)sizeof(temporary_buf) - block_size);
+        int bytes_to_feed = min(ciphertext_len - ciphertext_bytes_read,
+                                (int)sizeof(temporary_buf) - MAX_ENCRYPTION_SIZE_INCREASE);
         if (1 != EVP_DecryptUpdate(ctx, temporary_buf, &len,
                                    (const unsigned char*)ciphertext + ciphertext_bytes_read,
                                    bytes_to_feed))
@@ -366,7 +365,7 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
     }
 
     /* Set expected tag value */
-    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag)) {
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, TAG_SIZE, tag)) {
         HANDLE_SSL_ERROR();
     }
 
