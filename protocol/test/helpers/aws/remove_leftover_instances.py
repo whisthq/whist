@@ -3,7 +3,7 @@
 import os, sys, boto3
 
 from helpers.aws.boto3_tools import terminate_or_stop_aws_instance
-from helpers.common.constants import instances_name_tag, running_in_ci
+from helpers.common.constants import instances_name_tag, running_in_ci, github_run_id
 from helpers.common.git_tools import get_whist_branch_name
 
 # Before exiting, the streaming_e2e_tester.py script stops/terminates all EC2 instances

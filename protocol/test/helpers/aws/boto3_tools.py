@@ -12,6 +12,7 @@ from helpers.common.timestamps_and_exit_tools import (
 )
 from helpers.common.constants import (
     instances_name_tag,
+    github_run_id,
 )
 
 # Add the current directory to the path no matter where this is called from
