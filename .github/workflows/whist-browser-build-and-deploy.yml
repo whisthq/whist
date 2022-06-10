@@ -274,8 +274,8 @@ jobs:
 
       - name: Tar & Upload Whist Browser to AWS S3
         run: |
-          tar -zcvf "${{ env.${{ matrix.config.arch }}-binary-tar-name }}" "Component_${{ matrix.config.arch }}/Brave Browser" "${{ env.build_type }}.app"
-          aws s3 cp "${{ env.${{ matrix.config.arch }}-binary-tar-name }}" "${{ env.${{ matrix.config.arch }}-s3-bucket-uri }}/${{ env.${{ matrix.config.arch }}-binary-tar-name }}"
+          tar -zcvf "${{ matrix.config.target_arch }}-binary-tar-name" "Component_${{ matrix.config.target_arch }}/Brave Browser" "${{ env.build_type }}.app"
+          aws s3 cp "${{ matrix.config.target_arch }}-binary-tar-name" "${{ matrix.config.target_arch }}-s3-bucket-uri/${{ matrix.config.arch }}-binary-tar-name"
 
       ###################################################################################
 
