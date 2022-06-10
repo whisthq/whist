@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 
-import os, sys, time
+import os, sys, time, uuid
+import subprocess
 import pexpect
 
 from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
+    printgrey,
 )
 from helpers.common.pexpect_tools import wait_until_cmd_done
 from helpers.common.constants import (
     ssh_connection_retries,
     aws_timeout_seconds,
     running_in_ci,
+    username,
+    free_lock_path,
+    unique_lock_path,
+    lock_ssh_timeout_seconds,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -52,7 +58,7 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
         if result_index == 0:
             # If the connection was refused, sleep for 30s and then retry
             # (unless we exceeded the max number of retries)
-            print(
+            printgrey(
                 f"\tSSH connection refused by host (retry {retries + 1}/{ssh_connection_retries})"
             )
             child.kill(0)
@@ -71,7 +77,7 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
         elif result_index >= 3:
             # If the connection timed out, sleep for 30s and then retry
             # (unless we exceeded the max number of retries)
-            print(f"\tSSH connection timed out (retry {retries + 1}/{ssh_connection_retries})")
+            printgrey(f"\tSSH connection timed out (retry {retries + 1}/{ssh_connection_retries})")
             child.kill(0)
             time.sleep(30)
     # Give up if the SSH connection was refused too many times.
@@ -79,6 +85,28 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
         f"SSH connection refused by host {ssh_connection_retries} times. Giving up now.",
         timestamps=None,
     )
+
+
+def attempt_request_lock(instance_ip, ssh_key_path):
+    subproc_handle = subprocess.Popen(
+        f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} \
+         {username}@{instance_ip} "mv {free_lock_path} {unique_lock_path}"',
+        shell=True,
+        stdout=subprocess.PIPE,
+    )
+    return_code = subproc_handle.poll()
+    return return_code == 0
+
+
+def attempt_release_lock(instance_ip, ssh_key_path):
+    subproc_handle = subprocess.Popen(
+        f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} \
+        {username}@{instance_ip} "mv {unique_lock_path} {free_lock_path}"',
+        shell=True,
+        stdout=subprocess.PIPE,
+    )
+    return_code = subproc_handle.poll()
+    return return_code == 0
 
 
 def wait_for_apt_locks(pexpect_process, pexpect_prompt):

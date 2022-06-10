@@ -13,7 +13,12 @@ from helpers.common.timestamps_and_exit_tools import (
 from helpers.common.constants import (
     instances_name_tag,
     github_run_id,
+    start_instance_retries,
+    lock_contention_wait_time_seconds,
+    lock_get_attempt_timeout_seconds,
 )
+from helpers.common.ssh_tools import attempt_request_lock
+from protocol.test.helpers.common.timestamps_and_exit_tools import exit_with_error, printgrey
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -256,7 +261,37 @@ def create_ec2_instance(
     return instance_id
 
 
-def start_instance(boto3client: botocore.client, instance_id: str, max_retries: int) -> bool:
+def start_instance_and_get_lock(
+    boto3client: botocore.client, instance_id: str, lock_needed: bool, ssh_key_path: str
+):
+    if not lock_needed:
+        return start_instance(boto3client, instance_id)
+
+    deadline = time.time() + lock_get_attempt_timeout_seconds
+    while True:
+        if time.time() > deadline:
+            exit_with_error("Giving up attempting to acquire the lock after 2h")
+        if not is_instance_running(boto3client, instance_id):
+            print(f"Instance {instance_id} is currently not running. Attempting to start it...")
+            result = start_instance(boto3client, instance_id)
+            if not result:
+                return False
+        # Get IP address
+        ip_addresses = get_instance_ip(boto3client, instance_id)
+        public_ip = ip_addresses[0]["public"]
+        # Attempt to get the lock
+        if attempt_request_lock(public_ip, ssh_key_path):
+            print(f"Successfully acquired lock on instance {instance_id}!")
+            return True
+        printgrey(
+            f"Failed to get lock on {instance_id}! Waiting for {lock_contention_wait_time_seconds}s and retrying..."
+        )
+        time.sleep(lock_contention_wait_time_seconds)
+
+
+def start_instance(
+    boto3client: botocore.client, instance_id: str, max_retries: int = start_instance_retries
+) -> bool:
     """
     Attempt to turn on an existing EC2 instance. Return a bool indicating whether the operation succeeded.
 
@@ -367,7 +402,9 @@ def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
     return retval
 
 
-def create_or_start_aws_instance(boto3client, region_name, existing_instance_id, ssh_key_name):
+def create_or_start_aws_instance(
+    boto3client, region_name, existing_instance_id, ssh_key_name, lock_needed, ssh_key_path
+):
     """
     Connect to an existing instance (if the parameter existing_instance_id is not empty) or create a new one
 
@@ -386,7 +423,7 @@ def create_or_start_aws_instance(boto3client, region_name, existing_instance_id,
     # Attempt to start existing instance
     if existing_instance_id != "":
         instance_id = existing_instance_id
-        result = start_instance(boto3client, instance_id, max_retries=5)
+        result = start_instance_and_get_lock(boto3client, instance_id, lock_needed, ssh_key_path)
         if result is True:
             # Wait for the instance to be running
             wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
@@ -418,6 +455,9 @@ def create_or_start_aws_instance(boto3client, region_name, existing_instance_id,
 
     # Wait for the instance to be running
     wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
+
+    if not start_instance_and_get_lock(boto3client, instance_id, lock_needed, ssh_key_path):
+        return False
 
     return instance_id
 

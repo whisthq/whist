@@ -16,6 +16,7 @@ class PrintFormats:
     yellow = "\033[93m"
     red = "\033[91m"
     bold = "\033[1m"
+    grey = "\033[37m"
     underline = "\033[4m"
     end_formatting = "\033[0m"
 
@@ -38,6 +39,10 @@ def printyellow(text):
 
 def printred(text):
     print(f"{PrintFormats.red}{text}{PrintFormats.end_formatting}")
+
+
+def printgrey(text):
+    print(f"{PrintFormats.grey}{text}{PrintFormats.end_formatting}")
 
 
 def printbold(text):

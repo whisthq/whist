@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os
+import os, uuid
 
 # The username to use to access the AWS EC2 instance(s)
 username = "ubuntu"
@@ -9,6 +9,8 @@ ssh_connection_retries = 5
 # The timeout after which we give up on commands that have not finished on a remote AWS EC2 instance.
 # This value should not be set to less than 40mins (2400s)
 aws_timeout_seconds = 2400
+
+start_instance_retries = 5
 
 # The path (on the machine running this script) to the file containing the AWS credentials to use
 # to access the Whist AWS console. The file should contain the access key ID and the secret access key.
@@ -50,3 +52,8 @@ MANDELBOX_BUILD_MAX_RETRIES = 5
 
 # Whether the E2E script is running in CI vs on a local machine
 running_in_ci = os.getenv("CI") == "true"
+
+unique_lock_path = os.path.join("/", "home", username, f"LOCK-{str(uuid.uuid4())}")
+free_lock_path = os.path.join("/", "home", username, "free_lock")
+lock_ssh_timeout_seconds = 30
+lock_contention_wait_time_seconds = 60
