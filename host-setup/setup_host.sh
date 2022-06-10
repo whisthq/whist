@@ -125,7 +125,7 @@ common_steps () {
   sudo systemctl stop nvidia-persistenced.service ||:
 
   # Install Linux headers
-  sudo apt-get install -y gcc make "linux-headers-$(uname -r)"
+  sudo apt-get install -y gcc make "linux-headers-5.13.0-1025-aws"
 
   # Blacklist some Linux kernel modules that would block NVIDIA drivers
   idempotent_backup "/etc/modprobe.d/blacklist.conf" "sudo"
@@ -144,9 +144,8 @@ EOF
 GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
 
-  # Configure GRUB to use previous stable version of the kernel.
-  # Note: Remove this part once the kernel has been patched.
-  # see https://bugs.launchpad.net/ubuntu/focal/+source/linux-aws-5.13/+bug/1977919
+  # Configure GRUB to use a stable version of the kernel. This version and the
+  # linux headers should be updated so that the Nvidia drivers work correctly.
   sudo apt-get install -y linux-image-5.13.0-1025-aws
   sudo sed -i 's/GRUB_DEFAULT=0/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 5.13.0-1025-aws"/g' /etc/default/grub
   sudo update-grub
