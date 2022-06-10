@@ -386,8 +386,6 @@ class PerformanceBasedController {
     // the fec encode re-enabling is riggered
     const double ENCODE_ENABLE_TIME = 5.0;  // NOLINT
 
-    const int verbose_log = 1;
-
     // the last time the encode_disable threshold is not satisfied
     double last_below_encode_disable_threshold_time;
     // the last time the encode_enable threshold is not satisfied
@@ -408,7 +406,7 @@ class PerformanceBasedController {
     }
 
     void feed_queue_length(double current_time, int queue_len) {
-        if (verbose_log) {
+        if (LOG_FEC_CONTROLLER) {
             static double last_log_time = 0;
             if (current_time - last_log_time >= 0.1) {
                 LOG_INFO("[FEC_CONTROLLER][PERFORMANCE] udp socket queue_len=%d\n", queue_len);
@@ -418,7 +416,7 @@ class PerformanceBasedController {
 
         // if the queue len is >= local_disable_threshold, disable fec decode immediately
         if (queue_len >= DECODE_DISABLE_THRESHOLD) {
-            if (verbose_log && disable_decode == 0) {
+            if (LOG_FEC_CONTROLLER && disable_decode == 0) {
                 LOG_INFO(
                     "[FEC_CONTROLLER][PERFORMANCE] 🟥 decode disabled, current udp "
                     "queue_len=%d\n",
@@ -428,7 +426,7 @@ class PerformanceBasedController {
         }
         // if the queue len is <= the local_enable_threshold, re-enable fec decode immediately
         else if (queue_len <= DECODE_ENABLE_THRESHOLD) {
-            if (verbose_log && disable_decode == 1) {
+            if (LOG_FEC_CONTROLLER && disable_decode == 1) {
                 LOG_INFO(
                     "[FEC_CONTROLLER][PERFORMANCE] 🟩 decode re-enabled, current udp "
                     "queue_len=%d\n",
@@ -453,7 +451,7 @@ class PerformanceBasedController {
         // encode
         if (queue_len >= ENCODE_DISABLE_THRESHOLD_HARD ||
             current_time - last_below_encode_disable_threshold_time > ENCODE_DISABLE_TIME) {
-            if (verbose_log && disable_encode == 0) {
+            if (LOG_FEC_CONTROLLER && disable_encode == 0) {
                 LOG_INFO(
                     "[FEC_CONTROLLER][PERFORMANCE] 🟥🟥 encode disabled, current udp "
                     "queue_len=%d\n",
@@ -464,7 +462,7 @@ class PerformanceBasedController {
         // if the queue has satisty decode enable threshold for a specific period, re-enable fec
         // decode
         else if (current_time - last_above_encode_enable_threshold_time > ENCODE_ENABLE_TIME) {
-            if (verbose_log && disable_encode == 1) {
+            if (LOG_FEC_CONTROLLER && disable_encode == 1) {
                 LOG_INFO(
                     "[FEC_CONTROLLER][PERFORMANCE] 🟩🟩 decode re-enabled, current udp "
                     "queue_len=%d\n",
