@@ -24,6 +24,7 @@ if __name__ == "__main__":
 
     # If the `instances_to_clean.txt` todolist does not exist, streaming_e2e_tester.py has already
     # completed the cleanup, and we are done.
+    removed_instances = []
     if os.path.exists(filepath) and os.path.isfile(filepath):
         todo_list = open(filepath, "r")
 
@@ -32,6 +33,7 @@ if __name__ == "__main__":
             cleanup_action, aws_region_name, instance_id = line.strip().split()
             # Connect to the E2 console
             boto3client = boto3.client("ec2", region_name=aws_region_name)
+            removed_instances.append(instance_id)
             # Check if we need to stop or terminate the instance
             if cleanup_action == "terminate":
                 print(f"Terminating instance '{instance_id}' in region '{aws_region_name}' ...")
@@ -67,6 +69,9 @@ if __name__ == "__main__":
             leftover_instances = leftover_instances + instance_ids
 
         for instance_id in leftover_instances:
+            if instance_id in removed_instances:
+                continue
+
             if running_in_ci:
                 print(f"Terminating instance '{instance_id}' in region '{region_name}' ...")
                 terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=True)
