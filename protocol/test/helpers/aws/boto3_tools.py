@@ -156,6 +156,35 @@ def get_security_group_id(boto3client: botocore.client, security_group_name: str
     return sec_groups_ids[0]["GroupId"]
 
 
+def is_instance_running(
+    boto3client: botocore.client,
+    instance_id: str,
+) -> bool:
+
+    """
+    Check if the specified instance is running. Warning: to return the correct result, you need to pass
+    to this function a boto3 client set up to work in the region where the instance is also located.
+
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        instance_id (str): The ID of the instance whose status we want to check
+
+    Returns:
+        is_running (bool): Whether the instance is 'running' or not
+    """
+    try:
+        response = boto3client.describe_instance_status(
+            InstanceIds=[instance_id], IncludeAllInstances=True
+        )
+    except botocore.exceptions.ClientError as e:
+        printred("Got exception:")
+        print(e)
+        return False
+    if response["InstanceStatuses"][0]["InstanceState"]["Name"] == "running":
+        return True
+    return False
+
+
 def create_ec2_instance(
     boto3client: botocore.client,
     region_name: str,
