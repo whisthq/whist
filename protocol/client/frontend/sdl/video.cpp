@@ -84,16 +84,13 @@ void sdl_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen)
 #endif
 }
 
-void sdl_paint_solid(WhistFrontend* frontend, int id, const WhistRGBColor* color) {
+void sdl_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
 
-    if (context->windows.contains(id)) {
-        SDLWindowContext* window_context = context->windows[id];
+    for (const auto& [window_id, window_context] : context->windows) {
         SDL_SetRenderDrawColor(window_context->renderer, color->red, color->green, color->blue,
                                SDL_ALPHA_OPAQUE);
         SDL_RenderClear(window_context->renderer);
-    } else {
-        LOG_FATAL("Tried to paint window %d, but no such window exists!", id);
     }
 }
 
@@ -129,34 +126,13 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
     }
 
 #if USING_MULTIWINDOW
-    // Get IDs that are in context->windows, but not in the most recent Frame's window list
-    vector<int> remove_ids;
-    for (const auto& [window_id, window_context] : context->windows) {
-        bool found = false;
-        for (int i = 0; i < num_windows; i++) {
-            // TODO: Fix uint64_t usage
-            if ((int)window_data[i].id == window_id) {
-                found = true;
-                break;
-            }
-        }
-        // If that SDL window isn't in the Frame's window list, get ready to destroy it
-        if (!found) {
-            remove_ids.push_back(window_id);
-        }
-    }
-
-    // Destroy those IDs
-    for (int remove_id : remove_ids) {
-        sdl_destroy_window(frontend, remove_id);
-    }
-
     // Loop over the Frame's windows list, and create any uncreated windows
     int dpi_scale = sdl_get_dpi_scale(frontend);
     for (int i = 0; i < num_windows; i++) {
         int id = window_data[i].id;
         // If that window doesn't exist yet,
         if (!context->windows.contains(id)) {
+            LOG_INFO("Creating window with ID %d", id);
             // Create and populate the window_context
             SDLWindowContext* window_context = new SDLWindowContext();
             window_context->to_be_created = true;
@@ -211,6 +187,28 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
             window_context->is_fullscreen = window_data[i].is_fullscreen;
             window_context->is_resizable = false;
         }
+    }
+    // Get IDs that are in context->windows, but not in the most recent Frame's window list
+    vector<int> remove_ids;
+    for (const auto& [window_id, window_context] : context->windows) {
+        bool found = false;
+        for (int i = 0; i < num_windows; i++) {
+            // TODO: Fix uint64_t usage
+            if ((int)window_data[i].id == window_id) {
+                found = true;
+                break;
+            }
+        }
+        // If that SDL window isn't in the Frame's window list, get ready to destroy it
+        if (!found) {
+            remove_ids.push_back(window_id);
+        }
+    }
+
+    // Destroy those IDs
+    for (int remove_id : remove_ids) {
+        LOG_INFO("Destroying window with ID %d", remove_id);
+        sdl_destroy_window(frontend, remove_id);
     }
 #else
     SDLWindowContext* root_window_context = context->windows[0];

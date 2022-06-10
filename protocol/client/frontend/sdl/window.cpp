@@ -60,10 +60,12 @@ WhistStatus sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* wi
     return WHIST_ERROR_NOT_FOUND;
 }
 
-WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* index) {
+// TODO: not window-specific for now. But we should make it so soon
+
+WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int* index) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (context->windows.contains(id)) {
-        int ret = SDL_GetWindowDisplayIndex(context->windows[id]->window);
+    if (!context->windows.empty() || context->windows.begin()->second->window == NULL) {
+        int ret = SDL_GetWindowDisplayIndex(context->windows.begin()->second->window);
         if (ret < 0) {
             // LOG_ERROR("Could not get window display index - %s", SDL_GetError());
             return WHIST_ERROR_UNKNOWN;

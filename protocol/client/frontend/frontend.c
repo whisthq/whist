@@ -93,9 +93,9 @@ WhistStatus whist_frontend_get_window_virtual_size(WhistFrontend* frontend, int 
     return frontend->call->get_window_virtual_size(frontend, id, width, height);
 }
 
-WhistStatus whist_frontend_get_window_display_index(WhistFrontend* frontend, int id, int* index) {
+WhistStatus whist_frontend_get_window_display_index(WhistFrontend* frontend, int* index) {
     FRONTEND_ENTRY();
-    return frontend->call->get_window_display_index(frontend, id, index);
+    return frontend->call->get_window_display_index(frontend, index);
 }
 
 int whist_frontend_get_window_dpi(WhistFrontend* frontend) {
@@ -189,9 +189,9 @@ void whist_frontend_paint_png(WhistFrontend* frontend, const uint8_t* data, size
     frontend->call->paint_png(frontend, data, data_size, x, y);
 }
 
-void whist_frontend_paint_solid(WhistFrontend* frontend, int id, const WhistRGBColor* color) {
+void whist_frontend_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {
     FRONTEND_ENTRY();
-    frontend->call->paint_solid(frontend, id, color);
+    frontend->call->paint_solid(frontend, color);
 }
 
 void whist_frontend_paint_video(WhistFrontend* frontend) {

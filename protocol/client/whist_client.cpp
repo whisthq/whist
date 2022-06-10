@@ -253,7 +253,7 @@ static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* rende
         if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
             static int cached_display_index = -1;
             int current_display_index;
-            if (whist_frontend_get_window_display_index(frontend, 0, &current_display_index) ==
+            if (whist_frontend_get_window_display_index(frontend, &current_display_index) ==
                 WHIST_SUCCESS) {
                 if (cached_display_index != current_display_index) {
                     if (cached_display_index) {

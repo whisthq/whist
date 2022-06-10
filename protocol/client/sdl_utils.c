@@ -388,7 +388,7 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
     }
 
     // Wipes the renderer to background color before we present
-    whist_frontend_paint_solid(frontend, 0, &background_color);
+    whist_frontend_paint_solid(frontend, &background_color);
 
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);

@@ -362,8 +362,11 @@ int render_video(VideoContext* video_context) {
         }*/
         int num_windows = 0;
         while (num_windows < MAX_WINDOWS && (int)window_data[num_windows].id != -1) {
+            LOG_INFO("Window %d: %dx%d (%d,%d)", (int)window_data[num_windows].id, window_data[num_windows].width,
+        window_data[num_windows].height, window_data[num_windows].x, window_data[num_windows].y);
             num_windows++;
         }
+        /*
         num_windows = 1;
         window_data[0].id = 0;
         window_data[0].x = 20;
@@ -398,6 +401,7 @@ int render_video(VideoContext* video_context) {
             window_data[1].height = 958;
             num_windows = 2;
         }
+        */
         sdl_update_framebuffer(av_frame, window_data, num_windows);
 
         // Mark the framebuffer out to render

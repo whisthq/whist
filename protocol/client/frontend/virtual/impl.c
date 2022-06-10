@@ -180,7 +180,7 @@ WhistStatus virtual_get_window_virtual_size(WhistFrontend* frontend, int id, int
     return WHIST_SUCCESS;
 }
 
-WhistStatus virtual_get_window_display_index(WhistFrontend* frontend, int id, int* index) {
+WhistStatus virtual_get_window_display_index(WhistFrontend* frontend, int* index) {
     *index = 0;
     return WHIST_SUCCESS;
 }
@@ -350,7 +350,7 @@ void virtual_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_sta
 void virtual_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size, int x,
                        int y) {}
 
-void virtual_paint_solid(WhistFrontend* frontend, int id, const WhistRGBColor* color) {}
+void virtual_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {}
 
 WhistStatus virtual_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindow* window_data,
                                  int num_windows) {

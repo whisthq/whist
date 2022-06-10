@@ -15,7 +15,7 @@
               int* height)                                                                         \
     GENERATOR(WhistStatus, get_window_virtual_size, WhistFrontend* frontend, int id, int* width,   \
               int* height)                                                                         \
-    GENERATOR(WhistStatus, get_window_display_index, WhistFrontend* frontend, int id, int* index)  \
+    GENERATOR(WhistStatus, get_window_display_index, WhistFrontend* frontend, int* index)  \
     GENERATOR(int, get_window_dpi, WhistFrontend* frontend)                                        \
     GENERATOR(bool, is_any_window_visible, WhistFrontend* frontend)                                \
     GENERATOR(WhistStatus, set_title, WhistFrontend* frontend, int id, const char* title)          \
@@ -41,8 +41,8 @@
               WhistWindow* window_data, int num_windows)                                           \
     GENERATOR(void, paint_png, WhistFrontend* frontend, const uint8_t* data, size_t data_size,     \
               int x, int y)                                                                        \
-    GENERATOR(void, paint_solid, WhistFrontend* frontend, int id, const WhistRGBColor* color)      \
     GENERATOR(void, paint_video, WhistFrontend* frontend)                                          \
+    GENERATOR(void, paint_solid, WhistFrontend* frontend, const WhistRGBColor* color)      \
     GENERATOR(void, render, WhistFrontend* frontend)                                               \
     GENERATOR(void, set_titlebar_color, WhistFrontend* frontend, int id,                           \
               const WhistRGBColor* color)                                                          \
