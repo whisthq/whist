@@ -259,6 +259,149 @@ static void send_new_tab_urls_if_needed(WhistFrontend* frontend) {
     }
 }
 
+#define MAX_INIT_CONNECTION_ATTEMPTS (6)
+
+/**
+ * @brief Initialize the connection to the server, retrying as many times as desired.
+ *
+ * @returns WHIST_SUCCESS if the connection was successful, WHIST_ERROR_UNKNOWN otherwise.
+ *
+ * @note This function is responsible for all retry logic -- the caller can assume that if this
+ *       function fails, no amount of retries will succeed.
+ */
+static WhistStatus initialize_connection(void) {
+    // Connection attempt loop
+    for (int retry_attempt = 0; retry_attempt < MAX_INIT_CONNECTION_ATTEMPTS && !client_exiting;
+         ++retry_attempt) {
+        WhistTimer handshake_time;
+        start_timer(&handshake_time);
+        if (connect_to_server(server_ip, using_stun, user_email) == 0) {
+            // Success -- log time to metrics and developer logs
+            double connect_to_server_time = get_timer(&handshake_time);
+            LOG_INFO("Server connection took %f ms", connect_to_server_time);
+            LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
+            return WHIST_SUCCESS;
+        }
+
+        LOG_WARNING("Failed to connect to server, retrying...");
+        // TODO: maybe we want something better than sleeping 1 second?
+        whist_sleep(1000);
+    }
+
+    return WHIST_ERROR_UNKNOWN;
+}
+
+/**
+ * @brief Loop through the main Whist client loop until we either exit or the server disconnects.
+ *
+ * @param frontend      The frontend to target for UI updates.
+ * @param renderer      The video/audio renderers to pump.
+ *
+ * @returns             The appropriate WHIST_EXIT_CODE based on how we exited.
+ * @todo                Use a more sensible return type/scheme.
+ */
+static WhistExitCode main_loop(WhistFrontend* frontend, WhistRenderer* renderer) {
+    WhistTimer keyboard_sync_timer, monitor_change_timer, new_tab_urls_timer,
+        cpu_usage_statistics_timer;
+    start_timer(&keyboard_sync_timer);
+    start_timer(&monitor_change_timer);
+    start_timer(&new_tab_urls_timer);
+    start_timer(&cpu_usage_statistics_timer);
+
+    while (connected && !client_exiting) {
+        // This should be called BEFORE the call to read_piped_arguments,
+        // otherwise one URL may get lost.
+        send_new_tab_urls_if_needed(frontend);
+
+        // Update any pending SDL tasks
+        sdl_update_pending_tasks(frontend);
+
+        // Try rendering anything out, if there's something to render out
+        renderer_try_render(renderer);
+
+        // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set
+        // because getting cpu usage statistics is expensive.
+
+        double cpu_timer_time_elapsed = 0;
+        if (LOG_CPU_USAGE &&
+            ((cpu_timer_time_elapsed = get_timer(&cpu_usage_statistics_timer)) > 1)) {
+            double cpu_usage = get_cpu_usage(cpu_timer_time_elapsed);
+            if (cpu_usage != -1) {
+                log_double_statistic(CLIENT_CPU_USAGE, cpu_usage);
+            }
+            start_timer(&cpu_usage_statistics_timer);
+        }
+
+        // This might hang for a long time
+        // The 50ms timeout is chosen to match other checks in this
+        // loop, though when video is running it will almost always
+        // be interrupted before it reaches the timeout.
+        if (!handle_frontend_events(frontend, 50)) {
+            // unable to handle event
+            return WHIST_EXIT_FAILURE;
+        }
+
+        if (get_timer(&new_tab_urls_timer) * MS_IN_SECOND > 50.0) {
+            int piped_args_ret = read_piped_arguments(true);
+            switch (piped_args_ret) {
+                case -2: {
+                    // Fatal reading pipe or similar
+                    LOG_ERROR("Failed to read piped arguments -- exiting");
+                    return WHIST_EXIT_FAILURE;
+                }
+                case -1: {
+                    // Invalid arguments
+                    LOG_ERROR("Invalid piped arguments -- exiting");
+                    return WHIST_EXIT_CLI;
+                }
+                case 1: {
+                    // Arguments prompt graceful exit
+                    LOG_INFO("Piped argument prompts graceful exit");
+                    client_exiting = true;
+                    return WHIST_EXIT_SUCCESS;
+                    break;
+                }
+                default: {
+                    // Success, so nothing to do
+                    break;
+                }
+            }
+            start_timer(&new_tab_urls_timer);
+        }
+
+        if (get_timer(&keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
+            sync_keyboard_state(frontend);
+            start_timer(&keyboard_sync_timer);
+        }
+
+        if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
+            static int cached_display_index = -1;
+            int current_display_index;
+            if (whist_frontend_get_window_display_index(frontend, &current_display_index) ==
+                WHIST_SUCCESS) {
+                if (cached_display_index != current_display_index) {
+                    if (cached_display_index) {
+                        // Update DPI to new monitor
+                        send_message_dimensions(frontend);
+                    }
+                    cached_display_index = current_display_index;
+                }
+            } else {
+                LOG_ERROR("Failed to get display index");
+            }
+
+            start_timer(&monitor_change_timer);
+        }
+
+        // Check if file upload has been initiated and initiated selection dialog if so
+        if (upload_initiated) {
+            initiate_file_upload();
+        }
+    }
+
+    return WHIST_EXIT_SUCCESS;
+}
+
 int whist_client_main(int argc, const char* argv[]) {
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
@@ -270,22 +413,17 @@ int whist_client_main(int argc, const char* argv[]) {
     }
 
     whist_init_subsystems();
-
-    // the logic inside guarantees debug console is only enabled for debug build
+    // (internally, only happend for debug builds)
     init_debug_console();
-
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
-
     handle_single_icon_launch_client_app(argc, argv);
 
     srand(rand() * (unsigned int)time(NULL) + rand());
 
-    LOG_INFO("Client protocol started.");
+    LOG_INFO("Client protocol started...");
 
-    // Initialize the error monitor, and tell it we are the client.
+    // Initialize logger error monitor
     whist_error_monitor_initialize(true);
-
-    // Set error monitor username based on email from parsed arguments.
     whist_error_monitor_set_username(user_email);
 
     print_system_info();
@@ -323,176 +461,54 @@ int whist_client_main(int argc, const char* argv[]) {
 
     WhistFrontend* frontend = init_sdl(output_width, output_height, program_name);
 
-#define CONTINUE_MAIN_LOOP(EXITING, CODE) (!(EXITING) && ((CODE) == WHIST_EXIT_SUCCESS))
-
     bool failed_to_connect = false;
 
-    // While we can continue with the main loop, we first loop and try to connect to the server.
-    // If we fail to connect, then we wait for a few seconds and try again, and we give up after
-    // a certain number of attempts. If we succeed, then we enter the main event loop until
-    // conditions change; as needed, we either exit the program or re-enter the connection loop.
-    while (CONTINUE_MAIN_LOOP(client_exiting, exit_code)) {
-        WhistRenderer* whist_renderer = NULL;
+    while (!client_exiting && (exit_code == WHIST_EXIT_SUCCESS)) {
+        WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
+        init_clipboard_synchronizer(true);
+        init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
 
-        // Connection attempt loop
-        for (int retry_attempt = 0; retry_attempt < MAX_INIT_CONNECTION_ATTEMPTS; ++retry_attempt) {
-            whist_renderer = init_renderer(frontend, output_width, output_height);
-            init_clipboard_synchronizer(true);
-            init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
-
-            WhistTimer handshake_time;
-            start_timer(&handshake_time);
-            if (connect_to_server(server_ip, using_stun, user_email) == 0) {
-                // Success -- log to METRIC for cross-session tracking and INFO for developer-facing
-                // logging
-                double connect_to_server_time = get_timer(&handshake_time);
-                LOG_INFO("Server connection took %f ms", connect_to_server_time);
-                LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
-
-                connected = true;
-                break;
-            }
-
-            LOG_WARNING("Failed to connect to server, retrying...");
-
-            destroy_file_synchronizer();
-            destroy_clipboard_synchronizer();
-            destroy_renderer(whist_renderer);
-
-            // Wait before retrying
-            // TODO: This is a sleep 1000, but I don't think we should ever show the user
-            // a frozen window for 1 second if we're not connected to the server. Better to
-            // show a "reconnecting" message within the main loop.
-            whist_sleep(1000);
-        }
-
-        if (!connected) {
+        if (initialize_connection() != WHIST_SUCCESS) {
             failed_to_connect = true;
             break;
         }
 
-        WhistTimer keyboard_sync_timer, monitor_change_timer, new_tab_urls_timer,
-            cpu_usage_statistics_timer;
-        start_timer(&window_resize_timer);
-        start_timer(&keyboard_sync_timer);
-        start_timer(&monitor_change_timer);
-        start_timer(&new_tab_urls_timer);
-        start_timer(&cpu_usage_statistics_timer);
+        connected = true;
 
+        start_timer(&window_resize_timer);
         window_resize_mutex = whist_create_mutex();
 
+        // Create tcp/udp handlers and give them the renderer so they can route packets properly
+        init_packet_synchronizers(whist_renderer);
+
+        // Sometimes, resize events aren't generated during startup, so we manually call this to
+        // initialize internal values to actual dimensions
+        sdl_renderer_resize_window(frontend, -1, -1);
+        send_message_dimensions(frontend);
+
+        LOG_INFO("Entering main event loop...");
+
         // We now are guaranteed to have a connection to the server
-        while (connected && CONTINUE_MAIN_LOOP(client_exiting, exit_code)) {
-            // This should be called BEFORE the call to read_piped_arguments,
-            // otherwise one URL may get lost.
-            send_new_tab_urls_if_needed(frontend);
+        // TODO: Instead of returning exit_code here, return something more informative that will
+        //       us whether we disconnected, manually exited, etc. maybe a proper WhistStatus?
+        exit_code = main_loop(frontend, whist_renderer);
 
-            // Update any pending SDL tasks
-            sdl_update_pending_tasks(frontend);
-
-            // Try rendering anything out, if there's something to render out
-            renderer_try_render(whist_renderer);
-
-            // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set
-            // because getting cpu usage statistics is expensive.
-
-            double cpu_timer_time_elapsed = 0;
-            if (LOG_CPU_USAGE &&
-                ((cpu_timer_time_elapsed = get_timer(&cpu_usage_statistics_timer)) > 1)) {
-                double cpu_usage = get_cpu_usage(cpu_timer_time_elapsed);
-                if (cpu_usage != -1) {
-                    log_double_statistic(CLIENT_CPU_USAGE, cpu_usage);
-                }
-                start_timer(&cpu_usage_statistics_timer);
-            }
-
-            // This might hang for a long time
-            // The 50ms timeout is chosen to match other checks in this
-            // loop, though when video is running it will almost always
-            // be interrupted before it reaches the timeout.
-            if (!handle_frontend_events(frontend, 50)) {
-                // unable to handle event
-                exit_code = WHIST_EXIT_FAILURE;
-                break;
-            }
-
-            if (get_timer(&new_tab_urls_timer) * MS_IN_SECOND > 50.0) {
-                int piped_args_ret = read_piped_arguments(true);
-                switch (piped_args_ret) {
-                    case -2: {
-                        // Fatal reading pipe or similar
-                        LOG_ERROR("Failed to read piped arguments -- exiting");
-                        exit_code = WHIST_EXIT_FAILURE;
-                        break;
-                    }
-                    case -1: {
-                        // Invalid arguments
-                        LOG_ERROR("Invalid piped arguments -- exiting");
-                        exit_code = WHIST_EXIT_CLI;
-                        break;
-                    }
-                    case 1: {
-                        // Arguments prompt graceful exit
-                        LOG_INFO("Piped argument prompts graceful exit");
-                        exit_code = WHIST_EXIT_SUCCESS;
-                        client_exiting = true;
-                        break;
-                    }
-                    default: {
-                        // Success, so nothing to do
-                        break;
-                    }
-                }
-                start_timer(&new_tab_urls_timer);
-            }
-
-            if (get_timer(&keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
-                sync_keyboard_state(frontend);
-                start_timer(&keyboard_sync_timer);
-            }
-
-            if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
-                static int cached_display_index = -1;
-                int current_display_index;
-                if (whist_frontend_get_window_display_index(frontend, &current_display_index) ==
-                    WHIST_SUCCESS) {
-                    if (cached_display_index != current_display_index) {
-                        if (cached_display_index) {
-                            // Update DPI to new monitor
-                            send_message_dimensions(frontend);
-                        }
-                        cached_display_index = current_display_index;
-                    }
-                } else {
-                    LOG_ERROR("Failed to get display index");
-                }
-
-                start_timer(&monitor_change_timer);
-            }
-
-            // Check if file upload has been initiated and initiated selection dialog if so
-            if (upload_initiated) {
-                initiate_file_upload();
-            }
-        }
-
-        if (!CONTINUE_MAIN_LOOP(client_exiting, exit_code)) {
-            LOG_INFO("Disconnecting from server...");
+        if (client_exiting || (exit_code != WHIST_EXIT_SUCCESS)) {
             // We actually exited the main loop, so signal the server to quit
+            LOG_INFO("Disconnecting from server...");
             send_server_quit_messages(3);
         } else {
+            // We exited due to a disconnect
             LOG_INFO("Reconnecting to server...");
         }
 
-        // Destroy the packet receivers,
-        // So we end communication with the server
+        // End communication with server
         destroy_packet_synchronizers();
 
-        // Destroy the renderer,
-        // Which may have been viewing into the packet buffer
+        // Destroy the renderer, which may have been viewing into the packet buffer
         destroy_renderer(whist_renderer);
 
-        // Destroy the networking peripherals
+        // Destroy networking peripherals
         destroy_file_synchronizer();
         destroy_clipboard_synchronizer();
 
@@ -513,7 +529,7 @@ int whist_client_main(int argc, const char* argv[]) {
         case WHIST_EXIT_CLI: {
             // If we're in prod or staging, CLI errors are serious errors since we should always
             // be passing the correct arguments, so we log them as errors to report to Sentry.
-            char* environment = get_error_monitor_environment();
+            const char* environment = get_error_monitor_environment();
             if (strcmp(environment, "prod") == 0 || strcmp(environment, "staging") == 0) {
                 LOG_ERROR("Failure in main loop! Exiting with code WHIST_EXIT_CLI");
             } else {
