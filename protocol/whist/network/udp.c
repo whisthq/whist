@@ -1273,7 +1273,7 @@ void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType typ
 
     int b = -1;
     socklen_t b_len = sizeof(b);
-    if (getsockopt(context->socket, SOL_SOCKET, SO_RCVBUF, &b, &b_len) != -1) {
+    if (getsockopt(context->socket, SOL_SOCKET, SO_RCVBUF, (char*)&b, &b_len) != -1) {
         LOG_INFO("actual recv buffer size= %d\n", b);
     }
 }
