@@ -54,6 +54,12 @@ jobs:
           fetch-depth: 1 # Only fetch the latest commit, since the history is so large
           token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
+      - name: Authenticate with GitHub
+        env:
+          GH_USERNAME: ${{ secrets.GHA_USERNAME }}
+          GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+        run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
+
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
