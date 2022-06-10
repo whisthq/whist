@@ -7,6 +7,7 @@
 #pragma once
 
 #define ENABLE_FEC true
+#define ENABLE_FEC_PERFORMANCE_BASED_CONTROLLER true
 #define INITIAL_FEC_RATIO 0.05
 
 /**

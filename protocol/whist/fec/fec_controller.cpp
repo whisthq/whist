@@ -654,7 +654,8 @@ double fec_controller_get_total_fec_ratio(void *controller, double current_time,
     }
 
     // disable fec if performance is poor
-    if (fec_controller->performance_controller->is_encode_disabled() == true) {
+    if (ENABLE_FEC_PERFORMANCE_BASED_CONTROLLER &&
+        fec_controller->performance_controller->is_encode_disabled() == true) {
         total_fec_ratio = 0.0;
     }
 

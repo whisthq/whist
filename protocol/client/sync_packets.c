@@ -101,11 +101,12 @@ static int multithreaded_sync_udp_packets(void* opaque) {
             continue;
         }
 
-        if (ENABLE_FEC) {
+        if (ENABLE_FEC && ENABLE_FEC_PERFORMANCE_BASED_CONTROLLER) {
             static double last_measure_time = 0;
             double current_time = get_timestamp_sec();
             if (current_time - last_measure_time > 0.005) {
-                // the syscall inside is not instant, call it every 5ms uses 0.2% cpu of WhistClient
+                // limit the call frequence, since the syscall inside is not instant,
+                // call it every 5ms uses 0.2% cpu of WhistClient
                 int socket_queue_len = socket_get_queue_len(udp_socket);
                 // feed socket queue len to the fec performance based controller
                 fec_controller_feed_queue_len(fec_controller, current_time, socket_queue_len);
