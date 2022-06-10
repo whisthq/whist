@@ -168,7 +168,9 @@ jobs:
             # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
             echo "new_dev_rc_version=${NEW_DEV_RC}" >> $GITHUB_ENV
           else
-            echo 'Error: Invalid branch' && false
+            # TODO: Remove this once done testing
+            echo 'Currently testing workflow, continuing even if not on `dev` branch...'
+            # echo 'Error: Invalid branch' && false
           fi
 
           # store new desktop app version as GitHub step output to substitute in GitHub Release tag creation
