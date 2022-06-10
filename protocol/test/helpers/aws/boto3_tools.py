@@ -199,6 +199,7 @@ def create_ec2_instance(
                 "ResourceType": "instance",
                 "Tags": [
                     {"Key": "Name", "Value": instance_name},
+                    {"Key": "RunID", "Value": github_run_id},
                 ],
             },
         ],
