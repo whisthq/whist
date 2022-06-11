@@ -25,6 +25,19 @@ size_t whist_cursor_info_get_size(const WhistCursorInfo* cursor_info) {
     }
 }
 
+WhistCursorInfo* whist_cursor_dup(const WhistCursorInfo* cursor) {
+    size_t size = whist_cursor_info_get_size(cursor);
+    WhistCursorInfo* new = safe_malloc(size);
+    memcpy(new, cursor, sizeof(*new));
+    if (new->using_png) {
+        new->png_data = (uint8_t*)(new + 1);
+        memcpy(new->png_data, cursor->png_data, new->png_size);
+    } else {
+        new->png_data = NULL;
+    }
+    return new;
+}
+
 uint8_t* whist_cursor_info_to_rgba(const WhistCursorInfo* info) {
     FATAL_ASSERT(info != NULL);
     FATAL_ASSERT(info->using_png);
@@ -32,7 +45,7 @@ uint8_t* whist_cursor_info_to_rgba(const WhistCursorInfo* info) {
     uint8_t* rgba;
     unsigned int width, height;
 
-    unsigned int ret = lodepng_decode32(&rgba, &width, &height, info->png, info->png_size);
+    unsigned int ret = lodepng_decode32(&rgba, &width, &height, info->png_data, info->png_size);
     if (ret) {
         LOG_ERROR("Failed to decode cursor png: %s", lodepng_error_text(ret));
         return NULL;
@@ -91,9 +104,7 @@ void whist_cursor_cache_add(WhistCursorCache* cache, WhistCursorInfo* info) {
     // Add the new entry at the front of the list.
     WhistCursorCacheEntry* entry = safe_zalloc(sizeof(*entry));
     if (cache->store_data) {
-        size_t size = whist_cursor_info_get_size(info);
-        entry->info = safe_malloc(size);
-        memcpy(entry->info, info, size);
+        entry->info = whist_cursor_dup(info);
     } else {
         entry->info = safe_malloc(sizeof(*info));
         memcpy(entry->info, info, sizeof(*info));

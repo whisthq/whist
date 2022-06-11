@@ -122,7 +122,8 @@ static int multithreaded_sync_udp_packets(void* opaque) {
                 // And pass it to the renderer if one exists
                 WhistPacket* whist_packet = (WhistPacket*)get_packet(udp_context, packet_type);
                 if (whist_packet) {
-                    renderer_receive_frame(whist_renderer, packet_type, whist_packet->data);
+                    renderer_receive_frame(whist_renderer, packet_type, whist_packet->data,
+                                           whist_packet->payload_size);
                     // Store the pointer so we can free it later,
                     // While still keeping it alive for the renderer to render it
                     last_whist_packet[packet_type] = whist_packet;

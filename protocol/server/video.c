@@ -65,9 +65,20 @@ Includes
 
 static WhistSemaphore consumer;
 static WhistSemaphore producer;
+
+typedef struct VideoSendFrameBuffer {
+    /** Header of the frame being sent. */
+    VideoFrame header;
+    /** Serialised form of the frame (header, cursors, video data). */
+    uint8_t buffer[LARGEST_VIDEOFRAME_SIZE];
+    /** Size of the serialised frame. */
+    size_t size;
+} VideoSendFrameBuffer;
+
 // send_populated_frames/send_empty_frame will populate one of the frame_buf's, and then wait
 // While multithreaded_send_video_packets is working to send the other frame_buf over the network
-static char encoded_frame_buf[2][LARGEST_VIDEOFRAME_SIZE];
+static VideoSendFrameBuffer video_send_frame_buffer[2];
+
 static bool run_multithreaded_send_video_packets;
 static int send_frame_id;
 static int currently_sending_index;
@@ -183,20 +194,28 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
     // Create frame struct with compressed frame data and
     // metadata
 
-    VideoFrame* frame = (VideoFrame*)encoded_frame_buf[1 - currently_sending_index];
-    frame->width = encoder->out_width;
-    frame->height = encoder->out_height;
-    frame->codec_type = encoder->codec_type;
-    frame->is_empty_frame = false;
-    frame->is_window_visible = true;
+    VideoSendFrameBuffer* send = &video_send_frame_buffer[1 - currently_sending_index];
+
+    VideoFrame* frame = &send->header;
+
+    *frame = (VideoFrame){
+        .width = encoder->out_width,
+        .height = encoder->out_height,
+        .codec_type = encoder->codec_type,
+        .frame_type = encoder->frame_type,
+        .frame_id = id,
+        .is_empty_frame = false,
+        .is_window_visible = true,
+        .corner_color = device->corner_color,
+        .server_timestamp = server_timestamp,
+        .client_input_timestamp = client_input_timestamp,
+    };
     memcpy(frame->window_data, device->window_data, sizeof(frame->window_data));
-    frame->corner_color = device->corner_color;
-    frame->server_timestamp = server_timestamp;
-    frame->client_input_timestamp = client_input_timestamp;
 
     start_timer(statistics_timer);
     WhistCursorInfo* current_cursor = whist_cursor_capture();
     log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
+    const WhistCursorInfo* cached_cursor = NULL;
 
     // The cursor cache is reset on recovery points, since we can't
     // guaranteed that all previous cursors have been received.
@@ -210,41 +229,48 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
         frame->has_cursor = false;
     } else {
         // Cursor has changed, we need to send the new one.
-        const WhistCursorInfo* cached_cursor =
-            whist_cursor_cache_check(state->cursor_cache, current_cursor->hash);
-        if (cached_cursor) {
-            // Use cached cursor.
-            set_frame_cursor_info(frame, cached_cursor);
-        } else {
-            // Send new cursor.
-            whist_cursor_cache_add(state->cursor_cache, current_cursor);
-            set_frame_cursor_info(frame, current_cursor);
-        }
+        frame->has_cursor = true;
+        // If it's in the cache we can avoid sending the actual image
+        // again, though.
+        cached_cursor = whist_cursor_cache_check(state->cursor_cache, current_cursor->hash);
         state->last_cursor_hash = current_cursor->hash;
     }
+
+    frame->data_length = encoder->encoded_frame_size;
+
+    WhistWriteBuffer wb;
+    whist_write_buffer_init(&wb, send->buffer, sizeof(send->buffer));
+    whist_write_frame_header(&wb, frame);
+    if (frame->has_cursor) {
+        if (cached_cursor) {
+            whist_write_cursor(&wb, cached_cursor);
+        } else {
+            whist_write_cursor(&wb, current_cursor);
+            if (current_cursor->using_png) {
+                whist_write_data(&wb, current_cursor->png_data, current_cursor->png_size);
+            }
+        }
+    }
+    whist_write_packet_data(&wb, encoder->packets, encoder->num_packets);
+
+    // The buffer should always be big enough.
+    FATAL_ASSERT(!whist_write_buffer_has_overflowed(&wb));
+    send->size = whist_write_buffer_bytes_written(&wb);
+
     free(current_cursor);
 
-    // Client needs to know about frame type to find recovery points.
-    frame->frame_type = encoder->frame_type;
-
-    frame->frame_id = id;
-
-    frame->videodata_length = (int)encoder->encoded_frame_size;
-
-    write_avpackets_to_buffer(encoder->num_packets, encoder->packets, get_frame_videodata(frame));
     whist_wait_semaphore(consumer);
     send_frame_id = id;
     currently_sending_index = 1 - currently_sending_index;
 
     if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type) || LOG_VIDEO) {
-        LOG_INFO("Sent video packet %d (Size: %zu) %s", id, encoder->encoded_frame_size,
+        LOG_INFO("Sent video packet %d (Size: %zu) %s", id, frame->data_length,
                  video_frame_type_string(frame->frame_type));
     }
 
     whist_post_semaphore(producer);
     timestamp_us time_to_transmit =
-        ((uint64_t)get_total_frame_size(frame) * BITS_IN_BYTE * US_IN_SECOND) /
-        network_settings.burst_bitrate;
+        (send->size * BITS_IN_BYTE * US_IN_SECOND) / network_settings.burst_bitrate;
     // If the time to transmit this frame is more than one frame duration, then sleep for remaining
     // time to reduce the latency of next frame. If we capture the next frame early anyways network
     // throttler will make us wait thus increasing its latency(time from capture to render).
@@ -328,21 +354,27 @@ static void update_current_device(WhistServerState* state, WhistTimer* statistic
  */
 static void send_empty_frame(WhistServerState* state, int id) {
     // If we don't have a new frame to send, let's just send an empty one
-    VideoFrame* frame = (VideoFrame*)encoded_frame_buf[1 - currently_sending_index];
+    VideoSendFrameBuffer* send = &video_send_frame_buffer[1 - currently_sending_index];
+    VideoFrame* frame = &send->header;
     memset(frame, 0, sizeof(*frame));
     frame->is_empty_frame = true;
     // This signals that the screen hasn't changed, so don't bother rendering
     // this frame and just keep showing the last one.
     frame->is_window_visible = !state->stop_streaming;
     // We don't need to fill out the rest of the fields of the VideoFrame because
-    // is_empty_frame is true, so it will just be ignored by the client.
+    // is_empty_frame is true, so they won't be sent over the network at all.
+
+    WhistWriteBuffer wb;
+    whist_write_buffer_init(&wb, send->buffer, sizeof(send->buffer));
+    whist_write_frame_header(&wb, frame);
+    send->size = whist_write_buffer_bytes_written(&wb);
 
     whist_wait_semaphore(consumer);
     // Increase the size of empty size frames during saturate bandwidth to prevent sending lot of
     // small packets. Lot of small packets means that we might hit the packet count limit on certain
     // networks.
     if (network_settings.saturate_bandwidth) {
-        frame->videodata_length = MAX_PAYLOAD_SIZE - sizeof(VideoFrame);
+        send->size = MAX_PAYLOAD_SIZE;
     }
     send_frame_id = id;
     currently_sending_index = 1 - currently_sending_index;
@@ -508,12 +540,12 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
         // Consume the video frame
         WhistTimer statistics_timer;
         start_timer(&statistics_timer);
-        VideoFrame* frame = (VideoFrame*)encoded_frame_buf[currently_sending_index];
+        VideoSendFrameBuffer* send = &video_send_frame_buffer[currently_sending_index];
         ClientLock* client_lock = client_active_trylock(state->client);
         if (client_lock != NULL) {
-            packet_sent = send_packet(&state->client->udp_context, PACKET_VIDEO, frame,
-                                      get_total_frame_size(frame), send_frame_id,
-                                      VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type));
+            packet_sent = send_packet(&state->client->udp_context, PACKET_VIDEO, send->buffer,
+                                      (int)send->size, send_frame_id,
+                                      VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(send->header.frame_type));
             if (packet_sent != 0) {
                 LOG_WARNING("Failed to send the video packet!");
             }

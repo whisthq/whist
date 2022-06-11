@@ -4,6 +4,7 @@
 #include "whist.h"
 #include <whist/cursor/cursor.h>
 #include <whist/utils/color.h>
+#include "whist/utils/buffer.h"
 #include "whist/video/video.h"
 
 /**
@@ -35,13 +36,13 @@ typedef struct VideoFrame {
     bool is_empty_frame;     // indicates whether this frame is identical to the one last sent
     bool is_window_visible;  // indicates whether the client app is visible. If the client realizes
                              // the server is wrong, it can correct it
-    int videodata_length;
     WhistRGBColor corner_color;
     timestamp_us client_input_timestamp;  // Last ping client timestamp + time elapsed. Used for
                                           // E2E latency calculation.
     timestamp_us server_timestamp;        // Server timestamp during capture of this frame
 
-    unsigned char data[];
+    size_t data_length;
+    uint8_t *data;
 } VideoFrame;
 
 typedef struct AudioFrame {
@@ -73,49 +74,50 @@ typedef struct AudioFrame {
 #define MAX_AUDIOFRAME_DATA_SIZE (LARGEST_AUDIOFRAME_SIZE - MAX_AUDIOFRAME_METADATA_SIZE)
 
 /**
- * @brief                          Sets the whist frame's cursor image
+ * Write a frame header to a buffer.
  *
- * @param frame                    The frame who's data buffer should be written to
- *
- * @param cursor                   The WhistCursorInfo who's cursor data should be embedded in
- *                                 the given frame. Pass NULL to embed no cursor whatsoever.
- *                                 Default of a 0'ed VideoFrame* is already a NULL cursor.
+ * @param wb     Buffer to write to.
+ * @param frame  Frame header structure to write.
  */
-void set_frame_cursor_info(VideoFrame* frame, const WhistCursorInfo* cursor);
+void whist_write_frame_header(WhistWriteBuffer *wb, const VideoFrame *frame);
 
 /**
- * @brief                          Get a pointer to the WhistCursorInfo inside of the VideoFrame*
+ * Read a frame header from a buffer.
  *
- * @param frame                    The VideoFrame who's data buffer is being used
- *
- * @returns                        A pointer to the internal WhistCursorInfo. May return NULL if
- *                                 no cursor was embedded.
+ * @param rb     Buffer to read from.
+ * @param frame  Frame header structure to fill.
  */
-WhistCursorInfo* get_frame_cursor_info(VideoFrame* frame);
+void whist_read_frame_header(WhistReadBuffer *rb, VideoFrame *frame);
 
 /**
- * @brief                          Get a pointer to the videodata inside of the VideoFrame*
- *                                 Prerequisites for writing to the returned buffer pointer:
- *                                     frame->videodata_length must be set
- *                                     set_frame_cursor_info must be called
- *                                 Please only read/write up to frame->videodata_length bytes from
- *                                 the returned buffer
+ * Get the frame type of a video frame in serialised form.
  *
- * @param frame                    The VideoFrame that contains the videodata buffer
+ * This is provided so that the network code can see whether a frame is
+ * a recovery point or not without reading the whole header.
  *
- * @returns                        The videodata buffer that is stored in this VideoFrame
+ * TODO: it would probably be better to mark recovery points at a higher
+ * level to avoid this.
+ *
+ * @param data  Buffer containing the frame.
+ * @param size  Size of the buffer.
+ * @return  The frame type.
  */
-unsigned char* get_frame_videodata(VideoFrame* frame);
+VideoFrameType whist_get_video_frame_type(const uint8_t *data, size_t size);
 
 /**
- * @brief                          Get the total VideoFrame size, including all of the data embedded
- * in the VideoFrame's buffer. Even if the VideoFrame* is being stored in a much larger buffer, this
- * function returns only the number of bytes needed for the data inside the VideoFrame* to be read
- * correctly. I.e., these are the only bytes that need to be sent over for example a network
- * connection.
+ * Write cursor metadata to a buffer.
  *
- * @returns                        The number of bytes that the frame uses up.
+ * @param wb      Buffer to write to.
+ * @param cursor  Cursor info to write.
  */
-int get_total_frame_size(VideoFrame* frame);
+void whist_write_cursor(WhistWriteBuffer *wb, const WhistCursorInfo *cursor);
+
+/**
+ * Read cursor metadata from a buffer.
+ *
+ * @param rb      Buffer to read from.
+ * @param cursor  Cursor info to fill.
+ */
+void whist_read_cursor(WhistReadBuffer *rb, WhistCursorInfo *cursor);
 
 #endif

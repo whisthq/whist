@@ -36,6 +36,16 @@ void write_avpackets_to_buffer(int num_packets, AVPacket** packets, uint8_t* buf
     }
 }
 
+void whist_write_packet_data(WhistWriteBuffer* wb, AVPacket** packets, int num_packets) {
+    whist_write_4(wb, num_packets);
+    for (int i = 0; i < num_packets; i++) {
+        whist_write_4(wb, packets[i]->size);
+    }
+    for (int i = 0; i < num_packets; i++) {
+        whist_write_data(wb, packets[i]->data, packets[i]->size);
+    }
+}
+
 int extract_avpackets_from_buffer(uint8_t* buffer, size_t buffer_size, AVPacket** packets) {
     /*
         Read the encoded packets stored in buffer into packets. The buffer should have been filled

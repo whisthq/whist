@@ -64,7 +64,8 @@ WhistCursorInfo* whist_cursor_info_from_rgba(const uint32_t* rgba, unsigned shor
     info->png_hot_x = hot_x;
     info->png_hot_y = hot_y;
     info->cursor_state = state;
-    memcpy(info->png, png, png_size);
+    info->png_data = (uint8_t*)(info + 1);
+    memcpy(info->png_data, png, png_size);
     if (state == CURSOR_STATE_HIDDEN) {
         const int hidden_id = HIDDEN_CURSOR_HASH_OFFSET;
         info->hash = hash(&hidden_id, sizeof(int));

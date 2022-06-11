@@ -2616,6 +2616,54 @@ TEST_F(ProtocolTest, ReadWriteBufferLEB128Test) {
     }
 }
 
+TEST_F(ProtocolTest, VideoFrameSerialisationTest) {
+    VideoFrame input = {
+        .width = 1280,
+        .height = 720,
+        .codec_type = CODEC_TYPE_H264,
+        .frame_type = VIDEO_FRAME_TYPE_CREATE_LONG_TERM,
+        .frame_id = 1729,
+
+        .has_cursor = true,
+        .is_empty_frame = false,
+        .is_window_visible = true,
+
+        .corner_color = {12, 34, 56},
+
+        .client_input_timestamp = 1234,
+        .server_timestamp = 2345,
+    };
+
+    WhistWriteBuffer wb;
+    uint8_t buffer[1024];
+
+    whist_write_buffer_init(&wb, buffer, sizeof(buffer));
+    whist_write_frame_header(&wb, &input);
+    EXPECT_FALSE(whist_write_buffer_has_overflowed(&wb));
+    size_t size = whist_write_buffer_bytes_written(&wb);
+
+    WhistReadBuffer rb;
+    whist_read_buffer_init(&rb, buffer, size);
+
+    VideoFrame output;
+    whist_read_frame_header(&rb, &output);
+    EXPECT_FALSE(whist_read_buffer_has_underflowed(&rb));
+
+    EXPECT_EQ(input.width, output.width);
+    EXPECT_EQ(input.height, output.height);
+    EXPECT_EQ(input.codec_type, output.codec_type);
+    EXPECT_EQ(input.frame_type, output.frame_type);
+    EXPECT_EQ(input.frame_id, output.frame_id);
+    EXPECT_EQ(input.has_cursor, output.has_cursor);
+    EXPECT_EQ(input.is_empty_frame, output.is_empty_frame);
+    EXPECT_EQ(input.is_window_visible, output.is_window_visible);
+    EXPECT_EQ(input.corner_color.red, output.corner_color.red);
+    EXPECT_EQ(input.corner_color.green, output.corner_color.green);
+    EXPECT_EQ(input.corner_color.blue, output.corner_color.blue);
+    EXPECT_EQ(input.client_input_timestamp, output.client_input_timestamp);
+    EXPECT_EQ(input.server_timestamp, output.server_timestamp);
+}
+
 /*
 ============================
 Run Tests

@@ -225,8 +225,7 @@ bool sdl_render_pending(void) {
 
 void sdl_set_cursor_info_as_pending(const WhistCursorInfo* cursor_info) {
     // do the operations with a local pointer first, so to minimize locking
-    WhistCursorInfo* temp_cursor_info = safe_malloc(whist_cursor_info_get_size(cursor_info));
-    memcpy(temp_cursor_info, cursor_info, whist_cursor_info_get_size(cursor_info));
+    WhistCursorInfo* temp_cursor_info = whist_cursor_dup(cursor_info);
 
     whist_lock_mutex(pending_cursor_info_mutex);
     if (pending_cursor_info != NULL) {

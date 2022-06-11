@@ -941,10 +941,10 @@ static void* udp_get_packet(void* raw_context, WhistPacketType type) {
                 if (is_ready_to_render(ring_buffer, i)) {
                     FrameData* frame_data = get_frame_at_id(ring_buffer, i);
                     WhistPacket* whist_packet = (WhistPacket*)frame_data->frame_buffer;
-                    VideoFrame* video_frame = (VideoFrame*)whist_packet->data;
-                    if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(video_frame->frame_type)) {
-                        LOG_INFO("Catching up to recovery point (type %d) at ID %d",
-                                 video_frame->frame_type, i);
+                    VideoFrameType frame_type =
+                        whist_get_video_frame_type(whist_packet->data, whist_packet->payload_size);
+                    if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame_type)) {
+                        LOG_INFO("Catching up to recovery point (type %d) at ID %d", frame_type, i);
                         reset_stream(ring_buffer, i);
                         break;
                     }

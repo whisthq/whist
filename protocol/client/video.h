@@ -68,12 +68,14 @@ VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial
  *
  * @param video_context            The video context to give a video packet to
  *
- * @param video_frame              The video frame
+ * @param video_frame              Serialised video frame data.
+ *
+ * @param size                     Size of the video frame data.
  *
  * @note                           This function is guaranteed to return virtually instantly.
  *                                 It may be used in any hotpaths.
  */
-void receive_video(VideoContext* video_context, VideoFrame* video_frame);
+void receive_video(VideoContext* video_context, const void* video_frame, size_t size);
 
 /**
  * @brief                          Render the video frame (If any are available to render)

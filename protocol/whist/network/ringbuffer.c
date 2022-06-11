@@ -249,8 +249,9 @@ bool ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment)
                                 // Grab whether or not the video is a recovery point
                                 WhistPacket* whist_packet =
                                     (WhistPacket*)dropped_frame_data->frame_buffer;
-                                VideoFrame* video_frame = (VideoFrame*)whist_packet->data;
-                                if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(video_frame->frame_type)) {
+                                VideoFrameType frame_type = whist_get_video_frame_type(
+                                    whist_packet->data, whist_packet->payload_size);
+                                if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame_type)) {
                                     is_recovery_point = true;
                                 }
                             } else {

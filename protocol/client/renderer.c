@@ -139,15 +139,15 @@ bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type,
     }
 }
 
-void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packet_type,
-                            void* frame) {
+void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packet_type, void* frame,
+                            size_t size) {
     WhistTimer statistics_timer;
 
     // Pass the receive packet into the video or audio context
     switch (packet_type) {
         case PACKET_VIDEO: {
-            TIME_RUN(receive_video(whist_renderer->video_context, (VideoFrame*)frame),
-                     VIDEO_RECEIVE_TIME, statistics_timer);
+            TIME_RUN(receive_video(whist_renderer->video_context, frame, size), VIDEO_RECEIVE_TIME,
+                     statistics_timer);
             if (!SINGLE_THREAD_MODEL) {
                 whist_post_semaphore(whist_renderer->video_semaphore);
             }

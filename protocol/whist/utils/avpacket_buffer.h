@@ -55,4 +55,16 @@ int extract_avpackets_from_buffer(uint8_t* buffer, size_t buffer_size, AVPacket*
  */
 void write_avpackets_to_buffer(int num_packets, AVPacket** packets, uint8_t* buffer);
 
+/**
+ * Write AVPackets to a write buffer.
+ *
+ * Functionally equivalent to write_avpackets_to_buffer() but with an
+ * interface compatible with write buffers.
+ *
+ * @param wb           Write buffer to write to.
+ * @param packets      Array of packets to write.
+ * @param num_packets  Number of packets in the array.
+ */
+void whist_write_packet_data(WhistWriteBuffer* wb, AVPacket** packets, int num_packets);
+
 #endif  // DECODE_H

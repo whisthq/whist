@@ -68,9 +68,10 @@ struct VideoContext {
 
     bool has_video_rendered_yet;
 
-    // Context of the frame that is currently being rendered
-    VideoFrame* render_context;
-    bool pending_render_context;
+    // Content of the frame which is currently being rendered.
+    const uint8_t* render_frame_data;
+    size_t render_frame_size;
+    bool pending_render_frame;
 
     WhistCursorCache* cursor_cache;
 };
@@ -88,9 +89,9 @@ Private Functions
  *
  * @param video_context            The video context being used
  *
- * @param frame                    The frame that we will soon attempt to decode
+ * @param frame                    The header of the frame that we will soon attempt to decode
  */
-static void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame);
+static void sync_decoder_parameters(VideoContext* video_context, const VideoFrame* frame);
 
 /**
  * @brief                          Destroys an ffmpeg decoder on another thread
@@ -110,9 +111,8 @@ VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial
     memset(video_context, 0, sizeof(*video_context));
 
     video_context->has_video_rendered_yet = false;
-    video_context->render_context = NULL;
     video_context->frontend = frontend;
-    video_context->pending_render_context = false;
+    video_context->pending_render_frame = false;
 
     VideoDecoderParams params = {
         .codec_type = CODEC_TYPE_H264,
@@ -161,21 +161,22 @@ void destroy_video(VideoContext* video_context) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-void receive_video(VideoContext* video_context, VideoFrame* video_frame) {
+void receive_video(VideoContext* video_context, const void* frame, size_t size) {
     // TODO: Move to ringbuffer.c
     // LOG_INFO("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
 
-    if (!video_context->pending_render_context) {
+    if (!video_context->pending_render_frame) {
         // Send a frame to the renderer,
-        // then set video_context->pending_render_context to true to signal readiness
+        // then set video_context->pending_render_frame to true to signal readiness
 
         whist_analyzer_record_pending_rendering(PACKET_VIDEO);
         // give data pointer to the video context
-        video_context->render_context = video_frame;
+        video_context->render_frame_data = frame;
+        video_context->render_frame_size = size;
         log_double_statistic(VIDEO_FPS_RENDERED, 1.0);
         // signal to the renderer that we're ready
-        video_context->pending_render_context = true;
+        video_context->pending_render_frame = true;
     } else {
         LOG_ERROR("We tried to send the video context a frame when it wasn't ready!");
     }
@@ -194,14 +195,37 @@ int render_video(VideoContext* video_context) {
     static timestamp_us last_rendered_time = 0;
 
     // Receive and process a render context that's being pushed
-    if (video_context->pending_render_context) {
+    if (video_context->pending_render_frame) {
         // Grab and consume the actual frame
-        VideoFrame* frame = video_context->render_context;
+
+        WhistReadBuffer rb;
+        whist_read_buffer_init(&rb, video_context->render_frame_data,
+                               video_context->render_frame_size);
+
+        // First read the frame header.
+        VideoFrame frame;
+        whist_read_frame_header(&rb, &frame);
+
+        // Read cursor information, if any.
+        WhistCursorInfo cursor = {0};
+        if (frame.has_cursor) {
+            whist_read_cursor(&rb, &cursor);
+            if (cursor.using_png) {
+                // There is also a PNG-encoded cursor which we don't
+                // want to copy, so fetch the pointer and skip over it.
+                cursor.png_data = (uint8_t*)whist_read_buffer_get_pointer(&rb);
+                whist_read_buffer_skip(&rb, cursor.png_size);
+            }
+        }
+
+        // The video data follows, to the end of the packet.
+        const uint8_t* video_data = whist_read_buffer_get_pointer(&rb);
+        size_t video_data_size =
+            video_context->render_frame_size - (video_data - video_context->render_frame_data);
 
         // If server thinks the window isn't visible, but the window is visible now,
         // Send a START_STREAMING message
-        if (!frame->is_window_visible &&
-            whist_frontend_is_window_visible(video_context->frontend)) {
+        if (!frame.is_window_visible && whist_frontend_is_window_visible(video_context->frontend)) {
             // The server thinks the client window is occluded/minimized, but it isn't. So
             // we'll correct it. NOTE: Most of the time, this is just because there was a
             // delay between the window losing visibility and the server reacting.
@@ -214,50 +238,49 @@ int render_video(VideoContext* video_context) {
         }
 
         whist_analyzer_record_decode_video();
-        if (!frame->is_empty_frame) {
+        if (!frame.is_empty_frame) {
             if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
                 // Indicate to the server that this frame is received
                 // in full and will be decoded.
                 if (LOG_LONG_TERM_REFERENCE_FRAMES) {
-                    LOG_INFO("LTR: send frame ack for frame ID %d (%s).", frame->frame_id,
-                             video_frame_type_string(frame->frame_type));
+                    LOG_INFO("LTR: send frame ack for frame ID %d (%s).", frame.frame_id,
+                             video_frame_type_string(frame.frame_type));
                 }
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_FRAME_ACK;
-                wcmsg.frame_ack.frame_id = frame->frame_id;
+                wcmsg.frame_ack.frame_id = frame.frame_id;
                 send_wcmsg(&wcmsg);
             }
 
-            sync_decoder_parameters(video_context, frame);
+            sync_decoder_parameters(video_context, &frame);
             int ret;
-            server_timestamp = frame->server_timestamp;
-            client_input_timestamp = frame->client_input_timestamp;
-            TIME_RUN(ret = video_decoder_send_packets(
-                         video_context->decoder, get_frame_videodata(frame),
-                         frame->videodata_length, frame->frame_type == VIDEO_FRAME_TYPE_INTRA),
+            server_timestamp = frame.server_timestamp;
+            client_input_timestamp = frame.client_input_timestamp;
+            TIME_RUN(ret = video_decoder_send_packets(video_context->decoder, (void*)video_data,
+                                                      video_data_size,
+                                                      frame.frame_type == VIDEO_FRAME_TYPE_INTRA),
                      VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
             if (ret < 0) {
                 LOG_ERROR("Failed to send packets to decoder, unable to render frame");
-                video_context->pending_render_context = false;
+                video_context->pending_render_frame = false;
                 return -1;
             }
 
-            window_color = frame->corner_color;
+            window_color = frame.corner_color;
 
-            if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type)) {
+            if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame.frame_type)) {
                 whist_cursor_cache_clear(video_context->cursor_cache);
             }
-            if (frame->has_cursor) {
-                WhistCursorInfo* new_cursor = get_frame_cursor_info(frame);
+            if (frame.has_cursor) {
                 const WhistCursorInfo* cached_cursor =
-                    whist_cursor_cache_check(video_context->cursor_cache, new_cursor->hash);
+                    whist_cursor_cache_check(video_context->cursor_cache, cursor.hash);
                 if (cached_cursor) {
                     // Reuse the cached cursor.
                     sdl_set_cursor_info_as_pending(cached_cursor);
                 } else {
                     // Use the new cursor and add it to the cache.
-                    whist_cursor_cache_add(video_context->cursor_cache, new_cursor);
-                    sdl_set_cursor_info_as_pending(new_cursor);
+                    whist_cursor_cache_add(video_context->cursor_cache, &cursor);
+                    sdl_set_cursor_info_as_pending(&cursor);
                 }
             }
         } else {
@@ -267,7 +290,7 @@ int render_video(VideoContext* video_context) {
         }
 
         // Mark as received so render_context can be overwritten again
-        video_context->pending_render_context = false;
+        video_context->pending_render_frame = false;
     }
 
     // Try to keep decoding frames from the decoder, if we can
@@ -387,7 +410,7 @@ Private Function Implementations
 ============================
 */
 
-void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
+void sync_decoder_parameters(VideoContext* video_context, const VideoFrame* frame) {
     if (frame->width == video_context->last_frame_width &&
         frame->height == video_context->last_frame_height &&
         frame->codec_type == video_context->last_frame_codec) {
@@ -442,4 +465,4 @@ int32_t multithreaded_destroy_decoder(void* opaque) {
     return 0;
 }
 
-bool video_ready_for_frame(VideoContext* context) { return !context->pending_render_context; }
+bool video_ready_for_frame(VideoContext* context) { return !context->pending_render_frame; }

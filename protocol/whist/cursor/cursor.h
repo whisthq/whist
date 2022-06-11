@@ -82,7 +82,7 @@ typedef struct WhistCursorInfo {
     unsigned short png_height;
     unsigned short png_hot_x;
     unsigned short png_hot_y;
-    unsigned char png[];
+    uint8_t* png_data;
 } WhistCursorInfo;
 
 typedef struct WhistCursorCache WhistCursorCache;
@@ -111,6 +111,14 @@ void whist_cursor_capture_destroy(void);
  * @returns                        The size of the WhistCursorInfo struct
  */
 size_t whist_cursor_info_get_size(const WhistCursorInfo* image);
+
+/**
+ * Duplicate a cursor instance.
+ *
+ * @param cursor  Cursor instance to duplicate.
+ * @return  New copy of cursor instance.
+ */
+WhistCursorInfo* whist_cursor_dup(const WhistCursorInfo* cursor);
 
 /**
  * @brief                          Return RGBA pixel data from a WhistCursorInfo struct
