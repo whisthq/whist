@@ -56,4 +56,5 @@ running_in_ci = os.getenv("CI") == "true"
 unique_lock_path = os.path.join("/", "home", username, f"LOCK-{str(uuid.uuid4())}")
 free_lock_path = os.path.join("/", "home", username, "free_lock")
 lock_ssh_timeout_seconds = 30
+lock_get_attempt_timeout_seconds = 2 * 3600 # After 2h, given up
 lock_contention_wait_time_seconds = 60
