@@ -137,11 +137,12 @@ module.exports = {
     rimrafSync(protocolTargetDir)
 
     // Copy protocol binaries to WhistProtocolClient/build
+    // We don't copy the images, since they are now bundled in the protocol binary
     fse.copySync(
       path.join(protocolSourceDir, cmakeBuildDir, "client/build64"),
       protocolTargetBuild,
       {
-        filter: (src) => !src.endsWith(".debug"),
+        filter: (src) => !src.endsWith(".debug") && !src.endsWith(".png"),
       }
     )
 
@@ -165,9 +166,6 @@ module.exports = {
         path.join(protocolTargetBuild, `${newExecutable}${ext}`)
       )
     }
-
-    // Delete the /images folder, since we now embed them directly into the binary
-    rimrafSync("images")
   },
 
   // Build TailwindCSS
