@@ -24,7 +24,6 @@ Includes
 #include <whist/core/whist.h>
 #include "frontend/frontend.h"
 
-#define MAX_INIT_CONNECTION_ATTEMPTS (6)
 #define MAX_RECONNECTION_ATTEMPTS (10)
 #define IP_MAXLEN (31)
 

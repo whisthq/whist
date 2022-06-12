@@ -17,6 +17,7 @@ else() # GCC and Clang base flags
     "-Wno-unused-result"
     "-Wno-unused-variable" # Maybe we should bring this back?
     "-Wno-parentheses"
+    "-Wno-deprecated-declarations"
     "-Wno-missing-field-initializers"
     "-fexceptions" # Lets C++ exceptions pass through C code cleanly. MSVC already works (/EHc would turn it off).
     "-Wno-implicit-fallthrough" # We use switch/case fallthrough intentionally a lot, it should be allowed
