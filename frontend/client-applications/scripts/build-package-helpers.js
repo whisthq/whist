@@ -165,6 +165,9 @@ module.exports = {
         path.join(protocolTargetBuild, `${newExecutable}${ext}`)
       )
     }
+
+    // Delete the /images folder, since we now embed them directly into the binary
+    rimrafSync("images")
   },
 
   // Build TailwindCSS
