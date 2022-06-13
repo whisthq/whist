@@ -398,6 +398,10 @@ def stop_instance_and_release_lock(
 
     result = stop_instance(boto3client, instance_id)
 
+    # Remove log file with lock name
+    if os.path.isfile("lock_name.txt"):
+        os.remove("lock_name.txt")
+
     return result and unlocking_succeded
 
 
