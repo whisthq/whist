@@ -208,6 +208,9 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     LOG_INFO("Using renderer: %s", info.name);
     context->render_driver_name = info.name;
 
+    frontend->call->get_window_pixel_size(frontend, &context->latest_pixel_width,
+                                          &context->latest_pixel_height);
+
     sdl_init_video_device(context);
 
     frontend->call->paint_solid(frontend, color);

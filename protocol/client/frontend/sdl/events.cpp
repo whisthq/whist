@@ -80,6 +80,8 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                     event->type = FRONTEND_EVENT_RESIZE;
                     event->resize.width = sdl_event->window.data1;
                     event->resize.height = sdl_event->window.data2;
+                    frontend->call->get_window_pixel_size(frontend, &context->latest_pixel_width,
+                                                          &context->latest_pixel_height);
                     break;
                 }
                 case SDL_WINDOWEVENT_LEAVE: {

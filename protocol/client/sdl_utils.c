@@ -337,7 +337,7 @@ Private Function Implementations
 */
 
 static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
-    static volatile bool insufficient_bandwidth = false;
+    static bool insufficient_bandwidth = false;
 
     // Render out the current framebuffer, if there's a pending render
     whist_lock_mutex(frontend_render_mutex);

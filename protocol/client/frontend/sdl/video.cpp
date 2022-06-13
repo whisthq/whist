@@ -41,17 +41,14 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
         return;
     }
 
-    int output_width, output_height;
-    frontend->call->get_window_pixel_size(frontend, &output_width, &output_height);
-
     // TODO: Formalize window position constants.
     if (x == -1) {
         // Center horizontally
-        x = (output_width - w) / 2;
+        x = (context->latest_pixel_width - w) / 2;
     }
     if (y == -1) {
         // Place at bottom
-        y = output_height - h;
+        y = context->latest_pixel_height - h;
     }
     SDL_Rect rect = {x, y, (int)w, (int)h};
     SDL_RenderCopy(context->renderer, texture, NULL, &rect);
@@ -222,16 +219,13 @@ void sdl_paint_video(WhistFrontend* frontend) {
         return;
     }
 
-    int output_width, output_height;
-    frontend->call->get_window_pixel_size(frontend, &output_width, &output_height);
-
     // Take the subsection of texture that should be rendered to screen,
     // and draw it on the renderer
     SDL_Rect output_rect = {
         .x = 0,
         .y = 0,
-        .w = min(output_width, context->video.frame_width),
-        .h = min(output_height, context->video.frame_height),
+        .w = min(context->latest_pixel_width, context->video.frame_width),
+        .h = min(context->latest_pixel_height, context->video.frame_height),
     };
     res = SDL_RenderCopy(context->renderer, context->video.texture, &output_rect, NULL);
     if (res < 0) {
