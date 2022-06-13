@@ -45,7 +45,7 @@ def set_environment(ref: str) -> None:
     else:
         environment = "dev"
         domain = "fractal-dev.us.auth0.com"
-        client_id = "zfNXAien2yNOJBKaxcVu7ngWfwr6l2eP"
+        client_id = "6cd4nskyIHQOePVM6q7FU3x7i5sZLwl1"
 
     print(f"::set-output name=environment::{environment}")
     print(f"::set-output name=auth0-domain::{domain}")
