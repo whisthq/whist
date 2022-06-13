@@ -17,9 +17,16 @@ from helpers.common.constants import (
     lock_contention_wait_time_seconds,
     lock_get_attempt_timeout_seconds,
     unique_lock_path,
+    UNLOCKING_MAX_RETRIES,
 )
-from helpers.common.ssh_tools import attempt_request_lock
-from protocol.test.helpers.common.timestamps_and_exit_tools import exit_with_error, printgrey
+from helpers.common.ssh_tools import (
+    attempt_request_lock,
+    attempt_release_lock,
+)
+from helpers.common.timestamps_and_exit_tools import (
+    exit_with_error,
+    printgrey,
+)
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -343,6 +350,57 @@ def start_instance(
     return True
 
 
+def stop_instance_and_release_lock(
+    boto3client: botocore.client, instance_id: str, ssh_key_path: str
+):
+    """
+    Stop an existing instance and release the instance's E2E lock. If releasing the E2E lock
+    fails, sleep for lock_contention_wait_time_seconds and retry.
+
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        instance_id (str): The ID of the instance to start and for which we want to acquire the lock
+        ssh_key_path (str): The path to the SSH key to be used to access the instance via SSH
+
+    Returns:
+        success (bool): indicates whether the stop and unlocking both succeeded.
+    """
+    # Write name of the lock to file to allow for unlocking in case of crash
+    with open("lock_name.txt", "w+") as lock_log_file:
+        lock_log_file.write(f"{unique_lock_path}\n")
+
+    # Safety checks
+    if not is_instance_running(boto3client, instance_id):
+        printyellow(
+            "Warning, the instance was already stopped when attempting to stop it and release the lock."
+        )
+        return False
+
+    # Unlocking
+    unlocking_succeded = True
+    ip_addresses = get_instance_ip(boto3client, instance_id)
+    public_ip = ip_addresses[0]["public"]
+    # Attempt to release the lock
+    for retry in range(UNLOCKING_MAX_RETRIES):
+        print(
+            f"Attempting to release E2E lock on instance {instance_id} (retry {retry+1}/{UNLOCKING_MAX_RETRIES})..."
+        )
+        if attempt_release_lock(public_ip, ssh_key_path):
+            print(f"Successfully released E2E lock on instance {instance_id}!")
+            break
+        if retry == UNLOCKING_MAX_RETRIES - 1:
+            printred(
+                f"Unable to release E2E lock after {UNLOCKING_MAX_RETRIES} retries! Giving up!"
+            )
+            unlocking_succeded = False
+
+        time.sleep(lock_contention_wait_time_seconds)
+
+    result = stop_instance(boto3client, instance_id)
+
+    return result and unlocking_succeded
+
+
 def stop_instance(boto3client: botocore.client, instance_id: str) -> bool:
     """
     Attempt to turn off an existing EC2 instance. Return a bool indicating whether the operation succeeded.
@@ -352,7 +410,7 @@ def stop_instance(boto3client: botocore.client, instance_id: str) -> bool:
         instance_id (str): The ID of the instance to stop
 
     Returns:
-        success (bool): indicates whether the start succeeded.
+        success (bool): indicates whether the stop succeeded.
     """
     try:
         response = boto3client.stop_instances(InstanceIds=[instance_id], DryRun=False)
