@@ -169,6 +169,7 @@ tenant:
   default_audience: ""
   default_directory: ""
   enabled_locales:
+    - en
     - bs
     - bg
     - zh-CN
@@ -177,7 +178,6 @@ tenant:
     - cs
     - da
     - nl
-    - en
     - et
     - fi
     - fr-CA
