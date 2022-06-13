@@ -12,6 +12,7 @@ import (
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
@@ -267,6 +268,7 @@ func TestUserInitialBrowserParseEmptyBookmarks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not marshal browser data: %v", err)
 	}
+	logger.Infof("stringifiedBrowserData: %s", stringifiedBrowserData)
 
 	deflatedBrowserData, err := configutils.GzipDeflateString(string(stringifiedBrowserData))
 	if err != nil {
@@ -299,8 +301,31 @@ func TestUserInitialBrowserParseEmptyBookmarks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not marshal browser data: %v", err)
 	}
+	logger.Infof("stringifiedBrowserData: %s", stringifiedBrowserData)
 
 	deflatedBrowserData, err = configutils.GzipDeflateString(string(stringifiedBrowserData))
+	if err != nil {
+		t.Fatalf("could not deflate browser data: %v", err)
+	}
+
+	inflatedBrowserData, err = configutils.GzipInflateString(deflatedBrowserData)
+	if err != nil || len(inflatedBrowserData) == 0 {
+		t.Fatalf("Could not inflate compressed user browser data: %v", err)
+	}
+
+	// Unmarshal user browser data into proper format
+	unmarshalledBrowserData, err = UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+	if err != nil {
+		t.Fatalf("Error unmarshalling user browser data: %v", err)
+	}
+
+	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData, cmpopts.EquateEmpty()) {
+		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
+	}
+
+
+	browserDataString := `{"cookiesJSON":"[{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'},{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}]","bookmarks":"", "extensions":"not_real_extension_id,not_real_second_extension_id"}`
+	deflatedBrowserData, err = configutils.GzipDeflateString(string(browserDataString))
 	if err != nil {
 		t.Fatalf("could not deflate browser data: %v", err)
 	}
