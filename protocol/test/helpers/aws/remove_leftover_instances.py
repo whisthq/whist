@@ -57,7 +57,7 @@ if __name__ == "__main__":
         name_tag_match = {"Name": "tag:Name", "Values": [instance_name]}
         instance_creator_match = {"Name": "tag:RunID", "Values": [github_run_id]}
         boto3client = boto3.client("ec2", region_name=region_name)
-        response = boto3client.describe_instances(Filters=[name_tag_match, name_tag_match])
+        response = boto3client.describe_instances(Filters=[name_tag_match, instance_creator_match])
 
         leftover_instances = []
 
