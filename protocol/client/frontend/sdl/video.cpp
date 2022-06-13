@@ -215,7 +215,7 @@ void sdl_paint_video(WhistFrontend* frontend) {
     if (context->video.texture == NULL) {
         // No texture to render - this can happen at startup if no video
         // has been decoded yet.  Do nothing here, since the screen was
-        // cleared to a solid colour anyway.
+        // cleared to a solid color anyway.
         return;
     }
 
