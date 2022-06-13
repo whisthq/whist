@@ -602,7 +602,9 @@ def get_client_and_instances(
     return boto3client, server_instance_id, client_instance_id
 
 
-def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
+def terminate_or_stop_aws_instance(
+    boto3client, instance_id, should_terminate, should_unlock=False, ssh_key_path=None
+):
     """
     Stop (if should_terminate==False) or terminate (if should_terminate==True) a AWS instance
 
@@ -628,9 +630,13 @@ def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
         print(f"Testing complete, stopping EC2 instance")
         result = False
         try:
-            result = stop_instance(boto3client, instance_id)
+            result = (
+                stop_instance_and_release_lock(boto3client, instance_id, ssh_key_path)
+                if should_unlock
+                else stop_instance(boto3client, instance_id)
+            )
         except botocore.exceptions.ClientError as e:
-            printred(f"Caught Boto3 client exception while terminating instance {instance_id}!")
+            printred(f"Caught Boto3 client exception while stopping instance {instance_id}!")
             print(e)
         if result is False:
             printyellow("Error while stopping the EC2 instance!")

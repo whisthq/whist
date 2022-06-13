@@ -391,15 +391,20 @@ def complete_experiment_and_save_results(
 
     # 7- Stop or terminate the AWS EC2 instance(s)
     if leave_instances_on == "false":
-        # Terminate or stop AWS instance(s)
+        # Terminate or stop AWS instance(s), and release the lock on the server instance
         terminate_or_stop_aws_instance(
-            boto3client, server_instance_id, server_instance_id != use_existing_server_instance
+            boto3client,
+            server_instance_id,
+            server_instance_id != use_existing_server_instance,
+            should_unlock=True,
+            ssh_key_path=ssh_key_path,
         )
         if use_two_instances:
             terminate_or_stop_aws_instance(
                 boto3client,
                 client_instance_id,
                 client_instance_id != use_existing_client_instance,
+                should_unlock=False,
             )
     elif running_in_ci:
         # Save instance IDs to file for reuse by later runs
