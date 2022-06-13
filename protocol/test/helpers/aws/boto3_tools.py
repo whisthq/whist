@@ -485,7 +485,12 @@ def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
 
 
 def create_or_start_aws_instance(
-    boto3client, region_name, existing_instance_id, ssh_key_name, ssh_key_path, lock_needed=False
+    boto3client,
+    region_name,
+    existing_instance_id,
+    ssh_key_name,
+    lock_needed=False,
+    ssh_key_path=None,
 ):
     """
     Connect to an existing instance (if the parameter existing_instance_id is not empty) or create a new one
