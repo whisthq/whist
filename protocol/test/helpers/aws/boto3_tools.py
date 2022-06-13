@@ -16,6 +16,7 @@ from helpers.common.constants import (
     start_instance_retries,
     lock_contention_wait_time_seconds,
     lock_get_attempt_timeout_seconds,
+    unique_lock_path,
 )
 from helpers.common.ssh_tools import attempt_request_lock
 from protocol.test.helpers.common.timestamps_and_exit_tools import exit_with_error, printgrey
@@ -267,10 +268,14 @@ def start_instance_and_get_lock(
     if not lock_needed:
         return start_instance(boto3client, instance_id)
 
+    # Write name of the lock to file to allow for unlocking in case of crash
+    with open("lock_name.txt", "w+") as lock_log_file:
+        lock_log_file.write(f"{unique_lock_path}\n")
+
     deadline = time.time() + lock_get_attempt_timeout_seconds
     while True:
         if time.time() > deadline:
-            exit_with_error("Giving up attempting to acquire the lock after 2h")
+            break
         if not is_instance_running(boto3client, instance_id):
             print(f"Instance {instance_id} is currently not running. Attempting to start it...")
             result = start_instance(boto3client, instance_id)
@@ -287,6 +292,11 @@ def start_instance_and_get_lock(
             f"Failed to get lock on {instance_id}! Waiting for {lock_contention_wait_time_seconds}s and retrying..."
         )
         time.sleep(lock_contention_wait_time_seconds)
+
+    printyellow(
+        f"Could not acquire lock on instance {instance_id} after waiting for {lock_get_attempt_timeout_seconds}s! Giving up."
+    )
+    return False
 
 
 def start_instance(
