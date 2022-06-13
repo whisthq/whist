@@ -263,11 +263,8 @@ def create_ec2_instance(
 
 
 def start_instance_and_get_lock(
-    boto3client: botocore.client, instance_id: str, lock_needed: bool, ssh_key_path: str
+    boto3client: botocore.client, instance_id: str, ssh_key_path: str
 ):
-    if not lock_needed:
-        return start_instance(boto3client, instance_id)
-
     # Write name of the lock to file to allow for unlocking in case of crash
     with open("lock_name.txt", "w+") as lock_log_file:
         lock_log_file.write(f"{unique_lock_path}\n")
