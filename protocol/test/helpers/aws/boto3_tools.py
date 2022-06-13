@@ -485,7 +485,7 @@ def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
 
 
 def create_or_start_aws_instance(
-    boto3client, region_name, existing_instance_id, ssh_key_name, lock_needed, ssh_key_path
+    boto3client, region_name, existing_instance_id, ssh_key_name, ssh_key_path, lock_needed=False
 ):
     """
     Connect to an existing instance (if the parameter existing_instance_id is not empty) or create a new one
@@ -505,7 +505,11 @@ def create_or_start_aws_instance(
     # Attempt to start existing instance
     if existing_instance_id != "":
         instance_id = existing_instance_id
-        result = start_instance_and_get_lock(boto3client, instance_id, lock_needed, ssh_key_path)
+        result = (
+            start_instance_and_get_lock(boto3client, instance_id, ssh_key_path)
+            if lock_needed
+            else start_instance(boto3client, instance_id)
+        )
         if result is True:
             # Wait for the instance to be running
             wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
@@ -572,10 +576,7 @@ def get_client_and_instances(
     boto3client = boto3.client("ec2", region_name=region_name)
 
     server_instance_id = create_or_start_aws_instance(
-        boto3client,
-        region_name,
-        existing_server_instance_id,
-        ssh_key_name,
+        boto3client, region_name, existing_server_instance_id, ssh_key_name, lock_needed=True
     )
     if server_instance_id == "":
         printyellow(f"Creating new instance on {region_name} for the server failed!")
