@@ -292,9 +292,20 @@ if __name__ == "__main__":
     with open(metadata_filename, "w") as metadata_file:
         json.dump(experiment_metadata, metadata_file)
 
+    # 4a - Create a todo-list of EC2 cleanup steps we need to do at the end of the test. The cleanup will be done by
+    # the remove_leftover_instances.py script if this one fails.
+    # If we are reusing instances, save the instance ID to file before attempting to start them
+    if existing_server_instance_id != "" and desired_region_name != "":
+        instances_to_be_stopped = set(
+            [x for x in [existing_server_instance_id, existing_client_instance_id] if x != ""]
+        )
+        with open("instances_to_remove.txt", "a+") as instances_file:
+            for i in instances_to_be_stopped:
+                instances_file.write(f"stop {desired_region_name} {i}\n")
+
     timestamps.add_event("Initialization")
 
-    # 4 - Create a boto3 client, connect to the EC2 console, and create or start the instance(s).
+    # 5 - Create a boto3 client, connect to the EC2 console, and create or start the instance(s).
     ec2_region_names = (
         [region["RegionName"] for region in boto3.client("ec2").describe_regions()["Regions"]]
         if desired_region_name == ""
@@ -325,19 +336,16 @@ if __name__ == "__main__":
             timestamps=timestamps,
         )
 
-    # 5 - Create a todo-list of EC2 cleanup steps we need to do at the end of the test.
-    # Save the todo-list to a file named `instances_to_remove.txt` so that we can retrieve
-    # it in case  this script crashes.
+    # 4b - Create a todo-list of EC2 cleanup steps we need to do at the end of the test. The cleanup will be done by
+    # the remove_leftover_instances.py script if this one fails.
+    # If we are creating new instances, save the instance IDs to file so we can terminate them.
     instances_to_be_terminated = []
-    instances_to_be_stopped = []
 
     if server_instance_id != existing_server_instance_id:
         instances_to_be_terminated.append(server_instance_id)
         # Turning off skipping git clone and host setup if we created a new instance
         skip_git_clone = "false"
         skip_host_setup = "false"
-    else:
-        instances_to_be_stopped.append(server_instance_id)
 
     if client_instance_id != server_instance_id:
         if client_instance_id != existing_client_instance_id:
@@ -345,15 +353,10 @@ if __name__ == "__main__":
             # Turning off skipping git clone and host setup if we created a new instance
             skip_git_clone = "false"
             skip_host_setup = "false"
-        else:
-            instances_to_be_stopped.append(client_instance_id)
 
     instances_file = open("instances_to_remove.txt", "a+")
     for i in instances_to_be_terminated:
         instances_file.write(f"terminate {region_name} {i}\n")
-    for i in instances_to_be_stopped:
-        instances_file.write(f"stop {region_name} {i}\n")
-    instances_file.close()
 
     timestamps.add_event("Creating/starting instance(s)")
 
