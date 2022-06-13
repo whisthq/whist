@@ -547,7 +547,7 @@ def create_or_start_aws_instance(
     # Wait for the instance to be running
     wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
 
-    if not start_instance_and_get_lock(boto3client, instance_id, lock_needed, ssh_key_path):
+    if not start_instance_and_get_lock(boto3client, instance_id, ssh_key_path):
         return False
 
     return instance_id
