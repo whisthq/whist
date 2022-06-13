@@ -36,6 +36,15 @@ type BrowserData struct {
 	ExtensionState types.ExtensionState `json:"extension_state,omitempty"`
 }
 
+func (i *BrowserData) UnmarshalJSON(data []byte) error {
+    if string(data) == `""` {
+        return nil
+    }
+
+    type tmp BrowserData
+    return json.Unmarshal(data, (*tmp)(i))
+}
+
 // UnmarshalBookmarks takes a JSON string containing all the user browser data
 // and unmarshals it into a BrowserData struct, returning the struct
 // and any errors encountered.

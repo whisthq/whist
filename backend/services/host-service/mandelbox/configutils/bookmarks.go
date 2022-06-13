@@ -26,6 +26,16 @@ type Bookmarks struct {
 	Version      int                 `json:"version,omitempty"`
 }
 
+func (i *Bookmarks) UnmarshalJSON(data []byte) error {
+    if string(data) == `""` {
+        return nil
+    }
+
+    type tmp Bookmarks
+    return json.Unmarshal(data, (*tmp)(i))
+}
+
+
 // UnmarshalBookmarks takes a JSON string containing bookmark data
 // and unmarshals it into a Bookmarks struct, returning the struct
 // and any errors encountered.
