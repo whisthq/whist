@@ -323,7 +323,7 @@ func TestUserInitialBrowserParseEmptyBookmarks(t *testing.T) {
 	// 3. Test case where bookmars are defined as an empty string in JSON
 	browserDataString := `{"cookiesJSON":"[{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'},{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}]","bookmarks":"", "extensions":"not_real_extension_id,not_real_second_extension_id"}`
 	expectedBookmarks := configutils.Bookmarks{}
-	
+
 	deflatedBrowserData, err = configutils.GzipDeflateString(string(browserDataString))
 	if err != nil {
 		t.Fatalf("could not deflate browser data: %v", err)

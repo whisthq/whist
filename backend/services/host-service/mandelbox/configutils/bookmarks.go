@@ -27,14 +27,13 @@ type Bookmarks struct {
 }
 
 func (i *Bookmarks) UnmarshalJSON(data []byte) error {
-    if string(data) == `""` {
-        return nil
-    }
+	if string(data) == `""` {
+		return nil
+	}
 
-    type tmp Bookmarks
-    return json.Unmarshal(data, (*tmp)(i))
+	type tmp Bookmarks
+	return json.Unmarshal(data, (*tmp)(i))
 }
-
 
 // UnmarshalBookmarks takes a JSON string containing bookmark data
 // and unmarshals it into a Bookmarks struct, returning the struct

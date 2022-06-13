@@ -37,12 +37,12 @@ type BrowserData struct {
 }
 
 func (i *BrowserData) UnmarshalJSON(data []byte) error {
-    if string(data) == `""` {
-        return nil
-    }
+	if string(data) == `""` {
+		return nil
+	}
 
-    type tmp BrowserData
-    return json.Unmarshal(data, (*tmp)(i))
+	type tmp BrowserData
+	return json.Unmarshal(data, (*tmp)(i))
 }
 
 // UnmarshalBookmarks takes a JSON string containing all the user browser data
