@@ -247,3 +247,44 @@ func TestUserInitialBrowserParseEmpty(t *testing.T) {
 		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
 	}
 }
+
+func TestUserInitialBrowserParseEmptyBookmarks(t *testing.T) {
+	// Define browser data
+	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
+	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
+
+	// We will simulate a user with cookies but no bookmarks
+	cookiesJSON := "[" + testCookie1 + "," + testCookie2 + "]"
+	extensions := "not_real_extension_id,not_real_second_extension_id"
+
+	// Create browser data
+	userInitialBrowserData := BrowserData{
+		CookiesJSON: types.Cookies(cookiesJSON),
+		Extensions:  types.Extensions(extensions),
+	}
+
+	stringifiedBrowserData, err := json.Marshal(userInitialBrowserData)
+	if err != nil {
+		t.Fatalf("could not marshal browser data: %v", err)
+	}
+
+	deflatedBrowserData, err := configutils.GzipDeflateString(string(stringifiedBrowserData))
+	if err != nil {
+		t.Fatalf("could not deflate browser data: %v", err)
+	}
+
+	inflatedBrowserData, err := configutils.GzipInflateString(deflatedBrowserData)
+	if err != nil || len(inflatedBrowserData) == 0 {
+		t.Fatalf("Could not inflate compressed user browser data: %v", err)
+	}
+
+	// Unmarshal user browser data into proper format
+	unmarshalledBrowserData, err := UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+	if err != nil {
+		t.Fatalf("Error unmarshalling user browser data: %v", err)
+	}
+
+	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData, cmpopts.EquateEmpty()) {
+		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
+	}
+}
