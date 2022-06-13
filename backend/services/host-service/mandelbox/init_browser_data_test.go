@@ -12,7 +12,6 @@ import (
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
-	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
@@ -258,7 +257,6 @@ func TestUserInitialBrowserParseEmptyBookmarks(t *testing.T) {
 	cookiesJSON := "[" + testCookie1 + "," + testCookie2 + "]"
 	extensions := "not_real_extension_id,not_real_second_extension_id"
 
-	
 	// 1. Test case where no bookmark variable is defined (the stringified JSON will not have a `bookmars` variable)
 	userInitialBrowserData := BrowserData{
 		CookiesJSON: types.Cookies(cookiesJSON),
@@ -269,7 +267,6 @@ func TestUserInitialBrowserParseEmptyBookmarks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not marshal browser data: %v", err)
 	}
-	logger.Infof("stringifiedBrowserData: %s", stringifiedBrowserData)
 
 	deflatedBrowserData, err := configutils.GzipDeflateString(string(stringifiedBrowserData))
 	if err != nil {
@@ -291,7 +288,6 @@ func TestUserInitialBrowserParseEmptyBookmarks(t *testing.T) {
 		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
 	}
 
-
 	// 2. Test case where bookmarks are nil
 	userInitialBrowserData = BrowserData{
 		CookiesJSON: types.Cookies(cookiesJSON),
@@ -303,7 +299,6 @@ func TestUserInitialBrowserParseEmptyBookmarks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not marshal browser data: %v", err)
 	}
-	logger.Infof("stringifiedBrowserData: %s", stringifiedBrowserData)
 
 	deflatedBrowserData, err = configutils.GzipDeflateString(string(stringifiedBrowserData))
 	if err != nil {
@@ -325,10 +320,9 @@ func TestUserInitialBrowserParseEmptyBookmarks(t *testing.T) {
 		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
 	}
 
-
 	// 3. Test case where bookmars are defined as an empty string in JSON
 	browserDataString := `{"cookiesJSON":"[{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'},{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}]","bookmarks":"", "extensions":"not_real_extension_id,not_real_second_extension_id"}`
-	expectedBookmarks = configutils.Bookmarks{}
+	expectedBookmarks := configutils.Bookmarks{}
 	
 	deflatedBrowserData, err = configutils.GzipDeflateString(string(browserDataString))
 	if err != nil {
