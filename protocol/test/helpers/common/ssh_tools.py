@@ -88,6 +88,18 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
 
 
 def attempt_request_lock(instance_ip, ssh_key_path):
+    """
+    Request the E2E lock on the specified instance through SSH. We do that by moving the free lock
+    (if it exists) to a unique path that is specific to the current run of the E2E. We use the `mv`
+    operation, which is atomic in Linux.
+
+    Args:
+        instance_ip (str): The public IP of the instance for which we are trying to acquire the lock
+        ssh_key_path (str): The path to the SSH key to be used to access the instance via SSH
+
+    Returns:
+        success (bool): indicates whether the locking succeeded.
+    """
     subproc_handle = subprocess.Popen(
         f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} \
          {username}@{instance_ip} "mv {free_lock_path} {unique_lock_path}"',
@@ -99,6 +111,18 @@ def attempt_request_lock(instance_ip, ssh_key_path):
 
 
 def attempt_release_lock(instance_ip, ssh_key_path):
+    """
+    Release the E2E lock on the specified instance through SSH. We do that by moving the lock
+    from a unique path that is specific to the current run of the E2E, to the path of the free lock.
+    We use the `mv` operation, which is atomic in Linux.
+
+    Args:
+        instance_ip (str): The public IP of the instance for which we are trying to release the lock
+        ssh_key_path (str): The path to the SSH key to be used to access the instance via SSH
+
+    Returns:
+        success (bool): indicates whether the unlocking succeeded.
+    """
     subproc_handle = subprocess.Popen(
         f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} \
         {username}@{instance_ip} "mv {unique_lock_path} {free_lock_path}"',

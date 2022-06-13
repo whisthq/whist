@@ -262,9 +262,22 @@ def create_ec2_instance(
     return instance_id
 
 
-def start_instance_and_get_lock(
-    boto3client: botocore.client, instance_id: str, ssh_key_path: str
-):
+def start_instance_and_get_lock(boto3client: botocore.client, instance_id: str, ssh_key_path: str):
+    """
+    Start an existing instance and acquire the instance's E2E lock. If acquiring the E2E lock
+    fails, sleep for lock_contention_wait_time_seconds and retry. Each time, we have to ensure
+    that the instance is still running, and if not, turn it back on before attempting to acquire
+    the lock. This is because other E2E actors might have turned the instance off after completing
+    their work.
+
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        instance_id (str): The ID of the instance to start and for which we want to acquire the lock
+        ssh_key_path (str): The path to the SSH key to be used to access the instance via SSH
+
+    Returns:
+        success (bool): indicates whether the start/locking succeeded.
+    """
     # Write name of the lock to file to allow for unlocking in case of crash
     with open("lock_name.txt", "w+") as lock_log_file:
         lock_log_file.write(f"{unique_lock_path}\n")

@@ -53,8 +53,9 @@ MANDELBOX_BUILD_MAX_RETRIES = 5
 # Whether the E2E script is running in CI vs on a local machine
 running_in_ci = os.getenv("CI") == "true"
 
+# Constants used to acquire lock on the AWS instance
 unique_lock_path = os.path.join("/", "home", username, f"LOCK-{str(uuid.uuid4())}")
 free_lock_path = os.path.join("/", "home", username, "free_lock")
 lock_ssh_timeout_seconds = 30
-lock_get_attempt_timeout_seconds = 2 * 3600 # After 2h, given up
+lock_get_attempt_timeout_seconds = 2 * 3600  # After 2h, given up
 lock_contention_wait_time_seconds = 60
