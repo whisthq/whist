@@ -25,17 +25,19 @@ struct WhistRenderer {
     VideoContext* video_context;
     AudioContext* audio_context;
 
+    // for quite the render threads
     bool run_renderer_threads;
 
-    // WhistMutex renderer_mutex;
-
-    // Multi-thread model
-    bool has_video_rendered_yet;
-    WhistSemaphore video_semaphore;
-    WhistSemaphore audio_semaphore;
-
+    // one thread for video and one thread for audio
     WhistThread video_thread;
     WhistThread audio_thread;
+
+    // to implement the feature of not playing audio until video is played
+    bool has_video_rendered_yet;
+
+    // for blocking and waking video and audio thread
+    WhistSemaphore video_semaphore;
+    WhistSemaphore audio_semaphore;
 };
 
 /*
