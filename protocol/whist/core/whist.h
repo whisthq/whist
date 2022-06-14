@@ -659,27 +659,6 @@ int get_wcmsg_size(WhistClientMessage* wcmsg);
 NORETURN void terminate_protocol(WhistExitCode exit_code);
 
 /**
- * @brief                          Safely copy a string from source to destination.
- *
- * @details                        Copies at most `num` bytes from `source` to `destination`. Bytes
- *                                 after the first null character of `source` are not copied.
- *                                 If no null character is encountered within the first `num` bytes
- *                                 of `source`, `destination[num - 1]` will be manually set to zero,
- *                                 so `destination` is guaranteed to be null terminated, unless
- *                                 `num` is zero, in which case the `destination` is left unchanged.
- *
- * @param destination              Address to copy to. Should have at least `num` bytes available.
- *
- * @param source                   Address to copy from.
- *
- * @param num                      Number of bytes to copy.
- *
- * @returns                        True if all bytes of source were copied (i.e. strlen(source) <=
- *                                 num - 1)
- */
-bool safe_strncpy(char* destination, const char* source, size_t num);
-
-/**
  * @brief                          This will exit on error, and log a warning if this
  *                                 function is used when the logger is already initialized.
  *                                 If the logger is initialized, please use LOG_INFO.
@@ -720,16 +699,6 @@ void bit_array_free(BitArray* ba);
  */
 void bit_array_clear_all(const BitArray* const ba);
 
-/**
- * @brief                          This function takes a null-terminated string and modifies
- *                                 it to remove any dangling unicode characters that may have
- *                                 been left over from a previous truncation. This is necessary
- *                                 because dangling unicode characters will cause horrible crashes
- *                                 if they are not removed.
- *
- * @param str                      The utf8 string to be trimmed.
- */
-void trim_utf8_string(char* str);
 /**
  * @brief                          This function sets every bit to 1 in the bit array passed
  *                                 as a parameter.

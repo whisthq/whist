@@ -25,6 +25,7 @@ Includes
 #include "client_utils.h"
 #include "network.h"
 #include <whist/logging/logging.h>
+#include <whist/core/whist_string.h>
 #include <whist/logging/error_monitor.h>
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
@@ -148,169 +149,97 @@ int client_parse_args(int argc, const char *argv[]) {
     return 0;
 }
 
+static int handle_piped_argument(const char *key, const char *value) {
+    LOG_INFO("Piped argument: %s=%s", key, value);
+    int opt_ret = whist_set_single_option(key, value);
+    if (opt_ret == WHIST_SUCCESS) {
+        // Success, it was a normal option.
+    } else if (opt_ret != WHIST_ERROR_NOT_FOUND) {
+        // The option existed but parsing failed.
+        LOG_WARNING("Error setting piped arg %s: %s.", key, whist_error_string(opt_ret));
+    } else if (strlen(key) == 2 && !strncmp(key, "ip", strlen(key))) {
+        // If key is `ip`, then set IP address
+        if (!value) {
+            LOG_WARNING("Must pass value with `ip` key");
+        } else {
+            whist_set_single_option("server-ip", value);
+            LOG_INFO("Connecting to IP %s", value);
+        }
+    } else if (strlen(key) == 4 && !strncmp(key, "kill", strlen(key))) {
+        // If key is `kill`, then return indication for graceful exit
+        LOG_INFO("Killing client app");
+        return 2;
+    } else if (strlen(key) == 8 && !strncmp(key, "finished", strlen(key))) {
+        // If key is `finished`, then stop reading args from pipe
+        LOG_INFO("Finished piping arguments");
+        return 1;
+    } else if (strlen(key) == 7 && !strncmp(key, "loading", strlen(key))) {
+        LOG_INFO("Loading message found %s", value);
+    } else {
+        // If key is invalid, then log a warning, but continue
+        LOG_WARNING("Piped arg %s not available", key);
+    }
+    return 0;
+}
+
+/**
+ * Read stdin until a line of the form:
+ * key?value\n or key\n is read.
+ */
+static int read_next_piped_argument(char **key, char **value) {
+    FATAL_ASSERT(key != NULL);
+    FATAL_ASSERT(value != NULL);
+
+    char *incoming = safe_malloc(INCOMING_MAXLEN + 1);
+
+    if (fgets(incoming, INCOMING_MAXLEN + 1, stdin) == NULL) {
+        free(incoming);
+        return -1;
+    }
+
+    trim_newlines(incoming);
+    if (strlen(incoming) == 0) {
+        free(incoming);
+        return 1;
+    }
+
+    char *raw_value = split_string_at(incoming, "?");
+    *key = strdup(incoming);
+    if (raw_value) {
+        trim_newlines(raw_value);
+        *value = strdup(raw_value);
+    } else {
+        *value = NULL;
+    }
+
+    free(incoming);
+    return 0;
+}
+
 int read_piped_arguments(bool run_only_once) {
     if (!using_piped_arguments) {
         return 0;
     }
 
-    // Arguments will arrive from the client application via pipe to stdin.
-    // This array is too large to be made on the stack.
-    char *incoming = safe_malloc(INCOMING_MAXLEN + 1);
-
-    int total_stored_chars = 0;
-    char read_char = 0;
-    bool keep_reading = true;
-    bool finished_line = false;
-
-#if !OS_IS(OS_WIN32)
-    int available_chars;
-#else
-    DWORD available_chars;
-
-    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
-    DWORD stdin_filetype = GetFileType(h_stdin);
-    if (stdin_filetype != FILE_TYPE_PIPE) {
-        LOG_ERROR("Stdin must be piped in on Windows");
-        free(incoming);
-        return -2;
-    }
-#endif
-
-    // Each argument will be passed via pipe from the client application
-    //    with the argument name and value separated by a "?"
-    //    and each argument/value pair on its own line
     do {
-        if (!run_only_once) {
-            // to keep the fan from freaking out
-            // If stdin doesn't have any characters, continue the loop
-            // TODO: Block/poll with a 50 ms timeout on the stdin fd instead
-            whist_sleep(50);
-        }
-
-#if !OS_IS(OS_WIN32)
-        if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
-            LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
-            free(incoming);
+        char *key;
+        char *value;
+        int ret = read_next_piped_argument(&key, &value);
+        if (ret == -1) {
             return -2;
-        } else if (available_chars == 0) {
+        } else if (ret == 1) {
             continue;
         }
-#else
-        // When in piped mode (e.g. from the client app), stdin is a NamedPipe
-        if (!PeekNamedPipe(h_stdin, NULL, 0, NULL, &available_chars, NULL)) {
-            if (GetLastError() == ERROR_BROKEN_PIPE || GetLastError() == ERROR_PIPE_NOT_CONNECTED) {
-                // On closed stdin, fgetc will return 0 for EOF, so force a char read to eval line
-                available_chars = 1;
-            }
+
+        ret = handle_piped_argument(key, value);
+        free(key);
+        free(value);
+        if (ret == 2) {
+            return 1;
+        } else if (ret == 1) {
+            return 0;
         }
-#endif  // Windows
-
-        // Reset `incoming` so that it is at the very least initialized.
-        memset(incoming, 0, INCOMING_MAXLEN + 1);
-        for (int char_idx = 0; char_idx < (int)available_chars; char_idx++) {
-            // Read a character from stdin
-            read_char = (char)fgetc(stdin);
-            // If the character is EOF, make sure the loop ends after this iteration
-            if (read_char == EOF) {
-                keep_reading = false;
-            } else if (!finished_line) {
-                incoming[total_stored_chars] = read_char;
-                total_stored_chars++;
-            }
-            // Causes some funky behavior if the line being read in is longer than 128 characters
-            // because
-            //   it splits into two and processes as two different pieces
-            if (!keep_reading ||
-                (total_stored_chars > 0 && ((incoming[total_stored_chars - 1] == '\n') ||
-                                            total_stored_chars == INCOMING_MAXLEN))) {
-                finished_line = true;
-                total_stored_chars = 0;
-            } else {
-                continue;
-            }
-
-            // We could use `strsep`, but it sadly is not cross-platform.
-            // We split at the first occurence of '?'; the first part becomes
-            // the name, and the last part becomes the value.
-            // If there is no '?', the value is set to NULL.
-            char *c;
-            for (c = incoming; *c && *c != '?'; ++c)
-                ;
-            char *arg_name = incoming;
-            char *arg_value = NULL;
-            if (*c == '?') {
-                *c = '\0';
-                arg_value = c + 1;
-            }
-
-            if (!arg_name) {
-                goto completed_line_eval;
-            }
-
-            if (arg_value) {
-                arg_value[strcspn(arg_value, "\n")] = 0;  // removes trailing newline, if exists
-                arg_value[strcspn(arg_value, "\r")] =
-                    0;  // removes trailing carriage return, if exists
-            }
-
-            arg_name[strcspn(arg_name, "\n")] = 0;  // removes trailing newline, if exists
-            arg_name[strcspn(arg_name, "\r")] = 0;  // removes trailing carriage return, if exists
-
-            int opt_ret = whist_set_single_option(arg_name, arg_value);
-            if (opt_ret == WHIST_SUCCESS) {
-                // Success, it was a normal option.
-            } else if (opt_ret != WHIST_ERROR_NOT_FOUND) {
-                // The option existed but parsing failed.
-                LOG_WARNING("Error settng piped arg %s: %s.", arg_name,
-                            whist_error_string(opt_ret));
-            } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
-                // If arg_name is `ip`, then set IP address
-                if (!arg_value) {
-                    LOG_WARNING("Must pass arg_value with `ip` arg_name");
-                } else {
-                    whist_set_single_option("server-ip", arg_value);
-                    LOG_INFO("Connecting to IP %s", arg_value);
-                }
-            } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
-                // If arg_name is `kill`, then return indication for graceful exit
-                LOG_INFO("Killing client app");
-                free(incoming);
-                return 1;
-            } else if (strlen(arg_name) == 8 && !strncmp(arg_name, "finished", strlen(arg_name))) {
-                // If arg_name is `finished`, then stop reading args from pipe
-                LOG_INFO("Finished piping arguments");
-                keep_reading = false;
-                goto end_of_eval_loop;
-            } else if (strlen(arg_name) == 7 && !strncmp(arg_name, "loading", strlen(arg_name))) {
-                LOG_INFO("Loading message found %s", arg_value);
-            } else {
-                // If arg_name is invalid, then log a warning, but continue
-                LOG_WARNING("Piped arg %s not available", arg_name);
-            }
-
-            fflush(stdout);
-
-        completed_line_eval:
-            if (finished_line) {
-                // Reset finished_line after evaluating a line
-                finished_line = false;
-                memset(incoming, 0, INCOMING_MAXLEN + 1);
-            }
-        }
-    end_of_eval_loop:
-        available_chars = 0;
-    } while (keep_reading && !run_only_once);
-
-    free(incoming);
-
-    const char *server_ip = NULL;
-    if (whist_option_get_string_value("server-ip", &server_ip) != WHIST_SUCCESS ||
-        server_ip == NULL) {
-        LOG_ERROR(
-            "Need IP: if not passed in directly, IP must "
-            "be passed in via pipe with arg name `ip`");
-        return -1;
-    }
+    } while (!run_only_once);
 
     return 0;
 }

@@ -25,6 +25,7 @@ Includes
 #include <fcntl.h>
 
 #include <whist/core/whist.h>
+#include <whist/core/whist_string.h>
 #include <whist/network/network.h>
 #include <whist/utils/aes.h>
 #include <whist/utils/clock.h>

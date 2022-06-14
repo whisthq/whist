@@ -32,6 +32,7 @@ extern "C" {
 #include <client/sdl_utils.h>
 #include "whist/utils/color.h"
 #include <whist/core/whist.h>
+#include <whist/core/whist_string.h>
 #include <whist/utils/os_utils.h>
 #include <whist/network/ringbuffer.h>
 #include <client/audio.h>

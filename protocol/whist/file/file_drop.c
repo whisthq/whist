@@ -17,6 +17,7 @@ destroy_file_drop_handler();
 */
 
 #include <whist/core/whist.h>
+#include <whist/core/whist_string.h>
 #include "file_drop.h"
 
 #if !OS_IS(OS_LINUX)

@@ -19,6 +19,7 @@ Includes
 #include "handle_frontend_events.h"
 
 #include <whist/logging/logging.h>
+#include <whist/core/whist_string.h>
 #include "sdl_utils.h"
 #include "audio.h"
 #include "client_utils.h"

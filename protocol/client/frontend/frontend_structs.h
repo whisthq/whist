@@ -68,6 +68,14 @@ typedef enum FrontendEventType {
      */
     FRONTEND_EVENT_FILE_DROP,
     /**
+     * URL open event.
+     */
+    // FRONTEND_EVENT_OPEN_URL,
+    /**
+     * Startup parameter event.
+     */
+    // FRONTEND_EVENT_STARTUP_PARAMETER,
+    /**
      * Quit event.
      *
      * The user or OS indicated that the application should quit.
@@ -128,6 +136,15 @@ typedef struct FrontendMouseWheelEvent {
     } precise_delta;
 } FrontendMouseWheelEvent;
 
+typedef struct FrontendOpenURLEvent {
+    const char *url;
+} FrontendOpenURLEvent;
+
+typedef struct FrontendStartupParameterEvent {
+    const char *name;
+    const char *value;
+} FrontendParameterEvent;
+
 typedef struct FrontendGestureEvent {
     struct {
         float theta;
@@ -146,7 +163,7 @@ typedef struct FrontendFileDropEvent {
         int x;
         int y;
     } position;
-    char* filename;  // must be freed by handler, if not NULL
+    char *filename;  // must be freed by handler, if not NULL
     bool end_drop;   // true when ending a series of a drop events part of the same multi-file drop
 } FrontendFileDropEvent;
 
@@ -157,7 +174,7 @@ typedef struct FrontendFileDragEvent {
     } position;
     int group_id;
     bool end_drag;
-    char* filename;  // File being dragged (multiple files should
+    char *filename;  // File being dragged (multiple files should
                      //     be sent in multiple messages)
 } FrontendFileDragEvent;
 

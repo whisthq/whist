@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <whist/core/whist_string.h>
 #include "input.h"
 #include "input_internal.h"
 

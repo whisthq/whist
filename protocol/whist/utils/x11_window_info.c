@@ -18,6 +18,7 @@ Includes
 */
 
 #include <whist/core/whist.h>
+#include <whist/core/whist_string.h>
 #include "window_info.h"
 #include <locale.h>
 #include <whist/video/capture/x11capture.h>
