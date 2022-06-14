@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/whisthq/whist/backend/services/host-service/auth"
-	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -78,16 +77,6 @@ func GetAccessToken(r *http.Request) (string, error) {
 // and will parse the request body and try to unmarshal into a
 // `ServerRequest` type.
 func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) (*auth.WhistClaims, error) {
-	if metadata.IsRunningInCI() {
-		// Only parse request and skip validation when running tests
-		_, err := ParseRequest(w, r, s)
-		if err != nil {
-			return nil, utils.MakeError("Error while parsing request. Err: %v", err)
-		}
-
-		return nil, nil
-	}
-
 	accessToken, err := GetAccessToken(r)
 	if err != nil {
 		return nil, err
