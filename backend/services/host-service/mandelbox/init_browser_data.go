@@ -38,7 +38,7 @@ type BrowserData struct {
 
 // Custom-defined UnmarshalJSON function to handle the empty-string case correctly.
 func (browserdata *BrowserData) UnmarshalJSON(data []byte) error {
-	if string(data) == `""` || string(data) == `''` || string(data) == "" {
+	if string(data) == `""` || string(data) == "" {
 		return nil
 	}
 	return json.Unmarshal(data, browserdata)

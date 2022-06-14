@@ -28,7 +28,7 @@ type Bookmarks struct {
 
 // Custom-defined UnmarshalJSON function to handle the empty-string case correctly.
 func (bookmarks *Bookmarks) UnmarshalJSON(data []byte) error {
-	if string(data) == `""` || string(data) == `''` || string(data) == "" {
+	if string(data) == `""` || string(data) == "" {
 		return nil
 	}
 	return json.Unmarshal(data, bookmarks)
