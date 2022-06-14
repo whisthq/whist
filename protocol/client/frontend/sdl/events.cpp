@@ -48,13 +48,7 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 int id = (intptr_t)user_event->data2;
                 if (context->windows.contains(id)) {
                     SDL_Window* window = context->windows[id]->window;
-                    if (window == NULL) {
-                        LOG_WARNING(
-                            "Window title change event ignored "
-                            "because there is no window.");
-                    } else {
-                        SDL_SetWindowTitle(window, title);
-                    }
+                    SDL_SetWindowTitle(window, title);
                 } else {
                     LOG_WARNING(
                         "Window title change event ignored because there is no window of id %d",
