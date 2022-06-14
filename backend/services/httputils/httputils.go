@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -70,6 +71,29 @@ func GetAccessToken(r *http.Request) (string, error) {
 	}
 	accessToken := bearer[1]
 	return accessToken, nil
+}
+
+// AuthenticateRequest will verify that the access token is valid
+// and will parse the request body and try to unmarshal into a
+// `ServerRequest` type.
+func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) (*auth.WhistClaims, error) {
+	accessToken, err := GetAccessToken(r)
+	if err != nil {
+		return nil, err
+	}
+
+	claims, err := auth.ParseToken(accessToken)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+	}
+
+	_, err = ParseRequest(w, r, s)
+	if err != nil {
+		return nil, utils.MakeError("Error while parsing request. Err: %v", err)
+	}
+
+	return claims, nil
 }
 
 // ParseRequest will split the request body, unmarshal into a raw JSON map, and then unmarshal

@@ -54,7 +54,7 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	}
 
 	var reqdata httputils.MandelboxAssignRequest
-	claims, err := authenticateRequest(w, req, &reqdata)
+	claims, err := httputils.AuthenticateRequest(w, req, &reqdata)
 	if err != nil {
 		logger.Errorf("Failed while authenticating request. Err: %v", err)
 		return
@@ -177,7 +177,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Verify authorization and unmarshal into the right object type
 	var reqdata httputils.JSONTransportRequest
-	if _, err := authenticateRequest(w, r, &reqdata); err != nil {
+	if _, err := httputils.AuthenticateRequest(w, r, &reqdata); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
@@ -222,29 +222,6 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(hostBody)
-}
-
-// authenticateRequest will verify that the access token is valid
-// and will parse the request body and try to unmarshal into a
-// `ServerRequest` type.
-func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) (*auth.WhistClaims, error) {
-	accessToken, err := httputils.GetAccessToken(r)
-	if err != nil {
-		return nil, err
-	}
-
-	claims, err := auth.ParseToken(accessToken)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-	}
-
-	_, err = httputils.ParseRequest(w, r, s)
-	if err != nil {
-		return nil, utils.MakeError("Error while parsing request. Err: %v", err)
-	}
-
-	return claims, nil
 }
 
 // throttleMiddleware will limit requests on the endpoint using the provided rate limiter.
