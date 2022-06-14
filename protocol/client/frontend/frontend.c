@@ -113,9 +113,9 @@ int whist_frontend_get_window_dpi(WhistFrontend* frontend) {
     return frontend->call->get_window_dpi(frontend);
 }
 
-bool whist_frontend_is_window_visible(WhistFrontend* frontend) {
+bool whist_frontend_is_any_window_visible(WhistFrontend* frontend) {
     FRONTEND_ENTRY();
-    return frontend->call->is_window_visible(frontend);
+    return frontend->call->is_any_window_visible(frontend);
 }
 
 WhistStatus whist_frontend_set_title(WhistFrontend* frontend, int id, const char* title) {

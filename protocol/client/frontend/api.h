@@ -19,7 +19,7 @@
               int* height)                                                                         \
     GENERATOR(WhistStatus, get_window_display_index, WhistFrontend* frontend, int id, int* index)  \
     GENERATOR(int, get_window_dpi, WhistFrontend* frontend)                                        \
-    GENERATOR(bool, is_window_visible, WhistFrontend* frontend)                                    \
+    GENERATOR(bool, is_any_window_visible, WhistFrontend* frontend)                                \
     GENERATOR(WhistStatus, set_title, WhistFrontend* frontend, int id, const char* title)          \
     GENERATOR(void, restore_window, WhistFrontend* frontend, int id)                               \
     GENERATOR(void, set_window_fullscreen, WhistFrontend* frontend, int id, bool fullscreen)       \

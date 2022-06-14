@@ -160,7 +160,7 @@ int virtual_get_window_dpi(WhistFrontend* frontend) {
     return context->dpi;
 }
 
-bool virtual_is_window_visible(WhistFrontend* frontend) { return true; }
+bool virtual_is_any_window_visible(WhistFrontend* frontend) { return true; }
 
 WhistStatus virtual_set_title(WhistFrontend* frontend, int id, const char* title) {
     return WHIST_SUCCESS;

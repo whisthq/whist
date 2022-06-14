@@ -75,8 +75,8 @@ int sdl_get_window_dpi(WhistFrontend* frontend) {
     return -1;
 }
 
-bool sdl_is_window_visible(WhistFrontend* frontend) {
-    // TODO: changed to check if any window is visible
+// Checks if at least one window is visible. Returns false if all windows are minimized or occluded.
+bool sdl_is_any_window_visible(WhistFrontend* frontend) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     for (const auto& [window_id, window_context] : context->windows) {
         if (!(SDL_GetWindowFlags(window_context->window) &
