@@ -25,7 +25,7 @@ struct WhistRenderer {
     VideoContext* video_context;
     AudioContext* audio_context;
 
-    // for quite the render threads
+    // for quit the render threads
     bool run_renderer_threads;
 
     // one thread for video and one thread for audio
