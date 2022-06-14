@@ -548,7 +548,7 @@ const getBookmarksFromFile = (browser: InstalledBrowser): string => {
     // Remove checksum if it exists
     delete bookmarksJSON.checksum
 
-    return JSON.stringify(bookmarksJSON)
+    return bookmarksJSON
   } catch (err) {
     console.error("Could not get bookmarks from file. Error:", err)
     return ""
