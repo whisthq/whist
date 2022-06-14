@@ -78,19 +78,25 @@ func GetAccessToken(r *http.Request) (string, error) {
 // and will parse the request body and try to unmarshal into a
 // `ServerRequest` type.
 func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) (*auth.WhistClaims, error) {
+	if metadata.IsRunningInCI() {
+		// Only parse request and skip validation when running tests
+		_, err := ParseRequest(w, r, s)
+		if err != nil {
+			return nil, utils.MakeError("Error while parsing request. Err: %v", err)
+		}
+
+		return nil, nil
+	}
+
 	accessToken, err := GetAccessToken(r)
 	if err != nil {
 		return nil, err
 	}
 
-	var claims *auth.WhistClaims
-	// Disable token validation when running tests
-	if !metadata.IsRunningInCI() {
-		claims, err = auth.ParseToken(accessToken)
-		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-		}
+	claims, err := auth.ParseToken(accessToken)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
 	}
 
 	_, err = ParseRequest(w, r, s)
