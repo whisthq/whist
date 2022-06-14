@@ -308,9 +308,7 @@ void sdl_destroy_window(WhistFrontend* frontend, int id) {
         }
         // destroy the D3D11 device and context if Windows
 #if OS_IS(OS_WIN32)
-        if (!strcmp(context->render_driver_name, "direct3d11")) {
-            sdl_d3d11_destroy_window(context, id);
-        }
+        sdl_d3d11_destroy_window(context, id);
 #endif  // Windows
         // destroy renderer
         if (window_context->renderer != NULL) {
