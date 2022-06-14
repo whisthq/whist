@@ -415,16 +415,18 @@ void mark_unused_region(void* region) {
     if (p->size > page_size) {
         char* next_page = (char*)p + page_size;
         size_t advise_size = p->size - page_size;
-#if OS_IS(OS_WIN32)
-        // Offer the Virtual Memory up so that task manager knows we're not using those pages
-        // anymore
-        OfferVirtualMemory(next_page, advise_size, VmOfferPriorityNormal);
-#elif OS_IS(OS_MACOS)
+#if OS_IS(OS_MACOS)
         // Lets you tell the Apple Task Manager to report correct memory usage
         madvise(next_page, advise_size, MADV_FREE_REUSABLE);
-#else
+#elif OS_IS(OS_LINUX)
         // Linux won't update `top`, but it will have the correct OOM semantics
         madvise(next_page, advise_size, MADV_FREE);
+#else
+        // On Windows it is possible to use OfferVirtualMemory() here,
+        // but the cost of doing so makes this less efficient than just
+        // doing malloc()/free() every time.  Therefore do nothing.
+        UNUSED(next_page);
+        UNUSED(advise_size);
 #endif
     }
 }
@@ -443,10 +445,7 @@ void mark_used_region(void* region) {
     if (p->size > page_size) {
         char* next_page = (char*)p + page_size;
         size_t advise_size = p->size - page_size;
-#if OS_IS(OS_WIN32)
-        // Reclaim the virtual memory for usage again
-        ReclaimVirtualMemory(next_page, advise_size);
-#elif OS_IS(OS_MACOS)
+#if OS_IS(OS_MACOS)
         // Tell the Apple Task Manager that we'll use this memory again
         // Apparently we can lie to their Task Manager by not calling this
         // Hm.
