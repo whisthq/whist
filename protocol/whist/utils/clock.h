@@ -123,7 +123,7 @@ int current_time_str(char* buffer, size_t size);
  *
  * @returns                        Number of microseconds elapsed since epoch
  * @note                           This value returned by this function is based on wallclock time,
- *                                 it's not aim for comparing how much time has pased
+ *                                 it's not for comparing how much time has past
  */
 timestamp_us current_time_us(void);
 
@@ -132,10 +132,11 @@ timestamp_us current_time_us(void);
  *
  * @returns                        Timestamp in sec.
  * @note                           The point of this function is to get a comparable timestamp, the
- *                                 absolute value is not important. But for a well defined behavior:
+ *                                 absolute value is not important. But for a well-defined behavior:
  *                                 The first call of this function returns zero, following calls run
  *                                 the time past in sec since first call.
- *
+ *                                 This function is thread-safe after the first call finishes. The
+ *                                 first call is expected to be done inside whist_init_subsystems().
  */
 double get_timestamp_sec(void);
 
