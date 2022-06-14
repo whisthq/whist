@@ -175,6 +175,14 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Extract access token from request header to pass to host service
+	accessToken, err := httputils.GetAccessToken(r)
+	if err != nil {
+		logger.Error(err)
+		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
+		return
+	}
+
 	// Verify authorization and unmarshal into the right object type
 	var reqdata httputils.JSONTransportRequest
 	if _, err := httputils.AuthenticateRequest(w, r, &reqdata); err != nil {
@@ -191,14 +199,20 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create a new request
 	bodyReader := bytes.NewReader(jsonBody)
 	hostReq, err := http.NewRequest("PUT", url, bodyReader)
 	if err != nil {
-		logger.Errorf("Failed to send JSON transport request to instance. Err: %v", err)
+		logger.Errorf("Failed to create JSON transport request for host service. Err: %v", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
+	// Add necessary headers to host request
+	hostReq.Header.Add("content-type", "application/json")
+	hostReq.Header.Add("Authorization", utils.Sprintf("Bearer %s", accessToken))
+
+	// Instanciate a new http client with a custom transport
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -206,6 +220,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	client := &http.Client{Transport: tr}
 
+	// Now that request is fully assembled and the client is initialized, send the request
 	res, err := client.Do(hostReq)
 	if err != nil {
 		logger.Errorf("Failed to send JSON transport request to instance. Err: %v", err)
