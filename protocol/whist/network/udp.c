@@ -119,7 +119,7 @@ typedef struct {
 // How long to go without a pong, before the connection is marked as lost
 #define UDP_PONG_TIMEOUT_SEC 2.5
 // How long to go without a pong, before we signal severe congestion to congestion control
-#define UDP_PONG_CONGESTION_SEC 0.25
+#define UDP_PONG_CONGESTION_SEC 0.5
 // How often to print ping logs
 #define UDP_PING_LOG_INTERVAL_SEC 1.0
 #define MAX_GROUP_STATS 8
@@ -211,6 +211,8 @@ typedef struct {
     NetworkSettings network_settings;
     WhistMutex congestion_control_mutex;
     WhistTimer last_network_settings_send_time;
+    // Last time UDP thread bottleneck (mostly due to CPU starvation) was detected
+    WhistTimer last_bottleneck_timer;
     // Group related stats and variables required for congestion control
     GroupStats group_stats[MAX_GROUP_STATS];
     int prev_group_id;
@@ -254,6 +256,12 @@ typedef struct {
 // we can safely drop packets if we're truly oversaturating our send bandwidth
 #define UDP_SEND_BUFFER_SIZE (1 << 17)
 
+// Number of seconds WCC will be put on hold, after a UDP thread bottleneck(CPU starvation) is
+// detected
+#define WCC_HOLD_TIME_AFTER_UDP_BOTTLENECK_SEC 0.25
+// Maximum number of milliseconds between two consecutive calls to UDP recv(), beyond which it is
+// considered as UDP thread being bottlenecked due to CPU starvation or otherwise.
+#define UDP_RECV_BOTTLENECK_THRESHOLD_MS 4.0
 /*
 ============================
 Globals
@@ -512,7 +520,8 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     }
 
     if (group_id > context->curr_group_id) {
-        if (context->prev_group_id != 0) {
+        if (context->prev_group_id != 0 &&
+            get_timer(&context->last_bottleneck_timer) > WCC_HOLD_TIME_AFTER_UDP_BOTTLENECK_SEC) {
             GroupStats* curr_group_stats =
                 &context->group_stats[context->curr_group_id % MAX_GROUP_STATS];
             GroupStats* prev_group_stats =
@@ -595,7 +604,8 @@ static bool udp_update(void* raw_context) {
         start_timer(&last_recv_timer);
     }
     double last_recv = get_timer(&last_recv_timer);
-    if (last_recv * MS_IN_SECOND > 5.0) {
+    if (last_recv * MS_IN_SECOND > UDP_RECV_BOTTLENECK_THRESHOLD_MS) {
+        start_timer(&context->last_bottleneck_timer);
         LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
                                  last_recv * MS_IN_SECOND);
     }
@@ -1067,6 +1077,11 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     context->connection_lost = false;
     context->unordered_packet_info.max_unordered_packets = 0.0;
     start_timer(&context->last_network_settings_send_time);
+    start_timer(&context->last_bottleneck_timer);
+    // Just reduce it by the nearest integer to WCC_HOLD_TIME_AFTER_UDP_BOTTLENECK_SEC to ensure
+    // that bottleneck related logic doesn't get triggered in start-up.
+    adjust_timer(&context->last_bottleneck_timer,
+                 (int)(-1.0 - WCC_HOLD_TIME_AFTER_UDP_BOTTLENECK_SEC));
 
     // Map Port
     if ((int)((unsigned short)port) != port) {
