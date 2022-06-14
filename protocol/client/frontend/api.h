@@ -31,9 +31,9 @@
               enum AVPixelFormat* format)                                                          \
     GENERATOR(WhistStatus, update_video, WhistFrontend* frontend, AVFrame* frame)                  \
     GENERATOR(void, paint_png, WhistFrontend* frontend, const uint8_t* data, size_t data_size,     \
-              int output_width, int output_height, int x, int y)                                   \
+              int x, int y)                                                                        \
     GENERATOR(void, paint_solid, WhistFrontend* frontend, const WhistRGBColor* color)              \
-    GENERATOR(void, paint_video, WhistFrontend* frontend, int output_width, int output_height)     \
+    GENERATOR(void, paint_video, WhistFrontend* frontend)                                          \
     GENERATOR(void, render, WhistFrontend* frontend)                                               \
     GENERATOR(void, set_titlebar_color, WhistFrontend* frontend, const WhistRGBColor* color)       \
     GENERATOR(void, display_notification, WhistFrontend* frontend, const WhistNotification* notif) \

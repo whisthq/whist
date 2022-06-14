@@ -23,20 +23,15 @@ Includes
 #include "frontend/frontend.h"
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/command_line.h>
+#include <whist/network/network_algorithm.h>
 
 #include <whist/utils/color.h>
 #include "client_utils.h"
-
-extern volatile int output_width;
-extern volatile int output_height;
-extern volatile bool insufficient_bandwidth;
 
 static WhistMutex frontend_render_mutex;
 
 // pending render Update
 static volatile bool pending_render = false;
-
-static volatile bool prev_insufficient_bandwidth = false;
 
 // Video frame update.
 static AVFrame* pending_video_frame;
@@ -82,15 +77,15 @@ Public Function Implementations
 ============================
 */
 
-WhistFrontend* init_sdl(int target_output_width, int target_output_height, const char* title) {
+WhistFrontend* create_frontend(void) {
     WhistFrontend* frontend = whist_frontend_create(frontend_type ? frontend_type : "sdl");
     if (frontend == NULL) {
         LOG_ERROR("Failed to create frontend");
         return NULL;
     }
 
-    if (whist_frontend_init(frontend, target_output_width, target_output_height, title,
-                            &background_color) != WHIST_SUCCESS) {
+    // TODO: Stop passing width/height/title here.
+    if (whist_frontend_init(frontend, 0, 0, "Whist", &background_color) != WHIST_SUCCESS) {
         whist_frontend_destroy(frontend);
         LOG_ERROR("Failed to initialize frontend");
         return NULL;
@@ -98,8 +93,8 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
 
     pending_cursor_info_mutex = whist_create_mutex();
     frontend_render_mutex = whist_create_mutex();
-    // set pending_cursor_info to NULL for safety, not necessary at the moment since init_sdl() is
-    // only called once.
+    // set pending_cursor_info to NULL for safety, not necessary at the moment since
+    // create_frontend() is only called once.
     pending_cursor_info = NULL;
 
     pending_video_frame = NULL;
@@ -109,15 +104,14 @@ WhistFrontend* init_sdl(int target_output_width, int target_output_height, const
     // pixels
     int w, h;
     whist_frontend_get_window_pixel_size(frontend, &w, &h);
-    output_width = w;
-    output_height = h;
+    network_algo_set_dimensions(w, h);
 
     event_frontend = frontend;
 
     return frontend;
 }
 
-void destroy_sdl(WhistFrontend* frontend) {
+void destroy_frontend(WhistFrontend* frontend) {
     av_frame_free(&pending_video_frame);
 
     LOG_INFO("Destroying SDL");
@@ -185,17 +179,14 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
     }
 #endif  // non-Linux
 
-    // Update output width / output height
-    if (current_width != output_width || current_height != output_height) {
-        output_width = current_width;
-        output_height = current_height;
-    }
+    network_algo_set_dimensions(current_width, current_height);
 
     whist_lock_mutex(window_resize_mutex);
     pending_resize_message = true;
     whist_unlock_mutex(window_resize_mutex);
 
-    LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, output_width, output_height);
+    LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, current_width,
+             current_height);
 }
 
 void sdl_update_framebuffer(AVFrame* frame) {
@@ -346,12 +337,19 @@ Private Function Implementations
 */
 
 static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
+    static bool insufficient_bandwidth = false;
+
     // Render out the current framebuffer, if there's a pending render
     whist_lock_mutex(frontend_render_mutex);
 
     // Render the error message immediately during state transition to insufficient bandwidth
-    if (prev_insufficient_bandwidth == false && insufficient_bandwidth == true) {
-        pending_render = true;
+    if (network_algo_is_insufficient_bandwidth()) {
+        if (insufficient_bandwidth == false) {
+            pending_render = true;
+        }
+        insufficient_bandwidth = true;
+    } else {
+        insufficient_bandwidth = false;
     }
 
     // If there's no pending render or overlay visualizations, just do nothing,
@@ -377,12 +375,11 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
         av_frame_free(&pending_video_frame);
     }
 
-    whist_frontend_paint_video(frontend, output_width, output_height);
+    whist_frontend_paint_video(frontend);
 
     if (insufficient_bandwidth) {
         render_insufficient_bandwidth(frontend);
     }
-    prev_insufficient_bandwidth = insufficient_bandwidth;
 
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
     whist_unlock_mutex(frontend_render_mutex);
@@ -443,6 +440,5 @@ static void render_insufficient_bandwidth(WhistFrontend* frontend) {
         }
     }
 
-    whist_frontend_paint_png(frontend, images[chosen_idx].data, *images[chosen_idx].size,
-                             output_width, output_height, -1, -1);
+    whist_frontend_paint_png(frontend, images[chosen_idx].data, *images[chosen_idx].size, -1, -1);
 }

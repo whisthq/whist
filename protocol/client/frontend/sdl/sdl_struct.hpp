@@ -85,6 +85,14 @@ typedef struct SDLFrontendContext {
     void* file_drag_data;
     bool video_has_rendered;
     bool window_has_shown;
+    /**
+     * The cached pixel width of the window, updated on resize events.
+     */
+    int latest_pixel_width;
+    /**
+     * The cached pixel height of the window, updated on resize events.
+     */
+    int latest_pixel_height;
 } SDLFrontendContext;
 
 // D3D11 helper functions (Windows only).

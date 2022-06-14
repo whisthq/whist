@@ -60,11 +60,7 @@ Includes
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
 
-extern volatile int output_width;
-extern volatile int output_height;
-static char* program_name;
 static char* server_ip;
-static char* user_email;
 extern bool using_stun;
 
 // Mouse motion state
@@ -93,12 +89,8 @@ extern bool upload_initiated;
 
 // Command-line options.
 
-COMMAND_LINE_STRING_OPTION(user_email, 'u', "user", WHIST_ARGS_MAXLEN,
-                           "Tell Whist the user's email.  Default: None.")
 COMMAND_LINE_STRING_OPTION(new_tab_urls, 'x', "new-tab-url", MAX_URL_LENGTH* MAX_NEW_TAB_URLS,
                            "URL to open in new tab.")
-COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
-                           "Set the window title.  Default: Whist.")
 COMMAND_LINE_STRING_OPTION(server_ip, 0, "server-ip", IP_MAXLEN, "Set the server IP to connect to.")
 
 static void sync_keyboard_state(WhistFrontend* frontend) {
@@ -275,7 +267,7 @@ static WhistStatus initialize_connection(void) {
          ++retry_attempt) {
         WhistTimer handshake_time;
         start_timer(&handshake_time);
-        if (connect_to_server(server_ip, using_stun, user_email) == 0) {
+        if (connect_to_server(server_ip, using_stun) == 0) {
             // Success -- log time to metrics and developer logs
             double connect_to_server_time = get_timer(&handshake_time);
             LOG_INFO("Server connection took %f ms", connect_to_server_time);
@@ -300,7 +292,9 @@ static WhistStatus initialize_connection(void) {
  * @returns             The appropriate WHIST_EXIT_CODE based on how we exited.
  * @todo                Use a more sensible return type/scheme.
  */
-static WhistExitCode main_loop(WhistFrontend* frontend, WhistRenderer* renderer) {
+static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* renderer) {
+    LOG_INFO("Entering main event loop...");
+
     WhistTimer keyboard_sync_timer, monitor_change_timer, new_tab_urls_timer,
         cpu_usage_statistics_timer;
     start_timer(&keyboard_sync_timer);
@@ -402,6 +396,62 @@ static WhistExitCode main_loop(WhistFrontend* frontend, WhistRenderer* renderer)
     return WHIST_EXIT_SUCCESS;
 }
 
+/**
+ * @brief Initialize the renderer and synchronizer threads which must exist before connection.
+ *
+ * @param frontend      The frontend to target for UI updates.
+ * @param renderer      A pointer to be filled in with a reference to the video/audio renderer.
+ */
+static void pre_connection_setup(WhistFrontend* frontend, WhistRenderer** renderer) {
+    FATAL_ASSERT(renderer != NULL);
+    int initial_width = 0, initial_height = 0;
+    whist_frontend_get_window_pixel_size(frontend, &initial_width, &initial_height);
+    *renderer = init_renderer(frontend, initial_width, initial_height);
+    init_clipboard_synchronizer(true);
+    init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
+}
+
+/**
+ * @brief Initialize synchronization threads and state which must be created after a connection is
+ *        started.
+ *
+ * @param frontend      The frontend to target for UI updates.
+ * @param renderer      A reference to the video/audio renderer.
+ */
+static void on_connection_setup(WhistFrontend* frontend, WhistRenderer* renderer) {
+    start_timer(&window_resize_timer);
+    window_resize_mutex = whist_create_mutex();
+
+    // Create tcp/udp handlers and give them the renderer so they can route packets properly
+    init_packet_synchronizers(renderer);
+
+    // Sometimes, resize events aren't generated during startup, so we manually call this to
+    // initialize internal values to actual dimensions
+    sdl_renderer_resize_window(frontend, -1, -1);
+    send_message_dimensions(frontend);
+}
+
+/**
+ * @brief Clean up the renderer, synchronization threads, and state which must be destroyed after a
+ *        connection is closed.
+ *
+ * @param renderer      A reference to the video/audio renderer.
+ */
+static void post_connection_cleanup(WhistRenderer* renderer) {
+    // End communication with server
+    destroy_packet_synchronizers();
+
+    // Destroy the renderer, which may have been viewing into the packet buffer
+    destroy_renderer(renderer);
+
+    // Destroy networking peripherals
+    destroy_file_synchronizer();
+    destroy_clipboard_synchronizer();
+
+    // Close the connections, destroying the packet buffers
+    close_connections();
+}
+
 int whist_client_main(int argc, const char* argv[]) {
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
@@ -424,13 +474,14 @@ int whist_client_main(int argc, const char* argv[]) {
 
     // Initialize logger error monitor
     whist_error_monitor_initialize(true);
-    whist_error_monitor_set_username(user_email);
 
     print_system_info();
     LOG_INFO("Whist client revision %s", whist_git_revision());
 
     client_exiting = false;
     WhistExitCode exit_code = WHIST_EXIT_SUCCESS;
+
+    WhistFrontend* frontend = create_frontend();
 
     // Read in any piped arguments. If the arguments are bad, then skip to the destruction phase
     switch (read_piped_arguments(false)) {
@@ -459,40 +510,21 @@ int whist_client_main(int argc, const char* argv[]) {
         }
     }
 
-    WhistFrontend* frontend = init_sdl(output_width, output_height, program_name);
-
     bool failed_to_connect = false;
 
     while (!client_exiting && (exit_code == WHIST_EXIT_SUCCESS)) {
-        WhistRenderer* whist_renderer = init_renderer(frontend, output_width, output_height);
-        init_clipboard_synchronizer(true);
-        init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);
+        WhistRenderer* renderer;
+        pre_connection_setup(frontend, &renderer);
 
         if (initialize_connection() != WHIST_SUCCESS) {
             failed_to_connect = true;
             break;
         }
-
         connected = true;
+        on_connection_setup(frontend, renderer);
 
-        start_timer(&window_resize_timer);
-        window_resize_mutex = whist_create_mutex();
-
-        // Create tcp/udp handlers and give them the renderer so they can route packets properly
-        init_packet_synchronizers(whist_renderer);
-
-        // Sometimes, resize events aren't generated during startup, so we manually call this to
-        // initialize internal values to actual dimensions
-        sdl_renderer_resize_window(frontend, -1, -1);
-        send_message_dimensions(frontend);
-
-        LOG_INFO("Entering main event loop...");
-
-        // We now are guaranteed to have a connection to the server
-        // TODO: Instead of returning exit_code here, return something more informative that will
-        //       us whether we disconnected, manually exited, etc. maybe a proper WhistStatus?
-        exit_code = main_loop(frontend, whist_renderer);
-
+        // TODO: Maybe return something more informative than exit_code, like a WhistStatus
+        exit_code = run_main_loop(frontend, renderer);
         if (client_exiting || (exit_code != WHIST_EXIT_SUCCESS)) {
             // We actually exited the main loop, so signal the server to quit
             LOG_INFO("Disconnecting from server...");
@@ -502,19 +534,7 @@ int whist_client_main(int argc, const char* argv[]) {
             LOG_INFO("Reconnecting to server...");
         }
 
-        // End communication with server
-        destroy_packet_synchronizers();
-
-        // Destroy the renderer, which may have been viewing into the packet buffer
-        destroy_renderer(whist_renderer);
-
-        // Destroy networking peripherals
-        destroy_file_synchronizer();
-        destroy_clipboard_synchronizer();
-
-        // Close the connections, destroying the packet buffers
-        close_connections();
-
+        post_connection_cleanup(renderer);
         connected = false;
     }
 
@@ -556,7 +576,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
 
-    destroy_sdl(frontend);
+    destroy_frontend(frontend);
 
     LOG_INFO("Client frontend has exited...");
 

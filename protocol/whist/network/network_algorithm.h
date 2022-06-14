@@ -144,4 +144,8 @@ NetworkSettings get_starting_network_settings(void);
  */
 void network_algo_set_dpi(int dpi);
 
+void network_algo_set_dimensions(int width, int height);
+
+bool network_algo_is_insufficient_bandwidth(void);
+
 #endif

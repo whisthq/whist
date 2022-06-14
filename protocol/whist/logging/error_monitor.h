@@ -99,18 +99,6 @@ void whist_error_monitor_set_session_id(const char *session_id);
 char *get_error_monitor_session_id(void);
 
 /**
- * @brief                          Configures the username tag for error
- *                                 monitor reports.
- *
- * @param username                 The username to set. Setting NULL or "None"
- *                                 will unset the username instead.
- *
- * @note                           This should only be called after calling
- *                                 `error_monitor_initialize()`.
- */
-void whist_error_monitor_set_username(const char *username);
-
-/**
  * @brief                          Configures the connection id tag for error
  *                                 monitor reports.
  *

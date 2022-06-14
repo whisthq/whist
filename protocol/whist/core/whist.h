@@ -195,9 +195,6 @@ Defines
 #define MAX_QP 40                  // Max QP value of video frames
 #define MAX_INTRA_QP (MAX_QP + 6)  // Higher QP value for intra frames if supported by the encoder
 
-#define OUTPUT_WIDTH 1280
-#define OUTPUT_HEIGHT 720
-
 #define DEFAULT_BINARY_PRIVATE_KEY \
     ((const void*)"\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF")
 #define DEFAULT_HEX_PRIVATE_KEY "ED5EF33CD728D17DB8064581428D19EF"
@@ -342,7 +339,6 @@ typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
  * @details Init packet to be sent from client to server.
  */
 typedef struct ClientInitMessage {
-    char user_email[WHIST_ARGS_MAXLEN + 1];
     WhistOSType os;
 } ClientInitMessage;
 
