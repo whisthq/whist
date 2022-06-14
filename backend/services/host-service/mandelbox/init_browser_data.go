@@ -41,7 +41,8 @@ func (browserdata *BrowserData) UnmarshalJSON(data []byte) error {
 	if string(data) == `""` || string(data) == `''` || string(data) == "" {
 		return nil
 	}
-	return json.Unmarshal(data, browserdata)
+	type tmp BrowserData
+	return json.Unmarshal(data, (*tmp)(browserdata))
 }
 
 // UnmarshalBookmarks takes a JSON string containing all the user browser data

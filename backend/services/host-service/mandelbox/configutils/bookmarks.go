@@ -31,7 +31,8 @@ func (bookmarks *Bookmarks) UnmarshalJSON(data []byte) error {
 	if string(data) == `""` || string(data) == `''` || string(data) == "" {
 		return nil
 	}
-	return json.Unmarshal(data, bookmarks)
+	type tmp Bookmarks
+	return json.Unmarshal(data, (*tmp)(bookmarks))
 }
 
 // UnmarshalBookmarks takes a JSON string containing bookmark data
