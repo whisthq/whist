@@ -108,7 +108,7 @@ func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Extract access token from request header
-	accessToken, err := getAccessToken(req)
+	accessToken, err := httputils.GetAccessToken(req)
 	if err != nil {
 		logger.Error(err)
 		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
@@ -228,7 +228,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 // and will parse the request body and try to unmarshal into a
 // `ServerRequest` type.
 func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) (*auth.WhistClaims, error) {
-	accessToken, err := getAccessToken(r)
+	accessToken, err := httputils.GetAccessToken(r)
 	if err != nil {
 		return nil, err
 	}
@@ -245,18 +245,6 @@ func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.Ser
 	}
 
 	return claims, nil
-}
-
-// getAccessToken is a helper function that extracts the access token
-// from the request "Authorization" header.
-func getAccessToken(r *http.Request) (string, error) {
-	authorization := r.Header.Get("Authorization")
-	bearer := strings.Split(authorization, "Bearer ")
-	if len(bearer) <= 1 {
-		return "", utils.MakeError("Bearer token is empty.")
-	}
-	accessToken := bearer[1]
-	return accessToken, nil
 }
 
 // throttleMiddleware will limit requests on the endpoint using the provided rate limiter.
@@ -277,7 +265,7 @@ func throttleMiddleware(limiter *rate.Limiter, f func(http.ResponseWriter, *http
 func verifyPaymentMiddleware(f func(http.ResponseWriter, *http.Request)) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		// Get and parse Authorization header from access token
-		accessToken, err := getAccessToken(r)
+		accessToken, err := httputils.GetAccessToken(r)
 		if err != nil {
 			logger.Error(err)
 			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)

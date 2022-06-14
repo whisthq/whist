@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os/exec"
+	"strings"
 
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -58,6 +59,18 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 }
 
 // Helper functions
+
+// GetAccessToken is a helper function that extracts the access token
+// from the request "Authorization" header.
+func GetAccessToken(r *http.Request) (string, error) {
+	authorization := r.Header.Get("Authorization")
+	bearer := strings.Split(authorization, "Bearer ")
+	if len(bearer) <= 1 {
+		return "", utils.MakeError("Bearer token is empty.")
+	}
+	accessToken := bearer[1]
+	return accessToken, nil
+}
 
 // ParseRequest will split the request body, unmarshal into a raw JSON map, and then unmarshal
 // the remaining fields into the struct `s`. We unmarshal the raw JSON map and the rest of the
