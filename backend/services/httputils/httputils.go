@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/whisthq/whist/backend/services/host-service/auth"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -82,10 +83,14 @@ func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest
 		return nil, err
 	}
 
-	claims, err := auth.ParseToken(accessToken)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+	var claims *auth.WhistClaims
+	// Disable token validation when running tests
+	if !metadata.IsRunningInCI() {
+		claims, err = auth.ParseToken(accessToken)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+		}
 	}
 
 	_, err = ParseRequest(w, r, s)
