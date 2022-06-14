@@ -34,18 +34,18 @@ func init() {
 
 // processJSONDataRequest processes an HTTP request to receive data
 // directly from the client app. It is handled in host-service.go
-func processJSONDataRequest(w http.ResponseWriter, req *http.Request, queue chan<- httputils.ServerRequest) {
+func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<- httputils.ServerRequest) {
 	// Start timer to measure average time processing http requests.
 	start := time.Now()
 
 	// Verify that it is an PUT request
-	if httputils.VerifyRequestType(w, req, http.MethodPut) != nil {
+	if httputils.VerifyRequestType(w, r, http.MethodPut) != nil {
 		metrics.Increment("FailedRequests")
 		return
 	}
 
 	var reqdata httputils.JSONTransportRequest
-	_, err := httputils.AuthenticateRequest(w, req, &reqdata)
+	_, err := httputils.AuthenticateRequest(w, r, &reqdata)
 	if err != nil {
 		logger.Errorf("Failed while authenticating request. Err: %v", err)
 		return

@@ -44,9 +44,9 @@ const HostServicePort uint16 = 4678
 
 // mandelboxAssignHandler is the http handler for any requests to the `/assign` endpoint. It authenticates
 // the request, verifies the type, and parses the body. After that it sends it to the server events channel.
-func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
+func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
-	err := verifyRequestType(w, req, http.MethodPost)
+	err := verifyRequestType(w, r, http.MethodPost)
 	if err != nil {
 		logger.Errorf("Error verifying request type. Err: %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -54,7 +54,7 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	}
 
 	var reqdata httputils.MandelboxAssignRequest
-	claims, err := httputils.AuthenticateRequest(w, req, &reqdata)
+	claims, err := httputils.AuthenticateRequest(w, r, &reqdata)
 	if err != nil {
 		logger.Errorf("Failed while authenticating request. Err: %v", err)
 		return
@@ -98,9 +98,9 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 
 // paymentSessionHandler handles a payment session request. It verifies the access token,
 // and then creates a StripeClient to get the URL of a payment session.
-func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
+func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 	// Verify that we got a GET request
-	err := verifyRequestType(w, req, http.MethodGet)
+	err := verifyRequestType(w, r, http.MethodGet)
 	if err != nil {
 		// err is already logged
 		http.Error(w, "", http.StatusMethodNotAllowed)
@@ -108,7 +108,7 @@ func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Extract access token from request header
-	accessToken, err := httputils.GetAccessToken(req)
+	accessToken, err := httputils.GetAccessToken(r)
 	if err != nil {
 		logger.Error(err)
 		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
@@ -118,7 +118,7 @@ func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
 	// Get claims from access token
 	claims, err := auth.ParseToken(accessToken)
 	if err != nil {
-		logger.Errorf("Received an unpermissioned backend request on %s to URL %s. Error: %s", req.Host, req.URL, err)
+		logger.Errorf("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
 		http.Error(w, "Invalid access token", http.StatusUnauthorized)
 		return
 	}
