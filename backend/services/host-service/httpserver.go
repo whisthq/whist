@@ -45,21 +45,11 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	}
 
 	var reqdata httputils.JSONTransportRequest
-	if metadata.IsRunningInCI() {
-		// Skip authentication if running tests
-		_, err := httputils.ParseRequest(w, r, &reqdata)
-		if err != nil {
-			logger.Errorf("Error while parsing request. Err: %v", err)
-			return
-		}
-	} else {
-		_, err := httputils.AuthenticateRequest(w, r, &reqdata)
-		if err != nil {
-			logger.Errorf("Failed while authenticating request. Err: %v", err)
-			return
-		}
+	_, err := httputils.AuthenticateRequest(w, r, &reqdata)
+	if err != nil {
+		logger.Errorf("Failed while authenticating request. Err: %v", err)
+		return
 	}
-
 	// Send request to queue, then wait for result
 	queue <- &reqdata
 	res := <-reqdata.ResultChan
@@ -166,39 +156,6 @@ func getAppName(mandelboxSubscription subscriptions.Mandelbox, transportRequestM
 	}
 
 	return req, AppName
-}
-
-// authenticateRequest will verify that the access token is valid
-// and will parse the request body and try to unmarshal into a
-// `ServerRequest` type.
-func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest, authorizeAsBackend bool) (err error) {
-	// Extract access token from request header
-	accessToken, err := httputils.GetAccessToken(r)
-	if err != nil {
-		logger.Error(err)
-
-		return utils.MakeError("Did not receive an access token: %s", err)
-	}
-
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return utils.MakeError("Error getting jwt_access_token from JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
-	}
-
-	// Actually verify authentication. We check that the access token sent is a valid JWT signed by Auth0.
-	// Parses a raw access token string, verifies the token's signature, ensures that it is valid at the current moment in time.
-	claims, err := auth.ParseToken(accessToken)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-	}
-
-	if err := auth.Verify(claims); err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-	}
-
-	return nil
 }
 
 // StartHTTPServer returns a channel of events from the HTTP server as its first return value

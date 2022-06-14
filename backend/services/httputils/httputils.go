@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/whisthq/whist/backend/services/host-service/auth"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -64,6 +65,10 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 // GetAccessToken is a helper function that extracts the access token
 // from the request "Authorization" header.
 func GetAccessToken(r *http.Request) (string, error) {
+	if metadata.IsRunningInCI() {
+		return "", nil
+	}
+
 	authorization := r.Header.Get("Authorization")
 	bearer := strings.Split(authorization, "Bearer ")
 	if len(bearer) <= 1 {
@@ -82,10 +87,13 @@ func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest
 		return nil, err
 	}
 
-	claims, err := auth.ParseToken(accessToken)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+	var claims *auth.WhistClaims
+	if !metadata.IsRunningInCI() {
+		claims, err = auth.ParseToken(accessToken)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+		}
 	}
 
 	_, err = ParseRequest(w, r, s)
