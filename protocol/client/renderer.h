@@ -50,21 +50,6 @@ Public Functions
 WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int initial_height);
 
 /**
- * @brief                          Does any pending work the renderer
- *                                 wants to do.
- *
- * @param renderer                 The renderer to update
- *
- * @note                           This function is guaranteed to return virtually instantly.
- *                                 It may be used in any hotpaths.
- *
- * @note                           In order for video and audio to be responsive,
- *                                 this function *MUST* be called in a tight loop,
- *                                 at least once every millisecond.
- */
-void renderer_update(WhistRenderer* renderer);
-
-/**
  * @brief                          Whether or not the renderer wants a frame of that type
  *
  * @param renderer                 The renderer context to give a packet to
@@ -102,23 +87,6 @@ bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type,
  *                                 TODO: Use a memcpy to simplify this logic
  */
 void renderer_receive_frame(WhistRenderer* renderer, WhistPacketType packet_type, void* frame);
-
-/**
- * @brief                          Render the video/audio frames (If any are available to render)
- *
- * @param renderer                 The video context that wants to render a frame
- *
- * @note                           This function is thread-safe, and may be called in a way
- *                                 that overlaps other functions that use the whist renderer.
- *
- * @note                           This function will potentially take a long time (4-8ms)
- *
- * @note                           This function is optional to call, but it's provided
- *                                 so that rendering work can be done on a thread that
- *                                 already exists. If you fail to call this function,
- *                                 another thread will be used automatically, increasing CPU usage.
- */
-void renderer_try_render(WhistRenderer* renderer);
 
 /**
  * @brief                          Destroy the given whist renderer

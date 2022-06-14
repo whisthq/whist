@@ -75,8 +75,6 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 
     while (run_sync_packets_threads) {
-        // Update the renderer
-        renderer_update(whist_renderer);
         // Update the UDP socket
         start_timer(&statistics_timer);
         // Disconnect if the UDP connection was lost
