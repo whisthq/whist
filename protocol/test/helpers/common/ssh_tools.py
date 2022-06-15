@@ -125,7 +125,7 @@ def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
     Returns:
         success (bool): indicates whether the locking succeeded.
     """
-    creation_command = f"touch {free_lock_path}"
+    creation_command = f"test -f {free_lock_path} || touch {free_lock_path}"
     locking_command = f"mv {free_lock_path} {unique_lock_path}"
 
     if create_lock:
