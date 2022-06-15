@@ -30,12 +30,12 @@
     "eslint-plugin-promise": "^6.0.0",
     "fetch-mock": "^9.11.0",
     "install": "^0.13.0",
-    "jest": "^27.3.1",
+    "jest": "^28.0.0",
     "jest-fetch-mock": "^3.0.3",
     "nodemon": "^2.0.13",
     "prettier": "^2.5.0",
     "rimraf": "^3.0.2",
-    "ts-jest": "^27.0.5",
+    "ts-jest": "^28.0.0",
     "ts-node": "^10.4.0",
     "tsconfig-paths": "^4.0.0",
     "typescript": "4.7.3"
@@ -49,7 +49,7 @@
     "jwt-decode": "^3.1.2",
     "lodash.difference": "^4.5.0",
     "lodash.identity": "^3.0.0",
-    "node-fetch": "^2.6.6"
+    "node-fetch": "^3.0.0"
   },
   "scripts": {
     "compile": "tsc",
