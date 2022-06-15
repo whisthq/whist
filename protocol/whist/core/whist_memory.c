@@ -185,7 +185,7 @@ void free_dynamic_buffer(DynamicBuffer* db) {
 // and maintains a free list of recently freed blocks
 // ------------------------------------
 
-#define MAX_FREES 1024
+#define MAX_FREES 8
 
 // The internal block allocator struct,
 struct BlockAllocator {
