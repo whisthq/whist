@@ -87,7 +87,7 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
     )
 
 
-def attempt_request_lock(instance_ip, ssh_key_path):
+def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
     """
     Request the E2E lock on the specified instance through SSH. We do that by moving the free lock
     (if it exists) to a unique path that is specific to the current run of the E2E. We use the `mv`
@@ -96,15 +96,25 @@ def attempt_request_lock(instance_ip, ssh_key_path):
     Args:
         instance_ip (str): The public IP of the instance for which we are trying to acquire the lock
         ssh_key_path (str): The path to the SSH key to be used to access the instance via SSH
+        create_lock (book): Whether we need to create a lock for the fist time
 
     Returns:
         success (bool): indicates whether the locking succeeded.
     """
-    subproc_handle = subprocess.Popen(
-        f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
+    subproc_handle = (
+        subprocess.Popen(
+            f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
          {username}@{instance_ip} "mv {free_lock_path} {unique_lock_path}"',
-        shell=True,
-        stdout=subprocess.PIPE,
+            shell=True,
+            stdout=subprocess.PIPE,
+        )
+        if not create_lock
+        else subprocess.Popen(
+            f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
+         {username}@{instance_ip} "touch {free_lock_path}"',
+            shell=True,
+            stdout=subprocess.PIPE,
+        )
     )
     return_code = subproc_handle.poll()
     return return_code == 0

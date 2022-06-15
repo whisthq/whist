@@ -269,7 +269,9 @@ def create_ec2_instance(
     return instance_id
 
 
-def start_instance_and_get_lock(boto3client: botocore.client, instance_id: str, ssh_key_path: str):
+def start_instance_and_get_lock(
+    boto3client: botocore.client, instance_id: str, ssh_key_path: str, create_lock: bool
+):
     """
     Start an existing instance and acquire the instance's E2E lock. If acquiring the E2E lock
     fails, sleep for lock_contention_wait_time_seconds and retry. Each time, we have to ensure
@@ -281,6 +283,7 @@ def start_instance_and_get_lock(boto3client: botocore.client, instance_id: str, 
         boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
         instance_id (str): The ID of the instance to start and for which we want to acquire the lock
         ssh_key_path (str): The path to the SSH key to be used to access the instance via SSH
+        create_lock (bool): Whether we need to create the lock for the first time
 
     Returns:
         success (bool): indicates whether the start/locking succeeded.
@@ -302,7 +305,7 @@ def start_instance_and_get_lock(boto3client: botocore.client, instance_id: str, 
         ip_addresses = get_instance_ip(boto3client, instance_id)
         public_ip = ip_addresses[0]["public"]
         # Attempt to get the lock
-        if attempt_request_lock(public_ip, ssh_key_path):
+        if attempt_request_lock(public_ip, ssh_key_path, create_lock=create_lock):
             print(f"Successfully acquired lock on instance {instance_id}!")
             return True
         printgrey(
@@ -514,8 +517,9 @@ def create_or_start_aws_instance(
     # Attempt to start existing instance
     if existing_instance_id != "":
         instance_id = existing_instance_id
+        # If reusing an existing instance, we don't need to create the lock
         result = (
-            start_instance_and_get_lock(boto3client, instance_id, ssh_key_path)
+            start_instance_and_get_lock(boto3client, instance_id, ssh_key_path, create_lock=False)
             if lock_needed
             else start_instance(boto3client, instance_id)
         )
@@ -551,7 +555,8 @@ def create_or_start_aws_instance(
     # Wait for the instance to be running
     wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
 
-    if not start_instance_and_get_lock(boto3client, instance_id, ssh_key_path):
+    # We need to create a new lock if we just created the instance
+    if not start_instance_and_get_lock(boto3client, instance_id, ssh_key_path, create_lock=True):
         return False
 
     return instance_id
