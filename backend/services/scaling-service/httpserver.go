@@ -22,7 +22,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -262,12 +261,6 @@ func verifyPaymentMiddleware(f func(http.ResponseWriter, *http.Request)) http.Ha
 			logger.Error(err)
 			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
-		}
-
-		if len(strings.Split(accessToken, "Bearer")) <= 1 {
-			logger.Infof("Access token does not have Bearer header. Trying to parse token as is.")
-		} else {
-			accessToken = strings.Split(accessToken, "Bearer ")[1]
 		}
 
 		// Verify if the user's subscription is valid
