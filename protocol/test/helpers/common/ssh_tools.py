@@ -3,6 +3,7 @@
 import os, sys, time, uuid
 import subprocess
 import pexpect
+import paramiko
 
 from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
@@ -87,6 +88,21 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
     )
 
 
+def run_single_ssh_command(instance_ip, ssh_key_path, timeout, command):
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(instance_ip, username=username, key_filename=ssh_key_path, timeout=timeout)
+    _, stdout, stderr = client.exec_command(command)
+    return_code = stdout.channel.recv_exit_status()
+    stdout = stdout.read().decode("utf-8") or ""
+    stderr = stderr.read().decode("utf-8") or ""
+    if len(stdout) > 0:
+        print(stdout)
+    if len(stderr) > 0:
+        print(stderr)
+    return return_code
+
+
 def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
     """
     Request the E2E lock on the specified instance through SSH. We do that by moving the free lock
@@ -101,25 +117,23 @@ def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
     Returns:
         success (bool): indicates whether the locking succeeded.
     """
+    creation_command = f"touch {free_lock_path}"
+    locking_command = f"mv {free_lock_path} {unique_lock_path}"
+
     if create_lock:
+        print(f"Issuing creation command: {creation_command}")
         # Create the lock if needed
-        subproc_handle = subprocess.Popen(
-            f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
-            {username}@{instance_ip} "touch {free_lock_path}"',
-            shell=True,
-            stdout=subprocess.PIPE,
+        return_code = run_single_ssh_command(
+            instance_ip, ssh_key_path, lock_ssh_timeout_seconds, creation_command
         )
-        return_code = subproc_handle.poll()
+        print(f"Lock creation return code: {return_code}")
         if return_code != 0:
             return False
-
-    subproc_handle = subprocess.Popen(
-        f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
-        {username}@{instance_ip} "mv {free_lock_path} {unique_lock_path}"',
-        shell=True,
-        stdout=subprocess.PIPE,
+    print(f"Issuing locking command: {locking_command}")
+    return_code = run_single_ssh_command(
+        instance_ip, ssh_key_path, lock_ssh_timeout_seconds, locking_command
     )
-    return_code = subproc_handle.poll()
+    print(f"Get lock return code: {return_code}")
     return return_code == 0
 
 
@@ -136,13 +150,12 @@ def attempt_release_lock(instance_ip, ssh_key_path):
     Returns:
         success (bool): indicates whether the unlocking succeeded.
     """
-    subproc_handle = subprocess.Popen(
-        f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
-        {username}@{instance_ip} "mv {unique_lock_path} {free_lock_path}"',
-        shell=True,
-        stdout=subprocess.PIPE,
+    unlocking_command = f"mv {unique_lock_path} {free_lock_path}"
+    print(f"Issuing unlocking command: {unlocking_command}")
+    return_code = run_single_ssh_command(
+        instance_ip, ssh_key_path, lock_ssh_timeout_seconds, unlocking_command
     )
-    return_code = subproc_handle.poll()
+    print(f"Unlock return code: {return_code}")
     return return_code == 0
 
 
