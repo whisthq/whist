@@ -247,3 +247,106 @@ func TestUserInitialBrowserParseEmpty(t *testing.T) {
 		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
 	}
 }
+
+func TestUserInitialBrowserParseEmptyBookmarks(t *testing.T) {
+	// Define variables that will be reused
+	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
+	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
+
+	// We will simulate a user with cookies but no bookmarks
+	cookiesJSON := "[" + testCookie1 + "," + testCookie2 + "]"
+	extensions := "not_real_extension_id,not_real_second_extension_id"
+
+	// 1. Test case where no bookmark variable is defined (the stringified JSON will not have a `bookmarks` variable)
+	userInitialBrowserData := BrowserData{
+		CookiesJSON: types.Cookies(cookiesJSON),
+		Extensions:  types.Extensions(extensions),
+	}
+
+	stringifiedBrowserData, err := json.Marshal(userInitialBrowserData)
+	if err != nil {
+		t.Fatalf("could not marshal browser data: %v", err)
+	}
+
+	deflatedBrowserData, err := configutils.GzipDeflateString(string(stringifiedBrowserData))
+	if err != nil {
+		t.Fatalf("could not deflate browser data: %v", err)
+	}
+
+	inflatedBrowserData, err := configutils.GzipInflateString(deflatedBrowserData)
+	if err != nil || len(inflatedBrowserData) == 0 {
+		t.Fatalf("Could not inflate compressed user browser data: %v", err)
+	}
+
+	// Unmarshal user browser data into proper format
+	unmarshalledBrowserData, err := UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+	if err != nil {
+		t.Fatalf("Error unmarshalling user browser data: %v", err)
+	}
+
+	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData, cmpopts.EquateEmpty()) {
+		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
+	}
+
+	// 2. Test case where bookmarks are nil
+	userInitialBrowserData = BrowserData{
+		CookiesJSON: types.Cookies(cookiesJSON),
+		Bookmarks:   nil,
+		Extensions:  types.Extensions(extensions),
+	}
+
+	stringifiedBrowserData, err = json.Marshal(userInitialBrowserData)
+	if err != nil {
+		t.Fatalf("could not marshal browser data: %v", err)
+	}
+
+	deflatedBrowserData, err = configutils.GzipDeflateString(string(stringifiedBrowserData))
+	if err != nil {
+		t.Fatalf("could not deflate browser data: %v", err)
+	}
+
+	inflatedBrowserData, err = configutils.GzipInflateString(deflatedBrowserData)
+	if err != nil || len(inflatedBrowserData) == 0 {
+		t.Fatalf("Could not inflate compressed user browser data: %v", err)
+	}
+
+	// Unmarshal user browser data into proper format
+	unmarshalledBrowserData, err = UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+	if err != nil {
+		t.Fatalf("Error unmarshalling user browser data: %v", err)
+	}
+
+	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData, cmpopts.EquateEmpty()) {
+		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
+	}
+
+	// 3. Test case where bookmarks are defined as an empty string in JSON
+	browserDataString := `{"cookiesJSON":"[{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'},{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}]","bookmarks":"", "extensions":"not_real_extension_id,not_real_second_extension_id"}`
+	expectedBookmarks := configutils.Bookmarks{}
+
+	deflatedBrowserData, err = configutils.GzipDeflateString(string(browserDataString))
+	if err != nil {
+		t.Fatalf("could not deflate browser data: %v", err)
+	}
+
+	inflatedBrowserData, err = configutils.GzipInflateString(deflatedBrowserData)
+	if err != nil || len(inflatedBrowserData) == 0 {
+		t.Fatalf("Could not inflate compressed user browser data: %v", err)
+	}
+
+	// Unmarshal user browser data into proper format
+	unmarshalledBrowserData, err = UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
+	if err != nil {
+		t.Fatalf("Error unmarshalling user browser data: %v", err)
+	}
+
+	if !cmp.Equal(*unmarshalledBrowserData.Bookmarks, expectedBookmarks, cmpopts.EquateEmpty()) {
+		t.Fatalf("UnmarshalBrowserData returned Bookmarks: %v, expected Bookmarks: %v", *unmarshalledBrowserData.Bookmarks, expectedBookmarks)
+	}
+
+	userInitialBrowserData.Bookmarks = &expectedBookmarks
+
+	if !cmp.Equal(unmarshalledBrowserData, userInitialBrowserData, cmpopts.EquateEmpty()) {
+		t.Fatalf("UnmarshalBrowserData returned %v, expected %v", unmarshalledBrowserData, userInitialBrowserData)
+	}
+}

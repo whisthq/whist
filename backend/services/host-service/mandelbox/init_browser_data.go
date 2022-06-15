@@ -36,6 +36,15 @@ type BrowserData struct {
 	ExtensionState types.ExtensionState `json:"extension_state,omitempty"`
 }
 
+// Custom-defined UnmarshalJSON function to handle the empty-string case correctly.
+func (browserdata *BrowserData) UnmarshalJSON(data []byte) error {
+	if string(data) == `""` || string(data) == `''` || string(data) == "" {
+		return nil
+	}
+	type tmp BrowserData
+	return json.Unmarshal(data, (*tmp)(browserdata))
+}
+
 // UnmarshalBookmarks takes a JSON string containing all the user browser data
 // and unmarshals it into a BrowserData struct, returning the struct
 // and any errors encountered.
