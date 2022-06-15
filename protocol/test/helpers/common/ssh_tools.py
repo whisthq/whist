@@ -101,7 +101,7 @@ def attempt_request_lock(instance_ip, ssh_key_path):
         success (bool): indicates whether the locking succeeded.
     """
     subproc_handle = subprocess.Popen(
-        f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} \
+        f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
          {username}@{instance_ip} "mv {free_lock_path} {unique_lock_path}"',
         shell=True,
         stdout=subprocess.PIPE,
@@ -124,7 +124,7 @@ def attempt_release_lock(instance_ip, ssh_key_path):
         success (bool): indicates whether the unlocking succeeded.
     """
     subproc_handle = subprocess.Popen(
-        f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} \
+        f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
         {username}@{instance_ip} "mv {unique_lock_path} {free_lock_path}"',
         shell=True,
         stdout=subprocess.PIPE,
