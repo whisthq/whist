@@ -48,10 +48,6 @@
       groupName: "frontend/core-ts",
     },
     {
-      matchPaths: ["frontend/website/"],
-      groupName: "frontend/website",
-    },
-    {
       matchPaths: ["mandelboxes/"],
       groupName: "mandelboxes",
     },
