@@ -12,9 +12,8 @@ int get_next_piped_argument(char **key, char **value) {
     FATAL_ASSERT(value != NULL);
 
 #if OS_IS(OS_WIN32)
-    static HANDLE stdin_handle = GetStdHandle(STD_INPUT_HANDLE);
     DWORD bytes_available;
-    if (PeekNamedPipe(stdin_handle, NULL, 0, NULL, &bytes_available, NULL) == 0) {
+    if (PeekNamedPipe(GetStdHandle(STD_INPUT_HANDLE), NULL, 0, NULL, &bytes_available, NULL) == 0) {
         LOG_ERROR("Error in PeekNamedPipe: %d", GetLastError());
         return -1;
     }

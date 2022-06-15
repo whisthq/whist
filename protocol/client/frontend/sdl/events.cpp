@@ -73,11 +73,7 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                     // The stdin stream was broken; forward this
                     // information to the caller.
                     event->type = FRONTEND_EVENT_STARTUP_PARAMETER;
-                    event->startup_parameter = (FrontendStartupParameterEvent){
-                        .key = NULL,
-                        .value = NULL,
-                        .error = true,
-                    };
+                    event->startup_parameter = {NULL, NULL, true};
                     return true;
                 }
 
@@ -98,11 +94,7 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 }
 
                 event->type = FRONTEND_EVENT_STARTUP_PARAMETER;
-                event->startup_parameter = (FrontendStartupParameterEvent){
-                    .key = key,
-                    .value = value,
-                    .error = false,
-                };
+                event->startup_parameter = {key, value, false};
                 return true;
             }
             default: {
