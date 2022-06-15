@@ -101,20 +101,23 @@ def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
     Returns:
         success (bool): indicates whether the locking succeeded.
     """
-    subproc_handle = (
-        subprocess.Popen(
+    if create_lock:
+        # Create the lock if needed
+        subproc_handle = subprocess.Popen(
             f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
-         {username}@{instance_ip} "mv {free_lock_path} {unique_lock_path}"',
+            {username}@{instance_ip} "touch {free_lock_path}"',
             shell=True,
             stdout=subprocess.PIPE,
         )
-        if not create_lock
-        else subprocess.Popen(
-            f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
-         {username}@{instance_ip} "touch {free_lock_path}"',
-            shell=True,
-            stdout=subprocess.PIPE,
-        )
+        return_code = subproc_handle.poll()
+        if return_code != 0:
+            return False
+
+    subproc_handle = subprocess.Popen(
+        f'ssh -i {ssh_key_path} -o ConnectTimeout={lock_ssh_timeout_seconds} -o StrictHostKeyChecking=no \
+        {username}@{instance_ip} "mv {free_lock_path} {unique_lock_path}"',
+        shell=True,
+        stdout=subprocess.PIPE,
     )
     return_code = subproc_handle.poll()
     return return_code == 0
