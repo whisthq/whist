@@ -164,16 +164,17 @@ static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
 
         int relative_client_app_path_len = (int)strlen(relative_client_app_path);
         if (relative_client_app_path_len < APP_PATH_MAXLEN + 1) {
+            bool proceed = false;
 #if OS_IS(OS_WIN32)
             int max_protocol_path_len = APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1;
             // Get the path of the current executable
             int path_read_size = GetModuleFileNameA(NULL, client_app_path, max_protocol_path_len);
-            bool proceed = path_read_size > 0 && path_read_size < max_protocol_path_len;
+            proceed = path_read_size > 0 && path_read_size < max_protocol_path_len;
 #elif OS_IS(OS_MACOS)
             uint32_t max_protocol_path_len =
                 (uint32_t)(APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1);
             // Get the path of the current executable
-            bool proceed = _NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0;
+            proceed = _NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0;
 #endif
             if (proceed) {
                 // Get directory from executable path. We could use dirname but it's

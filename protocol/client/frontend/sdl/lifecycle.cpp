@@ -255,12 +255,12 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // these to appropriate WhistFrontend events.
     context->stdin_parser_thread = whist_create_thread(
         [](void* opaque) -> int {
-            SDLFrontendContext* context = (SDLFrontendContext*)opaque;
-            SDL_Event event = {0};
-            event.type = context->internal_event_id;
-            event.user.code = SDL_FRONTEND_EVENT_STDIN_EVENT;
+            SDLFrontendContext* ctx = (SDLFrontendContext*)opaque;
+            SDL_Event e = {0};
+            e.type = ctx->internal_event_id;
+            e.user.code = SDL_FRONTEND_EVENT_STDIN_EVENT;
             int ret = 0;
-            while (!context->kill_stdin_parser && ret != -1) {
+            while (!ctx->kill_stdin_parser && ret != -1) {
                 char* key = NULL;
                 char* value = NULL;
 
@@ -272,9 +272,9 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
                 }
 
                 // `key` and `value` are owned by the event handler, so don't free them here
-                event.user.data1 = key;
-                event.user.data2 = value;
-                SDL_PushEvent(&event);
+                e.user.data1 = key;
+                e.user.data2 = value;
+                SDL_PushEvent(&e);
             }
             return 0;
         },
