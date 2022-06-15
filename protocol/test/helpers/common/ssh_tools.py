@@ -8,6 +8,7 @@ import paramiko
 from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
     printgrey,
+    printyellow,
 )
 from helpers.common.pexpect_tools import wait_until_cmd_done
 from helpers.common.constants import (
@@ -90,8 +91,15 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
 
 def run_single_ssh_command(instance_ip, ssh_key_path, timeout, command):
     client = paramiko.SSHClient()
+    client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(instance_ip, username=username, key_filename=ssh_key_path, timeout=timeout)
+    private_key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
+    try:
+        client.connect(instance_ip, username=username, key_filename=ssh_key_path, timeout=timeout)
+    except Exception as e:
+        printyellow("Caught exception:")
+        print(e)
+        return -1
     _, stdout, stderr = client.exec_command(command)
     return_code = stdout.channel.recv_exit_status()
     stdout = stdout.read().decode("utf-8") or ""
