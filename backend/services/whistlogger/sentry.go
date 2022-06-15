@@ -2,10 +2,13 @@ package whistlogger // import "github.com/whisthq/whist/backend/services/whistlo
 
 import (
 	"log"
+	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/pkg/errors"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	"go.uber.org/zap/zapcore"
@@ -24,8 +27,7 @@ type sentryCore struct {
 
 //  NewSentryCore will initialize sentry and necessary fields.
 func NewSentryCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
-	// sentryDsn := os.Getenv("SENTRY_DSN")
-	sentryDsn := "https://52baabcbf5cb4cd9a83c825ffd55cb4c@o400459.ingest.sentry.io/6144258"
+	sentryDsn := os.Getenv("SENTRY_DSN")
 	sender, err := sentry.NewClient(sentry.ClientOptions{
 		Dsn:         sentryDsn,
 		Release:     metadata.GetGitCommit(),
@@ -100,18 +102,19 @@ func (lc *sentryCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 		return nil
 	}
 
-	// Write to sentry
-	err := utils.MakeError(ent.Message)
+	// Assemble Sentry event
+	err := errors.New(ent.Message)
 	event := sentry.NewEvent()
 	event.Level = sentry.Level(ent.Level.String())
 	event.Exception = append(event.Exception, sentry.Exception{
 		Value:      ent.Message,
 		Type:       reflect.TypeOf(err).String(),
-		Stacktrace: sentry.ExtractStacktrace(err),
+		Stacktrace: getStackStrace(err),
 	})
 	event.Timestamp = ent.Time
 
-	lc.sender.CaptureEvent(event, &sentry.EventHint{OriginalException: utils.MakeError(ent.Message)}, sentry.CurrentHub().Scope())
+	// Send to Sentry
+	lc.sender.CaptureEvent(event, &sentry.EventHint{OriginalException: err}, sentry.CurrentHub().Scope())
 	return nil
 }
 
@@ -124,4 +127,41 @@ func (lc *sentryCore) Sync() error {
 	}
 
 	return nil
+}
+
+// getStackTrace will extract and filter the stack trace from the error.
+func getStackStrace(err error) *sentry.Stacktrace {
+	stack := sentry.ExtractStacktrace(err)
+	frames := filterFrames(stack.Frames)
+	stacktrace := sentry.Stacktrace{
+		Frames: frames,
+	}
+
+	return &stacktrace
+}
+
+// filterFrames filters out stack frames that are not meant to be reported to
+// Sentry. Those are frames internal to the logger implementation.
+func filterFrames(frames []sentry.Frame) []sentry.Frame {
+	if len(frames) == 0 {
+		return nil
+	}
+
+	filteredFrames := make([]sentry.Frame, 0, len(frames))
+
+	for _, frame := range frames {
+		// Skip zap frames
+		if strings.HasPrefix(frame.Module, "go.uber.org/zap") ||
+			strings.Contains(frame.AbsPath, "go.uber.org/zap") {
+			continue
+		}
+		// Skip whistlogger frames
+		if strings.HasPrefix(frame.Module, "github.com/whisthq/whist/backend/services/whistlogger") ||
+			strings.Contains(frame.AbsPath, "github.com/whisthq/whist/backend/services/whistlogger") {
+			continue
+		}
+		filteredFrames = append(filteredFrames, frame)
+	}
+
+	return filteredFrames
 }
