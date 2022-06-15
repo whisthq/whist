@@ -65,7 +65,7 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 // GetAccessToken is a helper function that extracts the access token
 // from the request "Authorization" header.
 func GetAccessToken(r *http.Request) (string, error) {
-	if metadata.IsRunningInCI() {
+	if metadata.IsLocalEnv() {
 		return "", nil
 	}
 
@@ -88,9 +88,15 @@ func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest
 	}
 
 	var claims *auth.WhistClaims
-	if !metadata.IsRunningInCI() {
+	// Skip token validation if running on local environment
+	if !metadata.IsLocalEnv() {
 		claims, err = auth.ParseToken(accessToken)
 		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+		}
+
+		if err := auth.Verify(claims); err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
 		}
