@@ -223,7 +223,7 @@ bool sdl_render_pending(void) {
     return pending_render_val;
 }
 
-void sdl_set_cursor_info_as_pending(WhistCursorInfo* cursor_info) {
+void sdl_set_cursor_info_as_pending(const WhistCursorInfo* cursor_info) {
     // do the operations with a local pointer first, so to minimize locking
     WhistCursorInfo* temp_cursor_info = safe_malloc(whist_cursor_info_get_size(cursor_info));
     memcpy(temp_cursor_info, cursor_info, whist_cursor_info_get_size(cursor_info));

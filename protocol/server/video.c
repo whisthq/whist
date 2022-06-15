@@ -194,25 +194,35 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
     frame->server_timestamp = server_timestamp;
     frame->client_input_timestamp = client_input_timestamp;
 
-    static uint32_t last_cursor_hash = 0;
-
     start_timer(statistics_timer);
     WhistCursorInfo* current_cursor = whist_cursor_capture();
     log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
-    // On I-frames or new cursors, we want to pack the new cursor into the frame
-    if ((VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type) ||
-         current_cursor->hash != last_cursor_hash) &&
-        current_cursor) {
-        set_frame_cursor_info(frame, current_cursor);
-        last_cursor_hash = current_cursor->hash;
-    } else {
-        set_frame_cursor_info(frame, NULL);
+    // The cursor cache is reset on recovery points, since we can't
+    // guaranteed that all previous cursors have been received.
+    if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type)) {
+        whist_cursor_cache_clear(state->cursor_cache);
+        state->last_cursor_hash = 0;
     }
 
-    if (current_cursor) {
-        free(current_cursor);
+    if (current_cursor->hash == state->last_cursor_hash) {
+        // Cursor has not changed.
+        frame->has_cursor = false;
+    } else {
+        // Cursor has changed, we need to send the new one.
+        const WhistCursorInfo* cached_cursor =
+            whist_cursor_cache_check(state->cursor_cache, current_cursor->hash);
+        if (cached_cursor) {
+            // Use cached cursor.
+            set_frame_cursor_info(frame, cached_cursor);
+        } else {
+            // Send new cursor.
+            whist_cursor_cache_add(state->cursor_cache, current_cursor);
+            set_frame_cursor_info(frame, current_cursor);
+        }
+        state->last_cursor_hash = current_cursor->hash;
     }
+    free(current_cursor);
 
     // Client needs to know about frame type to find recovery points.
     frame->frame_type = encoder->frame_type;

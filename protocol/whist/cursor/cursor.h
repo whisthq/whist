@@ -75,6 +75,7 @@ typedef struct WhistCursorInfo {
     WhistCursorID cursor_id;
     WhistCursorState cursor_state;
     uint32_t hash;
+    bool cached;
     bool using_png;
     size_t png_size;
     unsigned short png_width;
@@ -83,6 +84,8 @@ typedef struct WhistCursorInfo {
     unsigned short png_hot_y;
     unsigned char png[];
 } WhistCursorInfo;
+
+typedef struct WhistCursorCache WhistCursorCache;
 
 /*
 ============================
@@ -107,7 +110,7 @@ void whist_cursor_capture_destroy(void);
  *
  * @returns                        The size of the WhistCursorInfo struct
  */
-size_t whist_cursor_info_get_size(WhistCursorInfo* image);
+size_t whist_cursor_info_get_size(const WhistCursorInfo* image);
 
 /**
  * @brief                          Return RGBA pixel data from a WhistCursorInfo struct
@@ -128,5 +131,49 @@ uint8_t* whist_cursor_info_to_rgba(const WhistCursorInfo* info);
  *                                 by the caller.
  */
 WhistCursorInfo* whist_cursor_capture(void);
+
+/**
+ * Create a new cursor cache instance.
+ *
+ * @param max_entries  The number of entries in the cache.
+ * @param store_data   Whether to store full cursor data (metadata is
+ *                     always stored).
+ * @return  New cursor cache instance.
+ */
+WhistCursorCache* whist_cursor_cache_create(int max_entries, bool store_data);
+
+/**
+ * Clear the cursor cache of all entries.
+ *
+ * @param cache  Cache instance to clear.
+ */
+void whist_cursor_cache_clear(WhistCursorCache* cache);
+
+/**
+ * Destroy a cursor cache instance.
+ *
+ * @param cache  Cache instance to destroy.
+ */
+void whist_cursor_cache_destroy(WhistCursorCache* cache);
+
+/**
+ * Add a new entry to the cursor cache.
+ *
+ * If the cache is already full this will evict the least recently used
+ * entry currently in the cache.
+ *
+ * @param cache  Cache to add new entry to.
+ * @param info   Cursor to add to the cache.  All data is copied.
+ */
+void whist_cursor_cache_add(WhistCursorCache* cache, WhistCursorInfo* info);
+
+/**
+ * Check whether a given hash is in the cache.
+ *
+ * @param cache  Cache to do the lookup in.
+ * @param hash   Hash to look for.
+ * @return  Cursor with the matching hash, or NULL if not found.
+ */
+const WhistCursorInfo* whist_cursor_cache_check(WhistCursorCache* cache, uint32_t hash);
 
 #endif  // CURSOR_H

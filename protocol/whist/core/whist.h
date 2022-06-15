@@ -218,6 +218,22 @@ Defines
 #define AUDIO_FREQUENCY 48000
 
 /**
+ * Number of entries in the cursor cache.
+ *
+ * This must be the same on the server and the client.  It is kept in
+ * sync by simple LRU eviction behaviour - as long as we make the same
+ * sequence of operations the result will be the same.  It gets reset on
+ * any stream recovery point, since we can't guarantee the state of the
+ * cache on the client at that point.
+ *
+ * There should not actually be very many cursors, so this can easily be
+ * enough to store all of the cursors used in a session.  When testing,
+ * setting this to 2 is useful so that cache evictions happen much more
+ * often.
+ */
+#define CURSOR_CACHE_ENTRIES 20
+
+/**
  * Global constructor function.
  *
  * This defines a function which will run before main() is called
