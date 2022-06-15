@@ -1,3 +1,5 @@
+
+extern "C" {
 #include <whist/core/platform.h>
 #if OS_IS(OS_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
@@ -26,7 +28,7 @@ Includes
 #if !OS_IS(OS_WIN32)
 #include <fcntl.h>
 #endif
-
+}
 /*
 ============================
 Defines
@@ -461,7 +463,7 @@ static void udp_nack_packet(SocketContext* socket_context, WhistPacketType type,
                             int index) {
     UDPContext* context = (UDPContext*)socket_context->context;
     // Nack for the given packet by sending a UDPPacket of type UDP_NACK
-    UDPPacket packet = {0};
+    UDPPacket packet = {};
     packet.type = UDP_NACK;
     packet.udp_nack_data.whist_type = type;
     packet.udp_nack_data.id = id;
@@ -473,7 +475,7 @@ static void udp_request_stream_reset(SocketContext* socket_context, WhistPacketT
                                      int greatest_failed_id) {
     UDPContext* context = (UDPContext*)socket_context->context;
     // Tell the server the client fell too far behind
-    UDPPacket packet = {0};
+    UDPPacket packet = {};
     packet.type = UDP_STREAM_RESET;
     packet.udp_stream_reset_data.whist_type = type;
     packet.udp_stream_reset_data.greatest_failed_id = greatest_failed_id;
@@ -728,7 +730,8 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
     }
 
     // Construct the WhistPacket based on the parameters given
-    WhistPacket* whist_packet = allocate_region(PACKET_HEADER_SIZE + whist_packet_payload_size);
+    WhistPacket* whist_packet =
+        (WhistPacket*)allocate_region(PACKET_HEADER_SIZE + whist_packet_payload_size);
     whist_packet->id = packet_id;
     whist_packet->type = packet_type;
     whist_packet->payload_size = whist_packet_payload_size;
@@ -1048,7 +1051,7 @@ static void udp_destroy_socket_context(void* raw_context) {
         network_throttler_destroy(context->network_throttler);
     }
     if (context->nack_queue != NULL) {
-        fifo_queue_destroy(context->nack_queue);
+        fifo_queue_destroy((QueueContext*)context->nack_queue);
     }
     whist_destroy_mutex(context->mutex);
     free(context);
@@ -1067,7 +1070,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     FATAL_ASSERT(using_stun == false);
 
     // Create the UDPContext, and set to zero
-    UDPContext* context = safe_malloc(sizeof(UDPContext));
+    UDPContext* context = (UDPContext*)safe_malloc(sizeof(UDPContext));
     memset(context, 0, sizeof(UDPContext));
     // Create the mutex
     context->timestamp_mutex = whist_create_mutex();
@@ -1155,7 +1158,7 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
      * Create a nack buffer for the specified packet type which will resend packets to the client in
      * case of data loss.
      */
-    UDPContext* context = socket_context->context;
+    UDPContext* context = (UDPContext*)socket_context->context;
 
     int type_index = (int)type;
     FATAL_ASSERT(0 <= type_index && type_index < NUM_PACKET_TYPES);
@@ -1172,8 +1175,8 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     // Allocate buffers than can handle the above maximum sizes
     // Memory isn't an issue here, because we'll use our region allocator,
     // so unused memory never gets allocated by the kernel
-    context->nack_buffers[type_index] = malloc(sizeof(UDPPacket*) * num_buffers);
-    context->nack_buffer_valid[type_index] = malloc(sizeof(bool*) * num_buffers);
+    context->nack_buffers[type_index] = (UDPPacket**)malloc(sizeof(UDPPacket*) * num_buffers);
+    context->nack_buffer_valid[type_index] = (bool**)malloc(sizeof(bool*) * num_buffers);
     context->nack_mutex[type_index] = whist_create_mutex();
     context->nack_num_buffers[type_index] = num_buffers;
     // This is just used to sanitize the pre-FEC buffer that's passed into send_packet
@@ -1183,10 +1186,11 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     // Allocate each nack buffer, based on num_buffers
     for (int i = 0; i < num_buffers; i++) {
         // Allocate a buffer of max_num_ids WhistPacket's
-        context->nack_buffers[type_index][i] = allocate_region(sizeof(UDPPacket) * max_num_ids);
+        context->nack_buffers[type_index][i] =
+            (UDPPacket*)allocate_region(sizeof(UDPPacket) * max_num_ids);
         // Allocate nack buffer validity
         // We hold this separately, since writing anything to the region causes it to allocate
-        context->nack_buffer_valid[type_index][i] = malloc(sizeof(bool) * max_num_ids);
+        context->nack_buffer_valid[type_index][i] = (bool*)malloc(sizeof(bool) * max_num_ids);
         for (int j = 0; j < max_num_ids; j++) {
             context->nack_buffer_valid[type_index][i][j] = false;
         }
@@ -1252,7 +1256,7 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
 void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType type,
                               int max_frame_size, int num_buffers) {
     FATAL_ASSERT(socket_context != NULL);
-    UDPContext* context = socket_context->context;
+    UDPContext* context = (UDPContext*)socket_context->context;
     FATAL_ASSERT(context != NULL);
 
     int type_index = (int)type;
@@ -1341,7 +1345,7 @@ bool udp_handle_pending_nacks(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
     NackID nack_id;
     bool ret = false;
-    while (fifo_queue_dequeue_item(context->nack_queue, &nack_id) != -1) {
+    while (fifo_queue_dequeue_item((QueueContext*)context->nack_queue, &nack_id) != -1) {
         udp_handle_nack(context, PACKET_VIDEO, nack_id.frame_id, nack_id.packet_index, false);
         ret = true;
     }
@@ -1743,6 +1747,62 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
 UDP Message Handling
 ============================
 */
+typedef struct {
+    UDPPacket udp_packet;
+    int network_payload_size;
+    timestamp_us arrival_time;
+} RecvData;
+
+void udp_loop_receive_packet(void* raw_context) {
+    UDPContext* context = (UDPContext*)raw_context;
+    /*UDPNetworkPacket udp_network_packet;
+    socklen_t slen = sizeof(context->last_addr);
+
+    int recv_len =
+        recvfrom_no_intr(context->socket, &udp_network_packet, sizeof(udp_network_packet), 0,
+    (struct sockaddr*)(&context->last_addr), &slen);*/
+
+    FATAL_ASSERT(context->dedicated_recv_thread == 1);
+
+    for (int i = 0; i < NUM_PACKET_TYPES; i++) {
+        context->recv_queue[i] = fifo_queue_create(sizeof(char*), 1000);
+    }
+
+    static WhistTimer last_recv_timer;
+
+    while (1) {
+        /*
+            double last_recv = get_timer(&last_recv_timer);
+            if (last_recv * MS_IN_SECOND > 5.0) {
+                LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
+                                         last_recv * MS_IN_SECOND);
+                         }*/
+        RecvData* recv_data = (RecvData*)malloc(sizeof(RecvData));
+
+        udp_get_udp_packet(context, &recv_data->udp_packet, &recv_data->arrival_time,
+                           &recv_data->network_payload_size);
+        start_timer(&last_recv_timer);
+
+        if (recv_data->udp_packet.type == UDP_WHIST_SEGMENT) {
+            WhistPacketType packet_type = recv_data->udp_packet.udp_whist_segment_data.whist_type;
+            fifo_queue_enqueue_item(context->recv_queue[0], &recv_data);
+        } else {
+            fifo_queue_enqueue_item(context->recv_queue[0], &recv_data);
+        }
+    }
+}
+
+static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packet,
+                                      timestamp_us* arrival_time, int* network_payload_size) {
+    RecvData* recv_data;
+    int r = fifo_queue_dequeue_item_timeout(context->recv_queue[0], &recv_data, 1);
+    if (r == -1) return -1;
+    *udp_packet = &recv_data->udp_packet;
+    *arrival_time = recv_data->arrival_time;
+    *network_payload_size = recv_data->network_payload_size;
+
+    return 0;
+}
 
 void udp_handle_message(UDPContext* context, UDPPacket* packet) {
     switch (packet->type) {
@@ -1752,7 +1812,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
             nack_id.frame_id = packet->udp_nack_data.id;
             if ((short)packet->udp_nack_data.index >= 0) {
                 nack_id.packet_index = packet->udp_nack_data.index;
-                if (fifo_queue_enqueue_item(context->nack_queue, &nack_id) < 0) {
+                if (fifo_queue_enqueue_item((QueueContext*)context->nack_queue, &nack_id) < 0) {
                     LOG_ERROR("Failed to enqueue NACK request");
                 }
             } else {
@@ -1773,7 +1833,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
                     if (LOG_NACKING) {
                         LOG_INFO("Generating Nack for Frame ID %d, index %d", nack_id.frame_id, i);
                     }
-                    if (fifo_queue_enqueue_item(context->nack_queue, &nack_id) < 0) {
+                    if (fifo_queue_enqueue_item((QueueContext*)context->nack_queue, &nack_id) < 0) {
                         LOG_ERROR("Failed to enqueue NACK request");
                     }
                 }
@@ -1796,7 +1856,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
                  i < packet->udp_bitarray_nack_data.numBits; i++) {
                 if (bit_array_test_bit(bit_arr, i)) {
                     nack_id.packet_index = i;
-                    if (fifo_queue_enqueue_item(context->nack_queue, &nack_id) < 0) {
+                    if (fifo_queue_enqueue_item((QueueContext*)context->nack_queue, &nack_id) < 0) {
                         LOG_ERROR("Failed to enqueue NACK request");
                     }
                 }
@@ -1938,7 +1998,7 @@ void udp_update_ping(UDPContext* context, WhistTimer* current_time) {
     // If we wanted to send a ping with some given ID,
     if (send_ping_id != -1) {
         // Send the ping with that ID
-        UDPPacket ping = {0};
+        UDPPacket ping = {};
         ping.type = UDP_PING;
         ping.udp_ping_data.id = send_ping_id;
         ping.udp_ping_data.send_timestamp = current_time_us();
@@ -1961,7 +2021,7 @@ void udp_handle_ping(UDPContext* context, int id, timestamp_us timestamp) {
 #endif
 
     // Reply to the ping, with a pong
-    UDPPacket pong_packet = {0};
+    UDPPacket pong_packet = {};
     pong_packet.type = UDP_PONG;
     pong_packet.udp_pong_data.id = id;
     pong_packet.udp_pong_data.ping_send_timestamp = timestamp;
