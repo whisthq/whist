@@ -14,7 +14,9 @@ import (
 var logger *zap.Logger
 
 func init() {
-	// First, define our level-handling logic.
+	// Define the logic for filtering messages according to their level.
+	// For Logzio we want all messages, but for Sentry only the errors
+	// are considered.
 	onlyErrors := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.ErrorLevel
 	})
@@ -22,10 +24,11 @@ func init() {
 		return true
 	})
 
-	// High-priority output should go to standard error, and low-priority
-	// output should also go to standard out.
+	// Define a stdout with Locking so that the logging methods are
+	// safe for concurrent use.
 	consoleDebugging := zapcore.Lock(os.Stdout)
 
+	// Define configurations for each core.
 	sentryEncoderConfig := NewSentryEncoderConfig()
 	logzEncoderConfig := NewLogzioEncoderConfig()
 	consoleEncoderConfig := zap.NewDevelopmentEncoderConfig()
@@ -33,6 +36,7 @@ func init() {
 	// Enable colored output on stdout
 	consoleEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
+	// Create the new encoders for each core.
 	sentryEncoder := zapcore.NewJSONEncoder(sentryEncoderConfig)
 	logzEncoder := zapcore.NewJSONEncoder(logzEncoderConfig)
 	consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
@@ -48,9 +52,12 @@ func init() {
 		zapcore.NewCore(consoleEncoder, consoleDebugging, allLevels),
 	)
 
+	// Once everything is configured, instanciate the logger.
 	logger = zap.New(core)
 }
 
+// Sync is a function that flushes the queues and sends the events to the
+// corresponding output. This should be called before exiting the program.
 func Sync() {
 	err := logger.Sync()
 	if err != nil && !strings.Contains(err.Error(), "sync /dev/stdout: invalid argument") {
@@ -58,18 +65,17 @@ func Sync() {
 	}
 }
 
-// Info logs some info + timestamp, but does not send it to Sentry.
+// Info constructs a log message.
 func Info(v ...interface{}) {
 	logger.Sugar().Info(v...)
 }
 
-// Error logs an error and sends it to Sentry.
+// Error logs an error.
 func Error(err error) {
 	logger.Sugar().Error(err)
 }
 
-// Warning logs an error in red text, like Error, but doesn't send it to
-// Sentry.
+// Warning logs a warning message.
 func Warning(err error) {
 	logger.Sugar().Warn(err)
 }

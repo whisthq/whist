@@ -10,12 +10,18 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// logzioCore is a custom core that sends output to Logz.io
 type logzioCore struct {
+	// enabler decides whether the entry should be logged or not,
+	// according to its level.
 	enabler zapcore.LevelEnabler
+	// encoder is responsible for marshalling the entry to the desired format.
 	encoder zapcore.Encoder
-	sender  *logzio.LogzioSender // logz client
+	// sender is the client used to send the events to logz.io
+	sender *logzio.LogzioSender // logz client
 }
 
+// NewLogzioCore will initialize logz and necessary fields.
 func NewLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
 	logzioShippingToken := os.Getenv("LOGZIO_SHIPPING_TOKEN")
 	sender, err := logzio.New(
@@ -37,6 +43,8 @@ func NewLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 	return lc
 }
 
+// NewLogzioEncoderConfig returns a configuration that is appropiate for
+// using with logz.io.
 func NewLogzioEncoderConfig() zapcore.EncoderConfig {
 	return zapcore.EncoderConfig{
 		TimeKey:        "timestamp",
@@ -54,10 +62,13 @@ func NewLogzioEncoderConfig() zapcore.EncoderConfig {
 	}
 }
 
+// Enabled is used to check whether the event should be logged
+// or not, depending on its level.
 func (lc *logzioCore) Enabled(level zapcore.Level) bool {
 	return lc.enabler.Enabled(level)
 }
 
+// With adds the fields defined in the configuration to the core.
 func (lc *logzioCore) With(fields []zapcore.Field) zapcore.Core {
 	core := &logzioCore{
 		enabler: lc.enabler,
@@ -72,6 +83,8 @@ func (lc *logzioCore) With(fields []zapcore.Field) zapcore.Core {
 	return core
 }
 
+// Check will add the current entry (event) to the core, which in the future will
+// send it to logz.io.
 func (lc *logzioCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
 	if lc.Enabled(ent.Level) {
 		return ce.AddCore(ent, lc)
@@ -79,6 +92,7 @@ func (lc *logzioCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 	return ce
 }
 
+// Write is where the core sends the event payload to logz.io
 func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	if usingProdLogging() {
 		return nil
@@ -101,6 +115,7 @@ func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	return nil
 }
 
+// Sync drains the queue.
 func (lc *logzioCore) Sync() error {
 	//Flush logzio
 	return lc.sender.Sync()
