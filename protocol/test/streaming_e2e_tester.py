@@ -315,6 +315,7 @@ if __name__ == "__main__":
         result = get_client_and_instances(
             region,
             ssh_key_name,
+            ssh_key_path,
             use_two_instances,
             existing_server_instance_id,
             existing_client_instance_id,

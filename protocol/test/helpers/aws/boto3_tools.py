@@ -489,8 +489,8 @@ def create_or_start_aws_instance(
     region_name,
     existing_instance_id,
     ssh_key_name,
+    ssh_key_path,
     lock_needed=False,
-    ssh_key_path=None,
 ):
     """
     Connect to an existing instance (if the parameter existing_instance_id is not empty) or create a new one
@@ -501,6 +501,10 @@ def create_or_start_aws_instance(
         existing_instance_id (str): The ID of the instance to connect to, or "" to create a new one
         ssh_key_name (str): The name of the AWS key to use to create a new instance. This parameter is
                             ignored if a valid instance ID is passed to the existing_instance_id parameter.
+        ssh_key_path (str): The path to the .pem file containing the key to be used to accesss the EC2 instance
+                            via SSH
+        lock_needed (bool): Whether we will need to acquire a E2E usage lock on the instance. When using two instances
+                            we only acquire/release the lock on the server instance.
 
     Returns:
         instance_id (str): the ID of the started instance. This can be the existing instance
@@ -556,6 +560,7 @@ def create_or_start_aws_instance(
 def get_client_and_instances(
     region_name,
     ssh_key_name,
+    ssh_key_path,
     use_two_instances,
     existing_server_instance_id,
     existing_client_instance_id,
@@ -581,7 +586,12 @@ def get_client_and_instances(
     boto3client = boto3.client("ec2", region_name=region_name)
 
     server_instance_id = create_or_start_aws_instance(
-        boto3client, region_name, existing_server_instance_id, ssh_key_name, lock_needed=True
+        boto3client,
+        region_name,
+        existing_server_instance_id,
+        ssh_key_name,
+        ssh_key_path,
+        lock_needed=True,
     )
     if server_instance_id == "":
         printyellow(f"Creating new instance on {region_name} for the server failed!")
@@ -593,6 +603,7 @@ def get_client_and_instances(
             region_name,
             existing_client_instance_id,
             ssh_key_name,
+            ssh_key_path,
         )
         if use_two_instances
         else server_instance_id
