@@ -48,6 +48,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/frontend/virtual/interface.c
         ../client/frontend/sdl/video.cpp
         ../client/frontend/sdl/window.cpp
+        ../client/frontend/sdl/stdin_parser.c
 
         # Files needed for LodePNG unit tests
         ../whist/utils/lodepng.cpp

@@ -57,6 +57,13 @@ enum {
      */
     SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE,
     /**
+     * Stdin-generated event from stdin (`key?value\n`).
+     *
+     * data1 contains a pointer to a key string (char*), and
+     * data2 contains a pointer to a value string (char*) or NULL.
+     */
+    SDL_FRONTEND_EVENT_STDIN_EVENT,
+    /**
      * A notification was activated by the user.
      *
      * Contains no data.  Future: indicate which notification it was.

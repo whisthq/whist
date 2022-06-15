@@ -135,6 +135,7 @@ Defines
 #define safe_close(fd) _close(fd)
 #define strerror_r(errno, buf, len) strerror_s(buf, len, errno)
 #define strdup(str) _strdup(str)
+#define execl(pathname, ...) _execl(pathname, __VA_ARGS__)
 #else
 #define safe_mkdir(dir) mkdir(dir, 0777)
 #define safe_dup(fd) dup(fd)

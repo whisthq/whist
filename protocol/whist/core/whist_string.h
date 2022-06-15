@@ -44,10 +44,10 @@ bool safe_strncpy(char* destination, const char* source, size_t num);
 void trim_utf8_string(char* str);
 
 /**
- * @brief                          Split a string at the first occurence of a delimiter.
+ * @brief                          Split a string at the first occurrence of a delimiter.
  *
  * @param str                      The null-terminated string to be split. The string is
- *                                 modified so that the first occurence of the delimiter is
+ *                                 modified so that the first occurrence of the delimiter is
  *                                 replaced with a null termination.
  *
  * @param delim                    A null-terminated string containing possible delimiters.
@@ -57,7 +57,7 @@ void trim_utf8_string(char* str);
 char* split_string_at(char* str, const char* delim);
 
 /**
- * @brief                          Trim a string up to the first occurence of a newline character;
+ * @brief                          Trim a string up to the first occurrence of a newline character;
  *                                 that is, `\r` or `\n`.
  *
  * @param str                      The null-terminated string to be trimmed.

@@ -70,11 +70,11 @@ typedef enum FrontendEventType {
     /**
      * URL open event.
      */
-    // FRONTEND_EVENT_OPEN_URL,
+    FRONTEND_EVENT_OPEN_URL,
     /**
      * Startup parameter event.
      */
-    // FRONTEND_EVENT_STARTUP_PARAMETER,
+    FRONTEND_EVENT_STARTUP_PARAMETER,
     /**
      * Quit event.
      *
@@ -137,13 +137,14 @@ typedef struct FrontendMouseWheelEvent {
 } FrontendMouseWheelEvent;
 
 typedef struct FrontendOpenURLEvent {
-    const char *url;
+    char *url;  // must be freed by the handler if not NULL.
 } FrontendOpenURLEvent;
 
 typedef struct FrontendStartupParameterEvent {
-    const char *name;
-    const char *value;
-} FrontendParameterEvent;
+    char *key;    // must be freed by the handler if not NULL.
+    char *value;  // must be freed by the handler if not NULL.
+    bool error;
+} FrontendStartupParameterEvent;
 
 typedef struct FrontendGestureEvent {
     struct {
@@ -163,7 +164,7 @@ typedef struct FrontendFileDropEvent {
         int x;
         int y;
     } position;
-    char *filename;  // must be freed by handler, if not NULL
+    char *filename;  // must be freed by handler if not NULL
     bool end_drop;   // true when ending a series of a drop events part of the same multi-file drop
 } FrontendFileDropEvent;
 
@@ -192,6 +193,8 @@ typedef struct WhistFrontendEvent {
         FrontendGestureEvent gesture;
         FrontendFileDropEvent file_drop;
         FrontendFileDragEvent file_drag;
+        FrontendOpenURLEvent open_url;
+        FrontendStartupParameterEvent startup_parameter;
         FrontendQuitEvent quit;
         FrontendResizeEvent resize;
         FrontendVisibilityEvent visibility;
