@@ -223,6 +223,11 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
 size_t udp_packet_max_size(void);
 
+void udp_loop_receive_packet(void* raw_context);
+
+void udp_receive_thread_control(void* raw_context, int flag);
+
+SOCKET udp_get_socket(void* raw_context);
 /*
 ============================
 Private Functions. Exposed for the sake of unit testing only.

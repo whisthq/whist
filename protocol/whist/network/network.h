@@ -442,6 +442,10 @@ int recv_no_intr(SOCKET sockfd, void* buf, size_t len, int flags);
 int recvfrom_no_intr(SOCKET sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
                      socklen_t* addrlen);
 
+/**
+ * @brief get num of bytes queued insided socket
+ */
+int socket_get_queue_len(SOCKET socket);
 // TODO: Move
 #include <whist/network/tcp.h>
 #include <whist/network/udp.h>

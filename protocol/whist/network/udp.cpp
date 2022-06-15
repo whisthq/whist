@@ -1,6 +1,11 @@
 
+
+#include "whist/core/whist.h"
 extern "C" {
+// #include "whist/logging/logging.h"
+#include "whist/utils/threads.h"
 #include <whist/core/platform.h>
+#include "whist/network/network.h"
 #if OS_IS(OS_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
                                          // be at the very top
@@ -29,6 +34,7 @@ Includes
 #include <fcntl.h>
 #endif
 }
+#include <deque>
 /*
 ============================
 Defines
@@ -156,6 +162,11 @@ typedef struct NackID {
     int packet_index;
 } NackID;
 
+struct MyQueue {
+    std::deque<void*> q;
+    WhistMutex mutex;
+    WhistSemaphore sem;
+};
 // An instance of the UDP Context
 typedef struct {
     int timeout;
@@ -223,6 +234,11 @@ typedef struct {
     void* nack_queue;
 
     void* fec_controller;
+
+    int dedicated_recv_thread;
+
+    MyQueue* recv_queue[NUM_PACKET_TYPES];
+
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -404,7 +420,7 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  *                               wait for as long as the socket's most recent set_timeout
  */
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
-                               timestamp_us* arrival_time, int* network_payload_size);
+                               timestamp_us* arrival_time, int* network_payload_size, int * a = NULL);
 
 /**
  * @brief                        Returns the size, in bytes, of the relevant part of
@@ -420,6 +436,9 @@ static int get_udp_packet_size(UDPPacket* udp_packet);
 
 // TODO: document
 static void udp_update_ping(UDPContext* context, WhistTimer* current_time);
+
+static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packet,
+                                      timestamp_us* arrival_time, int* network_payload_size);
 
 /*
 ============================
@@ -607,19 +626,36 @@ static bool udp_update(void* raw_context) {
     if (last_recv_timer.opaque[0] == 0 && last_recv_timer.opaque[1] == 0) {
         start_timer(&last_recv_timer);
     }
+//<<<<<<< HEAD
     double last_recv = diff_timer(&last_recv_timer, &current_time);
+//=======
+
+    //double last_recv = get_timer(&last_recv_timer);
+//>>>>>>> aea8fb8cb (dedicated udp thread packed)
     if (last_recv * MS_IN_SECOND > UDP_RECV_BOTTLENECK_THRESHOLD_MS) {
         context->last_bottleneck_timer = current_time;
         LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
                                  last_recv * MS_IN_SECOND);
     }
-    UDPPacket udp_packet;
+    UDPPacket* udp_packet_p = NULL;
     timestamp_us arrival_time;
     int network_payload_size;
-    bool received_packet =
-        udp_get_udp_packet(context, &udp_packet, &arrival_time, &network_payload_size);
+    bool received_packet;
+
+    if (context->dedicated_recv_thread == 0) {
+        fprintf(stderr, "not using dedicated recv thread!!\n");
+        udp_packet_p = (UDPPacket*)malloc(sizeof(UDPPacket));
+        received_packet =
+            udp_get_udp_packet(context, udp_packet_p, &arrival_time, &network_payload_size, NULL);
+    } else {
+        // fprintf(stderr,"wanted!!\n");
+        received_packet =
+            udp_get_packet_from_queue(context, &udp_packet_p, &arrival_time, &network_payload_size);
+    }
     start_timer(&last_recv_timer);
     current_time = last_recv_timer;
+
+    UDPPacket& udp_packet = *udp_packet_p;
 
     if (received_packet) {
         // if the packet is a whist_segment, store the data to give later via get_packet
@@ -687,6 +723,7 @@ static bool udp_update(void* raw_context) {
             &context->network_settings, &current_time);
     }
 
+    free(udp_packet_p);
     return true;
 }
 
@@ -1400,7 +1437,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
             // to prevent accidentally making a blocking -1 call
             set_timeout(
                 context->socket,
-                max(connection_timeout_ms - get_timer(&server_creation_timer) * MS_IN_SECOND, 0));
+                max(connection_timeout_ms - get_timer(&server_creation_timer) * MS_IN_SECOND, 0.0));
         }
         // Check to see if we received a UDP_CONNECTION_ATTEMPT
         UDPPacket client_packet;
@@ -1490,8 +1527,8 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
             set_timeout(
                 context->socket,
                 min(max(connection_timeout_ms - get_timer(&client_creation_timer) * MS_IN_SECOND,
-                        0),
-                    CONNECTION_ATTEMPT_INTERVAL_MS));
+                        0.0),
+                    (double)CONNECTION_ATTEMPT_INTERVAL_MS));
         }
         // Check to see if we received a UDP_CONNECTION_CONFIRMATION
         UDPPacket server_response;
@@ -1643,13 +1680,18 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 }
 
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
-                               timestamp_us* arrival_time, int* network_payload_size) {
+                               timestamp_us* arrival_time, int* network_payload_size, int * recv_len_out) {
     // Wait to receive a packet over UDP, until timing out
     UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
+    // fprintf(stderr,"<%d>\n",context->socket);
     int recv_len =
         recvfrom_no_intr(context->socket, &udp_network_packet, sizeof(udp_network_packet), 0,
                          (struct sockaddr*)(&context->last_addr), &slen);
+    if(recv_len_out!=NULL)
+    {
+	*recv_len_out =recv_len;
+    }
 
     if (context->connected) {
         // TODO: Compare last_addr, with connection_addr, more accurately than memcmp
@@ -1751,10 +1793,17 @@ typedef struct {
     UDPPacket udp_packet;
     int network_payload_size;
     timestamp_us arrival_time;
+    int recv_size;
 } RecvData;
+void udp_receive_thread_control(void* raw_context, int flag) {
+    UDPContext* context = (UDPContext*)raw_context;
+    context->dedicated_recv_thread = flag;
+}
 
+int user_queue_len=0;
 void udp_loop_receive_packet(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
+    user_queue_len=0;
     /*UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
 
@@ -1763,14 +1812,34 @@ void udp_loop_receive_packet(void* raw_context) {
     (struct sockaddr*)(&context->last_addr), &slen);*/
 
     FATAL_ASSERT(context->dedicated_recv_thread == 1);
+    // context->dedicated_recv_thread =1;
+    /*
+      FATAL_ASSERT(context->dedicated_recv_thread == 1);*/
 
     for (int i = 0; i < NUM_PACKET_TYPES; i++) {
-        context->recv_queue[i] = fifo_queue_create(sizeof(char*), 1000);
+        context->recv_queue[i] = new MyQueue;
+        context->recv_queue[i]->mutex = whist_create_mutex();
+        context->recv_queue[i]->sem = whist_create_semaphore(0);
+        // fifo_queue_create(sizeof(char*), 1000);
     }
 
     static WhistTimer last_recv_timer;
 
-    while (1) {
+    // Initialize the timer
+    if (last_recv_timer.opaque[0] == 0 && last_recv_timer.opaque[1] == 0) {
+        start_timer(&last_recv_timer);
+    }
+    int video_cnt=0;
+    int non_video_cnt=0;
+    while (context->dedicated_recv_thread != -1) {
+        double last_recv = get_timer(&last_recv_timer);
+        if (last_recv * MS_IN_SECOND > 2.0) {
+            LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
+                                     last_recv * MS_IN_SECOND);
+	    //fprintf(stderr, "[v=%d nv=%d]\n", video_cnt,non_video_cnt);
+        }
+
+        // fprintf(stderr,"in loop!!!\n");
         /*
             double last_recv = get_timer(&last_recv_timer);
             if (last_recv * MS_IN_SECOND > 5.0) {
@@ -1778,30 +1847,71 @@ void udp_loop_receive_packet(void* raw_context) {
                                          last_recv * MS_IN_SECOND);
                          }*/
         RecvData* recv_data = (RecvData*)malloc(sizeof(RecvData));
-
-        udp_get_udp_packet(context, &recv_data->udp_packet, &recv_data->arrival_time,
-                           &recv_data->network_payload_size);
         start_timer(&last_recv_timer);
 
-        if (recv_data->udp_packet.type == UDP_WHIST_SEGMENT) {
-            WhistPacketType packet_type = recv_data->udp_packet.udp_whist_segment_data.whist_type;
-            fifo_queue_enqueue_item(context->recv_queue[0], &recv_data);
-        } else {
-            fifo_queue_enqueue_item(context->recv_queue[0], &recv_data);
+        bool got_packet =
+            udp_get_udp_packet(context, &recv_data->udp_packet, &recv_data->arrival_time,
+                               &recv_data->network_payload_size, &recv_data->recv_size);
+
+        if (!got_packet) {
+            continue;
         }
+       if (recv_data->udp_packet.type == UDP_WHIST_SEGMENT &&
+            recv_data->udp_packet.udp_whist_segment_data.whist_type == PACKET_VIDEO)
+       {
+	   video_cnt++;
+       }
+       else
+       {
+	   non_video_cnt++;
+       }
+            whist_lock_mutex(context->recv_queue[0]->mutex);
+            context->recv_queue[0]->q.push_back(recv_data);
+	    user_queue_len += recv_data->recv_size;
+            whist_unlock_mutex(context->recv_queue[0]->mutex);
+	    
+            whist_post_semaphore(context->recv_queue[0]->sem);
+            /*
+// fifo_queue_enqueue_item(context->recv_queue[0], &recv_data);
+        } else {
+            whist_lock_mutex(context->recv_queue[0]->mutex);
+            context->recv_queue[0]->q.push_back(recv_data);
+            whist_unlock_mutex(context->recv_queue[0]->mutex);
+            // whist_post_semaphore(context->recv_queue[0]->sem);
+            // fifo_queue_enqueue_item(context->recv_queue[0], &recv_data);
+	    }*/
     }
 }
 
 static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packet,
                                       timestamp_us* arrival_time, int* network_payload_size) {
     RecvData* recv_data;
-    int r = fifo_queue_dequeue_item_timeout(context->recv_queue[0], &recv_data, 1);
-    if (r == -1) return -1;
+    // bool succ= whist_wait_timeout_semaphore(context->recv_queue[0]->sem,1);
+
+    int succ = 0;
+    whist_wait_semaphore(context->recv_queue[0]->sem);
+    whist_lock_mutex(context->recv_queue[0]->mutex);
+    if (context->recv_queue[0]->q.size() != 0) {
+        succ = 1;
+        recv_data = (RecvData*)context->recv_queue[0]->q.front();
+        context->recv_queue[0]->q.pop_front();
+	user_queue_len-= recv_data->recv_size;
+    }
+    whist_unlock_mutex(context->recv_queue[0]->mutex);
+
+    if (!succ) {
+        // whist_sleep(1);
+        //usleep(300);
+        return false;
+    }
+
+    // int r = fifo_queue_dequeue_item_timeout(context->recv_queue[0], &recv_data, 1);
+    // if (r == -1) return false;
     *udp_packet = &recv_data->udp_packet;
     *arrival_time = recv_data->arrival_time;
     *network_payload_size = recv_data->network_payload_size;
 
-    return 0;
+    return true;
 }
 
 void udp_handle_message(UDPContext* context, UDPPacket* packet) {
@@ -2092,3 +2202,8 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 }
 
 size_t udp_packet_max_size(void) { return (sizeof(UDPNetworkPacket)); }
+
+SOCKET udp_get_socket(void* raw_context) {
+    UDPContext* context = (UDPContext*)raw_context;
+    return context->socket;
+}
