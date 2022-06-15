@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"sync"
@@ -45,15 +44,12 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 		return
 	}
 
-	// Verify authorization and unmarshal into the right object type
 	var reqdata httputils.JSONTransportRequest
-	if err := authenticateRequest(w, r, &reqdata, !metadata.IsLocalEnv()); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		metrics.Increment("FailedRequests")
-		metrics.Increment("ErrorRate")
+	_, err := httputils.AuthenticateRequest(w, r, &reqdata)
+	if err != nil {
+		logger.Errorf("Failed while authenticating request. Err: %v", err)
 		return
 	}
-
 	// Send request to queue, then wait for result
 	queue <- &reqdata
 	res := <-reqdata.ResultChan
@@ -160,60 +156,6 @@ func getAppName(mandelboxSubscription subscriptions.Mandelbox, transportRequestM
 	}
 
 	return req, AppName
-}
-
-// Function to authenticate an incoming request. Splitting this into a separate
-// function has the following advantages:
-// 1. We factor out duplicated functionality among all the endpoints that need
-// authentication.
-// 2. Doing so allows us not to unmarshal the `jwt_access_token` field, and
-// therefore prevents needing to pass it to client code in other packages that
-// don't need to understand our authentication mechanism or read the secret
-// key. We could alternatively do this by creating two separate types of
-// structs containing the data required for the endpoint --- one without the
-// auth secret, and one with it --- but this requires duplication of struct
-// definitions and writing code to copy values from one struct to another.
-// 3. If we get a bad, unauthenticated request we can minimize the amount of
-// processsing power we devote to it. This is useful for being resistant to
-// Denial-of-Service attacks.
-func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest, authorizeAsBackend bool) (err error) {
-	// Get the raw map of the request, and unmarshal into
-	// the corresponding struct
-	rawmap, err := httputils.ParseRequest(w, r, s)
-	if err != nil {
-		return utils.MakeError("Error while parsing request. Err: %v", err)
-	}
-
-	if authorizeAsBackend {
-		var requestAuthSecret string
-
-		err = func() error {
-			if value, ok := rawmap["jwt_access_token"]; ok {
-				return json.Unmarshal(*value, &requestAuthSecret)
-			}
-			return utils.MakeError("Request body had no \"jwt_access_token\" field.")
-		}()
-
-		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Error getting jwt_access_token from JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
-		}
-
-		// Actually verify authentication. We check that the access token sent is a valid JWT signed by Auth0.
-		// Parses a raw access token string, verifies the token's signature, ensures that it is valid at the current moment in time.
-		claims, err := auth.ParseToken(requestAuthSecret)
-		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-		}
-
-		if err := auth.Verify(claims); err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-		}
-	}
-
-	return nil
 }
 
 // StartHTTPServer returns a channel of events from the HTTP server as its first return value

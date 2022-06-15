@@ -509,7 +509,7 @@ func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
 	}
 
 	// authenticateAndParseRequest will get an error trying to read request body and will cause an error
-	err := authenticateRequest(res, req, &testJSONTransportRequest, true)
+	_, err := httputils.AuthenticateRequest(res, req, &testJSONTransportRequest)
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request when real all fails. Expected err, got nil")
@@ -529,7 +529,7 @@ func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 	}
 
 	// authenticateAndParseRequest will be unable to unmarshal an empty body and will cause an error
-	err := authenticateRequest(res, req, &testJSONTransportRequest, true)
+	_, err := httputils.AuthenticateRequest(res, req, &testJSONTransportRequest)
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request with empty body. Expected err, got nil")
@@ -537,71 +537,6 @@ func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 
 	if res.Result().StatusCode != http.StatusBadRequest {
 		t.Fatalf("error authenticating and parsing request with empty body. Expected status code %v, got %v", http.StatusBadRequest, res.Result().StatusCode)
-	}
-}
-
-// TestAuthenticateAndParseRequestMissingJWTField checks if missing jwt access token will error successfully
-func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
-	res := httptest.NewRecorder()
-
-	deflatedJSONData, err := configutils.GzipDeflateString(string("test_json_data"))
-	if err != nil {
-		t.Fatalf("could not deflate JSON data: %v", err)
-	}
-
-	// generateTestJSONTransportRequest will give a well formatted request
-	testJSONTransportRequest := httputils.JSONTransportRequest{
-		JSONData:   mandelboxtypes.JSONData(deflatedJSONData),
-		ResultChan: make(chan httputils.RequestResult),
-	}
-
-	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
-	if err != nil {
-		t.Fatalf("error creating json transport request: %v", err)
-	}
-
-	// authenticateAndParseRequest will return an error because jwt_access_token is not set in serverRequest
-	err = authenticateRequest(res, req, &testJSONTransportRequest, true)
-
-	if err == nil {
-		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
-	}
-
-	if res.Result().StatusCode != http.StatusUnauthorized {
-		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected status code %v, got %v", http.StatusUnauthorized, res.Result().StatusCode)
-	}
-}
-
-// TestAuthenticateAndParseRequestInvalidJWTField checks if an invalid jwt access token will error successfully
-func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
-	res := httptest.NewRecorder()
-
-	deflatedJSONData, err := configutils.GzipDeflateString(string("test_json_data"))
-	if err != nil {
-		t.Fatalf("could not deflate JSON data: %v", err)
-	}
-
-	// generateTestJSONTransportRequest will give a well formatted request
-	testJSONTransportRequest := httputils.JSONTransportRequest{
-		JwtAccessToken: "test_invalid_jwt_token",
-		JSONData:       mandelboxtypes.JSONData(deflatedJSONData),
-		ResultChan:     make(chan httputils.RequestResult),
-	}
-
-	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
-	if err != nil {
-		t.Fatalf("error creating json transport request: %v", err)
-	}
-
-	// authenticateAndParseRequest will return an error because the jwt_access_token is not valid
-	err = authenticateRequest(res, req, &testJSONTransportRequest, true)
-
-	if err == nil {
-		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
-	}
-
-	if res.Result().StatusCode != http.StatusUnauthorized {
-		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected status code %v, got %v", http.StatusUnauthorized, res.Result().StatusCode)
 	}
 }
 
