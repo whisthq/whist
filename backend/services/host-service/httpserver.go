@@ -85,8 +85,8 @@ func handleJSONTransportRequest(serverevent httputils.ServerRequest, transportRe
 	close(transportRequestMap[req.MandelboxID])
 }
 
-// getJSONTransportRequestChannel returns the JSON transport request for the solicited user
-// in a safe way. It also creates the channel in case it doesn't exists for that particular user.
+// getJSONTransportRequestChannel returns the JSON transport request for the solicited mandelbox
+// in a safe way. It also creates the channel in case it doesn't exists for that particular mandelbox.
 func getJSONTransportRequestChannel(mandelboxID mandelboxtypes.MandelboxID,
 	transportRequestMap map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest, transportMapLock *sync.Mutex) chan *httputils.JSONTransportRequest {
 	// Acquire lock on transport requests map
