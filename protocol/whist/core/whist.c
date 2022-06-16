@@ -28,6 +28,7 @@ Static globals
 ============================
 */
 
+// Global gpu lock as around of m1 freeze
 static WhistMutex gpu_lock;
 
 /*

@@ -308,9 +308,7 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
 
     sdl_present_pending_cursor(frontend);
 
-    // whist_gpu_lock();
     sdl_present_pending_framebuffer(frontend);
-    // whist_gpu_unlock();
 }
 
 void sdl_utils_check_private_vars(bool* pending_resize_message_ptr) {
