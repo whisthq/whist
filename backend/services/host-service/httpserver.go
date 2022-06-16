@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/httputils"
@@ -68,28 +66,9 @@ func handleJSONTransportRequest(serverevent httputils.ServerRequest, transportRe
 	// Receive the value of the `json_transport request`
 	req := serverevent.(*httputils.JSONTransportRequest)
 
-	// First we validate the JWT received from the `json_transport` endpoint
-	// Set up auth
-	claims := new(auth.WhistClaims)
-	parser := &jwt.Parser{SkipClaimsValidation: true}
-
-	// Only verify auth in non-local environments
-	if !metadata.IsLocalEnv() {
-		// Decode the access token without validating any of its claims or
-		// verifying its signature because we've already done that in
-		// `authenticateAndParseRequest`. All we want to know is the value of the
-		// sub (subject) claim.
-		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
-			logger.Errorf("There was a problem while parsing the access token for the second time: %s", err)
-			metrics.Increment("ErrorRate")
-			return
-		}
-	}
-
-	// If the jwt was valid, the next step is to verify if we have already received the JSONData from
-	// this specific user. In case we have, we ignore the request. Otherwise we add the request to the map.
-	// By performing this validation, we make the host service resistant to DDOS attacks, and by keeping track
-	// of each user's json data, we avoid any race condition that might corrupt other mandelboxes.
+	// Verify if we have already received the JSONData for this specific mandelbox. In case we have, we ignore the request.
+	// Otherwise we add the request to the map. By performing this validation, we make the host service resistant to DDOS
+	// attacks, and by keeping track of each mandelbox's json data, we avoid any race condition that might corrupt other mandelboxes.
 
 	// Acquire lock on transport requests map
 	transportMapLock.Lock()
