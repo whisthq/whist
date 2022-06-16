@@ -292,20 +292,9 @@ if __name__ == "__main__":
     with open(metadata_filename, "w") as metadata_file:
         json.dump(experiment_metadata, metadata_file)
 
-    # 4a - Create a todo-list of EC2 cleanup steps we need to do at the end of the test. The cleanup will be done by
-    # the remove_leftover_instances.py script if this one fails.
-    # If we are reusing instances, save the instance ID to file before attempting to start them
-    if existing_server_instance_id != "" and desired_region_name != "":
-        instances_to_be_stopped = set(
-            [x for x in [existing_server_instance_id, existing_client_instance_id] if x != ""]
-        )
-        with open("instances_to_remove.txt", "a+") as instances_file:
-            for i in instances_to_be_stopped:
-                instances_file.write(f"stop {desired_region_name} {i}\n")
-
     timestamps.add_event("Initialization")
 
-    # 5 - Create a boto3 client, connect to the EC2 console, and create or start the instance(s).
+    # 4 - Create a boto3 client, connect to the EC2 console, and create or start the instance(s).
     ec2_region_names = (
         [region["RegionName"] for region in boto3.client("ec2").describe_regions()["Regions"]]
         if desired_region_name == ""
@@ -336,31 +325,9 @@ if __name__ == "__main__":
             timestamps=timestamps,
         )
 
-    # 4b - Create a todo-list of EC2 cleanup steps we need to do at the end of the test. The cleanup will be done by
-    # the remove_leftover_instances.py script if this one fails.
-    # If we are creating new instances, save the instance IDs to file so we can terminate them.
-    instances_to_be_terminated = []
-
-    if server_instance_id != existing_server_instance_id:
-        instances_to_be_terminated.append(server_instance_id)
-        # Turning off skipping git clone and host setup if we created a new instance
-        skip_git_clone = "false"
-        skip_host_setup = "false"
-
-    if client_instance_id != server_instance_id:
-        if client_instance_id != existing_client_instance_id:
-            instances_to_be_terminated.append(client_instance_id)
-            # Turning off skipping git clone and host setup if we created a new instance
-            skip_git_clone = "false"
-            skip_host_setup = "false"
-
-    instances_file = open("instances_to_remove.txt", "a+")
-    for i in instances_to_be_terminated:
-        instances_file.write(f"terminate {region_name} {i}\n")
-
     timestamps.add_event("Creating/starting instance(s)")
 
-    # 6 - Get the IP address of the instance(s) that are now running
+    # 5 - Get the IP address of the instance(s) that are now running
     server_instance_ip = get_instance_ip(boto3client, server_instance_id)
     server_hostname = server_instance_ip[0]["public"]
     server_private_ip = server_instance_ip[0]["private"].replace(".", "-")
@@ -392,7 +359,7 @@ if __name__ == "__main__":
 
     timestamps.add_event("Connecting to the instance(s)")
 
-    # 7 - Setup the client and the server. Use multiprocesssing to parallelize the work in case
+    # 6 - Setup the client and the server. Use multiprocesssing to parallelize the work in case
     # we are using two instances. If we are using one instance, the setup will happen sequentially.
     manager = multiprocessing.Manager()
 
@@ -457,11 +424,11 @@ if __name__ == "__main__":
 
     timestamps.add_event("Setting up the instance(s) and building the mandelboxes")
 
-    # 8 - Open the server/client monitoring logs
+    # 7 - Open the server/client monitoring logs
     server_log = open(os.path.join(perf_logs_folder_name, "server_monitoring.log"), "a")
     client_log = open(os.path.join(perf_logs_folder_name, "client_monitoring.log"), "a")
 
-    # 9 - Run the host-service on the client and the server. We don't parallelize here for simplicity, given
+    # 8 - Run the host-service on the client and the server. We don't parallelize here for simplicity, given
     # that all operations below do not take too much time.
 
     # Start SSH connection(s) to the EC2 instance(s) to run the host-service commands
@@ -487,7 +454,7 @@ if __name__ == "__main__":
 
     timestamps.add_event("Starting the host service on the mandelboxes ")
 
-    # 10 - Run the browser/chrome server mandelbox on the server instance
+    # 9 - Run the browser/chrome server mandelbox on the server instance
     # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
     server_pexpect_process = attempt_ssh_connection(
         server_cmd,
@@ -501,7 +468,7 @@ if __name__ == "__main__":
     # Augment the configs with the initial URL we want to visit
     server_configs_data["initial_url"] = testing_url
 
-    # 11 - Run the development/client client mandelbox on the client instance
+    # 10 - Run the development/client client mandelbox on the client instance
     # Start SSH connection(s) to the EC2 instance(s) to run the development/client
     # client mandelbox on the client instance
     client_pexpect_process = attempt_ssh_connection(
@@ -525,12 +492,12 @@ if __name__ == "__main__":
 
     timestamps.add_event("Starting the mandelboxes and setting up the network conditions")
 
-    # 12 - Sit down and wait Wait <testing_time> seconds to let the test run to completion
+    # 11 - Sit down and wait Wait <testing_time> seconds to let the test run to completion
     time.sleep(testing_time)
 
     timestamps.add_event("Waiting for the test to finish")
 
-    # 13 - Grab the logs, check for errors, restore default network conditions, cleanup, shut down the instances, and save the results
+    # 12 - Grab the logs, check for errors, restore default network conditions, cleanup, shut down the instances, and save the results
     complete_experiment_and_save_results(
         server_hostname,
         server_instance_id,
@@ -564,5 +531,5 @@ if __name__ == "__main__":
         timestamps,
     )
 
-    # 23 - Success!
+    # 13 - Success!
     print("Done")
