@@ -397,7 +397,8 @@ static int register_resource(NvidiaEncoder* encoder, RegisteredResource* resourc
     */
     switch (resource_to_register->device_type) {
         case NVIDIA_DEVICE: {
-            LOG_DEBUG("On nvidia");
+            LOG_DEBUG("On nvidia, width = %d, height = %d, pitch = %d", resource_to_register->width,
+                      resource_to_register->height, resource_to_register->pitch);
             if (resource_to_register->texture_pointer == NULL) {
                 LOG_ERROR("Tried to register NULL resource, exiting");
                 return -1;
@@ -410,7 +411,7 @@ static int register_resource(NvidiaEncoder* encoder, RegisteredResource* resourc
             register_params.height = resource_to_register->height;
             register_params.pitch = resource_to_register->pitch;
             register_params.resourceToRegister = resource_to_register->texture_pointer;
-            register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_YV12;
+            register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_ARGB;
 
             int status = encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder,
                                                                  &register_params);

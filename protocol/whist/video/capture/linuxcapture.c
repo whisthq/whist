@@ -360,7 +360,7 @@ int capture_screen(CaptureDevice* device) {
                     device->last_capture_device = NVIDIA_DEVICE;
                     device->frame_data = (void*)device->nvidia_capture_device->p_gpu_texture;
                     // GPU captures need the pitch to just be width
-                    device->pitch = device->width;
+                    device->pitch = device->nvidia_capture_device->pitch;
                     device->corner_color = device->nvidia_capture_device->corner_color;
                     return ret;
                 } else {

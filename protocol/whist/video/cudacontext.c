@@ -51,6 +51,7 @@ CUCTXSYNCHRONIZEPROC cu_ctx_synchronize_ptr = NULL;
 CUCMEMALLOCPROC cu_mem_alloc_ptr = NULL;
 CUMEMFREEPROC cu_mem_free_ptr = NULL;
 CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
+CUMEMCPY2DV2PROC cu_memcpy_2d_v2_ptr = NULL;
 
 /*
 ============================
@@ -102,6 +103,12 @@ static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
     cu_memcpy_dtoh_v2_ptr = (CUMEMCPYDTOHV2PROC)dlsym(lib_cuda, "cuMemcpyDtoH_v2");
     if (cu_memcpy_dtoh_v2_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'cuMemcpyDtoH_v2'\n");
+        return NVFBC_FALSE;
+    }
+
+    cu_memcpy_2d_v2_ptr = (CUMEMCPY2DV2PROC)dlsym(lib_cuda, "cuMemcpy2D_v2");
+    if (cu_memcpy_2d_v2_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuMemcpy2D_v2'\n");
         return NVFBC_FALSE;
     }
 

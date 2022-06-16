@@ -629,12 +629,14 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // Update device with new parameters
 
-        // YUV pixel format requires the width to be a multiple of 4 and the height to be a
-        // multiple of 2 (see `bRoundFrameSize` in NvFBC.h). By default, the dimensions will be
-        // implicitly rounded up, but for some reason it looks better if we explicitly set the
-        // size. Also for some reason it actually rounds the width to a multiple of 8.
-        int true_width = state->client_width + 7 - ((state->client_width + 7) % 8);
-        int true_height = state->client_height + 1 - ((state->client_height + 1) % 2);
+        // Don't round the width or height explictly. Both X11 and nvidia capture will provide ARGB
+        // output with non-rounded exact width and height. But the encoder will implicitly round off
+        // the width and height to the nearest even number. On the client-side,
+        //  - Chromium client will crop off the extra rounded pixels before rendering.
+        //  - SDL client will do the rounding before sending this resolution to server. So the
+        //  capture resolution and encoder resolution will always be same for SDL client.
+        int true_width = state->client_width;
+        int true_height = state->client_height;
 
         // If we got an update device request, we should update the device
         if (state->update_device) {
