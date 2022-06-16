@@ -165,10 +165,10 @@ resource "aws_iam_user" "GithubActionsUser" {
 # Add the GithubActions user to the WhistCI group.
 resource "aws_iam_user_group_membership" "GithubActionsGroupMembership" {
   count = var.env == "dev" ? 1 : 0
-  user  = aws_iam_user.GithubActionsUser.name
+  user  = aws_iam_user.GithubActionsUser[0].name
 
   groups = [
-    aws_iam_group.WhistCI.name,
+    aws_iam_group.WhistCI[0].name,
   ]
 }
 
