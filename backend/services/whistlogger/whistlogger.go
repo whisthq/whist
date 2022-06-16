@@ -22,7 +22,7 @@ func init() {
 		return lvl >= zapcore.ErrorLevel
 	})
 	logsAndErrors := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl >= zapcore.DebugLevel
+		return lvl >= zapcore.InfoLevel
 	})
 	allLevels := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return true
