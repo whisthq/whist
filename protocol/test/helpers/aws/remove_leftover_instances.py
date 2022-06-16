@@ -12,15 +12,23 @@ from helpers.common.git_tools import get_whist_branch_name
 # The script terminates all newly-created instances, and stops all pre-existing instances that were re-used.
 #
 # However, if streaming_e2e_tester.py crashes, it will likely do so before completing the cleanup.
-# To handle this scenario, we make the E2E script log a todolist of all cleanup actions that are
-# required. The list is saved to a file called `instances_to_clean.txt` and located in the current
-# working directory. Upon successful completion of the cleanup, the E2E will delete the file.
-#
-# If the E2E crashes, the file will still exist after the E2E has exited, and this script
-# will follow the todolist and complete the cleanup.
+# To handle this scenario, this additional script will search for any leftover instances, and terminate
+# or stop them (depending on whether they are new instances or reused ones).
 
 
-def stop_ci_reusable_instances():
+def stop_ci_reusable_instances(boto3client):
+    """
+    Check if the REUSABLE_CLIENT_INSTANCE_ID or REUSABLE_SERVER_INSTANCE_ID environment variables are set,
+    and, if so, use the instance ID(s) to stop the reusable instances. If the REGION_NAME env is not set,
+    but either REUSABLE_CLIENT_INSTANCE_ID or REUSABLE_SERVER_INSTANCE_ID are set,this function prints
+    an error and does not stop any instance.
+
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+
+    Returns:
+        None
+    """
     client_instance_id = os.getenv("REUSABLE_CLIENT_INSTANCE_ID") or ""
     server_instance_id = os.getenv("REUSABLE_SERVER_INSTANCE_ID") or ""
     region_name = os.getenv("REGION_NAME") or ""
@@ -34,15 +42,28 @@ def stop_ci_reusable_instances():
             terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=False)
 
 
-def get_leftover_instances(region_name, leftover_instances_filters):
-    boto3client = boto3.client("ec2", region_name=region_name)
-    response = boto3client.describe_instances(Filters=leftover_instances_filters)
+def get_leftover_instances(boto3client, region_name, leftover_instances_filters):
+    """
+    Given a region name and a set of AWS filters (e.g. instance names, tags, etc...), fetch the list of instances
+    matching all the filters, and return the instance IDs
 
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        region_name (str): The AWS region where we need to look for instances with characteristics matching the filters
+        leftover_instances_filters (list):  The list of filters to be used to query the instances. Only instances matching
+                                            all filters will be included in the result.
+
+    Returns:
+        leftover_instances (list): List of instance IDs of the instances that were found to match the provided filters.
+    """
     leftover_instances = []
 
-    reservations = response.get("Reservations") if response.get("Reservations") else []
+    response = boto3client.describe_instances(Filters=leftover_instances_filters)
+    # The describe_instances function organizes the results in a list of dictionaries called "Reservations", so  we
+    # have to iterate through all entries to obtain all instance IDs matching the filters.
+    reservations = response.get("Reservations") or []
     for reservation in reservations:
-        instances = reservation.get("Instances") if reservation.get("Instances") else []
+        instances = reservation.get("Instances") or []
         instance_ids = [x["InstanceId"] for x in instances if x["State"]["Name"] != "terminated"]
         leftover_instances = leftover_instances + instance_ids
 
@@ -51,23 +72,32 @@ def get_leftover_instances(region_name, leftover_instances_filters):
 
 if __name__ == "__main__":
 
+    # 1. Stop the reusable instances, if they were used in the workflow running this script
     if running_in_ci:
-        # Stop reusable instances
         print("Stopping CI reusable instances...")
         stop_ci_reusable_instances()
 
-    # Search for any leftover instances with names suggesting they were created by the latest E2E instances
+    # 2. Terminate all instances that were created anew by the workflow (or E2E scripts) that last ran on the current machine.
+
+    # Search for instances created by the current github runner (or by any personal machine if the script is run outside of CI)
+    # to test the current branch of the Whist repository
     branch_name = get_whist_branch_name()
     instance_name = f"{instances_name_tag}-{branch_name}"
     name_tag_match = {"Name": "tag:Name", "Values": [instance_name]}
     instance_creator_match = {"Name": "tag:RunID", "Values": [github_run_id]}
     leftover_instances_filters = [name_tag_match, instance_creator_match]
 
+    # Get list of all available EC2 regions
     ec2_region_names = [
         region["RegionName"] for region in boto3.client("ec2").describe_regions()["Regions"]
     ]
+
+    # Search for leftover instances in each region, and terminate the ones matching the criteria above
     for region_name in ec2_region_names:
-        leftover_instances = get_leftover_instances(region_name, leftover_instances_filters)
+        boto3client = boto3.client("ec2", region_name=region_name)
+        leftover_instances = get_leftover_instances(
+            boto3client, region_name, leftover_instances_filters
+        )
         for instance_id in leftover_instances:
             print(f"Terminating instance '{instance_id}' in region '{region_name}' ...")
             terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=True)
