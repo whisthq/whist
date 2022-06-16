@@ -126,6 +126,7 @@ def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
         success (bool): indicates whether the locking succeeded.
     """
     creation_command = f"test -f {free_lock_path} || touch {free_lock_path}"
+    import_lock_command = f"test -f {unique_lock_path}"
     locking_command = f"mv {free_lock_path} {unique_lock_path}"
 
     if create_lock:
@@ -137,6 +138,15 @@ def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
         print(f"Lock creation return code: {return_code}")
         if return_code != 0:
             return False
+    # Attempt to import lock first
+    print(f"Issuing lock import command: {import_lock_command}")
+    return_code = run_single_ssh_command(
+        instance_ip, ssh_key_path, lock_ssh_timeout_seconds, import_lock_command
+    )
+    print(f"Import lock return code: {return_code}")
+    if return_code == 0:
+        return True
+
     print(f"Issuing locking command: {locking_command}")
     return_code = run_single_ssh_command(
         instance_ip, ssh_key_path, lock_ssh_timeout_seconds, locking_command
