@@ -108,7 +108,7 @@ jobs:
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
-          echo "LOCK_NAME=$(head -n 1 lock_name.txt)" >> $GITHUB_ENV
+          echo "E2E_LOCK_NAME=$(head -n 1 lock_name.txt)" >> $GITHUB_ENV
 
       - name: Run End-to-End Streaming Test (S3 video playout - good network)
         id: e2e_streaming_test1
@@ -130,7 +130,7 @@ jobs:
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
-          echo "LOCK_NAME=$(head -n 1 lock_name.txt)" >> $GITHUB_ENV
+          echo "E2E_LOCK_NAME=$(head -n 1 lock_name.txt)" >> $GITHUB_ENV
 
       - name: Run End-to-End Streaming Test (S3 video playout - busy network)
         id: e2e_streaming_test2
@@ -152,7 +152,7 @@ jobs:
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$(tail -n 1 instances_left_on.txt)" >> $GITHUB_ENV
-          echo "LOCK_NAME=$(head -n 1 lock_name.txt)" >> $GITHUB_ENV
+          echo "E2E_LOCK_NAME=$(tail -n 1 lock_name.txt)" >> $GITHUB_ENV
 
       - name: Run End-to-End Streaming Test (Aggressive text scrolling - low bandwidth 10 Mbps network)
         id: e2e_streaming_test3
