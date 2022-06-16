@@ -16,9 +16,13 @@ var logger *zap.Logger
 func init() {
 	// Define the logic for filtering messages according to their level.
 	// For Logzio we want all messages, but for Sentry only the errors
-	// are considered.
+	// are considered. In addition, we disable debug messages (such as metrics)
+	// in console output to avoid polluting stdout.
 	onlyErrors := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.ErrorLevel
+	})
+	logsAndErrors := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= zapcore.DebugLevel
 	})
 	allLevels := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return true
@@ -49,7 +53,7 @@ func init() {
 	core := zapcore.NewTee(
 		logzCore,
 		sentryCore,
-		zapcore.NewCore(consoleEncoder, consoleDebugging, allLevels),
+		zapcore.NewCore(consoleEncoder, consoleDebugging, logsAndErrors),
 	)
 
 	// Once everything is configured, instanciate the logger.
@@ -63,6 +67,11 @@ func Sync() {
 	if err != nil && !strings.Contains(err.Error(), "sync /dev/stdout: invalid argument") {
 		Errorf("failed to drain log queues: %s", err)
 	}
+}
+
+// Debug constructs a debug message.
+func Debug(v ...interface{}) {
+	logger.Sugar().Debug(v...)
 }
 
 // Info constructs a log message.
@@ -102,8 +111,14 @@ func Panic(globalCancel context.CancelFunc, err error) {
 	}
 }
 
-// Infof is identical to Info, since Info already respects printf syntax. We
-// only include Infof for consistency with Errorf, Warningf, and Panicf.
+// Debugf is like Info, but it respects printf syntax, i.e. takes in a format
+// string and arguments, for convenience.
+func Debugf(format string, v ...interface{}) {
+	logger.Sugar().Debugf(format, v...)
+}
+
+// Infof is like Info, but it respects printf syntax, i.e. takes in a format
+// string and arguments, for convenience.
 func Infof(format string, v ...interface{}) {
 	logger.Sugar().Infof(format, v...)
 }
