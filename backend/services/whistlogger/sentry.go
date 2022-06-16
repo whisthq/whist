@@ -39,12 +39,12 @@ func newSentryCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 	}
 	log.Printf("Set Sentry release to git commit hash: %s", metadata.GetGitCommit())
 
-	lc := &sentryCore{}
-	lc.encoder = encoder
-	lc.enabler = levelEnab
-	lc.sender = sender
+	sc := &sentryCore{}
+	sc.encoder = encoder
+	sc.enabler = levelEnab
+	sc.sender = sender
 
-	return lc
+	return sc
 }
 
 // NewSentryEncoderConfig returns a configuration that is appropiate for
@@ -69,23 +69,21 @@ func newSentryEncoderConfig() zapcore.EncoderConfig {
 // AddTags will add the tags to the current Sentry scope
 func AddTags(tags map[string]string) {
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
-		for k, v := range tags {
-			scope.SetTag(k, v)
-		}
+		scope.SetTags(tags)
 	})
 }
 
 // Enabled is used to check whether the event should be logged
 // or not, depending on its level.
-func (lc *sentryCore) Enabled(level zapcore.Level) bool {
-	return lc.enabler.Enabled(level)
+func (sc *sentryCore) Enabled(level zapcore.Level) bool {
+	return sc.enabler.Enabled(level)
 }
 
 // With adds the fields defined in the configuration to the core.
-func (lc *sentryCore) With(fields []zapcore.Field) zapcore.Core {
+func (sc *sentryCore) With(fields []zapcore.Field) zapcore.Core {
 	core := &logzioCore{
-		enabler: lc.enabler,
-		encoder: lc.encoder.Clone(),
+		enabler: sc.enabler,
+		encoder: sc.encoder.Clone(),
 	}
 
 	for i := range fields {
@@ -97,16 +95,16 @@ func (lc *sentryCore) With(fields []zapcore.Field) zapcore.Core {
 
 // Check will add the current entry (event) to the core, which in the future will
 // send it to Sentry.
-func (lc *sentryCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
-	if lc.Enabled(ent.Level) {
-		return ce.AddCore(ent, lc)
+func (sc *sentryCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
+	if sc.Enabled(ent.Level) {
+		return ce.AddCore(ent, sc)
 	}
 	return ce
 }
 
 // Write is where the core sends the event payload to Sentry. This method
 // will manually assemble Sentry events so that they are sent correctly.
-func (lc *sentryCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
+func (sc *sentryCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	if usingProdLogging() {
 		return nil
 	}
@@ -123,14 +121,14 @@ func (lc *sentryCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	event.Timestamp = ent.Time
 
 	// Send to Sentry
-	lc.sender.CaptureEvent(event, &sentry.EventHint{OriginalException: err}, sentry.CurrentHub().Scope())
+	sc.sender.CaptureEvent(event, &sentry.EventHint{OriginalException: err}, sentry.CurrentHub().Scope())
 	return nil
 }
 
 // Sync will send all events to Sentry and flush the queue.
-func (lc *sentryCore) Sync() error {
+func (sc *sentryCore) Sync() error {
 	//Flush sentry
-	ok := lc.sender.Flush(5 * time.Second)
+	ok := sc.sender.Flush(5 * time.Second)
 	if !ok {
 		return utils.MakeError("failed to flush Sentry, some events may not have been sent.")
 	}
