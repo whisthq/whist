@@ -313,7 +313,7 @@ int32_t multithreaded_video_renderer(void* opaque) {
 
         // Otherwise, try to render, but note that 1 means the renderer is still pending
         // TODO: Make render_video internally semaphore on render, so we don't have to check
-        if (render_video(whist_renderer->video_context)) {
+        if (render_video(whist_renderer->video_context) == 1) {
             pending_video = true;
         } else {
             pending_video = false;
