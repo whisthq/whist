@@ -55,10 +55,11 @@ running_in_ci = os.getenv("CI") == "true"
 
 # Constants used to acquire lock on the AWS instance
 # Check if the E2E_LOCK_NAME variable is not None and is not empty
-lock_name = (
-    os.getenv("E2E_LOCK_NAME") if len(os.getenv("E2E_LOCK_NAME") or "") > 0 else str(uuid.uuid4())
+unique_lock_path = (
+    os.getenv("E2E_LOCK_NAME")
+    if len(os.getenv("E2E_LOCK_NAME") or "") > 0
+    else os.path.join("/", "home", username, f"LOCK-{str(uuid.uuid4())}")
 )
-unique_lock_path = os.path.join("/", "home", username, f"LOCK-{lock_name}")
 free_lock_path = os.path.join("/", "home", username, "free_lock")
 lock_ssh_timeout_seconds = 30
 lock_get_attempt_timeout_seconds = 2 * 3600  # After 2h, given up
