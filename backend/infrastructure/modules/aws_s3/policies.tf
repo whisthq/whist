@@ -307,9 +307,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "whist-e2e-protocol-test-logs-l
 
   # Remove logs older than 7 days
   rule {
-    id = "removeObsoleteLogs"
+    id     = "removeObsoleteLogs"
     status = "Enabled"
-    
+
     expiration {
       days = 7
     }

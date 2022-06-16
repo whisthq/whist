@@ -12,8 +12,40 @@ resource "aws_vpc" "MainVPC" {
     Env       = var.env
     Terraform = true
     Packer    = true
-  } : {
+    } : {
     Name      = "MainVPC${var.env}"
+    Env       = var.env
+    Terraform = true
+  }
+}
+
+#
+# Create default Network ACLs
+#
+
+resource "aws_default_network_acl" "default" {
+  default_network_acl_id = aws_vpc.MainVPC.default_network_acl_id
+
+  ingress {
+    protocol   = -1
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  egress {
+    protocol   = -1
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  tags = {
+    Name      = "DefaultNetworkACL${var.env}"
     Env       = var.env
     Terraform = true
   }
@@ -34,7 +66,7 @@ resource "aws_subnet" "DefaultSubnet" {
     Env         = var.env
     Terraform   = true
     Packer      = true
-  } : {
+    } : {
     Name        = "DefaultSubnet${var.env}"
     Description = "Default subnet for the MainVPC."
     Env         = var.env
