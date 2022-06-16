@@ -22,7 +22,7 @@ type logzioCore struct {
 }
 
 // NewLogzioCore will initialize logz and necessary fields.
-func NewLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
+func newLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
 	logzioShippingToken := os.Getenv("LOGZIO_SHIPPING_TOKEN")
 	sender, err := logzio.New(
 		logzioShippingToken,
@@ -45,7 +45,7 @@ func NewLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 
 // NewLogzioEncoderConfig returns a configuration that is appropiate for
 // using with logz.io.
-func NewLogzioEncoderConfig() zapcore.EncoderConfig {
+func newLogzioEncoderConfig() zapcore.EncoderConfig {
 	return zapcore.EncoderConfig{
 		TimeKey:        "timestamp",
 		LevelKey:       "type",

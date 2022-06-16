@@ -299,6 +299,13 @@ func uninitializeFilesystem() {
 }
 
 func main() {
+	// Set Sentry tags
+	tags, err := aws.GetAWSMetadata()
+	if err != nil {
+		logger.Errorf("Failed to set Sentry tags: %s", err)
+	}
+	logger.AddTags(tags)
+
 	// We create a global context (i.e. for the entire host service) that can be
 	// cancelled if the entire program needs to terminate. We also create a
 	// WaitGroup for all goroutines to tell us when they've stopped (if the

@@ -26,7 +26,7 @@ type sentryCore struct {
 }
 
 //  NewSentryCore will initialize sentry and necessary fields.
-func NewSentryCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
+func newSentryCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
 	sentryDsn := os.Getenv("SENTRY_DSN")
 	sender, err := sentry.NewClient(sentry.ClientOptions{
 		Dsn:         sentryDsn,
@@ -49,7 +49,7 @@ func NewSentryCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 
 // NewSentryEncoderConfig returns a configuration that is appropiate for
 // using with sentry.
-func NewSentryEncoderConfig() zapcore.EncoderConfig {
+func newSentryEncoderConfig() zapcore.EncoderConfig {
 	return zapcore.EncoderConfig{
 		TimeKey:        "timestamp",
 		LevelKey:       "type",
@@ -64,6 +64,15 @@ func NewSentryEncoderConfig() zapcore.EncoderConfig {
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
+}
+
+// AddTags will add the tags to the current Sentry scope
+func AddTags(tags map[string]string) {
+	sentry.ConfigureScope(func(scope *sentry.Scope) {
+		for k, v := range tags {
+			scope.SetTag(k, v)
+		}
+	})
 }
 
 // Enabled is used to check whether the event should be logged

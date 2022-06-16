@@ -29,8 +29,8 @@ func init() {
 	consoleDebugging := zapcore.Lock(os.Stdout)
 
 	// Define configurations for each core.
-	sentryEncoderConfig := NewSentryEncoderConfig()
-	logzEncoderConfig := NewLogzioEncoderConfig()
+	sentryEncoderConfig := newSentryEncoderConfig()
+	logzEncoderConfig := newLogzioEncoderConfig()
 	consoleEncoderConfig := zap.NewDevelopmentEncoderConfig()
 
 	// Enable colored output on stdout
@@ -41,8 +41,8 @@ func init() {
 	logzEncoder := zapcore.NewJSONEncoder(logzEncoderConfig)
 	consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
 
-	logzCore := NewLogzioCore(logzEncoder, allLevels)
-	sentryCore := NewSentryCore(sentryEncoder, onlyErrors)
+	logzCore := newLogzioCore(logzEncoder, allLevels)
+	sentryCore := newSentryCore(sentryEncoder, onlyErrors)
 
 	// Join the outputs, encoders, and level-handling functions into
 	// zapcore.Cores, then tee the four cores together.
