@@ -3,7 +3,6 @@ package whistlogger // import "github.com/whisthq/whist/backend/services/whistlo
 import (
 	"log"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/logzio/logzio-go"
@@ -20,13 +19,18 @@ type logzioCore struct {
 	encoder zapcore.Encoder
 	// sender is the client used to send the events to Logz.io
 	sender *logzio.LogzioSender
-	// senderLock is a lock for the queue used by Logz.io
-	senderLock *sync.Mutex
 }
 
 // NewLogzioCore will initialize logz and necessary fields.
 func newLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
 	logzioShippingToken := os.Getenv("LOGZIO_SHIPPING_TOKEN")
+	if logzioShippingToken == "" {
+		// Here we use log because the whistlogger hasn't been
+		// fully initialized.
+		log.Printf("Logz shipping token is empty! Returning a no-op logging core.")
+		return zapcore.NewNopCore()
+	}
+
 	sender, err := logzio.New(
 		logzioShippingToken,
 		logzio.SetUrl("https://listener.logz.io:8071"),
@@ -42,9 +46,8 @@ func newLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 	lc.encoder = encoder
 	lc.enabler = levelEnab
 	lc.sender = sender
-	lc.senderLock = &sync.Mutex{}
 
-	return lc
+	return zapcore.NewCore(lc.encoder, lc.sender, lc.enabler)
 }
 
 // NewLogzioEncoderConfig returns a configuration that is appropiate for
@@ -106,10 +109,6 @@ func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 		return nil
 	}
 
-	// Lock the logzio client
-	lc.senderLock.Lock()
-	defer lc.senderLock.Unlock()
-
 	buf, err := lc.encoder.EncodeEntry(ent, fields)
 	if err != nil {
 		return err
@@ -129,10 +128,6 @@ func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 
 // Sync drains the queue.
 func (lc *logzioCore) Sync() error {
-	// Lock the logzio client
-	lc.senderLock.Lock()
-	defer lc.senderLock.Unlock()
-
 	//Flush logzio
 	return lc.sender.Sync()
 }

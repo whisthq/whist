@@ -28,6 +28,13 @@ type sentryCore struct {
 //  NewSentryCore will initialize sentry and necessary fields.
 func newSentryCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
 	sentryDsn := os.Getenv("SENTRY_DSN")
+	if sentryDsn == "" {
+		// Here we use log because the whistlogger hasn't been
+		// fully
+		log.Printf("Sentry DSN is empty! Returning a no-op logging core.")
+		return zapcore.NewNopCore()
+	}
+
 	sender, err := sentry.NewClient(sentry.ClientOptions{
 		Dsn:         sentryDsn,
 		Release:     metadata.GetGitCommit(),
