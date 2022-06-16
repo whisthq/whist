@@ -16,30 +16,33 @@ from helpers.common.git_tools import get_whist_branch_name
 # or stop them (depending on whether they are new instances or reused ones).
 
 
-def stop_ci_reusable_instances(boto3client):
+def stop_ci_reusable_instances():
     """
     Check if the REUSABLE_CLIENT_INSTANCE_ID or REUSABLE_SERVER_INSTANCE_ID environment variables are set,
     and, if so, use the instance ID(s) to stop the reusable instances. If the REGION_NAME env is not set,
-    but either REUSABLE_CLIENT_INSTANCE_ID or REUSABLE_SERVER_INSTANCE_ID are set,this function prints
-    an error and does not stop any instance.
+    but either REUSABLE_CLIENT_INSTANCE_ID or REUSABLE_SERVER_INSTANCE_ID are set, this function prints
+    a warning and does not stop any instance.
 
     Args:
-        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
 
     Returns:
         None
     """
+    region_name = os.getenv("REGION_NAME") or ""
+    if region_name == "":
+        print(
+            f"Cannot stop reusable instance(s) because REGION_NAME environment variable is not set!"
+        )
+        return
+
+    boto3client = boto3.client("ec2", region_name=region_name)
+
     client_instance_id = os.getenv("REUSABLE_CLIENT_INSTANCE_ID") or ""
     server_instance_id = os.getenv("REUSABLE_SERVER_INSTANCE_ID") or ""
-    region_name = os.getenv("REGION_NAME") or ""
+
     for instance_id in set([x for x in (client_instance_id, server_instance_id) if len(x) > 0]):
-        if region_name == "":
-            printred(
-                f"Cannot stop reusable instance {instance_id} because REGION_NAME environment variable is not set!"
-            )
-        else:
-            print(f"Stopping instance '{instance_id}' in region '{region_name}' ...")
-            terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=False)
+        print(f"Stopping instance '{instance_id}' in region '{region_name}' ...")
+        terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=False)
 
 
 def get_leftover_instances(boto3client, region_name, leftover_instances_filters):
