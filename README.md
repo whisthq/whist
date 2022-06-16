@@ -36,7 +36,6 @@ The Whist monorepository contains many subprojects:
 | backend/services/scaling-service | This service is responsible for scaling up/down EC2 instances to run mandelboxes on.    |
 | frontend/client-applications     | The client-side Electron-based application users download and use to launch Whist.      |
 | frontend/core-ts                 | The Whist internal TypeScript library of utilities and reusable components.             |
-| frontend/website                 | The website hosted at `whist.com`.                                                      |
 | host-setup                       | Scripts used to setup EC2 instances for running mandelboxes as Whist-optimized hosts.   |
 | mandelboxes                      | Whist-optimized Dockerfiles (known as mandelboxes) that run the applications we stream. |
 | protocol                         | The streaming technology API, both client and server, for streaming mandelboxes.        |

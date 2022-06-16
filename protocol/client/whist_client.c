@@ -310,9 +310,6 @@ static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* rende
         // Update any pending SDL tasks
         sdl_update_pending_tasks(frontend);
 
-        // Try rendering anything out, if there's something to render out
-        renderer_try_render(renderer);
-
         // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set
         // because getting cpu usage statistics is expensive.
 
