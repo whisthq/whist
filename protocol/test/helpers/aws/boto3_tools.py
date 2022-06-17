@@ -12,6 +12,7 @@ from helpers.common.timestamps_and_exit_tools import (
 )
 from helpers.common.constants import (
     instances_name_tag,
+    github_run_id,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -199,6 +200,7 @@ def create_ec2_instance(
                 "ResourceType": "instance",
                 "Tags": [
                     {"Key": "Name", "Value": instance_name},
+                    {"Key": "RunID", "Value": github_run_id},
                 ],
             },
         ],
@@ -464,11 +466,21 @@ def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
     if should_terminate:
         # Terminating the instance and waiting for them to shutdown
         print(f"Testing complete, terminating EC2 instance")
-        boto3client.terminate_instances(InstanceIds=[instance_id])
+        try:
+            boto3client.terminate_instances(InstanceIds=[instance_id])
+        except botocore.exceptions.ClientError as e:
+            printred(f"Caught Boto3 client exception while terminating instance {instance_id}!")
+            print(e)
+            return
     else:
         # Stopping the instance and waiting for it to shutdown
         print(f"Testing complete, stopping EC2 instance")
-        result = stop_instance(boto3client, instance_id)
+        result = False
+        try:
+            result = stop_instance(boto3client, instance_id)
+        except botocore.exceptions.ClientError as e:
+            printred(f"Caught Boto3 client exception while terminating instance {instance_id}!")
+            print(e)
         if result is False:
             printyellow("Error while stopping the EC2 instance!")
             return
