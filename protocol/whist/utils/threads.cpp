@@ -1,5 +1,22 @@
+#include <whist/core/whist.h>
+extern "C" {
 #include "threads.h"
-#include <whist/logging/logging.h>
+}
+#include <thread>
+#include <string>
+
+struct WhistThreadStruct {
+    std::string thread_name;
+    int ret_value;
+    std::thread whist_thread;
+    WhistThreadStruct(std::string thread_name, WhistThreadFunction thread_function, void *data)
+        : thread_name(thread_name),
+          ret_value(0),
+          whist_thread([this, thread_function, data]() -> void {
+              int ret = thread_function(data);
+              this->ret_value = ret;
+          }) {}
+};
 
 #if OS_IS(OS_LINUX)
 // Manual pthread control
@@ -13,13 +30,17 @@ void whist_init_multithreading(void) {
 
 WhistThreadID whist_get_thread_id(WhistThread thread) {
     // `thread` == NULL returns the current thread ID
-    return SDL_GetThreadID(thread);
+    if (thread == NULL) {
+        return std::hash<std::thread::id>{}(std::this_thread::get_id());
+    } else {
+        return std::hash<std::thread::id>{}(thread->whist_thread.get_id());
+    }
 }
 
 WhistThread whist_create_thread(WhistThreadFunction thread_function, const char *thread_name,
                                 void *data) {
     LOG_INFO("Creating thread \"%s\" from thread %lx", thread_name, whist_get_thread_id(NULL));
-    WhistThread ret = SDL_CreateThread(thread_function, thread_name, data);
+    WhistThread ret = new WhistThreadStruct(thread_name, thread_function, data);
     if (ret == NULL) {
         LOG_FATAL("Failure creating thread: %s", SDL_GetError());
     }
@@ -28,16 +49,26 @@ WhistThread whist_create_thread(WhistThreadFunction thread_function, const char 
 }
 
 void whist_detach_thread(WhistThread thread) {
-    LOG_INFO("Detaching thread \"%s\" from thread %lx", SDL_GetThreadName(thread),
-             whist_get_thread_id(NULL));
-    SDL_DetachThread(thread);
+    LOG_INFO("Detaching thread \"%s\" from thread %lx", thread->thread_name.c_str(),
+             whist_get_thread_id(thread));
+    std::thread detach_thread([thread]() -> void {
+        thread->whist_thread.join();
+        // We delete after joining,
+        // to ensure that "ret" isn't written to after the struct has been freed
+        delete thread;
+    });
+    detach_thread.detach();
     LOG_INFO("Detached from thread %lx", whist_get_thread_id(NULL));
 }
 
 void whist_wait_thread(WhistThread thread, int *ret) {
-    LOG_INFO("Waiting on thread \"%s\" from thread %lx", SDL_GetThreadName(thread),
-             whist_get_thread_id(NULL));
-    SDL_WaitThread(thread, ret);
+    LOG_INFO("Waiting on thread \"%s\" from thread %lx", thread->thread_name.c_str(),
+             whist_get_thread_id(thread));
+    thread->whist_thread.join();
+    if (ret != NULL) {
+        *ret = thread->ret_value;
+    }
+    delete thread;
     LOG_INFO("Waited from thread %lx", whist_get_thread_id(NULL));
 }
 

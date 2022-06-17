@@ -16,6 +16,7 @@ Includes
 #include <whist/core/whist.h>
 #include <whist/core/whist_string.h>
 #include <whist/utils/atomic.h>
+#include "whist/utils/threads.h"
 #if OS_IS(OS_MACOS)
 #include <Carbon/Carbon.h>
 #endif
@@ -273,7 +274,7 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
              current_layout.additional_command);
 
     if (thread != NULL) {
-        SDL_WaitThread(thread, NULL);
+        whist_wait_thread(thread, NULL);
         thread = NULL;
     }
 

@@ -50,13 +50,13 @@ typedef SDL_sem* WhistSemaphore;
  *
  * Used with functions which manipulate threads.
  */
-typedef SDL_Thread* WhistThread;
+typedef struct WhistThreadStruct* WhistThread;
 /**
  * System-specific thread ID type.
  *
  * The meaning of this depends on the system.
  */
-typedef SDL_threadID WhistThreadID;
+typedef unsigned long WhistThreadID;
 
 /**
  * Thread function type.
