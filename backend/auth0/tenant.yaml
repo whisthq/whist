@@ -119,41 +119,13 @@ connections:
     is_domain_connection: false
     options:
       email: true
-      gmail: false
-      orkut: false
       scope:
         - email
         - profile
-      sites: false
-      tasks: false
-      blogger: false
       profile: true
-      youtube: false
-      calendar: false
-      contacts: false
-      analytics: false
       client_id: 581514545734-4r65pae9m63dci2rq6isstvaapuqp85l.apps.googleusercontent.com
-      moderator: false
-      coordinate: false
-      picasa_web: false
-      google_plus: false
-      google_books: false
-      google_drive: false
-      spreadsheets: false
       client_secret: "##GOOGLE_OAUTH_SECRET##"
-      document_list: false
-      latitude_best: false
-      latitude_city: false
-      url_shortener: false
-      webmaster_tools: false
-      chrome_web_store: false
-      allowed_audiences: ""
-      adsense_management: false
-      google_drive_files: false
-      coordinate_readonly: false
-      google_cloud_storage: false
-      content_api_for_shopping: false
-      google_affiliate_network: false
+      allowed_audiences: []
 tenant:
   default_audience: ""
   default_directory: ""
