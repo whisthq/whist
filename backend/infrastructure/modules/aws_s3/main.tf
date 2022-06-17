@@ -78,7 +78,7 @@ resource "aws_s3_bucket" "whist-user-app-configs" {
 
 # Bucket for storing general Whist brand assets
 resource "aws_s3_bucket" "whist-brand-assets" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = "whist-brand-assets"
 
   tags = {
@@ -90,7 +90,7 @@ resource "aws_s3_bucket" "whist-brand-assets" {
 
 # Bucket for storing Whist test assets
 resource "aws_s3_bucket" "whist-test-assets" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = "whist-test-assets"
 
   tags = {
@@ -102,7 +102,7 @@ resource "aws_s3_bucket" "whist-test-assets" {
 
 # Bucket for storing fonts used in Whist
 resource "aws_s3_bucket" "whist-fonts" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = "whist-fonts"
 
   tags = {
@@ -116,7 +116,7 @@ resource "aws_s3_bucket" "whist-fonts" {
 
 # Bucket for storing protocol E2E test logs
 resource "aws_s3_bucket" "whist-e2e-protocol-test-logs" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = "whist-e2e-protocol-test-logs"
 
   tags = {
@@ -128,7 +128,7 @@ resource "aws_s3_bucket" "whist-e2e-protocol-test-logs" {
 
 # Bucket for storing protocol build dependencies binaries (i.e. shared libraries)
 resource "aws_s3_bucket" "whist-protocol-dependencies" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = "whist-protocol-dependencies"
 
   tags = {
@@ -142,7 +142,7 @@ resource "aws_s3_bucket" "whist-protocol-dependencies" {
 
 # Bucket for storing Whist development secrets (Apple codesigning files, etc.)
 resource "aws_s3_bucket" "whist-dev-secrets" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = "whist-dev-secrets"
 
   tags = {
@@ -154,7 +154,7 @@ resource "aws_s3_bucket" "whist-dev-secrets" {
 
 # Bucket for storing Terraform state files
 resource "aws_s3_bucket" "whist-terraform-state" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = "whist-terraform-state"
 
   tags = {
