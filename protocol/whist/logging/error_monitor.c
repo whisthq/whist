@@ -43,6 +43,7 @@ Includes
 
 #include <sentry/sentry.h>
 #include <whist/core/whist.h>
+#include <whist/core/whist_string.h>
 #include "whist/utils/command_line.h"
 #include "error_monitor.h"
 

@@ -1,6 +1,7 @@
 extern "C" {
 #include "common.h"
 #include "native.h"
+#include <whist/utils/command_line.h>
 }
 
 #include "sdl_struct.hpp"
@@ -62,6 +63,38 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
             }
             case SDL_FRONTEND_EVENT_INTERRUPT: {
                 event->type = FRONTEND_EVENT_INTERRUPT;
+                return true;
+            }
+            case SDL_FRONTEND_EVENT_STDIN_EVENT: {
+                char* key = (char*)user_event->data1;
+                char* value = (char*)user_event->data2;
+
+                if (key == NULL && value == NULL) {
+                    // The stdin stream was broken; forward this
+                    // information to the caller.
+                    event->type = FRONTEND_EVENT_STARTUP_PARAMETER;
+                    event->startup_parameter = {NULL, NULL, true};
+                    return true;
+                }
+
+                if (strlen(key) == 0) {
+                    // Silently ignore empty keys
+                    break;
+                }
+
+                if (key && !strcmp(key, "open-url")) {
+                    // Free `key` since we don't pass it to the handler.
+                    free(key);
+                    if (value == NULL) {
+                        break;
+                    }
+                    event->type = FRONTEND_EVENT_OPEN_URL;
+                    event->open_url.url = value;
+                    return true;
+                }
+
+                event->type = FRONTEND_EVENT_STARTUP_PARAMETER;
+                event->startup_parameter = {key, value, false};
                 return true;
             }
             default: {

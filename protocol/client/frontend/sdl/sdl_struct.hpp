@@ -93,6 +93,14 @@ typedef struct SDLFrontendContext {
      * The cached pixel height of the window, updated on resize events.
      */
     int latest_pixel_height;
+    /**
+     * A reference to the thread which parses STDIN for parameter and URL events.
+     */
+    WhistThread stdin_parser_thread;
+    /**
+     * A boolean signal to kill the stdin parser thread.
+     */
+    bool kill_stdin_parser;
 } SDLFrontendContext;
 
 // D3D11 helper functions (Windows only).

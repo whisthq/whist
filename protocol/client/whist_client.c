@@ -25,6 +25,7 @@ Includes
 #include <fcntl.h>
 
 #include <whist/core/whist.h>
+#include <whist/core/whist_string.h>
 #include <whist/network/network.h>
 #include <whist/utils/aes.h>
 #include <whist/utils/clock.h>
@@ -79,8 +80,6 @@ extern volatile bool connected;
 
 extern volatile bool client_exiting;
 
-static char* new_tab_urls;
-
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
 
@@ -89,9 +88,12 @@ extern bool upload_initiated;
 
 // Command-line options.
 
-COMMAND_LINE_STRING_OPTION(new_tab_urls, 'x', "new-tab-url", MAX_URL_LENGTH* MAX_NEW_TAB_URLS,
-                           "URL to open in new tab.")
 COMMAND_LINE_STRING_OPTION(server_ip, 0, "server-ip", IP_MAXLEN, "Set the server IP to connect to.")
+
+static bool wait_dynamic_arguments;
+COMMAND_LINE_BOOL_OPTION(wait_dynamic_arguments, 'r', "dynamic-arguments",
+                         "Wait for dynamic arguments to be passed in via the frontend. SDL uses "
+                         "`key` or `key?value` via stdin.")
 
 static void sync_keyboard_state(WhistFrontend* frontend) {
     /*
@@ -144,67 +146,56 @@ static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
     // and try to launch.
     //     This should be done first because `execl` won't cleanup any allocated resources.
     // Mac apps also sometimes pass an argument like -psn_0_2126343 to the executable.
-#if OS_IN(OS_WIN32 | OS_MACOS)
+    if (!OS_IS(OS_WIN32 | OS_MACOS)) {
+        return;
+    }
+
     if (argc == 1 || (argc == 2 && !strncmp(argv[1], "-psn_", 5))) {
         // hopefully the app path is not more than 1024 chars long
         char client_app_path[APP_PATH_MAXLEN + 1];
         memset(client_app_path, 0, APP_PATH_MAXLEN + 1);
 
-#if OS_IS(OS_WIN32)
-        const char* relative_client_app_path = "/../../Whist.exe";
-        char dir_split_char = '\\';
-        size_t protocol_path_len;
-
-#elif OS_IS(OS_MACOS)
-        // This executable is located at
+        // On macOS, this executable is located at
         //    Whist.app/Contents/MacOS/WhistClient
         // We want to reference client app at Whist.app/Contents/MacOS/WhistLauncher
-        const char* relative_client_app_path = "/WhistLauncher";
-        char dir_split_char = '/';
-        int protocol_path_len;
-#endif
+        const char* relative_client_app_path =
+            OS_IS(OS_WIN32) ? "/../../Whist.exe" : "/WhistLauncher";
+        const char* exe_name = OS_IS(OS_WIN32) ? "Whist.exe" : "Whist";
 
         int relative_client_app_path_len = (int)strlen(relative_client_app_path);
         if (relative_client_app_path_len < APP_PATH_MAXLEN + 1) {
+            bool proceed = false;
 #if OS_IS(OS_WIN32)
             int max_protocol_path_len = APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1;
             // Get the path of the current executable
             int path_read_size = GetModuleFileNameA(NULL, client_app_path, max_protocol_path_len);
-            if (path_read_size > 0 && path_read_size < max_protocol_path_len) {
+            proceed = path_read_size > 0 && path_read_size < max_protocol_path_len;
 #elif OS_IS(OS_MACOS)
             uint32_t max_protocol_path_len =
                 (uint32_t)(APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1);
             // Get the path of the current executable
-            if (_NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0) {
+            proceed = _NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0;
 #endif
-                // Get directory from executable path
-                char* last_dir_slash_ptr = strrchr(client_app_path, dir_split_char);
+            if (proceed) {
+                // Get directory from executable path. We could use dirname but it's
+                // not cross-platform.
+                char* last_dir_slash_ptr = strrchr(client_app_path, PATH_SEPARATOR);
                 if (last_dir_slash_ptr) {
                     *last_dir_slash_ptr = '\0';
                 }
 
                 // Get the relative path to the client app from the current executable location
-                protocol_path_len = strlen(client_app_path);
+                size_t protocol_path_len = strlen(client_app_path);
                 if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path,
                                  relative_client_app_path_len + 1)) {
-                    LOG_INFO("Client app path: %s", client_app_path);
-#if OS_IS(OS_WIN32)
-                    // If `_execl` fails, then the program proceeds, else defers to client app
-                    if (_execl(client_app_path, "Whist.exe", NULL) < 0) {
-                        LOG_INFO("_execl errno: %d errstr: %s", errno, strerror(errno));
-                    }
-#elif OS_IS(OS_MACOS)
                     // If `execl` fails, then the program proceeds, else defers to client app
-                    if (execl(client_app_path, "Whist", NULL) < 0) {
+                    if (execl(client_app_path, exe_name, (char*)NULL) < 0) {
                         LOG_INFO("execl errno: %d errstr: %s", errno, strerror(errno));
                     }
-#endif
                 }
             }
         }
     }
-#endif
-
     // END OF CHECKING IF IN PROD MODE AND TRYING TO LAUNCH CLIENT APP IF NO ARGS
 }
 
@@ -226,29 +217,6 @@ static void initiate_file_upload(void) {
         send_wcmsg(&wcmsg);
     }
     upload_initiated = false;
-}
-
-static void send_new_tab_urls_if_needed(WhistFrontend* frontend) {
-    // Send any new URL to the server
-    if (new_tab_urls) {
-        LOG_INFO("Sending message to open URL in new tab %s", new_tab_urls);
-        const size_t urls_length = strlen((const char*)new_tab_urls);
-        const size_t wcmsg_size = sizeof(WhistClientMessage) + urls_length + 1;
-        WhistClientMessage* wcmsg = safe_malloc(wcmsg_size);
-        memset(wcmsg, 0, sizeof(*wcmsg));
-        wcmsg->type = MESSAGE_OPEN_URL;
-        memcpy(&wcmsg->urls_to_open, (const char*)new_tab_urls, urls_length + 1);
-        send_wcmsg(wcmsg);
-        free(wcmsg);
-
-        free((void*)new_tab_urls);
-        new_tab_urls = NULL;
-
-        // Unmimimize the window if needed
-        if (!whist_frontend_is_window_visible(frontend)) {
-            whist_frontend_restore_window(frontend);
-        }
-    }
 }
 
 #define MAX_INIT_CONNECTION_ATTEMPTS (6)
@@ -295,18 +263,12 @@ static WhistStatus initialize_connection(void) {
 static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* renderer) {
     LOG_INFO("Entering main event loop...");
 
-    WhistTimer keyboard_sync_timer, monitor_change_timer, new_tab_urls_timer,
-        cpu_usage_statistics_timer;
+    WhistTimer keyboard_sync_timer, monitor_change_timer, cpu_usage_statistics_timer;
     start_timer(&keyboard_sync_timer);
     start_timer(&monitor_change_timer);
-    start_timer(&new_tab_urls_timer);
     start_timer(&cpu_usage_statistics_timer);
 
     while (connected && !client_exiting) {
-        // This should be called BEFORE the call to read_piped_arguments,
-        // otherwise one URL may get lost.
-        send_new_tab_urls_if_needed(frontend);
-
         // Update any pending SDL tasks
         sdl_update_pending_tasks(frontend);
 
@@ -330,34 +292,6 @@ static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* rende
         if (!handle_frontend_events(frontend, 50)) {
             // unable to handle event
             return WHIST_EXIT_FAILURE;
-        }
-
-        if (get_timer(&new_tab_urls_timer) * MS_IN_SECOND > 50.0) {
-            int piped_args_ret = read_piped_arguments(true);
-            switch (piped_args_ret) {
-                case -2: {
-                    // Fatal reading pipe or similar
-                    LOG_ERROR("Failed to read piped arguments -- exiting");
-                    return WHIST_EXIT_FAILURE;
-                }
-                case -1: {
-                    // Invalid arguments
-                    LOG_ERROR("Invalid piped arguments -- exiting");
-                    return WHIST_EXIT_CLI;
-                }
-                case 1: {
-                    // Arguments prompt graceful exit
-                    LOG_INFO("Piped argument prompts graceful exit");
-                    client_exiting = true;
-                    return WHIST_EXIT_SUCCESS;
-                    break;
-                }
-                default: {
-                    // Success, so nothing to do
-                    break;
-                }
-            }
-            start_timer(&new_tab_urls_timer);
         }
 
         if (get_timer(&keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
@@ -480,36 +414,28 @@ int whist_client_main(int argc, const char* argv[]) {
 
     WhistFrontend* frontend = create_frontend();
 
-    // Read in any piped arguments. If the arguments are bad, then skip to the destruction phase
-    switch (read_piped_arguments(false)) {
-        case -2: {
-            // Fatal reading pipe or similar
-            LOG_ERROR("Failed to read piped arguments -- exiting");
+    if (wait_dynamic_arguments) {
+        ret = client_handle_dynamic_args(frontend);
+        if (ret == -1) {
+            LOG_ERROR("Failed to handle dynamic arguments in this environment -- exiting");
             exit_code = WHIST_EXIT_FAILURE;
-            break;
-        }
-        case -1: {
-            // Invalid arguments
-            LOG_ERROR("Invalid piped arguments -- exiting");
-            exit_code = WHIST_EXIT_CLI;
-            break;
-        }
-        case 1: {
-            // Arguments prompt graceful exit
-            LOG_INFO("Piped argument prompts graceful exit");
+        } else if (ret == 1) {
+            LOG_INFO("Dynamic arguments prompt graceful exit");
             exit_code = WHIST_EXIT_SUCCESS;
             client_exiting = true;
-            break;
         }
-        default: {
-            // Success, so nothing to do
-            break;
-        }
+    }
+
+#define CLIENT_SHOULD_CONTINUE() (!client_exiting && (exit_code == WHIST_EXIT_SUCCESS))
+
+    if (CLIENT_SHOULD_CONTINUE() && !client_args_valid()) {
+        LOG_ERROR("Invalid client arguments -- exiting");
+        exit_code = WHIST_EXIT_CLI;
     }
 
     bool failed_to_connect = false;
 
-    while (!client_exiting && (exit_code == WHIST_EXIT_SUCCESS)) {
+    while (CLIENT_SHOULD_CONTINUE()) {
         WhistRenderer* renderer;
         pre_connection_setup(frontend, &renderer);
 
@@ -522,7 +448,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
         // TODO: Maybe return something more informative than exit_code, like a WhistStatus
         exit_code = run_main_loop(frontend, renderer);
-        if (client_exiting || (exit_code != WHIST_EXIT_SUCCESS)) {
+        if (!CLIENT_SHOULD_CONTINUE()) {
             // We actually exited the main loop, so signal the server to quit
             LOG_INFO("Disconnecting from server...");
             send_server_quit_messages(3);
@@ -540,24 +466,25 @@ int whist_client_main(int argc, const char* argv[]) {
             break;
         }
         case WHIST_EXIT_FAILURE: {
-            LOG_ERROR("Failure in main loop! Exiting with code WHIST_EXIT_FAILURE");
+            LOG_ERROR("Exiting with code WHIST_EXIT_FAILURE");
             break;
         }
         case WHIST_EXIT_CLI: {
             // If we're in prod or staging, CLI errors are serious errors since we should always
             // be passing the correct arguments, so we log them as errors to report to Sentry.
             const char* environment = get_error_monitor_environment();
-            if (strcmp(environment, "prod") == 0 || strcmp(environment, "staging") == 0) {
-                LOG_ERROR("Failure in main loop! Exiting with code WHIST_EXIT_CLI");
+            if (environment &&
+                (strcmp(environment, "prod") == 0 || strcmp(environment, "staging") == 0)) {
+                LOG_ERROR("Exiting with code WHIST_EXIT_CLI");
             } else {
                 // In dev or localdev, CLI errors will happen a lot as engineers develop, so we only
                 // log them as warnings
-                LOG_WARNING("Failure in main loop! Exiting with code WHIST_EXIT_CLI");
+                LOG_WARNING("Exiting with code WHIST_EXIT_CLI");
             }
             break;
         }
         default: {
-            LOG_ERROR("Failure in main loop! Unhandled exit with unknown exit code: %d", exit_code);
+            LOG_ERROR("Unhandled exit with unknown exit code: %d", exit_code);
             break;
         }
     }

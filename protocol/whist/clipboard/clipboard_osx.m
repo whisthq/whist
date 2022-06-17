@@ -22,6 +22,7 @@ Includes
 ============================
 */
 
+#include <whist/core/whist_string.h>
 #include "clipboard_osx.h"
 #include "clipboard_internal.h"
 #include <AppKit/AppKit.h>

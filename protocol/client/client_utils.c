@@ -25,6 +25,7 @@ Includes
 #include "client_utils.h"
 #include "network.h"
 #include <whist/logging/logging.h>
+#include <whist/core/whist_string.h>
 #include <whist/logging/error_monitor.h>
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
@@ -49,15 +50,6 @@ bool using_stun = false;
 MouseMotionAccumulation mouse_state = {0};
 
 extern unsigned short port_mappings[USHRT_MAX + 1];
-
-static bool using_piped_arguments;
-
-#define INCOMING_MAXLEN (MAX_URL_LENGTH * MAX_NEW_TAB_URLS)
-/*
-============================
-Command-line options
-============================
-*/
 
 static WhistStatus set_private_key(const WhistCommandLineOption *opt, const char *value) {
     if (!read_hexadecimal_private_key((char *)value, (char *)client_binary_aes_private_key,
@@ -108,10 +100,6 @@ COMMAND_LINE_CALLBACK_OPTION(set_port_mapping, 'p', "ports", WHIST_OPTION_REQUIR
                              "Pass in custom port:port mappings, period-separated.  "
                              "Default: identity mapping.")
 
-COMMAND_LINE_BOOL_OPTION(using_piped_arguments, 'r', "read-pipe",
-                         "Read arguments from stdin until EOF.  Don't need to pass "
-                         "in IP if using this argument and passing with arg `ip`.")
-
 static WhistStatus parse_operand(int pos, const char *value) {
     // The first operand maps to the server-ip option.  Any subsequent
     // operands are an error.
@@ -137,8 +125,6 @@ int client_parse_args(int argc, const char *argv[]) {
     memcpy((char *)&client_hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY,
            sizeof(client_hex_aes_private_key));
 
-    using_piped_arguments = false;
-
     WhistStatus ret = whist_parse_command_line(argc, (const char **)argv, &parse_operand);
     if (ret != WHIST_SUCCESS) {
         printf("Failed to parse command line!\n");
@@ -148,171 +134,62 @@ int client_parse_args(int argc, const char *argv[]) {
     return 0;
 }
 
-int read_piped_arguments(bool run_only_once) {
-    if (!using_piped_arguments) {
-        return 0;
-    }
-
-    // Arguments will arrive from the client application via pipe to stdin.
-    // This array is too large to be made on the stack.
-    char *incoming = safe_malloc(INCOMING_MAXLEN + 1);
-
-    int total_stored_chars = 0;
-    char read_char = 0;
-    bool keep_reading = true;
-    bool finished_line = false;
-
-#if !OS_IS(OS_WIN32)
-    int available_chars;
-#else
-    DWORD available_chars;
-
-    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
-    DWORD stdin_filetype = GetFileType(h_stdin);
-    if (stdin_filetype != FILE_TYPE_PIPE) {
-        LOG_ERROR("Stdin must be piped in on Windows");
-        free(incoming);
-        return -2;
-    }
-#endif
-
-    // Each argument will be passed via pipe from the client application
-    //    with the argument name and value separated by a "?"
-    //    and each argument/value pair on its own line
-    do {
-        if (!run_only_once) {
-            // to keep the fan from freaking out
-            // If stdin doesn't have any characters, continue the loop
-            // TODO: Block/poll with a 50 ms timeout on the stdin fd instead
-            whist_sleep(50);
-        }
-
-#if !OS_IS(OS_WIN32)
-        if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
-            LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
-            free(incoming);
-            return -2;
-        } else if (available_chars == 0) {
+int client_handle_dynamic_args(WhistFrontend *frontend) {
+    while (true) {
+        WhistFrontendEvent event;
+        // TODO: Technically, file_drop events at this time cause memory leaks,
+        // as we ignore those events and don't free the memory. We ignore these
+        // for now because such events should not occur before actual startup.
+        // A potential robust solution would be to integrate this handler with
+        // handle_frontend_events() in handle_frontend_events.c.
+        bool got_event = whist_frontend_wait_event(frontend, &event, 100);
+        if (!got_event) {
             continue;
         }
-#else
-        // When in piped mode (e.g. from the client app), stdin is a NamedPipe
-        if (!PeekNamedPipe(h_stdin, NULL, 0, NULL, &available_chars, NULL)) {
-            if (GetLastError() == ERROR_BROKEN_PIPE || GetLastError() == ERROR_PIPE_NOT_CONNECTED) {
-                // On closed stdin, fgetc will return 0 for EOF, so force a char read to eval line
-                available_chars = 1;
-            }
-        }
-#endif  // Windows
 
-        // Reset `incoming` so that it is at the very least initialized.
-        memset(incoming, 0, INCOMING_MAXLEN + 1);
-        for (int char_idx = 0; char_idx < (int)available_chars; char_idx++) {
-            // Read a character from stdin
-            read_char = (char)fgetc(stdin);
-            // If the character is EOF, make sure the loop ends after this iteration
-            if (read_char == EOF) {
-                keep_reading = false;
-            } else if (!finished_line) {
-                incoming[total_stored_chars] = read_char;
-                total_stored_chars++;
-            }
-            // Causes some funky behavior if the line being read in is longer than 128 characters
-            // because
-            //   it splits into two and processes as two different pieces
-            if (!keep_reading ||
-                (total_stored_chars > 0 && ((incoming[total_stored_chars - 1] == '\n') ||
-                                            total_stored_chars == INCOMING_MAXLEN))) {
-                finished_line = true;
-                total_stored_chars = 0;
-            } else {
-                continue;
+        if (event.type == FRONTEND_EVENT_STARTUP_PARAMETER) {
+            FrontendStartupParameterEvent *startup_parameter = &event.startup_parameter;
+            char *key = startup_parameter->key;
+            char *value = startup_parameter->value;
+
+            if (startup_parameter->error) {
+                // key/value are NULL
+                return -1;
             }
 
-            // We could use `strsep`, but it sadly is not cross-platform.
-            // We split at the first occurence of '?'; the first part becomes
-            // the name, and the last part becomes the value.
-            // If there is no '?', the value is set to NULL.
-            char *c;
-            for (c = incoming; *c && *c != '?'; ++c)
-                ;
-            char *arg_name = incoming;
-            char *arg_value = NULL;
-            if (*c == '?') {
-                *c = '\0';
-                arg_value = c + 1;
-            }
-
-            if (!arg_name) {
-                goto completed_line_eval;
-            }
-
-            if (arg_value) {
-                arg_value[strcspn(arg_value, "\n")] = 0;  // removes trailing newline, if exists
-                arg_value[strcspn(arg_value, "\r")] =
-                    0;  // removes trailing carriage return, if exists
-            }
-
-            arg_name[strcspn(arg_name, "\n")] = 0;  // removes trailing newline, if exists
-            arg_name[strcspn(arg_name, "\r")] = 0;  // removes trailing carriage return, if exists
-
-            int opt_ret = whist_set_single_option(arg_name, arg_value);
+            // Try setting as an option
+            WhistStatus opt_ret = whist_set_single_option(key, value);
             if (opt_ret == WHIST_SUCCESS) {
-                // Success, it was a normal option.
+                LOG_INFO("Successfully set option %s", key);
             } else if (opt_ret != WHIST_ERROR_NOT_FOUND) {
-                // The option existed but parsing failed.
-                LOG_WARNING("Error settng piped arg %s: %s.", arg_name,
-                            whist_error_string(opt_ret));
-            } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
-                // If arg_name is `ip`, then set IP address
-                if (!arg_value) {
-                    LOG_WARNING("Must pass arg_value with `ip` arg_name");
-                } else {
-                    whist_set_single_option("server-ip", arg_value);
-                    LOG_INFO("Connecting to IP %s", arg_value);
-                }
-            } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
-                // If arg_name is `kill`, then return indication for graceful exit
-                LOG_INFO("Killing client app");
-                free(incoming);
+                LOG_WARNING("Failed to set option %s: %s", key, whist_error_string(opt_ret));
+            } else if (!strcmp(key, "kill")) {
+                free(key);
+                free(value);
                 return 1;
-            } else if (strlen(arg_name) == 8 && !strncmp(arg_name, "finished", strlen(arg_name))) {
-                // If arg_name is `finished`, then stop reading args from pipe
-                LOG_INFO("Finished piping arguments");
-                keep_reading = false;
-                goto end_of_eval_loop;
-            } else if (strlen(arg_name) == 7 && !strncmp(arg_name, "loading", strlen(arg_name))) {
-                LOG_INFO("Loading message found %s", arg_value);
+            } else if (!strcmp(key, "finished")) {
+                free(key);
+                free(value);
+                return 0;
             } else {
-                // If arg_name is invalid, then log a warning, but continue
-                LOG_WARNING("Piped arg %s not available", arg_name);
+                LOG_WARNING("Dynamic argument %s not available", key);
             }
-
-            fflush(stdout);
-
-        completed_line_eval:
-            if (finished_line) {
-                // Reset finished_line after evaluating a line
-                finished_line = false;
-                memset(incoming, 0, INCOMING_MAXLEN + 1);
-            }
+            free(key);
+            free(value);
         }
-    end_of_eval_loop:
-        available_chars = 0;
-    } while (keep_reading && !run_only_once);
+    }
+}
 
-    free(incoming);
-
+bool client_args_valid(void) {
     const char *server_ip = NULL;
     if (whist_option_get_string_value("server-ip", &server_ip) != WHIST_SUCCESS ||
         server_ip == NULL) {
         LOG_ERROR(
             "Need IP: if not passed in directly, IP must "
-            "be passed in via pipe with arg name `ip`");
-        return -1;
+            "be passed in using the dynamic argument `server-ip`");
+        return false;
     }
-
-    return 0;
+    return true;
 }
 
 int update_mouse_motion(WhistFrontend *frontend) {

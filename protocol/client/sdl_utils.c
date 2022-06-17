@@ -18,6 +18,7 @@ Includes
 */
 
 #include "sdl_utils.h"
+#include <whist/core/whist_string.h>
 #include <whist/utils/png.h>
 #include <whist/utils/lodepng.h>
 #include "frontend/frontend.h"

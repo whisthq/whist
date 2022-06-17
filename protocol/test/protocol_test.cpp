@@ -32,6 +32,7 @@ extern "C" {
 #include <client/sdl_utils.h>
 #include "whist/utils/color.h"
 #include <whist/core/whist.h>
+#include <whist/core/whist_string.h>
 #include <whist/utils/os_utils.h>
 #include <whist/network/ringbuffer.h>
 #include <client/audio.h>
@@ -134,6 +135,8 @@ TEST_F(ProtocolTest, InitSDL) {
 #elif OS_IS(OS_LINUX)
     check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
 #endif
+
+    expect_thread_logs("stdin_parser_thread");
 
     // Check that the initial title was set appropriately
     const char* title = SDL_GetWindowTitle(new_window);
@@ -2376,9 +2379,6 @@ TEST_F(ProtocolTest, ClientParseArgs) {
         // Set the icon (using a 64x64 png file)
         "--sdl-icon",
         "assets/icon_dev.png",
-        // Pass URL to open up in new tab
-        "-x",
-        "https://www.nytimes.com/",
         // Add additional port mappings
         "-p",
         "8787:6969.1234:7248",
@@ -2437,12 +2437,6 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     EXPECT_TRUE(png_icon_filename != NULL);
     EXPECT_STREQ(png_icon_filename, argv[13]);
 
-    // Check that the url was saved properly
-    const char* new_tab_url;
-    EXPECT_SUCCESS(whist_option_get_string_value("new-tab-url", &new_tab_url));
-    EXPECT_TRUE(new_tab_url != NULL);
-    EXPECT_STREQ(new_tab_url, argv[15]);
-
     // Check the additional port mappings
     EXPECT_EQ(port_mappings[8787], 6969);
     EXPECT_EQ(port_mappings[1234], 7248);
@@ -2460,8 +2454,8 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     // Check session id
     char* session_id_copy = get_error_monitor_session_id();
     EXPECT_TRUE(session_id_copy != NULL);
-    EXPECT_EQ(strlen(session_id_copy), strlen(argv[19]));
-    EXPECT_EQ(strcmp(session_id_copy, argv[19]), 0);
+    EXPECT_EQ(strlen(session_id_copy), strlen(argv[17]));
+    EXPECT_EQ(strcmp(session_id_copy, argv[17]), 0);
     free(session_id_copy);
 }
 
