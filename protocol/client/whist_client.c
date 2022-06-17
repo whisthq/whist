@@ -426,14 +426,16 @@ int whist_client_main(int argc, const char* argv[]) {
         }
     }
 
-    if (!client_args_valid()) {
+#define CLIENT_SHOULD_CONTINUE() (!client_exiting && (exit_code == WHIST_EXIT_SUCCESS))
+
+    if (CLIENT_SHOULD_CONTINUE() && !client_args_valid()) {
         LOG_ERROR("Invalid client arguments -- exiting");
         exit_code = WHIST_EXIT_CLI;
     }
 
     bool failed_to_connect = false;
 
-    while (!client_exiting && (exit_code == WHIST_EXIT_SUCCESS)) {
+    while (CLIENT_SHOULD_CONTINUE()) {
         WhistRenderer* renderer;
         pre_connection_setup(frontend, &renderer);
 
@@ -446,7 +448,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
         // TODO: Maybe return something more informative than exit_code, like a WhistStatus
         exit_code = run_main_loop(frontend, renderer);
-        if (client_exiting || (exit_code != WHIST_EXIT_SUCCESS)) {
+        if (!CLIENT_SHOULD_CONTINUE()) {
             // We actually exited the main loop, so signal the server to quit
             LOG_INFO("Disconnecting from server...");
             send_server_quit_messages(3);
