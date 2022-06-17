@@ -81,19 +81,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			continue
 		}
 
-		instance := subscriptions.Instance{
-			ID:                string(dbInstance.ID),
-			Provider:          string(dbInstance.Provider),
-			Region:            string(dbInstance.Region),
-			ImageID:           string(dbInstance.ImageID),
-			ClientSHA:         string(dbInstance.ClientSHA),
-			IPAddress:         dbInstance.IPAddress,
-			Type:              string(dbInstance.Type),
-			RemainingCapacity: int64(dbInstance.RemainingCapacity),
-			Status:            string(dbInstance.Status),
-			CreatedAt:         dbInstance.CreatedAt,
-			UpdatedAt:         dbInstance.UpdatedAt,
-		}
+		instance := subscriptions.WhistInstanceToInstance(dbInstance)
 
 		_, protected := s.protectedFromScaleDown[instance.ImageID]
 		if protected {
@@ -129,19 +117,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}
 
 	for _, dbInstance := range drainingInstances {
-		instance := subscriptions.Instance{
-			ID:                string(dbInstance.ID),
-			Provider:          string(dbInstance.Provider),
-			Region:            string(dbInstance.Region),
-			ImageID:           string(dbInstance.ImageID),
-			ClientSHA:         string(dbInstance.ClientSHA),
-			IPAddress:         dbInstance.IPAddress,
-			Type:              string(dbInstance.Type),
-			RemainingCapacity: int64(dbInstance.RemainingCapacity),
-			Status:            string(dbInstance.Status),
-			CreatedAt:         dbInstance.CreatedAt,
-			UpdatedAt:         dbInstance.UpdatedAt,
-		}
+		instance := subscriptions.WhistInstanceToInstance(dbInstance)
 		// Check if lingering instance has any running mandelboxes
 		if dbInstance.RemainingCapacity == 0 {
 			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
@@ -239,19 +215,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 		}
 
 		for _, instance := range createdInstances {
-			instancesForDb = append(instancesForDb, subscriptions.Instance{
-				ID:                instance.ID,
-				IPAddress:         instance.IPAddress,
-				Provider:          instance.Provider,
-				Region:            instance.Region,
-				ImageID:           instance.ImageID,
-				ClientSHA:         instance.ClientSHA,
-				Type:              instance.Type,
-				RemainingCapacity: int64(instanceCapacity[instance.Type]),
-				Status:            instance.Status,
-				CreatedAt:         instance.CreatedAt,
-				UpdatedAt:         instance.UpdatedAt,
-			})
+			instancesForDb = append(instancesForDb, instance)
 			logger.Infof("Created tagged instance with ID %v", instance.ID)
 		}
 	}

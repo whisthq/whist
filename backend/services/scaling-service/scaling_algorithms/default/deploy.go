@@ -57,21 +57,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 			return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImage.ImageID, err)
 		}
 
-		for _, instance := range bufferInstances {
-			instancesForDb = append(instancesForDb, subscriptions.Instance{
-				ID:                instance.ID,
-				IPAddress:         instance.IPAddress,
-				Provider:          instance.Provider,
-				Region:            instance.Region,
-				ImageID:           instance.ImageID,
-				ClientSHA:         instance.ClientSHA,
-				Type:              instance.Type,
-				RemainingCapacity: int64(instanceCapacity[instance.Type]),
-				Status:            instance.Status,
-				CreatedAt:         instance.CreatedAt,
-				UpdatedAt:         instance.UpdatedAt,
-			})
-		}
+		instancesForDb = append(instancesForDb, bufferInstances...)
 	}
 
 	logger.Infof("Inserting newly created instances to database.")

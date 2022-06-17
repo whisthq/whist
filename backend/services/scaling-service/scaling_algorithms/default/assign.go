@@ -127,19 +127,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 		// Iterate over available instances, try to find one with a matching commit hash
 		for i := range instanceResult {
-			assignedInstance = subscriptions.Instance{
-				ID:                string(instanceResult[i].ID),
-				IPAddress:         string(instanceResult[i].IPAddress),
-				Provider:          string(instanceResult[i].Provider),
-				Region:            string(instanceResult[i].Region),
-				ImageID:           string(instanceResult[i].ImageID),
-				ClientSHA:         string(instanceResult[i].ClientSHA),
-				Type:              string(instanceResult[i].Type),
-				RemainingCapacity: int64(instanceResult[i].RemainingCapacity),
-				Status:            string(instanceResult[i].Status),
-				CreatedAt:         instanceResult[i].CreatedAt,
-				UpdatedAt:         instanceResult[i].UpdatedAt,
-			}
+			assignedInstance = subscriptions.WhistInstanceToInstance(instanceResult[i])
 
 			if assignedInstance.ClientSHA == mandelboxRequest.CommitHash {
 				logger.Infof("Found instance %v for user %v with commit hash %v.", assignedInstance.ID, mandelboxRequest.UserEmail, assignedInstance.ClientSHA)
