@@ -392,7 +392,7 @@ func main() {
 	}()
 
 	// Log the Git commit of the running executable
-	logger.Info("Host Service Version: %s", metadata.GetGitCommit())
+	logger.Infof("Host Service Version: %s", metadata.GetGitCommit())
 
 	// Initialize the database driver, if necessary (the `dbdriver` package
 	// takes care of the "if necessary" part).
@@ -550,7 +550,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			}
 
 		case dockerevent := <-dockerevents:
-			logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
+			logger.Infof("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 			if dockerevent.Action == "die" {
 				mandelboxDieHandler(dockerevent.ID, transportRequestMap, transportMapLock, dockerClient)
 			}
