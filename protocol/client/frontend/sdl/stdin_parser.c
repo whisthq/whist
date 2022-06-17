@@ -14,7 +14,12 @@ int get_next_piped_argument(char **key, char **value) {
 #if OS_IS(OS_WIN32)
     DWORD bytes_available;
     if (PeekNamedPipe(GetStdHandle(STD_INPUT_HANDLE), NULL, 0, NULL, &bytes_available, NULL) == 0) {
-        LOG_ERROR("Error in PeekNamedPipe: %d", GetLastError());
+        DWORD error = GetLastError();
+        // If the error is ERROR_INVALID_FUNCTION, then we are not running this in an environment
+        // where stdin can be treated as a pipe; no need to log anything.
+        if (error != ERROR_INVALID_FUNCTION) {
+            LOG_ERROR("Error in PeekNamedPipe: %d", error);
+        }
         return -1;
     }
 #else

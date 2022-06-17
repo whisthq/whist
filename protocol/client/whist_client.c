@@ -417,7 +417,7 @@ int whist_client_main(int argc, const char* argv[]) {
     if (wait_dynamic_arguments) {
         ret = client_handle_dynamic_args(frontend);
         if (ret == -1) {
-            LOG_ERROR("Failed to handle dynamic arguments -- exiting");
+            LOG_ERROR("Failed to handle dynamic arguments in this environment -- exiting");
             exit_code = WHIST_EXIT_FAILURE;
         } else if (ret == 1) {
             LOG_INFO("Dynamic arguments prompt graceful exit");

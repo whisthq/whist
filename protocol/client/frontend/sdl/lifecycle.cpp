@@ -260,6 +260,8 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
             e.type = ctx->internal_event_id;
             e.user.code = SDL_FRONTEND_EVENT_STDIN_EVENT;
             int ret = 0;
+            // If ret is -1, we push a NULL key/value event before quitting, which is
+            // propagated as a broken pipe or error by handlers.
             while (!ctx->kill_stdin_parser && ret != -1) {
                 char* key = NULL;
                 char* value = NULL;
