@@ -10,9 +10,10 @@ Includes
 #include <sstream>
 #include <iostream>
 #include <fstream>
-
+#include <algorithm>
 #include <assert.h>
 #include <whist/core/whist.h>
+
 extern "C" {
 #include "protocol_analyzer.h"
 #include <whist/network/network.h>
@@ -20,6 +21,7 @@ extern "C" {
 #include <whist/utils/threads.h>
 #include <whist/network/ringbuffer.h>
 #include <whist/fec/fec_controller.h>
+#include "whist/logging/logging.h"
 };
 
 /*
@@ -84,7 +86,7 @@ struct CCInfo {
 };
 
 // info related to FEC
-typedef struct {
+struct FECInfo {
     // base fec depending on packet loss measuring
     double base_fec_ratio;
     // extra fec for protect bandwitdh probing
@@ -94,7 +96,40 @@ typedef struct {
     // the final total_fec_ratio, this is the value actually used for fec. All values above are
     // just for easier debuging
     double total_fec_ratio;
-} FECInfo;
+};
+
+struct AudioAlgoInfo {
+    // the scale_factor when frame becomes ready
+    double scale_factor = -1;
+    // the userspace queue len when frame becomes ready
+    double user_queue_len = -1;
+    // the device queue len when frame becomes ready
+    double device_queue_len = -1;
+
+    // if a drop is performed on this frame
+    bool drop = false;
+    // if a dup is perforamed on this frame
+    bool dup = false;
+    // did rebuffer happen when trying to move this frame to device
+    bool rebuf = false;
+
+    string to_string() {
+        stringstream ss;
+        ss.setf(ios::fixed, ios::floatfield);
+        ss.precision(2);
+
+        if (scale_factor > 0) {
+            ss << "{"
+               << "u=" << user_queue_len << ",d=" << device_queue_len << ",s=" << scale_factor
+               << "},";
+        }
+        if (drop) ss << "DROP,";
+        if (dup) ss << "DUP,";
+        if (rebuf) ss << "REBUF,";
+
+        return ss.str();
+    }
+};
 
 // FrameLevelInfo
 struct FrameLevelInfo {
@@ -149,6 +184,9 @@ struct FrameLevelInfo {
 
     FECInfo current_fec_info;  // FEC info when the frame is first seen
     CCInfo current_cc_info;    // congestion control info when the frame is first seen
+
+    // audio algorithm info
+    AudioAlgoInfo current_audio_algo_info;
 };
 
 typedef map<int, FrameLevelInfo> FrameMap;
@@ -156,8 +194,10 @@ typedef map<int, FrameLevelInfo> FrameMap;
 // type level info
 struct TypeLevelInfo {
     FrameMap frames;
-    int current_rending_id;  // currrent_rendering_id inside running buffer
+    int current_rending_id;  // currrent_rendering_id inside ring buffer
     int pending_rending_id;  // current pending frame waiting to be take out by the decoder
+
+    int last_ready_frame = -1;  // the last frame that becomes ready
 
     // temply stores the 2 info at TypeLevel, and pass through to frame level
     FECInfo current_fec_info;  // current FEC info
@@ -275,6 +315,8 @@ struct ProtocolAnalyzer {
 
         if (info.ready_time != -1) return;
 
+        type_level_infos[type].last_ready_frame = id;
+
         info.ready_time = get_timestamp();
         if (info.nack_cnt > 0) info.nack_used = 1;
 
@@ -375,6 +417,37 @@ struct ProtocolAnalyzer {
         type_level_infos[type].current_cc_info.bitrate = bitrate;
         type_level_infos[type].current_cc_info.incoming_bitrate = incoming_bitrate;
     }
+    void record_current_audio_queue_info(double scale_factor, double user_queue_len,
+                                         double device_queue_len) {
+        int type = PACKET_AUDIO;
+        int last_ready_frame = type_level_infos[type].last_ready_frame;
+
+        if (last_ready_frame == -1) return;
+
+        auto &current_audio_algo_info =
+            type_level_infos[type].frames[last_ready_frame].current_audio_algo_info;
+        if (current_audio_algo_info.scale_factor == -1) {
+            current_audio_algo_info.scale_factor = scale_factor;
+            current_audio_algo_info.user_queue_len = user_queue_len;
+            current_audio_algo_info.device_queue_len = device_queue_len;
+        }
+    }
+
+    void record_audio_action(const char *action) {
+        int type = PACKET_AUDIO;
+        int id = type_level_infos[type].pending_rending_id;
+        assert(type_level_infos[type].frames.find(id) != type_level_infos[type].frames.end());
+        auto &current_audio_algo_info = type_level_infos[type].frames[id].current_audio_algo_info;
+        if (strcmp(action, "dup") == 0) {
+            current_audio_algo_info.dup = true;
+        } else if (strcmp(action, "drop") == 0) {
+            current_audio_algo_info.drop = true;
+        } else if (strcmp(action, "rebuf") == 0) {
+            current_audio_algo_info.rebuf = true;
+        } else {
+            LOG_FATAL("unknow audio action %s\n", action);
+        }
+    }
 };
 
 // generate distribution info of samples
@@ -436,6 +509,49 @@ struct DistributionStat {
         ss << endl;
         // [1000,inf)
         ss << "[" << range_max << ",inf]~" << exceed_range_cnt << endl;
+        return ss.str();
+    }
+};
+
+// generate percentage info of values
+struct PercentageStat {
+    vector<double> records;
+
+    // clear all records
+    void clear() { records.clear(); }
+
+    // insert a new record
+    void insert(double value) { records.push_back(value); }
+
+    // call before get final stats
+    void finalize() { sort(records.begin(), records.end()); }
+
+    // get the value for specific percentage
+    double get_percentage_value(double percentage) {
+        if (records.size() == 0) {
+            return -9999;
+        }
+        FATAL_ASSERT(percentage >= 0.0 && percentage <= 100.0);
+        int idx = percentage / 100.0 * records.size();
+        idx = min(idx, (int)records.size() - 1);
+        return records[idx];
+    }
+
+    // generated a report of required percentages
+    string get_stat(vector<double> vec) {
+        stringstream ss;
+        ss.setf(ios::fixed, ios::floatfield);
+        ss.precision(1);
+
+        for (int i = 0; i < (int)vec.size(); i++) {
+            if (vec[i] == 0.0)
+                ss << "min~";
+            else if (vec[i] == 100.0)
+                ss << "max~";
+            else
+                ss << vec[i] << "%~";
+            ss << get_percentage_value(vec[i]) << "  ";
+        }
         return ss.str();
     }
 };
@@ -518,6 +634,15 @@ void whist_analyzer_record_current_fec_info(int type, double base_fec_ratio, dou
 void whist_analyzer_record_current_cc_info(int type, double packet_loss, double latency,
                                            int bitrate, int incoming_bitrate) {
     FUNC_WRAPPER(record_current_cc_info, type, packet_loss, latency, bitrate, incoming_bitrate);
+}
+
+void whist_analyzer_record_current_audio_queue_info(double scale_factor, double user_queue_len,
+                                                    double device_queue_len) {
+    FUNC_WRAPPER(record_current_audio_queue_info, scale_factor, user_queue_len, device_queue_len);
+}
+
+void whist_analyzer_record_audio_action(const char *action) {
+    FUNC_WRAPPER(record_audio_action, action);
 }
 
 string whist_analyzer_get_report(int type, int num, int skip, bool more_format) {
@@ -611,9 +736,9 @@ string FrameLevelInfo::to_string(bool more_format) {
     if (overwrite_id != -1) ss << "overwrite=" << overwrite_id << ",";
     if (stream_reset_time != -1)
         ss << "stream_reset_time=" << time_to_str(stream_reset_time, more_format) << ",";
-    if (type == PACKET_AUDIO && queue_full != -1) {
-        ss << "queue_full"
-           << ",";
+    if (type == PACKET_AUDIO) {
+        if (queue_full != -1) ss << "queue_full,";
+        ss << current_audio_algo_info.to_string();
     }
     if (more_format) ss << "}" << endl << "{";
     ss << "segments=[";
@@ -784,6 +909,9 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
     Timestamp begin_ts = -1;  // time of first seen frame
     Timestamp end_ts = 0;     // time of last seen frame
 
+    PercentageStat device_queue_len_stat;
+    PercentageStat total_queue_len_stat;
+
     for (auto it = range.first; it != range.second; it++) {
         end_id = it->first;
         total_seen_cnt++;
@@ -876,6 +1004,15 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
         } else {
             not_decode_cnt++;
         }
+
+        if (type == PACKET_AUDIO) {
+            if (it->second.current_audio_algo_info.scale_factor > 0) {
+                double device_queue_len = it->second.current_audio_algo_info.device_queue_len;
+                double user_queue_len = it->second.current_audio_algo_info.user_queue_len;
+                device_queue_len_stat.insert(it->second.current_audio_algo_info.device_queue_len);
+                total_queue_len_stat.insert(device_queue_len + user_queue_len);
+            }
+        }
     }
 
     if (type == PACKET_VIDEO) {
@@ -957,6 +1094,18 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
 
     ss << "decode_gap_distribution_in_ms:" << endl;
     ss << decode_gap_stat.get_stat() << endl;
+
+    if (type == PACKET_AUDIO) {
+        ss << endl;
+        device_queue_len_stat.finalize();
+        ss << "device_queue_len_percenrage_stat:" << endl;
+        ss << device_queue_len_stat.get_stat({0, 0.5, 1, 10, 50, 90, 99, 99.5, 100}) << endl;
+        ss << endl;
+        total_queue_len_stat.finalize();
+        ss << "total_queue_len_percenrage_stat:" << endl;
+        ss << total_queue_len_stat.get_stat({0, 0.5, 1, 10, 50, 90, 99, 99.5, 100}) << endl;
+        ss << endl;
+    }
 
 #endif
 

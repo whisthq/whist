@@ -20,6 +20,9 @@ include(CMakeDependentOption)
 
 project(WhistProtocol LANGUAGES C CXX)
 
+# Generate compile_commands.json, which can make IDE's intellisense more accurate
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     check_language(CUDA)
     # CMAKE_CUDA_COMPILER will be set only if check_language(CUDA) succeeded
