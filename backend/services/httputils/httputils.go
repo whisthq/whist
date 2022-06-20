@@ -1,11 +1,16 @@
 package httputils
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os/exec"
+	"strings"
 
+	"github.com/whisthq/whist/backend/services/host-service/auth"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -58,6 +63,87 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 }
 
 // Helper functions
+
+// GetAccessToken is a helper function that extracts the access token
+// from the request "Authorization" header. If it fails, fallback to
+// extracting the token from the request's body.
+func GetAccessToken(r *http.Request) (string, error) {
+	if metadata.IsLocalEnv() {
+		return "", nil
+	}
+
+	authorization := r.Header.Get("Authorization")
+	bearer := strings.Split(authorization, "Bearer ")
+
+	var (
+		accessToken string
+		bodyMap     map[string]interface{}
+	)
+	if len(bearer) <= 1 || bearer[1] == "" || bearer[1] == "undefined" {
+		logger.Warningf("Bearer token is empty. Trying to parse token from request body.")
+
+		// Read request body and replace for subsequent reads
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return "", utils.MakeError("failed to read request body: %s", err)
+		}
+		r.Body.Close()
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+		// Here we unmarshal into a simple map because we are only interested
+		// in the access token.
+		err = json.Unmarshal(body, &bodyMap)
+		if err != nil {
+			return "", utils.MakeError("failed to umarshal request body: %s", err)
+		}
+
+		val, ok := bodyMap["jwt_access_token"]
+		if !ok {
+			return "", utils.MakeError("did not find jwt_access_token field in request body.")
+		}
+
+		// TODO: Once the client application is superseded by the Chromium extension, remove
+		// this logic to only obtain the token from the "jwt_access_token" key.
+		accessToken = val.(string)
+
+	} else {
+		accessToken = bearer[1]
+	}
+
+	return accessToken, nil
+}
+
+// AuthenticateRequest will verify that the access token is valid
+// and will parse the request body and try to unmarshal into a
+// `ServerRequest` type.
+func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) (*auth.WhistClaims, error) {
+	accessToken, err := GetAccessToken(r)
+	if err != nil {
+		return nil, err
+	}
+
+	var claims *auth.WhistClaims
+	// Skip token validation if running on local environment
+	if !metadata.IsLocalEnv() {
+		claims, err = auth.ParseToken(accessToken)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+		}
+
+		if err := auth.Verify(claims); err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+		}
+	}
+
+	_, err = ParseRequest(w, r, s)
+	if err != nil {
+		return nil, utils.MakeError("Error while parsing request. Err: %v", err)
+	}
+
+	return claims, nil
+}
 
 // ParseRequest will split the request body, unmarshal into a raw JSON map, and then unmarshal
 // the remaining fields into the struct `s`. We unmarshal the raw JSON map and the rest of the

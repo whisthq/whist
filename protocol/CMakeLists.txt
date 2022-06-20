@@ -66,7 +66,12 @@ set(META_AUTHOR_ORGANIZATION "Whist")
 set(META_AUTHOR_DOMAIN       "https://github.com/whisthq/whist")
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 20)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.20.4)
+    # On such systems, only 23 enables /std:c++latest, which is what we need
+    set(CMAKE_CXX_STANDARD 23)
+else()
+    set(CMAKE_CXX_STANDARD 20)
+endif()
 
 # verbose cmake outputs, useful for debugging CMake issues such as linking
 set(CMAKE_VERBOSE_MAKEFILE OFF)

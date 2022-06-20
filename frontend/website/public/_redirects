@@ -1,5 +1,0 @@
-# Redirects from what the browser requests to what we serve
-
-# Site-level redirects
-/robots.txt     /robots.txt   200
-/*              /index.html   200

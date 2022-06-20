@@ -407,11 +407,7 @@ def complete_experiment_and_save_results(
 
     timestamps.add_event("Stopping/terminating instance(s)")
 
-    # 8- Delete the cleanup todo-list, because we already completed it.
-    if not running_in_ci:
-        os.remove("instances_to_remove.txt")
-
-    # 9- Check if either of the WhistServer/WhistClient failed to start, or whether the client failed
+    # 8- Check if either of the WhistServer/WhistClient failed to start, or whether the client failed
     # to connect to the server. If so, add the error to the metadata, and exit with an error code (-1).
 
     # The server_metrics_file (server.log) and the client_metrics_file (client.log) fail to exist if
@@ -430,14 +426,14 @@ def complete_experiment_and_save_results(
         server_hang_detected and not experiment_metadata["server_failure"]
     )
 
-    # 10- Update metadata file with any new metadata that we added
+    # 9- Update metadata file with any new metadata that we added
     with open(metadata_filename, "w") as metadata_file:
         json.dump(experiment_metadata, metadata_file)
 
-    # 11- Print time breakdown of the experiment
+    # 10- Print time breakdown of the experiment
     timestamps.print_timestamps()
 
-    # 12- Print error message and exit with error if needed
+    # 11- Print error message and exit with error if needed
     for cause, message in {
         "server_failure": "Failed to run WhistServer",
         "client_failure": "Failed to run WhistClient",

@@ -61,17 +61,31 @@ Public Functions
 int client_parse_args(int argc, const char* argv[]);
 
 /**
- * @brief                          Read arguments from the stdin pipe if `using_piped_arguments`
- *                                 is set to `true`.
+ * @brief                          Process and handle dynamic arguments until receiving a signal
+ *                                 to proceed.
+
+ * @details                        The SDL frontend, for example, responds to dynamic
+ *                                 arguments passed via `key\n` or `key?value\n` to `stdin`. The
+ *                                 `kill` argument signals the client to exit gracefully, whereas
+ *                                 the `finished` argument signals the client to proceed. Other
+ *                                 dynamic arguments set the corresponding command-line options.
  *
- * @param run_only_once            A boolean controlling whether to keep polling for stdin updates
- *                                 or read from stdin only one time. Must use 'true' if this
- *                                 function is being called in a while loop.
+ * @param frontend                Frontend from which to receive dynamic arguments
  *
- * @returns                        -2 on read pipe failure, -1 on invalid arguments, 0 on success,
- *                                 1 on args prompting graceful exit (kill, etc.)
+ * @returns                        -1 on failure, 0 on "proceed", 1 on args prompting graceful exit
  */
-int read_piped_arguments(bool run_only_once);
+int client_handle_dynamic_args(WhistFrontend* frontend);
+
+/**
+ * @brief                          Validate that the client's arguments set by `client_parse_args`
+ *                                 and `handle_dynamic_args` are valid.
+ *
+ * @details                        This function verifies that a server IP address is indeed set,
+ *                                 and may be extended in the future to provide additional checks.
+ *
+ * @returns                        Returns `true` if the arguments are valid, `false` otherwise.
+ */
+bool client_args_valid(void);
 
 /**
  * @brief                          Update mouse location if the mouse state has

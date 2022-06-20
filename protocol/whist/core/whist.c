@@ -76,7 +76,7 @@ void whist_gpu_unlock(void) {
 
 void whist_init_subsystems(void) {
     gpu_lock = whist_create_mutex();
-    get_timestamp_sec();  // init the timer insdie
+    get_timestamp_sec();  // init the timer inside
     whist_init_multithreading();
     whist_init_logger();
     whist_init_features();
@@ -404,80 +404,6 @@ void terminate_protocol(WhistExitCode exit_code) {
     destroy_logger();
 
     exit(exit_code);
-}
-
-bool safe_strncpy(char *destination, const char *source, size_t num) {
-    /*
-        Safely copy a string from source to destination.
-
-        Copies at most `num` bytes * after the first null character of `source` are not copied.
-        If no null character is encountered within the first `num` bytes
-        of `source`, `destination[num - 1]` will be manually set to zero,
-        so `destination` is guaranteed to be null terminated, unless
-        `num` is zero, in which case the `destination` is left unchanged.
-
-        Arguments:
-            destination: Address to copy to. Should have at least `num` bytes available.
-            source: Address to copy from.
-            num: Number of bytes to copy.
-
-        Return:
-            (bool): true if all bytes of source were copied (i.e. strlen(source) <= num - 1),
-                else false
-     */
-    if (num > 0) {
-        size_t i;
-        for (i = 0; i < num - 1 && source[i] != '\0'; i++) {
-            destination[i] = source[i];
-        }
-        destination[i] = '\0';
-        return source[i] == '\0';
-    }
-    return false;
-}
-
-void trim_utf8_string(char *str) {
-    /*
-     * This function takes a null-terminated string and modifies it to remove
-     * any dangling unicode characters that may have been left over from a
-     * previous truncation. This is necessary because dangling unicode characters
-     * will cause horrible crashes if they are not removed.
-     *
-     * Arguments:
-     *     str (char*): The utf8 string to be trimmed.
-     */
-
-    // On Windows, utf-8 seems to behave weirdly, causing major issues in the
-    // below codepath. Therefore, I've disabled this function on Windows.
-    // TODO: Fix this on Windows and re-enable the unit test.
-#if !OS_IS(OS_WIN32)
-    // UTF-8 can use up to 4 bytes per character, so
-    // in the malformed case, we would at most need to
-    // trim 3 trailing bytes.
-
-    size_t len = strlen(str);
-
-    // Does a 4-byte sequence start at b[len - 3]?
-    if (len >= 3 && (str[len - 3] & 0xf0) == 0xf0) {
-        // Yes, so we need to trim 3 bytes.
-        str[len - 3] = '\0';
-        return;
-    }
-
-    // Does a 3 or more byte sequence start at str[len - 2]?
-    if (len >= 2 && (str[len - 2] & 0xe0) == 0xe0) {
-        // Yes, so we need to trim 2 bytes.
-        str[len - 2] = '\0';
-        return;
-    }
-
-    // Does a 2 or more byte sequence start at str[len - 1]?
-    if (len >= 1 && (str[len - 1] & 0xc0) == 0xc0) {
-        // Yes, so we need to trim 1 byte.
-        str[len - 1] = '\0';
-        return;
-    }
-#endif  // Not Windows
 }
 
 /* position of bit within character */

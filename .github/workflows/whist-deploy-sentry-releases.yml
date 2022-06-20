@@ -43,8 +43,6 @@ jobs:
             sentry-project: protocol
           - name: Scaling Service
             sentry-project: scaling-service
-          - name: Website
-            sentry-project: website
 
     env:
       SENTRY_ORG: whist
@@ -125,5 +123,5 @@ jobs:
 
           from notifications.slack_bot import slack_post
           TITLE = ":sentry: Sentry Releases Deployed :sentry:"
-          BODY = f"Sentry Releases for Whist Sentry Projects  `client-applications`, `host-service`, `mandelboxes`, `protocol`, `scaling-service`, and `website` deployed to Sentry on branch: `${{ needs.whist-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Sentry Releases for Whist Sentry Projects  `client-applications`, `host-service`, `mandelboxes`, `protocol`, and `scaling-service` deployed to Sentry on branch: `${{ needs.whist-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)

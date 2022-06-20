@@ -26,6 +26,15 @@ type Bookmarks struct {
 	Version      int                 `json:"version,omitempty"`
 }
 
+// Custom-defined UnmarshalJSON function to handle the empty-string case correctly.
+func (bookmarks *Bookmarks) UnmarshalJSON(data []byte) error {
+	if string(data) == `""` || string(data) == `''` || string(data) == "" {
+		return nil
+	}
+	type tmp Bookmarks
+	return json.Unmarshal(data, (*tmp)(bookmarks))
+}
+
 // UnmarshalBookmarks takes a JSON string containing bookmark data
 // and unmarshals it into a Bookmarks struct, returning the struct
 // and any errors encountered.

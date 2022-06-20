@@ -4,7 +4,7 @@
 
 # This role is linked to the Systems Manager service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForSSM" {
-  count            = var.env == "prod" ? 1 : 0
+  count            = var.env == "dev" ? 1 : 0
   aws_service_name = "ssm.amazonaws.com"
   description      = "Provides access to AWS Resources managed or used by Amazon SSM"
   tags = {
@@ -16,7 +16,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForSSM" {
 
 # This role is linked to the Compute Optimizer service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForComputeOptimizer" {
-  count            = var.env == "prod" ? 1 : 0
+  count            = var.env == "dev" ? 1 : 0
   aws_service_name = "compute-optimizer.amazonaws.com"
   description      = "Allows ComputeOptimizer to call AWS services and collect workload details on your behalf"
   tags = {
@@ -28,7 +28,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForComputeOptimizer" {
 
 # This role is linked to the EC2 Spot service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForEC2Spot" {
-  count            = var.env == "prod" ? 1 : 0
+  count            = var.env == "dev" ? 1 : 0
   aws_service_name = "spot.amazonaws.com"
   description      = "Default EC2 Spot Service Linked Role"
   tags = {
@@ -40,7 +40,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForEC2Spot" {
 
 # This role is linked to the Service Quotas service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForServiceQuotas" {
-  count            = var.env == "prod" ? 1 : 0
+  count            = var.env == "dev" ? 1 : 0
   aws_service_name = "servicequotas.amazonaws.com"
   description      = "A service-linked role is required for Service Quotas to access your service limits"
   tags = {
@@ -105,26 +105,26 @@ resource "aws_iam_instance_profile" "EC2DeploymentRoleInstanceProfile" {
 
 # All Whist employees are in this group. It forces 2-FA for all AWS console users.
 resource "aws_iam_group" "Whist2FA" {
-  count = var.env == "prod" ? 1 : 0
+  count = var.env == "dev" ? 1 : 0
   name  = "Whist2FA"
 }
 
 # This group confers full AWS administrative privileges to its members.
 resource "aws_iam_group" "WhistAdmins" {
-  count = var.env == "prod" ? 1 : 0
+  count = var.env == "dev" ? 1 : 0
   name  = "WhistAdmins"
 }
 
 # This group contains the Whist IAM role (s) used in our GitHub Actions pipelines.
 resource "aws_iam_group" "WhistCI" {
-  count = var.env == "prod" ? 1 : 0
+  count = var.env == "dev" ? 1 : 0
   name  = "WhistCI"
 }
 
 # This is the general user group for Whist engineers, containing the necessary 
 # permissions for developing Whist.
 resource "aws_iam_group" "WhistEngineers" {
-  count = var.env == "prod" ? 1 : 0
+  count = var.env == "dev" ? 1 : 0
   name  = "WhistEngineers"
 }
 
@@ -146,6 +146,32 @@ resource "aws_iam_user" "WhistEC2PassRoleUser" {
   }
 }
 
+# The GithubActions user used by the CI tools.
+resource "aws_iam_user" "GithubActionsUser" {
+  count = var.env == "dev" ? 1 : 0
+  name  = "GithubActions"
+
+  tags = {
+    Name      = "GithubActions"
+    Env       = var.env
+    Terraform = true
+  }
+}
+
+# 
+# IAM User group memberships
+# 
+
+# Add the GithubActions user to the WhistCI group.
+resource "aws_iam_user_group_membership" "GithubActionsGroupMembership" {
+  count = var.env == "dev" ? 1 : 0
+  user  = aws_iam_user.GithubActionsUser[0].name
+
+  groups = [
+    aws_iam_group.WhistCI[0].name,
+  ]
+}
+
 #
 # IAM User access keys
 #
@@ -162,7 +188,7 @@ resource "aws_iam_access_key" "WhistEC2PassRoleUserAccessKey" {
 # This policy forces 2-FA for all Whist engineers on AWS, and is attached to the 
 # Whist2FA group.
 resource "aws_iam_group_policy" "ForceMFA" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   name   = "ForceMFA"
   group  = aws_iam_group.Whist2FA[0].id
   policy = data.aws_iam_policy_document.MFAPolicy.json
@@ -174,7 +200,7 @@ resource "aws_iam_group_policy" "ForceMFA" {
 
 # This policy gives WhistAdmins full AWS permissions.
 resource "aws_iam_group_policy_attachment" "AdminPolicy" {
-  count      = var.env == "prod" ? 1 : 0
+  count      = var.env == "dev" ? 1 : 0
   group      = aws_iam_group.WhistAdmins[0].name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
@@ -182,7 +208,7 @@ resource "aws_iam_group_policy_attachment" "AdminPolicy" {
 # This policy gives WhistCI the basic permissions required for our GitHub Actions pipelines to function.
 resource "aws_iam_group_policy_attachment" "CIPolicy" {
   group = aws_iam_group.WhistCI[0].name
-  for_each = var.env == "prod" ? toset([
+  for_each = var.env == "dev" ? toset([
     "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",
     "arn:aws:iam::aws:policy/AmazonVPCFullAccess",
@@ -195,7 +221,7 @@ resource "aws_iam_group_policy_attachment" "CIPolicy" {
 # This policy gives WhistEngineers the basic permissions required for our developing Whist.
 resource "aws_iam_group_policy_attachment" "EngineeringPolicy" {
   group = aws_iam_group.WhistEngineers[0].name
-  for_each = var.env == "prod" ? toset([
+  for_each = var.env == "dev" ? toset([
     "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
     "arn:aws:iam::aws:policy/IAMFullAccess",
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",

@@ -25,6 +25,7 @@ instances_name_tag = (
     if job_name == "backend-integration-test"
     else "manual-e2e-test"
 )
+github_run_id = os.getenv("GITHUB_RUN_ID") or "personal machine"
 
 # The expected length of the Github SHA string
 GITHUB_SHA_LEN = 40

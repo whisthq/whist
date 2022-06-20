@@ -18,7 +18,6 @@ const getConfig = (env) => {
   const REQUIRED_ENV_VARS = [
     "AUTH0_CLIENT_SECRET",
     "GOOGLE_OAUTH_SECRET",
-    "APPLE_OAUTH_SECRET",
   ]
 
   REQUIRED_ENV_VARS.forEach((v) => {
@@ -36,10 +35,7 @@ const getConfig = (env) => {
     // Only auto-delete resources on dev
     AUTH0_ALLOW_DELETE: env === "dev",
     AUTH0_KEYWORD_REPLACE_MAPPINGS: {
-      ALLOWED_AUTH0_CALLBACKS: ["http://localhost/callback"],
-      WHIST_AUTHENTICATION_API: "https://api.fractal.co",
       GOOGLE_OAUTH_SECRET: process.env.GOOGLE_OAUTH_SECRET,
-      APPLE_OAUTH_SECRET: process.env.APPLE_OAUTH_SECRET,
     },
     EXCLUDED_PROPS: {
       clients: ["client_secret"],

@@ -19,6 +19,7 @@ Includes
 #include "handle_frontend_events.h"
 
 #include <whist/logging/logging.h>
+#include <whist/core/whist_string.h>
 #include "sdl_utils.h"
 #include "audio.h"
 #include "client_utils.h"
@@ -287,6 +288,24 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
     free(msg);
 }
 
+static void handle_open_url_event(WhistFrontend* frontend, FrontendOpenURLEvent* event) {
+    // Send any new URL to the server
+    const size_t data_len = strlen(event->url) + 1;
+    WhistClientMessage* msg = safe_malloc(sizeof(WhistClientMessage) + data_len);
+    memset(msg, 0, sizeof(WhistClientMessage) + data_len);
+    msg->type = MESSAGE_OPEN_URL;
+    memcpy(&msg->urls_to_open, event->url, data_len);
+    send_wcmsg(msg);
+    free(msg);
+
+    free(event->url);
+
+    // Unmimimize the window if needed
+    if (!whist_frontend_is_window_visible(frontend)) {
+        whist_frontend_restore_window(frontend);
+    }
+}
+
 static void handle_quit_event(FrontendQuitEvent* event) {
     if (event->quit_application) {
         const char* quit_client_app_notification = "QUIT_APPLICATION";
@@ -356,6 +375,17 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
         }
         case FRONTEND_EVENT_FILE_DRAG: {
             handle_file_drag_event(frontend, &event->file_drag);
+            break;
+        }
+        case FRONTEND_EVENT_OPEN_URL: {
+            handle_open_url_event(frontend, &event->open_url);
+            break;
+        }
+        case FRONTEND_EVENT_STARTUP_PARAMETER: {
+            // We manually handle these during startup, but
+            // must free caller-managed data from the event.
+            free(event->startup_parameter.key);
+            free(event->startup_parameter.value);
             break;
         }
         case FRONTEND_EVENT_QUIT: {

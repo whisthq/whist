@@ -2,14 +2,11 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/whisthq/whist/backend/services/host-service/auth"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/httputils"
@@ -45,15 +42,12 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 		return
 	}
 
-	// Verify authorization and unmarshal into the right object type
 	var reqdata httputils.JSONTransportRequest
-	if err := authenticateRequest(w, r, &reqdata, !metadata.IsLocalEnv()); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		metrics.Increment("FailedRequests")
-		metrics.Increment("ErrorRate")
+	_, err := httputils.AuthenticateRequest(w, r, &reqdata)
+	if err != nil {
+		logger.Errorf("Failed while authenticating request. Err: %v", err)
 		return
 	}
-
 	// Send request to queue, then wait for result
 	queue <- &reqdata
 	res := <-reqdata.ResultChan
@@ -72,28 +66,9 @@ func handleJSONTransportRequest(serverevent httputils.ServerRequest, transportRe
 	// Receive the value of the `json_transport request`
 	req := serverevent.(*httputils.JSONTransportRequest)
 
-	// First we validate the JWT received from the `json_transport` endpoint
-	// Set up auth
-	claims := new(auth.WhistClaims)
-	parser := &jwt.Parser{SkipClaimsValidation: true}
-
-	// Only verify auth in non-local environments
-	if !metadata.IsLocalEnv() {
-		// Decode the access token without validating any of its claims or
-		// verifying its signature because we've already done that in
-		// `authenticateAndParseRequest`. All we want to know is the value of the
-		// sub (subject) claim.
-		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
-			logger.Errorf("There was a problem while parsing the access token for the second time: %s", err)
-			metrics.Increment("ErrorRate")
-			return
-		}
-	}
-
-	// If the jwt was valid, the next step is to verify if we have already received the JSONData from
-	// this specific user. In case we have, we ignore the request. Otherwise we add the request to the map.
-	// By performing this validation, we make the host service resistant to DDOS attacks, and by keeping track
-	// of each user's json data, we avoid any race condition that might corrupt other mandelboxes.
+	// Verify if we have already received the JSONData for this specific mandelbox. In case we have, we ignore the request.
+	// Otherwise we add the request to the map. By performing this validation, we make the host service resistant to DDOS
+	// attacks, and by keeping track of each mandelbox's json data, we avoid any race condition that might corrupt other mandelboxes.
 
 	// Acquire lock on transport requests map
 	transportMapLock.Lock()
@@ -110,8 +85,8 @@ func handleJSONTransportRequest(serverevent httputils.ServerRequest, transportRe
 	close(transportRequestMap[req.MandelboxID])
 }
 
-// getJSONTransportRequestChannel returns the JSON transport request for the solicited user
-// in a safe way. It also creates the channel in case it doesn't exists for that particular user.
+// getJSONTransportRequestChannel returns the JSON transport request for the solicited mandelbox
+// in a safe way. It also creates the channel in case it doesn't exists for that particular mandelbox.
 func getJSONTransportRequestChannel(mandelboxID mandelboxtypes.MandelboxID,
 	transportRequestMap map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest, transportMapLock *sync.Mutex) chan *httputils.JSONTransportRequest {
 	// Acquire lock on transport requests map
@@ -160,60 +135,6 @@ func getAppName(mandelboxSubscription subscriptions.Mandelbox, transportRequestM
 	}
 
 	return req, AppName
-}
-
-// Function to authenticate an incoming request. Splitting this into a separate
-// function has the following advantages:
-// 1. We factor out duplicated functionality among all the endpoints that need
-// authentication.
-// 2. Doing so allows us not to unmarshal the `jwt_access_token` field, and
-// therefore prevents needing to pass it to client code in other packages that
-// don't need to understand our authentication mechanism or read the secret
-// key. We could alternatively do this by creating two separate types of
-// structs containing the data required for the endpoint --- one without the
-// auth secret, and one with it --- but this requires duplication of struct
-// definitions and writing code to copy values from one struct to another.
-// 3. If we get a bad, unauthenticated request we can minimize the amount of
-// processsing power we devote to it. This is useful for being resistant to
-// Denial-of-Service attacks.
-func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest, authorizeAsBackend bool) (err error) {
-	// Get the raw map of the request, and unmarshal into
-	// the corresponding struct
-	rawmap, err := httputils.ParseRequest(w, r, s)
-	if err != nil {
-		return utils.MakeError("Error while parsing request. Err: %v", err)
-	}
-
-	if authorizeAsBackend {
-		var requestAuthSecret string
-
-		err = func() error {
-			if value, ok := rawmap["jwt_access_token"]; ok {
-				return json.Unmarshal(*value, &requestAuthSecret)
-			}
-			return utils.MakeError("Request body had no \"jwt_access_token\" field.")
-		}()
-
-		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Error getting jwt_access_token from JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
-		}
-
-		// Actually verify authentication. We check that the access token sent is a valid JWT signed by Auth0.
-		// Parses a raw access token string, verifies the token's signature, ensures that it is valid at the current moment in time.
-		claims, err := auth.ParseToken(requestAuthSecret)
-		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-		}
-
-		if err := auth.Verify(claims); err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-		}
-	}
-
-	return nil
 }
 
 // StartHTTPServer returns a channel of events from the HTTP server as its first return value

@@ -185,7 +185,16 @@ void free_dynamic_buffer(DynamicBuffer* db) {
 // and maintains a free list of recently freed blocks
 // ------------------------------------
 
+// Madvise will mark unused memory regions, and the OS will reclaim only when it needs to
+// MAX_FREES is how many malloc'd regions to keep on standby for quick allocations
+// When using madvise, this can be large, since we still let the OS use unused regions
+#if OS_IS(OS_WIN32)
+#define USING_MADVISE false
+#define MAX_FREES 8
+#else
+#define USING_MADVISE true
 #define MAX_FREES 1024
+#endif
 
 // The internal block allocator struct,
 struct BlockAllocator {
@@ -408,6 +417,7 @@ void mark_unused_region(void* region) {
             region (void*): The region to mark as unused
     */
 
+#if USING_MADVISE
     RegionHeader* p = TO_REGION_HEADER(region);
     size_t page_size = get_page_size();
     // Only mark the next page and beyond as freed,
@@ -427,6 +437,7 @@ void mark_unused_region(void* region) {
         madvise(next_page, advise_size, MADV_FREE);
 #endif
     }
+#endif
 }
 
 void mark_used_region(void* region) {
@@ -438,6 +449,8 @@ void mark_used_region(void* region) {
             region (void*): The region to mark as used now
     */
 
+    // Do nothing on Linux, Linux will know when you touch the memory again
+#if USING_MADVISE && !OS_IS(OS_LINUX)
     RegionHeader* p = TO_REGION_HEADER(region);
     size_t page_size = get_page_size();
     if (p->size > page_size) {
@@ -451,12 +464,9 @@ void mark_used_region(void* region) {
         // Apparently we can lie to their Task Manager by not calling this
         // Hm.
         madvise(next_page, advise_size, MADV_FREE_REUSE);
-#else
-        // Do Nothing, Linux will know when you touch the memory again
-        UNUSED(next_page);
-        UNUSED(advise_size);
 #endif
     }
+#endif
 }
 
 void* realloc_region(void* region, size_t new_region_size) {

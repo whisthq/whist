@@ -22,7 +22,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -44,9 +43,9 @@ const HostServicePort uint16 = 4678
 
 // mandelboxAssignHandler is the http handler for any requests to the `/assign` endpoint. It authenticates
 // the request, verifies the type, and parses the body. After that it sends it to the server events channel.
-func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events chan<- algos.ScalingEvent) {
+func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<- algos.ScalingEvent) {
 	// Verify that we got a POST request
-	err := verifyRequestType(w, req, http.MethodPost)
+	err := verifyRequestType(w, r, http.MethodPost)
 	if err != nil {
 		logger.Errorf("Error verifying request type. Err: %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -54,7 +53,7 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 	}
 
 	var reqdata httputils.MandelboxAssignRequest
-	claims, err := authenticateRequest(w, req, &reqdata)
+	claims, err := httputils.AuthenticateRequest(w, r, &reqdata)
 	if err != nil {
 		logger.Errorf("Failed while authenticating request. Err: %v", err)
 		return
@@ -98,9 +97,9 @@ func mandelboxAssignHandler(w http.ResponseWriter, req *http.Request, events cha
 
 // paymentSessionHandler handles a payment session request. It verifies the access token,
 // and then creates a StripeClient to get the URL of a payment session.
-func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
+func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 	// Verify that we got a GET request
-	err := verifyRequestType(w, req, http.MethodGet)
+	err := verifyRequestType(w, r, http.MethodGet)
 	if err != nil {
 		// err is already logged
 		http.Error(w, "", http.StatusMethodNotAllowed)
@@ -108,7 +107,7 @@ func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Extract access token from request header
-	accessToken, err := getAccessToken(req)
+	accessToken, err := httputils.GetAccessToken(r)
 	if err != nil {
 		logger.Error(err)
 		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
@@ -118,7 +117,7 @@ func paymentSessionHandler(w http.ResponseWriter, req *http.Request) {
 	// Get claims from access token
 	claims, err := auth.ParseToken(accessToken)
 	if err != nil {
-		logger.Errorf("Received an unpermissioned backend request on %s to URL %s. Error: %s", req.Host, req.URL, err)
+		logger.Errorf("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
 		http.Error(w, "Invalid access token", http.StatusUnauthorized)
 		return
 	}
@@ -175,9 +174,17 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Extract access token from request header to pass to host service
+	accessToken, err := httputils.GetAccessToken(r)
+	if err != nil {
+		logger.Error(err)
+		http.Error(w, "Did not receive an access token", http.StatusUnauthorized)
+		return
+	}
+
 	// Verify authorization and unmarshal into the right object type
 	var reqdata httputils.JSONTransportRequest
-	if _, err := authenticateRequest(w, r, &reqdata); err != nil {
+	if _, err := httputils.AuthenticateRequest(w, r, &reqdata); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
@@ -191,14 +198,20 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create a new request
 	bodyReader := bytes.NewReader(jsonBody)
 	hostReq, err := http.NewRequest("PUT", url, bodyReader)
 	if err != nil {
-		logger.Errorf("Failed to send JSON transport request to instance. Err: %v", err)
+		logger.Errorf("Failed to create JSON transport request for host service. Err: %v", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
+	// Add necessary headers to host request
+	hostReq.Header.Add("content-type", "application/json")
+	hostReq.Header.Add("Authorization", utils.Sprintf("Bearer %s", accessToken))
+
+	// Instanciate a new http client with a custom transport
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -206,6 +219,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	client := &http.Client{Transport: tr}
 
+	// Now that request is fully assembled and the client is initialized, send the request
 	res, err := client.Do(hostReq)
 	if err != nil {
 		logger.Errorf("Failed to send JSON transport request to instance. Err: %v", err)
@@ -222,41 +236,6 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(hostBody)
-}
-
-// authenticateRequest will verify that the access token is valid
-// and will parse the request body and try to unmarshal into a
-// `ServerRequest` type.
-func authenticateRequest(w http.ResponseWriter, r *http.Request, s httputils.ServerRequest) (*auth.WhistClaims, error) {
-	accessToken, err := getAccessToken(r)
-	if err != nil {
-		return nil, err
-	}
-
-	claims, err := auth.ParseToken(accessToken)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-	}
-
-	_, err = httputils.ParseRequest(w, r, s)
-	if err != nil {
-		return nil, utils.MakeError("Error while parsing request. Err: %v", err)
-	}
-
-	return claims, nil
-}
-
-// getAccessToken is a helper function that extracts the access token
-// from the request "Authorization" header.
-func getAccessToken(r *http.Request) (string, error) {
-	authorization := r.Header.Get("Authorization")
-	bearer := strings.Split(authorization, "Bearer ")
-	if len(bearer) <= 1 {
-		return "", utils.MakeError("Bearer token is empty.")
-	}
-	accessToken := bearer[1]
-	return accessToken, nil
 }
 
 // throttleMiddleware will limit requests on the endpoint using the provided rate limiter.
@@ -277,17 +256,11 @@ func throttleMiddleware(limiter *rate.Limiter, f func(http.ResponseWriter, *http
 func verifyPaymentMiddleware(f func(http.ResponseWriter, *http.Request)) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		// Get and parse Authorization header from access token
-		accessToken, err := getAccessToken(r)
+		accessToken, err := httputils.GetAccessToken(r)
 		if err != nil {
 			logger.Error(err)
 			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
-		}
-
-		if len(strings.Split(accessToken, "Bearer")) <= 1 {
-			logger.Infof("Access token does not have Bearer header. Trying to parse token as is.")
-		} else {
-			accessToken = strings.Split(accessToken, "Bearer ")[1]
 		}
 
 		// Verify if the user's subscription is valid

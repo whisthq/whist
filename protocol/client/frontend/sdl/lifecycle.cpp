@@ -1,6 +1,7 @@
 extern "C" {
 #include "common.h"
 #include "native.h"
+#include "stdin_parser.h"
 #include <whist/utils/command_line.h>
 }
 
@@ -252,6 +253,38 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // The first call to sdl_paint_avframe() will set context->video_has_rendered to true. Then,
     // the next call to sdl_render() will show the window and set context->window_has_shown to true.
 
+    context->kill_stdin_parser = false;
+    // This thread reads entries of the form `key?value\n` or `key\n` from stdin and
+    // reroutes them as SDL user events. Then, our `sdl/events.cpp` handling translates
+    // these to appropriate WhistFrontend events.
+    context->stdin_parser_thread = whist_create_thread(
+        [](void* opaque) -> int {
+            SDLFrontendContext* ctx = (SDLFrontendContext*)opaque;
+            SDL_Event e = {0};
+            e.type = ctx->internal_event_id;
+            e.user.code = SDL_FRONTEND_EVENT_STDIN_EVENT;
+            int ret = 0;
+            // If ret is -1, we push a NULL key/value event before quitting, which is
+            // propagated as a broken pipe or error by handlers.
+            while (!ctx->kill_stdin_parser && ret != -1) {
+                char* key = NULL;
+                char* value = NULL;
+
+                ret = get_next_piped_argument(&key, &value);
+
+                if (ret == 1) {
+                    whist_sleep(100);
+                    continue;
+                }
+
+                // `key` and `value` are owned by the event handler, so don't free them here
+                e.user.data1 = key;
+                e.user.data2 = value;
+                SDL_PushEvent(&e);
+            }
+            return 0;
+        },
+        "stdin_parser_thread", context);
     return WHIST_SUCCESS;
 }
 
@@ -260,6 +293,12 @@ void sdl_destroy(WhistFrontend* frontend) {
 
     if (!context) {
         return;
+    }
+
+    if (context->stdin_parser_thread != NULL) {
+        context->kill_stdin_parser = true;
+        whist_wait_thread(context->stdin_parser_thread, NULL);
+        context->stdin_parser_thread = NULL;
     }
 
     if (context->video.texture != NULL) {

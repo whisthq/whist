@@ -20,6 +20,7 @@ set(WHIST_CLIENT_DEPENDS
         frontend/sdl/sdl.c
         frontend/sdl/video.cpp
         frontend/sdl/window.cpp
+        frontend/sdl/stdin_parser.c
         frontend/virtual/virtual.c
         frontend/virtual/impl.c
         frontend/virtual/interface.c

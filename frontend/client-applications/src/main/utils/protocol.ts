@@ -61,7 +61,7 @@ const launchProtocol = async (info?: {
     ...Object.entries(protocolParameters)
       .map(([flag, arg]) => [`--${flag}`, arg])
       .flat(),
-    "--read-pipe",
+    "--dynamic-arguments",
   ]
 
   const child = spawn(protocolPath, protocolArguments, {
@@ -113,18 +113,18 @@ const pipeNetworkInfo = (
     childProcess,
     `ports?${serializePorts(info.mandelboxPorts)}\nprivate-key?${
       info.mandelboxSecret
-    }\nip?${info.mandelboxIP}\nfinished?0\n`
+    }\nserver-ip?${info.mandelboxIP}\nfinished\n`
   )
 }
 
 const destroyProtocol = (childProcess: ChildProcess) => {
   // We send SIGINT just in case
-  pipeToProtocol(childProcess, "kill?0\n")
+  pipeToProtocol(childProcess, "kill\n")
 }
 
 const pipeURLToProtocol = (childProcess: ChildProcess, message: string) => {
   if (message === undefined || message === "") return
-  pipeToProtocol(childProcess, `new-tab-url?${message}\n`)
+  pipeToProtocol(childProcess, `open-url?${message}\n`)
 }
 
 export {

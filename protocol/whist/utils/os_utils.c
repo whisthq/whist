@@ -14,6 +14,7 @@ Includes
 
 #include "os_utils.h"
 #include <whist/core/whist.h>
+#include <whist/core/whist_string.h>
 #include <whist/utils/atomic.h>
 #if OS_IS(OS_MACOS)
 #include <Carbon/Carbon.h>
