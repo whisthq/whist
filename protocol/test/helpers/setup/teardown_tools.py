@@ -168,6 +168,11 @@ def extract_logs_from_mandelbox(
         command = "mv ~/network_conditions.log ~/perf_logs/client/network_conditions.log"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    # Extract URLs from history, to ensure that the desired websites were opened
+    else:
+        command = "strings ~/perf_logs/server/History | grep http > ~/perf_logs/server/history.log && rm ~/perf_logs/server/History"
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     # Download all the mandelbox logs from the AWS machine
     command = (

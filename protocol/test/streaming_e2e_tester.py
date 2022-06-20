@@ -184,8 +184,9 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--testing-url",
+    "--testing-urls",
     help="The URL to visit during the test. The default is a 4K video stored on our AWS S3.",
+    nargs="+",
     type=str,
     default="https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4",
 )
@@ -230,7 +231,11 @@ if __name__ == "__main__":
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
     ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
-    testing_url = args.testing_url
+    testing_urls = (
+        args.testing_urls[0]
+        if len(args.testing_urls) == 1
+        else " ".join([f'\\"{url}\\"' for url in args.testing_urls])
+    )
     desired_region_name = args.region_name
     existing_client_instance_id = args.existing_client_instance_id
     existing_server_instance_id = args.existing_server_instance_id
@@ -279,7 +284,7 @@ if __name__ == "__main__":
         "start_time": experiment_start_time + " local time"
         if not running_in_ci
         else experiment_start_time + " UTC",
-        "testing_url": testing_url,
+        "testing_urls": testing_urls,
         "testing_time": testing_time,
         "simulate_scrolling": simulate_scrolling,
         "network_conditions": network_conditions,
@@ -466,7 +471,7 @@ if __name__ == "__main__":
     server_docker_id, server_configs_data = run_server_on_instance(server_pexpect_process)
 
     # Augment the configs with the initial URL we want to visit
-    server_configs_data["initial_url"] = testing_url
+    server_configs_data["initial_urls"] = testing_urls
 
     # 10 - Run the development/client client mandelbox on the client instance
     # Start SSH connection(s) to the EC2 instance(s) to run the development/client
