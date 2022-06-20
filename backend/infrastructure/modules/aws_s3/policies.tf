@@ -48,7 +48,7 @@ resource "aws_s3_bucket_public_access_block" "whist-user-app-configs" {
 # ------------------------------ Policies for assets ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-brand-assets" {
-  count                   = var.env == "prod" ? 1 : 0
+  count                   = var.env == "dev" ? 1 : 0
   bucket                  = aws_s3_bucket.whist-brand-assets[0].id
   block_public_acls       = false
   block_public_policy     = false
@@ -57,7 +57,7 @@ resource "aws_s3_bucket_public_access_block" "whist-brand-assets" {
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-test-assets" {
-  count                   = var.env == "prod" ? 1 : 0
+  count                   = var.env == "dev" ? 1 : 0
   bucket                  = aws_s3_bucket.whist-test-assets[0].id
   block_public_acls       = false
   block_public_policy     = false
@@ -66,7 +66,7 @@ resource "aws_s3_bucket_public_access_block" "whist-test-assets" {
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-fonts" {
-  count                   = var.env == "prod" ? 1 : 0
+  count                   = var.env == "dev" ? 1 : 0
   bucket                  = aws_s3_bucket.whist-fonts[0].id
   block_public_acls       = true
   block_public_policy     = true
@@ -77,7 +77,7 @@ resource "aws_s3_bucket_public_access_block" "whist-fonts" {
 # ------------------------------ Policies for protocol ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-e2e-protocol-test-logs" {
-  count                   = var.env == "prod" ? 1 : 0
+  count                   = var.env == "dev" ? 1 : 0
   bucket                  = aws_s3_bucket.whist-e2e-protocol-test-logs[0].id
   block_public_acls       = true
   block_public_policy     = true
@@ -86,7 +86,7 @@ resource "aws_s3_bucket_public_access_block" "whist-e2e-protocol-test-logs" {
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-protocol-dependencies" {
-  count                   = var.env == "prod" ? 1 : 0
+  count                   = var.env == "dev" ? 1 : 0
   bucket                  = aws_s3_bucket.whist-protocol-dependencies[0].id
   block_public_acls       = false
   block_public_policy     = false
@@ -99,7 +99,7 @@ resource "aws_s3_bucket_public_access_block" "whist-protocol-dependencies" {
 # Policy for dev secrets
 
 resource "aws_s3_bucket_public_access_block" "whist-dev-secrets" {
-  count                   = var.env == "prod" ? 1 : 0
+  count                   = var.env == "dev" ? 1 : 0
   bucket                  = aws_s3_bucket.whist-dev-secrets[0].id
   block_public_acls       = true
   block_public_policy     = true
@@ -108,7 +108,7 @@ resource "aws_s3_bucket_public_access_block" "whist-dev-secrets" {
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-terraform-state" {
-  count                   = var.env == "prod" ? 1 : 0
+  count                   = var.env == "dev" ? 1 : 0
   bucket                  = aws_s3_bucket.whist-terraform-state[0].id
   block_public_acls       = true
   block_public_policy     = true
@@ -178,7 +178,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-user-app-co
 # Assets buckets encryption
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-brand-assets-encryption" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = aws_s3_bucket.whist-brand-assets[0].id
 
   rule {
@@ -189,7 +189,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-brand-asset
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-test-assets-encryption" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = aws_s3_bucket.whist-test-assets[0].id
 
   rule {
@@ -202,7 +202,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-test-assets
 # Protocol buckets encryption
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-e2e-protocol-test-logs-encryption" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = aws_s3_bucket.whist-e2e-protocol-test-logs[0].id
 
   rule {
@@ -213,7 +213,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-e2e-protoco
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-dependencies-encryption" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = aws_s3_bucket.whist-protocol-dependencies[0].id
 
   rule {
@@ -226,7 +226,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-de
 # Other resources encryption
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-dev-secrets-encryption" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = aws_s3_bucket.whist-dev-secrets[0].id
 
   rule {
@@ -237,7 +237,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-dev-secrets
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-terraform-state-encryption" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = aws_s3_bucket.whist-terraform-state[0].id
 
   rule {
@@ -261,7 +261,7 @@ resource "aws_s3_bucket_versioning" "whist-user-app-configs-versioning" {
 # We version the Terraform state bucket, so that we can "revert" to a previous state of our Terraform
 # infrastructure, in the case of a configuration or manual mistake.
 resource "aws_s3_bucket_versioning" "whist-terraform-state-versioning" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = aws_s3_bucket.whist-terraform-state[0].id
   versioning_configuration {
     status = "Enabled"
@@ -302,14 +302,14 @@ resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecyc
 
 # ------------------------------ Lifecycle policies for protocol E2E logs bucket  --------------------- #
 resource "aws_s3_bucket_lifecycle_configuration" "whist-e2e-protocol-test-logs-lifecycle" {
-  count  = var.env == "prod" ? 1 : 0
+  count  = var.env == "dev" ? 1 : 0
   bucket = aws_s3_bucket.whist-e2e-protocol-test-logs[0].id
 
   # Remove logs older than 7 days
   rule {
-    id = "removeObsoleteLogs"
+    id     = "removeObsoleteLogs"
     status = "Enabled"
-    
+
     expiration {
       days = 7
     }
