@@ -12,9 +12,6 @@ SERVER_PORT_MAPPINGS=""
 SERVER_AES_KEY=""
 INITIAL_URLS=""
 
-# Create list of command-line arguments to pass to the Whist protocol client
-OPTIONS=""
-
 # Sample JSON: {"dev_client_server_ip": "35.170.79.124", "dev_client_server_port_mappings": "32262:19020.32263:17242.32273:29843", "dev_client_server_aes_key": "70512c062ff1101f253be70e4cac81bc"}
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 if [[ -f $WHIST_JSON_FILE ]]; then
