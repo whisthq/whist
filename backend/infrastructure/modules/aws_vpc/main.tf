@@ -113,7 +113,7 @@ resource "aws_default_route_table" "MainRouteTable" {
 #
 
 resource "aws_security_group" "MandelboxesSecurityGroup" {
-  name        = "MandelboxesSecurityGroup${var.env}"
+  name_prefix = "MandelboxesSecurityGroup${var.env}"
   description = "The security group used for instances which run mandelboxes. The ingress rules are the ports that can be allocated by Docker, and the egress rules allows all traffic."
   vpc_id      = aws_vpc.MainVPC.id
 
@@ -167,6 +167,12 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
     from_port        = 0
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
+  }
+
+  // This will allow updating the security group without having
+  // to terminate instances using it.
+  lifecycle {
+    create_before_destroy = true
   }
 
   tags = {
