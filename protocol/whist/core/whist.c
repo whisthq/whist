@@ -20,6 +20,16 @@ Includes
 
 #include "features.h"
 #include "../utils/sysinfo.h"
+#include "whist.h"
+
+/*
+============================
+Static globals
+============================
+*/
+
+// Global gpu lock as around of m1 freeze
+static WhistMutex gpu_lock;
 
 /*
 ============================
@@ -52,7 +62,20 @@ Public Function Implementations
 ============================
 */
 
+void whist_gpu_lock(void) {
+    if (ARCH_IS(ARCH_ARM_64) && FIX_M1_FREEZE_WITH_LOCK) {
+        whist_lock_mutex(gpu_lock);
+    }
+}
+
+void whist_gpu_unlock(void) {
+    if (ARCH_IS(ARCH_ARM_64) && FIX_M1_FREEZE_WITH_LOCK) {
+        whist_unlock_mutex(gpu_lock);
+    }
+}
+
 void whist_init_subsystems(void) {
+    gpu_lock = whist_create_mutex();
     get_timestamp_sec();  // init the timer inside
     whist_init_multithreading();
     whist_init_logger();

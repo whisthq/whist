@@ -37,7 +37,11 @@ static void sdl_init_video_device(SDLFrontendContext* context) {
     // Texture sharing between Core Video decode and Metal rendering on
     // macOS. Disabled on ARM due to freeze issues (still enabled on x86).
 
-    bool allow_metal_texture_sharing = !ARCH_IS(ARCH_ARM_64);
+    bool allow_metal_texture_sharing = true;
+
+    if (ARCH_IS(ARCH_ARM_64) && !FIX_M1_FREEZE_WITH_LOCK) {
+        allow_metal_texture_sharing = false;
+    }
 
     if (allow_metal_texture_sharing && !strcmp(context->render_driver_name, "metal")) {
         // No device required; renderer can use Core Video pixel buffers

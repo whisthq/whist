@@ -12,6 +12,7 @@ Includes
 
 #include "renderer.h"
 #include "handle_frontend_events.h"
+#include "whist/core/whist.h"
 #include "whist/debug/debug_console.h"
 #include <whist/logging/log_statistic.h>
 
