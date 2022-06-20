@@ -212,16 +212,10 @@ def run_server_on_instance(pexpect_process):
             config_vals = line.strip().split()
             server_addr = config_vals[2]
             port_mappings = config_vals[3]
-            # Remove leading '-p' chars
-            port_mappings = port_mappings[2:].split(".")
-            port_32262 = port_mappings[0].split(":")[1]
-            port_32263 = port_mappings[1].split(":")[1]
-            port_32273 = port_mappings[2].split(":")[1]
             aes_key = config_vals[5]
             json_data["dev_client_server_ip"] = server_addr
-            json_data["dev_client_server_port_32262"] = port_32262
-            json_data["dev_client_server_port_32263"] = port_32263
-            json_data["dev_client_server_port_32273"] = port_32273
+            # Remove leading '-p' chars
+            json_data["dev_client_server_port_mappings"] = port_mappings[2:]
             json_data["dev_client_server_aes_key"] = aes_key
     return server_docker_id, json_data
 
