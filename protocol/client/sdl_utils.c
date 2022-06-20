@@ -450,5 +450,7 @@ static void render_insufficient_bandwidth(WhistFrontend* frontend) {
         }
     }
 
+    whist_gpu_lock();
     whist_frontend_paint_png(frontend, images[chosen_idx].data, *images[chosen_idx].size, -1, -1);
+    whist_gpu_unlock();
 }
