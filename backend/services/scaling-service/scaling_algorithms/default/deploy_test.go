@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
@@ -18,26 +17,20 @@ func TestDeploy(t *testing.T) {
 
 	// Populate test instances that will be used when
 	// mocking database functions.
-	testInstances = subscriptions.WhistInstances{
+	testInstances = []subscriptions.Instance{
 		{
 			ID:                "test-image-upgrade-instance",
 			Provider:          "AWS",
 			ImageID:           "test-image-id-old",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
+			RemainingCapacity: instanceCapacity["g4dn.2xlarge"],
 		},
 	}
 
 	// Set the current image for testing
-	testImages = subscriptions.WhistImages{
-		struct {
-			Provider  graphql.String `graphql:"provider"`
-			Region    graphql.String `graphql:"region"`
-			ImageID   graphql.String `graphql:"image_id"`
-			ClientSHA graphql.String `graphql:"client_sha"`
-			UpdatedAt time.Time      `graphql:"updated_at"`
-		}{
+	testImages = []subscriptions.Image{
+		{
 			Provider:  "AWS",
 			Region:    "test-region",
 			ImageID:   "test-image-id-old",
@@ -78,14 +71,14 @@ func TestDeploy(t *testing.T) {
 	wg.Wait()
 
 	// Check that an instance was scaled up after the test instance was removed
-	expectedInstances := subscriptions.WhistInstances{
+	expectedInstances := []subscriptions.Instance{
 		{
 			ID:                "test-image-upgrade-instance",
 			Provider:          "AWS",
 			ImageID:           "test-image-id-old",
 			Status:            "ACTIVE",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
+			RemainingCapacity: instanceCapacity["g4dn.2xlarge"],
 		},
 		{
 			ID:                "test-scale-up-instance",
@@ -93,7 +86,7 @@ func TestDeploy(t *testing.T) {
 			ImageID:           "test-image-id-new",
 			Status:            "PRE_CONNECTION",
 			Type:              "g4dn.2xlarge",
-			RemainingCapacity: graphql.Int(instanceCapacity["g4dn.2xlarge"]),
+			RemainingCapacity: instanceCapacity["g4dn.2xlarge"],
 		},
 	}
 	ok := reflect.DeepEqual(testInstances, expectedInstances)
@@ -107,14 +100,8 @@ func TestDeploy(t *testing.T) {
 		t.Errorf("Expected protected from scale down map to be empty, got: %v", testAlgorithm.protectedFromScaleDown)
 	}
 
-	expectedImages := subscriptions.WhistImages{
-		struct {
-			Provider  graphql.String `graphql:"provider"`
-			Region    graphql.String `graphql:"region"`
-			ImageID   graphql.String `graphql:"image_id"`
-			ClientSHA graphql.String `graphql:"client_sha"`
-			UpdatedAt time.Time      `graphql:"updated_at"`
-		}{
+	expectedImages := []subscriptions.Image{
+		{
 			Provider:  "AWS",
 			Region:    "test-region",
 			ImageID:   "test-image-id-new",
@@ -154,7 +141,7 @@ func compareProtectedMaps(a map[string]subscriptions.Image, b map[string]subscri
 
 // We need to use a custom compare function to compare WhistImages objects
 // because the `UpdatedAt` is a timestamp set with `time.Now`.
-func compareWhistImages(a subscriptions.WhistImages, b subscriptions.WhistImages) bool {
+func compareWhistImages(a []subscriptions.Image, b []subscriptions.Image) bool {
 	var equal bool
 	for _, v := range a {
 		for _, i := range b {

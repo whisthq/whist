@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
@@ -29,7 +28,7 @@ func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient 
 	testLock.Lock()
 	defer testLock.Unlock()
 
-	var result subscriptions.Instance
+	var result []subscriptions.Instance
 	for _, instance := range testInstances {
 		if string(instance.ID) == instanceID {
 			result = append(result, instance)
@@ -43,7 +42,7 @@ func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, gr
 	testLock.Lock()
 	defer testLock.Unlock()
 
-	var instancesWithCapacity subscriptions.Instance
+	var instancesWithCapacity []subscriptions.Instance
 	for _, instance := range testInstances {
 		if string(instance.Region) == region && instance.RemainingCapacity > 0 {
 			instancesWithCapacity = append(instancesWithCapacity, instance)
@@ -56,7 +55,7 @@ func (db *mockDBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Contex
 	testLock.Lock()
 	defer testLock.Unlock()
 
-	var result subscriptions.Instance
+	var result []subscriptions.Instance
 	for _, instance := range testInstances {
 		if string(instance.Status) == status &&
 			string(instance.Region) == region {
@@ -79,7 +78,7 @@ func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 	defer testLock.Unlock()
 
 	for _, instance := range insertParams {
-		testInstances = append(testInstances, subscriptions.NewWhistInstance(instance)...)
+		testInstances = append(testInstances, instance)
 	}
 
 	return len(insertParams), nil
@@ -92,16 +91,7 @@ func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient
 	var updated int
 	for index, instance := range testInstances {
 		if string(instance.ID) == updateParams.ID {
-			updatedInstance := subscriptions.NewWhistInstance(updateParams)[0]
-			updatedInstance.Provider = instance.Provider
-			updatedInstance.ImageID = instance.ImageID
-			updatedInstance.ClientSHA = graphql.String(instance.ClientSHA)
-			updatedInstance.Region = graphql.String(instance.Region)
-			updatedInstance.Type = instance.Type
-			updatedInstance.IPAddress = instance.IPAddress
-			updatedInstance.Status = graphql.String(updateParams.Status)
-			updatedInstance.RemainingCapacity = instance.RemainingCapacity
-			testInstances[index] = updatedInstance
+			testInstances[index] = updateParams
 			updated++
 		}
 	}
@@ -138,32 +128,19 @@ func (db *mockDBClient) InsertImages(scalingCtx context.Context, graphQLClient s
 	defer testLock.Unlock()
 
 	for _, image := range insertParams {
-		testImages = append(testImages, subscriptions.NewWhistImage(image)...)
+		testImages = append(testImages, image)
 	}
 	return len(testImages), nil
 }
 
-func (db *mockDBClient) UpdateImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, image subscriptions.Image) (int, error) {
+func (db *mockDBClient) UpdateImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, updateParams subscriptions.Image) (int, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
 	for index, testImage := range testImages {
-		if (testImage.Region == graphql.String(image.Region)) &&
-			testImage.Provider == graphql.String(image.Provider) {
-			updatedImage := struct {
-				Provider  graphql.String `graphql:"provider"`
-				Region    graphql.String `graphql:"region"`
-				ImageID   graphql.String `graphql:"image_id"`
-				ClientSHA graphql.String `graphql:"client_sha"`
-				UpdatedAt time.Time      `graphql:"updated_at"`
-			}{
-				Provider:  graphql.String(image.Provider),
-				Region:    graphql.String(image.Region),
-				ImageID:   graphql.String(image.ImageID),
-				ClientSHA: graphql.String(image.ClientSHA),
-				UpdatedAt: image.UpdatedAt,
-			}
-			testImages[index] = updatedImage
+		if testImage.Region == updateParams.Region &&
+			testImage.Provider == updateParams.Provider {
+			testImages[index] = updateParams
 		}
 	}
 	return len(testImages), nil
@@ -174,7 +151,7 @@ func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLCli
 	defer testLock.Unlock()
 
 	for _, mandelbox := range insertParams {
-		testMandelboxes = append(testMandelboxes, subscriptions.NewWhistMandelbox(mandelbox)...)
+		testMandelboxes = append(testMandelboxes, mandelbox)
 	}
 	return len(testMandelboxes), nil
 }

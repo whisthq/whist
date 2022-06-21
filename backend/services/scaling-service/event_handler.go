@@ -169,9 +169,9 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 // `interval` sets the time when the event will run in minutes (i.e. every 10 minutes), and `start`
 // sets the time when the first event will happen (i.e. 10 minutes from now).
 func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval interface{}, start time.Duration) {
-	// if metadata.IsLocalEnvWithoutDB() && !metadata.IsRunningInCI() {
-	// 	return
-	// }
+	if metadata.IsLocalEnvWithoutDB() && !metadata.IsRunningInCI() {
+		return
+	}
 
 	s := gocron.NewScheduler(time.UTC)
 

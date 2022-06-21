@@ -34,7 +34,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	for _, instanceRow := range instanceResult {
 		// Compute how many mandelboxes are running on the instance. We use the current remaining capacity
 		// and the total capacity of the instance type to check if it has running mandelboxes.
-		usage := instanceCapacity[string(instanceRow.Type)] - int(instanceRow.RemainingCapacity)
+		usage := instanceCapacity[string(instanceRow.Type)] - instanceRow.RemainingCapacity
 		if usage > 0 {
 			logger.Infof("Not scaling down draining instance because it has %v running mandelboxes.", usage)
 			return nil
@@ -89,7 +89,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 
 	// We consider the expected mandelbox capacity (active instances + starting instances)
 	// to account for warmup time and so that we don't scale up unnecesary instances.
-	if mandelboxCapacity < desiredFreeMandelboxesPerRegion[event.Region] {
+	if mandelboxCapacity < int64(desiredFreeMandelboxesPerRegion[event.Region]) {
 		logger.Infof("Current mandelbox capacity of %v is less than desired %v. Scaling up %v instances to satisfy minimum desired capacity.", mandelboxCapacity, desiredFreeMandelboxesPerRegion[event.Region], defaultInstanceBuffer)
 		err = s.ScaleUpIfNecessary(defaultInstanceBuffer, scalingCtx, event, latestImage)
 		if err != nil {

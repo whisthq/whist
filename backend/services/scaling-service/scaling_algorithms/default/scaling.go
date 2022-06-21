@@ -56,7 +56,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Extra capacity is considered once we have a full instance worth of capacity
 	// more than the desired free mandelboxes. TODO: Set the instance type once we
 	// have support for more instance types. For now default to `g4dn.2xlarge`.
-	extraCapacity := desiredFreeMandelboxesPerRegion[event.Region] + (defaultInstanceBuffer * instanceCapacity["g4dn.2xlarge"])
+	extraCapacity := int64(desiredFreeMandelboxesPerRegion[event.Region]) + (int64(defaultInstanceBuffer) * instanceCapacity["g4dn.2xlarge"])
 
 	// Acquire lock on protected from scale down map
 	s.protectedMapLock.Lock()
@@ -73,7 +73,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	for _, instance := range allActive {
 		// Compute how many mandelboxes are running on the instance. We use the current remaining capacity
 		// and the total capacity of the instance type to check if it has running mandelboxes.
-		usage := instanceCapacity[string(instance.Type)] - int(instance.RemainingCapacity)
+		usage := instanceCapacity[string(instance.Type)] - instance.RemainingCapacity
 		if usage > 0 {
 			// Don't scale down any instance that has running
 			// mandelboxes, regardless of the image it uses
@@ -99,7 +99,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			if mandelboxCapacity >= extraCapacity {
 				logger.Infof("Scaling down instance %v because we have more mandelbox capacity of %v than desired %v.", instance.ID, mandelboxCapacity, extraCapacity)
 				freeInstances = append(freeInstances, instance)
-				mandelboxCapacity -= int(instance.RemainingCapacity)
+				mandelboxCapacity -= instance.RemainingCapacity
 			}
 		} else {
 			// Old instances
