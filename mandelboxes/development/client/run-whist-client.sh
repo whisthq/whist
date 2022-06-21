@@ -43,8 +43,8 @@ fi
 ports?$SERVER_PORT_MAPPINGS
 private-key?$SERVER_AES_KEY
 server-ip?$SERVER_IP_ADDRESS
-open-url?$INITIAL_URLS
 finished
+open-url?$INITIAL_URLS
 EOF
 ) | timeout 240s /usr/share/whist/WhistClient --dynamic-arguments &> >(tee $PROTOCOL_LOG_FILENAME) &
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
