@@ -394,6 +394,9 @@ int whist_client_main(int argc, const char* argv[]) {
     }
 
     whist_init_subsystems();
+
+    whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+
     // (internally, only happend for debug builds)
     init_debug_console();
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
