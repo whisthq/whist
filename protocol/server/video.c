@@ -201,9 +201,8 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
     log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
     // On I-frames or new cursors, we want to pack the new cursor into the frame
-    if ((VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type) ||
-         current_cursor->hash != last_cursor_hash) &&
-        current_cursor) {
+    if (current_cursor && (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type) ||
+                           current_cursor->hash != last_cursor_hash)) {
         set_frame_cursor_info(frame, current_cursor);
         last_cursor_hash = current_cursor->hash;
     } else {
