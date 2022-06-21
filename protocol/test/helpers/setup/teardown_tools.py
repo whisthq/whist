@@ -156,6 +156,7 @@ def extract_logs_from_mandelbox(
         logfiles.append("/home/whist/.config/google-chrome/Default/Preferences")
         logfiles.append("/home/whist/.config/google-chrome/Default/Preferences.update"),
         logfiles.append("/home/whist/.config/google-chrome/Default/Preferences.new"),
+        logfiles.append("/home/whist/.config/google-chrome/Default/History")
 
     for file_path in logfiles:
         command = f"docker cp {docker_id}:{file_path} ~/perf_logs/{role}/"
@@ -166,6 +167,11 @@ def extract_logs_from_mandelbox(
     # to the machine running this script along with the other logs
     if role == "client":
         command = "mv ~/network_conditions.log ~/perf_logs/client/network_conditions.log"
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    # Extract URLs from history, to ensure that the desired websites were opened
+    else:
+        command = "strings ~/perf_logs/server/History | grep http > ~/perf_logs/server/history.log && rm ~/perf_logs/server/History"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
