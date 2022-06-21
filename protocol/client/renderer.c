@@ -164,6 +164,8 @@ Private Function Implementations
 */
 
 int32_t multithreaded_video_renderer(void* opaque) {
+    whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+
     WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
 
     // Whether or not video is still waiting to render
@@ -202,6 +204,8 @@ int32_t multithreaded_video_renderer(void* opaque) {
 }
 
 int32_t multithreaded_audio_renderer(void* opaque) {
+    whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+
     WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
 
     while (true) {

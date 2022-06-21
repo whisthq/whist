@@ -58,6 +58,9 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     /*
         Send, receive, and process UDP packets - dimension messages, audio/video packets.
     */
+
+    whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+
     WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
     SocketContext* udp_context = &packet_udp_context;
 
