@@ -45,6 +45,7 @@ format strings.
 #include <stdbool.h>
 
 #include <whist/core/whist.h>
+#include <whist/core/whist_string.h>
 #include "whist/utils/atomic.h"
 #include "whist/utils/command_line.h"
 #include "whist/utils/linked_list.h"
@@ -235,33 +236,6 @@ void test_set_pause_state_on_logger_thread(bool pause) {
     logger_thread_pause = pause;
     whist_broadcast_cond(logger_queue_cond);
     whist_unlock_mutex(logger_queue_mutex);
-}
-
-static size_t copy_and_escape(char* dst, size_t dst_size, const char* src) {
-    size_t d, s;
-
-    // Table of escape codes.
-    static const unsigned char escape_list[256] = {
-        ['\b'] = 'b',
-        ['\f'] = 'f',
-        ['\r'] = 'r',
-        ['\t'] = 't',
-    };
-
-    for (d = s = 0; src[s]; s++) {
-        unsigned char esc = escape_list[src[s] & 0xff];
-        if (esc) {
-            if (d >= dst_size - 2) break;
-            dst[d++] = '\\';
-            dst[d++] = esc;
-        } else {
-            if (d >= dst_size - 1) break;
-            dst[d++] = src[s];
-        }
-    }
-
-    dst[d] = '\0';
-    return d;
 }
 
 static void logger_queue_line(unsigned int level, const char* prefix, const char* line) {

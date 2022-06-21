@@ -64,4 +64,16 @@ char* split_string_at(char* str, const char* delim);
  */
 void trim_newlines(char* str);
 
+
+/**
+ * @brief                          Copy a string to a new buffer and escape any special characters.
+ *
+ * @param dst                      The destination buffer.
+ * @param dst_size                 The size of the destination buffer.
+ * @param src                      The string to copy.
+ *
+ * @returns                        The number of bytes copied.
+ */
+size_t copy_and_escape(char* dst, size_t dst_size, const char* src);
+
 #endif  // WHIST_CORE_WHIST_STRING_H
