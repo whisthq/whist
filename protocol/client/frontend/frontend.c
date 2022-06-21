@@ -55,6 +55,16 @@ void whist_frontend_destroy(WhistFrontend* frontend) {
     free(frontend);
 }
 
+WhistStatus whist_frontend_create_window(WhistFrontend* frontend, int id) {
+    FRONTEND_ENTRY();
+    return frontend->call->create_window(frontend, id);
+}
+
+void whist_frontend_destroy_window(WhistFrontend* frontend, int id) {
+    FRONTEND_ENTRY();
+    frontend->call->destroy_window(frontend, id);
+}
+
 void whist_frontend_open_audio(WhistFrontend* frontend, unsigned int frequency,
                                unsigned int channels) {
     FRONTEND_ENTRY();
@@ -81,19 +91,21 @@ size_t whist_frontend_get_audio_buffer_size(WhistFrontend* frontend) {
     return frontend->call->get_audio_buffer_size(frontend);
 }
 
-void whist_frontend_get_window_pixel_size(WhistFrontend* frontend, int* width, int* height) {
+WhistStatus whist_frontend_get_window_pixel_size(WhistFrontend* frontend, int id, int* width,
+                                                 int* height) {
     FRONTEND_ENTRY();
-    frontend->call->get_window_pixel_size(frontend, width, height);
+    return frontend->call->get_window_pixel_size(frontend, id, width, height);
 }
 
-void whist_frontend_get_window_virtual_size(WhistFrontend* frontend, int* width, int* height) {
+WhistStatus whist_frontend_get_window_virtual_size(WhistFrontend* frontend, int id, int* width,
+                                                   int* height) {
     FRONTEND_ENTRY();
-    frontend->call->get_window_virtual_size(frontend, width, height);
+    return frontend->call->get_window_virtual_size(frontend, id, width, height);
 }
 
-WhistStatus whist_frontend_get_window_display_index(WhistFrontend* frontend, int* index) {
+WhistStatus whist_frontend_get_window_display_index(WhistFrontend* frontend, int id, int* index) {
     FRONTEND_ENTRY();
-    return frontend->call->get_window_display_index(frontend, index);
+    return frontend->call->get_window_display_index(frontend, id, index);
 }
 
 int whist_frontend_get_window_dpi(WhistFrontend* frontend) {
@@ -101,14 +113,14 @@ int whist_frontend_get_window_dpi(WhistFrontend* frontend) {
     return frontend->call->get_window_dpi(frontend);
 }
 
-bool whist_frontend_is_window_visible(WhistFrontend* frontend) {
+bool whist_frontend_is_any_window_visible(WhistFrontend* frontend) {
     FRONTEND_ENTRY();
-    return frontend->call->is_window_visible(frontend);
+    return frontend->call->is_any_window_visible(frontend);
 }
 
-WhistStatus whist_frontend_set_title(WhistFrontend* frontend, const char* title) {
+WhistStatus whist_frontend_set_title(WhistFrontend* frontend, int id, const char* title) {
     FRONTEND_ENTRY();
-    return frontend->call->set_title(frontend, title);
+    return frontend->call->set_title(frontend, id, title);
 }
 
 bool whist_frontend_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
@@ -137,14 +149,14 @@ void whist_frontend_get_keyboard_state(WhistFrontend* frontend, const uint8_t** 
     frontend->call->get_keyboard_state(frontend, key_state, key_count, mod_state);
 }
 
-void whist_frontend_restore_window(WhistFrontend* frontend) {
+void whist_frontend_restore_window(WhistFrontend* frontend, int id) {
     FRONTEND_ENTRY();
-    frontend->call->restore_window(frontend);
+    frontend->call->restore_window(frontend, id);
 }
 
-void whist_frontend_set_window_fullscreen(WhistFrontend* frontend, bool fullscreen) {
+void whist_frontend_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen) {
     FRONTEND_ENTRY();
-    frontend->call->set_window_fullscreen(frontend, fullscreen);
+    frontend->call->set_window_fullscreen(frontend, id, fullscreen);
 }
 
 void whist_frontend_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
@@ -164,9 +176,9 @@ void whist_frontend_paint_png(WhistFrontend* frontend, const uint8_t* data, size
     frontend->call->paint_png(frontend, data, data_size, x, y);
 }
 
-void whist_frontend_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {
+void whist_frontend_paint_solid(WhistFrontend* frontend, int id, const WhistRGBColor* color) {
     FRONTEND_ENTRY();
-    frontend->call->paint_solid(frontend, color);
+    frontend->call->paint_solid(frontend, id, color);
 }
 
 void whist_frontend_paint_video(WhistFrontend* frontend) {
@@ -179,14 +191,15 @@ void whist_frontend_render(WhistFrontend* frontend) {
     frontend->call->render(frontend);
 }
 
-void whist_frontend_resize_window(WhistFrontend* frontend, int width, int height) {
+void whist_frontend_resize_window(WhistFrontend* frontend, int id, int width, int height) {
     FRONTEND_ENTRY();
-    frontend->call->resize_window(frontend, width, height);
+    frontend->call->resize_window(frontend, id, width, height);
 }
 
-void whist_frontend_set_titlebar_color(WhistFrontend* frontend, const WhistRGBColor* color) {
+void whist_frontend_set_titlebar_color(WhistFrontend* frontend, int id,
+                                       const WhistRGBColor* color) {
     FRONTEND_ENTRY();
-    frontend->call->set_titlebar_color(frontend, color);
+    frontend->call->set_titlebar_color(frontend, id, color);
 }
 
 void whist_frontend_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {

@@ -118,7 +118,7 @@ TEST_F(ProtocolTest, InitSDL) {
     }
 
     EXPECT_TRUE(frontend != NULL);
-    SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->window;
+    SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->windows[0]->window;
     EXPECT_TRUE(new_window != NULL);
 
     check_stdout_line(::testing::HasSubstr("Using renderer: "));
@@ -179,12 +179,12 @@ TEST_F(ProtocolTest, InitSDL) {
         // Apply window dimension change to SDL window
         SDL_SetWindowSize(new_window, width, height);
 
-        whist_frontend_get_window_virtual_size(frontend, &measured_width, &measured_height);
+        whist_frontend_get_window_virtual_size(frontend, 0, &measured_width, &measured_height);
 
         EXPECT_EQ(measured_width, width);
         EXPECT_EQ(measured_height, height);
 
-        whist_frontend_get_window_pixel_size(frontend, &width, &height);
+        whist_frontend_get_window_pixel_size(frontend, 0, &width, &height);
 
 #if !OS_IS(OS_LINUX)
         int adjusted_width = width - (width % 8);
@@ -230,7 +230,7 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_FALSE(pending_resize_message);
 
         // New dimensions should ensure width is a multiple of 8 and height is a even number
-        whist_frontend_get_window_pixel_size(frontend, &measured_width, &measured_height);
+        whist_frontend_get_window_pixel_size(frontend, 0, &measured_width, &measured_height);
         EXPECT_EQ(measured_width, adjusted_width);
         EXPECT_EQ(measured_height, adjusted_height);
     }
@@ -245,7 +245,7 @@ TEST_F(ProtocolTest, InitSDL) {
         c.green = (uint8_t)uniform_0_255(gen);
         c.blue = (uint8_t)uniform_0_255(gen);
 
-        sdl_render_window_titlebar_color(c);
+        sdl_render_window_titlebar_color(0, c);
 
         // Empty the event queue, including the titlebar color update event.
         WhistFrontendEvent ignored;
@@ -267,7 +267,7 @@ TEST_F(ProtocolTest, InitSDL) {
         title_len = strlen(changed_title);
         EXPECT_EQ(title_len, 150);
 
-        sdl_set_window_title(changed_title);
+        sdl_set_window_title(0, changed_title);
 
         const char* old_title = SDL_GetWindowTitle(new_window);
         EXPECT_FALSE(strcmp(old_title, changed_title) == 0);
@@ -285,12 +285,12 @@ TEST_F(ProtocolTest, InitSDL) {
 
     // Set fullscreen
     {
-        whist_frontend_get_window_pixel_size(frontend, &width, &height);
+        whist_frontend_get_window_pixel_size(frontend, 0, &width, &height);
 
-        sdl_set_fullscreen(true);
+        sdl_set_fullscreen(0, true);
 
         // nothing changed yet
-        whist_frontend_get_window_pixel_size(frontend, &measured_width, &measured_height);
+        whist_frontend_get_window_pixel_size(frontend, 0, &measured_width, &measured_height);
         EXPECT_EQ(measured_width, width);
         EXPECT_EQ(measured_height, height);
 

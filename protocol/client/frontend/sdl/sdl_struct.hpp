@@ -2,12 +2,18 @@
 #define WHIST_CLIENT_FRONTEND_SDL_STRUCT_H
 
 #include <whist/core/whist.h>
+
+extern "C" {
 #include "../api.h"
 #include "../frontend.h"
+}
+
+#include <map>
+#include <string>
 
 typedef struct SDLFrontendVideoContext {
     /**
-     * Platform-specific private data associated with the renderer.
+     * Platform-specific private data associated with the video decoder.
      */
     void* private_data;
     /**
@@ -24,19 +30,6 @@ typedef struct SDLFrontendVideoContext {
      * textures to be used directly.
      */
     enum AVPixelFormat decode_format;
-    /**
-     * The current video texture.
-     *
-     * When the video is updated this either copies the frame data to
-     * the existing texture (if the data is in CPU memory), or it
-     * destroys the existing texture and creates a new one corresponding
-     * the frame (if the data is already in GPU memroy).
-     */
-    SDL_Texture* texture;
-    /**
-     * The format of the current video texture.
-     */
-    SDL_PixelFormatEnum texture_format;
     /**
      * The width of the frame in the current video texture.
      */
@@ -55,10 +48,54 @@ typedef struct SDLFrontendVideoContext {
     AVFrame* frame_reference;
 } SDLFrontendVideoContext;
 
-typedef struct SDLFrontendContext {
-    SDL_AudioDeviceID audio_device;
+// All the information needed for the frontend to render a specific window
+typedef struct SDLWindowContext {
+    /**
+     * Platform-specific private data associated with the video decoder.
+     */
+    void* private_data;
+    // flags for Whist
+    bool to_be_created;
+    bool to_be_destroyed;
+    // TODO: are these needed now that we only open windows on demand?
+    bool video_has_rendered;
+    bool window_has_shown;
+    // window specific data
+    Uint32 window_id;  // the SDL window ID for SDL window events
     SDL_Window* window;
     SDL_Renderer* renderer;
+    /**
+     * The current video texture.
+     *
+     * When the video is updated this either copies the frame data to
+     * the existing texture (if the data is in CPU memory), or it
+     * destroys the existing texture and creates a new one corresponding
+     * the frame (if the data is already in GPU memroy).
+     */
+    SDL_Texture* texture;
+    /**
+     * The format of the current video texture.
+     */
+    SDL_PixelFormatEnum texture_format;
+    // TODO: dump this into a WhistWindowData
+    int x;
+    int y;
+    // the width and height of the window, as communicated by the server (actual pixels)
+    int width;
+    int height;
+    // the width and height of the SDL window (actual pixels)
+    int sdl_width;
+    int sdl_height;
+    std::string title;
+    WhistRGBColor color;
+    bool is_fullscreen;
+    bool is_resizable;
+} SDLWindowContext;
+
+typedef struct SDLFrontendContext {
+    SDL_AudioDeviceID audio_device;
+
+    std::map<int, SDLWindowContext*> windows;
     /**
      * Name of the render driver.
      */
@@ -116,7 +153,7 @@ typedef struct SDLFrontendContext {
  *
  * @param context  Frontend context containing renderer to wait for.
  */
-void sdl_d3d11_wait(SDLFrontendContext* context);
+void sdl_d3d11_wait(SDLWindowContext* window_context);
 
 /**
  * Create an SDL texture from a D3D11 texture.
@@ -125,25 +162,37 @@ void sdl_d3d11_wait(SDLFrontendContext* context);
  * wraps it in an SDL texture.  This never copies the actual data.
  *
  * @param context  Frontend context containing the devices.
+ * @param window_context The window that the texture will be bound to.
  * @param frame    Frame containing the D3D11 texture to use.
  * @return  The new SDL texture.
  */
-SDL_Texture* sdl_d3d11_create_texture(SDLFrontendContext* context, AVFrame* frame);
+SDL_Texture* sdl_d3d11_create_texture(SDLWindowContext* window_context, AVFrame* frame);
 
 /**
- * Initialise D3D11 devices for render and decode.
+ * Initialise D3D11 device and device context for rendering window id.
+ * All devices and device contexts should use the same adapter.
+ * The first call to this function will also create the video decoder device and context.
  *
- * Creates the two connected devices and device contexts to use for
- * rendering (with SDL) and decoding (with FFmpeg).
+ * Creates the device and device context to use for
+ * rendering (with SDL).
  *
- * @param context  Frontend context containing the SDL renderer.
+ * @param context  Frontend context to initialize D3D11 with.
+ * @param id The ID of the window for the device and context.
  * @return  Success or error code.  If this fails, rendering will have
  *          to copy frames rather than using textures directly.
  */
-WhistStatus sdl_d3d11_init(SDLFrontendContext* context);
+WhistStatus sdl_d3d11_init_window_data(SDLFrontendContext* context, int id);
 
 /**
- * Destroy D3D11 devices and clean up.
+ * Destroy D3D11 device and context for given window.
+ *
+ * @param context  Frontend context containing the device.
+ * @param id       ID of the window containing the device.
+ */
+void sdl_d3d11_destroy_window_data(SDLFrontendContext* context, int id);
+
+/**
+ * Destroy D3D11 video device and context and clean up. This device should be the last to go.
  *
  * In a debug build this also enumerates all live D3D11 objects to
  * detect memory leaks.

@@ -301,8 +301,8 @@ static void handle_open_url_event(WhistFrontend* frontend, FrontendOpenURLEvent*
     free(event->url);
 
     // Unmimimize the window if needed
-    if (!whist_frontend_is_window_visible(frontend)) {
-        whist_frontend_restore_window(frontend);
+    if (!whist_frontend_is_any_window_visible(frontend)) {
+        whist_frontend_restore_window(frontend, 0);
     }
 }
 

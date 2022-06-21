@@ -302,7 +302,7 @@ static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* rende
         if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
             static int cached_display_index = -1;
             int current_display_index;
-            if (whist_frontend_get_window_display_index(frontend, &current_display_index) ==
+            if (whist_frontend_get_window_display_index(frontend, 0, &current_display_index) ==
                 WHIST_SUCCESS) {
                 if (cached_display_index != current_display_index) {
                     if (cached_display_index) {
@@ -336,7 +336,7 @@ static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* rende
 static void pre_connection_setup(WhistFrontend* frontend, WhistRenderer** renderer) {
     FATAL_ASSERT(renderer != NULL);
     int initial_width = 0, initial_height = 0;
-    whist_frontend_get_window_pixel_size(frontend, &initial_width, &initial_height);
+    whist_frontend_get_window_pixel_size(frontend, 0, &initial_width, &initial_height);
     *renderer = init_renderer(frontend, initial_width, initial_height);
     init_clipboard_synchronizer(true);
     init_file_synchronizer(FILE_TRANSFER_CLIENT_DOWNLOAD);

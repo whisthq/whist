@@ -1,3 +1,4 @@
+#include <whist/core/whist.h>
 extern "C" {
 #include "common.h"
 #include "native.h"
@@ -30,36 +31,58 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 return true;
             }
             case SDL_FRONTEND_EVENT_FULLSCREEN: {
+                // Extract original fullscreen and id values, from the void*'s
                 bool fullscreen = (intptr_t)user_event->data1;
-                SDL_SetWindowFullscreen(context->window,
-                                        fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+                int id = (intptr_t)user_event->data2;
+                if (context->windows.contains(id)) {
+                    SDL_Window* window = context->windows[id]->window;
+                    SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+                } else {
+                    LOG_WARNING(
+                        "Window fullscreen event ignored because there is no window of id %d", id);
+                }
                 break;
             }
             case SDL_FRONTEND_EVENT_WINDOW_TITLE_CHANGE: {
+                // Get the title pointer, and convert from void* to id
                 const char* title = (const char*)user_event->data1;
-                if (context->window == NULL) {
-                    LOG_WARNING(
-                        "Window title change event ignored "
-                        "because there is no window.");
+                int id = (intptr_t)user_event->data2;
+                if (context->windows.contains(id)) {
+                    SDL_Window* window = context->windows[id]->window;
+                    SDL_SetWindowTitle(window, title);
                 } else {
-                    SDL_SetWindowTitle(context->window, title);
+                    LOG_WARNING(
+                        "Window title change event ignored because there is no window of id %d",
+                        id);
                 }
                 free(user_event->data1);
                 break;
             }
             case SDL_FRONTEND_EVENT_TITLE_BAR_COLOR_CHANGE: {
+                // Get the color pointer, and convert from void* to id
+                int id = (intptr_t)user_event->data2;
                 const WhistRGBColor* color = (const WhistRGBColor*)user_event->data1;
-                sdl_native_set_titlebar_color(context->window, color);
+                if (context->windows.contains(id)) {
+                    SDL_Window* window = context->windows[id]->window;
+                    sdl_native_set_titlebar_color(window, color);
+                } else {
+                    LOG_WARNING(
+                        "Window titlebar color change event ignored because there is no window of "
+                        "id %d",
+                        id);
+                }
                 free(user_event->data1);
                 break;
             }
             case SDL_FRONTEND_EVENT_NOTIFICATION_CALLBACK: {
+                SDLWindowContext* window_context = context->windows.begin()->second;
                 // TODO: do something with a notification.  For now,
-                // this just restores the window if it is minimised.
-                uint32_t flags = SDL_GetWindowFlags(context->window);
+                // this just restores the first window if it is minimised.
+                uint32_t flags = SDL_GetWindowFlags(window_context->window);
                 if (flags & SDL_WINDOW_MINIMIZED) {
-                    SDL_RestoreWindow(context->window);
+                    SDL_RestoreWindow(window_context->window);
                 }
+                break;
             }
             case SDL_FRONTEND_EVENT_INTERRUPT: {
                 event->type = FRONTEND_EVENT_INTERRUPT;
@@ -113,7 +136,7 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                     event->type = FRONTEND_EVENT_RESIZE;
                     event->resize.width = sdl_event->window.data1;
                     event->resize.height = sdl_event->window.data2;
-                    frontend->call->get_window_pixel_size(frontend, &context->latest_pixel_width,
+                    frontend->call->get_window_pixel_size(frontend, 0, &context->latest_pixel_width,
                                                           &context->latest_pixel_height);
                     break;
                 }

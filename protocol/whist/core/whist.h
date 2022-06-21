@@ -16,6 +16,28 @@ Includes
 
 #include "platform.h"
 
+#ifdef __cplusplus
+
+// whist.h supports direct cpp inclusion, with internal extern "C"
+// Includers should not wrap whist.h in extern "C"
+#include <vector>
+#include <map>
+#include <string>
+#include <algorithm>
+using std::max;
+using std::min;
+using std::vector;
+extern "C" {
+
+#else
+
+#if !OS_IS(OS_WIN32)
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
+#endif
+
 // In order to use accept4 we have to allow non-standard extensions
 #if !defined(_GNU_SOURCE) && OS_IS(OS_LINUX)
 #define _GNU_SOURCE
@@ -57,13 +79,6 @@ Includes
 #include <libavutil/hwcontext.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
-
-// Must be defined after libav,
-// since it temporarily uses min/max internally
-#ifndef _WIN32
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
 
 #include <whist/core/events.h>
 #include <whist/core/whist_memory.h>
@@ -769,5 +784,9 @@ void whist_gpu_unlock(void);
 
 // TODO: Resolve circular references
 #include "whist_frame.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // WHIST_H

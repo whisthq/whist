@@ -1,3 +1,4 @@
+#include <whist/core/whist.h>
 extern "C" {
 #include "common.h"
 #include "native.h"
@@ -23,16 +24,16 @@ COMMAND_LINE_STRING_OPTION(sdl_render_driver, 0, "sdl-render-driver", 16,
                            "the given driver does not work (SDL frontend only).")
 
 static void sdl_init_video_device(SDLFrontendContext* context) {
+    if (!strcmp(context->render_driver_name, "direct3d11") && context->video.decode_device) {
+        // The device setup for D3D11 was already done while creating
+        // the first window, so nothing else needed here.
+        return;
+    }
+
     // Defaults: no special device, all video must be downloaded to CPU
     // memory and then uploaded again.
     context->video.decode_device = NULL;
     context->video.decode_format = AV_PIX_FMT_NONE;
-
-#if OS_IS(OS_WIN32)
-    if (!strcmp(context->render_driver_name, "direct3d11")) {
-        sdl_d3d11_init(context);
-    }
-#endif  // Windows
 
     // Texture sharing between Core Video decode and Metal rendering on
     // macOS. Disabled on ARM due to freeze issues (still enabled on x86).
@@ -72,6 +73,10 @@ static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 // TODO: We could factor this out to initialize by component -- e.g. audio, window, renderer, etc.
 WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char* title,
                      const WhistRGBColor* color) {
+    /*
+     * Initialize an SDL frontend. Open an initial window with the given dimensions, title, and
+     * titlebar color, and start the video and audio.
+     */
     // Only the first init does anything; subsequent ones update an internal
     // refcount.
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
@@ -122,65 +127,17 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // Allow the screensaver to activate while the frontend is running
     SDL_EnableScreenSaver();
 
-    bool start_maximized = (width == 0 && height == 0);
-
-    // Grab the default display dimensions. If width or height are 0, then
-    // we'll set that dimension to half of the display's dimension. If the
-    // window starts maximized and the user then unmaximizes (double click
-    // the titlebar on macOS), then the window will be restored to these
-    // dimensions.
-    SDL_DisplayMode display_info;
-    if (SDL_GetDesktopDisplayMode(0, &display_info) != 0) {
-        LOG_ERROR("Could not get display mode: %s", SDL_GetError());
-        return WHIST_ERROR_UNKNOWN;
-    }
-
-    if (width == 0) {
-        width = display_info.w;
-    }
-    if (height == 0) {
-        height = display_info.h;
-    }
-
     if (skip_taskbar) {
         // Hide the taskbar on macOS directly
         sdl_native_hide_taskbar();
     }
 
-    uint32_t window_flags = 0;
-    window_flags |= SDL_WINDOW_ALLOW_HIGHDPI;
-    window_flags |= SDL_WINDOW_OPENGL;
-    window_flags |= SDL_WINDOW_RESIZABLE;
-    // Avoid glitchy-looking titlebar-content combinations while the
-    // window is loading, and glitches caused by early user interaction.
-    window_flags |= SDL_WINDOW_HIDDEN;
-    if (start_maximized) {
-        window_flags |= SDL_WINDOW_MAXIMIZED;
-    }
-    if (skip_taskbar) {
-        // Hide the taskbar on Windows/Linux
-        window_flags |= SDL_WINDOW_SKIP_TASKBAR;
-    }
-
-    if (title == NULL) {
-        // Default window title is "Whist"
-        title = "Whist";
-    }
-
-    uint32_t renderer_flags = 0;
-    renderer_flags |= SDL_RENDERER_ACCELERATED;
-    if (VSYNC_ON) {
-        renderer_flags |= SDL_RENDERER_PRESENTVSYNC;
-    }
-
-    SDLFrontendContext* context = (SDLFrontendContext*)safe_malloc(sizeof(SDLFrontendContext));
-    memset(context, 0, sizeof(SDLFrontendContext));
+    // Initialize the SDLFrontendContext
+    SDLFrontendContext* context = new SDLFrontendContext();
     frontend->context = context;
 
     context->audio_device = 0;
     context->key_state = SDL_GetKeyboardState(&context->key_count);
-    context->video_has_rendered = false;
-    context->window_has_shown = false;
 
     context->cursor.state = CURSOR_STATE_VISIBLE;
     context->cursor.hash = 0;
@@ -191,36 +148,27 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     context->internal_event_id = SDL_RegisterEvents(1);
     FATAL_ASSERT(context->internal_event_id != (uint32_t)-1);
 
-    context->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width,
-                                       height, window_flags);
-    if (context->window == NULL) {
-        LOG_ERROR("Could not create window: %s", SDL_GetError());
-        return WHIST_ERROR_UNKNOWN;
-    }
+    // Initialize the default window
+    SDLWindowContext* window_context = new SDLWindowContext();
+    window_context->to_be_created = true;
+    window_context->x = SDL_WINDOWPOS_CENTERED;
+    window_context->y = SDL_WINDOWPOS_CENTERED;
+    window_context->width = width;
+    window_context->height = height;
+    window_context->title = std::string(title == NULL ? "Whist" : title);
+    window_context->color = {17, 24, 39};
+    window_context->is_fullscreen = false;
+    window_context->is_resizable = true;
+    context->windows[0] = window_context;
+    sdl_create_window(frontend, 0);
 
-    context->renderer = SDL_CreateRenderer(context->window, -1, renderer_flags);
-    if (context->renderer == NULL) {
-        LOG_ERROR("Could not create renderer: %s", SDL_GetError());
-        return WHIST_ERROR_UNKNOWN;
-    }
-    SDL_SetRenderDrawBlendMode(context->renderer, SDL_BLENDMODE_BLEND);
+    // Render the newly created window
+    sdl_render(frontend);
 
-    SDL_RendererInfo info;
-    if (SDL_GetRendererInfo(context->renderer, &info) != 0) {
-        LOG_ERROR("Could not get renderer info: %s", SDL_GetError());
-        return WHIST_ERROR_UNKNOWN;
-    }
-    LOG_INFO("Using renderer: %s", info.name);
-    context->render_driver_name = info.name;
-
-    frontend->call->get_window_pixel_size(frontend, &context->latest_pixel_width,
+    frontend->call->get_window_pixel_size(frontend, 0, &context->latest_pixel_width,
                                           &context->latest_pixel_height);
 
     sdl_init_video_device(context);
-
-    frontend->call->paint_solid(frontend, color);
-    frontend->call->render(frontend);
-    frontend->call->set_titlebar_color(frontend, color);
 
     // TODO: Rebuild this functionality.
     // if (icon_png_filename != NULL) {
@@ -233,16 +181,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        // Pump the event loop until the window is actually initialized (mainly macOS).
-    }
-
-    // Safe to set these post-initialization.
-    sdl_native_init_window_options(context->window);
-    SDL_SetWindowMinimumSize(context->window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
-    SDL_SetWindowMaximumSize(context->window, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-
-    while (SDL_PollEvent(&event)) {
-        // Pump the event loop until the window fully finishes loading.
+        // Pump the event loop until the window fully finishes loading. (mainly MacOS)
     }
 
 #if OS_IS(OS_WIN32)
@@ -288,10 +227,157 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     return WHIST_SUCCESS;
 }
 
-void sdl_destroy(WhistFrontend* frontend) {
+WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
+    /*
+     * Create an SDL window and renderer with the given id, initially hidden until the first render.
+     * This function assumes that the corresponding SDLWindowContext* has already been filled in
+     * with the desired metadata
+     */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
 
-    if (!context) {
+    // Create a window and renderer with the given parameters, add it to context->windows
+
+    // If the id is already present in windows, LOG_ERROR
+    if (context->windows.contains(id)) {
+        if (!context->windows[id]->to_be_created) {
+            LOG_ERROR("Tried to make a window with duplicate ID %d!", id);
+            return WHIST_ERROR_ALREADY_SET;
+        }
+    } else {
+        LOG_ERROR(
+            "Tried to create a window with ID %d, but found no SDLWindowContext. Window will not "
+            "be created.",
+            id);
+        return WHIST_ERROR_NOT_FOUND;
+    }
+
+    SDLWindowContext* window_context = context->windows[id];
+
+    window_context->to_be_created = false;
+    window_context->texture = NULL;
+
+    // Window flags
+    uint32_t window_flags = 0;
+    window_flags |= SDL_WINDOW_ALLOW_HIGHDPI;
+    window_flags |= SDL_WINDOW_OPENGL;
+    window_flags |= SDL_WINDOW_RESIZABLE;
+    // Avoid glitchy-looking titlebar-content combinations while the
+    // window is loading, and glitches caused by early user interaction.
+    window_flags |= SDL_WINDOW_HIDDEN;
+    if (skip_taskbar) {
+        // Hide the taskbar on Windows/Linux
+        window_flags |= SDL_WINDOW_SKIP_TASKBAR;
+    }
+
+    // If width or height is 0, update width/height to use the entire display,
+    // And set the MAXIMIZED window flag
+    if (window_context->width == 0 || window_context->height == 0) {
+        SDL_DisplayMode display_info;
+        if (SDL_GetDesktopDisplayMode(0, &display_info) != 0) {
+            LOG_ERROR("Could not get display mode: %s", SDL_GetError());
+            return WHIST_ERROR_UNKNOWN;
+        }
+
+        window_context->width = display_info.w;
+        window_context->height = display_info.h;
+        window_flags |= SDL_WINDOW_MAXIMIZED;
+    }
+
+    // Renderer flags
+    uint32_t renderer_flags = 0;
+    renderer_flags |= SDL_RENDERER_ACCELERATED;
+    if (VSYNC_ON) {
+        renderer_flags |= SDL_RENDERER_PRESENTVSYNC;
+    }
+
+    // Create the window and renderer
+    window_context->window =
+        SDL_CreateWindow(window_context->title.c_str(), window_context->x, window_context->y,
+                         window_context->width, window_context->height, window_flags);
+    if (window_context->window == NULL) {
+        LOG_ERROR("Could not create window: %s", SDL_GetError());
+        return WHIST_ERROR_UNKNOWN;
+    }
+    window_context->window_id = SDL_GetWindowID(window_context->window);
+    if (window_context->window_id == 0) {
+        LOG_ERROR("Could not get window ID: %s", SDL_GetError());
+        return WHIST_ERROR_UNKNOWN;
+    }
+
+    window_context->renderer = SDL_CreateRenderer(window_context->window, -1, renderer_flags);
+    if (window_context->renderer == NULL) {
+        LOG_ERROR("Could not create renderer: %s", SDL_GetError());
+        return WHIST_ERROR_UNKNOWN;
+    }
+    SDL_SetRenderDrawBlendMode(window_context->renderer, SDL_BLENDMODE_BLEND);
+
+    // Set renderer name if not set
+    if (!context->render_driver_name) {
+        SDL_RendererInfo info;
+        if (SDL_GetRendererInfo(window_context->renderer, &info) != 0) {
+            LOG_ERROR("Could not get renderer info: %s", SDL_GetError());
+            return WHIST_ERROR_UNKNOWN;
+        }
+        LOG_INFO("Using renderer: %s", info.name);
+        context->render_driver_name = info.name;
+    }
+
+#if OS_IS(OS_WIN32)
+    if (!strcmp(context->render_driver_name, "direct3d11")) {
+        sdl_d3d11_init_window_data(context, id);
+    }
+#endif  // Windows
+
+    // We don't need to do this if we don't initialize the window until we get frames from the
+    // server window starts solid color
+    frontend->call->paint_solid(frontend, id, &window_context->color);
+    frontend->call->set_titlebar_color(frontend, id, &window_context->color);
+
+    // Safe to set these post-initialization.
+    sdl_native_init_window_options(window_context->window);
+    SDL_SetWindowMaximumSize(window_context->window, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+
+    return WHIST_SUCCESS;
+}
+
+void sdl_destroy_window(WhistFrontend* frontend, int id) {
+    /*
+     * Destroy the window and renderer with given id if it exists.
+     */
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+    if (context->windows.contains(id)) {
+        SDLWindowContext* window_context = context->windows[id];
+        // destroy video texture
+        if (window_context->texture != NULL) {
+            SDL_DestroyTexture(window_context->texture);
+            window_context->texture = NULL;
+        }
+        // destroy the D3D11 device and context if Windows
+#if OS_IS(OS_WIN32)
+        sdl_d3d11_destroy_window_data(context, id);
+#endif  // Windows
+        // destroy renderer
+        if (window_context->renderer != NULL) {
+            SDL_DestroyRenderer(window_context->renderer);
+        }
+        // destroy window
+        if (window_context->window != NULL) {
+            LOG_INFO("Destroying window with ID %d", id);
+            SDL_DestroyWindow(window_context->window);
+            window_context->window = NULL;
+        }
+        context->windows.erase(id);
+        delete window_context;
+    } else {
+        LOG_ERROR("Tried to destroy window with ID %d, but no window with that ID was found!", id);
+    }
+}
+
+void sdl_destroy(WhistFrontend* frontend) {
+    FATAL_ASSERT(frontend != NULL);
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+    // Context can be null, if SDL couldn't initialize
+    if (context == NULL) {
         return;
     }
 
@@ -301,29 +387,22 @@ void sdl_destroy(WhistFrontend* frontend) {
         context->stdin_parser_thread = NULL;
     }
 
-    if (context->video.texture != NULL) {
-        SDL_DestroyTexture(context->video.texture);
-        context->video.texture = NULL;
+    // Destroy all the windows
+    while (!context->windows.empty()) {
+        // Destroying a window erases it from the map, so we can't a for-each loop
+        sdl_destroy_window(frontend, context->windows.begin()->first);
     }
+
+    // Destroy video objects
     av_buffer_unref(&context->video.decode_device);
     av_frame_free(&context->video.frame_reference);
-
-    if (context->renderer != NULL) {
-        SDL_DestroyRenderer(context->renderer);
-        context->renderer = NULL;
-    }
 
 #if OS_IS(OS_WIN32)
     sdl_d3d11_destroy(context);
 #endif
 
-    if (context->window != NULL) {
-        LOG_INFO("Destroying window");
-        SDL_DestroyWindow(context->window);
-        context->window = NULL;
-    }
-
     sdl_native_destroy_external_drag_handler(frontend);
 
-    free(context);
+    frontend->context = NULL;
+    delete context;
 }

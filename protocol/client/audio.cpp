@@ -17,10 +17,11 @@ audio format.
 Includes
 ============================
 */
+
+#include <whist/core/whist.h>
 #include <deque>
 #include <atomic>
 #include <algorithm>
-
 extern "C" {
 #include "audio.h"
 #include "network.h"

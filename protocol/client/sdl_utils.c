@@ -105,7 +105,7 @@ WhistFrontend* create_frontend(void) {
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
     int w, h;
-    whist_frontend_get_window_pixel_size(frontend, &w, &h);
+    whist_frontend_get_window_pixel_size(frontend, 0, &w, &h);
     network_algo_set_dimensions(w, h);
 
     event_frontend = frontend;
@@ -134,21 +134,30 @@ volatile bool pending_resize_message = false;
 void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) {
     // Try to make pixel width and height conform to certain desirable dimensions
     int current_width, current_height;
-    whist_frontend_get_window_pixel_size(frontend, &current_width, &current_height);
+    whist_frontend_get_window_pixel_size(frontend, 0, &current_width, &current_height);
 
     LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
              current_height);
+    //
+    int dpi = whist_frontend_get_window_dpi(frontend);
+    // If we're on linux, our desired and current should match up
+    int desired_width = current_width;
+    int desired_height = current_height;
 
 #if !OS_IS(OS_LINUX)
-    int dpi = whist_frontend_get_window_dpi(frontend);
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
     // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
     // to a multiple of 2. Here, we try to force the window size to be valid values so the
     // dimensions of the client and server match. We round down rather than up to avoid extending
     // past the size of the display.
-    int desired_width = current_width - (current_width % 8);
-    int desired_height = current_height - (current_height % 2);
+    desired_width = current_width - (current_width % 8);
+    desired_height = current_height - (current_height % 2);
+#endif  // non-Linux
+
+    // Regardless of OS, constrain to min width/height
+    desired_width = max(MIN_SCREEN_WIDTH, desired_width);
+    desired_height = max(MIN_SCREEN_HEIGHT, desired_height);
     static int prev_desired_width = 0;
     static int prev_desired_height = 0;
     static int tries =
@@ -167,11 +176,11 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
 
             // The default DPI (no scaling) is 96, hence this magic number to divide by the scaling
             // factor
-            whist_frontend_resize_window(frontend, desired_width * 96 / dpi,
+            whist_frontend_resize_window(frontend, 0, desired_width * 96 / dpi,
                                          desired_height * 96 / dpi);
             LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
                      desired_width, desired_height);
-            whist_frontend_get_window_pixel_size(frontend, &current_width, &current_height);
+            whist_frontend_get_window_pixel_size(frontend, 0, &current_width, &current_height);
 
             if (current_width != desired_width || current_height != desired_height) {
                 LOG_WARNING("Failed to force resize -- got %dx%d instead of desired %dx%d",
@@ -179,7 +188,6 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
             }
         }
     }
-#endif  // non-Linux
 
     network_algo_set_dimensions(current_width, current_height);
 
@@ -267,7 +275,7 @@ void sdl_present_pending_cursor(WhistFrontend* frontend) {
     }
 }
 
-void sdl_render_window_titlebar_color(WhistRGBColor color) {
+void sdl_render_window_titlebar_color(int id, WhistRGBColor color) {
     /*
       Update window titlebar color using the colors of the new frame
      */
@@ -275,21 +283,23 @@ void sdl_render_window_titlebar_color(WhistRGBColor color) {
     if (memcmp(&current_color, &color, sizeof(color))) {
         WhistRGBColor* new_color = safe_malloc(sizeof(color));
         *new_color = color;
-        whist_frontend_set_titlebar_color(event_frontend, new_color);
+        // whist_frontend_set_titlebar_color is now responsible for free'ing new_color
+        whist_frontend_set_titlebar_color(event_frontend, id, new_color);
         current_color = color;
     }
 }
 
-void sdl_set_window_title(const char* requested_window_title) {
+void sdl_set_window_title(int id, const char* requested_window_title) {
     size_t len = strlen(requested_window_title) + 1;
     char* new_window_title = safe_malloc(len);
     safe_strncpy(new_window_title, requested_window_title, len);
 
-    whist_frontend_set_title(event_frontend, new_window_title);
+    // whist_frontend_set_title is now responsible for free'ing new_window_title
+    whist_frontend_set_title(event_frontend, id, new_window_title);
 }
 
-void sdl_set_fullscreen(bool is_fullscreen) {
-    whist_frontend_set_window_fullscreen(event_frontend, is_fullscreen);
+void sdl_set_fullscreen(int id, bool is_fullscreen) {
+    whist_frontend_set_window_fullscreen(event_frontend, id, is_fullscreen);
 }
 
 void sdl_client_display_notification(const WhistNotification* notif) {
@@ -363,7 +373,7 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
 
     // Wipes the renderer to background color before we present
     whist_gpu_lock();
-    whist_frontend_paint_solid(frontend, &background_color);
+    whist_frontend_paint_solid(frontend, 0, &background_color);
     whist_gpu_unlock();
 
     WhistTimer statistics_timer;

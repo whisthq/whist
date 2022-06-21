@@ -1,10 +1,13 @@
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+
+#include <whist/core/whist.h>
+
 extern "C" {
 #include "native.h"
 #include <SDL2/SDL_syswm.h>
 }
 #include "sdl_struct.hpp"
 
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <string>
 #include <format>
 #include <locale>

@@ -196,7 +196,7 @@ int render_video(VideoContext* video_context) {
         // If server thinks the window isn't visible, but the window is visible now,
         // Send a START_STREAMING message
         if (!frame->is_window_visible &&
-            whist_frontend_is_window_visible(video_context->frontend)) {
+            whist_frontend_is_any_window_visible(video_context->frontend)) {
             // The server thinks the client window is occluded/minimized, but it isn't. So
             // we'll correct it. NOTE: Most of the time, this is just because there was a
             // delay between the window losing visibility and the server reacting.
@@ -315,7 +315,7 @@ int render_video(VideoContext* video_context) {
         video_decoder_free_decoded_frame(&decoded_frame_data);
 
         // Update the window titlebar color
-        sdl_render_window_titlebar_color(window_color);
+        sdl_render_window_titlebar_color(0, window_color);
 
         // Render the decoded frame
         sdl_update_framebuffer(frame);

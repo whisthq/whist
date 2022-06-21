@@ -12,6 +12,7 @@ Includes
 #include <fstream>
 
 #include <assert.h>
+#include <whist/core/whist.h>
 extern "C" {
 #include "debug_console.h"
 #include <whist/network/udp.h>
