@@ -15,7 +15,7 @@ func TestGenerateInstanceCapacityMap(t *testing.T) {
 		name     string
 		gpuMap   map[string]int
 		vcpuMap  map[string]int
-		expected map[string]int
+		expected map[string]int64
 	}{
 		{
 			name: "gpu limited",
@@ -27,7 +27,7 @@ func TestGenerateInstanceCapacityMap(t *testing.T) {
 				"a": 1000,
 				"b": 2000,
 			},
-			expected: map[string]int{
+			expected: map[string]int64{
 				"a": constants.MaxMandelboxesPerGPU,
 				"b": 2 * constants.MaxMandelboxesPerGPU,
 			},
@@ -42,7 +42,7 @@ func TestGenerateInstanceCapacityMap(t *testing.T) {
 				"a": 4,
 				"b": 8,
 			},
-			expected: map[string]int{
+			expected: map[string]int64{
 				"a": 4 / VCPUsPerMandelbox,
 				"b": 8 / VCPUsPerMandelbox,
 			},
@@ -57,7 +57,7 @@ func TestGenerateInstanceCapacityMap(t *testing.T) {
 				"c": 4,
 				"d": 8,
 			},
-			expected: map[string]int{},
+			expected: map[string]int64{},
 		},
 	}
 
