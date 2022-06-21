@@ -57,6 +57,7 @@ extern "C" {
 #include <windows.h>
 #include <winuser.h>
 #include <direct.h>
+#include <io.h>
 
 #include "shellscalingapi.h"
 #else
@@ -146,6 +147,9 @@ Defines
 // Create platform-independent POSIX-style functions
 #if OS_IS(OS_WIN32)
 #define STDOUT_FILENO _fileno(stdout)
+#define STDERR_FILENO _fileno(stderr)
+#define STDIN_FILENO _fileno(stdin)
+#define safe_read(fd, buf, count) _read(fd, buf, count)
 #define safe_mkdir(dir) _mkdir(dir)
 #define safe_dup(fd) _dup(fd)
 #define safe_dup2(fd1, fd2) _dup2(fd1, fd2)
@@ -155,6 +159,7 @@ Defines
 #define strdup(str) _strdup(str)
 #define execl(pathname, ...) _execl(pathname, __VA_ARGS__)
 #else
+#define safe_read(fd, buf, count) read(fd, buf, count)
 #define safe_mkdir(dir) mkdir(dir, 0777)
 #define safe_dup(fd) dup(fd)
 #define safe_dup2(fd1, fd2) dup2(fd1, fd2)

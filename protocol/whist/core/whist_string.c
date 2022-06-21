@@ -65,3 +65,30 @@ char* split_string_at(char* str, const char* delim) {
 }
 
 void trim_newlines(char* str) { split_string_at(str, "\r\n"); }
+
+size_t copy_and_escape(char* dst, size_t dst_size, const char* src) {
+    size_t d, s;
+
+    // Table of escape codes.
+    static const unsigned char escape_list[256] = {
+        ['\b'] = 'b',
+        ['\f'] = 'f',
+        ['\r'] = 'r',
+        ['\t'] = 't',
+    };
+
+    for (d = s = 0; src[s]; s++) {
+        unsigned char esc = escape_list[src[s] & 0xff];
+        if (esc) {
+            if (d >= dst_size - 2) break;
+            dst[d++] = '\\';
+            dst[d++] = esc;
+        } else {
+            if (d >= dst_size - 1) break;
+            dst[d++] = src[s];
+        }
+    }
+
+    dst[d] = '\0';
+    return d;
+}

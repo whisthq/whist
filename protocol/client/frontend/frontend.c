@@ -226,6 +226,8 @@ const char* whist_frontend_event_type_string(FrontendEventType type) {
         [FRONTEND_EVENT_GESTURE] = "gesture",
         [FRONTEND_EVENT_FILE_DRAG] = "file-drag",
         [FRONTEND_EVENT_FILE_DROP] = "file-drop",
+        [FRONTEND_EVENT_STARTUP_PARAMETER] = "startup-parameter",
+        [FRONTEND_EVENT_OPEN_URL] = "open-url",
         [FRONTEND_EVENT_QUIT] = "quit",
         [FRONTEND_EVENT_INTERRUPT] = "interrupt",
     };
