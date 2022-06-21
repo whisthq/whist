@@ -76,10 +76,7 @@ func (db *mockDBClient) QueryInstancesByImage(scalingCtx context.Context, graphQ
 func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, insertParams []subscriptions.Instance) (int, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
-
-	for _, instance := range insertParams {
-		testInstances = append(testInstances, instance)
-	}
+	testInstances = append(testInstances, insertParams...)
 
 	return len(insertParams), nil
 }
@@ -126,10 +123,8 @@ func (db *mockDBClient) QueryImage(scalingCtx context.Context, graphQLClient sub
 func (db *mockDBClient) InsertImages(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, insertParams []subscriptions.Image) (int, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
+	testImages = append(testImages, insertParams...)
 
-	for _, image := range insertParams {
-		testImages = append(testImages, image)
-	}
 	return len(testImages), nil
 }
 
@@ -149,10 +144,8 @@ func (db *mockDBClient) UpdateImage(scalingCtx context.Context, graphQLClient su
 func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, insertParams []subscriptions.Mandelbox) (int, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
+	testMandelboxes = append(testMandelboxes, insertParams...)
 
-	for _, mandelbox := range insertParams {
-		testMandelboxes = append(testMandelboxes, mandelbox)
-	}
 	return len(testMandelboxes), nil
 }
 func (db *mockDBClient) QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) ([]subscriptions.Mandelbox, error) {
