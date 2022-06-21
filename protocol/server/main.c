@@ -421,9 +421,6 @@ int main(int argc, char* argv[]) {
     server_state.stream_needs_recovery = false;
     server_state.update_frame_ack = false;
 
-    server_state.cursor_cache = whist_cursor_cache_create(CURSOR_CACHE_ENTRIES, false);
-    server_state.last_cursor_hash = 0;
-
     WhistThread send_video_thread =
         whist_create_thread(multithreaded_send_video, "multithreaded_send_video", &server_state);
     WhistThread send_audio_thread =
@@ -692,7 +689,6 @@ int main(int argc, char* argv[]) {
     whist_destroy_dbus_handler(dbus_handler);
 
     ltr_destroy(server_state.ltr_context);
-    whist_cursor_cache_destroy(server_state.cursor_cache);
 
     LOG_INFO("Protocol has shutdown gracefully");
 

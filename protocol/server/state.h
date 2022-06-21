@@ -120,18 +120,6 @@ typedef struct WhistServerState {
     int encoder_factory_bitrate;
     int encoder_factory_vbv_size;
     CodecType encoder_factory_codec_type;
-
-    /**
-     * Server-side cursor cache.
-     */
-    WhistCursorCache* cursor_cache;
-    /**
-     * Hash of the cursor used with the last frame.
-     *
-     * If the hash of the new cursor does not match this then the cursor
-     * has changed and a new cursor will need to be sent.
-     */
-    uint32_t last_cursor_hash;
 } WhistServerState;
 
 #endif  // WHIST_SERVER_STATE_H
