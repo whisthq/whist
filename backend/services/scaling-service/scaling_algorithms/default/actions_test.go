@@ -46,30 +46,7 @@ func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, gr
 	var instancesWithCapacity subscriptions.WhistInstances
 	for _, instance := range testInstances {
 		if string(instance.Region) == region && instance.RemainingCapacity > 0 {
-			instancesWithCapacity = append(instancesWithCapacity, struct {
-				ID                graphql.String                 `graphql:"id"`
-				Provider          graphql.String                 `graphql:"provider"`
-				Region            graphql.String                 `graphql:"region"`
-				ImageID           graphql.String                 `graphql:"image_id"`
-				ClientSHA         graphql.String                 `graphql:"client_sha"`
-				IPAddress         string                         `graphql:"ip_addr"`
-				Type              graphql.String                 `graphql:"instance_type"`
-				RemainingCapacity graphql.Int                    `graphql:"remaining_capacity"`
-				Status            graphql.String                 `graphql:"status"`
-				CreatedAt         time.Time                      `graphql:"created_at"`
-				UpdatedAt         time.Time                      `graphql:"updated_at"`
-				Mandelboxes       subscriptions.WhistMandelboxes `graphql:"mandelboxes"`
-			}{
-				ID:                graphql.String(instance.ID),
-				Provider:          graphql.String(instance.Provider),
-				ImageID:           graphql.String(instance.ImageID),
-				ClientSHA:         graphql.String(instance.ClientSHA),
-				Region:            graphql.String(instance.Region),
-				Type:              graphql.String(instance.Type),
-				RemainingCapacity: graphql.Int(instance.RemainingCapacity),
-				IPAddress:         instance.IPAddress,
-				Status:            graphql.String(instance.Status),
-			})
+			instancesWithCapacity = append(instancesWithCapacity, instance)
 		}
 	}
 	return instancesWithCapacity, nil
@@ -102,30 +79,7 @@ func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 	defer testLock.Unlock()
 
 	for _, instance := range insertParams {
-		testInstances = append(testInstances, struct {
-			ID                graphql.String                 `graphql:"id"`
-			Provider          graphql.String                 `graphql:"provider"`
-			Region            graphql.String                 `graphql:"region"`
-			ImageID           graphql.String                 `graphql:"image_id"`
-			ClientSHA         graphql.String                 `graphql:"client_sha"`
-			IPAddress         string                         `graphql:"ip_addr"`
-			Type              graphql.String                 `graphql:"instance_type"`
-			RemainingCapacity graphql.Int                    `graphql:"remaining_capacity"`
-			Status            graphql.String                 `graphql:"status"`
-			CreatedAt         time.Time                      `graphql:"created_at"`
-			UpdatedAt         time.Time                      `graphql:"updated_at"`
-			Mandelboxes       subscriptions.WhistMandelboxes `graphql:"mandelboxes"`
-		}{
-			ID:                graphql.String(instance.ID),
-			Provider:          graphql.String(instance.Provider),
-			ImageID:           graphql.String(instance.ImageID),
-			ClientSHA:         graphql.String(instance.ClientSHA),
-			Region:            graphql.String(instance.Region),
-			Type:              graphql.String(instance.Type),
-			IPAddress:         instance.IPAddress,
-			RemainingCapacity: graphql.Int(instance.RemainingCapacity),
-			Status:            graphql.String(instance.Status),
-		})
+		testInstances = append(testInstances, subscriptions.NewWhistInstance(instance)...)
 	}
 
 	return len(insertParams), nil
@@ -138,30 +92,15 @@ func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient
 	var updated int
 	for index, instance := range testInstances {
 		if string(instance.ID) == updateParams.ID {
-			updatedInstance := struct {
-				ID                graphql.String                 `graphql:"id"`
-				Provider          graphql.String                 `graphql:"provider"`
-				Region            graphql.String                 `graphql:"region"`
-				ImageID           graphql.String                 `graphql:"image_id"`
-				ClientSHA         graphql.String                 `graphql:"client_sha"`
-				IPAddress         string                         `graphql:"ip_addr"`
-				Type              graphql.String                 `graphql:"instance_type"`
-				RemainingCapacity graphql.Int                    `graphql:"remaining_capacity"`
-				Status            graphql.String                 `graphql:"status"`
-				CreatedAt         time.Time                      `graphql:"created_at"`
-				UpdatedAt         time.Time                      `graphql:"updated_at"`
-				Mandelboxes       subscriptions.WhistMandelboxes `graphql:"mandelboxes"`
-			}{
-				ID:                graphql.String(updateParams.ID),
-				Provider:          instance.Provider,
-				ImageID:           instance.ImageID,
-				ClientSHA:         graphql.String(instance.ClientSHA),
-				Region:            graphql.String(instance.Region),
-				Type:              instance.Type,
-				IPAddress:         instance.IPAddress,
-				Status:            graphql.String(updateParams.Status),
-				RemainingCapacity: instance.RemainingCapacity,
-			}
+			updatedInstance := subscriptions.NewWhistInstance(updateParams)[0]
+			updatedInstance.Provider = instance.Provider
+			updatedInstance.ImageID = instance.ImageID
+			updatedInstance.ClientSHA = graphql.String(instance.ClientSHA)
+			updatedInstance.Region = graphql.String(instance.Region)
+			updatedInstance.Type = instance.Type
+			updatedInstance.IPAddress = instance.IPAddress
+			updatedInstance.Status = graphql.String(updateParams.Status)
+			updatedInstance.RemainingCapacity = instance.RemainingCapacity
 			testInstances[index] = updatedInstance
 			updated++
 		}
@@ -199,19 +138,7 @@ func (db *mockDBClient) InsertImages(scalingCtx context.Context, graphQLClient s
 	defer testLock.Unlock()
 
 	for _, image := range insertParams {
-		testImages = append(testImages, struct {
-			Provider  graphql.String `graphql:"provider"`
-			Region    graphql.String `graphql:"region"`
-			ImageID   graphql.String `graphql:"image_id"`
-			ClientSHA graphql.String `graphql:"client_sha"`
-			UpdatedAt time.Time      `graphql:"updated_at"`
-		}{
-			Provider:  graphql.String(image.Provider),
-			Region:    graphql.String(image.Region),
-			ImageID:   graphql.String(image.ImageID),
-			ClientSHA: graphql.String(image.ClientSHA),
-			UpdatedAt: image.UpdatedAt,
-		})
+		testImages = append(testImages, subscriptions.NewWhistImage(image)...)
 	}
 	return len(testImages), nil
 }
@@ -247,25 +174,7 @@ func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLCli
 	defer testLock.Unlock()
 
 	for _, mandelbox := range insertParams {
-		testMandelboxes = append(testMandelboxes, struct {
-			ID         graphql.String `graphql:"id"`
-			App        graphql.String `graphql:"app"`
-			InstanceID graphql.String `graphql:"instance_id"`
-			UserID     graphql.String `graphql:"user_id"`
-			SessionID  graphql.String `graphql:"session_id"`
-			Status     graphql.String `graphql:"status"`
-			CreatedAt  time.Time      `graphql:"created_at"`
-			UpdatedAt  time.Time      `graphql:"updated_at"`
-		}{
-			ID:         graphql.String(mandelbox.ID.String()),
-			App:        graphql.String(mandelbox.App),
-			InstanceID: graphql.String(mandelbox.InstanceID),
-			UserID:     graphql.String(mandelbox.UserID),
-			SessionID:  graphql.String(mandelbox.SessionID),
-			Status:     graphql.String(mandelbox.Status),
-			CreatedAt:  mandelbox.CreatedAt,
-			UpdatedAt:  mandelbox.UpdatedAt,
-		})
+		testMandelboxes = append(testMandelboxes, subscriptions.NewWhistMandelbox(mandelbox)...)
 	}
 	return len(testMandelboxes), nil
 }

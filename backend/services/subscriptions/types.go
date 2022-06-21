@@ -231,3 +231,48 @@ func WhistInstanceToInstance(dbInstance struct {
 		UpdatedAt:         dbInstance.UpdatedAt,
 	}
 }
+
+func NewWhistInstance(instance Instance) WhistInstances {
+	return WhistInstances{
+		{
+			ID:                graphql.String(instance.ID),
+			Provider:          graphql.String(instance.Provider),
+			Region:            graphql.String(instance.Region),
+			ImageID:           graphql.String(instance.ImageID),
+			ClientSHA:         graphql.String(instance.ClientSHA),
+			IPAddress:         instance.IPAddress,
+			Type:              graphql.String(instance.Type),
+			RemainingCapacity: graphql.Int(instance.RemainingCapacity),
+			Status:            graphql.String(instance.Status),
+			CreatedAt:         instance.CreatedAt,
+			UpdatedAt:         instance.UpdatedAt,
+		},
+	}
+}
+
+func NewWhistMandelbox(mandelbox Mandelbox) WhistMandelboxes {
+	return WhistMandelboxes{
+		{
+			ID:         graphql.String(mandelbox.ID.String()),
+			App:        graphql.String(mandelbox.App),
+			InstanceID: graphql.String(mandelbox.InstanceID),
+			UserID:     graphql.String(mandelbox.UserID),
+			SessionID:  graphql.String(mandelbox.SessionID),
+			Status:     graphql.String(mandelbox.Status),
+			CreatedAt:  mandelbox.CreatedAt,
+			UpdatedAt:  mandelbox.UpdatedAt,
+		},
+	}
+}
+
+func NewWhistImage(image Image) WhistImages {
+	return WhistImages{
+		{
+			Provider:  graphql.String(image.Provider),
+			Region:    graphql.String(image.Region),
+			ImageID:   graphql.String(image.ImageID),
+			ClientSHA: graphql.String(image.ClientSHA),
+			UpdatedAt: image.UpdatedAt,
+		},
+	}
+}

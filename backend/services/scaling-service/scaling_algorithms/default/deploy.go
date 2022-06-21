@@ -57,6 +57,11 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 			return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImage.ImageID, err)
 		}
 
+		// Set the instance capacity field and add to the slice
+		// that will be passed to the database.
+		for _, instance := range bufferInstances {
+			instance.RemainingCapacity = int64(instanceCapacity[instance.Type])
+		}
 		instancesForDb = append(instancesForDb, bufferInstances...)
 	}
 

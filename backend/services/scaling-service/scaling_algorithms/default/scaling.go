@@ -215,6 +215,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 		}
 
 		for _, instance := range createdInstances {
+			instance.RemainingCapacity = int64(instanceCapacity[instance.Type])
 			instancesForDb = append(instancesForDb, instance)
 			logger.Infof("Created tagged instance with ID %v", instance.ID)
 		}
