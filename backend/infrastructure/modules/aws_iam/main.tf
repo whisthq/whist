@@ -147,12 +147,12 @@ resource "aws_iam_user" "WhistEC2PassRoleUser" {
 }
 
 # The GithubActions user used by the CI tools.
-resource "aws_iam_user" "GithubActionsUser" {
+resource "aws_iam_user" "GitHubActionsUser" {
   count = var.env == "dev" ? 1 : 0
-  name  = "GithubActions"
+  name  = "GitHubActions"
 
   tags = {
-    Name      = "GithubActions"
+    Name      = "GitHubActions"
     Env       = var.env
     Terraform = true
   }
@@ -163,9 +163,9 @@ resource "aws_iam_user" "GithubActionsUser" {
 # 
 
 # Add the GithubActions user to the WhistCI group.
-resource "aws_iam_user_group_membership" "GithubActionsGroupMembership" {
+resource "aws_iam_user_group_membership" "GitHubActionsGroupMembership" {
   count = var.env == "dev" ? 1 : 0
-  user  = aws_iam_user.GithubActionsUser[0].name
+  user  = aws_iam_user.GitHubActionsUser[0].name
 
   groups = [
     aws_iam_group.WhistCI[0].name,
