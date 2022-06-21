@@ -1,6 +1,6 @@
 #include "whist_frame.h"
 
-void set_frame_cursor_info(VideoFrame* frame, const WhistCursorInfo* cursor) {
+void set_frame_cursor_info(VideoFrame* frame, WhistCursorInfo* cursor) {
     if (cursor == NULL) {
         frame->has_cursor = false;
     } else {
