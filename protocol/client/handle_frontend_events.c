@@ -187,7 +187,7 @@ static void handle_mouse_wheel_event(FrontendMouseWheelEvent* event) {
         .type = MESSAGE_MOUSE_WHEEL,
         .mouseWheel =
             {
-#ifdef _WIN32
+#if OS_IS(OS_WIN32)
                 .x = 2 * event->delta.x,
                 .y = 2 * event->delta.y,
                 .precise_x = 1.9f * event->precise_delta.x,
