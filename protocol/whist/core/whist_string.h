@@ -64,7 +64,6 @@ char* split_string_at(char* str, const char* delim);
  */
 void trim_newlines(char* str);
 
-
 /**
  * @brief                          Copy a string to a new buffer and escape any special characters.
  *
