@@ -8,7 +8,7 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
-func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) (subscriptions.WhistInstances, error) {
+func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) ([]subscriptions.Instance, error) {
 	// The status will always be active, because we want instances
 	// that are ready to accept mandelboxes (the host service is running)
 	const status = "ACTIVE"
@@ -18,43 +18,47 @@ func (client *DBClient) QueryInstanceWithCapacity(scalingCtx context.Context, gr
 		"status": graphql.String(status),
 	}
 	err := graphQLClient.Query(scalingCtx, &instancesQuery, queryParams)
+	instanceResult := subscriptions.ToInstances(instancesQuery.WhistInstances)
 
-	return instancesQuery.WhistInstances, err
+	return instanceResult, err
 }
 
 // QueryInstance queries the database for an instance with the received id.
-func (client *DBClient) QueryInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) (subscriptions.WhistInstances, error) {
+func (client *DBClient) QueryInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) ([]subscriptions.Instance, error) {
 	instancesQuery := subscriptions.QueryInstanceById
 	queryParams := map[string]interface{}{
 		"id": graphql.String(instanceID),
 	}
 	err := graphQLClient.Query(scalingCtx, &instancesQuery, queryParams)
+	instanceResult := subscriptions.ToInstances(instancesQuery.WhistInstances)
 
-	return instancesQuery.WhistInstances, err
+	return instanceResult, err
 }
 
 // QueryInstancesByStatusOnRegion queries the database for all instances with the given status on the given region.
-func (client *DBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region string) (subscriptions.WhistInstances, error) {
+func (client *DBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region string) ([]subscriptions.Instance, error) {
 	instancesQuery := subscriptions.QueryInstancesByStatusOnRegion
 	queryParams := map[string]interface{}{
 		"status": graphql.String(status),
 		"region": graphql.String(region),
 	}
 	err := graphQLClient.Query(scalingCtx, &instancesQuery, queryParams)
+	instanceResult := subscriptions.ToInstances(instancesQuery.WhistInstances)
 
-	return instancesQuery.WhistInstances, err
+	return instanceResult, err
 }
 
 // QueryInstancesByImage queries the database for instances that match the given image id.
-func (client *DBClient) QueryInstancesByImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, imageID string) (subscriptions.WhistInstances, error) {
+func (client *DBClient) QueryInstancesByImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, imageID string) ([]subscriptions.Instance, error) {
 	instancesQuery := subscriptions.QueryInstancesByImageID
 	queryParams := map[string]interface{}{
 		"image_id": graphql.String(imageID),
 	}
 
 	err := graphQLClient.Query(scalingCtx, &instancesQuery, queryParams)
+	instanceResult := subscriptions.ToInstances(instancesQuery.WhistInstances)
 
-	return instancesQuery.WhistInstances, err
+	return instanceResult, err
 }
 
 // InsertInstances adds the received instances to the database.

@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	testInstances   subscriptions.WhistInstances
-	testImages      subscriptions.WhistImages
-	testMandelboxes subscriptions.WhistMandelboxes
+	testInstances   []subscriptions.Instance
+	testImages      []subscriptions.Image
+	testMandelboxes []subscriptions.Mandelbox
 	testAlgorithm   *DefaultScalingAlgorithm
 	testLock        sync.Mutex
 )
@@ -25,11 +25,11 @@ var (
 // mockDBClient is used to test all database interactions
 type mockDBClient struct{}
 
-func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) (subscriptions.WhistInstances, error) {
+func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string) ([]subscriptions.Instance, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
-	var result subscriptions.WhistInstances
+	var result subscriptions.Instance
 	for _, instance := range testInstances {
 		if string(instance.ID) == instanceID {
 			result = append(result, instance)
@@ -39,11 +39,11 @@ func (db *mockDBClient) QueryInstance(scalingCtx context.Context, graphQLClient 
 	return result, nil
 }
 
-func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) (subscriptions.WhistInstances, error) {
+func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, region string) ([]subscriptions.Instance, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
-	var instancesWithCapacity subscriptions.WhistInstances
+	var instancesWithCapacity subscriptions.Instance
 	for _, instance := range testInstances {
 		if string(instance.Region) == region && instance.RemainingCapacity > 0 {
 			instancesWithCapacity = append(instancesWithCapacity, instance)
@@ -52,11 +52,11 @@ func (db *mockDBClient) QueryInstanceWithCapacity(scalingCtx context.Context, gr
 	return instancesWithCapacity, nil
 }
 
-func (db *mockDBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region string) (subscriptions.WhistInstances, error) {
+func (db *mockDBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, status string, region string) ([]subscriptions.Instance, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
-	var result subscriptions.WhistInstances
+	var result subscriptions.Instance
 	for _, instance := range testInstances {
 		if string(instance.Status) == status &&
 			string(instance.Region) == region {
@@ -67,7 +67,7 @@ func (db *mockDBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Contex
 	return result, nil
 }
 
-func (db *mockDBClient) QueryInstancesByImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, imageID string) (subscriptions.WhistInstances, error) {
+func (db *mockDBClient) QueryInstancesByImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, imageID string) ([]subscriptions.Instance, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
@@ -126,7 +126,7 @@ func (db *mockDBClient) DeleteInstance(scalingCtx context.Context, graphQLClient
 	return 0, nil
 }
 
-func (db *mockDBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) (subscriptions.WhistImages, error) {
+func (db *mockDBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) ([]subscriptions.Image, error) {
 	testLock.Lock()
 	defer testLock.Unlock()
 
@@ -178,7 +178,7 @@ func (db *mockDBClient) InsertMandelboxes(scalingCtx context.Context, graphQLCli
 	}
 	return len(testMandelboxes), nil
 }
-func (db *mockDBClient) QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistMandelboxes, error) {
+func (db *mockDBClient) QueryMandelbox(context.Context, subscriptions.WhistGraphQLClient, string, string) ([]subscriptions.Mandelbox, error) {
 	return testMandelboxes, nil
 }
 

@@ -8,7 +8,7 @@ import (
 )
 
 // QueryImage queries the database for an instance image (AMI) that matches the given id.
-func (client *DBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) (subscriptions.WhistImages, error) {
+func (client *DBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) ([]subscriptions.Image, error) {
 	latestImageQuery := subscriptions.QueryLatestImage
 	queryParams := map[string]interface{}{
 		"provider": graphql.String(provider),
@@ -16,7 +16,8 @@ func (client *DBClient) QueryImage(scalingCtx context.Context, graphQLClient sub
 	}
 
 	err := graphQLClient.Query(scalingCtx, &latestImageQuery, queryParams)
-	return latestImageQuery.WhistImages, err
+	imageResult := subscriptions.ToImages(latestImageQuery.WhistImages)
+	return imageResult, err
 }
 
 // InsertInstances adds the received instances to the database.

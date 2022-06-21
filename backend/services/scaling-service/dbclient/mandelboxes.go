@@ -8,15 +8,16 @@ import (
 )
 
 // QueryInstance queries for a mandelbox on the given instance with the given status.
-func (client *DBClient) QueryMandelbox(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string, status string) (subscriptions.WhistMandelboxes, error) {
+func (client *DBClient) QueryMandelbox(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, instanceID string, status string) ([]subscriptions.Mandelbox, error) {
 	mandelboxQuery := subscriptions.QueryMandelboxesByInstanceId
 	queryParams := map[string]interface{}{
 		"instance_id": graphql.String(instanceID),
 		"status":      graphql.String(status),
 	}
 	err := graphQLClient.Query(scalingCtx, &mandelboxQuery, queryParams)
+	mandelboxResult := subscriptions.ToMandelboxes(mandelboxQuery.WhistMandelboxes)
 
-	return mandelboxQuery.WhistMandelboxes, err
+	return mandelboxResult, err
 }
 
 // InsertMandelboxes adds the received mandelboxes to the database.

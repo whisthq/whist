@@ -70,18 +70,16 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// to the list that will be scaled down.
 	// 3. If the instance does not have the latest image, and is not running any mandelboxes, add to the
 	// list that will be scaled down.
-	for _, dbInstance := range allActive {
+	for _, instance := range allActive {
 		// Compute how many mandelboxes are running on the instance. We use the current remaining capacity
 		// and the total capacity of the instance type to check if it has running mandelboxes.
-		usage := instanceCapacity[string(dbInstance.Type)] - int(dbInstance.RemainingCapacity)
+		usage := instanceCapacity[string(instance.Type)] - int(instance.RemainingCapacity)
 		if usage > 0 {
 			// Don't scale down any instance that has running
 			// mandelboxes, regardless of the image it uses
-			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", dbInstance.ID, usage)
+			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", instance.ID, usage)
 			continue
 		}
-
-		instance := subscriptions.WhistInstanceToInstance(dbInstance)
 
 		_, protected := s.protectedFromScaleDown[instance.ImageID]
 		if protected {
@@ -116,16 +114,15 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return utils.MakeError("failed to query database for lingering instances. Err: %v", err)
 	}
 
-	for _, dbInstance := range drainingInstances {
-		instance := subscriptions.WhistInstanceToInstance(dbInstance)
+	for _, drainingInstance := range drainingInstances {
 		// Check if lingering instance has any running mandelboxes
-		if dbInstance.RemainingCapacity == 0 {
+		if drainingInstance.RemainingCapacity == 0 {
 			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
-			logger.Warningf("Instance %v has associated mandelboxes and is marked as Draining.", instance.ID)
-		} else if time.Since(dbInstance.UpdatedAt) > 10*time.Minute {
+			logger.Warningf("Instance %v has associated mandelboxes and is marked as Draining.", drainingInstance.ID)
+		} else if time.Since(drainingInstance.UpdatedAt) > 10*time.Minute {
 			// Mark instance as lingering only if it has taken more than 10 minutes to shut down.
-			lingeringInstances = append(lingeringInstances, instance)
-			lingeringIDs = append(lingeringIDs, string(instance.ID))
+			lingeringInstances = append(lingeringInstances, drainingInstance)
+			lingeringIDs = append(lingeringIDs, string(drainingInstance.ID))
 		}
 	}
 

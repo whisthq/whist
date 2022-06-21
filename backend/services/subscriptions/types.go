@@ -3,6 +3,7 @@ package subscriptions // import "github.com/whisthq/whist/backend/services/subsc
 import (
 	"time"
 
+	"github.com/google/uuid"
 	graphql "github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/types"
 )
@@ -13,10 +14,10 @@ import (
 // `queries.go` file. An advantage is that these queries can be used both as subscriptions and normal queries.
 type GraphQLQuery interface{}
 
-// WhistInstances is the mapping of the `whist.hosts` table. This type interacts directly
+// WhistInstance is the mapping of the `whist.hosts` table. This type interacts directly
 // with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
 // operations. For operations that do not interact with the client, use the `Instance` type instead.
-type WhistInstances []struct {
+type whistInstance struct {
 	ID                graphql.String   `graphql:"id"`
 	Provider          graphql.String   `graphql:"provider"`
 	Region            graphql.String   `graphql:"region"`
@@ -28,13 +29,13 @@ type WhistInstances []struct {
 	Status            graphql.String   `graphql:"status"`
 	CreatedAt         time.Time        `graphql:"created_at"`
 	UpdatedAt         time.Time        `graphql:"updated_at"`
-	Mandelboxes       WhistMandelboxes `graphql:"mandelboxes"`
+	Mandelboxes       []whistMandelbox `graphql:"mandelboxes"`
 }
 
-// WhistMandelboxes is the mapping of the `whist.mandelboxes` table. This type interacts directly
+// WhistMandelbox is the mapping of the `whist.mandelboxes` table. This type interacts directly
 // with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
 // operations. For operations that do not interact with the client, use the `Mandelbox` type instead.
-type WhistMandelboxes []struct {
+type whistMandelbox struct {
 	ID         graphql.String `graphql:"id"`
 	App        graphql.String `graphql:"app"`
 	InstanceID graphql.String `graphql:"instance_id"`
@@ -45,10 +46,10 @@ type WhistMandelboxes []struct {
 	UpdatedAt  time.Time      `graphql:"updated_at"`
 }
 
-// WhistImages is the mapping of the `whist.images` table. This type interacts directly
+// WhistImage is the mapping of the `whist.images` table. This type interacts directly
 // with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
 // operations. For operations that do not interact with the client, use the `Image` type instead.
-type WhistImages []struct {
+type whistImage struct {
 	Provider  graphql.String `graphql:"provider"`
 	Region    graphql.String `graphql:"region"`
 	ImageID   graphql.String `graphql:"image_id"`
@@ -56,11 +57,11 @@ type WhistImages []struct {
 	UpdatedAt time.Time      `graphql:"updated_at"`
 }
 
-// WhistClientAppVersions is the mapping of the `desktop_app_version` table on the config database.
+// WhistClientAppVersion is the mapping of the `desktop_app_version` table on the config database.
 // This type interacts directly with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal.
 // Only use for GraphQL operations. For operations that do not interact with the client, use the
 // `ClientAppVersion` type instead.
-type WhistClientAppVersions []struct {
+type whistClientAppVersion struct {
 	ID                graphql.Int    `graphql:"id"`
 	Major             graphql.Int    `graphql:"major"`
 	Minor             graphql.Int    `graphql:"minor"`
@@ -201,78 +202,62 @@ type ClientAppVersionEvent struct {
 
 // Helper function to convert between types
 
-// WhistInstanceToInstance converts a result obtained from GraphQL of type `WhistInstances`
-// to a type `Instance` for convenience.
-func WhistInstanceToInstance(dbInstance struct {
-	ID                graphql.String   `graphql:"id"`
-	Provider          graphql.String   `graphql:"provider"`
-	Region            graphql.String   `graphql:"region"`
-	ImageID           graphql.String   `graphql:"image_id"`
-	ClientSHA         graphql.String   `graphql:"client_sha"`
-	IPAddress         string           `graphql:"ip_addr"`
-	Type              graphql.String   `graphql:"instance_type"`
-	RemainingCapacity graphql.Int      `graphql:"remaining_capacity"`
-	Status            graphql.String   `graphql:"status"`
-	CreatedAt         time.Time        `graphql:"created_at"`
-	UpdatedAt         time.Time        `graphql:"updated_at"`
-	Mandelboxes       WhistMandelboxes `graphql:"mandelboxes"`
-}) Instance {
-	return Instance{
-		ID:                string(dbInstance.ID),
-		Provider:          string(dbInstance.Provider),
-		Region:            string(dbInstance.Region),
-		ImageID:           string(dbInstance.ImageID),
-		ClientSHA:         string(dbInstance.ClientSHA),
-		IPAddress:         dbInstance.IPAddress,
-		Type:              string(dbInstance.Type),
-		RemainingCapacity: int64(dbInstance.RemainingCapacity),
-		Status:            string(dbInstance.Status),
-		CreatedAt:         dbInstance.CreatedAt,
-		UpdatedAt:         dbInstance.UpdatedAt,
-	}
-}
-
-func NewWhistInstance(instance Instance) WhistInstances {
-	return WhistInstances{
-		{
-			ID:                graphql.String(instance.ID),
-			Provider:          graphql.String(instance.Provider),
-			Region:            graphql.String(instance.Region),
-			ImageID:           graphql.String(instance.ImageID),
-			ClientSHA:         graphql.String(instance.ClientSHA),
+// ToInstances converts a result obtained from GraphQL of type `WhistInstance`
+// to a slice of type `Instance` for convenience.
+func ToInstances(dbInstances []whistInstance) []Instance {
+	var instances []Instance
+	for _, instance := range dbInstances {
+		instances = append(instances, Instance{
+			ID:                string(instance.ID),
+			Provider:          string(instance.Provider),
+			Region:            string(instance.Region),
+			ImageID:           string(instance.ImageID),
+			ClientSHA:         string(instance.ClientSHA),
 			IPAddress:         instance.IPAddress,
-			Type:              graphql.String(instance.Type),
-			RemainingCapacity: graphql.Int(instance.RemainingCapacity),
-			Status:            graphql.String(instance.Status),
+			Type:              string(instance.Type),
+			RemainingCapacity: int64(instance.RemainingCapacity),
+			Status:            string(instance.Status),
 			CreatedAt:         instance.CreatedAt,
 			UpdatedAt:         instance.UpdatedAt,
-		},
+		})
 	}
+
+	return instances
 }
 
-func NewWhistMandelbox(mandelbox Mandelbox) WhistMandelboxes {
-	return WhistMandelboxes{
-		{
-			ID:         graphql.String(mandelbox.ID.String()),
-			App:        graphql.String(mandelbox.App),
-			InstanceID: graphql.String(mandelbox.InstanceID),
-			UserID:     graphql.String(mandelbox.UserID),
-			SessionID:  graphql.String(mandelbox.SessionID),
-			Status:     graphql.String(mandelbox.Status),
+// ToInstances converts a result obtained from GraphQL of type `WhistMandelbox`
+// to a slice of type `Mandelbox` for convenience.
+func ToMandelboxes(dbMandelboxes []whistMandelbox) []Mandelbox {
+	var mandelboxes []Mandelbox
+	for _, mandelbox := range dbMandelboxes {
+		mandelboxes = append(mandelboxes, Mandelbox{
+			ID:         types.MandelboxID(uuid.MustParse(string(mandelbox.ID))),
+			App:        string(mandelbox.App),
+			InstanceID: string(mandelbox.InstanceID),
+			UserID:     types.UserID(string(mandelbox.UserID)),
+			SessionID:  string(mandelbox.SessionID),
+			Status:     string(mandelbox.Status),
 			CreatedAt:  mandelbox.CreatedAt,
 			UpdatedAt:  mandelbox.UpdatedAt,
-		},
+		})
 	}
+
+	return mandelboxes
 }
 
-func NewWhistImage(image Image) WhistImages {
-	return WhistImages{
-		{
-			Provider:  graphql.String(image.Provider),
-			Region:    graphql.String(image.Region),
-			ImageID:   graphql.String(image.ImageID),
-			ClientSHA: graphql.String(image.ClientSHA),
+// ToImages converts a result obtained from GraphQL of type `WhistImage`
+// to a slice of type `Image` for convenience.
+func ToImages(dbImages []whistImage) []Image {
+	var images []Image
+	for _, image := range dbImages {
+		images = append(images, Image{
+			Provider:  string(image.Provider),
+			Region:    string(image.Region),
+			ImageID:   string(image.ImageID),
+			ClientSHA: string(image.ClientSHA),
 			UpdatedAt: image.UpdatedAt,
-		},
+		})
 	}
+
+	return images
 }
