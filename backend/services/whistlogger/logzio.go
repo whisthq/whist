@@ -69,10 +69,6 @@ func newLogzioEncoderConfig() zapcore.EncoderConfig {
 	}
 }
 
-func (lc *logzioCore) AddFields() {
-
-}
-
 // Enabled is used to check whether the event should be logged
 // or not, depending on its level.
 func (lc *logzioCore) Enabled(level zapcore.Level) bool {
