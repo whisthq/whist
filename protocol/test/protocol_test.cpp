@@ -142,13 +142,6 @@ TEST_F(ProtocolTest, InitSDL) {
     check_stdout_line(::testing::HasSubstr("device"));
 #endif
 
-    // set_titlebar_color (from create_window)
-#if OS_IS(OS_WIN32)
-    check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
-#elif OS_IS(OS_LINUX)
-    check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
-#endif
-
     // Check that the initial title was set appropriately
     const char* title = SDL_GetWindowTitle(new_window);
     EXPECT_EQ(strcmp(title, "Whist"), 0);
