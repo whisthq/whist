@@ -174,11 +174,7 @@ void virtual_restore_window(WhistFrontend* frontend, int id) {}
 
 void virtual_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen) {}
 
-void virtual_resize_window(WhistFrontend* frontend, int id, int width, int height) {
-    VirtualFrontendContext* context = frontend->context;
-    context->width = width;
-    context->height = height;
-}
+void virtual_resize_window(WhistFrontend* frontend, int id, int width, int height) {}
 
 bool virtual_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
     if (fifo_queue_dequeue_item(events_queue, event) == 0) {

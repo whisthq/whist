@@ -38,6 +38,7 @@ typedef struct {
     // Width and height of the capture session
     int width;
     int height;
+    int pitch;
 
     // The gpu texture of the most recently captured frame
     CUdeviceptr p_gpu_texture;

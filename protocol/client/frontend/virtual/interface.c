@@ -1,6 +1,7 @@
 #include "common.h"
 #include "interface.h"
 #include <whist/utils/queue.h>
+#include <whist/network/network_algorithm.h>
 
 // Just chosen a very large number for events queue size. If required we can optimize/reduce it.
 #define MAX_EVENTS_QUEUED 10000
@@ -10,6 +11,8 @@ QueueContext* events_queue = NULL;
 static WhistMutex lock;
 static AVFrame* pending = NULL;
 static bool connected = false;
+static int requested_width;
+static int requested_height;
 
 void virtual_interface_connect(void) {
     lock = whist_create_mutex();
@@ -32,12 +35,25 @@ void* virtual_interface_get_handle_from_frame_ref(void* frame_ref) {
 }
 
 void virtual_interface_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data, int** linesize,
-                                              int* width, int* height) {
+                                              int* width, int* height, int* visible_width,
+                                              int* visible_height) {
     AVFrame* frame = frame_ref;
     *data = frame->data;
     *linesize = frame->linesize;
     *width = frame->width;
     *height = frame->height;
+    // If video width is rounded to the nearest even number, then crop the last pixel
+    if (frame->width - requested_width == 1) {
+        *visible_width = requested_width;
+    } else {
+        *visible_width = frame->width;
+    }
+    // If video height is rounded to the nearest even number, then crop the last pixel
+    if (frame->height - requested_height == 1) {
+        *visible_height = requested_height;
+    } else {
+        *visible_height = frame->height;
+    }
 }
 
 void virtual_interface_free_frame_ref(void* frame_ref) {
@@ -61,6 +77,10 @@ void virtual_interface_disconnect(void) {
 }
 
 void virtual_interface_send_event(const WhistFrontendEvent* frontend_event) {
+    if (frontend_event->type == FRONTEND_EVENT_RESIZE) {
+        requested_width = frontend_event->resize.width;
+        requested_height = frontend_event->resize.height;
+    }
     if (fifo_queue_enqueue_item(events_queue, frontend_event) != 0) {
         LOG_ERROR("Virtual event queuing failed");
     }

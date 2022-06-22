@@ -187,7 +187,7 @@ TEST_F(ProtocolTest, InitSDL) {
         whist_frontend_get_window_pixel_size(frontend, 0, &width, &height);
 
 #if !OS_IS(OS_LINUX)
-        int adjusted_width = width - (width % 8);
+        int adjusted_width = width - (width % 2);
         int adjusted_height = height - (height % 2);
 #else
         int adjusted_width = width;
@@ -1965,7 +1965,7 @@ TEST_F(ProtocolTest, VirtualEventTest) {
     EXPECT_EQ(virtual_wait_event(&frontend, &received_event, 1000), true);
     double time_elapsed = get_timer(&timer);
     EXPECT_TRUE((time_elapsed * MS_IN_SECOND) > (0.75 * VIRTUAL_INTERRUPT_MS) &&
-                (time_elapsed * MS_IN_SECOND) < (1.25 * VIRTUAL_INTERRUPT_MS));
+                (time_elapsed * MS_IN_SECOND) < (1.5 * VIRTUAL_INTERRUPT_MS));
     EXPECT_EQ(received_event.type, FRONTEND_EVENT_INTERRUPT);
     whist_wait_thread(thread_context, NULL);
     virtual_destroy(&frontend);

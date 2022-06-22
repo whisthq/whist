@@ -34,7 +34,26 @@ Includes
 
 #define PRINT_STATUS false
 
+#define CAPTURE_PIXEL_FORMAT NVFBC_BUFFER_FORMAT_BGRA
+
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
+
+static int get_pitch_to_width_ratio(NVFBC_BUFFER_FORMAT buffer_format) {
+    switch (buffer_format) {
+        case NVFBC_BUFFER_FORMAT_ARGB:
+        case NVFBC_BUFFER_FORMAT_RGBA:
+        case NVFBC_BUFFER_FORMAT_BGRA:
+            return 4;
+        case NVFBC_BUFFER_FORMAT_RGB:
+            return 3;
+        case NVFBC_BUFFER_FORMAT_NV12:
+        case NVFBC_BUFFER_FORMAT_YUV444P:
+            return 1;
+        default:
+            LOG_FATAL("Unknown NVFBC_BUFFER_FORMAT");
+            return -1;
+    }
+}
 
 /*
 ============================
@@ -137,12 +156,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device(void) {
     // Get width and height
     device->width = status_params.screenSize.w;
     device->height = status_params.screenSize.h;
-
-    if (device->width % 4 != 0) {
-        LOG_ERROR("Device width must be a multiple of 4!");
-        destroy_nvidia_capture_device(device);
-        return NULL;
-    }
+    device->pitch = device->width * get_pitch_to_width_ratio(CAPTURE_PIXEL_FORMAT);
 
     /*
      * Create a capture session.
@@ -155,7 +169,9 @@ NvidiaCaptureDevice* create_nvidia_capture_device(void) {
     create_capture_params.eCaptureType = NVFBC_CAPTURE_SHARED_CUDA;
     create_capture_params.bWithCursor = NVFBC_FALSE;
     create_capture_params.frameSize = frame_size;
-    create_capture_params.bRoundFrameSize = NVFBC_TRUE;
+    // We don't want the width and height to be rounded up to the next multiple of 4 and 2
+    // respectively. To capture at the exactly same resolution, we disable rounding frame size
+    create_capture_params.bRoundFrameSize = NVFBC_FALSE;
     create_capture_params.eTrackingType = NVFBC_TRACKING_DEFAULT;
     // Set to FALSE to avoid NVFBC_ERR_MUST_RECREATE error
     create_capture_params.bDisableAutoModesetRecovery = NVFBC_FALSE;
@@ -172,7 +188,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device(void) {
      */
     NVFBC_TOCUDA_SETUP_PARAMS setup_params = {0};
     setup_params.dwVersion = NVFBC_TOCUDA_SETUP_PARAMS_VER;
-    setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_BGRA;
+    setup_params.eBufferFormat = CAPTURE_PIXEL_FORMAT;
 
     status = device->p_fbc_fn.nvFBCToCudaSetUp(device->fbc_handle, &setup_params);
     if (status != NVFBC_SUCCESS) {
@@ -181,9 +197,14 @@ NvidiaCaptureDevice* create_nvidia_capture_device(void) {
         return NULL;
     }
 
-    // Allocate a buffer for YUV420.
-    CUresult res =
-        cu_mem_alloc_ptr(&device->p_gpu_texture, (device->width * device->height * 3) / 2);
+    // Round up to the nearest even number
+    int rounded_width = device->width + (device->width & 1);
+    int rounded_height = device->height + (device->height & 1);
+
+    // Allocate a buffer for ARGB, but with rounded resolutions.
+    CUresult res = cu_mem_alloc_ptr(
+        &device->p_gpu_texture,
+        (rounded_width * rounded_height * get_pitch_to_width_ratio(CAPTURE_PIXEL_FORMAT)));
     if (res != CUDA_SUCCESS) {
         LOG_ERROR("YUV buffer allocation failed %d", res);
         destroy_nvidia_capture_device(device);
@@ -326,32 +347,28 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
         device->corner_color.blue = top_left_corner[0];
     }
 
-    NppiSize roi;
-    roi.width = frame_info.dwWidth;
-    roi.height = frame_info.dwHeight;
-    Npp8u* dst[3];
-    int dst_step[3];
-    size_t luma_size = frame_info.dwWidth * frame_info.dwHeight;
-    size_t chroma_size = ((frame_info.dwWidth + 1) / 2) * ((frame_info.dwHeight + 1) / 2);
-    dst[0] = (Npp8u*)device->p_gpu_texture;
-    dst_step[0] = frame_info.dwWidth;
-    dst[1] = dst[0] + luma_size + chroma_size;
-    dst[2] = dst[0] + luma_size;
-    dst_step[1] = dst_step[2] = (frame_info.dwWidth + 1) / 2;
-    // The below function uses BT.601 studio swing for YUV conversion. Precisely,
-    // Npp32f nY  =  0.257F * R + 0.504F * G + 0.098F * B + 16.0F;
-    // Npp32f nCb = -0.148F * R - 0.291F * G + 0.439F * B + 128.0F;
-    // Npp32f nCr =  0.439F * R - 0.368F * G - 0.071F * B + 128.0F;
-    NppStatus npp_status =
-        nppiBGRToYCbCr420_8u_AC4P3R(p_rgb_texture, frame_info.dwWidth * 4, dst, dst_step, roi);
-    if (npp_status != NPP_NO_ERROR) {
-        LOG_ERROR("RGB to YUV conversion failed %d", npp_status);
-        return -1;
+    CUDA_MEMCPY2D copy_params;
+    copy_params.srcXInBytes = 0;
+    copy_params.srcY = 0;
+    copy_params.srcMemoryType = CU_MEMORYTYPE_DEVICE;
+    copy_params.srcDevice = (CUdeviceptr)p_rgb_texture;
+    copy_params.srcPitch = frame_info.dwWidth * get_pitch_to_width_ratio(CAPTURE_PIXEL_FORMAT);
+    copy_params.dstXInBytes = 0;
+    copy_params.dstY = 0;
+    copy_params.dstMemoryType = CU_MEMORYTYPE_DEVICE;
+    copy_params.dstDevice = device->p_gpu_texture;
+    copy_params.dstPitch = frame_info.dwWidth * get_pitch_to_width_ratio(CAPTURE_PIXEL_FORMAT);
+    copy_params.WidthInBytes = frame_info.dwWidth * get_pitch_to_width_ratio(CAPTURE_PIXEL_FORMAT);
+    copy_params.Height = frame_info.dwHeight;
+    copy_status = cu_memcpy_2d_v2_ptr(&copy_params);
+    if (copy_status != CUDA_SUCCESS) {
+        LOG_ERROR("Failed to memcpy to rounded CUDA RGB texture: %d.", copy_status);
     }
 
     // Set the device to use the newly captured width/height
     device->width = frame_info.dwWidth;
     device->height = frame_info.dwHeight;
+    device->pitch = device->width * get_pitch_to_width_ratio(CAPTURE_PIXEL_FORMAT);
 
 #if SHOW_DEBUG_FRAMES
     t2 = NvFBCUtilsGetTimeInMillis();

@@ -147,11 +147,11 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
 #if !OS_IS(OS_LINUX)
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
-    // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
+    // requirements. Specifically, it will round the width up to a multiple of 2 and the height up
     // to a multiple of 2. Here, we try to force the window size to be valid values so the
     // dimensions of the client and server match. We round down rather than up to avoid extending
     // past the size of the display.
-    desired_width = current_width - (current_width % 8);
+    desired_width = current_width - (current_width % 2);
     desired_height = current_height - (current_height % 2);
 #endif  // non-Linux
 

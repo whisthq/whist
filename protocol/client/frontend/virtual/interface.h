@@ -10,7 +10,8 @@ void virtual_interface_connect(void);
 void* virtual_interface_get_frame_ref(void);
 void* virtual_interface_get_handle_from_frame_ref(void* frame_ref);
 void virtual_interface_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data, int** linesize,
-                                              int* width, int* height);
+                                              int* width, int* height, int* visible_width,
+                                              int* visible_height);
 void virtual_interface_free_frame_ref(void* frame_ref);
 void virtual_interface_disconnect(void);
 
