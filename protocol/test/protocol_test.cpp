@@ -127,7 +127,8 @@ TEST_F(ProtocolTest, InitSDL) {
     expect_thread_logs("stdin_parser_thread");
 
     EXPECT_TRUE(frontend != NULL);
-    // manually create the first window, since window creation now happens in whist_client_main after frontend creation
+    // manually create the first window, since window creation now happens in whist_client_main
+    // after frontend creation
     whist_frontend_create_window(frontend, 0);
     SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->windows[0]->window;
     EXPECT_TRUE(new_window != NULL);
@@ -256,7 +257,7 @@ TEST_F(ProtocolTest, InitSDL) {
         while (whist_frontend_poll_event(frontend, &ignored))
             ;
 
-        // should be two titlebar change events
+            // should be two titlebar change events
 #if OS_IS(OS_WIN32)
         check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
 #elif OS_IS(OS_LINUX)

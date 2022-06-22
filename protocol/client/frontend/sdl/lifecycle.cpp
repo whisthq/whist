@@ -173,7 +173,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 #if OS_IS(OS_WIN32)
     sdl_native_init_notifications(frontend);
 #endif
-    
+
     // create the parser thread
 
     context->kill_stdin_parser = false;
@@ -317,7 +317,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     // server window starts solid color
     frontend->call->paint_solid(frontend, id, &window_context->color);
     // will be freed by the next SDL event poll
-    WhistRGBColor* titlebar_color = (WhistRGBColor*) safe_malloc(sizeof(window_context->color));
+    WhistRGBColor* titlebar_color = (WhistRGBColor*)safe_malloc(sizeof(window_context->color));
     *titlebar_color = window_context->color;
     frontend->call->set_titlebar_color(frontend, id, titlebar_color);
 
