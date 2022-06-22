@@ -114,6 +114,6 @@ func (mandelbox *mandelboxData) writeResourceMappingToFile(filename, data string
 		return utils.MakeError("Couldn't close file %s. Error: %v", filename, err)
 	}
 
-	logger.Info("Wrote data \"%s\" to file %s\n", data, filename)
+	logger.Infof("Wrote data \"%s\" to file %s\n", data, filename)
 	return nil
 }

@@ -49,9 +49,6 @@ func main() {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := &sync.WaitGroup{}
 
-	// Start Sentry and Logzio
-	logger.InitScalingLogging()
-
 	var (
 		dbClient            dbclient.WhistDBClient                // The client that abstracts database interactions
 		graphqlClient       subscriptions.WhistGraphQLClient      // The GraphQL client to query the Hasura server

@@ -243,6 +243,6 @@ func InitializeTLS(privatekeyPath string, certPath string) error {
 		return utils.MakeError("Unable to create x509 private key/certificate pair. Error: %v, Command output: %s", err, output)
 	}
 
-	logger.Info("Successfully created TLS certificate/private key pair. Certificate path: %s", certPath)
+	logger.Infof("Successfully created TLS certificate/private key pair. Certificate path: %s", certPath)
 	return nil
 }

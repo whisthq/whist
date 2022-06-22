@@ -160,6 +160,50 @@ func GetInstanceName() (InstanceName, error) {
 	return InstanceName(str), err
 }
 
+// GetAWSMetadata will get a map of all the AWS metadata
+// we can collect or infer from the instance.
+func GetAWSMetadata() (map[string]string, error) {
+	metadata := make(map[string]string)
+
+	ami, err := GetAmiID()
+	if err != nil {
+		return nil, utils.MakeError("failed to get ami id: %s", err)
+	}
+	metadata["aws.ami-id"] = string(ami)
+
+	id, err := GetInstanceID()
+	if err != nil {
+		return nil, utils.MakeError("failed to get instance id: %s", err)
+	}
+	metadata["aws.instance-id"] = string(id)
+
+	instanceType, err := GetInstanceType()
+	if err != nil {
+		return nil, utils.MakeError("failed to get instance type: %s", err)
+	}
+	metadata["aws.instance-type"] = string(instanceType)
+
+	region, err := GetPlacementRegion()
+	if err != nil {
+		return nil, utils.MakeError("failed to get instance region: %s", err)
+	}
+	metadata["aws.placement-region"] = string(region)
+
+	ip, err := GetPublicIpv4()
+	if err != nil {
+		return nil, utils.MakeError("failed to get ip address: %s", err)
+	}
+	metadata["aws.public-ipv4"] = ip.String()
+
+	name, err := GetInstanceName()
+	if err != nil {
+		return nil, utils.MakeError("failed to get instance name: %s", err)
+	}
+	metadata["aws.instance-name"] = string(name)
+
+	return metadata, nil
+}
+
 //===============
 
 // This helper function generates functions that retrieve metadata from the

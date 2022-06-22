@@ -299,9 +299,12 @@ func uninitializeFilesystem() {
 }
 
 func main() {
-	// The first thing we want to do is to initialize Logz.io and Sentry so that
-	// we can catch any errors that might occur, or logs if we print them.
-	logger.InitHostLogging()
+	// Set Sentry tags
+	tags, err := aws.GetAWSMetadata()
+	if err != nil {
+		logger.Errorf("Failed to set Sentry tags: %s", err)
+	}
+	logger.AddTags(tags)
 
 	// We create a global context (i.e. for the entire host service) that can be
 	// cancelled if the entire program needs to terminate. We also create a
@@ -369,8 +372,7 @@ func main() {
 
 		// Drain to our remote logging providers, but don't yet stop recording new
 		// events, in case the shutdown fails.
-		logger.FlushLogzio()
-		logger.FlushSentry()
+		logger.Sync()
 
 		logger.Info("Finished host service shutdown procedure. Finally exiting...")
 		if shutdownInstanceOnExit {
@@ -386,14 +388,11 @@ func main() {
 			}
 		}
 
-		// Shut down the logging infrastructure (including re-draining the queues).
-		logger.Close()
-
 		os.Exit(0)
 	}()
 
 	// Log the Git commit of the running executable
-	logger.Info("Host Service Version: %s", metadata.GetGitCommit())
+	logger.Infof("Host Service Version: %s", metadata.GetGitCommit())
 
 	// Initialize the database driver, if necessary (the `dbdriver` package
 	// takes care of the "if necessary" part).
@@ -551,7 +550,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			}
 
 		case dockerevent := <-dockerevents:
-			logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
+			logger.Infof("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 			if dockerevent.Action == "die" {
 				mandelboxDieHandler(dockerevent.ID, transportRequestMap, transportMapLock, dockerClient)
 			}
