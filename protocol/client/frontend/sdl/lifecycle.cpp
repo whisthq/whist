@@ -160,13 +160,6 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     window_context->is_fullscreen = false;
     window_context->is_resizable = true;
     context->windows[0] = window_context;
-    sdl_create_window(frontend, 0);
-
-    // Render the newly created window
-    sdl_render(frontend);
-
-    frontend->call->get_window_pixel_size(frontend, 0, &context->latest_pixel_width,
-                                          &context->latest_pixel_height);
 
     sdl_init_video_device(context);
 
