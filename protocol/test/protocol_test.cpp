@@ -256,6 +256,13 @@ TEST_F(ProtocolTest, InitSDL) {
         while (whist_frontend_poll_event(frontend, &ignored))
             ;
 
+        // should be two titlebar change events
+#if OS_IS(OS_WIN32)
+        check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+#elif OS_IS(OS_LINUX)
+        check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
+#endif
+
 #if OS_IS(OS_WIN32)
         check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
 #elif OS_IS(OS_LINUX)
