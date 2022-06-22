@@ -441,6 +441,11 @@ int whist_client_main(int argc, const char* argv[]) {
     // create the first window (initialized in lifecycle)
     whist_frontend_create_window(frontend, 0);
 
+    // Pump the event loop until the window fully finishes loading (mainly MacOS)
+    WhistFrontendEvent ignored;
+    while (whist_frontend_poll_event(frontend, &ignored)) {
+    }
+
     while (CLIENT_SHOULD_CONTINUE()) {
         WhistRenderer* renderer;
         pre_connection_setup(frontend, &renderer);

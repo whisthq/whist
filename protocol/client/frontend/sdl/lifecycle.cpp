@@ -170,18 +170,11 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 
     sdl_native_init_external_drag_handler(frontend);
 
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        // Pump the event loop until the window fully finishes loading. (mainly MacOS)
-    }
-
 #if OS_IS(OS_WIN32)
     sdl_native_init_notifications(frontend);
 #endif
-
-    // The window is fully loaded, but we hold off on showing it until we actually start rendering.
-    // The first call to sdl_paint_avframe() will set context->video_has_rendered to true. Then,
-    // the next call to sdl_render() will show the window and set context->window_has_shown to true.
+    
+    // create the parser thread
 
     context->kill_stdin_parser = false;
     // This thread reads entries of the form `key?value\n` or `key\n` from stdin and
