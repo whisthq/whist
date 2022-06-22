@@ -161,8 +161,6 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     window_context->is_resizable = true;
     context->windows[0] = window_context;
 
-    sdl_init_video_device(context);
-
     // TODO: Rebuild this functionality.
     // if (icon_png_filename != NULL) {
     //     SDL_Surface* icon_surface = sdl_surface_from_png_file(icon_filename);
@@ -313,6 +311,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
         }
         LOG_INFO("Using renderer: %s", info.name);
         context->render_driver_name = info.name;
+        sdl_init_video_device(context);
     }
 
 #if OS_IS(OS_WIN32)
