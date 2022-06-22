@@ -117,12 +117,7 @@ TEST_F(ProtocolTest, InitSDL) {
         }
     }
 
-    EXPECT_TRUE(frontend != NULL);
-    // manually create the first window, since window creation now happens in whist_client_main after frontend creation
-    whist_frontend_create_window(frontend, 0);
-    SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->windows[0]->window;
-    EXPECT_TRUE(new_window != NULL);
-
+    // sdl_native_init_external_drag_handler
 #if OS_IS(OS_WIN32)
     check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
 #elif OS_IS(OS_LINUX)
@@ -131,6 +126,13 @@ TEST_F(ProtocolTest, InitSDL) {
 
     expect_thread_logs("stdin_parser_thread");
 
+    EXPECT_TRUE(frontend != NULL);
+    // manually create the first window, since window creation now happens in whist_client_main after frontend creation
+    whist_frontend_create_window(frontend, 0);
+    SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->windows[0]->window;
+    EXPECT_TRUE(new_window != NULL);
+
+    // create_window
     check_stdout_line(::testing::HasSubstr("Using renderer: "));
 
 #if OS_IS(OS_WIN32)
@@ -138,6 +140,13 @@ TEST_F(ProtocolTest, InitSDL) {
     // can be success or an error message.  For this test we don't care
     // which of those it is, but we need to consume the message here.
     check_stdout_line(::testing::HasSubstr("device"));
+#endif
+
+    // set_titlebar_color (from create_window)
+#if OS_IS(OS_WIN32)
+    check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
+#elif OS_IS(OS_LINUX)
+    check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
 #endif
 
     // Check that the initial title was set appropriately
