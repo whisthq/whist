@@ -167,12 +167,13 @@ func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstan
 	var newInstances []subscriptions.Instance
 	for i := 0; i < int(numInstances); i++ {
 		newInstances = append(newInstances, subscriptions.Instance{
-			ID:        "test-scale-up-instance",
-			Provider:  "AWS",
-			ImageID:   image.ImageID,
-			ClientSHA: image.ClientSHA,
-			Type:      "g4dn.2xlarge",
-			Status:    "PRE_CONNECTION",
+			ID:                "test-scale-up-instance",
+			Provider:          "AWS",
+			ImageID:           image.ImageID,
+			ClientSHA:         image.ClientSHA,
+			Type:              "g4dn.2xlarge",
+			RemainingCapacity: instanceCapacity["g4dn.2xlarge"],
+			Status:            "PRE_CONNECTION",
 		})
 	}
 
