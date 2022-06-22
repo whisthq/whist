@@ -105,6 +105,8 @@ char* generate_random_string(size_t length) {
 
 TEST_F(ProtocolTest, InitSDL) {
     WhistFrontend* frontend = create_frontend();
+    // manually create the first window, since window creation now happens in whist_client_main after frontend creation
+    whist_frontend_create_window(frontend, 0);
 
     if (frontend == NULL) {
         // Check if there is no device available to test SDL (e.g. on Ubuntu CI)
@@ -121,6 +123,8 @@ TEST_F(ProtocolTest, InitSDL) {
     SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->windows[0]->window;
     EXPECT_TRUE(new_window != NULL);
 
+    expect_thread_logs("stdin_parser_thread");
+
     check_stdout_line(::testing::HasSubstr("Using renderer: "));
 
 #if OS_IS(OS_WIN32)
@@ -135,8 +139,6 @@ TEST_F(ProtocolTest, InitSDL) {
 #elif OS_IS(OS_LINUX)
     check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
 #endif
-
-    expect_thread_logs("stdin_parser_thread");
 
     // Check that the initial title was set appropriately
     const char* title = SDL_GetWindowTitle(new_window);

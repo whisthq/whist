@@ -334,8 +334,6 @@ static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* rende
  * @param renderer      A pointer to be filled in with a reference to the video/audio renderer.
  */
 static void pre_connection_setup(WhistFrontend* frontend, WhistRenderer** renderer) {
-    // create the first window (initialized in lifecycle)
-    whist_frontend_create_window(frontend, 0);
     FATAL_ASSERT(renderer != NULL);
     int initial_width = 0, initial_height = 0;
     whist_frontend_get_window_pixel_size(frontend, 0, &initial_width, &initial_height);
@@ -439,6 +437,9 @@ int whist_client_main(int argc, const char* argv[]) {
     }
 
     bool failed_to_connect = false;
+
+    // create the first window (initialized in lifecycle)
+    whist_frontend_create_window(frontend, 0);
 
     while (CLIENT_SHOULD_CONTINUE()) {
         WhistRenderer* renderer;
