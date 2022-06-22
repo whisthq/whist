@@ -123,6 +123,12 @@ TEST_F(ProtocolTest, InitSDL) {
     SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->windows[0]->window;
     EXPECT_TRUE(new_window != NULL);
 
+#if OS_IS(OS_WIN32)
+    check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
+#elif OS_IS(OS_LINUX)
+    check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
+#endif
+
     expect_thread_logs("stdin_parser_thread");
 
     check_stdout_line(::testing::HasSubstr("Using renderer: "));
@@ -132,12 +138,6 @@ TEST_F(ProtocolTest, InitSDL) {
     // can be success or an error message.  For this test we don't care
     // which of those it is, but we need to consume the message here.
     check_stdout_line(::testing::HasSubstr("device"));
-#endif
-
-#if OS_IS(OS_WIN32)
-    check_stdout_line(::testing::HasSubstr("Not implemented on Windows"));
-#elif OS_IS(OS_LINUX)
-    check_stdout_line(::testing::HasSubstr("Not implemented on X11"));
 #endif
 
     // Check that the initial title was set appropriately
