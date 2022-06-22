@@ -105,8 +105,6 @@ char* generate_random_string(size_t length) {
 
 TEST_F(ProtocolTest, InitSDL) {
     WhistFrontend* frontend = create_frontend();
-    // manually create the first window, since window creation now happens in whist_client_main after frontend creation
-    whist_frontend_create_window(frontend, 0);
 
     if (frontend == NULL) {
         // Check if there is no device available to test SDL (e.g. on Ubuntu CI)
@@ -120,6 +118,8 @@ TEST_F(ProtocolTest, InitSDL) {
     }
 
     EXPECT_TRUE(frontend != NULL);
+    // manually create the first window, since window creation now happens in whist_client_main after frontend creation
+    whist_frontend_create_window(frontend, 0);
     SDL_Window* new_window = ((SDLFrontendContext*)frontend->context)->windows[0]->window;
     EXPECT_TRUE(new_window != NULL);
 
