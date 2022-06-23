@@ -70,18 +70,39 @@ prune_containers_if_needed() {
   fi
 }
 
-build_client_mandelbox() {
-  echo "Setting the experiment duration to ${test_duration}s..."
-  run_cmd "sed -i \'s/timeout 240s/timeout ${test_duration}s/g\' ~/whist/mandelboxes/development/client/run-whist-client.sh"
-  run_cmd "cd ~/whist/mandelboxes && ./build.sh development/client --${cmake_build_type}"
-}
-
-build_server_mandelbox() {
-  run_cmd "cd ~/whist/mandelboxes && ./build.sh browsers/chrome --${cmake_build_type}"
+build_mandelboxes() {
+  if [[ "$role" == "client" ]]; then
+    echo "Setting the experiment duration to ${test_duration}s..."
+    run_cmd "sed -i \'s/timeout 240s/timeout ${test_duration}s/g\' ~/whist/mandelboxes/development/client/run-whist-client.sh"
+    run_cmd "cd ~/whist/mandelboxes && ./build.sh development/client --${cmake_build_type}"
+  else
+    run_cmd "cd ~/whist/mandelboxes && ./build.sh browsers/chrome --${cmake_build_type}"
+  fi
 }
 
 restore_network_conditions() {
-
+  # Check that ifconfig is installed
+  if ! command -v aws &> /dev/null
+  then
+    echo "ifconfig is not installed on the client instance, so we don't need to restore normal network conditions."
+    return
+  fi
+  # Kill the script to apply net conditions if it is still running
+  run_cmd "killall -9 -v apply_network_conditions.sh"
+  # Get the list of network devices
+  devices=($(basename -a /sys/class/net/* ))
+  for device in ${devices[*]}; do
+    if [[ $device == *"docker"* || $device == *"veth"* || $device == *"lo"* || $device == *"ifb"* ]]; then
+      continue
+    else
+      echo "Restoring normal network conditions on device ${device}"
+      # Inbound degradations
+      run_cmd "sudo tc qdisc del dev ${device} handle ffff: ingress"
+      # Outbound degradations
+      run_cmd "sudo tc qdisc del dev ${device} root netem"
+    fi
+  done
+  run_cmd "sudo modprobe -r ifb"
 }
 
 reboot_machine() {
@@ -100,10 +121,6 @@ main() {
     if [ $skip_host_setup -eq 0 ]; then run_host_setup; fi
     reboot_machine()
   else
-    if [[ "$role" == "client" ]]; then
-      build_client_mandelbox
-    else
-      build_server_mandelbox
-    fi
+    build_mandelboxes
   fi
 }
