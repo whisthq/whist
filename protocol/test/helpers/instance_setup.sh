@@ -13,11 +13,13 @@ skip_git_clone=0
 role="client"
 git_branch="dev"
 git_token="ajdbwjhefbwjkfbwjw"
+disk_pruning_threshold=75
 
 run_cmd() {
   command=${1}
   cmd_stdout=$(eval "$command" | tee --append "$logfile")
-  # Add newline
+  ret=$? # TODO: fix this to make the ret variable point to the "$command" exit code 
+  # Add newline to logfile
   echo >> "$logfile"
 }
 
@@ -58,10 +60,9 @@ run_host_setup() {
 
 
 prune_containers_if_needed() {
-  check = $(df -h | grep --color=never /dev/root)
-  # process here
-  prune_needed=0
-  if [[ $post_reboot -eq 0 ]]; then
+  run_cmd "df --output=pcent /dev/root | grep -v Use | sed 's/%//'"
+  disk_usage="$cmd_stdout"
+  if [[ "$disk_usage" -gt "$disk_pruning_threshold" ]]; then
     echo "Disk is more than 75% full, pruning the docker containers..."
     run_cmd "docker system prune -af"
   else
@@ -83,6 +84,11 @@ restore_network_conditions() {
 
 }
 
+reboot_machine() {
+  echo "Rebooting the machine..."
+  sudo reboot
+}
+
 main() {
   pre_reboot=${1}
   if [[ $pre_reboot -eq 1 ]]; then
@@ -92,7 +98,7 @@ main() {
     install_and_configure_aws
     if [ $skip_git_clone -eq 0 ]; then clone_whist_repository; fi
     if [ $skip_host_setup -eq 0 ]; then run_host_setup; fi
-    sudo reboot
+    reboot_machine()
   else
     if [[ "$role" == "client" ]]; then
       build_client_mandelbox
