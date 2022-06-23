@@ -3,21 +3,32 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+# variables below are to be set in the config file and imported
+logfile=/home/ubuntu/logfile.log
+aws_access_key_id="fill here"
+aws_secret_access_key="fill here"
+
+run_cmd() {
+  command=${1}
+  cmd_stdout=$(eval "$command" | tee --append "$logfile")
+  # Add newline
+  echo >> "$logfile"
+}
+
 wait_for_apt_locks() {
-  while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do echo 'Waiting for apt locks...'; sleep 1; done
+  run_cmd "while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do echo 'Waiting for apt locks...'; sleep 1; done"
 }
 
 prepare_for_host_setup() {
   # Set dkpg frontend as non-interactive to avoid irrelevant warnings
-  echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+  run_cmd "echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections"
   wait_for_apt_locks
   # Clean, upgrade and update all the apt lists
-  sudo apt-get clean -y && sudo apt-get upgrade -y && sudo apt-get update -y
+  run_cmd "sudo apt-get clean -y && sudo apt-get upgrade -y && sudo apt-get update -y"
 }
 
 install_and_configure_aws() {
-  aws_access_key_id=${1}
-  aws_secret_access_key=${2}
+  
   wait_for_apt_locks
   sudo apt-get -y update
   if ! command -v aws &> /dev/null
