@@ -23,6 +23,25 @@ run_cmd() {
   echo >> "$logfile"
 }
 
+handle_errors() {
+  errors_to_search=${1}
+  error_messages=${2}
+  corrective_actions=${3}
+
+  local index=0
+  for err in ${errors_to_search[*]}; do
+    if [[ -z $cmd_stdout == *"$err"* ]]; then
+      echo "${error_messages[$index]}"
+      if [[ ! -z "${corrective_actions[$index]}" ]]; then
+        echo "Attempting to fix with command ${corrective_actions[$index]}"
+        run_cmd "${corrective_actions[$index]}"
+      fi
+      break
+    fi
+    (( index++ ))
+  done
+}
+
 wait_for_apt_locks() {
   run_cmd "while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do echo 'Waiting for apt locks...'; sleep 1; done"
 }
