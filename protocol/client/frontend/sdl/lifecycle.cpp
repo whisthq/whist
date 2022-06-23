@@ -160,15 +160,6 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     window_context->is_fullscreen = false;
     window_context->is_resizable = true;
     context->windows[0] = window_context;
-    sdl_create_window(frontend, 0);
-
-    // Render the newly created window
-    sdl_render(frontend);
-
-    frontend->call->get_window_pixel_size(frontend, 0, &context->latest_pixel_width,
-                                          &context->latest_pixel_height);
-
-    sdl_init_video_device(context);
 
     // TODO: Rebuild this functionality.
     // if (icon_png_filename != NULL) {
@@ -179,18 +170,11 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
 
     sdl_native_init_external_drag_handler(frontend);
 
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        // Pump the event loop until the window fully finishes loading. (mainly MacOS)
-    }
-
 #if OS_IS(OS_WIN32)
     sdl_native_init_notifications(frontend);
 #endif
 
-    // The window is fully loaded, but we hold off on showing it until we actually start rendering.
-    // The first call to sdl_paint_avframe() will set context->video_has_rendered to true. Then,
-    // the next call to sdl_render() will show the window and set context->window_has_shown to true.
+    // create the parser thread
 
     context->kill_stdin_parser = false;
     // This thread reads entries of the form `key?value\n` or `key\n` from stdin and
@@ -320,6 +304,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
         }
         LOG_INFO("Using renderer: %s", info.name);
         context->render_driver_name = info.name;
+        sdl_init_video_device(context);
     }
 
 #if OS_IS(OS_WIN32)
@@ -331,7 +316,10 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     // We don't need to do this if we don't initialize the window until we get frames from the
     // server window starts solid color
     frontend->call->paint_solid(frontend, id, &window_context->color);
-    frontend->call->set_titlebar_color(frontend, id, &window_context->color);
+    // will be freed by the next SDL event poll
+    WhistRGBColor* titlebar_color = (WhistRGBColor*)safe_malloc(sizeof(window_context->color));
+    *titlebar_color = window_context->color;
+    frontend->call->set_titlebar_color(frontend, id, titlebar_color);
 
     // Safe to set these post-initialization.
     sdl_native_init_window_options(window_context->window);
