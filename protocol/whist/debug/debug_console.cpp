@@ -14,6 +14,7 @@ Includes
 #include <assert.h>
 #include <whist/core/whist.h>
 extern "C" {
+#include "whist/debug/plotter.h"
 #include "debug_console.h"
 #include <whist/network/udp.h>
 #include <whist/utils/threads.h>
@@ -101,6 +102,7 @@ int init_debug_console() {
     UNUSED(&create_local_udp_listen_socket);
     UNUSED(&debug_console_thread);
 #endif
+    whist_plotter_init();
     return 0;
 }
 
@@ -174,6 +176,8 @@ static string handle_set(vector<string> cmd) {
             g_override_values.verbose_log_audio = stoi(cmd[2]);
         } else if (cmd[1] == "simulate_freeze") {
             g_override_values.simulate_freeze = stoi(cmd[2]);
+        } else if (cmd[1] == "plot_audio_algo") {
+            g_override_values.plot_audio_algo = stoi(cmd[2]);
         } else {
             ok = 0;
         }
@@ -182,6 +186,29 @@ static string handle_set(vector<string> cmd) {
     return "";
 }
 
+// function to handle the plot-related commands
+static string handle_plot(vector<string> cmd) {
+    if (cmd[0] == "plot_start") {
+        whist_plotter_start_sampling();
+        return "started or restarted";
+    }
+    if (cmd[0] == "plot_stop") {
+        whist_plotter_stop_sampling();
+        return "stopped";
+    } else if (cmd[0] == "plot_export") {
+        if (cmd.size() < 2) return "need file name";
+
+        string s = whist_plotter_export();
+        ofstream myfile;
+        myfile.open(cmd[1].c_str());
+        myfile << s;
+        myfile.close();
+
+        return "written to " + cmd[1];
+    } else {
+        return wrap_with_color("unknown command " + cmd[0], RED);
+    }
+}
 // function to handle the report command
 static string handle_report(vector<string> cmd) {
     int type = 0;
@@ -202,6 +229,11 @@ static string handle_report(vector<string> cmd) {
         more_format = true;
     }
     string s = whist_analyzer_get_report(type, num_records, skip_last, more_format);
+
+    if (s.empty()) {
+        return wrap_with_color("protocol analyzer not running", RED);
+    }
+
     if (cmd.size() > 1) {
         ofstream myfile;
         myfile.open(cmd[1].c_str());
@@ -224,7 +256,8 @@ static string handle_info(vector<string> cmd) {
     ss << "verbose_log=" << g_override_values.verbose_log << endl;
     ss << "verbose_log_audio=" << g_override_values.verbose_log_audio << endl;
     ss << "skip_last=" << skip_last << endl;
-    ss << "report_num=" << num_records;
+    ss << "report_num=" << num_records << endl;
+    ss << "plot_audio_algo=" << g_override_values.plot_audio_algo << endl;
     return ss.str();
 }
 
@@ -268,6 +301,8 @@ static int debug_console_thread(void *) {
             reply2 = handle_info(cmd);
         } else if (cmd[0] == "insert_atexit_handler" || cmd[0] == "insert") {
             reply2 = handle_insert_atexit_handler();
+        } else if (cmd[0] == "plot_start" || cmd[0] == "plot_stop" || cmd[0] == "plot_export") {
+            reply2 = handle_plot(cmd);
         } else {
             reply2 = wrap_with_color("unrecongized command", RED);
         }

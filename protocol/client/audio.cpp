@@ -22,7 +22,9 @@ Includes
 #include <deque>
 #include <atomic>
 #include <algorithm>
+#include "whist/utils/clock.h"
 extern "C" {
+#include "whist/debug/plotter.h"
 #include "audio.h"
 #include "network.h"
 #include <whist/logging/log_statistic.h>
@@ -567,6 +569,13 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     whist_analyzer_record_current_audio_queue_info(adaptive_parameter_controller.get_scale_factor(),
                                                    total_queue_len - device_queue_len,
                                                    device_queue_len);
+    if (PLOT_AUDIO_ALGO || get_debug_console_override_values()->plot_audio_algo) {
+        double current_time = get_timestamp_sec();
+        whist_plotter_insert_sample("audio_device_queue", current_time, device_queue_len);
+        whist_plotter_insert_sample("audio_total_queue", current_time, total_queue_len);
+        whist_plotter_insert_sample("audio_scale_factor", current_time,
+                                    adaptive_parameter_controller.get_scale_factor());
+    }
 
     if (LOG_AUDIO) {
         LOG_INFO_RATE_LIMITED(0.1, 1,
@@ -625,6 +634,16 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
         } else {
             LOG_INFO("Receiving Audio");
         }
+    }
+
+    if (PLOT_AUDIO_ALGO || get_debug_console_override_values()->plot_audio_algo) {
+        double current_time = get_timestamp_sec();
+        whist_plotter_insert_sample(
+            "audio_dup", current_time,
+            queue_len_controller.get_adjust_command() == DUP_FRAME ? 1.0 : 0.0);
+        whist_plotter_insert_sample(
+            "audio_drop", current_time,
+            queue_len_controller.get_adjust_command() == DROP_FRAME ? 1.0 : 0.0);
     }
 
     // If we're supposed to drop it, drop it.

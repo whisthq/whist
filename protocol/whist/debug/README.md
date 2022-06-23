@@ -94,6 +94,22 @@ Take a peek of the values of parameters supported by set
 
 Insert a atexit handler that turns exit() to abort, so that we can get the stack calling exit(). It's helpful for debugging problems, when you don't know where in the code called exit(), especially the exit() is called in some lib.
 
+#### `plot_xxx`
+
+Use `plot_start` to start or restart (the sampling of) plotting.
+
+Use `plot_export <filename>` to export the plot data to a file, which can be future turned into plot graphs by the `plotter.py`. Examples:
+
+```
+#inside debug console
+plot_export /Users/yancey/demo.json
+
+#inside shell
+./plotter.py ~/demo.json
+```
+
+Use `plot_stop` to stop (the sampling) of plotting, e.g avoid waste of CPU and memory used on sampling.
+
 ## Protocol Analyzer
 
 ### Overview
@@ -316,3 +332,204 @@ string FrameLevelInfo::to_string()
 ```
 
 If you want new attributes of frames to be printed out, add code to this function.
+
+## Plotter
+
+### Overiew
+
+the Plotter consist of the C++ APIs part (`plotter.h` and `plotter.cpp`) and the python helper `plotter.py` part.
+
+#### C++ API part
+
+##### Controlling APIs:
+
+```
+void whist_plotter_init(void);  // init the plotter, usually called inside
+void whist_plotter_start_sampling(void);  // start sampling,
+void whist_plotter_stop_sampling(void);   // stop sampling
+```
+
+They are usually expected to be called inside `debug_console`. But you can also call it manually at other places, e.g. in the unit-test to manually draw plot graphs.
+
+##### Sampling API:
+
+```
+void whist_plotter_insert_sample(const char* label, double x, double y);
+```
+
+This function can be called anywhere inside the `WhistClient`. The first parameter `label` is the label of data point `{x,y}`, data point with same label are considered to belong to a same data collection and has the same color in plotting. The `x` and `y`, are self-explained values to be plotted.
+
+#### Data Exporting API:
+
+```
+std::string whist_plotter_export();
+```
+
+This function exports the sampled values to a string of json, which can be turned into graphs by the `plotter.py`.
+
+It's usually expected to be called inside `debug_console`. But you can also call it manually at other places.
+
+#### Python Helper Part
+
+The python helper is the `plotter.py`, which turns the exported data into graphs. Full options:
+
+```
+Usage: plotter.py [options] filename1 [filename2 ...]
+
+Options:
+  -h, --help            show this help message and exit
+  -s, --scatter         draw scatter instead of line
+  -d, --distribution    draw distribution of y, instead of the x-y plot
+  -f FILTER_PATTERN, --filter=FILTER_PATTERN
+                        regex expression to filter label names
+  -r RANGE_X, --range=RANGE_X
+                        range of x, e.g. "10.0~15.0"
+  -w WEIGHT, --weight=WEIGHT
+                        weight of the line or point, default: 0.5
+```
+
+### Introduce to the use of plotter
+
+#### Practices for using the Sampling API
+
+To easily control the plotting of data, and to avoid wasting CPU and memory to sample the data you are not interested.
+
+It's suggested to organize related datasets as a group, and enable/disable the group as needed.
+
+This can be done in two ways:
+
+1. use MACRO
+2. use the dynamic value change mechanism of `debug_console`, AKA the `set` command.
+
+##### MACRO Method
+
+Define PLOT_AUDIO_ALGO inside `debug_flags.h`:
+
+```
+#define PLOT_AUDIO_ALGO false                // audio algo
+```
+
+Guard the group of datasets with macro:
+
+```
+    if (PLOT_AUDIO_ALGO) {
+        double current_time = get_timestamp_sec();
+        whist_plotter_insert_sample("audio_device_queue", current_time, device_queue_len);
+        whist_plotter_insert_sample("audio_total_queue", current_time, total_queue_len);
+        whist_plotter_insert_sample("audio_scale_factor", current_time,
+                                    adaptive_parameter_controller.get_scale_factor());
+    }
+```
+
+Then you can enable/disable the group at compile time with MACRO.
+
+##### dynamic Method
+
+If a group of data need to be looked very frequently, you might want to enable/disable the group without re-compile.
+
+First, you define `plot_audio_algo` inside the `DebugConsoleOverrideValues struct` of `debug_consol.h`. And make the relevant modification to `handle_set()` `handle_info()` to support that variable.
+
+Guard the group with the `plot_audio_algo` variable:
+
+```
+    if (get_debug_console_override_values()->plot_audio_algo) {
+        double current_time = get_timestamp_sec();
+        whist_plotter_insert_sample("audio_device_queue", current_time, device_queue_len);
+        whist_plotter_insert_sample("audio_total_queue", current_time, total_queue_len);
+        whist_plotter_insert_sample("audio_scale_factor", current_time,
+                                    adaptive_parameter_controller.get_scale_factor());
+    }
+```
+
+Then you can enable/disable the group with:
+
+```
+#inside debug console
+set plot_audio_algo 1           #to enable
+set plot_audio_algo 0           #to disable
+```
+
+#### Examples of using the `plotter.py`
+
+#### Basic usage
+
+```
+./plotter.py ~/sdl_present_cpu_copy.json
+```
+
+<img src="https://user-images.githubusercontent.com/4922024/176613266-80a41f03-69dc-4ec9-bac5-19143f66668e.png" width="400">
+
+#### Change style
+
+Sometimes the lines are too dense and hides each other, you can change style to scatter for a better view:
+
+```
+./plotter.py ~/saved_plots/audio_algo_new_piece.json -s
+```
+
+default style vs scatter style:
+
+<img src="https://user-images.githubusercontent.com/4922024/176612467-b9561388-e27c-4c09-ba56-cce24fbc341d.png" width="400"> <img src="https://user-images.githubusercontent.com/4922024/176612641-ebed72cf-d2d4-48c7-906f-e8af6694e882.png" width="400">
+
+#### Use distribution graph
+
+Sometimes the plot is filled by spikes, looking at the distribution of y value might give you a better understanding of data:
+
+```
+./plotter.py ~/socket_queue_len.json -d
+```
+
+default graph vs distribution graph:
+
+<img src="https://user-images.githubusercontent.com/4922024/176611074-6849c5bd-8af4-42a4-8c82-adce80dd5297.png" width="400"> <img src="https://user-images.githubusercontent.com/4922024/176613048-ad841793-2370-4500-ad71-bb2e6a196632.png" width="400">
+
+#### Change Weight
+
+You can also change the weight of line or scatter with the `-w` option:
+
+```
+./plotter.py ~/udp_dedicated_thread.json -d -w 2
+```
+
+default weight vs changed weight:
+
+<img src="https://user-images.githubusercontent.com/4922024/176620204-c7575168-0ad5-413c-a278-86aa02c6cd63.png" width="400"> <img src="https://user-images.githubusercontent.com/4922024/176620131-9980ce33-aaf3-43da-b41f-0e1465222ec3.png" width="400">
+
+#### User Label filter
+
+Sometimes the exported data contains too many labels than you are interested, you can filter out the interested lablel with regular expression:
+
+```
+./plotter.py ~/saved_plots/audio_algo_new.json -f '.*(scale|device).*'
+```
+
+without filter vs with filter:
+
+<img src="https://user-images.githubusercontent.com/4922024/176617848-6af9c004-2c1f-46c7-a13e-f5c0c3fe6049.png" width="400"> <img src="https://user-images.githubusercontent.com/4922024/176618049-d4702445-063b-4c58-beb7-cd9f94363d0f.png" width="400">
+
+#### Plot only specific range
+
+Sometimes the graph contains a super lage range of data. You can use the zoom function of the UI to zoom, but huge amount of data might make your UI very slow.
+
+So you might want to pre-specify a range of x data to plot, with the `-r` option:
+
+```
+./plotter.py ~/saved_plots/audio_algo_new.json -r 35~60
+```
+
+without range vs with range:
+
+<img src="https://user-images.githubusercontent.com/4922024/176618908-bab9bc36-3727-4368-89a0-873c09ee6d67.png" width="400"> <img src="https://user-images.githubusercontent.com/4922024/176619182-f9e75493-db2d-4cec-acfd-fd6d584ce01f.png" width="400">
+
+#### Compare two plots
+
+For easier comparsion, you can specific multiple files to `./plotter`, and compare the graphs on the same picture:
+
+```
+./plotter.py ~/my_pr.json ~/dev.json
+
+```
+
+<img src="https://user-images.githubusercontent.com/4922024/176622283-2109e8da-c432-41df-a4a1-ab4671a18762.png" width="400">
+
+Note that when you specific more than one input files, the labels are auto prefixed by the file name.

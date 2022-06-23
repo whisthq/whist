@@ -1,4 +1,5 @@
 add_library(whistDebug STATIC
+        plotter.cpp
         debug_console.cpp
         protocol_analyzer.cpp
         )

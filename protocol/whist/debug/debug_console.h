@@ -41,6 +41,8 @@ typedef struct {
     int verbose_log;
     int verbose_log_audio;  // you can add more log flags like this
     int simulate_freeze;    // this is an expample rather than a out-of-box option
+
+    int plot_audio_algo;  // plot can use dynamic flags too
 } DebugConsoleOverrideValues;
 
 /*

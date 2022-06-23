@@ -29,6 +29,9 @@ Includes
 #include <whist/utils/color.h>
 #include "client_utils.h"
 #include "whist/core/whist.h"
+#include "whist/debug/debug_flags.h"
+#include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
 
 static WhistMutex frontend_render_mutex;
 
@@ -317,11 +320,22 @@ void sdl_update_pending_tasks(WhistFrontend* frontend) {
     }
     whist_unlock_mutex(window_resize_mutex);
 
+    double time_before_sdl_present;
+    if (PLOT_SDL_PRESENT_FRAME_BUFFER) {
+        time_before_sdl_present = get_timestamp_sec();
+    }
+
     whist_gpu_lock();
     sdl_present_pending_cursor(frontend);
 
     sdl_present_pending_framebuffer(frontend);
     whist_gpu_unlock();
+
+    if (PLOT_SDL_PRESENT_FRAME_BUFFER) {
+        double current_time = get_timestamp_sec();
+        whist_plotter_insert_sample("sdl_present", current_time,
+                                    (current_time - time_before_sdl_present) * MS_IN_SECOND);
+    }
 }
 
 void sdl_utils_check_private_vars(bool* pending_resize_message_ptr) {

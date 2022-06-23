@@ -14,6 +14,9 @@ Includes
 #include "handle_frontend_events.h"
 #include "whist/core/whist.h"
 #include "whist/debug/debug_console.h"
+#include "whist/debug/debug_flags.h"
+#include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
 #include <whist/logging/log_statistic.h>
 
 /*
@@ -184,9 +187,20 @@ int32_t multithreaded_video_renderer(void* opaque) {
             break;
         }
 
+        double time_before_render_video;
+        if (PLOT_RENDER_VIDEO) {
+            time_before_render_video = get_timestamp_sec();
+        }
+
         whist_gpu_lock();
         int ret = render_video(whist_renderer->video_context);
         whist_gpu_unlock();
+
+        if (PLOT_RENDER_VIDEO) {
+            double current_time = get_timestamp_sec();
+            whist_plotter_insert_sample("render_video", current_time,
+                                        (current_time - time_before_render_video) * MS_IN_SECOND);
+        }
 
         // Otherwise, try to render, but note that 1 means the renderer is still pending
         // TODO: Make render_video internally semaphore on render, so we don't have to check
