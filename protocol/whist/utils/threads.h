@@ -34,17 +34,17 @@
 /**
  * Mutex object type.
  */
-typedef SDL_mutex* WhistMutex;
+typedef struct WhistMutexStruct* WhistMutex;
 /**
  * Condition variable object type.
  *
  * This must have an associated mutex.
  */
-typedef SDL_cond* WhistCondition;
+typedef struct WhistConditionStruct* WhistCondition;
 /**
  * Semaphore object type.
  */
-typedef SDL_sem* WhistSemaphore;
+typedef struct WhistSemaphoreStruct* WhistSemaphore;
 /**
  * Thread handle type.
  *
@@ -106,7 +106,7 @@ typedef enum WhistThreadPriority {
  * This is used to store and retrieve data accessible only to
  * the current thread.
  */
-typedef SDL_TLSID WhistThreadLocalStorageKey;
+typedef unsigned int WhistThreadLocalStorageKey;
 
 /**
  * Thread-local storage destructor function type.
@@ -299,7 +299,7 @@ void whist_wait_cond(WhistCondition cond, WhistMutex mutex);
  * @returns True if the conditional variable was woken up by a signal,
  *          False if the timeout was simply exceeded
  */
-int whist_timedwait_cond(WhistCondition cond, WhistMutex mutex, uint32_t timeout_ms);
+bool whist_timedwait_cond(WhistCondition cond, WhistMutex mutex, uint32_t timeout_ms);
 
 /**
  * @brief Signal to all waiters that a condition may have changed.

@@ -3,14 +3,17 @@ extern "C" {
 #include "threads.h"
 }
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 #include <string>
 
 struct WhistThreadStruct {
     std::string thread_name;
     int ret_value;
     std::thread whist_thread;
-    WhistThreadStruct(std::string thread_name, WhistThreadFunction thread_function, void *data)
-        : thread_name(thread_name),
+    WhistThreadStruct(std::string param_thread_name, WhistThreadFunction thread_function,
+                      void *data)
+        : thread_name(param_thread_name),
           ret_value(0),
           whist_thread([this, thread_function, data]() -> void {
               int ret = thread_function(data);
@@ -116,131 +119,125 @@ void whist_set_thread_priority(WhistThreadPriority priority) {
     }
 }
 
+// 1, so that a default-initalized WhistThreadLocalStorageKey won't exist in tls_map
+static thread_local WhistThreadLocalStorageKey next_key = 1;
+static thread_local std::map<WhistThreadLocalStorageKey,
+                             std::pair<void *, WhistThreadLocalStorageDestructor>>
+    tls_map;
+
 WhistThreadLocalStorageKey whist_create_thread_local_storage(void) {
-    WhistThreadLocalStorageKey key = SDL_TLSCreate();
-    if (key == 0) {
-        LOG_FATAL("Failure creating thread local storage: %s", SDL_GetError());
-    }
-    return key;
+    WhistThreadLocalStorageKey current_key = next_key++;
+    tls_map[current_key] = {nullptr, nullptr};
+    return current_key;
 }
 
 void whist_set_thread_local_storage(WhistThreadLocalStorageKey key, void *data,
                                     WhistThreadLocalStorageDestructor destructor) {
-    if (SDL_TLSSet(key, data, destructor) < 0) {
-        LOG_FATAL("Failure setting thread local storage: %s", SDL_GetError());
+    auto &tls_pair = tls_map.at(key);
+    // If the previous value needs to be destroyed,
+    if (tls_pair.second != nullptr) {
+        // Destroy it
+        tls_pair.second(tls_pair.first);
     }
+    // Now, save the new value
+    tls_pair = {data, destructor};
 }
 
-void *whist_get_thread_local_storage(WhistThreadLocalStorageKey key) { return SDL_TLSGet(key); }
+void *whist_get_thread_local_storage(WhistThreadLocalStorageKey key) {
+    return tls_map.at(key).first;
+}
 
-void whist_sleep(uint32_t ms) { SDL_Delay(ms); }
+void whist_sleep(uint32_t ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
 
 void whist_usleep(uint32_t us) {
 #if OS_IS(OS_WIN32)
-    // Not sure if this is implemented on Windows, so just fall back to SDL_Delay.
+    // Not sure if this is implemented on Windows, so just fall back to whist_sleep.
     whist_sleep(us / 1000);
 #else
     usleep(us);
 #endif  // Windows
 }
 
-WhistMutex whist_create_mutex(void) {
-    WhistMutex ret = SDL_CreateMutex();
-    if (ret == NULL) {
-        LOG_FATAL("Failure creating mutex: %s", SDL_GetError());
-    }
-    return ret;
-}
+struct WhistMutexStruct {
+    std::recursive_mutex mutex;
+};
 
-void whist_lock_mutex(WhistMutex mutex) {
-    if (SDL_LockMutex(mutex) < 0) {
-        LOG_FATAL("Failure locking mutex: %s", SDL_GetError());
-    }
-}
+WhistMutex whist_create_mutex() { return new WhistMutexStruct(); }
+
+void whist_lock_mutex(WhistMutex mutex) { mutex->mutex.lock(); }
 
 int whist_try_lock_mutex(WhistMutex mutex) {
-    int status = SDL_TryLockMutex(mutex);
-    if (status == 0 || status == SDL_MUTEX_TIMEDOUT) {
-        return status;
-    } else {
-        LOG_FATAL("Failure try-locking mutex: %s", SDL_GetError());
-    }
+    // Return 0 on success, 1 on failure
+    return mutex->mutex.try_lock() ? 0 : 1;
 }
 
-void whist_unlock_mutex(WhistMutex mutex) {
-    if (SDL_UnlockMutex(mutex) < 0) {
-        LOG_FATAL("Failure unlocking mutex: %s", SDL_GetError());
-    }
-}
+void whist_unlock_mutex(WhistMutex mutex) { mutex->mutex.unlock(); }
 
-void whist_destroy_mutex(WhistMutex mutex) { SDL_DestroyMutex(mutex); }
+void whist_destroy_mutex(WhistMutex mutex) { delete mutex; }
 
-WhistCondition whist_create_cond(void) {
-    WhistCondition ret = SDL_CreateCond();
-    if (ret == NULL) {
-        LOG_FATAL("Failure creating condition variable: %s", SDL_GetError());
-    }
-    return ret;
-}
+struct WhistConditionStruct {
+    std::condition_variable_any cond;
+};
 
-void whist_wait_cond(WhistCondition cond, WhistMutex mutex) {
-    if (SDL_CondWait(cond, mutex) < 0) {
-        LOG_FATAL("Failure waiting on condition variable: %s", SDL_GetError());
-    }
-}
+WhistCondition whist_create_cond(void) { return new WhistConditionStruct(); }
 
-int whist_timedwait_cond(WhistCondition cond, WhistMutex mutex, uint32_t timeout_ms) {
-    int ret = SDL_CondWaitTimeout(cond, mutex, timeout_ms);
-    if (ret == SDL_MUTEX_TIMEDOUT) {
+void whist_wait_cond(WhistCondition cond, WhistMutex mutex) { cond->cond.wait(mutex->mutex); }
+
+bool whist_timedwait_cond(WhistCondition cond, WhistMutex mutex, uint32_t timeout_ms) {
+    std::cv_status status =
+        cond->cond.wait_for(mutex->mutex, std::chrono::milliseconds(timeout_ms));
+    if (status == std::cv_status::timeout) {
         return false;
-    } else if (ret == 0) {
-        return true;
     } else {
-        LOG_FATAL("Failure waiting on condition variable: %s", SDL_GetError());
+        return true;
     }
 }
 
 void whist_broadcast_cond(WhistCondition cond) {
     // A spurious wake, can cause a wait_cond thread to not actually be waiting, during this
     // broadcast. Thus, the mutex must be locked in order to guarantee a wakeup
-    if (SDL_CondBroadcast(cond) < 0) {
-        LOG_FATAL("Failure broadcasting condition variable: %s", SDL_GetError());
-    }
+    cond->cond.notify_all();
 }
 
-void whist_destroy_cond(WhistCondition cond) { SDL_DestroyCond(cond); }
+void whist_destroy_cond(WhistCondition cond) { delete cond; }
 
-WhistSemaphore whist_create_semaphore(uint32_t initial_value) {
-    WhistSemaphore ret = SDL_CreateSemaphore(initial_value);
-    if (ret == NULL) {
-        LOG_FATAL("Failure creating semaphore: %s", SDL_GetError());
-    }
-    return ret;
-}
+struct WhistSemaphoreStruct {
+    // Note: std::counting_semaphore doesn't compile on Mac
+    std::mutex mutex;
+    std::condition_variable_any condvar;
+    int count;
+};
+
+WhistSemaphore whist_create_semaphore(uint32_t initial_value) { return new WhistSemaphoreStruct(); }
 
 void whist_post_semaphore(WhistSemaphore semaphore) {
-    if (SDL_SemPost(semaphore) < 0) {
-        LOG_FATAL("Failure posting semaphore: %s", SDL_GetError());
-    }
+    std::unique_lock<std::mutex> lock(semaphore->mutex);
+    semaphore->count++;
+    semaphore->condvar.notify_one();
 }
 
 void whist_wait_semaphore(WhistSemaphore semaphore) {
-    if (SDL_SemWait(semaphore) < 0) {
-        LOG_FATAL("Failure waiting on semaphore: %s", SDL_GetError());
-    }
+    std::unique_lock<std::mutex> lock(semaphore->mutex);
+    semaphore->condvar.wait(semaphore->mutex, [semaphore] { return semaphore->count > 0; });
+    semaphore->count--;
 }
 
 bool whist_wait_timeout_semaphore(WhistSemaphore semaphore, int timeout_ms) {
-    int ret = SDL_SemWaitTimeout(semaphore, timeout_ms);
-    if (ret == SDL_MUTEX_TIMEDOUT) {
-        return false;
-    } else if (ret == 0) {
+    std::unique_lock<std::mutex> lock(semaphore->mutex);
+    bool wait_succeeded =
+        semaphore->condvar.wait_for(semaphore->mutex, std::chrono::milliseconds(timeout_ms),
+                                    [semaphore] { return semaphore->count > 0; });
+    if (wait_succeeded) {
+        semaphore->count--;
         return true;
     } else {
-        LOG_FATAL("Failure waiting on semaphore: %s", SDL_GetError());
+        return false;
     }
 }
 
-uint32_t whist_semaphore_value(WhistSemaphore semaphore) { return SDL_SemValue(semaphore); }
+uint32_t whist_semaphore_value(WhistSemaphore semaphore) {
+    std::unique_lock<std::mutex> lock(semaphore->mutex);
+    return semaphore->count;
+}
 
-void whist_destroy_semaphore(WhistSemaphore semaphore) { SDL_DestroySemaphore(semaphore); }
+void whist_destroy_semaphore(WhistSemaphore semaphore) { delete semaphore; }
