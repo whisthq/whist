@@ -80,7 +80,8 @@ build_mandelboxes() {
   fi
 }
 
-restore_network_conditions() {
+restore_network_conditions_if_needed() {
+  if [ "$role" != "client" ]; then return; fi
   # Check that ifconfig is installed
   if ! command -v aws &> /dev/null
   then
@@ -113,13 +114,13 @@ reboot_machine() {
 main() {
   pre_reboot=${1}
   if [[ $pre_reboot -eq 1 ]]; then
-    if [ "$role" == "client" ]; then restore_network_conditions; fi
+    restore_network_conditions_if_needed
     prepare_for_host_setup
     prune_containers_if_needed
     install_and_configure_aws
     if [ $skip_git_clone -eq 0 ]; then clone_whist_repository; fi
     if [ $skip_host_setup -eq 0 ]; then run_host_setup; fi
-    reboot_machine()
+    reboot_machine
   else
     build_mandelboxes
   fi
