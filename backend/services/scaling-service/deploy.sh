@@ -67,7 +67,7 @@ deploy_scaling_service() {
     sleep 1
     echo "Failed to deploy to Heroku on attempt #$count of 5, retrying..."
   done
-  
+
   if [ "$count" == "5" ]; then
     echo "Scaling-service failed to deploy to Heroku after 5 tries, aborting."
     exit 1
