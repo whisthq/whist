@@ -61,7 +61,8 @@ install_and_configure_aws() {
   if ! command -v aws &> /dev/null
   then
     echo "AWS-CLI not yet installed. Installing using apt-get..."
-    sudo apt-get install -y awscli || echo "Installing AWS-CLI using apt-get failed. This usually happens when the Ubuntu package lists are being updated." && exit
+    run_cmd "sudo apt-get install -y awscli"
+    # || echo "Installing AWS-CLI using apt-get failed. This usually happens when the Ubuntu package lists are being updated." && exit
   fi
   run_cmd "aws configure set aws_access_key_id $aws_access_key_id"
   run_cmd "aws configure set aws_secret_access_key $aws_secret_access_key"
@@ -74,6 +75,7 @@ clone_whist_repository() {
 }
 
 run_host_setup() {
+  echo "Running the host setup..."
   wait_for_apt_locks
   run_cmd "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment"
 }
@@ -91,17 +93,25 @@ prune_containers_if_needed() {
 }
 
 build_mandelboxes() {
-  if [[ "$role" == "client" ]]; then
+  if [[ "$role" == "server" || "$role" == "both" ]]; then
+    echo "Building the server mandelbox in ${cmake_build_type} mode"
+    run_cmd "cd ~/whist/mandelboxes && ./build.sh browsers/chrome --${cmake_build_type}"
+    echo "Finished building the server mandelbox!"
+  fi
+  
+  if [[ "$role" == "client" || "$role" == "both" ]]; then
     echo "Setting the experiment duration to ${testing_time}s..."
     run_cmd "sed -i \'s/timeout 240s/timeout ${testing_time}s/g\' ~/whist/mandelboxes/development/client/run-whist-client.sh"
+    echo "Building the dev client mandelbox in ${cmake_build_type} mode..."
     run_cmd "cd ~/whist/mandelboxes && ./build.sh development/client --${cmake_build_type}"
-  else
-    run_cmd "cd ~/whist/mandelboxes && ./build.sh browsers/chrome --${cmake_build_type}"
+    echo "Finished building the dev client mandelbox!"
   fi
 }
 
 restore_network_conditions_if_needed() {
-  if [ "$role" != "client" ]; then return; fi
+  if [[ "$role" == "server" ]]; then 
+    return
+  fi
   # Check that ifconfig is installed
   if ! command -v aws &> /dev/null
   then
@@ -138,8 +148,12 @@ main() {
     prepare_for_host_setup
     prune_containers_if_needed
     install_and_configure_aws
-    if [ $skip_git_clone -eq 0 ]; then clone_whist_repository; fi
-    if [ $skip_host_setup -eq 0 ]; then run_host_setup; fi
+    if [[ $skip_git_clone == "true" ]]; then 
+      clone_whist_repository
+    fi
+    if [[ $skip_host_setup == "true" ]]; then 
+      run_host_setup
+    fi
     reboot_machine
   else
     build_mandelboxes
