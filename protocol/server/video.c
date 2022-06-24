@@ -196,6 +196,7 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
 
     start_timer(statistics_timer);
     WhistCursorInfo* current_cursor = whist_cursor_capture();
+    FATAL_ASSERT(current_cursor != NULL);
     log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
     // The cursor cache is reset on recovery points, since we can't
@@ -205,28 +206,24 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
         state->last_cursor_hash = 0;
     }
 
-    if (current_cursor) {
-        if (current_cursor->hash == state->last_cursor_hash) {
-            // Cursor has not changed.
-            set_frame_cursor_info(frame, NULL);
-        } else {
-            // Cursor has changed, we need to send the new one.
-            const WhistCursorInfo* cached_cursor =
-                whist_cursor_cache_check(state->cursor_cache, current_cursor->hash);
-            if (cached_cursor) {
-                // Use cached cursor.
-                set_frame_cursor_info(frame, cached_cursor);
-            } else {
-                // Send new cursor.
-                whist_cursor_cache_add(state->cursor_cache, current_cursor);
-                set_frame_cursor_info(frame, current_cursor);
-            }
-            state->last_cursor_hash = current_cursor->hash;
-        }
-        free(current_cursor);
-    } else {
+    if (current_cursor->hash == state->last_cursor_hash) {
+        // Cursor has not changed.
         set_frame_cursor_info(frame, NULL);
+    } else {
+        // Cursor has changed, we need to send the new one.
+        const WhistCursorInfo* cached_cursor =
+            whist_cursor_cache_check(state->cursor_cache, current_cursor->hash);
+        if (cached_cursor) {
+            // Use cached cursor.
+            set_frame_cursor_info(frame, cached_cursor);
+        } else {
+            // Send new cursor.
+            whist_cursor_cache_add(state->cursor_cache, current_cursor);
+            set_frame_cursor_info(frame, current_cursor);
+        }
+        state->last_cursor_hash = current_cursor->hash;
     }
+    free(current_cursor);
 
     // Client needs to know about frame type to find recovery points.
     frame->frame_type = encoder->frame_type;
