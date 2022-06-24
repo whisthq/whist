@@ -469,7 +469,7 @@ def instance_setup_process(args_dict):
     pexpect_process.sendline("./instance_setup.sh 1")
     wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
 
-    desired_output = "Rebooting the machine..."
+    desired_output = "Finished running the host setup!"
     result = pexpect_process.expect(
         [desired_output, pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF]
     )
@@ -478,6 +478,8 @@ def instance_setup_process(args_dict):
         exit_with_error(
             f"Host setup failed on {role} instance! Check the logs for troubleshooting!"
         )
+
+    reboot_instance(pexpect_process, ssh_cmd, sys.stdout, pexpect_prompt)
 
     # Reconnect after reboot
     pexpect_process = attempt_ssh_connection(

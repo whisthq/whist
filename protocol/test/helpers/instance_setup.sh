@@ -73,6 +73,7 @@ run_host_setup() {
   echo "Running the host setup..."
   wait_for_apt_locks
   { cd ~/whist/host-setup && ./setup_host.sh --localdevelopment ;} >>${logfile} 2>&1
+  echo "Finished running the host setup!"
 }
 
 
@@ -131,11 +132,6 @@ restore_network_conditions_if_needed() {
   sudo modprobe -r ifb >>${logfile} 2>&1
 }
 
-reboot_machine() {
-  echo "Rebooting the machine..."
-  sudo reboot
-}
-
 main() {
   pre_reboot=${1}
   if [[ $pre_reboot -eq 1 ]]; then
@@ -149,7 +145,7 @@ main() {
     if [[ $skip_host_setup != "true" ]]; then 
       run_host_setup
     fi
-    reboot_machine
+    exit 0
   else
     build_mandelboxes
     echo "Done!"
