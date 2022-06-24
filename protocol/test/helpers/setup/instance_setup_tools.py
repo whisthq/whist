@@ -368,7 +368,7 @@ def prune_containers_if_needed(pexpect_process, pexpect_prompt):
 
 def generate_configs_file(filename, data):
     with open(filename, "w+") as file_handle:
-        file_handle.write("#!/bin/bash\n\n# Exit on subcommand errors\nset -Eeuo pipefail\n")
+        file_handle.write("#!/bin/bash\n\n# Exit on subcommand errors\nset -Eeuo pipefail\n\n")
 
         for key in data:
             file_handle.write(f"{key}={data[key]}\n")
@@ -448,13 +448,6 @@ def instance_setup_process(args_dict):
     role = args_dict.get("role") if use_two_instances else "both"
     instance_setup_configs["role"] = role
 
-    generate_configs_file(f"{role}_setup_configs.sh", instance_setup_configs)
-    files_to_upload = [
-        (os.path.join("helpers", "instance_setup.sh"), f"/home/{username}/instance_setup.sh"),
-        (f"{role}_setup_configs.sh", f"/home/{username}/instance_setup_configs.sh"),
-    ]
-    upload_files_to_remote_path(instance_hostname, ssh_key_path, files_to_upload)
-
     # Initiate the SSH connections with the instance
     print("Initiating the SETUP ssh connection with the server AWS instance...")
     ssh_cmd = f"ssh {username}@{instance_hostname} -i {ssh_key_path} -o TCPKeepAlive=yes -o ServerAliveInterval=15"
@@ -463,6 +456,13 @@ def instance_setup_process(args_dict):
         sys.stdout,
         pexpect_prompt,
     )
+
+    generate_configs_file(f"{role}_setup_configs.sh", instance_setup_configs)
+    files_to_upload = [
+        (os.path.join("helpers", "instance_setup.sh"), f"/home/{username}/instance_setup.sh"),
+        (f"{role}_setup_configs.sh", f"/home/{username}/instance_setup_configs.sh"),
+    ]
+    upload_files_to_remote_path(instance_hostname, ssh_key_path, files_to_upload)
 
     pexpect_process.sendline("chmod +x instance_setup_configs.sh instance_setup.sh")
     wait_until_cmd_done(pexpect_process, pexpect_prompt)

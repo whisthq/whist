@@ -11,7 +11,7 @@ set -Eeuo pipefail
 #testing_time=126
 #cmake_build_type="metrics"
 #skip_git_clone=0
-role="client"
+#role="client"
 #branch_name="dev"
 #github_token="ajdbwjhefbwjkfbwjw"
 #disk_full_threshold=75
@@ -31,7 +31,7 @@ handle_errors() {
 
   local index=0
   for err in ${errors_to_search[*]}; do
-    if [[ -z $cmd_stdout == *"$err"* ]]; then
+    if [[ $cmd_stdout == *"$err"* ]]; then
       echo "${error_messages[$index]}"
       if [[ ! -z "${corrective_actions[$index]}" ]]; then
         echo "Attempting to fix with command ${corrective_actions[$index]}"

@@ -383,36 +383,34 @@ if __name__ == "__main__":
             "disk_full_threshold": disk_full_threshold,
         }
     )
-
     manager = multiprocessing.Manager()
+    args_dict1 = manager.dict(
+        {
+            "instance_hostname": server_hostname,
+            "ssh_key_path": ssh_key_path,
+            "pexpect_prompt": pexpect_prompt_server,
+            "use_two_instances": use_two_instances,
+            "instance_setup_configs": instance_setup_configs,
+        }
+    )
+    args_dict2 = manager.dict(
+        {
+            "instance_hostname": client_hostname,
+            "ssh_key_path": ssh_key_path,
+            "pexpect_prompt": pexpect_prompt_client,
+            "use_two_instances": use_two_instances,
+            "instance_setup_configs": instance_setup_configs,
+        }
+    )
+
     # We pass all parameters and other data to the setup processes via a dictionary
     p1 = multiprocessing.Process(
         target=instance_setup_process,
-        args=[
-            manager.dict(
-                {
-                    "instance_hostname": server_hostname,
-                    "ssh_key_path": ssh_key_path,
-                    "pexpect_prompt": pexpect_prompt_server,
-                    "use_two_instances": use_two_instances,
-                    "instance_setup_configs": instance_setup_configs,
-                }
-            )
-        ],
+        args=[args_dict1],
     )
     p2 = multiprocessing.Process(
         target=instance_setup_process,
-        args=[
-            manager.dict(
-                {
-                    "instance_hostname": client_hostname,
-                    "ssh_key_path": ssh_key_path,
-                    "pexpect_prompt": pexpect_prompt_client,
-                    "use_two_instances": use_two_instances,
-                    "instance_setup_configs": instance_setup_configs,
-                }
-            )
-        ],
+        args=[args_dict2],
     )
 
     if use_two_instances:
