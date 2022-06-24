@@ -53,12 +53,7 @@ func (mandelbox *mandelboxData) WriteSessionID() error {
 // WriteJSONData writes the data received through JSON transport
 // to the config.json file located on the resourceMappingDir.
 func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
-	var (
-		jsonDataPlainText string
-		err               error
-	)
-
-	jsonDataPlainText, err = configutils.GzipInflateString(string(data))
+	jsonDataPlainText, err := configutils.GzipInflateString(string(data))
 	if err != nil {
 		logger.Warningf("Couldn't inflate JSON Data, will use string as is.")
 		jsonDataPlainText = string(data)
