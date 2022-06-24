@@ -42,7 +42,7 @@ prepare_for_host_setup() {
   echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
   wait_for_apt_locks
   # Clean, upgrade and update all the apt lists
-  { sudo apt-get clean -y && sudo apt-get upgrade -y && sudo apt-get update -y  } >>${logfile} 2>&1
+  { sudo apt-get clean -y && sudo apt-get upgrade -y && sudo apt-get update -y  ;} >>${logfile} 2>&1
    
 }
 
@@ -66,13 +66,13 @@ install_and_configure_aws() {
 
 clone_whist_repository() {
   echo "Cloning branch ${branch_name} of the whisthq/whist repository on the AWS instance..."
-  { rm -rf whist; eval "git clone -b ${branch_name} https://${github_token}@github.com/whisthq/whist.git" } >>${logfile} 2>&1
+  { rm -rf whist; eval "git clone -b ${branch_name} https://${github_token}@github.com/whisthq/whist.git" ;} >>${logfile} 2>&1
 }
 
 run_host_setup() {
   echo "Running the host setup..."
   wait_for_apt_locks
-  { cd ~/whist/host-setup && ./setup_host.sh --localdevelopment } >>${logfile} 2>&1
+  { cd ~/whist/host-setup && ./setup_host.sh --localdevelopment ;} >>${logfile} 2>&1
 }
 
 
@@ -89,15 +89,15 @@ prune_containers_if_needed() {
 build_mandelboxes() {
   if [[ "$role" == "server" || "$role" == "both" ]]; then
     echo "Building the server mandelbox in ${cmake_build_type} mode"
-    { cd ~/whist/mandelboxes && eval "./build.sh browsers/chrome --${cmake_build_type}" } >>${logfile} 2>&1
+    { cd ~/whist/mandelboxes && eval "./build.sh browsers/chrome --${cmake_build_type}" ; } >>${logfile} 2>&1
     echo "Finished building the server mandelbox!"
   fi
   
   if [[ "$role" == "client" || "$role" == "both" ]]; then
     echo "Setting the experiment duration to ${testing_time}s..."
-    { sed -i 's/timeout 240s/timeout ${testing_time}s/g' ~/whist/mandelboxes/development/client/run-whist-client.sh } >>${logfile} 2>&1
+    { sed -i 's/timeout 240s/timeout ${testing_time}s/g' ~/whist/mandelboxes/development/client/run-whist-client.sh ;} >>${logfile} 2>&1
     echo "Building the dev client mandelbox in ${cmake_build_type} mode..."
-    { cd ~/whist/mandelboxes && eval "./build.sh development/client --${cmake_build_type}" } >>${logfile} 2>&1
+    { cd ~/whist/mandelboxes && eval "./build.sh development/client --${cmake_build_type}" ;} >>${logfile} 2>&1
     echo "Finished building the dev client mandelbox!"
   fi
 }
@@ -122,9 +122,9 @@ restore_network_conditions_if_needed() {
     else
       echo "Restoring normal network conditions on device ${device}"
       # Inbound degradations
-      { sudo eval "tc qdisc del dev ${device} handle ffff: ingress" } >>${logfile} 2>&1
+      { sudo eval "tc qdisc del dev ${device} handle ffff: ingress" ;} >>${logfile} 2>&1
       # Outbound degradations
-      { sudo eval "tc qdisc del dev ${device} root netem" } >>${logfile} 2>&1
+      { sudo eval "tc qdisc del dev ${device} root netem" ;} >>${logfile} 2>&1
     fi
   done
   sudo modprobe -r ifb >>${logfile} 2>&1
