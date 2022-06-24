@@ -46,6 +46,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		// err is already wrapped here
 		return err
 	}
+	logger.Infof("Frontend reported email %s, this value might not be accurate and is untrusted.", unsafeEmail)
 	// Append user email to logging context for better debugging.
 	contextFields = append(contextFields, zap.String("user", unsafeEmail))
 
@@ -117,8 +118,8 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// instances with capacity on the current region. Once it gets the instances, it will iterate over them and try
 	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
 	for _, region := range availableRegions {
-		logger.Infow(utils.Sprintf("Trying to find instance for user %s in region %s, with commit hash %s. (client reported email %s, this value might not be accurate and is untrusted)",
-			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail), contextFields)
+		logger.Infow(utils.Sprintf("Trying to find instance in region %s, with commit hash %s.",
+			region, mandelboxRequest.CommitHash), contextFields)
 
 		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, region)
 		if err != nil {
@@ -137,7 +138,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			assignedInstance = instanceResult[i]
 
 			if assignedInstance.ClientSHA == mandelboxRequest.CommitHash {
-				logger.Infow(utils.Sprintf("Found instance %s for user %s with commit hash %s.", assignedInstance.ID, mandelboxRequest.UserEmail, assignedInstance.ClientSHA), contextFields)
+				logger.Infow(utils.Sprintf("Found instance %s with commit hash %s.", assignedInstance.ID, assignedInstance.ClientSHA), contextFields)
 				instanceFound = true
 				break
 			}
