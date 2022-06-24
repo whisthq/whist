@@ -13,6 +13,7 @@ static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* e
         case FRONTEND_EVENT_RESIZE: {
             context->width = event->resize.width;
             context->height = event->resize.height;
+            context->dpi = event->resize.dpi;
             break;
         }
         case FRONTEND_EVENT_KEYPRESS: {
