@@ -86,7 +86,7 @@ void whist_analyzer_record_current_cc_info(int type, double packet_loss, double 
 void whist_analyzer_record_current_audio_queue_info(double scale_factor, double user_queue_len,
                                                     double device_queue_len);
 
-// record actions of by audio algorithm
+// record actions by audio algorithm
 void whist_analyzer_record_audio_action(const char *action);
 
 // only expose this function to c++
