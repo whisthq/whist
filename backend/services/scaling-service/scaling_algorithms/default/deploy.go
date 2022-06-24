@@ -9,14 +9,20 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"go.uber.org/zap"
 )
 
 // UpgradeImage is a scaling action which runs when a new version is deployed. Its responsible of
 // starting a buffer of instances with the new image and scaling down instances with the previous
 // image.
 func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event ScalingEvent, imageID interface{}) error {
-	logger.Infof("Starting upgrade image action for event: %v", event)
-	defer logger.Infof("Finished upgrade image action for event: %v", event)
+	contextFields := []interface{}{
+		zap.String("id", event.ID),
+		zap.Any("type", event.Type),
+		zap.String("region", event.Region),
+	}
+	logger.Infow("Starting upgrade image action.", contextFields)
+	defer logger.Infow("Finished upgrade image action.", contextFields)
 
 	// Check if we received a valid image before performing more
 	// expensive operations.
@@ -40,7 +46,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
 	}
 
-	logger.Infof("Creating new instance buffer for image %v", newImage.ImageID)
+	logger.Infow(utils.Sprintf("Creating new instance buffer for image %s", newImage.ImageID), contextFields)
 
 	// Slice that will hold the instances and pass them to the dbclient
 	var instancesForDb []subscriptions.Instance
@@ -49,7 +55,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// creating them on a cloud provider. In any other case we call the host handler to create
 	// them on the cloud provider for us.
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
-		logger.Infof("Running on localdev so scaling up fake instances.")
+		logger.Infow("Running on localdev so scaling up fake instances.", contextFields)
 		instancesForDb = helpers.SpinUpFakeInstances(defaultInstanceBuffer, newImage.ImageID, event.Region)
 	} else {
 		bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, int32(defaultInstanceBuffer), maxWaitTimeReady, newImage)
@@ -65,7 +71,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		instancesForDb = append(instancesForDb, bufferInstances...)
 	}
 
-	logger.Infof("Inserting newly created instances to database.")
+	logger.Infow("Inserting newly created instances to database.", contextFields)
 
 	// If successful, write to database
 	affectedRows, err := s.DBClient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
@@ -73,7 +79,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
 	}
 
-	logger.Infof("Inserted %v rows to database.", affectedRows)
+	logger.Infow(utils.Sprintf("Inserted %d rows to database.", affectedRows), contextFields)
 
 	// Acquire lock on protected from scale down map
 	s.protectedMapLock.Lock()
@@ -109,7 +115,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// failed to deploy, and if it does we rollback the new version.
 	select {
 	case s.SyncChan <- true:
-		logger.Infof("Finished upgrading image %v in region %v", newImage.ImageID, event.Region)
+		logger.Infow(utils.Sprintf("Finished upgrading image %s in region %s", newImage.ImageID, event.Region), contextFields)
 	case <-time.After(1 * time.Hour):
 		// Clear protected map since the client app deploy didn't complete successfully.
 		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
@@ -124,12 +130,17 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 // To the latest one. This is done separately to avoid having downtimes during deploys, since
 // we have to wait until the frontend has updated its version on the config database.
 func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, event ScalingEvent, clientVersion interface{}) error {
+	contextFields := []interface{}{
+		zap.String("id", event.ID),
+		zap.Any("type", event.Type),
+		zap.String("region", event.Region),
+	}
 	// Block until the image upgrade has finished successfully.
 	// We time out here in case something went wrong with the
 	// upgrade image action, in which case we roll back the new version.
 	select {
 	case <-s.SyncChan:
-		logger.Infof("Got signal that image upgrade action finished correctly.")
+		logger.Infow("Got signal that image upgrade action finished correctly.", contextFields)
 	case <-time.After(1 * time.Hour):
 		// Clear protected map since the image upgrade didn't complete successfully.
 		s.protectedMapLock.Lock()
@@ -139,8 +150,8 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 		return utils.MakeError("Timed out waiting for image upgrade to finish. Rolling back deploy of new version.")
 	}
 
-	logger.Infof("Starting image swapover action for event: %v", event)
-	defer logger.Infof("Finished image swapover action for event: %v", event)
+	logger.Infow("Starting image swapover action.", contextFields)
+	defer logger.Infow("Finished image swapover action.", contextFields)
 
 	// version is the entry we receive from the config database
 	version := clientVersion.(subscriptions.ClientAppVersion)
@@ -200,7 +211,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	}
 
 	// swapover active image on database
-	logger.Infof("Updating old %v image %v to new image %v on database.", event.Region, oldImageID, newImageID)
+	logger.Infow(utils.Sprintf("Updating old %s image %s to new image %s on database.", event.Region, oldImageID, newImageID), contextFields)
 
 	if oldImageID == "" {
 		_, err = s.DBClient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{newImage})

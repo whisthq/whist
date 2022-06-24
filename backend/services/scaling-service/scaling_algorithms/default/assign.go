@@ -13,13 +13,19 @@ import (
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"go.uber.org/zap"
 )
 
 // MandelboxAssign is the action responsible for assigning an instance to a user,
 // and scaling as necessary to satisfy demand.
 func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, event ScalingEvent) error {
-	logger.Infof("Starting mandelbox assign action for event: %v", event)
-	defer logger.Infof("Finished mandelbox assign action for event: %v", event)
+	contextFields := []interface{}{
+		zap.String("id", event.ID),
+		zap.Any("type", event.Type),
+		zap.String("region", event.Region),
+	}
+	logger.Infow("Starting mandelbox assign action.", contextFields)
+	defer logger.Infow("Finished mandelbox assign action.", contextFields)
 
 	// We want to verify if we have the desired capacity after assigning a mandelbox
 	defer func() {
@@ -40,6 +46,8 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		// err is already wrapped here
 		return err
 	}
+	// Append user email to logging context for better debugging.
+	contextFields = append(contextFields, zap.String("user", unsafeEmail))
 
 	var (
 		requestedRegions   = mandelboxRequest.Regions // This is a list of the regions requested by the frontend, in order of proximity.
@@ -109,8 +117,8 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// instances with capacity on the current region. Once it gets the instances, it will iterate over them and try
 	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
 	for _, region := range availableRegions {
-		logger.Infof("Trying to find instance for user %v in region %v, with commit hash %v. (client reported email %v, this value might not be accurate and is untrusted)",
-			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail)
+		logger.Infow(utils.Sprintf("Trying to find instance for user %s in region %s, with commit hash %s. (client reported email %s, this value might not be accurate and is untrusted)",
+			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail), contextFields)
 
 		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, region)
 		if err != nil {
@@ -129,7 +137,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			assignedInstance = instanceResult[i]
 
 			if assignedInstance.ClientSHA == mandelboxRequest.CommitHash {
-				logger.Infof("Found instance %v for user %v with commit hash %v.", assignedInstance.ID, mandelboxRequest.UserEmail, assignedInstance.ClientSHA)
+				logger.Infow(utils.Sprintf("Found instance %s for user %s with commit hash %s.", assignedInstance.ID, mandelboxRequest.UserEmail, assignedInstance.ClientSHA), contextFields)
 				instanceFound = true
 				break
 			}
@@ -179,7 +187,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// version from the request is less than the one we have locally, it
 	// means the request comes from an outdated frontend application.
 	if parsedFrontendVersion != nil && parsedRequestVersion != nil {
-		logger.Infof("Local version is %s, version received from request is %s.", parsedFrontendVersion.String(), parsedRequestVersion.String())
+		logger.Infow(utils.Sprintf("Local version is %s, version received from request is %s.", parsedFrontendVersion.String(), parsedRequestVersion.String()), contextFields)
 		isOutdatedClient = parsedRequestVersion.LessThan(parsedFrontendVersion)
 	}
 
@@ -195,7 +203,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		if metadata.GetAppEnvironment() == metadata.EnvProd && !isOutdatedClient {
 			msg = utils.MakeError("found instance with capacity but it has a different commit hash %v than frontend with commit hash  %v.", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
 		} else {
-			logger.Infof("Did not find instance with commit hash %v, but expect frontend to autoupdate and send another request with commit hash %v.", mandelboxRequest.CommitHash, assignedInstance.ClientSHA)
+			logger.Infow(utils.Sprintf("Did not find instance with commit hash %s, but expect frontend to autoupdate and send another request with commit hash %s.", mandelboxRequest.CommitHash, assignedInstance.ClientSHA), contextFields)
 		}
 
 		// Regardless if we log the error, its necessary to return an appropiate response.
@@ -237,7 +245,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return utils.MakeError("error while inserting mandelbox to database. Err: %v", err)
 	}
 
-	logger.Infof("Inserted %v rows to database.", affectedRows)
+	logger.Infow(utils.Sprintf("Inserted %d rows to database.", affectedRows), contextFields)
 
 	if assignedInstance.RemainingCapacity <= 0 {
 		// This should never happen, but we should consider
@@ -254,7 +262,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return utils.MakeError("error while updating instance capacity on database. Err: %v", err)
 	}
 
-	logger.Infof("Updated %v rows in database.", affectedRows)
+	logger.Infow(utils.Sprintf("Updated %d rows in database.", affectedRows), contextFields)
 
 	// Parse IP address. The database uses the CIDR notation (192.0.2.0/24)
 	// so we need to extract the address and send it to the frontend.
