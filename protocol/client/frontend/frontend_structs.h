@@ -101,6 +101,7 @@ typedef struct FrontendKeypressEvent {
 typedef struct FrontendResizeEvent {
     int width;
     int height;
+    int dpi;  // Right now this value is used only by the virtual interface(chromium)
 } FrontendResizeEvent;
 
 typedef struct FrontendVisibilityEvent {
