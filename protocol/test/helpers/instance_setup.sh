@@ -77,7 +77,8 @@ run_host_setup() {
 
 
 prune_containers_if_needed() {
-  disk_usage="$({ df --output=pcent /dev/root | grep -v Use | sed 's/%//' } 2>&1 | tee --append ${logfile})"
+  disk_usage="$({ df --output=pcent /dev/root | grep -v Use | sed 's/%//' ;} 2>&1 | tee --append ${logfile})"
+  echo $disk_usage
   if [[ "$disk_usage" -gt "$disk_full_threshold" ]]; then
     echo "Disk is more than 75% full, pruning the docker containers..."
     docker system prune -af >>${logfile} 2>&1
