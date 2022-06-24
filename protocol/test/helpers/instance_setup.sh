@@ -89,7 +89,7 @@ prune_containers_if_needed() {
 build_mandelboxes() {
   if [[ "$role" == "server" || "$role" == "both" ]]; then
     echo "Building the server mandelbox in ${cmake_build_type} mode"
-    { cd ~/whist/mandelboxes && ./build.sh browsers/chrome --${cmake_build_type} } >>${logfile} 2>&1
+    { cd ~/whist/mandelboxes && eval "./build.sh browsers/chrome --${cmake_build_type}" } >>${logfile} 2>&1
     echo "Finished building the server mandelbox!"
   fi
   
