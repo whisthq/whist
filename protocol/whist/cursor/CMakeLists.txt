@@ -1,4 +1,4 @@
-add_library(whistCursor STATIC cursor.c cursor_internal.c)
+add_library(whistCursor STATIC cursor.cpp cursor_internal.c)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(whistCursor PRIVATE linux_cursor_capture.c)
