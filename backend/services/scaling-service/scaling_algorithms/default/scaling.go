@@ -145,7 +145,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		}
 
 	} else if !metadata.IsLocalEnv() {
-		logger.Info("There are no lingering instances in %v.", event.Region)
+		logger.Infof("There are no lingering instances in %v.", event.Region)
 	} else {
 		logger.Infof("Running on localdev so not spinning down lingering instances.")
 
@@ -160,11 +160,11 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 	// Verify if there are free instances that can be scaled down
 	if len(freeInstances) == 0 {
-		logger.Info("There are no free instances to scale down in %v.", event.Region)
+		logger.Infof("There are no free instances to scale down in %v.", event.Region)
 		return nil
 	}
 
-	logger.Info("Scaling down %v free instances on %v.", len(freeInstances), event.Region)
+	logger.Infof("Scaling down %v free instances on %v.", len(freeInstances), event.Region)
 
 	for _, instance := range freeInstances {
 		logger.Infof("Scaling down instance %v.", instance.ID)
@@ -175,7 +175,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
 		}
 
-		logger.Info("Marked instance %v as draining on database.", instance.ID)
+		logger.Infof("Marked instance %v as draining on database.", instance.ID)
 	}
 
 	return err

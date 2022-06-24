@@ -121,7 +121,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceRemoval(scalingCtx context.Conte
 
 	// Verify that instance removed itself from the database
 	if len(instanceResult) == 0 {
-		logger.Info("Instance %v was successfully removed from database.", instance.ID)
+		logger.Infof("Instance %v was successfully removed from database.", instance.ID)
 		return nil
 	}
 
@@ -129,7 +129,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceRemoval(scalingCtx context.Conte
 	// This edge case means something went wrong with shutting down the instance and now the db is
 	// out of sync with the cloud provider. To amend this, delete the instance and its mandelboxes
 	// from the database.
-	logger.Info("Removing instance %v from database as it no longer exists on cloud provider.", instance.ID)
+	logger.Infof("Removing instance %v from database as it no longer exists on cloud provider.", instance.ID)
 
 	affectedRows, err := s.DBClient.DeleteInstance(scalingCtx, s.GraphQLClient, instance.ID)
 	if err != nil {

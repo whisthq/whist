@@ -141,6 +141,31 @@ func Panicf(globalCancel context.CancelFunc, format string, v ...interface{}) {
 	Panic(globalCancel, utils.MakeError(format, v...))
 }
 
+// Debugw constructs a debug message with additional context fields.
+func Debugw(msg string, fields interface{}) {
+	logger.Sugar().Debugw(msg, fields)
+}
+
+// Infow constructs a debug message with additional context fields.
+func Infow(msg string, fields interface{}) {
+	logger.Sugar().Infow(msg, fields)
+}
+
+// Warningw constructs a debug message with additional context fields.
+func Warningw(msg string, fields interface{}) {
+	logger.Sugar().Warnw(msg, fields)
+}
+
+// Errorw constructs a debug message with additional context fields.
+func Errorw(msg string, fields interface{}) {
+	logger.Sugar().Errorw(msg, fields)
+}
+
+// Panicw constructs a debug message with additional context fields.
+func Panicw(msg string, fields interface{}) {
+	logger.Sugar().Panicw(msg, fields)
+}
+
 // PrintStackTrace prints the stack trace, for debugging purposes.
 func PrintStackTrace() {
 	Info("Printing stack trace: ")
