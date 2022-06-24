@@ -143,10 +143,10 @@ main() {
     prepare_for_host_setup
     prune_containers_if_needed
     install_and_configure_aws
-    if [[ $skip_git_clone == "true" ]]; then 
+    if [[ $skip_git_clone != "true" ]]; then 
       clone_whist_repository
     fi
-    if [[ $skip_host_setup == "true" ]]; then 
+    if [[ $skip_host_setup != "true" ]]; then 
       run_host_setup
     fi
     reboot_machine
