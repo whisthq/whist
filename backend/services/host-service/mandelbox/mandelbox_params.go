@@ -3,7 +3,6 @@ package mandelbox // import "github.com/whisthq/whist/backend/services/host-serv
 import (
 	"os"
 	"path"
-	"strconv"
 
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	types "github.com/whisthq/whist/backend/services/types"
@@ -61,14 +60,7 @@ func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
 
 	jsonDataPlainText, err = configutils.GzipInflateString(string(data))
 	if err != nil {
-		logger.Warningf("Couldn't inflate JSON Data, trying to unquote string.")
-		jsonDataPlainText, err = strconv.Unquote(string(data))
-		if err != nil {
-			logger.Warningf("Couldn't inflate or unquote JSON Data, passing string as is.")
-		}
-	}
-
-	if jsonDataPlainText == "" {
+		logger.Warningf("Couldn't inflate JSON Data, will use string as is.")
 		jsonDataPlainText = string(data)
 	}
 
