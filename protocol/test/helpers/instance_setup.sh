@@ -146,3 +146,6 @@ main() {
     echo "Done!"
   fi
 }
+
+main ${1}
+
