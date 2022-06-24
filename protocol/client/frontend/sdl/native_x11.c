@@ -47,3 +47,9 @@ void sdl_native_destroy_external_drag_handler(WhistFrontend* frontend) {
 void sdl_native_display_notification(const WhistNotification* notif) {
     LOG_INFO("Not implemented on X11");
 }
+
+const char* sdl_native_get_chosen_file() {
+    LOG_INFO("Not implemented on X11");
+    // File upload has not implemented on X11 yet.
+    return NULL;
+}

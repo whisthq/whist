@@ -138,6 +138,11 @@ void whist_frontend_interrupt(WhistFrontend* frontend) {
     frontend->call->interrupt(frontend);
 }
 
+const char* whist_frontend_get_chosen_file(WhistFrontend* frontend) {
+    FRONTEND_ENTRY();
+    return frontend->call->get_chosen_file(frontend);
+}
+
 void whist_frontend_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
     FRONTEND_ENTRY();
     frontend->call->set_cursor(frontend, cursor);
