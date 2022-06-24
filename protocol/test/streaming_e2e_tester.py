@@ -26,10 +26,13 @@ from helpers.common.timestamps_and_exit_tools import (
 from helpers.common.constants import (
     username,
     running_in_ci,
+    disk_full_threshold,
 )
 
 from helpers.setup.instance_setup_tools import (
     start_host_service,
+    get_aws_credentials,
+    instance_setup_process,
 )
 
 from helpers.setup.network_tools import (
@@ -41,12 +44,10 @@ from helpers.setup.teardown_tools import (
 )
 
 from helpers.whist_client_tools import (
-    client_setup_process,
     run_client_on_instance,
 )
 
 from helpers.whist_server_tools import (
-    server_setup_process,
     run_server_on_instance,
 )
 
@@ -366,31 +367,56 @@ if __name__ == "__main__":
 
     # 6 - Setup the client and the server. Use multiprocesssing to parallelize the work in case
     # we are using two instances. If we are using one instance, the setup will happen sequentially.
-    manager = multiprocessing.Manager()
-
-    # We pass all parameters and other data to the setup processes via a dictionary
-    args_dict = manager.dict(
+    aws_access_key_id, aws_secret_access_key = get_aws_credentials()
+    instance_setup_configs = dict(
         {
-            "server_hostname": server_hostname,
-            "client_hostname": client_hostname,
-            "ssh_key_path": ssh_key_path,
-            "server_log_filepath": server_log_filepath,
-            "client_log_filepath": client_log_filepath,
-            "pexpect_prompt_server": pexpect_prompt_server,
-            "pexpect_prompt_client": pexpect_prompt_client,
-            "github_token": github_token,
-            "use_two_instances": use_two_instances,
-            "testing_time": testing_time,
+            "logfile": "instance_setup.log",
+            "aws_access_key_id": aws_access_key_id,
+            "aws_secret_access_key": aws_secret_access_key,
             "cmake_build_type": args.cmake_build_type,
+            "testing_time": testing_time,
             "skip_git_clone": skip_git_clone,
             "skip_host_setup": skip_host_setup,
+            "github_token": github_token,
+            "branch_name": get_whist_branch_name(),
+            "github_sha": get_whist_github_sha(),
+            "disk_full_threshold": disk_full_threshold,
         }
     )
 
-    # If using two instances, parallelize the host-setup and building of the Docker containers to save time
-    p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
-    p2 = multiprocessing.Process(target=client_setup_process, args=[args_dict])
+    manager = multiprocessing.Manager()
+    # We pass all parameters and other data to the setup processes via a dictionary
+    p1 = multiprocessing.Process(
+        target=instance_setup_process,
+        args=[
+            manager.dict(
+                {
+                    "instance_hostname": server_hostname,
+                    "ssh_key_path": ssh_key_path,
+                    "pexpect_prompt": pexpect_prompt_server,
+                    "use_two_instances": use_two_instances,
+                    "instance_setup_configs": instance_setup_configs,
+                }
+            )
+        ],
+    )
+    p2 = multiprocessing.Process(
+        target=instance_setup_process,
+        args=[
+            manager.dict(
+                {
+                    "instance_hostname": client_hostname,
+                    "ssh_key_path": ssh_key_path,
+                    "pexpect_prompt": pexpect_prompt_client,
+                    "use_two_instances": use_two_instances,
+                    "instance_setup_configs": instance_setup_configs,
+                }
+            )
+        ],
+    )
+
     if use_two_instances:
+        # If using two instances, parallelize the host-setup and building of the Docker containers to save time
         p1.start()
         p2.start()
         # Monitor the processes and immediately exit if one of them errors

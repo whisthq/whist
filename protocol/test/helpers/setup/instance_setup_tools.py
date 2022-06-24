@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import paramiko
 import pexpect
 import os
 import sys
@@ -16,6 +17,7 @@ from helpers.common.pexpect_tools import (
 
 from helpers.common.ssh_tools import (
     wait_for_apt_locks,
+    attempt_ssh_connection,
 )
 
 from helpers.common.timestamps_and_exit_tools import (
@@ -30,6 +32,8 @@ from helpers.common.constants import (
     TIMEOUT_KILL_EXIT_CODE,
     aws_credentials_filepath,
     running_in_ci,
+    username,
+    sftp_timeout,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -360,3 +364,137 @@ def prune_containers_if_needed(pexpect_process, pexpect_prompt):
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
     else:
         print(f"Disk is {space_used_pctg}% full, no need to prune containers.")
+
+
+def generate_configs_file(filename, data):
+    with open(filename, "w+") as file_handle:
+        file_handle.write("#!/bin/bash\n\n# Exit on subcommand errors\nset -Eeuo pipefail\n")
+
+        for key in data:
+            file_handle.write(f"{key}={data[key]}\n")
+
+
+def get_aws_credentials():
+    """
+    Obtain the AWS credentials that are currently in use on the machine where this script is being run.
+
+    Args:
+        None
+
+    Returns:
+        aws_access_key_id (str): The AWS access key ID
+        aws_secret_access_key (str): The AWS secret access key
+    """
+    # Step 1: Obtain AWS credentials from the local machine
+    aws_access_key_id = ""
+    aws_secret_access_key = ""
+    if running_in_ci:
+        # In CI, the AWS credentials are stored in the following env variables
+        print("Getting the AWS credentials from environment variables...")
+        aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+        aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    else:
+        # Extract AWS credentials from aws configuration file on disk
+        if not os.path.isfile(aws_credentials_filepath):
+            exit_with_error(
+                f"Could not find local AWS credential file at path {aws_credentials_filepath}!"
+            )
+        aws_credentials_file = open(aws_credentials_filepath, "r")
+
+        # Read the AWS configuration file
+        for line in aws_credentials_file.readlines():
+            if "aws_access_key_id" in line:
+                aws_access_key_id = line.strip().split()[2]
+            elif "aws_secret_access_key" in line:
+                aws_secret_access_key = line.strip().split()[2]
+                break
+        aws_credentials_file.close()
+
+    # Sanity check
+    if len(aws_access_key_id or "") == 0 or len(aws_secret_access_key or "") == 0:
+        exit_with_error(f"Could not obtain the AWS credentials!")
+
+    return aws_access_key_id, aws_secret_access_key
+
+
+def upload_files_to_remote_path(server_hostname, ssh_key_path, files_to_upload):
+    ssh_client = paramiko.SSHClient()
+    ssh_client.load_system_host_keys()
+    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    private_key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
+    try:
+        ssh_client.connect(
+            server_hostname, username=username, key_filename=ssh_key_path, timeout=sftp_timeout
+        )
+    except Exception as e:
+        printyellow("Caught exception:")
+        print(e)
+        return -1
+    sftp = ssh_client.open_sftp()
+    for tuple in files_to_upload:
+        local_path, remote_path = tuple
+        sftp.put(local_path, remote_path)
+    sftp.close()
+    ssh_client.close()
+
+
+def instance_setup_process(args_dict):
+    use_two_instances = args_dict["use_two_instances"]
+    instance_setup_configs = args_dict["instance_setup_configs"]
+    instance_hostname = args_dict["instance_hostname"]
+    ssh_key_path = args_dict["ssh_key_path"]
+    pexpect_prompt = args_dict["pexpect_prompt"]
+
+    role = args_dict.get("role") if use_two_instances else "both"
+    instance_setup_configs["role"] = role
+
+    generate_configs_file(f"{role}_setup_configs.sh", instance_setup_configs)
+    files_to_upload = [
+        (os.path.join("helpers", "instance_setup.sh"), f"/home/{username}/instance_setup.sh"),
+        (f"{role}_setup_configs.sh", f"/home/{username}/instance_setup_configs.sh"),
+    ]
+    upload_files_to_remote_path(instance_hostname, ssh_key_path, files_to_upload)
+
+    # Initiate the SSH connections with the instance
+    print("Initiating the SETUP ssh connection with the server AWS instance...")
+    ssh_cmd = f"ssh {username}@{instance_hostname} -i {ssh_key_path} -o TCPKeepAlive=yes -o ServerAliveInterval=15"
+    pexpect_process = attempt_ssh_connection(
+        ssh_cmd,
+        sys.stdout,
+        pexpect_prompt,
+    )
+
+    pexpect_process.sendline("chmod +x instance_setup_configs.sh instance_setup.sh")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    pexpect_process.sendline("./instance_setup.sh 1")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
+
+    desired_output = "Rebooting the machine..."
+    result = pexpect_process.expect(
+        [desired_output, pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF]
+    )
+    # If the desired output does not get printed, handle potential host service startup issues.
+    if result != 0:
+        exit_with_error(
+            f"Host setup failed on {role} instance! Check the logs for troubleshooting!"
+        )
+
+    # Reconnect after reboot
+    pexpect_process = attempt_ssh_connection(
+        ssh_cmd,
+        sys.stdout,
+        pexpect_prompt,
+    )
+
+    pexpect_process.sendline("./instance_setup.sh 0")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
+
+    desired_output = "Done!"
+    result = pexpect_process.expect(
+        [desired_output, pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF]
+    )
+    # If the desired output does not get printed, handle potential host service startup issues.
+    if result != 0:
+        exit_with_error(
+            f"Host setup failed on {role} instance! Check the logs for troubleshooting!"
+        )

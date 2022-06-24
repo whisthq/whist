@@ -50,3 +50,7 @@ MANDELBOX_BUILD_MAX_RETRIES = 5
 
 # Whether the E2E script is running in CI vs on a local machine
 running_in_ci = os.getenv("CI") == "true"
+
+# Percentage of space used after which we consider the disk to be full and in need of cleaning
+disk_full_threshold = 75
+sftp_timeout = 5 * 60  # 5mins

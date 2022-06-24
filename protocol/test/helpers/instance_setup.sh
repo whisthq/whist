@@ -4,16 +4,17 @@
 set -Eeuo pipefail
 
 # variables below are to be set in the config file and imported
-logfile=/home/ubuntu/logfile.log
-aws_access_key_id="fill here"
-aws_secret_access_key="fill here"
-test_duration=126
-cmake_build_type="metrics"
-skip_git_clone=0
+. instance_setup_configs.sh
+#logfile=/home/ubuntu/logfile.log
+#aws_access_key_id="fill here"
+#aws_secret_access_key="fill here"
+#testing_time=126
+#cmake_build_type="metrics"
+#skip_git_clone=0
 role="client"
-git_branch="dev"
-git_token="ajdbwjhefbwjkfbwjw"
-disk_pruning_threshold=75
+#branch_name="dev"
+#github_token="ajdbwjhefbwjkfbwjw"
+#disk_full_threshold=75
 
 run_cmd() {
   command=${1}
@@ -68,8 +69,8 @@ install_and_configure_aws() {
 }
 
 clone_whist_repository() {
-  echo "Cloning branch ${git_branch} of the whisthq/whist repository on the AWS instance..."
-  run_cmd "rm -rf whist; git clone -b ${git_branch} https://${git_token}@github.com/whisthq/whist.git"
+  echo "Cloning branch ${branch_name} of the whisthq/whist repository on the AWS instance..."
+  run_cmd "rm -rf whist; git clone -b ${branch_name} https://${github_token}@github.com/whisthq/whist.git"
 }
 
 run_host_setup() {
@@ -81,7 +82,7 @@ run_host_setup() {
 prune_containers_if_needed() {
   run_cmd "df --output=pcent /dev/root | grep -v Use | sed 's/%//'"
   disk_usage="$cmd_stdout"
-  if [[ "$disk_usage" -gt "$disk_pruning_threshold" ]]; then
+  if [[ "$disk_usage" -gt "$disk_full_threshold" ]]; then
     echo "Disk is more than 75% full, pruning the docker containers..."
     run_cmd "docker system prune -af"
   else
@@ -91,8 +92,8 @@ prune_containers_if_needed() {
 
 build_mandelboxes() {
   if [[ "$role" == "client" ]]; then
-    echo "Setting the experiment duration to ${test_duration}s..."
-    run_cmd "sed -i \'s/timeout 240s/timeout ${test_duration}s/g\' ~/whist/mandelboxes/development/client/run-whist-client.sh"
+    echo "Setting the experiment duration to ${testing_time}s..."
+    run_cmd "sed -i \'s/timeout 240s/timeout ${testing_time}s/g\' ~/whist/mandelboxes/development/client/run-whist-client.sh"
     run_cmd "cd ~/whist/mandelboxes && ./build.sh development/client --${cmake_build_type}"
   else
     run_cmd "cd ~/whist/mandelboxes && ./build.sh browsers/chrome --${cmake_build_type}"
@@ -142,5 +143,6 @@ main() {
     reboot_machine
   else
     build_mandelboxes
+    echo "Done!"
   fi
 }

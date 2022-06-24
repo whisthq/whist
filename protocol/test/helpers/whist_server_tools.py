@@ -60,67 +60,67 @@ def server_setup_process(args_dict):
     """
     server_hostname = args_dict["server_hostname"]
     ssh_key_path = args_dict["ssh_key_path"]
-    server_log_filepath = args_dict["server_log_filepath"]
+    # server_log_filepath = args_dict["server_log_filepath"]
     pexpect_prompt_server = args_dict["pexpect_prompt_server"]
-    github_token = args_dict["github_token"]
-    cmake_build_type = args_dict["cmake_build_type"]
-    skip_git_clone = args_dict["skip_git_clone"]
-    skip_host_setup = args_dict["skip_host_setup"]
+    # github_token = args_dict["github_token"]
+    # cmake_build_type = args_dict["cmake_build_type"]
+    # skip_git_clone = args_dict["skip_git_clone"]
+    # skip_host_setup = args_dict["skip_host_setup"]
 
-    server_log = open(server_log_filepath, "w")
+    # server_log = open(server_log_filepath, "w")
 
     # Initiate the SSH connections with the instance
     print("Initiating the SETUP ssh connection with the server AWS instance...")
     server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path}"
     hs_process = attempt_ssh_connection(
         server_cmd,
-        server_log,
+        # server_log,
         pexpect_prompt_server,
     )
 
-    print("Running pre-host-setup on the instance...")
-    prepare_instance_for_host_setup(hs_process, pexpect_prompt_server)
+    # print("Running pre-host-setup on the instance...")
+    # prepare_instance_for_host_setup(hs_process, pexpect_prompt_server)
 
-    print("Configuring AWS credentials on server instance...")
-    install_and_configure_aws(
-        hs_process,
-        pexpect_prompt_server,
-    )
+    # print("Configuring AWS credentials on server instance...")
+    # install_and_configure_aws(
+    #     hs_process,
+    #     pexpect_prompt_server,
+    # )
 
-    prune_containers_if_needed(hs_process, pexpect_prompt_server)
+    # prune_containers_if_needed(hs_process, pexpect_prompt_server)
 
-    if skip_git_clone == "false":
-        clone_whist_repository(github_token, hs_process, pexpect_prompt_server)
-    else:
-        print("Skipping git clone whisthq/whist repository on server instance.")
+    # if skip_git_clone == "false":
+    #     clone_whist_repository(github_token, hs_process, pexpect_prompt_server)
+    # else:
+    #     print("Skipping git clone whisthq/whist repository on server instance.")
 
-    # Ensure that the commit hash on server matches the one on the runner
-    server_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt_server)
-    local_sha = get_whist_github_sha()
-    if server_sha != local_sha:
-        exit_with_error(
-            f"Commit mismatch between server instance ({server_sha}) and E2E runner ({local_sha})"
-        )
+    # # Ensure that the commit hash on server matches the one on the runner
+    # server_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt_server)
+    # local_sha = get_whist_github_sha()
+    # if server_sha != local_sha:
+    #     exit_with_error(
+    #         f"Commit mismatch between server instance ({server_sha}) and E2E runner ({local_sha})"
+    #     )
 
-    if skip_host_setup == "false":
-        run_host_setup(
-            hs_process,
-            pexpect_prompt_server,
-        )
-    else:
-        print("Skipping host setup on server instance.")
+    # if skip_host_setup == "false":
+    #     run_host_setup(
+    #         hs_process,
+    #         pexpect_prompt_server,
+    #     )
+    # else:
+    #     print("Skipping host setup on server instance.")
 
-    # Reboot and wait for it to come back up
-    print("Rebooting the server EC2 instance (required after running the host-setup)...")
-    hs_process = reboot_instance(
-        hs_process,
-        server_cmd,
-        server_log,
-        pexpect_prompt_server,
-    )
+    # # Reboot and wait for it to come back up
+    # print("Rebooting the server EC2 instance (required after running the host-setup)...")
+    # hs_process = reboot_instance(
+    #     hs_process,
+    #     server_cmd,
+    #     server_log,
+    #     pexpect_prompt_server,
+    # )
 
-    # Build the protocol server
-    build_server_on_instance(hs_process, pexpect_prompt_server, cmake_build_type)
+    # # Build the protocol server
+    # build_server_on_instance(hs_process, pexpect_prompt_server, cmake_build_type)
 
     hs_process.kill(0)
     server_log.close()
