@@ -55,8 +55,10 @@ func (mandelbox *mandelboxData) WriteSessionID() error {
 func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
 	jsonDataPlainText, err := configutils.GzipInflateString(string(data))
 	if err != nil {
-		return utils.MakeError("Couldn't inflate JSON Data: %s", err)
+		logger.Warningf("Couldn't inflate JSON Data, will use string as is.")
+		jsonDataPlainText = string(data)
 	}
+
 	return mandelbox.writeResourceMappingToFile("config.json", jsonDataPlainText)
 }
 
