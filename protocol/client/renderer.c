@@ -184,9 +184,13 @@ int32_t multithreaded_video_renderer(void* opaque) {
             break;
         }
 
+        whist_gpu_lock();
+        int ret = render_video(whist_renderer->video_context);
+        whist_gpu_unlock();
+
         // Otherwise, try to render, but note that 1 means the renderer is still pending
         // TODO: Make render_video internally semaphore on render, so we don't have to check
-        if (render_video(whist_renderer->video_context) == 1) {
+        if (ret == 1) {
             pending_video = true;
         } else {
             pending_video = false;
