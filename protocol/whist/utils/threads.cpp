@@ -34,9 +34,9 @@ void whist_init_multithreading(void) {
 WhistThreadID whist_get_thread_id(WhistThread thread) {
     // `thread` == NULL returns the current thread ID
     if (thread == NULL) {
-        return std::hash<std::thread::id>{}(std::this_thread::get_id());
+        return (WhistThreadID)std::hash<std::thread::id>{}(std::this_thread::get_id());
     } else {
-        return std::hash<std::thread::id>{}(thread->whist_thread.get_id());
+        return (WhistThreadID)std::hash<std::thread::id>{}(thread->whist_thread.get_id());
     }
 }
 
