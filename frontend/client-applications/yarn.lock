@@ -8189,10 +8189,10 @@ react-refresh@^0.9.0:
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.9.0.tgz#71863337adc3e5c2f8a6bfddd12ae3bfe32aafbf"
   integrity sha512-Gvzk7OZpiqKSkxsQvO/mbTN1poglhmAV7gR/DdIrRrSMXraRQQlfikRJOr3Nb9GTMPC5kof948Zy6jJZIFtDvQ==
 
-react-use-intercom@^1.4.1:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/react-use-intercom/-/react-use-intercom-1.5.0.tgz#a44661f95dc68ae4bc2bcf17aca1d8574f05f37a"
-  integrity sha512-ck+rfDdh5l4tnvXDPIm6fXgwvX8AnB/zLhyCwHECAHTNpcBdIR07Y5oEOquCz7LQFrWDuhEqcKuDcTLaWQ4YBA==
+react-use-intercom@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/react-use-intercom/-/react-use-intercom-2.0.0.tgz#d90a1c63d2fee0b3e66ba95ab27b226b1ee5efa0"
+  integrity sha512-DSm79RtGHAQyZ4WfBFuNMWtmpyLjWt6jhrhFwfMmy/eIvvCeJ+5wMdPMGXBn2+qzLDyhV0fqo3vNsqR4EvFqHw==
 
 react@^18.0.0:
   version "18.0.0"
