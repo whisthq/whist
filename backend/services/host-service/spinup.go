@@ -66,9 +66,10 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	// parallel, stopping at the first error encountered
 	preCreateGroup, _ := errgroup.WithContext(mandelbox.GetContext())
 
-	var hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
+	var hostPortForTCP32261, hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
 	preCreateGroup.Go(func() error {
 		if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
+			{MandelboxPort: 32261, HostPort: 0, BindIP: "", Protocol: "tcp"},
 			{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
 			{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
 			{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
@@ -77,11 +78,12 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		}
 		logger.Infof("SpinUpMandelbox(): successfully assigned port bindings %v", mandelbox.GetPortBindings())
 		// Request port bindings for the mandelbox.
-		var err32262, err32263, err32273 error
+		var err32261, err32262, err32263, err32273 error
+		hostPortForTCP32261, err32261 = mandelbox.GetHostPort(32261, portbindings.TransportProtocolTCP)
 		hostPortForTCP32262, err32262 = mandelbox.GetHostPort(32262, portbindings.TransportProtocolTCP)
 		hostPortForUDP32263, err32263 = mandelbox.GetHostPort(32263, portbindings.TransportProtocolUDP)
 		hostPortForTCP32273, err32273 = mandelbox.GetHostPort(32273, portbindings.TransportProtocolTCP)
-		if err32262 != nil || err32263 != nil || err32273 != nil {
+		if err32261 != nil || err32262 != nil || err32263 != nil || err32273 != nil {
 			logAndReturnError("Couldn't return host port bindings.")
 		}
 		return nil
@@ -143,6 +145,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 
 	// We now create the underlying Docker container for this mandelbox.
 	exposedPorts := make(dockernat.PortSet)
+	exposedPorts[dockernat.Port("32261/tcp")] = struct{}{}
 	exposedPorts[dockernat.Port("32262/tcp")] = struct{}{}
 	exposedPorts[dockernat.Port("32263/udp")] = struct{}{}
 	exposedPorts[dockernat.Port("32273/tcp")] = struct{}{}
@@ -166,6 +169,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		Tty:          true,
 	}
 	natPortBindings := make(dockernat.PortMap)
+	natPortBindings[dockernat.Port("32261/tcp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForTCP32261)}}
 	natPortBindings[dockernat.Port("32262/tcp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForTCP32262)}}
 	natPortBindings[dockernat.Port("32263/udp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForUDP32263)}}
 	natPortBindings[dockernat.Port("32273/tcp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForTCP32273)}}
@@ -355,13 +359,14 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 
 	// Request port bindings for the mandelbox.
 	var (
-		hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
-		err32262, err32263, err32273                                  error
+		hostPortForTCP32261, hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
+		err32261, err32262, err32263, err32273                                  error
 	)
+	hostPortForTCP32261, err32261 = mandelbox.GetHostPort(32261, portbindings.TransportProtocolTCP)
 	hostPortForTCP32262, err32262 = mandelbox.GetHostPort(32262, portbindings.TransportProtocolTCP)
 	hostPortForUDP32263, err32263 = mandelbox.GetHostPort(32263, portbindings.TransportProtocolUDP)
 	hostPortForTCP32273, err32273 = mandelbox.GetHostPort(32273, portbindings.TransportProtocolTCP)
-	if err32262 != nil || err32263 != nil || err32273 != nil {
+	if err32261 != nil || err32262 != nil || err32263 != nil || err32273 != nil {
 		logAndReturnError("Couldn't return host port bindings.")
 	}
 
@@ -460,6 +465,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	createFailed = false
 
 	result := httputils.JSONTransportRequestResult{
+		hostPortForTCP32261: hostPortForTCP32261,
 		HostPortForTCP32262: hostPortForTCP32262,
 		HostPortForUDP32263: hostPortForUDP32263,
 		HostPortForTCP32273: hostPortForTCP32273,
