@@ -136,8 +136,10 @@ func main() {
 	select {
 	case <-sigChan:
 		logger.Infof("Got an interrupt or SIGTERM")
+		logger.Sync()
 	case <-globalCtx.Done():
 		logger.Infof("Global context cancelled!")
+		logger.Sync()
 	}
 }
 
