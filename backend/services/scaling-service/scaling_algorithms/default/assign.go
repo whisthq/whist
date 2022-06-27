@@ -5,7 +5,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/google/uuid"
 	hashicorp "github.com/hashicorp/go-version"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -127,19 +126,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 		// Iterate over available instances, try to find one with a matching commit hash
 		for i := range instanceResult {
-			assignedInstance = subscriptions.Instance{
-				ID:                string(instanceResult[i].ID),
-				IPAddress:         string(instanceResult[i].IPAddress),
-				Provider:          string(instanceResult[i].Provider),
-				Region:            string(instanceResult[i].Region),
-				ImageID:           string(instanceResult[i].ImageID),
-				ClientSHA:         string(instanceResult[i].ClientSHA),
-				Type:              string(instanceResult[i].Type),
-				RemainingCapacity: int64(instanceResult[i].RemainingCapacity),
-				Status:            string(instanceResult[i].Status),
-				CreatedAt:         instanceResult[i].CreatedAt,
-				UpdatedAt:         instanceResult[i].UpdatedAt,
-			}
+			assignedInstance = instanceResult[i]
 
 			if assignedInstance.ClientSHA == mandelboxRequest.CommitHash {
 				logger.Infof("Found instance %v for user %v with commit hash %v.", assignedInstance.ID, mandelboxRequest.UserEmail, assignedInstance.ClientSHA)
@@ -229,13 +216,12 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	}
 
 	waitingMandelbox := mandelboxResult[0]
-	mandelboxID, err := uuid.Parse(string(waitingMandelbox.ID))
 	if err != nil {
 		return utils.MakeError("failed to parse mandelbox id for instance %v. Err: %v", assignedInstance.ID, err)
 	}
 
 	mandelboxForDb := subscriptions.Mandelbox{
-		ID:         types.MandelboxID(mandelboxID),
+		ID:         waitingMandelbox.ID,
 		App:        string(waitingMandelbox.App),
 		InstanceID: assignedInstance.ID,
 		UserID:     mandelboxRequest.UserID,
@@ -280,7 +266,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// Return result to assign request
 	mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 		IP:          ip.String(),
-		MandelboxID: types.MandelboxID(mandelboxID),
+		MandelboxID: types.MandelboxID(waitingMandelbox.ID),
 	}, nil)
 
 	return nil

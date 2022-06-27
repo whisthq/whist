@@ -3,8 +3,83 @@ package subscriptions // import "github.com/whisthq/whist/backend/services/subsc
 import (
 	"time"
 
+	"github.com/google/uuid"
+	graphql "github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/types"
 )
+
+// Types used for GraphQL queries/subscriptions
+
+// GraphQLQuery is a custom empty interface to represent the graphql queries described in the
+// `queries.go` file. An advantage is that these queries can be used both as subscriptions and normal queries.
+type GraphQLQuery interface{}
+
+// WhistInstance is the mapping of the `whist.hosts` table. This type interacts directly
+// with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
+// operations. For operations that do not interact with the client, use the `Instance` type instead.
+type whistInstance struct {
+	ID                graphql.String   `graphql:"id"`
+	Provider          graphql.String   `graphql:"provider"`
+	Region            graphql.String   `graphql:"region"`
+	ImageID           graphql.String   `graphql:"image_id"`
+	ClientSHA         graphql.String   `graphql:"client_sha"`
+	IPAddress         string           `graphql:"ip_addr"`
+	Type              graphql.String   `graphql:"instance_type"`
+	RemainingCapacity graphql.Int      `graphql:"remaining_capacity"`
+	Status            graphql.String   `graphql:"status"`
+	CreatedAt         time.Time        `graphql:"created_at"`
+	UpdatedAt         time.Time        `graphql:"updated_at"`
+	Mandelboxes       []whistMandelbox `graphql:"mandelboxes"`
+}
+
+// WhistMandelbox is the mapping of the `whist.mandelboxes` table. This type interacts directly
+// with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
+// operations. For operations that do not interact with the client, use the `Mandelbox` type instead.
+type whistMandelbox struct {
+	ID         graphql.String `graphql:"id"`
+	App        graphql.String `graphql:"app"`
+	InstanceID graphql.String `graphql:"instance_id"`
+	UserID     graphql.String `graphql:"user_id"`
+	SessionID  graphql.String `graphql:"session_id"`
+	Status     graphql.String `graphql:"status"`
+	CreatedAt  time.Time      `graphql:"created_at"`
+	UpdatedAt  time.Time      `graphql:"updated_at"`
+}
+
+// WhistImage is the mapping of the `whist.images` table. This type interacts directly
+// with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
+// operations. For operations that do not interact with the client, use the `Image` type instead.
+type whistImage struct {
+	Provider  graphql.String `graphql:"provider"`
+	Region    graphql.String `graphql:"region"`
+	ImageID   graphql.String `graphql:"image_id"`
+	ClientSHA graphql.String `graphql:"client_sha"`
+	UpdatedAt time.Time      `graphql:"updated_at"`
+}
+
+// WhistClientAppVersion is the mapping of the `desktop_app_version` table on the config database.
+// This type interacts directly with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal.
+// Only use for GraphQL operations. For operations that do not interact with the client, use the
+// `ClientAppVersion` type instead.
+type whistClientAppVersion struct {
+	ID                graphql.Int    `graphql:"id"`
+	Major             graphql.Int    `graphql:"major"`
+	Minor             graphql.Int    `graphql:"minor"`
+	Micro             graphql.Int    `graphql:"micro"`
+	DevRC             graphql.Int    `graphql:"dev_rc"`
+	StagingRC         graphql.Int    `graphql:"staging_rc"`
+	DevCommitHash     graphql.String `graphql:"dev_commit_hash"`
+	StagingCommitHash graphql.String `graphql:"staging_commit_hash"`
+	ProdCommitHash    graphql.String `graphql:"prod_commit_hash"`
+}
+
+// WhistClientAppVersions is the mapping of the `dev`, `staging` and `prod` tables on the config database.
+// This type interacts directly with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal.
+// Only use for GraphQL operations.
+type WhistConfigs []struct {
+	Key   graphql.String `graphql:"key"`
+	Value graphql.String `graphql:"value"`
+}
 
 // HasuraParams contains the Heroku URL and Admin AccessKey to pass
 // to the client during initialization.
@@ -12,6 +87,8 @@ type HasuraParams struct {
 	URL       string
 	AccessKey string
 }
+
+// Types used for development that don't interact with database
 
 // Instance is a custom type to represent an instance. This type is
 // meant to be used across the codebase for any operation that does
@@ -121,4 +198,66 @@ type ImageEvent struct {
 // desktop_app_version database table.
 type ClientAppVersionEvent struct {
 	ClientAppVersions []ClientAppVersion `json:"desktop_app_version"`
+}
+
+// Helper function to convert between types
+
+// ToInstances converts a result obtained from GraphQL of type `WhistInstance`
+// to a slice of type `Instance` for convenience.
+func ToInstances(dbInstances []whistInstance) []Instance {
+	var instances []Instance
+	for _, instance := range dbInstances {
+		instances = append(instances, Instance{
+			ID:                string(instance.ID),
+			Provider:          string(instance.Provider),
+			Region:            string(instance.Region),
+			ImageID:           string(instance.ImageID),
+			ClientSHA:         string(instance.ClientSHA),
+			IPAddress:         instance.IPAddress,
+			Type:              string(instance.Type),
+			RemainingCapacity: int64(instance.RemainingCapacity),
+			Status:            string(instance.Status),
+			CreatedAt:         instance.CreatedAt,
+			UpdatedAt:         instance.UpdatedAt,
+		})
+	}
+
+	return instances
+}
+
+// ToInstances converts a result obtained from GraphQL of type `WhistMandelbox`
+// to a slice of type `Mandelbox` for convenience.
+func ToMandelboxes(dbMandelboxes []whistMandelbox) []Mandelbox {
+	var mandelboxes []Mandelbox
+	for _, mandelbox := range dbMandelboxes {
+		mandelboxes = append(mandelboxes, Mandelbox{
+			ID:         types.MandelboxID(uuid.MustParse(string(mandelbox.ID))),
+			App:        string(mandelbox.App),
+			InstanceID: string(mandelbox.InstanceID),
+			UserID:     types.UserID(string(mandelbox.UserID)),
+			SessionID:  string(mandelbox.SessionID),
+			Status:     string(mandelbox.Status),
+			CreatedAt:  mandelbox.CreatedAt,
+			UpdatedAt:  mandelbox.UpdatedAt,
+		})
+	}
+
+	return mandelboxes
+}
+
+// ToImages converts a result obtained from GraphQL of type `WhistImage`
+// to a slice of type `Image` for convenience.
+func ToImages(dbImages []whistImage) []Image {
+	var images []Image
+	for _, image := range dbImages {
+		images = append(images, Image{
+			Provider:  string(image.Provider),
+			Region:    string(image.Region),
+			ImageID:   string(image.ImageID),
+			ClientSHA: string(image.ClientSHA),
+			UpdatedAt: image.UpdatedAt,
+		})
+	}
+
+	return images
 }

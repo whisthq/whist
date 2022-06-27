@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -21,7 +21,7 @@ func TestMandelboxAssign(t *testing.T) {
 
 	var tests = []struct {
 		name             string
-		capacity         int
+		capacity         int64
 		clientSHA, want  string
 		shouldBeAssigned bool
 	}{
@@ -39,7 +39,7 @@ func TestMandelboxAssign(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Populate test instances that will be used when
 			// mocking database functions.
-			testInstances = subscriptions.WhistInstances{
+			testInstances = []subscriptions.Instance{
 				{
 					ID:                "test-assign-instance-1",
 					Provider:          "AWS",
@@ -48,8 +48,8 @@ func TestMandelboxAssign(t *testing.T) {
 					Type:              "g4dn.2xlarge",
 					Region:            "us-east-1",
 					IPAddress:         "1.1.1.1/24",
-					ClientSHA:         graphql.String("test-sha"),
-					RemainingCapacity: graphql.Int(tt.capacity),
+					ClientSHA:         "test-sha",
+					RemainingCapacity: int64(tt.capacity),
 				},
 				{
 					ID:                "test-assign-instance-2",
@@ -59,20 +59,14 @@ func TestMandelboxAssign(t *testing.T) {
 					Type:              "g4dn.2xlarge",
 					Region:            "us-west-1",
 					IPAddress:         "1.1.1.1/24",
-					ClientSHA:         graphql.String("test-sha"),
-					RemainingCapacity: graphql.Int(tt.capacity),
+					ClientSHA:         "test-sha",
+					RemainingCapacity: int64(tt.capacity),
 				},
 			}
 
 			// Set the current image for testing
-			testImages = subscriptions.WhistImages{
-				struct {
-					Provider  graphql.String `graphql:"provider"`
-					Region    graphql.String `graphql:"region"`
-					ImageID   graphql.String `graphql:"image_id"`
-					ClientSHA graphql.String `graphql:"client_sha"`
-					UpdatedAt time.Time      `graphql:"updated_at"`
-				}{
+			testImages = []subscriptions.Image{
+				{
 					Provider:  "AWS",
 					Region:    "test-region",
 					ImageID:   "test-image-id-old",
@@ -81,22 +75,13 @@ func TestMandelboxAssign(t *testing.T) {
 				},
 			}
 
-			testMandelboxes = subscriptions.WhistMandelboxes{
-				struct {
-					ID         graphql.String `graphql:"id"`
-					App        graphql.String `graphql:"app"`
-					InstanceID graphql.String `graphql:"instance_id"`
-					UserID     graphql.String `graphql:"user_id"`
-					SessionID  graphql.String `graphql:"session_id"`
-					Status     graphql.String `graphql:"status"`
-					CreatedAt  time.Time      `graphql:"created_at"`
-					UpdatedAt  time.Time      `graphql:"updated_at"`
-				}{
-					ID:         graphql.String(uuid.NewString()),
+			testMandelboxes = []subscriptions.Mandelbox{
+				{
+					ID:         types.MandelboxID(uuid.New()),
 					App:        "CHROME",
 					InstanceID: "test-instance-id",
 					UserID:     "test-user-id",
-					SessionID:  graphql.String(utils.Sprintf("%v", time.Now().UnixMilli())),
+					SessionID:  utils.Sprintf("%v", time.Now().UnixMilli()),
 					Status:     "WAITING",
 					CreatedAt:  time.Now(),
 					UpdatedAt:  time.Now(),

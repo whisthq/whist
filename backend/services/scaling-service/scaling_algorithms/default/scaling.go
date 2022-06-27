@@ -56,7 +56,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Extra capacity is considered once we have a full instance worth of capacity
 	// more than the desired free mandelboxes. TODO: Set the instance type once we
 	// have support for more instance types. For now default to `g4dn.2xlarge`.
-	extraCapacity := desiredFreeMandelboxesPerRegion[event.Region] + (defaultInstanceBuffer * instanceCapacity["g4dn.2xlarge"])
+	extraCapacity := int64(desiredFreeMandelboxesPerRegion[event.Region]) + (int64(defaultInstanceBuffer) * instanceCapacity["g4dn.2xlarge"])
 
 	// Acquire lock on protected from scale down map
 	s.protectedMapLock.Lock()
@@ -70,29 +70,15 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// to the list that will be scaled down.
 	// 3. If the instance does not have the latest image, and is not running any mandelboxes, add to the
 	// list that will be scaled down.
-	for _, dbInstance := range allActive {
+	for _, instance := range allActive {
 		// Compute how many mandelboxes are running on the instance. We use the current remaining capacity
 		// and the total capacity of the instance type to check if it has running mandelboxes.
-		usage := instanceCapacity[string(dbInstance.Type)] - int(dbInstance.RemainingCapacity)
+		usage := instanceCapacity[string(instance.Type)] - instance.RemainingCapacity
 		if usage > 0 {
 			// Don't scale down any instance that has running
 			// mandelboxes, regardless of the image it uses
-			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", dbInstance.ID, usage)
+			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", instance.ID, usage)
 			continue
-		}
-
-		instance := subscriptions.Instance{
-			ID:                string(dbInstance.ID),
-			Provider:          string(dbInstance.Provider),
-			Region:            string(dbInstance.Region),
-			ImageID:           string(dbInstance.ImageID),
-			ClientSHA:         string(dbInstance.ClientSHA),
-			IPAddress:         dbInstance.IPAddress,
-			Type:              string(dbInstance.Type),
-			RemainingCapacity: int64(dbInstance.RemainingCapacity),
-			Status:            string(dbInstance.Status),
-			CreatedAt:         dbInstance.CreatedAt,
-			UpdatedAt:         dbInstance.UpdatedAt,
 		}
 
 		_, protected := s.protectedFromScaleDown[instance.ImageID]
@@ -113,7 +99,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			if mandelboxCapacity >= extraCapacity {
 				logger.Infof("Scaling down instance %v because we have more mandelbox capacity of %v than desired %v.", instance.ID, mandelboxCapacity, extraCapacity)
 				freeInstances = append(freeInstances, instance)
-				mandelboxCapacity -= int(instance.RemainingCapacity)
+				mandelboxCapacity -= instance.RemainingCapacity
 			}
 		} else {
 			// Old instances
@@ -128,28 +114,15 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return utils.MakeError("failed to query database for lingering instances. Err: %v", err)
 	}
 
-	for _, dbInstance := range drainingInstances {
-		instance := subscriptions.Instance{
-			ID:                string(dbInstance.ID),
-			Provider:          string(dbInstance.Provider),
-			Region:            string(dbInstance.Region),
-			ImageID:           string(dbInstance.ImageID),
-			ClientSHA:         string(dbInstance.ClientSHA),
-			IPAddress:         dbInstance.IPAddress,
-			Type:              string(dbInstance.Type),
-			RemainingCapacity: int64(dbInstance.RemainingCapacity),
-			Status:            string(dbInstance.Status),
-			CreatedAt:         dbInstance.CreatedAt,
-			UpdatedAt:         dbInstance.UpdatedAt,
-		}
+	for _, drainingInstance := range drainingInstances {
 		// Check if lingering instance has any running mandelboxes
-		if dbInstance.RemainingCapacity == 0 {
+		if drainingInstance.RemainingCapacity == 0 {
 			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
-			logger.Warningf("Instance %v has associated mandelboxes and is marked as Draining.", instance.ID)
-		} else if time.Since(dbInstance.UpdatedAt) > 10*time.Minute {
+			logger.Warningf("Instance %v has associated mandelboxes and is marked as Draining.", drainingInstance.ID)
+		} else if time.Since(drainingInstance.UpdatedAt) > 10*time.Minute {
 			// Mark instance as lingering only if it has taken more than 10 minutes to shut down.
-			lingeringInstances = append(lingeringInstances, instance)
-			lingeringIDs = append(lingeringIDs, string(instance.ID))
+			lingeringInstances = append(lingeringInstances, drainingInstance)
+			lingeringIDs = append(lingeringIDs, string(drainingInstance.ID))
 		}
 	}
 
@@ -239,19 +212,8 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 		}
 
 		for _, instance := range createdInstances {
-			instancesForDb = append(instancesForDb, subscriptions.Instance{
-				ID:                instance.ID,
-				IPAddress:         instance.IPAddress,
-				Provider:          instance.Provider,
-				Region:            instance.Region,
-				ImageID:           instance.ImageID,
-				ClientSHA:         instance.ClientSHA,
-				Type:              instance.Type,
-				RemainingCapacity: int64(instanceCapacity[instance.Type]),
-				Status:            instance.Status,
-				CreatedAt:         instance.CreatedAt,
-				UpdatedAt:         instance.UpdatedAt,
-			})
+			instance.RemainingCapacity = int64(instanceCapacity[instance.Type])
+			instancesForDb = append(instancesForDb, instance)
 			logger.Infof("Created tagged instance with ID %v", instance.ID)
 		}
 	}

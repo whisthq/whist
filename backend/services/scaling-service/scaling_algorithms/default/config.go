@@ -87,16 +87,17 @@ var (
 // generateInstanceCapacityMap uses the global instanceTypeToGPUNum and instanceTypeToVCPUNum maps
 // to generate the maximum mandelbox capacity for each instance type in the intersection
 // of their keys.
-func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]int) map[string]int {
+func generateInstanceCapacityMap(instanceToGPUMap, instanceToVCPUMap map[string]int) map[string]int64 {
 	// Initialize the instance capacity map
-	capacityMap := map[string]int{}
+	capacityMap := map[string]int64{}
 	for instanceType, gpuNum := range instanceToGPUMap {
 		// Only populate for instances that are in both maps
 		vcpuNum, ok := instanceToVCPUMap[instanceType]
 		if !ok {
 			continue
 		}
-		capacityMap[instanceType] = utils.Min(gpuNum*constants.MaxMandelboxesPerGPU, vcpuNum/VCPUsPerMandelbox)
+		min := utils.Min(gpuNum*constants.MaxMandelboxesPerGPU, vcpuNum/VCPUsPerMandelbox)
+		capacityMap[instanceType] = int64(min)
 	}
 	return capacityMap
 }
