@@ -82,6 +82,13 @@ void whist_analyzer_record_current_fec_info(int type, double base_fec_ratio, dou
 void whist_analyzer_record_current_cc_info(int type, double packet_loss, double latency,
                                            int bitrate, int incoming_bitrate);
 
+// record audio algo info related to queue lens
+void whist_analyzer_record_current_audio_queue_info(double scale_factor, double user_queue_len,
+                                                    double device_queue_len);
+
+// record actions by audio algorithm
+void whist_analyzer_record_audio_action(const char *action);
+
 // only expose this function to c++
 #ifdef __cplusplus
 extern "C++" {

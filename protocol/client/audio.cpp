@@ -482,6 +482,7 @@ static void check_device_buffer_dry(AudioContext* audio_context) {
     if (audio_context->audio_state != BUFFERING && safe_get_audio_queue(audio_context) == 0) {
         LOG_WARNING("[AUDIO_ALGO]Audio Device is dry, will start to buffer");
         audio_context->audio_state = BUFFERING;
+        whist_analyzer_record_audio_action("rebuf");
     }
 }
 
@@ -563,6 +564,10 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
     double device_queue_len = audio_device_len_in_bytes / (double)DECODED_BYTES_PER_FRAME;
     double total_queue_len = audio_total_len_in_bytes / (double)DECODED_BYTES_PER_FRAME;
 
+    whist_analyzer_record_current_audio_queue_info(adaptive_parameter_controller.get_scale_factor(),
+                                                   total_queue_len - device_queue_len,
+                                                   device_queue_len);
+
     if (LOG_AUDIO) {
         LOG_INFO_RATE_LIMITED(0.1, 1,
                               "[AUDIO_ALGO]queue_len: %d %.2f  state=%d  scale_factor=%.2f\n",
@@ -574,7 +579,7 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
                               adaptive_parameter_controller.get_scale_factor());
     }
 
-    audio_context->adaptive_parameter_controller->handle_scaling(device_queue_len);
+    adaptive_parameter_controller.handle_scaling(device_queue_len);
 
     // get the current values of queue lens from adaptive_parameter_controller
     double current_device_queue_target_size =
@@ -625,6 +630,9 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     // If we're supposed to drop it, drop it.
     if (queue_len_controller.get_adjust_command() == DROP_FRAME) {
         log_double_statistic(AUDIO_FRAMES_SKIPPED, 1.0);
+        // logically we consider dropped frames as pending first
+        whist_analyzer_record_pending_rendering(PACKET_AUDIO);
+        whist_analyzer_record_audio_action("drop");
     } else {
         // If we shouldn't drop it, push the audio frame to the render context
         if (!audio_context->pending_render_context) {
@@ -637,6 +645,9 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
             // audio_context->last_played_id); signal to the renderer that we're ready
 
             whist_analyzer_record_pending_rendering(PACKET_AUDIO);
+            if (audio_context->render_context.adjust_command == DUP_FRAME) {
+                whist_analyzer_record_audio_action("dup");
+            }
             audio_context->pending_render_context = true;
         } else {
             LOG_ERROR("We tried to render audio, but the renderer wasn't ready!");
