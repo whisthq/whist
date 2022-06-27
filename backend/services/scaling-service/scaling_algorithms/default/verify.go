@@ -34,7 +34,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	// First, verify if the draining instance has mandelboxes running
 	instanceResult, err := s.DBClient.QueryInstance(scalingCtx, s.GraphQLClient, instance.ID)
 	if err != nil {
-		return utils.MakeError("failed to query database for instance %v. Error: %v", instance.ID, err)
+		return utils.MakeError("failed to query database for instance %s: %s", instance.ID, err)
 	}
 
 	for _, instanceRow := range instanceResult {

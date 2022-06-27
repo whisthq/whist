@@ -69,7 +69,7 @@ func main() {
 	graphqlClient = &subscriptions.GraphQLClient{}
 	err := graphqlClient.Initialize(useConfigDB)
 	if err != nil {
-		logger.Errorf("Failed to start GraphQL client. Error: %v", err)
+		logger.Errorf("failed to start GraphQL client: %s", err)
 	}
 
 	// Start GraphQL client for getting configuration from the config db
@@ -77,7 +77,7 @@ func main() {
 	configGraphqlClient = &subscriptions.GraphQLClient{}
 	err = configGraphqlClient.Initialize(useConfigDB)
 	if err != nil {
-		logger.Errorf("Failed to start config GraphQL client. Error: %v", err)
+		logger.Errorf("failed to start config GraphQL client: %s", err)
 	}
 
 	// Start database subscriptions
@@ -153,7 +153,7 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 	subscriptions.SetupScalingSubscriptions(subscriptionClient)
 	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents, useConfigDatabase)
 	if err != nil {
-		logger.Errorf("Failed to start database subscription client. Error: %s", err)
+		logger.Errorf("failed to start database subscription client: %s", err)
 	}
 
 	// The second client will subscribe to the config database
@@ -163,7 +163,7 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 	subscriptions.SetupConfigSubscriptions(configClient)
 	err = subscriptions.Start(configClient, globalCtx, goroutineTracker, subscriptionEvents, useConfigDatabase)
 	if err != nil {
-		logger.Errorf("Failed to start config database subscription client. Error: %s", err)
+		logger.Errorf("failed to start config database subscription client: %s", err)
 	}
 }
 
@@ -198,14 +198,14 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 // StartDeploy reads the `images.json` file which is written by the Github
 // deploy workflow, and sends the event to the appropiate channel.
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
-	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
-		logger.Infof("Running in localenv so not performing deploy actions.")
-		return
-	}
+	// if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
+	// 	logger.Infof("Running in localenv so not performing deploy actions.")
+	// 	return
+	// }
 
 	regionImageMap, err := getRegionImageMap()
 	if err != nil {
-		logger.Errorf("Error while getting regionImageMap. Err: %v", err)
+		logger.Error(err)
 		return
 	}
 
@@ -230,7 +230,7 @@ func getRegionImageMap() (map[string]interface{}, error) {
 	// Get current working directory to read images file.
 	currentWorkingDirectory, err := os.Getwd()
 	if err != nil {
-		return nil, utils.MakeError("Failed to get working directory. Err: %v", err)
+		return nil, utils.MakeError("failed to get working directory: %s", err)
 	}
 
 	// Read file which contains the region to image on JSON format. This file will
@@ -238,13 +238,13 @@ func getRegionImageMap() (map[string]interface{}, error) {
 	// The file is also generated during deploy and lives in the scaling service directory.
 	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "images.json"))
 	if err != nil {
-		return nil, utils.MakeError("Failed to read region to image map from file. Not performing image upgrade. Err: %v", err)
+		return nil, utils.MakeError("failed to read region to image map from file. Not performing image upgrade: %s", err)
 	}
 
 	// Try to unmarshal contents of file into a map
 	err = json.Unmarshal(content, &regionImageMap)
 	if err != nil {
-		return nil, utils.MakeError("Failed to unmarshal region to image map. Not performing image upgrade. Err: %v", err)
+		return nil, utils.MakeError("failed to unmarshal region to image map. Not performing image upgrade: %s", err)
 	}
 
 	return regionImageMap, nil
@@ -343,7 +343,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				// the regionImageMap.
 				regionImageMap, err := getRegionImageMap()
 				if err != nil {
-					logger.Errorf("Error getting regionImageMap. Err: %v", err)
+					logger.Error(err)
 					break
 				}
 

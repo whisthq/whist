@@ -86,11 +86,11 @@ func GetClientAppVersion(ctx context.Context, client subscriptions.WhistGraphQLC
 		"id": graphql.Int(versionID),
 	})
 	if err != nil {
-		return subscriptions.ClientAppVersion{}, utils.MakeError("Failed to query config database for client app version. Err: %v", err)
+		return subscriptions.ClientAppVersion{}, utils.MakeError("failed to query config database for client app version: %w", err)
 	}
 
 	if len(query.WhistClientAppVersions) == 0 {
-		return subscriptions.ClientAppVersion{}, utils.MakeError("Could not find client app version on config database")
+		return subscriptions.ClientAppVersion{}, utils.MakeError("could not find client app version on config database")
 	}
 
 	version := subscriptions.ClientAppVersion{
