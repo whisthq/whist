@@ -362,8 +362,9 @@ int render_video(VideoContext* video_context) {
         }*/
         int num_windows = 0;
         while (num_windows < MAX_WINDOWS && (int)window_data[num_windows].id != -1) {
-            LOG_INFO("Window %d: %dx%d (%d,%d)", (int)window_data[num_windows].id, window_data[num_windows].width,
-        window_data[num_windows].height, window_data[num_windows].x, window_data[num_windows].y);
+            LOG_INFO("Window %d: %dx%d (%d,%d)", (int)window_data[num_windows].id,
+                     window_data[num_windows].width, window_data[num_windows].height,
+                     window_data[num_windows].x, window_data[num_windows].y);
             num_windows++;
         }
         /*

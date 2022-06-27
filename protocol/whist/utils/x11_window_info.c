@@ -151,7 +151,7 @@ void get_window_attributes(CaptureDevice* capture_device, WhistWindow* whist_win
         whist_window->x = -1;
         whist_window->y = -1;
         return;
-}
+    }
     whist_window->width = attr.width;
     whist_window->height = attr.height;
     whist_window->x = attr.x;
@@ -270,7 +270,8 @@ bool is_window_fullscreen(X11CaptureDevice* device, WhistWindow whist_window) {
     Window w = (Window)whist_window.id;
     static unsigned long nitems;
     static unsigned char* states;  // name stored here
-    if (x11_get_window_property(device, w, device->_NET_WM_STATE, device->ATOM_ARRAY, &nitems, &states)) {
+    if (x11_get_window_property(device, w, device->_NET_WM_STATE, device->ATOM_ARRAY, &nitems,
+                                &states)) {
         Atom* state_hints = (Atom*)states;
         for (int i = 0; i < (int)nitems; i++) {
             if (state_hints[i] == device->_NET_WM_STATE_FULLSCREEN) {
@@ -282,7 +283,6 @@ bool is_window_fullscreen(X11CaptureDevice* device, WhistWindow whist_window) {
     LOG_ERROR("Couldn't get states, assuming window is not fullscreen!");
     return false;
 }
-
 
 // superseded by x11_get_active_window
 static Window get_focused_window(void) {

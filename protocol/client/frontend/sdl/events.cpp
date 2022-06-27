@@ -206,11 +206,9 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
             event->mouse_motion.relative.x = sdl_event->motion.xrel;
             event->mouse_motion.relative.y = sdl_event->motion.yrel;
             event->mouse_motion.relative_mode = SDL_GetRelativeMouseMode();
-            LOG_DEBUG("Absolute %d,%d, relative %d,%d",
-                    event->mouse_motion.absolute.x,
-                    event->mouse_motion.absolute.y,
-                    event->mouse_motion.relative.x,
-                    event->mouse_motion.relative.y);
+            LOG_DEBUG("Absolute %d,%d, relative %d,%d", event->mouse_motion.absolute.x,
+                      event->mouse_motion.absolute.y, event->mouse_motion.relative.x,
+                      event->mouse_motion.relative.y);
             break;
         }
         case SDL_MOUSEBUTTONUP:
