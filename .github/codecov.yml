@@ -15,11 +15,6 @@ coverage:
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - backend-services
-      frontend-core-ts:
-        target: auto # /frontend/core-ts code coverage
-        threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
-        flags:
-          - frontend-core-ts
       protocol:
         target: auto # /protocol code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
@@ -33,7 +28,6 @@ coverage:
 # so we need this fix to retrieve /services as the root folder
 fixes:
   - "**/whist/backend/services/::services/" # Make backend/services coverage relative to backend/services directory
-  - "**/whist/frontend/core-ts/::core-ts/" # Make core-ts coverage relative to core-ts directory
   - "**/whist/protocol/::protocol/" # Make protocol coverage relative to protocol directory
 
 # Settings for Codecov comments on pull requests
@@ -52,10 +46,6 @@ flags:
   backend-services:
     paths:
       - backend/services/
-    carryforward: true
-  frontend-core-ts:
-    paths:
-      - frontend/core-ts/
     carryforward: true
   protocol:
     paths:

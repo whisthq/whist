@@ -9,7 +9,6 @@ This repository contains the bulk of the code for the Whist Browser, previously 
 |            Project | Code Coverage                                                                                                                                            |
 | -----------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `backend/services` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=backend-services)](https://codecov.io/gh/whisthq/whist) |
-| `frontend/core-ts` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=frontend-core-ts)](https://codecov.io/gh/whisthq/whist) |
 |         `protocol` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=protocol)](https://codecov.io/gh/whisthq/whist)         |
 |            Overall | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/whisthq/whist)                       |
 
@@ -34,8 +33,6 @@ The Whist monorepository contains many subprojects:
 | backend/auth0                    | Auth0 is a third-party service which manages authentication and user accounts for us.   |
 | backend/services/host-service    | This service runs on EC2 instance hosts and orchestrates mandelbox management.          |
 | backend/services/scaling-service | This service is responsible for scaling up/down EC2 instances to run mandelboxes on.    |
-| frontend/client-applications     | The client-side Electron-based application users download and use to launch Whist.      |
-| frontend/core-ts                 | The Whist internal TypeScript library of utilities and reusable components.             |
 | host-setup                       | Scripts used to setup EC2 instances for running mandelboxes as Whist-optimized hosts.   |
 | mandelboxes                      | Whist-optimized Dockerfiles (known as mandelboxes) that run the applications we stream. |
 | protocol                         | The streaming technology API, both client and server, for streaming mandelboxes.        |

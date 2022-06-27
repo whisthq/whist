@@ -22,11 +22,11 @@ jobs:
       PR_LABEL_PREFIX: "📁 Repo: "
 
     steps:
-      - name: Label Pull Request (.github, backend, and frontend subprojects)
+      - name: Label Pull Request (.github & backend subprojects)
         uses: adamzolyak/monorepo-pr-labeler-action@4.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE_DIRS: ".github|frontend|backend"
+          BASE_DIRS: ".github|backend"
         with:
           prefix: ${{ env.PR_LABEL_PREFIX }}
 
