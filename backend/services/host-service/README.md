@@ -25,19 +25,9 @@ There are two ways of running development mandelboxes on the host-service. The f
 3. Run the protocol client on your local machine (follow the [protocol README](../protocol/README.md#building-the-protocol)).
 4. You should see a Chrome window open on your machine!
 
-#### Connecting with the Whist application
-
-1. Start your instance, ssh into it and go to `~/whist/backend/services`, then run `make run_host_service`.
-2. Once you see the host enter the event loop, open another terminal window, ssh into your instance, go to `~/whist/mandelboxes` and run `./build.sh browsers/chrome && ./run.sh browsers/chrome`.
-3. On your local machine, go to `frontend/client-applications/`, run `yarn -i` follwed by the command
-   `TESTING_LOCALDEV_HOST_IP=<your instance IP> yarn test:manual localdevHost`. You can also export the `TESTING_LOCALDEV_HOST_IP` environment variable first and then run `yarn test:manual localdevHost`.
-4. The Whist application should open up a Chrome window!
-
 ### Working with the JSON transport endpoint
 
 The host-service communicates with the Whist application through the `json_transport` endpoint. The purpose of this endpoint is to send data directly from a client machine to host-service, which in turn writes a `config.json` file for the mandelbox to read. You can find the spec of this project on [this Notion doc](https://www.notion.so/whisthq/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=21ada58db10249c2bce9158578873261).
-
-If you need to add a feature or test the JSON transport, you can follow the steps above. You can modify the values sent from the client [here](https://github.com/whisthq/whist/blob/9cd531e5ea52a7c5abe4c1e21c8ce6e83e21170f/client-applications/src/main/flows/mandelbox/index.ts#L30). If you work on the protocol side, just edit the values sent on the client and then look for the `/whist/<mandelboxID>/resourceMappings/config.json` file and the data you sent should be there.
 
 ### Setting up Hasura and a local database
 

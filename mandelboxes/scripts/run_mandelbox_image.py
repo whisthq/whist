@@ -15,7 +15,7 @@ import requests
 
 DESCRIPTION = """
 This script runs a Whist mandelbox by calling the `SpinUpMandelbox` endpoint
-on the host service and emulating the client-app (but not the client protocol).
+on the host service and emulating the Whist frontend  (but not the client protocol).
 It is used by the scripts `run_local_mandelbox_image.sh` and
 `run_remote_mandelbox_image.sh` and is usually not called directly.
 """

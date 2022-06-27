@@ -33,12 +33,12 @@ const (
 	EncryptedArchiveFilename = "whist-app-config.tar.lz4.enc"
 )
 
-// ConfigEncryptionInfo defines the information we want from the client-app to
+// ConfigEncryptionInfo defines the information we want from the Whist frontend to
 // successfully decrypt configs.
 type ConfigEncryptionInfo struct {
 	Token types.ConfigEncryptionToken
 	// When IsNewTokenAccordingToClientApp is true, then the client app
-	// effectively believes that the client-app is starting from a clean slate
+	// effectively believes that the Whist frontend is starting from a clean slate
 	// (either a fresh install, or a user who logged out fully).
 	IsNewTokenAccordingToClientApp bool
 }

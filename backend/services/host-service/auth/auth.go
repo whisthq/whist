@@ -1,5 +1,5 @@
 /*
-Package auth provides functions for validating JWTs sent by the user application (i.e. Whist client-app).
+Package auth provides functions for validating JWTs sent by the user application (i.e. Whist browser).
 
 Currently, it has been tested on JWTs generated with our Auth0 configuration. It should work with other
 JWTs too, provided that they are signed with the RS256 algorithm.
