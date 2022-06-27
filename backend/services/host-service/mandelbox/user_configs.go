@@ -192,7 +192,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 		return
 	}
 
-	// At this point, we are still waiting on the client-app to get the user's
+	// At this point, we are still waiting on the Whist frontend to get the user's
 	// config encryption token. Instead of waiting, we want to speculatively
 	// download a config that we think is the most likely to be the one we need.
 	predictedConfigKey, err := mandelbox.predictConfigToDownload(s3Client)
@@ -231,7 +231,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	}
 
 	// Now we compare the config that we speculatively downloaded to the one we
-	// know we need based on the token that came back from the client-app.
+	// know we need based on the token that came back from the Whist frontend.
 	correctConfigKey, correctHeadObject, err := mandelbox.determineCorrectConfigKey(s3Client, predictedConfigKey, predictedConfigHeadObj, encryptionInfo)
 	if err != nil {
 		errorChan <- utils.MakeError("Could not determine correct config key for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
@@ -241,7 +241,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// Check for the frontend's indication that this is a fresh config before
 	// we do any more expensive operations.
 	if encryptionInfo.IsNewTokenAccordingToClientApp {
-		logger.Warningf("Client-app says the hashed config encryption token %s for user %s and mandelbox %s is new. Therefore, we will not try to decrypt any configs.", hash(encryptionInfo.Token), mandelbox.GetUserID(), mandelbox.GetID())
+		logger.Warningf("Whist frontend says the hashed config encryption token %s for user %s and mandelbox %s is new. Therefore, we will not try to decrypt any configs.", hash(encryptionInfo.Token), mandelbox.GetUserID(), mandelbox.GetID())
 		return
 	}
 
@@ -382,7 +382,7 @@ func (mandelbox *mandelboxData) receiveAndSanityCheckEncryptionToken(uncheckedTo
 
 // determineCorrectConfigKey confirms or corrects our predictions about which
 // S3 object to download for configs, given the ConfigEncryptionInfo from the
-// client-app.
+// Whist frontend.
 func (mandelbox *mandelboxData) determineCorrectConfigKey(s3client *s3.Client, predictedKey string, predictedHeadObject *s3.HeadObjectOutput, encryptionInfo ConfigEncryptionInfo) (string, *s3.HeadObjectOutput, error) {
 	tokenHash := hash(encryptionInfo.Token)
 
