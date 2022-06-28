@@ -364,6 +364,7 @@ COPY --chown=whist display/theme/gtkrc-2.0 $HYDRAULIC_ROOT/home/whist/.gtkrc-2.0
 COPY display/theme/qt4-settings.conf $HYDRAULIC_ROOT/root/.config/Trolltech.conf
 COPY --chown=whist display/theme/qt4-settings.conf $HYDRAULIC_ROOT/home/whist/.config/Trolltech.conf
 COPY display/theme/awesome-rc.lua $HYDRAULIC_ROOT/home/whist/.config/awesome/rc.lua
+COPY display/theme/cursor-builder/WhistSpicyCursors $HYDRAULIC_ROOT/usr/share/icons/WhistSpicyCursors
 
 #########################
 # Audio
