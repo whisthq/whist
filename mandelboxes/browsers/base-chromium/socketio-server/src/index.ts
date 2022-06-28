@@ -6,6 +6,8 @@ const expressServer = express()
 const server = http.createServer(expressServer)
 const io = new Socketio(server)
 
+console.log("Server has started")
+
 io.on("connection", () => {
     console.log("Socket connected!")
 })
