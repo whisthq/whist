@@ -29,6 +29,8 @@ extern "C" {
 #include <whist/core/features.h>
 #include <whist/debug/debug_console.h>
 #include <whist/fec/fec_controller.h>
+#include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
 
 #if !OS_IS(OS_WIN32)
 #include <fcntl.h>
@@ -183,8 +185,10 @@ struct RecvQueue {
     }
     void set_capacity(int c) { capacity = c; }
     void push(RecvQueueData* in) {
+        whist_plotter_insert_sample("packet_size", get_timestamp_sec(), in->recv_size / 1024.0);
         q.push_back(in);
         bytes_len_ += in->recv_size;
+        // fprintf(stderr,"<recv_size: %d>", in->recv_size);
         while (capacity != 0 && (int)q.size() > capacity) {
             pop();
         }
@@ -462,7 +466,7 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  */
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
                                timestamp_us* arrival_time, int* network_payload_size,
-                               int* a = NULL);
+                               int* recv_len);
 
 /**
  * @brief                        Returns the size, in bytes, of the relevant part of
@@ -1494,7 +1498,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
         }
         // Check to see if we received a UDP_CONNECTION_ATTEMPT
         UDPPacket client_packet;
-        if (udp_get_udp_packet(context, &client_packet, NULL, NULL)) {
+        if (udp_get_udp_packet(context, &client_packet, NULL, NULL, NULL)) {
             if (client_packet.type == UDP_CONNECTION_ATTEMPT) {
                 received_connection_attempt = true;
             }
@@ -1585,7 +1589,7 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
         }
         // Check to see if we received a UDP_CONNECTION_CONFIRMATION
         UDPPacket server_response;
-        if (udp_get_udp_packet(context, &server_response, NULL, NULL)) {
+        if (udp_get_udp_packet(context, &server_response, NULL, NULL, NULL)) {
             if (server_response.type == UDP_CONNECTION_CONFIRMATION) {
                 connection_succeeded = true;
             }
@@ -1858,7 +1862,6 @@ void udp_dedicated_recv_iterate(void* raw_context) {
 
     bool got_packet = udp_get_udp_packet(context, &recv_data->udp_packet, &recv_data->arrival_time,
                                          &recv_data->network_payload_size, &recv_data->recv_size);
-
     if (!got_packet) {
         return;
     }
@@ -2197,7 +2200,16 @@ int udp_get_user_queue_len(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
     int sum = 0;
     for (int i = 0; i < NUM_RECV_QUEUES; i++) {
-        sum += context->recv_queue[0]->bytes_len();
+        sum += context->recv_queue[i]->bytes_len();
+    }
+    return sum;
+}
+
+int udp_get_user_queue_size(void* raw_context) {
+    UDPContext* context = (UDPContext*)raw_context;
+    int sum = 0;
+    for (int i = 0; i < NUM_RECV_QUEUES; i++) {
+        sum += context->recv_queue[i]->size();
     }
     return sum;
 }

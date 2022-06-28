@@ -20,6 +20,7 @@ Includes
 #include <whist/network/network.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/logging.h>
+#include <whist/debug/plotter.h>
 
 #include "handle_server_message.h"
 #include "network.h"
@@ -100,21 +101,19 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 
     while (run_sync_packets_threads) {
-        if (1) {
-            int user_queue_len = udp_get_user_queue_len(udp_context->context);
-            static double last_measure_time = 0;
+        if (PLOT_UDP_RECV_QUEUE) {
             double current_time = get_timestamp_sec();
-            if (current_time - last_measure_time > 0.020) {
-                // limit the call frequence, since the syscall inside is not instant,
-                // call it every 5ms uses 0.2% cpu of WhistClient
-                int socket_queue_len = udp_get_socket_queue_len(udp_context->context);
-                int total_len = user_queue_len + socket_queue_len;
-                if (total_len > 50000) {
-                    fprintf(stderr, "<%.2f  %d  %d  %d>\n", current_time, total_len / 1000,
-                            socket_queue_len / 1000, user_queue_len / 1000);
-                }
-                last_measure_time = current_time;
-            }
+            int user_queue_len = udp_get_user_queue_len(udp_context->context);
+            int user_queue_size = udp_get_user_queue_size(udp_context->context);
+            int socket_queue_len = udp_get_socket_queue_len(udp_context->context);
+            int total_queue_len = user_queue_len + socket_queue_len;
+
+            whist_plotter_insert_sample("udp_socket_queue", current_time,
+                                        socket_queue_len / 1024.0);
+            whist_plotter_insert_sample("udp_user_queue", current_time, user_queue_len / 1024.0);
+            whist_plotter_insert_sample("udp_total_queue", current_time, total_queue_len / 1024.0);
+
+            whist_plotter_insert_sample("udp_user_queue_size", current_time, user_queue_size);
         }
 
         // Update the UDP socket
