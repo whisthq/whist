@@ -645,13 +645,13 @@ int socket_get_queue_len(SOCKET socket) {
     if (ioctlsocket(socket, FIONREAD, &len) != 0) {
         return 0;
     }
-    FATAL_ASSERT(len >= 0);
     return (int)len;
 #else
     int len;
     if (ioctl(socket, FIONREAD, &len) != 0) {
         return 0;
     }
+    FATAL_ASSERT(len >= 0);
     return len;
 #endif
 }

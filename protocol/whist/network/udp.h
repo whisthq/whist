@@ -227,7 +227,7 @@ void udp_loop_receive_packet(void* raw_context);
 
 void udp_receive_thread_control(void* raw_context, int flag);
 
-SOCKET udp_get_socket(void* raw_context);
+int udp_get_socket_queue_len(void* raw_context);
 /*
 ============================
 Private Functions. Exposed for the sake of unit testing only.
