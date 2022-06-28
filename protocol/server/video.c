@@ -199,6 +199,13 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
     FATAL_ASSERT(current_cursor != NULL);
     log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
+    // Client needs to know about frame type to find recovery points.
+    frame->frame_type = encoder->frame_type;
+
+    frame->frame_id = id;
+
+    frame->videodata_length = (int)encoder->encoded_frame_size;
+
     // The cursor cache is reset on recovery points, since we can't
     // guaranteed that all previous cursors have been received.
     if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type)) {
@@ -206,6 +213,7 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
         state->last_cursor_hash = 0;
     }
 
+    // Store the cursor info in the frame struct
     if (current_cursor->hash == state->last_cursor_hash) {
         // Cursor has not changed.
         set_frame_cursor_info(frame, NULL);
@@ -225,13 +233,7 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
     }
     free(current_cursor);
 
-    // Client needs to know about frame type to find recovery points.
-    frame->frame_type = encoder->frame_type;
-
-    frame->frame_id = id;
-
-    frame->videodata_length = (int)encoder->encoded_frame_size;
-
+    // Write frame data to the frame struct
     write_avpackets_to_buffer(encoder->num_packets, encoder->packets, get_frame_videodata(frame));
     whist_wait_semaphore(consumer);
     send_frame_id = id;
