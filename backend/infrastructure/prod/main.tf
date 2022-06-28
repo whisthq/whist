@@ -48,13 +48,13 @@ module "s3-control" {
 
 # Region-specific modules, these are enabled only on certain regions
 
-module "user-configs" {
+module "user-configs-us-east-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   # us-east-1
 }
 
-module "user-configs" {
+module "user-configs-us-west-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
@@ -63,7 +63,7 @@ module "user-configs" {
   }
 }
 
-module "user-configs" {
+module "user-configs-eu-central-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
@@ -72,7 +72,7 @@ module "user-configs" {
   }
 }
 
-module "user-configs" {
+module "user-configs-ap-southeast-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
@@ -81,7 +81,7 @@ module "user-configs" {
   }
 }
 
-module "user-configs" {
+module "user-configs-sa-east-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
