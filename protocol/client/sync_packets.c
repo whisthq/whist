@@ -69,13 +69,13 @@ static int multithreaded_udp_receive_packets(void* opaque) {
 }
 
 static int multithreaded_sync_udp_packets(void* opaque) {
-    const bool ENABLE_DEDICATED_UDP_THREAD= true; //NOLINT
+    const bool ENABLE_DEDICATED_UDP_THREAD = true;  // NOLINT
     WhistThread udp_recv_thread;
 
-    if(ENABLE_DEDICATED_UDP_THREAD) {
-	run_dedicated_udp_recv_thread = true;
-	udp_recv_thread = whist_create_thread(multithreaded_udp_receive_packets,
-                                                      "multithreaded_udp_recv_thread", NULL);
+    if (ENABLE_DEDICATED_UDP_THREAD) {
+        run_dedicated_udp_recv_thread = true;
+        udp_recv_thread = whist_create_thread(multithreaded_udp_receive_packets,
+                                              "multithreaded_udp_recv_thread", NULL);
     }
     /*
         Send, receive, and process UDP packets - dimension messages, audio/video packets.
@@ -171,10 +171,9 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         }
     }
 
-    if(ENABLE_DEDICATED_UDP_THREAD)
-    {
-	run_dedicated_udp_recv_thread = false;
-	whist_wait_thread(udp_recv_thread, NULL);
+    if (ENABLE_DEDICATED_UDP_THREAD) {
+        run_dedicated_udp_recv_thread = false;
+        whist_wait_thread(udp_recv_thread, NULL);
     }
 
     return 0;

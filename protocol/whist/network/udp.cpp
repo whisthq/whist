@@ -5,13 +5,11 @@ Includes
 ============================
 */
 
-
 #include "whist/core/whist.h"
 #if OS_IS(OS_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
                                          // be at the very top
 #endif
-
 
 extern "C" {
 #include "whist/logging/logging.h"
@@ -175,15 +173,20 @@ struct RecvQueue {
    private:
     std::deque<RecvQueueData*> q;
     std::atomic<int> bytes_len_ = 0;
+    int capacity = 0;
 
    public:
     RecvQueue() {
         // mutex = whist_create_mutex();
         // sem = whist_create_semaphore(0);
     }
+    void set_capacity(int c) { capacity = c; }
     void push(RecvQueueData* in) {
         q.push_back(in);
         bytes_len_ += in->recv_size;
+        while (capacity != 0 && (int)q.size() > capacity) {
+            pop();
+        }
     }
     RecvQueueData* pop() {
         FATAL_ASSERT(!q.empty());
@@ -198,7 +201,8 @@ struct RecvQueue {
     // WhistSemaphore sem;
 };
 
-enum { VIDEO_RECV_QUEUE = 0, NON_VIDEO_RECV_QUEUE, NUM_RECV_QUEUES };
+enum { NON_VIDEO_RECV_QUEUE = 0, VIDEO_RECV_QUEUE, NUM_RECV_QUEUES };
+const int RECV_QUEUE_CAPACITY[NUM_RECV_QUEUES] = {200, 800};  // NOLINT
 
 // An instance of the UDP Context
 typedef struct {
@@ -1836,13 +1840,15 @@ UDP Message Handling
 void udp_dedicated_recv_init(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
 
-    whist_lock_mutex(context->recv_mutex);
-    context->dedicated_recv = true;
-    whist_unlock_mutex(context->recv_mutex);
-
     for (int i = 0; i < NUM_RECV_QUEUES; i++) {
         context->recv_queue[i] = new RecvQueue();
+        context->recv_queue[i]->set_capacity(RECV_QUEUE_CAPACITY[i]);
     }
+
+    whist_lock_mutex(context->mutex);
+    context->dedicated_recv = true;
+    whist_unlock_mutex(context->mutex);
+
     FATAL_ASSERT(context->dedicated_recv == true);
 }
 void udp_dedicated_recv_iterate(void* raw_context) {
@@ -1858,17 +1864,15 @@ void udp_dedicated_recv_iterate(void* raw_context) {
         return;
     }
 
-    if (true || recv_data->udp_packet.type == UDP_WHIST_SEGMENT &&
-                    recv_data->udp_packet.udp_whist_segment_data.whist_type == PACKET_VIDEO) {
-        whist_lock_mutex(context->recv_mutex);
+    whist_lock_mutex(context->recv_mutex);
+    if (recv_data->udp_packet.type == UDP_WHIST_SEGMENT &&
+        recv_data->udp_packet.udp_whist_segment_data.whist_type == PACKET_VIDEO) {
         context->recv_queue[VIDEO_RECV_QUEUE]->push(recv_data);
-        whist_unlock_mutex(context->recv_mutex);
-        whist_post_semaphore(context->recv_sem);
     } else {
-        whist_lock_mutex(context->recv_mutex);
         context->recv_queue[NON_VIDEO_RECV_QUEUE]->push(recv_data);
-        whist_unlock_mutex(context->recv_mutex);
     }
+    whist_unlock_mutex(context->recv_mutex);
+    whist_post_semaphore(context->recv_sem);
 }
 
 static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packet,
@@ -1882,11 +1886,13 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
     }
 
     whist_lock_mutex(context->recv_mutex);
-    recv_data = (RecvQueueData*)context->recv_queue[0]->pop();
+    if (context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() > 0) {
+        recv_data = context->recv_queue[NON_VIDEO_RECV_QUEUE]->pop();
+    } else {
+        recv_data = context->recv_queue[VIDEO_RECV_QUEUE]->pop();
+    }
     whist_unlock_mutex(context->recv_mutex);
 
-    // int r = fifo_queue_dequeue_item_timeout(context->recv_queue[0], &recv_data, 1);
-    // if (r == -1) return false;
     *udp_packet = &recv_data->udp_packet;
     *arrival_time = recv_data->arrival_time;
     *network_payload_size = recv_data->network_payload_size;
