@@ -363,19 +363,19 @@ def complete_experiment_and_save_results(
     wait_until_cmd_done(client_mandelbox_pexpect_process, pexpect_prompt_client)
 
     # Stop and delete any leftover Docker containers
-    command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
-    server_mandelbox_pexpect_process.sendline(command)
-    wait_until_cmd_done(server_mandelbox_pexpect_process, pexpect_prompt_server)
-    if use_two_instances:
-        client_mandelbox_pexpect_process.sendline(command)
-        wait_until_cmd_done(client_mandelbox_pexpect_process, pexpect_prompt_client)
+    # command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
+    # server_mandelbox_pexpect_process.sendline(command)
+    # wait_until_cmd_done(server_mandelbox_pexpect_process, pexpect_prompt_server)
+    # if use_two_instances:
+    #    client_mandelbox_pexpect_process.sendline(command)
+    #    wait_until_cmd_done(client_mandelbox_pexpect_process, pexpect_prompt_client)
 
     # Terminate the host-service
-    server_hs_process.sendcontrol("c")
-    server_hs_process.kill(0)
-    if use_two_instances:
-        client_hs_process.sendcontrol("c")
-        client_hs_process.kill(0)
+    # server_hs_process.sendcontrol("c")
+    # server_hs_process.kill(0)
+    # if use_two_instances:
+    #     client_hs_process.sendcontrol("c")
+    #     client_hs_process.kill(0)
 
     # Terminate all pexpect processes
     server_mandelbox_pexpect_process.kill(0)
