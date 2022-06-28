@@ -14,7 +14,7 @@
 /backend/services/                  @mauaraujo @rpadaki @gabrieleoliaro
 /host-setup/                        @rpadaki @mauaraujo @philippemnoel
 /mandelboxes/                       @rpadaki @mauaraujo @philippemnoel
-/protocol/                          @jkarthic @fhvwy @npip99 @rpadaki @sardination
+/protocol/                          @jkarthic @npip99 @rpadaki @sardination
 
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
