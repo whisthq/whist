@@ -178,8 +178,8 @@ struct RecvQueue {
 
    public:
     RecvQueue() {
-        mutex = whist_create_mutex();
-        sem = whist_create_semaphore(0);
+        // mutex = whist_create_mutex();
+        // sem = whist_create_semaphore(0);
     }
     void push(RecvQueueData* in) {
         q.push_back(in);
@@ -193,8 +193,8 @@ struct RecvQueue {
     }
     int bytes_len() { return bytes_len_; }
     int size() { return int(q.size()); }
-    WhistMutex mutex;
-    WhistSemaphore sem;
+    // WhistMutex mutex;
+    // WhistSemaphore sem;
 };
 
 enum { VIDEO_RECV_QUEUE = 0, NON_VIDEO_RECV_QUEUE, NUM_RECV_QUEUES };
@@ -270,6 +270,9 @@ typedef struct {
     int dedicated_recv_thread;
 
     RecvQueue* recv_queue[NUM_RECV_QUEUES];
+
+    WhistMutex recv_mutex;
+    WhistSemaphore recv_sem;
 
 } UDPContext;
 
@@ -1174,6 +1177,9 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         context->fec_packet_ratios[i] = 0.0;
     }
 
+    context->recv_mutex = whist_create_mutex();
+    context->recv_sem = whist_create_semaphore(0);
+
     int ret;
     if (destination == NULL) {
         // Create the server context
@@ -1882,14 +1888,14 @@ void udp_loop_receive_packet(void* raw_context) {
 
         if (true || recv_data->udp_packet.type == UDP_WHIST_SEGMENT &&
                         recv_data->udp_packet.udp_whist_segment_data.whist_type == PACKET_VIDEO) {
-            whist_lock_mutex(context->recv_queue[VIDEO_RECV_QUEUE]->mutex);
+            whist_lock_mutex(context->recv_mutex);
             context->recv_queue[VIDEO_RECV_QUEUE]->push(recv_data);
-            whist_unlock_mutex(context->recv_queue[VIDEO_RECV_QUEUE]->mutex);
-            whist_post_semaphore(context->recv_queue[VIDEO_RECV_QUEUE]->sem);
+            whist_unlock_mutex(context->recv_mutex);
+            whist_post_semaphore(context->recv_sem);
         } else {
-            whist_lock_mutex(context->recv_queue[NON_VIDEO_RECV_QUEUE]->mutex);
+            whist_lock_mutex(context->recv_mutex);
             context->recv_queue[NON_VIDEO_RECV_QUEUE]->push(recv_data);
-            whist_unlock_mutex(context->recv_queue[NON_VIDEO_RECV_QUEUE]->mutex);
+            whist_unlock_mutex(context->recv_mutex);
         }
     }
 }
@@ -1898,15 +1904,15 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
                                       timestamp_us* arrival_time, int* network_payload_size) {
     RecvQueueData* recv_data;
 
-    bool succ = whist_wait_timeout_semaphore(context->recv_queue[0]->sem, 1);
+    bool succ = whist_wait_timeout_semaphore(context->recv_sem, 1);
 
     if (!succ) {
         return false;
     }
 
-    whist_lock_mutex(context->recv_queue[0]->mutex);
+    whist_lock_mutex(context->recv_mutex);
     recv_data = (RecvQueueData*)context->recv_queue[0]->pop();
-    whist_unlock_mutex(context->recv_queue[0]->mutex);
+    whist_unlock_mutex(context->recv_mutex);
 
     // int r = fifo_queue_dequeue_item_timeout(context->recv_queue[0], &recv_data, 1);
     // if (r == -1) return false;
