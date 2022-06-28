@@ -65,7 +65,6 @@ static int multithreaded_udp_receive_packets(void* opaque) {
     return 0;
 }
 
-
 extern int user_queue_len;
 static int multithreaded_sync_udp_packets(void* opaque) {
     WhistThread udp_recv_thread = whist_create_thread(multithreaded_udp_receive_packets,
@@ -105,9 +104,10 @@ static int multithreaded_sync_udp_packets(void* opaque) {
                 // limit the call frequence, since the syscall inside is not instant,
                 // call it every 5ms uses 0.2% cpu of WhistClient
                 int socket_queue_len = socket_get_queue_len(udp_socket);
-		int total_len = user_queue_len +socket_queue_len;
+                int total_len = user_queue_len + socket_queue_len;
                 if (total_len > 50000) {
-                    fprintf(stderr, "<%.2f  %d  %d  %d>\n", current_time, total_len/1000, socket_queue_len/1000,  user_queue_len/1000);
+                    fprintf(stderr, "<%.2f  %d  %d  %d>\n", current_time, total_len / 1000,
+                            socket_queue_len / 1000, user_queue_len / 1000);
                 }
                 last_measure_time = current_time;
             }

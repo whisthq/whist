@@ -420,7 +420,8 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  *                               wait for as long as the socket's most recent set_timeout
  */
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
-                               timestamp_us* arrival_time, int* network_payload_size, int * a = NULL);
+                               timestamp_us* arrival_time, int* network_payload_size,
+                               int* a = NULL);
 
 /**
  * @brief                        Returns the size, in bytes, of the relevant part of
@@ -626,12 +627,12 @@ static bool udp_update(void* raw_context) {
     if (last_recv_timer.opaque[0] == 0 && last_recv_timer.opaque[1] == 0) {
         start_timer(&last_recv_timer);
     }
-//<<<<<<< HEAD
+    //<<<<<<< HEAD
     double last_recv = diff_timer(&last_recv_timer, &current_time);
-//=======
+    //=======
 
-    //double last_recv = get_timer(&last_recv_timer);
-//>>>>>>> aea8fb8cb (dedicated udp thread packed)
+    // double last_recv = get_timer(&last_recv_timer);
+    //>>>>>>> aea8fb8cb (dedicated udp thread packed)
     if (last_recv * MS_IN_SECOND > UDP_RECV_BOTTLENECK_THRESHOLD_MS) {
         context->last_bottleneck_timer = current_time;
         LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
@@ -1680,7 +1681,8 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 }
 
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
-                               timestamp_us* arrival_time, int* network_payload_size, int * recv_len_out) {
+                               timestamp_us* arrival_time, int* network_payload_size,
+                               int* recv_len_out) {
     // Wait to receive a packet over UDP, until timing out
     UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
@@ -1688,9 +1690,8 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
     int recv_len =
         recvfrom_no_intr(context->socket, &udp_network_packet, sizeof(udp_network_packet), 0,
                          (struct sockaddr*)(&context->last_addr), &slen);
-    if(recv_len_out!=NULL)
-    {
-	*recv_len_out =recv_len;
+    if (recv_len_out != NULL) {
+        *recv_len_out = recv_len;
     }
 
     if (context->connected) {
@@ -1800,10 +1801,10 @@ void udp_receive_thread_control(void* raw_context, int flag) {
     context->dedicated_recv_thread = flag;
 }
 
-int user_queue_len=0;
+int user_queue_len = 0;
 void udp_loop_receive_packet(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
-    user_queue_len=0;
+    user_queue_len = 0;
     /*UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
 
@@ -1829,14 +1830,14 @@ void udp_loop_receive_packet(void* raw_context) {
     if (last_recv_timer.opaque[0] == 0 && last_recv_timer.opaque[1] == 0) {
         start_timer(&last_recv_timer);
     }
-    int video_cnt=0;
-    int non_video_cnt=0;
+    int video_cnt = 0;
+    int non_video_cnt = 0;
     while (context->dedicated_recv_thread != -1) {
         double last_recv = get_timer(&last_recv_timer);
         if (last_recv * MS_IN_SECOND > 2.0) {
             LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
                                      last_recv * MS_IN_SECOND);
-	    //fprintf(stderr, "[v=%d nv=%d]\n", video_cnt,non_video_cnt);
+            // fprintf(stderr, "[v=%d nv=%d]\n", video_cnt,non_video_cnt);
         }
 
         // fprintf(stderr,"in loop!!!\n");
@@ -1856,30 +1857,27 @@ void udp_loop_receive_packet(void* raw_context) {
         if (!got_packet) {
             continue;
         }
-       if (recv_data->udp_packet.type == UDP_WHIST_SEGMENT &&
-            recv_data->udp_packet.udp_whist_segment_data.whist_type == PACKET_VIDEO)
-       {
-	   video_cnt++;
-       }
-       else
-       {
-	   non_video_cnt++;
-       }
-            whist_lock_mutex(context->recv_queue[0]->mutex);
-            context->recv_queue[0]->q.push_back(recv_data);
-	    user_queue_len += recv_data->recv_size;
-            whist_unlock_mutex(context->recv_queue[0]->mutex);
-	    
-            whist_post_semaphore(context->recv_queue[0]->sem);
-            /*
-// fifo_queue_enqueue_item(context->recv_queue[0], &recv_data);
+        if (recv_data->udp_packet.type == UDP_WHIST_SEGMENT &&
+            recv_data->udp_packet.udp_whist_segment_data.whist_type == PACKET_VIDEO) {
+            video_cnt++;
         } else {
-            whist_lock_mutex(context->recv_queue[0]->mutex);
-            context->recv_queue[0]->q.push_back(recv_data);
-            whist_unlock_mutex(context->recv_queue[0]->mutex);
-            // whist_post_semaphore(context->recv_queue[0]->sem);
-            // fifo_queue_enqueue_item(context->recv_queue[0], &recv_data);
-	    }*/
+            non_video_cnt++;
+        }
+        whist_lock_mutex(context->recv_queue[0]->mutex);
+        context->recv_queue[0]->q.push_back(recv_data);
+        user_queue_len += recv_data->recv_size;
+        whist_unlock_mutex(context->recv_queue[0]->mutex);
+
+        whist_post_semaphore(context->recv_queue[0]->sem);
+        /*
+// fifo_queue_enqueue_item(context->recv_queue[0], &recv_data);
+    } else {
+        whist_lock_mutex(context->recv_queue[0]->mutex);
+        context->recv_queue[0]->q.push_back(recv_data);
+        whist_unlock_mutex(context->recv_queue[0]->mutex);
+        // whist_post_semaphore(context->recv_queue[0]->sem);
+        // fifo_queue_enqueue_item(context->recv_queue[0], &recv_data);
+    }*/
     }
 }
 
@@ -1895,13 +1893,13 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
         succ = 1;
         recv_data = (RecvData*)context->recv_queue[0]->q.front();
         context->recv_queue[0]->q.pop_front();
-	user_queue_len-= recv_data->recv_size;
+        user_queue_len -= recv_data->recv_size;
     }
     whist_unlock_mutex(context->recv_queue[0]->mutex);
 
     if (!succ) {
         // whist_sleep(1);
-        //usleep(300);
+        // usleep(300);
         return false;
     }
 
