@@ -42,6 +42,9 @@ WhistThreadID whist_get_thread_id(WhistThread thread) {
 
 WhistThread whist_create_thread(WhistThreadFunction thread_function, const char *thread_name,
                                 void *data) {
+    if (thread_name == NULL) {
+        thread_name = "[[UNNAMED]]";
+    }
     LOG_INFO("Creating thread \"%s\" from thread %lx", thread_name, whist_get_thread_id(NULL));
     WhistThread ret = new WhistThreadStruct(thread_name, thread_function, data);
     if (ret == NULL) {
