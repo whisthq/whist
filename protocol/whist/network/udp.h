@@ -228,6 +228,8 @@ void udp_dedicated_recv_init(void* raw_context);
 void udp_dedicated_recv_iterate(void* raw_context);
 
 int udp_get_socket_queue_len(void* raw_context);
+
+int udp_get_user_queue_len(void* context);
 /*
 ============================
 Private Functions. Exposed for the sake of unit testing only.

@@ -189,6 +189,7 @@ struct RecvQueue {
         FATAL_ASSERT(!q.empty());
         auto ret = q.front();
         q.pop_front();
+        bytes_len_ -= ret->recv_size;
         return ret;
     }
     int bytes_len() { return bytes_len_; }
@@ -2187,4 +2188,11 @@ int udp_get_socket_queue_len(void* raw_context) {
     return socket_get_queue_len(context->socket);
 }
 
-int udp_get_recv_queue_len(UDPContext* context) { return context->recv_queue[0]->bytes_len(); }
+int udp_get_user_queue_len(void* raw_context) {
+    UDPContext* context = (UDPContext*)raw_context;
+    int sum = 0;
+    for (int i = 0; i < NUM_RECV_QUEUES; i++) {
+        sum += context->recv_queue[0]->bytes_len();
+    }
+    return sum;
+}

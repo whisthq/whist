@@ -97,7 +97,7 @@ static int multithreaded_sync_udp_packets(void* opaque) {
 
     while (run_sync_packets_threads) {
         if (1) {
-            int user_queue_len = 0;
+            int user_queue_len = udp_get_user_queue_len(udp_context->context);
             static double last_measure_time = 0;
             double current_time = get_timestamp_sec();
             if (current_time - last_measure_time > 0.020) {
