@@ -15,6 +15,9 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+# Start socketio server in the background
+/opt/teleport/socketio-server &
+
 USER_DATA_DIR="${1:-$HOME/.config/google-chrome}"
 
 # Under certain (bad) circumstances, SingletonLock might be saved into the user's config. This is an issue,

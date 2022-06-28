@@ -52,7 +52,8 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | b
     && nvm use 16 \
     && cd /socketio-server \
     && yarn \
-    && yarn build
+    && yarn build \
+    && yarn bundle:linux
 
 #########################################################
 # Base-Chromium Build Stage (Common to all Chromium browsers)
@@ -67,20 +68,8 @@ SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 COPY --from=whist-teleport-chrome-extension /teleport-extension/build /opt/teleport/chrome-extension
 COPY --chmod=555 teleport-extension-host.py /opt/teleport/chrome-extension-host
 
-# Install NVM dependencies
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    curl \
-    ca-certificates \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install NVM and NodeJS 16 for whist user
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | su whist -c bash \
-    && su whist -c "nvm install 16 && nvm use 16"
-
 # Install Socketio server
-COPY --from=whist-socketio-server /socketio-server/build /opt/teleport/socketio-server
+COPY --from=whist-socketio-server /socketio-server/socketio-server /opt/teleport/socketio-server
 
 # Install and configure our KDE proxy (for handlers used in file upload/download, etc.)
 COPY --chmod=555 teleport-kde-proxy.py /opt/teleport/teleport-kde-proxy.py
