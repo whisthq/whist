@@ -1,5 +1,4 @@
 const path = require("path")
-const nodeExternals = require('webpack-node-externals');
 
 const srcDir = path.join(__dirname, "..", "src")
 const outDir = path.join(__dirname, "..", "build")
