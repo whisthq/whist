@@ -37,7 +37,7 @@ const (
 // successfully decrypt configs.
 type ConfigEncryptionInfo struct {
 	Token types.ConfigEncryptionToken
-	// When IsNewTokenAccordingToClientApp is true, then the client app
+	// When IsNewTokenAccordingToClientApp is true, then the Whist frontend
 	// effectively believes that the Whist frontend is starting from a clean slate
 	// (either a fresh install, or a user who logged out fully).
 	IsNewTokenAccordingToClientApp bool
