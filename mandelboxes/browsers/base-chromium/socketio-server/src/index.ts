@@ -14,7 +14,7 @@ const io = new Socketio(server, {
 
 // Listens for client/server events and broadcasts them to the other side
 io.on("connection", (socket: Socket) => {
-  if (io.engine.clientCount === 2) io.emit("connected")
+  io.emit("connected", io.engine.clientCount)
   socket.onAny((eventName, ...args) => {
     socket.broadcast.emit(eventName, args)
   })
