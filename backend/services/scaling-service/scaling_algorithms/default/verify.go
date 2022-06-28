@@ -146,7 +146,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceRemoval(scalingCtx context.Conte
 
 	affectedRows, err := s.DBClient.DeleteInstance(scalingCtx, s.GraphQLClient, instance.ID)
 	if err != nil {
-		return utils.MakeError("failed to delete instance %v from database. Error: %v", instance.ID, err)
+		return utils.MakeError("failed to delete instance %s from database: %s", instance.ID, err)
 	}
 
 	logger.Infof("Deleted %d rows from database.", affectedRows)

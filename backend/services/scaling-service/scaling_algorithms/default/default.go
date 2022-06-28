@@ -188,7 +188,7 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 
 		mandelboxInt, err := strconv.Atoi(configMandelboxes)
 		if err != nil {
-			logger.Errorf("error parsing desired mandelboxes value: %w", err)
+			logger.Errorf("error parsing desired mandelboxes value: %s", err)
 			// Use default value of 2 if we failed to convert to int
 			mandelboxRegionMap[region] = 2
 			continue
@@ -229,11 +229,9 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 		for {
 			select {
 			case instanceEvent := <-s.InstanceEventChan:
-				logger.Infof("Scaling algorithm received an instance database event with value: %v", instanceEvent)
 				instance := instanceEvent.Data.(subscriptions.Instance)
 
 				if instance.Status == "DRAINING" {
-
 					// Track this goroutine so we can wait for it to
 					// finish if the global context gets cancelled.
 					goroutineTracker.Add(1)
@@ -253,7 +251,6 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 					}()
 				}
 			case versionEvent := <-s.ClientAppVersionChan:
-				logger.Infof("Scaling algorithm received a client app version database event with value: %v", versionEvent)
 				version := versionEvent.Data.(subscriptions.ClientAppVersion)
 
 				// Track this goroutine so we can wait for it to
@@ -278,8 +275,6 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 			case scheduledEvent := <-s.ScheduledEventChan:
 				switch scheduledEvent.Type {
 				case "SCHEDULED_SCALE_DOWN_EVENT":
-					logger.Infof("Scaling algorithm received a scheduled scale down event with value: %v", scheduledEvent)
-
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
@@ -287,14 +282,12 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						scalingCtx, scalingCancel := context.WithCancel(context.Background())
 						err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
 						if err != nil {
-							logger.Errorf("error running scale down job in %s: %s", scheduledEvent.Region, err)
+							logger.Errorf("error running scale down job: %s", err)
 						}
 
 						scalingCancel()
 					}()
 				case "SCHEDULED_IMAGE_UPGRADE_EVENT":
-					logger.Infof("Scaling algorithm received an image upgrade event with value: %v", scheduledEvent)
-
 					// Track this goroutine so we can wait for it to
 					// finish if the global context gets cancelled.
 					goroutineTracker.Add(1)
@@ -315,7 +308,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 
 						err := s.UpgradeImage(scalingCtx, scheduledEvent, regionImageMap[scheduledEvent.Region])
 						if err != nil {
-							logger.Errorf("error running image upgrade in %s: %s", scheduledEvent.Region, err)
+							logger.Errorf("error running image upgrade: %s", err)
 						}
 
 						scalingCancel()
@@ -324,8 +317,6 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 			case serverEvent := <-s.ServerEventChan:
 				switch serverEvent.Type {
 				case "SERVER_MANDELBOX_ASSIGN_EVENT":
-					logger.Infof("Scaling algorithm received a mandelbox assign request with value: %v", serverEvent)
-
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()

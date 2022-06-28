@@ -275,7 +275,7 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 		return algorithm.(algos.ScalingAlgorithm)
 	}
 
-	logger.Warningf("Failed to get scaling algorithm in %v", scalingEvent.Region)
+	logger.Warningf("Failed to get scaling algorithm in %s", scalingEvent.Region)
 
 	return nil
 }
@@ -335,7 +335,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				if len(subscriptionEvent.ClientAppVersions) == 1 {
 					version = subscriptionEvent.ClientAppVersions[0]
 				} else {
-					logger.Errorf("Unexpected length of %v in version received from the config database.", len(subscriptionEvent.ClientAppVersions))
+					logger.Errorf("unexpected length of %d in version received from the config database", len(subscriptionEvent.ClientAppVersions))
 				}
 
 				// TODO: once we keep track of client versions per region,

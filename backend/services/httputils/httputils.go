@@ -57,7 +57,7 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 
 	w.WriteHeader(status)
 	if err != nil {
-		logger.Errorf("Error marshalling a %v HTTP Response body: %s", status, err)
+		logger.Errorf("error marshalling a %v HTTP Response body: %s", status, err)
 	}
 	_, _ = w.Write(buf)
 }
@@ -128,12 +128,12 @@ func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest
 		claims, err = auth.ParseToken(accessToken)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+			return nil, utils.MakeError("received an unpermissioned backend request on %s to URL %s: %s", r.Host, r.URL, err)
 		}
 
 		if err := auth.Verify(claims); err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return nil, utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+			return nil, utils.MakeError("received an unpermissioned backend request on %s to URL %s: %s", r.Host, r.URL, err)
 		}
 	}
 
@@ -153,7 +153,7 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) (map[
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return nil, utils.MakeError("Error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
+		return nil, utils.MakeError("error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	// Extract only the jwt_access_token field from a raw JSON unmarshalling that
@@ -162,14 +162,14 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) (map[
 	err = json.Unmarshal(body, &rawmap)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return nil, utils.MakeError("Error raw-unmarshalling JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
+		return nil, utils.MakeError("error raw-unmarshalling JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	// Now, actually do the unmarshalling into the right object type
 	err = json.Unmarshal(body, s)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return nil, utils.MakeError("Could not fully unmarshal the body of a request sent on %s to URL %s: %s", r.Host, r.URL, err)
+		return nil, utils.MakeError("could not fully unmarshal the body of a request sent on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	// Set up the result channel
@@ -181,7 +181,7 @@ func ParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) (map[
 // Function to verify the type (method) of a request
 func VerifyRequestType(w http.ResponseWriter, r *http.Request, method string) error {
 	if r == nil {
-		err := utils.MakeError("Received a nil request expecting to be type %s", method)
+		err := utils.MakeError("received a nil request expecting to be type %s", method)
 		logger.Error(err)
 
 		http.Error(w, utils.Sprintf("Bad request. Expected %s, got nil", method), http.StatusBadRequest)
@@ -190,7 +190,7 @@ func VerifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 	}
 
 	if r.Method != method {
-		err := utils.MakeError("Received a request on %s to URL %s of type %s, but it should have been type %s", r.Host, r.URL, r.Method, method)
+		err := utils.MakeError("received a request on %s to URL %s of type %s, but it should have been type %s", r.Host, r.URL, r.Method, method)
 		logger.Error(err)
 
 		http.Error(w, utils.Sprintf("Bad request type. Expected %s, got %s", method, r.Method), http.StatusBadRequest)
