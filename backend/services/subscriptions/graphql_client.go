@@ -58,13 +58,13 @@ func (wc *GraphQLClient) Initialize(useConfigDB bool) error {
 		params, err = getWhistConfigHasuraParams()
 		if err != nil {
 			// Error obtaining the connection parameters, we stop and don't setup the client
-			return utils.MakeError("error creating hasura client: %v", err)
+			return utils.MakeError("error creating hasura client: %s", err)
 		}
 	} else {
 		params, err = getWhistHasuraParams()
 		if err != nil {
 			// Error obtaining the connection parameters, we stop and don't setup the client
-			return utils.MakeError("error creating hasura client: %v", err)
+			return utils.MakeError("error creating hasura client: %s", err)
 		}
 	}
 	wc.SetParams(params)

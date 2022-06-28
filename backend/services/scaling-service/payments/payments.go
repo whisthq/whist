@@ -146,7 +146,7 @@ func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 func VerifyPayment(accessToken string) (bool, error) {
 	claims, err := auth.ParseToken(accessToken)
 	if err != nil {
-		return false, utils.MakeError("failed to parse access token: %s", err)
+		return false, err
 	}
 
 	status := claims.SubscriptionStatus

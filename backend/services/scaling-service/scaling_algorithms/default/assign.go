@@ -31,7 +31,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	defer func() {
 		err := s.VerifyCapacity(scalingCtx, event)
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("error verifying capacity when assigning mandelbox: %s", err)
 		}
 	}()
 

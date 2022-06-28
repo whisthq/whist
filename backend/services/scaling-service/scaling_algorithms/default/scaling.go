@@ -28,7 +28,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	defer func() {
 		err := s.VerifyCapacity(scalingCtx, event)
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("error verifying capacity when scaling down: %s", err)
 		}
 	}()
 
