@@ -1,15 +1,14 @@
 import { io } from "socket.io-client"
 
+import { SOCKETIO_SERVER_URL } from "@app/constants/urls"
+
 const initSocketioConnection = () => {
-  console.log("trying to connect")
-  const socket = io(`http://127.0.0.1:32261`, {
+  const socket = io(SOCKETIO_SERVER_URL, {
     reconnectionDelayMax: 10000,
     transports: ["websocket"]
   })
 
-  socket.on("connect_error", (err) => {
-    console.log("connection error", err)
-  })
+  return socket
 }
 
 export { initSocketioConnection }
