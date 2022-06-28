@@ -4,7 +4,11 @@ import { Server as Socketio } from "socket.io"
 
 const expressServer = express()
 const server = http.createServer(expressServer)
-const io = new Socketio(server)
+const io = new Socketio(server, {
+    cors: {
+        origin: "*",
+    },
+})
 
 console.log("Server has started")
 
