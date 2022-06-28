@@ -219,6 +219,7 @@ def complete_experiment_and_save_results(
     experiment_metadata,
     metadata_filename,
     timestamps,
+    server_running_independently,
 ):
     """
     This function performs the teardown and cleanup required at the end of a E2E streaming test. This
@@ -363,20 +364,21 @@ def complete_experiment_and_save_results(
     client_mandelbox_pexpect_process.sendline("exit")
     wait_until_cmd_done(client_mandelbox_pexpect_process, pexpect_prompt_client)
 
-    # Stop and delete any leftover Docker containers
-    # command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
-    # server_mandelbox_pexpect_process.sendline(command)
-    # wait_until_cmd_done(server_mandelbox_pexpect_process, pexpect_prompt_server)
-    # if use_two_instances:
-    #    client_mandelbox_pexpect_process.sendline(command)
-    #    wait_until_cmd_done(client_mandelbox_pexpect_process, pexpect_prompt_client)
+    if not server_running_independently:
+        # Stop and delete any leftover Docker containers
+        command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
+        server_mandelbox_pexpect_process.sendline(command)
+        wait_until_cmd_done(server_mandelbox_pexpect_process, pexpect_prompt_server)
+        if use_two_instances:
+            client_mandelbox_pexpect_process.sendline(command)
+            wait_until_cmd_done(client_mandelbox_pexpect_process, pexpect_prompt_client)
 
-    # Terminate the host-service
-    # server_hs_process.sendcontrol("c")
-    # server_hs_process.kill(0)
-    # if use_two_instances:
-    #     client_hs_process.sendcontrol("c")
-    #     client_hs_process.kill(0)
+        # Terminate the host-service
+        server_hs_process.sendcontrol("c")
+        server_hs_process.kill(0)
+        if use_two_instances:
+            client_hs_process.sendcontrol("c")
+            client_hs_process.kill(0)
 
     # Terminate all pexpect processes
     server_mandelbox_pexpect_process.kill(0)
@@ -392,10 +394,11 @@ def complete_experiment_and_save_results(
 
     # 7- Stop or terminate the AWS EC2 instance(s)
     if leave_instances_on == "false":
-        # Terminate or stop AWS instance(s)
-        terminate_or_stop_aws_instance(
-            boto3client, server_instance_id, server_instance_id != use_existing_server_instance
-        )
+        if not server_running_independently:
+            # Terminate or stop AWS instance(s)
+            terminate_or_stop_aws_instance(
+                boto3client, server_instance_id, server_instance_id != use_existing_server_instance
+            )
         if use_two_instances:
             terminate_or_stop_aws_instance(
                 boto3client,

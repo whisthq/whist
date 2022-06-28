@@ -66,7 +66,7 @@ def server_setup_process(args_dict):
     cmake_build_type = args_dict["cmake_build_type"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
-    server_already_running_host_service = args_dict["server_already_running_host_service"]
+    server_running_independently = args_dict["server_running_independently"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -79,7 +79,7 @@ def server_setup_process(args_dict):
         pexpect_prompt_server,
     )
 
-    if not server_already_running_host_service:
+    if not server_running_independently:
 
         print("Running pre-host-setup on the instance...")
         prepare_instance_for_host_setup(hs_process, pexpect_prompt_server)
