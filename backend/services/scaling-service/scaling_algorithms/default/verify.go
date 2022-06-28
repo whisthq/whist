@@ -27,7 +27,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	defer func() {
 		err := s.VerifyCapacity(scalingCtx, event)
 		if err != nil {
-			logger.Errorf("Error verifying capacity on %v. Err: %v", event.Region, err)
+			logger.Errorf("error verifying capacity in %s: %s", event.Region, err)
 		}
 	}()
 
@@ -69,11 +69,11 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	// Query for the latest image id
 	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
 	if err != nil {
-		return utils.MakeError("failed to query database for current image. Err: %v", err)
+		return utils.MakeError("failed to query database for current image: %s", err)
 	}
 
 	if len(imageResult) == 0 {
-		logger.Warningf("Image not found on %v. Not performing any scaling actions.", event.Region)
+		logger.Warningf("Image not found in %s. Not performing any scaling actions.", event.Region)
 		return nil
 	}
 	latestImage := subscriptions.Image{
@@ -87,13 +87,13 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	// This query will return all instances with the ACTIVE status
 	allActive, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
 	if err != nil {
-		return utils.MakeError("failed to query database for active instances. Err: %v", err)
+		return utils.MakeError("failed to query database for active instances: %s", err)
 	}
 
 	// This query will return all instances with the PRE_CONNECTION status
 	allStarting, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "PRE_CONNECTION", event.Region)
 	if err != nil {
-		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
+		return utils.MakeError("failed to query database for starting instances: %s", err)
 	}
 
 	mandelboxCapacity := helpers.ComputeExpectedMandelboxCapacity(string(latestImage.ImageID), allActive, allStarting)
@@ -129,7 +129,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceRemoval(scalingCtx context.Conte
 	// Once its terminated, verify that it was removed from the database
 	instanceResult, err := s.DBClient.QueryInstance(scalingCtx, s.GraphQLClient, instance.ID)
 	if err != nil {
-		return utils.MakeError("failed to query database for instance %v. Error: %v", instance.ID, err)
+		return utils.MakeError("failed to query database for instance %s: %s", instance.ID, err)
 	}
 
 	// Verify that instance removed itself from the database

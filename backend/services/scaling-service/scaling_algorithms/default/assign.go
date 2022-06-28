@@ -43,7 +43,6 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// potential attacks.
 	unsafeEmail, err := helpers.SanitizeEmail(mandelboxRequest.UserEmail)
 	if err != nil {
-		// err is already wrapped here
 		return err
 	}
 	logger.Infof("Frontend reported email %s, this value might not be accurate and is untrusted.", unsafeEmail)

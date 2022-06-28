@@ -28,7 +28,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	defer func() {
 		err := s.VerifyCapacity(scalingCtx, event)
 		if err != nil {
-			logger.Errorf("Error verifying capacity on %v. Err: %v", event.Region, err)
+			logger.Error(err)
 		}
 	}()
 
@@ -41,11 +41,11 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Query for the latest image id
 	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
 	if err != nil {
-		return utils.MakeError("failed to query database for current image. Err: %v", err)
+		return utils.MakeError("failed to query database for current image: %s", err)
 	}
 
 	if len(imageResult) == 0 {
-		logger.Warningf("Image not found on %v. Not performing any scaling actions.", event.Region)
+		logger.Warningf("Image not found in %s. Not performing any scaling actions.", event.Region)
 		return nil
 	}
 	latestImageID := string(imageResult[0].ImageID)
@@ -53,7 +53,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Query database for all active instances (status ACTIVE) without mandelboxes
 	allActive, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
 	if err != nil {
-		return utils.MakeError("failed to query database for active instances. Err: %v", err)
+		return utils.MakeError("failed to query database for active instances: %s", err)
 	}
 
 	// Active instances with space to run mandelboxes
@@ -117,14 +117,14 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Check database for draining instances without running mandelboxes
 	drainingInstances, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "DRAINING", event.Region)
 	if err != nil {
-		return utils.MakeError("failed to query database for lingering instances. Err: %v", err)
+		return utils.MakeError("failed to query database for lingering instances: %s", err)
 	}
 
 	for _, drainingInstance := range drainingInstances {
 		// Check if lingering instance has any running mandelboxes
 		if drainingInstance.RemainingCapacity == 0 {
 			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
-			logger.Warningf("Instance %v has associated mandelboxes and is marked as Draining.", drainingInstance.ID)
+			logger.Warningf("Instance %s has associated mandelboxes and is marked as Draining.", drainingInstance.ID)
 		} else if time.Since(drainingInstance.UpdatedAt) > 10*time.Minute {
 			// Mark instance as lingering only if it has taken more than 10 minutes to shut down.
 			lingeringInstances = append(lingeringInstances, drainingInstance)
@@ -139,7 +139,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 		err := s.Host.SpinDownInstances(scalingCtx, lingeringIDs)
 		if err != nil {
-			return utils.MakeError("failed to terminate lingering instances. Err: %s", err)
+			return utils.MakeError("failed to terminate lingering instances: %s", err)
 		}
 
 		// Verify that each instance is terminated correctly and is removed from the database
@@ -178,7 +178,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		instance.Status = "DRAINING"
 		_, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, instance)
 		if err != nil {
-			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
+			logger.Errorf("failed to mark instance %s as draining: %s", instance, err)
 		}
 
 		logger.Infow(utils.Sprintf("Marked instance %s as draining on database.", instance.ID), contextFields)
@@ -214,12 +214,12 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 		// Call the host handler to handle the instance spinup in the cloud provider
 		createdInstances, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, image)
 		if err != nil {
-			return utils.MakeError("Failed to spin up instances, created %v, err: %v", createdInstances, err)
+			return utils.MakeError("failed to spin up instances: %s", err)
 		}
 
 		// Check if we could create the desired number of instances
 		if len(createdInstances) != instancesToScale {
-			return utils.MakeError("Could not scale up %v instances, only scaled up %v.", instancesToScale, len(createdInstances))
+			return utils.MakeError("could not scale up %d instances, only scaled up %d", instancesToScale, len(createdInstances))
 		}
 
 		for _, instance := range createdInstances {
@@ -234,7 +234,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	// If successful, write to database
 	affectedRows, err := s.DBClient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
 	if err != nil {
-		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
+		return utils.MakeError("failed to insert instances into database: %s", err)
 	}
 
 	logger.Infow(utils.Sprintf("Inserted %d rows to database.", affectedRows), contextFields)

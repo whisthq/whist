@@ -28,7 +28,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// expensive operations.
 
 	if imageID == nil {
-		logger.Warningf("Received an empty image ID on %v. Not performing upgrade.", event.Region)
+		logger.Warningf("Received an empty image ID in %s. Not performing upgrade.", event.Region)
 		return nil
 	}
 
@@ -43,7 +43,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// Query for the current image id
 	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
 	if err != nil {
-		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
+		return utils.MakeError("failed to query database for current image: %s", err)
 	}
 
 	logger.Infow(utils.Sprintf("Creating new instance buffer for image %s", newImage.ImageID), contextFields)
@@ -60,7 +60,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	} else {
 		bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, int32(defaultInstanceBuffer), maxWaitTimeReady, newImage)
 		if err != nil {
-			return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImage.ImageID, err)
+			return utils.MakeError("failed to create instance buffer: %s", err)
 		}
 
 		// Set the instance capacity field and add to the slice
@@ -76,7 +76,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// If successful, write to database
 	affectedRows, err := s.DBClient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
 	if err != nil {
-		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
+		return utils.MakeError("failed to insert instances into database: %s", err)
 	}
 
 	logger.Infow(utils.Sprintf("Inserted %d rows to database.", affectedRows), contextFields)
@@ -93,7 +93,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	// If the region does not have an existing image, insert the new one to the database.
 	if len(imageResult) == 0 {
-		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImage.ImageID)
+		logger.Warningf("Image doesn't exist in %s. Creating a new entry with image %s.", event.Region, newImage.ImageID)
 
 		updateParams := subscriptions.Image{
 			Provider:  "AWS",
@@ -105,7 +105,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 		_, err = s.DBClient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{updateParams})
 		if err != nil {
-			return utils.MakeError("Failed to insert image %v into database. Error: %v", newImage.ImageID, err)
+			return utils.MakeError("failed to insert image into database: %s", err)
 		}
 	}
 
@@ -120,7 +120,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		// Clear protected map since the client app deploy didn't complete successfully.
 		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
 
-		return utils.MakeError("Timed out waiting for config database to swap versions. Rolling back deploy of new version.")
+		return utils.MakeError("timed out waiting for config database to swap versions")
 	}
 
 	return nil
@@ -147,7 +147,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
 		s.protectedMapLock.Unlock()
 
-		return utils.MakeError("Timed out waiting for image upgrade to finish. Rolling back deploy of new version.")
+		return utils.MakeError("timed out waiting for image upgrade to finish.")
 	}
 
 	logger.Infow("Starting image swapover action.", contextFields)
@@ -194,17 +194,17 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	}
 
 	if newImage == (subscriptions.Image{}) {
-		return utils.MakeError("did not find protected image with commit hash %v. Not performing image swapover.", commitHash)
+		return utils.MakeError("did not find protected image with commit hash %s. Not performing image swapover.", commitHash)
 	}
 
 	// Query for the current image id
 	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
 	if err != nil {
-		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
+		return utils.MakeError("failed to query database for current image: %s", err)
 	}
 
 	if len(imageResult) == 0 {
-		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImageID)
+		logger.Warningf("Image doesn't exist in %s. Creating a new entry with image %s.", event.Region, newImageID)
 	} else {
 		// We now consider the "current" image as the "old" image
 		oldImageID = string(imageResult[0].ImageID)
@@ -216,12 +216,12 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	if oldImageID == "" {
 		_, err = s.DBClient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{newImage})
 		if err != nil {
-			return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
+			return utils.MakeError("failed to insert image into database: %s", err)
 		}
 	} else {
 		_, err = s.DBClient.UpdateImage(scalingCtx, s.GraphQLClient, newImage)
 		if err != nil {
-			return utils.MakeError("Failed to update image %v to image %v in database. Error: %v", oldImageID, newImageID, err)
+			return utils.MakeError("failed to update image in database: %s", err)
 		}
 	}
 
