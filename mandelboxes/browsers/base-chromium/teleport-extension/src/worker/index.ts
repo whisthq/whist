@@ -15,6 +15,7 @@ import {
   initActivateTabHandler,
 } from "./tabs"
 import { initLocationHandler } from "./geolocation"
+import { initSocketioConnection } from "./socketio"
 
 const nativeHostPort = initNativeHostIpc()
 
@@ -44,3 +45,6 @@ initActivateTabHandler(nativeHostPort)
 
 // Receive geolocation from extension host
 initLocationHandler(nativeHostPort)
+
+// Connect to socket.io server to communicate with client extension
+initSocketioConnection()
