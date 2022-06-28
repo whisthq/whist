@@ -684,12 +684,12 @@ static bool udp_update(void* raw_context) {
     bool received_packet;
 
     if (context->dedicated_recv == false) {
-        whist_lock_mutex(context->mutex);
-        fprintf(stderr, "not using dedicated recv thread!!\n");
+        whist_lock_mutex(context->recv_mutex);
+        // fprintf(stderr, "not using dedicated recv thread!!\n");
         udp_packet_p = (UDPPacket*)malloc(sizeof(UDPPacket));
         received_packet =
             udp_get_udp_packet(context, udp_packet_p, &arrival_time, &network_payload_size, NULL);
-        whist_unlock_mutex(context->mutex);
+        whist_unlock_mutex(context->recv_mutex);
     } else {
         // fprintf(stderr,"wanted!!\n");
         received_packet =
@@ -1187,6 +1187,11 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
 
     context->recv_mutex = whist_create_mutex();
     context->recv_sem = whist_create_semaphore(0);
+
+    for (int i = 0; i < NUM_RECV_QUEUES; i++) {
+        context->recv_queue[i] = new RecvQueue();
+        context->recv_queue[i]->set_capacity(RECV_QUEUE_CAPACITY[i]);
+    }
 
     int ret;
     if (destination == NULL) {
@@ -1840,14 +1845,7 @@ UDP Message Handling
 void udp_dedicated_recv_init(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
 
-    for (int i = 0; i < NUM_RECV_QUEUES; i++) {
-        context->recv_queue[i] = new RecvQueue();
-        context->recv_queue[i]->set_capacity(RECV_QUEUE_CAPACITY[i]);
-    }
-
-    whist_lock_mutex(context->mutex);
     context->dedicated_recv = true;
-    whist_unlock_mutex(context->mutex);
 
     FATAL_ASSERT(context->dedicated_recv == true);
 }
