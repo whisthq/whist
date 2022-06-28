@@ -7,6 +7,15 @@ module.exports = {
   entry: {
     index: path.join(srcDir, "index.ts")
   },
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        use: "ts-loader",
+        exclude: /node_modules/,
+      }
+    ],
+  },
   target: "node",
   output: {
     path: outDir,
