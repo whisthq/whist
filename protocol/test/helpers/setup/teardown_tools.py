@@ -26,6 +26,7 @@ from helpers.common.constants import (
     username,
     aws_timeout_seconds,
     running_in_ci,
+    e2e_run_id,
 )
 
 from helpers.aws.boto3_tools import (
@@ -129,7 +130,7 @@ def extract_logs_from_mandelbox(
     Returns:
         None
     """
-    command = f"rm -rf ~/perf_logs/{role}; mkdir -p ~/perf_logs/{role}"
+    command = f"rm -rf ~/perf_logs/{e2e_run_id}/{role}; mkdir -p ~/perf_logs/{e2e_run_id}/{role}"
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
@@ -159,26 +160,26 @@ def extract_logs_from_mandelbox(
         logfiles.append("/home/whist/.config/google-chrome/Default/History")
 
     for file_path in logfiles:
-        command = f"docker cp {docker_id}:{file_path} ~/perf_logs/{role}/"
+        command = f"docker cp {docker_id}:{file_path} ~/perf_logs/{e2e_run_id}/{role}/"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     # Move the network conditions log to the perf_logs folder, so that it is downloaded
     # to the machine running this script along with the other logs
     if role == "client":
-        command = "mv ~/network_conditions.log ~/perf_logs/client/network_conditions.log"
+        command = (
+            f"mv ~/network_conditions.log ~/perf_logs/{e2e_run_id}/client/network_conditions.log"
+        )
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
     # Extract URLs from history, to ensure that the desired websites were opened
     else:
-        command = "strings ~/perf_logs/server/History | grep http > ~/perf_logs/server/history.log && rm ~/perf_logs/server/History"
+        command = f"strings ~/perf_logs/{e2e_run_id}/server/History | grep http > ~/perf_logs/{e2e_run_id}/server/history.log && rm ~/perf_logs/{e2e_run_id}/server/History"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     # Download all the mandelbox logs from the AWS machine
-    command = (
-        f"scp -r -i {ssh_key_path} {username}@{hostname}:~/perf_logs/{role} {perf_logs_folder_name}"
-    )
+    command = f"scp -r -i {ssh_key_path} {username}@{hostname}:~/perf_logs/{e2e_run_id}/{role} {perf_logs_folder_name}"
 
     local_process = pexpect.spawn(
         command, timeout=aws_timeout_seconds, logfile=log_grabber_log.buffer

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import os
 
 # The username to use to access the AWS EC2 instance(s)
 username = "ubuntu"
@@ -56,3 +55,4 @@ MANDELBOX_BUILD_MAX_RETRIES = 5
 
 # Whether the E2E script is running in CI vs on a local machine
 running_in_ci = os.getenv("CI") == "true"
+e2e_run_id = str(uuid.uuid4())
