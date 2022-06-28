@@ -178,7 +178,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		instance.Status = "DRAINING"
 		_, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, instance)
 		if err != nil {
-			logger.Errorf("failed to mark instance %s as draining: %s", instance, err)
+			return utils.MakeError("failed to mark instance %s as draining: %s", instance, err)
 		}
 
 		logger.Infow(utils.Sprintf("Marked instance %s as draining on database.", instance.ID), contextFields)

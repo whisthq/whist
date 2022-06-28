@@ -48,7 +48,7 @@ func (host *AWSHost) Initialize(region string) error {
 	// Initialize general AWS config on the selected region
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
 	if err != nil {
-		return utils.MakeError("Unable to load AWS SDK config: %s", err)
+		return utils.MakeError("unable to load AWS SDK config: %s", err)
 	}
 
 	// Start AWS host and EC2 client
@@ -59,19 +59,19 @@ func (host *AWSHost) Initialize(region string) error {
 	// Get main subnet for the current region and env
 	mainSubnet, err := host.getMainSubnet()
 	if err != nil {
-		return utils.MakeError("Failed to get main subnet. Err: %v", err)
+		return err
 	}
 
 	// Get security group for the current region and env
 	securityGroup, err := host.getSecurityGroup()
 	if err != nil {
-		return utils.MakeError("Failed to get security group. Err: %v", err)
+		return err
 	}
 
 	// Get instance profile for current env
 	profile := host.getInstanceProfile()
 	if profile == "" {
-		return utils.MakeError("Error: instance profile is empty.")
+		return utils.MakeError("instance profile is empty")
 	}
 
 	host.MainSubnet = mainSubnet
@@ -99,7 +99,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 	// Get base64 encoded user data to start host service at launch
 	userData, err := getUserData()
 	if err != nil {
-		return nil, utils.MakeError("failed to encode userdata for launching instances. Err: %v", err)
+		return nil, utils.MakeError("failed to encode userdata for launching instances: %s", err)
 	}
 
 	// Set run input
@@ -134,17 +134,17 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 				return
 
 			case <-retryTicker.C:
-				logger.Infof("Trying to spinup %v instances with image %v", numInstances, image.ImageID)
+				logger.Infof("Trying to spinup %d instances with image %s", numInstances, image.ImageID)
 
 				attempts += 1
 				result, err = host.MakeInstances(ctx, input)
 
 				if err == nil || attempts == MAX_RETRY_ATTEMPTS {
-					logger.Infof("Done trying to spinup instances.")
+					logger.Infof("Done trying to spinup instances")
 					retryTicker.Stop()
 					retryDone <- true
 				} else {
-					logger.Warningf("Failed to start desired number of instances with error: %v", err)
+					logger.Warningf("Failed to start desired number of instances: %s", err)
 				}
 			}
 		}
@@ -153,7 +153,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 	<-retryDone
 
 	if err != nil {
-		return nil, utils.MakeError("error creating instances, retry time expired: Err: %v", err)
+		return nil, utils.MakeError("error creating instances, retry time expired: %s", err)
 	}
 
 	// Create slice with instances to write to database
@@ -169,7 +169,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 
 	err = host.WaitForInstanceReady(scalingCtx, maxWaitTimeReady, outputInstanceIDs)
 	if err != nil {
-		return nil, utils.MakeError("failed to wait for new instances to be ready. Err: %v", err)
+		return nil, utils.MakeError("failed to wait for new instances to be ready: %s", err)
 	}
 
 	for _, outputInstance := range result.Instances {
@@ -195,7 +195,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 
 		_, err = host.MakeTags(ctx, tagInput)
 		if err != nil {
-			return nil, utils.MakeError("error taging instance. Err: %v", err)
+			return nil, utils.MakeError("error taging instance: %s", err)
 		}
 
 		// Only append instance to output slice if we have created
@@ -216,12 +216,11 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 	desiredInstances := int(numInstances)
 	if len(outputInstances) != desiredInstances {
 		return outputInstances,
-			utils.MakeError("failed to start requested number of instances with parameters: %v. Number of instances marked as ready: %v",
-				input, len(result.Instances))
+			utils.MakeError("failed to start requested number of instances, only marked as ready %d", len(result.Instances))
 	}
 
 	if err != nil {
-		return outputInstances, utils.MakeError("error starting instances with parameters: %v. Error: %v", input, err)
+		return outputInstances, utils.MakeError("error starting instances: %s", err)
 	}
 	return outputInstances, nil
 }
@@ -239,12 +238,11 @@ func (host *AWSHost) SpinDownInstances(scalingCtx context.Context, instanceIDs [
 
 	// Verify termination output
 	if len(terminateOutput.TerminatingInstances) != len(instanceIDs) {
-		return utils.MakeError("failed to terminate requested number of instances with parameters: %v. Number of terminated instances: %v",
-			terminateInput, len(terminateOutput.TerminatingInstances))
+		return utils.MakeError("failed to terminate requested number of instances, only terminated %d", len(terminateOutput.TerminatingInstances))
 	}
 
 	if err != nil {
-		return utils.MakeError("error terminating instance with id: %v. Error: %v", instanceIDs, err)
+		return utils.MakeError("error terminating instance %s: %s", instanceIDs, err)
 	}
 	return nil
 }
@@ -259,7 +257,7 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, maxW
 	defer cancel()
 
 	waiter := ec2.NewInstanceTerminatedWaiter(host.EC2, func(*ec2.InstanceTerminatedWaiterOptions) {
-		logger.Infof("Waiting for instances to terminate on AWS")
+		logger.Infof("Waiting for instances to terminate")
 	})
 
 	waitParams := &ec2.DescribeInstancesInput{
@@ -268,7 +266,7 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, maxW
 
 	err := waiter.Wait(ctx, waitParams, maxWaitTime)
 	if err != nil {
-		return utils.MakeError("failed waiting for instances %v to terminate from AWS: %v", instanceIds, err)
+		return utils.MakeError("failed waiting for instances to terminate: %s", err)
 	}
 
 	return nil
@@ -280,7 +278,7 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, maxWaitTim
 	defer cancel()
 
 	waiter := ec2.NewInstanceRunningWaiter(host.EC2, func(*ec2.InstanceRunningWaiterOptions) {
-		logger.Infof("Waiting for instances %v to be ready on AWS", instanceIds)
+		logger.Infof("Waiting for instances to be ready", instanceIds)
 	})
 
 	waitParams := &ec2.DescribeInstancesInput{
@@ -289,7 +287,7 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, maxWaitTim
 
 	err := waiter.Wait(ctx, waitParams, maxWaitTime)
 	if err != nil {
-		return utils.MakeError("failed waiting for instances %v to be ready from AWS: %v", instanceIds, err)
+		return utils.MakeError("failed waiting for instances to be ready: %s", err)
 	}
 
 	return nil
@@ -323,11 +321,11 @@ func (host *AWSHost) getMainSubnet() (ec2Types.Subnet, error) {
 	}
 	output, err := host.EC2.DescribeSubnets(ctx, input)
 	if err != nil {
-		return ec2Types.Subnet{}, utils.MakeError("failed to get main subnet for env %v. Err: %v", env, err)
+		return ec2Types.Subnet{}, utils.MakeError("failed to get main subnet for env %s: %s", env, err)
 	}
 
 	if len(output.Subnets) == 0 {
-		return ec2Types.Subnet{}, utils.MakeError("Couldn't find the main subnet for env %v", env)
+		return ec2Types.Subnet{}, utils.MakeError("couldn't find the main subnet for env %s", env)
 	}
 	return output.Subnets[0], nil
 }
@@ -358,11 +356,11 @@ func (host *AWSHost) getSecurityGroup() (ec2Types.SecurityGroup, error) {
 	}
 	output, err := host.EC2.DescribeSecurityGroups(ctx, input)
 	if err != nil {
-		return ec2Types.SecurityGroup{}, utils.MakeError("failed to get security group for env %v. Err: %v", env, err)
+		return ec2Types.SecurityGroup{}, utils.MakeError("failed to get security group for env %s: %s", env, err)
 	}
 
 	if len(output.SecurityGroups) == 0 {
-		return ec2Types.SecurityGroup{}, utils.MakeError("Couldn't find security group for env %v", env)
+		return ec2Types.SecurityGroup{}, utils.MakeError("couldn't find security group for env %s", env)
 	}
 	return output.SecurityGroups[0], nil
 }

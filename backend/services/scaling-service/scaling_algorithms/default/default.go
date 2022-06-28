@@ -34,6 +34,7 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"go.uber.org/zap"
 )
 
 // ScalingAlgorithm is the basic abstraction of a scaling algorithm.
@@ -246,7 +247,13 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						scalingCancel()
 
 						if err != nil {
-							logger.Errorf("error verifying instance scale down: %s", err)
+							contextFields := []interface{}{
+								zap.String("id", instanceEvent.ID),
+								zap.Any("type", instanceEvent.Type),
+								zap.Any("data", instanceEvent.Data),
+								zap.String("region", instanceEvent.Region),
+							}
+							logger.Errorw(utils.Sprintf("error verifying instance scale down: %s", err), contextFields)
 						}
 					}()
 				}
@@ -268,7 +275,13 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 					scalingCancel()
 
 					if err != nil {
-						logger.Errorf("error running image swapover: %s", err)
+						contextFields := []interface{}{
+							zap.String("id", versionEvent.ID),
+							zap.Any("type", versionEvent.Type),
+							zap.Any("data", versionEvent.Data),
+							zap.String("region", versionEvent.Region),
+						}
+						logger.Errorw(utils.Sprintf("error running image swapover: %s", err), contextFields)
 					}
 				}()
 
@@ -282,7 +295,13 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						scalingCtx, scalingCancel := context.WithCancel(context.Background())
 						err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
 						if err != nil {
-							logger.Errorf("error running scale down job: %s", err)
+							contextFields := []interface{}{
+								zap.String("id", scheduledEvent.ID),
+								zap.Any("type", scheduledEvent.Type),
+								zap.Any("data", scheduledEvent.Data),
+								zap.String("region", scheduledEvent.Region),
+							}
+							logger.Errorw(utils.Sprintf("error running scale down job: %s", err), contextFields)
 						}
 
 						scalingCancel()
@@ -293,8 +312,6 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
-
-						logger.Infof("%v", scheduledEvent)
 
 						if scheduledEvent.Data == nil {
 							logger.Errorf("error running image upgrade, event data is nil.")
@@ -308,7 +325,13 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 
 						err := s.UpgradeImage(scalingCtx, scheduledEvent, regionImageMap[scheduledEvent.Region])
 						if err != nil {
-							logger.Errorf("error running image upgrade: %s", err)
+							contextFields := []interface{}{
+								zap.String("id", scheduledEvent.ID),
+								zap.Any("type", scheduledEvent.Type),
+								zap.Any("data", scheduledEvent.Data),
+								zap.String("region", scheduledEvent.Region),
+							}
+							logger.Errorw(utils.Sprintf("error running image upgrade: %s", err), contextFields)
 						}
 
 						scalingCancel()
@@ -327,7 +350,13 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 
 						err := s.MandelboxAssign(scalingCtx, serverEvent)
 						if err != nil {
-							logger.Errorf("error running mandelbox assign action: %s", err)
+							contextFields := []interface{}{
+								zap.String("id", serverEvent.ID),
+								zap.Any("type", serverEvent.Type),
+								zap.Any("data", serverEvent.Data),
+								zap.String("region", serverEvent.Region),
+							}
+							logger.Errorw(utils.Sprintf("error running mandelbox assign action: %s", err), contextFields)
 						}
 						// Cancel context once the operation is done
 						scalingCancel()
@@ -336,7 +365,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 			case <-globalCtx.Done():
 				logger.Info("Global context has been cancelled. Exiting from default scaling algorithm event loop...")
 				goroutineTracker.Wait()
-				logger.Infof("Finished waiting for all goroutines to finish. Scaling algorithm from %v exited.", s.Region)
+				logger.Infof("Finished waiting for all goroutines to finish. Scaling algorithm %s exited.", s.Region)
 				return
 			}
 		}

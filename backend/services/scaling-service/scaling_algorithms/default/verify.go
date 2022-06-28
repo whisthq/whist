@@ -27,7 +27,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	defer func() {
 		err := s.VerifyCapacity(scalingCtx, event)
 		if err != nil {
-			logger.Errorf("error verifying capacity in %s: %s", event.Region, err)
+			logger.Error(err)
 		}
 	}()
 

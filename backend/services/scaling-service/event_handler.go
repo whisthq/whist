@@ -198,10 +198,10 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 // StartDeploy reads the `images.json` file which is written by the Github
 // deploy workflow, and sends the event to the appropiate channel.
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
-	// if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
-	// 	logger.Infof("Running in localenv so not performing deploy actions.")
-	// 	return
-	// }
+	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
+		logger.Infof("Running in localenv so not performing deploy actions.")
+		return
+	}
 
 	regionImageMap, err := getRegionImageMap()
 	if err != nil {
@@ -238,13 +238,13 @@ func getRegionImageMap() (map[string]interface{}, error) {
 	// The file is also generated during deploy and lives in the scaling service directory.
 	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "images.json"))
 	if err != nil {
-		return nil, utils.MakeError("failed to read region to image map from file. Not performing image upgrade: %s", err)
+		return nil, utils.MakeError("failed to read region to image map from file: %s", err)
 	}
 
 	// Try to unmarshal contents of file into a map
 	err = json.Unmarshal(content, &regionImageMap)
 	if err != nil {
-		return nil, utils.MakeError("failed to unmarshal region to image map. Not performing image upgrade: %s", err)
+		return nil, utils.MakeError("failed to unmarshal region to image map: %s", err)
 	}
 
 	return regionImageMap, nil
@@ -264,7 +264,7 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 	region = scalingEvent.Region
 
 	if region == "" {
-		logger.Infof("No region found on scaling event. Getting scaling algorithm on default region %v.", defaultRegion)
+		logger.Infof("No region found in scaling event, using default region %s", defaultRegion)
 		name = utils.Sprintf("default-sa-%s", defaultRegion)
 	} else {
 		name = utils.Sprintf("default-sa-%s", scalingEvent.Region)
@@ -310,7 +310,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				}
 
 				// Start scaling algorithm based on region
-				logger.Infof("Received database event.")
 				algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
 				switch algorithm := algorithm.(type) {
@@ -352,7 +351,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 					scalingEvent.Data = version
 
 					// Start scaling algorithm based on region
-					logger.Infof("Received database event.")
 					algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
 					switch algorithm := algorithm.(type) {
@@ -373,8 +371,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 
 		case scheduledEvent := <-scheduledEvents:
 			// Start scaling algorithm based on region
-			logger.Infof("Received scheduled event. %v", scheduledEvent)
-
 			for _, region := range algos.GetEnabledRegions() {
 				scheduledEvent.Region = region
 				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
@@ -384,8 +380,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				}
 			}
 		case serverEvent := <-serverEvents:
-			logger.Infof("Received server event. %v", serverEvent)
-
 			algorithm := getScalingAlgorithm(algorithmByRegion, serverEvent)
 			switch algorithm := algorithm.(type) {
 			case *algos.DefaultScalingAlgorithm:
@@ -393,7 +387,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 			}
 
 		case <-globalCtx.Done():
-			logger.Infof("Gloal context has been cancelled, exiting event loop...")
+			logger.Infof("Global context has been cancelled, exiting event loop...")
 			return
 		}
 	}

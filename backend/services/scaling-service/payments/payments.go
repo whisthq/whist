@@ -68,7 +68,7 @@ func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionS
 	// Verify that all necessary configurations are present
 	secret, ok := configs["STRIPE_SECRET"]
 	if !ok {
-		return utils.MakeError("Could not find key STRIPE_SECRET in configurations map.")
+		return utils.MakeError("could not find key STRIPE_SECRET in configurations map")
 	}
 
 	// Use the restriced Stripe key if on localdev or testing
@@ -79,12 +79,12 @@ func (whistPayments *PaymentsClient) Initialize(customerID string, subscriptionS
 
 	price, ok := configs["MONTHLY_PRICE_IN_CENTS"]
 	if !ok {
-		return utils.MakeError("Could not find key MONTHLY_PRICE_IN_CENTS in configurations map.")
+		return utils.MakeError("could not find key MONTHLY_PRICE_IN_CENTS in configurations map")
 	}
 
 	monthlyPrice, err := strconv.ParseInt(price, 10, 64)
 	if err != nil {
-		return utils.MakeError("failed to parse monthly price. Err: %v", err)
+		return utils.MakeError("failed to parse monthly price: %s", err)
 	}
 
 	stripeClient.configure(secret, restricedKey, customerID, subscriptionStatus, monthlyPrice)
@@ -117,7 +117,7 @@ func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 		// can use to manage their subscription and billing information.
 		sessionUrl, err = whistPayments.stripeClient.createBillingPortal()
 		if err != nil {
-			return "", utils.MakeError("error creating Stripe billing portal. Err: %v", err)
+			return "", utils.MakeError("error creating Stripe billing portal: %s", err)
 		}
 	} else if !isNewUser {
 		// The authenticated user has previous Whist subscriptions. This means that the
@@ -125,7 +125,7 @@ func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 		withTrialPeriod := false
 		sessionUrl, err = whistPayments.stripeClient.createCheckoutSession(withTrialPeriod)
 		if err != nil {
-			return "", utils.MakeError("error creating Stripe billing portal. Err: %v", err)
+			return "", utils.MakeError("error creating Stripe billing portal: %s", err)
 		}
 	} else {
 		// The authenticated user does not have an active Whist subscription, so we offer
@@ -133,7 +133,7 @@ func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 		withTrialPeriod := true
 		sessionUrl, err = whistPayments.stripeClient.createCheckoutSession(withTrialPeriod)
 		if err != nil {
-			return "", utils.MakeError("error creating Stripe checkout session. Err: %v", err)
+			return "", utils.MakeError("error creating Stripe checkout session: %s", err)
 		}
 	}
 
@@ -146,12 +146,12 @@ func (whistPayments *PaymentsClient) CreateSession() (string, error) {
 func VerifyPayment(accessToken string) (bool, error) {
 	claims, err := auth.ParseToken(accessToken)
 	if err != nil {
-		return false, utils.MakeError("failed to parse access token. Err: %v", err)
+		return false, utils.MakeError("failed to parse access token: %s", err)
 	}
 
 	status := claims.SubscriptionStatus
 	if status == "" {
-		return false, utils.MakeError("subscription status claim is empty.")
+		return false, utils.MakeError("subscription status claim is empty")
 	}
 
 	paymentValid := status == "active" || status == "trialing"
