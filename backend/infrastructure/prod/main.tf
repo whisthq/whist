@@ -34,6 +34,50 @@ module "secrets-manager" {
   env    = var.env
 }
 
+# Region-specific modules, these are enabled only on certain regions
+
+module "s3-control" {
+  source = "../modules/aws_s3_control"
+  env    = var.env
+  # us-east-1
+}
+
+module "s3-control" {
+  source = "../modules/aws_s3_control"
+  env    = var.env
+  providers = {
+    # us-west-1
+    aws = aws.usw1
+  }
+}
+
+module "s3-control" {
+  source = "../modules/aws_s3_control"
+  env    = var.env
+  providers = {
+    # eu-central-1
+    aws = aws.euc1
+  }
+}
+
+module "s3-control" {
+  source = "../modules/aws_s3_control"
+  env    = var.env
+  providers = {
+    # ap-southeast-2
+    aws = aws.apse2
+  }
+}
+
+module "s3-control" {
+  source = "../modules/aws_s3_control"
+  env    = var.env
+  providers = {
+    # sa-east-1
+    aws = aws.sae1
+  }
+}
+
 # Enable all AWS regions on Terraform. Doing this will create
 # all multi-region resources on each region declared below. See 
 # `providers.tf` for the provider abbreviations used below.
