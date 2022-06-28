@@ -2,7 +2,6 @@ import express from "express"
 import http from "http"
 import { Server as Socketio, Socket } from "socket.io"
 
-console.log("Starting socket server")
 
 // Initialize socket.io server
 const expressServer = express()
@@ -15,7 +14,7 @@ const io = new Socketio(server, {
 
 // Listens for client/server events and broadcasts them to the other side
 io.on("connection", (socket: Socket) => {
-  socket.emit("connected")
+  if (io.engine.clientCount === 2) io.emit("connected")
   socket.onAny((eventName, ...args) => {
     socket.broadcast.emit(eventName, args)
   })
