@@ -78,7 +78,7 @@ local_host_service = args.host_address == "127.0.0.1"
 mandelbox_server_path = os.path.abspath("/usr/share/whist")
 
 PortBindings = namedtuple(
-    "PortBindings", ["host_port_32261tcp", "host_port_32262tcp", "host_port_32263udp", "host_port_32273tcp"]
+    "PortBindings", ["host_port_32262tcp", "host_port_32263udp", "host_port_32273tcp"]
 )
 json_data = args.json_data
 
@@ -154,14 +154,13 @@ def send_spin_up_mandelbox_request(mandelbox_id):
     print(f"Response from host service: {response}")
     respobj.raise_for_status()
 
-    host_port_32261tcp = response["result"]["port_32261"]
     host_port_32262tcp = response["result"]["port_32262"]
     host_port_32263udp = response["result"]["port_32263"]
     host_port_32273tcp = response["result"]["port_32273"]
     key = response["result"]["aes_key"]
 
     return (
-        PortBindings(host_port_32261tcp, host_port_32262tcp, host_port_32263udp, host_port_32273tcp),
+        PortBindings(host_port_32262tcp, host_port_32263udp, host_port_32273tcp),
         key,
     )
 
@@ -201,8 +200,6 @@ if __name__ == "__main__":
         linux/macos:    ./wclient {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
     """
         )
-
-        print(f"port 32261 is {host_ports.host_port_32261tcp}")
 
     if local_host_service:
         print(
