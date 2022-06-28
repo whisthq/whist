@@ -1,17 +1,17 @@
 
 
-#include <mutex>
 #include "whist/core/whist.h"
 #include "whist/logging/logging.h"
 extern "C" {
-// #include "whist/logging/logging.h"
-#include "whist/utils/threads.h"
-#include <whist/core/platform.h>
-#include "whist/network/network.h"
 #if OS_IS(OS_WIN32)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
                                          // be at the very top
 #endif
+// #include "whist/logging/logging.h"
+#include "whist/utils/threads.h"
+#include <whist/core/platform.h>
+#include "whist/network/network.h"
+
 
 /*
 ============================
@@ -37,6 +37,7 @@ Includes
 #endif
 }
 #include <deque>
+#include <mutex>
 /*
 ============================
 Defines
