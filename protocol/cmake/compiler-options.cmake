@@ -28,6 +28,7 @@ else() # GCC and Clang base flags
     "$<$<COMPILE_LANGUAGE:C>:-Wmissing-prototypes>" # Warn when a global function has no prototype.
     "$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,C>:-Werror=implicit-function-declaration>" # Error on implicit function declaration with C
     "$<$<CONFIG:DEBUG>:-Og;-g3;-O2>"
+    "$<$<CONFIG:DEBUG_O0>:-Og;-g3;-O0>"
     "$<$<CONFIG:RELEASE>:-g3;-O2>"
     "$<$<BOOL:${CLIENT_SHARED_LIB}>:-fPIC>")
   add_link_options("-pthread" "-rdynamic")
