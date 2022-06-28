@@ -1,3 +1,8 @@
+#include <whist/core/platform.h>
+#if OS_IS(OS_WIN32)
+#define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
+                                         // be at the very top
+#endif
 
 /*
 ============================
@@ -6,10 +11,6 @@ Includes
 */
 
 #include "whist/core/whist.h"
-#if OS_IS(OS_WIN32)
-#define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
-                                         // be at the very top
-#endif
 
 extern "C" {
 #include "whist/logging/logging.h"
