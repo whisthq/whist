@@ -70,7 +70,7 @@ static int multithreaded_udp_receive_packets(void* opaque) {
 
 static int multithreaded_sync_udp_packets(void* opaque) {
     const bool ENABLE_DEDICATED_UDP_THREAD = true;  // NOLINT
-    WhistThread udp_recv_thread;
+    WhistThread udp_recv_thread = NULL;
 
     if (ENABLE_DEDICATED_UDP_THREAD) {
         run_dedicated_udp_recv_thread = true;
