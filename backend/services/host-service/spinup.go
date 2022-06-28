@@ -465,7 +465,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	createFailed = false
 
 	result := httputils.JSONTransportRequestResult{
-		hostPortForTCP32261: hostPortForTCP32261,
+		HostPortForTCP32261: hostPortForTCP32261,
 		HostPortForTCP32262: hostPortForTCP32262,
 		HostPortForUDP32263: hostPortForUDP32263,
 		HostPortForTCP32273: hostPortForTCP32273,
