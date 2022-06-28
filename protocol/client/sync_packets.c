@@ -40,7 +40,7 @@ extern volatile bool
 static WhistThread sync_udp_packets_thread;
 static WhistThread sync_tcp_packets_thread;
 static bool run_sync_packets_threads;
-
+static bool run_dedicated_udp_recv_thread;
 /*
 ============================
 Public Function Implementations
@@ -59,17 +59,19 @@ Public Function Implementations
 
 static int multithreaded_udp_receive_packets(void* opaque) {
     void* inner_context = packet_udp_context.context;
-    udp_receive_thread_control(inner_context, 1);
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
-    udp_loop_receive_packet(inner_context);
+
+    udp_dedicated_recv_init(inner_context);
+    while (run_dedicated_udp_recv_thread) {
+        udp_dedicated_recv_iterate(inner_context);
+    }
     return 0;
 }
 
 static int multithreaded_sync_udp_packets(void* opaque) {
+    run_dedicated_udp_recv_thread = true;
     WhistThread udp_recv_thread = whist_create_thread(multithreaded_udp_receive_packets,
                                                       "multithreaded_udp_recv_thread", NULL);
-
-    whist_sleep(2);
 
     /*
         Send, receive, and process UDP packets - dimension messages, audio/video packets.
@@ -164,8 +166,8 @@ static int multithreaded_sync_udp_packets(void* opaque) {
             }
         }
     }
-    udp_receive_thread_control(udp_context->context, -1);
 
+    run_dedicated_udp_recv_thread = false;
     whist_wait_thread(udp_recv_thread, NULL);
 
     return 0;

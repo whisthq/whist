@@ -223,9 +223,9 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
 size_t udp_packet_max_size(void);
 
-void udp_loop_receive_packet(void* raw_context);
+void udp_dedicated_recv_init(void* raw_context);
 
-void udp_receive_thread_control(void* raw_context, int flag);
+void udp_dedicated_recv_iterate(void* raw_context);
 
 int udp_get_socket_queue_len(void* raw_context);
 /*
