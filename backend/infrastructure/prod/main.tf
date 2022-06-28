@@ -34,16 +34,28 @@ module "secrets-manager" {
   env    = var.env
 }
 
-# Region-specific modules, these are enabled only on certain regions
-
 module "s3-control" {
   source = "../modules/aws_s3_control"
+  env    = var.env
+  regions = [
+    "us-east-1",
+    "us-west-1",
+    "eu-central-1",
+    "ap-southeast-1",
+    "sa-east-1"
+  ]
+}
+
+# Region-specific modules, these are enabled only on certain regions
+
+module "user-configs" {
+  source = "../modules/aws_user_configs"
   env    = var.env
   # us-east-1
 }
 
-module "s3-control" {
-  source = "../modules/aws_s3_control"
+module "user-configs" {
+  source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
     # us-west-1
@@ -51,8 +63,8 @@ module "s3-control" {
   }
 }
 
-module "s3-control" {
-  source = "../modules/aws_s3_control"
+module "user-configs" {
+  source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
     # eu-central-1
@@ -60,8 +72,8 @@ module "s3-control" {
   }
 }
 
-module "s3-control" {
-  source = "../modules/aws_s3_control"
+module "user-configs" {
+  source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
     # ap-southeast-2
@@ -69,8 +81,8 @@ module "s3-control" {
   }
 }
 
-module "s3-control" {
-  source = "../modules/aws_s3_control"
+module "user-configs" {
+  source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
     # sa-east-1
