@@ -65,7 +65,6 @@ static int multithreaded_udp_receive_packets(void* opaque) {
     return 0;
 }
 
-extern int user_queue_len;
 static int multithreaded_sync_udp_packets(void* opaque) {
     WhistThread udp_recv_thread = whist_create_thread(multithreaded_udp_receive_packets,
                                                       "multithreaded_udp_recv_thread", NULL);
@@ -98,6 +97,7 @@ static int multithreaded_sync_udp_packets(void* opaque) {
 
     while (run_sync_packets_threads) {
         if (1) {
+            int user_queue_len = 0;
             static double last_measure_time = 0;
             double current_time = get_timestamp_sec();
             if (current_time - last_measure_time > 0.020) {

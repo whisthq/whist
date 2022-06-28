@@ -1,6 +1,8 @@
 
 
+#include <mutex>
 #include "whist/core/whist.h"
+#include "whist/logging/logging.h"
 extern "C" {
 // #include "whist/logging/logging.h"
 #include "whist/utils/threads.h"
@@ -162,8 +164,35 @@ typedef struct NackID {
     int packet_index;
 } NackID;
 
-struct MyQueue {
-    std::deque<void*> q;
+struct RecvQueueData {
+    UDPPacket udp_packet;
+    int network_payload_size;
+    timestamp_us arrival_time;
+    int recv_size;
+};
+
+struct RecvQueue {
+   private:
+    std::deque<RecvQueueData*> q;
+    int bytes_len_ = 0;
+
+   public:
+    RecvQueue() {
+        mutex = whist_create_mutex();
+        sem = whist_create_semaphore(0);
+    }
+    void push(RecvQueueData* in) {
+        q.push_back(in);
+        bytes_len_ += in->recv_size;
+    }
+    RecvQueueData* pop() {
+        FATAL_ASSERT(!q.empty());
+        auto ret = q.front();
+        q.pop_front();
+        return ret;
+    }
+    int bytes_len() { return bytes_len_; }
+    int size() { return int(q.size()); }
     WhistMutex mutex;
     WhistSemaphore sem;
 };
@@ -237,7 +266,7 @@ typedef struct {
 
     int dedicated_recv_thread;
 
-    MyQueue* recv_queue[NUM_PACKET_TYPES];
+    RecvQueue* recv_queue[NUM_PACKET_TYPES];
 
 } UDPContext;
 
@@ -1790,21 +1819,14 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
 UDP Message Handling
 ============================
 */
-typedef struct {
-    UDPPacket udp_packet;
-    int network_payload_size;
-    timestamp_us arrival_time;
-    int recv_size;
-} RecvData;
+
 void udp_receive_thread_control(void* raw_context, int flag) {
     UDPContext* context = (UDPContext*)raw_context;
     context->dedicated_recv_thread = flag;
 }
 
-int user_queue_len = 0;
 void udp_loop_receive_packet(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
-    user_queue_len = 0;
     /*UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
 
@@ -1818,10 +1840,7 @@ void udp_loop_receive_packet(void* raw_context) {
       FATAL_ASSERT(context->dedicated_recv_thread == 1);*/
 
     for (int i = 0; i < NUM_PACKET_TYPES; i++) {
-        context->recv_queue[i] = new MyQueue;
-        context->recv_queue[i]->mutex = whist_create_mutex();
-        context->recv_queue[i]->sem = whist_create_semaphore(0);
-        // fifo_queue_create(sizeof(char*), 1000);
+        context->recv_queue[i] = new RecvQueue();
     }
 
     static WhistTimer last_recv_timer;
@@ -1847,7 +1866,7 @@ void udp_loop_receive_packet(void* raw_context) {
                 LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
                                          last_recv * MS_IN_SECOND);
                          }*/
-        RecvData* recv_data = (RecvData*)malloc(sizeof(RecvData));
+        RecvQueueData* recv_data = (RecvQueueData*)malloc(sizeof(RecvQueueData));
         start_timer(&last_recv_timer);
 
         bool got_packet =
@@ -1864,8 +1883,7 @@ void udp_loop_receive_packet(void* raw_context) {
             non_video_cnt++;
         }
         whist_lock_mutex(context->recv_queue[0]->mutex);
-        context->recv_queue[0]->q.push_back(recv_data);
-        user_queue_len += recv_data->recv_size;
+        context->recv_queue[0]->push(recv_data);
         whist_unlock_mutex(context->recv_queue[0]->mutex);
 
         whist_post_semaphore(context->recv_queue[0]->sem);
@@ -1883,25 +1901,17 @@ void udp_loop_receive_packet(void* raw_context) {
 
 static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packet,
                                       timestamp_us* arrival_time, int* network_payload_size) {
-    RecvData* recv_data;
-    // bool succ= whist_wait_timeout_semaphore(context->recv_queue[0]->sem,1);
+    RecvQueueData* recv_data;
 
-    int succ = 0;
-    whist_wait_semaphore(context->recv_queue[0]->sem);
-    whist_lock_mutex(context->recv_queue[0]->mutex);
-    if (context->recv_queue[0]->q.size() != 0) {
-        succ = 1;
-        recv_data = (RecvData*)context->recv_queue[0]->q.front();
-        context->recv_queue[0]->q.pop_front();
-        user_queue_len -= recv_data->recv_size;
-    }
-    whist_unlock_mutex(context->recv_queue[0]->mutex);
+    bool succ = whist_wait_timeout_semaphore(context->recv_queue[0]->sem, 1);
 
     if (!succ) {
-        // whist_sleep(1);
-        // usleep(300);
         return false;
     }
+
+    whist_lock_mutex(context->recv_queue[0]->mutex);
+    recv_data = (RecvQueueData*)context->recv_queue[0]->pop();
+    whist_unlock_mutex(context->recv_queue[0]->mutex);
 
     // int r = fifo_queue_dequeue_item_timeout(context->recv_queue[0], &recv_data, 1);
     // if (r == -1) return false;
