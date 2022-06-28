@@ -16,7 +16,7 @@ esac
 set -Eeuo pipefail
 
 # Start Socketio server
-# node /opt/teleport/socketio-server
+node /opt/teleport/socketio-server
 
 USER_DATA_DIR="${1:-$HOME/.config/google-chrome}"
 
