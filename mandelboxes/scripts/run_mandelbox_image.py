@@ -202,7 +202,7 @@ if __name__ == "__main__":
     """
         )
 
-        print(f"port 32261 is {host_ports.host_port_32262tcp}")
+        print(f"port 32261 is {host_ports.host_port_32261tcp}")
 
     if local_host_service:
         print(
