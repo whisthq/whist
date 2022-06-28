@@ -2,6 +2,8 @@ import express from "express"
 import http from "http"
 import { Server as Socketio, Socket } from "socket.io"
 
+console.log("Starting socket server")
+
 // Initialize socket.io server
 const expressServer = express()
 const server = http.createServer(expressServer)
