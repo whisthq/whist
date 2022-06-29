@@ -87,7 +87,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return err
 	}
 
-	// This condition is to accomodate the worflow for developers of client_apps
+	// This condition is to accomodate the worflow for developers of the Whist frontend
 	// to test their changes without needing to update the development database with
 	// commit_hashes on their local machines.
 	if metadata.IsLocalEnv() || mandelboxRequest.CommitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {

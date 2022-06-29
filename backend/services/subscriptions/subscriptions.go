@@ -150,7 +150,7 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 // function is specific for the subscriptions used for the config database.
 func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
 	// The version ID is always set to 1 on the database, since there
-	// is only one row in the `desktop_client_app_version` which contains
+	// is only one row in the the config DB version table, which contains
 	// all of the dev/staging/prod commit hashes.
 	const versionID = 1
 

@@ -136,7 +136,7 @@ type Image struct {
 	UpdatedAt time.Time `json:"updated_at"` // Timestamp when the image was registered
 }
 
-// FrontendVersion is a custom type to represent the client app version. This type is
+// FrontendVersion is a custom type to represent the frontend version. This type is
 // meant to be used across the codebase for any operation that does not interact with
 // the GraphQL client. For operations that interact with it, use the `WhistClientAppVersions` type.
 type FrontendVersion struct {

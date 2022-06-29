@@ -78,7 +78,7 @@ func GetProdConfigs(ctx context.Context, client subscriptions.WhistGraphQLClient
 // GetFrontendVersion will query the config database and get the only row of the `desktop_app_version` table.
 func GetFrontendVersion(ctx context.Context, client subscriptions.WhistGraphQLClient) (subscriptions.FrontendVersion, error) {
 	// The version ID is always set to 1 on the database, since there
-	// is only one row in the `desktop_client_app_version`.
+	// is only one row in the the config DB version table.
 	const versionID = 1
 
 	query := subscriptions.QueryFrontendVersion

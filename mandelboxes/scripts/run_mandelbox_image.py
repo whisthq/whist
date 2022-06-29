@@ -65,7 +65,7 @@ parser.add_argument(
     default="RaR9Olgvqj+/AtNUHAPXjRZ26FkrFIVd",
     help=(
         "Config encryption token for the user. This would normally be passed in "
-        "by the client app, but by default we use a fake token instead."
+        "by the Whist frontend, but by default we use a fake token instead."
     ),
 )
 args = parser.parse_args()
