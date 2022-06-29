@@ -222,7 +222,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--server-already-running-host-service",
+    "--server-running-independently",
     help="This option indicates whether the server machine is already running the host service, in which case we should \
     not run it again, nor we should build the mandelboxes",
     type=str,
