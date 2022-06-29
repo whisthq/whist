@@ -574,6 +574,215 @@ jobs:
           BODY = "@releases :rotating_light: Deployment failed: could not deploy AMIs in the `amis-publish-aws` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
+  # Whist Browser: Retrieve Version Number
+  # Retrieve the current Whist version number from our configuration database, through Hasura
+  # This is the first step in the Whist Browser deployment jobs
+  whist-browser-retrieve-version-number:
+    name: "Whist Browser: Retrieve Current Version Number from Config Database"
+    runs-on: ubuntu-20.04
+    concurrency: whist-browser-retrieve-version-number-${{ github.ref }}
+    needs:
+      [
+        whist-publish-build-config,
+        scaling-service-deploy,
+        auth0-deploy-rules,
+        terraform-deploy,
+      ]
+    outputs:
+      release_version: ${{ steps.generate-release-version.outputs.release_version }}
+      new_micro_version: ${{ steps.generate-release-version.outputs.new_micro_version }}
+      new_staging_rc_version: ${{ steps.generate-release-version.outputs.new_staging_rc_version }}
+      new_dev_rc_version: ${{ steps.generate-release-version.outputs.new_dev_rc_version }}
+
+    # Only run whist-browser deployment if none of the previous steps failed
+    if: |
+      always() &&
+      (needs.scaling-service-deploy.result == 'success') &&
+      (needs.auth0-deploy-rules.result == 'success') &&
+      (needs.mandelboxes-publish-ghcr.result == 'success') &&
+      (needs.amis-publish-aws.result == 'success')
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Retrieve Whist Desktop Browser Version from Config Database
+        id: generate-release-version
+        shell: bash --noprofile --norc -eo pipefail {0}
+        run: |
+          BRANCH_NAME="${{ needs.whist-publish-build-config.outputs.branch }}"
+          ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}'
+
+          # curl GraphQL API to retrieve version number from config database
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
+          --data "{ \"query\": \"query { desktop_app_version { major minor micro dev_rc staging_rc } }\" }" \
+          https://config-database.whist.com/v1/graphql > response.json
+
+          # Check if we actually got back valid json. If not, we should
+          # throw a human-readable error because the config DB might be
+          # down.
+          if cat response.json | jq -e . > /dev/null 2>&1; then
+            echo "Got some valid JSON from the config DB:"
+            cat response.json
+            echo
+            echo "Continuing..."
+          else
+            echo "Failed to parse the JSON from the config DB. Is it up?" && false
+          fi
+
+          # parse JSON into major.minor.micro-rc
+          MAJOR=$(cat response.json | jq '.data.desktop_app_version[0].major')
+          MINOR=$(cat response.json | jq '.data.desktop_app_version[0].minor')
+          MICRO=$(cat response.json | jq '.data.desktop_app_version[0].micro')
+          DEV_RC=$(cat response.json | jq '.data.desktop_app_version[0].dev_rc')
+          STAGING_RC=$(cat response.json | jq '.data.desktop_app_version[0].staging_rc')
+
+          # remove temporary JSON file
+          rm response.json
+
+          echo "Current prod version: $MAJOR.$MINOR.$MICRO"
+          echo "Current staging version: $MAJOR.$MINOR.$MICRO-staging-rc.$STAGING_RC"
+          echo "Current dev version: $MAJOR.$MINOR.$MICRO-dev-rc.$DEV_RC"
+
+          # if dev or staging, increment RC by 1, else increment micro by 1 and set RC to 0
+          if [[ "$BRANCH_NAME" == "prod" ]]; then
+            echo 'Using prod configuration...'
+
+            # increment version by 0.0.1
+            NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
+            # set new Whist Desktop Browser version
+            NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
+
+            # store NEW_MICRO in GITHUB_ENV to push to GraphQL API, and reset STAGING_RC and DEV_RC to 0
+            echo "::set-output name=new_micro_version::${NEW_MICRO}"
+            echo "::set-output name=new_staging_rc_version::0"
+            echo "::set-output name=new_dev_rc_version::0"
+          elif [[ "$BRANCH_NAME" == "staging" ]]; then
+            echo 'Using staging configuration...'
+
+            # increment version by staging-rc.1
+            NEW_STAGING_RC=$(echo "print( ${STAGING_RC} + 1)" | python)
+
+            # set temporary variable for upcoming micro version which is 1 ahead of current, since
+            # staging/dev are release candiates (rc) for the next version
+            # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
+            UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
+            # set new Whist Desktop Browser version
+            NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-staging-rc.${NEW_STAGING_RC}"
+
+            # store NEW_STAGING_RC in GITHUB_ENV to push to GraphQL API
+            echo "::set-output name=new_staging_rc_version::${NEW_STAGING_RC}"
+          elif [[ "$BRANCH_NAME" == "dev" ]]; then
+            echo 'Using dev configuration...'
+
+            # increment version by dev-rc.1
+            NEW_DEV_RC=$(echo "print( ${DEV_RC} + 1)" | python)
+            
+            # set temporary variable for upcoming micro version which is 1 ahead of current, since
+            # staging/dev are release candiates (rc) for the next version
+            # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
+            UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
+            # set new Whist Desktop Browser version [-x64/-arm64] gets appended depending on the OS architecture it is built on
+            NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-dev-rc.${NEW_DEV_RC}"
+
+            # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
+            echo "::set-output name=new_dev_rc_version::${NEW_DEV_RC}"
+          else
+            echo 'Error: Invalid branch' && false
+          fi
+
+          # store new Whist Desktop Browser version as GitHub step output to substitute in GitHub Release tag creation
+          echo "New $BRANCH_NAME version: ${NEW_VERSION}"
+          echo "::set-output name=release_version::${NEW_VERSION}"
+
+  #######################################################################################
+  #######################################################################################
+
+  # TODO: Build the Brave/Chromium deploy file in `whisthq/brave-browser`, and call it 
+  # from here using inter-repos deployment
+
+  #######################################################################################
+  #######################################################################################
+
+  # Whist Browser: Update Version Number
+  # Set the New Whist version number in our configuration database, through Hasura
+  whist-browser-update-version-number:
+    name: "Whist Browser: Set New Version Number in Config Database"
+    runs-on: ubuntu-20.04
+    concurrency: whist-browser-update-version-number-${{ github.ref }}
+    needs:
+      [
+        whist-publish-build-config,
+        whist-browser-retrieve-version-number,
+        whist-browser-publish-build-s3,
+      ]
+
+    # Only run whist-browser deployment if none of the previous steps failed
+    if: |
+      always() &&
+      (needs.whist-browser-retrieve-version-number.result == 'success') &&
+      (needs.whist-browser-publish-build-s3.result == 'success')
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Update Config Database version with the new version
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        run: |
+          BRANCH_NAME="${{ needs.whist-publish-build-config.outputs.branch }}"
+          ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}'
+
+          # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
+          if [[ "$BRANCH_NAME" == "prod" ]]; then
+            curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ needs.whist-browser-retrieve-version-number.outputs.new_micro_version }}, staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, prod_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            https://config-database.whist.com/v1/graphql
+          elif [[ "$BRANCH_NAME" == "staging" ]]; then
+            curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, staging_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            https://config-database.whist.com/v1/graphql
+          elif [[ "$BRANCH_NAME" == "dev" ]]; then
+            curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, dev_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            https://config-database.whist.com/v1/graphql
+          fi
+
+      - name: Notify Slack on Publishing Whist Desktop Browser Success
+        shell: python3 {0}
+        if: needs.whist-browser-publish-build-s3.result == 'success'
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+            WEBSITE_URL = "https://whist.com"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+            WEBSITE_URL = "https://staging.whist.com"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+            WEBSITE_URL = "https://dev.whist.com"
+
+          from notifications.slack_bot import slack_post
+          TITLE = ":chromium: Windows & macOS Whist Desktop Browser Deployed :chromium:"
+          BODY = f"Windows & macOS Whist Desktop Browser deployed via upload to AWS S3 on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` - You can download them from {WEBSITE_URL} (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
+
   #######################################################################################
   #######################################################################################
 
@@ -591,6 +800,7 @@ jobs:
         amis-publish-aws,
         auth0-deploy-rules,
         terraform-deploy,
+        whist-browser-update-version-number,
       ]
 
     steps:
@@ -734,4 +944,78 @@ jobs:
           from notifications.slack_bot import slack_post
           SCALING_SERVICE_URL = "${{ needs.whist-publish-build-config.outputs.scaling_service_url }}"
           BODY = f"@releases :rotating_light: Scaling Service at {SCALING_SERVICE_URL} failed to deploy, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
+
+  #######################################################################################
+  #######################################################################################
+
+  # Create GitHub Tag
+  # Create a GitHub Tag when promoting to the `prod` branch
+  # Runs if the entire deployment succeeds and the promotion is running on `prod`
+  whist-create-github-release-tag:
+    name: "Create GitHub Release Tag"
+    runs-on: ubuntu-20.04
+    needs:
+      [
+        whist-publish-build-config,
+        auth0-deploy-rules,
+        terraform-deploy,
+        mandelboxes-publish-ghcr,
+        amis-publish-aws,
+        scaling-service-deploy,
+        whist-browser-retrieve-version-number,
+        whist-browser-publish-build-s3,
+        whist-browser-update-version-number,
+      ]
+    if: needs.whist-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.whist-publish-build-config.outputs.branch)
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Retrieve Today's Date
+        run: echo "date=$(date)" >> $GITHUB_ENV
+
+      - name: Create GitHub Tag
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}
+          body: Whist Production Release on ${{ env.date }}
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Slack on Job Success
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          TITLE = ":github: Whist GitHub Release Completed :github:"
+          BODY = "Deployment of Whist Version `v${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.whist-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/whisthq/whist/releases/tag/v${{ needs.whist-browser-retrieve-version-number.outputs.release_version }} (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
+      
+      - name: Notify Slack on Job Error
+        if: failure()
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `whist-create-github-release-tag` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
