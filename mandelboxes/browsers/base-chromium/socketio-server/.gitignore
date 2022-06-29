@@ -1,0 +1,4 @@
+# NodeJS
+node_modules/
+build/
+socketio-server

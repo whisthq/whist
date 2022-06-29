@@ -23,6 +23,7 @@ type JSONTransportRequest struct {
 // JSONTransportRequestResult defines the data returned by the
 // `json_transport` endpoint.
 type JSONTransportRequestResult struct {
+	HostPortForTCP32261 uint16 `json:"port_32261"`
 	HostPortForTCP32262 uint16 `json:"port_32262"`
 	HostPortForUDP32263 uint16 `json:"port_32263"`
 	HostPortForTCP32273 uint16 `json:"port_32273"`

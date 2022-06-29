@@ -77,6 +77,7 @@ func TestSpinUpHandler(t *testing.T) {
 	}
 
 	testResult := httputils.JSONTransportRequestResult{
+		HostPortForTCP32261: 32261,
 		HostPortForTCP32262: 32262,
 		HostPortForUDP32263: 32263,
 		HostPortForTCP32273: 32273,
@@ -207,6 +208,7 @@ func TestHttpServerIntegration(t *testing.T) {
 	}
 
 	testResult := httputils.JSONTransportRequestResult{
+		HostPortForTCP32261: 32261,
 		HostPortForTCP32262: 32262,
 		HostPortForUDP32263: 32263,
 		HostPortForTCP32273: 32273,
