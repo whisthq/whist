@@ -112,7 +112,7 @@ func (sc *sentryCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 // Write is where the core sends the event payload to Sentry. This method
 // will manually assemble Sentry events so that they are sent correctly.
 func (sc *sentryCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
-	if usingProdLogging() {
+	if !usingProdLogging() {
 		return nil
 	}
 
