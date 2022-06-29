@@ -308,8 +308,8 @@ static void handle_open_url_event(WhistFrontend* frontend, FrontendOpenURLEvent*
 
 static void handle_quit_event(FrontendQuitEvent* event) {
     if (event->quit_application) {
-        const char* quit_client_app_notification = "QUIT_APPLICATION";
-        LOG_INFO("%s", quit_client_app_notification);
+        const char* quit_whist_app_notification = "QUIT_APPLICATION";
+        LOG_INFO("%s", quit_whist_app_notification);
     }
 
     LOG_INFO("The user triggered a Quit event! WhistClient is now Quitting...");
