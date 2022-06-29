@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os, uuid
 
 # The username to use to access the AWS EC2 instance(s)
 username = "ubuntu"
