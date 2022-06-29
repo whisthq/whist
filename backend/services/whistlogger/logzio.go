@@ -42,7 +42,7 @@ func newLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 		logzio.SetCheckDiskSpace(false),
 	)
 	if err != nil {
-		log.Printf("Couldn't marshal payload for logz.io. Error: %s", err)
+		log.Printf("couldn't marshal payload for logz.io: %s", err)
 		return nil
 	}
 
@@ -125,7 +125,7 @@ func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	err = lc.sender.Send(buf.Bytes())
 	buf.Free()
 	if err != nil {
-		return utils.MakeError("Couldn't marshal payload for logz.io. Error: %s", err)
+		return utils.MakeError("couldn't marshal payload for logz.io: %s", err)
 	}
 	if ent.Level > zapcore.ErrorLevel {
 		// Since we may be crashing the program, sync the output.
