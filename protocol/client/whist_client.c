@@ -139,66 +139,6 @@ static void sync_keyboard_state(WhistFrontend* frontend) {
     send_wcmsg(&wcmsg);
 }
 
-static void handle_single_icon_launch_client_app(int argc, const char* argv[]) {
-    // This function handles someone clicking the protocol icon as a means of starting Whist by
-    // instead launching the client app
-    // If argc == 1 (no args passed), then check if client app path exists
-    // and try to launch.
-    //     This should be done first because `execl` won't cleanup any allocated resources.
-    // Mac apps also sometimes pass an argument like -psn_0_2126343 to the executable.
-    if (!OS_IS(OS_WIN32 | OS_MACOS)) {
-        return;
-    }
-
-    if (argc == 1 || (argc == 2 && !strncmp(argv[1], "-psn_", 5))) {
-        // hopefully the app path is not more than 1024 chars long
-        char client_app_path[APP_PATH_MAXLEN + 1];
-        memset(client_app_path, 0, APP_PATH_MAXLEN + 1);
-
-        // On macOS, this executable is located at
-        //    Whist.app/Contents/MacOS/WhistClient
-        // We want to reference client app at Whist.app/Contents/MacOS/WhistLauncher
-        const char* relative_client_app_path =
-            OS_IS(OS_WIN32) ? "/../../Whist.exe" : "/WhistLauncher";
-        const char* exe_name = OS_IS(OS_WIN32) ? "Whist.exe" : "Whist";
-
-        int relative_client_app_path_len = (int)strlen(relative_client_app_path);
-        if (relative_client_app_path_len < APP_PATH_MAXLEN + 1) {
-            bool proceed = false;
-#if OS_IS(OS_WIN32)
-            int max_protocol_path_len = APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1;
-            // Get the path of the current executable
-            int path_read_size = GetModuleFileNameA(NULL, client_app_path, max_protocol_path_len);
-            proceed = path_read_size > 0 && path_read_size < max_protocol_path_len;
-#elif OS_IS(OS_MACOS)
-            uint32_t max_protocol_path_len =
-                (uint32_t)(APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1);
-            // Get the path of the current executable
-            proceed = _NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0;
-#endif
-            if (proceed) {
-                // Get directory from executable path. We could use dirname but it's
-                // not cross-platform.
-                char* last_dir_slash_ptr = strrchr(client_app_path, PATH_SEPARATOR);
-                if (last_dir_slash_ptr) {
-                    *last_dir_slash_ptr = '\0';
-                }
-
-                // Get the relative path to the client app from the current executable location
-                size_t protocol_path_len = strlen(client_app_path);
-                if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path,
-                                 relative_client_app_path_len + 1)) {
-                    // If `execl` fails, then the program proceeds, else defers to client app
-                    if (execl(client_app_path, exe_name, (char*)NULL) < 0) {
-                        LOG_INFO("execl errno: %d errstr: %s", errno, strerror(errno));
-                    }
-                }
-            }
-        }
-    }
-    // END OF CHECKING IF IN PROD MODE AND TRYING TO LAUNCH CLIENT APP IF NO ARGS
-}
-
 static void initiate_file_upload(void) {
     /*
         Pull up system file dialog and set selection as transfering file
@@ -397,10 +337,9 @@ int whist_client_main(int argc, const char* argv[]) {
 
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
 
-    // (internally, only happend for debug builds)
+    // (internally, only happens for debug builds)
     init_debug_console();
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
-    handle_single_icon_launch_client_app(argc, argv);
 
     srand(rand() * (unsigned int)time(NULL) + rand());
 
