@@ -2,15 +2,15 @@
 
 ## Promotion Testing
 
-All the below items need to be tested and checked for this promotion to be merged. Make sure to perform these checks on the correct Whist Browser application. If you don't have them already installed, you can download the applications from the following links:
+All the below items need to be tested and checked for this promotion to be merged. Make sure to perform these checks on the version of the Whist Browser for the appropriate environment. If you don't have them already installed, you can download them from the following links:
 
 ### `dev`
 
-- Incoming shoon for Chromium Whist
+- TBD (Chromium Whist)
 
 ### `staging`
 
-- Incoming soon for Chromium Whist
+- TBD (Chromium Whist)
 
 ### Checklist
 
