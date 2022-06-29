@@ -5,7 +5,8 @@ import { Socket } from "socket.io-client"
 
 const initSocketioConnection = () => {
   const socket = io(SOCKETIO_SERVER_URL, {
-    reconnectionDelayMax: 10000,
+    reconnectionDelay: 25,
+    reconnectionDelayMax: 25,
     transports: ["websocket"]
   })
 
