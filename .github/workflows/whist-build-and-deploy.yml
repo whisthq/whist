@@ -800,7 +800,6 @@ jobs:
         amis-publish-aws,
         auth0-deploy-rules,
         terraform-deploy,
-        whist-browser-update-version-number,
       ]
 
     steps:
