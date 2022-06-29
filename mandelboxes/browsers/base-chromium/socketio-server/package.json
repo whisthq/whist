@@ -1,5 +1,6 @@
 {
     "main": "index.js",
+    "description": "Socket.io server for communication between server and client extensions",
     "scripts": {
         "build": "webpack --config webpack/webpack.prod.js",
         "bundle:linux": "pkg -t node16-linux-x64 -o socketio-server build/index.js"
