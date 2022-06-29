@@ -74,7 +74,7 @@ TELEPORT_LOG_FILENAME=/usr/share/whist/teleport-drag-drop.log
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 
 # Parse options from JSON transport file
-LOCAL_CLIENT=false # true if the client app was `yarn start` or `package:local`
+LOCAL_CLIENT=false # true if the frontend is being tested manually by a Whist engineer
 if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq -rc 'has("local_client")' < $WHIST_JSON_FILE )" == "true"  ]; then
     LOCAL_CLIENT="$(jq -rc '.local_client' < $WHIST_JSON_FILE)"

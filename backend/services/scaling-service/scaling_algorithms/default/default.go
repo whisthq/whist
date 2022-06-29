@@ -70,7 +70,7 @@ type DefaultScalingAlgorithm struct {
 	Region                 string
 	InstanceEventChan      chan ScalingEvent
 	ImageEventChan         chan ScalingEvent
-	ClientAppVersionChan   chan ScalingEvent
+	FrontendVersionChan    chan ScalingEvent
 	ScheduledEventChan     chan ScalingEvent
 	ServerEventChan        chan ScalingEvent
 	SyncChan               chan bool                      // This channel is used to sync actions
@@ -88,8 +88,8 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	if s.ImageEventChan == nil {
 		s.ImageEventChan = make(chan ScalingEvent, 100)
 	}
-	if s.ClientAppVersionChan == nil {
-		s.ClientAppVersionChan = make(chan ScalingEvent, 100)
+	if s.FrontendVersionChan == nil {
+		s.FrontendVersionChan = make(chan ScalingEvent, 100)
 	}
 	if s.ScheduledEventChan == nil {
 		s.ScheduledEventChan = make(chan ScalingEvent, 100)
@@ -130,14 +130,14 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
-	// Get the most recent client app version from the config database
-	version, err := dbclient.GetClientAppVersion(ctx, client)
+	// Get the most recent frontend version from the config database
+	version, err := dbclient.GetFrontendVersion(ctx, client)
 	if err != nil {
-		logger.Errorf("Failed to query client app version. Err: %v", err)
+		logger.Errorf("Failed to query frontend version. Err: %v", err)
 	}
 
-	if version == (subscriptions.ClientAppVersion{}) {
-		logger.Errorf("Got an empty client app version")
+	if version == (subscriptions.FrontendVersion{}) {
+		logger.Errorf("Got an empty frontend version")
 	}
 
 	// Set the scaling algorithm's internal version to the one received
@@ -252,9 +252,9 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						}
 					}()
 				}
-			case versionEvent := <-s.ClientAppVersionChan:
-				logger.Infof("Scaling algorithm received a client app version database event with value: %v", versionEvent)
-				version := versionEvent.Data.(subscriptions.ClientAppVersion)
+			case versionEvent := <-s.FrontendVersionChan:
+				logger.Infof("Scaling algorithm received a frontend version database event with value: %v", versionEvent)
+				version := versionEvent.Data.(subscriptions.FrontendVersion)
 
 				// Track this goroutine so we can wait for it to
 				// finish if the global context gets cancelled.

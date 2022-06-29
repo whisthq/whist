@@ -210,7 +210,7 @@ void whist_error_monitor_initialize(bool is_client) {
 
     // By default, Sentry will use the SENTRY_DSN environment variable. We could use this instead
     // of baking it into the protocol like this, but should only do so after setting up Sentry for
-    // the callers (client app and mandelboxes).
+    // the callers (Whist frontend and mandelboxes).
     sentry_options_set_dsn(options, SENTRY_DSN);
 
     // Set the release name: of the form protocol@[git hash].

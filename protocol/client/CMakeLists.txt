@@ -49,13 +49,6 @@ else()
   )
 endif()
 
-# On Windows during client app packaging, WhistClient should have icon set
-if(USE_CLIENT_APP_ICON AND ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_sources(WhistClient
-    PUBLIC executable_assets/WindowsAppIcon.rc
-    )
-endif()
-
 # set the build directory
 set_target_properties(WhistClient PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch}

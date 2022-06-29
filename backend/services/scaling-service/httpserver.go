@@ -166,7 +166,7 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // processJSONTransportRequest processes an HTTP request to receive data
-// directly from the client app.
+// directly from the frontend.
 func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	// Verify that it is an PUT request
 	if httputils.VerifyRequestType(w, r, http.MethodPut) != nil {
@@ -314,9 +314,8 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	}
 
 	// Start a new rate limiter. This will limit requests on an endpoint
-	//  to every `interval` with a burst of up to `burst` requests. This
-	// will help mitigate Denial of Service attacks, or a client app
-	// spamming too many requests.
+	// to every `interval` with a burst of up to `burst` requests. This
+	// will help mitigate Denial of Service attacks, or a rogue frontend.
 	interval := 1 * time.Second
 	burst := 10
 	limiter := rate.NewLimiter(rate.Every(interval), burst)

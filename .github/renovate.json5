@@ -40,14 +40,6 @@
       groupName: "backend/services",
     },
     {
-      matchPaths: ["frontend/client-applications/"],
-      groupName: "frontend/client-applications",
-    },
-    {
-      matchPaths: ["frontend/core-ts/"],
-      groupName: "frontend/core-ts",
-    },
-    {
       matchPaths: ["mandelboxes/"],
       groupName: "mandelboxes",
     },

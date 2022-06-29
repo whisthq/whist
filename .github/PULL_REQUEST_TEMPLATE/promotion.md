@@ -2,19 +2,15 @@
 
 ## Promotion Testing
 
-All the below items need to be tested and checked for this promotion to be merged. Make sure to perform these checks on the correct Whist application. If you don't have them already installed, you can download the applications from the following links:
+All the below items need to be tested and checked for this promotion to be merged. Make sure to perform these checks on the version of the Whist Browser for the appropriate environment. If you don't have them already installed, you can download them from the following links:
 
 ### `dev`
 
-- [macOS (X86_64)](https://whist-electron-macos-x64-dev.s3.amazonaws.com/Whist.dmg)
-- [macOS (ARM64)](https://whist-electron-macos-arm64-dev.s3.amazonaws.com/Whist.dmg)
-- [Windows](https://whist-electron-windows-dev.s3.amazonaws.com/Whist.exe)
+- TBD (Chromium Whist)
 
 ### `staging`
 
-- [macOS (X86_64)](https://whist-electron-macos-x64-staging.s3.amazonaws.com/Whist.dmg)
-- [macOS (ARM64)](https://whist-electron-macos-arm64-staging.s3.amazonaws.com/Whist.dmg)
-- [Windows](https://whist-electron-windows-staging.s3.amazonaws.com/Whist.exe)
+- TBD (Chromium Whist)
 
 ### Checklist
 

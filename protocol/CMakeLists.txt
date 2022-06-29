@@ -172,8 +172,6 @@ endif()
 
 # Get Bash on all OSs
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # Windows option to add icon (used primarily for client app compilation pipeline)
-    option(USE_CLIENT_APP_ICON "use client app icon in exe" OFF)
     # Find git
     find_program(GIT git REQUIRED)
     # Find git's path

@@ -38,7 +38,7 @@ func TestDeploy(t *testing.T) {
 		},
 	}
 
-	testVersion := subscriptions.ClientAppVersion{
+	testVersion := subscriptions.FrontendVersion{
 		DevCommitHash:     metadata.GetGitCommit(),
 		StagingCommitHash: metadata.GetGitCommit(),
 		ProdCommitHash:    metadata.GetGitCommit(),
