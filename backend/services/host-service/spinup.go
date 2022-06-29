@@ -360,7 +360,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	// Request port bindings for the mandelbox.
 	var (
 		hostPortForTCP32261, hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
-		err32261, err32262, err32263, err32273                                  error
+		err32261, err32262, err32263, err32273                                             error
 	)
 	hostPortForTCP32261, err32261 = mandelbox.GetHostPort(32261, portbindings.TransportProtocolTCP)
 	hostPortForTCP32262, err32262 = mandelbox.GetHostPort(32262, portbindings.TransportProtocolTCP)
