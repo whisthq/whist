@@ -81,19 +81,53 @@ resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecyc
     id     = "userConfigCleanRule"
     status = "Enabled"
 
-    # To apply the rule to all user configs, add a filter using a range
-    # of size up to 1Gb.
-    filter {
-      # Represented in bytes
-      and {
-        object_size_greater_than = 0
-        object_size_less_than    = 1000000000 # 1Gb
-      }
+    # The Lifecycle rule applies to all objects in the bucket.
+    filter {}
+
+    # If the configs have not been used in two months, transition
+    # to the infrequent access tier to minimize storage costs.
+    transition {
+      days          = 60
+      storage_class = "STANDARD_IA"
+    }
+
+
+    # If the configs have not been used in three months, delete them.
+    expiration {
+      days = 90
     }
 
     noncurrent_version_expiration {
       newer_noncurrent_versions = 3
       noncurrent_days           = 5
+    }
+  }
+}
+
+# ------------------------------ Configure bucket replication ------------------------------ #
+
+resource "aws_s3_bucket_replication_configuration" "UserConfigReplication" {
+  bucket = "whist-user-app-configs-${data.aws_region.current.name}-${var.env}"
+  role   = modules.iam.aws_iam_role.BucketReplicationRole.arn
+
+  # This will iterate the regions list declared on this module. It is assumed
+  # that the regions list is sorted by proximity to the region represented in
+  # this module, so they will be assigned priorities in that order.
+  dynamic "rule" {
+    for_each = var.regions
+    content {
+      id       = rule.key
+      priority = rule.key
+
+      # An empty filter is required to declarre multiple
+      # destinations with priorities.
+      filter {}
+
+      status = "Enabled"
+
+      destination {
+        bucket = rule.value
+      }
     }
   }
 }

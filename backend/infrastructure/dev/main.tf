@@ -47,6 +47,13 @@ module "user-configs-us-east-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   # us-east-1
+  # List of regions in order of proximity.
+  regions = [
+    "us-west-1",
+    "sa-east-1",
+    "eu-central-1",
+    "ap-southeast-1",
+  ]
 }
 
 module "user-configs-us-west-1" {
@@ -56,6 +63,13 @@ module "user-configs-us-west-1" {
     # us-west-1
     aws = aws.usw1
   }
+  # List of regions in order of proximity.
+  regions = [
+    "us-east-1",
+    "sa-east-1",
+    "eu-central-1",
+    "ap-southeast-1",
+  ]
 }
 
 module "user-configs-eu-central-1" {
@@ -65,6 +79,13 @@ module "user-configs-eu-central-1" {
     # eu-central-1
     aws = aws.euc1
   }
+  # List of regions in order of proximity.
+  regions = [
+    "us-east-1",
+    "us-west-1",
+    "sa-east-1",
+    "ap-southeast-1",
+  ]
 }
 
 module "user-configs-ap-southeast-1" {
@@ -74,6 +95,13 @@ module "user-configs-ap-southeast-1" {
     # ap-southeast-2
     aws = aws.apse2
   }
+  # List of regions in order of proximity.
+  regions = [
+    "us-east-1",
+    "us-west-1",
+    "eu-central-1",
+    "sa-east-1"
+  ]
 }
 
 module "user-configs-sa-east-1" {
@@ -83,6 +111,13 @@ module "user-configs-sa-east-1" {
     # sa-east-1
     aws = aws.sae1
   }
+  # List of regions in order of proximity.
+  regions = [
+    "us-east-1",
+    "us-west-1",
+    "eu-central-1",
+    "ap-southeast-1",
+  ]
 }
 
 # Enable all AWS regions on Terraform. Doing this will create
