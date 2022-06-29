@@ -8,3 +8,7 @@ variable "env" {
 variable "regions" {
   type = list(string)
 }
+
+variable "replication_role_arn" {
+  description = "The role assumed by S3 to replicate objects between buckets."
+}

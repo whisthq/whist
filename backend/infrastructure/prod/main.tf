@@ -59,6 +59,7 @@ module "user-configs-us-east-1" {
     "eu-central-1",
     "ap-southeast-1",
   ]
+  replication_role_arn = module.iam.replication_role_arn
 }
 
 module "user-configs-us-west-1" {
@@ -75,6 +76,7 @@ module "user-configs-us-west-1" {
     "eu-central-1",
     "ap-southeast-1",
   ]
+  replication_role_arn = module.iam.replication_role_arn
 }
 
 module "user-configs-eu-central-1" {
@@ -91,6 +93,7 @@ module "user-configs-eu-central-1" {
     "sa-east-1",
     "ap-southeast-1",
   ]
+  replication_role_arn = module.iam.replication_role_arn
 }
 
 module "user-configs-ap-southeast-1" {
@@ -107,6 +110,7 @@ module "user-configs-ap-southeast-1" {
     "eu-central-1",
     "sa-east-1"
   ]
+  replication_role_arn = module.iam.replication_role_arn
 }
 
 module "user-configs-sa-east-1" {
@@ -123,6 +127,7 @@ module "user-configs-sa-east-1" {
     "eu-central-1",
     "ap-southeast-1",
   ]
+  replication_role_arn = module.iam.replication_role_arn
 }
 
 
