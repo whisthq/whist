@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys, time
+import os, sys, time, re
 import pexpect
 
 from helpers.common.timestamps_and_exit_tools import (
@@ -59,8 +59,9 @@ def wait_until_cmd_done(
     # again (if we are not in CI), otherwise the output will be overwritten.
     pexpect_output = None
     if return_output:
+        ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]")
         pexpect_output = [
-            line.replace("\r", "").replace("\n", "")
+            ansi_escape.sub("", line.replace("\r", "").replace("\n", ""))
             for line in pexpect_process.before.decode("utf-8").strip().split("\n")
         ]
 
