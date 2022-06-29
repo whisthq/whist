@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.16.5
 	github.com/aws/aws-sdk-go-v2/config v1.15.11
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.16
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.46.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.47.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.11
 	github.com/aws/smithy-go v1.11.3
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
@@ -61,7 +61,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/hashicorp/go-version v1.5.0
+	github.com/hashicorp/go-version v1.6.0
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
