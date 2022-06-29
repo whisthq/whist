@@ -51,7 +51,7 @@ func newLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 	lc.enabler = levelEnab
 	lc.sender = sender
 
-	return zapcore.NewCore(lc.encoder, lc.sender, lc.enabler)
+	return lc
 }
 
 // NewLogzioEncoderConfig returns a configuration that is appropiate for
@@ -76,7 +76,7 @@ func newLogzioEncoderConfig() zapcore.EncoderConfig {
 // AddLogzFields will add the fields to the Logzio message.
 func AddLogzioFields(fields map[string]string) {
 	for name, val := range fields {
-		messageFields = append(messageFields, zap.Any(name, val))
+		messageFields = append(messageFields, zap.String(name, val))
 	}
 }
 
@@ -98,10 +98,6 @@ func (lc *logzioCore) With(fields []zapcore.Field) zapcore.Core {
 		fields[i].AddTo(core.encoder)
 	}
 
-	for i := range messageFields {
-		messageFields[i].AddTo(core.encoder)
-	}
-
 	return core
 }
 
@@ -120,6 +116,7 @@ func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 		return nil
 	}
 
+	fields = append(fields, messageFields...)
 	buf, err := lc.encoder.EncodeEntry(ent, fields)
 	if err != nil {
 		return err
