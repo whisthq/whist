@@ -703,7 +703,7 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # TODO: Build the Brave/Chromium deploy file in `whisthq/brave-browser`, and call it 
+  # TODO: Build the Brave/Chromium deploy file in `whisthq/brave-browser`, and call it
   # from here using inter-repos deployment
 
   #######################################################################################
@@ -1003,7 +1003,7 @@ jobs:
           TITLE = ":github: Whist GitHub Release Completed :github:"
           BODY = "Deployment of Whist Version `v${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.whist-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/whisthq/whist/releases/tag/v${{ needs.whist-browser-retrieve-version-number.outputs.release_version }} (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
-      
+
       - name: Notify Slack on Job Error
         if: failure()
         shell: python3 {0}
