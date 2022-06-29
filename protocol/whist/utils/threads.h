@@ -310,6 +310,7 @@ bool whist_timedwait_cond(WhistCondition cond, WhistMutex mutex, uint32_t timeou
  */
 void whist_broadcast_cond(WhistCondition cond);
 
+void whist_signal_cond(WhistCondition cond);
 /**
  * Destroy a condition variable.
  *

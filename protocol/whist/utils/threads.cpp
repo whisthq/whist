@@ -216,6 +216,10 @@ void whist_broadcast_cond(WhistCondition cond) {
     cond->cond.notify_all();
 }
 
+void whist_signal_cond(WhistCondition cond) {
+    cond->cond.notify_one();
+}
+
 void whist_destroy_cond(WhistCondition cond) { delete cond; }
 
 struct WhistSemaphoreStruct {

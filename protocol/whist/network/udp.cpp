@@ -285,8 +285,9 @@ typedef struct {
 
     RecvQueue* recv_queue[NUM_RECV_QUEUES];
 
+    WhistCondition recv_cond;
     WhistMutex recv_mutex;
-    WhistSemaphore recv_sem;
+    // WhistSemaphore recv_sem;
 
 } UDPContext;
 
@@ -1195,7 +1196,8 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     }
 
     context->recv_mutex = whist_create_mutex();
-    context->recv_sem = whist_create_semaphore(0);
+    context->recv_cond = whist_create_cond();
+    // context->recv_sem = whist_create_semaphore(0);
 
     for (int i = 0; i < NUM_RECV_QUEUES; i++) {
         context->recv_queue[i] = new RecvQueue();
@@ -1870,6 +1872,8 @@ void udp_dedicated_recv_init(void* raw_context) {
 
     context->dedicated_recv = true;
 
+    set_timeout(context->socket, 9999);
+
     FATAL_ASSERT(context->dedicated_recv == true);
 }
 void udp_dedicated_recv_iterate(void* raw_context) {
@@ -1892,25 +1896,42 @@ void udp_dedicated_recv_iterate(void* raw_context) {
         context->recv_queue[NON_VIDEO_RECV_QUEUE]->push(recv_data);
     }
     whist_unlock_mutex(context->recv_mutex);
-    whist_post_semaphore(context->recv_sem);
+    whist_signal_cond(context->recv_cond);
+    // whist_post_semaphore(context->recv_sem);
 }
 
 static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packet,
                                       timestamp_us* arrival_time, int* network_payload_size) {
     RecvQueueData* recv_data;
 
-    bool succ = whist_wait_timeout_semaphore(context->recv_sem, 1 /*ms*/);
+    /*
+    bool succ = whist_wait_timeout_semaphore(context->recv_sem, 1 ); // 1ms
 
     if (!succ) {
         return false;
-    }
+    }*/
 
+    int size_total = 0;
     whist_lock_mutex(context->recv_mutex);
+    while ((size_total = context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() +
+                         context->recv_queue[VIDEO_RECV_QUEUE]->size()) == 0) {
+        bool succ = true;
+	//whist_timedwait_cond(context->recv_cond, context->recv_mutex, 1);
+	whist_wait_cond(context->recv_cond,context->recv_mutex);
+        if (succ == false) {
+            whist_unlock_mutex(context->recv_mutex);
+            return false;
+        }
+        if (size_total > 0) {
+            break;
+        }
+    }
     if (context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() > 0) {
         recv_data = context->recv_queue[NON_VIDEO_RECV_QUEUE]->pop();
     } else {
         recv_data = context->recv_queue[VIDEO_RECV_QUEUE]->pop();
     }
+
     whist_unlock_mutex(context->recv_mutex);
 
     *udp_packet = &recv_data->udp_packet;
