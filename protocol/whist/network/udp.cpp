@@ -198,6 +198,10 @@ struct RecvQueue {
         auto ret = q.front();
         q.pop_front();
         bytes_len_ -= ret->recv_size;
+        if (PLOT_UDP_PACKET_HANDLE_DELAY) {
+            whist_plotter_insert_sample("packet_delay", get_timestamp_sec(),
+                                        (current_time_us() - ret->arrival_time) / 1000.0);
+        }
         return ret;
     }
     int bytes_len() { return bytes_len_; }
@@ -1743,9 +1747,23 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
     UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
     // fprintf(stderr,"<%d>\n",context->socket);
+
+    static double last_time_after_recv = 0;
+
+    if (PLOT_UDP_RECV_GAP) {
+        double current_time = get_timestamp_sec();
+        double gap = current_time - last_time_after_recv;
+        whist_plotter_insert_sample("udp_recv_gap", current_time, gap * MS_IN_SECOND);
+    }
+
     int recv_len =
         recvfrom_no_intr(context->socket, &udp_network_packet, sizeof(udp_network_packet), 0,
                          (struct sockaddr*)(&context->last_addr), &slen);
+
+    if (PLOT_UDP_RECV_GAP) {
+        last_time_after_recv = get_timestamp_sec();
+    }
+
     if (recv_len_out != NULL) {
         *recv_len_out = recv_len;
     }

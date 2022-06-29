@@ -103,17 +103,24 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     while (run_sync_packets_threads) {
         if (PLOT_UDP_RECV_QUEUE) {
             double current_time = get_timestamp_sec();
-            int user_queue_len = udp_get_user_queue_len(udp_context->context);
-            int user_queue_size = udp_get_user_queue_size(udp_context->context);
-            int socket_queue_len = udp_get_socket_queue_len(udp_context->context);
-            int total_queue_len = user_queue_len + socket_queue_len;
+            static double last_sample_time = 0;
 
-            whist_plotter_insert_sample("udp_socket_queue", current_time,
-                                        socket_queue_len / 1024.0);
-            whist_plotter_insert_sample("udp_user_queue", current_time, user_queue_len / 1024.0);
-            whist_plotter_insert_sample("udp_total_queue", current_time, total_queue_len / 1024.0);
+            if (current_time - last_sample_time > 0.0005) {
+                int user_queue_len = udp_get_user_queue_len(udp_context->context);
+                int user_queue_size = udp_get_user_queue_size(udp_context->context);
+                int socket_queue_len = udp_get_socket_queue_len(udp_context->context);
+                int total_queue_len = user_queue_len + socket_queue_len;
 
-            whist_plotter_insert_sample("udp_user_queue_size", current_time, user_queue_size);
+                whist_plotter_insert_sample("udp_socket_queue", current_time,
+                                            socket_queue_len / 1024.0);
+                whist_plotter_insert_sample("udp_user_queue", current_time,
+                                            user_queue_len / 1024.0);
+                whist_plotter_insert_sample("udp_total_queue", current_time,
+                                            total_queue_len / 1024.0);
+
+                whist_plotter_insert_sample("udp_user_queue_size", current_time, user_queue_size);
+                last_sample_time = current_time;
+            }
         }
 
         // Update the UDP socket
