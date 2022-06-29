@@ -112,7 +112,7 @@ func (lc *logzioCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 
 // Write is where the core sends the event payload to logz.io
 func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
-	if usingProdLogging() {
+	if !usingProdLogging() {
 		return nil
 	}
 
