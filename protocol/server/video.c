@@ -219,14 +219,20 @@ static void send_populated_frames(WhistServerState* state, WhistTimer* statistic
         set_frame_cursor_info(frame, NULL);
     } else {
         // Cursor has changed, we need to send the new one.
-        const WhistCursorInfo* cached_cursor =
-            whist_cursor_cache_check(state->cursor_cache, current_cursor->hash);
-        if (cached_cursor) {
-            // Use cached cursor.
-            set_frame_cursor_info(frame, cached_cursor);
+        if (current_cursor->type == WHIST_CURSOR_PNG) {
+            // If a PNG is being used,
+            // Make sure to cache it
+            const WhistCursorInfo* cached_cursor =
+                whist_cursor_cache_check(state->cursor_cache, current_cursor->hash);
+            if (cached_cursor) {
+                // Use cached cursor.
+                set_frame_cursor_info(frame, cached_cursor);
+            } else {
+                // Send new cursor.
+                whist_cursor_cache_add(state->cursor_cache, current_cursor);
+                set_frame_cursor_info(frame, current_cursor);
+            }
         } else {
-            // Send new cursor.
-            whist_cursor_cache_add(state->cursor_cache, current_cursor);
             set_frame_cursor_info(frame, current_cursor);
         }
         state->last_cursor_hash = current_cursor->hash;

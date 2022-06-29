@@ -263,18 +263,24 @@ int render_video(VideoContext* video_context) {
             }
             if (frame->has_cursor) {
                 WhistCursorInfo* new_cursor = get_frame_cursor_info(frame);
-                const WhistCursorInfo* cached_cursor =
-                    whist_cursor_cache_check(video_context->cursor_cache, new_cursor->hash);
-                if (cached_cursor) {
-                    // Verify cache sync
-                    FATAL_ASSERT(new_cursor->cached == true);
-                    // Reuse the cached cursor.
-                    sdl_set_cursor_info_as_pending(cached_cursor);
+                if (new_cursor->type == WHIST_CURSOR_PNG) {
+                    // If the cursor is a PNG, use the cache
+                    const WhistCursorInfo* cached_cursor =
+                        whist_cursor_cache_check(video_context->cursor_cache, new_cursor->hash);
+                    if (cached_cursor) {
+                        // Verify cache sync
+                        FATAL_ASSERT(new_cursor->cached == true);
+                        // Reuse the cached cursor.
+                        sdl_set_cursor_info_as_pending(cached_cursor);
+                    } else {
+                        // Verify cache sync
+                        FATAL_ASSERT(new_cursor->cached == false);
+                        // Use the new cursor and add it to the cache.
+                        whist_cursor_cache_add(video_context->cursor_cache, new_cursor);
+                        sdl_set_cursor_info_as_pending(new_cursor);
+                    }
                 } else {
-                    // Verify cache sync
                     FATAL_ASSERT(new_cursor->cached == false);
-                    // Use the new cursor and add it to the cache.
-                    whist_cursor_cache_add(video_context->cursor_cache, new_cursor);
                     sdl_set_cursor_info_as_pending(new_cursor);
                 }
             }
