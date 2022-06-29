@@ -57,3 +57,4 @@ MANDELBOX_BUILD_MAX_RETRIES = 5
 # Whether the E2E script is running in CI vs on a local machine
 running_in_ci = os.getenv("CI") == "true"
 e2e_run_id = str(uuid.uuid4())
+use_spot_instances = False

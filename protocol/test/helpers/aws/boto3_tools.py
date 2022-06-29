@@ -16,6 +16,7 @@ from helpers.common.constants import (
     AMAZON_OWNER_ID,
     AWS_UBUNTU_2004_AMI,
     INSTANCE_TYPE,
+    use_spot_instances,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -203,9 +204,22 @@ def create_ec2_instance(
         ],
         "SubnetId": subnet_id,  # (DefaultSubnetdev)
         "SecurityGroupIds": [security_group_id],  # (MandelboxesSecurityGroupdev)
-        "InstanceInitiatedShutdownBehavior": "terminate",
+        "InstanceInitiatedShutdownBehavior": "stop" if use_spot_instances else "terminate",
         "KeyName": key_name,  # needs to be the same that's loaded on the client calling this function
     }
+    if use_spot_instances:
+        kwargs["InstanceMarketOptions"] = dict(
+            {
+                "MarketType": "spot",
+                "SpotOptions": {
+                    #'MaxPrice': 'string',
+                    "SpotInstanceType": "persistent",
+                    #'BlockDurationMinutes': 123,
+                    #'ValidUntil': datetime(2015, 1, 1),
+                    "InstanceInterruptionBehavior": "stop",
+                },
+            }
+        )
 
     # Create the EC2 instance
     try:
