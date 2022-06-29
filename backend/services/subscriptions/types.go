@@ -57,11 +57,11 @@ type whistImage struct {
 	UpdatedAt time.Time      `graphql:"updated_at"`
 }
 
-// WhistClientAppVersion is the mapping of the `desktop_app_version` table on the config database.
+// whistFrontendVersion is the mapping of the `desktop_app_version` table on the config database.
 // This type interacts directly with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal.
 // Only use for GraphQL operations. For operations that do not interact with the client, use the
 // `ClientAppVersion` type instead.
-type whistClientAppVersion struct {
+type whistFrontendVersion struct {
 	ID                graphql.Int    `graphql:"id"`
 	Major             graphql.Int    `graphql:"major"`
 	Minor             graphql.Int    `graphql:"minor"`
@@ -136,10 +136,10 @@ type Image struct {
 	UpdatedAt time.Time `json:"updated_at"` // Timestamp when the image was registered
 }
 
-// ClientAppVersion is a custom type to represent the client app version. This type is
+// FrontendVersion is a custom type to represent the client app version. This type is
 // meant to be used across the codebase for any operation that does not interact with
 // the GraphQL client. For operations that interact with it, use the `WhistClientAppVersions` type.
-type ClientAppVersion struct {
+type FrontendVersion struct {
 	ID                int    `json:"id"`
 	Major             int    `json:"major"`
 	Minor             int    `json:"minor"`
@@ -192,12 +192,12 @@ type ImageEvent struct {
 	Images []Image `json:"whist_images"`
 }
 
-// ClientAppVersionEvent represents an occurred event on the
+// FrontendVersionEvent represents an occurred event on the
 // `dekstop_app_version` config database table. This struct is
 // meant to be used by any event that operates on the
 // desktop_app_version database table.
-type ClientAppVersionEvent struct {
-	ClientAppVersions []ClientAppVersion `json:"desktop_app_version"`
+type FrontendVersionEvent struct {
+	FrontendVersions []FrontendVersion `json:"desktop_app_version"`
 }
 
 // Helper function to convert between types

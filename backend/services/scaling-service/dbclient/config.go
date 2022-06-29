@@ -75,34 +75,34 @@ func GetProdConfigs(ctx context.Context, client subscriptions.WhistGraphQLClient
 	return configMap, nil
 }
 
-// GetClientAppVersion will query the config database and get the only row of the `desktop_app_version` table.
-func GetClientAppVersion(ctx context.Context, client subscriptions.WhistGraphQLClient) (subscriptions.ClientAppVersion, error) {
+// GetFrontendVersion will query the config database and get the only row of the `desktop_app_version` table.
+func GetFrontendVersion(ctx context.Context, client subscriptions.WhistGraphQLClient) (subscriptions.FrontendVersion, error) {
 	// The version ID is always set to 1 on the database, since there
 	// is only one row in the `desktop_client_app_version`.
 	const versionID = 1
 
-	query := subscriptions.QueryClientAppVersion
+	query := subscriptions.QueryFrontendVersion
 	err := client.Query(ctx, &query, map[string]interface{}{
 		"id": graphql.Int(versionID),
 	})
 	if err != nil {
-		return subscriptions.ClientAppVersion{}, utils.MakeError("Failed to query config database for client app version. Err: %v", err)
+		return subscriptions.FrontendVersion{}, utils.MakeError("Failed to query config database for frontend version. Err: %v", err)
 	}
 
-	if len(query.WhistClientAppVersions) == 0 {
-		return subscriptions.ClientAppVersion{}, utils.MakeError("Could not find client app version on config database")
+	if len(query.WhistFrontendVersions) == 0 {
+		return subscriptions.FrontendVersion{}, utils.MakeError("Could not find frontend version on config database")
 	}
 
-	version := subscriptions.ClientAppVersion{
-		ID:                int(query.WhistClientAppVersions[0].ID),
-		Major:             int(query.WhistClientAppVersions[0].Major),
-		Minor:             int(query.WhistClientAppVersions[0].Minor),
-		Micro:             int(query.WhistClientAppVersions[0].Micro),
-		DevRC:             int(query.WhistClientAppVersions[0].DevRC),
-		StagingRC:         int(query.WhistClientAppVersions[0].StagingRC),
-		DevCommitHash:     string(query.WhistClientAppVersions[0].DevCommitHash),
-		StagingCommitHash: string(query.WhistClientAppVersions[0].StagingCommitHash),
-		ProdCommitHash:    string(query.WhistClientAppVersions[0].ProdCommitHash),
+	version := subscriptions.FrontendVersion{
+		ID:                int(query.WhistFrontendVersions[0].ID),
+		Major:             int(query.WhistFrontendVersions[0].Major),
+		Minor:             int(query.WhistFrontendVersions[0].Minor),
+		Micro:             int(query.WhistFrontendVersions[0].Micro),
+		DevRC:             int(query.WhistFrontendVersions[0].DevRC),
+		StagingRC:         int(query.WhistFrontendVersions[0].StagingRC),
+		DevCommitHash:     string(query.WhistFrontendVersions[0].DevCommitHash),
+		StagingCommitHash: string(query.WhistFrontendVersions[0].StagingCommitHash),
+		ProdCommitHash:    string(query.WhistFrontendVersions[0].ProdCommitHash),
 	}
 
 	return version, nil

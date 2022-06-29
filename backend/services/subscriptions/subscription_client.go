@@ -144,7 +144,7 @@ func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string
 				// We notify via the subscriptionsEvent channel
 				subscriptionEvents <- &result
 			}
-		case ClientAppVersionEvent:
+		case FrontendVersionEvent:
 			err = json.Unmarshal(*data, &result)
 			if err != nil {
 				return utils.MakeError("failed to unmarshal subscription event: %v", err)

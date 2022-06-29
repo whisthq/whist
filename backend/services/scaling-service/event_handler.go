@@ -317,30 +317,27 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				case *algos.DefaultScalingAlgorithm:
 					algorithm.InstanceEventChan <- scalingEvent
 				}
-			case *subscriptions.ClientAppVersionEvent:
+			case *subscriptions.FrontendVersionEvent:
 				var (
 					scalingEvent algos.ScalingEvent
-					version      subscriptions.ClientAppVersion
+					version      subscriptions.FrontendVersion
 				)
 
-				// We set the event type to DATABASE_CLIENT_VERSION_EVENT
+				// We set the event type to DATABASE_FRONTEND_VERSION_EVENT
 				// here so that we have more information about the event.
 				// DATABASE means the source of the event is the database
-				// and CLIENT_VERSION means it will perform an action with
-				// the client version information received from the database.
-				scalingEvent.Type = "DATABASE_CLIENT_VERSION_EVENT"
+				// and FRONTEND_VERSION means it will perform an action with
+				// the frontend version information received from the database.
+				scalingEvent.Type = "DATABASE_FRONTEND_VERSION_EVENT"
 
 				// We only expect one version to come from the database subscription,
 				// anything more or less than it indicates an error in our backend.
-				if len(subscriptionEvent.ClientAppVersions) == 1 {
-					version = subscriptionEvent.ClientAppVersions[0]
+				if len(subscriptionEvent.FrontendVersions) == 1 {
+					version = subscriptionEvent.FrontendVersions[0]
 				} else {
-					logger.Errorf("Unexpected length of %v in version received from the config database.", len(subscriptionEvent.ClientAppVersions))
+					logger.Errorf("Unexpected length of %v in version received from the config database.", len(subscriptionEvent.FrontendVersions))
 				}
 
-				// TODO: once we keep track of client versions per region,
-				// get the region directly from the database. For now use
-				// the regionImageMap.
 				regionImageMap, err := getRegionImageMap()
 				if err != nil {
 					logger.Errorf("Error getting regionImageMap. Err: %v", err)
@@ -357,7 +354,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 
 					switch algorithm := algorithm.(type) {
 					case *algos.DefaultScalingAlgorithm:
-						algorithm.ClientAppVersionChan <- scalingEvent
+						algorithm.FrontendVersionChan <- scalingEvent
 					}
 				}
 
