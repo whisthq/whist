@@ -49,6 +49,12 @@ func main() {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := &sync.WaitGroup{}
 
+	// Add some additional fields for Logz.io
+	tags := make(map[string]string)
+	tags["component"] = "backend"
+	tags["sub-component"] = "scaling-service"
+	logger.AddLogzioFields(tags)
+
 	var (
 		dbClient            dbclient.WhistDBClient                // The client that abstracts database interactions
 		graphqlClient       subscriptions.WhistGraphQLClient      // The GraphQL client to query the Hasura server
@@ -171,15 +177,15 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 // `interval` sets the time when the event will run in minutes (i.e. every 10 minutes), and `start`
 // sets the time when the first event will happen (i.e. 10 minutes from now).
 func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval interface{}, start time.Duration) {
-	if metadata.IsLocalEnvWithoutDB() && !metadata.IsRunningInCI() {
-		return
-	}
+	// if metadata.IsLocalEnvWithoutDB() && !metadata.IsRunningInCI() {
+	// 	return
+	// }
 
 	s := gocron.NewScheduler(time.UTC)
 
 	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
-	t := time.Now().Add(start)
-	s.Every(interval).Minutes().StartAt(t).Do(func() {
+	// t := time.Now().Add(start)
+	s.Every(1).Minutes().Do(func() {
 		// Send into scheduling channel
 		scheduledEvents <- algos.ScalingEvent{
 			// Create a UUID so we can identify and search this event on our logs

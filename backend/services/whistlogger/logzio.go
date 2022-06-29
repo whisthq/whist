@@ -7,6 +7,7 @@ import (
 
 	"github.com/logzio/logzio-go"
 	"github.com/whisthq/whist/backend/services/utils"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -20,6 +21,9 @@ type logzioCore struct {
 	// sender is the client used to send the events to Logz.io
 	sender *logzio.LogzioSender
 }
+
+// fields are additional fields to be parsed by Logz.io
+var messageFields []zapcore.Field
 
 // NewLogzioCore will initialize logz and necessary fields.
 func newLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
@@ -69,6 +73,13 @@ func newLogzioEncoderConfig() zapcore.EncoderConfig {
 	}
 }
 
+// AddLogzFields will add the fields to the Logzio message.
+func AddLogzioFields(fields map[string]string) {
+	for name, val := range fields {
+		messageFields = append(messageFields, zap.Any(name, val))
+	}
+}
+
 // Enabled is used to check whether the event should be logged
 // or not, depending on its level.
 func (lc *logzioCore) Enabled(level zapcore.Level) bool {
@@ -87,6 +98,10 @@ func (lc *logzioCore) With(fields []zapcore.Field) zapcore.Core {
 		fields[i].AddTo(core.encoder)
 	}
 
+	for i := range messageFields {
+		messageFields[i].AddTo(core.encoder)
+	}
+
 	return core
 }
 
@@ -101,7 +116,7 @@ func (lc *logzioCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 
 // Write is where the core sends the event payload to logz.io
 func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
-	if !usingProdLogging() {
+	if usingProdLogging() {
 		return nil
 	}
 
@@ -119,11 +134,13 @@ func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 		// Since we may be crashing the program, sync the output.
 		lc.Sync()
 	}
+
 	return nil
 }
 
 // Sync drains the queue.
 func (lc *logzioCore) Sync() error {
 	//Flush logzio
+	messageFields = nil
 	return lc.sender.Sync()
 }

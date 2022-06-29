@@ -73,8 +73,8 @@ func newSentryEncoderConfig() zapcore.EncoderConfig {
 	}
 }
 
-// AddTags will add the tags to the current Sentry scope
-func AddTags(tags map[string]string) {
+// AddSentryTags will add the tags to the current Sentry scope
+func AddSentryTags(tags map[string]string) {
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetTags(tags)
 	})
