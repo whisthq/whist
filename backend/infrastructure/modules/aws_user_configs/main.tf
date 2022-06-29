@@ -108,7 +108,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecyc
 
 resource "aws_s3_bucket_replication_configuration" "UserConfigReplication" {
   bucket = "whist-user-app-configs-${data.aws_region.current.name}-${var.env}"
-  role   = modules.iam.aws_iam_role.BucketReplicationRole.arn
+  role   = module.iam.aws_iam_role.BucketReplicationRole.arn
 
   # This will iterate the regions list declared on this module. It is assumed
   # that the regions list is sorted by proximity to the region represented in
