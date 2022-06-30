@@ -21,7 +21,7 @@ while read line; do
   x=$(((i % 7) * 3))
   y=$(((i / 7) * 3))
   echo $line $x $y
-	echo "32 $x $y $picture" | xcursorgen - "$foldername/cursors/$line"
+  echo "32 $x $y $picture" | xcursorgen - "$foldername/cursors/$line"
   ((i+=1))
 done < names.txt
 
