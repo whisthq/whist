@@ -25,10 +25,9 @@ typedef std::unordered_map<std::string, std::deque<std::pair<double, double>>> P
 static PlotData *g_plot_data;
 static WhistMutex g_plot_mutex;
 
-// TODO: maybe it's better to use memeory fence to handle memory visiblity,
-// instead of volatile.
+// TODO: maybe it's better to use memeory fence to handle memory visiblity
 // But at the moment let's not overdesign since this is only for debug
-volatile static bool in_sampling = false;  // indicate if in the sampling status
+static std::atomic<bool> in_sampling = false;  // indicate if in the sampling status
 
 /*
 ============================
