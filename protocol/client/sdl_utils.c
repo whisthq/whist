@@ -141,26 +141,17 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
 
     LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
              current_height);
-    //
-    int dpi = whist_frontend_get_window_dpi(frontend);
-    // If we're on linux, our desired and current should match up
-    int desired_width = current_width;
-    int desired_height = current_height;
 
 #if !OS_IS(OS_LINUX)
+    int dpi = whist_frontend_get_window_dpi(frontend);
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
     // requirements. Specifically, it will round the width up to a multiple of 2 and the height up
     // to a multiple of 2. Here, we try to force the window size to be valid values so the
     // dimensions of the client and server match. We round down rather than up to avoid extending
     // past the size of the display.
-    desired_width = current_width - (current_width % 2);
-    desired_height = current_height - (current_height % 2);
-#endif  // non-Linux
-
-    // Regardless of OS, constrain to min width/height
-    desired_width = max(MIN_SCREEN_WIDTH, desired_width);
-    desired_height = max(MIN_SCREEN_HEIGHT, desired_height);
+    int desired_width = current_width - (current_width % 2);
+    int desired_height = current_height - (current_height % 2);
     static int prev_desired_width = 0;
     static int prev_desired_height = 0;
     static int tries =
@@ -191,6 +182,7 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
             }
         }
     }
+#endif  // non-Linux
 
     network_algo_set_dimensions(current_width, current_height);
 
