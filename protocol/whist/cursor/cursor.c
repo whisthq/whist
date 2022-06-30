@@ -18,7 +18,7 @@ including a potential embedded PNG.
 size_t whist_cursor_info_get_size(WhistCursorInfo* cursor_info) {
     FATAL_ASSERT(cursor_info != NULL);
 
-    if (cursor_info->using_png) {
+    if (cursor_info->type == WHIST_CURSOR_PNG) {
         return sizeof(WhistCursorInfo) + cursor_info->png_size;
     } else {
         return sizeof(WhistCursorInfo);
@@ -27,7 +27,7 @@ size_t whist_cursor_info_get_size(WhistCursorInfo* cursor_info) {
 
 uint8_t* whist_cursor_info_to_rgba(const WhistCursorInfo* info) {
     FATAL_ASSERT(info != NULL);
-    FATAL_ASSERT(info->using_png);
+    FATAL_ASSERT(info->type == WHIST_CURSOR_PNG);
 
     uint8_t* rgba;
     unsigned int width, height;

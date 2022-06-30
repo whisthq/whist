@@ -109,7 +109,7 @@ typedef struct SDLFrontendContext {
      */
     uint32_t internal_event_id;
     struct {
-        WhistCursorState state;
+        WhistCursorCaptureState capture_state;
         struct {
             int x;
             int y;

@@ -84,7 +84,7 @@ static void load_cursors(void) {
  *
  * @param pci   A pointer to the cursor info struct
  */
-static WhistCursorID get_cursor_id(PCURSORINFO pci) {
+static WhistCursorType get_cursor_type(PCURSORINFO pci) {
     HCURSOR cursor = pci->hCursor;
 
     if (cursor == types->CursorArrow) {
@@ -96,22 +96,23 @@ static WhistCursorID get_cursor_id(PCURSORINFO pci) {
     } else if (cursor == types->CursorIBeam) {
         return WHIST_CURSOR_IBEAM;
     } else if (cursor == types->CursorNo) {
-        return WHIST_CURSOR_NO;
+        return WHIST_CURSOR_NOT_ALLOWED;
     } else if (cursor == types->CursorSizeAll) {
-        return WHIST_CURSOR_SIZEALL;
+        return WHIST_CURSOR_ALL_SCROLL;
     } else if (cursor == types->CursorSizeNESW) {
-        return WHIST_CURSOR_SIZENESW;
+        return WHIST_CURSOR_RESIZE_NESW;
     } else if (cursor == types->CursorSizeNS) {
-        return WHIST_CURSOR_SIZENS;
+        return WHIST_CURSOR_RESIZE_NS;
     } else if (cursor == types->CursorSizeNWSE) {
-        return WHIST_CURSOR_SIZENWSE;
+        return WHIST_CURSOR_RESIZE_NWSE;
     } else if (cursor == types->CursorSizeWE) {
-        return WHIST_CURSOR_SIZEWE;
+        return WHIST_CURSOR_RESIZE_WE;
     } else if (cursor == types->CursorWait) {
-        return WHIST_CURSOR_WAITARROW;
-    } else {
-        return WHIST_CURSOR_ARROW;
+        return WHIST_CURSOR_WAIT;
     }
+
+    // We don't support PNG cursors, so fallback to a regular arrow.
+    return WHIST_CURSOR_ARROW;
 }
 
 /*
@@ -128,5 +129,11 @@ WhistCursorInfo* whist_cursor_capture(void) {
     CURSORINFO cursor_info;
     cursor_info.cbSize = sizeof(CURSORINFO);
     GetCursorInfo(&cursor_info);
-    return whist_cursor_info_from_id(get_cursor_id(&cursor_info), cursor_info.flags);
+    bool cursor_visible = cursor_info.flags & CURSOR_SHOWING;
+    // We used to use cursor_info.flags as a proxy for cursor capture state, but that's incorrect.
+    // Since we don't really care about Windows server functionality, just always set this to
+    // CURSOR_CAPTURE_STATE_NORMAL.
+    return whist_cursor_info_from_type(
+        cursor_visible ? get_cursor_type(&cursor_info) : WHIST_CURSOR_NONE,
+        CURSOR_CAPTURE_STATE_NORMAL);
 }
