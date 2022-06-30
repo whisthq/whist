@@ -72,21 +72,21 @@ func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]int
 	return (mandelbox.InstanceID == instanceID) && (mandelbox.Status == status)
 }
 
-// ClientAppVersionHandler handles events from the hasura subscription which
-// detects changes on the config database client app version to the current.
-func ClientAppVersionHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
-	result := event.(ClientAppVersionEvent)
+// FrontendVersionHandler handles events from the hasura subscription which
+// detects changes to the config database frontend version.
+func FrontendVersionHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
+	result := event.(FrontendVersionEvent)
 
 	var (
-		version    ClientAppVersion
+		version    FrontendVersion
 		commitHash string
 	)
 
-	if len(result.ClientAppVersions) > 0 {
-		version = result.ClientAppVersions[0]
+	if len(result.FrontendVersions) > 0 {
+		version = result.FrontendVersions[0]
 	}
 
-	if version == (ClientAppVersion{}) {
+	if version == (FrontendVersion{}) {
 		return false
 	}
 
@@ -150,18 +150,18 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 // function is specific for the subscriptions used for the config database.
 func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
 	// The version ID is always set to 1 on the database, since there
-	// is only one row in the `desktop_client_app_version` which contains
+	// is only one row in the the config DB version table, which contains
 	// all of the dev/staging/prod commit hashes.
 	const versionID = 1
 
 	configSubscriptions := []HasuraSubscription{
 		{
-			Query: QueryClientAppVersion,
+			Query: QueryFrontendVersion,
 			Variables: map[string]interface{}{
 				"id": graphql.Int(versionID),
 			},
-			Result:  ClientAppVersionEvent{ClientAppVersions: []ClientAppVersion{}},
-			Handler: ClientAppVersionHandler,
+			Result:  FrontendVersionEvent{FrontendVersions: []FrontendVersion{}},
+			Handler: FrontendVersionHandler,
 		},
 	}
 	whistClient.SetSubscriptions(configSubscriptions)

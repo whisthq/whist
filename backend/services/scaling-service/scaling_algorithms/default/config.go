@@ -24,9 +24,9 @@ var (
 	desiredFreeMandelboxesPerRegion = map[string]int{
 		"us-east-1": 2,
 	}
-	// clientAppVersion represents the current version of the client app
+	// frontendVersion represents the current version of the frontend
 	// (e.g. "2.6.13").
-	clientAppVersion *subscriptions.ClientAppVersion
+	frontendVersion *subscriptions.FrontendVersion
 	// A lock to update the version once it gets switched on the database
 	versionLock = &sync.Mutex{}
 )
@@ -38,7 +38,7 @@ const (
 	// These are all the possible reasons we would fail to find an instance for a user
 	// and return a 503 error
 
-	// Instance was found but the client app is out of date
+	// Instance was found but the frontend is out of date
 	COMMIT_HASH_MISMATCH = "COMMIT_HASH_MISMATCH"
 
 	// No instance was found e.g. a capacity issue
@@ -143,17 +143,17 @@ func getFrontendVersion() string {
 
 	var version string
 
-	if clientAppVersion == nil {
+	if frontendVersion == nil {
 		return ""
 	}
 
 	switch metadata.GetAppEnvironment() {
 	case metadata.EnvDev:
-		version = utils.Sprintf("%v.%v.%v-dev-rc.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro, clientAppVersion.DevRC)
+		version = utils.Sprintf("%v.%v.%v-dev-rc.%v", frontendVersion.Major, frontendVersion.Minor, frontendVersion.Micro, frontendVersion.DevRC)
 	case metadata.EnvStaging:
-		version = utils.Sprintf("%v.%v.%v-staging-rc.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro, clientAppVersion.StagingRC)
+		version = utils.Sprintf("%v.%v.%v-staging-rc.%v", frontendVersion.Major, frontendVersion.Minor, frontendVersion.Micro, frontendVersion.StagingRC)
 	default:
-		version = utils.Sprintf("%v.%v.%v", clientAppVersion.Major, clientAppVersion.Minor, clientAppVersion.Micro)
+		version = utils.Sprintf("%v.%v.%v", frontendVersion.Major, frontendVersion.Minor, frontendVersion.Micro)
 	}
 
 	return version
@@ -163,9 +163,9 @@ func getFrontendVersion() string {
 // only the configuration variable defined in this file shared between scaling algorithms. This function is only used
 // when starting the scaling algorithm, and when the CI has updated the config database. Its necessary to grab a lock
 // because multiple scaling algorithms read and update it.
-func setFrontendVersion(newVersion subscriptions.ClientAppVersion) {
+func setFrontendVersion(newVersion subscriptions.FrontendVersion) {
 	versionLock.Lock()
 	defer versionLock.Unlock()
 
-	clientAppVersion = &newVersion
+	frontendVersion = &newVersion
 }

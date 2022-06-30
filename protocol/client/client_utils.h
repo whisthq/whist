@@ -49,7 +49,7 @@ Public Functions
 */
 
 /**
- * @brief                          Parse the arguments passed into the client application
+ * @brief                          Parse the arguments passed into the Whist frontend
  *
  * @param argc                     Number of arguments
  *

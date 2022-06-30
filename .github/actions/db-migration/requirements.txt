@@ -1,5 +1,5 @@
 migra==3.0.1652017683
 psycopg2==2.9.3
-requests==2.28.0
+requests==2.28.1
 rich==12.4.4
 SQLAlchemy==1.4.39

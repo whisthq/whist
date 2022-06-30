@@ -184,8 +184,11 @@ def parse_logs(parsed_logs, logs_page):
         except IndexError:
             print("Found a log line without message : " + str(log["_source"]))
 
+        # TODO: Build a way to send logs from the Whist Chromium Extension to Logz.io
+        # TODO: Build a way to send logs from WhistClient/Chromium to Logz.io
+        # TODO: Once these two TODOs are done, remove the clientapp here
         if component == "clientapp":
-            # if it's client app, then we know these are logs from the client
+            # if it's this case, then we know these are logs from the client
             origin = "client"
         else:
             # otherwise, this is mandlebox, so these are logs from the server

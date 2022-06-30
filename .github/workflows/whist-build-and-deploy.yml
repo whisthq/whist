@@ -160,7 +160,7 @@ jobs:
 
   # Auth0 Rules: Build & Deploy Auth0 Rules to Auth0 Tenant
   # Build and deploy the Auth0 rules to the Whist Auth0 Tenant platform, with
-  # which our client-application interfaces with authenticating users through Auth0
+  # which our frontend interfaces with for authenticating users through Auth0
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
   auth0-deploy-rules:
     name: "Deploy Auth0 Rules"
@@ -574,16 +574,13 @@ jobs:
           BODY = "@releases :rotating_light: Deployment failed: could not deploy AMIs in the `amis-publish-aws` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
-  #######################################################################################
-  #######################################################################################
-
-  # Client Applications: Retrieve Version Number
+  # Whist Browser: Retrieve Version Number
   # Retrieve the current Whist version number from our configuration database, through Hasura
-  # This is the first step in the client-applications deployment jobs
-  client-applications-retrieve-version-number:
-    name: "Client Applications: Retrieve Current Version Number from Config Database"
+  # This is the first step in the Whist Browser deployment jobs
+  whist-browser-retrieve-version-number:
+    name: "Whist Browser: Retrieve Current Version Number from Config Database"
     runs-on: ubuntu-20.04
-    concurrency: client-applications-retrieve-version-number-${{ github.ref }}
+    concurrency: whist-browser-retrieve-version-number-${{ github.ref }}
     needs:
       [
         whist-publish-build-config,
@@ -597,7 +594,7 @@ jobs:
       new_staging_rc_version: ${{ steps.generate-release-version.outputs.new_staging_rc_version }}
       new_dev_rc_version: ${{ steps.generate-release-version.outputs.new_dev_rc_version }}
 
-    # Only run client-applications deployment if none of the previous steps failed
+    # Only run whist-browser deployment if none of the previous steps failed
     if: |
       always() &&
       (needs.scaling-service-deploy.result == 'success') &&
@@ -609,7 +606,7 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
 
-      - name: Retrieve Desktop App Version from Config Database
+      - name: Retrieve Whist Desktop Browser Version from Config Database
         id: generate-release-version
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
@@ -652,10 +649,11 @@ jobs:
           # if dev or staging, increment RC by 1, else increment micro by 1 and set RC to 0
           if [[ "$BRANCH_NAME" == "prod" ]]; then
             echo 'Using prod configuration...'
+
             # increment version by 0.0.1
             NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
 
-            # set new desktop app version
+            # set new Whist Desktop Browser version
             NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
 
             # store NEW_MICRO in GITHUB_ENV to push to GraphQL API, and reset STAGING_RC and DEV_RC to 0
@@ -664,6 +662,7 @@ jobs:
             echo "::set-output name=new_dev_rc_version::0"
           elif [[ "$BRANCH_NAME" == "staging" ]]; then
             echo 'Using staging configuration...'
+
             # increment version by staging-rc.1
             NEW_STAGING_RC=$(echo "print( ${STAGING_RC} + 1)" | python)
 
@@ -672,22 +671,23 @@ jobs:
             # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
             UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
 
-            # set new desktop app version
+            # set new Whist Desktop Browser version
             NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-staging-rc.${NEW_STAGING_RC}"
 
             # store NEW_STAGING_RC in GITHUB_ENV to push to GraphQL API
             echo "::set-output name=new_staging_rc_version::${NEW_STAGING_RC}"
           elif [[ "$BRANCH_NAME" == "dev" ]]; then
             echo 'Using dev configuration...'
+
             # increment version by dev-rc.1
             NEW_DEV_RC=$(echo "print( ${DEV_RC} + 1)" | python)
-
+            
             # set temporary variable for upcoming micro version which is 1 ahead of current, since
             # staging/dev are release candiates (rc) for the next version
             # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
             UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
 
-            # set new desktop app version [-x64/-arm64] gets appended depending on the OS architecture it is built on
+            # set new Whist Desktop Browser version [-x64/-arm64] gets appended depending on the OS architecture it is built on
             NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-dev-rc.${NEW_DEV_RC}"
 
             # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
@@ -696,33 +696,30 @@ jobs:
             echo 'Error: Invalid branch' && false
           fi
 
-          # store new desktop app version as GitHub step output to substitute in GitHub Release tag creation
+          # store new Whist Desktop Browser version as GitHub step output to substitute in GitHub Release tag creation
           echo "New $BRANCH_NAME version: ${NEW_VERSION}"
           echo "::set-output name=release_version::${NEW_VERSION}"
 
   #######################################################################################
   #######################################################################################
 
-  # Client Application: Build & Publish to AWS S3
-  # Build and publish the client application to the respective AWS S3 bucket,
-  # from which Electron Updater pulls them for auto-updating
-  # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and all previous publish jobs succeed
-  client-applications-publish-build-s3:
-    name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
+  # TODO: Build the Brave/Chromium deploy file in `whisthq/brave-browser`, and call it
+  # from here using inter-repos deployment
+  whist-browser-publish-build-s3:
+    name: "Whist Browser: Build & Deploy Whist Chromium Browser (${{ matrix.config.name }})"
     runs-on: ${{ matrix.config.os }}
-    concurrency: client-applications-publish-build-${{ matrix.config.arch }}-s3-${{ matrix.config.os }}${{ github.ref }}
+    concurrency: whist-browser-publish-build-${{ matrix.config.arch }}-s3-${{ matrix.config.os }}${{ github.ref }}
     needs:
       [
         whist-publish-build-config,
-        client-applications-retrieve-version-number,
+        whist-browser-retrieve-version-number,
         terraform-deploy,
       ]
 
-    # Only run client-apps deployment if none of the previous steps failed
+    # Only run whist-browser deployment if none of the previous steps failed
     if: |
       always() &&
-      (needs.client-applications-retrieve-version-number.result == 'success')
-
+      (needs.whist-browser-retrieve-version-number.result == 'success')
     strategy:
       matrix:
         config:
@@ -735,178 +732,32 @@ jobs:
           - name: macOS (arm64)
             os: macos-11.0
             arch: arm64
-
     steps:
-      # Get the whole git history. We must do this because the
-      # client app calls `git describe` in order to bake the
-      # version number into the React frontend.
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Set up NodeJS Environment
-        uses: actions/setup-node@v3.3.0
-        with:
-          node-version: "16"
-
-      # To retrieve Whist protocol libraries from AWS S3
-      - name: Configure AWS S3 CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      ############################# Windows Configuration Steps START #############################
-
-      - name: Install cmake via Chocolatey on Windows GHA Machine
-        if: runner.os == 'Windows'
-        uses: crazy-max/ghaction-chocolatey@v2
-        with:
-          args: install cmake --pre --no-progress --installargs 'ADD_CMAKE_TO_PATH=System'
-
-      - name: Set up Visual Studio Developer Command Prompt (for nmake)
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-
-      #############################################################################################
-      ############################### Unix Configuration Steps START ##############################
-
-      - name: Install macOS Codesigning Certificates on macOS GHA Machine
-        if: runner.os == 'macOS'
-        uses: apple-actions/import-codesign-certs@v1
-        with:
-          p12-file-base64: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
-          p12-password: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
-
-      # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
-      - name: Install macOS Notarization API Key
-        if: runner.os == 'macOS'
-        run: |
-          mkdir -p ~/private_keys
-          aws s3 cp s3://whist-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
-
-      #############################################################################################
-      #################################### Publish Steps START ####################################
-
-      # Bump the package version in package.json using jq
-      - name: Update Package Version
-        working-directory: frontend/client-applications
-        shell: bash --noprofile --norc -eo pipefail {0}
-        run: |
-          mv package.json packageOld.json
-          # String substitution works here because of the GitHub Actions double-curly-brace variable "pre-processor" notation
-          cat packageOld.json | jq '.version = "${{ needs.client-applications-retrieve-version-number.outputs.release_version }}"' > package.json
-          rm packageOld.json
-
-      # (builds the branch that it is run on automatically, so prod if running on push to prod)
-      - name: Publish the Windows Electron Application
-        if: runner.os == 'Windows'
-        working-directory: frontend/client-applications
-        env:
-          AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-        run: |
-          REM We use "call" before since ancient DOS versions don't support recursively executing batch files
-          REM We need to increase the timeout to deal with GHA's weak VMs.
-          call yarn config set network-timeout 600000
-          call yarn cache clean
-          call yarn install
-          call yarn package:publish ^
-          --version=${{ needs.client-applications-retrieve-version-number.outputs.release_version }} ^
-          --environment=${{ needs.whist-publish-build-config.outputs.branch }} ^
-          --commit=${{ github.sha }}
-
-      # (builds the branch that it is run on automatically, so prod if running on push to prod)
-      - name: Publish the MacOS Electron Application
-        if: runner.os == 'macOS'
-        working-directory: frontend/client-applications
-        env:
-          AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-          MACOS_ARCH: "${{ matrix.config.arch }}"
-          # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
-        run: |
-          # Build the Whist protocol and package the Electron application
-          # We need to increase the timeout to deal with GHA's weak VMs.
-          yarn config set network-timeout 600000
-          yarn cache clean
-          yarn install
-          yarn package:publish \
-          --version=${{ needs.client-applications-retrieve-version-number.outputs.release_version }} \
-          --environment=${{ needs.whist-publish-build-config.outputs.branch }} \
-          --commit=${{ github.sha }}
-
-        # Each final build has an internal build id and debug id. Sentry will use these
-        # IDs to match the debug symbols with the build that crashed to build the backtrace
-      - name: Copy Client debug symbols to Sentry, on macOS
-        if: runner.os == 'macOS'
-        working-directory: frontend/client-applications
-        env:
-          SENTRY_ORG: whist
-          SENTRY_PROJECT: protocol
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: |
-          curl -sL https://sentry.io/get-cli/ | bash
-          sentry-cli upload-dif WhistProtocolClient/build/WhistClient
-          sentry-cli upload-dif WhistProtocolClient/debugSymbols/WhistClient.debug
-
-        # Each final build has an internal build id and debug id. Sentry will use these
-        # IDs to match the debug symbols with the build that crashed to build the backtrace
-      - name: Copy Client debug symbols to Sentry, on Windows
-        if: runner.os == 'Windows'
-        working-directory: frontend/client-applications
-        env:
-          SENTRY_ORG: whist
-          SENTRY_PROJECT: protocol
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        shell: bash --noprofile --norc -eo pipefail {0}
-        run: |
-          # We specify INSTALL_DIR first, so the sentry-cli script doesn't try to call `sudo`
-          export INSTALL_DIR=$GITHUB_WORKSPACE
-          curl -sL https://sentry.io/get-cli/ | bash
-          D:/a/whist/whist/sentry-cli upload-dif WhistProtocolClient/build/WhistClient
-          D:/a/whist/whist/sentry-cli upload-dif WhistProtocolClient/debugSymbols/WhistClient.debug
-
-      - name: Notify Slack on Publishing Client Applications Error
-        if: failure()
-        shell: python3 {0}
-        run: |
-          # Retrieve Slack webhook
-          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-          else:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-
-          from notifications.slack_bot import slack_post
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-s3` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
+      - name: Dummy Step
+        shell: bash
+        run: echo "Hello, this is a dummy step until we configure Chromium builds"
 
   #######################################################################################
   #######################################################################################
 
-  # Client Applications: Update Version Number
+  # Whist Browser: Update Version Number
   # Set the New Whist version number in our configuration database, through Hasura
-  client-applications-update-version-number:
-    name: "Client Applications: Set New Version Number in Config Database"
+  whist-browser-update-version-number:
+    name: "Whist Browser: Set New Version Number in Config Database"
     runs-on: ubuntu-20.04
-    concurrency: client-applications-update-version-number-${{ github.ref }}
+    concurrency: whist-browser-update-version-number-${{ github.ref }}
     needs:
       [
         whist-publish-build-config,
-        client-applications-retrieve-version-number,
-        client-applications-publish-build-s3,
+        whist-browser-retrieve-version-number,
+        whist-browser-publish-build-s3,
       ]
 
-    # Only run client-apps deployment if none of the previous steps failed
+    # Only run whist-browser deployment if none of the previous steps failed
     if: |
       always() &&
-      (needs.client-applications-retrieve-version-number.result == 'success') &&
-      (needs.client-applications-publish-build-s3.result == 'success')
+      (needs.whist-browser-retrieve-version-number.result == 'success') &&
+      (needs.whist-browser-publish-build-s3.result == 'success')
 
     steps:
       - name: Checkout Git Repository
@@ -927,25 +778,25 @@ jobs:
             curl -X POST \
             -H "Content-Type: application/json" \
             -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ needs.client-applications-retrieve-version-number.outputs.new_micro_version }}, staging_rc: ${{ needs.client-applications-retrieve-version-number.outputs.new_staging_rc_version }}, dev_rc: ${{ needs.client-applications-retrieve-version-number.outputs.new_dev_rc_version }}, prod_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ needs.whist-browser-retrieve-version-number.outputs.new_micro_version }}, staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, prod_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
             https://config-database.whist.com/v1/graphql
           elif [[ "$BRANCH_NAME" == "staging" ]]; then
             curl -X POST \
             -H "Content-Type: application/json" \
             -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ needs.client-applications-retrieve-version-number.outputs.new_staging_rc_version }}, staging_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_staging_rc_version }}, staging_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
             https://config-database.whist.com/v1/graphql
           elif [[ "$BRANCH_NAME" == "dev" ]]; then
             curl -X POST \
             -H "Content-Type: application/json" \
             -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ needs.client-applications-retrieve-version-number.outputs.new_dev_rc_version }}, dev_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ needs.whist-browser-retrieve-version-number.outputs.new_dev_rc_version }}, dev_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
             https://config-database.whist.com/v1/graphql
           fi
 
-      - name: Notify Slack on Publishing Client Applications Success
+      - name: Notify Slack on Publishing Whist Desktop Browser Success
         shell: python3 {0}
-        if: needs.client-applications-publish-build-s3.result == 'success'
+        if: needs.whist-browser-publish-build-s3.result == 'success'
         run: |
           # Retrieve Slack webhook
           if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
@@ -959,8 +810,8 @@ jobs:
             WEBSITE_URL = "https://dev.whist.com"
 
           from notifications.slack_bot import slack_post
-          TITLE = ":electron: Windows & macOS Applications Deployed :electron:"
-          BODY = f"Windows & macOS Applications deployed via upload to AWS S3 on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` - You can download them from {WEBSITE_URL} (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          TITLE = ":chromium: Windows & macOS Whist Desktop Browser Deployed :chromium:"
+          BODY = f"Windows & macOS Whist Desktop Browser deployed via upload to AWS S3 on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` - You can download them from {WEBSITE_URL} (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
   #######################################################################################
@@ -1142,9 +993,9 @@ jobs:
         mandelboxes-publish-ghcr,
         amis-publish-aws,
         scaling-service-deploy,
-        client-applications-retrieve-version-number,
-        client-applications-publish-build-s3,
-        client-applications-update-version-number,
+        whist-browser-retrieve-version-number,
+        whist-browser-publish-build-s3,
+        whist-browser-update-version-number,
       ]
     if: needs.whist-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.whist-publish-build-config.outputs.branch)
     steps:
@@ -1161,7 +1012,7 @@ jobs:
       - name: Create GitHub Tag
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}
+          tag_name: v${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}
           body: Whist Production Release on ${{ env.date }}
           draft: false
         env:
@@ -1180,7 +1031,7 @@ jobs:
 
           from notifications.slack_bot import slack_post
           TITLE = ":github: Whist GitHub Release Completed :github:"
-          BODY = "Deployment of Whist Version `v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.whist-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/whisthq/whist/releases/tag/v${{ needs.client-applications-retrieve-version-number.outputs.release_version }} (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "Deployment of Whist Version `v${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.whist-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/whisthq/whist/releases/tag/v${{ needs.whist-browser-retrieve-version-number.outputs.release_version }} (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error

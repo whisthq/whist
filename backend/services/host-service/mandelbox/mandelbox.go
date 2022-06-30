@@ -365,14 +365,14 @@ func (mandelbox *mandelboxData) SetPrivateKey(aesKey types.PrivateKey) {
 	mandelbox.privateKey = aesKey
 }
 
-// GetClientAppAccessToken returns the client app access token.
+// GetClientAppAccessToken returns the Whist frontend access token.
 func (mandelbox *mandelboxData) GetClientAppAccessToken() types.ClientAppAccessToken {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.clientAppAccessToken
 }
 
-// SetClientAppAccessToken sets the client app access token.
+// SetClientAppAccessToken sets the Whist frontend access token.
 func (mandelbox *mandelboxData) SetClientAppAccessToken(token types.ClientAppAccessToken) {
 	mandelbox.rwlock.Lock()
 	defer mandelbox.rwlock.Unlock()

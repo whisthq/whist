@@ -31,7 +31,7 @@ func init() {
 }
 
 // processJSONDataRequest processes an HTTP request to receive data
-// directly from the client app. It is handled in host-service.go
+// directly from the Whist frontend. It is handled in host-service.go
 func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<- httputils.ServerRequest) {
 	// Start timer to measure average time processing http requests.
 	start := time.Now()

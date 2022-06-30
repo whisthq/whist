@@ -18,3 +18,5 @@ export const URLS_THAT_NEED_CAMERA_MIC = [
   "slack.com",
   "zoom.us",
 ]
+
+export const SOCKETIO_SERVER_URL = "http://127.0.0.1:32261"

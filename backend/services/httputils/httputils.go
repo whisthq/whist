@@ -102,8 +102,10 @@ func GetAccessToken(r *http.Request) (string, error) {
 			return "", utils.MakeError("did not find jwt_access_token field in request body.")
 		}
 
-		// TODO: Once the client application is superseded by the Chromium extension, remove
-		// this logic to only obtain the token from the "jwt_access_token" key.
+		// TODO: We've decided to supersede the client-app with Chromium on June 29, 2022. It no
+		// longer gets deployed. In ~1 month, remove this logic to only obtain the token from
+		// the "jwt_access_token" key. -- If the date is past what's above and this code is still
+		// here, simply make a PR to remove it.
 		accessToken = val.(string)
 
 	} else {

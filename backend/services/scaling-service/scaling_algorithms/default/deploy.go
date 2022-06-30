@@ -86,7 +86,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	defer s.protectedMapLock.Unlock()
 
 	// Protect the new instance buffer from scale down. This is done to avoid any downtimes
-	// during deploy, as the active image will be switched until the client app has updated
+	// during deploy, as the active image will be switched until the frontend has updated
 	// its version on the config database.
 	s.protectedFromScaleDown = make(map[string]subscriptions.Image)
 	s.protectedFromScaleDown[newImage.ImageID] = newImage
@@ -117,7 +117,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	case s.SyncChan <- true:
 		logger.Infow(utils.Sprintf("Finished upgrading image %s in region %s", newImage.ImageID, event.Region), contextFields)
 	case <-time.After(1 * time.Hour):
-		// Clear protected map since the client app deploy didn't complete successfully.
+		// Clear protected map since the frontend deploy didn't complete successfully.
 		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
 
 		return utils.MakeError("timed out waiting for config database to swap versions")
@@ -154,7 +154,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	defer logger.Infow("Finished image swapover action.", contextFields)
 
 	// version is the entry we receive from the config database
-	version := clientVersion.(subscriptions.ClientAppVersion)
+	version := clientVersion.(subscriptions.FrontendVersion)
 
 	// Update the internal version with the new one received from the database.
 	// This function updates the value inside the config file, so we can keep  track
