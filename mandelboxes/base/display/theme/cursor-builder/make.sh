@@ -6,25 +6,23 @@
 set -Eeuo pipefail
 
 # Set the name of your cursor theme
-themetitle='WhistSpicyCursors'
+THEME_NAME='WhistSpicyCursors'
 
 # For the folder name: Replace forbidden characters with “-”
-foldername=$(echo $themetitle | sed -e 's/[^A-Za-z0-9_-]/-/g')
-mkdir -p $foldername
-mkdir -p $foldername/cursors
+mkdir -p $THEME_NAME
+mkdir -p $THEME_NAME/cursors
 echo '[Icon Theme]
-Name="'$themetitle'"' > $foldername/cursor.theme
+Name="'$THEME_NAME'"' > $THEME_NAME/cursor.theme
 
-picture="cursor.png"
+CURSOR_PNG="cursor.png"
 
 # Go to hotspots folder, render the PNGs according to those files
 i=0
-while read line; do
-  x=$(((i % 7) * 3))
-  y=$(((i / 7) * 3))
-  echo $line $x $y
-  echo "32 $x $y $picture" | xcursorgen - "$foldername/cursors/$line"
-  ((i+=1))
+while read -r line; do
+    x=$(((i % 7) * 3))
+    y=$(((i / 7) * 3))
+    echo "32 $x $y $CURSOR_PNG" | xcursorgen - "$THEME_NAME/cursors/$line"
+    ((i+=1))
 done < names.txt
 
 # Note that these symlinks come from the original author(s) -- see AUTHORS
@@ -32,7 +30,7 @@ done < names.txt
 # just be aware if making changes.
 
 # Create symbolic links for equivalent cursors
-cd $foldername/cursors
+cd $THEME_NAME/cursors
 ln -sf left_ptr default
 ln -sf left_ptr top_left_arrow
 ln -sf left_ptr left-arrow
