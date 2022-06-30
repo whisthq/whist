@@ -129,7 +129,7 @@ static WhistCursorType get_cursor_type(XFixesCursorImage* cursor_image) {
 
     // If the cursor is a 1x1 transparent cursor, the cursor is actually hidden.
     if (cursor_image->width == 1 && cursor_image->height == 1 &&
-        cursor_image->pixels[0] & 0xff000000 == 0) {
+        (cursor_image->pixels[0] & 0xff000000) == 0) {
         return WHIST_CURSOR_NONE;
     }
 

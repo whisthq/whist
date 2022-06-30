@@ -151,4 +151,13 @@ uint8_t* whist_cursor_info_to_rgba(const WhistCursorInfo* info);
  */
 WhistCursorInfo* whist_cursor_capture(void);
 
+/**
+ * @brief                          Convert a cursor type to a string name
+ *
+ * @param type                     The cursor type to convert
+ *
+ * @returns                        The string name of the cursor type
+ */
+const char* whist_cursor_type_to_string(WhistCursorType type);
+
 #endif  // CURSOR_H

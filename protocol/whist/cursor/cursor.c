@@ -44,3 +44,15 @@ uint8_t* whist_cursor_info_to_rgba(const WhistCursorInfo* info) {
 
     return rgba;
 }
+
+const char* whist_cursor_type_to_string(WhistCursorType type) {
+    static const char* map[] = {
+        "none",         "png",        "alias",          "all-scroll",  "arrow",      "cell",
+        "context-menu", "copy",       "crosshair",      "grab",        "grabbing",   "hand",
+        "help",         "ibeam",      "ibeam-vertical", "move",        "no-drop",    "not-allowed",
+        "progress",     "resize-col", "resize-e",       "resize-ew",   "resize-n",   "resize-ne",
+        "resize-nesw",  "resize-ns",  "resize-nw",      "resize-nwse", "resize-row", "resize-s",
+        "resize-se",    "resize-sw",  "resize-w",       "wait",        "zoom-in",    "zoom-out",
+    };
+    return map[type];
+}
