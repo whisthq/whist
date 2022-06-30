@@ -705,6 +705,37 @@ jobs:
 
   # TODO: Build the Brave/Chromium deploy file in `whisthq/brave-browser`, and call it
   # from here using inter-repos deployment
+  whist-browser-publish-build-s3:
+    name: "Whist Browser: Build & Deploy Whist Chromium Browser (${{ matrix.config.name }})"
+    runs-on: ${{ matrix.config.os }}
+    concurrency: whist-browser-publish-build-${{ matrix.config.arch }}-s3-${{ matrix.config.os }}${{ github.ref }}
+    needs:
+      [
+        whist-publish-build-config,
+        whist-browser-retrieve-version-number,
+        terraform-deploy,
+      ]
+
+    # Only run whist-browser deployment if none of the previous steps failed
+    if: |
+      always() &&
+      (needs.whist-browser-retrieve-version-number.result == 'success')
+    strategy:
+      matrix:
+        config:
+          - name: Windows
+            os: windows-2019
+            arch: x86_64
+          - name: macOS (x64)
+            os: macos-11.0
+            arch: x86_64
+          - name: macOS (arm64)
+            os: macos-11.0
+            arch: arm64
+    steps:
+      - name: Dummy Step
+        shell: bash
+        run: echo "Hello, this is a dummy step until we configure Chromium builds"
 
   #######################################################################################
   #######################################################################################
