@@ -1,3 +1,8 @@
+# This modules includes all configurations for the user config
+# S3 buckets. The reason they are not in the `aws_s3` module is
+# because we need to control the regions where these buckets will
+# be created, and as the userbase grows, gradually add more regions.
+
 terraform {
   required_providers {
     aws = {
@@ -126,7 +131,7 @@ resource "aws_s3_bucket_replication_configuration" "UserConfigReplication" {
       status = "Enabled"
 
       destination {
-        bucket = rule.value
+        bucket = "arn:aws:s3:::whist-user-app-configs-${rule.value}-${var.env}"
       }
     }
   }

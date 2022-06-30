@@ -43,6 +43,11 @@ module "s3-control" {
 
 # Region-specific modules, these are enabled only on certain regions
 
+# These are the regions where user config bucket replication is currently enabled. They are meant to represent
+# a good world coverage so that users in any geography can retrieve their config from a nearby bucket,
+# for faster launch/load time. If we want to optimize this further, we can add more regions here to get
+# more replication closer to users as the userbase grows.
+
 module "user-configs-us-east-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
