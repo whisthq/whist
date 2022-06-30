@@ -3,6 +3,8 @@
 # Copyright (C) 2018 Gerhard Großmann
 # Copyright (C) 2022 Whist Technologies, Inc.
 
+set -Eeuo pipefail
+
 # Set the name of your cursor theme
 themetitle='WhistSpicyCursors'
 
@@ -24,6 +26,10 @@ while read line; do
   echo "32 $x $y $picture" | xcursorgen - "$foldername/cursors/$line"
   ((i+=1))
 done < names.txt
+
+# Note that these symlinks come from the original author(s) -- see AUTHORS
+# for details. Searching online, these seem to be standard hardcodes, so
+# just be aware if making changes.
 
 # Create symbolic links for equivalent cursors
 cd $foldername/cursors
