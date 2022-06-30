@@ -106,7 +106,7 @@ static WhistCursorType get_cursor_type(PCURSORINFO pci) {
     } else if (cursor == types->CursorSizeNWSE) {
         return WHIST_CURSOR_RESIZE_NWSE;
     } else if (cursor == types->CursorSizeWE) {
-        return WHIST_CURSOR_RESIZE_WE;
+        return WHIST_CURSOR_RESIZE_EW;
     } else if (cursor == types->CursorWait) {
         return WHIST_CURSOR_WAIT;
     }
