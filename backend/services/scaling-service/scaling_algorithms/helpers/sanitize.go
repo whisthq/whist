@@ -14,7 +14,7 @@ func SanitizeEmail(email string) (string, error) {
 
 	match, err := regexp.Match(emailRegex, []byte(email))
 	if err != nil {
-		return "", utils.MakeError("error sanitizing user email. Err: %v", err)
+		return "", utils.MakeError("error sanitizing user email: %s", err)
 	}
 
 	if match {

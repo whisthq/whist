@@ -41,7 +41,7 @@ func newSentryCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 		Environment: string(metadata.GetAppEnvironment()),
 	})
 	if err != nil {
-		log.Printf("Error starting Sentry client: %s", err)
+		log.Printf("error starting Sentry client: %s", err)
 		return nil
 	}
 	log.Printf("Set Sentry release to git commit hash: %s", metadata.GetGitCommit())
@@ -73,8 +73,8 @@ func newSentryEncoderConfig() zapcore.EncoderConfig {
 	}
 }
 
-// AddTags will add the tags to the current Sentry scope
-func AddTags(tags map[string]string) {
+// AddSentryTags will add the tags to the current Sentry scope
+func AddSentryTags(tags map[string]string) {
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetTags(tags)
 	})

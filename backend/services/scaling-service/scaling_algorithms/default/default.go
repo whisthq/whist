@@ -34,6 +34,7 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"go.uber.org/zap"
 )
 
 // ScalingAlgorithm is the basic abstraction of a scaling algorithm.
@@ -133,11 +134,11 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 	// Get the most recent frontend version from the config database
 	version, err := dbclient.GetFrontendVersion(ctx, client)
 	if err != nil {
-		logger.Errorf("Failed to query frontend version. Err: %v", err)
+		logger.Error(err)
 	}
 
 	if version == (subscriptions.FrontendVersion{}) {
-		logger.Errorf("Got an empty frontend version")
+		logger.Errorf("got an empty frontend version")
 	}
 
 	// Set the scaling algorithm's internal version to the one received
@@ -179,7 +180,7 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 
 		configMandelboxes, ok := configs[utils.Sprintf("DESIRED_FREE_MANDELBOXES_%s", key)]
 		if !ok {
-			logger.Errorf("Desired mandelboxes for region %v not found on %v config database. Using default value.", region, metadata.GetAppEnvironmentLowercase())
+			logger.Errorf("desired mandelboxes for region %s not found on %s config database. Using default value.", region, metadata.GetAppEnvironmentLowercase())
 			// Use default value of 2 if the entry for the specific
 			// region was not found
 			mandelboxRegionMap[region] = 2
@@ -188,7 +189,7 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 
 		mandelboxInt, err := strconv.Atoi(configMandelboxes)
 		if err != nil {
-			logger.Errorf("Error parsing desired mandelboxes value. Using default value. Err: %v", err)
+			logger.Errorf("error parsing desired mandelboxes value: %s", err)
 			// Use default value of 2 if we failed to convert to int
 			mandelboxRegionMap[region] = 2
 			continue
@@ -212,7 +213,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 		err := handler.Initialize(s.Region)
 
 		if err != nil {
-			logger.Errorf("Error starting host on region: %v. Error: %v", err, s.Region)
+			logger.Errorf("error starting host in %s: %s", s.Region, err)
 		}
 
 		s.Host = handler
@@ -229,11 +230,9 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 		for {
 			select {
 			case instanceEvent := <-s.InstanceEventChan:
-				logger.Infof("Scaling algorithm received an instance database event with value: %v", instanceEvent)
 				instance := instanceEvent.Data.(subscriptions.Instance)
 
 				if instance.Status == "DRAINING" {
-
 					// Track this goroutine so we can wait for it to
 					// finish if the global context gets cancelled.
 					goroutineTracker.Add(1)
@@ -248,12 +247,17 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						scalingCancel()
 
 						if err != nil {
-							logger.Errorf("Error verifying instance scale down. Error: %v", err)
+							contextFields := []interface{}{
+								zap.String("id", instanceEvent.ID),
+								zap.Any("type", instanceEvent.Type),
+								zap.Any("data", instanceEvent.Data),
+								zap.String("region", instanceEvent.Region),
+							}
+							logger.Errorw(utils.Sprintf("error verifying instance scale down: %s", err), contextFields)
 						}
 					}()
 				}
 			case versionEvent := <-s.FrontendVersionChan:
-				logger.Infof("Scaling algorithm received a frontend version database event with value: %v", versionEvent)
 				version := versionEvent.Data.(subscriptions.FrontendVersion)
 
 				// Track this goroutine so we can wait for it to
@@ -271,15 +275,19 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 					scalingCancel()
 
 					if err != nil {
-						logger.Errorf("Error running image swapover. Error: %v", err)
+						contextFields := []interface{}{
+							zap.String("id", versionEvent.ID),
+							zap.Any("type", versionEvent.Type),
+							zap.Any("data", versionEvent.Data),
+							zap.String("region", versionEvent.Region),
+						}
+						logger.Errorw(utils.Sprintf("error running image swapover: %s", err), contextFields)
 					}
 				}()
 
 			case scheduledEvent := <-s.ScheduledEventChan:
 				switch scheduledEvent.Type {
 				case "SCHEDULED_SCALE_DOWN_EVENT":
-					logger.Infof("Scaling algorithm received a scheduled scale down event with value: %v", scheduledEvent)
-
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
@@ -287,24 +295,26 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						scalingCtx, scalingCancel := context.WithCancel(context.Background())
 						err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
 						if err != nil {
-							logger.Errorf("Error running scale down job on region %v. Err: %v", scheduledEvent.Region, err)
+							contextFields := []interface{}{
+								zap.String("id", scheduledEvent.ID),
+								zap.Any("type", scheduledEvent.Type),
+								zap.Any("data", scheduledEvent.Data),
+								zap.String("region", scheduledEvent.Region),
+							}
+							logger.Errorw(utils.Sprintf("error running scale down job: %s", err), contextFields)
 						}
 
 						scalingCancel()
 					}()
 				case "SCHEDULED_IMAGE_UPGRADE_EVENT":
-					logger.Infof("Scaling algorithm received an image upgrade event with value: %v", scheduledEvent)
-
 					// Track this goroutine so we can wait for it to
 					// finish if the global context gets cancelled.
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
 
-						logger.Infof("%v", scheduledEvent)
-
 						if scheduledEvent.Data == nil {
-							logger.Errorf("Error running image upgrade, event data is nil.")
+							logger.Errorf("error running image upgrade, event data is nil.")
 							return
 						}
 
@@ -315,7 +325,13 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 
 						err := s.UpgradeImage(scalingCtx, scheduledEvent, regionImageMap[scheduledEvent.Region])
 						if err != nil {
-							logger.Errorf("Error running image upgrade on region %v. Err: %v", scheduledEvent.Region, err)
+							contextFields := []interface{}{
+								zap.String("id", scheduledEvent.ID),
+								zap.Any("type", scheduledEvent.Type),
+								zap.Any("data", scheduledEvent.Data),
+								zap.String("region", scheduledEvent.Region),
+							}
+							logger.Errorw(utils.Sprintf("error running image upgrade: %s", err), contextFields)
 						}
 
 						scalingCancel()
@@ -324,8 +340,6 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 			case serverEvent := <-s.ServerEventChan:
 				switch serverEvent.Type {
 				case "SERVER_MANDELBOX_ASSIGN_EVENT":
-					logger.Infof("Scaling algorithm received a mandelbox assign request with value: %v", serverEvent)
-
 					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
@@ -336,7 +350,13 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 
 						err := s.MandelboxAssign(scalingCtx, serverEvent)
 						if err != nil {
-							logger.Errorf("Error running mandelbox assign action. Err: %v", err)
+							contextFields := []interface{}{
+								zap.String("id", serverEvent.ID),
+								zap.Any("type", serverEvent.Type),
+								zap.Any("data", serverEvent.Data),
+								zap.String("region", serverEvent.Region),
+							}
+							logger.Errorw(utils.Sprintf("error running mandelbox assign action: %s", err), contextFields)
 						}
 						// Cancel context once the operation is done
 						scalingCancel()
@@ -345,7 +365,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 			case <-globalCtx.Done():
 				logger.Info("Global context has been cancelled. Exiting from default scaling algorithm event loop...")
 				goroutineTracker.Wait()
-				logger.Infof("Finished waiting for all goroutines to finish. Scaling algorithm from %v exited.", s.Region)
+				logger.Infof("Finished waiting for all goroutines to finish. Scaling algorithm %s exited.", s.Region)
 				return
 			}
 		}

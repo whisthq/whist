@@ -304,7 +304,12 @@ func main() {
 	if err != nil {
 		logger.Errorf("Failed to set Sentry tags: %s", err)
 	}
-	logger.AddTags(tags)
+	logger.AddSentryTags(tags)
+
+	// Add some additional fields for Logz.io
+	tags["component"] = "backend"
+	tags["sub-component"] = "host-service"
+	logger.AddLogzioFields(tags)
 
 	// We create a global context (i.e. for the entire host service) that can be
 	// cancelled if the entire program needs to terminate. We also create a

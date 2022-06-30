@@ -7,6 +7,7 @@ import (
 
 	"github.com/logzio/logzio-go"
 	"github.com/whisthq/whist/backend/services/utils"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -20,6 +21,9 @@ type logzioCore struct {
 	// sender is the client used to send the events to Logz.io
 	sender *logzio.LogzioSender
 }
+
+// fields are additional fields to be parsed by Logz.io
+var messageFields []zapcore.Field
 
 // NewLogzioCore will initialize logz and necessary fields.
 func newLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
@@ -38,7 +42,7 @@ func newLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 		logzio.SetCheckDiskSpace(false),
 	)
 	if err != nil {
-		log.Printf("Couldn't marshal payload for logz.io. Error: %s", err)
+		log.Printf("couldn't marshal payload for logz.io: %s", err)
 		return nil
 	}
 
@@ -47,7 +51,7 @@ func newLogzioCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapc
 	lc.enabler = levelEnab
 	lc.sender = sender
 
-	return zapcore.NewCore(lc.encoder, lc.sender, lc.enabler)
+	return lc
 }
 
 // NewLogzioEncoderConfig returns a configuration that is appropiate for
@@ -66,6 +70,13 @@ func newLogzioEncoderConfig() zapcore.EncoderConfig {
 		EncodeTime:     zapcore.EpochTimeEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
+	}
+}
+
+// AddLogzFields will add the fields to the Logzio message.
+func AddLogzioFields(fields map[string]string) {
+	for name, val := range fields {
+		messageFields = append(messageFields, zap.String(name, val))
 	}
 }
 
@@ -105,6 +116,7 @@ func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 		return nil
 	}
 
+	fields = append(fields, messageFields...)
 	buf, err := lc.encoder.EncodeEntry(ent, fields)
 	if err != nil {
 		return err
@@ -113,17 +125,19 @@ func (lc *logzioCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	err = lc.sender.Send(buf.Bytes())
 	buf.Free()
 	if err != nil {
-		return utils.MakeError("Couldn't marshal payload for logz.io. Error: %s", err)
+		return utils.MakeError("couldn't marshal payload for logz.io: %s", err)
 	}
 	if ent.Level > zapcore.ErrorLevel {
 		// Since we may be crashing the program, sync the output.
 		lc.Sync()
 	}
+
 	return nil
 }
 
 // Sync drains the queue.
 func (lc *logzioCore) Sync() error {
 	//Flush logzio
+	messageFields = nil
 	return lc.sender.Sync()
 }

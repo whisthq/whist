@@ -17,11 +17,11 @@ func GetDevConfigs(ctx context.Context, client subscriptions.WhistGraphQLClient)
 	query := subscriptions.QueryDevConfigurations
 	err := client.Query(ctx, &query, map[string]interface{}{})
 	if err != nil {
-		return nil, utils.MakeError("Failed to query config database for configuration values of env %v. Using default values instead. Err: %v", metadata.GetAppEnvironmentLowercase(), err)
+		return nil, utils.MakeError("failed to query config database for %s values: %s", metadata.GetAppEnvironmentLowercase(), err)
 	}
 
 	if len(query.WhistConfigs) == 0 {
-		return nil, utils.MakeError("Could not find dev configs on database")
+		return nil, utils.MakeError("could not find dev configs on database")
 	}
 
 	// Convert to a map for easier manipulation
@@ -38,11 +38,11 @@ func GetStagingConfigs(ctx context.Context, client subscriptions.WhistGraphQLCli
 	query := subscriptions.QueryStagingConfigurations
 	err := client.Query(ctx, &query, map[string]interface{}{})
 	if err != nil {
-		return nil, utils.MakeError("Failed to query config database for configuration values of env %v. Using default values instead. Err: %v", metadata.GetAppEnvironmentLowercase(), err)
+		return nil, utils.MakeError("failed to query config database for %s values: %s", metadata.GetAppEnvironmentLowercase(), err)
 	}
 
 	if len(query.WhistConfigs) == 0 {
-		return nil, utils.MakeError("Could not find staging configs on database")
+		return nil, utils.MakeError("could not find staging configs on database")
 	}
 
 	// Convert to a map for easier manipulation
@@ -59,11 +59,11 @@ func GetProdConfigs(ctx context.Context, client subscriptions.WhistGraphQLClient
 	query := subscriptions.QueryProdConfigurations
 	err := client.Query(ctx, &query, map[string]interface{}{})
 	if err != nil {
-		return nil, utils.MakeError("Failed to query config database for configuration values of env %v. Using default values instead. Err: %v", metadata.GetAppEnvironmentLowercase(), err)
+		return nil, utils.MakeError("failed to query config database for %s values: %s", metadata.GetAppEnvironmentLowercase(), err)
 	}
 
 	if len(query.WhistConfigs) == 0 {
-		return nil, utils.MakeError("Could not find prod configs on database")
+		return nil, utils.MakeError("could not find prod configs on database")
 	}
 
 	// Convert to a map for easier manipulation
@@ -86,11 +86,11 @@ func GetFrontendVersion(ctx context.Context, client subscriptions.WhistGraphQLCl
 		"id": graphql.Int(versionID),
 	})
 	if err != nil {
-		return subscriptions.FrontendVersion{}, utils.MakeError("Failed to query config database for frontend version. Err: %v", err)
+		return subscriptions.FrontendVersion{}, utils.MakeError("failed to query config database for frontend version: %s", err)
 	}
 
 	if len(query.WhistFrontendVersions) == 0 {
-		return subscriptions.FrontendVersion{}, utils.MakeError("Could not find frontend version on config database")
+		return subscriptions.FrontendVersion{}, utils.MakeError("could not find frontend version on config database")
 	}
 
 	version := subscriptions.FrontendVersion{

@@ -13,19 +13,25 @@ import (
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"go.uber.org/zap"
 )
 
 // MandelboxAssign is the action responsible for assigning an instance to a user,
 // and scaling as necessary to satisfy demand.
 func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, event ScalingEvent) error {
-	logger.Infof("Starting mandelbox assign action for event: %v", event)
-	defer logger.Infof("Finished mandelbox assign action for event: %v", event)
+	contextFields := []interface{}{
+		zap.String("id", event.ID),
+		zap.Any("type", event.Type),
+		zap.String("region", event.Region),
+	}
+	logger.Infow("Starting mandelbox assign action.", contextFields)
+	defer logger.Infow("Finished mandelbox assign action.", contextFields)
 
 	// We want to verify if we have the desired capacity after assigning a mandelbox
 	defer func() {
 		err := s.VerifyCapacity(scalingCtx, event)
 		if err != nil {
-			logger.Errorf("Error verifying capacity on %v. Err: %v", event.Region, err)
+			logger.Errorf("error verifying capacity when assigning mandelbox: %s", err)
 		}
 	}()
 
@@ -37,9 +43,11 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// potential attacks.
 	unsafeEmail, err := helpers.SanitizeEmail(mandelboxRequest.UserEmail)
 	if err != nil {
-		// err is already wrapped here
 		return err
 	}
+	logger.Infof("Frontend reported email %s, this value might not be accurate and is untrusted.", unsafeEmail)
+	// Append user email to logging context for better debugging.
+	contextFields = append(contextFields, zap.String("user", unsafeEmail))
 
 	var (
 		requestedRegions   = mandelboxRequest.Regions // This is a list of the regions requested by the frontend, in order of proximity.
@@ -67,14 +75,14 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// but could still be allocated to a region that is relatively close.
 	if len(unavailableRegions) != 0 && len(unavailableRegions) != len(requestedRegions) {
 		if metadata.GetAppEnvironment() == metadata.EnvProd {
-			logger.Errorf("User %s requested access to the following unavailable regions: %s. Trying to find instance on remaining available regions.", unsafeEmail, utils.PrintSlice(unavailableRegions))
+			logger.Errorf("user %s requested access to the following unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions))
 		}
 	}
 
 	// The user requested access to only unavailable regions. The last resort is to default to us-east-1.
 	if len(unavailableRegions) == len(requestedRegions) {
 		if metadata.GetAppEnvironment() == metadata.EnvProd {
-			logger.Errorf("User %s requested access to only unavailable regions: %s. Defaulting to us-east-1.", unsafeEmail, utils.PrintSlice(unavailableRegions))
+			logger.Errorf("user %s requested access to only unavailable regions: %s", unsafeEmail, utils.PrintSlice(unavailableRegions))
 		}
 		availableRegions = []string{"us-east-1"}
 	}
@@ -94,11 +102,11 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		// Query for the latest image id
 		imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
 		if err != nil {
-			return utils.MakeError("failed to query database for current image. Err: %v", err)
+			return utils.MakeError("failed to query database for current image: %s", err)
 		}
 
 		if len(imageResult) == 0 {
-			return utils.MakeError("Image not found on %v.", event.Region)
+			return utils.MakeError("image not found in %s", event.Region)
 		}
 
 		mandelboxRequest.CommitHash = string(imageResult[0].ClientSHA)
@@ -109,16 +117,16 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// instances with capacity on the current region. Once it gets the instances, it will iterate over them and try
 	// to find an instance with a matching commit hash. If it fails to do so, move on to the next region.
 	for _, region := range availableRegions {
-		logger.Infof("Trying to find instance for user %v in region %v, with commit hash %v. (client reported email %v, this value might not be accurate and is untrusted)",
-			unsafeEmail, region, mandelboxRequest.CommitHash, unsafeEmail)
+		logger.Infow(utils.Sprintf("Trying to find instance in region %s, with commit hash %s.",
+			region, mandelboxRequest.CommitHash), contextFields)
 
 		instanceResult, err := s.DBClient.QueryInstanceWithCapacity(scalingCtx, s.GraphQLClient, region)
 		if err != nil {
-			return utils.MakeError("failed to query for instance with capacity. Err: %v", err)
+			return utils.MakeError("failed to query for instance with capacity: %s", err)
 		}
 
 		if len(instanceResult) == 0 {
-			logger.Warningf("Failed to find an instance in %v for commit hash %v. Trying on next region.", region, mandelboxRequest.CommitHash)
+			logger.Warningf("Failed to find an instance in %s for commit hash %s. Trying on next region.", region, mandelboxRequest.CommitHash)
 			continue
 		}
 
@@ -129,7 +137,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 			assignedInstance = instanceResult[i]
 
 			if assignedInstance.ClientSHA == mandelboxRequest.CommitHash {
-				logger.Infof("Found instance %v for user %v with commit hash %v.", assignedInstance.ID, mandelboxRequest.UserEmail, assignedInstance.ClientSHA)
+				logger.Infow(utils.Sprintf("Found instance %s with commit hash %s.", assignedInstance.ID, assignedInstance.ClientSHA), contextFields)
 				instanceFound = true
 				break
 			}
@@ -144,7 +152,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	// No instances with capacity were found
 	if assignedInstance == (subscriptions.Instance{}) {
-		err := utils.MakeError("did not find an instance with capacity for user %v and commit hash %v.", mandelboxRequest.UserEmail, mandelboxRequest.CommitHash)
+		err := utils.MakeError("did not find an instance with capacity for user %s and commit hash %s.", mandelboxRequest.UserEmail, mandelboxRequest.CommitHash)
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: NO_INSTANCE_AVAILABLE,
 		}, err)
@@ -166,20 +174,20 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// Parse the version with the `hashicorp/go-version` package so we can compare.
 	parsedFrontendVersion, err = hashicorp.NewVersion(frontendVersion)
 	if err != nil {
-		logger.Errorf("Failed parsing frontend version from scaling algorithm config. Err: %v", err)
+		logger.Errorf("failed parsing frontend version from scaling algorithm config: %s", err)
 	}
 
 	// Parse the version we got in the request.
 	parsedRequestVersion, err = hashicorp.NewVersion(mandelboxRequest.Version)
 	if err != nil {
-		logger.Errorf("Failed parsing frontend version from request. Err: %v", err)
+		logger.Errorf("failed parsing frontend version from request: %s", err)
 	}
 
 	// Compare the request version with the one from the config. If the
 	// version from the request is less than the one we have locally, it
 	// means the request comes from an outdated frontend application.
 	if parsedFrontendVersion != nil && parsedRequestVersion != nil {
-		logger.Infof("Local version is %s, version received from request is %s.", parsedFrontendVersion.String(), parsedRequestVersion.String())
+		logger.Infow(utils.Sprintf("Local version is %s, version received from request is %s.", parsedFrontendVersion.String(), parsedRequestVersion.String()), contextFields)
 		isOutdatedFrontend = parsedRequestVersion.LessThan(parsedFrontendVersion)
 	}
 
@@ -193,9 +201,9 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		// Only log the commit mismatch error when running on prod. This is because we only update the full version
 		// (major, minor, micro) on the config database when deploying to prod, so this is only a real error in that case.
 		if metadata.GetAppEnvironment() == metadata.EnvProd && !isOutdatedFrontend {
-			msg = utils.MakeError("found instance with capacity but it has a different commit hash %v than frontend with commit hash  %v.", assignedInstance.ClientSHA, mandelboxRequest.CommitHash)
+			msg = utils.MakeError("found instance with capacity but different commit hash")
 		} else {
-			logger.Infof("Did not find instance with commit hash %v, but expect frontend to autoupdate and send another request with commit hash %v.", mandelboxRequest.CommitHash, assignedInstance.ClientSHA)
+			logger.Infow(utils.Sprintf("Did not find instance with commit hash %s, but expect frontend to autoupdate and send another request with commit hash %s.", mandelboxRequest.CommitHash, assignedInstance.ClientSHA), contextFields)
 		}
 
 		// Regardless if we log the error, its necessary to return an appropiate response.
@@ -208,16 +216,16 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// Try to find a mandelbox in the WAITING status in the assigned instance.
 	mandelboxResult, err := s.DBClient.QueryMandelbox(scalingCtx, s.GraphQLClient, assignedInstance.ID, "WAITING")
 	if err != nil {
-		return utils.MakeError("failed to query database for mandelbox on instance %s. Err: %v", assignedInstance.ID, err)
+		return utils.MakeError("failed to query database for mandelbox on instance %s: %s", assignedInstance.ID, err)
 	}
 
 	if len(mandelboxResult) == 0 {
-		return utils.MakeError("failed to find a waiting mandelbox even though the instance %v had sufficient capacity.", assignedInstance.ID)
+		return utils.MakeError("failed to find a waiting mandelbox even though the instance %s had sufficient capacity", assignedInstance.ID)
 	}
 
 	waitingMandelbox := mandelboxResult[0]
 	if err != nil {
-		return utils.MakeError("failed to parse mandelbox id for instance %v. Err: %v", assignedInstance.ID, err)
+		return utils.MakeError("failed to parse mandelbox id for instance %s: %s", assignedInstance.ID, err)
 	}
 
 	mandelboxForDb := subscriptions.Mandelbox{
@@ -234,15 +242,15 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// Allocate mandelbox on database so the host service can start downloading user configs
 	affectedRows, err := s.DBClient.UpdateMandelbox(scalingCtx, s.GraphQLClient, mandelboxForDb)
 	if err != nil {
-		return utils.MakeError("error while inserting mandelbox to database. Err: %v", err)
+		return utils.MakeError("error while inserting mandelbox to database: %s", err)
 	}
 
-	logger.Infof("Inserted %v rows to database.", affectedRows)
+	logger.Infow(utils.Sprintf("Inserted %d rows to database.", affectedRows), contextFields)
 
 	if assignedInstance.RemainingCapacity <= 0 {
 		// This should never happen, but we should consider
 		// possible edge cases before updating the database.
-		return utils.MakeError("instance with id %v has a remaning capacity less than or equal to 0.", assignedInstance.ID)
+		return utils.MakeError("instance with id %s has a remaning capacity less than or equal to 0", assignedInstance.ID)
 	}
 
 	// Subtract 1 from the current instance capacity because we allocated a mandelbox
@@ -251,16 +259,16 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	affectedRows, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, assignedInstance)
 	if err != nil {
-		return utils.MakeError("error while updating instance capacity on database. Err: %v", err)
+		return utils.MakeError("error while updating instance capacity on database: %s", err)
 	}
 
-	logger.Infof("Updated %v rows in database.", affectedRows)
+	logger.Infow(utils.Sprintf("Updated %d rows in database.", affectedRows), contextFields)
 
 	// Parse IP address. The database uses the CIDR notation (192.0.2.0/24)
 	// so we need to extract the address and send it to the frontend.
 	ip, _, err := net.ParseCIDR(assignedInstance.IPAddress)
 	if err != nil {
-		return utils.MakeError("failed to parse IP address %v. Err: %v", assignedInstance.IPAddress, err)
+		return utils.MakeError("failed to parse IP address %s: %s", assignedInstance.IPAddress, err)
 	}
 
 	// Return result to assign request

@@ -49,6 +49,12 @@ func main() {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := &sync.WaitGroup{}
 
+	// Add some additional fields for Logz.io
+	tags := make(map[string]string)
+	tags["component"] = "backend"
+	tags["sub-component"] = "scaling-service"
+	logger.AddLogzioFields(tags)
+
 	var (
 		dbClient            dbclient.WhistDBClient                // The client that abstracts database interactions
 		graphqlClient       subscriptions.WhistGraphQLClient      // The GraphQL client to query the Hasura server
@@ -69,7 +75,7 @@ func main() {
 	graphqlClient = &subscriptions.GraphQLClient{}
 	err := graphqlClient.Initialize(useConfigDB)
 	if err != nil {
-		logger.Errorf("Failed to start GraphQL client. Error: %v", err)
+		logger.Errorf("failed to start GraphQL client: %s", err)
 	}
 
 	// Start GraphQL client for getting configuration from the config db
@@ -77,7 +83,7 @@ func main() {
 	configGraphqlClient = &subscriptions.GraphQLClient{}
 	err = configGraphqlClient.Initialize(useConfigDB)
 	if err != nil {
-		logger.Errorf("Failed to start config GraphQL client. Error: %v", err)
+		logger.Errorf("failed to start config GraphQL client: %s", err)
 	}
 
 	// Start database subscriptions
@@ -153,7 +159,7 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 	subscriptions.SetupScalingSubscriptions(subscriptionClient)
 	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents, useConfigDatabase)
 	if err != nil {
-		logger.Errorf("Failed to start database subscription client. Error: %s", err)
+		logger.Errorf("failed to start database subscription client: %s", err)
 	}
 
 	// The second client will subscribe to the config database
@@ -163,7 +169,7 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 	subscriptions.SetupConfigSubscriptions(configClient)
 	err = subscriptions.Start(configClient, globalCtx, goroutineTracker, subscriptionEvents, useConfigDatabase)
 	if err != nil {
-		logger.Errorf("Failed to start config database subscription client. Error: %s", err)
+		logger.Errorf("failed to start config database subscription client: %s", err)
 	}
 }
 
@@ -205,7 +211,7 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 
 	regionImageMap, err := getRegionImageMap()
 	if err != nil {
-		logger.Errorf("Error while getting regionImageMap. Err: %v", err)
+		logger.Error(err)
 		return
 	}
 
@@ -230,7 +236,7 @@ func getRegionImageMap() (map[string]interface{}, error) {
 	// Get current working directory to read images file.
 	currentWorkingDirectory, err := os.Getwd()
 	if err != nil {
-		return nil, utils.MakeError("Failed to get working directory. Err: %v", err)
+		return nil, utils.MakeError("failed to get working directory: %s", err)
 	}
 
 	// Read file which contains the region to image on JSON format. This file will
@@ -238,13 +244,13 @@ func getRegionImageMap() (map[string]interface{}, error) {
 	// The file is also generated during deploy and lives in the scaling service directory.
 	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "images.json"))
 	if err != nil {
-		return nil, utils.MakeError("Failed to read region to image map from file. Not performing image upgrade. Err: %v", err)
+		return nil, utils.MakeError("failed to read region to image map from file: %s", err)
 	}
 
 	// Try to unmarshal contents of file into a map
 	err = json.Unmarshal(content, &regionImageMap)
 	if err != nil {
-		return nil, utils.MakeError("Failed to unmarshal region to image map. Not performing image upgrade. Err: %v", err)
+		return nil, utils.MakeError("failed to unmarshal region to image map: %s", err)
 	}
 
 	return regionImageMap, nil
@@ -264,7 +270,7 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 	region = scalingEvent.Region
 
 	if region == "" {
-		logger.Infof("No region found on scaling event. Getting scaling algorithm on default region %v.", defaultRegion)
+		logger.Infof("No region found in scaling event, using default region %s", defaultRegion)
 		name = utils.Sprintf("default-sa-%s", defaultRegion)
 	} else {
 		name = utils.Sprintf("default-sa-%s", scalingEvent.Region)
@@ -275,7 +281,7 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 		return algorithm.(algos.ScalingAlgorithm)
 	}
 
-	logger.Warningf("Failed to get scaling algorithm in %v", scalingEvent.Region)
+	logger.Warningf("Failed to get scaling algorithm in %s", scalingEvent.Region)
 
 	return nil
 }
@@ -310,7 +316,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				}
 
 				// Start scaling algorithm based on region
-				logger.Infof("Received database event.")
 				algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
 				switch algorithm := algorithm.(type) {
@@ -335,12 +340,12 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				if len(subscriptionEvent.FrontendVersions) == 1 {
 					version = subscriptionEvent.FrontendVersions[0]
 				} else {
-					logger.Errorf("Unexpected length of %v in version received from the config database.", len(subscriptionEvent.FrontendVersions))
+					logger.Errorf("unexpected length of %d in version received from the config database", len(subscriptionEvent.FrontendVersions))
 				}
 
 				regionImageMap, err := getRegionImageMap()
 				if err != nil {
-					logger.Errorf("Error getting regionImageMap. Err: %v", err)
+					logger.Error(err)
 					break
 				}
 
@@ -349,7 +354,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 					scalingEvent.Data = version
 
 					// Start scaling algorithm based on region
-					logger.Infof("Received database event.")
 					algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
 					switch algorithm := algorithm.(type) {
@@ -370,8 +374,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 
 		case scheduledEvent := <-scheduledEvents:
 			// Start scaling algorithm based on region
-			logger.Infof("Received scheduled event. %v", scheduledEvent)
-
 			for _, region := range algos.GetEnabledRegions() {
 				scheduledEvent.Region = region
 				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
@@ -381,8 +383,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 				}
 			}
 		case serverEvent := <-serverEvents:
-			logger.Infof("Received server event. %v", serverEvent)
-
 			algorithm := getScalingAlgorithm(algorithmByRegion, serverEvent)
 			switch algorithm := algorithm.(type) {
 			case *algos.DefaultScalingAlgorithm:
@@ -390,7 +390,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 			}
 
 		case <-globalCtx.Done():
-			logger.Infof("Gloal context has been cancelled, exiting event loop...")
+			logger.Infof("Global context has been cancelled, exiting event loop...")
 			return
 		}
 	}

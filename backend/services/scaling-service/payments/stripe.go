@@ -70,7 +70,7 @@ func (sc *StripeClient) getSubscription() (*stripe.Subscription, error) {
 		subscription = subscriptionsList.Subscription()
 	}
 	if subscriptionsList.Err() != nil || subscription == nil {
-		return nil, utils.MakeError("Failed to obtain subscription for customer %v", sc.customerID)
+		return nil, utils.MakeError("failed to obtain subscription for customer %s: %s", sc.customerID, subscriptionsList.Err().Error())
 	}
 
 	return subscription, nil
@@ -121,17 +121,17 @@ func (sc *StripeClient) findPrice() (string, error) {
 	}
 
 	if priceList.Err() != nil || priceID == "" {
-		logger.Warningf("Failed to find price in Stripe. Creating new price.")
+		logger.Warningf("Creating new price since no Stripe prices were found")
 	}
 
 	// If a Stripe Price was not found, create one.
 	if priceID != "" {
-		logger.Infof("Found price of %v in Stripe.", sc.monthlyPriceInCents)
+		logger.Infof("Found price of %d in Stripe", sc.monthlyPriceInCents)
 	} else {
 		//Create new price
 		newPrice, err := sc.createPrice(sc.monthlyPriceInCents, "Whist", "month")
 		if err != nil {
-			return "", utils.MakeError("failed to create new Stripe price. Err: %v", err)
+			return "", utils.MakeError("failed to create new Stripe price: %s", err)
 		}
 		priceID = newPrice.ID
 	}
@@ -151,7 +151,7 @@ func (sc *StripeClient) createCheckoutSession(withTrialPeriod bool) (string, err
 	// Get a Stripe price with the desired amount
 	priceID, err := sc.findPrice()
 	if err != nil {
-		return "", utils.MakeError("failed to find or create Stripe price for amount %v. Err: %v", sc.monthlyPriceInCents, err)
+		return "", utils.MakeError("failed to find or create Stripe price for amount %d: %s", sc.monthlyPriceInCents, err)
 	}
 
 	// Create subscription params depending if we are offering a free trial or not
@@ -183,7 +183,7 @@ func (sc *StripeClient) createCheckoutSession(withTrialPeriod bool) (string, err
 
 	s, err := checkout.New(params)
 	if err != nil {
-		return "", utils.MakeError("failed to create checkout session. Err: %v", err)
+		return "", utils.MakeError("failed to create checkout session: %s", err)
 	}
 
 	return s.URL, nil

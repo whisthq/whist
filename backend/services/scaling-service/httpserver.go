@@ -47,7 +47,7 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 	// Verify that we got a POST request
 	err := verifyRequestType(w, r, http.MethodPost)
 	if err != nil {
-		logger.Errorf("Error verifying request type. Err: %v", err)
+		logger.Errorf("error verifying request type: %s", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -55,7 +55,7 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 	var reqdata httputils.MandelboxAssignRequest
 	claims, err := httputils.AuthenticateRequest(w, r, &reqdata)
 	if err != nil {
-		logger.Errorf("Failed while authenticating request. Err: %v", err)
+		logger.Errorf("failed while authenticating request: %s", err)
 		return
 	}
 
@@ -90,7 +90,7 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 	buf, err = json.Marshal(assignResult)
 	w.WriteHeader(status)
 	if err != nil {
-		logger.Errorf("Error marshalling a %v HTTP Response body: %s", status, err)
+		logger.Errorf("error marshalling a %d HTTP Response body: %s", status, err)
 	}
 	_, _ = w.Write(buf)
 }
@@ -117,7 +117,7 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 	// Get claims from access token
 	claims, err := auth.ParseToken(accessToken)
 	if err != nil {
-		logger.Errorf("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+		logger.Errorf("received an unpermissioned backend request on %s to URL %s: %s", r.Host, r.URL, err)
 		http.Error(w, "Invalid access token", http.StatusUnauthorized)
 		return
 	}
@@ -130,7 +130,7 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 	configGraphqlClient := &subscriptions.GraphQLClient{}
 	err = configGraphqlClient.Initialize(useConfigDB)
 	if err != nil {
-		logger.Errorf("Failed to setup config GraphQL client. Err: %v", err)
+		logger.Errorf("failed to setup config GraphQL client: %s", err)
 		http.Error(w, "", http.StatusInternalServerError)
 	}
 
@@ -139,14 +139,14 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 	stripeClient := &payments.StripeClient{}
 	err = paymentsClient.Initialize(claims.CustomerID, claims.SubscriptionStatus, configGraphqlClient, stripeClient)
 	if err != nil {
-		logger.Errorf("Failed to Initialize Stripe Client. Err: %v", err)
+		logger.Errorf("failed to Initialize Stripe Client: %s", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
 	sessionUrl, err := paymentsClient.CreateSession()
 	if err != nil {
-		logger.Errorf("Failed to create Stripe Session. Err: %v", err)
+		logger.Errorf("failed to create Stripe Session: %s", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
@@ -156,7 +156,7 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 		"url": sessionUrl,
 	})
 	if err != nil {
-		logger.Errorf("Error marshalling HTTP Response body: %s", err)
+		logger.Errorf("error marshalling HTTP Response body: %s", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
@@ -185,7 +185,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	// Verify authorization and unmarshal into the right object type
 	var reqdata httputils.JSONTransportRequest
 	if _, err := httputils.AuthenticateRequest(w, r, &reqdata); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		logger.Error(err)
 		return
 	}
 
@@ -194,7 +194,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 
 	jsonBody, err := json.Marshal(reqdata)
 	if err != nil {
-		logger.Errorf("Error marshalling body for host service. Err: %v", err)
+		logger.Errorf("error marshalling body for host service: %s", err)
 		return
 	}
 
@@ -202,7 +202,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	bodyReader := bytes.NewReader(jsonBody)
 	hostReq, err := http.NewRequest("PUT", url, bodyReader)
 	if err != nil {
-		logger.Errorf("Failed to create JSON transport request for host service. Err: %v", err)
+		logger.Errorf("failed to create JSON transport request for host service: %s", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
@@ -222,14 +222,14 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	// Now that request is fully assembled and the client is initialized, send the request
 	res, err := client.Do(hostReq)
 	if err != nil {
-		logger.Errorf("Failed to send JSON transport request to instance. Err: %v", err)
+		logger.Errorf("failed to send JSON transport request to instance: %s", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
 	hostBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		logger.Errorf("Could not read host response body. Err: %v", err)
+		logger.Errorf("could not read host response body: %s", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
@@ -266,7 +266,7 @@ func verifyPaymentMiddleware(f func(http.ResponseWriter, *http.Request)) http.Ha
 		// Verify if the user's subscription is valid
 		paymentValid, err := payments.VerifyPayment(accessToken)
 		if err != nil {
-			logger.Errorf("Failed to validate Stripe payment from access token. Err: %v", err)
+			logger.Errorf("failed to validate Stripe payment from access token: %s", err)
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -283,7 +283,7 @@ func verifyPaymentMiddleware(f func(http.ResponseWriter, *http.Request)) http.Ha
 // Function to verify the type (method) of a request
 func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) error {
 	if r == nil {
-		err := utils.MakeError("Received a nil request expecting to be type %s", method)
+		err := utils.MakeError("received a nil request expecting to be type %s", method)
 		logger.Error(err)
 
 		http.Error(w, utils.Sprintf("Bad request. Expected %s, got nil", method), http.StatusBadRequest)
@@ -292,7 +292,7 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 	}
 
 	if r.Method != method {
-		err := utils.MakeError("Received a request on %s to URL %s of type %s, but it should have been type %s", r.Host, r.URL, r.Method, method)
+		err := utils.MakeError("received a request on %s to URL %s of type %s, but it should have been type %s", r.Host, r.URL, r.Method, method)
 		logger.Error(err)
 
 		http.Error(w, utils.Sprintf("Bad request type. Expected %s, got %s", method, r.Method), http.StatusBadRequest)

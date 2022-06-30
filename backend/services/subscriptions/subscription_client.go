@@ -57,13 +57,13 @@ func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 		params, err = getWhistConfigHasuraParams()
 		if err != nil {
 			// Error obtaining the connection parameters, we stop and don't setup the client
-			return utils.MakeError("error creating hasura client: %v", err)
+			return utils.MakeError("error creating hasura client: %s", err)
 		}
 	} else {
 		params, err = getWhistHasuraParams()
 		if err != nil {
 			// Error obtaining the connection parameters, we stop and don't setup the client
-			return utils.MakeError("error creating hasura client: %v", err)
+			return utils.MakeError("error creating hasura client: %s", err)
 		}
 	}
 
@@ -74,10 +74,10 @@ func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 			"headers": map[string]string{
 				"x-hasura-admin-secret": wc.GetParams().AccessKey,
 			},
-		}).WithLog(logger.Info).
+		}).WithLog(logger.Debug).
 		WithoutLogTypes(graphql.GQL_CONNECTION_KEEP_ALIVE).
 		OnError(func(sc *graphql.SubscriptionClient, err error) error {
-			logger.Errorf("Error received from Hasura client: %v", err)
+			logger.Errorf("Error received from Hasura client: %s", err)
 			return err
 		}).
 		WithRetryTimeout(5 * time.Minute)
@@ -120,7 +120,7 @@ func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string
 
 	id, err := wc.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
 		if err != nil {
-			return utils.MakeError("error receiving subscription event from Hasura: %v", err)
+			return utils.MakeError("error receiving subscription event from Hasura: %s", err)
 		}
 
 		// Note: this switch is necessary to unmarshal the result into the appropiate
@@ -129,7 +129,7 @@ func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string
 		case InstanceEvent:
 			err = json.Unmarshal(*data, &result)
 			if err != nil {
-				return utils.MakeError("failed to unmarshal subscription event: %v", err)
+				return utils.MakeError("failed to unmarshal subscription event: %s", err)
 			}
 			if conditionFn(result, variables) {
 				// We notify via the subscriptionsEvent channel
@@ -138,7 +138,7 @@ func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string
 		case MandelboxEvent:
 			err = json.Unmarshal(*data, &result)
 			if err != nil {
-				return utils.MakeError("failed to unmarshal subscription event: %v", err)
+				return utils.MakeError("failed to unmarshal subscription event: %s", err)
 			}
 			if conditionFn(result, variables) {
 				// We notify via the subscriptionsEvent channel
@@ -147,7 +147,7 @@ func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string
 		case FrontendVersionEvent:
 			err = json.Unmarshal(*data, &result)
 			if err != nil {
-				return utils.MakeError("failed to unmarshal subscription event: %v", err)
+				return utils.MakeError("failed to unmarshal subscription event: %s", err)
 			}
 			if conditionFn(result, variables) {
 				// We notify via the subscriptionsEvent channel
@@ -191,7 +191,7 @@ func (wc *SubscriptionClient) Close() error {
 			// Only use a warning instead of an error because failure to unsubscribe
 			// is not fatal, as we have already started the host service
 			// shut down process and the client will get cleaned up.
-			logger.Warningf("Failed to unsubscribe from:%v, %v", id, err)
+			logger.Warningf("Failed to unsubscribe from %s: %s", id, err)
 		}
 	}
 
@@ -208,7 +208,7 @@ func (wc *SubscriptionClient) Close() error {
 		// Only use a warning instead of an error because failure to close the
 		// Hasura server is not fatal, as we have already started the host service
 		// shut down process and the client will get cleaned up.
-		logger.Warningf("Error closing connection with Hasura server: %v", err)
+		logger.Warningf("Error closing connection with Hasura server: %s", err)
 	}
 
 	// Once successfully close, set the Hasura field to nil
