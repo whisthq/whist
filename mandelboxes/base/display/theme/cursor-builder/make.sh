@@ -19,10 +19,10 @@ CURSOR_PNG="cursor.png"
 # Go to hotspots folder, render the PNGs according to those files
 i=0
 while read -r line; do
-    x=$(((i % 7) * 3))
-    y=$(((i / 7) * 3))
-    echo "32 $x $y $CURSOR_PNG" | xcursorgen - "$THEME_NAME/cursors/$line"
-    ((i+=1))
+  x=$(((i % 7) * 3))
+  y=$(((i / 7) * 3))
+  echo "32 $x $y $CURSOR_PNG" | xcursorgen - "$THEME_NAME/cursors/$line"
+  ((i+=1))
 done < names.txt
 
 # Note that these symlinks come from the original author(s) -- see AUTHORS
