@@ -18,7 +18,8 @@ Includes
 ============================
 */
 #if defined(_MSC_VER)
-#pragma warning(disable : 4815)
+#pragma warning(disable : 4815)  // the MSCV produce a warning for the zero size array inside
+                                 // WhistClientMessage
 #endif
 
 #include <atomic>
@@ -193,7 +194,7 @@ int render_video(VideoContext* video_context) {
     // We make this static so that even if `sdl_render_pending` happens,
     // a later call to render_video can still access the data
     // from the most recently consumed render context.
-    static WhistRGBColor window_color = {0};
+    static WhistRGBColor window_color = {};
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
     static timestamp_us last_rendered_time = 0;
