@@ -26,8 +26,6 @@ typedef std::unordered_map<std::string, std::deque<std::pair<double, double>>> P
 static PlotData *g_plot_data;
 static WhistMutex g_plot_mutex;
 
-// TODO: maybe it's better to use memeory fence to handle memory visiblity
-// But at the moment let's not overdesign since this is only for debug
 static std::atomic<bool> in_sampling = false;  // indicate if in the sampling status
 
 /*
@@ -57,11 +55,17 @@ void whist_plotter_stop_sampling() {
     whist_unlock_mutex(g_plot_mutex);
 }
 
+// the whist_plotter_insert_sample() uses a string instead a int as label. So that you don't need a
+// centralized logic to manage the mapping of id and string. It's optimized for easily use, instead
+// of max performance.
 void whist_plotter_insert_sample(const char *label, double x, double y) {
     if (!in_sampling) return;  // if not in sampling, this function returns immediately
 
     auto &plot_data = *g_plot_data;
 
+    // for simplicity it uses a global lock, for debugging and analysis perpurse it's good enough.
+    // If aimming for more performance in future, we can use one lock for each lable. We can even
+    // consider lock free queues.
     whist_lock_mutex(g_plot_mutex);
     auto &q = plot_data[label];  // get the dataset with specific lable
     q.push_back({x, y});         // insert a sample
