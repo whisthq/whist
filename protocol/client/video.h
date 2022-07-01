@@ -37,11 +37,12 @@ Includes
 ============================
 */
 
+#include <whist/core/whist.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <whist/core/whist.h>
 #include "frontend/frontend.h"
 /*
 ============================
