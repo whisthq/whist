@@ -38,8 +38,12 @@ Includes
 */
 
 #include <whist/core/whist.h>
-#include "frontend/frontend.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "frontend/frontend.h"
 /*
 ============================
 Defines
@@ -117,5 +121,9 @@ void destroy_video(VideoContext* video_context);
  * @param video_context       The video context to query
  */
 bool video_ready_for_frame(VideoContext* video_context);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif  // CLIENT_VIDEO_H

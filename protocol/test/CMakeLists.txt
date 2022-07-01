@@ -35,7 +35,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/handle_frontend_events.c
         ../client/sdl_utils.c
         ../client/handle_server_message.c
-        ../client/video.c
+        ../client/video.cpp
         ../client/sync_packets.c
         ../client/renderer.c
         ../client/frontend/frontend.c

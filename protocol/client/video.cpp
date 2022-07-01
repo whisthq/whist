@@ -18,7 +18,11 @@ Includes
 ============================
 */
 
+#include <atomic>
 #include "video.h"
+
+extern "C" {
+
 #include "sdl_utils.h"
 #include <whist/network/network.h>
 #include <whist/network/ringbuffer.h>
@@ -37,6 +41,7 @@ Includes
 #include "network.h"
 #include "client_utils.h"
 #include <whist/debug/protocol_analyzer.h>
+};
 
 #define USE_HARDWARE_DECODE_DEFAULT true
 #define NO_NACKS_DURING_IFRAME false
@@ -71,7 +76,8 @@ struct VideoContext {
 
     // Context of the frame that is currently being rendered
     VideoFrame* render_context;
-    bool pending_render_context;
+
+    std::atomic<bool> pending_render_context;
 };
 
 /*
@@ -105,8 +111,9 @@ Public Function Implementations
 */
 
 VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial_height) {
-    VideoContext* video_context = safe_malloc(sizeof(*video_context));
-    memset(video_context, 0, sizeof(*video_context));
+    // since the struct contains an atomic type which is not POD type,
+    // this struct should be newed instead of malloced
+    VideoContext* video_context = new VideoContext;
 
     video_context->has_video_rendered_yet = false;
     video_context->render_context = NULL;
@@ -150,7 +157,7 @@ void destroy_video(VideoContext* video_context) {
     }
 
     // Free the video context
-    free(video_context);
+    delete video_context;
 }
 
 // NOTE that this function is in the hotpath.
@@ -203,7 +210,7 @@ int render_video(VideoContext* video_context) {
             LOG_INFO(
                 "Server thinks the client window is occluded/minimized, but it isn't. So, Start "
                 "Streaming");
-            WhistClientMessage wcmsg = {0};
+            WhistClientMessage wcmsg = {};
             wcmsg.type = MESSAGE_START_STREAMING;
             send_wcmsg(&wcmsg);
         }
@@ -217,7 +224,7 @@ int render_video(VideoContext* video_context) {
                     LOG_INFO("LTR: send frame ack for frame ID %d (%s).", frame->frame_id,
                              video_frame_type_string(frame->frame_type));
                 }
-                WhistClientMessage wcmsg = {0};
+                WhistClientMessage wcmsg = {};
                 wcmsg.type = MESSAGE_FRAME_ACK;
                 wcmsg.frame_ack.frame_id = frame->frame_id;
                 send_wcmsg(&wcmsg);
