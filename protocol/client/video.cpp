@@ -17,6 +17,9 @@ packet), before being saved in a proper video frame format.
 Includes
 ============================
 */
+#if defined(_MSC_VER)
+#pragma warning(disable : 4815)
+#endif
 
 #include <atomic>
 #include "video.h"
