@@ -208,10 +208,14 @@ struct WhistSemaphoreStruct {
     // Note: std::counting_semaphore doesn't compile on Mac
     std::mutex mutex;
     std::condition_variable_any condvar;
-    int count;
+    uint32_t count;
 };
 
-WhistSemaphore whist_create_semaphore(uint32_t initial_value) { return new WhistSemaphoreStruct(); }
+WhistSemaphore whist_create_semaphore(uint32_t initial_value) {
+    WhistSemaphoreStruct *ret = new WhistSemaphoreStruct();
+    ret->count = initial_value;
+    return ret;
+}
 
 void whist_post_semaphore(WhistSemaphore semaphore) {
     std::unique_lock<std::mutex> lock(semaphore->mutex);
