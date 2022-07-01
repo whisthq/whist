@@ -16,6 +16,18 @@ data "aws_iam_policy_document" "EC2AssumeRolePolicy" {
   }
 }
 
+# This policy is used for AWS service roles, like Compute Optimizer, etc.
+data "aws_iam_policy_document" "S3AssumeRolePolicy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+  }
+}
+
 #
 # Custom Whist policies for IAM roles
 #

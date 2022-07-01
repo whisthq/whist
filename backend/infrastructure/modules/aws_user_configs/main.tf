@@ -1,4 +1,4 @@
-# This modules includes all configurations for the user config
+# This module includes all configurations for the user config
 # S3 buckets. The reason they are not in the `aws_s3` module is
 # because we need to control the regions where these buckets will
 # be created, and as the userbase grows, gradually add more regions.
@@ -109,24 +109,33 @@ resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecyc
   }
 }
 
-# ------------------------------ Configure bucket replication ------------------------------ #
+output "bucket_name" {
+  value = aws_s3_bucket.whist-user-app-configs.id
+}
 
+# ------------------------------ Bucket Replication Configuration ------------------------------ #
+
+# This enables Cross-Region Replication (CRR) between the list of buckets.
+# It is only enabled in the "prod" environment to save costs.
 resource "aws_s3_bucket_replication_configuration" "UserConfigReplication" {
-  bucket = "whist-user-app-configs-${data.aws_region.current.name}-${var.env}"
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-user-app-configs.id
   role   = var.replication_role_arn
 
-  # This will iterate the regions list declared on this module. It is assumed
-  # that the regions list is sorted by proximity to the region represented in
-  # this module, so they will be assigned priorities in that order.
   dynamic "rule" {
-    for_each = var.regions
+    for_each = var.replication_regions
+
     content {
       id       = rule.key
       priority = rule.key
 
-      # An empty filter is required to declarre multiple
+      # An empty filter is required to declare multiple
       # destinations with priorities.
       filter {}
+
+      delete_marker_replication {
+        status = "Disabled"
+      }
 
       status = "Enabled"
 

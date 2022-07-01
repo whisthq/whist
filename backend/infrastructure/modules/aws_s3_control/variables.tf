@@ -3,8 +3,8 @@ variable "env" {
   type = string
 }
 
-# This variable specifies the regions where the multi-region access point
-# should look for user config buckets
-variable "regions" {
-  type = list(string)
+# This variable is a list of the buckets that will be included
+# in the multi-region access point.
+variable "buckets" {
+  type = map(string)
 }

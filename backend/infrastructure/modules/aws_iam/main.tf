@@ -94,10 +94,9 @@ resource "aws_iam_role" "EC2DeploymentRole" {
 # This role is used to replicate objects between S3 buckets. It is necessary for
 # the user config multi-region access point bucket replication.
 resource "aws_iam_role" "BucketReplicationRole" {
-  count              = var.env == "dev" ? 1 : 0
-  name               = "BucketReplicationRole"
+  name               = "BucketReplicationRole${var.env}"
   description        = "This role is used to replicate objects between S3 buckets."
-  assume_role_policy = data.aws_iam_policy_document.EC2AssumeRolePolicy.json
+  assume_role_policy = data.aws_iam_policy_document.S3AssumeRolePolicy.json
 
   inline_policy {
     name   = "BucketReplicationRolePolicy"
@@ -105,14 +104,14 @@ resource "aws_iam_role" "BucketReplicationRole" {
   }
 
   tags = {
-    Name      = "BucketReplicationRole"
+    Name      = "BucketReplicationRole${var.env}"
     Env       = var.env
     Terraform = true
   }
 }
 
 output "replication_role_arn" {
-  value = aws_iam_role.BucketReplicationRole[0].arn
+  value = aws_iam_role.BucketReplicationRole.arn
 }
 
 # We create an instance profile for the deployment role because 

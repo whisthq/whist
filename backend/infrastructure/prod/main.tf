@@ -37,13 +37,16 @@ module "secrets-manager" {
 module "s3-control" {
   source = "../modules/aws_s3_control"
   env    = var.env
-  regions = [
-    "us-east-1",
-    "us-west-1",
-    "eu-central-1",
-    "ap-southeast-1",
-    "sa-east-1"
-  ]
+  # Its necessary to specify static map keys so that
+  # Terraform is able to determine the length of it
+  # with unknown values.
+  buckets = {
+    1 = module.user-configs-us-east-1.bucket_name,
+    2 = module.user-configs-us-west-1.bucket_name,
+    3 = module.user-configs-eu-central-1.bucket_name,
+    4 = module.user-configs-sa-east-1.bucket_name,
+    5 = module.user-configs-ap-southeast-2.bucket_name,
+  }
 }
 
 # Region-specific modules, these are enabled only on certain regions
@@ -58,11 +61,11 @@ module "user-configs-us-east-1" {
   env    = var.env
   # us-east-1
   # List of regions in order of proximity.
-  regions = [
+  replication_regions = [
     "us-west-1",
     "sa-east-1",
     "eu-central-1",
-    "ap-southeast-1",
+    "ap-southeast-2",
   ]
   replication_role_arn = module.iam.replication_role_arn
 }
@@ -75,11 +78,11 @@ module "user-configs-us-west-1" {
     aws = aws.usw1
   }
   # List of regions in order of proximity.
-  regions = [
+  replication_regions = [
     "us-east-1",
     "sa-east-1",
     "eu-central-1",
-    "ap-southeast-1",
+    "ap-southeast-2",
   ]
   replication_role_arn = module.iam.replication_role_arn
 }
@@ -92,16 +95,16 @@ module "user-configs-eu-central-1" {
     aws = aws.euc1
   }
   # List of regions in order of proximity.
-  regions = [
+  replication_regions = [
     "us-east-1",
     "us-west-1",
     "sa-east-1",
-    "ap-southeast-1",
+    "ap-southeast-2",
   ]
   replication_role_arn = module.iam.replication_role_arn
 }
 
-module "user-configs-ap-southeast-1" {
+module "user-configs-ap-southeast-2" {
   source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
@@ -109,7 +112,7 @@ module "user-configs-ap-southeast-1" {
     aws = aws.apse2
   }
   # List of regions in order of proximity.
-  regions = [
+  replication_regions = [
     "us-east-1",
     "us-west-1",
     "eu-central-1",
@@ -126,11 +129,11 @@ module "user-configs-sa-east-1" {
     aws = aws.sae1
   }
   # List of regions in order of proximity.
-  regions = [
+  replication_regions = [
     "us-east-1",
     "us-west-1",
     "eu-central-1",
-    "ap-southeast-1",
+    "ap-southeast-2",
   ]
   replication_role_arn = module.iam.replication_role_arn
 }
