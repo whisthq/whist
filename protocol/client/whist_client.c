@@ -339,9 +339,6 @@ int whist_client_main(int argc, const char* argv[]) {
 
     // (internally, only happens for debug builds)
     init_debug_console();
-    if (LOG_DATA_FOR_PLOTTER) {
-        whist_plotter_init();
-    }
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
     srand(rand() * (unsigned int)time(NULL) + rand());

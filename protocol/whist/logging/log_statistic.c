@@ -183,6 +183,7 @@ void whist_init_statistic_logger(int interval) {
         statistic_context.all_statistics[i].min = 0;
     }
     if (LOG_DATA_FOR_PLOTTER) {
+        whist_plotter_init();
         whist_plotter_start_sampling();
     }
 }
