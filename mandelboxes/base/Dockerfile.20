@@ -306,7 +306,7 @@ RUN cd /cursor-builder \
     && ./make.sh \
     && mv WhistSpicyCursors /WhistSpicyCursors
 
-################ STAGE 5: hydraulic-press #####################
+################ STAGE 6: hydraulic-press #####################
 # - Copy, set permissions for, and install all base mandelbox
 #   scripts, services, and config files to the hydraulic-squash
 #   directory so that they can be neatly organized here while
@@ -459,7 +459,7 @@ COPY --chown=root:root --chmod=600 main/whist-main.service $HYDRAULIC_ROOT/etc/s
 # output path. We do this for the main service which launches after startup.
 RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-main.service.d/
 
-################ STAGE 6: whist-base ######################
+################ STAGE 7: whist-base ######################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
