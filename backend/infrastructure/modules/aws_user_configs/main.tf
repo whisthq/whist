@@ -117,31 +117,31 @@ output "bucket_name" {
 
 # This enables Cross-Region Replication (CRR) between the list of buckets.
 # It is only enabled in the "prod" environment to save costs.
-resource "aws_s3_bucket_replication_configuration" "UserConfigReplication" {
-  count  = var.env == "prod" ? 1 : 0
-  bucket = aws_s3_bucket.whist-user-app-configs.id
-  role   = var.replication_role_arn
+# resource "aws_s3_bucket_replication_configuration" "UserConfigReplication" {
+#   count  = var.env == "prod" ? 1 : 0
+#   bucket = aws_s3_bucket.whist-user-app-configs.id
+#   role   = var.replication_role_arn
 
-  dynamic "rule" {
-    for_each = var.replication_regions
+#   dynamic "rule" {
+#     for_each = var.replication_regions
 
-    content {
-      id       = rule.key
-      priority = rule.key
+#     content {
+#       id       = rule.key
+#       priority = rule.key
 
-      # An empty filter is required to declare multiple
-      # destinations with priorities.
-      filter {}
+#       # An empty filter is required to declare multiple
+#       # destinations with priorities.
+#       filter {}
 
-      delete_marker_replication {
-        status = "Disabled"
-      }
+#       delete_marker_replication {
+#         status = "Disabled"
+#       }
 
-      status = "Enabled"
+#       status = "Enabled"
 
-      destination {
-        bucket = "arn:aws:s3:::whist-user-app-configs-${rule.value}-${var.env}"
-      }
-    }
-  }
-}
+#       destination {
+#         bucket = "arn:aws:s3:::whist-user-app-configs-${rule.value}-${var.env}"
+#       }
+#     }
+#   }
+# }
