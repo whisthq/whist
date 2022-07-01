@@ -197,11 +197,11 @@ void log_double_statistic(uint32_t index, double val) {
         LOG_ERROR("index is out of bounds. index = %d, num_metrics = %d", index, NUM_METRICS);
         return;
     }
-    
+
     if (LOG_DATA_FOR_PLOTTER) {
         whist_plotter_insert_sample(statistic_info[index].key, get_timestamp_sec(), val);
     }
-    
+
     whist_lock_mutex(log_statistic_mutex);
     if (all_statistics[index].count == 0) {
         all_statistics[index].min = val;
@@ -228,4 +228,22 @@ void destroy_statistic_logger(void) {
     free(statistic_context.all_statistics);
     memset((void *)&statistic_context, 0, sizeof(statistic_context));
     whist_destroy_mutex(log_statistic_mutex);
+    if (LOG_DATA_FOR_PLOTTER) {
+        whist_plotter_stop_sampling();
+
+        LOG_INFO("Saving data for plotter to file...");
+        char *json_buffer = (char *)calloc(PLOT_DATA_SIZE, sizeof(char));
+        whist_plotter_export_c(json_buffer, PLOT_DATA_SIZE);
+
+        const char *plt_filename = PLOT_DATA_FILENAME;
+        FILE *plt_file = fopen(plt_filename, "w");
+        if (plt_file != NULL) {
+            fprintf(plt_file, "%s", json_buffer);
+            fclose(plt_file);
+        } else {
+            LOG_ERROR("Could not open %s file to export plotting data!", plt_filename);
+        }
+        free(json_buffer);
+        free((char *)plt_filename);
+    }
 }

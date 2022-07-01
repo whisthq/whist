@@ -339,6 +339,9 @@ int whist_client_main(int argc, const char* argv[]) {
 
     // (internally, only happens for debug builds)
     init_debug_console();
+    if (LOG_DATA_FOR_PLOTTER) {
+        whist_plotter_init();
+    }
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
     srand(rand() * (unsigned int)time(NULL) + rand());
@@ -445,23 +448,6 @@ int whist_client_main(int argc, const char* argv[]) {
     destroy_frontend(frontend);
 
     LOG_INFO("Client frontend has exited...");
-
-    if (LOG_DATA_FOR_PLOTTER) {
-        LOG_INFO("Saving data for plotter to file...");
-        char* json_buffer = (char*)calloc(PLOT_DATA_SIZE, sizeof(char));
-        whist_plotter_export_c(json_buffer, PLOT_DATA_SIZE);
-
-        const char* plt_filename = PLOT_DATA_FILENAME;
-        FILE* plt_file = fopen(plt_filename, "w");
-        if (plt_file != NULL) {
-            fprintf(plt_file, "%s", json_buffer);
-            fclose(plt_file);
-        } else {
-            LOG_ERROR("Could not open %s file to export plotting data!", plt_filename);
-        }
-        free(json_buffer);
-        free((char*)plt_filename);
-    }
 
     destroy_statistic_logger();
 
