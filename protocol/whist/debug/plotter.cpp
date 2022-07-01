@@ -101,3 +101,8 @@ std::string whist_plotter_export() {
     ss << "}" << std::endl;
     return ss.str();
 }
+
+void whist_plotter_export_c(char *out_s, size_t max_size) {
+    std::string s = whist_plotter_export();
+    strncpy(out_s, s.c_str(), min(max_size, s.size()));
+}

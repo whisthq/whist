@@ -47,4 +47,5 @@ endif()
 
 # For now, log everything.
 add_compile_definitions(LOG_LEVEL=5
+                        $<$<CONFIG:Metrics>:LOG_DATA_FOR_PLOTTER=true>
                         __ROOT_FILE__="${PROJECT_SOURCE_DIR}")

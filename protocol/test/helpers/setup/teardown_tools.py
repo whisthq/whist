@@ -150,6 +150,8 @@ def extract_logs_from_mandelbox(
         os.path.join("/var/log/whist", session_id, "protocol-out.log"),
         # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
         "/var/log/whist/simulated_scrolling.log",
+        # JSON file with data for plotting
+        "/usr/share/whist/plot_data.json",
     ]
     if role == "server":
         # Download Chrome preferences if they exist (only first file should exist)

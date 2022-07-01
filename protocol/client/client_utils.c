@@ -156,7 +156,6 @@ int client_handle_dynamic_args(WhistFrontend *frontend) {
                 // key/value are NULL
                 return -1;
             }
-            LOG_INFO("XXXXXX: Got key:%s, value:%s\n", key, value);
             // Try setting as an option
             WhistStatus opt_ret = whist_set_single_option(key, value);
             if (opt_ret == WHIST_SUCCESS) {
@@ -164,12 +163,10 @@ int client_handle_dynamic_args(WhistFrontend *frontend) {
             } else if (opt_ret != WHIST_ERROR_NOT_FOUND) {
                 LOG_WARNING("Failed to set option %s: %s", key, whist_error_string(opt_ret));
             } else if (!strcmp(key, "kill")) {
-                LOG_INFO("GOT KEY=KILL!");
                 free(key);
                 free(value);
                 return 1;
             } else if (!strcmp(key, "finished")) {
-                LOG_INFO("GOT KEY=FINISHED!");
                 free(key);
                 free(value);
                 return 0;

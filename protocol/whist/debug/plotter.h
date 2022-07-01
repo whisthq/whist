@@ -61,3 +61,13 @@ extern "C++" {
 std::string whist_plotter_export();
 }
 #endif
+
+/**
+ * @brief                          Export the samples to a json format string. This function is a C
+ * wrapper to whist_plotter_export().
+ *
+ * @param out_s                    The point to the buffer to use to save the JSON string
+ * @param max_size                 The size of the buffer
+ *
+ */
+void whist_plotter_export_c(char* out_s, size_t max_size);

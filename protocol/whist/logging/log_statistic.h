@@ -16,6 +16,7 @@ about the stored values for each key and flush the data.
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <whist/debug/plotter.h>
 
 /*
 ============================
@@ -23,6 +24,13 @@ Public Constants
 ============================
 */
 #define STATISTICS_FREQUENCY_IN_SEC 10
+
+#ifndef LOG_DATA_FOR_PLOTTER
+#define LOG_DATA_FOR_PLOTTER false
+#endif
+
+#define PLOT_DATA_SIZE 100000
+#define PLOT_DATA_FILENAME "/usr/share/whist/plot_data.json"
 
 /*
 ============================
