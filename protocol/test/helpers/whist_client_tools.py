@@ -171,7 +171,7 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmak
     """
     # Edit the run-whist-client.sh to make the client quit after the experiment is over
     print(f"Setting the experiment duration to {testing_time}s...")
-    command = f"sed -i 's/timeout 240s/timeout {testing_time}s/g' ~/whist/mandelboxes/development/client/run-whist-client.sh"
+    command = f"sed -i 's/sleep 240/sleep {testing_time}/g' ~/whist/mandelboxes/development/client/run-whist-client.sh"
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 

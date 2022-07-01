@@ -38,15 +38,15 @@ if [[ -f $WHIST_JSON_FILE ]]; then
 fi
 
 # Use pipe to pass arguments to the protocol to be able to open multiple URLs
-(
-  cat <<EOF
+( (
+cat <<EOF
 ports?$SERVER_PORT_MAPPINGS
 private-key?$SERVER_AES_KEY
 server-ip?$SERVER_IP_ADDRESS
 finished
 open-url?$INITIAL_URLS
 EOF
-) | timeout 240s /usr/share/whist/WhistClient --dynamic-arguments &> >(tee $PROTOCOL_LOG_FILENAME) &
+); sleep 240; echo "quit" ) /usr/share/whist/WhistClient --dynamic-arguments &> >(tee $PROTOCOL_LOG_FILENAME) &
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
 # Timeout will turn off the client once we are done gathering metrics data. This value here should match the one in the protocol/test/streaming_e2e_tester.py file
 whist_client_pid=$!
