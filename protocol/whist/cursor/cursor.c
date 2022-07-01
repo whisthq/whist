@@ -46,7 +46,7 @@ uint8_t* whist_cursor_info_to_rgba(const WhistCursorInfo* info) {
 }
 
 const char* whist_cursor_type_to_string(WhistCursorType type) {
-    static const char* map[] = {
+    static const char* const map[] = {
         "none",         "png",        "alias",          "all-scroll",  "arrow",      "cell",
         "context-menu", "copy",       "crosshair",      "grab",        "grabbing",   "hand",
         "help",         "ibeam",      "ibeam-vertical", "move",        "no-drop",    "not-allowed",
