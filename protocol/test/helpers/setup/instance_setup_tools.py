@@ -220,7 +220,7 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt):
         pexpect_process.sendline(command)
         git_clone_stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
         git_clone_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt)
-        
+
         branch_not_found_error = f"fatal: Remote branch {branch_name} not found in upstream origin"
         index_pack_failed_error = f"fatal: index-pack failed"
         index_pack_mitigation_comands = [
@@ -241,7 +241,9 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt):
             else:
                 printyellow(f"Git clone failed!")
                 if expression_in_pexpect_output(index_pack_failed_error, git_clone_stdout):
-                    print("Got a git index-pack failure. Turning off the core.fscache and retrying...")
+                    print(
+                        "Got a git index-pack failure. Turning off the core.fscache and retrying..."
+                    )
                     for fix_cmd in index_pack_mitigation_comands:
                         pexpect_process.sendline(fix_cmd)
                         wait_until_cmd_done(pexpect_process, pexpect_prompt)
