@@ -210,7 +210,8 @@ int render_video(VideoContext* video_context) {
             LOG_INFO(
                 "Server thinks the client window is occluded/minimized, but it isn't. So, Start "
                 "Streaming");
-            WhistClientMessage wcmsg{};
+            WhistClientMessage wcmsg;
+            memset(&wcmsg, 0, sizeof(wcmsg));  // work around to compile on msvc
             wcmsg.type = MESSAGE_START_STREAMING;
             send_wcmsg(&wcmsg);
         }
@@ -224,7 +225,8 @@ int render_video(VideoContext* video_context) {
                     LOG_INFO("LTR: send frame ack for frame ID %d (%s).", frame->frame_id,
                              video_frame_type_string(frame->frame_type));
                 }
-                WhistClientMessage wcmsg{};
+                WhistClientMessage wcmsg;
+                memset(&wcmsg, 0, sizeof(wcmsg));  // work around to compile on msvc
                 wcmsg.type = MESSAGE_FRAME_ACK;
                 wcmsg.frame_ack.frame_id = frame->frame_id;
                 send_wcmsg(&wcmsg);
