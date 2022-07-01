@@ -55,6 +55,8 @@ module "user-configs-us-east-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   # us-east-1
+  replication_regions = []
+  replication_role_arn = ""
 }
 
 module "user-configs-us-west-1" {
@@ -64,6 +66,8 @@ module "user-configs-us-west-1" {
     # us-west-1
     aws = aws.usw1
   }
+  replication_regions = []
+  replication_role_arn = ""
 }
 
 module "user-configs-eu-central-1" {
@@ -73,6 +77,8 @@ module "user-configs-eu-central-1" {
     # eu-central-1
     aws = aws.euc1
   }
+  replication_regions = []
+  replication_role_arn = ""
 }
 
 module "user-configs-ap-southeast-2" {
@@ -82,6 +88,8 @@ module "user-configs-ap-southeast-2" {
     # ap-southeast-2
     aws = aws.apse2
   }
+  replication_regions = []
+  replication_role_arn = ""
 }
 
 module "user-configs-sa-east-1" {
@@ -91,6 +99,8 @@ module "user-configs-sa-east-1" {
     # sa-east-1
     aws = aws.sae1
   }
+  replication_regions = []
+  replication_role_arn = ""
 }
 
 # Enable all AWS regions on Terraform. Doing this will create
