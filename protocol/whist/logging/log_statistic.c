@@ -23,6 +23,9 @@ Includes
 #include "log_statistic.h"
 
 #define LOG_STATISTICS true
+#ifndef LOG_DATA_FOR_PLOTTER
+#define LOG_DATA_FOR_PLOTTER false
+#endif
 
 static WhistMutex log_statistic_mutex;
 
@@ -182,6 +185,9 @@ void whist_init_statistic_logger(int interval) {
         statistic_context.all_statistics[i].max = 0;
         statistic_context.all_statistics[i].min = 0;
     }
+    if (LOG_DATA_FOR_PLOTTER) {
+        whist_plotter_start_sampling();
+    }
 }
 
 void log_double_statistic(uint32_t index, double val) {
@@ -194,6 +200,7 @@ void log_double_statistic(uint32_t index, double val) {
         LOG_ERROR("index is out of bounds. index = %d, num_metrics = %d", index, NUM_METRICS);
         return;
     }
+    whist_plotter_insert_sample(index, get_timestamp_sec(), val);
     whist_lock_mutex(log_statistic_mutex);
     if (all_statistics[index].count == 0) {
         all_statistics[index].min = val;
