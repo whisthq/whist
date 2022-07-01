@@ -39,7 +39,7 @@ fi
 
 # Use pipe to pass arguments to the protocol to be able to open multiple URLs
 ( (
-cat <<EOF
+    cat <<EOF
 ports?$SERVER_PORT_MAPPINGS
 private-key?$SERVER_AES_KEY
 server-ip?$SERVER_IP_ADDRESS
