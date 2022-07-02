@@ -29,7 +29,7 @@ Public Constants
 #define LOG_DATA_FOR_PLOTTER false
 #endif
 
-#define PLOT_DATA_SIZE 100000
+#define PLOT_DATA_SIZE 100000000
 #define PLOT_DATA_FILENAME "/usr/share/whist/plot_data.json"
 
 /*
