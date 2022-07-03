@@ -15,6 +15,8 @@ Includes
 #include <whist/core/whist.h>
 
 extern "C" {
+#include "debug_flags.h"
+#include "plotter.h"
 #include "protocol_analyzer.h"
 #include <whist/network/network.h>
 #include <whist/network/udp.h>
@@ -32,7 +34,7 @@ Defines
 
 using namespace std;
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !DISABLE_PROTOCOL_ANALYZER
 // make sure protocol analyzer is only enabled for DEBUG build
 // with this macro, we remove codes at compile, to avoid competitors enable the function in a hacky
 // way and get too much info of our product
@@ -350,6 +352,11 @@ struct ProtocolAnalyzer {
         FrameLevelInfo &info = type_level_infos[type].frames[id];
         assert(info.decode_time == -1);
         info.decode_time = get_timestamp();
+
+        if (PLOT_VIDEO_FIRST_SEEN_TO_DECODE && type == PACKET_VIDEO) {
+            whist_plotter_insert_sample("video_first_seen_to_decode", id,
+                                        (info.decode_time - info.first_seen_time) / US_IN_MS);
+        }
     }
     void record_decode_video() {
         int type = PACKET_VIDEO;
@@ -646,7 +653,9 @@ void whist_analyzer_record_audio_action(const char *action) {
 }
 
 string whist_analyzer_get_report(int type, int num, int skip, bool more_format) {
-    assert(g_analyzer != NULL);
+    if (g_analyzer == NULL) {
+        return "";
+    }
     whist_lock_mutex(g_analyzer->m_mutex);
     string s;
     s += g_analyzer->get_stat(type, num, skip);
