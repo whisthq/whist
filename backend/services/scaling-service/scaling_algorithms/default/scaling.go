@@ -212,20 +212,19 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 		instancesForDb = helpers.SpinUpFakeInstances(instancesToScale, image.ImageID, event.Region)
 	} else {
 		// Call the host handler to handle the instance spinup in the cloud provider
-		createdInstances, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, image)
+		instancesForDb, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, image)
 		if err != nil {
 			return utils.MakeError("failed to spin up instances: %s", err)
 		}
 
 		// Check if we could create the desired number of instances
-		if len(createdInstances) != instancesToScale {
-			return utils.MakeError("could not scale up %d instances, only scaled up %d", instancesToScale, len(createdInstances))
+		if len(instancesForDb) != instancesToScale {
+			return utils.MakeError("could not scale up %d instances, only scaled up %d", instancesToScale, len(instancesForDb))
 		}
 
-		for _, instance := range createdInstances {
-			instance.RemainingCapacity = int64(instanceCapacity[instance.Type])
-			instancesForDb = append(instancesForDb, instance)
-			logger.Infow(utils.Sprintf("Created tagged instance with ID %s", instance.ID), contextFields)
+		for i := 0; i < len(instancesForDb); i++ {
+			instancesForDb[i].RemainingCapacity = int64(instanceCapacity[instancesForDb[i].Type])
+			logger.Infow(utils.Sprintf("Created tagged instance with ID %s", instancesForDb[i].ID), contextFields)
 		}
 	}
 

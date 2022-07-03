@@ -58,17 +58,16 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 		logger.Infow("Running on localdev so scaling up fake instances.", contextFields)
 		instancesForDb = helpers.SpinUpFakeInstances(defaultInstanceBuffer, newImage.ImageID, event.Region)
 	} else {
-		bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, int32(defaultInstanceBuffer), maxWaitTimeReady, newImage)
+		instancesForDb, err = s.Host.SpinUpInstances(scalingCtx, int32(defaultInstanceBuffer), maxWaitTimeReady, newImage)
 		if err != nil {
 			return utils.MakeError("failed to create instance buffer: %s", err)
 		}
 
 		// Set the instance capacity field and add to the slice
 		// that will be passed to the database.
-		for _, instance := range bufferInstances {
-			instance.RemainingCapacity = int64(instanceCapacity[instance.Type])
+		for i := 0; i < len(instancesForDb); i++ {
+			instancesForDb[i].RemainingCapacity = int64(instanceCapacity[instancesForDb[i].Type])
 		}
-		instancesForDb = append(instancesForDb, bufferInstances...)
 	}
 
 	logger.Infow("Inserting newly created instances to database.", contextFields)
