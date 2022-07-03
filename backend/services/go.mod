@@ -7,9 +7,9 @@ require (
 	github.com/NVIDIA/go-nvml v0.11.6-0
 	github.com/aws/aws-sdk-go-v2 v1.16.6
 	github.com/aws/aws-sdk-go-v2/config v1.15.12
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.17
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.18
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.47.1
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.12
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.27.0
 	github.com/aws/smithy-go v1.12.0
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/docker/docker v20.10.14+incompatible
