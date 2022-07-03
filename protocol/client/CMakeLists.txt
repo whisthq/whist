@@ -10,7 +10,7 @@ set(WHIST_CLIENT_DEPENDS
         handle_frontend_events.c
         sdl_utils.c
         handle_server_message.c
-        video.c
+        video.cpp
         sync_packets.c
         renderer.c
         frontend/frontend.c
