@@ -202,7 +202,10 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	instanceNum := int32(instancesToScale)
 
 	// Slice that will hold the instances and pass them to the dbclient
-	var instancesForDb []subscriptions.Instance
+	var (
+		instancesForDb []subscriptions.Instance
+		err            error
+	)
 
 	// If we are running on a local or testing environment, spinup "fake" instances to avoid
 	// creating them on a cloud provider. In any other case we call the host handler to create
@@ -212,7 +215,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 		instancesForDb = helpers.SpinUpFakeInstances(instancesToScale, image.ImageID, event.Region)
 	} else {
 		// Call the host handler to handle the instance spinup in the cloud provider
-		instancesForDb, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, image)
+		instancesForDb, err = s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, image)
 		if err != nil {
 			return utils.MakeError("failed to spin up instances: %s", err)
 		}
