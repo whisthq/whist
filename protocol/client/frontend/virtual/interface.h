@@ -7,6 +7,7 @@
 typedef const char* (*OnFileUploadCallback)(void* data);
 typedef void (*OnCursorChangeCallback)(void* data, const char* cursor_type,
                                        bool relative_mouse_mode);
+typedef void (*VideoFrameCallback)(void* frame_ref);
 
 typedef struct VirtualInterface {
     struct {
@@ -22,6 +23,7 @@ typedef struct VirtualInterface {
                                        int* height, int* visible_width, int* visible_height);
         void (*free_frame_ref)(void* frame_ref);
         void (*set_on_cursor_change_callback)(OnCursorChangeCallback cb);
+        void (*set_video_frame_callback)(VideoFrameCallback cb);
     } video;
     struct {
         void (*send)(const WhistFrontendEvent* event);
