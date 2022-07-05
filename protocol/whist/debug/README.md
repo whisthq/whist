@@ -382,6 +382,7 @@ Options:
   -d, --distribution    draw distribution of y, instead of the x-y plot
   -f FILTER_PATTERN, --filter=FILTER_PATTERN
                         regex expression to filter label names
+  -v, --inverse-match   when used together with -f, do inverse match
   -r RANGE_X, --range=RANGE_X
                         range of x, e.g. "10.0~15.0"
   -w WEIGHT, --weight=WEIGHT
