@@ -78,7 +78,7 @@ jobs:
           fi
 
       - name: Install End-to-End Streaming Test Dependencies
-        run: pip install boto3 paramiko numpy pytablewriter
+        run: pip install boto3 paramiko numpy pytablewriter matplotlib
 
       - name: Wait for pre-existing E2E workflows to complete
         working-directory: protocol/test
