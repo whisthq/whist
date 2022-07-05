@@ -155,6 +155,8 @@ legend_handle = plt.legend(title="Legend:", bbox_to_anchor=(1.7, 0.5), loc="righ
 plt.subplots_adjust(left=0.08, right=0.624)
 plt.tight_layout()
 
+plt.grid(True)
+
 # save the plot
 output_file = options.output_file
 if output_file:
