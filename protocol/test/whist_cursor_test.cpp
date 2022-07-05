@@ -21,11 +21,11 @@ class WhistCursorTest : public CaptureStdoutFixture {};
 using WhistCursorDeathTest = WhistCursorTest;
 
 TEST_F(WhistCursorTest, CursorSizeID) {
-    WhistCursorInfo* info = whist_cursor_info_from_id(WHIST_CURSOR_CROSSHAIR, CURSOR_STATE_VISIBLE);
+    WhistCursorInfo* info = whist_cursor_info_from_type(WHIST_CURSOR_CROSSHAIR, MOUSE_MODE_NORMAL);
     EXPECT_EQ(sizeof(WhistCursorInfo), whist_cursor_info_get_size(info));
     free(info);
 
-    info = whist_cursor_info_from_id(WHIST_CURSOR_ARROW, CURSOR_STATE_HIDDEN);
+    info = whist_cursor_info_from_type(WHIST_CURSOR_ARROW, MOUSE_MODE_RELATIVE);
     EXPECT_EQ(sizeof(WhistCursorInfo), whist_cursor_info_get_size(info));
     free(info);
 }
@@ -53,7 +53,7 @@ static const size_t citadel_cursor_height = 11;
 TEST_F(WhistCursorTest, CursorSizePNG) {
     // Print out what's in the buf in a 25 x 11 hex grid
     WhistCursorInfo* info = whist_cursor_info_from_rgba(
-        citadel_cursor, citadel_cursor_width, citadel_cursor_height, 5, 5, CURSOR_STATE_VISIBLE);
+        citadel_cursor, citadel_cursor_width, citadel_cursor_height, 5, 5, MOUSE_MODE_NORMAL);
     EXPECT_TRUE(info != NULL);
 
     const size_t hardcoded_png_size = 112;
@@ -68,7 +68,7 @@ TEST_F(WhistCursorDeathTest, CursorSizeNull) {
 
 TEST_F(WhistCursorTest, PNGIdentity) {
     WhistCursorInfo* info = whist_cursor_info_from_rgba(
-        citadel_cursor, citadel_cursor_width, citadel_cursor_height, 5, 5, CURSOR_STATE_VISIBLE);
+        citadel_cursor, citadel_cursor_width, citadel_cursor_height, 5, 5, MOUSE_MODE_NORMAL);
 
     EXPECT_TRUE(info != NULL);
 

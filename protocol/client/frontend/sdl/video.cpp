@@ -292,14 +292,68 @@ void sdl_render(WhistFrontend* frontend) {
 
 void sdl_declare_user_activity(WhistFrontend* frontend) { sdl_native_declare_user_activity(); }
 
+static SDL_SystemCursor sdl_system_cursor_from_whist_cursor_type(WhistCursorType type) {
+    FATAL_ASSERT(type != WHIST_CURSOR_PNG);
+    switch (type) {
+        case WHIST_CURSOR_CROSSHAIR: {
+            return SDL_SYSTEM_CURSOR_CROSSHAIR;
+        }
+        case WHIST_CURSOR_HAND: {
+            return SDL_SYSTEM_CURSOR_HAND;
+        }
+        case WHIST_CURSOR_IBEAM: {
+            return SDL_SYSTEM_CURSOR_IBEAM;
+        }
+        case WHIST_CURSOR_NO_DROP:
+        case WHIST_CURSOR_NOT_ALLOWED: {
+            return SDL_SYSTEM_CURSOR_NO;
+        }
+        case WHIST_CURSOR_RESIZE_NE:
+        case WHIST_CURSOR_RESIZE_NESW:
+        case WHIST_CURSOR_RESIZE_SW: {
+            return SDL_SYSTEM_CURSOR_SIZENESW;
+        }
+        case WHIST_CURSOR_RESIZE_NS:
+        case WHIST_CURSOR_RESIZE_ROW: {
+            return SDL_SYSTEM_CURSOR_SIZENS;
+        }
+        case WHIST_CURSOR_RESIZE_NW:
+        case WHIST_CURSOR_RESIZE_NWSE:
+        case WHIST_CURSOR_RESIZE_SE: {
+            return SDL_SYSTEM_CURSOR_SIZENWSE;
+        }
+        case WHIST_CURSOR_RESIZE_COL:
+        case WHIST_CURSOR_RESIZE_EW: {
+            return SDL_SYSTEM_CURSOR_SIZEWE;
+        }
+        case WHIST_CURSOR_WAIT: {
+            return SDL_SYSTEM_CURSOR_WAIT;
+        }
+        case WHIST_CURSOR_PROGRESS: {
+            return SDL_SYSTEM_CURSOR_WAITARROW;
+        }
+        default: {
+            // There are three cases.
+            // 1. WHIST_CURSOR_ARROW => this is correct
+            // 2. WHIST_CURSOR_NONE => anything is fine; we hid the cursor
+            // 3. This is a cursor SDL can't produce, so we'll just use the default.
+            //    Note that this is technically a loss in functionality for the SDL
+            //    frontend, as we can't fallback to PNGs that aren't transmitted in
+            //    this case! Consider it a temporary sacrifice for virtual/Chromium.
+            // TODO: Fix 3.
+            return SDL_SYSTEM_CURSOR_ARROW;
+        }
+    }
+}
+
 void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (cursor == NULL || cursor->hash == context->cursor.hash) {
         return;
     }
 
-    if (cursor->cursor_state != context->cursor.state) {
-        if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
+    if (cursor->mode != context->cursor.mode) {
+        if (cursor->mode == MOUSE_MODE_RELATIVE) {
             SDL_GetGlobalMouseState(&context->cursor.last_visible_position.x,
                                     &context->cursor.last_visible_position.y);
             SDL_SetRelativeMouseMode((SDL_bool) true);
@@ -308,15 +362,23 @@ void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
             SDL_WarpMouseGlobal(context->cursor.last_visible_position.x,
                                 context->cursor.last_visible_position.y);
         }
-        context->cursor.state = cursor->cursor_state;
+        context->cursor.mode = cursor->mode;
     }
 
-    if (context->cursor.state == CURSOR_STATE_HIDDEN) {
+    if (context->cursor.mode == MOUSE_MODE_RELATIVE) {
         return;
     }
 
+    // TODO: If this is too heavy, we can cache what SDL_ShowCursor(SDL_QUERY) returns, and only
+    // update if it needs to change.
+    if (cursor->type == WHIST_CURSOR_NONE) {
+        SDL_ShowCursor(SDL_DISABLE);
+    } else {
+        SDL_ShowCursor(SDL_ENABLE);
+    }
+
     SDL_Cursor* sdl_cursor = NULL;
-    if (cursor->using_png) {
+    if (cursor->type == WHIST_CURSOR_PNG) {
         uint8_t* rgba = whist_cursor_info_to_rgba(cursor);
         SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(
             rgba, cursor->png_width, cursor->png_height, sizeof(uint32_t) * 8,
@@ -348,7 +410,7 @@ void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
                                            cursor->png_hot_y * 96 / dpi);
         SDL_FreeSurface(scaled);
     } else {
-        sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
+        sdl_cursor = SDL_CreateSystemCursor(sdl_system_cursor_from_whist_cursor_type(cursor->type));
     }
     SDL_SetCursor(sdl_cursor);
 

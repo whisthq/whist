@@ -139,7 +139,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     context->audio_device = 0;
     context->key_state = SDL_GetKeyboardState(&context->key_count);
 
-    context->cursor.state = CURSOR_STATE_VISIBLE;
+    context->cursor.mode = MOUSE_MODE_NORMAL;
     context->cursor.hash = 0;
     context->cursor.last_visible_position.x = 0;
     context->cursor.last_visible_position.y = 0;

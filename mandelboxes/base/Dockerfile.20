@@ -272,7 +272,41 @@ RUN cd /whist-teleport-drag-drop/src \
     && gcc -Wall -Werror -D _GNU_SOURCE unshare.c -o unshare.o -c \
     && gcc -Wall -Werror unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
 
-################ STAGE 5: hydraulic-press #####################
+################ STAGE 5: whist-spicy-cursors-theme ################
+# - Copy and build the WhistSpicyCursors theme, which encodes
+#   cursor type/ID in the cursor's hot_x and hot_y values.
+# EXPOSES the built cursor theme.
+####################################################################
+FROM ubuntu:20.04 as whist-spicy-cursors-theme
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+
+# Update apt source list
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install cursor theme build dependencies (xcursogen)
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    x11-apps \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY display/theme/cursor-builder /cursor-builder
+
+RUN cd /cursor-builder \
+    && ./make.sh \
+    && mv WhistSpicyCursors /WhistSpicyCursors
+
+################ STAGE 6: hydraulic-press #####################
 # - Copy, set permissions for, and install all base mandelbox
 #   scripts, services, and config files to the hydraulic-squash
 #   directory so that they can be neatly organized here while
@@ -364,6 +398,7 @@ COPY --chown=whist display/theme/gtkrc-2.0 $HYDRAULIC_ROOT/home/whist/.gtkrc-2.0
 COPY display/theme/qt4-settings.conf $HYDRAULIC_ROOT/root/.config/Trolltech.conf
 COPY --chown=whist display/theme/qt4-settings.conf $HYDRAULIC_ROOT/home/whist/.config/Trolltech.conf
 COPY display/theme/awesome-rc.lua $HYDRAULIC_ROOT/home/whist/.config/awesome/rc.lua
+COPY --from=whist-spicy-cursors-theme /WhistSpicyCursors $HYDRAULIC_ROOT/usr/share/icons/WhistSpicyCursors
 
 #########################
 # Audio
@@ -424,7 +459,7 @@ COPY --chown=root:root --chmod=600 main/whist-main.service $HYDRAULIC_ROOT/etc/s
 # output path. We do this for the main service which launches after startup.
 RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-main.service.d/
 
-################ STAGE 6: whist-base ######################
+################ STAGE 7: whist-base ######################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
@@ -757,9 +792,6 @@ RUN mkdir -p /home/whist/.themes \
 # which is /usr/share/icons
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme \
     && /bin/bash install.sh --bold && rm -rf /WhiteSur-icon-theme
-
-RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors \
-    && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 
 #########################
 # Audio
