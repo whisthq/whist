@@ -12,7 +12,7 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 N_NETWORK_CONDITION_PARAMETERS = 5
 
 from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
-    compute_deltas,
+    generate_comparison_entries,
 )
 
 
@@ -252,7 +252,7 @@ def generate_comparison_table(
         None
     """
 
-    client_table_entries, server_table_entries, test_result = compute_deltas(
+    client_table_entries, server_table_entries, test_result = generate_comparison_entries(
         client_metrics,
         server_metrics,
         compared_client_metrics,

@@ -117,7 +117,7 @@ def extract_metrics(client_log_file, server_log_file):
     return experiment_metrics
 
 
-def compute_deltas(
+def generate_comparison_entries(
     client_dictionary,
     server_dictionary,
     compared_client_dictionary,
