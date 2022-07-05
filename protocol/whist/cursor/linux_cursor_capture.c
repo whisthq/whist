@@ -170,10 +170,11 @@ static WhistCursorType get_cursor_type(XFixesCursorImage* cursor_image) {
     // In our encoding, xhot and yhot are both multiples of three, and the index is calculated
     // as (x/3) + 7 * (y/3).
 
-    // As a sanity check, let's ensure the multiples of three.
+    // As a sanity check, let's warn if they're not multiples of three.
     if (cursor_image->xhot % 3 != 0 || cursor_image->yhot % 3 != 0) {
-        // Not a system cursor
-        return WHIST_CURSOR_PNG;
+        LOG_WARNING_RATE_LIMITED(5, 1,
+                                 "Cursor hot-spot is supposed to be a multiple of 3: (%d, %d)",
+                                 cursor_image->xhot, cursor_image->yhot);
     }
 
     int index = (cursor_image->xhot / 3) + 7 * (cursor_image->yhot / 3);

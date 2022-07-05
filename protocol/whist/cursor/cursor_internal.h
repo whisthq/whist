@@ -29,7 +29,7 @@ Defines
  * @brief                          Returns WhistCursorInfo from a cursor type
  *
  * @param type                     The WhistCursorType from which to generate the cursor info
- * @param mode                     The cursor mode (normal or relative)
+ * @param mode                     The mouse mode (normal or relative)
  *
  * @returns                        The generated cursor info as a pointer to
  *                                 a WhistCursorInfo struct, which must be freed
@@ -50,7 +50,7 @@ WhistCursorInfo* whist_cursor_info_from_type(WhistCursorType type, WhistMouseMod
  * @param height                   The height of the RGBA pixel data
  * @param hot_x                    The x-coordinate of the cursor hotspot
  * @param hot_y                    The y-coordinate of the cursor hotspot
- * @param mode                     The cursor mode (normal or relative)
+ * @param mode                     The mouse mode (normal or relative)
  *
  * @returns                        The generated cursor info as a pointer to
  *                                 a WhistCursorInfo struct, which must be freed
