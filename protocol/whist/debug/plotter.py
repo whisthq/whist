@@ -31,7 +31,7 @@ parser.add_option(
 )
 
 parser.add_option(
-    "-i",
+    "-v",
     "--inverse-match",
     action="store_true",
     dest="inverse_match",
