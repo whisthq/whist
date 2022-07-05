@@ -99,6 +99,7 @@ Custom Types
 
 typedef struct StatisticData {
     double sum;
+    double cum_sum;
     unsigned count;
     double min;
     double max;
@@ -177,6 +178,7 @@ void whist_init_statistic_logger(int interval) {
     start_timer(&print_statistic_clock);
     for (uint32_t i = 0; i < NUM_METRICS; i++) {
         statistic_context.all_statistics[i].sum = 0;
+        statistic_context.all_statistics[i].cum_sum = 0;
         statistic_context.all_statistics[i].count = 0;
         statistic_context.all_statistics[i].max = 0;
         statistic_context.all_statistics[i].min = 0;
@@ -199,7 +201,10 @@ void log_double_statistic(uint32_t index, double val) {
     }
 
     if (LOG_DATA_FOR_PLOTTER) {
-        whist_plotter_insert_sample(statistic_info[index].key, get_timestamp_sec(), val);
+        double value_to_plot = (statistic_info[index].aggregation_type == SUM)
+                                   ? val + all_statistics[index].cum_sum
+                                   : val;
+        whist_plotter_insert_sample(statistic_info[index].key, get_timestamp_sec(), value_to_plot);
     }
 
     whist_lock_mutex(log_statistic_mutex);
@@ -217,6 +222,9 @@ void log_double_statistic(uint32_t index, double val) {
     }
 
     all_statistics[index].sum += val;
+    if (LOG_DATA_FOR_PLOTTER) {
+        all_statistics[index].cum_sum += val;
+    }
 
     if (get_timer(&print_statistic_clock) > statistic_context.interval) {
         unsafe_print_statistics();
