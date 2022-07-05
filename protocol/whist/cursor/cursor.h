@@ -39,8 +39,10 @@ Custom Types
 */
 
 /**
- * @brief   Cursor state.
- * @details State of the cursor on the rendered screen.
+ * @brief   Mouse mode.
+ * @details The mouse mode -- normal or relative. Relative
+ *          occurs when the cursor is locked/captured by
+ *          an application.
  */
 typedef enum WhistMouseMode {
     MOUSE_MODE_NORMAL = 0,
