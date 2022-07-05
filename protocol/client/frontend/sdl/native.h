@@ -95,4 +95,9 @@ void sdl_native_display_notification(const WhistNotification* notif);
  */
 void sdl_native_init_notifications(WhistFrontend* frontend);
 
+/**
+ * @brief                          Open a File chooser pop up and return the path of chosen file.
+ */
+const char* sdl_native_get_chosen_file(void);
+
 #endif  // WHIST_CLIENT_FRONTEND_SDL_NATIVE_H

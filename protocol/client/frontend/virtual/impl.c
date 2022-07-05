@@ -203,6 +203,10 @@ void virtual_interrupt(WhistFrontend* frontend) {
     }
 }
 
+const char* virtual_get_chosen_file(WhistFrontend* frontend) {
+    return virtual_interface_on_file_upload();
+}
+
 void virtual_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {}
 
 void virtual_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,

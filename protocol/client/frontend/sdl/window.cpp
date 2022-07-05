@@ -149,3 +149,5 @@ void sdl_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor
 void sdl_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {
     sdl_native_display_notification(notif);
 }
+
+const char* sdl_get_chosen_file(WhistFrontend* frontend) { return sdl_native_get_chosen_file(); }

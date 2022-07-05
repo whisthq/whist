@@ -34,7 +34,6 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
-#include <whist/file/file_upload.h>
 #include "whist_client.h"
 #include "audio.h"
 #include "client_utils.h"
@@ -48,6 +47,7 @@ Includes
 #include "renderer.h"
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
+#include "frontend/virtual/interface.h"
 
 #if OS_IS(OS_MACOS)
 #include <mach-o/dyld.h>
@@ -139,12 +139,12 @@ static void sync_keyboard_state(WhistFrontend* frontend) {
     send_wcmsg(&wcmsg);
 }
 
-static void initiate_file_upload(void) {
+static void initiate_file_upload(WhistFrontend* frontend) {
     /*
         Pull up system file dialog and set selection as transfering file
     */
 
-    const char* ns_picked_file_path = whist_file_upload_get_picked_file();
+    const char* ns_picked_file_path = whist_frontend_get_chosen_file(frontend);
     if (ns_picked_file_path) {
         file_synchronizer_set_file_reading_basic_metadata(ns_picked_file_path,
                                                           FILE_TRANSFER_SERVER_UPLOAD, NULL);
@@ -260,7 +260,7 @@ static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* rende
 
         // Check if file upload has been initiated and initiated selection dialog if so
         if (upload_initiated) {
-            initiate_file_upload();
+            initiate_file_upload(frontend);
         }
     }
 

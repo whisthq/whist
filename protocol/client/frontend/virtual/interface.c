@@ -13,6 +13,8 @@ static AVFrame* pending = NULL;
 static bool connected = false;
 static int requested_width;
 static int requested_height;
+static FileUploadCallback callback_ptr;
+static void* callback_arg;
 
 void virtual_interface_connect(void) {
     lock = whist_create_mutex();
@@ -83,5 +85,18 @@ void virtual_interface_send_event(const WhistFrontendEvent* frontend_event) {
     }
     if (fifo_queue_enqueue_item(events_queue, frontend_event) != 0) {
         LOG_ERROR("Virtual event queuing failed");
+    }
+}
+
+void virtual_interface_set_fileupload_callback(FileUploadCallback callback, void* arg) {
+    callback_ptr = callback;
+    callback_arg = arg;
+}
+
+const char* virtual_interface_on_file_upload(void) {
+    if (callback_ptr) {
+        return callback_ptr(callback_arg);
+    } else {
+        return NULL;
     }
 }
