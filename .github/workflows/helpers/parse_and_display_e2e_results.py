@@ -24,6 +24,7 @@ from protocol.e2e_streaming_test_display_helpers.logs_tools import (
 
 from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
     extract_metrics,
+    generate_plots,
 )
 
 from protocol.e2e_streaming_test_display_helpers.git_tools import (
@@ -218,6 +219,12 @@ if __name__ == "__main__":
                 )
         else:
             client_metrics, server_metrics = extract_metrics(client_log_file, server_log_file)
+            # Generate all the metrics' plots
+            for role in ("client", "server"):
+                plot_data_filename = os.path.join(log_dir, role, "plot_data.json")
+                destination_folder = os.path.join(log_dir, role, "plots")
+                os.makedirs(destination_folder)
+                generate_plots(plot_data_filename, destination_folder, verbose=verbose)
 
         experiment_entry = {
             "experiment_metadata": experiment_metadata,
