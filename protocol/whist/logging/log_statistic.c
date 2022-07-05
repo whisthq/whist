@@ -84,7 +84,6 @@ static StatisticInfo statistic_info[NUM_METRICS] = {
     [VIDEO_RECEIVE_TIME] = {"VIDEO_RECEIVE_TIME", true, false, AVERAGE},
     [VIDEO_RENDER_TIME] = {"VIDEO_RENDER_TIME", true, false, AVERAGE},
     [VIDEO_TIME_BETWEEN_FRAMES] = {"VIDEO_TIME_BETWEEN_FRAMES", true, false, AVERAGE},
-    [VIDEO_UPDATE_TIME] = {"VIDEO_UPDATE_TIME", true, false, AVERAGE},
     [NOTIFICATIONS_RECEIVED] = {"NOTIFICATIONS_RECEIVED", false, false, SUM},
     [CLIENT_CPU_USAGE] = {"CLIENT_CPU_USAGE", false, false, AVERAGE},
 
