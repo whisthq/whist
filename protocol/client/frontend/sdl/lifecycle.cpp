@@ -73,6 +73,8 @@ static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 // TODO: We could factor this out to initialize by component -- e.g. audio, window, renderer, etc.
 WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char* title,
                      const WhistRGBColor* color) {
+    // Ensure that SDL doesn't override our signal handlers
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     /*
      * Initialize an SDL frontend. Open an initial window with the given dimensions, title, and
      * titlebar color, and start the video and audio.

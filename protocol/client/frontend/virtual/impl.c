@@ -52,6 +52,8 @@ WhistStatus virtual_init(WhistFrontend* frontend, int width, int height, const c
     context->dpi = 96;
     context->sdl_audio_device = 0;
 
+    // Ensure that SDL doesn't override our signal handlers
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     // We only need to initialize SDL for the audio system
     if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         LOG_ERROR("Could not initialize SDL - %s", SDL_GetError());
