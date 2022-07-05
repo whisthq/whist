@@ -42,10 +42,10 @@ Custom Types
  * @brief   Cursor state.
  * @details State of the cursor on the rendered screen.
  */
-typedef enum WhistCursorCaptureState {
-    CURSOR_CAPTURE_STATE_NORMAL = 0,
-    CURSOR_CAPTURE_STATE_CAPTURED = 1,
-} WhistCursorCaptureState;
+typedef enum WhistMouseMode {
+    MOUSE_MODE_NORMAL = 0,
+    MOUSE_MODE_RELATIVE = 1,
+} WhistMouseMode;
 
 /**
  * @brief   Cursor type.
@@ -96,7 +96,7 @@ typedef enum WhistCursorType {
  */
 typedef struct WhistCursorInfo {
     WhistCursorType type;
-    WhistCursorCaptureState capture_state;
+    WhistMouseMode mode;
     uint32_t hash;
     size_t png_size;
     unsigned short png_width;

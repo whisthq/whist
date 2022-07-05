@@ -132,8 +132,7 @@ WhistCursorInfo* whist_cursor_capture(void) {
     bool cursor_visible = cursor_info.flags & CURSOR_SHOWING;
     // We used to use cursor_info.flags as a proxy for cursor capture state, but that's incorrect.
     // Since we don't really care about Windows server functionality, just always set this to
-    // CURSOR_CAPTURE_STATE_NORMAL.
+    // MOUSE_MODE_NORMAL.
     return whist_cursor_info_from_type(
-        cursor_visible ? get_cursor_type(&cursor_info) : WHIST_CURSOR_NONE,
-        CURSOR_CAPTURE_STATE_NORMAL);
+        cursor_visible ? get_cursor_type(&cursor_info) : WHIST_CURSOR_NONE, MOUSE_MODE_NORMAL);
 }

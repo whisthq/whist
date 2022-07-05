@@ -127,15 +127,15 @@ static WhistCursorType get_cursor_type(XFixesCursorImage* cursor_image) {
     // mandelboxes/base/display/theme/cursor-builder. Comments here will explain what is
     // going on, but for ultimate clarity look at the theme generation files.
 
-    // If the cursor is a 1x1 transparent cursor, the cursor is actually hidden.
+    // If the cursor is a 1x1 transparent cursor, the cursor is actually hidden, as per GTK.
     if (cursor_image->width == 1 && cursor_image->height == 1 &&
         (cursor_image->pixels[0] & 0xff000000) == 0) {
         return WHIST_CURSOR_NONE;
     }
 
-    // Our GTK cursor theme guarantees that all actual system cursors are 32x32 squares of the
-    // solid color #42f58a. So we first check cursor size. Then (rather than checking every
-    // pixel), we check the four corners for whether they match the color.
+    // Our GTK cursor theme guarantees that all actual system cursors are 32x32 squares whose
+    // quadrants are distinctive colors. So we first check cursor size. Then (rather than
+    // checking every pixel), we check the four corners for whether they match their colors.
 
     // Size check
     if (cursor_image->width != 32 || cursor_image->height != 32) {
@@ -144,12 +144,18 @@ static WhistCursorType get_cursor_type(XFixesCursorImage* cursor_image) {
     }
 
     // Color check
-    uint32_t top_left = cursor_image->pixels[0];
-    uint32_t top_right = cursor_image->pixels[31];
-    uint32_t bottom_left = cursor_image->pixels[32 * 31];
-    uint32_t bottom_right = cursor_image->pixels[32 * 31 + 31];
-    if (top_left & 0x00ffffff != 0x42f58a || top_right & 0x00ffffff != 0x42f58a ||
-        bottom_left & 0x00ffffff != 0x42f58a || bottom_right & 0x00ffffff != 0x42f58a) {
+    uint32_t northwest = cursor_image->pixels[0] & 0x00ffffff;
+    uint32_t northeast = cursor_image->pixels[31] & 0x00ffffff;
+    uint32_t southwest = cursor_image->pixels[32 * 31] & 0x00ffffff;
+    uint32_t southeast = cursor_image->pixels[32 * 31 + 31] & 0x00ffffff;
+
+    const uint32_t northwest_color = 0x42f58a;
+    const uint32_t northeast_color = 0xe742f5;
+    const uint32_t southwest_color = 0x2f7aeb;
+    const uint32_t southeast_color = 0xff7e20;
+
+    if (northwest != northwest_color || northeast != northeast_color ||
+        southwest != southwest_color || southeast != southeast_color) {
         // Not a system cursor
         return WHIST_CURSOR_PNG;
     }
@@ -163,6 +169,13 @@ static WhistCursorType get_cursor_type(XFixesCursorImage* cursor_image) {
 
     // In our encoding, xhot and yhot are both multiples of three, and the index is calculated
     // as (x/3) + 7 * (y/3).
+
+    // As a sanity check, let's ensure the multiples of three.
+    if (cursor_image->xhot % 3 != 0 || cursor_image->yhot % 3 != 0) {
+        // Not a system cursor
+        return WHIST_CURSOR_PNG;
+    }
+
     int index = (cursor_image->xhot / 3) + 7 * (cursor_image->yhot / 3);
 
     if (index < 0 || index >= NUM_GTK_CURSORS) {
@@ -174,9 +187,9 @@ static WhistCursorType get_cursor_type(XFixesCursorImage* cursor_image) {
     return gtk_index_to_cursor_type[index];
 }
 
-static WhistCursorCaptureState get_latest_capture_state(void) {
+static WhistMouseMode get_latest_mouse_mode(void) {
 #define POINTER_LOCK_UPDATE_TRIGGER_FILE "/home/whist/.teleport/pointer-lock-update"
-    static WhistCursorCaptureState capture_state = CURSOR_CAPTURE_STATE_NORMAL;
+    static WhistMouseMode mode = MOUSE_MODE_NORMAL;
     static WhistTimer timer;
     static bool first_run = true;
     if (first_run) {
@@ -192,9 +205,9 @@ static WhistCursorCaptureState get_latest_capture_state(void) {
             read(fd, pointer_locked, 1);
             close(fd);
             if (pointer_locked[0] == '1') {
-                capture_state = CURSOR_CAPTURE_STATE_CAPTURED;
+                mode = MOUSE_MODE_RELATIVE;
             } else if (pointer_locked[0] == '0') {
-                capture_state = CURSOR_CAPTURE_STATE_NORMAL;
+                mode = MOUSE_MODE_NORMAL;
             } else {
                 LOG_ERROR("Invalid pointer lock state");
             }
@@ -203,7 +216,7 @@ static WhistCursorCaptureState get_latest_capture_state(void) {
         start_timer(&timer);
     }
 
-    return capture_state;
+    return mode;
 }
 
 WhistCursorInfo* whist_cursor_capture(void) {
@@ -218,7 +231,7 @@ WhistCursorInfo* whist_cursor_capture(void) {
             return NULL;
         }
 
-        WhistCursorCaptureState capture_state = get_latest_capture_state();
+        WhistMouseMode mode = get_latest_mouse_mode();
 
         WhistCursorType cursor_type = get_cursor_type(cursor_image);
         if (cursor_type == WHIST_CURSOR_PNG) {
@@ -230,12 +243,11 @@ WhistCursorInfo* whist_cursor_capture(void) {
                 const uint32_t argb_pix = (uint32_t)cursor_image->pixels[i];
                 rgba[i] = argb_pix << 8 | argb_pix >> 24;
             }
-            image =
-                whist_cursor_info_from_rgba(rgba, cursor_image->width, cursor_image->height,
-                                            cursor_image->xhot, cursor_image->yhot, capture_state);
+            image = whist_cursor_info_from_rgba(rgba, cursor_image->width, cursor_image->height,
+                                                cursor_image->xhot, cursor_image->yhot, mode);
         } else {
             // Use system cursor
-            image = whist_cursor_info_from_type(cursor_type, capture_state);
+            image = whist_cursor_info_from_type(cursor_type, mode);
         }
         XFree(cursor_image);
     } else {

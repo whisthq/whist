@@ -352,8 +352,8 @@ void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
         return;
     }
 
-    if (cursor->capture_state != context->cursor.capture_state) {
-        if (cursor->capture_state == CURSOR_CAPTURE_STATE_CAPTURED) {
+    if (cursor->mode != context->cursor.mode) {
+        if (cursor->mode == MOUSE_MODE_RELATIVE) {
             SDL_GetGlobalMouseState(&context->cursor.last_visible_position.x,
                                     &context->cursor.last_visible_position.y);
             SDL_SetRelativeMouseMode((SDL_bool) true);
@@ -362,10 +362,10 @@ void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
             SDL_WarpMouseGlobal(context->cursor.last_visible_position.x,
                                 context->cursor.last_visible_position.y);
         }
-        context->cursor.capture_state = cursor->capture_state;
+        context->cursor.mode = cursor->mode;
     }
 
-    if (context->cursor.capture_state == CURSOR_CAPTURE_STATE_CAPTURED) {
+    if (context->cursor.mode == MOUSE_MODE_RELATIVE) {
         return;
     }
 

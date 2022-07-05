@@ -10,7 +10,9 @@ Earlier attempts to solve this problem involved pre-computing hashes for all the
 
 Finally, we found the correct solution! ("Correct", maybe.) Create our own cursor theme, with only one size. No more pesky DPI resizing. Next, we needed a way to map captured cursor data to the GTK cursor type. The initial idea was to continue to use hashing, or else to otherwise encode cursor type in the pixel data. But a simpler solution worked instead!
 
-To indicate that a cursor is a GTK system cursor and not some custom cursor, we set the image to a 32 by 32 square of color `#42f58a`. Funnily, enough, there is an API to create such images: https://singlecolorimage.com/get/42f58a/32x32. Next, we encode the cursor type in the _metadata_! Namely, in the hot x and y coordinate of the cursor. Hence the name "spicy", or "hot" cursors!
+To indicate that a cursor is a GTK system cursor and not some custom cursor, we set the image to a 32 by 32 square with distinctive colors in each quadrant. The northwest is `#42f58a`, the northeast is `#e742f5`, the southeast is `#ff7e20`, and the southwest is `#2f7aeb`.
+
+Next, we encode the cursor type in the _metadata_! Namely, in the hot x and y coordinate of the cursor. Hence the name "spicy", or "hot" cursors!
 
 How do we do the encoding? We first alphabetize the GTK cursor names, and zero-index them to get an index `i`. We map each index to the `(x, y)` coordinate pair `((i % 7) * 3, (i / 7) * 3)`, where division is integer divison.
 

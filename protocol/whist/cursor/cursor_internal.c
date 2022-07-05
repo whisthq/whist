@@ -27,14 +27,13 @@ Includes
 // accidental collisions are going to be very easy.
 #define ID_CURSOR_HASH_OFFSET 0x2000
 
-WhistCursorInfo* whist_cursor_info_from_type(WhistCursorType type,
-                                             WhistCursorCaptureState capture_state) {
+WhistCursorInfo* whist_cursor_info_from_type(WhistCursorType type, WhistMouseMode mode) {
     FATAL_ASSERT(type != WHIST_CURSOR_PNG);
     WhistCursorInfo* info = safe_malloc(sizeof(WhistCursorInfo));
     memset(info, 0, sizeof(WhistCursorInfo));
     info->type = type;
-    info->capture_state = capture_state;
-    if (capture_state == CURSOR_CAPTURE_STATE_CAPTURED) {
+    info->mode = mode;
+    if (mode == MOUSE_MODE_RELATIVE) {
         const int hidden_id = HIDDEN_CURSOR_HASH_OFFSET;
         info->hash = hash(&hidden_id, sizeof(int));
     } else {
@@ -46,8 +45,7 @@ WhistCursorInfo* whist_cursor_info_from_type(WhistCursorType type,
 
 WhistCursorInfo* whist_cursor_info_from_rgba(const uint32_t* rgba, unsigned short width,
                                              unsigned short height, unsigned short hot_x,
-                                             unsigned short hot_y,
-                                             WhistCursorCaptureState capture_state) {
+                                             unsigned short hot_y, WhistMouseMode mode) {
     unsigned char* png;
     size_t png_size;
 
@@ -65,9 +63,9 @@ WhistCursorInfo* whist_cursor_info_from_rgba(const uint32_t* rgba, unsigned shor
     info->png_size = png_size;
     info->png_hot_x = hot_x;
     info->png_hot_y = hot_y;
-    info->capture_state = capture_state;
+    info->mode = mode;
     memcpy(info->png, png, png_size);
-    if (capture_state == CURSOR_CAPTURE_STATE_CAPTURED) {
+    if (mode == MOUSE_MODE_RELATIVE) {
         const int hidden_id = HIDDEN_CURSOR_HASH_OFFSET;
         info->hash = hash(&hidden_id, sizeof(int));
     } else {

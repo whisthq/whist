@@ -29,7 +29,7 @@ Defines
  * @brief                          Returns WhistCursorInfo from a cursor type
  *
  * @param type                     The WhistCursorType from which to generate the cursor info
- * @param capture_state            The cursor capture state (captured or normal)
+ * @param mode                     The cursor mode (normal or relative)
  *
  * @returns                        The generated cursor info as a pointer to
  *                                 a WhistCursorInfo struct, which must be freed
@@ -38,8 +38,7 @@ Defines
  * @note                           The type must not be WHIST_CURSOR_PNG; use
  *                                 whist_cursor_info_from_rgba() for PNG cursors.
  */
-WhistCursorInfo* whist_cursor_info_from_type(WhistCursorType type,
-                                             WhistCursorCaptureState capture_state);
+WhistCursorInfo* whist_cursor_info_from_type(WhistCursorType type, WhistMouseMode mode);
 
 /**
  * @brief                          Returns WhistCursorInfo from RGBA pixel data
@@ -51,7 +50,7 @@ WhistCursorInfo* whist_cursor_info_from_type(WhistCursorType type,
  * @param height                   The height of the RGBA pixel data
  * @param hot_x                    The x-coordinate of the cursor hotspot
  * @param hot_y                    The y-coordinate of the cursor hotspot
- * @param capture_state            The cursor capture state (captured or normal)
+ * @param mode                     The cursor mode (normal or relative)
  *
  * @returns                        The generated cursor info as a pointer to
  *                                 a WhistCursorInfo struct, which must be freed
@@ -59,6 +58,5 @@ WhistCursorInfo* whist_cursor_info_from_type(WhistCursorType type,
  */
 WhistCursorInfo* whist_cursor_info_from_rgba(const uint32_t* rgba, unsigned short width,
                                              unsigned short height, unsigned short hot_x,
-                                             unsigned short hot_y,
-                                             WhistCursorCaptureState capture_state);
+                                             unsigned short hot_y, WhistMouseMode mode);
 #endif  // WHIST_CURSOR_INTERNAL
