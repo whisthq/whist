@@ -1922,9 +1922,6 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
             whist_unlock_mutex(context->recv_mutex);
             return false;
         }
-        if (size_total > 0) {
-            break;
-        }
     }
     if (context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() > 0) {
         recv_data = context->recv_queue[NON_VIDEO_RECV_QUEUE]->pop();

@@ -104,7 +104,7 @@ Defines
 #define BASE_TCP_PORT 32273
 
 // If true, try to fix m1 freeze with gpu lock instead of disable gpu copy
-#define FIX_M1_FREEZE_WITH_LOCK true
+#define FIX_M1_FREEZE_WITH_LOCK false
 
 // Various control flags
 #define USING_FFMPEG_IFRAME_FLAG false
