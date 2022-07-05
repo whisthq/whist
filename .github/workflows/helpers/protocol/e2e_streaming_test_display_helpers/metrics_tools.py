@@ -229,3 +229,40 @@ def compute_deltas(
         table_entries.append(new_table_entries)
 
     return table_entries[0], table_entries[1], test_result
+
+
+def generate_plots(plot_data_filename, destination_folder, verbose=False):
+    """
+    Generate the time-series plot of each metric in the file at the plot_data_filename path, and save
+    each plot in the given destination_folder. The name of each plot will be destination_folder/<METRIC>.png
+
+    Args:
+        plot_data_filename (str):   The path to the file (usually <{client,server}>/plot_data.json) containing
+                                the data needed for plotting
+        destination_folder (str):   The path to the folder (usually <{client,server}>/plots) where we should
+                                    save all the plots
+        verbose (bool): Whether to print verbose logs to stdout
+    Returns:
+        None
+    """
+
+    def plot_metric(key, destination_folder, trimmed_plot, verbose):
+        output_filename = os.path.join(
+            destination_folder, f"{key}.png" if not trimmed_plot else f"{key}_trimmed.png"
+        )
+        time_range = f"0.0~36000.0" if not trimmed_plot else f"5.0~36000.0"
+        plotting_command = f'python3 ../whist/debug/plotter.py -f "{k}" -r {time_range} -o {output_filename} {plot_data_filename}'
+        subprocess.run(plotting_command, shell=True, capture_output=verbose)
+        if verbose:
+            print(p.stdout.decode())
+        if p.returncode != 0:
+            print(f"Could not generate plot {output_filename}!")
+
+    if not os.path.isfile(plot_data_filename):
+        print(f"Could not plot metrics because file {plot_data_filename} does not exist")
+        return
+    with open(plot_data_filename) as plot_data_file:
+        data_file = json.loads(plot_data_file.read())
+        for k in data_file.keys():
+            for trimmed_plot in (True, False):
+                plot_metric(k, destination_folder, trimmed_plot=trimmed_plot, verbose=verbose)
