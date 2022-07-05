@@ -547,7 +547,7 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
     start_timer(&latency_clock);
 
     int res = avcodec_receive_frame(decoder->context, frame);
-    log_double_statistic(VIDEO_AVCODEC_RECEIVE_TIME, get_timer(&latency_clock) * 1000);
+    log_double_statistic(VIDEO_AVCODEC_RECEIVE_TIME, get_timer(&latency_clock) * MS_IN_SECOND);
 
     // Exit or copy the captured frame into hw_frame
     if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
