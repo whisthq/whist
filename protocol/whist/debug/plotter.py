@@ -31,6 +31,14 @@ parser.add_option(
 )
 
 parser.add_option(
+    "-i",
+    "--inverse-match",
+    action="store_true",
+    dest="inverse_match",
+    help="when used together with -f, do inverse match",
+)
+
+parser.add_option(
     "-r",
     "--range",
     action="store",
@@ -109,7 +117,9 @@ for file_name in args:
     for i in data.keys():
         if options.filter_pattern:
             m = re.match(options.filter_pattern, str(i))
-            if not m:
+            if options.inverse_match and m:
+                continue
+            elif not options.inverse_match and not m:
                 continue
         label = i
         # if there are more than one file, append the file name to the label to indicate which file the lable comes from
