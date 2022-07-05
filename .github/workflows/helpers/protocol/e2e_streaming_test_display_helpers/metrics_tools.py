@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import json
 import os
+import subprocess
 import sys
 import numpy as np
 
@@ -252,7 +254,7 @@ def generate_plots(plot_data_filename, destination_folder, verbose=False):
         )
         time_range = f"0.0~36000.0" if not trimmed_plot else f"5.0~36000.0"
         plotting_command = f'python3 ../whist/debug/plotter.py -f "{k}" -r {time_range} -o {output_filename} {plot_data_filename}'
-        subprocess.run(plotting_command, shell=True, capture_output=verbose)
+        p = subprocess.run(plotting_command, shell=True, capture_output=verbose)
         if verbose:
             print(p.stdout.decode())
         if p.returncode != 0:
