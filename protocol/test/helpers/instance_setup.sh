@@ -6,14 +6,6 @@ set -Eeuo pipefail
 # variables below are to be set in the config file and imported
 . instance_setup_configs.sh
 
-# run_cmd() {
-#   command=${1}
-#   cmd_stdout=$(eval "$command" | tee --append "$logfile")
-#   ret=$? # TODO: fix this to make the ret variable point to the "$command" exit code 
-#   # Add newline to logfile
-#   echo >> "$logfile"
-# }
-
 # handle_errors() {
 #   errors_to_search=${1}
 #   error_messages=${2}
