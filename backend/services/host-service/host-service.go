@@ -129,19 +129,20 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 		// Replace "chrome" by "brave" (or some other container we support) to test a different app. Note that the Whist
 		// backend is designed to only ever deploy the same application everywhere, which we hardcode here.
 		var appName mandelboxtypes.AppName = "browsers/chrome"
-		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan)
+		zygote, err := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan)
 
 		// If we fail to create a zygote mandelbox, it indicates a problem with the instance, or the Docker
 		// images. Its not safe to assign users to it, so we cancel the global context and shut down the instance
-		if zygote == nil {
+		if zygote == nil || err != nil {
 			globalCancel()
+			logger.Errorf("Failed to start waiting mandelbox: %s", err)
 			return
 		}
 
 		// We have to parse the appname before writing to the database.
 		appString := strings.Split(string(zygote.GetAppName()), "/")
 		appNameForDb := strings.ToUpper(appString[1])
-		err := dbdriver.CreateMandelbox(zygote.GetID(), appNameForDb, instanceID)
+		err = dbdriver.CreateMandelbox(zygote.GetID(), appNameForDb, instanceID)
 		if err != nil {
 			logger.Errorf("Failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
 		}
@@ -680,7 +681,12 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 					// For local development, we start and finish the mandelbox spin up back to back
 					StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName, mandelboxDieEvents)
-					go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxSubscription, transportRequestMap, transportMapLock, req)
+					go func() {
+						err := FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxSubscription, transportRequestMap, transportMapLock, req)
+						if err != nil {
+							logger.Errorf("Failed to finish mandelbox startup: %s", err)
+						}
+					}()
 				}
 			default:
 				if serverevent != nil {
@@ -696,8 +702,13 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			case *subscriptions.MandelboxEvent:
 				mandelboxSubscription := subscriptionEvent.Mandelboxes[0]
 				req, _ := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
-				go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient,
-					mandelboxSubscription, transportRequestMap, transportMapLock, req)
+				go func() {
+					err := FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient,
+						mandelboxSubscription, transportRequestMap, transportMapLock, req)
+					if err != nil {
+						logger.Errorf("Failed to finish mandelbox startup: %s", err)
+					}
+				}()
 
 			case *subscriptions.InstanceEvent:
 				if len(subscriptionEvent.Instances) == 0 {

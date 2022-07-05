@@ -42,7 +42,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
 	mandelboxDieChan := make(chan bool, 10)
 	var appName mandelboxtypes.AppName = "chrome"
-	testMandelbox := StartMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxID, appName, mandelboxDieChan)
+	testMandelbox, _ := StartMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxID, appName, mandelboxDieChan)
 
 	// Check that container would have been started
 	if !dockerClient.started {

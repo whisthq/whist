@@ -529,7 +529,7 @@ func (mandelbox *mandelboxData) GetDeviceMappings() []dockercontainer.DeviceMapp
 func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup) error {
 	devices, mappings, err := uinputdevices.Allocate()
 	if err != nil {
-		return utils.MakeError("Couldn't allocate uinput devices: %s", err)
+		return utils.MakeError("couldn't allocate uinput devices: %s", err)
 	}
 
 	mandelbox.rwlock.Lock()
@@ -549,10 +549,10 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 				mandelbox.GetStatus() != dbdriver.MandelboxStatusRunning {
 				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
 			} else {
-				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
+				logger.Errorf("sendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
 			}
 		} else {
-			logger.Infof("SendDeviceFDsOverSocket returned successfully for MandelboxID %s", mandelbox.GetID())
+			logger.Infof("sendDeviceFDsOverSocket returned successfully for MandelboxID %s", mandelbox.GetID())
 		}
 	}()
 
