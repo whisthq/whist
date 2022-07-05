@@ -9,30 +9,46 @@ from github import Github, InputFileContent
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def create_github_gist_post(github_gist_token, title, files_list):
+def initialize_github_gist_post(github_gist_token, title):
     """
-    Create a secret Github Gist for the E2E results. Add one file for each tuple
-    in the files_list parameter. Print the html url of the secret Gist.
+    Create a secret Github Gist for the E2E results. Initialize the Gist's description
 
     Args:
         github_gist_token (str):    The Github Gist token to use for authentication
         title (str):    The title to give to the Gist
+    Returns:
+        gist (github.Gist.Gist): The Github Gist object just created
+    """
+    client = Github(github_gist_token)
+    gh_auth_user = client.get_user()
+    gist = gh_auth_user.create_gist(
+        public=False,
+        description=title,
+    )
+    print(f"\nInitialized secret gist for the performance results: {gist.html_url}")
+    return gist
+
+
+def update_github_gist_post(gist, files_list):
+    """
+    Update a secret Github Gist with the E2E results. Add one file for each tuple
+    in the files_list parameter. Print the html url of the secret Gist.
+
+    Args:
+        github_gist_token (str):    The Github Gist token to use for authentication
+        gist (github.Gist.Gist): The Github Gist object that was previously created
         files_list (list):  A list of tuples, where each tuple contains the name of a file
                             to add to the Gist and the desired contents of the file
     Returns:
         None
     """
-    # Display the results as a Github Gist
-    client = Github(github_gist_token)
-    gh_auth_user = client.get_user()
+    if not gist:
+        print("Error: Could not update Gist!")
+
     files_dict = {}
     for filename, file_contents in files_list:
         files_dict[filename] = InputFileContent(file_contents)
-    gist = gh_auth_user.create_gist(
-        public=False,
-        files=files_dict,
-        description=title,
-    )
+    gist.edit(description=gist.description, files=files_dict)
     print(f"\nPosted performance results to secret gist: {gist.html_url}")
     return gist.html_url
 

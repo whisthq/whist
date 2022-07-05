@@ -28,7 +28,8 @@ from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
 )
 
 from protocol.e2e_streaming_test_display_helpers.git_tools import (
-    create_github_gist_post,
+    initialize_github_gist_post,
+    update_github_gist_post,
     associate_branch_to_open_pr,
 )
 
@@ -193,6 +194,8 @@ if __name__ == "__main__":
             print("Error: protocol logs not found!")
             sys.exit(-1)
 
+    ################################################# 1. Extract data from logs ###################################################
+
     print("Found E2E logs for the following experiments: ")
     experiments = []
     for i, log_dir in enumerate(logs_root_dirs):
@@ -261,6 +264,8 @@ if __name__ == "__main__":
         }
         experiments.append(experiment_entry)
         print("\t+ Failed/skipped experiment with no logs")
+
+    ################################################# 2. Generate result tables ###################################################
 
     for i, compared_branch_name in enumerate(compared_branch_names):
         if compared_branch_name == current_branch_name:
@@ -390,21 +395,23 @@ if __name__ == "__main__":
                 )
 
         summary_file.write("\n\n</details>\n\n")
-    #######################################################################################
 
+    ################################################# 3. Post results to Slack/GitHub ###################################################
+
+    # Get updated start time (accounting for timezone)
     if (
         "experiment_metadata" in experiments[0]
         and "start_time" in experiments[0]["experiment_metadata"]
     ):
         test_start_time = experiments[0]["experiment_metadata"]["start_time"]
 
+    # Initialize the Gist post
     title = f"Protocol End-to-End Streaming Test Results - {test_start_time}"
     github_repo = "whisthq/whist"
-    # Adding timestamp to prevent overwrite of message
     identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
+    gist = initialize_github_gist_post(github_gist_token, title)
 
     # Create one file for each branch
-
     md_files = glob.glob("streaming_e2e_test_results_*.md")
     files_list = []
     merged_files = ""
@@ -414,7 +421,10 @@ if __name__ == "__main__":
             files_list.append((filename, contents))
             merged_files += contents
 
-    gist_url = create_github_gist_post(github_gist_token, title, files_list)
+    # TODO: Create files for the plots
+
+    # Update Gist with all the files
+    gist_url = update_github_gist_post(gist, files_list)
 
     success_outcome = ":white_check_mark: All experiments succeeded!"
     test_outcome = success_outcome
