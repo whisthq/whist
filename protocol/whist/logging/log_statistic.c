@@ -200,10 +200,14 @@ void log_double_statistic(uint32_t index, double val) {
     }
 
     if (LOG_DATA_FOR_PLOTTER) {
-        double value_to_plot = (statistic_info[index].aggregation_type == SUM)
-                                   ? val + all_statistics[index].cum_sum
-                                   : val;
-        whist_plotter_insert_sample(statistic_info[index].key, get_timestamp_sec(), value_to_plot);
+        double time_since_start = get_timestamp_sec();
+        double value_to_plot = val;
+        if (statistic_info[index].aggregation_type == SUM) {
+            value_to_plot = val + all_statistics[index].cum_sum;
+        } else if (statistic_info[index].aggregation_type == AVERAGE_OVER_TIME) {
+            value_to_plot = (val + all_statistics[index].cum_sum) / time_since_start;
+        }
+        whist_plotter_insert_sample(statistic_info[index].key, time_since_start, value_to_plot);
     }
 
     whist_lock_mutex(log_statistic_mutex);

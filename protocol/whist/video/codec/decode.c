@@ -580,7 +580,8 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
             destroy_video_decoder(decoder);
             return -1;
         }
-        log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME, get_timer(&latency_clock) * MS_IN_SECOND);
+        log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME,
+                             get_timer(&latency_clock) * MS_IN_SECOND);
     } else {
         if (decoder->decode_type != software_decode_type) {
             LOG_ERROR("Decoder internally fell back from hardware to software");
