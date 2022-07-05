@@ -68,7 +68,6 @@ static StatisticInfo statistic_info[NUM_METRICS] = {
 
     // Client side metrics
     [AUDIO_RECEIVE_TIME] = {"AUDIO_RECEIVE_TIME", true, false, AVERAGE},
-    [AUDIO_UPDATE_TIME] = {"AUDIO_UPDATE_TIME", true, false, AVERAGE},
     [AUDIO_FRAMES_SKIPPED] = {"AUDIO_FRAMES_SKIPPED", false, false, SUM},
     [NETWORK_READ_PACKET_TCP] = {"READ_PACKET_TIME_TCP", true, false, AVERAGE},
     [NETWORK_READ_PACKET_UDP] = {"READ_PACKET_TIME_UDP", true, false, AVERAGE},

@@ -68,7 +68,6 @@ typedef enum {
 
     // Client side metrics
     AUDIO_RECEIVE_TIME,
-    AUDIO_UPDATE_TIME,
     AUDIO_FRAMES_SKIPPED,
     NETWORK_READ_PACKET_TCP,
     NETWORK_READ_PACKET_UDP,
