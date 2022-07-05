@@ -166,7 +166,8 @@ int whist_timedwait_cond(WhistCondition cond, WhistMutex mutex, uint32_t timeout
     } else if (ret == 0) {
         return true;
     } else {
-        LOG_FATAL("Failure waiting on condition variable: %s", SDL_GetError());
+	fprintf(stderr,"<%lld>\n", (long long) cond);
+        LOG_FATAL("Failure waiting on condition variable: %d %s", ret, SDL_GetError());
     }
 }
 

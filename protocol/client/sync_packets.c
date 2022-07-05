@@ -41,7 +41,7 @@ extern volatile bool
 static WhistThread sync_udp_packets_thread;
 static WhistThread sync_tcp_packets_thread;
 static bool run_sync_packets_threads;
-static bool run_dedicated_udp_recv_thread;
+static volatile bool run_dedicated_udp_recv_thread;
 /*
 ============================
 Public Function Implementations

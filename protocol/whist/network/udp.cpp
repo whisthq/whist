@@ -1197,6 +1197,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
 
     context->recv_mutex = whist_create_mutex();
     context->recv_cond = whist_create_cond();
+    fprintf(stderr,"<%lld>\n", (long long) context->recv_cond);
     // context->recv_sem = whist_create_semaphore(0);
 
     for (int i = 0; i < NUM_RECV_QUEUES; i++) {
@@ -1877,6 +1878,7 @@ void udp_dedicated_recv_init(void* raw_context) {
     FATAL_ASSERT(context->dedicated_recv == true);
 }
 void udp_dedicated_recv_iterate(void* raw_context) {
+    
     UDPContext* context = (UDPContext*)raw_context;
     FATAL_ASSERT(context->dedicated_recv == true);
 
@@ -1915,9 +1917,9 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
     whist_lock_mutex(context->recv_mutex);
     while ((size_total = context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() +
                          context->recv_queue[VIDEO_RECV_QUEUE]->size()) == 0) {
-        bool succ = true;
-	//whist_timedwait_cond(context->recv_cond, context->recv_mutex, 1);
-	whist_wait_cond(context->recv_cond,context->recv_mutex);
+
+        bool succ = whist_timedwait_cond(context->recv_cond, context->recv_mutex, 1);
+	//whist_wait_cond(context->recv_cond,context->recv_mutex);
         if (succ == false) {
             whist_unlock_mutex(context->recv_mutex);
             return false;
