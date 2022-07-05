@@ -529,25 +529,25 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     enc_params.outputBitstream = encoder->output_buffer;
 
     encoder->frame_type = encoder->ltr_action.frame_type;
+    NV_ENC_PIC_PARAMS_H264* h264_pic_params = &enc_params.codecPicParams.h264PicParams;
+
     if (encoder->wants_iframe || encoder->ltr_action.frame_type == VIDEO_FRAME_TYPE_INTRA) {
         encoder->frame_type = VIDEO_FRAME_TYPE_INTRA;
         enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR | NV_ENC_PIC_FLAG_OUTPUT_SPSPPS;
         if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
             // In H.264 IDR frames must go in long-term slot 0.
             FATAL_ASSERT(encoder->ltr_action.long_term_frame_index == 0);
-            enc_params.codecPicParams.h264PicParams.ltrMarkFrame = 1;
-            enc_params.codecPicParams.h264PicParams.ltrMarkFrameIdx = 0;
+            h264_pic_params->ltrMarkFrame = 1;
+            h264_pic_params->ltrMarkFrameIdx = 0;
         }
     } else if (encoder->ltr_action.frame_type == VIDEO_FRAME_TYPE_NORMAL) {
         // Normal encode, don't set any extra options.
     } else if (encoder->ltr_action.frame_type == VIDEO_FRAME_TYPE_CREATE_LONG_TERM) {
-        enc_params.codecPicParams.h264PicParams.ltrMarkFrame = 1;
-        enc_params.codecPicParams.h264PicParams.ltrMarkFrameIdx =
-            encoder->ltr_action.long_term_frame_index;
+        h264_pic_params->ltrMarkFrame = 1;
+        h264_pic_params->ltrMarkFrameIdx = encoder->ltr_action.long_term_frame_index;
     } else if (encoder->ltr_action.frame_type == VIDEO_FRAME_TYPE_REFER_LONG_TERM) {
-        enc_params.codecPicParams.h264PicParams.ltrUseFrames = 1;
-        enc_params.codecPicParams.h264PicParams.ltrUseFrameBitmap =
-            1 << encoder->ltr_action.long_term_frame_index;
+        h264_pic_params->ltrUseFrames = 1;
+        h264_pic_params->ltrUseFrameBitmap = (1 << encoder->ltr_action.long_term_frame_index);
     } else {
         FATAL_ASSERT(false && "Invalid frame_type in LTR action");
     }
