@@ -237,7 +237,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	dockerBody, err := dockerClient.ContainerCreate(mandelbox.GetContext(), &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, mandelboxName)
 	if err != nil {
 		incrementErrorRate()
-		return nil, utils.MakeError("error running `create` for %s:\n%s", mandelbox.GetID(), err)
+		return nil, utils.MakeError("error running `create` for %s: %s", mandelbox.GetID(), err)
 	}
 
 	logger.Infof("SpinUpMandelbox(): Value returned from ContainerCreate: %#v", dockerBody)
