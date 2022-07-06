@@ -58,7 +58,7 @@ def update_github_gist_post(github_gist_token, gist_id, files_list, verbose):
     clone_command = f"git clone https://{github_gist_token}@gist.github.com/{gist_id}"
     p = subprocess.run(clone_command, shell=True, capture_output=verbose)
     for old_filepath in files_list:
-        os.replace(old_filepath, "gist_id")
+        os.replace(old_filepath, os.path.join(".", f"{gist_id}", os.path.basename(old_filepath)))
     upload_files_command = f"cd {gist_id} && git add * && git commit -am 'upload files' && git push"
     p = subprocess.run(upload_files_command, shell=True, capture_output=verbose)
 
