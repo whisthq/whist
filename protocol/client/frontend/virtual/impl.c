@@ -226,7 +226,6 @@ static const char* css_cursor_from_whist_cursor_type(WhistCursorType type) {
 
 void virtual_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
     static WhistCursorType last_cursor_type = WHIST_CURSOR_ARROW;
-    static WhistMouseMode last_mouse_mode = MOUSE_MODE_NORMAL;
 
     if (cursor->type == WHIST_CURSOR_PNG) {
         // We don't support PNG, so fall back to the arrow cursor.
