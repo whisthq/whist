@@ -24,7 +24,7 @@ def initialize_github_gist_post(github_gist_token, title):
     gist = gh_auth_user.create_gist(
         public=False,
         files={
-            "placeholder.txt": github.InputFileContent(
+            "placeholder.txt": InputFileContent(
                 "If you can see this, the Gist was created successfully!"
             )
         },
