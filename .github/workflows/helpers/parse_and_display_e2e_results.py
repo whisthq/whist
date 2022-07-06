@@ -271,9 +271,11 @@ if __name__ == "__main__":
         print("\t+ Failed/skipped experiment with no logs")
 
     print("Created the following plots:")
-    for filename in os.listdir(plots_folder):
-        if os.path.isfile(os.path.join(plots_folder, filename)):
-            print(filename)
+    plot_files = [
+        p for p in os.listdir(plots_folder) if os.path.isfile(os.path.join(plots_folder, p))
+    ]
+    for filename in plot_files:
+        print(filename)
     ################################################# 2. Generate result tables ###################################################
 
     for i, compared_branch_name in enumerate(compared_branch_names):
@@ -422,18 +424,17 @@ if __name__ == "__main__":
 
     # Create one file for each branch
     md_files = glob.glob("streaming_e2e_test_results_*.md")
-    files_list = []
+    files_list = [f for f in plot_files]
     merged_files = ""
     for filename in sorted(md_files):
+        files_list.append(filename)
         with open(filename, "r") as f:
             contents = f.read()
-            files_list.append((filename, contents))
+            # files_list.append((filename, contents))
             merged_files += contents
 
-    # TODO: Create files for the plots
-
     # Update Gist with all the files
-    gist_url = update_github_gist_post(gist, files_list)
+    update_github_gist_post(github_gist_token, gist.id, files_list, verbose)
 
     success_outcome = ":white_check_mark: All experiments succeeded!"
     test_outcome = success_outcome
