@@ -17,3 +17,5 @@
 #define PLOT_UDP_PACKET_HANDLE_DELAY true
 
 #define PLOT_UDP_RECV_GAP true
+
+#define PLOT_UDP_PACKET_SIZE false

@@ -165,49 +165,66 @@ typedef struct NackID {
     int packet_index;
 } NackID;
 
+// the struct of an item inside RecvQueue of dedicated udp recv thread
 struct RecvQueueData {
     UDPPacket udp_packet;
     int network_payload_size;
     timestamp_us arrival_time;
-    int recv_size;
+
+    int recv_len;  // the size returned by recv, only for debug/plotting
 };
 
-struct RecvQueue {
+// the class of RecvQueue of dedicated udp recv thread
+class RecvQueue {
    private:
+    // the real queue structure, a deque
     std::deque<RecvQueueData*> q;
-    std::atomic<int> bytes_len_ = 0;
-    int capacity = 0;
+
+    // the sums of recv_len of all items, only for debug/plotting
+    std::atomic<int> bytes_len_;
+
+    // capacity of the queue, oldest item will be kicked if exceed cacacity
+    // 0 means unlimited
+    int capacity;
 
    public:
     RecvQueue() {
-        // mutex = whist_create_mutex();
-        // sem = whist_create_semaphore(0);
+        bytes_len_ = 0;
+        capacity = 0;
     }
     void set_capacity(int c) { capacity = c; }
     void push(RecvQueueData* in) {
-        whist_plotter_insert_sample("packet_size", get_timestamp_sec(), in->recv_size / 1024.0);
+        if (PLOT_UDP_PACKET_SIZE) {
+            whist_plotter_insert_sample("packet_size", get_timestamp_sec(), in->recv_len / 1024.0);
+        }
+
         q.push_back(in);
-        bytes_len_ += in->recv_size;
-        // fprintf(stderr,"<recv_size: %d>", in->recv_size);
+        bytes_len_ += in->recv_len;
+
+        // kick oldest item if exceed capacity
         while (capacity != 0 && (int)q.size() > capacity) {
             pop();
         }
     }
     RecvQueueData* pop() {
         FATAL_ASSERT(!q.empty());
+
         auto ret = q.front();
         q.pop_front();
-        bytes_len_ -= ret->recv_size;
+        bytes_len_ -= ret->recv_len;
+
         if (PLOT_UDP_PACKET_HANDLE_DELAY) {
             whist_plotter_insert_sample("packet_delay", get_timestamp_sec(),
                                         (current_time_us() - ret->arrival_time) / 1000.0);
         }
         return ret;
     }
+
+    /* below two are only exposed for debug/plotting */
+    // get the total bytes inside queue
     int bytes_len() { return bytes_len_; }
+    // get the num of items/packets inside queue
     int size() { return int(q.size()); }
-    // WhistMutex mutex;
-    // WhistSemaphore sem;
 };
 
 enum { NON_VIDEO_RECV_QUEUE = 0, VIDEO_RECV_QUEUE, NUM_RECV_QUEUES };
@@ -281,13 +298,13 @@ typedef struct {
 
     void* fec_controller;
 
-    bool dedicated_recv;
+    // TODO change to atomic, but then this struct is no longer a POD
+    volatile bool dedicated_recv;
 
     RecvQueue* recv_queue[NUM_RECV_QUEUES];
 
     WhistCondition recv_cond;
     WhistMutex recv_mutex;
-    // WhistSemaphore recv_sem;
 
 } UDPContext;
 
@@ -463,6 +480,8 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  * @param network_payload_size   Writes the payload size of the packet over the network (if
  *                               non-NULL). Valid if the return value of this function is true
  *
+ * @param recv_len               Write the return of recv() to the pointed location, for
+ * debug/plotting
  * @returns                      True if a packet was received and written to,
  *                               False if no packet was received
  *
@@ -677,31 +696,32 @@ static bool udp_update(void* raw_context) {
     if (last_recv_timer.opaque[0] == 0 && last_recv_timer.opaque[1] == 0) {
         start_timer(&last_recv_timer);
     }
-    //<<<<<<< HEAD
-    double last_recv = diff_timer(&last_recv_timer, &current_time);
-    //=======
 
-    // double last_recv = get_timer(&last_recv_timer);
-    //>>>>>>> aea8fb8cb (dedicated udp thread packed)
+    double last_recv = diff_timer(&last_recv_timer, &current_time);
+
     if (last_recv * MS_IN_SECOND > UDP_RECV_BOTTLENECK_THRESHOLD_MS) {
         context->last_bottleneck_timer = current_time;
         LOG_WARNING_RATE_LIMITED(1, 1, "Time between recv() calls is too long: %fms",
                                  last_recv * MS_IN_SECOND);
     }
     UDPPacket* udp_packet_p = NULL;
+    UDPPacket udp_packet_on_stack;
+
     timestamp_us arrival_time;
     int network_payload_size;
     bool received_packet;
 
     if (context->dedicated_recv == false) {
-        // whist_lock_mutex(context->recv_mutex);
-        //  fprintf(stderr, "not using dedicated recv thread!!\n");
-        udp_packet_p = (UDPPacket*)malloc(sizeof(UDPPacket));
+        // this lock guards there is only one udp_get_udp_packet() called during the swtiching
+        // to dedicated_recv thread. In all other cases this is a noop
+        whist_lock_mutex(context->recv_mutex);
+
+        udp_packet_p = &udp_packet_on_stack;
         received_packet =
             udp_get_udp_packet(context, udp_packet_p, &arrival_time, &network_payload_size, NULL);
-        // whist_unlock_mutex(context->recv_mutex);
+
+        whist_unlock_mutex(context->recv_mutex);
     } else {
-        // fprintf(stderr,"wanted!!\n");
         received_packet =
             udp_get_packet_from_queue(context, &udp_packet_p, &arrival_time, &network_payload_size);
     }
@@ -759,7 +779,11 @@ static bool udp_update(void* raw_context) {
             // Handle the UDP message
             udp_handle_message(context, &udp_packet);
         }
-        free(udp_packet_p);
+
+        // free the packet if it's allocated
+        if (udp_packet_p != &udp_packet_on_stack) {
+            free(udp_packet_p);
+        }
     }
 
     // *************
@@ -1145,6 +1169,13 @@ static void udp_destroy_socket_context(void* raw_context) {
         fifo_queue_destroy((QueueContext*)context->nack_queue);
     }
     whist_destroy_mutex(context->mutex);
+
+    for (int i = 0; i < NUM_RECV_QUEUES; i++) {
+        delete context->recv_queue[i];
+    }
+    whist_destroy_mutex(context->recv_mutex);
+    whist_destroy_cond(context->recv_cond);
+
     free(context);
 }
 
@@ -1197,8 +1228,8 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
 
     context->recv_mutex = whist_create_mutex();
     context->recv_cond = whist_create_cond();
-    fprintf(stderr, "<%lld %lld>\n", (long long)context->recv_cond, (long long)context->recv_mutex);
-    // context->recv_sem = whist_create_semaphore(0);
+
+    context->dedicated_recv = false;
 
     for (int i = 0; i < NUM_RECV_QUEUES; i++) {
         context->recv_queue[i] = new RecvQueue();
@@ -1884,7 +1915,7 @@ void udp_dedicated_recv_iterate(void* raw_context) {
     RecvQueueData* recv_data = (RecvQueueData*)malloc(sizeof(RecvQueueData));
 
     bool got_packet = udp_get_udp_packet(context, &recv_data->udp_packet, &recv_data->arrival_time,
-                                         &recv_data->network_payload_size, &recv_data->recv_size);
+                                         &recv_data->network_payload_size, &recv_data->recv_len);
     if (!got_packet) {
         whist_signal_cond(context->recv_cond);
         return;
