@@ -278,6 +278,26 @@ def generate_plots(plot_data_filename, destination_folder, name_prefix, verbose=
 def add_plot_links(
     client_metrics, server_metrics, plots_folder, plots_name_prefix, git_username, gist_id
 ):
+    """
+    Augment the client and server metrics with links to the time series plots. For each metric, we check
+    if a full plot, a trimmed plot or both are available, and if so, we create a key:value pair where the
+    value is a string with the Markdown hyperlinks to the plots.
+
+    Args:
+        client_metrics (dict):  The dictionary containing the metrics key-value pairs for the
+                                client from the current run
+        server_metrics (dict):  The dictionary containing the metrics key-value pairs for the
+                                server from the current run
+        plots_name_prefix (str): Prefix used to name all plot files
+        git_username (str): The username corresponding to the token used to create the Gist
+        gist_id (str): The ID of the Gist where we are uploading the plots and storing the reports with the results
+    Returns:
+        client_metrics (dict):  The dictionary containing the metrics key-value pairs for the
+                                client from the current run, augmented with the links to the plots
+        server_metrics (dict):  The dictionary containing the metrics key-value pairs for the
+                                server from the current run, augmented with the links to the plots
+    """
+
     def generate_plot_links(role, metric_key_name, git_username, gist_id):
         plot_links = []
         for plot_type in [("Full", ""), ("Trimmed", "_trimmed")]:

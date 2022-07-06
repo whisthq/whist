@@ -10,6 +10,15 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def get_gist_username(github_gist_token):
+    """
+    Get the username associated with a particular git token. We use the username to obtain the link to images
+    that are uploaded to a Gist file.
+
+    Args:
+        github_gist_token (str):    The Github Gist token to use for authentication
+    Returns:
+        username (str): The Github username
+    """
     client = Github(github_gist_token)
     return client.get_user().login
 
@@ -55,18 +64,16 @@ def update_github_gist_post(github_gist_token, gist_id, files_list, verbose):
     # Clone the gist
     clone_command = f"git clone https://{github_gist_token}@gist.github.com/{gist_id}"
     if not verbose:
-        subprocess.run(clone_command, shell=True, capture_output=False, stdout=subprocess.DEVNULL)
+        os.system(clone_command)
     else:
         subprocess.run(clone_command, shell=True, capture_output=True)
     # Copy the plots and reports into the gist folder
     for old_filepath in files_list:
         os.replace(old_filepath, os.path.join(".", f"{gist_id}", os.path.basename(old_filepath)))
     # Upload all the files
-    upload_files_command = f"cd {gist_id} && git add * && git commit -am 'upload files' && git push"
+    upload_files_command = f"cd {gist_id} && rm placeholder.txt && git add * && git commit -am 'upload files' && git push"
     if not verbose:
-        subprocess.run(
-            upload_files_command, shell=True, capture_output=False, stdout=subprocess.DEVNULL
-        )
+        os.system(upload_files_command)
     else:
         subprocess.run(upload_files_command, shell=True, capture_output=True)
 
