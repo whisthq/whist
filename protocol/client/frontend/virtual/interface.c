@@ -7,6 +7,8 @@
 #define MAX_EVENTS_QUEUED 10000
 
 QueueContext* events_queue = NULL;
+OnCursorChangeCallback on_cursor_change = NULL;
+void* on_cursor_change_data = NULL;
 
 static WhistMutex lock;
 static AVFrame* pending = NULL;
@@ -20,6 +22,11 @@ void virtual_interface_connect(void) {
     lock = whist_create_mutex();
     events_queue = fifo_queue_create(sizeof(WhistFrontendEvent), MAX_EVENTS_QUEUED);
     connected = true;
+}
+
+void virtual_interface_set_on_cursor_change_callback(OnCursorChangeCallback cb, void* data) {
+    on_cursor_change = cb;
+    on_cursor_change_data = data;
 }
 
 void* virtual_interface_get_frame_ref(void) {
@@ -94,7 +101,7 @@ void virtual_interface_set_fileupload_callback(FileUploadCallback callback, void
 }
 
 const char* virtual_interface_on_file_upload(void) {
-    if (callback_ptr) {
+    if (callback_ptr != NULL) {
         return callback_ptr(callback_arg);
     } else {
         return NULL;

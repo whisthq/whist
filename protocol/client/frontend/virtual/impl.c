@@ -6,6 +6,8 @@
 static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 
 extern QueueContext* events_queue;
+extern OnCursorChangeCallback on_cursor_change;
+extern void* on_cursor_change_data;
 
 static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* event) {
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
@@ -207,7 +209,37 @@ const char* virtual_get_chosen_file(WhistFrontend* frontend) {
     return virtual_interface_on_file_upload();
 }
 
-void virtual_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {}
+static const char* css_cursor_from_whist_cursor_type(WhistCursorType type) {
+    FATAL_ASSERT(type != WHIST_CURSOR_PNG);
+
+    static const char* const map[] = {
+        "none",         "png",        "alias",         "all-scroll",  "default",    "cell",
+        "context-menu", "copy",       "crosshair",     "grab",        "grabbing",   "pointer",
+        "help",         "text",       "vertical-text", "move",        "no-drop",    "not-allowed",
+        "progress",     "col-resize", "e-resize",      "ew-resize",   "n-resize",   "ne-resize",
+        "nesw-resize",  "ns-resize",  "nw-resize",     "nwse-resize", "row-resize", "s-resize",
+        "se-resize",    "sw-resize",  "w-resize",      "wait",        "zoom-in",    "zoom-out",
+    };
+
+    return map[type];
+}
+
+void virtual_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
+    static WhistCursorType last_cursor_type = WHIST_CURSOR_ARROW;
+
+    if (cursor->type == WHIST_CURSOR_PNG) {
+        // We don't support PNG, so fall back to the arrow cursor.
+        cursor->type = WHIST_CURSOR_ARROW;
+    }
+
+    if (cursor->type != last_cursor_type) {
+        const char* css_name = css_cursor_from_whist_cursor_type(cursor->type);
+        if (on_cursor_change != NULL) {
+            on_cursor_change(on_cursor_change_data, css_name);
+        }
+        last_cursor_type = cursor->type;
+    }
+}
 
 void virtual_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_state, int* key_count,
                                 int* mod_state) {

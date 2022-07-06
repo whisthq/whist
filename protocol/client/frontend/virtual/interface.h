@@ -8,6 +8,8 @@ typedef const char* (*FileUploadCallback)(void*);
 void virtual_interface_send_frame(AVFrame* frame);
 const char* virtual_interface_on_file_upload(void);
 
+typedef void (*OnCursorChangeCallback)(void* data, const char* cursor_type);
+
 // External only
 void virtual_interface_connect(void);
 void* virtual_interface_get_frame_ref(void);
@@ -17,6 +19,7 @@ void virtual_interface_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data, 
                                               int* visible_height);
 void virtual_interface_free_frame_ref(void* frame_ref);
 void virtual_interface_disconnect(void);
+void virtual_interface_set_on_cursor_change_callback(OnCursorChangeCallback cb, void* data);
 
 void virtual_interface_send_event(const WhistFrontendEvent* frontend_event);
 
