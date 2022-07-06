@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import subprocess
 import sys
 import argparse
 import glob
@@ -32,7 +33,7 @@ from protocol.e2e_streaming_test_display_helpers.git_tools import (
     initialize_github_gist_post,
     update_github_gist_post,
     associate_branch_to_open_pr,
-    get_gist_username,
+    get_gist_user_info,
 )
 
 
@@ -151,7 +152,13 @@ if __name__ == "__main__":
     github_token = os.environ["GITHUB_TOKEN"]
     github_run_id = os.environ.get("GITHUB_RUN_ID")
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
-    gist_username = get_gist_username(github_gist_token)
+    gist_username, gist_author_name, gist_author_email = get_gist_user_info(github_gist_token)
+    # Set the Git identity
+    git_config_command = f'git config --global user.email "{gist_author_email}" && git config --global user.name "{gist_author_name}"'
+    if not verbose:
+        os.system(git_config_command)
+    else:
+        subprocess.run(git_config_command, shell=True, capture_output=True)
 
     current_branch_name = ""
     # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable

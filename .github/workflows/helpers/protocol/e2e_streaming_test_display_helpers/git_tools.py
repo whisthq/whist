@@ -9,18 +9,25 @@ from github import Github, InputFileContent
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def get_gist_username(github_gist_token):
+def get_gist_user_info(github_gist_token):
     """
-    Get the username associated with a particular git token. We use the username to obtain the link to images
-    that are uploaded to a Gist file.
+    Get the username, name and primary email associated with a particular git token. We use the username to
+    obtain the link to images that are uploaded to a Gist file. We use the name and email to commit the images
+    to the Gist
 
     Args:
         github_gist_token (str):    The Github Gist token to use for authentication
     Returns:
         username (str): The Github username
+        name (str): The name associated with the Github account
+        email (str): The email associated with the Github account
     """
     client = Github(github_gist_token)
-    return client.get_user().login
+    user = client.get_user()
+    username = user.login
+    name = user.name
+    email = list(filter(lambda d: d["primary"] == True, user.get_emails()))[0]["email"]
+    return username, name, email
 
 
 def initialize_github_gist_post(github_gist_token, title):

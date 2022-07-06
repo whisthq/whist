@@ -257,11 +257,12 @@ def generate_plots(plot_data_filename, destination_folder, name_prefix, verbose=
         )
         time_range = f"0.0~36000.0" if not trimmed_plot else f"5.0~36000.0"
         plotting_command = f'python3 ../whist/debug/plotter.py -f "{k}" -r {time_range} -o {output_filename} {plot_data_filename}'
-        p = subprocess.run(plotting_command, shell=True, capture_output=verbose)
-        if verbose:
-            print(p.stdout.decode())
-        if p.returncode != 0:
-            print(f"Could not generate plot {output_filename}!")
+        if not verbose:
+            os.system(plotting_command)
+        else:
+            p = subprocess.run(plotting_command, shell=True, capture_output=True)
+            if p.returncode != 0:
+                print(f"Could not generate plot {output_filename}!")
 
     if not os.path.isfile(plot_data_filename):
         print(f"Could not plot metrics because file {plot_data_filename} does not exist")
