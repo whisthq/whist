@@ -1873,7 +1873,7 @@ void udp_dedicated_recv_init(void* raw_context) {
 
     context->dedicated_recv = true;
 
-    set_timeout(context->socket, 9999);
+    set_timeout(context->socket, 2);
 
     FATAL_ASSERT(context->dedicated_recv == true);
 }
@@ -1886,6 +1886,7 @@ void udp_dedicated_recv_iterate(void* raw_context) {
     bool got_packet = udp_get_udp_packet(context, &recv_data->udp_packet, &recv_data->arrival_time,
                                          &recv_data->network_payload_size, &recv_data->recv_size);
     if (!got_packet) {
+        whist_signal_cond(context->recv_cond);
         return;
     }
 
@@ -1921,7 +1922,10 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
     while ((size_total = context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() +
                          context->recv_queue[VIDEO_RECV_QUEUE]->size()) == 0) {
         // fprintf(stderr,"<cnt=%d>\n",cnt);
-        // bool succ = whist_timedwait_cond(context->recv_cond, context->recv_mutex, 5);
+        // the timedwait failed after long running, I don't know why
+        // Failure waiting on condition variable: -1 pthread_cond_timedwait() failed
+        // bool succ = whist_timedwait_cond(context->recv_cond, context->recv_mutex, 1);
+
         bool succ = true;
         whist_wait_cond(context->recv_cond, context->recv_mutex);
         if (succ == false) {
