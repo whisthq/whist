@@ -23,6 +23,11 @@ def initialize_github_gist_post(github_gist_token, title):
     gh_auth_user = client.get_user()
     gist = gh_auth_user.create_gist(
         public=False,
+        files={
+            "placeholder.txt": github.InputFileContent(
+                "If you can see this, the Gist was created successfully!"
+            )
+        },
         description=title,
     )
     print(f"\nInitialized secret gist for the performance results: {gist.html_url}")
