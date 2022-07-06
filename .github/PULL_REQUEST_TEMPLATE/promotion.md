@@ -17,7 +17,6 @@ All the below items need to be tested and checked for this promotion to be merge
 #### General
 
 - [ ] This promotion is backwards compatible
-- [ ] Website preview successfully deploys to Netlify
 - [ ] Whist successfully auto-updates
 - [ ] Whist successfully launches
 - [ ] Whist successfully plays audio
@@ -25,16 +24,16 @@ All the below items need to be tested and checked for this promotion to be merge
 #### Frontend
 
 - [ ] Sign in to Whist works
-- [ ] Importing browser settings from Brave & Chrome works
+- [ ] Importing browser settings/cookies works
 - [ ] Going to Google Maps correctly shows the user's approximate location
 - [ ] User local settings for language, dark mode, DPI, keyboard repeat, etc. are properly set
-- [ ] Accessing and updating the Stripe subscription from the omnibar works
-- [ ] Live chat support with Intercom from the omnibar works
-- [ ] Sign out button on omnibar works
+- [ ] Accessing and updating the Stripe subscription works
+- [ ] Live chat support with Intercom works
+- [ ] Sign out button works
 
 #### Backend
 
-- [ ] Startup time for Whist is <15 seconds
+- [ ] Startup time for Whist is <10 seconds
 - [ ] Typing "where am I" in Google shows that I'm connected to the closest datacenter
 - [ ] User sessions are successfully stored across Whist sessions
 
@@ -49,9 +48,8 @@ All the below items need to be tested and checked for this promotion to be merge
 
 #### Display
 
-- [ ] Resizing the SDL window blocks at minimum resolution
-- [ ] Rapid resizing of the SDL window works seamlessly
-- [ ] Minimizing and maximizing the SDL window works without interruptions
+- [ ] Rapid resizing of a cloud tab works seamlessly
+- [ ] Minimizing and maximizing a cloud works without interruptions
 
 #### Clipboard
 
