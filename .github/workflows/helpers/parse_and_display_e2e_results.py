@@ -230,7 +230,7 @@ if __name__ == "__main__":
                 generate_plots(
                     plot_data_filename,
                     destination_folder=plots_folder,
-                    name_prefix=f"experiment{i+1}:{role}",
+                    name_prefix=f"plot_experiment{i+1}:{role}",
                     verbose=False,
                 )
 
@@ -286,7 +286,7 @@ if __name__ == "__main__":
         else:
             print(f"\nComparing results to latest values from {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
-        results_file = open(f"streaming_e2e_test_results_{i+1}.md", "w")
+        results_file = open(f"e2e_report_{i+1}.md", "w")
         results_file.write(f"## Results compared to branch: `{compared_branch_name}`\n")
 
         results_file.write("<details>\n")
@@ -388,7 +388,7 @@ if __name__ == "__main__":
 
         results_file.close()
 
-    with open(f"streaming_e2e_test_results_0.md", "w") as summary_file:
+    with open(f"e2e_report_0.md", "w") as summary_file:
         summary_file.write("### Experiments Summary\n\n")
 
         summary_file.write("<details>\n")
@@ -423,18 +423,19 @@ if __name__ == "__main__":
     gist = initialize_github_gist_post(github_gist_token, title)
 
     # Create one file for each branch
-    md_files = glob.glob("streaming_e2e_test_results_*.md")
-    files_list = [f for f in plot_files]
+    md_files = glob.glob("e2e_report_*.md")
+    files_list = [os.path.join(".", "plots", f) for f in plot_files]
     merged_files = ""
     for filename in sorted(md_files):
         files_list.append(filename)
         with open(filename, "r") as f:
             contents = f.read()
-            # files_list.append((filename, contents))
             merged_files += contents
 
     # Update Gist with all the files
+    print("\nUploading performance results and plots to Gist...")
     update_github_gist_post(github_gist_token, gist.id, files_list, verbose)
+    print(f"\nPosted performance results to secret gist: {gist.html_url}")
 
     success_outcome = ":white_check_mark: All experiments succeeded!"
     test_outcome = success_outcome
