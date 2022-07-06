@@ -198,6 +198,8 @@ if __name__ == "__main__":
 
     print("Found E2E logs for the following experiments: ")
     experiments = []
+    plots_folder = "plots"
+    os.makedirs(plots_folder)
     for i, log_dir in enumerate(logs_root_dirs):
 
         client_log_file = os.path.join(log_dir, "client", "client.log")
@@ -225,9 +227,12 @@ if __name__ == "__main__":
             # Generate all the metrics' plots
             for role in ("client", "server"):
                 plot_data_filename = os.path.join(log_dir, role, "plot_data.json")
-                destination_folder = os.path.join(log_dir, role, "plots")
-                os.makedirs(destination_folder)
-                generate_plots(plot_data_filename, destination_folder, verbose=verbose)
+                generate_plots(
+                    plot_data_filename,
+                    destination_folder=plots_folder,
+                    name_prefix=f"experiment{i+1}:{role}",
+                    verbose=False,
+                )
 
         experiment_entry = {
             "experiment_metadata": experiment_metadata,
@@ -265,6 +270,10 @@ if __name__ == "__main__":
         experiments.append(experiment_entry)
         print("\t+ Failed/skipped experiment with no logs")
 
+    print("Created the following plots:")
+    for filename in os.listdir(plots_folder):
+        if os.path.isfile(os.path.join(plots_folder, filename)):
+            print(filename)
     ################################################# 2. Generate result tables ###################################################
 
     for i, compared_branch_name in enumerate(compared_branch_names):
