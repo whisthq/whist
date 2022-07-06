@@ -46,8 +46,6 @@ def update_github_gist_post(github_gist_token, gist_id, files_list, verbose):
     Returns:
         None
     """
-    if not gist:
-        print("Error: Could not update Gist!")
 
     # files_dict = {}
     # for filename, file_contents in files_list:
