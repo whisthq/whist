@@ -41,7 +41,7 @@ static void sdl_init_video_device(SDLFrontendContext* context) {
     bool allow_metal_texture_sharing = true;
 
     if (ARCH_IS(ARCH_ARM_64) && !FIX_M1_FREEZE_WITH_LOCK) {
-        allow_metal_texture_sharing = false;
+        // allow_metal_texture_sharing = false;
     }
 
     if (allow_metal_texture_sharing && !strcmp(context->render_driver_name, "metal")) {

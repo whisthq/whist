@@ -694,12 +694,12 @@ static bool udp_update(void* raw_context) {
     bool received_packet;
 
     if (context->dedicated_recv == false) {
-        whist_lock_mutex(context->recv_mutex);
-        // fprintf(stderr, "not using dedicated recv thread!!\n");
+        // whist_lock_mutex(context->recv_mutex);
+        //  fprintf(stderr, "not using dedicated recv thread!!\n");
         udp_packet_p = (UDPPacket*)malloc(sizeof(UDPPacket));
         received_packet =
             udp_get_udp_packet(context, udp_packet_p, &arrival_time, &network_payload_size, NULL);
-        whist_unlock_mutex(context->recv_mutex);
+        // whist_unlock_mutex(context->recv_mutex);
     } else {
         // fprintf(stderr,"wanted!!\n");
         received_packet =
@@ -1921,9 +1921,9 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
     while ((size_total = context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() +
                          context->recv_queue[VIDEO_RECV_QUEUE]->size()) == 0) {
         // fprintf(stderr,"<cnt=%d>\n",cnt);
-        bool succ = whist_timedwait_cond(context->recv_cond, context->recv_mutex, 2);
-        // bool succ= true;
-        // whist_wait_cond(context->recv_cond,context->recv_mutex);
+        // bool succ = whist_timedwait_cond(context->recv_cond, context->recv_mutex, 5);
+        bool succ = true;
+        whist_wait_cond(context->recv_cond, context->recv_mutex);
         if (succ == false) {
             whist_unlock_mutex(context->recv_mutex);
             return false;
