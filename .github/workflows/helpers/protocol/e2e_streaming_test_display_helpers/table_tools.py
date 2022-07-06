@@ -198,12 +198,13 @@ def generate_results_table(
 
                 writer = MarkdownTableWriter(
                     # table_name="Interesting metrics",
-                    headers=["Metric", "Entries", "Average"],
+                    headers=["Metric", "Entries", "Average", "Plots"],
                     value_matrix=[
                         [
                             k,
                             metrics[k]["entries"],
                             f"{metrics[k]['avg']:.3f}",
+                            metrics[k]["plots"],
                         ]
                         for k in metrics
                     ],
@@ -305,6 +306,7 @@ def generate_comparison_table(
                         "Average (this branch)",
                         "Delta",
                         "",
+                        "Plots",
                     ],
                     value_matrix=[i for i in entries],
                     margin=1,  # add a whitespace for both sides of each cell

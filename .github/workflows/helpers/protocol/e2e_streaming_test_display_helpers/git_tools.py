@@ -9,6 +9,11 @@ from github import Github, InputFileContent
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
+def get_gist_username(github_gist_token):
+    client = Github(github_gist_token)
+    return client.get_user().login
+
+
 def initialize_github_gist_post(github_gist_token, title):
     """
     Create a secret Github Gist for the E2E results. Initialize the Gist's description

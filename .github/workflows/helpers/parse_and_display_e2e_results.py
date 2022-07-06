@@ -25,12 +25,14 @@ from protocol.e2e_streaming_test_display_helpers.logs_tools import (
 from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
     extract_metrics,
     generate_plots,
+    add_plot_links,
 )
 
 from protocol.e2e_streaming_test_display_helpers.git_tools import (
     initialize_github_gist_post,
     update_github_gist_post,
     associate_branch_to_open_pr,
+    get_gist_username,
 )
 
 
@@ -149,6 +151,7 @@ if __name__ == "__main__":
     github_token = os.environ["GITHUB_TOKEN"]
     github_run_id = os.environ.get("GITHUB_RUN_ID")
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
+    gist_username = get_gist_username(github_gist_token)
 
     current_branch_name = ""
     # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable
@@ -194,12 +197,20 @@ if __name__ == "__main__":
             print("Error: protocol logs not found!")
             sys.exit(-1)
 
+    # Initialize the plots folder
+    plots_folder = "plots"
+    os.makedirs(plots_folder)
+
+    # Initialize the Gist post
+    title = "Protocol End-to-End Streaming Test Results"
+    github_repo = "whisthq/whist"
+    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
+    gist = initialize_github_gist_post(github_gist_token, title)
+
     ################################################# 1. Extract data from logs ###################################################
 
     print("Found E2E logs for the following experiments: ")
     experiments = []
-    plots_folder = "plots"
-    os.makedirs(plots_folder)
     for i, log_dir in enumerate(logs_root_dirs):
 
         client_log_file = os.path.join(log_dir, "client", "client.log")
@@ -225,14 +236,23 @@ if __name__ == "__main__":
         else:
             client_metrics, server_metrics = extract_metrics(client_log_file, server_log_file)
             # Generate all the metrics' plots
+            plots_name_prefix = f"plot_experiment{i+1}"
             for role in ("client", "server"):
                 plot_data_filename = os.path.join(log_dir, role, "plot_data.json")
                 generate_plots(
                     plot_data_filename,
                     destination_folder=plots_folder,
-                    name_prefix=f"plot_experiment{i+1}:{role}",
+                    name_prefix=f"{plots_name_prefix}:{role}",
                     verbose=False,
                 )
+            client_metrics, server_metrics = add_plot_links(
+                client_metrics,
+                server_metrics,
+                plots_folder,
+                plots_name_prefix,
+                gist_username,
+                gist.id,
+            )
 
         experiment_entry = {
             "experiment_metadata": experiment_metadata,
@@ -270,12 +290,15 @@ if __name__ == "__main__":
         experiments.append(experiment_entry)
         print("\t+ Failed/skipped experiment with no logs")
 
-    print("Created the following plots:")
+    # Keep track of plot files that were created
     plot_files = [
         p for p in os.listdir(plots_folder) if os.path.isfile(os.path.join(plots_folder, p))
     ]
-    for filename in plot_files:
-        print(filename)
+    if verbose:
+        print("Created the following plots:")
+        for filename in plot_files:
+            print(filename)
+
     ################################################# 2. Generate result tables ###################################################
 
     for i, compared_branch_name in enumerate(compared_branch_names):
@@ -409,19 +432,7 @@ if __name__ == "__main__":
 
     ################################################# 3. Post results to Slack/GitHub ###################################################
 
-    # Get updated start time (accounting for timezone)
-    if (
-        "experiment_metadata" in experiments[0]
-        and "start_time" in experiments[0]["experiment_metadata"]
-    ):
-        test_start_time = experiments[0]["experiment_metadata"]["start_time"]
-
-    # Initialize the Gist post
-    title = f"Protocol End-to-End Streaming Test Results - {test_start_time}"
-    github_repo = "whisthq/whist"
-    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
-    gist = initialize_github_gist_post(github_gist_token, title)
-
+    # Update Github Gist with all the results
     # Create one file for each branch
     md_files = glob.glob("e2e_report_*.md")
     files_list = [os.path.join(".", "plots", f) for f in plot_files]
@@ -432,11 +443,12 @@ if __name__ == "__main__":
             contents = f.read()
             merged_files += contents
 
-    # Update Gist with all the files
+    # Upload plots and results summaries
     print("\nUploading performance results and plots to Gist...")
     update_github_gist_post(github_gist_token, gist.id, files_list, verbose)
     print(f"\nPosted performance results to secret gist: {gist.html_url}")
 
+    # Check for and report errors
     success_outcome = ":white_check_mark: All experiments succeeded!"
     test_outcome = success_outcome
     error_index = 0

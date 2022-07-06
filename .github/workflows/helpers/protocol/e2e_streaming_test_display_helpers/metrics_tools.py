@@ -227,6 +227,7 @@ def generate_comparison_entries(
                     emoji_delta = "✅"
 
             new_entry.append(emoji_delta)
+            new_entry.append(dictionary[k]["plots"])
             new_table_entries.append(new_entry)
         table_entries.append(new_table_entries)
 
@@ -272,3 +273,26 @@ def generate_plots(plot_data_filename, destination_folder, name_prefix, verbose=
                 plot_metric(
                     k, destination_folder, name_prefix, trimmed_plot=trimmed_plot, verbose=verbose
                 )
+
+
+def add_plot_links(
+    client_metrics, server_metrics, plots_folder, plots_name_prefix, git_username, gist_id
+):
+    def generate_plot_links(role, metric_key_name, git_username, gist_id):
+        plot_links = []
+        for plot_type in [("Full", ""), ("Trimmed", "_trimmed")]:
+            readable_type, suffix_type = plot_type
+            plot_name = f"{plots_name_prefix}:{role}:{metric_key_name}{suffix_type}.png"
+            if os.path.isfile(os.path.join(plots_folder, plot_name)):
+                plot_link = (
+                    f"https://gist.githubusercontent.com/{git_username}/{gist_id}/raw/{plot_name}"
+                )
+                plot_links.append(f"[{readable_type}]({plot_link})")
+        return ", ".join(plot_links)
+
+    for metrics_tuples in (("client", client_metrics), ("server", server_metrics)):
+        role, metrics_dictionary = metrics_tuples
+        for k in metrics_dictionary:
+            metrics_dictionary[k]["plots"] = generate_plot_links(role, k, git_username, gist_id)
+
+    return client_metrics, server_metrics
