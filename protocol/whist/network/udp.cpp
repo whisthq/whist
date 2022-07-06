@@ -180,12 +180,15 @@ class RecvQueue {
     // the real queue structure, a deque
     std::deque<RecvQueueData*> q;
 
-    // the sums of recv_len of all items, only for debug/plotting
-    std::atomic<int> bytes_len_;
-
     // capacity of the queue, oldest item will be kicked if exceed cacacity
     // 0 means unlimited
     int capacity;
+
+    // the sums of recv_len of all items, only for debug/plotting
+    std::atomic<int> bytes_len_;
+
+    // cached value of q.size() to allow safe lock free access
+    std::atomic<int> size_;
 
    public:
     RecvQueue() {
@@ -205,6 +208,8 @@ class RecvQueue {
         while (capacity != 0 && (int)q.size() > capacity) {
             pop();
         }
+
+        size_ = (int)q.size();
     }
     RecvQueueData* pop() {
         FATAL_ASSERT(!q.empty());
@@ -217,6 +222,8 @@ class RecvQueue {
             whist_plotter_insert_sample("packet_delay", get_timestamp_sec(),
                                         (current_time_us() - ret->arrival_time) / 1000.0);
         }
+
+        size_ = (int)q.size();
         return ret;
     }
 
@@ -224,7 +231,7 @@ class RecvQueue {
     // get the total bytes inside queue
     int bytes_len() { return bytes_len_; }
     // get the num of items/packets inside queue
-    int size() { return int(q.size()); }
+    int size() { return size_; }
 };
 
 enum { NON_VIDEO_RECV_QUEUE = 0, VIDEO_RECV_QUEUE, NUM_RECV_QUEUES };
@@ -1780,10 +1787,8 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
     // Wait to receive a packet over UDP, until timing out
     UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
-    // fprintf(stderr,"<%d>\n",context->socket);
 
     static double last_time_after_recv = 0;
-
     if (PLOT_UDP_RECV_GAP) {
         double current_time = get_timestamp_sec();
         double gap = current_time - last_time_after_recv;
@@ -1904,6 +1909,7 @@ void udp_dedicated_recv_init(void* raw_context) {
 
     context->dedicated_recv = true;
 
+    // change the timeout to 2ms to reduce wake, hopefully this doesn't have negative effect
     set_timeout(context->socket, 2);
 
     FATAL_ASSERT(context->dedicated_recv == true);
@@ -1912,11 +1918,15 @@ void udp_dedicated_recv_iterate(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
     FATAL_ASSERT(context->dedicated_recv == true);
 
+    // TODO: this malloc can be eliminated.
+    // but it doesn't seem to affect performance much
     RecvQueueData* recv_data = (RecvQueueData*)malloc(sizeof(RecvQueueData));
 
     bool got_packet = udp_get_udp_packet(context, &recv_data->udp_packet, &recv_data->arrival_time,
                                          &recv_data->network_payload_size, &recv_data->recv_len);
     if (!got_packet) {
+        // wake the udp sync thread after timeout.
+        // this is not optimal, but as a workaround of whist_timedwait_cond not working well
         whist_signal_cond(context->recv_cond);
         return;
     }
@@ -1930,30 +1940,18 @@ void udp_dedicated_recv_iterate(void* raw_context) {
     }
     whist_unlock_mutex(context->recv_mutex);
     whist_signal_cond(context->recv_cond);
-
-    // whist_broadcast_cond(context->recv_cond);
-    // whist_signal_cond(context->recv_cond);
-    //  whist_post_semaphore(context->recv_sem);
 }
 
 static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packet,
                                       timestamp_us* arrival_time, int* network_payload_size) {
     RecvQueueData* recv_data;
 
-    /*
-    bool succ = whist_wait_timeout_semaphore(context->recv_sem, 1 ); // 1ms
-
-    if (!succ) {
-        return false;
-    }*/
-
     int size_total = 0;
     whist_lock_mutex(context->recv_mutex);
     int cnt = 0;
     while ((size_total = context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() +
                          context->recv_queue[VIDEO_RECV_QUEUE]->size()) == 0) {
-        // fprintf(stderr,"<cnt=%d>\n",cnt);
-        // the timedwait failed after long running, I don't know why
+        // the timedwait_cond failed after long running, I don't know why
         // Failure waiting on condition variable: -1 pthread_cond_timedwait() failed
         // bool succ = whist_timedwait_cond(context->recv_cond, context->recv_mutex, 1);
 
@@ -1965,6 +1963,7 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
         }
         cnt++;
     }
+
     if (context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() > 0) {
         recv_data = context->recv_queue[NON_VIDEO_RECV_QUEUE]->pop();
     } else {

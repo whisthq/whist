@@ -223,14 +223,26 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
 size_t udp_packet_max_size(void);
 
+// switch to decicated_recv mode
 void udp_dedicated_recv_init(void* raw_context);
 
+// after switched to deciated_recv mode, then this function will be called from another thread
+// repetively to do the recv
 void udp_dedicated_recv_iterate(void* raw_context);
 
+/*
+ ===============================
+  below 3 functions are only for debug/plotting
+ ===============================
+ */
+
+// get the len of queued data in socket, unit: bytes
 int udp_get_socket_queue_len(void* raw_context);
 
+// get the len of queued data in RecvQueues, unit: bytes
 int udp_get_user_queue_len(void* raw_context);
 
+// get the num of queued items RecvQueues
 int udp_get_user_queue_size(void* raw_context);
 /*
 ============================
