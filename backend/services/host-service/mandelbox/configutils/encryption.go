@@ -30,7 +30,7 @@ func EncryptAES256GCM(password string, data []byte) ([]byte, error) {
 	// Generate a random salt to use for key generation
 	salt, err := generateRandomBytes(defaultSaltLength)
 	if err != nil {
-		return nil, utils.MakeError("could not generate salt: %v", err)
+		return nil, utils.MakeError("could not generate salt: %s", err)
 	}
 
 	// We need to generate a cryptographically secure key from the password
@@ -38,18 +38,18 @@ func EncryptAES256GCM(password string, data []byte) ([]byte, error) {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, utils.MakeError("could not create aes cipher block: %v", err)
+		return nil, utils.MakeError("could not create aes cipher block: %s", err)
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, utils.MakeError("could not create gcm cipher mode: %v", err)
+		return nil, utils.MakeError("could not create gcm cipher mode: %s", err)
 	}
 
 	// Generate a random nonce to use for encryption
 	nonce, err := generateRandomBytes(gcm.NonceSize())
 	if err != nil {
-		return nil, utils.MakeError("could not generate nonce: %v", err)
+		return nil, utils.MakeError("could not generate nonce: %s", err)
 	}
 
 	// We want to store the salt and nonce as a prefix to the encrypted data
@@ -70,7 +70,7 @@ func DecryptAES256GCM(password string, data []byte) ([]byte, error) {
 	// Extract the salt and nonce from the encrypted data
 	salt, nonce, encryptedData, err := getSaltNonceAndDataFromEncryptedFile(data, defaultSaltLength, aes256GCMNonceLength)
 	if err != nil {
-		return nil, utils.MakeError("could not extract salt and nonce from encrypted data: %v", err)
+		return nil, utils.MakeError("could not extract salt and nonce from encrypted data: %s", err)
 	}
 
 	// Generate the encryption key used from the password and salt
@@ -78,17 +78,17 @@ func DecryptAES256GCM(password string, data []byte) ([]byte, error) {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, utils.MakeError("could not create aes cipher block: %v", err)
+		return nil, utils.MakeError("could not create aes cipher block: %s", err)
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, utils.MakeError("could not create gcm cipher mode: %v", err)
+		return nil, utils.MakeError("could not create gcm cipher mode: %s", err)
 	}
 
 	decryptedData, err := gcm.Open(nil, nonce, encryptedData, nil)
 	if err != nil {
-		return nil, utils.MakeError("could not decrypt data: %v", err)
+		return nil, utils.MakeError("could not decrypt data: %s", err)
 	}
 
 	return decryptedData, nil
@@ -139,7 +139,7 @@ func generateKeyFromPasswordAndSalt(password string, salt []byte, length uint32)
 func generateRandomBytes(length int) ([]byte, error) {
 	randomData := make([]byte, length)
 	if _, err := io.ReadFull(rand.Reader, randomData); err != nil {
-		return nil, utils.MakeError("could not generate random bytes: %v", err)
+		return nil, utils.MakeError("could not generate random bytes: %s", err)
 	}
 	return randomData, nil
 }

@@ -25,10 +25,10 @@ func ExtractTarLz4(file []byte, dir string) (int64, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			if err := os.MkdirAll(dir, 0755); err != nil {
-				return 0, utils.MakeError("failed to create directory %s: %v", dir, err)
+				return 0, utils.MakeError("failed to create directory %s: %s", dir, err)
 			}
 		} else {
-			return 0, utils.MakeError("failed to stat directory %s: %v", dir, err)
+			return 0, utils.MakeError("failed to stat directory %s: %s", dir, err)
 		}
 	}
 
@@ -51,7 +51,7 @@ func ExtractTarLz4(file []byte, dir string) (int64, error) {
 			if err == io.EOF {
 				break
 			}
-			return totalBytes, utils.MakeError("error reading tar header: %v", err)
+			return totalBytes, utils.MakeError("error reading tar header: %s", err)
 		}
 
 		// This really should not happen
@@ -73,7 +73,7 @@ func ExtractTarLz4(file []byte, dir string) (int64, error) {
 		// Create directory if it doesn't exist, otherwise go next
 		if info.IsDir() {
 			if err = os.MkdirAll(path, info.Mode()); err != nil {
-				return totalBytes, utils.MakeError("error creating directory: %v", err)
+				return totalBytes, utils.MakeError("error creating directory: %s", err)
 			}
 			continue
 		}
@@ -81,13 +81,13 @@ func ExtractTarLz4(file []byte, dir string) (int64, error) {
 		// Create file and copy contents
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
-			return totalBytes, utils.MakeError("error opening file: %v", err)
+			return totalBytes, utils.MakeError("error opening file: %s", err)
 		}
 
 		numBytes, err := io.Copy(file, tarReader)
 		if err != nil {
 			file.Close()
-			return totalBytes, utils.MakeError("error copying data to file: %v", err)
+			return totalBytes, utils.MakeError("error copying data to file: %s", err)
 		}
 
 		totalBytes += numBytes
@@ -95,7 +95,7 @@ func ExtractTarLz4(file []byte, dir string) (int64, error) {
 		// Manually close file instead of defer otherwise files are only
 		// closed when ALL files are done unpacking
 		if err := file.Close(); err != nil {
-			logger.Warningf("Failed to close file %s: %v", path, err)
+			logger.Warningf("Failed to close file %s: %s", path, err)
 		}
 	}
 
@@ -110,7 +110,7 @@ func CompressTarLz4(dir string) ([]byte, error) {
 		if os.IsNotExist(err) {
 			return nil, utils.MakeError("directory %s does not exist", dir)
 		}
-		return nil, utils.MakeError("failed to stat directory %s: %v", dir, err)
+		return nil, utils.MakeError("failed to stat directory %s: %s", dir, err)
 	}
 	if !info.IsDir() {
 		return nil, utils.MakeError("%s is not a directory", dir)
@@ -128,13 +128,13 @@ func CompressTarLz4(dir string) ([]byte, error) {
 	// Walk the directory and add all files to the tar
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return utils.MakeError("error walking directory: %v", err)
+			return utils.MakeError("error walking directory: %s", err)
 		}
 
 		// Create header for the file
 		header, err := tar.FileInfoHeader(info, info.Name())
 		if err != nil {
-			return utils.MakeError("error creating tar header for file %s: %v", path, err)
+			return utils.MakeError("error creating tar header for file %s: %s", path, err)
 		}
 
 		// Convert the path to a relative path from the base directory.
@@ -144,13 +144,13 @@ func CompressTarLz4(dir string) ([]byte, error) {
 		// See: https://pkg.go.dev/archive/tar#FileInfoHeader
 		relPath, err := filepath.Rel(dir, path)
 		if err != nil {
-			return utils.MakeError("error converting path %s to relative path: %v", path, err)
+			return utils.MakeError("error converting path %s to relative path: %s", path, err)
 		}
 		header.Name = relPath
 
 		// Write the header to the tar
 		if err := tarWriter.WriteHeader(header); err != nil {
-			return utils.MakeError("error writing tar header for file %s: %v", path, err)
+			return utils.MakeError("error writing tar header for file %s: %s", path, err)
 		}
 
 		// Skip directories and symlinks since there is no data to tar
@@ -162,24 +162,24 @@ func CompressTarLz4(dir string) ([]byte, error) {
 		// Open the file and copy its contents to the tar
 		file, err := os.Open(path)
 		if err != nil {
-			return utils.MakeError("error opening file %s: %v", path, err)
+			return utils.MakeError("error opening file %s: %s", path, err)
 		}
 
 		if _, err := io.Copy(tarWriter, file); err != nil {
 			file.Close()
-			return utils.MakeError("error copying data from file %s: %v", path, err)
+			return utils.MakeError("error copying data from file %s: %s", path, err)
 		}
 
 		// Manually close file instead of defer otherwise files are only
 		// closed when ALL files are done packing
 		if err := file.Close(); err != nil {
-			logger.Warningf("Failed to close file %s: %v", path, err)
+			logger.Warningf("Failed to close file %s: %s", path, err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, utils.MakeError("error tarring directory: %v", err)
+		return nil, utils.MakeError("error tarring directory: %s", err)
 	}
 
 	// Close writers manually instead of defer to ensure that all
@@ -196,7 +196,7 @@ func SetupTestDir(testDir string) error {
 	for i := 0; i < 300; i++ {
 		tempDir := path.Join(testDir, utils.Sprintf("dir%d", i))
 		if err := os.Mkdir(tempDir, 0777); err != nil {
-			return utils.MakeError("failed to create temp dir %s: %v", tempDir, err)
+			return utils.MakeError("failed to create temp dir %s: %s", tempDir, err)
 		}
 
 		for j := 0; j < 3; j++ {
@@ -204,7 +204,7 @@ func SetupTestDir(testDir string) error {
 			fileContents := utils.Sprintf("This is file %d in directory %d.", j, i)
 			err := os.WriteFile(filePath, []byte(fileContents), 0777)
 			if err != nil {
-				return utils.MakeError("failed to write to file %s: %v", filePath, err)
+				return utils.MakeError("failed to write to file %s: %s", filePath, err)
 			}
 		}
 	}
@@ -212,13 +212,13 @@ func SetupTestDir(testDir string) error {
 	// Write a nested directory with files inside
 	nestedDir := path.Join(testDir, "dir10", "nested")
 	if err := os.Mkdir(nestedDir, 0777); err != nil {
-		return utils.MakeError("failed to create nested dir %s: %v", nestedDir, err)
+		return utils.MakeError("failed to create nested dir %s: %s", nestedDir, err)
 	}
 	nestedFile := path.Join(nestedDir, "nested-file.txt")
 	fileContents := utils.Sprintf("This is a nested file.")
 	err := os.WriteFile(nestedFile, []byte(fileContents), 0777)
 	if err != nil {
-		return utils.MakeError("failed to write to file %s: %v", nestedFile, err)
+		return utils.MakeError("failed to write to file %s: %s", nestedFile, err)
 	}
 
 	// Write some files not in a directory
@@ -227,7 +227,7 @@ func SetupTestDir(testDir string) error {
 		fileContents := utils.Sprintf("This is file %d in directory %s.", i, "none")
 		err := os.WriteFile(filePath, []byte(fileContents), 0777)
 		if err != nil {
-			return utils.MakeError("failed to write to file %s: %v", filePath, err)
+			return utils.MakeError("failed to write to file %s: %s", filePath, err)
 		}
 	}
 
@@ -244,19 +244,19 @@ func ValidateDirectoryContents(oldDir, newDir string) error {
 
 		relativePath, err := filepath.Rel(oldDir, filePath)
 		if err != nil {
-			return utils.MakeError("error getting relative path for %s: %v", filePath, err)
+			return utils.MakeError("error getting relative path for %s: %s", filePath, err)
 		}
 
 		newFilePath := filepath.Join(newDir, relativePath)
 		matchingFile, err := os.Open(newFilePath)
 		if err != nil {
-			return utils.MakeError("error opening matching file %s: %v", newFilePath, err)
+			return utils.MakeError("error opening matching file %s: %s", newFilePath, err)
 		}
 		defer matchingFile.Close()
 
 		matchingFileInfo, err := matchingFile.Stat()
 		if err != nil {
-			return utils.MakeError("error reading stat for file: %s: %v", newFilePath, err)
+			return utils.MakeError("error reading stat for file: %s: %s", newFilePath, err)
 		}
 
 		// If one is a directory, both should be
@@ -267,13 +267,13 @@ func ValidateDirectoryContents(oldDir, newDir string) error {
 		} else {
 			testFileContents, err := ioutil.ReadFile(filePath)
 			if err != nil {
-				return utils.MakeError("error reading test file %s: %v", filePath, err)
+				return utils.MakeError("error reading test file %s: %s", filePath, err)
 			}
 
 			matchingFileBuf := bytes.NewBuffer(nil)
 			_, err = matchingFileBuf.ReadFrom(matchingFile)
 			if err != nil {
-				return utils.MakeError("error reading matching file %s: %v", newFilePath, err)
+				return utils.MakeError("error reading matching file %s: %s", newFilePath, err)
 			}
 
 			// Check contents match
@@ -290,13 +290,13 @@ func ValidateDirectoryContents(oldDir, newDir string) error {
 func inflateGzip(w io.Writer, data []byte) error {
 	gr, err := gzip.NewReader(bytes.NewBuffer(data))
 	if err != nil {
-		return utils.MakeError("Couldn't create gzip reader: %s", err)
+		return utils.MakeError("couldn't create gzip reader: %s", err)
 	}
 	defer gr.Close()
 
 	data, err = ioutil.ReadAll(gr)
 	if err != nil {
-		return utils.MakeError("Couldn't extract inflated string from gzip reader: %s", err)
+		return utils.MakeError("couldn't extract inflated string from gzip reader: %s", err)
 	}
 
 	w.Write(data)
@@ -308,12 +308,12 @@ func inflateGzip(w io.Writer, data []byte) error {
 func deflateGzip(w io.Writer, data []byte) error {
 	gw, err := gzip.NewWriterLevel(w, gzip.BestCompression)
 	if err != nil {
-		return utils.MakeError("Couldn't create gzip writer: %s", err)
+		return utils.MakeError("couldn't create gzip writer: %s", err)
 	}
 	defer gw.Close()
 
 	if err != nil {
-		return utils.MakeError("Couldn't write deflated string to gzip writer: %s", err)
+		return utils.MakeError("couldn't write deflated string to gzip writer: %s", err)
 	}
 
 	gw.Write(data)
@@ -326,12 +326,12 @@ func GzipInflateString(compressedGzipString string) (string, error) {
 	if len(compressedGzipString) > 0 {
 		base64DecodedData, err := base64.StdEncoding.DecodeString(compressedGzipString)
 		if err != nil {
-			return "", utils.MakeError("Couldn't decode received string: %s", err)
+			return "", utils.MakeError("couldn't decode received string: %s", err)
 		}
 		var gzipDecodedDataBuffer bytes.Buffer
 		err = inflateGzip(&gzipDecodedDataBuffer, base64DecodedData)
 		if err != nil {
-			return "", utils.MakeError("Couldn't inflate decoded string: %s", err)
+			return "", utils.MakeError("couldn't inflate decoded string: %s", err)
 		}
 		return gzipDecodedDataBuffer.String(), nil
 	} else {
@@ -345,7 +345,7 @@ func GzipDeflateString(plaintextString string) (string, error) {
 		var gzipBinaryBuffer bytes.Buffer
 		err := deflateGzip(&gzipBinaryBuffer, []byte(plaintextString))
 		if err != nil {
-			return "", utils.MakeError("Couldn't deflate string to be compressed: %s", err)
+			return "", utils.MakeError("couldn't deflate string to be compressed: %s", err)
 		}
 		base64EncodedData := base64.StdEncoding.EncodeToString(gzipBinaryBuffer.Bytes())
 		return base64EncodedData, nil

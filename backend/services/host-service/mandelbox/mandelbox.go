@@ -171,7 +171,10 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		mandelboxDieChan:     mandelboxDieChan,
 	}
 
-	mandelbox.createResourceMappingDir()
+	err := mandelbox.createResourceMappingDir()
+	if err != nil {
+		logger.Errorf("Couldn't create mandelbox resource mapping directory: %s", err)
+	}
 
 	trackMandelbox(mandelbox)
 
@@ -407,7 +410,7 @@ func (mandelbox *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portb
 		}
 	}
 
-	return 0, utils.MakeError("Couldn't GetHostPort(%v, %v) for mandelbox with MandelboxID %s", mandelboxPort, protocol, mandelbox.GetID())
+	return 0, utils.MakeError("couldn't GetHostPort(%v, %v) for mandelbox with MandelboxID %s", mandelboxPort, protocol, mandelbox.GetID())
 }
 
 // GetIdentifyingHostPort returns the assigned host port for TCP 32262.
@@ -460,7 +463,7 @@ func (mandelbox *mandelboxData) GetTTY() ttys.TTY {
 // RegisterCreation registers a Docker container ID to the mandelbox.
 func (mandelbox *mandelboxData) RegisterCreation(d types.DockerID) error {
 	if len(d) == 0 {
-		return utils.MakeError("RegisterCreation: can't register mandelbox %s with empty docker ID", mandelbox.GetUserID())
+		return utils.MakeError("can't register mandelbox %s with empty docker ID", mandelbox.GetUserID())
 	}
 
 	mandelbox.rwlock.Lock()
@@ -473,7 +476,7 @@ func (mandelbox *mandelboxData) RegisterCreation(d types.DockerID) error {
 // SetAppName tries to set the app name for the mandelbox.
 func (mandelbox *mandelboxData) SetAppName(name types.AppName) error {
 	if len(name) == 0 {
-		return utils.MakeError("SetAppName: can't set mandelbox app name to empty for mandelboxID: %s", mandelbox.GetUserID())
+		return utils.MakeError("can't set mandelbox app name to empty for mandelboxID: %s", mandelbox.GetUserID())
 	}
 
 	mandelbox.rwlock.Lock()

@@ -46,7 +46,7 @@ func LookUpByDockerID(DockerID types.DockerID) (Mandelbox, error) {
 			return mandelbox, nil
 		}
 	}
-	return nil, utils.MakeError("Couldn't find Mandelbox with DockerID %s", DockerID)
+	return nil, utils.MakeError("none of the tracked mandelboxes has the docker id %s", DockerID)
 }
 
 // LookUpByMandelboxID finds a mandelbox by its Mandelbox ID.
@@ -58,7 +58,7 @@ func LookUpByMandelboxID(mandelboxID types.MandelboxID) (Mandelbox, error) {
 	if _, ok := tracker[mandelboxID]; ok {
 		return tracker[mandelboxID], nil
 	}
-	return nil, utils.MakeError("Couldn't find Mandelbox with MandelboxID %s", mandelboxID)
+	return nil, utils.MakeError("mandelbox %s is not tracked", mandelboxID)
 }
 
 // GetMandelboxCount gets the current number of waiting mandelboxes running on the instance.

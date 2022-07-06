@@ -42,7 +42,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 
 	pgxConfig, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
-		return utils.MakeError("Unable to parse database connection string! Error: %s", err)
+		return utils.MakeError("Unable to parse database connection string: %s", err)
 	}
 
 	// TODO: investigate and optimize the pgxConfig settings

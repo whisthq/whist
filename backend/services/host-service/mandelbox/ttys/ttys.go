@@ -53,7 +53,7 @@ func Allocate() (TTY, error) {
 		}
 	}
 	if tty == TTY(0) {
-		return TTY(0), utils.MakeError("Tried %v times to allocate a TTY. Breaking out to avoid spinning for too long. Number of currently-allocated TTYs: %v", maxTries, len(ttymap))
+		return TTY(0), utils.MakeError("Tried %d times to allocate a TTY. Breaking out to avoid spinning for too long. Number of currently-allocated TTYs: %d", maxTries, len(ttymap))
 	}
 
 	// Mark it as allocated and return

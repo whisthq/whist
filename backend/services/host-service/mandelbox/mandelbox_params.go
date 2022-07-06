@@ -16,7 +16,7 @@ func (mandelbox *mandelboxData) WriteMandelboxParams() error {
 	// Write identifying host port
 	p, err := mandelbox.GetIdentifyingHostPort()
 	if err != nil {
-		return utils.MakeError("Couldn't write mandelbox params: %s", err)
+		return utils.MakeError("couldn't write mandelbox params: %s", err)
 	}
 	if err = mandelbox.writeResourceMappingToFile("hostPort_for_my_32262_tcp", utils.Sprintf("%d", p)); err != nil {
 		// Don't need to wrap err here because it already contains the relevant info
@@ -81,7 +81,7 @@ func (mandelbox *mandelboxData) getResourceMappingDir() string {
 func (mandelbox *mandelboxData) createResourceMappingDir() error {
 	err := os.MkdirAll(mandelbox.getResourceMappingDir(), 0777)
 	if err != nil {
-		return utils.MakeError("Failed to create dir %s. Error: %s", mandelbox.getResourceMappingDir(), err)
+		return utils.MakeError("failed to create dir %s: %s", mandelbox.getResourceMappingDir(), err)
 	}
 	return nil
 }
@@ -89,31 +89,31 @@ func (mandelbox *mandelboxData) createResourceMappingDir() error {
 func (mandelbox *mandelboxData) cleanResourceMappingDir() {
 	err := os.RemoveAll(mandelbox.getResourceMappingDir())
 	if err != nil {
-		logger.Errorf("Failed to remove dir %s. Error: %s", mandelbox.getResourceMappingDir(), err)
+		logger.Errorf("Failed to remove dir %s: %s", mandelbox.getResourceMappingDir(), err)
 	}
 }
 
 func (mandelbox *mandelboxData) writeResourceMappingToFile(filename, data string) (err error) {
 	file, err := os.OpenFile(path.Join(mandelbox.getResourceMappingDir(), filename), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
 	if err != nil {
-		return utils.MakeError("Unable to create file %s to store resource assignment. Error: %v", filename, err)
+		return utils.MakeError("unable to create file %s to store resource assignment: %s", filename, err)
 	}
 	// Instead of deferring the close() and sync() of the file, as is
 	// conventional, we do it at the end of the function to avoid some annoying
 	// linter errors
 	_, err = file.WriteString(data)
 	if err != nil {
-		return utils.MakeError("Couldn't write assignment with data %s to file %s. Error: %v", data, filename, err)
+		return utils.MakeError("couldn't write assignment with data %s to file %s: %s", data, filename, err)
 	}
 
 	err = file.Sync()
 	if err != nil {
-		return utils.MakeError("Couldn't sync file %s. Error: %v", filename, err)
+		return utils.MakeError("couldn't sync file %s: %v", filename, err)
 	}
 
 	err = file.Close()
 	if err != nil {
-		return utils.MakeError("Couldn't close file %s. Error: %v", filename, err)
+		return utils.MakeError("couldn't close file %s: %v", filename, err)
 	}
 
 	logger.Infof("Wrote data \"%s\" to file %s\n", data, filename)

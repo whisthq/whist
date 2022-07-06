@@ -86,7 +86,7 @@ var portMapsLock = new(sync.Mutex)
 func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 	mapToUse, err := getProtocolSpecificHostPortMap(desiredBind.Protocol)
 	if err != nil {
-		return PortBinding{}, utils.MakeError("allocateSinglePort failed. Error: %s", err)
+		return PortBinding{}, utils.MakeError("allocateSinglePort failed: %s", err)
 	}
 
 	// If the given HostPort is nonzero, we want to use that one specifically.
@@ -119,7 +119,7 @@ func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 		}
 	}
 	if randomPort == uint16(0) {
-		return PortBinding{}, utils.MakeError("Tried %v times to allocate a host port for mandelbox port %v/%v. Breaking out to avoid spinning for too long.", maxTries, desiredBind.HostPort, desiredBind.Protocol)
+		return PortBinding{}, utils.MakeError("tried %d times to allocate a host port for mandelbox port %v/%v. Breaking out to avoid spinning for too long.", maxTries, desiredBind.HostPort, desiredBind.Protocol)
 	}
 
 	// Mark it as allocated and return
@@ -138,7 +138,7 @@ func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 func freeSinglePort(bind PortBinding) {
 	mapToUse, err := getProtocolSpecificHostPortMap(bind.Protocol)
 	if err != nil {
-		logger.Errorf("FreePortBindings: failed for bind %v. Error: %s", bind, err)
+		logger.Errorf("FreePortBindings: failed for bind %v: %s", bind, err)
 		return
 	}
 

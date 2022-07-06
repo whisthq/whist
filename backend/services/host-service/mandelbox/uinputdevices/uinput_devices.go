@@ -48,7 +48,7 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 
 	absmouse, err = uinput.CreateTouchPad("/dev/uinput", []byte("Whist Virtual Absolute Input"), 0, 0xFFF, 0, 0xFFF)
 	if err != nil {
-		reterr = utils.MakeError("Could not create virtual absolute input: %s", reterr)
+		reterr = utils.MakeError("could not create virtual absolute input: %s", reterr)
 		return
 	}
 	defer func() {
@@ -59,13 +59,13 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 
 	absmousePath, err = getDeviceFilePath(absmouse.DeviceFile())
 	if err != nil {
-		reterr = utils.MakeError("Failed to get device path for virtual absolute input: %s", err)
+		reterr = utils.MakeError("failed to get device path for virtual absolute input: %s", err)
 		return
 	}
 
 	relmouse, err = uinput.CreateMouse("/dev/uinput", []byte("Whist Virtual Relative Input"))
 	if err != nil {
-		reterr = utils.MakeError("Could not create virtual relative input: %s", err)
+		reterr = utils.MakeError("could not create virtual relative input: %s", err)
 		return
 	}
 	defer func() {
@@ -76,13 +76,13 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 
 	relmousePath, err = getDeviceFilePath(relmouse.DeviceFile())
 	if err != nil {
-		reterr = utils.MakeError("Failed to get device path for virtual relative input: %s", err)
+		reterr = utils.MakeError("failed to get device path for virtual relative input: %s", err)
 		return
 	}
 
 	keyboard, err = uinput.CreateKeyboard("/dev/uinput", []byte("Whist Virtual Keyboard"))
 	if err != nil {
-		reterr = utils.MakeError("Could not create virtual keyboard: %s", err)
+		reterr = utils.MakeError("could not create virtual keyboard: %s", err)
 		return
 	}
 	defer func() {
@@ -93,7 +93,7 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 
 	keyboardPath, err = getDeviceFilePath(keyboard.DeviceFile())
 	if err != nil {
-		reterr = utils.MakeError("Failed to get device path for virtual keyboard: %s", err)
+		reterr = utils.MakeError("failed to get device path for virtual keyboard: %s", err)
 		return
 	}
 
@@ -131,7 +131,7 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.Wai
 
 	dir, err := filepath.Abs(filepath.Dir(socketPath))
 	if err != nil {
-		return utils.MakeError("Unable to calculate parent directory of given socketPath %s. Error: %s", socketPath, err)
+		return utils.MakeError("unable to calculate parent directory of given socketPath %s. Error: %s", socketPath, err)
 	}
 
 	os.MkdirAll(dir, 0777)
@@ -140,7 +140,7 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.Wai
 	var lc net.ListenConfig
 	listener, err := lc.Listen(ctx, "unix", socketPath)
 	if err != nil {
-		return utils.MakeError("Could not create unix socket at %s: %s", socketPath, err)
+		return utils.MakeError("could not create unix socket at %s: %s", socketPath, err)
 	}
 	// Instead of running `defer listener.Close()` we ran `defer cancel()` above,
 	// which will cause the following goroutine to always close `listener`.
@@ -158,13 +158,13 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.Wai
 	// listener.Accept() blocks until the protocol connects
 	client, err := listener.Accept()
 	if err != nil {
-		return utils.MakeError("Could not connect to client over unix socket at %s: %s", socketPath, err)
+		return utils.MakeError("could not connect to client over unix socket at %s: %s", socketPath, err)
 	}
 	defer client.Close()
 
 	connf, err := client.(*net.UnixConn).File()
 	if err != nil {
-		return utils.MakeError("Could not get file corresponding to client connection for unix socket at %s: %s", socketPath, err)
+		return utils.MakeError("could not get file corresponding to client connection for unix socket at %s: %s", socketPath, err)
 	}
 	defer connf.Close()
 
@@ -177,7 +177,7 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.Wai
 	rights := syscall.UnixRights(fds[:]...)
 	err = syscall.Sendmsg(connfd, nil, rights, nil, 0)
 	if err != nil {
-		return utils.MakeError("Error sending uinput file descriptors over socket: %s", err)
+		return utils.MakeError("error sending uinput file descriptors over socket: %s", err)
 	}
 
 	logger.Infof("Sent uinput file descriptors to socket at %s", socketPath)
@@ -201,7 +201,7 @@ func getDeviceFilePath(fd *os.File) (string, error) {
 	}
 	names, err := sysdir.Readdirnames(0)
 	if err != nil {
-		return "", utils.MakeError("Readdirnames for directory %s failed: %s", syspath, err)
+		return "", utils.MakeError("readdirnames for directory %s failed: %s", syspath, err)
 	}
 	for _, name := range names {
 		if strings.HasPrefix(name, "event") {

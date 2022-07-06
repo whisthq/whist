@@ -44,29 +44,29 @@ func RegisterInstance() error {
 
 	publicIP4, err := aws.GetPublicIpv4()
 	if err != nil {
-		return utils.MakeError("Couldn't register instance: couldn't get public IPv4: %s", err)
+		return utils.MakeError("couldn't register instance: couldn't get public IPv4: %s", err)
 	}
 	imageID, err := aws.GetAmiID()
 	if err != nil {
-		return utils.MakeError("Couldn't register instance: couldn't get AMI ID: %s", err)
+		return utils.MakeError("couldn't register instance: couldn't get AMI ID: %s", err)
 	}
 	region, err := aws.GetPlacementRegion()
 	if err != nil {
-		return utils.MakeError("Couldn't register instance: couldn't get AWS Placement Region: %s", err)
+		return utils.MakeError("couldn't register instance: couldn't get AWS Placement Region: %s", err)
 	}
 	instanceType, err := aws.GetInstanceType()
 	if err != nil {
-		return utils.MakeError("Couldn't register instance: couldn't get AWS Instance type: %s", err)
+		return utils.MakeError("couldn't register instance: couldn't get AWS Instance type: %s", err)
 	}
 	instanceID, err := aws.GetInstanceID()
 	if err != nil {
-		return utils.MakeError("Couldn't register instance: couldn't get AWS Instance id: %s", err)
+		return utils.MakeError("couldn't register instance: couldn't get AWS Instance id: %s", err)
 	}
 	// Create a transaction to register the instance, since we are querying and
 	// writing separately.
 	tx, err := dbpool.BeginTx(context.Background(), pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
-		return utils.MakeError("Couldn't register instance: unable to begin transaction: %s", err)
+		return utils.MakeError("couldn't register instance: unable to begin transaction: %s", err)
 	}
 	// Safe to do even if committed -- see tx.Rollback() docs.
 	defer tx.Rollback(context.Background())
@@ -76,31 +76,31 @@ func RegisterInstance() error {
 
 	rows, err := q.FindInstanceByID(context.Background(), string(instanceID))
 	if err != nil {
-		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
+		return utils.MakeError("error running query: %s", err)
 	}
 
 	// Since the `instance_name` is the primary key of `whist.instances`,
 	// we know that `rows` ought to contain either 0 or 1 results.
 	if len(rows) == 0 {
-		return utils.MakeError("RegisterInstance(): Existing row for this instance not found in the database.")
+		return utils.MakeError("existing row for this instance not found in the database.")
 	}
 
 	// Verify that the properties of the existing row are actually as we expect
 	if rows[0].ImageID.String != string(imageID) {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but AMI differs. Expected "%s", Got "%s"`, imageID, rows[0].ImageID.String)
+		return utils.MakeError(`existing database row found, but AMI differs: expected "%s", got "%s"`, imageID, rows[0].ImageID.String)
 	}
 	if rows[0].Region.String != string(region) {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but location differs. Expected "%s", Got "%s"`, region, rows[0].Region.String)
+		return utils.MakeError(`existing database row found, but location differs: expected "%s", got "%s"`, region, rows[0].Region.String)
 	}
 	if !(rows[0].ClientSha.Status == pgtype.Present && strings.HasPrefix(metadata.GetGitCommit(), rows[0].ClientSha.String)) {
 		// This is the only string where we have to check status, since an empty string is a prefix for anything.
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but commit hash differs. Expected "%s", Got "%s"`, metadata.GetGitCommit(), rows[0].ClientSha.String)
+		return utils.MakeError(`existing database row found, but commit hash differs: expected "%s", got "%s"`, metadata.GetGitCommit(), rows[0].ClientSha.String)
 	}
 	if rows[0].InstanceType.String != string(instanceType) {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but AWS instance type differs. Expected "%s", Got "%s"`, instanceType, rows[0].InstanceType.String)
+		return utils.MakeError(`existing database row found, but AWS instance type differs: expected "%s", got "%s"`, instanceType, rows[0].InstanceType.String)
 	}
 	if rows[0].Status.String != string(InstanceStatusPreConnection) {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but status differs. Expected "%s", Got "%s"`, InstanceStatusPreConnection, rows[0].Status.String)
+		return utils.MakeError(`existing database row found, but status differs: expected "%s", got "%s"`, InstanceStatusPreConnection, rows[0].Status.String)
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
@@ -147,9 +147,9 @@ func RegisterInstance() error {
 		InstanceID: string(instanceID),
 	})
 	if err != nil {
-		return utils.MakeError("Couldn't register instance: error updating existing row in table `whist.instances`: %s", err)
+		return utils.MakeError("couldn't register instance: error updating existing row in table `whist.instances`: %s", err)
 	} else if result.RowsAffected() == 0 {
-		return utils.MakeError("Couldn't register instance in database: row went missing!")
+		return utils.MakeError("couldn't register instance in database: row went missing!")
 	}
 	tx.Commit(context.Background())
 
@@ -177,11 +177,11 @@ func GetInstanceCapacity(instanceID string) (int32, error) {
 
 	rows, err := q.FindInstanceByID(context.Background(), string(instanceID))
 	if err != nil {
-		return -1, utils.MakeError("Error running query for instance. Err: %s", err)
+		return -1, utils.MakeError("error running query for instance: %s", err)
 	}
 
 	if len(rows) == 0 {
-		return -1, utils.MakeError("Existing row for this instance not found in the database.")
+		return -1, utils.MakeError("existing row for this instance not found in the database")
 	}
 
 	return rows[0].RemainingCapacity, nil
@@ -201,7 +201,7 @@ func markDraining() error {
 
 	instanceID, err := aws.GetInstanceID()
 	if err != nil {
-		return utils.MakeError("Couldn't mark instance as draining: couldn't get instance name: %s", err)
+		return utils.MakeError("couldn't mark instance as draining: couldn't get instance name: %s", err)
 	}
 
 	result, err := q.WriteInstanceStatus(context.Background(), pgtype.Varchar{
@@ -210,9 +210,9 @@ func markDraining() error {
 	}, string(instanceID))
 
 	if err != nil {
-		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `whist.instances`: %s", err)
+		return utils.MakeError("couldn't mark instance as draining: error updating existing row in table `whist.instances`: %s", err)
 	} else if result.RowsAffected() == 0 {
-		return utils.MakeError("Couldn't mark instance as draining: row in database went missing!")
+		return utils.MakeError("couldn't mark instance as draining: row in database went missing!")
 	}
 	logger.Infof("Successfully marked instance %s as draining in database.", instanceID)
 	return nil
@@ -227,20 +227,20 @@ func unregisterInstance() error {
 		return nil
 	}
 	if dbpool == nil {
-		return utils.MakeError("UnregisterInstance() called but dbdriver is not initialized!")
+		return utils.MakeError("unregisterInstance() called but dbdriver is not initialized!")
 	}
 
 	instanceID, err := aws.GetInstanceID()
 	if err != nil {
-		return utils.MakeError("Couldn't unregister instance: couldn't get instance name: %s", err)
+		return utils.MakeError("couldn't unregister instance: couldn't get instance name: %s", err)
 	}
 
 	q := queries.NewQuerier(dbpool)
 	result, err := q.DeleteInstance(context.Background(), string(instanceID))
 	if err != nil {
-		return utils.MakeError("UnregisterInstance(): Error running delete command: %s", err)
+		return utils.MakeError("unregisterInstance(): error running delete command: %s", err)
 	} else if result.RowsAffected() == 0 {
-		return utils.MakeError("UnregisterInstance(): row went missing before we could delete it!")
+		return utils.MakeError("unregisterInstance(): row went missing before we could delete it!")
 	}
 	logger.Infof("UnregisterInstance(): delete command successful")
 

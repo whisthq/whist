@@ -140,19 +140,19 @@ func ParseToken(tokenString string) (*WhistClaims, error) {
 // It returns an error if any of the checks are fail.
 func Verify(claims *WhistClaims) error {
 	if claims == nil {
-		return utils.MakeError("Expected claims but received nil")
+		return utils.MakeError("expected claims but received nil")
 	}
 
 	if !claims.VerifyAudience(config.Aud, true) {
 		return jwt.NewValidationError(
-			utils.Sprintf("Bad audience %s", claims.Audience),
+			utils.Sprintf("bad audience %s", claims.Audience),
 			jwt.ValidationErrorAudience,
 		)
 	}
 
 	if !claims.VerifyIssuer(config.Iss, true) {
 		return jwt.NewValidationError(
-			utils.Sprintf("Bad issuer %s", claims.Issuer),
+			utils.Sprintf("bad issuer %s", claims.Issuer),
 			jwt.ValidationErrorIssuer,
 		)
 	}

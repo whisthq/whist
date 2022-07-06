@@ -25,6 +25,8 @@ import (
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -276,7 +278,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		}
 
 		if err := mandelbox.WriteProtocolTimeout(protocolTimeout); err != nil {
-			return utils.MakeError("Error writing protocol timeout: %s", err)
+			return utils.MakeError("error writing protocol timeout: %s", err)
 		}
 
 		logger.Infof("SpinUpMandelbox(): Successfully wrote parameters for mandelbox %s", mandelboxID)
@@ -335,7 +337,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	mandelbox, err := mandelboxData.LookUpByMandelboxID(mandelboxSubscription.ID)
 	if err != nil {
 		incrementErrorRate()
-		return utils.MakeError("Did not find existing mandelbox with ID %v", mandelboxSubscription.ID)
+		return utils.MakeError("did not find existing mandelbox with ID %v", mandelboxSubscription.ID)
 	}
 	mandelbox.SetStatus(dbdriver.MandelboxStatusAllocated)
 
@@ -354,7 +356,11 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
 
 	mandelbox.SetSessionID(mandelboxtypes.SessionID(mandelboxSubscription.SessionID))
-	mandelbox.WriteSessionID()
+	err = mandelbox.WriteSessionID()
+	if err != nil {
+		logger.Errorf("Failed to write session id file: %s", err)
+	}
+
 	logger.Infof("SpinUpMandelbox(): Successfully wrote client session id file with content %s", mandelbox.GetSessionID())
 
 	// Request port bindings for the mandelbox.
@@ -414,7 +420,10 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	for err := range configDownloadErrChan {
 		// We don't want these user config errors to be fatal, so we log them as
 		// errors and move on.
-		logger.Error(err)
+		logger.Errorw(err, []zapcore.Field{
+			zap.Any("mandelbox", mandelbox.GetID()),
+			zap.Any("user", mandelbox.GetUserID()),
+		})
 	}
 
 	// Write the user's initial browser data

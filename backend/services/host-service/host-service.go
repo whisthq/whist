@@ -155,7 +155,7 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 	// been closed (via a call to Close() or a context cancellation).
 	mandelbox, err := mandelboxData.LookUpByDockerID(mandelboxtypes.DockerID(id))
 	if err != nil {
-		logger.Infof("mandelboxDieHandler(): %s", err)
+		logger.Warningf("mandelboxDieHandler(): %s", err)
 		return
 	}
 

@@ -80,9 +80,9 @@ func CreateMandelbox(id types.MandelboxID, app string, instanceID string) error 
 	q := queries.NewQuerier(dbpool)
 	mandelboxResult, err := q.CreateMandelbox(context.Background(), insertParams)
 	if err != nil {
-		return utils.MakeError("failed to insert mandelbox %v to database. Err: %v", id, err)
+		return utils.MakeError("failed to insert mandelbox %s to database: %s", id, err)
 	} else if mandelboxResult.RowsAffected() == 0 {
-		return utils.MakeError("couldn't insert mandelbox %v: inserted 0 rows to database.", id)
+		return utils.MakeError("couldn't insert mandelbox %s: inserted 0 rows to database", id)
 	}
 
 	return nil
@@ -100,31 +100,31 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 	// writing separately.
 	tx, err := dbpool.BeginTx(context.Background(), pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
-		return utils.MakeError("Couldn't register instance: unable to begin transaction: %s", err)
+		return utils.MakeError("couldn't register instance: unable to begin transaction: %s", err)
 	}
 	// Safe to do even if committed -- see tx.Rollback() docs.
 	defer tx.Rollback(context.Background())
 
 	instanceID, err := aws.GetInstanceID()
 	if err != nil {
-		return utils.MakeError("Couldn't verify mandelbox %s for user %s: couldn't get instance name: %s", mandelboxID, userID, err)
+		return utils.MakeError("couldn't verify mandelbox %s for user %s: couldn't get instance name: %s", mandelboxID, userID, err)
 	}
 
 	q := queries.NewQuerier(tx)
 	rows, err := q.FindMandelboxByID(context.Background(), mandelboxID.String())
 	if err != nil {
-		return utils.MakeError("Couldn't verify mandelbox %s for user %s: error running query: %s", mandelboxID, userID, err)
+		return utils.MakeError("couldn't verify mandelbox %s for user %s: error running query: %s", mandelboxID, userID, err)
 	}
 
 	// We expect that `rows` should contain exactly one, allocated (but not
 	// running) mandelbox with a matching mandelbox ID. Any other state is an
 	// error.
 	if len(rows) == 0 {
-		return utils.MakeError("Couldn't verify mandelbox %s for user %s: didn't find matching row in the database.", mandelboxID, userID)
+		return utils.MakeError("couldn't verify mandelbox %s for user %s: didn't find matching row in the database.", mandelboxID, userID)
 	} else if rows[0].Status.String != string(MandelboxStatusAllocated) {
-		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found a mandelbox row in the database for this instance, but it's in the wrong state. Expected "%s", got "%s".`, mandelboxID, userID, MandelboxStatusAllocated, rows[0].Status.String)
+		return utils.MakeError(`couldn't verify mandelbox %s for user %s: found a mandelbox row in the database for this instance, but it's in the wrong state: expected "%s", got "%s".`, mandelboxID, userID, MandelboxStatusAllocated, rows[0].Status.String)
 	} else if rows[0].InstanceID.String != string(instanceID) {
-		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found an allocated mandelbox row in the database, but it has the wrong instanceName. Expected "%s", got "%s".`, mandelboxID, userID, rows[0].InstanceID.String, instanceID)
+		return utils.MakeError(`couldn't verify mandelbox %s for user %s: found an allocated mandelbox row in the database, but it has the wrong instanceName: expected "%s", got "%s".`, mandelboxID, userID, rows[0].InstanceID.String, instanceID)
 	}
 
 	// Mark the mandelbox as connecting. We can't just use WriteMandelboxStatus
@@ -142,9 +142,9 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 	}
 	result, err := q.WriteMandelboxStatus(context.Background(), params)
 	if err != nil {
-		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `whist.mandelboxes`: %s", MandelboxStatusConnecting, mandelboxID, err)
+		return utils.MakeError("couldn't write status %s for mandelbox %s: error updating existing row in table `whist.mandelboxes`: %s", MandelboxStatusConnecting, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
-		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", MandelboxStatusConnecting, mandelboxID)
+		return utils.MakeError("couldn't write status %s for mandelbox %s: row in database missing!", MandelboxStatusConnecting, mandelboxID)
 	}
 	logger.Infof("Updated status in database for mandelbox %s to %s: %s", mandelboxID, MandelboxStatusConnecting, result)
 
@@ -178,9 +178,9 @@ func WriteMandelboxStatus(mandelboxID types.MandelboxID, status MandelboxStatus)
 
 	result, err := q.WriteMandelboxStatus(context.Background(), params)
 	if err != nil {
-		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `whist.mandelboxes`: %s", status, mandelboxID, err)
+		return utils.MakeError("couldn't write status %s for mandelbox %s: error updating existing row in table `whist.mandelboxes`: %s", status, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
-		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", status, mandelboxID)
+		return utils.MakeError("couldn't write status %s for mandelbox %s: row in database missing!", status, mandelboxID)
 	}
 	logger.Infof("Updated status in database for mandelbox %s to %s: %s", mandelboxID, status, result)
 
@@ -200,26 +200,26 @@ func RemoveMandelbox(mandelboxID types.MandelboxID) error {
 	// Get mandelbox row from database
 	mandelboxResult, err := q.FindMandelboxByID(context.Background(), mandelboxID.String())
 	if err != nil {
-		return utils.MakeError("failed to query mandelbox %v from database. Err: %v", mandelboxID, err)
+		return utils.MakeError("failed to query mandelbox %s from database: %s", mandelboxID, err)
 	}
 
 	if len(mandelboxResult) == 0 {
-		return utils.MakeError("mandelbox %v not found in database.", mandelboxID)
+		return utils.MakeError("mandelbox %s not found in database.", mandelboxID)
 	}
 
 	// Remove mandelbox row from database
 	result, err := q.RemoveMandelbox(context.Background(), mandelboxID.String())
 	if err != nil {
-		return utils.MakeError("Couldn't remove mandelbox %s from database: %s", mandelboxID, err)
+		return utils.MakeError("couldn't remove mandelbox %s from database: %s", mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
-		return utils.MakeError("Tried to remove mandelbox %s from database, but it was already gone!", mandelboxID)
+		return utils.MakeError("tried to remove mandelbox %s from database, but it was already gone!", mandelboxID)
 	}
 	logger.Infof("Removed row in database for mandelbox %s: %s", mandelboxID, result)
 
 	// Update the remaining capacity to account for the removed mandelbox.
 	instanceResult, err := q.UpdateInstanceCapacity(context.Background(), int32(result.RowsAffected()), mandelboxResult[0].InstanceID.String)
 	if err != nil {
-		return utils.MakeError("couldn't increment instance capacity after cleaning mandelbox. Err: %v", err)
+		return utils.MakeError("couldn't increment instance capacity after cleaning mandelbox: %s", err)
 	}
 
 	if instanceResult.RowsAffected() != 0 {
