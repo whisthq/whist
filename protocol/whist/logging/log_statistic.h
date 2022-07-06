@@ -29,7 +29,13 @@ Public Constants
 #define LOG_DATA_FOR_PLOTTER false
 #endif
 
+// The size of the plot data can get big relatively quickly. A usual 2mins-long E2E test produces
+// ~5MB of data for each of the client and the server. Here, we are setting the size of the buffer
+// to 100MB to have a reasonable amount of space. If size scales linearly, 100MB will allow us to
+// run tests of ~40mins duration.
 #define PLOT_DATA_SIZE 100000000
+// Save the plotting data in the same folder (on the mandelbox) as the {client,server}.log files to
+// facilitate retrieval. This value should be changed when testing on a local machine.
 #define PLOT_DATA_FILENAME "/usr/share/whist/plot_data.json"
 
 /*
