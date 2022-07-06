@@ -435,13 +435,11 @@ if __name__ == "__main__":
     # Update Github Gist with all the results
     # Create one file for each branch
     md_files = glob.glob("e2e_report_*.md")
-    files_list = [os.path.join(".", "plots", f) for f in plot_files]
-    merged_files = ""
-    for filename in sorted(md_files):
-        files_list.append(filename)
-        with open(filename, "r") as f:
-            contents = f.read()
-            merged_files += contents
+    files_list = [os.path.join(".", "plots", f) for f in plot_files] + md_files
+    summary_contents = ""
+    with open(f"e2e_report_0.md", "r") as summary_file:
+        summary_contents = summary_file.read()
+    summary_contents += f"<details>\n<summary>Expand Full Results</summary>\n\n\nThe detailed results and comparisons with previous runs or with `dev` are available here: [link to the Gist]({gist.html_url})\n\n\n</details>\n\n"
 
     # Upload plots and results summaries
     print("\nUploading performance results and plots to Gist...")
@@ -489,7 +487,7 @@ if __name__ == "__main__":
                 github_repo,
                 pr_number,
                 identifier,
-                merged_files,
+                summary_contents,
                 title=title,
                 update_date=True,
             )
