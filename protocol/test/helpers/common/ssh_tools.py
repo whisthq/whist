@@ -129,29 +129,42 @@ def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
     locking_command = f"mv {free_lock_path} {unique_lock_path}"
 
     if create_lock:
-        print(f"Issuing creation command: {creation_command}")
+        print(f"Creating lock on instance `{instance_ip}`...")
         # Create the lock if needed
         return_code = run_single_ssh_command(
             instance_ip, ssh_key_path, lock_ssh_timeout_seconds, creation_command
         )
-        print(f"Lock creation return code: {return_code}")
         if return_code != 0:
+            printyellow(f"Failed to create lock on instance `{instance_ip}`")
             return False
+        print(f"Successfully created lock on instance `{instance_ip}`!")
+
+    print(f"Attempting to grab lock on instance `{instance_ip}`...")
+
     # Attempt to import lock first
-    print(f"Issuing lock import command: {import_lock_command}")
     return_code = run_single_ssh_command(
         instance_ip, ssh_key_path, lock_ssh_timeout_seconds, import_lock_command
     )
-    print(f"Import lock return code: {return_code}")
     if return_code == 0:
+        print(
+            f"Successfully imported lock {unique_lock_path} on instance `{instance_ip}` from previous session!"
+        )
         return True
 
-    print(f"Issuing locking command: {locking_command}")
+    # Attempt to grab the free lock
     return_code = run_single_ssh_command(
         instance_ip, ssh_key_path, lock_ssh_timeout_seconds, locking_command
     )
     print(f"Get lock return code: {return_code}")
-    return return_code == 0
+    if return_code == 0:
+        print(
+            f"Successfully grabbed the free lock on instance `{instance_ip}`! The lock is now named {unique_lock_path}!"
+        )
+        return True
+    else:
+        print(f"Lock is not available on instance `{instance_ip}`. Retry later...")
+        print()
+        return False
 
 
 def attempt_release_lock(instance_ip, ssh_key_path):
@@ -167,24 +180,38 @@ def attempt_release_lock(instance_ip, ssh_key_path):
     Returns:
         success (bool): indicates whether the unlocking succeeded.
     """
-    # Check if we hold the lock
+    print(f"Attempting to release the lock on instance `{instance_ip}`...")
+
+    # Check if we hold the lock. If we don't hold it, no further action is required.
+    # We need to explicitly check because if we do hold the lock, and unlocking fails,
+    # we need to keep retrying until we succeed in unlocking.
     check_lock_command = f"test -f {unique_lock_path}"
-    print(f"Issuing check lock existence command: {check_lock_command}")
     return_code = run_single_ssh_command(
         instance_ip, ssh_key_path, lock_ssh_timeout_seconds, check_lock_command
     )
-    print(f"Import lock return code: {return_code}")
     if return_code == 1:
-        print(f"Lock not found. Either it was already released, or it was never acquired.")
+        print(
+            f"We do not hold the lock on instance `{instance_ip}`. Either it was already released, or it was never acquired. No further action required."
+        )
         return True
 
+    # Unlock
     unlocking_command = f"mv {unique_lock_path} {free_lock_path}"
-    print(f"Issuing unlocking command: {unlocking_command}")
     return_code = run_single_ssh_command(
         instance_ip, ssh_key_path, lock_ssh_timeout_seconds, unlocking_command
     )
-    print(f"Unlock return code: {return_code}")
-    return return_code == 0
+
+    if return_code == 0:
+        print(
+            f"Successfully released the lock {unique_lock_path} on instance `{instance_ip}`! The lock is now available at {free_lock_path}!"
+        )
+        return True
+    else:
+        print(
+            f"Could not release lock {unique_lock_path} on instance `{instance_ip}`. Retry unlocking later..."
+        )
+        print()
+        return False
 
 
 def wait_for_apt_locks(pexpect_process, pexpect_prompt):

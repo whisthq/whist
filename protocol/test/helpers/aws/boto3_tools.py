@@ -357,8 +357,7 @@ def start_instance(
 
 def release_lock(boto3client: botocore.client, instance_id: str, ssh_key_path: str):
     """
-    Stop an existing instance and release the instance's E2E lock. If releasing the E2E lock
-    fails, sleep for lock_contention_wait_time_seconds and retry.
+    Release an instance's E2E lock. If releasing the E2E lock fails, sleep for lock_contention_wait_time_seconds and retry.
 
     Args:
         boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
