@@ -205,8 +205,8 @@ func monitorWaitingMandelboxes(globalCtx context.Context, globalCancel context.C
 	return nil
 }
 
-// removeStaleMandelboxesGoroutine spawns a goroutine to periodically
-// cleanup stale mandelboxes.
+// removeStaleMandelboxesGoroutine periodically checks for stale mandelboxes
+// and cleans them up as needed. This function is meant to be run as a goroutine.
 func removeStaleMandelboxesGoroutine(globalCtx context.Context) {
 	defer logger.Infof("Finished removeStaleMandelboxes goroutine.")
 	timerChan := make(chan interface{})
@@ -513,6 +513,13 @@ func main() {
 	if err != nil {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
 	}
+
+	// Start goroutine to cleanup stale mandelboxes
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+		removeStaleMandelboxesGoroutine(globalCtx)
+	}()
 
 	// Start warming up as many instances as we have capacity for. This will effectively create
 	// mandelboxes up to the point where we need a config token, and register them to the database.

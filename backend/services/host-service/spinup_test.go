@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/go-connections/nat"
 	"github.com/google/uuid"
+	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
@@ -145,8 +146,8 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	}
 
 	// Verify that the mandelbox has the connected status to false
-	if testMandelbox.GetConnectedStatus() {
-		t.Errorf("Mandelbox has invalid connected status: got true, want false")
+	if testMandelbox.GetStatus() != dbdriver.MandelboxStatusRunning {
+		t.Errorf("Mandelbox has invalid connected status: got %v, want %v", testMandelbox.GetStatus(), dbdriver.MandelboxStatusRunning)
 	}
 	testMandelboxChrome = testMandelbox
 }
