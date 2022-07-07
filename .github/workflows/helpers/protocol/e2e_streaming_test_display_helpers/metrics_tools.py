@@ -258,7 +258,9 @@ def generate_plots(plot_data_filename, destination_folder, name_prefix, verbose=
         time_range = f"0.0~36000.0" if not trimmed_plot else f"5.0~36000.0"
         plotting_command = f'python3 ../whist/debug/plotter.py -f "{k}" -r {time_range} -o {output_filename} {plot_data_filename}'
         if not verbose:
-            os.system(plotting_command)
+            subprocess.run(
+                plotting_command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+            )
         else:
             p = subprocess.run(plotting_command, shell=True, capture_output=True)
             if p.returncode != 0:

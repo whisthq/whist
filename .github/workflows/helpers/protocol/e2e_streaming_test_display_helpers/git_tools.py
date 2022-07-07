@@ -75,7 +75,9 @@ def update_github_gist_post(github_gist_token, gist_id, files_list, verbose):
     # Clone the gist
     clone_command = f"git clone https://{github_gist_token}@gist.github.com/{gist_id}"
     if not verbose:
-        os.system(clone_command)
+        subprocess.run(
+            clone_command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+        )
     else:
         subprocess.run(clone_command, shell=True, capture_output=True)
     # Copy the plots and reports into the gist folder
@@ -84,7 +86,9 @@ def update_github_gist_post(github_gist_token, gist_id, files_list, verbose):
     # Upload all the files
     upload_files_command = f"cd {gist_id} && rm placeholder.txt && git add * && git commit -am 'upload files' && git push"
     if not verbose:
-        os.system(upload_files_command)
+        subprocess.run(
+            upload_files_command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+        )
     else:
         subprocess.run(upload_files_command, shell=True, capture_output=True)
 

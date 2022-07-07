@@ -156,7 +156,9 @@ if __name__ == "__main__":
     # Set the Git identity
     git_config_command = f'git config --global user.email "{gist_author_email}" && git config --global user.name "{gist_author_name}"'
     if not verbose:
-        os.system(git_config_command)
+        subprocess.run(
+            git_config_command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+        )
     else:
         subprocess.run(git_config_command, shell=True, capture_output=True)
 
