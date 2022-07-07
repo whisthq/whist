@@ -5,6 +5,7 @@ import (
 	"time"
 
 	dockerclient "github.com/docker/docker/client"
+	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -39,10 +40,10 @@ func LookUpByDockerID(DockerID types.DockerID) (Mandelbox, error) {
 	trackerLock.RLock()
 	defer trackerLock.RUnlock()
 
-	for _, v := range tracker {
-		d := v.GetDockerID()
+	for _, m := range tracker {
+		d := m.GetDockerID()
 		if d == DockerID {
-			return v, nil
+			return m, nil
 		}
 	}
 	return nil, utils.MakeError("Couldn't find Mandelbox with DockerID %s", DockerID)
@@ -60,17 +61,17 @@ func LookUpByMandelboxID(mandelboxID types.MandelboxID) (Mandelbox, error) {
 	return nil, utils.MakeError("Couldn't find Mandelbox with MandelboxID %s", mandelboxID)
 }
 
-// GetMandelboxCount gets the current number of mandelboxes on the instance.
+// GetMandelboxCount gets the current number of waiting mandelboxes running on the instance.
 func GetMandelboxCount() int32 {
 	trackerLock.RLock()
 	defer trackerLock.RUnlock()
 
 	var currentWaitingMandelboxes []types.MandelboxID
 
-	for _, v := range tracker {
-		// Only consider mandelboxes to which users haven't connected yet.
-		if !v.GetConnectedStatus() {
-			currentWaitingMandelboxes = append(currentWaitingMandelboxes, v.GetID())
+	for _, m := range tracker {
+		// Only consider waiting mandelboxes to which users haven't connected yet.
+		if m.GetStatus() == dbdriver.MandelboxStatusWaiting {
+			currentWaitingMandelboxes = append(currentWaitingMandelboxes, m.GetID())
 		}
 	}
 
@@ -81,22 +82,41 @@ func GetMandelboxCount() int32 {
 // connected. This function should only be called once the global context
 // gets cancelled.
 func StopWaitingMandelboxes(dockerClient dockerclient.CommonAPIClient) {
-	logger.Infof("Cleaning up mandelboxes that were never connected to.")
+	logger.Infof("Cleaning up waiting mandelboxes that were never connected to.")
 	trackerLock.RLock()
 	defer trackerLock.RUnlock()
 
-	for _, v := range tracker {
-		if !v.GetConnectedStatus() {
+	for _, m := range tracker {
+		if m.GetStatus() == dbdriver.MandelboxStatusWaiting {
 			// Gracefully shut down the mandelbox Docker container
 			stopTimeout := 60 * time.Second
-			err := dockerClient.ContainerStop(v.GetContext(), string(v.GetDockerID()), &stopTimeout)
+			err := dockerClient.ContainerStop(m.GetContext(), string(m.GetDockerID()), &stopTimeout)
 
 			if err != nil {
 				logger.Errorf("Failed to gracefully stop mandelbox docker container.")
 			}
 
 			// Now cancel the mandelbox context
-			v.Close()
+			m.Close()
+		}
+	}
+}
+
+// RemoveStaleMandelboxes cancels the context of mandelboxes that have an
+// old creation time but are still marked as allocated, or have been marked
+// connecting for too long.
+func RemoveStaleMandelboxes(allocatedAge, connectingAge time.Duration) {
+	logger.Infof("Cleaning up stale mandelboxes.")
+	trackerLock.RLock()
+	defer trackerLock.RUnlock()
+
+	for _, m := range tracker {
+		if m.GetStatus() == dbdriver.MandelboxStatusAllocated ||
+			m.GetStatus() == dbdriver.MandelboxStatusConnecting {
+			if m.GetLastUpdatedTime().Before(time.Now().Add(-1*allocatedAge)) ||
+				m.GetLastUpdatedTime().Before(time.Now().Add(-1*connectingAge)) {
+				m.Close()
+			}
 		}
 	}
 }

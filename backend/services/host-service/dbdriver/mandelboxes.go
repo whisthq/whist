@@ -2,14 +2,12 @@ package dbdriver // import "github.com/whisthq/whist/backend/services/host-servi
 
 import (
 	"context"
-	"math/rand"
 	"time"
 
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver/queries"
-	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -229,85 +227,4 @@ func RemoveMandelbox(mandelboxID types.MandelboxID) error {
 	}
 
 	return nil
-}
-
-// removeStaleMandelboxes removes mandelboxes that have an old creation time
-// but are still marked as allocated, or have been marked connecting for too
-// long.
-func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
-	if !enabled {
-		return nil
-	}
-	if dbpool == nil {
-		return utils.MakeError("removeStaleMandelboxes() called but dbdriver is not initialized!")
-	}
-
-	instanceID, err := aws.GetInstanceID()
-	if err != nil {
-		return utils.MakeError("Couldn't remove stale allocated mandelboxes: %s", err)
-	}
-
-	q := queries.NewQuerier(dbpool)
-	result, err := q.RemoveStaleMandelboxes(context.Background(), queries.RemoveStaleMandelboxesParams{
-		InstanceID:      string(instanceID),
-		AllocatedStatus: string(MandelboxStatusAllocated),
-		AllocatedCreationTimeThreshold: pgtype.Timestamptz{
-			Time:   time.Now().Add(-1 * allocatedAge),
-			Status: pgtype.Present,
-		},
-		ConnectingStatus: string(MandelboxStatusConnecting),
-		ConnectingCreationTimeThreshold: pgtype.Timestamptz{
-			Time:   time.Now().Add(-1 * connectingAge),
-			Status: pgtype.Present,
-		},
-	})
-	if err != nil {
-		return utils.MakeError("Couldn't remove stale allocated mandelboxes from database: %s", err)
-	}
-	if result.RowsAffected() != 0 {
-		// We avoid logging this every time to avoid polluting the logs.
-		logger.Infof("Removed %v stale mandelboxes", result.RowsAffected())
-		metrics.Add("CleanedStaleMandelboxes", result.RowsAffected())
-
-		// Update the remaining capacity to account for the removed stale mandelboxes.
-		instanceResult, err := q.UpdateInstanceCapacity(context.Background(), int32(result.RowsAffected()), string(instanceID))
-		if err != nil {
-			return utils.MakeError("couldn't increment instance capacity after cleaning stale mandelboxes. Err: %v", err)
-		}
-
-		if instanceResult.RowsAffected() != 0 {
-			logger.Infof("Updated capacity of %v instances.", instanceResult.RowsAffected())
-		}
-	}
-
-	return nil
-}
-
-func removeStaleMandelboxesGoroutine(globalCtx context.Context) {
-	defer logger.Infof("Finished removeStaleMandelboxes goroutine.")
-	timerChan := make(chan interface{})
-
-	// Instead of running exactly every 10 seconds, we choose a random time in
-	// the range [9.5, 10.5] seconds to prevent waves of hosts repeatedly crowding
-	// the database.
-	for {
-		sleepTime := 10000 - rand.Intn(1001)
-		timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- struct{}{} })
-
-		select {
-		case <-globalCtx.Done():
-			// Remove allocated stale mandelboxes one last time
-			if err := removeStaleMandelboxes(10*time.Second, 90*time.Second); err != nil {
-				logger.Error(err)
-			}
-
-			utils.StopAndDrainTimer(timer)
-			return
-
-		case <-timerChan:
-			if err := removeStaleMandelboxes(10*time.Second, 90*time.Second); err != nil {
-				logger.Error(err)
-			}
-		}
-	}
 }
