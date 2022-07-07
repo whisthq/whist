@@ -169,14 +169,7 @@ void *whist_get_thread_local_storage(WhistThreadLocalStorageKey key) {
 
 void whist_sleep(uint32_t ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
 
-void whist_usleep(uint32_t us) {
-#if OS_IS(OS_WIN32)
-    // Not sure if this is implemented on Windows, so just fall back to whist_sleep.
-    whist_sleep(us / 1000);
-#else
-    usleep(us);
-#endif  // Windows
-}
+void whist_usleep(uint32_t us) { std::this_thread::sleep_for(std::chrono::microseconds(us)); }
 
 struct WhistMutexStruct {
     std::recursive_mutex mutex;
