@@ -52,22 +52,14 @@ def prepare_instance_for_host_setup(pexpect_process, pexpect_prompt):
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
 
-def install_and_configure_aws(
-    pexpect_process,
-    pexpect_prompt,
-):
+def get_aws_credentials():
     """
-    Install the AWS CLI and configure the AWS credentials on a remote machine by copying them
-    from the ones configured on the machine where this script is being run.
-
+    Obtain the AWS credentials that are currently in use on the machine where this script is being run.
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used
-                                                    to interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
-                        is ready to execute a command
-
+        None
     Returns:
-        True if the AWS installation and configuration succeeded, False otherwise.
+        aws_access_key_id (str): The AWS access key ID
+        aws_secret_access_key (str): The AWS secret access key
     """
     # Step 1: Obtain AWS credentials from the local machine
     aws_access_key_id = ""
@@ -95,13 +87,31 @@ def install_and_configure_aws(
         aws_credentials_file.close()
 
     # Sanity check
-    if (
-        aws_access_key_id == None
-        or aws_secret_access_key == None
-        or len(aws_access_key_id) == 0
-        or len(aws_secret_access_key) == 0
-    ):
+    if len(aws_access_key_id or "") == 0 or len(aws_secret_access_key or "") == 0:
         exit_with_error(f"Could not obtain the AWS credentials!")
+
+    return aws_access_key_id, aws_secret_access_key
+
+
+def install_and_configure_aws(
+    pexpect_process,
+    pexpect_prompt,
+):
+    """
+    Install the AWS CLI and configure the AWS credentials on a remote machine by copying them
+    from the ones configured on the machine where this script is being run.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used
+                                                    to interact with the remote machine
+        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
+                        is ready to execute a command
+
+    Returns:
+        True if the AWS installation and configuration succeeded, False otherwise.
+    """
+    # Step 1: Obtain AWS credentials from the local machine
+    aws_access_key_id, aws_secret_access_key = get_aws_credentials()
 
     # Wait for apt locks
     wait_for_apt_locks(pexpect_process, pexpect_prompt)
@@ -135,44 +145,9 @@ def install_and_configure_aws(
         # Check if the apt-get installation failed (it happens from time to time)
         error_msg = "E: Package 'awscli' has no installation candidate"
         if expression_in_pexpect_output(error_msg, stdout):
-            print(
+            exit_with_error(
                 "Installing AWS-CLI using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
             )
-
-            # Attempt to install manually. This can also fail from time to time, because we need apt-get
-            # to install the `unzip` package
-            print("Installing AWS-CLI from source")
-
-            # Wait for apt locks
-            wait_for_apt_locks(pexpect_process, pexpect_prompt)
-
-            # Download the unzip program
-            command = "sudo apt-get install -y unzip"
-            pexpect_process.sendline(command)
-            stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
-            error_msg = "E: Package 'unzip' has no installation candidate"
-
-            if expression_in_pexpect_output(error_msg, stdout):
-                printyellow(
-                    "Installing 'unzip' using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
-                )
-                exit_with_error("Installing AWS-CLI from source failed")
-
-            install_commands = [
-                # Download AWS installer
-                "curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip",
-                # Unzip the AWS installer
-                "unzip -o awscliv2.zip",
-                # Remove the zip file
-                "rm awscliv2.zip",
-                # Install AWS
-                "sudo ./aws/install",
-            ]
-
-            for command in install_commands:
-                pexpect_process.sendline(command)
-                wait_until_cmd_done(pexpect_process, pexpect_prompt)
-            print("AWS CLI installed manually")
     else:
         print("AWS CLI is already installed")
 
