@@ -234,7 +234,8 @@ def run_host_setup(
     """
 
     success_msg = "Install complete. If you set this machine up for local development, please 'sudo reboot' before continuing."
-    lock_error_msg = "E: Could not get lock"
+    lock_error_msg1 = "E: Could not get lock"
+    lock_error_msg2 = "E: Unable to lock directory "
     dpkg_config_error = "E: dpkg was interrupted, you must manually run 'sudo dpkg --configure -a' to correct the problem."
     command = f"cd ~/whist/host-setup && timeout {HOST_SETUP_TIMEOUT_SECONDS} ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
 
@@ -251,11 +252,13 @@ def run_host_setup(
         # 3 - Check if the setup succeeded or report reason for failure
         if (
             expression_in_pexpect_output(success_msg, host_setup_output)
-            or host_setup_exit_code == 0
+            and host_setup_exit_code == 0
         ):
             print("Finished running the host setup script on the EC2 instance")
             break
-        elif expression_in_pexpect_output(lock_error_msg, host_setup_output):
+        elif expression_in_pexpect_output(
+            lock_error_msg1, host_setup_output
+        ) or expression_in_pexpect_output(lock_error_msg2, host_setup_output):
             printyellow("Host setup failed to grab the necessary apt/dpkg locks.")
         elif expression_in_pexpect_output(dpkg_config_error, host_setup_output):
             printyellow("Host setup failed due to dpkg interruption error. Reconfiguring dpkg....")
