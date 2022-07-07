@@ -210,6 +210,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	// Add necessary headers to host request
 	hostReq.Header.Add("content-type", "application/json")
 	hostReq.Header.Add("Authorization", utils.Sprintf("Bearer %s", accessToken))
+	hostReq.Close = true
 
 	// Instanciate a new http client with a custom transport
 	tr := &http.Transport{
@@ -221,6 +222,8 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Now that request is fully assembled and the client is initialized, send the request
 	res, err := client.Do(hostReq)
+	defer hostReq.Body.Close()
+
 	if err != nil {
 		logger.Errorf("failed to send JSON transport request to instance: %s", err)
 		http.Error(w, "", http.StatusInternalServerError)
@@ -343,9 +346,9 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	// or DDOS attacks.
 	srv := &http.Server{
 		Addr:         utils.Sprintf("0.0.0.0:%v", port),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  30 * time.Second,
 		Handler:      mux,
 	}
 

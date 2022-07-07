@@ -37,6 +37,17 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	mandelboxRequest := event.Data.(*httputils.MandelboxAssignRequest)
 
+	// This is necessary so that the request is always closed
+	// when encountering an error in the scaling action.
+	var serviceUnavailable bool = true
+	defer func() {
+		if serviceUnavailable {
+			mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
+				Error: SERVICE_UNAVAILABLE,
+			}, nil)
+		}
+	}()
+
 	// Note: we receive the email from the client, so its value should
 	// not be trusted for anything else other than logging since
 	// it can be spoofed. We sanitize the email before using to help mitigate
@@ -88,6 +99,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	}
 
 	if len(availableRegions) == 0 {
+		serviceUnavailable = false
 		err := utils.MakeError("")
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: REGION_NOT_ENABLED,
@@ -152,6 +164,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	// No instances with capacity were found
 	if assignedInstance == (subscriptions.Instance{}) {
+		serviceUnavailable = false
 		err := utils.MakeError("did not find an instance with capacity for user %s and commit hash %s.", mandelboxRequest.UserEmail, mandelboxRequest.CommitHash)
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: NO_INSTANCE_AVAILABLE,
@@ -174,13 +187,13 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// Parse the version with the `hashicorp/go-version` package so we can compare.
 	parsedFrontendVersion, err = hashicorp.NewVersion(frontendVersion)
 	if err != nil {
-		logger.Errorf("failed parsing frontend version from scaling algorithm config: %s", err)
+		logger.Warningf("Failed parsing frontend version from scaling algorithm config: %s", err)
 	}
 
 	// Parse the version we got in the request.
 	parsedRequestVersion, err = hashicorp.NewVersion(mandelboxRequest.Version)
 	if err != nil {
-		logger.Errorf("failed parsing frontend version from request: %s", err)
+		logger.Warningf("Failed parsing frontend version from request: %s", err)
 	}
 
 	// Compare the request version with the one from the config. If the
@@ -207,6 +220,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		}
 
 		// Regardless if we log the error, its necessary to return an appropiate response.
+		serviceUnavailable = false
 		mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 			Error: COMMIT_HASH_MISMATCH,
 		}, msg)
@@ -271,6 +285,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return utils.MakeError("failed to parse IP address %s: %s", assignedInstance.IPAddress, err)
 	}
 
+	serviceUnavailable = false
 	// Return result to assign request
 	mandelboxRequest.ReturnResult(httputils.MandelboxAssignRequestResult{
 		IP:          ip.String(),
