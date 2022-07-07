@@ -234,7 +234,7 @@ class RecvQueue {
     int size() { return size_; }
 };
 
-enum { NON_VIDEO_RECV_QUEUE = 0, VIDEO_RECV_QUEUE, NUM_RECV_QUEUES };
+enum { HIGH_PRIORITY_RECV_QUEUE = 0, NORMAL_PRIORITY_RECV_QUEUE, NUM_RECV_QUEUES };
 const int RECV_QUEUE_CAPACITY[NUM_RECV_QUEUES] = {200, 800};  // NOLINT
 
 // An instance of the UDP Context
@@ -1934,9 +1934,9 @@ void udp_dedicated_recv_iterate(void* raw_context) {
     whist_lock_mutex(context->recv_mutex);
     if (recv_data->udp_packet.type == UDP_WHIST_SEGMENT &&
         recv_data->udp_packet.udp_whist_segment_data.whist_type == PACKET_VIDEO) {
-        context->recv_queue[VIDEO_RECV_QUEUE]->push(recv_data);
+        context->recv_queue[NORMAL_PRIORITY_RECV_QUEUE]->push(recv_data);
     } else {
-        context->recv_queue[NON_VIDEO_RECV_QUEUE]->push(recv_data);
+        context->recv_queue[HIGH_PRIORITY_RECV_QUEUE]->push(recv_data);
     }
     whist_unlock_mutex(context->recv_mutex);
     whist_signal_cond(context->recv_cond);
@@ -1949,8 +1949,8 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
     int size_total = 0;
     whist_lock_mutex(context->recv_mutex);
     int cnt = 0;
-    while ((size_total = context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() +
-                         context->recv_queue[VIDEO_RECV_QUEUE]->size()) == 0) {
+    while ((size_total = context->recv_queue[HIGH_PRIORITY_RECV_QUEUE]->size() +
+                         context->recv_queue[NORMAL_PRIORITY_RECV_QUEUE]->size()) == 0) {
         // the timedwait_cond failed after long running, I don't know why
         // Failure waiting on condition variable: -1 pthread_cond_timedwait() failed
         // bool succ = whist_timedwait_cond(context->recv_cond, context->recv_mutex, 1);
@@ -1964,10 +1964,10 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
         cnt++;
     }
 
-    if (context->recv_queue[NON_VIDEO_RECV_QUEUE]->size() > 0) {
-        recv_data = context->recv_queue[NON_VIDEO_RECV_QUEUE]->pop();
+    if (context->recv_queue[HIGH_PRIORITY_RECV_QUEUE]->size() > 0) {
+        recv_data = context->recv_queue[HIGH_PRIORITY_RECV_QUEUE]->pop();
     } else {
-        recv_data = context->recv_queue[VIDEO_RECV_QUEUE]->pop();
+        recv_data = context->recv_queue[NORMAL_PRIORITY_RECV_QUEUE]->pop();
     }
 
     whist_unlock_mutex(context->recv_mutex);
