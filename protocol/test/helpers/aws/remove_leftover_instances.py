@@ -2,9 +2,8 @@
 
 import os, sys, boto3
 
-from helpers.aws.boto3_tools import terminate_or_stop_aws_instance
+from helpers.aws.boto3_tools import terminate_or_stop_aws_instance, release_lock
 from helpers.common.constants import instances_name_tag, running_in_ci, github_run_id
-from helpers.common.timestamps_and_exit_tools import printred
 from helpers.common.git_tools import get_whist_branch_name
 from github import Github
 
@@ -46,13 +45,16 @@ def stop_ci_reusable_instances():
     w = repo.get_workflow("protocol-e2e-streaming-testing.yml")
     running_states = ["in_progress", "queued", "requested", "waiting"]
     running_workflows = [run for status in running_states for run in w.get_runs(status=status)]
-    if len(running_workflows) > 1:
-        print("Other E2E workflows are running or queued, so we don't stop the reusable instances.")
-        return
 
     for instance_id in set([x for x in (client_instance_id, server_instance_id) if len(x) > 0]):
-        print(f"Stopping instance '{instance_id}' in region '{region_name}' ...")
-        terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=False)
+        if len(running_workflows) > 1:
+            print(
+                f"Unlocking '{instance_id}' in region '{region_name}' without stopping it (other workflows are waiting for it)..."
+            )
+            release_lock(boto3client, instance_id, ssh_key_path="/home/runner/.ssh/id_rsa")
+        else:
+            print(f"Stopping instance '{instance_id}' in region '{region_name}' ...")
+            terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=False)
 
 
 def get_leftover_instances(boto3client, region_name, leftover_instances_filters):

@@ -355,9 +355,7 @@ def start_instance(
     return True
 
 
-def stop_instance_and_release_lock(
-    boto3client: botocore.client, instance_id: str, ssh_key_path: str
-):
+def release_lock(boto3client: botocore.client, instance_id: str, ssh_key_path: str):
     """
     Stop an existing instance and release the instance's E2E lock. If releasing the E2E lock
     fails, sleep for lock_contention_wait_time_seconds and retry.
@@ -401,13 +399,11 @@ def stop_instance_and_release_lock(
 
         time.sleep(lock_contention_wait_time_seconds)
 
-    result = stop_instance(boto3client, instance_id)
-
     # Remove log file with lock name
     if os.path.isfile("lock_name.txt"):
         os.remove("lock_name.txt")
 
-    return result and unlocking_succeded
+    return unlocking_succeded
 
 
 def stop_instance(boto3client: botocore.client, instance_id: str) -> bool:
@@ -640,20 +636,20 @@ def terminate_or_stop_aws_instance(
             print(e)
             return
     else:
+        # Release the lock
+        unlock_result = (
+            release_lock(boto3client, instance_id, ssh_key_path) if should_unlock else True
+        )
         # Stopping the instance and waiting for it to shutdown
+        stop_result = False
         print(f"Testing complete, stopping EC2 instance")
-        result = False
         try:
-            result = (
-                stop_instance_and_release_lock(boto3client, instance_id, ssh_key_path)
-                if should_unlock
-                else stop_instance(boto3client, instance_id)
-            )
+            stop_result = stop_instance(boto3client, instance_id)
         except botocore.exceptions.ClientError as e:
             printred(f"Caught Boto3 client exception while stopping instance {instance_id}!")
             print(e)
-        if result is False:
-            printyellow("Error while stopping the EC2 instance!")
+        if stop_result is False or unlock_result is False:
+            printyellow("Error while unlocking/stopping the EC2 instance!")
             return
 
     # Wait for the instance to be terminated
