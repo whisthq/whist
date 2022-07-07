@@ -299,7 +299,9 @@ def start_instance_and_get_lock(
         if not is_instance_running(boto3client, instance_id):
             print(f"Instance {instance_id} is currently not running. Attempting to start it...")
             result = start_instance(boto3client, instance_id)
-            if not result:
+            if result:
+                wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
+            else:
                 return False
         # Get IP address
         ip_addresses = get_instance_ip(boto3client, instance_id)
@@ -514,12 +516,9 @@ def create_or_start_aws_instance(
     # Attempt to start existing instance
     if existing_instance_id != "":
         # If reusing an existing instance, we don't need to create the lock
-        result = start_instance_and_get_lock(
+        if start_instance_and_get_lock(
             boto3client, existing_instance_id, ssh_key_path, create_lock=False
-        )
-        if result is True:
-            # Wait for the instance to be running
-            wait_for_instance_to_start_or_stop(boto3client, existing_instance_id, stopping=False)
+        ):
             return existing_instance_id
 
     # Define the AWS machine variables

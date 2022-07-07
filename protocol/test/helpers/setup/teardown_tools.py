@@ -410,7 +410,7 @@ def complete_experiment_and_save_results(
             should_unlock=True,
             ssh_key_path=ssh_key_path,
         )
-        
+
     elif running_in_ci:
         # Save instance IDs to file for reuse by later runs
         with open("instances_left_on.txt", "w") as instances_file:
