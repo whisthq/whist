@@ -3,7 +3,7 @@
 import os
 import sys
 import subprocess
-from github import Github, InputFileContent
+from github import Github, InputFileContent, GithubException
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -26,7 +26,11 @@ def get_gist_user_info(github_gist_token):
     user = client.get_user()
     username = user.login
     name = user.name
-    email = list(filter(lambda d: d["primary"] == True, user.get_emails()))[0]["email"]
+    try:
+        email = list(filter(lambda d: d["primary"] == True, user.get_emails()))[0]["email"]
+    except GithubException.UnknownObjectException as e:
+        print("Caught exception: ", e)
+        email = "e2e_bot@whist.com"
     return username, name, email
 
 
