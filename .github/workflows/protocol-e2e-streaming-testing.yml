@@ -185,6 +185,8 @@ jobs:
       - name: Stop or terminate leftover AWS instances
         if: always()
         working-directory: protocol/test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 -m helpers.aws.remove_leftover_instances
 
       # We parse the log files from the E2E performance tests above and display the results of the test.

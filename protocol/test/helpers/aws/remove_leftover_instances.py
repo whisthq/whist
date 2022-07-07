@@ -6,6 +6,7 @@ from helpers.aws.boto3_tools import terminate_or_stop_aws_instance
 from helpers.common.constants import instances_name_tag, running_in_ci, github_run_id
 from helpers.common.timestamps_and_exit_tools import printred
 from helpers.common.git_tools import get_whist_branch_name
+from github import Github
 
 # Before exiting, the streaming_e2e_tester.py script stops/terminates all EC2 instances
 # (unless the `--leave-instances-on` flag is set to 'true') used in the E2E test.
@@ -28,17 +29,26 @@ def stop_ci_reusable_instances():
     Returns:
         None
     """
+    client_instance_id = os.getenv("REUSABLE_CLIENT_INSTANCE_ID") or ""
+    server_instance_id = os.getenv("REUSABLE_SERVER_INSTANCE_ID") or ""
     region_name = os.getenv("REGION_NAME") or ""
     if region_name == "":
         print(
             f"Cannot stop reusable instance(s) because REGION_NAME environment variable is not set!"
         )
         return
-
     boto3client = boto3.client("ec2", region_name=region_name)
 
-    client_instance_id = os.getenv("REUSABLE_CLIENT_INSTANCE_ID") or ""
-    server_instance_id = os.getenv("REUSABLE_SERVER_INSTANCE_ID") or ""
+    # Check if there are other E2E workflows running or queued. If so, we should not stop the instances, otherwise the other
+    # workflows will have to re-start them
+    git_token = os.getenv("GITHUB_TOKEN") or ""
+    repo = Github(git_token).get_repo("whisthq/whist")
+    w = repo.get_workflow("protocol-e2e-streaming-testing.yml")
+    running_states = ["in_progress", "queued", "requested", "waiting"]
+    running_workflows = [run for status in running_states for run in w.get_runs(status=status)]
+    if len(running_workflows) > 1:
+        print("Other E2E workflows are running or queued, so we don't stop the reusable instances.")
+        return
 
     for instance_id in set([x for x in (client_instance_id, server_instance_id) if len(x) > 0]):
         print(f"Stopping instance '{instance_id}' in region '{region_name}' ...")
