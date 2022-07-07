@@ -493,7 +493,6 @@ def create_or_start_aws_instance(
     existing_instance_id,
     ssh_key_name,
     ssh_key_path,
-    lock_needed=False,
 ):
     """
     Connect to an existing instance (if the parameter existing_instance_id is not empty) or create a new one
@@ -506,8 +505,6 @@ def create_or_start_aws_instance(
                             ignored if a valid instance ID is passed to the existing_instance_id parameter.
         ssh_key_path (str): The path to the .pem file containing the key to be used to accesss the EC2 instance
                             via SSH
-        lock_needed (bool): Whether we will need to acquire a E2E usage lock on the instance. When using two instances
-                            we only acquire/release the lock on the server instance.
 
     Returns:
         instance_id (str): the ID of the started instance. This can be the existing instance
@@ -516,17 +513,14 @@ def create_or_start_aws_instance(
     """
     # Attempt to start existing instance
     if existing_instance_id != "":
-        instance_id = existing_instance_id
         # If reusing an existing instance, we don't need to create the lock
-        result = (
-            start_instance_and_get_lock(boto3client, instance_id, ssh_key_path, create_lock=False)
-            if lock_needed
-            else start_instance(boto3client, instance_id)
+        result = start_instance_and_get_lock(
+            boto3client, existing_instance_id, ssh_key_path, create_lock=False
         )
         if result is True:
             # Wait for the instance to be running
-            wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
-            return instance_id
+            wait_for_instance_to_start_or_stop(boto3client, existing_instance_id, stopping=False)
+            return existing_instance_id
 
     # Define the AWS machine variables
 
@@ -596,7 +590,6 @@ def get_client_and_instances(
         existing_server_instance_id,
         ssh_key_name,
         ssh_key_path,
-        lock_needed=True,
     )
     if server_instance_id == "":
         printyellow(f"Creating new instance on {region_name} for the server failed!")
