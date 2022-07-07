@@ -10,18 +10,17 @@ extern "C" {
 
 struct WhistThreadStruct {
     std::string thread_name;
-    std::shared_ptr<int> ret_value;
+    std::shared_ptr<int> ret_ptr;
     std::thread whist_thread;
     WhistThreadStruct(std::string param_thread_name, WhistThreadFunction thread_function,
                       void *data)
-        : thread_name(param_thread_name), ret_value(std::make_shared<int>(0)) {
-        // Let local_ret_shared_ptr reference this->ret_value,
-        // So that others can use this->ret_value later.
-        std::shared_ptr<int> local_ret_shared_ptr = this->ret_value;
+        : thread_name(param_thread_name), ret_ptr(std::make_shared<int>(0)) {
+        // Keep a local reference to ret_ptr
+        std::shared_ptr<int> local_ret_ptr = this->ret_ptr;
         // Call thread_function(data) in its own std::thread,
-        this->whist_thread = std::thread([local_ret_shared_ptr, thread_function, data]() -> void {
+        this->whist_thread = std::thread([local_ret_ptr, thread_function, data]() -> void {
             // Call, and store the return value into the shared_ptr
-            *local_ret_shared_ptr = thread_function(data);
+            *local_ret_ptr = thread_function(data);
         });
     }
 };
@@ -76,7 +75,7 @@ void whist_wait_thread(WhistThread thread, int *ret) {
     // Copy out the return value, if the caller wants it
     if (ret != NULL) {
         // "join" creates a memory barrier, so this is safe
-        *ret = *thread->ret_value;
+        *ret = *thread->ret_ptr;
     }
     // And then delete the thread struct
     delete thread;
