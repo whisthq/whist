@@ -97,8 +97,7 @@ def run_single_ssh_command(instance_ip, ssh_key_path, timeout, command):
     try:
         client.connect(instance_ip, username=username, key_filename=ssh_key_path, timeout=timeout)
     except Exception as e:
-        printyellow("Caught exception:")
-        print(e)
+        print("Caught SSH connect exception:")
         return -1
     _, stdout, stderr = client.exec_command(command)
     return_code = stdout.channel.recv_exit_status()
