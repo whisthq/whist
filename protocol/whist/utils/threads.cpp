@@ -122,32 +122,49 @@ void whist_set_thread_priority(WhistThreadPriority priority) {
     }
 }
 
+class WhistThreadLocalStorageContainer {
+   public:
+    void *data = nullptr;
+    WhistThreadLocalStorageDestructor data_destructor = nullptr;
+    WhistThreadLocalStorageContainer() {}
+    WhistThreadLocalStorageContainer(void *ptr, WhistThreadLocalStorageDestructor destructor)
+        : data(ptr), data_destructor(destructor) {}
+    // Custom destructor
+    ~WhistThreadLocalStorageContainer() {
+        if (this->data_destructor != nullptr) {
+            this->data_destructor(this->data);
+        }
+    }
+    // Rule of three
+    WhistThreadLocalStorageContainer(const WhistThreadLocalStorageContainer &other) = delete;
+    WhistThreadLocalStorageContainer &operator=(const WhistThreadLocalStorageContainer &other) =
+        delete;
+    // Move-assignment
+    WhistThreadLocalStorageContainer &operator=(WhistThreadLocalStorageContainer &&other) {
+        std::swap(this->data, other.data);
+        std::swap(this->data_destructor, other.data_destructor);
+        return *this;
+    }
+};
+
 // 1, so that a default-initalized WhistThreadLocalStorageKey won't exist in tls_map
 static thread_local WhistThreadLocalStorageKey next_key = 1;
-static thread_local std::map<WhistThreadLocalStorageKey,
-                             std::pair<void *, WhistThreadLocalStorageDestructor>>
-    tls_map;
+static thread_local std::map<WhistThreadLocalStorageKey, WhistThreadLocalStorageContainer> tls_map;
 
 WhistThreadLocalStorageKey whist_create_thread_local_storage(void) {
     WhistThreadLocalStorageKey current_key = next_key++;
-    tls_map[current_key] = {nullptr, nullptr};
+    tls_map[current_key] = WhistThreadLocalStorageContainer();
     return current_key;
 }
 
 void whist_set_thread_local_storage(WhistThreadLocalStorageKey key, void *data,
                                     WhistThreadLocalStorageDestructor destructor) {
-    auto &tls_pair = tls_map.at(key);
-    // If the previous value needs to be destroyed,
-    if (tls_pair.second != nullptr) {
-        // Destroy it
-        tls_pair.second(tls_pair.first);
-    }
-    // Now, save the new value
-    tls_pair = {data, destructor};
+    // Replace the storage container with the new (data, destructor) pair
+    tls_map.at(key) = WhistThreadLocalStorageContainer(data, destructor);
 }
 
 void *whist_get_thread_local_storage(WhistThreadLocalStorageKey key) {
-    return tls_map.at(key).first;
+    return tls_map.at(key).data;
 }
 
 void whist_sleep(uint32_t ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
