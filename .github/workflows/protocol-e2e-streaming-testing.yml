@@ -34,9 +34,9 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       # Passing an empty region name will let the E2E pick any region available
-      REGION_NAME: ""
-      REUSABLE_CLIENT_INSTANCE_ID: ""
-      REUSABLE_SERVER_INSTANCE_ID: ""
+      REGION_NAME: "us-east-1"
+      REUSABLE_CLIENT_INSTANCE_ID: "i-061a353731c542eeb"
+      REUSABLE_SERVER_INSTANCE_ID: "i-00ddb3dce5e4bd581"
 
     steps:
       - name: Checkout Git Repository
