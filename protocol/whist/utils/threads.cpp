@@ -9,16 +9,20 @@ extern "C" {
 
 struct WhistThreadStruct {
     std::string thread_name;
-    int ret_value;
+    std::shared_ptr<int> ret_value;
     std::thread whist_thread;
     WhistThreadStruct(std::string param_thread_name, WhistThreadFunction thread_function,
                       void *data)
-        : thread_name(param_thread_name),
-          ret_value(0),
-          whist_thread([this, thread_function, data]() -> void {
-              int ret = thread_function(data);
-              this->ret_value = ret;
-          }) {}
+        : thread_name(param_thread_name), ret_value(0) {
+        // Let local_ret_shared_ptr reference this->ret_value,
+        // So that others can use this->ret_value later.
+        std::shared_ptr<int> local_ret_shared_ptr = this->ret_value;
+        // Call thread_function(data) in its own std::thread,
+        this->whist_thread = std::thread([local_ret_shared_ptr, thread_function, data]() -> void {
+            // Call, and store the return value into the shared_ptr
+            *local_ret_shared_ptr = thread_function(data);
+        });
+    }
 };
 
 #if OS_IS(OS_LINUX)
@@ -57,23 +61,23 @@ WhistThread whist_create_thread(WhistThreadFunction thread_function, const char 
 void whist_detach_thread(WhistThread thread) {
     LOG_INFO("Detaching thread \"%s\" from thread %lx", thread->thread_name.c_str(),
              whist_get_thread_id(thread));
-    std::thread detach_thread([thread]() -> void {
-        thread->whist_thread.join();
-        // We delete after joining,
-        // to ensure that "ret" isn't written to after the struct has been freed
-        delete thread;
-    });
-    detach_thread.detach();
+    // Detach the thread, and delete its struct
+    thread->whist_thread.detach();
+    delete thread;
     LOG_INFO("Detached from thread %lx", whist_get_thread_id(NULL));
 }
 
 void whist_wait_thread(WhistThread thread, int *ret) {
     LOG_INFO("Waiting on thread \"%s\" from thread %lx", thread->thread_name.c_str(),
              whist_get_thread_id(thread));
+    // Wait for the thread to finish executing,
     thread->whist_thread.join();
+    // Copy out the return value, if the caller wants it
     if (ret != NULL) {
-        *ret = thread->ret_value;
+        // "join" creates a memory barrier, so this is safe
+        *ret = *thread->ret_value;
     }
+    // And then delete the thread struct
     delete thread;
     LOG_INFO("Waited from thread %lx", whist_get_thread_id(NULL));
 }
