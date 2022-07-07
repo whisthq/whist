@@ -166,7 +166,7 @@ jobs:
             --use-two-instances=true \
             --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
             --existing-server-instance-id "$SERVER_INSTANCE_ID" \
-            --leave-instances-on=false \
+            --leave-instances-on=true \
             --skip-host-setup=true \
             --skip-git-clone=true \
             --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" \

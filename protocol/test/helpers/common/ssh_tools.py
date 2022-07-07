@@ -168,6 +168,17 @@ def attempt_release_lock(instance_ip, ssh_key_path):
     Returns:
         success (bool): indicates whether the unlocking succeeded.
     """
+    # Check if we hold the lock
+    check_lock_command = f"test -f {unique_lock_path}"
+    print(f"Issuing check lock existence command: {check_lock_command}")
+    return_code = run_single_ssh_command(
+        instance_ip, ssh_key_path, lock_ssh_timeout_seconds, check_lock_command
+    )
+    print(f"Import lock return code: {return_code}")
+    if return_code == 1:
+        print(f"Lock not found. Either it was already released, or it was never acquired.")
+        return True
+
     unlocking_command = f"mv {unique_lock_path} {free_lock_path}"
     print(f"Issuing unlocking command: {unlocking_command}")
     return_code = run_single_ssh_command(
