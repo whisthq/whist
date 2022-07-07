@@ -119,6 +119,16 @@ def client_setup_process(args_dict):
             )
 
         if skip_host_setup == "false":
+            # Reboot and wait for it to come back up (to prevent issues such as the following:
+            #       `ERROR: An NVIDIA kernel module 'nvidia-modeset' appears to already be loaded in your kernel.`
+            # )
+            print("Rebooting the client EC2 instance to run the host-setup from a clean state...")
+            hs_process = reboot_instance(
+                hs_process,
+                client_cmd,
+                client_log,
+                pexpect_prompt_client,
+            )
             run_host_setup(hs_process, pexpect_prompt_client)
         else:
             print("Skipping host-setup on server instance.")
