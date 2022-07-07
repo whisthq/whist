@@ -6,6 +6,7 @@ extern "C" {
 #include <mutex>
 #include <condition_variable>
 #include <string>
+#include <memory>
 
 struct WhistThreadStruct {
     std::string thread_name;
@@ -13,7 +14,7 @@ struct WhistThreadStruct {
     std::thread whist_thread;
     WhistThreadStruct(std::string param_thread_name, WhistThreadFunction thread_function,
                       void *data)
-        : thread_name(param_thread_name), ret_value(0) {
+        : thread_name(param_thread_name), ret_value(std::make_shared<int>(0)) {
         // Let local_ret_shared_ptr reference this->ret_value,
         // So that others can use this->ret_value later.
         std::shared_ptr<int> local_ret_shared_ptr = this->ret_value;
