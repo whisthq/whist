@@ -120,40 +120,25 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		EbsOptimized: aws.Bool(true), // This has to be set at launch time, otherwise AWS will disable the optimization
 	}
 
-	var (
-		attempts int
-		result   *ec2.RunInstancesOutput
-	)
-	retryTicker := time.NewTicker(WAIT_TIME_BEFORE_RETRY_IN_SECONDS * time.Second)
-	retryDone := make(chan bool)
+	var result *ec2.RunInstancesOutput
 
-	go func() {
-		for {
-			select {
-			case <-retryDone:
-				return
+	for i := 0; i < MAX_RETRY_ATTEMPTS; i++ {
+		logger.Infof("Attempt %d to spinup %d instances with image %s", i+1, numInstances, image.ImageID)
+		result, err = host.MakeInstances(ctx, input)
 
-			case <-retryTicker.C:
-				logger.Infof("Trying to spinup %d instances with image %s", numInstances, image.ImageID)
-
-				attempts += 1
-				result, err = host.MakeInstances(ctx, input)
-
-				if err == nil || attempts == MAX_RETRY_ATTEMPTS {
-					logger.Infof("Done trying to spinup instances")
-					retryTicker.Stop()
-					retryDone <- true
-				} else {
-					logger.Warningf("Failed to start desired number of instances: %s", err)
-				}
-			}
+		if err == nil {
+			logger.Infof("Done trying to spinup instances")
+			break
+		} else {
+			logger.Warningf("Failed to start instances: %s", err)
+			time.Sleep(1 * time.Second)
 		}
-	}()
+	}
 
-	<-retryDone
-
+	// If the last value of err is not nil, we know the loop failed to
+	// spinup instances.
 	if err != nil {
-		return nil, utils.MakeError("error creating instances, retry time expired: %s", err)
+		return nil, err
 	}
 
 	// Create slice with instances to write to database
