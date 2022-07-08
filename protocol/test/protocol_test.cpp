@@ -210,7 +210,9 @@ TEST_F(ProtocolTest, InitSDL) {
         memset(buffer, 0, 1000);
         sprintf(buffer, "Forcing a resize from %dx%d to %dx%d", width, height, adjusted_width,
                 adjusted_height);
-        check_stdout_line(::testing::HasSubstr(buffer));
+        if (width != adjusted_width || height != adjusted_height) {
+            check_stdout_line(::testing::HasSubstr(buffer));
+        }
 #endif
         memset(buffer, 0, 1000);
         sprintf(buffer, "Window resized to %dx%d (Actual %dx%d)", width, height, adjusted_width,
@@ -1943,11 +1945,12 @@ int test_virtual_intr(void* arg) {
 }
 
 TEST_F(ProtocolTest, VirtualEventTest) {
-    virtual_interface_connect();
+    const VirtualInterface* vi = get_virtual_interface();
+    vi->lifecycle.connect();
     WhistFrontendEvent sent_event;
     sent_event.type = FRONTEND_EVENT_RESIZE;  // Can be anything. We just want this to
                                               // match when we poll it.
-    virtual_interface_send_event(&sent_event);
+    vi->events.send(&sent_event);
     WhistFrontend frontend;
     virtual_init(&frontend, 0, 0, NULL, NULL);
     WhistFrontendEvent received_event;
@@ -1955,7 +1958,7 @@ TEST_F(ProtocolTest, VirtualEventTest) {
     EXPECT_EQ(received_event.type, FRONTEND_EVENT_RESIZE);
     EXPECT_EQ(virtual_poll_event(&frontend, &received_event), false);
     sent_event.type = FRONTEND_EVENT_VISIBILITY;
-    virtual_interface_send_event(&sent_event);
+    vi->events.send(&sent_event);
     EXPECT_EQ(virtual_wait_event(&frontend, &received_event, 50), true);
     EXPECT_EQ(received_event.type, FRONTEND_EVENT_VISIBILITY);
     EXPECT_EQ(virtual_wait_event(&frontend, &received_event, 50), false);
@@ -1969,7 +1972,7 @@ TEST_F(ProtocolTest, VirtualEventTest) {
     EXPECT_EQ(received_event.type, FRONTEND_EVENT_INTERRUPT);
     whist_wait_thread(thread_context, NULL);
     virtual_destroy(&frontend);
-    virtual_interface_disconnect();
+    vi->lifecycle.disconnect();
 }
 
 TEST_F(ProtocolTest, WCCTest) {
