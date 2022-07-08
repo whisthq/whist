@@ -54,7 +54,13 @@ def stop_ci_reusable_instances():
             release_lock(boto3client, instance_id, ssh_key_path="/home/runner/.ssh/id_rsa")
         else:
             print(f"Stopping instance '{instance_id}' in region '{region_name}' ...")
-            terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=False)
+            terminate_or_stop_aws_instance(
+                boto3client,
+                instance_id,
+                should_terminate=False,
+                should_unlock=True,
+                ssh_key_path="/home/runner/.ssh/id_rsa",
+            )
 
 
 def get_leftover_instances(boto3client, region_name, leftover_instances_filters):

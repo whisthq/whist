@@ -10,47 +10,23 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 # Acknowledged to https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal-in-python
 class PrintFormats:
-    blue = "\033[94m"
-    cyan = "\033[96m"
-    green = "\033[92m"
-    yellow = "\033[93m"
-    red = "\033[91m"
-    bold = "\033[1m"
-    grey = "\033[37m"
-    underline = "\033[4m"
+    colors = {
+        "blue": "\033[94m",
+        "cyan": "\033[96m",
+        "green": "\033[92m",
+        "yellow": "\033[93m",
+        "red": "\033[91m",
+        "bold": "\033[1m",
+        "grey": "\033[37m",
+    }
     end_formatting = "\033[0m"
 
 
-def printblue(text):
-    print(f"{PrintFormats.blue}{text}{PrintFormats.end_formatting}")
-
-
-def printcyan(text):
-    print(f"{PrintFormats.cyan}{text}{PrintFormats.end_formatting}")
-
-
-def printgreen(text):
-    print(f"{PrintFormats.green}{text}{PrintFormats.end_formatting}")
-
-
-def printyellow(text):
-    print(f"{PrintFormats.yellow}{text}{PrintFormats.end_formatting}")
-
-
-def printred(text):
-    print(f"{PrintFormats.red}{text}{PrintFormats.end_formatting}")
-
-
-def printgrey(text):
-    print(f"{PrintFormats.grey}{text}{PrintFormats.end_formatting}")
-
-
-def printbold(text):
-    print(f"{PrintFormats.bold}{text}{PrintFormats.end_formatting}")
-
-
-def printunderline(text):
-    print(f"{PrintFormats.underline}{text}{PrintFormats.end_formatting}")
+def printcolor(text, color):
+    if color not in PrintFormats.colors:
+        print(text)
+    else:
+        print(f"{PrintFormats.colors[color]}{text}{PrintFormats.end_formatting}")
 
 
 class TimeStamps:
