@@ -122,8 +122,10 @@ static const VirtualInterface vi = {
         {
             .send = virtual_interface_send_event,
         },
-    .file = {
-        .set_on_file_upload_callback = virtual_interface_set_on_file_upload_callback,
-    }};
+    .file =
+        {
+            .set_on_file_upload_callback = virtual_interface_set_on_file_upload_callback,
+        },
+};
 
 const VirtualInterface* get_virtual_interface(void) { return &vi; }
