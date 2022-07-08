@@ -91,6 +91,19 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
 
 
 def run_single_ssh_command(instance_ip, ssh_key_path, timeout, command):
+    """
+    Execute a single command on a remote instance via SSH, and get the exit code. This function is less flexible
+    but safer than pexpect
+
+    Args:
+        instance_ip (str): The public IP of the instance where we want to run the command
+        ssh_key_path (str): The path to the SSH key to be used to access the instance via SSH
+        timeout (int): The timeout in seconds for the command
+        command (str): The command to run on the remote instance
+
+    Returns:
+        return_code (int): The exit code of the command (on the remote machine).
+    """
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -102,12 +115,13 @@ def run_single_ssh_command(instance_ip, ssh_key_path, timeout, command):
         return -1
     _, stdout, stderr = client.exec_command(command)
     return_code = stdout.channel.recv_exit_status()
-    stdout = stdout.read().decode("utf-8") or ""
-    stderr = stderr.read().decode("utf-8") or ""
-    if len(stdout) > 0:
-        print(stdout)
-    if len(stderr) > 0:
-        print(stderr)
+    # To enable printing the stdout/stderr, uncomment the lines below:
+    # stdout = stdout.read().decode("utf-8") or ""
+    # stderr = stderr.read().decode("utf-8") or ""
+    # if len(stdout) > 0:
+    #     print(stdout)
+    # if len(stderr) > 0:
+    #     print(stderr)
     return return_code
 
 
@@ -269,6 +283,19 @@ def reboot_instance(pexpect_process, ssh_cmd, log_file_handle, pexpect_prompt):
 
 
 def force_unlock(pexpect_process, pexpect_prompt):
+    """
+    This function is used to force unlock a machine in case a E2E agent crashed while holding the lock, and we
+    do not know the lock's name.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process
+                        on the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
+                        execute a new command
+
+    Returns:
+        success (bool): whether we succeeded in releasing the lock
+    """
     pexpect_process.sendline(f"rm -f {path_to_all_locks}; touch {free_lock_path}")
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 

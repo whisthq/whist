@@ -68,6 +68,9 @@ if __name__ == "__main__":
     force_unlock_logfile = open(log_filepath, "w+")
 
     for instance_id in args.instances:
+        if is_instance_running(boto3client, instance_id) == False:
+            print(f"Cannot unlock instance `{instance_id}` because it is not running!")
+            continue
         instance_ips = get_instance_ip(boto3client, instance_id)
         public_ip = instance_ips[0]["public"]
         private_ip = instance_ips[0]["private"].replace(".", "-")
@@ -80,9 +83,6 @@ if __name__ == "__main__":
             print(
                 f"Attempting to force unlock instance `{instance_id}` (retry {retry+1}/{unlock_max_retries})..."
             )
-            if is_instance_running(boto3client, instance_id) == False:
-                print(f"Cannot unlock instance `{instance_id}` because it is not running!")
-                break
             result = force_unlock(pexpect_process, pexpect_prompt)
             if result:
                 print(f"Succesfully force unlocked instance `{instance_id}`!")
