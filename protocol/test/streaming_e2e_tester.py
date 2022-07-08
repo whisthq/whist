@@ -20,7 +20,7 @@ from helpers.common.ssh_tools import (
 from helpers.common.timestamps_and_exit_tools import (
     TimeStamps,
     exit_with_error,
-    printyellow,
+    printcolor,
 )
 
 from helpers.common.constants import (
@@ -403,13 +403,15 @@ if __name__ == "__main__":
                         p_done.append(p)
                     else:
                         if p == p1:
-                            printyellow(
-                                "Server setup process failed. Terminating the client setup process and exiting."
+                            printcolor(
+                                "Server setup process failed. Terminating the client setup process and exiting.",
+                                "yellow",
                             )
                             p2.terminate()
                         else:
-                            printyellow(
-                                "Client setup process failed. Terminating the server setup process and exiting."
+                            printcolor(
+                                "Client setup process failed. Terminating the server setup process and exiting.",
+                                "yellow",
                             )
                             p1.terminate()
                         exit_with_error(None, timestamps=timestamps)
