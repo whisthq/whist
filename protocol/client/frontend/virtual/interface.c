@@ -19,7 +19,6 @@ static AVFrame* pending = NULL;
 static bool connected = false;
 static int requested_width;
 static int requested_height;
-static void* callback_arg;
 
 static void virtual_interface_connect(void) {
     lock = whist_create_mutex();
