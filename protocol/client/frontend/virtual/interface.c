@@ -1,4 +1,6 @@
 #include "common.h"
+// This is a crutch. Once video is callback-ized we won't need it anymore.
+#define FROM_WHIST_PROTOCOL true
 #include "interface.h"
 #include <whist/utils/queue.h>
 #include <whist/network/network_algorithm.h>
@@ -7,29 +9,29 @@
 #define MAX_EVENTS_QUEUED 10000
 
 QueueContext* events_queue = NULL;
+
+void* callback_context = NULL;
 OnCursorChangeCallback on_cursor_change = NULL;
-void* on_cursor_change_data = NULL;
+OnFileUploadCallback on_file_upload = NULL;
 
 static WhistMutex lock;
 static AVFrame* pending = NULL;
 static bool connected = false;
 static int requested_width;
 static int requested_height;
-static FileUploadCallback callback_ptr;
 static void* callback_arg;
 
-void virtual_interface_connect(void) {
+static void virtual_interface_connect(void) {
     lock = whist_create_mutex();
     events_queue = fifo_queue_create(sizeof(WhistFrontendEvent), MAX_EVENTS_QUEUED);
     connected = true;
 }
 
-void virtual_interface_set_on_cursor_change_callback(OnCursorChangeCallback cb, void* data) {
+static void virtual_interface_set_on_cursor_change_callback(OnCursorChangeCallback cb) {
     on_cursor_change = cb;
-    on_cursor_change_data = data;
 }
 
-void* virtual_interface_get_frame_ref(void) {
+static void* virtual_interface_get_frame_ref(void) {
     whist_lock_mutex(lock);
     void* out = pending;
     pending = NULL;
@@ -37,15 +39,15 @@ void* virtual_interface_get_frame_ref(void) {
     return out;
 }
 
-void* virtual_interface_get_handle_from_frame_ref(void* frame_ref) {
+static void* virtual_interface_get_handle_from_frame_ref(void* frame_ref) {
     AVFrame* frame = frame_ref;
     // Assuming we want CVPixelBufferRef for now
     return frame->data[3];
 }
 
-void virtual_interface_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data, int** linesize,
-                                              int* width, int* height, int* visible_width,
-                                              int* visible_height) {
+static void virtual_interface_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data,
+                                                     int** linesize, int* width, int* height,
+                                                     int* visible_width, int* visible_height) {
     AVFrame* frame = frame_ref;
     *data = frame->data;
     *linesize = frame->linesize;
@@ -65,7 +67,7 @@ void virtual_interface_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data, 
     }
 }
 
-void virtual_interface_free_frame_ref(void* frame_ref) {
+static void virtual_interface_free_frame_ref(void* frame_ref) {
     AVFrame* frame = frame_ref;
     av_frame_free(&frame);
 }
@@ -79,13 +81,13 @@ void virtual_interface_send_frame(AVFrame* frame) {
     whist_unlock_mutex(lock);
 }
 
-void virtual_interface_disconnect(void) {
+static void virtual_interface_disconnect(void) {
     connected = false;
     whist_destroy_mutex(lock);
     fifo_queue_destroy(events_queue);
 }
 
-void virtual_interface_send_event(const WhistFrontendEvent* frontend_event) {
+static void virtual_interface_send_event(const WhistFrontendEvent* frontend_event) {
     if (frontend_event->type == FRONTEND_EVENT_RESIZE) {
         requested_width = frontend_event->resize.width;
         requested_height = frontend_event->resize.height;
@@ -95,15 +97,34 @@ void virtual_interface_send_event(const WhistFrontendEvent* frontend_event) {
     }
 }
 
-void virtual_interface_set_fileupload_callback(FileUploadCallback callback, void* arg) {
-    callback_ptr = callback;
-    callback_arg = arg;
+static void virtual_interface_set_on_file_upload_callback(OnFileUploadCallback cb) {
+    on_file_upload = cb;
 }
 
-const char* virtual_interface_on_file_upload(void) {
-    if (callback_ptr != NULL) {
-        return callback_ptr(callback_arg);
-    } else {
-        return NULL;
-    }
-}
+static void virtual_interface_set_callback_context(void* context) { callback_context = context; }
+
+static const VirtualInterface vi = {
+    .lifecycle =
+        {
+            .connect = virtual_interface_connect,
+            .set_callback_context = virtual_interface_set_callback_context,
+            .start = whist_client_main,
+            .disconnect = virtual_interface_disconnect,
+        },
+    .video =
+        {
+            .get_frame_ref = virtual_interface_get_frame_ref,
+            .get_handle_from_frame_ref = virtual_interface_get_handle_from_frame_ref,
+            .get_frame_ref_yuv_data = virtual_interface_get_frame_ref_yuv_data,
+            .free_frame_ref = virtual_interface_free_frame_ref,
+            .set_on_cursor_change_callback = virtual_interface_set_on_cursor_change_callback,
+        },
+    .events =
+        {
+            .send = virtual_interface_send_event,
+        },
+    .file = {
+        .set_on_file_upload_callback = virtual_interface_set_on_file_upload_callback,
+    }};
+
+const VirtualInterface* get_virtual_interface(void) { return &vi; }

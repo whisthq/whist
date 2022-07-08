@@ -1,4 +1,6 @@
 #include "common.h"
+// This is a crutch. Once video is callback-ized we won't need it anymore.
+#define FROM_WHIST_PROTOCOL true
 #include "interface.h"
 #include <whist/utils/queue.h>
 #include <whist/utils/atomic.h>
@@ -6,8 +8,9 @@
 static atomic_int sdl_atexit_initialized = ATOMIC_VAR_INIT(0);
 
 extern QueueContext* events_queue;
+extern void* callback_context;
+extern OnFileUploadCallback on_file_upload;
 extern OnCursorChangeCallback on_cursor_change;
-extern void* on_cursor_change_data;
 
 static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* event) {
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
@@ -206,7 +209,11 @@ void virtual_interrupt(WhistFrontend* frontend) {
 }
 
 const char* virtual_get_chosen_file(WhistFrontend* frontend) {
-    return virtual_interface_on_file_upload();
+    if (on_file_upload != NULL) {
+        return on_file_upload(callback_context);
+    } else {
+        return NULL;
+    }
 }
 
 static const char* css_cursor_from_whist_cursor_type(WhistCursorType type) {
@@ -235,7 +242,7 @@ void virtual_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
     if (cursor->type != last_cursor_type) {
         const char* css_name = css_cursor_from_whist_cursor_type(cursor->type);
         if (on_cursor_change != NULL) {
-            on_cursor_change(on_cursor_change_data, css_name);
+            on_cursor_change(callback_context, css_name);
         }
         last_cursor_type = cursor->type;
     }
