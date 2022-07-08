@@ -154,8 +154,6 @@ def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
             return False
         print(f"Successfully created lock on instance `{instance_ip}`!")
 
-    print(f"Attempting to grab lock on instance `{instance_ip}`...")
-
     # Attempt to import lock first
     return_code = run_single_ssh_command(
         instance_ip, ssh_key_path, lock_ssh_timeout_seconds, import_lock_command
@@ -173,12 +171,10 @@ def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
     print(f"Get lock return code: {return_code}")
     if return_code == 0:
         print(
-            f"Successfully grabbed the free lock on instance `{instance_ip}`! The lock is now named {unique_lock_path}!"
+            f"Successfully acquired the free lock on instance `{instance_ip}`! The lock is now named {unique_lock_path}!"
         )
         return True
     else:
-        print(f"Lock is not available on instance `{instance_ip}`. Retry later...")
-        print()
         return False
 
 

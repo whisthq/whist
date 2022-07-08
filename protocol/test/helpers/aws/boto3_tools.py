@@ -306,7 +306,6 @@ def start_instance_and_get_lock(
         public_ip = ip_addresses[0]["public"]
         # Attempt to get the lock
         if attempt_request_lock(public_ip, ssh_key_path, create_lock=create_lock):
-            print(f"Successfully acquired lock on instance {instance_id}!")
             return True
         printgrey(
             f"Failed to get lock on {instance_id}! Waiting for {lock_contention_wait_time_seconds}s and retrying..."
