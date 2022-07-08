@@ -106,17 +106,16 @@ func StopWaitingMandelboxes(dockerClient dockerclient.CommonAPIClient) {
 // old creation time but are still marked as allocated, or have been marked
 // connecting for too long.
 func RemoveStaleMandelboxes(allocatedAge, connectingAge time.Duration) {
-	logger.Infof("Cleaning up stale mandelboxes.")
 	trackerLock.RLock()
 	defer trackerLock.RUnlock()
 
 	for _, m := range tracker {
-		if m.GetStatus() == dbdriver.MandelboxStatusAllocated ||
-			m.GetStatus() == dbdriver.MandelboxStatusConnecting {
-			if m.GetLastUpdatedTime().Before(time.Now().Add(-1*allocatedAge)) ||
+		if m.GetStatus() == dbdriver.MandelboxStatusAllocated &&
+			m.GetLastUpdatedTime().Before(time.Now().Add(-1*allocatedAge)) ||
+			m.GetStatus() == dbdriver.MandelboxStatusConnecting &&
 				m.GetLastUpdatedTime().Before(time.Now().Add(-1*connectingAge)) {
-				m.Close()
-			}
+			logger.Infof("Cleaning up stale mandelbox %s", m.GetID())
+			m.Close()
 		}
 	}
 }

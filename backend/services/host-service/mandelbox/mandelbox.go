@@ -145,12 +145,6 @@ type Mandelbox interface {
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context
 
-	// CleanupDone will return a channel indicating if the mandelbox has finished
-	// freeing the allocated resources and cleaned up from the database. This provides
-	// an explicit synchronization mechanism for starting more mandelboxes iff the
-	// "old" mandelboxes have been cleaned up successfully.
-	CleanupDone() chan bool
-
 	// Close cancels the mandelbox-specific context, triggering the cleanup of
 	// all associated resources.
 	Close()
@@ -159,11 +153,11 @@ type Mandelbox interface {
 // New creates a new Mandelbox given a parent context and a whist ID. It is
 // simply a wrapper around new() to avoid exposing the underlying type to
 // non-testing packages.
-func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID) Mandelbox {
-	return new(baseCtx, goroutineTracker, fid)
+func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID, mandelboxDieChan chan bool) Mandelbox {
+	return new(baseCtx, goroutineTracker, fid, mandelboxDieChan)
 }
 
-func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID) *mandelboxData {
+func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID, mandelboxDieChan chan bool) *mandelboxData {
 	// We create a context for this mandelbox specifically.
 	ctx, cancel := context.WithCancel(baseCtx)
 
@@ -174,7 +168,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		uinputDeviceMappings: []dockercontainer.DeviceMapping{},
 		otherDeviceMappings:  []dockercontainer.DeviceMapping{},
 		updatedAt:            time.Now(),
-		cleanupChan:          make(chan bool),
+		mandelboxDieChan:     mandelboxDieChan,
 	}
 
 	mandelbox.createResourceMappingDir()
@@ -260,9 +254,8 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		logger.Infof("Cleaned up after Mandelbox %s", mandelbox.GetID())
 
 		// Only after every step of the cleanup function has completed successfully,
-		// notify that the cleanup for this mandelbox is done and close the channel.
-		mandelbox.cleanupChan <- true
-		close(mandelbox.cleanupChan)
+		// notify that the cleanup for this mandelbox is done.
+		mandelbox.mandelboxDieChan <- true
 	}()
 
 	return mandelbox
@@ -302,7 +295,7 @@ type mandelboxData struct {
 
 	portBindings []portbindings.PortBinding
 
-	cleanupChan chan bool
+	mandelboxDieChan chan bool
 }
 
 // GetID returns the mandelbox ID.
@@ -553,8 +546,7 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 		if err != nil {
 			placeholderUUID := types.MandelboxID(utils.PlaceholderWarmupUUID())
 			if mandelbox.GetID() == placeholderUUID && strings.Contains(err.Error(), "use of closed network connection") ||
-				mandelbox.GetStatus() == dbdriver.MandelboxStatusAllocated ||
-				mandelbox.GetStatus() == dbdriver.MandelboxStatusConnecting {
+				mandelbox.GetStatus() != dbdriver.MandelboxStatusRunning {
 				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
 			} else {
 				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
@@ -572,10 +564,6 @@ func (mandelbox *mandelboxData) GetContext() context.Context {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.ctx
-}
-
-func (mandelbox *mandelboxData) CleanupDone() chan bool {
-	return mandelbox.cleanupChan
 }
 
 // Close cancels the context for the mandelbox, causing it to shutdown
