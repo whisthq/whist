@@ -32,6 +32,7 @@ jobs:
   protocol-streaming-e2e-check-pr:
     name: "Protocol Streaming End-to-End Test"
     runs-on: ubuntu-20.04
+    timeout-minutes: 180 # cancel the workflow if we have waited for 3h or more
     env:
       # Passing an empty region name will let the E2E pick any region available
       REGION_NAME: "us-east-1"
