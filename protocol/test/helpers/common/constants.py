@@ -2,15 +2,12 @@
 
 import os, uuid
 
-# The username to use to access the AWS EC2 instance(s)
-username = "ubuntu"
-# The number of times to retry if a SSH connection is refused or if the connection attempt times out
-ssh_connection_retries = 5
-# The timeout after which we give up on commands that have not finished on a remote AWS EC2 instance.
-# This value should not be set to less than 40mins (2400s)
-aws_timeout_seconds = 2400
+################################### AWS constants ##############################################
 
-start_instance_retries = 5
+# We will need to change the owner ID/AMI once AWS' target version of Linux Ubuntu changes
+AMAZON_OWNER_ID = "099720109477"
+AWS_UBUNTU_2004_AMI = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
+INSTANCE_TYPE = "g4dn.xlarge"
 
 # The path (on the machine running this script) to the file containing the AWS credentials to use
 # to access the Whist AWS console. The file should contain the access key ID and the secret access key.
@@ -27,10 +24,28 @@ instances_name_tag = (
     if job_name == "backend-integration-test"
     else "manual-e2e-test"
 )
+
+start_instance_retries = 5
+
+################################### SSH constants ##############################################
+
+# The username to use to access the AWS EC2 instance(s)
+username = "ubuntu"
+# The number of times to retry if a SSH connection is refused or if the connection attempt times out
+ssh_connection_retries = 5
+# The timeout after which we give up on commands that have not finished on a remote AWS EC2 instance.
+# This value should not be set to less than 40mins (2400s)
+aws_timeout_seconds = 2400
+
+
+################################### GitHub constants ##############################################
+
 github_run_id = os.getenv("GITHUB_RUN_ID") or "personal machine"
 
 # The expected length of the Github SHA string
 GITHUB_SHA_LEN = 40
+
+################################### E2E-specific constants ##############################################
 
 # Max number of times to retry setup commands that can fail due to API outages
 SETUP_MAX_RETRIES = 5
@@ -52,6 +67,8 @@ MANDELBOX_BUILD_MAX_RETRIES = 5
 
 # Whether the E2E script is running in CI vs on a local machine
 running_in_ci = os.getenv("CI") == "true"
+
+################################### E2E concurrency constants ##############################################
 
 # Constants used to acquire lock on the AWS instance
 # Check if the E2E_LOCK_NAME variable is not None and is not empty

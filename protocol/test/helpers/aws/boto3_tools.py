@@ -11,6 +11,9 @@ from helpers.common.timestamps_and_exit_tools import (
     printyellow,
 )
 from helpers.common.constants import (
+    AMAZON_OWNER_ID,
+    AWS_UBUNTU_2004_AMI,
+    INSTANCE_TYPE,
     instances_name_tag,
     github_run_id,
     start_instance_retries,
@@ -30,12 +33,6 @@ from helpers.common.timestamps_and_exit_tools import (
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
-# Constants
-# We will need to change the owner ID/AMI once AWS' target version of Linux Ubuntu changes
-AMAZON_OWNER_ID = "099720109477"
-AWS_UBUNTU_2004_AMI = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
-INSTANCE_TYPE = "g4dn.xlarge"
 
 
 def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
@@ -367,10 +364,6 @@ def release_lock(boto3client: botocore.client, instance_id: str, ssh_key_path: s
     Returns:
         success (bool): indicates whether the stop and unlocking both succeeded.
     """
-    # Write name of the lock to file to allow for unlocking in case of crash
-    with open("lock_name.txt", "w+") as lock_log_file:
-        lock_log_file.write(f"{unique_lock_path}\n")
-
     # Safety checks
     if not is_instance_running(boto3client, instance_id):
         printyellow(
