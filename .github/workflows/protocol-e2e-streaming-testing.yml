@@ -172,7 +172,6 @@ jobs:
             --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" \
             --simulate-scrolling 10 \
             --network-conditions 10Mbit,10,None,100,None
-          echo "E2E_LOCK_NAME=$(tail -n 1 lock_name.txt)" >> $GITHUB_ENV
 
       # need one more section like this to ensure the S3 command works in case of failure/timeout of the Python script above
       - name: Upload logs to S3 for debugging purposes
@@ -188,7 +187,10 @@ jobs:
         working-directory: protocol/test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 -m helpers.aws.remove_leftover_instances
+        run: |
+          # Retrieve lost lock name (if there is one) 
+          echo "E2E_LOCK_NAME=$(tail -n 1 lock_name.txt)" >> $GITHUB_ENV
+          python3 -m helpers.aws.remove_leftover_instances
 
       # We parse the log files from the E2E performance tests above and display the results of the test.
       # We compare the performance to dev and the previous runs of the same branch, if available

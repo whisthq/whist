@@ -286,6 +286,7 @@ def start_instance_and_get_lock(
         success (bool): indicates whether the start/locking succeeded.
     """
     # Write name of the lock to file to allow for unlocking in case of crash
+    # We should write down the lock's name BEFORE attempting to grab the lock!
     with open("lock_name.txt", "w+") as lock_log_file:
         lock_log_file.write(f"{unique_lock_path}\n")
 
@@ -392,7 +393,7 @@ def release_lock(boto3client: botocore.client, instance_id: str, ssh_key_path: s
         time.sleep(lock_contention_wait_time_seconds)
 
     # Remove log file with lock name
-    if os.path.isfile("lock_name.txt"):
+    if os.path.isfile("lock_name.txt") and unlocking_succeded:
         os.remove("lock_name.txt")
 
     return unlocking_succeded
