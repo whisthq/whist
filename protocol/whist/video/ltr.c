@@ -155,10 +155,12 @@ static void ltr_clear_old_frames(LTRState *ltr) {
     // When lists get too long, assume nothing interesting is going to
     // happen with the excess.
     LTRFrame *frame;
+
     while (linked_list_size(&ltr->inflight_list) > LTR_MAX_INFLIGHT_FRAMES) {
         frame = linked_list_extract_head(&ltr->inflight_list);
         linked_list_add_tail(&ltr->done_list, frame);
     }
+
     while (linked_list_size(&ltr->done_list) > LTR_MAX_DONE_FRAMES) {
         frame = linked_list_extract_head(&ltr->done_list);
         free(frame);
@@ -215,25 +217,34 @@ static int ltr_pick_next_action(LTRState *ltr, LTRAction *action) {
     frame->frame_counter = ++ltr->frame_counter;
     linked_list_add_tail(&ltr->pending_list, frame);
 
-    if (frame->action.frame_type == VIDEO_FRAME_TYPE_INTRA) {
-        // If this is an intra frame then we don't want frames before it
-        // to affect the stream after (though we do still want to track
-        // them).
-        ltr->intra_frame_counter = frame->frame_counter;
-        ltr->refer_long_term_outstanding = false;
-        ltr->create_long_term_outstanding = false;
-        ltr->have_good_long_term_frame = false;
+    switch (frame->action.frame_type) {
+        case VIDEO_FRAME_TYPE_INTRA:
+            // If this is an intra frame then we don't want frames before it
+            // to affect the stream after (though we do still want to track
+            // them).
+            ltr->intra_frame_counter = frame->frame_counter;
+            ltr->refer_long_term_outstanding = false;
+            ltr->create_long_term_outstanding = false;
+            ltr->have_good_long_term_frame = false;
+            break;
 
-    } else if (frame->action.frame_type == VIDEO_FRAME_TYPE_REFER_LONG_TERM) {
-        // If we are referring to a long-term frame then any previous
-        // creation of a long-term frame is now useless.
-        ltr->refer_long_term_frame_counter = frame->frame_counter;
-        ltr->refer_long_term_outstanding = true;
-        ltr->create_long_term_outstanding = false;
+        case VIDEO_FRAME_TYPE_REFER_LONG_TERM:
+            // If we are referring to a long-term frame then any previous
+            // creation of a long-term frame is now useless.
+            ltr->refer_long_term_frame_counter = frame->frame_counter;
+            ltr->refer_long_term_outstanding = true;
+            ltr->create_long_term_outstanding = false;
+            break;
 
-    } else if (frame->action.frame_type == VIDEO_FRAME_TYPE_CREATE_LONG_TERM) {
-        ltr->create_long_term_frame_counter = frame->frame_counter;
-        ltr->create_long_term_outstanding = true;
+        case VIDEO_FRAME_TYPE_CREATE_LONG_TERM:
+            ltr->create_long_term_frame_counter = frame->frame_counter;
+            ltr->create_long_term_outstanding = true;
+            break;
+        case VIDEO_FRAME_TYPE_NORMAL:
+            break;
+
+        default:
+            FATAL_ASSERT(0 && "invalid frame->action.frame_type");
     }
 
     *action = frame->action;
@@ -276,36 +287,43 @@ static void ltr_ack_frame_internal(LTRState *ltr, LTRFrame *frame) {
     frame->ack = true;
 
     if (frame->frame_counter >= ltr->intra_frame_counter) {
-        // If this was the most recent reference to a long-term frame then
-        // we are now in a good state and can start creating new long-term
-        // reference frames again.
-        if (frame->action.frame_type == VIDEO_FRAME_TYPE_REFER_LONG_TERM) {
-            if (frame->frame_counter == ltr->refer_long_term_frame_counter) {
-                ltr->refer_long_term_outstanding = false;
-            } else {
-                // This is an old frame which is no longer useful because
-                // some following frames are already known to be bad.
-            }
-        }
+        switch (frame->action.frame_type) {
+            // If this was the most recent reference to a long-term frame then
+            // we are now in a good state and can start creating new long-term
+            // reference frames again.
+            case VIDEO_FRAME_TYPE_REFER_LONG_TERM:
+                if (frame->frame_counter == ltr->refer_long_term_frame_counter) {
+                    ltr->refer_long_term_outstanding = false;
+                } else {
+                    // This is an old frame which is no longer useful because
+                    // some following frames are already known to be bad.
+                }
+                break;
 
-        // If this frame creates a long-term reference then have a new good
-        // long term reference to use.
-        if (frame->action.frame_type == VIDEO_FRAME_TYPE_INTRA) {
-            ltr->have_good_long_term_frame = true;
-            ltr->good_long_term_frame_index = frame->action.long_term_frame_index;
-            ltr->good_long_term_frame_counter = frame->frame_counter;
-        } else if (frame->action.frame_type == VIDEO_FRAME_TYPE_CREATE_LONG_TERM) {
-            if (frame->frame_counter == ltr->create_long_term_frame_counter) {
+            case VIDEO_FRAME_TYPE_INTRA:
+                // If this frame creates a long-term reference then have a new good
+                // long term reference to use.
                 ltr->have_good_long_term_frame = true;
                 ltr->good_long_term_frame_index = frame->action.long_term_frame_index;
                 ltr->good_long_term_frame_counter = frame->frame_counter;
-                ltr->create_long_term_outstanding = false;
-            } else {
-                // This did create a long-term frame at the far end, but
-                // it is no longer useful because some later frames were
-                // bad and we have already recovered using a previous
-                // long-term frame.
-            }
+                break;
+
+            case VIDEO_FRAME_TYPE_CREATE_LONG_TERM:
+                if (frame->frame_counter == ltr->create_long_term_frame_counter) {
+                    ltr->have_good_long_term_frame = true;
+                    ltr->good_long_term_frame_index = frame->action.long_term_frame_index;
+                    ltr->good_long_term_frame_counter = frame->frame_counter;
+                    ltr->create_long_term_outstanding = false;
+                } else {
+                    // This did create a long-term frame at the far end, but
+                    // it is no longer useful because some later frames were
+                    // bad and we have already recovered using a previous
+                    // long-term frame.
+                }
+                break;
+
+            default:
+                break;
         }
     }
 
@@ -346,16 +364,21 @@ static void ltr_nack_frame_internal(LTRState *ltr, LTRFrame *frame, bool pending
     }
 
     if (frame->frame_counter >= ltr->intra_frame_counter) {
-        // If this was a reference to a long-term frame then that reference
-        // did not work and we will need to make a new one.
-        if (frame->action.frame_type == VIDEO_FRAME_TYPE_REFER_LONG_TERM) {
-            ltr->refer_long_term_outstanding = false;
-        }
+        switch (frame->action.frame_type) {
+            // If this was a reference to a long-term frame then that reference
+            // did not work and we will need to make a new one.
+            case VIDEO_FRAME_TYPE_REFER_LONG_TERM:
+                ltr->refer_long_term_outstanding = false;
+                break;
 
-        // If this was a creating a long-term frame then it has failed and
-        // we will need to fix the stream and try again.
-        if (frame->action.frame_type == VIDEO_FRAME_TYPE_CREATE_LONG_TERM) {
-            ltr->create_long_term_outstanding = false;
+            // If this was a creating a long-term frame then it has failed and
+            // we will need to fix the stream and try again.
+            case VIDEO_FRAME_TYPE_CREATE_LONG_TERM:
+                ltr->create_long_term_outstanding = false;
+                break;
+
+            default:
+                break;
         }
     }
 
