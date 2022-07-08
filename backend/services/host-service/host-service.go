@@ -174,8 +174,7 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 
 	err = dockerClient.ContainerStop(stopCtx, id, &stopTimeout)
 	if err != nil {
-		logger.Errorf("Failed to gracefully stop mandelbox docker container. Err: %v", err)
-		metrics.Increment("ErrorRate")
+		logger.Warningf("Failed to gracefully stop mandelbox docker container. Err: %v", err)
 	}
 
 }

@@ -96,7 +96,7 @@ func StopWaitingMandelboxes(dockerClient dockerclient.CommonAPIClient) {
 			err := dockerClient.ContainerStop(m.GetContext(), string(m.GetDockerID()), &stopTimeout)
 
 			if err != nil {
-				logger.Errorf("Failed to gracefully stop mandelbox docker container.")
+				logger.Warningf("Failed to gracefully stop mandelbox docker container.")
 			}
 		}
 	}
