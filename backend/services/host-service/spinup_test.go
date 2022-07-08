@@ -147,7 +147,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	}
 
 	// Verify that the mandelbox has the connected status to false
-	if testMandelbox.GetStatus() != dbdriver.MandelboxStatusRunning {
+	if testMandelbox.GetStatus() != dbdriver.MandelboxStatusWaiting {
 		t.Errorf("Mandelbox has invalid connected status: got %v, want %v", testMandelbox.GetStatus(), dbdriver.MandelboxStatusWaiting)
 	}
 	testMandelboxChrome = testMandelbox
