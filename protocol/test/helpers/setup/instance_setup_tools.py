@@ -20,7 +20,7 @@ from helpers.common.ssh_tools import (
 
 from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
-    printyellow,
+    printcolor,
 )
 
 from helpers.common.constants import (
@@ -203,7 +203,7 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt):
                     f"Branch {branch_name} not found in the whisthq/whist repository. Maybe it has been merged while the E2E was running?"
                 )
             else:
-                printyellow(f"Git clone failed!")
+                printcolor(f"Git clone failed!", "yellow")
         else:
             break
 
@@ -259,18 +259,20 @@ def run_host_setup(
         elif expression_in_pexpect_output(
             lock_error_msg1, host_setup_output
         ) or expression_in_pexpect_output(lock_error_msg2, host_setup_output):
-            printyellow("Host setup failed to grab the necessary apt/dpkg locks.")
+            printcolor("Host setup failed to grab the necessary apt/dpkg locks.", "yellow")
         elif expression_in_pexpect_output(dpkg_config_error, host_setup_output):
-            printyellow("Host setup failed due to dpkg interruption error. Reconfiguring dpkg....")
+            printcolor(
+                "Host setup failed due to dpkg interruption error. Reconfiguring dpkg....", "yellow"
+            )
             pexpect_process.sendline("sudo dpkg --force-confdef --configure -a ")
             wait_until_cmd_done(pexpect_process, pexpect_prompt)
         elif (
             host_setup_exit_code == TIMEOUT_EXIT_CODE
             or host_setup_exit_code == TIMEOUT_KILL_EXIT_CODE
         ):
-            printyellow(f"Host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s!")
+            printcolor(f"Host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s!", "yellow")
         else:
-            printyellow("Host setup failed for unspecified reason (check the logs)!")
+            printcolor("Host setup failed for unspecified reason (check the logs)!", "yellow")
 
         if retry == SETUP_MAX_RETRIES - 1:
             exit_with_error(f"Host setup failed {SETUP_MAX_RETRIES} times. Giving up now!")

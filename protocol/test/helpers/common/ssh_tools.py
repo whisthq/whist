@@ -7,10 +7,12 @@ import paramiko
 
 from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
-    printgrey,
-    printyellow,
+    printcolor,
 )
-from helpers.common.pexpect_tools import wait_until_cmd_done, get_command_exit_code
+from helpers.common.pexpect_tools import (
+    wait_until_cmd_done,
+    get_command_exit_code,
+)
 from helpers.common.constants import (
     ssh_connection_retries,
     aws_timeout_seconds,
@@ -61,8 +63,9 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
         if result_index == 0:
             # If the connection was refused, sleep for 30s and then retry
             # (unless we exceeded the max number of retries)
-            printgrey(
-                f"\tSSH connection refused by host (retry {retries + 1}/{ssh_connection_retries})"
+            printcolor(
+                f"\tSSH connection refused by host (retry {retries + 1}/{ssh_connection_retries})",
+                "grey",
             )
             child.kill(0)
             time.sleep(30)
@@ -80,7 +83,9 @@ def attempt_ssh_connection(ssh_command, log_file_handle, pexpect_prompt):
         elif result_index >= 3:
             # If the connection timed out, sleep for 30s and then retry
             # (unless we exceeded the max number of retries)
-            printgrey(f"\tSSH connection timed out (retry {retries + 1}/{ssh_connection_retries})")
+            printcolor(
+                f"\tSSH connection timed out (retry {retries + 1}/{ssh_connection_retries})", "grey"
+            )
             child.kill(0)
             time.sleep(30)
     # Give up if the SSH connection was refused too many times.
@@ -150,7 +155,7 @@ def attempt_request_lock(instance_ip, ssh_key_path, create_lock):
             instance_ip, ssh_key_path, lock_ssh_timeout_seconds, creation_command
         )
         if return_code != 0:
-            printyellow(f"Failed to create lock on instance `{instance_ip}`")
+            printcolor(f"Failed to create lock on instance `{instance_ip}`", "yellow")
             return False
         print(f"Successfully created lock on instance `{instance_ip}`!")
 

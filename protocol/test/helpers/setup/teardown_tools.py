@@ -18,7 +18,6 @@ from helpers.common.ssh_tools import (
 
 from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
-    printyellow,
 )
 
 from helpers.common.constants import (
@@ -86,7 +85,7 @@ def get_session_id(pexpect_process, role, session_id_filename="/whist/resourceMa
     )
     if len(session_id_output) != 3 or len(session_id_output[1]) != SESSION_ID_LEN:
         print(session_id_output)
-        printyellow(f"Could not parse the {role} session id!")
+        printcolor(f"Could not parse the {role} session id!", "yellow")
         return ""
 
     print(f"{role} session ID: {session_id_output[1]}")

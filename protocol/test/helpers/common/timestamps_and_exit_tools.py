@@ -100,7 +100,7 @@ class TimeStamps:
             padding_len = self.max_event_name_len - len(event_name)
             padding = " " * padding_len if padding_len > 0 else ""
             if time_elapsed == self.most_time_consuming_event:
-                printbold(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}")
+                printcolor(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}", "bold")
             else:
                 print(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}")
         print("############################")
@@ -122,7 +122,7 @@ def exit_with_error(error_message, timestamps=None):
         None and exit with exitcode -1
     """
     if error_message is not None:
-        printred(error_message)
+        printcolor(error_message, "red")
     if timestamps is not None:
         timestamps.print_timestamps()
 
@@ -130,9 +130,10 @@ def exit_with_error(error_message, timestamps=None):
     print(
         "If running locally, don't forget to remove new instances (1) and unlock/stop reused instances (2) with the commands below:"
     )
-    printblue("(1) python3 -m helpers.aws.remove_leftover_instances")
-    printblue(
-        "(2) python3 -m helpers.aws.force_unlock_instances --ssh-key-path SSH_KEY_PATH --region-name REGION_NAME instance_id1 [instance_id2 ...]"
+    printcolor("(1) python3 -m helpers.aws.remove_leftover_instances", "blue")
+    printcolor(
+        "(2) python3 -m helpers.aws.force_unlock_instances --ssh-key-path SSH_KEY_PATH --region-name REGION_NAME instance_id1 [instance_id2 ...]",
+        "blue",
     )
 
     sys.exit(-1)

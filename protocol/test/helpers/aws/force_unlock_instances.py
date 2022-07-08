@@ -2,10 +2,17 @@
 
 import argparse, boto3, os
 
-from helpers.common.ssh_tools import attempt_ssh_connection, force_unlock
+from helpers.common.ssh_tools import (
+    attempt_ssh_connection,
+    force_unlock,
+)
 from helpers.aws.boto3_tools import terminate_or_stop_aws_instance, get_instance_ip
-from helpers.common.constants import username
-from helpers.aws.boto3_tools import is_instance_running
+from helpers.common.constants import (
+    username,
+)
+from helpers.aws.boto3_tools import (
+    is_instance_running,
+)
 
 DESCRIPTION = "This script will allow you to force unlock instances in case a E2E runner erroneously exits while holding a lock"
 parser = argparse.ArgumentParser(description=DESCRIPTION)

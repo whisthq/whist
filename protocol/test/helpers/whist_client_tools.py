@@ -30,8 +30,8 @@ from helpers.common.git_tools import (
     get_whist_github_sha,
 )
 from helpers.common.timestamps_and_exit_tools import (
-    printyellow,
     exit_with_error,
+    printcolor,
 )
 
 from helpers.common.constants import (
@@ -205,7 +205,9 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmak
             print("Finished building the dev client mandelbox on the EC2 instance")
             break
         else:
-            printyellow("Could not build the development/client mandelbox on the client instance!")
+            printcolor(
+                "Could not build the development/client mandelbox on the client instance!", "yellow"
+            )
         if retry == MANDELBOX_BUILD_MAX_RETRIES - 1:
             # If building the development/client mandelbox fails too many times, trigger a fatal error.
             exit_with_error(

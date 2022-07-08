@@ -5,10 +5,11 @@ import boto3
 import botocore
 from operator import itemgetter
 
-from helpers.common.git_tools import get_whist_branch_name
+from helpers.common.git_tools import (
+    get_whist_branch_name,
+)
 from helpers.common.timestamps_and_exit_tools import (
-    printred,
-    printyellow,
+    printcolor,
 )
 from helpers.common.constants import (
     AMAZON_OWNER_ID,
@@ -25,10 +26,6 @@ from helpers.common.constants import (
 from helpers.common.ssh_tools import (
     attempt_request_lock,
     attempt_release_lock,
-)
-from helpers.common.timestamps_and_exit_tools import (
-    exit_with_error,
-    printgrey,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -61,7 +58,7 @@ def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
     )
 
     if len(response) < 1:
-        printred(f"Error, could not get instance AMI for region {region_name}")
+        printcolor(f"Error, could not get instance AMI for region {region_name}", "red")
         return ""
 
     # Sort the Images in reverse order of creation
@@ -91,8 +88,9 @@ def get_subnet_id(boto3client: botocore.client, subnet_name: str):
         subnets = boto3client.describe_subnets()
     except botocore.exceptions.ClientError as e:
         print(e)
-        printred(
-            f"Caught Boto3 client exception. Could not find Subnet ID for subnet '{subnet_name}'"
+        printcolor(
+            f"Caught Boto3 client exception. Could not find Subnet ID for subnet '{subnet_name}'",
+            "red",
         )
         return ""
     desired_subnet_tag = dict(
@@ -102,7 +100,7 @@ def get_subnet_id(boto3client: botocore.client, subnet_name: str):
         }
     )
     if "Subnets" not in subnets:
-        printred(f"Could not find Subnet ID for subnet '{subnet_name}'")
+        printcolor(f"Could not find Subnet ID for subnet '{subnet_name}'", "red")
         return ""
 
     subnet_ids = list(
@@ -112,11 +110,12 @@ def get_subnet_id(boto3client: botocore.client, subnet_name: str):
         )
     )
     if len(subnet_ids) == 0:
-        printred(f"Could not find Subnet ID for subnet '{subnet_name}'")
+        printcolor(f"Could not find Subnet ID for subnet '{subnet_name}'", "red")
         return ""
     elif len(subnet_ids) > 1:
-        printyellow(
-            f"Warning, found {len(subnet_ids)} matching subnet ids for subnet {subnet_name}. Using the first one"
+        printcolor(
+            f"Warning, found {len(subnet_ids)} matching subnet ids for subnet {subnet_name}. Using the first one",
+            "yellow",
         )
 
     return subnet_ids[0]["SubnetId"]
@@ -140,13 +139,16 @@ def get_security_group_id(boto3client: botocore.client, security_group_name: str
         security_groups = boto3client.describe_security_groups()
     except botocore.exceptions.ClientError as e:
         print(e)
-        printred(
-            f"Caught Boto3 client exception. Could not find security group id for security group '{security_group_name}'"
+        printcolor(
+            f"Caught Boto3 client exception. Could not find security group id for security group '{security_group_name}'",
+            "red",
         )
         return ""
     desired_sec_group_tag = dict({"Key": "Name", "Value": security_group_name})
     if "SecurityGroups" not in security_groups:
-        printred(f"Could not find security group ID for security group '{security_group_name}'")
+        printcolor(
+            f"Could not find security group ID for security group '{security_group_name}'", "red"
+        )
         return ""
 
     sec_groups_ids = list(
@@ -156,11 +158,14 @@ def get_security_group_id(boto3client: botocore.client, security_group_name: str
         )
     )
     if len(sec_groups_ids) == 0:
-        printred(f"Could not find security group ID for security group '{security_group_name}'")
+        printcolor(
+            f"Could not find security group ID for security group '{security_group_name}'", "red"
+        )
         return ""
     elif len(sec_groups_ids) > 1:
-        printyellow(
-            f"Warning, found {len(sec_groups_ids)} matching security group ids for {security_group_name}. Using the first one"
+        printcolor(
+            f"Warning, found {len(sec_groups_ids)} matching security group ids for {security_group_name}. Using the first one",
+            "yellow",
         )
 
     return sec_groups_ids[0]["GroupId"]
@@ -187,7 +192,7 @@ def is_instance_running(
             InstanceIds=[instance_id], IncludeAllInstances=True
         )
     except botocore.exceptions.ClientError as e:
-        printred("Got exception:")
+        printcolor("Got exception:", "red")
         print(e)
         return False
     if response["InstanceStatuses"][0]["InstanceState"]["Name"] == "running":
@@ -254,8 +259,9 @@ def create_ec2_instance(
         resp = boto3client.run_instances(**kwargs)
     except botocore.exceptions.ClientError as e:
         print(e)
-        printred(
-            f"Caught Boto3 client exception. Could not create EC2 instance with AMI '{instance_AMI}'"
+        printcolor(
+            f"Caught Boto3 client exception. Could not create EC2 instance with AMI '{instance_AMI}'",
+            "red",
         )
         return ""
 
@@ -307,13 +313,15 @@ def start_instance_and_get_lock(
         # Attempt to get the lock
         if attempt_request_lock(public_ip, ssh_key_path, create_lock=create_lock):
             return True
-        printgrey(
-            f"Failed to get lock on {instance_id}! Waiting for {lock_contention_wait_time_seconds}s and retrying..."
+        printcolor(
+            f"Failed to get lock on {instance_id}! Waiting for {lock_contention_wait_time_seconds}s and retrying...",
+            "grey",
         )
         time.sleep(lock_contention_wait_time_seconds)
 
-    printyellow(
-        f"Could not acquire lock on instance {instance_id} after waiting for {lock_get_attempt_timeout_seconds}s! Giving up."
+    printcolor(
+        f"Could not acquire lock on instance {instance_id} after waiting for {lock_get_attempt_timeout_seconds}s! Giving up.",
+        "yellow",
     )
     return False
 
@@ -346,7 +354,9 @@ def start_instance(
                 time.sleep(60)
                 continue
             else:
-                printred(f"Could not start instance after {max_retries} retries. Giving up now.")
+                printcolor(
+                    f"Could not start instance after {max_retries} retries. Giving up now.", "red"
+                )
                 return False
         break
     return True
@@ -366,8 +376,9 @@ def release_lock(boto3client: botocore.client, instance_id: str, ssh_key_path: s
     """
     # Safety checks
     if not is_instance_running(boto3client, instance_id):
-        printyellow(
-            "Warning, the instance was already stopped when attempting to stop it and release the lock."
+        printcolor(
+            "Warning, the instance was already stopped when attempting to stop it and release the lock.",
+            "yellow",
         )
         return False
 
@@ -384,8 +395,9 @@ def release_lock(boto3client: botocore.client, instance_id: str, ssh_key_path: s
             print(f"Successfully released E2E lock on instance {instance_id}!")
             break
         if retry == UNLOCKING_MAX_RETRIES - 1:
-            printred(
-                f"Unable to release E2E lock after {UNLOCKING_MAX_RETRIES} retries! Giving up!"
+            printcolor(
+                f"Unable to release E2E lock after {UNLOCKING_MAX_RETRIES} retries! Giving up!",
+                "red",
             )
             unlocking_succeded = False
 
@@ -577,7 +589,7 @@ def get_client_and_instances(
         ssh_key_path,
     )
     if server_instance_id == "":
-        printyellow(f"Creating new instance on {region_name} for the server failed!")
+        printcolor(f"Creating new instance on {region_name} for the server failed!", "yellow")
         return None
 
     client_instance_id = (
@@ -592,7 +604,9 @@ def get_client_and_instances(
         else server_instance_id
     )
     if client_instance_id == "":
-        printyellow(f"Creating/starting new instance on {region_name} for the client failed!")
+        printcolor(
+            f"Creating/starting new instance on {region_name} for the client failed!", "yellow"
+        )
         # Terminate or stop server AWS instance
         terminate_or_stop_aws_instance(
             boto3client, server_instance_id, server_instance_id != existing_server_instance_id
@@ -622,7 +636,9 @@ def terminate_or_stop_aws_instance(
         try:
             boto3client.terminate_instances(InstanceIds=[instance_id])
         except botocore.exceptions.ClientError as e:
-            printred(f"Caught Boto3 client exception while terminating instance {instance_id}!")
+            printcolor(
+                f"Caught Boto3 client exception while terminating instance {instance_id}!", "red"
+            )
             print(e)
             return
     else:
@@ -636,10 +652,12 @@ def terminate_or_stop_aws_instance(
         try:
             stop_result = stop_instance(boto3client, instance_id)
         except botocore.exceptions.ClientError as e:
-            printred(f"Caught Boto3 client exception while stopping instance {instance_id}!")
+            printcolor(
+                f"Caught Boto3 client exception while stopping instance {instance_id}!", "red"
+            )
             print(e)
         if stop_result is False or unlock_result is False:
-            printyellow("Error while unlocking/stopping the EC2 instance!")
+            printcolor("Error while unlocking/stopping the EC2 instance!", "yellow")
             return
 
     # Wait for the instance to be terminated
