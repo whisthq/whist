@@ -88,6 +88,9 @@ func StopWaitingMandelboxes(dockerClient dockerclient.CommonAPIClient) {
 
 	for _, m := range tracker {
 		if m.GetStatus() == dbdriver.MandelboxStatusWaiting {
+			// Now cancel the mandelbox context
+			m.Close()
+
 			// Gracefully shut down the mandelbox Docker container
 			stopTimeout := 60 * time.Second
 			err := dockerClient.ContainerStop(m.GetContext(), string(m.GetDockerID()), &stopTimeout)
@@ -95,9 +98,6 @@ func StopWaitingMandelboxes(dockerClient dockerclient.CommonAPIClient) {
 			if err != nil {
 				logger.Errorf("Failed to gracefully stop mandelbox docker container.")
 			}
-
-			// Now cancel the mandelbox context
-			m.Close()
 		}
 	}
 }

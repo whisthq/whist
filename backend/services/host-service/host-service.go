@@ -164,8 +164,11 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 	transportRequestMap[mandelboxID] = nil
 	transportMapLock.Unlock()
 
+	logger.Infof("Cancelling mandelbox context.")
+	mandelbox.Close()
+
 	// Gracefully shut down the mandelbox Docker container
-	stopTimeout := 15 * time.Second
+	stopTimeout := 10 * time.Second
 	stopCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -175,8 +178,6 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 		metrics.Increment("ErrorRate")
 	}
 
-	logger.Infof("Successfully stopped docker container, cancelling mandelbox context.")
-	mandelbox.Close()
 }
 
 func monitorWaitingMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxDieChan chan bool) error {
@@ -186,6 +187,11 @@ func monitorWaitingMandelboxes(globalCtx context.Context, globalCancel context.C
 	case <-globalCtx.Done():
 		return nil
 	default:
+	}
+
+	// Skip monitoring waiting mandelboxes when running on local env.
+	if metadata.IsLocalEnvWithoutDB() {
+		return nil
 	}
 
 	instanceID, err := aws.GetInstanceID()
