@@ -508,20 +508,18 @@ def create_or_start_aws_instance(
             boto3client, existing_instance_id, ssh_key_path, create_lock=False
         ):
             return existing_instance_id
-
-    # Define the AWS machine variables
+        else:
+            return ""
 
     # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
     instance_AMI = get_current_AMI(boto3client, region_name)
-    instance_type = INSTANCE_TYPE  # The type of instance we want to create
-
-    print(f"Creating AWS EC2 instance of size: {instance_type} and with AMI: {instance_AMI}...")
+    print(f"Creating AWS EC2 instance of size: {INSTANCE_TYPE} and with AMI: {instance_AMI}...")
 
     # Create our EC2 instance
     instance_id = create_ec2_instance(
         boto3client=boto3client,
         region_name=region_name,
-        instance_type=instance_type,
+        instance_type=INSTANCE_TYPE,
         instance_AMI=instance_AMI,
         key_name=ssh_key_name,
         disk_size=64,  # GB
@@ -538,7 +536,7 @@ def create_or_start_aws_instance(
 
     # We need to create a new lock if we just created the instance
     if not start_instance_and_get_lock(boto3client, instance_id, ssh_key_path, create_lock=True):
-        return False
+        return ""
 
     return instance_id
 
