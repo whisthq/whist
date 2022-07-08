@@ -10,7 +10,7 @@ from helpers.common.timestamps_and_exit_tools import (
     printgrey,
     printyellow,
 )
-from helpers.common.pexpect_tools import wait_until_cmd_done
+from helpers.common.pexpect_tools import wait_until_cmd_done, get_command_exit_code
 from helpers.common.constants import (
     ssh_connection_retries,
     aws_timeout_seconds,
@@ -19,6 +19,7 @@ from helpers.common.constants import (
     free_lock_path,
     unique_lock_path,
     lock_ssh_timeout_seconds,
+    path_to_all_locks,
 )
 
 # Add the current directory to the path no matter where this is called from
@@ -265,3 +266,19 @@ def reboot_instance(pexpect_process, ssh_cmd, log_file_handle, pexpect_prompt):
     pexpect_process = attempt_ssh_connection(ssh_cmd, log_file_handle, pexpect_prompt)
     print("Reboot complete")
     return pexpect_process
+
+
+def force_unlock(pexpect_process, pexpect_prompt):
+    pexpect_process.sendline(f"rm -f {path_to_all_locks}; touch {free_lock_path}")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+
+    # Success is defined as: no LOCK-* files exist and the free_lock file exists
+    pexpect_process.sendline(f"test -f {path_to_all_locks}")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    delete_locks_success = get_command_exit_code(pexpect_process, pexpect_prompt) == 1
+
+    pexpect_process.sendline(f"test -f {free_lock_path}")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    create_free_lock_success = get_command_exit_code(pexpect_process, pexpect_prompt) == 0
+
+    return delete_locks_success and create_free_lock_success

@@ -77,6 +77,9 @@ unique_lock_path = (
     if len(os.getenv("E2E_LOCK_NAME") or "") > 0
     else os.path.join("/", "home", username, f"LOCK-{str(uuid.uuid4())}")
 )
+path_to_all_locks = os.path.join(
+    "/", "home", username, "LOCK-*"
+)  # all possible acquired locks. used for cleanup.
 free_lock_path = os.path.join("/", "home", username, "free_lock")
 lock_ssh_timeout_seconds = 30
 lock_get_attempt_timeout_seconds = 2 * 3600  # After 2h, given up
