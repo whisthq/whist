@@ -495,6 +495,7 @@ void get_valid_windows_helper(X11CaptureDevice* device, LinkedList* list, Window
             valid_window->x = attr.x + parent_attr.x;
             valid_window->y = attr.y + parent_attr.y;
             valid_window->is_fullscreen = is_window_fullscreen(device, *valid_window);
+            valid_window->has_titlebar = false;
             linked_list_add_tail(list, valid_window);
         }
 

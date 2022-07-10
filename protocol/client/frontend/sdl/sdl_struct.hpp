@@ -89,6 +89,7 @@ typedef struct SDLWindowContext {
     std::string title;
     WhistRGBColor color;
     bool is_fullscreen;
+    bool has_titlebar;
     bool is_resizable;
 } SDLWindowContext;
 

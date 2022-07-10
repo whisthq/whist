@@ -585,6 +585,7 @@ typedef struct WhistWindow {
     int height;
     WhistRGBColor corner_color;
     bool is_fullscreen;
+    bool has_titlebar;
 } WhistWindow;
 
 /**

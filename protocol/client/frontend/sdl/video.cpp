@@ -144,6 +144,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
             window_context->title = "Default Title";
             window_context->color = window_data[i].corner_color;
             window_context->is_fullscreen = window_data[i].is_fullscreen;
+            window_context->has_titlebar = window_data[i].has_titlebar;
             window_context->is_resizable = false;
 
             // Then create the actual SDL window
@@ -160,6 +161,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
                                                                     ? SDL_WINDOW_FULLSCREEN_DESKTOP
                                                                     : 0);
             }
+            // TODO: Update titlebar decoration, based on window_data[i].has_titlebar
             // Update SDL x/y/w/h, in pixel coordinates
             SDL_GL_GetDrawableSize(window_context->window, &window_context->width,
                                    &window_context->height);
@@ -170,13 +172,14 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
                                   window_data[i].height / dpi_scale);
             }
             SDL_GetWindowPosition(window_context->window, &window_context->x, &window_context->y);
-            window_context->y -= Y_SHIFT;
+            int y_adjust = window_data[i].has_titlebar ? Y_SHIFT : 0;
+            window_context->y -= y_adjust;
             window_context->x *= dpi_scale;
             window_context->y *= dpi_scale;
             if (window_context->x != window_data[i].x || window_context->y != window_data[i].y) {
                 // Set the window position, adjusting for DPI scale and y-shift
                 SDL_SetWindowPosition(window_context->window, window_data[i].x / dpi_scale,
-                                      window_data[i].y / dpi_scale + Y_SHIFT);
+                                      window_data[i].y / dpi_scale + y_adjust);
             }
             window_context->x = window_data[i].x;
             window_context->y = window_data[i].y;
@@ -185,6 +188,7 @@ WhistStatus sdl_update_video(WhistFrontend* frontend, AVFrame* frame, WhistWindo
             window_context->title = "Default Title";
             window_context->color = window_data[i].corner_color;
             window_context->is_fullscreen = window_data[i].is_fullscreen;
+            window_context->has_titlebar = window_data[i].has_titlebar;
             window_context->is_resizable = false;
         }
     }

@@ -161,6 +161,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     window_context->title = std::string(title == NULL ? "Whist" : title);
     window_context->color = {17, 24, 39};
     window_context->is_fullscreen = false;
+    window_context->has_titlebar = false;
     window_context->is_resizable = true;
     context->windows[0] = window_context;
     sdl_create_window(frontend, 0);
@@ -302,11 +303,12 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
             SDL_CreateWindow(window_context->title.c_str(), window_context->x, window_context->y,
                              window_context->width, window_context->height, window_flags);
     } else {
-        // Otherwise, do dpi scaling and y shift
+        // Otherwise, do dpi scaling and y shift for the titlebar
         int dpi_scale = window_context->window_id == 0 ? 1 : sdl_get_dpi_scale(frontend);
+        int y_adjust = window_context->has_titlebar ? Y_SHIFT : 0;
         window_context->window = SDL_CreateWindow(
             window_context->title.c_str(), window_context->x / dpi_scale,
-            window_context->y / dpi_scale + Y_SHIFT, window_context->width / dpi_scale,
+            window_context->y / dpi_scale + y_adjust, window_context->width / dpi_scale,
             window_context->height / dpi_scale, window_flags);
     }
     if (window_context->window == NULL) {
