@@ -10,7 +10,7 @@ add_library(whistFEC STATIC
         fec_controller.cpp
         )
 
-target_link_libraries(whistFEC whistFEC_cm256 whistFEC_gf256)
+target_link_libraries(whistFEC whistFEC_cm256 whistFEC_gf256 whistFEC_wirehair)
 
 set_property(TARGET whistFEC PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
