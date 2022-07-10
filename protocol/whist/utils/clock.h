@@ -21,6 +21,7 @@ Includes
 */
 
 #include <stdint.h>
+#include "whist/core/whist.h"
 #if OS_IS(OS_WIN32)
 #include <windows.h>
 #else
@@ -150,6 +151,10 @@ timestamp_us current_time_us(void);
  *                                 first call is expected to be done inside whist_init_subsystems().
  */
 double get_timestamp_sec(void);
+
+inline double get_timestamp_ms(void){
+    return get_timestamp_sec()* 1000;
+}
 
 /** @} */
 

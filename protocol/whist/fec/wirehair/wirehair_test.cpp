@@ -1,6 +1,11 @@
 #include <vector>
 #include <random>
 
+#include "whist/core/whist.h"
+extern "C"
+{
+#include "whist/utils/clock.h"
+};
 #include "wrapper.h"
 
 #include <string.h>
@@ -24,27 +29,6 @@ extern "C"
 };
 
 typedef unsigned long long u64_t;
-
-u64_t get_current_time_ms()
-{
-	timespec tmp_time;
-	clock_gettime(CLOCK_MONOTONIC, &tmp_time);
-	return tmp_time.tv_sec*1000ll+tmp_time.tv_nsec/(double)1000l/(double)1000;
-}
-
-
-static double get_cpu_time_ms(void) {
-    struct timespec t2;
-    // use CLOCK_MONOTONIC for relative time
-    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
-
-    double elapsed_time = (t2.tv_sec) * 1000l;
-    elapsed_time += (t2.tv_nsec) / (double)1000/(double)1000;
-
-    double ret = elapsed_time;
-    return ret;
-}
-
 
 int my_rand()
 {
@@ -96,13 +80,18 @@ void one_test(int segment_size, int num_real,int num_fec)
 	auto buffers=make_buffers(num_real+num_fec, segment_size);
 	split_copy(input, &buffers[0],segment_size);
 
-	Encoder encoder;
-	encoder.init(num_real,num_fec,segment_size);
+     Encoder encoder;
+     {
+	 double t1=get_timestamp_ms();
+	 encoder.init(num_real,num_fec,segment_size);
+	 double t2=get_timestamp_ms();
+	 //fprintf(stderr, "encoder init_time= %f ;", t2-t1);
+     }
 
     {
-        double t1=get_cpu_time_ms();
+        double t1=get_timestamp_ms();
         encoder.encode(&buffers[0],&buffers[num_real],segment_size);
-        double t2=get_cpu_time_ms();
+        double t2=get_timestamp_ms();
         fprintf(stderr,"encode_time=%f; ", (t2-t1));
     }
 
@@ -110,7 +99,14 @@ void one_test(int segment_size, int num_real,int num_fec)
     auto pkt=make_buffers(num_real,segment_size);
 
 	Decoder decoder;
+
+	{
+	    double t1=get_timestamp_ms();
 	decoder.init(num_real,num_fec,segment_size);
+	double t2=get_timestamp_ms();
+	fprintf(stderr,"decoder init cost= %f\n",t2-t1);
+	    
+	}
 
     vector<int> shuffle;
     for(int i=0;i<num_real+num_fec;i++)
@@ -124,9 +120,11 @@ void one_test(int segment_size, int num_real,int num_fec)
     }
 
     {
-        double t1=get_cpu_time_ms();
+        double t1=get_timestamp_ms();
 
         int cnt=0;
+
+	fprintf(stderr,"\n");
         for(int i=num_fec+num_real-1;i>=0;i--)
         {
             //int idx=shuffle[i];
@@ -136,8 +134,18 @@ void one_test(int segment_size, int num_real,int num_fec)
 	    else idx=i;
 
             cnt++;
+	    double tt1=get_timestamp_ms();
+	    
             decoder.feed(idx,buffers[idx],segment_size);
-            if(decoder.try_decode(&pkt[0],segment_size)==0 )
+	    double tt2=get_timestamp_ms();
+	    if(verbose_log)
+	    fprintf(stderr,"<decode feed cnt=%d cost %f>", cnt, tt2-tt1 );
+	    
+	    int ret=decoder.try_decode(&pkt[0],segment_size)==0;
+	    double tt3= get_timestamp_ms();
+
+	    //fprintf(stderr,"<decode cnt=%d total cost %f>", cnt,tt3-tt1);
+            if(ret )
             {  
                 fprintf(stderr,"decoded with %d packets; ",cnt);
                 break; 
@@ -145,7 +153,7 @@ void one_test(int segment_size, int num_real,int num_fec)
             //pkt.push_back(buffers[i]);
             //index.push_back(i);
         }
-        double t2=get_cpu_time_ms();
+        double t2=get_timestamp_ms();
         fprintf(stderr,"decode_time=%f\n", (t2-t1));
     }
 
@@ -176,9 +184,11 @@ void one_test(int segment_size, int num_real,int num_fec)
 
 int wirehair_test(void)
 {
+    get_timestamp_sec();
     fprintf(stderr,"segment_size=%d num_real=%d,num_fec=%d\n",g_segment_size,g_num_real,g_num_fec);
     for(int i=0;i<g_iterations;i++)
     {
+	fprintf(stderr,"=============\n");
 	if(g_use_sleep) usleep(1000*1000);
         one_test(g_segment_size,g_num_real,g_num_fec);
     }
