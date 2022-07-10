@@ -180,7 +180,7 @@ WhistStatus virtual_get_window_virtual_size(WhistFrontend* frontend, int id, int
     return WHIST_SUCCESS;
 }
 
-WhistStatus virtual_get_window_display_index(WhistFrontend* frontend, int* index) {
+WhistStatus virtual_get_window_display_index(WhistFrontend* frontend, int id, int* index) {
     *index = 0;
     return WHIST_SUCCESS;
 }

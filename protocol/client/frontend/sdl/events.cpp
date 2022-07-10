@@ -191,6 +191,7 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
         }
         case SDL_MOUSEMOTION: {
             event->type = FRONTEND_EVENT_MOUSE_MOTION;
+            int x_adjust = 0;
             int y_adjust = 0;
 #if USING_MULTIWINDOW
             for (const auto& [window_id, window_context] : context->windows) {

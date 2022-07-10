@@ -60,12 +60,10 @@ WhistStatus sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* wi
     return WHIST_ERROR_NOT_FOUND;
 }
 
-// TODO: not window-specific for now. But we should make it so soon
-
-WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int* index) {
+WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* index) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (!context->windows.empty() || context->windows.begin()->second->window == NULL) {
-        int ret = SDL_GetWindowDisplayIndex(context->windows.begin()->second->window);
+    if (context->windows.contains(id)) {
+        int ret = SDL_GetWindowDisplayIndex(context->windows[id]->window);
         if (ret < 0) {
             // LOG_ERROR("Could not get window display index - %s", SDL_GetError());
             return WHIST_ERROR_UNKNOWN;
@@ -74,12 +72,14 @@ WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int* index) {
             *index = ret;
         }
         return WHIST_SUCCESS;
+    } else {
+        LOG_ERROR("Tried to get window display index for window %d, but no such window exists!",
+                  id);
+        if (index != NULL) {
+            *index = WHIST_ERROR_NOT_FOUND;
+        }
+        return WHIST_ERROR_NOT_FOUND;
     }
-    LOG_ERROR("Tried to get window display index for window %d, but no such window exists!", id);
-    if (index != NULL) {
-        *index = WHIST_ERROR_NOT_FOUND;
-    }
-    return WHIST_ERROR_NOT_FOUND;
 }
 
 int sdl_get_window_dpi(WhistFrontend* frontend) {

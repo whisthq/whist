@@ -350,8 +350,8 @@ void sdl_paint_video(WhistFrontend* frontend) {
         window_context->sdl_width = MAX_SCREEN_WIDTH;
         window_context->sdl_height = MAX_SCREEN_HEIGHT;
 #else
-        window_context->sdl_width = output_width;
-        window_context->sdl_height = output_height;
+        window_context->sdl_width = context->latest_pixel_width;
+        window_context->sdl_height = context->latest_pixel_height;
 #endif
         // Take that crop when rendering it out
         SDL_Rect src_rect = {

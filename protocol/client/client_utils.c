@@ -207,10 +207,11 @@ int update_mouse_motion(WhistFrontend *frontend) {
     */
 
     if (mouse_state.update) {
-        int x, y, x_nonrel, y_nonrel;  // , virtual_width, virtual_height;
+        int x, y, x_nonrel, y_nonrel, virtual_width, virtual_height;
+        whist_frontend_get_window_virtual_size(frontend, 0, &virtual_width, &virtual_height);
 
         // Calculate x location of mouse cursor
-        x_nonrel = mouse_state.x_nonrel * MOUSE_SCALING_FACTOR / output_width;
+        x_nonrel = mouse_state.x_nonrel * MOUSE_SCALING_FACTOR / virtual_width;
         if (x_nonrel < 0) {
             x_nonrel = 0;
         } else if (x_nonrel >= MOUSE_SCALING_FACTOR) {
@@ -218,7 +219,7 @@ int update_mouse_motion(WhistFrontend *frontend) {
         }
 
         // Calculate y location of mouse cursor
-        y_nonrel = mouse_state.y_nonrel * MOUSE_SCALING_FACTOR / output_height;
+        y_nonrel = mouse_state.y_nonrel * MOUSE_SCALING_FACTOR / virtual_height;
         if (y_nonrel < 0) {
             y_nonrel = 0;
         } else if (y_nonrel >= MOUSE_SCALING_FACTOR) {

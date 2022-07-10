@@ -93,9 +93,9 @@ WhistStatus whist_frontend_get_window_virtual_size(WhistFrontend* frontend, int 
     return frontend->call->get_window_virtual_size(frontend, id, width, height);
 }
 
-WhistStatus whist_frontend_get_window_display_index(WhistFrontend* frontend, int* index) {
+WhistStatus whist_frontend_get_window_display_index(WhistFrontend* frontend, int id, int* index) {
     FRONTEND_ENTRY();
-    return frontend->call->get_window_display_index(frontend, index);
+    return frontend->call->get_window_display_index(frontend, id, index);
 }
 
 int whist_frontend_get_window_dpi(WhistFrontend* frontend) {
