@@ -1925,8 +1925,8 @@ void udp_dedicated_recv_iterate(void* raw_context) {
     bool got_packet = udp_get_udp_packet(context, &recv_data->udp_packet, &recv_data->arrival_time,
                                          &recv_data->network_payload_size, &recv_data->recv_len);
     if (!got_packet) {
-        // wake the processing thread after timeout.
-        // see also the comment on whist_timedwait_cond().
+        // wake the processing thread after socket timeout, since we use wait_cond() instead of
+        // timedwait_cond(). see also the comment on timedwait_cond() below
         whist_signal_cond(context->recv_cond);
         return;
     }
@@ -1953,7 +1953,7 @@ static bool udp_get_packet_from_queue(UDPContext* context, UDPPacket** udp_packe
                          context->recv_queue[NORMAL_PRIORITY_RECV_QUEUE]->size()) == 0) {
         // the timedwait_cond() seems more costly than wait_cond().
         // So this is commented and wait_cond() is used instead
-        // bool succ = whist_timedwait_cond(context->recv_cond, context->recv_mutex, 1);
+        // bool succ = whist_timedwait_cond(context->recv_cond, context->recv_mutex, 2);
 
         bool succ = true;
         whist_wait_cond(context->recv_cond, context->recv_mutex);
