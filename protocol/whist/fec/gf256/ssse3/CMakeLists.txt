@@ -4,4 +4,4 @@ if(NOT MSVC)
     add_compile_options("-mssse3")
 endif()
 
-add_library(whistFEC_cm256_ssse3 STATIC gf256_ssse3.cpp)
+add_library(whistFEC_gf256_ssse3 STATIC gf256_ssse3.cpp)

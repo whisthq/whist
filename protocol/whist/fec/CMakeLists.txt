@@ -1,4 +1,5 @@
 add_subdirectory(cm256)
+add_subdirectory(gf256)
 
 add_library(whistFEC STATIC
         lugi_rs.c
@@ -8,7 +9,7 @@ add_library(whistFEC STATIC
         fec_controller.cpp
         )
 
-target_link_libraries(whistFEC whistFEC_cm256)
+target_link_libraries(whistFEC whistFEC_cm256 whistFEC_gf256)
 
 set_property(TARGET whistFEC PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
