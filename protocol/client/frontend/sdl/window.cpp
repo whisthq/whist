@@ -23,6 +23,7 @@ WhistStatus sdl_get_window_pixel_size(WhistFrontend* frontend, int id, int* widt
         *width = dm.w * dpi_scale;
         *height = dm.h * dpi_scale;
     }
+    return WHIST_SUCCESS;
 #else
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (context->windows.contains(id)) {
@@ -46,11 +47,16 @@ WhistStatus sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* wi
      * fraction of the actual size in high DPI monitors.
      */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+
+#if USING_MULTIWINDOW
+    // When using multiwindow, the entire screen is used
+    int dpi_scale = sdl_get_dpi_scale(frontend);
+    *width = context->latest_pixel_width / dpi_scale;
+    *height = context->latest_pixel_height / dpi_scale;
+    return WHIST_SUCCESS;
+#else
     if (context->windows.contains(id)) {
         SDL_GetWindowSize(context->windows[id]->window, width, height);
-        // TODO: Rename this function because we actually want latest_pixel_width
-        *width = context->latest_pixel_width;
-        *height = context->latest_pixel_height;
         return WHIST_SUCCESS;
     }
     LOG_ERROR("Tried to get window virtual size for window %d, but no such window exists!", id);
@@ -61,12 +67,13 @@ WhistStatus sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* wi
         *height = WHIST_ERROR_NOT_FOUND;
     }
     return WHIST_ERROR_NOT_FOUND;
+#endif
 }
 
 WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* index) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (context->windows.contains(id)) {
-        int ret = SDL_GetWindowDisplayIndex(context->windows[id]->window);
+    if (context->windows.size() > 0) {
+        int ret = SDL_GetWindowDisplayIndex(context->windows.begin()->second->window);
         if (ret < 0) {
             // LOG_ERROR("Could not get window display index - %s", SDL_GetError());
             return WHIST_ERROR_UNKNOWN;
