@@ -116,13 +116,6 @@ typedef unsigned int WhistThreadLocalStorageKey;
 typedef void (*WhistThreadLocalStorageDestructor)(void*);
 
 /**
- * Initialize threading.
- *
- * This must be called before any threads are created.
- */
-void whist_init_multithreading(void);
-
-/**
  * Create a new thread.
  *
  * @param thread_function  Function to call in the new thread.

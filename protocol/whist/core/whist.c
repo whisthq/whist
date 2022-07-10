@@ -77,7 +77,6 @@ void whist_gpu_unlock(void) {
 void whist_init_subsystems(void) {
     gpu_lock = whist_create_mutex();
     get_timestamp_sec();  // init the timer inside
-    whist_init_multithreading();
     whist_init_logger();
     whist_init_features();
     init_fec();
