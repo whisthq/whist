@@ -48,6 +48,9 @@ WhistStatus sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* wi
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (context->windows.contains(id)) {
         SDL_GetWindowSize(context->windows[id]->window, width, height);
+        // TODO: Rename this function because we actually want latest_pixel_width
+        *width = context->latest_pixel_width;
+        *height = context->latest_pixel_height;
         return WHIST_SUCCESS;
     }
     LOG_ERROR("Tried to get window virtual size for window %d, but no such window exists!", id);
