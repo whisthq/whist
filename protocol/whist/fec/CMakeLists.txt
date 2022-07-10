@@ -1,5 +1,6 @@
 add_subdirectory(cm256)
 add_subdirectory(gf256)
+add_subdirectory(wirehair)
 
 add_library(whistFEC STATIC
         lugi_rs.c
