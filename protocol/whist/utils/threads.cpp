@@ -38,8 +38,6 @@ struct WhistThreadStruct {
     }
 };
 
-void whist_init_multithreading(void) {}
-
 WhistThreadID whist_get_thread_id(WhistThread thread) {
     // `thread` == NULL returns the current thread ID
     if (thread == NULL) {
