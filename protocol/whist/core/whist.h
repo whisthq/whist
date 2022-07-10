@@ -126,9 +126,6 @@ Defines
 
 // Whether or not multi-window is being used
 #define USING_MULTIWINDOW false
-// The y-shift of the window header, when using multiwindow
-// This represents the side of the window header on mac
-#define Y_SHIFT 55
 
 #if OS_IS(OS_WIN32)
 
