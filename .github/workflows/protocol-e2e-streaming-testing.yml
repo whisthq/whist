@@ -190,10 +190,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Retrieve lost lock name (if there is one)
-          echo ${E2E_LOCK_NAME:-}
-          cat lock_name.txt
+          echo "E2E_LOCK_NAME: ${E2E_LOCK_NAME:-}"
+          echo "lock_name.txt has number of lines and contents:"
+          wc -l lock_name.txt
+          cat lock_name.txt 
           echo "E2E_LOCK_NAME=$(tail -n 1 lock_name.txt)" >> $GITHUB_ENV
-          echo $E2E_LOCK_NAME
+          echo "E2E_LOCK_NAME: ${E2E_LOCK_NAME:-}"
+          echo "Printing all vars with printenv"
+          printenv
+          echo "Printing GITHUB_ENV"
+          echo "$GITHUB_ENV"
+          echo "Now removing the leftover instances!"
           python3 -m helpers.aws.remove_leftover_instances
 
       # We parse the log files from the E2E performance tests above and display the results of the test.
