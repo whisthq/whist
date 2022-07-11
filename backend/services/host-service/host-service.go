@@ -117,7 +117,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 	globalCancel()
 }
 
-func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, instanceID string, instanceCapacity int32) {
+func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxDieChan chan bool, instanceID string, instanceCapacity int32) {
 	if metadata.IsLocalEnvWithoutDB() && !metadata.IsRunningInCI() {
 		return
 	}
@@ -129,7 +129,7 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 		// Replace "chrome" by "brave" (or some other container we support) to test a different app. Note that the Whist
 		// backend is designed to only ever deploy the same application everywhere, which we hardcode here.
 		var appName mandelboxtypes.AppName = "browsers/chrome"
-		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName)
+		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan)
 
 		// If we fail to create a zygote mandelbox, it indicates a problem with the instance, or the Docker
 		// images. Its not safe to assign users to it, so we cancel the global context and shut down the instance
@@ -164,19 +164,80 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 	transportRequestMap[mandelboxID] = nil
 	transportMapLock.Unlock()
 
+	logger.Infof("Cancelling mandelbox context.")
+	mandelbox.Close()
+
 	// Gracefully shut down the mandelbox Docker container
-	stopTimeout := 15 * time.Second
+	stopTimeout := 10 * time.Second
 	stopCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	err = dockerClient.ContainerStop(stopCtx, id, &stopTimeout)
 	if err != nil {
-		logger.Errorf("Failed to gracefully stop mandelbox docker container. Err: %v", err)
-		metrics.Increment("ErrorRate")
+		logger.Warningf("Failed to gracefully stop mandelbox docker container. Err: %v", err)
 	}
 
-	logger.Infof("Successfully stopped docker container, cancelling mandelbox context.")
-	mandelbox.Close()
+}
+
+func monitorWaitingMandelboxes(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxDieChan chan bool) error {
+	// We don't need to start more waiting mandelboxes
+	// if the global context has already been cancelled.
+	select {
+	case <-globalCtx.Done():
+		return nil
+	default:
+	}
+
+	// Skip monitoring waiting mandelboxes when running on local env.
+	if metadata.IsLocalEnvWithoutDB() {
+		return nil
+	}
+
+	instanceID, err := aws.GetInstanceID()
+	if err != nil {
+		return utils.MakeError("couldn't get instance name: %s", err)
+	}
+
+	capacity, err := dbdriver.GetInstanceCapacity(string(instanceID))
+	if err != nil {
+		return utils.MakeError("couldn't get instance capacity: %s", err)
+	}
+
+	logger.Infof("Instance has a remaining capacity of %v, current number of waiting mandelboxes is %v", capacity, mandelboxData.GetMandelboxCount())
+
+	newWaitingMandelboxes := int32(capacity) - mandelboxData.GetMandelboxCount()
+	// If the remaining capacity field changes, check how many mandelboxes are currently
+	// running and start mandelbox zygotes as necessary.
+	if newWaitingMandelboxes > 0 {
+		logger.Infof("Starting %v new waiting mandelboxes.", newWaitingMandelboxes)
+		SpinUpMandelboxes(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxDieChan, string(instanceID), newWaitingMandelboxes)
+	}
+
+	return nil
+}
+
+// removeStaleMandelboxesGoroutine starts
+func removeStaleMandelboxesGoroutine(globalCtx context.Context) {
+	defer logger.Infof("Finished removeStaleMandelboxes goroutine.")
+	timerChan := make(chan interface{})
+
+	// Instead of running exactly every 10 seconds, we choose a random time in
+	// the range [9.5, 10.5] seconds to space out cleaning stale mandelboxes.
+	for {
+		sleepTime := 10000 - rand.Intn(1001)
+		timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- struct{}{} })
+
+		select {
+		case <-globalCtx.Done():
+			// Remove allocated stale mandelboxes one last time
+			mandelboxData.RemoveStaleMandelboxes(time.Duration(90*time.Second), time.Duration(10*time.Second))
+			utils.StopAndDrainTimer(timer)
+			return
+
+		case <-timerChan:
+			mandelboxData.RemoveStaleMandelboxes(time.Duration(90*time.Second), time.Duration(10*time.Second))
+		}
+	}
 }
 
 // ---------------------------
@@ -444,6 +505,13 @@ func main() {
 
 	// Now we start all the goroutines that actually do work.
 
+	// Start a goroutine that removes stale mandelboxes.
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+		removeStaleMandelboxesGoroutine(globalCtx)
+	}()
+
 	// Start the HTTP server and listen for events
 	httpServerEvents, err := StartHTTPServer(globalCtx, globalCancel, &goroutineTracker)
 	if err != nil {
@@ -462,17 +530,19 @@ func main() {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
 	}
 
+	mandelboxDieEvents := make(chan bool, 10)
+
 	// Start warming up as many instances as we have capacity for. This will effectively create
 	// mandelboxes up to the point where we need a config token, and register them to the database.
 	// The scaling service will handling assigning users to this instance and will update the
 	// database row to assign the user to a waiting mandelbox.
-	SpinUpMandelboxes(globalCtx, globalCancel, &goroutineTracker, dockerClient, string(instanceID), capacity)
+	SpinUpMandelboxes(globalCtx, globalCancel, &goroutineTracker, dockerClient, mandelboxDieEvents, string(instanceID), capacity)
 
 	// Start main event loop. Note that we don't track this goroutine, but
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it
 	// needs to stay alive after the global context is cancelled, so we can
 	// process mandelbox death events.
-	go eventLoopGoroutine(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents, subscriptionEvents)
+	go eventLoopGoroutine(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents, subscriptionEvents, mandelboxDieEvents)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -494,7 +564,7 @@ var eventLoopKeepalive = make(chan interface{}, 1)
 
 func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc,
 	goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
-	httpServerEvents <-chan httputils.ServerRequest, subscriptionEvents <-chan subscriptions.SubscriptionEvent) {
+	httpServerEvents <-chan httputils.ServerRequest, subscriptionEvents <-chan subscriptions.SubscriptionEvent, mandelboxDieEvents chan bool) {
 	// Note that we don't use globalCtx for the Docker Context, since we still
 	// wish to process Docker events after the global context is cancelled.
 	dockerContext, dockerContextCancel := context.WithCancel(context.Background())
@@ -559,6 +629,8 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			if dockerevent.Action == "die" {
 				mandelboxDieHandler(dockerevent.ID, transportRequestMap, transportMapLock, dockerClient)
 			}
+		case <-mandelboxDieEvents:
+			monitorWaitingMandelboxes(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxDieEvents)
 
 		// It may seem silly to just launch goroutines to handle these
 		// serverevents, but we aim to keep the high-level flow control and handling
@@ -607,7 +679,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					req, appName := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
 
 					// For local development, we start and finish the mandelbox spin up back to back
-					StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName)
+					StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName, mandelboxDieEvents)
 					go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxSubscription, transportRequestMap, transportMapLock, req)
 				}
 			default:
@@ -638,16 +710,6 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					// Don't do this in a separate goroutine, since there's no reason to.
 					drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
 					break
-				}
-
-				logger.Infof("Instance has a remaining capacity of %v, current number of waiting mandelboxes is %v", instance.RemainingCapacity, mandelboxData.GetMandelboxCount())
-
-				newWaitingMandelboxes := int32(instance.RemainingCapacity) - mandelboxData.GetMandelboxCount()
-				// If the remaining capacity field changes, check how many mandelboxes are currently
-				// running and start mandelbox zygotes as necessary.
-				if newWaitingMandelboxes > 0 {
-					logger.Infof("Starting %v new waiting mandelboxes.", newWaitingMandelboxes)
-					SpinUpMandelboxes(globalCtx, globalCancel, goroutineTracker, dockerClient, instance.ID, newWaitingMandelboxes)
 				}
 
 			default:

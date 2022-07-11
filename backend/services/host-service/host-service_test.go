@@ -137,7 +137,8 @@ func TestMandelboxDieHandler(t *testing.T) {
 	testTransportRequestMap[mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())] = make(chan *httputils.JSONTransportRequest)
 	testMux.Unlock()
 
-	m := mandelbox.New(ctx, tracker, mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+	mandelboxDieChan := make(chan bool, 10)
+	m := mandelbox.New(ctx, tracker, mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()), mandelboxDieChan)
 	m.RegisterCreation(mandelboxtypes.DockerID("test-docker-id"))
 
 	mandelboxDieHandler("test-docker-id", testTransportRequestMap, testMux, &dockerClient)

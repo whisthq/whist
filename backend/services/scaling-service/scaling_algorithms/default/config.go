@@ -49,6 +49,9 @@ const (
 
 	// User is already connected to a mandelbox, possibly on another device
 	USER_ALREADY_ACTIVE = "USER_ALREADY_ACTIVE"
+
+	// A generic 503 error message
+	SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
 )
 
 // VCPUsPerMandelbox indicates the number of vCPUs allocated per mandelbox.

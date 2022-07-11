@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/go-connections/nat"
 	"github.com/google/uuid"
+	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
@@ -39,8 +40,9 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 		browserImage: "browsers/chrome",
 	}
 	mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
+	mandelboxDieChan := make(chan bool, 10)
 	var appName mandelboxtypes.AppName = "chrome"
-	testMandelbox := StartMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxID, appName)
+	testMandelbox := StartMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxID, appName, mandelboxDieChan)
 
 	// Check that container would have been started
 	if !dockerClient.started {
@@ -145,8 +147,8 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	}
 
 	// Verify that the mandelbox has the connected status to false
-	if testMandelbox.GetConnectedStatus() {
-		t.Errorf("Mandelbox has invalid connected status: got true, want false")
+	if testMandelbox.GetStatus() != dbdriver.MandelboxStatusWaiting {
+		t.Errorf("Mandelbox has invalid connected status: got %v, want %v", testMandelbox.GetStatus(), dbdriver.MandelboxStatusWaiting)
 	}
 	testMandelboxChrome = testMandelbox
 }

@@ -27,6 +27,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -53,11 +54,15 @@ type Mandelbox interface {
 	GetSessionID() types.SessionID
 	SetSessionID(session types.SessionID)
 
-	// The connected status indicates if a user successfully connected
-	// to the mandelbox or not. Its helpful when deciding if we should
-	// log some errors, backup configs, etc.
-	GetConnectedStatus() bool
-	SetConnectedStatus(bool)
+	// The status indicates the current state of the mandelbox lifecycle. Its
+	// helpful when deciding if we should log some errors, backup configs, etc.
+	// and for monitoring waiting mandelboxes.
+	GetStatus() dbdriver.MandelboxStatus
+	SetStatus(dbdriver.MandelboxStatus)
+
+	// Return the time when the mandelbox status was last updated. The time
+	// will be set internally when the status of the mandelbox changes.
+	GetLastUpdatedTime() time.Time
 
 	GetHostPort(mandelboxPort uint16, protocol portbindings.TransportProtocol) (uint16, error)
 	GetIdentifyingHostPort() (uint16, error)
@@ -148,11 +153,11 @@ type Mandelbox interface {
 // New creates a new Mandelbox given a parent context and a whist ID. It is
 // simply a wrapper around new() to avoid exposing the underlying type to
 // non-testing packages.
-func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID) Mandelbox {
-	return new(baseCtx, goroutineTracker, fid)
+func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID, mandelboxDieChan chan bool) Mandelbox {
+	return new(baseCtx, goroutineTracker, fid, mandelboxDieChan)
 }
 
-func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID) *mandelboxData {
+func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID, mandelboxDieChan chan bool) *mandelboxData {
 	// We create a context for this mandelbox specifically.
 	ctx, cancel := context.WithCancel(baseCtx)
 
@@ -162,6 +167,8 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		ID:                   fid,
 		uinputDeviceMappings: []dockercontainer.DeviceMapping{},
 		otherDeviceMappings:  []dockercontainer.DeviceMapping{},
+		updatedAt:            time.Now(),
+		mandelboxDieChan:     mandelboxDieChan,
 	}
 
 	mandelbox.createResourceMappingDir()
@@ -185,11 +192,8 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 		<-ctx.Done()
 
-		// Mark mandelbox as dying in the database, but only if it's not a warmup
-		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
-			if err := dbdriver.WriteMandelboxStatus(mandelbox.GetID(), dbdriver.MandelboxStatusDying); err != nil {
-				logger.Error(err)
-			}
+		if err := dbdriver.WriteMandelboxStatus(mandelbox.GetID(), dbdriver.MandelboxStatusDying); err != nil {
+			logger.Error(err)
 		}
 
 		untrackMandelbox(mandelbox)
@@ -229,7 +233,8 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.GetID())
 
 		// Only try to backup user configs if the mandelbox was successfully connected to
-		if mandelbox.GetConnectedStatus() {
+		if mandelbox.GetStatus() == dbdriver.MandelboxStatusRunning ||
+			mandelbox.GetStatus() == dbdriver.MandelboxStatusDying {
 			// Backup and clean user config directory.
 			err := mandelbox.BackupUserConfigs()
 			if err != nil {
@@ -242,14 +247,15 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 			logger.Infof("No users connected to the mandelbox, so not trying to backup configs.")
 		}
 
-		// Remove mandelbox from the database altogether, once again excluding warmups
-		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
-			if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
-				logger.Error(err)
-			}
+		if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
+			logger.Error(err)
 		}
 
 		logger.Infof("Cleaned up after Mandelbox %s", mandelbox.GetID())
+
+		// Only after every step of the cleanup function has completed successfully,
+		// notify that the cleanup for this mandelbox is done.
+		mandelbox.mandelboxDieChan <- true
 	}()
 
 	return mandelbox
@@ -269,13 +275,14 @@ type mandelboxData struct {
 	// We use rwlock to protect all the below fields.
 	rwlock sync.RWMutex
 
-	dockerID        types.DockerID
-	appName         types.AppName
-	userID          types.UserID
-	sessionID       types.SessionID
-	connectedStatus bool
-	tty             ttys.TTY
-	gpuIndex        gpus.Index
+	dockerID  types.DockerID
+	appName   types.AppName
+	userID    types.UserID
+	sessionID types.SessionID
+	status    dbdriver.MandelboxStatus
+	updatedAt time.Time
+	tty       ttys.TTY
+	gpuIndex  gpus.Index
 
 	configEncryptionToken types.ConfigEncryptionToken
 	clientAppAccessToken  types.ClientAppAccessToken
@@ -287,6 +294,8 @@ type mandelboxData struct {
 	otherDeviceMappings []dockercontainer.DeviceMapping
 
 	portBindings []portbindings.PortBinding
+
+	mandelboxDieChan chan bool
 }
 
 // GetID returns the mandelbox ID.
@@ -323,18 +332,27 @@ func (mandelbox *mandelboxData) SetSessionID(session types.SessionID) {
 	mandelbox.sessionID = session
 }
 
-// GetConnectedStatus indicates if the user connected successfully to the mandelbox or not.
-func (mandelbox *mandelboxData) GetConnectedStatus() bool {
+// GetConnectedStatus returns the current status of the mandelbox.
+func (mandelbox *mandelboxData) GetStatus() dbdriver.MandelboxStatus {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
-	return mandelbox.connectedStatus
+	return mandelbox.status
 }
 
-// SetConnectedStatus sets the connected status.
-func (mandelbox *mandelboxData) SetConnectedStatus(status bool) {
+// SetConnectedStatus sets the mandelbox status and changes the time
+// the mandelbox was updated.
+func (mandelbox *mandelboxData) SetStatus(status dbdriver.MandelboxStatus) {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
-	mandelbox.connectedStatus = status
+	mandelbox.status = status
+	mandelbox.updatedAt = time.Now()
+}
+
+// GetLastUpdatedTime returns the time when the mandelbox status was last updated
+func (mandelbox *mandelboxData) GetLastUpdatedTime() time.Time {
+	mandelbox.rwlock.RLock()
+	defer mandelbox.rwlock.RUnlock()
+	return mandelbox.updatedAt
 }
 
 // GetConfigEncryptionToken returns the config encryption token.
@@ -528,7 +546,7 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 		if err != nil {
 			placeholderUUID := types.MandelboxID(utils.PlaceholderWarmupUUID())
 			if mandelbox.GetID() == placeholderUUID && strings.Contains(err.Error(), "use of closed network connection") ||
-				!mandelbox.GetConnectedStatus() {
+				mandelbox.GetStatus() != dbdriver.MandelboxStatusRunning {
 				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
 			} else {
 				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)

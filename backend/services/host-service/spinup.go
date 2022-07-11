@@ -31,14 +31,14 @@ import (
 // StartMandelboxSpinUp will create and start a mandelbox, doing all the steps that can be done without the user's config token.
 // Once the mandelbox is started, it effectively waits an infinite time until a user gets assigned to it and the remaining
 // steps can continue.
-func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName) mandelboxData.Mandelbox {
+func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName, mandelboxDieChan chan bool) mandelboxData.Mandelbox {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
 		metrics.Increment("ErrorRate")
 	}
 
-	mandelbox := mandelboxData.New(context.Background(), goroutineTracker, mandelboxID)
+	mandelbox := mandelboxData.New(context.Background(), goroutineTracker, mandelboxID, mandelboxDieChan)
 	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", mandelbox.GetID())
 
 	// If the creation of the mandelbox fails, we want to clean up after it. We
@@ -312,6 +312,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	// Mark mandelbox creation as successful, preventing cleanup on function
 	// termination.
 	createFailed = false
+	mandelbox.SetStatus(dbdriver.MandelboxStatusWaiting)
 	return mandelbox
 }
 
@@ -338,6 +339,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	if err != nil {
 		logAndReturnError("Did not find existing mandelbox with ID %v", mandelboxSubscription.ID)
 	}
+	mandelbox.SetStatus(dbdriver.MandelboxStatusAllocated)
 
 	// If the creation of the mandelbox fails, we want to clean up after it. We
 	// do this by setting `createFailed` to true until all steps are done, and
@@ -387,12 +389,10 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		case <-time.After(1 * time.Minute):
 			// Clean up the mandelbox if the time out limit is reached
 			logAndReturnError("User %v failed to connect to mandelbox %v due to config token time out. Not performing user-specific cleanup.", mandelbox.GetUserID(), mandelbox.GetID())
-			mandelbox.SetConnectedStatus(false)
 			return
 		}
 	}
-
-	mandelbox.SetConnectedStatus(true)
+	mandelbox.SetStatus(dbdriver.MandelboxStatusConnecting)
 
 	// Report the config encryption info to the config loader after making sure
 	// it passes some basic sanity checks.
@@ -472,5 +472,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		AesKey:              string(mandelbox.GetPrivateKey()),
 	}
 	req.ReturnResult(result, nil)
+	mandelbox.SetStatus(dbdriver.MandelboxStatusRunning)
 	logger.Infof("SpinUpMandelbox(): Finished starting up mandelbox %s", mandelbox.GetID())
 }

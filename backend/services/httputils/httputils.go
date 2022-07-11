@@ -153,6 +153,8 @@ func AuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest
 func ParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) (map[string]*json.RawMessage, error) {
 	// Get body of request
 	body, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
 		return nil, utils.MakeError("error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)

@@ -111,7 +111,8 @@ func TestSetAppName(t *testing.T) {
 func createTestMandelboxData() (*mandelboxData, context.CancelFunc, *sync.WaitGroup) {
 	ctx, cancel := context.WithCancel(context.Background())
 	routineTracker := sync.WaitGroup{}
-	mandelbox := new(ctx, &routineTracker, types.MandelboxID(utils.PlaceholderTestUUID()))
+	mandelboxDieChan := make(chan bool, 10)
+	mandelbox := new(ctx, &routineTracker, types.MandelboxID(utils.PlaceholderTestUUID()), mandelboxDieChan)
 
 	return mandelbox, cancel, &routineTracker
 }
