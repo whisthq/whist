@@ -37,7 +37,6 @@ ssh_connection_retries = 5
 # This value should not be set to less than 40mins (2400s)
 aws_timeout_seconds = 2400
 
-
 ################################### GitHub constants ##############################################
 
 github_run_id = os.getenv("GITHUB_RUN_ID") or "personal machine"

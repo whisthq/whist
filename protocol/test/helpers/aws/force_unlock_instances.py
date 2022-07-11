@@ -99,7 +99,9 @@ if __name__ == "__main__":
                 print(f"Giving up unlocking `{instance_id}`")
 
         if args.stop_instances:
-            terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=False)
+            terminate_or_stop_aws_instance(
+                boto3client, args.ssh_key_path, instance_id, should_terminate=False
+            )
 
         # Newline for spacing
         print()
