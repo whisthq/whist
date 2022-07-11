@@ -62,10 +62,9 @@ def stop_ci_reusable_instances():
             print(f"Stopping instance '{instance_id}' in region '{region_name}' ...")
             terminate_or_stop_aws_instance(
                 boto3client,
+                "/home/runner/.ssh/id_rsa",  # ssh_key_path
                 instance_id,
                 should_terminate=False,
-                should_unlock=True,
-                ssh_key_path="/home/runner/.ssh/id_rsa",
             )
 
 
@@ -127,4 +126,6 @@ if __name__ == "__main__":
         )
         for instance_id in leftover_instances:
             print(f"Terminating instance '{instance_id}' in region '{region_name}' ...")
-            terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate=True)
+            terminate_or_stop_aws_instance(
+                boto3client, "", instance_id, should_terminate=True
+            )  # ssh_key_path does not need to be defined if we are terminating the instance

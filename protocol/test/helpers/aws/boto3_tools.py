@@ -609,21 +609,23 @@ def get_client_and_instances(
         )
         # Terminate or stop server AWS instance
         terminate_or_stop_aws_instance(
-            boto3client, server_instance_id, server_instance_id != existing_server_instance_id
+            boto3client,
+            ssh_key_path,
+            server_instance_id,
+            server_instance_id != existing_server_instance_id,
         )
         return None
 
     return boto3client, server_instance_id, client_instance_id
 
 
-def terminate_or_stop_aws_instance(
-    boto3client, instance_id, should_terminate, should_unlock=False, ssh_key_path=None
-):
+def terminate_or_stop_aws_instance(boto3client, ssh_key_path, instance_id, should_terminate):
     """
     Stop (if should_terminate==False) or terminate (if should_terminate==True) a AWS instance
 
     Args:
         boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        ssh_key_path (str): The path to the SSH key to be used to access the instance via SSH
         instance_id (str): The ID of the instance to stop or terminate
         should_terminate (bool): A boolean indicating whether the instance should be terminated (instead of stopped)
 
@@ -644,7 +646,7 @@ def terminate_or_stop_aws_instance(
     else:
         # Release the lock
         unlock_result = (
-            release_lock(boto3client, instance_id, ssh_key_path) if should_unlock else True
+            release_lock(boto3client, instance_id, ssh_key_path) if not should_terminate else True
         )
         # Stopping the instance and waiting for it to shutdown
         stop_result = False
