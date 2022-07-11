@@ -18,6 +18,7 @@ from helpers.common.ssh_tools import (
 
 from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
+    printcolor,
 )
 
 from helpers.common.constants import (
