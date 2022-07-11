@@ -143,6 +143,19 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(${PROTOCOL_TEST_BINARY} ${CMAKE_DL_LIBS})
 endif()
 
+set(SDL2_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
+find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${SDL2_DIR_PATH}"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT_PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+if(NOT STATIC_SDL2)
+    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${SDL2_DIR_PATH}")
+endif()
+target_link_libraries(${PROTOCOL_TEST_BINARY} ${STATIC_SDL2})
+
 # Link the remaining platform-independent libraries
 target_link_libraries(${PROTOCOL_TEST_BINARY}
     ${PLATFORM_INDEPENDENT_SERVER_LIBS}

@@ -10,6 +10,19 @@ target_link_libraries(${DECODER_TEST_BINARY}
 
 copy_runtime_libs(${DECODER_TEST_BINARY})
 
+set(SDL2_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
+find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${SDL2_DIR_PATH}"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT_PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+if(NOT STATIC_SDL2)
+    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${SDL2_DIR_PATH}")
+endif()
+target_link_libraries(${DECODER_TEST_BINARY} ${STATIC_SDL2})
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
 
