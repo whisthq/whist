@@ -284,18 +284,6 @@ if(NOT LIB_SENTRY)
 endif()
 list(APPEND SHARED_LIBS_PATHS ${SENTRY_DIR_PATH})
 
-set(SDL2_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
-find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${SDL2_DIR_PATH}"
-        NO_DEFAULT_PATH
-        NO_CMAKE_ENVIRONMENT_PATH
-        NO_CMAKE_PATH
-        NO_SYSTEM_ENVIRONMENT_PATH
-        NO_CMAKE_SYSTEM_PATH
-        NO_CMAKE_FIND_ROOT_PATH)
-if(NOT STATIC_SDL2)
-    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${SDL2_DIR_PATH}")
-endif()
-
 function(copy_runtime_libs TARGET)
     foreach(DIR ${SHARED_LIBS_PATHS})
         add_custom_command(TARGET ${TARGET} POST_BUILD
@@ -353,7 +341,6 @@ set(PLATFORM_INDEPENDENT_LIBS   whistCore
     whistUtils
     whistDebug
     whistFEC
-    ${STATIC_SDL2}
     ${LIB_SENTRY}
 )
 set(MAC_SPECIFIC_CLIENT_LIBS
@@ -438,7 +425,6 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile 
         whistFEC
         whistDebug
         whistUtils
-        ${STATIC_SDL2}
         ${LIB_SENTRY}
     )
     # Server Specific windows libs go here

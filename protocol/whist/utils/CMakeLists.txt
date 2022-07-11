@@ -30,4 +30,4 @@ endif()
 set_property(TARGET whistUtils PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-target_link_libraries(whistUtils ${STATIC_SDL2} ${CMAKE_DL_LIBS})
+target_link_libraries(whistUtils ${CMAKE_DL_LIBS})

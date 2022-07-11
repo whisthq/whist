@@ -107,6 +107,22 @@ endif()
 target_link_libraries(WhistClient ${PLATFORM_INDEPENDENT_LIBS})
 
 #[[
+################## Linking SDL to Client ##################
+]]
+set(SDL2_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
+find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${SDL2_DIR_PATH}"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT_PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+if(NOT STATIC_SDL2)
+    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${SDL2_DIR_PATH}")
+endif()
+target_link_libraries(WhistClient ${STATIC_SDL2})
+
+#[[
 ################## LINUX ##################
 ]]
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

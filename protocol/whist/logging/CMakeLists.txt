@@ -10,4 +10,4 @@ add_library(whistLogging STATIC
 set_property(TARGET whistLogging PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-target_link_libraries(whistLogging whistCore ${STATIC_SDL2} ${CMAKE_DL_LIBS})
+target_link_libraries(whistLogging whistCore ${CMAKE_DL_LIBS})
