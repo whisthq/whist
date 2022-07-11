@@ -102,9 +102,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecyc
       days = 90
     }
 
+    # Keep only the 3 latest noncurrent versions (old versions of the object).
+    # The rest of the noncurrent versions will be deleted once they are more than
+    # a day old.
     noncurrent_version_expiration {
       newer_noncurrent_versions = 3
-      noncurrent_days           = 5
+      noncurrent_days           = 1
     }
   }
 }

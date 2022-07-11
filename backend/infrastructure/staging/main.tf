@@ -39,7 +39,7 @@ module "s3-control" {
     1 = module.user-configs-us-east-1.bucket_name,
     2 = module.user-configs-us-west-1.bucket_name,
     3 = module.user-configs-eu-central-1.bucket_name,
-    4 = module.user-configs-sa-east-1.bucket_name,
+    4 = module.user-configs-ap-south-1.bucket_name,
     5 = module.user-configs-ap-southeast-2.bucket_name,
   }
 }
@@ -54,7 +54,7 @@ module "s3-control" {
 module "user-configs-us-east-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
-  # us-east-1
+  # N. Virginia
   replication_regions = []
   replication_role_arn = ""
 }
@@ -63,7 +63,7 @@ module "user-configs-us-west-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
-    # us-west-1
+    # N. California
     aws = aws.usw1
   }
   replication_regions = []
@@ -74,7 +74,7 @@ module "user-configs-eu-central-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
-    # eu-central-1
+    # Frankfurt
     aws = aws.euc1
   }
   replication_regions = []
@@ -85,23 +85,24 @@ module "user-configs-ap-southeast-2" {
   source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
-    # ap-southeast-2
+    # Syndey
     aws = aws.apse2
   }
   replication_regions = []
   replication_role_arn = ""
 }
 
-module "user-configs-sa-east-1" {
+module "user-configs-ap-south-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   providers = {
-    # sa-east-1
-    aws = aws.sae1
+    # Mumbai
+    aws = aws.aps1
   }
   replication_regions = []
   replication_role_arn = ""
 }
+
 
 # Enable all AWS regions on Terraform. Doing this will create
 # all multi-region resources on each region declared below. See 
