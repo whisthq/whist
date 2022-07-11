@@ -30,6 +30,7 @@ from helpers.common.constants import (
 
 from helpers.aws.boto3_tools import (
     terminate_or_stop_aws_instance,
+    release_lock,
 )
 
 from helpers.setup.network_tools import (
@@ -416,6 +417,17 @@ def complete_experiment_and_save_results(
             instances_file.write(f"{server_instance_id}\n")
             if client_instance_id != server_instance_id:
                 instances_file.write(f"{client_instance_id}\n")
+    else:
+        # If we are leaving the instance(s) on, and we are outside of CI, we should unlock it/them
+        if use_two_instances:
+            # If we're using two instances, always unlock the client first
+            result = release_lock(boto3client, client_instance_id, ssh_key_path)
+            if not result:
+                printcolor("Error while unlocking the client EC2 instance!", "red")
+        # Unlock the server
+        result = release_lock(boto3client, server_instance_id, ssh_key_path)
+        if not result:
+            printcolor("Error while unlocking the server EC2 instance!", "red")
 
     print("Instance successfully stopped/terminated, goodbye")
 

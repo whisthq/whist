@@ -644,7 +644,7 @@ def terminate_or_stop_aws_instance(boto3client, ssh_key_path, instance_id, shoul
             print(e)
             return
     else:
-        # Release the lock
+        # Release the lock if we are stopping the instance
         unlock_result = (
             release_lock(boto3client, instance_id, ssh_key_path) if not should_terminate else True
         )
