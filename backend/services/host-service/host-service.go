@@ -216,6 +216,30 @@ func monitorWaitingMandelboxes(globalCtx context.Context, globalCancel context.C
 	return nil
 }
 
+// removeStaleMandelboxesGoroutine starts
+func removeStaleMandelboxesGoroutine(globalCtx context.Context) {
+	defer logger.Infof("Finished removeStaleMandelboxes goroutine.")
+	timerChan := make(chan interface{})
+
+	// Instead of running exactly every 10 seconds, we choose a random time in
+	// the range [9.5, 10.5] seconds to space out cleaning stale mandelboxes.
+	for {
+		sleepTime := 10000 - rand.Intn(1001)
+		timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- struct{}{} })
+
+		select {
+		case <-globalCtx.Done():
+			// Remove allocated stale mandelboxes one last time
+			mandelboxData.RemoveStaleMandelboxes(time.Duration(90*time.Second), time.Duration(10*time.Second))
+			utils.StopAndDrainTimer(timer)
+			return
+
+		case <-timerChan:
+			mandelboxData.RemoveStaleMandelboxes(time.Duration(90*time.Second), time.Duration(10*time.Second))
+		}
+	}
+}
+
 // ---------------------------
 // Service shutdown and initialization
 // ---------------------------
@@ -480,6 +504,13 @@ func main() {
 	}
 
 	// Now we start all the goroutines that actually do work.
+
+	// Start a goroutine that removes stale mandelboxes.
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+		removeStaleMandelboxesGoroutine(globalCtx)
+	}()
 
 	// Start the HTTP server and listen for events
 	httpServerEvents, err := StartHTTPServer(globalCtx, globalCancel, &goroutineTracker)

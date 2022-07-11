@@ -40,10 +40,10 @@ func LookUpByDockerID(DockerID types.DockerID) (Mandelbox, error) {
 	trackerLock.RLock()
 	defer trackerLock.RUnlock()
 
-	for _, m := range tracker {
-		d := m.GetDockerID()
+	for _, mandelbox := range tracker {
+		d := mandelbox.GetDockerID()
 		if d == DockerID {
-			return m, nil
+			return mandelbox, nil
 		}
 	}
 	return nil, utils.MakeError("Couldn't find Mandelbox with DockerID %s", DockerID)
@@ -105,17 +105,21 @@ func StopWaitingMandelboxes(dockerClient dockerclient.CommonAPIClient) {
 // RemoveStaleMandelboxes cancels the context of mandelboxes that have an
 // old creation time but are still marked as allocated, or have been marked
 // connecting for too long.
-func RemoveStaleMandelboxes(allocatedAge, connectingAge time.Duration) {
+func RemoveStaleMandelboxes(allocatedAgeLimit, connectingAgeLimit time.Duration) {
 	trackerLock.RLock()
 	defer trackerLock.RUnlock()
 
-	for _, m := range tracker {
-		if m.GetStatus() == dbdriver.MandelboxStatusAllocated &&
-			m.GetLastUpdatedTime().Before(time.Now().Add(-1*allocatedAge)) ||
-			m.GetStatus() == dbdriver.MandelboxStatusConnecting &&
-				m.GetLastUpdatedTime().Before(time.Now().Add(-1*connectingAge)) {
-			logger.Infof("Cleaning up stale mandelbox %s", m.GetID())
-			m.Close()
+	for _, mandelbox := range tracker {
+		timeSinceLastUpdate := time.Since(mandelbox.GetLastUpdatedTime())
+		// If a mandelbox has the `ALLOCATED` or `CONNECTING` status, and the
+		// last time since it was updated is greater than the allocated and
+		// connecting limits, then it is considered stale and will be cleaned up.
+		if mandelbox.GetStatus() == dbdriver.MandelboxStatusAllocated &&
+			timeSinceLastUpdate > allocatedAgeLimit ||
+			mandelbox.GetStatus() == dbdriver.MandelboxStatusConnecting &&
+				timeSinceLastUpdate > connectingAgeLimit {
+			logger.Infof("Cleaning up stale mandelbox %s", mandelbox.GetID())
+			mandelbox.Close()
 		}
 	}
 }
