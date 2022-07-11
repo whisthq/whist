@@ -1,3 +1,15 @@
+// So that SDL sees symbols such as memcpy
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <string.h>
+#endif
+
+// include SDL
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
+
+#include <whist/core/whist.h>
 #include "common.h"
 // This is a crutch. Once video is callback-ized we won't need it anymore.
 #define FROM_WHIST_PROTOCOL true
