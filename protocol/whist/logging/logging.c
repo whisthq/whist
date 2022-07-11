@@ -358,8 +358,10 @@ void destroy_logger(void) {
     whist_destroy_mutex(logger_queue_mutex);
     whist_destroy_cond(logger_queue_cond);
 
-    crash_handler_mutex_active = false;
-    whist_destroy_mutex(crash_handler_mutex);
+    if (crash_handler_mutex_active) {
+        crash_handler_mutex_active = false;
+        whist_destroy_mutex(crash_handler_mutex);
+    }
 
     // Debug check: if we get here and the logger queue is not empty
     // and the freelist full then something has gone wrong.

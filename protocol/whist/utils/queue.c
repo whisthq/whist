@@ -101,7 +101,7 @@ int fifo_queue_dequeue_item_timeout(QueueContext *context, void *item, int timeo
     int current_timeout_ms = timeout_ms;
     whist_lock_mutex(context->mutex);
     while (context->num_items <= 0) {
-        int res = whist_timedwait_cond(context->cond, context->mutex, current_timeout_ms);
+        bool res = whist_timedwait_cond(context->cond, context->mutex, current_timeout_ms);
         if (res == false) {  // In case of a timeout simply exit
             whist_unlock_mutex(context->mutex);
             return -1;

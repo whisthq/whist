@@ -80,8 +80,9 @@ struct VideoContext {
 
     // Context of the frame that is currently being rendered
     VideoFrame* render_context;
-
     std::atomic<bool> pending_render_context;
+
+    WhistCursorCache* cursor_cache;
 };
 
 /*
@@ -145,6 +146,8 @@ VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial
     video_context->last_frame_height = initial_height;
     video_context->last_frame_codec = CODEC_TYPE_H264;
 
+    video_context->cursor_cache = whist_cursor_cache_create(CURSOR_CACHE_ENTRIES, true);
+
     sdl_render_framebuffer();
 
     // Return the new struct
@@ -159,6 +162,8 @@ void destroy_video(VideoContext* video_context) {
         whist_detach_thread(destroy_decoder_thread);
         video_context->decoder = NULL;
     }
+
+    whist_cursor_cache_destroy(video_context->cursor_cache);
 
     // Free the video context
     delete video_context;
@@ -252,11 +257,32 @@ int render_video(VideoContext* video_context) {
 
             window_color = frame->corner_color;
 
-            WhistCursorInfo* frame_cursor_image = get_frame_cursor_info(frame);
-
-            // set the cursor image as pending, so that it will be rendered in main.
-            if (frame_cursor_image) {
-                sdl_set_cursor_info_as_pending(frame_cursor_image);
+            if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type)) {
+                whist_cursor_cache_clear(video_context->cursor_cache);
+                FATAL_ASSERT(frame->has_cursor);
+            }
+            if (frame->has_cursor) {
+                WhistCursorInfo* new_cursor = get_frame_cursor_info(frame);
+                if (new_cursor->type == WHIST_CURSOR_PNG) {
+                    // If the cursor is a PNG, use the cache
+                    const WhistCursorInfo* cached_cursor =
+                        whist_cursor_cache_check(video_context->cursor_cache, new_cursor->hash);
+                    if (cached_cursor) {
+                        // Verify cache sync
+                        FATAL_ASSERT(new_cursor->cached == true);
+                        // Reuse the cached cursor.
+                        sdl_set_cursor_info_as_pending(cached_cursor);
+                    } else {
+                        // Verify cache sync
+                        FATAL_ASSERT(new_cursor->cached == false);
+                        // Use the new cursor and add it to the cache.
+                        whist_cursor_cache_add(video_context->cursor_cache, new_cursor);
+                        sdl_set_cursor_info_as_pending(new_cursor);
+                    }
+                } else {
+                    FATAL_ASSERT(new_cursor->cached == false);
+                    sdl_set_cursor_info_as_pending(new_cursor);
+                }
             }
         } else {
             // Reset last_rendered_time for an empty frame, so that a non-empty frame following an

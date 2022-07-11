@@ -663,8 +663,11 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
     // Note: We can't check active_frame->pict_type bc ffmpeg cobbles it for some reason
     if (encoder->wants_iframe) {
         encoder->frame_type = VIDEO_FRAME_TYPE_INTRA;
+        encoder->wants_iframe = false;
+    } else if (encoder->frame_type != VIDEO_FRAME_TYPE_INTRA) {
+        /* simulate LTR support */
+        encoder->frame_type = encoder->ltr_action.frame_type;
     }
-    encoder->wants_iframe = false;
 
     return 0;
 }

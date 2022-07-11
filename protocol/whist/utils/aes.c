@@ -136,6 +136,12 @@ uint32_t hash(const void* buf, size_t len) {
     hash += (hash << 3);
     hash ^= (hash >> 11);
     hash += (hash << 15);
+
+    // Ensure that hashes are always positive
+    if (hash == 0) {
+        hash = 1;
+    }
+
     return hash;
 }
 

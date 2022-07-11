@@ -22,6 +22,7 @@ Includes
 */
 
 #include <whist/core/whist.h>
+#include <whist/video/ltr.h>
 
 /*
 ============================
@@ -72,6 +73,7 @@ typedef struct FFmpegEncoder {
     AVFrame* hw_frame;
     AVFrame* sw_frame;
     AVFrame* filtered_frame;
+    LTRAction ltr_action;
 } FFmpegEncoder;
 
 /*

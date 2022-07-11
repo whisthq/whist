@@ -350,6 +350,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
             UNUSED(transfer_nvidia_data);
 #endif
         case FFMPEG_ENCODER:
+            encoder->ffmpeg_encoder->ltr_action = encoder->next_ltr_action;
             if (ffmpeg_encoder_send_frame(encoder->ffmpeg_encoder)) {
                 LOG_ERROR("Unable to send frame to encoder!");
                 return -1;

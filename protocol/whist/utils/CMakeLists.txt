@@ -11,7 +11,7 @@ add_library(whistUtils STATIC
         lodepng.c
         rwlock.c
         color.c
-        threads.c
+        threads.cpp
         os_utils.c
         linked_list.c
         queue.c
