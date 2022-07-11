@@ -232,17 +232,20 @@ static const char* css_cursor_from_whist_cursor_type(WhistCursorType type) {
 }
 
 void virtual_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
+    // Technically redundant caching, but solves for issues with the ARROW fallback cursor
+    // and is really cheap.
     static WhistCursorType last_cursor_type = WHIST_CURSOR_ARROW;
+    static WhistMouseMode last_mode = MOUSE_MODE_NORMAL;
 
     if (cursor->type == WHIST_CURSOR_PNG) {
         // We don't support PNG, so fall back to the arrow cursor.
         cursor->type = WHIST_CURSOR_ARROW;
     }
 
-    if (cursor->type != last_cursor_type) {
+    if (cursor->type != last_cursor_type || cursor->mode != last_mode) {
         const char* css_name = css_cursor_from_whist_cursor_type(cursor->type);
         if (on_cursor_change != NULL) {
-            on_cursor_change(callback_context, css_name);
+            on_cursor_change(callback_context, css_name, cursor->mode == MOUSE_MODE_RELATIVE);
         }
         last_cursor_type = cursor->type;
     }
