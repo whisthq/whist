@@ -1800,7 +1800,7 @@ TEST_F(ProtocolTest, FECTest2) {
     rs_wrapper_set_max_group_overhead(saved_max_group_overhead);
 }
 extern "C" {
-#include <whist/fec/wirehair/wirehair_test.h>
+#include <whist/fec/wirehair_test.h>
 };
 TEST_F(ProtocolTest, FountainTest) { wirehair_test(); }
 typedef struct {

@@ -8,6 +8,7 @@ add_library(whistFEC STATIC
         rs_wrapper.c
         fec.c
         fec_controller.cpp
+        wirehair_test.cpp
         )
 
 target_link_libraries(whistFEC whistFEC_cm256 whistFEC_gf256 whistFEC_wirehair)

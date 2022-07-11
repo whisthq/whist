@@ -152,10 +152,6 @@ timestamp_us current_time_us(void);
  */
 double get_timestamp_sec(void);
 
-inline double get_timestamp_ms(void){
-    return get_timestamp_sec()* 1000;
-}
-
 /** @} */
 
 #endif /* WHIST_UTILS_CLOCK_H */
