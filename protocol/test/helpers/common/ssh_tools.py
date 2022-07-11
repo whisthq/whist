@@ -115,11 +115,11 @@ def run_single_ssh_command(instance_ip, ssh_key_path, timeout, command):
     private_key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
     try:
         client.connect(instance_ip, username=username, key_filename=ssh_key_path, timeout=timeout)
+        _, stdout, stderr = client.exec_command(command)
+        return_code = stdout.channel.recv_exit_status()
     except Exception as e:
         print("Caught SSH connect exception:")
         return -1
-    _, stdout, stderr = client.exec_command(command)
-    return_code = stdout.channel.recv_exit_status()
     # To enable printing the stdout/stderr, uncomment the lines below:
     # stdout = stdout.read().decode("utf-8") or ""
     # stderr = stderr.read().decode("utf-8") or ""
