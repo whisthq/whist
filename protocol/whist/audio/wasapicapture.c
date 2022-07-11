@@ -18,6 +18,7 @@ device via DestroyAudioDevice.
 #include <whist/core/platform.h>
 #if OS_IS(OS_WIN32)
 
+#include <whist/core/whist.h>
 #include "wasapicapture.h"
 
 /*
