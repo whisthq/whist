@@ -396,16 +396,16 @@ def complete_experiment_and_save_results(
             # stop/terminate the client instance
             terminate_or_stop_aws_instance(
                 boto3client,
+                ssh_key_path,
                 client_instance_id,
                 client_instance_id != use_existing_client_instance,
-                ssh_key_path,
             )
         # stop/terminate the server instance
         terminate_or_stop_aws_instance(
             boto3client,
+            ssh_key_path,
             server_instance_id,
             server_instance_id != use_existing_server_instance,
-            ssh_key_path,
         )
 
     elif running_in_ci:
