@@ -221,18 +221,17 @@ static WhistMouseMode get_latest_mouse_mode(void) {
 }
 
 WhistCursorInfo* whist_cursor_capture(void) {
-    WhistCursorInfo* image = NULL;
+    WhistCursorInfo* cursor_info;
     if (disp) {
-        XFixesCursorImage* cursor_image = XFixesGetCursorImage(disp);
+        WhistMouseMode mode = get_latest_mouse_mode();
 
+        XFixesCursorImage* cursor_image = XFixesGetCursorImage(disp);
         if (cursor_image->width > MAX_CURSOR_WIDTH || cursor_image->height > MAX_CURSOR_HEIGHT) {
             LOG_WARNING("Cursor is too large; rejecting capture: %hux%hu", cursor_image->width,
                         cursor_image->height);
             XFree(cursor_image);
-            return NULL;
+            return whist_cursor_info_from_type(WHIST_CURSOR_ARROW, mode);
         }
-
-        WhistMouseMode mode = get_latest_mouse_mode();
 
         WhistCursorType cursor_type = get_cursor_type(cursor_image);
         if (cursor_type == WHIST_CURSOR_PNG) {
@@ -244,16 +243,18 @@ WhistCursorInfo* whist_cursor_capture(void) {
                 const uint32_t argb_pix = (uint32_t)cursor_image->pixels[i];
                 rgba[i] = argb_pix << 8 | argb_pix >> 24;
             }
-            image = whist_cursor_info_from_rgba(rgba, cursor_image->width, cursor_image->height,
-                                                cursor_image->xhot, cursor_image->yhot, mode);
+            cursor_info =
+                whist_cursor_info_from_rgba(rgba, cursor_image->width, cursor_image->height,
+                                            cursor_image->xhot, cursor_image->yhot, mode);
         } else {
             // Use system cursor
-            image = whist_cursor_info_from_type(cursor_type, mode);
+            cursor_info = whist_cursor_info_from_type(cursor_type, mode);
         }
         XFree(cursor_image);
     } else {
         LOG_ERROR("Cursor capture not initialized");
+        cursor_info = whist_cursor_info_from_type(WHIST_CURSOR_ARROW, MOUSE_MODE_NORMAL);
     }
 
-    return image;
+    return cursor_info;
 }

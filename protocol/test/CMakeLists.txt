@@ -24,7 +24,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
         # Files needed for Cursor unit tests
         whist_cursor_test.cpp
-        ../whist/cursor/cursor.c
+        ../whist/cursor/cursor.cpp
         ../whist/cursor/cursor_internal.c
 
         # Files needed for Client unit tests
@@ -84,7 +84,7 @@ else()
 
         # Files needed for Cursor unit tests
         whist_cursor_test.cpp
-        ../whist/cursor/cursor.c
+        ../whist/cursor/cursor.cpp
         ../whist/cursor/cursor_internal.c
 
         # Files needed for Client unit tests

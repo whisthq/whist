@@ -59,4 +59,5 @@ WhistCursorInfo* whist_cursor_info_from_type(WhistCursorType type, WhistMouseMod
 WhistCursorInfo* whist_cursor_info_from_rgba(const uint32_t* rgba, unsigned short width,
                                              unsigned short height, unsigned short hot_x,
                                              unsigned short hot_y, WhistMouseMode mode);
+
 #endif  // WHIST_CURSOR_INTERNAL

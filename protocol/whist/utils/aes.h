@@ -58,6 +58,8 @@ Public Functions
  * @brief                          Hash a buffer to a pseudorandomly unique ID
  *                                 This will not be cryptographically secure against
  *                                 preimage/collision attacks, it is intended to be fast instead
+ *                                 Note that this function will never return 0,
+ *                                 so "0" is safe as a null hash value
  *
  * @param data                     Pointer to the data to get hashed
  * @param len                      Length of buffer to get hashed, in bytes
