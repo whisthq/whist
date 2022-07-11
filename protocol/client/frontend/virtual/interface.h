@@ -5,7 +5,8 @@
 #include "../../whist_client.h"
 
 typedef const char* (*OnFileUploadCallback)(void* data);
-typedef void (*OnCursorChangeCallback)(void* data, const char* cursor_type, bool relative_mouse_mode);
+typedef void (*OnCursorChangeCallback)(void* data, const char* cursor_type,
+                                       bool relative_mouse_mode);
 
 typedef struct VirtualInterface {
     struct {
