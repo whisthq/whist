@@ -235,7 +235,15 @@ def generate_comparison_entries(
     return table_entries[0], table_entries[1], test_result
 
 
-def generate_plots(plot_data_filename, branch_name, destination_folder, name_prefix, compared_plot_data_filename="", compared_branch_name="", verbose=False):
+def generate_plots(
+    plot_data_filename,
+    branch_name,
+    destination_folder,
+    name_prefix,
+    compared_plot_data_filename="",
+    compared_branch_name="",
+    verbose=False,
+):
     """
     Generate the time-series plot of each metric in the file at the plot_data_filename path, and save
     each plot in the given destination_folder. The name of each plot will be destination_folder/<METRIC>.png
@@ -258,7 +266,11 @@ def generate_plots(plot_data_filename, branch_name, destination_folder, name_pre
     plot_data = json.loads(plot_data_file.read())
     plot_data_file.close()
     compared_plot_data = {}
-    if len(compared_plot_data_filename) > 0 and os.path.isfile(compared_plot_data_filename) and len(compared_branch_name) > 0:
+    if (
+        len(compared_plot_data_filename) > 0
+        and os.path.isfile(compared_plot_data_filename)
+        and len(compared_branch_name) > 0
+    ):
         compared_plot_data_file = open(plot_data_filename, "r")
         compared_plot_data = json.loads(compared_plot_data_file.read())
         compared_plot_data_file.close()
@@ -282,32 +294,6 @@ def generate_plots(plot_data_filename, branch_name, destination_folder, name_pre
                 f"{name_prefix}:{k}.png" if not trimmed_plot else f"{name_prefix}:{k}_trimmed.png",
             )
             plt.savefig(output_filename, dpi=300, bbox_inches="tight")
-
-
-    def plot_metric(key, destination_folder, name_prefix, trimmed_plot, verbose):
-        output_filename = os.path.join(
-            destination_folder,
-            f"{name_prefix}:{key}.png" if not trimmed_plot else f"{name_prefix}:{key}_trimmed.png",
-        )
-        time_range = f"0.0~36000.0" if not trimmed_plot else f"5.0~36000.0"
-        plotting_command = f'python3 ../whist/debug/plotter.py -f "{k}" -r {time_range} -o {output_filename} {plot_data_filename}'
-        if not verbose:
-            subprocess.run(
-                plotting_command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
-            )
-        else:
-            p = subprocess.run(plotting_command, shell=True, capture_output=True)
-            if p.returncode != 0:
-                print(f"Could not generate plot {output_filename}!")
-
-    
-    with open(plot_data_filename) as plot_data_file:
-        data_file = json.loads(plot_data_file.read())
-        for k in data_file.keys():
-            for trimmed_plot in (True, False):
-                plot_metric(
-                    k, destination_folder, name_prefix, trimmed_plot=trimmed_plot, verbose=verbose
-                )
 
 
 def add_plot_links(
