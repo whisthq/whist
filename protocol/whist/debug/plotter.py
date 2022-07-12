@@ -56,15 +56,6 @@ parser.add_option(
     help="weight of the line or point, default: 0.5",
 )
 
-parser.add_option(
-    "-o",
-    "--output",
-    action="store",
-    dest="output_file",
-    type="string",
-    help="output file where we should save the plot",
-)
-
 # parse options by the optparse lib
 (options, args) = parser.parse_args()
 
@@ -116,8 +107,6 @@ def draw(label, arr):
         plt.plot(x, y, label=label, linewidth=options.weight)
 
 
-plt.figure(figsize=(10, 5))
-
 # handle input of multiple files
 for file_name in args:
     # read in the file
@@ -141,28 +130,17 @@ for file_name in args:
         # call the draw logical
         draw(label, data[i])
 
-# depending on the mode, print xlabel
+# print out description of lables
+plt.legend()
+
+# depend on the mode, print xlabel
 if options.draw_distribution:
     plt.xlabel("percentage rank")
 else:
     plt.xlabel("x value")
+
 # print y label
 plt.ylabel("y value")
-
-# print out description of labels
-legend_handle = plt.legend(title="Legend:", bbox_to_anchor=(1.7, 0.5), loc="right")
-# make room for the legend on the right of the plot
-plt.subplots_adjust(left=0.08, right=0.624)
-plt.tight_layout()
-
-plt.grid(True)
-
-# save the plot
-output_file = options.output_file
-if output_file:
-    plt.savefig(
-        options.output_file, dpi=300, bbox_extra_artists=(legend_handle,), bbox_inches="tight"
-    )
 
 # show the plot
 plt.show()
