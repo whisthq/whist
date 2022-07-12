@@ -5,7 +5,6 @@ from github import Github
 
 from helpers.common.git_tools import (
     get_workflow_handle,
-    get_github_run_id,
     get_workflows_to_prioritize,
 )
 
