@@ -6,7 +6,7 @@ import { createTab, activateTab, removeTab } from "@app/utils/tabs"
 import { SOCKETIO_SERVER_URL } from "@app/constants/urls"
 import { WhistTab } from "@app/constants/tabs"
 
-let tabs: WhistTab[] = []
+let openTabs: WhistTab[] = []
 
 const initSocketioConnection = () => {
   const socket = io(SOCKETIO_SERVER_URL, {
@@ -19,40 +19,40 @@ const initSocketioConnection = () => {
 }
 
 const initCreateTabListener = (socket: Socket) => {
-  socket.on("create-tab", async (_tabs: chrome.tabs.Tab[]) => {
-    const tab = _tabs[0]
-    const _tab = await createTab({
+  socket.on("create-tab", async (tabs: chrome.tabs.Tab[]) => {
+    const tab = tabs[0]
+    const createdTab = await createTab({
       url: tab.url,
       active: tab.active,
     })
 
-    tabs.push(<WhistTab>{
-      tab: _tab,
+    openTabs.push(<WhistTab>{
+      tab: createdTab,
       clientTabId: tab.id,
     })
   })
 }
 
 const initActivateTabListener = (socket: Socket) => {
-  socket.on("activate-tab", (_tabs: chrome.tabs.Tab[]) => {
-    const tab = _tabs[0]
-    const _tab = find(tabs, (t) => t.clientTabId === tab.id)
-    if (_tab?.tab?.id === undefined) {
+  socket.on("activate-tab", (tabs: chrome.tabs.Tab[]) => {
+    const tab = tabs[0]
+    const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
+    if (foundTab?.tab?.id === undefined) {
       socket.emit("activate-tab-error")
     } else {
-      activateTab(_tab.tab.id)
+      activateTab(foundTab.tab.id)
     }
   })
 }
 
 const initCloseTabListener = (socket: Socket) => {
-  socket.on("close-tab", (_tabs: chrome.tabs.Tab[]) => {
-    const tab = _tabs[0]
-    const _tab = find(tabs, (t) => t.clientTabId === tab.id)
-    if (_tab?.tab?.id === undefined) {
+  socket.on("close-tab", (tabs: chrome.tabs.Tab[]) => {
+    const tab = tabs[0]
+    const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
+    if (foundTab?.tab?.id === undefined) {
       console.warn(`Could not remove tab ${tab.id}`)
     } else {
-      removeTab(_tab?.tab?.id)
+      removeTab(foundTab?.tab?.id)
     }
   })
 }
