@@ -177,7 +177,7 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Set up NodeJS Environment
-        uses: actions/setup-node@v3.3.0
+        uses: actions/setup-node@v3.4.0
         with:
           node-version: "16"
 
@@ -352,7 +352,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Set up Python Environment
-        uses: actions/setup-python@v4.0.0
+        uses: actions/setup-python@v4.1.0
         with:
           python-version: "3.10.4"
 
@@ -364,7 +364,7 @@ jobs:
       ########################### Stage 1 - Build Backend Services #############################
 
       - name: Set up Go Environment
-        uses: actions/setup-go@v3.2.0
+        uses: actions/setup-go@v3.2.1
         with:
           go-version: "1.18"
 
@@ -855,7 +855,7 @@ jobs:
           EOF
 
       - name: Set up Go Environment
-        uses: actions/setup-go@v3.2.0
+        uses: actions/setup-go@v3.2.1
         with:
           go-version: "1.18"
 
