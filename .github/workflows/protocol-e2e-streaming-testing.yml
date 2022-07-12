@@ -84,7 +84,7 @@ jobs:
         working-directory: protocol/test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 -m helpers.aws.wait_in_queue
+        run: python3 -m helpers.wait_in_queue
 
       # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under
       # Key Pairs, where the SSH key is defined. Other possible flags:
