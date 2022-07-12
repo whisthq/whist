@@ -2,6 +2,8 @@
 
 import os, sys, subprocess
 
+from github import Github
+
 from helpers.common.pexpect_tools import wait_until_cmd_done
 from helpers.common.timestamps_and_exit_tools import printred
 from helpers.common.constants import GITHUB_SHA_LEN, running_in_ci
@@ -104,3 +106,57 @@ def get_remote_whist_github_sha(pexpect_process, pexpect_prompt):
         printred("Could not get the Github SHA of the commit checked out on the remote instance")
         return ""
     return stdout[1]
+
+
+def get_workflow_handle():
+    git_token = os.getenv("GITHUB_TOKEN") or ""
+    if len(git_token) != 40:
+        print("Either the GITHUB_TOKEN env is not set, or a token of the wrong length was passed.")
+        return None
+    workflow_name = os.getenv("GITHUB_WORKFLOW") or ""
+    if len(workflow_name) == 0:
+        print("Could not get the workflow name!")
+        return None
+    git_client = Github(git_token)
+    if not git_client:
+        print("Could not obtain Github client!")
+        return None
+    repo = git_client.get_repo("whisthq/whist")
+    if not repo:
+        print("Could not access the whisthq/whist repository!")
+        return None
+    
+    workflows = [w for w in repo.get_workflows() if w.name == workflow_name]
+    if len(workflows) != 1:
+        print(f"Could not access the `{workflow_name}` workflow!")
+        return None
+
+    return workflows[0]
+
+def get_workflows_to_prioritize(workflow, github_run_id):
+    # possible github statuses are: "queued", "in_progress", "completed"
+    running_states = ["queued", "in_progress"]
+    running_workflows = [
+            run for status in running_states for run in workflow.get_runs(status=status)
+        ]
+    this_workflow_creation_time = None
+    found = False
+    for w in running_workflows:
+        if w.id == github_run_id:
+            this_workflow_creation_time = w.created_at
+            found = True
+            running_workflows = [
+                w_good
+                for w_good in running_workflows
+                if w_good.id != github_run_id
+                and (
+                    (w_good.created_at < this_workflow_creation_time)
+                    or (
+                        w_good.created_at <= this_workflow_creation_time
+                        and w_good.id < github_run_id
+                    )
+                )
+            ]
+            break
+    assert found == True
+    return running_workflows
