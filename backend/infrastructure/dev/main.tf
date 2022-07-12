@@ -55,7 +55,7 @@ module "user-configs-us-east-1" {
   source = "../modules/aws_user_configs"
   env    = var.env
   # N. Virginia
-  replication_regions = []
+  replication_regions  = []
   replication_role_arn = ""
 }
 
@@ -66,7 +66,7 @@ module "user-configs-us-west-1" {
     # N. California
     aws = aws.usw1
   }
-  replication_regions = []
+  replication_regions  = []
   replication_role_arn = ""
 }
 
@@ -77,7 +77,7 @@ module "user-configs-eu-central-1" {
     # Frankfurt
     aws = aws.euc1
   }
-  replication_regions = []
+  replication_regions  = []
   replication_role_arn = ""
 }
 
@@ -88,7 +88,7 @@ module "user-configs-ap-southeast-2" {
     # Syndey
     aws = aws.apse2
   }
-  replication_regions = []
+  replication_regions  = []
   replication_role_arn = ""
 }
 
@@ -99,7 +99,7 @@ module "user-configs-ap-south-1" {
     # Mumbai
     aws = aws.aps1
   }
-  replication_regions = []
+  replication_regions  = []
   replication_role_arn = ""
 }
 
