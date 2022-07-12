@@ -19,7 +19,8 @@ const initSocketioConnection = () => {
 }
 
 const initCreateTabListener = (socket: Socket) => {
-  socket.on("create-tab", async (tab: chrome.tabs.Tab) => {
+  socket.on("create-tab", async (_tabs: chrome.tabs.Tab[]) => {
+    const tab = _tabs[0]
     const _tab = await createTab({
       url: tab.url,
       active: tab.active,
@@ -33,7 +34,8 @@ const initCreateTabListener = (socket: Socket) => {
 }
 
 const initActivateTabListener = (socket: Socket) => {
-  socket.on("activate-tab", (tab: chrome.tabs.Tab) => {
+  socket.on("activate-tab", (_tabs: chrome.tabs.Tab[]) => {
+    const tab = _tabs[0]
     const _tab = find(tabs, (t) => t.clientTabId === tab.id)
     if (_tab?.tab?.id === undefined) {
       socket.emit("activate-tab-error")
@@ -44,7 +46,8 @@ const initActivateTabListener = (socket: Socket) => {
 }
 
 const initCloseTabListener = (socket: Socket) => {
-  socket.on("close-tab", (tab: chrome.tabs.Tab) => {
+  socket.on("close-tab", (_tabs: chrome.tabs.Tab[]) => {
+    const tab = _tabs[0]
     const _tab = find(tabs, (t) => t.clientTabId === tab.id)
     if (_tab?.tab?.id === undefined) {
       console.warn(`Could not remove tab ${tab.id}`)
