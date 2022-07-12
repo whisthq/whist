@@ -134,7 +134,8 @@ def get_workflow_handle():
     return workflows[0]
 
 
-def get_workflows_to_prioritize(workflow, github_run_id):
+def get_workflows_to_prioritize(workflow, raw_github_run_id):
+    github_run_id = int(raw_github_run_id)
     # possible github statuses are: "queued", "in_progress", "completed"
     running_states = ["queued", "in_progress"]
     running_workflows = [
