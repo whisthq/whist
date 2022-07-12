@@ -48,13 +48,9 @@ extern "C" {
 
 #if OS_IS(OS_WIN32)
 #define _WINSOCKAPI_
-#include <Audioclient.h>
-#include <avrt.h>
-#include <initguid.h>
-#include <mmdeviceapi.h>
+#include <windows.h>
 #include <process.h>
 #include <synchapi.h>
-#include <windows.h>
 #include <winuser.h>
 #include <direct.h>
 #include <io.h>
