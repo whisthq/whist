@@ -32,11 +32,13 @@ jobs:
   protocol-streaming-e2e-check-pr:
     name: "Protocol Streaming End-to-End Test"
     runs-on: ubuntu-20.04
+    # Cancel the workflow if we have waited for 3h or more. This duration will give enough time for the worker to wait for up to 4-5 additional competiting workflows to complete, then run the whole E2E job.
+    timeout-minutes: 180
     env:
       # Passing an empty region name will let the E2E pick any region available
-      REGION_NAME: ""
-      REUSABLE_CLIENT_INSTANCE_ID: ""
-      REUSABLE_SERVER_INSTANCE_ID: ""
+      REGION_NAME: "us-east-1"
+      REUSABLE_SERVER_INSTANCE_ID: "i-061a353731c542eeb"
+      REUSABLE_CLIENT_INSTANCE_ID: "i-00ddb3dce5e4bd581"
 
     steps:
       - name: Checkout Git Repository
@@ -77,6 +79,13 @@ jobs:
 
       - name: Install End-to-End Streaming Test Dependencies
         run: pip install boto3 paramiko numpy pytablewriter
+
+      - name: Wait for pre-existing E2E workflows to complete
+        working-directory: protocol/tes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 ../../.github/workflows/helpers/wait_in_queue.py
+
 
       # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under
       # Key Pairs, where the SSH key is defined. Other possible flags:
