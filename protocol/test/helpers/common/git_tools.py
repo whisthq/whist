@@ -109,6 +109,18 @@ def get_remote_whist_github_sha(pexpect_process, pexpect_prompt):
 
 
 def get_workflow_handle():
+    """
+    Get the github workflow object corresponding to the workflow running this script
+
+    Args:
+        None
+
+    Returns:
+        On success:
+            workflow_handle (github.Workflow.Workflow): The handle to the Github workflow running this script
+        On failure:
+            None
+    """
     git_token = os.getenv("GITHUB_TOKEN") or ""
     if len(git_token) != 40:
         print("Either the GITHUB_TOKEN env is not set, or a token of the wrong length was passed.")
@@ -134,31 +146,43 @@ def get_workflow_handle():
     return workflows[0]
 
 
-def get_workflows_to_prioritize(workflow, raw_github_run_id):
+def count_runs_to_prioritize(workflow, raw_github_run_id):
+    """
+    Get the number of runs that will need to complete before the current script can access the AWS shared instances.
+    This function assumes that the arguments are not set to None and are valid. In case invalid values are passed,
+    the function will run into undefined behavior.
+
+    Args:
+        workflow (github.Workflow.Workflow): The handle to the workflow running this script
+        raw_github_run_id (str): The current github run ID.
+
+    Returns:
+        number_of_runs (int): The number of runs that we have to give priority to
+    """
     github_run_id = int(raw_github_run_id)
     # possible github statuses are: "queued", "in_progress", "completed"
     running_states = ["queued", "in_progress"]
-    running_workflows = [
+    prioritized_runs = [
         run for status in running_states for run in workflow.get_runs(status=status)
     ]
     this_workflow_creation_time = None
     found = False
-    for w in running_workflows:
+    for w in prioritized_runs:
         if w.id == github_run_id:
             this_workflow_creation_time = w.created_at
             found = True
-            running_workflows = [
-                w_good
-                for w_good in running_workflows
-                if w_good.id != github_run_id
+            prioritized_runs = [
+                r_priority
+                for r_priority in prioritized_runs
+                if r_priority.id != github_run_id
                 and (
-                    (w_good.created_at < this_workflow_creation_time)
+                    (r_priority.created_at < this_workflow_creation_time)
                     or (
-                        w_good.created_at <= this_workflow_creation_time
-                        and w_good.id < github_run_id
+                        r_priority.created_at <= this_workflow_creation_time
+                        and r_priority.id < github_run_id
                     )
                 )
             ]
             break
     assert found == True
-    return running_workflows
+    return len(prioritized_runs)

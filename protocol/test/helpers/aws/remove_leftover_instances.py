@@ -8,7 +8,7 @@ from helpers.common.timestamps_and_exit_tools import printgreen
 from helpers.common.git_tools import (
     get_whist_branch_name,
     get_workflow_handle,
-    get_workflows_to_prioritize,
+    count_runs_to_prioritize,
 )
 
 # Before exiting, the streaming_e2e_tester.py script stops/terminates all EC2 instances
@@ -39,11 +39,13 @@ def stop_ci_reusable_instances():
         )
         return
 
+    # Check if there are other runs with priority access to the shared instances. If that is the case,
+    # we are not authorized to stop the reusable instances. The run with 1° priority will take care of
+    # stopping them once done
     workflow = get_workflow_handle()
     if not github_run_id or not workflow:
         sys.exit(-1)
-    workflows_to_prioritize = get_workflows_to_prioritize(workflow, github_run_id)
-    if len(workflows_to_prioritize) > 0:
+    if count_runs_to_prioritize(workflow, github_run_id) > 0:
         printgreen(
             "We do not stop the reusable instances because other workflows are using them before us."
         )
