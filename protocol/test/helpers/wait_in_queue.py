@@ -15,7 +15,7 @@ from helpers.common.timestamps_and_exit_tools import exit_with_error
 if __name__ == "__main__":
     if not running_in_ci:
         exit_with_error("Error: Cannot run this script outside of CI!")
-    
+
     workflow = get_workflow_handle()
     if not github_run_id or not workflow:
         sys.exit(-1)

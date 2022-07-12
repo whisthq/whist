@@ -125,7 +125,7 @@ def get_workflow_handle():
     if not repo:
         print("Could not access the whisthq/whist repository!")
         return None
-    
+
     workflows = [w for w in repo.get_workflows() if w.name == workflow_name]
     if len(workflows) != 1:
         print(f"Could not access the `{workflow_name}` workflow!")
@@ -133,12 +133,13 @@ def get_workflow_handle():
 
     return workflows[0]
 
+
 def get_workflows_to_prioritize(workflow, github_run_id):
     # possible github statuses are: "queued", "in_progress", "completed"
     running_states = ["queued", "in_progress"]
     running_workflows = [
-            run for status in running_states for run in workflow.get_runs(status=status)
-        ]
+        run for status in running_states for run in workflow.get_runs(status=status)
+    ]
     this_workflow_creation_time = None
     found = False
     for w in running_workflows:

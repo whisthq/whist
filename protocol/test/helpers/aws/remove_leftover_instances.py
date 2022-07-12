@@ -3,12 +3,12 @@
 import os, sys, boto3
 
 from helpers.aws.boto3_tools import terminate_or_stop_aws_instance
-from helpers.common.constants import (
-    instances_name_tag, running_in_ci, github_run_id
-)
+from helpers.common.constants import instances_name_tag, running_in_ci, github_run_id
 from helpers.common.timestamps_and_exit_tools import printgreen
 from helpers.common.git_tools import (
-    get_whist_branch_name, get_workflow_handle, get_workflows_to_prioritize
+    get_whist_branch_name,
+    get_workflow_handle,
+    get_workflows_to_prioritize,
 )
 
 # Before exiting, the streaming_e2e_tester.py script stops/terminates all EC2 instances
@@ -44,7 +44,9 @@ def stop_ci_reusable_instances():
         sys.exit(-1)
     workflows_to_prioritize = get_workflows_to_prioritize(workflow, github_run_id)
     if len(workflows_to_prioritize) > 0:
-        printgreen("We do not stop the reusable instances because other workflows are using them before us.")
+        printgreen(
+            "We do not stop the reusable instances because other workflows are using them before us."
+        )
         return
 
     boto3client = boto3.client("ec2", region_name=region_name)
