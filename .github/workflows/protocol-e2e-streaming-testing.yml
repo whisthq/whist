@@ -81,11 +81,10 @@ jobs:
         run: pip install boto3 paramiko numpy pytablewriter
 
       - name: Wait for pre-existing E2E workflows to complete
-        working-directory: protocol/tes
+        working-directory: protocol/test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 ../../.github/workflows/helpers/wait_in_queue.py
-
 
       # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under
       # Key Pairs, where the SSH key is defined. Other possible flags:
