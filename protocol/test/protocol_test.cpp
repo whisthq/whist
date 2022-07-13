@@ -1800,9 +1800,7 @@ TEST_F(ProtocolTest, FECTest2) {
     rs_wrapper_set_max_group_overhead(saved_max_group_overhead);
 }
 
-TEST_F(ProtocolTest, WirehairTest) {
-    EXPECT_EQ(wirehair_unittest(),0);
-}
+TEST_F(ProtocolTest, WirehairTest) { EXPECT_EQ(wirehair_unittest(), 0); }
 
 typedef struct {
     LINKED_LIST_HEADER;
