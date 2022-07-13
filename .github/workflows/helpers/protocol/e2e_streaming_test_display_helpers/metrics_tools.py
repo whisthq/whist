@@ -278,9 +278,9 @@ def generate_plots(
     for k in plot_data.keys():
         for trimmed_plot in (True, False):
             plt.figure()
-            plt.plot(zip(plot_data[k]), label=branch_name)
+            plt.plot(*zip(*plot_data[k]), label=branch_name)
             if k in compared_plot_data:
-                plt.plot(zip(compared_plot_data[k]), label=compared_branch_name)
+                plt.plot(*zip(*compared_plot_data[k]), label=compared_branch_name)
             plt.title(k)
             plt.xlabel("Time (s)")
             plt.ylabel("Value")
