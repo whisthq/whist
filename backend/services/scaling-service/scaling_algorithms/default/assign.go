@@ -187,13 +187,17 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// Parse the version with the `hashicorp/go-version` package so we can compare.
 	parsedFrontendVersion, err = hashicorp.NewVersion(frontendVersion)
 	if err != nil {
-		logger.Warningf("Failed parsing frontend version from scaling algorithm config: %s", err)
+		logger.Errorf("ailed parsing frontend version from scaling algorithm config: %s", err)
 	}
 
 	// Parse the version we got in the request.
-	parsedRequestVersion, err = hashicorp.NewVersion(mandelboxRequest.Version)
-	if err != nil {
-		logger.Warningf("Failed parsing frontend version from request: %s", err)
+	if mandelboxRequest.Version == "" {
+		logger.Warningf("Request version is empty, this is caused by frontend testing and development.")
+	} else {
+		parsedRequestVersion, err = hashicorp.NewVersion(mandelboxRequest.Version)
+		if err != nil {
+			logger.Errorf("failed parsing frontend version from request: %s", err)
+		}
 	}
 
 	// Compare the request version with the one from the config. If the
