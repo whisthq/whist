@@ -89,7 +89,7 @@ func GetPublicIpv4() (net.IP, error) {
 	}
 	ip := net.ParseIP(str).To4()
 	if ip == nil {
-		return ip, utils.MakeError("Unable to parse response from IMDS endpoint as an IPv4 address: %v", str)
+		return ip, utils.MakeError("unable to parse response from IMDS endpoint as an IPv4 address: %v", str)
 	}
 	return ip, nil
 }
@@ -104,19 +104,19 @@ type InstanceName string
 var getInstanceName = utils.MemoizeStringWithError(func() (string, error) {
 	region, err := GetPlacementRegion()
 	if err != nil {
-		return "", utils.MakeError("Unable to find region to create AWS SDK config!")
+		return "", utils.MakeError("unable to find region to create AWS SDK config!")
 	}
 
 	// Initialize general AWS config and EC2 client
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(string(region)))
 	if err != nil {
-		return "", utils.MakeError("Unable to load AWS SDK config: %s", err)
+		return "", utils.MakeError("unable to load AWS SDK config: %s", err)
 	}
 	ec2Client := ec2.NewFromConfig(cfg)
 
 	instanceID, err := GetInstanceID()
 	if err != nil {
-		return "", utils.MakeError("Unable to compute instance name because unable to get AWS instance ID: %s", err)
+		return "", utils.MakeError("unable to compute instance name because unable to get AWS instance ID: %s", err)
 	}
 
 	var resourceTypeStr string = "resource-type"
@@ -136,7 +136,7 @@ var getInstanceName = utils.MemoizeStringWithError(func() (string, error) {
 	})
 
 	if err != nil {
-		return "", utils.MakeError("Error describing tags: %s", err)
+		return "", utils.MakeError("error describing tags: %s", err)
 	}
 
 	for _, t := range out.Tags {
@@ -151,7 +151,7 @@ var getInstanceName = utils.MemoizeStringWithError(func() (string, error) {
 		printableTags[*(t.Key)] = *(t.Value)
 	}
 
-	return "", utils.MakeError(`Did not find a "Name" tag for this instance! Found these tags instead: %v`, printableTags)
+	return "", utils.MakeError(`did not find a "Name" tag for this instance! Found these tags instead: %v`, printableTags)
 })
 
 // GetInstanceName returns the "Name" tag of the current EC2 instance.
@@ -232,16 +232,16 @@ func generateAWSMetadataRetriever(path string) func() (string, error) {
 	return func() (string, error) {
 		resp, err := httpClient.Get(url)
 		if err != nil {
-			return "", utils.MakeError("Error retrieving data from URL %s: %v. Is the service running on an AWS EC2 instance?", url, err)
+			return "", utils.MakeError("error retrieving data from URL %s: %v. Is the service running on an AWS EC2 instance?", url, err)
 		}
 		defer resp.Body.Close()
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return string(body), utils.MakeError("Error reading response body from URL %s: %v", url, err)
+			return string(body), utils.MakeError("error reading response body from URL %s: %v", url, err)
 		}
 		if resp.StatusCode != 200 {
-			return string(body), utils.MakeError("Got non-200 response from URL %s: %s", url, resp.Status)
+			return string(body), utils.MakeError("got non-200 response from URL %s: %s", url, resp.Status)
 		}
 		return string(body), nil
 	}

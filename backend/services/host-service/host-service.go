@@ -44,6 +44,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/whisthq/whist/backend/services/httputils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"go.uber.org/zap"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
@@ -135,7 +136,10 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 		// images. Its not safe to assign users to it, so we cancel the global context and shut down the instance
 		if zygote == nil || err != nil {
 			globalCancel()
-			logger.Errorf("Failed to start waiting mandelbox: %s", err)
+			logger.Errorw(utils.Sprintf("Failed to start waiting mandelbox: %s", err), []interface{}{
+				zap.String("mandelbox_id", zygote.GetID().String()),
+				zap.Time("updated_at", zygote.GetLastUpdatedTime()),
+			})
 			return
 		}
 
@@ -680,11 +684,26 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					req, appName := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
 
 					// For local development, we start and finish the mandelbox spin up back to back
-					StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName, mandelboxDieEvents)
+					zygote, err := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName, mandelboxDieEvents)
+					if err != nil {
+						logger.Errorw(utils.Sprintf("Failed to start waiting mandelbox: %s", err), []interface{}{
+							zap.String("mandelbox_id", zygote.GetID().String()),
+							zap.Time("updated_at", zygote.GetLastUpdatedTime()),
+						})
+					}
+
 					go func() {
 						err := FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxSubscription, transportRequestMap, transportMapLock, req)
 						if err != nil {
-							logger.Errorf("Failed to finish mandelbox startup: %s", err)
+							logger.Errorw(utils.Sprintf("Failed to finish mandelbox startup: %s", err), []interface{}{
+								zap.String("instance_id", mandelboxSubscription.InstanceID),
+								zap.String("mandelbox_id", mandelboxSubscription.ID.String()),
+								zap.String("mandelbox_app", mandelboxSubscription.App),
+								zap.String("session_id", mandelboxSubscription.SessionID),
+								zap.String("user_id", string(mandelboxSubscription.UserID)),
+								zap.Time("created_at", mandelboxSubscription.CreatedAt),
+								zap.Time("updated_at", mandelboxSubscription.UpdatedAt),
+							})
 						}
 					}()
 				}
@@ -698,7 +717,6 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 		case subscriptionEvent := <-subscriptionEvents:
 			switch subscriptionEvent := subscriptionEvent.(type) {
-			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxEvent:
 				mandelboxSubscription := subscriptionEvent.Mandelboxes[0]
 				req, _ := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
@@ -706,7 +724,15 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					err := FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient,
 						mandelboxSubscription, transportRequestMap, transportMapLock, req)
 					if err != nil {
-						logger.Errorf("Failed to finish mandelbox startup: %s", err)
+						logger.Errorw(utils.Sprintf("Failed to finish mandelbox startup: %s", err), []interface{}{
+							zap.String("instance_id", mandelboxSubscription.InstanceID),
+							zap.String("mandelbox_id", mandelboxSubscription.ID.String()),
+							zap.String("mandelbox_app", mandelboxSubscription.App),
+							zap.String("session_id", mandelboxSubscription.SessionID),
+							zap.String("user_id", string(mandelboxSubscription.UserID)),
+							zap.Time("created_at", mandelboxSubscription.CreatedAt),
+							zap.Time("updated_at", mandelboxSubscription.UpdatedAt),
+						})
 					}
 				}()
 
