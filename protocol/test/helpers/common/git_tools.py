@@ -167,20 +167,20 @@ def count_runs_to_prioritize(workflow, raw_github_run_id):
     prioritized_runs = [
         run for status in running_states for run in workflow.get_runs(status=status)
     ]
-    this_workflow_creation_time = None
+    this_run_start_time = None
     found = False
     for w in prioritized_runs:
         if w.id == github_run_id:
-            this_workflow_creation_time = w.created_at
+            this_run_start_time = w.run_started_at
             found = True
             prioritized_runs = [
                 r_priority
                 for r_priority in prioritized_runs
                 if r_priority.id != github_run_id
                 and (
-                    (r_priority.created_at < this_workflow_creation_time)
+                    (r_priority.run_started_at < this_run_start_time)
                     or (
-                        r_priority.created_at <= this_workflow_creation_time
+                        r_priority.run_started_at <= this_run_start_time
                         and r_priority.id < github_run_id
                     )
                 )
