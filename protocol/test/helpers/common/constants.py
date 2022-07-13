@@ -27,6 +27,8 @@ instances_name_tag = (
 )
 github_run_id = os.getenv("GITHUB_RUN_ID") or "personal machine"
 
+GITHUB_RUN_ID_LEN = 10
+
 # The expected length of the Github SHA string
 GITHUB_SHA_LEN = 40
 

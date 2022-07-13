@@ -6,7 +6,7 @@ from github import Github
 
 from helpers.common.pexpect_tools import wait_until_cmd_done
 from helpers.common.timestamps_and_exit_tools import printred
-from helpers.common.constants import GITHUB_SHA_LEN, running_in_ci
+from helpers.common.constants import GITHUB_SHA_LEN, running_in_ci, GITHUB_RUN_ID_LEN
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -149,8 +149,7 @@ def get_workflow_handle():
 def count_runs_to_prioritize(workflow, raw_github_run_id):
     """
     Get the number of runs that will need to complete before the current script can access the AWS shared instances.
-    This function assumes that the arguments are not set to None and are valid. In case invalid values are passed,
-    the function will run into undefined behavior.
+    This function assumes that the arguments are not set to None and are valid.
 
     Args:
         workflow (github.Workflow.Workflow): The handle to the workflow running this script
@@ -159,6 +158,13 @@ def count_runs_to_prioritize(workflow, raw_github_run_id):
     Returns:
         number_of_runs (int): The number of runs that we have to give priority to
     """
+    # Sanity check the parameters. raw_github_run_id should be passed as a string, not integer
+    if (
+        not worfklow
+        or type(raw_github_run_id) != str
+        or len(str(raw_github_run_id)) != GITHUB_RUN_ID_LEN
+    ):
+        return -1
     github_run_id = int(raw_github_run_id)
     # possible github statuses are: "queued", "in_progress", "completed"
     running_states = ["queued", "in_progress"]
