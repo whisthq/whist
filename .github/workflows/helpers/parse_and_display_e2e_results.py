@@ -308,7 +308,7 @@ if __name__ == "__main__":
                 )
             if experiment["client_metrics"] is None or experiment["server_metrics"] is None:
                 continue
-            plots_name_prefix = f"plot_experiment{j+1}"
+            plots_name_prefix = f"plot:experiment{j+1}:{compared_branch_name}"
             # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
             if compared_branch_name != "":
                 testing_url = testing_time = simulate_scrolling = using_two_instances = None

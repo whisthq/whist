@@ -271,7 +271,7 @@ def generate_plots(
         and os.path.isfile(compared_plot_data_filename)
         and len(compared_branch_name) > 0
     ):
-        compared_plot_data_file = open(plot_data_filename, "r")
+        compared_plot_data_file = open(compared_plot_data_filename, "r")
         compared_plot_data = json.loads(compared_plot_data_file.read())
         compared_plot_data_file.close()
 
@@ -280,7 +280,12 @@ def generate_plots(
             plt.figure()
             plt.plot(*zip(*plot_data[k]), label=branch_name)
             if k in compared_plot_data:
-                plt.plot(*zip(*compared_plot_data[k]), label=compared_branch_name)
+                plt.plot(
+                    *zip(*compared_plot_data[k]),
+                    label=compared_branch_name
+                    if compared_branch_name != branch_name
+                    else f"{branch_name} (previous results)",
+                )
             plt.title(k)
             plt.xlabel("Time (s)")
             plt.ylabel("Value")
@@ -294,6 +299,7 @@ def generate_plots(
                 f"{name_prefix}:{k}.png" if not trimmed_plot else f"{name_prefix}:{k}_trimmed.png",
             )
             plt.savefig(output_filename, dpi=300, bbox_inches="tight")
+            plt.close()
 
 
 def add_plot_links(
