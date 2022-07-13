@@ -36,7 +36,7 @@ static double get_cputime_ms(void) {
     return ret;
 #else
     // for other operation system fallback to noraml time
-    return get_timestamp_sec() * MS_IN_SEC;
+    return get_timestamp_sec() * MS_IN_SECOND;
 #endif
 }
 
