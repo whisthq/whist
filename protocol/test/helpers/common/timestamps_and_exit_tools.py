@@ -149,4 +149,4 @@ def exit_with_error(error_message, timestamps=None):
     print("If running locally, don't forget to remove leftover instances with the command below:")
     printblue("python3 -m helpers.aws.remove_leftover_instances")
 
-    sys.exit(-1)
+    sys.exit(1)
