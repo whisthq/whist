@@ -15,23 +15,28 @@ clipboard packets.
 Includes
 ============================
 */
+
+#include <atomic>
 #include <whist/core/whist.h>
+#include "network.h"
+#include "video.h"
+
+extern "C" {
 #include <whist/utils/clock.h>
 #include <whist/network/network.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/logging.h>
 
 #include "handle_server_message.h"
-#include "network.h"
 #include "audio.h"
-#include "video.h"
 #include "sync_packets.h"
 #include "client_utils.h"
+}
 
 // Updater variables
 extern SocketContext packet_udp_context;
 extern SocketContext packet_tcp_context;
-extern volatile bool
+extern std::atomic<bool>
     connected;  // The state of the client, i.e. whether it's connected to a server or not
 
 // Threads
@@ -172,7 +177,7 @@ static void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char*
     }
 
     // Alloc wcmsg
-    WhistClientMessage* wcmsg_tcp = allocate_region(sizeof(WhistClientMessage) + data_size);
+    WhistClientMessage* wcmsg_tcp = (WhistClientMessage*) allocate_region(sizeof(WhistClientMessage) + data_size);
 
     switch (message_type) {
         case CMESSAGE_CLIPBOARD: {
@@ -216,7 +221,8 @@ static void send_complete_file_drop_message(FileTransferType transfer_type) {
     LOG_INFO("send_complete_file_drop_message");
 
     // Alloc wcmsg
-    WhistClientMessage wcmsg = {0};
+    WhistClientMessage wcmsg;
+    memset(&wcmsg, 0, sizeof(wcmsg));
 
     // Build wcmsg
     wcmsg.type = CMESSAGE_FILE_GROUP_END;
@@ -256,7 +262,7 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
 
         successful_read_or_pull = false;
 
-        TIME_RUN(WhistPacket* packet = get_packet(tcp_context, PACKET_MESSAGE),
+        TIME_RUN(WhistPacket* packet = (WhistPacket*) get_packet(tcp_context, PACKET_MESSAGE),
                  NETWORK_READ_PACKET_TCP, statistics_timer);
 
         if (packet) {

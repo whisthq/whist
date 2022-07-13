@@ -24,6 +24,7 @@ Includes
 
 #include <atomic>
 #include "video.h"
+#include "network.h"
 
 extern "C" {
 
@@ -42,7 +43,6 @@ extern "C" {
 #include "whist/core/features.h"
 #include "whist/core/whist.h"
 #include "whist/utils/command_line.h"
-#include "network.h"
 #include "client_utils.h"
 #include <whist/debug/protocol_analyzer.h>
 };

@@ -21,20 +21,22 @@ Includes
 */
 
 #include "network.h"
-
 #include <whist/core/whist.h>
+#include <atomic>
+
+extern "C" {
 #include <whist/logging/error_monitor.h>
 #include "whist/core/features.h"
-#include "network.h"
 #include "client_utils.h"
 #include "audio.h"
+}
 
 // Data
 extern volatile char client_binary_aes_private_key[16];
 SocketContext packet_udp_context = {0};
 SocketContext packet_tcp_context = {0};
 
-volatile bool connected = false;
+std::atomic<bool> connected = false;
 
 #define UDP_CONNECTION_WAIT 500  // ms
 #define TCP_CONNECTION_WAIT 500  // ms
@@ -75,7 +77,8 @@ int connect_to_server(const char *server_ip, bool with_stun) {
     LOG_INFO("create_tcp_socket_context() done");
 
     // Construct init packet
-    WhistClientMessage wcmsg = {0};
+    WhistClientMessage wcmsg;
+    memset(&wcmsg, 0, sizeof(wcmsg));
     wcmsg.type = CMESSAGE_INIT;
 
     // Let the server know what OS we are
@@ -103,7 +106,7 @@ int connect_to_server(const char *server_ip, bool with_stun) {
     start_timer(&timer);
     while (tcp_packet == NULL && get_timer(&timer) < TCP_CONNECTION_WAIT) {
         socket_update(&packet_tcp_context);
-        tcp_packet = get_packet(&packet_tcp_context, PACKET_MESSAGE);
+        tcp_packet = (WhistPacket*) get_packet(&packet_tcp_context, PACKET_MESSAGE);
         whist_sleep(5);
     }
 
@@ -171,7 +174,8 @@ int send_server_quit_messages(int num_messages) {
             (int): 0 on success, -1 on failure
     */
 
-    WhistClientMessage wcmsg = {0};
+    WhistClientMessage wcmsg;
+    memset(&wcmsg, 0, sizeof(wcmsg));
     wcmsg.type = CMESSAGE_QUIT;
     int retval = 0;
     for (; num_messages > 0; num_messages--) {
