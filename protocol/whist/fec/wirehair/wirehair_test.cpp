@@ -11,20 +11,13 @@ extern "C" {
 
 #include <string.h>
 #include <assert.h>
-//#include <unistd.h>
 using namespace std;
-
-const int g_use_sleep = 0;
-const int g_use_shuffle = 1;
-const int g_segment_size = 4;
 
 extern "C" {
 #include "wirehair_test.h"
 };
 
-const int base_perf_log = 0;
-const int run_on_ci = 0;
-
+static const int g_use_shuffle = 1;
 static int base_log = 0;
 static int verbose_log = 0;
 
@@ -207,10 +200,6 @@ void overhead_test(void) {
     int round = 10000;
     int segment_size = 4;
 
-    if (run_on_ci) {
-        round = 10;
-    }
-
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
     for (int i = 2; i < 256; i++) {
         for (int ii = 0; ii < 3; ii++) {
@@ -245,7 +234,6 @@ void overhead_test(void) {
 void performance_test(void) {
     int round = 500;
     int segment_size = 1280;
-    if (run_on_ci) round = 10;
 
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
     for (int i = 2; i < 256; i++) {
