@@ -79,6 +79,13 @@ func Info(v ...interface{}) {
 	logger.Sugar().Info(v...)
 }
 
+// FastInfo constructs a log message using a faster logger. This should only be used
+// for performance-sensitive code where every allocation and microsecond matter, as
+// the logger only supports structured, strongly-typed fields.
+func FastInfo(msg string, fields ...zapcore.Field) {
+	logger.Info(msg, fields...)
+}
+
 // Error logs an error.
 func Error(err error) {
 	logger.Sugar().Error(err)
