@@ -39,6 +39,7 @@ else() # GCC and Clang base flags
       add_link_options("-fsanitize=${TYPE}")
     endforeach()
     if(CHECK_CI)
+      add_compile_options("-fno-sanitize=alignment")
       add_compile_options("-fno-sanitize-recover=all")
       add_link_options("-fno-sanitize-recover=all")
     endif()
