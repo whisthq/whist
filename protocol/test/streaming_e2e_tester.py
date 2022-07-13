@@ -300,11 +300,13 @@ if __name__ == "__main__":
     timestamps.add_event("Initialization")
 
     # 4 - Create a boto3 client, connect to the EC2 console, and create or start the instance(s).
-    ec2_region_names = (
-        [region["RegionName"] for region in boto3.client("ec2").describe_regions()["Regions"]]
-        if desired_region_name == ""
-        else [desired_region_name]
-    )
+    ec2_region_names = [
+        region["RegionName"] for region in boto3.client("ec2").describe_regions()["Regions"]
+    ]
+    # If the user passed a desired region, put it ahead of the list to try that first.
+    if desired_region_name != "":
+        ec2_region_names.remove(desired_region_name)
+        ec2_region_names = [desired_region_name] + ec2_region_names
 
     boto3client = None
     server_instance_id = ""
@@ -323,6 +325,15 @@ if __name__ == "__main__":
             boto3client, server_instance_id, client_instance_id = result
             region_name = region
             break
+        else:
+            if not running_in_ci:
+                try_other_regions = input(
+                    f"Do you want to try on a different region (type `y` only if your key {ssh_key_name} is enabled on all EC2 regions) [y,n]? "
+                )
+                if try_other_regions == "y":
+                    continue
+                else:
+                    break
 
     if not boto3client or server_instance_id == "" or client_instance_id == "" or region_name == "":
         exit_with_error(

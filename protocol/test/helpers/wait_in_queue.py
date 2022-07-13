@@ -26,8 +26,8 @@ if __name__ == "__main__":
 
     while True:
         queue_length = count_runs_to_prioritize(workflow, github_run_id)
-        if queue_length > 4:
-            # with 5 workflows ahead of us, we'd need to wait ~2.5h if there is no error. So it is better to use new instances
+        if queue_length > 3:
+            # with 4 workflows ahead of us, we'd need to wait ~2h if there is no error. So it is better to use new instances
             print(
                 "There are too many prioritized runs ahead of us, so we use new instances and run in parallel instead!"
             )

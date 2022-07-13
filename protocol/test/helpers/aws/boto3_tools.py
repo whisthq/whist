@@ -356,12 +356,13 @@ def create_or_start_aws_instance(boto3client, region_name, existing_instance_id,
     """
     # Attempt to start existing instance
     if existing_instance_id != "":
-        instance_id = existing_instance_id
-        result = start_instance(boto3client, instance_id, max_retries=5)
+        result = start_instance(boto3client, existing_instance_id, max_retries=5)
         if result is True:
             # Wait for the instance to be running
-            wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
-            return instance_id
+            wait_for_instance_to_start_or_stop(boto3client, existing_instance_id, stopping=False)
+            return existing_instance_id
+        else:
+            return ""
 
     # Define the AWS machine variables
 
