@@ -27,7 +27,7 @@ def get_gist_user_info(github_gist_token):
     username = user.login
     name = user.name
     try:
-        email = list(filter(lambda d: d["primary"] == True, user.get_emails()))[0]["email"]
+        email = list(filter(lambda d: d.primary == True, user.get_emails()))[0].email
     except GithubException as e:
         print("Caught exception: ", e)
         email = "e2e_bot@whist.com"

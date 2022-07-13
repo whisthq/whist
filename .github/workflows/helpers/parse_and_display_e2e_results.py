@@ -208,7 +208,7 @@ if __name__ == "__main__":
 
     # Initialize the plots folder
     plots_folder = "plots"
-    os.makedirs(plots_folder)
+    os.makedirs(plots_folder, exist_ok=True)
 
     # Initialize the Gist post
     title = "Protocol End-to-End Streaming Test Results"
@@ -369,8 +369,8 @@ if __name__ == "__main__":
                 # Generate plots
                 for role in ("client", "server"):
                     plot_data_filename = os.path.join(log_dir, role, "plot_data.json")
-                    compared_plot_data_filename = (
-                        os.path.join(".", compared_branch_name, role, "plot_data.json"),
+                    compared_plot_data_filename = os.path.join(
+                        ".", compared_branch_name, role, "plot_data.json"
                     )
                     generate_plots(
                         plot_data_filename,
