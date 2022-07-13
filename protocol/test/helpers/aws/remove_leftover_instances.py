@@ -32,10 +32,10 @@ def stop_ci_reusable_instances():
     Returns:
         None
     """
-    region_name = os.getenv("REGION_NAME") or ""
+    region_name = os.getenv("REUSABLE_INSTANCES_REGION_NAME") or ""
     if region_name == "":
         print(
-            f"Cannot stop reusable instance(s) because REGION_NAME environment variable is not set!"
+            f"Cannot stop reusable instance(s) because REUSABLE_INSTANCES_REGION_NAME environment variable is not set!"
         )
         return
 

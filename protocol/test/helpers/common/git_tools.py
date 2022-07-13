@@ -160,7 +160,7 @@ def count_runs_to_prioritize(workflow, raw_github_run_id):
     """
     # Sanity check the parameters. raw_github_run_id should be passed as a string, not integer
     if (
-        not worfklow
+        not workflow
         or type(raw_github_run_id) != str
         or len(str(raw_github_run_id)) != GITHUB_RUN_ID_LEN
     ):
