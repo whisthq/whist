@@ -159,12 +159,8 @@ def count_runs_to_prioritize(workflow, raw_github_run_id):
         number_of_runs (int): The number of runs that we have to give priority to
     """
     # Sanity check the parameters. raw_github_run_id should be passed as a string, not integer
-    if (
-        not workflow
-        or type(raw_github_run_id) != str
-        or len(str(raw_github_run_id)) != GITHUB_RUN_ID_LEN
-    ):
-        return -1
+    if not workflow or len(raw_github_run_id) == 0:
+        exit_with_error("Either the workflow handle or the github run id is invalid")
     github_run_id = int(raw_github_run_id)
     # possible github statuses are: "queued", "in_progress", "completed"
     running_states = ["queued", "in_progress"]

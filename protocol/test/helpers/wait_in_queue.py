@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     workflow = get_workflow_handle()
     if not github_run_id or not workflow:
-        sys.exit(-1)
+        exit_with_error("Invalid github run id or workflow handle!")
 
     while True:
         queue_length = count_runs_to_prioritize(workflow, github_run_id)
