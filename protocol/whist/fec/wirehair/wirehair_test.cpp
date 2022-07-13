@@ -255,7 +255,7 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
             // pkt.push_back(buffers[i]);
             // index.push_back(i);
         }
-        assert(succ == 1);
+        FATAL_ASSERT(succ == 1);
         double t2 = get_timestamp_ms();
         decode_total += t2 - t1;
         if (base_perf_log) fprintf(stderr, "decode_time=%f\n", (t2 - t1));
@@ -264,8 +264,8 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
     string output;
     output = combine_copy(pkt, segment_size);
 
-    assert(input.size() == output.size());
-    assert(input == output);
+    FATAL_ASSERT(input.size() == output.size());
+    FATAL_ASSERT(input == output);
 
     free_buffers(buffers);
     free_buffers(pkt);
@@ -276,23 +276,22 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
 
 void overhead_test(void) {
     int round = 10000;
+    int segment_size = 4;
 
-    if (run_on_ci) {
-        round = 10;
-    }
+    if (run_on_ci) {round = 10;}
 
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
     for (int i = 2; i < 256; i++) {
         for (int ii = 0; ii < 3; ii++) {
             fprintf(stderr, "real=%d; ", i);
-            for (int j = 1; j < (int)num_fec_packets.size(); j++) {
+            for (int j = 0; j < (int)num_fec_packets.size(); j++) {
                 int o1_cnt = 0, o2_cnt = 0, o3_cnt = 0;
                 int o5_cnt = 0, o10_cnt = 0;
                 int o_sum = 0;
                 int y = num_fec_packets[j];
                 int max_overhead = 0;
                 for (int k = 0; k < round; k++) {
-                    auto [overhead, encode_time, decode_time] = one_test(4, i, y);
+                    auto [overhead, encode_time, decode_time] = one_test(segment_size, i, y);
                     o_sum += overhead;
                     if (overhead >= 1) o1_cnt++;
                     if (overhead >= 2) o2_cnt++;
@@ -303,7 +302,7 @@ void overhead_test(void) {
                         max_overhead = overhead;
                     }
                 }
-                fprintf(stderr, "<%d;%3d,%3d,%2d,%2d,%2d;%3d;%3d>  ", y, o1_cnt, o2_cnt, o3_cnt,
+                fprintf(stderr, "<%d;%3d,%3d,%2d,%2d,%2d;%3d;%3d>   ", y, o1_cnt, o2_cnt, o3_cnt,
                         o5_cnt, o10_cnt, max_overhead, o_sum);
             }
             fprintf(stderr, "\n");
@@ -313,13 +312,15 @@ void overhead_test(void) {
 }
 
 void performance_test(void) {
-    int round = 5000;
+    int round = 500;
+    int segment_size=1280;
     if (run_on_ci) round = 10;
+    
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
     for (int i = 2; i < 256; i++) {
         for (int ii = 0; ii < 3; ii++) {
             fprintf(stderr, "real=%d; ", i);
-            for (int j = 1; j < (int)num_fec_packets.size(); j++) {
+            for (int j = 0; j < (int)num_fec_packets.size(); j++) {
                 int y = num_fec_packets[j];
 
                 double encode_time_min = 9999;
@@ -331,7 +332,7 @@ void performance_test(void) {
                 double decode_time_sum = 0;
 
                 for (int k = 0; k < round; k++) {
-                    auto [overhead, encode_time, decode_time] = one_test(4, i, y);
+                    auto [overhead, encode_time, decode_time] = one_test(segment_size, i, y);
 
                     encode_time_min = min(encode_time_min, encode_time);
                     encode_time_max = max(encode_time_max, encode_time);
@@ -342,7 +343,7 @@ void performance_test(void) {
                     decode_time_sum += decode_time;
                 }
 
-                fprintf(stderr, "<%3d; %.0f;%.0f,%.0f; %.0f,%.0f,%.0f>   ", y,
+                fprintf(stderr, "<%d; %.0f;%.0f,%.0f; %.0f,%.0f,%.0f>   ", y,
                         encode_time_min * 1000, encode_time_max * 1000,
                         encode_time_sum / round * 1000, decode_time_min * 1000,
                         decode_time_max * 1000, decode_time_sum / round * 1000);
