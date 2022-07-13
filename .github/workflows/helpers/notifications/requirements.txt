@@ -1,2 +1,2 @@
 requests==2.28.1
-PyGithub==1.55
+https://github.com/gabrieleoliaro/PyGithub/archive/refs/tags/v2.0.zip
