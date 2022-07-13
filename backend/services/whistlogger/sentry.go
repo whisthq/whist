@@ -116,6 +116,14 @@ func (sc *sentryCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 		return nil
 	}
 
+	// Add fields to a derived Sentry scope. This will not
+	// modify the original scope.
+	sentry.WithScope(func(scope *sentry.Scope) {
+		for _, field := range fields {
+			scope.SetTag(field.Key, field.String)
+		}
+	})
+
 	// Assemble Sentry event
 	err := errors.New(ent.Message)
 	event := sentry.NewEvent()
