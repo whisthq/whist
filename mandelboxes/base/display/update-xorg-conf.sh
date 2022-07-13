@@ -26,7 +26,8 @@ GPU_INDEX=$(cat $WHIST_MAPPINGS_DIR/$GPU_INDEX_FILENAME)
 echo "Using GPU Index ${GPU_INDEX}"
 
 # Retrieve the Whist NVIDIA display config
-XCONFIG="/usr/share/X11/xorg.conf.d/01-whist-display.conf"
+# XCONFIG="/usr/share/X11/xorg.conf.d/01-whist-display.conf"
+XCONFIG="/usr/share/X11/xorg.conf.d/02-whist-dummy-display.conf"
 if [ ! -f ${XCONFIG} ]; then
   echo "Xconfig at location ${XCONFIG} not found (or is not a file)"
   exit 1
@@ -37,35 +38,35 @@ fi
 ####################
 
 # Retrieve the current NVIDIA BusID and the new NVIDIA BusID
-OLDBUSID=$(awk '/BusID/{gsub(/"/, "", $2); print $2}' ${XCONFIG})
+# OLDBUSID=$(awk '/BusID/{gsub(/"/, "", $2); print $2}' ${XCONFIG})
 # Note that we need to add 1 to GPU_INDEX since `tail` and `head` are 1-indexed.
-NEWBUSID=$(nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}' | tail +$((GPU_INDEX+1)) | head -n1)
+# NEWBUSID=$(nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}' | tail +$((GPU_INDEX+1)) | head -n1)
 
 # Update the current NVIDIA BusID to the new NVIDIA BusID
-if [[ "${OLDBUSID}" == "${NEWBUSID}" ]] ; then
-  echo "Nvidia BusID not changed - nothing to do"
-else
-  echo "Nvidia BusID changed from \"${OLDBUSID}\" to \"${NEWBUSID}\": Updating ${XCONFIG}"
-  sed -i -e 's|BusID.*|BusID          '\""${NEWBUSID}"\"'|' ${XCONFIG}
-fi
+# if [[ "${OLDBUSID}" == "${NEWBUSID}" ]] ; then
+  # echo "Nvidia BusID not changed - nothing to do"
+# else
+  # echo "Nvidia BusID changed from \"${OLDBUSID}\" to \"${NEWBUSID}\": Updating ${XCONFIG}"
+  # sed -i -e 's|BusID.*|BusID          '\""${NEWBUSID}"\"'|' ${XCONFIG}
+# fi
 
 ############################
 # Update uinput devices
 ############################
 
 # Loop through files /dev/input/eventN to determine which correspond to which device
-for filename in /dev/input/event*; do
-  name=$(udevadm info -a "$filename" | grep 'ATTRS{name}' | sed 's/^\s*ATTRS{name}=="\(.*\)"/\1/')
-  if [[ $name == 'Whist Virtual Absolute Input' ]]; then
-    echo "Found device file $filename=$name"
-    sed -i "s~ABSOLUTE_INPUT_DEVICE~$filename~g" ${XCONFIG}
-  fi
-  if [[ $name == 'Whist Virtual Relative Input' ]]; then
-    echo "Found device file $filename=$name"
-    sed -i "s~RELATIVE_INPUT_DEVICE~$filename~g" ${XCONFIG}
-  fi
-  if [[ $name == 'Whist Virtual Keyboard' ]]; then
-    echo "Found device file $filename=$name"
-    sed -i "s~KEYBOARD_DEVICE~$filename~g" ${XCONFIG}
-  fi
-done
+# for filename in /dev/input/event*; do
+#   name=$(udevadm info -a "$filename" | grep 'ATTRS{name}' | sed 's/^\s*ATTRS{name}=="\(.*\)"/\1/')
+#   if [[ $name == 'Whist Virtual Absolute Input' ]]; then
+#     echo "Found device file $filename=$name"
+#     sed -i "s~ABSOLUTE_INPUT_DEVICE~$filename~g" ${XCONFIG}
+#   fi
+#   if [[ $name == 'Whist Virtual Relative Input' ]]; then
+#     echo "Found device file $filename=$name"
+#     sed -i "s~RELATIVE_INPUT_DEVICE~$filename~g" ${XCONFIG}
+#   fi
+#   if [[ $name == 'Whist Virtual Keyboard' ]]; then
+#     echo "Found device file $filename=$name"
+#     sed -i "s~KEYBOARD_DEVICE~$filename~g" ${XCONFIG}
+#   fi
+# done
