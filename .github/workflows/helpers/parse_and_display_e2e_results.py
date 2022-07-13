@@ -244,24 +244,6 @@ if __name__ == "__main__":
                 )
         else:
             client_metrics, server_metrics = extract_metrics(client_log_file, server_log_file)
-            # Generate all the metrics' plots
-            plots_name_prefix = f"plot_experiment{i+1}"
-            for role in ("client", "server"):
-                plot_data_filename = os.path.join(log_dir, role, "plot_data.json")
-                generate_plots(
-                    plot_data_filename,
-                    destination_folder=plots_folder,
-                    name_prefix=f"{plots_name_prefix}:{role}",
-                    verbose=False,
-                )
-            client_metrics, server_metrics = add_plot_links(
-                client_metrics,
-                server_metrics,
-                plots_folder,
-                plots_name_prefix,
-                gist_username,
-                gist.id,
-            )
 
         experiment_entry = {
             "experiment_metadata": experiment_metadata,
@@ -270,7 +252,7 @@ if __name__ == "__main__":
             "network_conditions": "unknown",
             "human_readable_network_conditions": "unknown",
             "outcome": e2e_script_outcomes[i],
-            "dirname": short_dirname,
+            "dirname": log_dir,
         }
 
         if client_metrics is not None and server_metrics is not None:
@@ -299,15 +281,6 @@ if __name__ == "__main__":
         experiments.append(experiment_entry)
         print("\t+ Failed/skipped experiment with no logs")
 
-    # Keep track of plot files that were created
-    plot_files = [
-        p for p in os.listdir(plots_folder) if os.path.isfile(os.path.join(plots_folder, p))
-    ]
-    if verbose:
-        print("Created the following plots:")
-        for filename in plot_files:
-            print(filename)
-
     ################################################# 2. Generate result tables ###################################################
 
     for i, compared_branch_name in enumerate(compared_branch_names):
@@ -335,6 +308,7 @@ if __name__ == "__main__":
                 )
             if experiment["client_metrics"] is None or experiment["server_metrics"] is None:
                 continue
+            plots_name_prefix = f"plot_experiment{j+1}"
             # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
             if compared_branch_name != "":
                 testing_url = testing_time = simulate_scrolling = using_two_instances = None
@@ -392,6 +366,30 @@ if __name__ == "__main__":
                         compared_client_log_path, compared_server_log_path
                     )
 
+                # Generate plots
+                for role in ("client", "server"):
+                    plot_data_filename = os.path.join(log_dir, role, "plot_data.json")
+                    compared_plot_data_filename = (
+                        os.path.join(".", compared_branch_name, role, "plot_data.json"),
+                    )
+                    generate_plots(
+                        plot_data_filename,
+                        current_branch_name,
+                        plots_folder,
+                        f"{plots_name_prefix}:{role}",
+                        compared_plot_data_filename,
+                        compared_branch_name,
+                        verbose,
+                    )
+                client_metrics, server_metrics = add_plot_links(
+                    experiment["client_metrics"],
+                    experiment["server_metrics"],
+                    plots_folder,
+                    plots_name_prefix,
+                    gist_username,
+                    gist.id,
+                )
+
                 test_result = generate_comparison_table(
                     results_file,
                     experiment["experiment_metadata"],
@@ -399,8 +397,8 @@ if __name__ == "__main__":
                     current_branch_name,
                     compared_branch_name,
                     most_interesting_metrics,
-                    experiment["client_metrics"],
-                    experiment["server_metrics"],
+                    client_metrics,
+                    server_metrics,
                     compared_client_metrics,
                     compared_server_metrics,
                 )
@@ -408,12 +406,32 @@ if __name__ == "__main__":
                     e2e_script_outcomes[j] = test_result
 
             else:
+
+                # Generate plots
+                for role in ("client", "server"):
+                    plot_data_filename = os.path.join(log_dir, role, "plot_data.json")
+                    generate_plots(
+                        plot_data_filename,
+                        current_branch_name,
+                        plots_folder,
+                        f"{plots_name_prefix}:{role}",
+                        verbose=verbose,
+                    )
+                client_metrics, server_metrics = add_plot_links(
+                    experiment["client_metrics"],
+                    experiment["server_metrics"],
+                    plots_folder,
+                    plots_name_prefix,
+                    gist_username,
+                    gist.id,
+                )
+
                 generate_results_table(
                     results_file,
                     experiment["experiment_metadata"],
                     most_interesting_metrics,
-                    experiment["client_metrics"],
-                    experiment["server_metrics"],
+                    client_metrics,
+                    server_metrics,
                 )
 
         results_file.write("\n\n</details>\n\n")
@@ -430,7 +448,7 @@ if __name__ == "__main__":
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
             if experiment["dirname"] is not None:
                 summary_file.write(
-                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{os.path.basename(experiment['dirname'])}/ {os.path.basename(experiment['dirname'])}/ --recursive\n```\n"
                 )
             else:
                 summary_file.write(
@@ -438,6 +456,15 @@ if __name__ == "__main__":
                 )
 
         summary_file.write("\n\n</details>\n\n")
+
+    # Keep track of plot files that were created
+    plot_files = [
+        p for p in os.listdir(plots_folder) if os.path.isfile(os.path.join(plots_folder, p))
+    ]
+    if verbose:
+        print("Created the following plots:")
+        for filename in plot_files:
+            print(filename)
 
     ################################################# 3. Post results to Slack/GitHub ###################################################
 
