@@ -89,7 +89,7 @@ func (mandelbox *mandelboxData) createResourceMappingDir() error {
 func (mandelbox *mandelboxData) cleanResourceMappingDir() {
 	err := os.RemoveAll(mandelbox.getResourceMappingDir())
 	if err != nil {
-		logger.Errorf("Failed to remove dir %s: %s", mandelbox.getResourceMappingDir(), err)
+		logger.Errorf("failed to remove dir %s: %s", mandelbox.getResourceMappingDir(), err)
 	}
 }
 

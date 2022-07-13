@@ -463,7 +463,7 @@ func (mandelbox *mandelboxData) extractConfig(configKey string, decryptedConfig 
 
 	totalFileSize, err := configutils.ExtractTarLz4(decryptedConfig, unpackedConfigDir)
 	if err != nil {
-		logger.Errorf("Error extracting tar lz4 file for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
+		logger.Errorf("error extracting tar lz4 file for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
 	}
 
 	logger.Infof("Untarred config to: %s, total size was %d bytes", unpackedConfigDir, totalFileSize)
@@ -492,7 +492,7 @@ func (mandelbox *mandelboxData) setupUserConfigDirs() error {
 func (mandelbox *mandelboxData) cleanUserConfigDir() {
 	err := os.RemoveAll(mandelbox.GetUserConfigDir())
 	if err != nil {
-		logger.Errorf("Failed to remove dir %s: %s", mandelbox.GetUserConfigDir(), err)
+		logger.Errorf("failed to remove dir %s: %s", mandelbox.GetUserConfigDir(), err)
 	}
 }
 

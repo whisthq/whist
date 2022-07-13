@@ -45,7 +45,7 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	var reqdata httputils.JSONTransportRequest
 	_, err := httputils.AuthenticateRequest(w, r, &reqdata)
 	if err != nil {
-		logger.Errorf("Failed while authenticating request. Err: %v", err)
+		logger.Errorf("failed while authenticating request: %s", err)
 		return
 	}
 	// Send request to queue, then wait for result

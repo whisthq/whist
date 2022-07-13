@@ -169,7 +169,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	} else {
 		instanceID, err = aws.GetInstanceID()
 		if err != nil {
-			logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
+			logger.Errorf("can't get AWS Instance name for localdev user config userID")
 		}
 		userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceID))
 	}

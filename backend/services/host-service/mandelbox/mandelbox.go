@@ -173,7 +173,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 	err := mandelbox.createResourceMappingDir()
 	if err != nil {
-		logger.Errorf("Couldn't create mandelbox resource mapping directory: %s", err)
+		logger.Errorf("couldn't create mandelbox resource mapping directory: %s", err)
 	}
 
 	trackMandelbox(mandelbox)
@@ -223,7 +223,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		// CI does not have GPUs
 		if !metadata.IsRunningInCI() {
 			if err := gpus.Free(mandelbox.gpuIndex, mandelbox.GetID()); err != nil {
-				logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.GetID(), err)
+				logger.Errorf("error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.GetID(), err)
 			} else {
 				logger.Infof("Successfully freed GPU %v for mandelbox %s", mandelbox.gpuIndex, mandelbox.GetID())
 			}
@@ -241,7 +241,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 			// Backup and clean user config directory.
 			err := mandelbox.BackupUserConfigs()
 			if err != nil {
-				logger.Errorf("Error backing up user configs for MandelboxID %s. Error: %s", mandelbox.GetID(), err)
+				logger.Errorf("error backing up user configs for MandelboxID %s: %s", mandelbox.GetID(), err)
 			} else {
 				logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.GetID())
 			}

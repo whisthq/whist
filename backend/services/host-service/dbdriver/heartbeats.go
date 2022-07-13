@@ -24,7 +24,7 @@ func heartbeatGoroutine() {
 
 	// Send initial heartbeat right away
 	if err := writeHeartbeat(); err != nil {
-		logger.Errorf("Error writing initial heartbeat: %s", err)
+		logger.Errorf("error writing initial heartbeat: %s", err)
 	}
 
 	// Instead of running exactly every minute, we choose a random time in the
@@ -46,7 +46,7 @@ func heartbeatGoroutine() {
 		case <-timerChan:
 			// There's just no time to die
 			if err := writeHeartbeat(); err != nil {
-				logger.Errorf("Error writing heartbeat: %s", err)
+				logger.Errorf("error writing heartbeat: %s", err)
 			}
 		}
 	}

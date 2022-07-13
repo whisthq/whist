@@ -24,7 +24,7 @@ type TransportProtocol string
 func (tp *TransportProtocol) UnmarshalJSON(b []byte) error {
 	if strings.ToLower(string(b)) == "null" {
 		*tp = TransportProtocolTCP
-		logger.Errorf("Unmarshalled nil transportProtocol as TCP")
+		logger.Errorf("unmarshalled nil transportProtocol as TCP")
 		return nil
 	}
 	switch string(b) {

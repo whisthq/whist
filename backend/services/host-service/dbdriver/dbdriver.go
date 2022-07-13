@@ -88,7 +88,7 @@ func Close() {
 
 	// Delete the instance row
 	if err := unregisterInstance(); err != nil {
-		logger.Errorf("Error unregistering instance: %s", err)
+		logger.Errorf("error unregistering instance: %s", err)
 	}
 
 	logger.Infof("Closing the connection pool to the database...")

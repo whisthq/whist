@@ -62,7 +62,7 @@ func init() {
 	jwks, err = keyfunc.Get(config.getJwksURL(), keyfunc.Options{
 		RefreshInterval: refreshInterval,
 		RefreshErrorHandler: func(err error) {
-			logger.Errorf("Error refreshing JWKs: %s", err)
+			logger.Errorf("error refreshing JWKs: %s", err)
 		},
 		RefreshUnknownKID: refreshUnknown,
 	})

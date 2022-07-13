@@ -148,7 +148,7 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 		appNameForDb := strings.ToUpper(appString[1])
 		err = dbdriver.CreateMandelbox(zygote.GetID(), appNameForDb, instanceID)
 		if err != nil {
-			logger.Errorf("Failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
+			logger.Errorf("failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
 		}
 	}
 }
@@ -283,7 +283,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	ephemeralDeviceCmd := "nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == \"Amazon EC2 NVMe Instance Storage\")) | max_by(.PhysicalSize) | .DevicePath'"
 	out, err := exec.Command("bash", "-c", ephemeralDeviceCmd).CombinedOutput()
 	if err != nil {
-		logger.Errorf("Error while getting ephemeral device path, not using ephemeral storage.")
+		logger.Errorf("error while getting ephemeral device path, not using ephemeral storage.")
 	}
 
 	ephemeralDevicePath := string(out)
@@ -341,26 +341,26 @@ func uninitializeFilesystem() {
 	logger.Infof("removing all files")
 	err := os.RemoveAll(utils.WhistDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.WhistDir, err)
+		logger.Errorf("failed to delete directory %s: %s", utils.WhistDir, err)
 		metrics.Increment("ErrorRate")
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", utils.WhistDir)
+		logger.Infof("Successfully deleted directory %s", utils.WhistDir)
 	}
 
 	err = os.RemoveAll(utils.WhistPrivateDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.WhistPrivateDir, err)
+		logger.Errorf("failed to delete directory %s: %s", utils.WhistPrivateDir, err)
 		metrics.Increment("ErrorRate")
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", utils.WhistPrivateDir)
+		logger.Infof("Successfully deleted directory %s", utils.WhistPrivateDir)
 	}
 
 	err = os.RemoveAll(utils.TempDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.TempDir, err)
+		logger.Errorf("failed to delete directory %s: %s", utils.TempDir, err)
 		metrics.Increment("ErrorRate")
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", utils.TempDir)
+		logger.Infof("Successfully deleted directory %s", utils.TempDir)
 	}
 }
 
@@ -368,7 +368,7 @@ func main() {
 	// Set Sentry tags
 	tags, err := aws.GetAWSMetadata()
 	if err != nil {
-		logger.Errorf("Failed to set Sentry tags: %s", err)
+		logger.Errorf("failed to set Sentry tags: %s", err)
 	}
 	logger.AddSentryTags(tags)
 
@@ -453,7 +453,7 @@ func main() {
 					// we'll just ignore it. We still `logger.Info()` it just in case.
 					logger.Infof("Shutdown command returned 'signal: terminated' error. Ignoring it.")
 				} else {
-					logger.Errorf("Couldn't shut down instance: %s", err)
+					logger.Errorf("couldn't shut down instance: %s", err)
 					metrics.Increment("ErrorRate")
 				}
 			}
@@ -499,13 +499,13 @@ func main() {
 	// Start database subscription client
 	instanceID, err := aws.GetInstanceID()
 	if err != nil {
-		logger.Errorf("Can't get AWS Instance Name. Error: %s", err)
+		logger.Errorf("can't get AWS Instance Name: %s", err)
 		metrics.Increment("ErrorRate")
 	}
 
 	capacity, err := dbdriver.GetInstanceCapacity(string(instanceID))
 	if err != nil {
-		logger.Errorf("Failed to get capacity of instance %v. Err: %s", instanceID, err)
+		logger.Errorf("failed to get capacity of instance %s: %s", instanceID, err)
 	}
 
 	// Now we start all the goroutines that actually do work.
@@ -532,7 +532,7 @@ func main() {
 	subscriptions.SetupHostSubscriptions(string(instanceID), subscriptionClient)
 	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents, useConfigDB)
 	if err != nil {
-		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
+		logger.Errorf("failed to start database subscriptions: %s", err)
 	}
 
 	mandelboxDieEvents := make(chan bool, 10)
@@ -656,13 +656,13 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 					userID, err := metadata.GetUserID()
 					if err != nil {
-						logger.Errorf("Error getting userID, %v", err)
+						logger.Errorf("error getting userID, %s", err)
 						metrics.Increment("ErrorRate")
 					}
 
 					instanceID, err := aws.GetInstanceID()
 					if err != nil {
-						logger.Errorf("Error getting instance name from AWS, %v", err)
+						logger.Errorf("error getting instance name from AWS, %s", err)
 						metrics.Increment("ErrorRate")
 					}
 

@@ -47,18 +47,18 @@ const (
 // (ideally in an `init` function), before any mandelboxes are started.
 func Reserve(num uint16, protocol TransportProtocol) {
 	if !isInAllowedRange(num) {
-		logger.Errorf("Could not reserve port %v/%s as port is not in allowed range.", num, protocol)
+		logger.Errorf("could not reserve port %v/%s as port is not in allowed range.", num, protocol)
 		return
 	}
 
 	mapToUse, err := getProtocolSpecificHostPortMap(protocol)
 	if err != nil {
-		logger.Errorf("Could not reserve port %v/%s. Err: %s", num, protocol, err)
+		logger.Errorf("could not reserve port %v/%s. Err: %s", num, protocol, err)
 		return
 	}
 
 	if status, exists := (*mapToUse)[num]; exists {
-		logger.Errorf("Could not reserve port %v/%s. Port exists on table and is set to %v", num, protocol, status)
+		logger.Errorf("could not reserve port %v/%s. Port exists on table and is set to %v", num, protocol, status)
 		return
 	}
 
@@ -138,15 +138,15 @@ func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 func freeSinglePort(bind PortBinding) {
 	mapToUse, err := getProtocolSpecificHostPortMap(bind.Protocol)
 	if err != nil {
-		logger.Errorf("FreePortBindings: failed for bind %v: %s", bind, err)
+		logger.Errorf("failed for bind %v: %s", bind, err)
 		return
 	}
 
 	v, ok := (*mapToUse)[bind.HostPort]
 	if !ok {
-		logger.Errorf("FreePortBindings: tried to remove nonexistent binding for %v/%v.", bind.HostPort, bind.Protocol)
+		logger.Errorf("tried to remove nonexistent binding for %v/%v.", bind.HostPort, bind.Protocol)
 	} else if v == reserved {
-		logger.Errorf("FreePortBindings: tried to remove reserved binding for %v/%v. Sorry, but I can't let you do that.", bind.HostPort, bind.Protocol)
+		logger.Errorf("tried to remove reserved binding for %v/%v. Sorry, but I can't let you do that.", bind.HostPort, bind.Protocol)
 	} else {
 		delete(*mapToUse, bind.HostPort)
 	}

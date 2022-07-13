@@ -27,7 +27,7 @@ func initializeGPUMetricsCollector() error {
 // Terminate NVML to stop metrics collection.
 func shutdownGPUMetricsCollector() {
 	if nvmlRet := nvml.Shutdown(); nvmlRet != nvml.SUCCESS {
-		logger.Errorf("Error shutting down NVML library.")
+		logger.Errorf("error shutting down NVML library.")
 	}
 }
 
