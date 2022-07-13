@@ -25,13 +25,13 @@ extern "C" {
 const int base_perf_log = 0;
 const int run_on_ci = 0;
 
-static int base_log=0;
-static int verbose_log=0;
+static int base_log = 0;
+static int verbose_log = 0;
 
 inline double get_timestamp_ms0(void) { return get_timestamp_sec() * 1000; }
 
-static double get_timestamp_ms(void) {
-#if OS_IS(OS_MACOS)
+static double get_cputime_ms(void) {
+#if OS_IS(OS_MACOS) || OS_IS(OS_MACOS)
     struct timespec t2;
     // use CLOCK_MONOTONIC for relative time
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
@@ -42,7 +42,8 @@ static double get_timestamp_ms(void) {
     double ret = elapsed_time;
     return ret;
 #else
-    return 0;
+    // for other operation system fallback to noraml time
+    return get_timestamp_sec() * MS_IN_SEC;
 #endif
 }
 
@@ -84,49 +85,48 @@ string combine_copy(vector<char *> buffers, int segment_size) {
     return res;
 }
 std::tuple<int, double, double> one_test(int segment_size, int num_real, int num_fec) {
-    
-    string input(segment_size * num_real,'a');
+    string input(segment_size * num_real, 'a');
     for (int i = 0; i < (int)input.size(); i++) {
         input[i] = my_rand() % 256;
     }
-    
+
     auto buffers = make_buffers(num_real + num_fec, segment_size);
     split_copy(input, &buffers[0], segment_size);
 
     double encode_time_total = 0;
-    
+
     WirehairCodec wirehair_encoder;
-	
+
     {
-	double t1= get_timestamp_ms();
-	wirehair_encoder = wirehair_encoder_create(nullptr, &input[0], segment_size * num_real, segment_size);
-	double t2= get_timestamp_ms();
-	if(base_log) {
-	    fprintf(stderr,"<encoder create: %.3f>", t2-t1);
-	}
-	encode_time_total += t2 - t1;
+        double t1 = get_cputime_ms();
+        wirehair_encoder =
+            wirehair_encoder_create(nullptr, &input[0], segment_size * num_real, segment_size);
+        double t2 = get_cputime_ms();
+        if (base_log) {
+            fprintf(stderr, "<encoder create: %.3f>", t2 - t1);
+        }
+        encode_time_total += t2 - t1;
     }
 
-    double before_encode_loop_time = get_timestamp_ms();
+    double before_encode_loop_time = get_cputime_ms();
 
-    for(int i=0;i<num_fec;i++)
-    {
-	int idx= num_real + i;
-	uint32_t out_size;
+    for (int i = 0; i < num_fec; i++) {
+        int idx = num_real + i;
+        uint32_t out_size;
 
-	double t1= get_timestamp_ms();
-	int r = wirehair_encode(wirehair_encoder, idx, buffers[idx], segment_size, &out_size);
-	double t2= get_timestamp_ms();
+        double t1 = get_cputime_ms();
+        int r = wirehair_encode(wirehair_encoder, idx, buffers[idx], segment_size, &out_size);
+        double t2 = get_cputime_ms();
 
-	encode_time_total += t2-t1;
-	FATAL_ASSERT(r == 0);
-	FATAL_ASSERT(segment_size == (int)out_size);
+        encode_time_total += t2 - t1;
+        FATAL_ASSERT(r == 0);
+        FATAL_ASSERT(segment_size == (int)out_size);
     }
-    
-    double after_encode_loop_time = get_timestamp_ms();
 
-    if(base_log){
-	fprintf(stderr,"<encode loop: %3f>",after_encode_loop_time - before_encode_loop_time);
+    double after_encode_loop_time = get_cputime_ms();
+
+    if (base_log) {
+        fprintf(stderr, "<encode loop: %3f>", after_encode_loop_time - before_encode_loop_time);
     }
 
     encode_time_total = after_encode_loop_time - before_encode_loop_time;
@@ -140,54 +140,53 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
         swap(shuffle[i], shuffle[my_rand() % shuffle.size()]);
     }
 
-    
-    string output(num_real* segment_size, 'b');
+    string output(num_real * segment_size, 'b');
     WirehairCodec wirehair_decoder;
     double decode_time_total = 0;
 
     {
-	double t1= get_timestamp_ms();
-	wirehair_decoder = wirehair_decoder_create(0, num_real * segment_size, segment_size);
-	double t2= get_timestamp_ms();
-	decode_time_total+= t2 -t1;
-	if(base_log){
-	    fprintf(stderr,"<decoder create: %.3f>",t2-t1);
-	}
+        double t1 = get_cputime_ms();
+        wirehair_decoder = wirehair_decoder_create(0, num_real * segment_size, segment_size);
+        double t2 = get_cputime_ms();
+        decode_time_total += t2 - t1;
+        if (base_log) {
+            fprintf(stderr, "<decoder create: %.3f>", t2 - t1);
+        }
     }
 
     int succ = 0;
-    int decode_packet_cnt =0;
-    double before_decode_loop_time= get_timestamp_ms();
-    for (int i= num_fec+ num_real -1; i>=0; i--) {
-	int idx;
-	if(g_use_shuffle){
-	    idx = shuffle[i];
-	} else {
-	    idx = i;
-	}
-	decode_packet_cnt++;
-	int r = wirehair_decode(wirehair_decoder, idx, buffers[idx], segment_size);
-	if(r ==0 ){
-	    succ =1;
-	    break;
-	}
+    int decode_packet_cnt = 0;
+    double before_decode_loop_time = get_cputime_ms();
+    for (int i = num_fec + num_real - 1; i >= 0; i--) {
+        int idx;
+        if (g_use_shuffle) {
+            idx = shuffle[i];
+        } else {
+            idx = i;
+        }
+        decode_packet_cnt++;
+        int r = wirehair_decode(wirehair_decoder, idx, buffers[idx], segment_size);
+        if (r == 0) {
+            succ = 1;
+            break;
+        }
     }
-    double after_decode_loop_time= get_timestamp_ms();
-    decode_time_total += after_decode_loop_time -before_decode_loop_time;
-    if(base_log){
-	fprintf(stderr, "<decode loop: %.3f>", after_decode_loop_time - before_decode_loop_time);
+    double after_decode_loop_time = get_cputime_ms();
+    decode_time_total += after_decode_loop_time - before_decode_loop_time;
+    if (base_log) {
+        fprintf(stderr, "<decode loop: %.3f>", after_decode_loop_time - before_decode_loop_time);
     }
-    
-    FATAL_ASSERT(succ ==1);
+
+    FATAL_ASSERT(succ == 1);
 
     {
-	double t1 = get_timestamp_ms();
-	FATAL_ASSERT(wirehair_recover(wirehair_decoder, &output[0], num_real * segment_size) ==0);
-	double t2 = get_timestamp_ms();
-	if(base_log){
-	    fprintf(stderr, "<decode recover: %.3f>" ,t2-t1);
-	}
-	decode_time_total+= t2-t1;
+        double t1 = get_cputime_ms();
+        FATAL_ASSERT(wirehair_recover(wirehair_decoder, &output[0], num_real * segment_size) == 0);
+        double t2 = get_cputime_ms();
+        if (base_log) {
+            fprintf(stderr, "<decode recover: %.3f>", t2 - t1);
+        }
+        decode_time_total += t2 - t1;
     }
 
     FATAL_ASSERT(input.size() == output.size());
@@ -196,7 +195,11 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
     free_buffers(buffers);
     wirehair_free(wirehair_encoder);
     wirehair_free(wirehair_decoder);
-    
+
+    if (base_log) {
+        fprintf(stderr, "\n");
+    }
+
     return make_tuple(decode_packet_cnt - num_real, encode_time_total, decode_time_total);
 }
 
@@ -204,7 +207,9 @@ void overhead_test(void) {
     int round = 10000;
     int segment_size = 4;
 
-    if (run_on_ci) {round = 10;}
+    if (run_on_ci) {
+        round = 10;
+    }
 
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
     for (int i = 2; i < 256; i++) {
@@ -239,9 +244,9 @@ void overhead_test(void) {
 
 void performance_test(void) {
     int round = 500;
-    int segment_size=1280;
+    int segment_size = 1280;
     if (run_on_ci) round = 10;
-    
+
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
     for (int i = 2; i < 256; i++) {
         for (int ii = 0; ii < 3; ii++) {
@@ -280,7 +285,21 @@ void performance_test(void) {
     }
 }
 
-int wirehair_test(void) {
+int wirehair_unittest(void) {
+    wirehair_init();
+
+    int segment_size = 1280;
+    int round = 1000;
+
+    for (int i = 0; i < round; i++) {
+        int num_real = my_rand() % 1024 + 2;
+        int num_fec = my_rand() % 1024;
+        one_test(segment_size, num_real, num_fec);
+    }
+    return 0;
+}
+
+int wirehair_manualtest(void) {
     wirehair_init();
 
     get_timestamp_sec();

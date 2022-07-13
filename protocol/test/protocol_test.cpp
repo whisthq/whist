@@ -61,7 +61,7 @@ extern "C" {
 #include <whist/fec/rs_wrapper.h>
 #include <whist/fec/fec_controller.h>
 #include "whist/utils/string_buffer.h"
-
+#include <whist/fec/wirehair/wirehair_test.h>
 #include "whist/core/error_codes.h"
 #include <whist/core/features.h>
 
@@ -1799,10 +1799,11 @@ TEST_F(ProtocolTest, FECTest2) {
     rs_wrapper_set_max_group_size(saved_max_group_size);
     rs_wrapper_set_max_group_overhead(saved_max_group_overhead);
 }
-extern "C" {
-#include <whist/fec/wirehair/wirehair_test.h>
-};
-TEST_F(ProtocolTest, FountainTest) { wirehair_test(); }
+
+TEST_F(ProtocolTest, WirehairTest) {
+    EXPECT_EQ(wirehair_unittest(),0);
+}
+
 typedef struct {
     LINKED_LIST_HEADER;
     int id;

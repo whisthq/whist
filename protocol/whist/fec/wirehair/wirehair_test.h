@@ -1,1 +1,4 @@
-int wirehair_test(void);
+#pragma once
+
+int wirehair_unittest(void);
+int wirehair_manualtest(void);
