@@ -77,7 +77,7 @@ unset IFS
 # Replace /experimental:external /external:W0 /external:I with -I, since clang can only read -I
 if [[ -n "$isWindows" ]]; then
   sed -i 's/\/experimental:external//g' "$compileCommands"
-  sed -i 's/\/external:W0//g' "$compileCommands"
+  # sed -i 's/\/external:W0//g' "$compileCommands"
   sed -i 's/\/external:I/-I/g' "$compileCommands"
   sed -i 's/\/MP//g' "$compileCommands"
   sed -i 's/-external:W0//g' "$compileCommands"
