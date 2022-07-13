@@ -82,7 +82,7 @@ func init() {
 func createDockerClient() (*dockerclient.Client, error) {
 	client, err := dockerclient.NewClientWithOpts(dockerclient.WithAPIVersionNegotiation())
 	if err != nil {
-		return nil, utils.MakeError("Error creating new Docker client: %s", err)
+		return nil, utils.MakeError("error creating new Docker client: %s", err)
 	}
 	return client, nil
 }
@@ -136,7 +136,7 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 		// images. Its not safe to assign users to it, so we cancel the global context and shut down the instance
 		if zygote == nil || err != nil {
 			globalCancel()
-			logger.Errorw(utils.Sprintf("Failed to start waiting mandelbox: %s", err), []interface{}{
+			logger.Errorw(utils.Sprintf("failed to start waiting mandelbox: %s", err), []interface{}{
 				zap.String("mandelbox_id", zygote.GetID().String()),
 				zap.Time("updated_at", zygote.GetLastUpdatedTime()),
 			})
@@ -179,7 +179,7 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 
 	err = dockerClient.ContainerStop(stopCtx, id, &stopTimeout)
 	if err != nil {
-		logger.Warningf("Failed to gracefully stop mandelbox docker container. Err: %v", err)
+		logger.Warningf("Failed to gracefully stop mandelbox docker container: %s", err)
 	}
 
 }
@@ -315,7 +315,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// configs).
 	err = os.MkdirAll(utils.WhistDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistDir, err)
+		logger.Panicf(globalCancel, "failed to create directory %s: %s\n", utils.WhistDir, err)
 	}
 	cmd := exec.Command("chown", "-R", "ubuntu", utils.WhistDir)
 	cmd.Run()
@@ -323,14 +323,14 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// Create whist-private directory
 	err = os.MkdirAll(utils.WhistPrivateDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistPrivateDir, err)
+		logger.Panicf(globalCancel, "failed to create directory %s: %s\n", utils.WhistPrivateDir, err)
 	}
 
 	// Create whist temp directory (only let root read and write this, since it
 	// contains logs and uinput sockets).
 	err = os.MkdirAll(utils.TempDir, 0600)
 	if err != nil {
-		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", utils.TempDir, err)
+		logger.Panicf(globalCancel, "could not mkdir path %s: %s", utils.TempDir, err)
 	}
 }
 
@@ -686,7 +686,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					// For local development, we start and finish the mandelbox spin up back to back
 					zygote, err := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName, mandelboxDieEvents)
 					if err != nil {
-						logger.Errorw(utils.Sprintf("Failed to start waiting mandelbox: %s", err), []interface{}{
+						logger.Errorw(utils.Sprintf("failed to start waiting mandelbox: %s", err), []interface{}{
 							zap.String("mandelbox_id", zygote.GetID().String()),
 							zap.Time("updated_at", zygote.GetLastUpdatedTime()),
 						})
@@ -695,7 +695,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					go func() {
 						err := FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxSubscription, transportRequestMap, transportMapLock, req)
 						if err != nil {
-							logger.Errorw(utils.Sprintf("Failed to finish mandelbox startup: %s", err), []interface{}{
+							logger.Errorw(utils.Sprintf("failed to finish mandelbox startup: %s", err), []interface{}{
 								zap.String("instance_id", mandelboxSubscription.InstanceID),
 								zap.String("mandelbox_id", mandelboxSubscription.ID.String()),
 								zap.String("mandelbox_app", mandelboxSubscription.App),
@@ -724,7 +724,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					err := FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient,
 						mandelboxSubscription, transportRequestMap, transportMapLock, req)
 					if err != nil {
-						logger.Errorw(utils.Sprintf("Failed to finish mandelbox startup: %s", err), []interface{}{
+						logger.Errorw(utils.Sprintf("failed to finish mandelbox startup: %s", err), []interface{}{
 							zap.String("instance_id", mandelboxSubscription.InstanceID),
 							zap.String("mandelbox_id", mandelboxSubscription.ID.String()),
 							zap.String("mandelbox_app", mandelboxSubscription.App),
@@ -751,7 +751,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 			default:
 				if subscriptionEvent != nil {
-					err := utils.MakeError("Unimplemented handling of subscription event [type: %T]: %v", subscriptionEvent, subscriptionEvent)
+					err := utils.MakeError("unimplemented handling of subscription event [type: %T]: %v", subscriptionEvent, subscriptionEvent)
 					logger.Error(err)
 				}
 			}
