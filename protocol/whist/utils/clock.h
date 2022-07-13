@@ -21,7 +21,6 @@ Includes
 */
 
 #include <stdint.h>
-#include "whist/core/whist.h"
 #if OS_IS(OS_WIN32)
 #include <windows.h>
 #else
