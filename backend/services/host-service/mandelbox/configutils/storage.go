@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -27,16 +28,25 @@ func NewS3Client(region string) (*s3.Client, error) {
 	}), nil
 }
 
-// GetConfigBucket returns name of the S3 bucket that contains the encrypted user configs.
-func GetConfigBucket() string {
+// GetAccessPoint returns name of the multi-region access point used to
+// access encrypted user configs.
+func GetAccessPoint() string {
+	accessPointArn := arn.ARN{
+		Partition: "aws",
+		Service:   "s3",
+		AccountID: "747391415460",
+	}
+
 	env := metadata.GetAppEnvironmentLowercase()
 	if env == string(metadata.EnvDev) || env == string(metadata.EnvStaging) || env == string(metadata.EnvProd) {
 		// Return the appropiate bucket depending on current environment
-		return utils.Sprintf("whist-user-app-configs-%s", metadata.GetAppEnvironmentLowercase())
+		accessPointArn.Resource = "<MRAP_alias_per_environment>"
 	} else {
 		// Default to dev
-		return utils.Sprintf("whist-user-app-configs-dev")
+		accessPointArn.Resource = "<MRAP_alias_dev>"
 	}
+
+	return accessPointArn.String()
 }
 
 // GetHeadObject returns the head object of the given bucket and key.
@@ -81,7 +91,7 @@ func GetMD5Hash(data []byte) string {
 // file in S3 with the provided token.
 func UpdateMostRecentToken(client *s3.Client, user types.UserID, token string) error {
 	recentTokenPath := path.Join("last-used-tokens", string(user))
-	_, err := UploadFileToBucket(client, GetConfigBucket(), recentTokenPath, []byte(token))
+	_, err := UploadFileToBucket(client, GetAccessPoint(), recentTokenPath, []byte(token))
 	if err != nil {
 		return utils.MakeError("failed to update most recent token: %v", err)
 	}
@@ -92,7 +102,7 @@ func UpdateMostRecentToken(client *s3.Client, user types.UserID, token string) e
 func GetMostRecentToken(client *s3.Client, user types.UserID) (string, error) {
 	recentTokenPath := path.Join("last-used-tokens", string(user))
 	dataBuffer := manager.NewWriteAtBuffer([]byte{})
-	_, err := DownloadObjectToBuffer(client, GetConfigBucket(), recentTokenPath, dataBuffer)
+	_, err := DownloadObjectToBuffer(client, GetAccessPoint(), recentTokenPath, dataBuffer)
 	if err != nil {
 		return "", utils.MakeError("failed to get most recent token: %v", err)
 	}
