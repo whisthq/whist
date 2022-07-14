@@ -211,10 +211,10 @@ if __name__ == "__main__":
     os.makedirs(plots_folder, exist_ok=True)
 
     # Initialize the Gist post
-    title = "Protocol End-to-End Streaming Test Results"
-    github_repo = "whisthq/whist"
-    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
-    gist = initialize_github_gist_post(github_gist_token, title)
+    # title = "Protocol End-to-End Streaming Test Results"
+    # github_repo = "whisthq/whist"
+    # identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
+    plots_gist = create_or_update_gist(github_gist_token, title="E2E plots", verbose=verbose)
 
     ################################################# 1. Extract data from logs ###################################################
 
@@ -387,7 +387,7 @@ if __name__ == "__main__":
                     plots_folder,
                     plots_name_prefix,
                     gist_username,
-                    gist.id,
+                    plots_gist.id,
                 )
 
                 test_result = generate_comparison_table(
@@ -423,7 +423,7 @@ if __name__ == "__main__":
                     plots_folder,
                     plots_name_prefix,
                     gist_username,
-                    gist.id,
+                    plots_gist.id,
                 )
 
                 generate_results_table(
