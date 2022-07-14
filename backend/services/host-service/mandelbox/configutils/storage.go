@@ -8,13 +8,15 @@ import (
 	"path"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3control"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // NewS3Client returns a new AWS S3 client.
@@ -28,26 +30,96 @@ func NewS3Client(region string) (*s3.Client, error) {
 	}), nil
 }
 
-// GetAccessPoint returns name of the multi-region access point used to
-// access encrypted user configs.
-func GetAccessPoint() string {
-	accessPointArn := arn.ARN{
-		Partition: "aws",
-		Service:   "s3",
-		AccountID: "747391415460",
+// NewS3ControlClient returns a new AWS S3 Control client.
+func NewS3ControlClient(region string) (*s3control.Client, error) {
+	cfg, err := config.LoadDefaultConfig(context.Background())
+	if err != nil {
+		return nil, utils.MakeError("failed to load aws config: %v", err)
+	}
+	return s3control.NewFromConfig(cfg, func(o *s3control.Options) {
+		o.Region = region
+	}), nil
+}
+
+// NewS3ControlClient returns a new AWS STS client.
+func NewSTSClient(region string) (*sts.Client, error) {
+	cfg, err := config.LoadDefaultConfig(context.Background())
+	if err != nil {
+		return nil, utils.MakeError("failed to load aws config: %v", err)
+	}
+	return sts.NewFromConfig(cfg, func(o *sts.Options) {
+		o.Region = region
+	}), nil
+}
+
+// GetAccountNumber will get the AWS account number.
+func GetAccountNumber() (string, error) {
+	client, err := NewSTSClient("us-east-1")
+	if err != nil {
+		return "", utils.MakeError("couldn't create s3control client: %s", err)
 	}
 
+	output, err := client.GetCallerIdentity(context.Background(), &sts.GetCallerIdentityInput{})
+	if err != nil {
+		return "", utils.MakeError("failed to get caller identity: %s", err)
+	}
+
+	return aws.ToString(output.Account), nil
+}
+
+// GetAccessPoint returns the ARN of the multi-region access point used to
+// access encrypted user configs.
+var GetAccessPoint func() string = func(unmemoized func() string) func() string {
+	// This nested function syntax is used to memoize the result of the first call
+	// to GetAccessPoint() and cache the result for all future calls.
+
+	var isCached = false
+	var cache string
+
+	return func() string {
+		if isCached {
+			return cache
+		}
+		cache = unmemoized()
+		isCached = true
+		return cache
+	}
+}(func() string {
+	client, err := NewS3ControlClient("us-east-1")
+	if err != nil {
+		logger.Errorf("couldn't create s3control client: %s", err)
+		return ""
+	}
+
+	account, err := GetAccountNumber()
+	if err != nil {
+		logger.Errorf("couldn't get account number: %s", err)
+		return ""
+	}
+
+	var input *s3control.GetAccessPointInput
 	env := metadata.GetAppEnvironmentLowercase()
 	if env == string(metadata.EnvDev) || env == string(metadata.EnvStaging) || env == string(metadata.EnvProd) {
-		// Return the appropiate bucket depending on current environment
-		accessPointArn.Resource = "<MRAP_alias_per_environment>"
+		// Return the appropiate mmulti-region access point depending on current environment
+		input = &s3control.GetAccessPointInput{
+			AccountId: aws.String(account),
+			Name:      aws.String(utils.Sprintf("whist-user-configs-access-point-%s", env)),
+		}
 	} else {
 		// Default to dev
-		accessPointArn.Resource = "<MRAP_alias_dev>"
+		input = &s3control.GetAccessPointInput{
+			AccountId: aws.String(account),
+			Name:      aws.String(utils.Sprintf("whist-user-configs-access-point-%s", env)),
+		}
+	}
+	output, err := client.GetAccessPoint(context.Background(), input)
+	if err != nil {
+		logger.Errorf("failed to get access point: %s", err)
+		return ""
 	}
 
-	return accessPointArn.String()
-}
+	return aws.ToString(output.AccessPointArn)
+})
 
 // GetHeadObject returns the head object of the given bucket and key.
 func GetHeadObject(client *s3.Client, bucket, key string) (*s3.HeadObjectOutput, error) {
