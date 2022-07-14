@@ -2,6 +2,8 @@
 
 import os, sys, subprocess
 
+from github import Github
+
 from helpers.common.pexpect_tools import wait_until_cmd_done
 from helpers.common.timestamps_and_exit_tools import printred
 from helpers.common.constants import GITHUB_SHA_LEN, running_in_ci
@@ -104,3 +106,85 @@ def get_remote_whist_github_sha(pexpect_process, pexpect_prompt):
         printred("Could not get the Github SHA of the commit checked out on the remote instance")
         return ""
     return stdout[1]
+
+
+def get_workflow_handle():
+    """
+    Get the github workflow object corresponding to the workflow running this script
+
+    Args:
+        None
+
+    Returns:
+        On success:
+            workflow_handle (github.Workflow.Workflow): The handle to the Github workflow running this script
+        On failure:
+            None
+    """
+    git_token = os.getenv("GITHUB_TOKEN") or ""
+    if len(git_token) != 40:
+        print("Either the GITHUB_TOKEN env is not set, or a token of the wrong length was passed.")
+        return None
+    workflow_name = os.getenv("GITHUB_WORKFLOW") or ""
+    if len(workflow_name) == 0:
+        print("Could not get the workflow name!")
+        return None
+    git_client = Github(git_token)
+    if not git_client:
+        print("Could not obtain Github client!")
+        return None
+    repo = git_client.get_repo("whisthq/whist")
+    if not repo:
+        print("Could not access the whisthq/whist repository!")
+        return None
+
+    workflows = [w for w in repo.get_workflows() if w.name == workflow_name]
+    if len(workflows) != 1:
+        print(f"Could not access the `{workflow_name}` workflow!")
+        return None
+
+    return workflows[0]
+
+
+def count_runs_to_prioritize(workflow, raw_github_run_id):
+    """
+    Get the number of runs that will need to complete before the current script can access the AWS shared instances.
+    This function assumes that the arguments are not set to None and are valid.
+
+    Args:
+        workflow (github.Workflow.Workflow): The handle to the workflow running this script
+        raw_github_run_id (str): The current github run ID.
+
+    Returns:
+        number_of_runs (int): The number of runs that we have to give priority to
+    """
+    # Sanity check the parameters. raw_github_run_id should be passed as a string, not integer
+    if not workflow or len(raw_github_run_id) == 0:
+        exit_with_error("Either the workflow handle or the github run id is invalid")
+    github_run_id = int(raw_github_run_id)
+    # possible github statuses are: "queued", "in_progress", "completed"
+    running_states = ["queued", "in_progress"]
+    prioritized_runs = [
+        run for status in running_states for run in workflow.get_runs(status=status)
+    ]
+    this_run_start_time = None
+    found = False
+    for w in prioritized_runs:
+        if w.id == github_run_id:
+            this_run_start_time = w.run_started_at
+            found = True
+            prioritized_runs = [
+                r_priority
+                for r_priority in prioritized_runs
+                if r_priority.id != github_run_id
+                and (
+                    (r_priority.run_started_at < this_run_start_time)
+                    or (
+                        r_priority.run_started_at <= this_run_start_time
+                        and r_priority.id < github_run_id
+                    )
+                )
+            ]
+            break
+    assert found == True
+    return len(prioritized_runs)

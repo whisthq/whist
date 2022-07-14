@@ -4,8 +4,12 @@ import os, sys, boto3
 
 from helpers.aws.boto3_tools import terminate_or_stop_aws_instance
 from helpers.common.constants import instances_name_tag, running_in_ci, github_run_id
-from helpers.common.timestamps_and_exit_tools import printred
-from helpers.common.git_tools import get_whist_branch_name
+from helpers.common.timestamps_and_exit_tools import printgreen, exit_with_error
+from helpers.common.git_tools import (
+    get_whist_branch_name,
+    get_workflow_handle,
+    count_runs_to_prioritize,
+)
 
 # Before exiting, the streaming_e2e_tester.py script stops/terminates all EC2 instances
 # (unless the `--leave-instances-on` flag is set to 'true') used in the E2E test.
@@ -28,10 +32,22 @@ def stop_ci_reusable_instances():
     Returns:
         None
     """
-    region_name = os.getenv("REGION_NAME") or ""
+    region_name = os.getenv("REUSABLE_INSTANCES_REGION_NAME") or ""
     if region_name == "":
         print(
-            f"Cannot stop reusable instance(s) because REGION_NAME environment variable is not set!"
+            f"Cannot stop reusable instance(s) because REUSABLE_INSTANCES_REGION_NAME environment variable is not set!"
+        )
+        return
+
+    # Check if there are other runs with priority access to the shared instances. If that is the case,
+    # we are not authorized to stop the reusable instances. The run with 1° priority will take care of
+    # stopping them once done
+    workflow = get_workflow_handle()
+    if not github_run_id or not workflow:
+        exit_with_error("Either the workflow handle or the github run id is invalid")
+    if count_runs_to_prioritize(workflow, github_run_id) > 0:
+        printgreen(
+            "We do not stop the reusable instances because other workflows are using them before us."
         )
         return
 
