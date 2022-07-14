@@ -84,7 +84,7 @@ static string combine_copy(vector<char *> buffers, int segment_size) {
 
 std::tuple<int, double, double> one_test(int segment_size, int num_real, int num_fec) {
     UNUSED(combine_copy);
-    
+
     string input(segment_size * num_real, 'a');
 
     for (int i = 0; i < (int)input.size(); i++) {
