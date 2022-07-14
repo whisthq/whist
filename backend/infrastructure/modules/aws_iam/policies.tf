@@ -16,6 +16,18 @@ data "aws_iam_policy_document" "EC2AssumeRolePolicy" {
   }
 }
 
+# This policy is used for AWS service roles, like Compute Optimizer, etc.
+data "aws_iam_policy_document" "S3AssumeRolePolicy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+  }
+}
+
 #
 # Custom Whist policies for IAM roles
 #
@@ -121,6 +133,26 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
     effect = "Allow"
     resources = [
       aws_iam_role.EC2DeploymentRole.arn
+    ]
+  }
+}
+
+# This policy allows is assumed by S3 to replicate objects on our behalf.
+data "aws_iam_policy_document" "BucketReplicationRolePolicy" {
+  statement {
+    actions = [
+      "s3:GetReplicationConfiguration",
+      "s3:ListBucket",
+      "s3:GetObjectVersionForReplication",
+      "s3:GetObjectVersionAcl",
+      "s3:GetObjectVersionTagging",
+      "s3:ReplicateObject",
+      "s3:ReplicateDelete",
+      "s3:ReplicateTags"
+    ]
+    effect = "Allow"
+    resources = [
+      "*"
     ]
   }
 }

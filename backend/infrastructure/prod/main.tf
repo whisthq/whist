@@ -34,6 +34,100 @@ module "secrets-manager" {
   env    = var.env
 }
 
+module "s3-control" {
+  source = "../modules/aws_s3control"
+  env    = var.env
+  # Its necessary to specify static map keys so that
+  # Terraform is able to determine the length of it
+  # with unknown values.
+  buckets = {
+    1 = module.user-configs-us-east-1.bucket_name,
+    2 = module.user-configs-us-west-1.bucket_name,
+    3 = module.user-configs-eu-central-1.bucket_name,
+    4 = module.user-configs-ap-south-1.bucket_name,
+    5 = module.user-configs-ap-southeast-2.bucket_name,
+  }
+}
+
+# Region-specific modules, these are enabled only on certain regions
+
+# These are the regions where user config bucket replication is currently enabled. They are meant to represent
+# a good world coverage so that users in any geography can retrieve their config from a nearby bucket,
+# for faster launch/load time. If we want to optimize this further, we can add more regions here to get
+# more replication closer to users as the userbase grows.
+
+module "user-configs-us-east-1" {
+  source = "../modules/aws_user_configs"
+  env    = var.env
+  # N. Virginia
+  # List of regions in order of proximity.
+  replication_regions = [
+    "us-west-1",
+    "sa-east-1",
+    "eu-central-1",
+    "ap-southeast-2",
+  ]
+  replication_role_arn = ""
+}
+
+module "user-configs-us-west-1" {
+  source = "../modules/aws_user_configs"
+  env    = var.env
+  providers = {
+    # N. California
+    aws = aws.usw1
+  }
+  # List of regions in order of proximity.
+  replication_regions = [
+    "us-east-1",
+  ]
+  replication_role_arn = ""
+}
+
+module "user-configs-eu-central-1" {
+  source = "../modules/aws_user_configs"
+  env    = var.env
+  providers = {
+    # Frankfurt
+    aws = aws.euc1
+  }
+  # List of regions in order of proximity.
+  replication_regions = [
+    "us-east-1",
+  ]
+  replication_role_arn = ""
+}
+
+module "user-configs-ap-southeast-2" {
+  source = "../modules/aws_user_configs"
+  env    = var.env
+  providers = {
+    # Syndey
+    aws = aws.apse2
+  }
+  # List of regions in order of proximity.
+  replication_regions = [
+    "us-east-1",
+  ]
+  replication_role_arn = ""
+}
+
+module "user-configs-ap-south-1" {
+  source = "../modules/aws_user_configs"
+  env    = var.env
+  providers = {
+    # Mumbai
+    aws = aws.aps1
+  }
+  # List of regions in order of proximity.
+  replication_regions = [
+    "us-east-1",
+  ]
+  replication_role_arn = ""
+}
+
+
+
 # Enable all AWS regions on Terraform. Doing this will create
 # all multi-region resources on each region declared below. See 
 # `providers.tf` for the provider abbreviations used below.
