@@ -40,7 +40,7 @@ def create_or_update_gist(github_gist_token, gist=None, title=None, files_list=N
         print(
             "Error: gist and title are both `None`. To create a new gist, pass a title. To update a gist, pass the handle to an existing gist"
         )
-        return
+        return None
     if not gist:
         client = Github(github_gist_token)
         gh_auth_user = client.get_user()
@@ -55,7 +55,7 @@ def create_or_update_gist(github_gist_token, gist=None, title=None, files_list=N
         )
         if not gist:
             print(f"Error: could not create gist with title {title}")
-            return
+            return None
         print(f"\nInitialized secret gist at url: {gist.html_url}")
 
     if files_list:
@@ -71,6 +71,8 @@ def create_or_update_gist(github_gist_token, gist=None, title=None, files_list=N
             )
         else:
             subprocess.run(upload_files_command, shell=True, capture_output=True)
+
+    return gist
 
 
 def associate_branch_to_open_pr(branch_name, verbose=False):

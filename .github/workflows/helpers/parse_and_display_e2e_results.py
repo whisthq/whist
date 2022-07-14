@@ -154,7 +154,8 @@ if __name__ == "__main__":
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
     gist_username, gist_author_name, gist_author_email = get_gist_user_info(github_gist_token)
     # Set the Git identity
-    git_config_command = f'git config --global user.email "{gist_author_email}" && git config --global user.name "{gist_author_name}"'
+    git_config_commands = f'git config --global user.email "{gist_author_email}" && git config --global user.name "{gist_author_name}" && (umask 0077 && echo {github_gist_token} > ~/.gist)'
+
     if not verbose:
         subprocess.run(
             git_config_command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
@@ -211,9 +212,6 @@ if __name__ == "__main__":
     os.makedirs(plots_folder, exist_ok=True)
 
     # Initialize the Gist post
-    # title = "Protocol End-to-End Streaming Test Results"
-    # github_repo = "whisthq/whist"
-    # identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
     plots_gist = create_or_update_gist(github_gist_token, title="E2E plots", verbose=verbose)
 
     ################################################# 1. Extract data from logs ###################################################
@@ -381,6 +379,12 @@ if __name__ == "__main__":
                         compared_branch_name,
                         verbose,
                     )
+                    create_or_update_gist(
+                        github_gist_token,
+                        gist=plots_gist,
+                        files_list=[f"{plots_name_prefix}:{role}*.png"],
+                        verbose=verbose,
+                    )
                 client_metrics, server_metrics = add_plot_links(
                     experiment["client_metrics"],
                     experiment["server_metrics"],
@@ -415,6 +419,12 @@ if __name__ == "__main__":
                         current_branch_name,
                         plots_folder,
                         f"{plots_name_prefix}:{role}",
+                        verbose=verbose,
+                    )
+                    create_or_update_gist(
+                        github_gist_token,
+                        gist=plots_gist,
+                        files_list=[f"{plots_name_prefix}:{role}*.png"],
                         verbose=verbose,
                     )
                 client_metrics, server_metrics = add_plot_links(
@@ -470,17 +480,20 @@ if __name__ == "__main__":
 
     # Update Github Gist with all the results
     # Create one file for each branch
+    title = "Protocol End-to-End Streaming Test Results"
+    github_repo = "whisthq/whist"
+    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
     md_files = glob.glob("e2e_report_*.md")
-    files_list = [os.path.join(".", "plots", f) for f in plot_files] + md_files
+    # Upload link to plots and results summaries to gist
+    print("\nCreating Gist with performance results and links to plots...")
+    summary_gist = create_or_update_gist(github_gist_token, files_list=md_files, verbose=verbose)
+    print(f"\nPosted performance results to secret gist: {summary_gist.html_url}")
+
+    # Create Github Post
     summary_contents = ""
     with open(f"e2e_report_0.md", "r") as summary_file:
         summary_contents = summary_file.read()
     summary_contents += f"<details>\n<summary>Expand Full Results</summary>\n\n\nThe detailed results and comparisons with previous runs or with `dev` are available here: [link to the Gist]({gist.html_url})\n\n\n</details>\n\n"
-
-    # Upload plots and results summaries
-    print("\nUploading performance results and plots to Gist...")
-    update_github_gist_post(github_gist_token, gist.id, files_list, verbose)
-    print(f"\nPosted performance results to secret gist: {gist.html_url}")
 
     # Check for and report errors
     success_outcome = ":white_check_mark: All experiments succeeded!"
