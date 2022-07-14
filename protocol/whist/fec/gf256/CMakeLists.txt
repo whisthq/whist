@@ -1,4 +1,4 @@
-# this lib is like 10 times slower when compiled with -O0
+# cm256+gf256 is like 10 times slower when compiled with -O0
 # it's better to compile as -O2 even for debug version
 
 if(NOT MSVC)
@@ -13,7 +13,7 @@ endif()
 # the below detection works since the only arm we support is M1,
 # otherwise much more complex detections are needed
 if((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") AND (${MACOS_ARCHITECTURE} MATCHES "arm"))
-        #message(WARNING "cm256: Current ARCH is macos arm!!!")
+        #message(WARNING "gf256: Current ARCH is macos arm!!!")
         set(GF256_IS_ARM TRUE)
 else()
         set(GF256_IS_ARM FALSE)
