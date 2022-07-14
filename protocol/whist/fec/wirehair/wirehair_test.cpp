@@ -21,10 +21,8 @@ static const int g_use_shuffle = 1;
 static int base_log = 0;
 static int verbose_log = 0;
 
-inline double get_timestamp_ms0(void) { return get_timestamp_sec() * 1000; }
-
 static double get_cputime_ms(void) {
-#if OS_IS(OS_MACOS) || OS_IS(OS_MACOS)
+#if OS_IS(OS_MACOS) || OS_IS(OS_LINUX)
     struct timespec t2;
     // use CLOCK_MONOTONIC for relative time
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
@@ -40,7 +38,13 @@ static double get_cputime_ms(void) {
 #endif
 }
 
-int my_rand() {
+static int fast_rand(void) {
+    static unsigned int g_seed = 1111;
+    g_seed = (214013 * g_seed + 2531011);
+    return (g_seed >> 16) & 0x7FFF;
+}
+
+static int better_rand() {
     static random_device rd;
     static mt19937 g(rd());
     static uniform_int_distribution<> dis(1, 1000 * 1000 * 1000);
@@ -79,8 +83,9 @@ string combine_copy(vector<char *> buffers, int segment_size) {
 }
 std::tuple<int, double, double> one_test(int segment_size, int num_real, int num_fec) {
     string input(segment_size * num_real, 'a');
+
     for (int i = 0; i < (int)input.size(); i++) {
-        input[i] = my_rand() % 256;
+        input[i] = fast_rand() % 256;
     }
 
     auto buffers = make_buffers(num_real + num_fec, segment_size);
@@ -130,7 +135,7 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
     }
 
     for (int i = 0; i < (int)shuffle.size(); i++) {
-        swap(shuffle[i], shuffle[my_rand() % shuffle.size()]);
+        swap(shuffle[i], shuffle[better_rand() % shuffle.size()]);
     }
 
     string output(num_real * segment_size, 'b');
@@ -170,7 +175,9 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
         fprintf(stderr, "<decode loop: %.3f>", after_decode_loop_time - before_decode_loop_time);
     }
 
-    FATAL_ASSERT(succ == 1);
+    if (succ != 1) {
+        return make_tuple(-1, 0.0, 0.0);
+    }
 
     {
         double t1 = get_cputime_ms();
@@ -183,7 +190,9 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
     }
 
     FATAL_ASSERT(input.size() == output.size());
-    FATAL_ASSERT(input == output);
+    if (input != output) {
+        return make_tuple(-2, 0.0, 0.0);
+    }
 
     free_buffers(buffers);
     wirehair_free(wirehair_encoder);
@@ -212,6 +221,7 @@ void overhead_test(void) {
                 int max_overhead = 0;
                 for (int k = 0; k < round; k++) {
                     auto [overhead, encode_time, decode_time] = one_test(segment_size, i, y);
+                    FATAL_ASSERT(overhead >= 0);
                     o_sum += overhead;
                     if (overhead >= 1) o1_cnt++;
                     if (overhead >= 2) o2_cnt++;
@@ -252,7 +262,7 @@ void performance_test(void) {
 
                 for (int k = 0; k < round; k++) {
                     auto [overhead, encode_time, decode_time] = one_test(segment_size, i, y);
-
+                    FATAL_ASSERT(overhead >= 0);
                     encode_time_min = min(encode_time_min, encode_time);
                     encode_time_max = max(encode_time_max, encode_time);
                     encode_time_sum += encode_time;
@@ -273,35 +283,42 @@ void performance_test(void) {
     }
 }
 
-int wirehair_unittest(void) {
-
-    wirehair_manualtest();
-    
+int wirehair_auto_test(void) {
     wirehair_init();
 
     int segment_size = 1280;
     int round = 1000;
 
     for (int i = 0; i < round; i++) {
-        int num_real = my_rand() % 1024 + 2;
-        int num_fec = my_rand() % 1024;
-        one_test(segment_size, num_real, num_fec);
+        int num_real = better_rand() % 1024 + 2;
+        int num_fec = better_rand() % 1024;
+        auto [overhead, encode_time, decode_time] = one_test(segment_size, num_real, num_fec);
+
+        if (overhead < 0) {
+            fprintf(stderr, "error %d with num_real=%d num_fec=%d\n", overhead, num_real, num_fec);
+            return overhead;
+        }
+
+        if (verbose_log) {
+            fprintf(stderr,
+                    "<num_real=%d, num_fec=%d, encode_time=%f,decode_time=%f, overhead=%d>\n",
+                    num_real, num_fec, encode_time, decode_time, overhead);
+        }
     }
 
     return 0;
 }
 
-int wirehair_manualtest(void) {
-
+int wirehair_manual_test(void) {
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
-    
+
     wirehair_init();
 
     get_timestamp_sec();
 
     performance_test();
 
-    //overhead_test();
+    // overhead_test();
 
     return 0;
 }
