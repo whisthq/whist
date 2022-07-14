@@ -206,24 +206,28 @@ static void split_copy(const string &block, char *output[], int segment_size) {
 static std::tuple<int, double, double> one_test(int segment_size, int num_real, int num_fec) {
     string input(segment_size * num_real, 'a');
 
+    // generate test data with fast_rand()
     for (int i = 0; i < (int)input.size(); i++) {
         input[i] = fast_rand() % 256;
     }
 
+    // allocate buffers, split the input into the first `num_real` buffers
     auto buffers = make_buffers(num_real + num_fec, segment_size);
     split_copy(input, &buffers[0], segment_size);
 
-    double encode_time_total = 0;
-
+    double encode_time_total = 0;  // hold the total time of encode
     WirehairCodec wirehair_encoder, dummy_old_encoder = nullptr;
 
+    // code for testing the codec_reuse feature of wirehair
     if (g_codec_reuse) {
+        // create a dummy old encoder for reuse
         dummy_old_encoder =
             wirehair_encoder_create(nullptr, &input[0], segment_size * num_real, segment_size);
     }
 
     {
         double t1 = get_cputime_ms();
+        // create the encoder, feed in the input as a continuous buffer
         wirehair_encoder = wirehair_encoder_create(dummy_old_encoder, &input[0],
                                                    segment_size * num_real, segment_size);
         double t2 = get_cputime_ms();
@@ -237,11 +241,13 @@ static std::tuple<int, double, double> one_test(int segment_size, int num_real, 
 
     double max_encode_iteration_time = 0;
     double min_encode_iteration_time = 9999;
+    // generate redundant buffers in a loop
     for (int i = 0; i < num_fec; i++) {
         int idx = num_real + i;
         uint32_t out_size;
 
         double t1 = get_cputime_ms();
+        // generate one redundant buffer
         int r = wirehair_encode(wirehair_encoder, idx, buffers[idx], segment_size, &out_size);
         double t2 = get_cputime_ms();
 
@@ -266,19 +272,23 @@ static std::tuple<int, double, double> one_test(int segment_size, int num_real, 
 
     encode_time_total += encode_loop_time;
 
+    // make an array of shuffles index of [0, num_real)
+    // so that we can simulate packet losss
     vector<int> shuffle;
     for (int i = 0; i < num_real + num_fec; i++) {
         shuffle.push_back(i);
     }
-
     for (int i = 0; i < (int)shuffle.size(); i++) {
         swap(shuffle[i], shuffle[better_rand() % shuffle.size()]);
     }
 
+    // output buffer to store decoded data
     string output(num_real * segment_size, 'b');
-    WirehairCodec wirehair_decoder, dummy_old_decoder = nullptr;
-    double decode_time_total = 0;
 
+    WirehairCodec wirehair_decoder, dummy_old_decoder = nullptr;
+    double decode_time_total = 0;  // holdes total decode time
+
+    // create dummy_old_decoder to test the codec reuse feature of wirehair
     if (g_codec_reuse) {
         dummy_old_decoder =
             wirehair_decoder_create(nullptr, (num_real + 1) * segment_size, segment_size);
@@ -286,6 +296,7 @@ static std::tuple<int, double, double> one_test(int segment_size, int num_real, 
 
     {
         double t1 = get_cputime_ms();
+        // create the decoder
         wirehair_decoder =
             wirehair_decoder_create(dummy_old_decoder, num_real * segment_size, segment_size);
         double t2 = get_cputime_ms();
@@ -296,21 +307,25 @@ static std::tuple<int, double, double> one_test(int segment_size, int num_real, 
     }
 
     int succ = 0;
-    int decode_packet_cnt = 0;
+    int decode_packet_cnt = 0;  // num of packets used for decoding
     double before_decode_loop_time = get_cputime_ms();
 
     double max_decode_iteration_time = 0;
     double min_decode_iteration_time = 9999;
     double last_decode_iteration_time = -1;
+
+    // a loop to feed buffers into the decoder
     for (int i = num_fec + num_real - 1; i >= 0; i--) {
         int idx;
         if (g_use_shuffle) {
+            // use the shuffle to simulate packet loss
             idx = shuffle[i];
         } else {
             idx = i;
         }
         decode_packet_cnt++;
         double t1 = get_cputime_ms();
+        // feed in one buffer
         int r = wirehair_decode(wirehair_decoder, idx, buffers[idx], segment_size);
         double t2 = get_cputime_ms();
         if (verbose_log) {
@@ -344,6 +359,7 @@ static std::tuple<int, double, double> one_test(int segment_size, int num_real, 
 
     {
         double t1 = get_cputime_ms();
+        // call the recover() function, to reconstruct the data
         FATAL_ASSERT(wirehair_recover(wirehair_decoder, &output[0], num_real * segment_size) == 0);
         double t2 = get_cputime_ms();
         if (base_log) {
@@ -357,6 +373,7 @@ static std::tuple<int, double, double> one_test(int segment_size, int num_real, 
         return make_tuple(-2, 0.0, 0.0);
     }
 
+    // free buffers and codec
     free_buffers(buffers);
     wirehair_free(wirehair_encoder);
     wirehair_free(wirehair_decoder);
@@ -368,11 +385,15 @@ static void overhead_test(void) {
     int round = 10000;
     int segment_size = 4;
 
+    // num of selected fec packets to test
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
+    // test real buffers from 2 to 256
     for (int i = 2; i < 256; i++) {
+        // test each num of real buffer for 3 times for comparsion/cross-verify
         for (int ii = 0; ii < 3; ii++) {
             fprintf(stderr, "real=%d; ", i);
             for (int j = 0; j < (int)num_fec_packets.size(); j++) {
+                // o3_cnt means the time we need at least 3 more packets to recover
                 int o1_cnt = 0, o2_cnt = 0, o3_cnt = 0;
                 int o5_cnt = 0, o10_cnt = 0;
                 int o_sum = 0;
@@ -404,8 +425,11 @@ static void performance_test(void) {
     int round = 3000;
     int segment_size = 4;
 
+    // num of selected fec packets to test
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
-    for (int i = 2; i < 1024; i++) {
+    // test real buffers from 2 to 512
+    for (int i = 2; i < 512; i++) {
+        // test each num of real buffer for 3 times for comparsion/cross-verify
         for (int ii = 0; ii < 3; ii++) {
             fprintf(stderr, "real=%d; ", i);
             for (int j = 0; j < (int)num_fec_packets.size(); j++) {
@@ -444,11 +468,16 @@ static void performance_test(void) {
 
 static void performance_of_phases(void) {
     int segment_size = 1280;
+
+    // num of selected real packets to test
     vector<int> num_real_packets = {2,   5,    10,   20,   50,    100,   200,
                                     500, 1000, 2000, 5000, 10000, 20000, 50000};
+
+    // num of selected fec packets to test
     vector<int> num_fec_packets = {1,   2,    5,    10,   20,    100,   200,
                                    500, 1000, 2000, 5000, 10000, 20000, 50000};
 
+    // toggle on the log flag, so that the data for different phases are printed
     base_log = 1;
     for (int i = 0; i < (int)num_real_packets.size(); i++) {
         int x = num_real_packets[i];
@@ -461,5 +490,7 @@ static void performance_of_phases(void) {
             fprintf(stderr, "\n");
         }
     }
+
+    // toggle off the log flag
     base_log = 0;
 }
