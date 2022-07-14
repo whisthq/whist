@@ -59,8 +59,8 @@ def create_or_update_gist(github_gist_token, gist=None, title=None, files_list=N
         print(f"\nInitialized secret gist at url: {gist.html_url}")
 
     if files_list:
-        print(f"Updating gist {gist.id}...")
         files = " ".join(files_list)
+        print(f"Updating gist {gist.id} with files {files}")
         upload_files_command = f"gist-paste -u {gist.id} {files}"
         if not verbose:
             subprocess.run(

@@ -381,7 +381,7 @@ if __name__ == "__main__":
                     create_or_update_gist(
                         github_gist_token,
                         gist=plots_gist,
-                        files_list=[f"{plots_name_prefix}:{role}*.png"],
+                        files_list=[os.path.join(plots_folder, f"{plots_name_prefix}:{role}*.png")],
                         verbose=verbose,
                     )
                 client_metrics, server_metrics = add_plot_links(
@@ -423,7 +423,7 @@ if __name__ == "__main__":
                     create_or_update_gist(
                         github_gist_token,
                         gist=plots_gist,
-                        files_list=[f"{plots_name_prefix}:{role}*.png"],
+                        files_list=[os.path.join(plots_folder, f"{plots_name_prefix}:{role}*.png")],
                         verbose=verbose,
                     )
                 client_metrics, server_metrics = add_plot_links(
@@ -485,7 +485,9 @@ if __name__ == "__main__":
     md_files = glob.glob("e2e_report_*.md")
     # Upload link to plots and results summaries to gist
     print("\nCreating Gist with performance results and links to plots...")
-    summary_gist = create_or_update_gist(github_gist_token, files_list=md_files, verbose=verbose)
+    summary_gist = create_or_update_gist(
+        github_gist_token, title=title, files_list=md_files, verbose=verbose
+    )
     print(f"\nPosted performance results to secret gist: {summary_gist.html_url}")
 
     # Create Github Post

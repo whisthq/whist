@@ -298,7 +298,7 @@ def generate_plots(
                 destination_folder,
                 f"{name_prefix}:{k}.png" if not trimmed_plot else f"{name_prefix}:{k}_trimmed.png",
             )
-            plt.savefig(output_filename, dpi=300, bbox_inches="tight")
+            plt.savefig(output_filename, bbox_inches="tight")
             plt.close()
 
 
