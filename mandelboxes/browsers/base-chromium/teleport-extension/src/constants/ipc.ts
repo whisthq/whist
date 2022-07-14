@@ -3,8 +3,6 @@ export enum ContentScriptMessageType {
 }
 
 export enum NativeHostMessageType {
-  ACTIVATE_TAB = "ACTIVATE_TAB",
-  CREATE_NEW_TAB = "CREATE_NEW_TAB",
   DOWNLOAD_COMPLETE = "DOWNLOAD_COMPLETE",
   GEOLOCATION = "GEOLOCATION",
   NATIVE_HOST_EXIT = "NATIVE_HOST_EXIT",
