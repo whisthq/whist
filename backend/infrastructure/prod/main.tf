@@ -35,7 +35,7 @@ module "secrets-manager" {
 }
 
 module "s3-control" {
-  source = "../modules/aws_s3_control"
+  source = "../modules/aws_s3control"
   env    = var.env
   # Its necessary to specify static map keys so that
   # Terraform is able to determine the length of it
