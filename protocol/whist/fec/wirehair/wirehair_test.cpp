@@ -72,7 +72,7 @@ static void split_copy(string &block, char *output[], int segment_size) {
     }
 }
 
-static string combine_copy(vector<char *> buffers, int segment_size) {
+[[maybe_unused]] static string combine_copy(vector<char *> buffers, int segment_size) {
     string res;
     for (int i = 0; i < (int)buffers.size(); i++) {
         string tmp(segment_size, 'a');
@@ -83,8 +83,6 @@ static string combine_copy(vector<char *> buffers, int segment_size) {
 }
 
 std::tuple<int, double, double> one_test(int segment_size, int num_real, int num_fec) {
-    UNUSED(combine_copy);
-
     string input(segment_size * num_real, 'a');
 
     for (int i = 0; i < (int)input.size(); i++) {
@@ -119,7 +117,10 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
         int r = wirehair_encode(wirehair_encoder, idx, buffers[idx], segment_size, &out_size);
         double t2 = get_cputime_ms();
 
-        encode_time_total += t2 - t1;
+        if (verbose_log) {
+            fprintf(stderr, "<encode idx=%d: %.3f>", idx, t2 - t1);
+        }
+
         FATAL_ASSERT(r == 0);
         FATAL_ASSERT(segment_size == (int)out_size);
     }
@@ -130,7 +131,7 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
         fprintf(stderr, "<encode loop: %3f>", after_encode_loop_time - before_encode_loop_time);
     }
 
-    encode_time_total = after_encode_loop_time - before_encode_loop_time;
+    encode_time_total += after_encode_loop_time - before_encode_loop_time;
 
     vector<int> shuffle;
     for (int i = 0; i < num_real + num_fec; i++) {
@@ -147,7 +148,7 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
 
     {
         double t1 = get_cputime_ms();
-        wirehair_decoder = wirehair_decoder_create(0, num_real * segment_size, segment_size);
+        wirehair_decoder = wirehair_decoder_create(nullptr, num_real * segment_size, segment_size);
         double t2 = get_cputime_ms();
         decode_time_total += t2 - t1;
         if (base_log) {
@@ -166,7 +167,12 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
             idx = i;
         }
         decode_packet_cnt++;
+        double t1 = get_cputime_ms();
         int r = wirehair_decode(wirehair_decoder, idx, buffers[idx], segment_size);
+        double t2 = get_cputime_ms();
+        if (verbose_log) {
+            fprintf(stderr, "<decode feed idx=%d: %.3f>", idx, t2 - t1);
+        }
         if (r == 0) {
             succ = 1;
             break;
