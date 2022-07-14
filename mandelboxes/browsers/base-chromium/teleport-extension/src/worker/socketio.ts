@@ -50,4 +50,21 @@ const initCloseTabListener = (socket: Socket) => {
   })
 }
 
-export { initSocketioConnection, initActivateTabListener, initCloseTabListener }
+const initTabUpdateListener = (socket: Socket) => {
+  chrome.tabs.onUpdated.addListener(
+    (tabId: number, changeInfo: { url?: string }, tab: chrome.tabs.Tab) => {
+      if (changeInfo.url !== undefined) {
+        const foundTab = find(openTabs, (t) => t.tab.id === tabId)
+        if (foundTab !== undefined)
+          socket.emit("tab-url-updated", foundTab.clientTabId, changeInfo.url)
+      }
+    }
+  )
+}
+
+export {
+  initSocketioConnection,
+  initActivateTabListener,
+  initCloseTabListener,
+  initTabUpdateListener,
+}
