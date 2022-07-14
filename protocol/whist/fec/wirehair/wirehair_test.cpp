@@ -1,6 +1,11 @@
-#include <vector>
+/**
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file wirehair_test.cpp
+ * @brief contains codes that help unstand the performance/overhead/recoverablity
+ * of wirehair
+ */
+
 #include <random>
-#include <tuple>
 
 #include "whist/core/whist.h"
 #include "whist/logging/logging.h"
@@ -17,11 +22,124 @@ extern "C" {
 #include "wirehair_test.h"
 };
 
-static const int g_use_shuffle = 1;
-static const int g_codec_reuse = 0;
+/*
+============================
+Globals
+============================
+*/
 
+static const int g_use_shuffle = 1;  // use shuffer when testing decode
+static const int g_codec_reuse = 0;  // use the codec reuse feature of wirehair
+
+// flags to enable stderr logs
 static int base_log = 0;
 static int verbose_log = 0;
+
+/*
+============================
+Private Function Declarations
+============================
+*/
+
+// get the timestamp that, only counts cpu time. so that performance profile will not be affected by
+// schedule.
+// currently not implemented on windows, on windows it will fallback to the normal timestamp
+static double get_cputime_ms(void);
+
+// fast random number generator that generates worse random number than standard rand(),
+// but 3 times faster.
+static int fast_rand(void);
+
+// slow random generator, but generates better random numbes.
+static int better_rand(void);
+
+/*
+  below 4 functions are helper function to help manipulate buffers
+ */
+
+// mallocs a size 'num' array of buffers, with each buffer has size `segment_size`
+static vector<char *> make_buffers(int num, int segment_size);
+// free array buffers
+static void free_buffers(const vector<char *> &buffers);
+
+// split the data in 'block' into equal size buffers in `output`, each has size `segment_size`
+static void split_copy(const string &block, char *output[], int segment_size);
+
+// combine an array of buffers with size `segment_size` into a continuous buffer in the return
+// value.
+[[maybe_unused]] static string combine_copy(vector<char *> buffers, int segment_size);
+
+/**
+ * @brief                          do one iteration of encode-then-decode test with the spefic
+ *                                 parameters
+ *
+ * @param segment size             size of each buffers
+ * @param num_real                 num of real buffers
+ * @param num_fec                  num of fec buffers
+ * @returns                        a tuple of (overhead,encode_time,decode_time)
+ *                                 where overhead is defined as (num of buffers needed to decode) -
+ *                                 (num of real buffers)
+ */
+
+static std::tuple<int, double, double> one_test(int segment_size, int num_real, int num_fec);
+
+// print out a human readble table of the overhead of varies parameters
+static void overhead_test(void);
+// print out a human readble table of the encode/decode performance of varies parameters
+static void performance_test(void);
+// print out a human readble table of breakdown of encode/decode performance for selected parameters
+static void performance_of_phases(void);
+
+/*
+============================
+Public Function Implementations
+============================
+*/
+
+int wirehair_auto_test(void) {
+    wirehair_init();
+
+    int segment_size = 1280;
+    int round = 1000;
+
+    for (int i = 0; i < round; i++) {
+        int num_real = better_rand() % 1024 + 2;
+        int num_fec = better_rand() % 1024;
+        auto [overhead, encode_time, decode_time] = one_test(segment_size, num_real, num_fec);
+
+        if (overhead < 0) {
+            fprintf(stderr, "error %d with num_real=%d num_fec=%d\n", overhead, num_real, num_fec);
+            return overhead;
+        }
+
+        if (verbose_log) {
+            fprintf(stderr,
+                    "<num_real=%d, num_fec=%d, encode_time=%f,decode_time=%f, overhead=%d>\n",
+                    num_real, num_fec, encode_time, decode_time, overhead);
+        }
+    }
+
+    return 0;
+}
+
+int wirehair_manual_test(void) {
+    whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+    wirehair_init();
+
+    performance_test();
+
+    overhead_test();
+
+    performance_of_phases();
+
+    return 0;
+}
+
+/*
+============================
+Private Function Implementations
+============================
+*/
 
 static double get_cputime_ms(void) {
 #if OS_IS(OS_MACOS) || OS_IS(OS_LINUX)
@@ -35,7 +153,7 @@ static double get_cputime_ms(void) {
     double ret = elapsed_time;
     return ret;
 #else
-    // for other operation system fallback to noraml time
+    // for other operation system fallback to normal time
     return get_timestamp_sec() * MS_IN_SECOND;
 #endif
 }
@@ -61,12 +179,12 @@ static vector<char *> make_buffers(int num, int segment_size) {
     return buffers;
 }
 
-static void free_buffers(vector<char *> buffers) {
+static void free_buffers(const vector<char *> &buffers) {
     for (int i = 0; i < (int)buffers.size(); i++) {
         free(buffers[i]);
     }
 }
-static void split_copy(string &block, char *output[], int segment_size) {
+static void split_copy(const string &block, char *output[], int segment_size) {
     assert(block.size() % segment_size == 0);
     int num = (int)block.size() / segment_size;
     for (int i = 0; i < num; i++) {
@@ -84,7 +202,7 @@ static void split_copy(string &block, char *output[], int segment_size) {
     return res;
 }
 
-std::tuple<int, double, double> one_test(int segment_size, int num_real, int num_fec) {
+static std::tuple<int, double, double> one_test(int segment_size, int num_real, int num_fec) {
     string input(segment_size * num_real, 'a');
 
     for (int i = 0; i < (int)input.size(); i++) {
@@ -245,7 +363,7 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
     return make_tuple(decode_packet_cnt - num_real, encode_time_total, decode_time_total);
 }
 
-void overhead_test(void) {
+static void overhead_test(void) {
     int round = 10000;
     int segment_size = 4;
 
@@ -281,7 +399,7 @@ void overhead_test(void) {
     }
 }
 
-void performance_test(void) {
+static void performance_test(void) {
     int round = 3000;
     int segment_size = 4;
 
@@ -323,7 +441,7 @@ void performance_test(void) {
     }
 }
 
-void performance_of_phases(void) {
+static void performance_of_phases(void) {
     int segment_size = 1280;
     vector<int> num_real_packets = {2,   5,    10,   20,   50,    100,   200,
                                     500, 1000, 2000, 5000, 10000, 20000, 50000};
@@ -343,45 +461,4 @@ void performance_of_phases(void) {
         }
     }
     base_log = 0;
-}
-int wirehair_auto_test(void) {
-    wirehair_init();
-
-    int segment_size = 1280;
-    int round = 1000;
-
-    for (int i = 0; i < round; i++) {
-        int num_real = better_rand() % 1024 + 2;
-        int num_fec = better_rand() % 1024;
-        auto [overhead, encode_time, decode_time] = one_test(segment_size, num_real, num_fec);
-
-        if (overhead < 0) {
-            fprintf(stderr, "error %d with num_real=%d num_fec=%d\n", overhead, num_real, num_fec);
-            return overhead;
-        }
-
-        if (verbose_log) {
-            fprintf(stderr,
-                    "<num_real=%d, num_fec=%d, encode_time=%f,decode_time=%f, overhead=%d>\n",
-                    num_real, num_fec, encode_time, decode_time, overhead);
-        }
-    }
-
-    return 0;
-}
-
-int wirehair_manual_test(void) {
-    whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
-
-    wirehair_init();
-
-    get_timestamp_sec();
-
-    // performance_test();
-
-    // overhead_test();
-
-    // performance_of_phases();
-
-    return 0;
 }
