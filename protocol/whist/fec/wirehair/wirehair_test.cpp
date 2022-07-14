@@ -232,11 +232,11 @@ void overhead_test(void) {
 }
 
 void performance_test(void) {
-    int round = 500;
-    int segment_size = 1280;
+    int round = 3000;
+    int segment_size = 4;
 
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
-    for (int i = 2; i < 256; i++) {
+    for (int i = 2; i < 512; i++) {
         for (int ii = 0; ii < 3; ii++) {
             fprintf(stderr, "real=%d; ", i);
             for (int j = 0; j < (int)num_fec_packets.size(); j++) {
@@ -274,6 +274,9 @@ void performance_test(void) {
 }
 
 int wirehair_unittest(void) {
+
+    wirehair_manualtest();
+    
     wirehair_init();
 
     int segment_size = 1280;
@@ -284,17 +287,21 @@ int wirehair_unittest(void) {
         int num_fec = my_rand() % 1024;
         one_test(segment_size, num_real, num_fec);
     }
+
     return 0;
 }
 
 int wirehair_manualtest(void) {
+
+    whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+    
     wirehair_init();
 
     get_timestamp_sec();
 
     performance_test();
 
-    overhead_test();
+    //overhead_test();
 
     return 0;
 }
