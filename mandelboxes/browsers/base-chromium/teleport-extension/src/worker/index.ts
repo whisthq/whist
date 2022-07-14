@@ -16,6 +16,7 @@ import {
   initActivateTabListener,
   initCloseTabListener,
   initTabUpdateListener,
+  initTabCreatedListener
 } from "./socketio"
 
 const socket = initSocketioConnection()
@@ -46,3 +47,4 @@ initLocationHandler(nativeHostPort)
 initActivateTabListener(socket)
 initCloseTabListener(socket)
 initTabUpdateListener(socket)
+initTabCreatedListener(socket)

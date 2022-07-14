@@ -52,7 +52,7 @@ const initCloseTabListener = (socket: Socket) => {
 
 const initTabUpdateListener = (socket: Socket) => {
   chrome.tabs.onUpdated.addListener(
-    (tabId: number, changeInfo: { url?: string }, tab: chrome.tabs.Tab) => {
+    (tabId: number, changeInfo: { url?: string }) => {
       if (changeInfo.url !== undefined) {
         const foundTab = find(openTabs, (t) => t.tab.id === tabId)
         if (foundTab !== undefined)
@@ -62,9 +62,18 @@ const initTabUpdateListener = (socket: Socket) => {
   )
 }
 
+const initTabCreatedListener = (socket: Socket) => {
+  chrome.tabs.onCreated.addListener((tab: chrome.tabs.Tab) => {
+    if(tab.openerTabId !== undefined) {
+      socket.emit("tab-created", tab)
+    }
+  })
+}
+
 export {
   initSocketioConnection,
   initActivateTabListener,
   initCloseTabListener,
   initTabUpdateListener,
+  initTabCreatedListener
 }
