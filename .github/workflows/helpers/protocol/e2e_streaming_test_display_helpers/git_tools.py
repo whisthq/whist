@@ -29,14 +29,19 @@ def get_gist_user_info(github_gist_token):
     try:
         email = list(filter(lambda d: d.primary == True, user.get_emails()))[0].email
     except GithubException as e:
-        print("Caught exception: ", e)
+        print(
+            "Caught exception when trying to get user email. Perhaps the token does not have access to the emails? ",
+            e,
+        )
         email = "e2e_bot@whist.com"
     return username, name, email
 
 
 def create_gist(github_gist_token, title, files_dict={}):
     """
-    Create a secret Github Gist for the E2E results. Initialize the Gist's description
+    Create a secret Github Gist for the E2E results or plots. Initialize the Gist's description
+    with the title. If no dictionary (or an empty dictionary) is passed to the files_dict parameter,
+    we initialize the gist with a placeholder file
 
     Args:
         github_gist_token (str):    The Github Gist token to use for authentication
