@@ -1,9 +1,9 @@
-const createTab = (createProperties: { url?: string, active: boolean }) => {
+const createTab = (createProperties: { url?: string; active: boolean }) => {
   const promise = new Promise((resolve) => {
-    if(createProperties.url === undefined) return
+    if (createProperties.url === undefined) return
 
-    if(createProperties.url.startsWith("cloud:")) {
-    	createProperties.url = createProperties.url.replace("cloud:", "")
+    if (createProperties.url.startsWith("cloud:")) {
+      createProperties.url = createProperties.url.replace("cloud:", "")
     }
     chrome.tabs.create(createProperties, (tab: chrome.tabs.Tab) => {
       resolve(tab)

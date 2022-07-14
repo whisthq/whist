@@ -14,23 +14,13 @@ const initSocketioConnection = () => {
     transports: ["websocket"],
   })
 
-  console.log("Connecting to socket...")
-
-  socket.on("connect", () => console.log("Socket connected"))
-  socket.on("connected", (x: any) => console.log("Client also connected", x))
-
   return socket
 }
 
 const initActivateTabListener = (socket: Socket) => {
   socket.on("activate-tab", async (tabs: chrome.tabs.Tab[]) => {
     const tab = tabs[0]
-
-    console.log("activating", tab)
-
     const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
-
-    console.log("open tabs are", openTabs, "found is", foundTab)
 
     if (foundTab?.tab?.id === undefined) {
       const createdTab = await createTab({
@@ -42,7 +32,6 @@ const initActivateTabListener = (socket: Socket) => {
         tab: createdTab,
         clientTabId: tab.id,
       })
-
     } else {
       activateTab(foundTab.tab.id)
     }
@@ -61,8 +50,4 @@ const initCloseTabListener = (socket: Socket) => {
   })
 }
 
-export {
-  initSocketioConnection,
-  initActivateTabListener,
-  initCloseTabListener,
-}
+export { initSocketioConnection, initActivateTabListener, initCloseTabListener }

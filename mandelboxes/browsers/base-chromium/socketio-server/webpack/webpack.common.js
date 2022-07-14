@@ -5,7 +5,7 @@ const outDir = path.join(__dirname, "..", "build")
 
 module.exports = {
   entry: {
-    index: path.join(srcDir, "index.ts")
+    index: path.join(srcDir, "index.ts"),
   },
   module: {
     rules: [
@@ -13,7 +13,7 @@ module.exports = {
         test: /\.ts$/,
         use: "ts-loader",
         exclude: /node_modules/,
-      }
+      },
     ],
   },
   target: "node",
@@ -30,6 +30,6 @@ module.exports = {
   externals: {
     modules: [path.join(srcDir, "..", "node_modules")],
     bufferutil: "commonjs bufferutil",
-    "utf-8-validate": "commonjs utf-8-validate"
+    "utf-8-validate": "commonjs utf-8-validate",
   },
 }
