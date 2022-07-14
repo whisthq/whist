@@ -18,6 +18,8 @@ extern "C" {
 };
 
 static const int g_use_shuffle = 1;
+static const int g_codec_reuse = 0;
+
 static int base_log = 0;
 static int verbose_log = 0;
 
@@ -94,12 +96,17 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
 
     double encode_time_total = 0;
 
-    WirehairCodec wirehair_encoder;
+    WirehairCodec wirehair_encoder, dummy_old_encoder = nullptr;
+
+    if (g_codec_reuse) {
+        dummy_old_encoder =
+            wirehair_encoder_create(nullptr, &input[0], segment_size * num_real, segment_size);
+    }
 
     {
         double t1 = get_cputime_ms();
-        wirehair_encoder =
-            wirehair_encoder_create(nullptr, &input[0], segment_size * num_real, segment_size);
+        wirehair_encoder = wirehair_encoder_create(dummy_old_encoder, &input[0],
+                                                   segment_size * num_real, segment_size);
         double t2 = get_cputime_ms();
         if (base_log) {
             fprintf(stderr, "<encoder create: %.3f>", t2 - t1);
@@ -109,6 +116,8 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
 
     double before_encode_loop_time = get_cputime_ms();
 
+    double max_encode_iteration_time = 0;
+    double min_encode_iteration_time = 9999;
     for (int i = 0; i < num_fec; i++) {
         int idx = num_real + i;
         uint32_t out_size;
@@ -121,17 +130,22 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
             fprintf(stderr, "<encode idx=%d: %.3f>", idx, t2 - t1);
         }
 
+        max_encode_iteration_time = max(t2 - t1, max_encode_iteration_time);
+        min_encode_iteration_time = min(t2 - t1, min_encode_iteration_time);
+
         FATAL_ASSERT(r == 0);
         FATAL_ASSERT(segment_size == (int)out_size);
     }
 
-    double after_encode_loop_time = get_cputime_ms();
+    double encode_loop_time = get_cputime_ms() - before_encode_loop_time;
 
     if (base_log) {
-        fprintf(stderr, "<encode loop: %3f>", after_encode_loop_time - before_encode_loop_time);
+        fprintf(stderr, "<encode loop: %3f>", encode_loop_time);
+        fprintf(stderr, "<min/max/avg encode iteration: %.3f/%.3f/%.3f>", min_encode_iteration_time,
+                max_encode_iteration_time, encode_loop_time / num_fec);
     }
 
-    encode_time_total += after_encode_loop_time - before_encode_loop_time;
+    encode_time_total += encode_loop_time;
 
     vector<int> shuffle;
     for (int i = 0; i < num_real + num_fec; i++) {
@@ -143,12 +157,18 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
     }
 
     string output(num_real * segment_size, 'b');
-    WirehairCodec wirehair_decoder;
+    WirehairCodec wirehair_decoder, dummy_old_decoder = nullptr;
     double decode_time_total = 0;
+
+    if (g_codec_reuse) {
+        dummy_old_decoder =
+            wirehair_decoder_create(nullptr, (num_real + 1) * segment_size, segment_size);
+    }
 
     {
         double t1 = get_cputime_ms();
-        wirehair_decoder = wirehair_decoder_create(nullptr, num_real * segment_size, segment_size);
+        wirehair_decoder =
+            wirehair_decoder_create(dummy_old_decoder, num_real * segment_size, segment_size);
         double t2 = get_cputime_ms();
         decode_time_total += t2 - t1;
         if (base_log) {
@@ -159,6 +179,10 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
     int succ = 0;
     int decode_packet_cnt = 0;
     double before_decode_loop_time = get_cputime_ms();
+
+    double max_decode_iteration_time = 0;
+    double min_decode_iteration_time = 9999;
+    double last_decode_iteration_time = -1;
     for (int i = num_fec + num_real - 1; i >= 0; i--) {
         int idx;
         if (g_use_shuffle) {
@@ -173,15 +197,26 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
         if (verbose_log) {
             fprintf(stderr, "<decode feed idx=%d: %.3f>", idx, t2 - t1);
         }
+
+        if (r != 0) {
+            max_decode_iteration_time = max(t2 - t1, max_decode_iteration_time);
+            min_decode_iteration_time = min(t2 - t1, min_decode_iteration_time);
+        } else {
+            last_decode_iteration_time = t2 - t1;
+        }
+
         if (r == 0) {
             succ = 1;
             break;
         }
     }
-    double after_decode_loop_time = get_cputime_ms();
-    decode_time_total += after_decode_loop_time - before_decode_loop_time;
+    double decode_loop_time = get_cputime_ms() - before_decode_loop_time;
+    decode_time_total += decode_loop_time;
     if (base_log) {
-        fprintf(stderr, "<decode loop: %.3f>", after_decode_loop_time - before_decode_loop_time);
+        fprintf(stderr, "<decode loop: %.3f>", decode_loop_time);
+        fprintf(stderr, "<min/max/avg decode iteration: %.3f/%.3f/%.3f>", min_decode_iteration_time,
+                max_decode_iteration_time, decode_loop_time / decode_packet_cnt);
+        fprintf(stderr, "<last decode iteration: %.3f>", last_decode_iteration_time);
     }
 
     if (succ != 1) {
@@ -206,10 +241,6 @@ std::tuple<int, double, double> one_test(int segment_size, int num_real, int num
     free_buffers(buffers);
     wirehair_free(wirehair_encoder);
     wirehair_free(wirehair_decoder);
-
-    if (base_log) {
-        fprintf(stderr, "\n");
-    }
 
     return make_tuple(decode_packet_cnt - num_real, encode_time_total, decode_time_total);
 }
@@ -251,11 +282,11 @@ void overhead_test(void) {
 }
 
 void performance_test(void) {
-    int round = 500;
-    int segment_size = 1280;
+    int round = 3000;
+    int segment_size = 4;
 
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
-    for (int i = 2; i < 512; i++) {
+    for (int i = 2; i < 1024; i++) {
         for (int ii = 0; ii < 3; ii++) {
             fprintf(stderr, "real=%d; ", i);
             for (int j = 0; j < (int)num_fec_packets.size(); j++) {
@@ -292,6 +323,27 @@ void performance_test(void) {
     }
 }
 
+void performance_of_phases(void) {
+    int segment_size = 1280;
+    vector<int> num_real_packets = {2,   5,    10,   20,   50,    100,   200,
+                                    500, 1000, 2000, 5000, 10000, 20000, 50000};
+    vector<int> num_fec_packets = {1,   2,    5,    10,   20,    100,   200,
+                                   500, 1000, 2000, 5000, 10000, 20000, 50000};
+
+    base_log = 1;
+    for (int i = 0; i < (int)num_real_packets.size(); i++) {
+        int x = num_real_packets[i];
+        for (int j = 0; j < (int)num_fec_packets.size(); j++) {
+            int y = num_fec_packets[j];
+            fprintf(stderr, "num_real=%5d num_fec=%5d ", x, y);
+            auto [overhead, encode_time, decode_time] = one_test(segment_size, x, y);
+            FATAL_ASSERT(overhead >= 0);
+            fprintf(stderr, " encode_total=%f decode_total=%f", encode_time, decode_time);
+            fprintf(stderr, "\n");
+        }
+    }
+    base_log = 0;
+}
 int wirehair_auto_test(void) {
     wirehair_init();
 
@@ -325,9 +377,11 @@ int wirehair_manual_test(void) {
 
     get_timestamp_sec();
 
-    performance_test();
+    // performance_test();
 
     // overhead_test();
+
+    // performance_of_phases();
 
     return 0;
 }

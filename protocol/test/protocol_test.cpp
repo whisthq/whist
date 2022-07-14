@@ -1801,7 +1801,7 @@ TEST_F(ProtocolTest, FECTest2) {
 }
 
 TEST_F(ProtocolTest, WirehairTest) {
-    const int enable_manual_test = 0;
+    const int enable_manual_test = 1;
 
     if (enable_manual_test) {
         wirehair_manual_test();
