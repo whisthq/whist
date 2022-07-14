@@ -251,8 +251,8 @@ void overhead_test(void) {
 }
 
 void performance_test(void) {
-    int round = 3000;
-    int segment_size = 4;
+    int round = 500;
+    int segment_size = 1280;
 
     vector<int> num_fec_packets = {1, 2, 5, 10, 20, 50, 100, 200, 500};
     for (int i = 2; i < 512; i++) {
