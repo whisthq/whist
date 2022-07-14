@@ -259,7 +259,7 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 	cmd := exec.Command("apparmor_parser", "-Kr")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		logger.Panicf(globalCancel, "Unable to attach to process 'stdin' pipe. Error: %v", err)
+		logger.Panicf(globalCancel, "unable to attach to process 'stdin' pipe: %s", err)
 	}
 
 	go func() {
@@ -269,7 +269,7 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 
 	err = cmd.Run()
 	if err != nil {
-		logger.Panicf(globalCancel, "Unable to register AppArmor profile. Error: %v", err)
+		logger.Panicf(globalCancel, "unable to register AppArmor profile: %s", err)
 	}
 }
 
@@ -304,9 +304,9 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// from this panic will clean up the directory and the next run will work properly.
 	if _, err := os.Lstat(utils.WhistDir); !os.IsNotExist(err) {
 		if err == nil {
-			logger.Panicf(globalCancel, "Directory %s already exists!", utils.WhistDir)
+			logger.Panicf(globalCancel, "directory %s already exists!", utils.WhistDir)
 		} else {
-			logger.Panicf(globalCancel, "Could not make directory %s because of error %v", utils.WhistDir, err)
+			logger.Panicf(globalCancel, "could not make directory %s: %s", utils.WhistDir, err)
 		}
 	}
 
@@ -618,13 +618,13 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 				logger.Info("We got a nil error over the Docker event stream. This might indicate an error inside the docker go library. Ignoring it and proceeding normally...")
 				continue
 			case err == io.EOF:
-				logger.Panicf(globalCancel, "Docker event stream has been completely read.")
+				logger.Panicf(globalCancel, "docker event stream has been completely read.")
 			case dockerclient.IsErrConnectionFailed(err):
 				// This means "Cannot connect to the Docker daemon..."
-				logger.Panicf(globalCancel, "Got error \"%v\". Could not connect to the Docker daemon.", err)
+				logger.Panicf(globalCancel, "could not connect to the Docker daemon: %s", err)
 			default:
 				if !strings.HasSuffix(strings.ToLower(err.Error()), "context canceled") {
-					logger.Panicf(globalCancel, "Got an unknown error from the Docker event stream: %v", err)
+					logger.Panicf(globalCancel, "got an unknown error from the Docker event stream: %s", err)
 				}
 				return
 			}

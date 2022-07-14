@@ -42,7 +42,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 
 	pgxConfig, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
-		return utils.MakeError("Unable to parse database connection string: %s", err)
+		return utils.MakeError("unable to parse database connection string: %s", err)
 	}
 
 	// TODO: investigate and optimize the pgxConfig settings
@@ -55,7 +55,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 
 	dbpool, err = pgxpool.ConnectConfig(globalCtx, pgxConfig)
 	if err != nil {
-		return utils.MakeError("Unable to connect to the database: %s", err)
+		return utils.MakeError("unable to connect to the database: %s", err)
 	}
 	logger.Infof("Successfully connected to the database.")
 
