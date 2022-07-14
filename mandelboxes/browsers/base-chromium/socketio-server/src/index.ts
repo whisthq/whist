@@ -1,11 +1,9 @@
-import express from "express"
-import http from "http"
-import { Server as Socketio, Socket } from "socket.io"
+import { createServer } from "http"
+import { Server, Socket } from "socket.io"
 
 // Initialize socket.io server
-const expressServer = express()
-const server = http.createServer(expressServer)
-const io = new Socketio(server, {
+const httpServer = createServer()
+const io = new Server(httpServer, {
   cors: {
     origin: "*",
   },
@@ -13,11 +11,12 @@ const io = new Socketio(server, {
 
 // Listens for client/server events and broadcasts them to the other side
 io.on("connection", (socket: Socket) => {
-  if (io.engine.clientsCount === 2) io.emit("connected")
+  socket.emit("connected", io.engine.clientsCount)
+  socket.broadcast.emit("connected", io.engine.clientsCount)
   socket.onAny((eventName, ...args) => {
     socket.broadcast.emit(eventName, args)
   })
 })
 
 // Listens for connections on port 32261
-server.listen(32261)
+httpServer.listen(32261)

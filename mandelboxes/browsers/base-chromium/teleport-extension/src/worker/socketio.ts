@@ -10,35 +10,39 @@ let openTabs: WhistTab[] = []
 
 const initSocketioConnection = () => {
   const socket = io(SOCKETIO_SERVER_URL, {
-    reconnectionDelay: 25,
-    reconnectionDelayMax: 25,
+    reconnectionDelayMax: 500,
     transports: ["websocket"],
   })
+
+  console.log("Connecting to socket...")
+
+  socket.on("connect", () => console.log("Socket connected"))
+  socket.on("connected", (x: any) => console.log("Client also connected", x))
 
   return socket
 }
 
-const initCreateTabListener = (socket: Socket) => {
-  socket.on("create-tab", async (tabs: chrome.tabs.Tab[]) => {
-    const tab = tabs[0]
-    const createdTab = await createTab({
-      url: tab.url,
-      active: tab.active,
-    })
-
-    openTabs.push(<WhistTab>{
-      tab: createdTab,
-      clientTabId: tab.id,
-    })
-  })
-}
-
 const initActivateTabListener = (socket: Socket) => {
-  socket.on("activate-tab", (tabs: chrome.tabs.Tab[]) => {
+  socket.on("activate-tab", async (tabs: chrome.tabs.Tab[]) => {
     const tab = tabs[0]
+
+    console.log("activating", tab)
+
     const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
+
+    console.log("open tabs are", openTabs, "found is", foundTab)
+
     if (foundTab?.tab?.id === undefined) {
-      socket.emit("activate-tab-error")
+      const createdTab = await createTab({
+        url: tab.url,
+        active: tab.active,
+      })
+
+      openTabs.push(<WhistTab>{
+        tab: createdTab,
+        clientTabId: tab.id,
+      })
+
     } else {
       activateTab(foundTab.tab.id)
     }
@@ -59,7 +63,6 @@ const initCloseTabListener = (socket: Socket) => {
 
 export {
   initSocketioConnection,
-  initCreateTabListener,
   initActivateTabListener,
   initCloseTabListener,
 }

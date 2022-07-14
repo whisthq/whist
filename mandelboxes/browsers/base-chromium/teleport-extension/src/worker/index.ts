@@ -13,7 +13,6 @@ import { initTabDetachSuppressor } from "./tabs"
 import { initLocationHandler } from "./geolocation"
 import {
   initSocketioConnection,
-  initCreateTabListener,
   initActivateTabListener,
   initCloseTabListener,
 } from "./socketio"
@@ -43,6 +42,5 @@ initChromeWelcomeRedirect()
 initLocationHandler(nativeHostPort)
 
 // Listen to the client for tab actions
-initCreateTabListener(socket)
 initActivateTabListener(socket)
 initCloseTabListener(socket)
