@@ -6,6 +6,7 @@ import sys
 import argparse
 import glob
 from datetime import datetime, timedelta
+from github import InputFileContent
 
 sys.path.append(".github/workflows/helpers")
 from notifications.slack_bot import slack_post
@@ -30,7 +31,8 @@ from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
 )
 
 from protocol.e2e_streaming_test_display_helpers.git_tools import (
-    create_or_update_gist,
+    create_gist,
+    update_gist,
     associate_branch_to_open_pr,
     get_gist_user_info,
 )
@@ -153,7 +155,7 @@ if __name__ == "__main__":
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
     gist_username, gist_author_name, gist_author_email = get_gist_user_info(github_gist_token)
     # Set the Git identity
-    git_config_command = f'git config --global user.email "{gist_author_email}" && git config --global user.name "{gist_author_name}" && (umask 0077 && echo {github_gist_token} > ~/.gist)'
+    git_config_command = f'git config --global user.email "{gist_author_email}" && git config --global user.name "{gist_author_name}"'
 
     if not verbose:
         subprocess.run(
@@ -211,7 +213,7 @@ if __name__ == "__main__":
     os.makedirs(plots_folder, exist_ok=True)
 
     # Initialize the Gist post
-    plots_gist = create_or_update_gist(github_gist_token, title="E2E plots", verbose=verbose)
+    plots_gist = create_gist(github_gist_token, "E2E plots")
 
     ################################################# 1. Extract data from logs ###################################################
 
@@ -278,7 +280,7 @@ if __name__ == "__main__":
         experiments.append(experiment_entry)
         print("\t+ Failed/skipped experiment with no logs")
 
-    ################################################# 2. Generate result tables ###################################################
+    ################################################# 2. Generate result tables and plots ###############################################
 
     for i, compared_branch_name in enumerate(compared_branch_names):
         if compared_branch_name == current_branch_name:
@@ -378,12 +380,7 @@ if __name__ == "__main__":
                         compared_branch_name,
                         verbose,
                     )
-                    create_or_update_gist(
-                        github_gist_token,
-                        gist=plots_gist,
-                        files_list=[os.path.join(plots_folder, f"{plots_name_prefix}:{role}*.png")],
-                        verbose=verbose,
-                    )
+
                 client_metrics, server_metrics = add_plot_links(
                     experiment["client_metrics"],
                     experiment["server_metrics"],
@@ -420,12 +417,7 @@ if __name__ == "__main__":
                         f"{plots_name_prefix}:{role}",
                         verbose=verbose,
                     )
-                    create_or_update_gist(
-                        github_gist_token,
-                        gist=plots_gist,
-                        files_list=[os.path.join(plots_folder, f"{plots_name_prefix}:{role}*.png")],
-                        verbose=verbose,
-                    )
+
                 client_metrics, server_metrics = add_plot_links(
                     experiment["client_metrics"],
                     experiment["server_metrics"],
@@ -466,6 +458,8 @@ if __name__ == "__main__":
 
         summary_file.write("\n\n</details>\n\n")
 
+    ################################################# 3. Upload the plots to the Gist ###################################################
+
     # Keep track of plot files that were created
     plot_files = [
         p for p in os.listdir(plots_folder) if os.path.isfile(os.path.join(plots_folder, p))
@@ -475,26 +469,28 @@ if __name__ == "__main__":
         for filename in plot_files:
             print(filename)
 
+    update_gist(github_gist_token, plots_gist.id, plot_files, verbose)
+
     ################################################# 3. Post results to Slack/GitHub ###################################################
 
-    # Update Github Gist with all the results
-    # Create one file for each branch
+    # Create summary Gist with all the results
     title = "Protocol End-to-End Streaming Test Results"
-    github_repo = "whisthq/whist"
-    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
     md_files = glob.glob("e2e_report_*.md")
     # Upload link to plots and results summaries to gist
     print("\nCreating Gist with performance results and links to plots...")
-    summary_gist = create_or_update_gist(
-        github_gist_token, title=title, files_list=md_files, verbose=verbose
-    )
-    print(f"\nPosted performance results to secret gist: {summary_gist.html_url}")
+    files_dict = {}
+    for filename in sorted(md_files):
+        with open(filename, "r") as f:
+            contents = f.read()
+            files_dict[filename] = InputFileContent(contents)
+    gist = create_gist(github_gist_token, title, files_dict)
+    print(f"\nPosted performance results to secret gist: {gist.html_url}")
 
     # Create Github Post
     summary_contents = ""
     with open(f"e2e_report_0.md", "r") as summary_file:
         summary_contents = summary_file.read()
-    summary_contents += f"<details>\n<summary>Expand Full Results</summary>\n\n\nThe detailed results and comparisons with previous runs or with `dev` are available here: [link to the Gist]({summary_gist.html_url})\n\n\n</details>\n\n"
+    summary_contents += f"<details>\n<summary>Expand Full Results</summary>\n\n\nThe detailed results and comparisons with previous runs or with `dev` are available here: [link to the Gist]({gist.html_url})\n\n\n</details>\n\n"
 
     # Check for and report errors
     success_outcome = ":white_check_mark: All experiments succeeded!"
@@ -514,9 +510,9 @@ if __name__ == "__main__":
     if slack_webhook and post_results_on_slack and github_run_id:
         link_to_runner_logs = f"https://github.com/whisthq/whist/actions/runs/{github_run_id}"
         if test_outcome == success_outcome:
-            body = f"Whist daily E2E test for branch `{current_branch_name}` completed successfully. See results: {summary_gist.html_url} (<{link_to_runner_logs} | see logs>)"
+            body = f"Whist daily E2E test for branch `{current_branch_name}` completed successfully. See results: {gist.html_url} (<{link_to_runner_logs} | see logs>)"
         else:
-            body = f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {summary_gist.html_url}"
+            body = f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {gist.html_url}"
 
         slack_post(
             slack_webhook,
@@ -528,6 +524,8 @@ if __name__ == "__main__":
     # Otherwise post on GitHub if the branch is tied to a open PR
     else:
         pr_number = associate_branch_to_open_pr(current_branch_name)
+        github_repo = "whisthq/whist"
+        identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
         if pr_number != -1:
             print(
                 f"Posting contents of Gist with performance results as a comment to PR #{pr_number} associated with {current_branch_name}"
