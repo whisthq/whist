@@ -14,9 +14,9 @@ endif()
 # otherwise much more complex detections are needed
 if((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") AND (${MACOS_ARCHITECTURE} MATCHES "arm"))
         #message(WARNING "cm256: Current ARCH is macos arm!!!")
-	set(GF256_IS_ARM TRUE)
+        set(GF256_IS_ARM TRUE)
 else()
-	set(GF256_IS_ARM FALSE)
+        set(GF256_IS_ARM FALSE)
 endif()
 
 add_library(whistFEC_gf256 STATIC

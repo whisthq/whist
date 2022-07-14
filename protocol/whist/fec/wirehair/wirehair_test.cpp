@@ -51,7 +51,7 @@ static int better_rand() {
     return dis(g);
 }
 
-vector<char *> make_buffers(int num, int segment_size) {
+static vector<char *> make_buffers(int num, int segment_size) {
     vector<char *> buffers(num);
     for (int i = 0; i < num; i++) {
         buffers[i] = (char *)malloc(segment_size);
@@ -59,12 +59,12 @@ vector<char *> make_buffers(int num, int segment_size) {
     return buffers;
 }
 
-void free_buffers(vector<char *> buffers) {
+static void free_buffers(vector<char *> buffers) {
     for (int i = 0; i < (int)buffers.size(); i++) {
         free(buffers[i]);
     }
 }
-void split_copy(string &block, char *output[], int segment_size) {
+static void split_copy(string &block, char *output[], int segment_size) {
     assert(block.size() % segment_size == 0);
     int num = (int)block.size() / segment_size;
     for (int i = 0; i < num; i++) {
@@ -72,7 +72,7 @@ void split_copy(string &block, char *output[], int segment_size) {
     }
 }
 
-string combine_copy(vector<char *> buffers, int segment_size) {
+static string combine_copy(vector<char *> buffers, int segment_size) {
     string res;
     for (int i = 0; i < (int)buffers.size(); i++) {
         string tmp(segment_size, 'a');
@@ -81,7 +81,10 @@ string combine_copy(vector<char *> buffers, int segment_size) {
     }
     return res;
 }
+
 std::tuple<int, double, double> one_test(int segment_size, int num_real, int num_fec) {
+    UNUSED(combine_copy);
+    
     string input(segment_size * num_real, 'a');
 
     for (int i = 0; i < (int)input.size(); i++) {
