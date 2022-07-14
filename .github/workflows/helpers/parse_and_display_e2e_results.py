@@ -462,7 +462,9 @@ if __name__ == "__main__":
 
     # Keep track of plot files that were created
     plot_files = [
-        p for p in os.listdir(plots_folder) if os.path.isfile(os.path.join(plots_folder, p))
+        os.path.join(plots_folder, p)
+        for p in os.listdir(plots_folder)
+        if os.path.isfile(os.path.join(plots_folder, p))
     ]
     if verbose:
         print("Created the following plots:")
