@@ -3,6 +3,7 @@
  * @file wirehair_test.cpp
  * @brief contains codes that help unstand the performance/overhead/recoverablity
  * of wirehair
+ * @note the codes can also be reused if in futhure we integrate raptor
  */
 
 #include <random>
