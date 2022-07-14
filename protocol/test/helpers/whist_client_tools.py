@@ -177,6 +177,7 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmak
 
     command = f"cd ~/whist/mandelboxes && ./build.sh development/client --{cmake_build_type} | tee ~/client_mandelbox_build.log"
     success_msg = "All images built successfully!"
+    docker_tar_io_eof_error = "io: read/write on closed pipe"
 
     for retry in range(MANDELBOX_BUILD_MAX_RETRIES):
         print(
@@ -196,6 +197,13 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmak
             break
         else:
             printyellow("Could not build the development/client mandelbox on the client instance!")
+            if expression_in_pexpect_output(docker_tar_io_eof_error, build_client_output):
+                print(
+                    "Detected tar io: read/write on closed pipe error. Attempting to fix by restarting docker!"
+                )
+                pexpect_process.sendline("sudo service docker restart")
+                wait_until_cmd_done(pexpect_process, pexpect_prompt)
+
         if retry == MANDELBOX_BUILD_MAX_RETRIES - 1:
             # If building the development/client mandelbox fails too many times, trigger a fatal error.
             exit_with_error(
