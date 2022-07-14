@@ -30,8 +30,7 @@ from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
 )
 
 from protocol.e2e_streaming_test_display_helpers.git_tools import (
-    initialize_github_gist_post,
-    update_github_gist_post,
+    create_or_update_gist,
     associate_branch_to_open_pr,
     get_gist_user_info,
 )
@@ -154,7 +153,7 @@ if __name__ == "__main__":
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
     gist_username, gist_author_name, gist_author_email = get_gist_user_info(github_gist_token)
     # Set the Git identity
-    git_config_commands = f'git config --global user.email "{gist_author_email}" && git config --global user.name "{gist_author_name}" && (umask 0077 && echo {github_gist_token} > ~/.gist)'
+    git_config_command = f'git config --global user.email "{gist_author_email}" && git config --global user.name "{gist_author_name}" && (umask 0077 && echo {github_gist_token} > ~/.gist)'
 
     if not verbose:
         subprocess.run(
@@ -493,7 +492,7 @@ if __name__ == "__main__":
     summary_contents = ""
     with open(f"e2e_report_0.md", "r") as summary_file:
         summary_contents = summary_file.read()
-    summary_contents += f"<details>\n<summary>Expand Full Results</summary>\n\n\nThe detailed results and comparisons with previous runs or with `dev` are available here: [link to the Gist]({gist.html_url})\n\n\n</details>\n\n"
+    summary_contents += f"<details>\n<summary>Expand Full Results</summary>\n\n\nThe detailed results and comparisons with previous runs or with `dev` are available here: [link to the Gist]({summary_gist.html_url})\n\n\n</details>\n\n"
 
     # Check for and report errors
     success_outcome = ":white_check_mark: All experiments succeeded!"
@@ -513,9 +512,9 @@ if __name__ == "__main__":
     if slack_webhook and post_results_on_slack and github_run_id:
         link_to_runner_logs = f"https://github.com/whisthq/whist/actions/runs/{github_run_id}"
         if test_outcome == success_outcome:
-            body = f"Whist daily E2E test for branch `{current_branch_name}` completed successfully. See results: {gist.html_url} (<{link_to_runner_logs} | see logs>)"
+            body = f"Whist daily E2E test for branch `{current_branch_name}` completed successfully. See results: {summary_gist.html_url} (<{link_to_runner_logs} | see logs>)"
         else:
-            body = f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {gist.html_url}"
+            body = f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {summary_gist.html_url}"
 
         slack_post(
             slack_webhook,
