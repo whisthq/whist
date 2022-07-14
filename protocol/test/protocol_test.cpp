@@ -61,7 +61,7 @@ extern "C" {
 #include <whist/fec/rs_wrapper.h>
 #include <whist/fec/fec_controller.h>
 #include "whist/utils/string_buffer.h"
-#include <whist/fec/wirehair/wirehair_test.h>
+#include <whist/fec/wirehair_test.h>
 #include "whist/core/error_codes.h"
 #include <whist/core/features.h>
 
