@@ -13,6 +13,9 @@ QueueContext* events_queue = NULL;
 void* callback_context = NULL;
 OnCursorChangeCallback on_cursor_change = NULL;
 OnFileUploadCallback on_file_upload = NULL;
+OnFileDownloadStart on_file_download_start = NULL;
+OnFileDownloadUpdate on_file_download_update = NULL;
+OnFileDownloadComplete on_file_download_complete = NULL;
 
 static WhistMutex lock;
 static AVFrame* pending = NULL;
@@ -100,6 +103,18 @@ static void virtual_interface_set_on_file_upload_callback(OnFileUploadCallback c
     on_file_upload = cb;
 }
 
+static void virtual_interface_set_on_file_download_start_callback(OnFileDownloadStart cb) {
+    on_file_download_start = cb;
+}
+
+static void virtual_interface_set_on_file_download_update_callback(OnFileDownloadUpdate cb) {
+    on_file_download_update = cb;
+}
+
+static void virtual_interface_set_on_file_download_complete_callback(OnFileDownloadComplete cb) {
+    on_file_download_complete = cb;
+}
+
 static void virtual_interface_set_callback_context(void* context) { callback_context = context; }
 
 static const VirtualInterface vi = {
@@ -125,6 +140,12 @@ static const VirtualInterface vi = {
     .file =
         {
             .set_on_file_upload_callback = virtual_interface_set_on_file_upload_callback,
+            .set_on_file_download_start_callback =
+                virtual_interface_set_on_file_download_start_callback,
+            .set_on_file_download_update_callback =
+                virtual_interface_set_on_file_download_update_callback,
+            .set_on_file_download_complete_callback =
+                virtual_interface_set_on_file_download_complete_callback,
         },
 };
 

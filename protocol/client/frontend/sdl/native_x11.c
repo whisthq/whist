@@ -53,3 +53,8 @@ const char* sdl_native_get_chosen_file() {
     // File upload has not implemented on X11 yet.
     return NULL;
 }
+
+void sdl_native_file_download_notify_finished(const char* filepath) {
+    UNUSED(filepath);
+    // Notification not implemented on X11 yet.
+}

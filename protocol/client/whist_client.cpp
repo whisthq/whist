@@ -306,7 +306,7 @@ static void on_connection_setup(WhistFrontend* frontend, WhistRenderer* renderer
     window_resize_mutex = whist_create_mutex();
 
     // Create tcp/udp handlers and give them the renderer so they can route packets properly
-    init_packet_synchronizers(renderer);
+    init_packet_synchronizers(frontend, renderer);
 
     // Sometimes, resize events aren't generated during startup, so we manually call this to
     // initialize internal values to actual dimensions

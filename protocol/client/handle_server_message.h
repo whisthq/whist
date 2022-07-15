@@ -22,6 +22,7 @@ Includes
 #include <stddef.h>
 
 #include <whist/core/whist.h>
+#include "frontend/frontend.h"
 
 /*
 ============================
@@ -40,9 +41,10 @@ Public Functions
  * @param wsmsg                     Message from server
  * @param wsmsg_size                The size (in bytes) of the message, including
  *                                 any buffer considered part of the message
+ * @param frontend                  Pointer to the frontend UI
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+int handle_server_message(WhistServerMessage* wsmsg, size_t wsmsg_size, WhistFrontend* frontend);
 
 #endif  // SERVER_MESSAGE_HANDLER_H

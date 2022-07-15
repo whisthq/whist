@@ -21,6 +21,7 @@ extern "C" {
 #include <NotificationActivationCallback.h>
 #include <Windows.UI.Notifications.h>
 #include <ShObjIdl_core.h>
+#include <ShlObj_core.h>
 
 #include "windows_notification_helper.h"
 
@@ -330,4 +331,22 @@ const char* sdl_native_get_chosen_file() {
 
     // Return the filepath
     return filepath_buffer;
+}
+
+void sdl_native_file_download_notify_finished(const char* filepath) {
+    // Create an LPITEMIDLIST for the given filepath
+    LPITEMIDLIST folder = ILCreateFromPathA(filepath);
+    if (folder == NULL) {
+        LOG_ERROR("ILCreateFromPathA failed");
+        return;
+    }
+
+    // Open up and select that filepath
+    HRESULT hr = SHOpenFolderAndSelectItems(folder, 0, NULL, 0);
+    if (FAILED(hr)) {
+        LOG_ERROR("SHOpenFolderAndSelectItems failed");
+    }
+
+    // Free the LPITEMIDLIST
+    ILFree(folder);
 }

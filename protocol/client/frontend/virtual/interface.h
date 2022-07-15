@@ -7,6 +7,9 @@
 typedef const char* (*OnFileUploadCallback)(void* data);
 typedef void (*OnCursorChangeCallback)(void* data, const char* cursor_type,
                                        bool relative_mouse_mode);
+typedef void* (*OnFileDownloadStart)(const char* file_path, int64_t file_size);
+typedef void (*OnFileDownloadUpdate)(void* opaque, int64_t bytes_so_far, int64_t bytes_per_sec);
+typedef void (*OnFileDownloadComplete)(void* opaque);
 
 typedef struct VirtualInterface {
     struct {
@@ -28,6 +31,9 @@ typedef struct VirtualInterface {
     } events;
     struct {
         void (*set_on_file_upload_callback)(OnFileUploadCallback cb);
+        void (*set_on_file_download_start_callback)(OnFileDownloadStart cb);
+        void (*set_on_file_download_update_callback)(OnFileDownloadUpdate cb);
+        void (*set_on_file_download_complete_callback)(OnFileDownloadComplete cb);
     } file;
 } VirtualInterface;
 

@@ -19,6 +19,7 @@ Includes
 */
 
 #include "renderer.h"
+#include "frontend/frontend.h"
 
 /*
 ============================
@@ -30,9 +31,10 @@ Public Functions
  * @brief                          Initialize the packet synchronizer
  *                                 threads for UDP and TCP
  *
+ * @param frontend                 Pointer to the frontend UI
  * @param whist_renderer           The whist renderer to pass packets into
  */
-void init_packet_synchronizers(WhistRenderer* whist_renderer);
+void init_packet_synchronizers(WhistFrontend* frontend, WhistRenderer* whist_renderer);
 
 /**
  * @brief                          Destroy the packet synchronizer

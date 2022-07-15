@@ -143,6 +143,23 @@ const char* whist_frontend_get_chosen_file(WhistFrontend* frontend) {
     return frontend->call->get_chosen_file(frontend);
 }
 
+void* whist_frontend_file_download_start(WhistFrontend* frontend, const char* file_path,
+                                         int64_t file_size) {
+    FRONTEND_ENTRY();
+    return frontend->call->file_download_start(frontend, file_path, file_size);
+}
+
+void whist_frontend_file_download_update(WhistFrontend* frontend, void* opaque,
+                                         int64_t bytes_so_far, int64_t bytes_per_sec) {
+    FRONTEND_ENTRY();
+    frontend->call->file_download_update(frontend, opaque, bytes_so_far, bytes_per_sec);
+}
+
+void whist_frontend_file_download_complete(WhistFrontend* frontend, void* opaque) {
+    FRONTEND_ENTRY();
+    frontend->call->file_download_complete(frontend, opaque);
+}
+
 void whist_frontend_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
     FRONTEND_ENTRY();
     frontend->call->set_cursor(frontend, cursor);

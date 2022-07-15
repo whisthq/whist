@@ -913,11 +913,11 @@ TEST_F(ProtocolTest, FileSynchronizerTestSingleTransfer) {
 
     // Write the file chunks - these are usually sent over a tcp channel
     for (int i = 0; i < transfer_steps_large_image(); i++) {
-        file_synchronizer_write_file_chunk(file_chunks[i]);
+        file_synchronizer_write_file_chunk(file_chunks[i], NULL, NULL);
         deallocate_region(file_chunks[i]);
     }
     // Final write necessary to register file close chunk
-    file_synchronizer_write_file_chunk(file_close_chunk);
+    file_synchronizer_write_file_chunk(file_close_chunk, NULL, NULL);
     EXPECT_EQ(linked_list_size(transferring_files_list), 0);
 
     // Since the FILE_TRANSFER_DEFAULT flag is set - the file is written to the current directory
@@ -995,7 +995,7 @@ TEST_F(ProtocolTest, FileSynchronizerMultipleFileTransfer) {
 
     // Read in chunks - file synchronizer should handle matching correct chunks to files
     for (int i = 0; i < file_chunk_counter; i++) {
-        file_synchronizer_write_file_chunk(file_chunks[i]);
+        file_synchronizer_write_file_chunk(file_chunks[i], NULL, NULL);
         deallocate_region(file_chunks[i]);
     }
 

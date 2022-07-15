@@ -420,3 +420,10 @@ const char* sdl_native_get_chosen_file() {
 
     return NULL;
 }
+
+void sdl_native_file_download_notify_finished(const char* file_path) {
+    // Bounce the downloads folder
+    [[NSDistributedNotificationCenter defaultCenter]
+        postNotificationName:@"com.apple.DownloadFileFinished"
+                      object:[NSString stringWithUTF8String:file_path]];
+}
