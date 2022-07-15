@@ -38,9 +38,9 @@ extern "C" {
 // Data
 extern "C" {
 extern volatile char client_binary_aes_private_key[16];
-SocketContext packet_udp_context = {0};
+SocketContext packet_udp_context = {};
 }
-SocketContext packet_tcp_context = {0};
+SocketContext packet_tcp_context = {};
 
 std::atomic<bool> connected = false;
 
