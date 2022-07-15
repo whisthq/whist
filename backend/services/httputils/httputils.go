@@ -1,10 +1,8 @@
 package httputils
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os/exec"
 	"strings"
@@ -65,8 +63,7 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 // Helper functions
 
 // GetAccessToken is a helper function that extracts the access token
-// from the request "Authorization" header. If it fails, fallback to
-// extracting the token from the request's body.
+// from the request "Authorization" header.
 func GetAccessToken(r *http.Request) (string, error) {
 	if metadata.IsLocalEnv() {
 		return "", nil
@@ -74,45 +71,11 @@ func GetAccessToken(r *http.Request) (string, error) {
 
 	authorization := r.Header.Get("Authorization")
 	bearer := strings.Split(authorization, "Bearer ")
-
-	var (
-		accessToken string
-		bodyMap     map[string]interface{}
-	)
 	if len(bearer) <= 1 || bearer[1] == "" || bearer[1] == "undefined" {
-		logger.Warningf("Bearer token is empty. Trying to parse token from request body.")
-
-		// Read request body and replace for subsequent reads
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return "", utils.MakeError("failed to read request body: %s", err)
-		}
-		r.Body.Close()
-		r.Body = io.NopCloser(bytes.NewBuffer(body))
-
-		// Here we unmarshal into a simple map because we are only interested
-		// in the access token.
-		err = json.Unmarshal(body, &bodyMap)
-		if err != nil {
-			return "", utils.MakeError("failed to umarshal request body: %s", err)
-		}
-
-		val, ok := bodyMap["jwt_access_token"]
-		if !ok {
-			return "", utils.MakeError("did not find jwt_access_token field in request body.")
-		}
-
-		// TODO: We've decided to supersede the client-app with Chromium on June 29, 2022. It no
-		// longer gets deployed. In ~1 month, remove this logic to only obtain the token from
-		// the "jwt_access_token" key. -- If the date is past what's above and this code is still
-		// here, simply make a PR to remove it.
-		accessToken = val.(string)
-
-	} else {
-		accessToken = bearer[1]
+		return "", utils.MakeError("couldn't find access token in Authorization header")
 	}
 
-	return accessToken, nil
+	return bearer[1], nil
 }
 
 // AuthenticateRequest will verify that the access token is valid
