@@ -12,9 +12,9 @@
 #define PLOT_VIDEO_FIRST_SEEN_TO_DECODE \
     false  // how long it takes between video frame is seen and send to decoder
 
-#define PLOT_UDP_RECV_QUEUE true
+#define PLOT_UDP_RECV_QUEUE false
 
-#define PLOT_UDP_PACKET_HANDLE_DELAY true
+#define PLOT_UDP_PACKET_HANDLE_DELAY false
 
 #define PLOT_UDP_RECV_GAP true
 
