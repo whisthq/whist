@@ -70,10 +70,8 @@ extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
 
 static char* server_ip;
+extern "C" {
 extern bool using_stun;
-
-// Mouse motion state
-extern MouseMotionAccumulation mouse_state;
 
 // Whether a pinch is currently active - set in handle_frontend_events.c
 extern bool active_pinch;
@@ -81,15 +79,19 @@ extern bool active_pinch;
 // Window resizing state
 extern WhistMutex window_resize_mutex;  // protects pending_resize_message
 extern WhistTimer window_resize_timer;
-extern volatile bool pending_resize_message;
-
-// The state of the client, i.e. whether it's connected to a server or not
-extern std::atomic<bool> connected;
 
 extern volatile bool client_exiting;
 
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
+}
+
+// Mouse motion state
+extern MouseMotionAccumulation mouse_state;
+extern volatile bool pending_resize_message;
+
+// The state of the client, i.e. whether it's connected to a server or not
+extern std::atomic<bool> connected;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
