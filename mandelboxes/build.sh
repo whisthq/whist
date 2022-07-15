@@ -49,8 +49,7 @@ if [[ "$mode" == "dev" ]]; then
   docker builder prune --filter "until=48h" --force
 fi
 
-# Nuke the build-assets temp directory
-#rm -rf base/build-assets/build-temp && mkdir base/build-assets/build-temp
+# Create the build-assets temp directory if it doesn't exist
 mkdir -p base/build-assets/build-temp
 
 # Build and copy the protocol
