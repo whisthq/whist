@@ -37,7 +37,9 @@ extern "C" {
 }
 
 // Updater variables
+extern "C" {
 extern SocketContext packet_udp_context;
+}
 extern SocketContext packet_tcp_context;
 extern std::atomic<bool>
     connected;  // The state of the client, i.e. whether it's connected to a server or not
