@@ -20,11 +20,11 @@ Includes
 ============================
 */
 
-#include "network.h"
 #include <whist/core/whist.h>
 #include <atomic>
 
 extern "C" {
+#include "network.h"
 #include <whist/logging/error_monitor.h>
 #include "whist/core/features.h"
 #include "client_utils.h"

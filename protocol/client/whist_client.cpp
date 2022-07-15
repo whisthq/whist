@@ -18,7 +18,6 @@ Includes
 */
 
 #include <atomic>
-#include "network.h"
 #include <whist/core/whist.h>
 
 extern "C" {
@@ -29,6 +28,7 @@ extern "C" {
 #include <string.h>
 #include <fcntl.h>
 
+#include "network.h"
 #include <whist/core/whist_string.h>
 #include <whist/network/network.h>
 #include <whist/utils/aes.h>

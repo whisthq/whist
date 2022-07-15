@@ -24,7 +24,6 @@ Includes
 
 #include <atomic>
 #include "video.h"
-#include "network.h"
 
 extern "C" {
 
@@ -36,6 +35,7 @@ extern "C" {
 
 #include <stdio.h>
 
+#include "network.h"
 #include <whist/utils/color.h>
 #include <whist/utils/png.h>
 #include <whist/logging/log_statistic.h>

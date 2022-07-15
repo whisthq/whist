@@ -18,8 +18,6 @@ Includes
 
 #include <atomic>
 #include <whist/core/whist.h>
-#include "network.h"
-#include "video.h"
 
 extern "C" {
 #include <whist/utils/clock.h>
@@ -28,7 +26,9 @@ extern "C" {
 #include <whist/logging/logging.h>
 
 #include "handle_server_message.h"
+#include "network.h"
 #include "audio.h"
+#include "video.h"
 #include "sync_packets.h"
 #include "client_utils.h"
 }
