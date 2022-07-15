@@ -49,8 +49,8 @@ if [[ "$mode" == "dev" ]]; then
   docker builder prune --filter "until=48h" --force
 fi
 
-# Nuke the build-assets temp directory
-rm -rf base/build-assets/build-temp && mkdir base/build-assets/build-temp
+# Create the build-assets temp directory if it doesn't exist
+mkdir -p base/build-assets/build-temp
 
 # Build and copy the protocol
 if [[ "$mode" == "dev" ]]; then
@@ -78,14 +78,14 @@ fi
 
 # Copy the Nvidia driver installer
 echo "Fetching Nvidia driver installer..."
-mkdir base/build-assets/build-temp/nvidia-driver
+mkdir -p base/build-assets/build-temp/nvidia-driver
 ../host-setup/get-nvidia-driver-installer.sh
 mv nvidia-driver-installer.run base/build-assets/build-temp/nvidia-driver
 
 # Copy the fonts used in Whist
 echo "Fetching the Whist fonts..."
-mkdir base/build-assets/build-temp/fonts
-aws s3 cp --only-show-errors s3://whist-fonts base/build-assets/build-temp/fonts --recursive
+mkdir -p base/build-assets/build-temp/fonts
+aws s3 sync s3://whist-fonts base/build-assets/build-temp/fonts
 
 # Bundle these build assets into a cached Docker image
 echo "Bundling build assets..."
