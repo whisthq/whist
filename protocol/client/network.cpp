@@ -112,7 +112,7 @@ int connect_to_server(const char *server_ip, bool with_stun) {
     start_timer(&timer);
     while (tcp_packet == NULL && get_timer(&timer) < TCP_CONNECTION_WAIT) {
         socket_update(&packet_tcp_context);
-        tcp_packet = (WhistPacket*) get_packet(&packet_tcp_context, PACKET_MESSAGE);
+        tcp_packet = (WhistPacket *)get_packet(&packet_tcp_context, PACKET_MESSAGE);
         whist_sleep(5);
     }
 

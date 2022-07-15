@@ -182,7 +182,8 @@ static void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char*
     }
 
     // Alloc wcmsg
-    WhistClientMessage* wcmsg_tcp = (WhistClientMessage*) allocate_region(sizeof(WhistClientMessage) + data_size);
+    WhistClientMessage* wcmsg_tcp =
+        (WhistClientMessage*)allocate_region(sizeof(WhistClientMessage) + data_size);
 
     switch (message_type) {
         case CMESSAGE_CLIPBOARD: {
@@ -267,7 +268,7 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
 
         successful_read_or_pull = false;
 
-        TIME_RUN(WhistPacket* packet = (WhistPacket*) get_packet(tcp_context, PACKET_MESSAGE),
+        TIME_RUN(WhistPacket* packet = (WhistPacket*)get_packet(tcp_context, PACKET_MESSAGE),
                  NETWORK_READ_PACKET_TCP, statistics_timer);
 
         if (packet) {
