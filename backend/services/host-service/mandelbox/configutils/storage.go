@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -85,7 +86,9 @@ var GetAccessPoint func() string = func(unmemoized func() string) func() string 
 		return cache
 	}
 }(func() string {
-	client, err := NewS3ControlClient("us-east-1")
+	// For some reason, AWS routes all requests to manage the multi-region
+	// access point to Oregon, so the region needs to be set to us-west-2.
+	client, err := NewS3ControlClient("us-west-2")
 	if err != nil {
 		logger.Errorf("couldn't create s3control client: %s", err)
 		return ""
@@ -97,28 +100,35 @@ var GetAccessPoint func() string = func(unmemoized func() string) func() string 
 		return ""
 	}
 
-	var input *s3control.GetAccessPointInput
+	var input *s3control.GetMultiRegionAccessPointInput
 	env := metadata.GetAppEnvironmentLowercase()
 	if env == string(metadata.EnvDev) || env == string(metadata.EnvStaging) || env == string(metadata.EnvProd) {
 		// Return the appropiate mmulti-region access point depending on current environment
-		input = &s3control.GetAccessPointInput{
+		input = &s3control.GetMultiRegionAccessPointInput{
 			AccountId: aws.String(account),
 			Name:      aws.String(utils.Sprintf("whist-user-configs-access-point-%s", env)),
 		}
 	} else {
 		// Default to dev
-		input = &s3control.GetAccessPointInput{
+		input = &s3control.GetMultiRegionAccessPointInput{
 			AccountId: aws.String(account),
-			Name:      aws.String(utils.Sprintf("whist-user-configs-access-point-%s", env)),
+			Name:      aws.String("whist-user-configs-access-point-dev"),
 		}
 	}
-	output, err := client.GetAccessPoint(context.Background(), input)
+	output, err := client.GetMultiRegionAccessPoint(context.Background(), input)
 	if err != nil {
 		logger.Errorf("failed to get access point: %s", err)
 		return ""
 	}
 
-	return aws.ToString(output.AccessPointArn)
+	accessPointARN := arn.ARN{
+		Partition: "aws",
+		AccountID: account,
+		Service:   "s3",
+		Resource:  utils.Sprintf("accesspoint/%s", aws.ToString(output.AccessPoint.Alias)),
+	}
+
+	return accessPointARN.String()
 })
 
 // GetHeadObject returns the head object of the given bucket and key.
