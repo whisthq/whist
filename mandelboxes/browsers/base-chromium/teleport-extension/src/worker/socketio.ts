@@ -50,22 +50,41 @@ const initCloseTabListener = (socket: Socket) => {
   })
 }
 
-const initTabUpdateListener = (socket: Socket) => {
-  chrome.tabs.onUpdated.addListener(
-    (tabId: number, changeInfo: { url?: string }) => {
-      if (changeInfo.url !== undefined) {
-        const foundTab = find(openTabs, (t) => t.tab.id === tabId)
-        if (foundTab !== undefined)
-          socket.emit("tab-url-updated", foundTab.clientTabId, changeInfo.url)
+const initUpdateTabIDListener = (socket: Socket) => {
+  socket.on("update-tab-id", (clientTabId: number, serverTabId: number) => {
+    openTabs = openTabs.map((t) => {
+      if (t.tab.id !== serverTabId) return t
+      return {
+        clientTabId,
+        tab: t.tab,
       }
+    })
+  })
+}
+
+const initCloudTabUpdatedListener = (socket: Socket) => {
+  chrome.tabs.onUpdated.addListener(
+    (
+      tabId: number,
+      changeInfo: { url?: string; title?: string },
+      tab: chrome.tabs.Tab
+    ) => {
+      if (changeInfo.url === undefined && changeInfo.title === undefined) return
+
+      const foundTab = find(openTabs, (t) => t.tab.id === tabId)
+      socket.emit("tab-updated", foundTab?.clientTabId, tab)
     }
   )
 }
 
-const initTabCreatedListener = (socket: Socket) => {
+const initCloudTabCreatedListener = (socket: Socket) => {
   chrome.tabs.onCreated.addListener((tab: chrome.tabs.Tab) => {
-    if(tab.openerTabId !== undefined) {
+    if (tab.openerTabId !== undefined) {
       socket.emit("tab-created", tab)
+      openTabs.push(<WhistTab>{
+        tab: tab,
+        clientTabId: undefined,
+      })
     }
   })
 }
@@ -74,6 +93,7 @@ export {
   initSocketioConnection,
   initActivateTabListener,
   initCloseTabListener,
-  initTabUpdateListener,
-  initTabCreatedListener
+  initCloudTabUpdatedListener,
+  initCloudTabCreatedListener,
+  initUpdateTabIDListener,
 }

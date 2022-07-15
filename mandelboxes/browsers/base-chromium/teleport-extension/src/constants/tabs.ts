@@ -1,4 +1,4 @@
 export interface WhistTab {
   tab: chrome.tabs.Tab
-  clientTabId: number
+  clientTabId: number | undefined
 }
