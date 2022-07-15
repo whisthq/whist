@@ -496,7 +496,7 @@ if __name__ == "__main__":
     summary_contents = ""
     with open(f"e2e_report_0.md", "r") as summary_file:
         summary_contents = summary_file.read()
-    summary_contents += f"<details>\n<summary>Expand Full Results</summary>\n\n\nThe detailed results and comparisons with previous runs or with `dev` are available here: [link to the Gist]({gist.html_url})\n\n\n</details>\n\n"
+    summary_contents += f"\n\nFull Results: The detailed results and comparisons with previous runs or with `dev` are available here: [link to the Gist]({gist.html_url})\n\n"
 
     # Check for and report errors
     success_outcome = ":white_check_mark: All experiments succeeded!"
