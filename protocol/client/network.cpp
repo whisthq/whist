@@ -20,6 +20,10 @@ Includes
 ============================
 */
 
+#if defined(_MSC_VER)
+#pragma warning(disable : 4815)  // Disable MSVC warning about 0-size array in wcmsg
+#endif
+
 #include <whist/core/whist.h>
 #include <atomic>
 
