@@ -17,6 +17,14 @@ Includes
 ============================
 */
 
+#if defined(_MSC_VER)
+#pragma warning(disable : 4815)  // Disable MSVC warning about 0-size array in wcmsg
+#endif
+
+#include <atomic>
+#include <whist/core/whist.h>
+
+extern "C" {
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -24,7 +32,7 @@ Includes
 #include <string.h>
 #include <fcntl.h>
 
-#include <whist/core/whist.h>
+#include "network.h"
 #include <whist/core/whist_string.h>
 #include <whist/network/network.h>
 #include <whist/utils/aes.h>
@@ -37,7 +45,6 @@ Includes
 #include "whist_client.h"
 #include "audio.h"
 #include "client_utils.h"
-#include "network.h"
 #include "handle_frontend_events.h"
 #include "sdl_utils.h"
 #include "handle_server_message.h"
@@ -53,6 +60,7 @@ Includes
 #include <mach-o/dyld.h>
 #include <whist/utils/mac_utils.h>
 #endif  // macOS
+}
 
 // N.B.: Please don't put globals here, since main.c won't be included when the testing suite is
 // used instead
@@ -62,10 +70,8 @@ extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
 
 static char* server_ip;
+extern "C" {
 extern bool using_stun;
-
-// Mouse motion state
-extern MouseMotionAccumulation mouse_state;
 
 // Whether a pinch is currently active - set in handle_frontend_events.c
 extern bool active_pinch;
@@ -73,15 +79,19 @@ extern bool active_pinch;
 // Window resizing state
 extern WhistMutex window_resize_mutex;  // protects pending_resize_message
 extern WhistTimer window_resize_timer;
-extern volatile bool pending_resize_message;
-
-// The state of the client, i.e. whether it's connected to a server or not
-extern volatile bool connected;
 
 extern volatile bool client_exiting;
 
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
+}
+
+// Mouse motion state
+extern MouseMotionAccumulation mouse_state;
+extern volatile bool pending_resize_message;
+
+// The state of the client, i.e. whether it's connected to a server or not
+extern std::atomic<bool> connected;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
@@ -103,7 +113,8 @@ static void sync_keyboard_state(WhistFrontend* frontend) {
     */
 
     // Set keyboard state initialized to null
-    WhistClientMessage wcmsg = {0};
+    WhistClientMessage wcmsg;
+    memset(&wcmsg, 0, sizeof(wcmsg));
 
     wcmsg.type = MESSAGE_KEYBOARD_STATE;
 
@@ -152,7 +163,8 @@ static void initiate_file_upload(WhistFrontend* frontend) {
         LOG_INFO("Upload has been initiated");
     } else {
         LOG_INFO("No file selected");
-        WhistClientMessage wcmsg = {0};
+        WhistClientMessage wcmsg;
+        memset(&wcmsg, 0, sizeof(wcmsg));
         wcmsg.type = MESSAGE_FILE_UPLOAD_CANCEL;
         send_wcmsg(&wcmsg);
     }

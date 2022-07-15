@@ -35,6 +35,7 @@ extern "C" {
 
 #include <stdio.h>
 
+#include "network.h"
 #include <whist/utils/color.h>
 #include <whist/utils/png.h>
 #include <whist/logging/log_statistic.h>
@@ -42,7 +43,6 @@ extern "C" {
 #include "whist/core/features.h"
 #include "whist/core/whist.h"
 #include "whist/utils/command_line.h"
-#include "network.h"
 #include "client_utils.h"
 #include <whist/debug/protocol_analyzer.h>
 };

@@ -3,15 +3,15 @@
 ]]
 
 set(WHIST_CLIENT_DEPENDS
-        whist_client.c
+        whist_client.cpp
         audio.cpp
         client_utils.c
-        network.c
+        network.cpp
         handle_frontend_events.c
         sdl_utils.c
         handle_server_message.c
         video.cpp
-        sync_packets.c
+        sync_packets.cpp
         renderer.c
         frontend/frontend.c
         frontend/sdl/audio.cpp
