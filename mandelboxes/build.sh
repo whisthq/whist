@@ -50,7 +50,8 @@ if [[ "$mode" == "dev" ]]; then
 fi
 
 # Nuke the build-assets temp directory
-rm -rf base/build-assets/build-temp && mkdir base/build-assets/build-temp
+#rm -rf base/build-assets/build-temp && mkdir base/build-assets/build-temp
+mkdir -p base/build-assets/build-temp
 
 # Build and copy the protocol
 if [[ "$mode" == "dev" ]]; then
@@ -78,13 +79,13 @@ fi
 
 # Copy the Nvidia driver installer
 echo "Fetching Nvidia driver installer..."
-mkdir base/build-assets/build-temp/nvidia-driver
+mkdir -p base/build-assets/build-temp/nvidia-driver
 ../host-setup/get-nvidia-driver-installer.sh
 mv nvidia-driver-installer.run base/build-assets/build-temp/nvidia-driver
 
 # Copy the fonts used in Whist
 echo "Fetching the Whist fonts..."
-mkdir base/build-assets/build-temp/fonts
+mkdir -p base/build-assets/build-temp/fonts
 aws s3 sync s3://whist-fonts base/build-assets/build-temp/fonts
 
 # Bundle these build assets into a cached Docker image
