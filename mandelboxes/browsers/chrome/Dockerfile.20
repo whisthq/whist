@@ -8,6 +8,8 @@ FROM whist/build-assets:$BuildAssetPackage as build-assets
 
 FROM whisthq/browsers/base-chromium:current-build as whist-browsers-chrome
 
+ARG chrome_beta="false"
+
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
@@ -38,8 +40,8 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | APT_KEY_D
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
 
 # Install Google Chrome
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    google-chrome-stable \
+RUN apt-get update && if [[ "$chrome_beta" == "true" ]] ; then echo "Installing Chrome beta" ; apt-get install --no-install-recommends -y \
+    google-chrome-beta; else echo "Installing Chrome (stable)" ; apt-get install --no-install-recommends -y google-chrome-stable ; fi \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
