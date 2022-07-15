@@ -471,6 +471,10 @@ if __name__ == "__main__":
         for filename in plot_files:
             print(filename)
 
+    # Because PyGithub (together with other tools that support creating gist, such as the defunkt/gist package) does not allow you to
+    # upload binary files to a gist, we have to first create the gist, then upload the plots using repository-style commands such as
+    # git clone / git add / git commit / git push. In addition, initializing the plots_gist before creating the tables is advantageous
+    # because it allows us to immediately insert the plots' urls into the tables upon creation, without neededing to update the entries.
     update_gist(github_gist_token, plots_gist.id, plot_files, verbose)
 
     ################################################# 3. Post results to Slack/GitHub ###################################################

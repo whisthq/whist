@@ -99,7 +99,7 @@ def server_setup_process(args_dict):
     local_sha = get_whist_github_sha()
     if server_sha != local_sha:
         exit_with_error(
-            f"Commit mismatch between server instance ({server_sha}) and E2E runner ({local_sha})"
+            f"Commit mismatch between server instance ({server_sha}) and E2E runner ({local_sha}). This can happen when re-running a CI workflow after having pushed new commits."
         )
 
     if skip_host_setup == "false":

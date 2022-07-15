@@ -247,6 +247,10 @@ def generate_plots(
     """
     Generate the time-series plot of each metric in the file at the plot_data_filename path, and save
     each plot in the given destination_folder. The name of each plot will be destination_folder/<METRIC>.png
+    The implementation of this function is an adaptation of the protocol/whist/debug/plotter.py script to the
+    needs of the E2E, to avoid having to modify the code significantly to do what we need here efficiently. In
+    this way, we also don't have to call the plotter.py with os.system / subprocess.run / pexpect, which would
+    make the integration weaker, and more fragile (any change to plotter.py can break the E2E).
 
     Args:
         plot_data_filename (str):   The path to the file (usually <{client,server}>/plot_data.json) containing
