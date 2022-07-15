@@ -85,7 +85,7 @@ mv nvidia-driver-installer.run base/build-assets/build-temp/nvidia-driver
 # Copy the fonts used in Whist
 echo "Fetching the Whist fonts..."
 mkdir base/build-assets/build-temp/fonts
-aws s3 cp --only-show-errors s3://whist-fonts base/build-assets/build-temp/fonts --recursive
+aws s3 sync s3://whist-fonts base/build-assets/build-temp/fonts
 
 # Bundle these build assets into a cached Docker image
 echo "Bundling build assets..."
