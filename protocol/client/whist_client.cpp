@@ -74,7 +74,7 @@ extern "C" {
 extern bool using_stun;
 
 // Whether a pinch is currently active - set in handle_frontend_events.c
-extern bool active_pinch;
+extern std::atomic<bool> active_pinch;
 
 // Window resizing state
 extern WhistMutex window_resize_mutex;  // protects pending_resize_message
