@@ -156,7 +156,6 @@ int client_handle_dynamic_args(WhistFrontend *frontend) {
                 // key/value are NULL
                 return -1;
             }
-
             // Try setting as an option
             WhistStatus opt_ret = whist_set_single_option(key, value);
             if (opt_ret == WHIST_SUCCESS) {

@@ -116,6 +116,14 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                     return true;
                 }
 
+                if (key && !strcmp(key, "quit")) {
+                    // Free `key` and `value` since we don't pass them to the handler.
+                    free(key);
+                    free(value);
+                    event->type = FRONTEND_EVENT_QUIT;
+                    return true;
+                }
+
                 event->type = FRONTEND_EVENT_STARTUP_PARAMETER;
                 event->startup_parameter = {key, value, false};
                 return true;

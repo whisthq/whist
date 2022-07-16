@@ -547,7 +547,7 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
     start_timer(&latency_clock);
 
     int res = avcodec_receive_frame(decoder->context, frame);
-    log_double_statistic(VIDEO_AVCODEC_RECEIVE_TIME, get_timer(&latency_clock) * 1000);
+    log_double_statistic(VIDEO_AVCODEC_RECEIVE_TIME, get_timer(&latency_clock) * MS_IN_SECOND);
 
     // Exit or copy the captured frame into hw_frame
     if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
@@ -580,7 +580,8 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
             destroy_video_decoder(decoder);
             return -1;
         }
-        log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME, get_timer(&latency_clock) * 1000);
+        log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME,
+                             get_timer(&latency_clock) * MS_IN_SECOND);
     } else {
         if (decoder->decode_type != software_decode_type) {
             LOG_ERROR("Decoder internally fell back from hardware to software");

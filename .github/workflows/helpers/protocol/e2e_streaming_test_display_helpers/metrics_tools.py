@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+import json
 import os
+import subprocess
 import sys
+from matplotlib import pyplot as plt
 import numpy as np
 
 # add the current directory to the path no matter where this is called from
@@ -115,7 +118,7 @@ def extract_metrics(client_log_file, server_log_file):
     return experiment_metrics
 
 
-def compute_deltas(
+def generate_comparison_entries(
     client_dictionary,
     server_dictionary,
     compared_client_dictionary,
@@ -225,7 +228,122 @@ def compute_deltas(
                     emoji_delta = "✅"
 
             new_entry.append(emoji_delta)
+            new_entry.append(dictionary[k]["plots"])
             new_table_entries.append(new_entry)
         table_entries.append(new_table_entries)
 
     return table_entries[0], table_entries[1], test_result
+
+
+def generate_plots(
+    plot_data_filename,
+    branch_name,
+    destination_folder,
+    name_prefix,
+    compared_plot_data_filename="",
+    compared_branch_name="",
+    verbose=False,
+):
+    """
+    Generate the time-series plot of each metric in the file at the plot_data_filename path, and save
+    each plot in the given destination_folder. The name of each plot will be destination_folder/<METRIC>.png
+    The implementation of this function is an adaptation of the protocol/whist/debug/plotter.py script to the
+    needs of the E2E, to avoid having to modify the code significantly to do what we need here efficiently. In
+    this way, we also don't have to call the plotter.py with os.system / subprocess.run / pexpect, which would
+    make the integration weaker, and more fragile (any change to plotter.py can break the E2E).
+
+    Args:
+        plot_data_filename (str):   The path to the file (usually <{client,server}>/plot_data.json) containing
+                                the data needed for plotting
+        destination_folder (str):   The path to the folder (usually <{client,server}>/plots) where we should
+                                    save all the plots
+        name_prefix (str): Prefix to add to the plots output files (e.g. info about experiment number, client/server)
+        verbose (bool): Whether to print verbose logs to stdout
+    Returns:
+        None
+    """
+
+    if not os.path.isfile(plot_data_filename):
+        print(f"Could not plot metrics because file {plot_data_filename} does not exist")
+        return
+    plot_data_file = open(plot_data_filename, "r")
+    plot_data = json.loads(plot_data_file.read())
+    plot_data_file.close()
+    compared_plot_data = {}
+    if (
+        len(compared_plot_data_filename) > 0
+        and os.path.isfile(compared_plot_data_filename)
+        and len(compared_branch_name) > 0
+    ):
+        compared_plot_data_file = open(compared_plot_data_filename, "r")
+        compared_plot_data = json.loads(compared_plot_data_file.read())
+        compared_plot_data_file.close()
+
+    for k in plot_data.keys():
+        for trimmed_plot in (True, False):
+            plt.figure()
+            plt.plot(*zip(*plot_data[k]), label=branch_name)
+            if k in compared_plot_data:
+                plt.plot(
+                    *zip(*compared_plot_data[k]),
+                    label=compared_branch_name
+                    if compared_branch_name != branch_name
+                    else f"{branch_name} (previous results)",
+                )
+            plt.title(k)
+            plt.xlabel("Time (s)")
+            plt.ylabel("Value")
+            if trimmed_plot:
+                plt.xlim(left=5.0)
+            plt.legend()
+            plt.tight_layout()
+            plt.grid(True)
+            output_filename = os.path.join(
+                destination_folder,
+                f"{name_prefix}:{k}.png" if not trimmed_plot else f"{name_prefix}:{k}_trimmed.png",
+            )
+            plt.savefig(output_filename, bbox_inches="tight")
+            plt.close()
+
+
+def add_plot_links(
+    client_metrics, server_metrics, plots_folder, plots_name_prefix, git_username, gist_id
+):
+    """
+    Augment the client and server metrics with links to the time series plots. For each metric, we check
+    if a full plot, a trimmed plot or both are available, and if so, we create a key:value pair where the
+    value is a string with the Markdown hyperlinks to the plots.
+
+    Args:
+        client_metrics (dict):  The dictionary containing the metrics key-value pairs for the
+                                client from the current run
+        server_metrics (dict):  The dictionary containing the metrics key-value pairs for the
+                                server from the current run
+        plots_name_prefix (str): Prefix used to name all plot files
+        git_username (str): The username corresponding to the token used to create the Gist
+        gist_id (str): The ID of the Gist where we are uploading the plots and storing the reports with the results
+    Returns:
+        client_metrics (dict):  The dictionary containing the metrics key-value pairs for the
+                                client from the current run, augmented with the links to the plots
+        server_metrics (dict):  The dictionary containing the metrics key-value pairs for the
+                                server from the current run, augmented with the links to the plots
+    """
+
+    def generate_plot_links(role, metric_key_name, git_username, gist_id):
+        plot_links = []
+        for plot_type in [("Full", ""), ("Trimmed", "_trimmed")]:
+            readable_type, suffix_type = plot_type
+            plot_name = f"{plots_name_prefix}:{role}:{metric_key_name}{suffix_type}.png"
+            if os.path.isfile(os.path.join(plots_folder, plot_name)):
+                plot_link = (
+                    f"https://gist.githubusercontent.com/{git_username}/{gist_id}/raw/{plot_name}"
+                )
+                plot_links.append(f"[{readable_type}]({plot_link})")
+        return ", ".join(plot_links)
+
+    for metrics_tuples in (("client", client_metrics), ("server", server_metrics)):
+        role, metrics_dictionary = metrics_tuples
+        for k in metrics_dictionary:
+            metrics_dictionary[k]["plots"] = generate_plot_links(role, k, git_username, gist_id)
+
+    return client_metrics, server_metrics

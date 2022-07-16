@@ -3,38 +3,104 @@
 import os
 import sys
 import subprocess
-from github import Github, InputFileContent
+from github import Github, InputFileContent, GithubException
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def create_github_gist_post(github_gist_token, title, files_list):
+def get_gist_user_info(github_gist_token):
     """
-    Create a secret Github Gist for the E2E results. Add one file for each tuple
-    in the files_list parameter. Print the html url of the secret Gist.
+    Get the username, name and primary email associated with a particular git token. We use the username to
+    obtain the link to images that are uploaded to a Gist file. We use the name and email to commit the images
+    to the Gist
+
+    Args:
+        github_gist_token (str):    The Github Gist token to use for authentication
+    Returns:
+        username (str): The Github username
+        name (str): The name associated with the Github account
+        email (str): The email associated with the Github account
+    """
+    client = Github(github_gist_token)
+    user = client.get_user()
+    username = user.login
+    name = user.name
+    try:
+        email = list(filter(lambda d: d.primary == True, user.get_emails()))[0].email
+    except GithubException as e:
+        print(
+            "Caught exception when trying to get user email. Perhaps the token does not have access to the emails? ",
+            e,
+        )
+        email = "e2e_bot@whist.com"
+    return username, name, email
+
+
+def create_gist(github_gist_token, title, files_dict={}):
+    """
+    Create a secret Github Gist for the E2E results or plots. Initialize the Gist's description
+    with the title. If no dictionary (or an empty dictionary) is passed to the files_dict parameter,
+    we initialize the gist with a placeholder file
 
     Args:
         github_gist_token (str):    The Github Gist token to use for authentication
         title (str):    The title to give to the Gist
-        files_list (list):  A list of tuples, where each tuple contains the name of a file
-                            to add to the Gist and the desired contents of the file
+    Returns:
+        gist (github.Gist.Gist): The Github Gist object just created
+    """
+    client = Github(github_gist_token)
+    gh_auth_user = client.get_user()
+    files_to_upload = (
+        files_dict
+        if len(files_dict) > 0
+        else {
+            "placeholder.txt": InputFileContent(
+                "If you can see this, the Gist was created successfully!"
+            )
+        }
+    )
+    gist = gh_auth_user.create_gist(
+        public=False,
+        files=files_to_upload,
+        description=title,
+    )
+    # print(f"\nCreated secret gist for the performance results: {gist.html_url}")
+    return gist
+
+
+def update_gist(github_gist_token, gist_id, files_list, verbose):
+    """
+    Update a secret Github Gist with the E2E results. Add all files at the path provided
+    in the files_list list.
+
+    Args:
+        github_gist_token (str):    The Github Gist token to use for authentication
+        gist_id (str): The ID of the Github Gist object that was previously created
+        files_list (list):  A list of files to be uploaded to the Gist post
+        verbose (bool): Whether to print verbose logs
     Returns:
         None
     """
-    # Display the results as a Github Gist
-    client = Github(github_gist_token)
-    gh_auth_user = client.get_user()
-    files_dict = {}
-    for filename, file_contents in files_list:
-        files_dict[filename] = InputFileContent(file_contents)
-    gist = gh_auth_user.create_gist(
-        public=False,
-        files=files_dict,
-        description=title,
-    )
-    print(f"\nPosted performance results to secret gist: {gist.html_url}")
-    return gist.html_url
+    # Clone the gist
+    clone_command = f"git clone https://{github_gist_token}@gist.github.com/{gist_id}"
+    if not verbose:
+        subprocess.run(
+            clone_command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+        )
+    else:
+        subprocess.run(clone_command, shell=True, capture_output=True)
+    # Copy the plots and reports into the gist folder
+    for old_filepath in files_list:
+        os.replace(old_filepath, os.path.join(".", f"{gist_id}", os.path.basename(old_filepath)))
+    # Upload all the files
+    upload_files_command = f"cd {gist_id} && rm placeholder.txt && git add * && git commit -am 'upload files' && git push"
+    if not verbose:
+        subprocess.run(
+            upload_files_command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+        )
+    else:
+        subprocess.run(upload_files_command, shell=True, capture_output=True)
 
 
 def associate_branch_to_open_pr(branch_name, verbose=False):

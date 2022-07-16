@@ -284,7 +284,7 @@ if __name__ == "__main__":
         "start_time": experiment_start_time + " local time"
         if not running_in_ci
         else experiment_start_time + " UTC",
-        "testing_urls": testing_urls,
+        "testing_urls": args.testing_urls,
         "testing_time": testing_time,
         "simulate_scrolling": simulate_scrolling,
         "network_conditions": network_conditions,

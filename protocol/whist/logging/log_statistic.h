@@ -16,6 +16,7 @@ about the stored values for each key and flush the data.
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <whist/debug/plotter.h>
 
 /*
 ============================
@@ -23,6 +24,19 @@ Public Constants
 ============================
 */
 #define STATISTICS_FREQUENCY_IN_SEC 10
+
+#ifndef LOG_DATA_FOR_PLOTTER
+#define LOG_DATA_FOR_PLOTTER false
+#endif
+
+// The size of the plot data can get big relatively quickly. A usual 2mins-long E2E test produces
+// ~5MB of data for each of the client and the server. Here, we are setting the size of the buffer
+// to 100MB to have a reasonable amount of space. If size scales linearly, 100MB will allow us to
+// run tests of ~40mins duration.
+#define PLOT_DATA_SIZE 100000000
+// Save the plotting data in the same folder (on the mandelbox) as the {client,server}.log files to
+// facilitate retrieval. This value should be changed when testing on a local machine.
+#define PLOT_DATA_FILENAME "/usr/share/whist/plot_data.json"
 
 /*
 ============================
@@ -39,7 +53,6 @@ typedef enum {
     CLIENT_HANDLE_USERINPUT_TIME,
     NETWORK_THROTTLED_PACKET_DELAY,
     NETWORK_THROTTLED_PACKET_DELAY_RATE,
-    NETWORK_THROTTLED_PACKET_DELAY_LOOPS,
     VIDEO_CAPTURE_CREATE_TIME,
     VIDEO_CAPTURE_UPDATE_TIME,
     VIDEO_CAPTURE_SCREEN_TIME,
@@ -60,12 +73,10 @@ typedef enum {
 
     // Client side metrics
     AUDIO_RECEIVE_TIME,
-    AUDIO_UPDATE_TIME,
     AUDIO_FRAMES_SKIPPED,
     NETWORK_READ_PACKET_TCP,
     NETWORK_READ_PACKET_UDP,
     SERVER_HANDLE_MESSAGE_TCP,
-    SERVER_HANDLE_MESSAGE_UDP,
     VIDEO_AVCODEC_RECEIVE_TIME,
     VIDEO_AV_HWFRAME_TRANSFER_TIME,
     VIDEO_CURSOR_UPDATE_TIME,
@@ -78,7 +89,6 @@ typedef enum {
     VIDEO_RECEIVE_TIME,
     VIDEO_RENDER_TIME,
     VIDEO_TIME_BETWEEN_FRAMES,
-    VIDEO_UPDATE_TIME,
     NOTIFICATIONS_RECEIVED,
     CLIENT_CPU_USAGE,
 

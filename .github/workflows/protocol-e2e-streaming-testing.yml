@@ -78,18 +78,18 @@ jobs:
           fi
 
       - name: Install End-to-End Streaming Test Dependencies
-        run: pip install boto3 paramiko numpy pytablewriter
+        run: pip install boto3 paramiko numpy pytablewriter matplotlib
 
       - name: Wait for pre-existing E2E workflows to complete
         working-directory: protocol/test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Set the instance ids and region name to use in the next steps. In case there are too many workflows running ahead of the current one,
-          # the script below will reset the variables to "" to run the test on new (disposable) instances.
           echo "SERVER_INSTANCE_ID=$REUSABLE_SERVER_INSTANCE_ID" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$REUSABLE_CLIENT_INSTANCE_ID" >> $GITHUB_ENV
           echo "REGION_NAME=$REUSABLE_INSTANCES_REGION_NAME" >> $GITHUB_ENV
+          # We set the instance ids and region name to use in the next steps. In case there are too many workflows running ahead of the current one,
+          # the script below will reset the variables to "" to run the test on new (disposable) instances.
           python3 -m helpers.wait_in_queue
 
       # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under

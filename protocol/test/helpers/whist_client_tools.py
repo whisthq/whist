@@ -115,7 +115,7 @@ def client_setup_process(args_dict):
         local_sha = get_whist_github_sha()
         if client_sha != local_sha:
             exit_with_error(
-                f"Commit mismatch between client instance ({client_sha}) and E2E runner ({local_sha})"
+                f"Commit mismatch between client instance ({client_sha}) and E2E runner ({local_sha}). This can happen when re-running a CI workflow after having pushed new commits."
             )
 
         if skip_host_setup == "false":
@@ -171,12 +171,13 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmak
     """
     # Edit the run-whist-client.sh to make the client quit after the experiment is over
     print(f"Setting the experiment duration to {testing_time}s...")
-    command = f"sed -i 's/timeout 240s/timeout {testing_time}s/g' ~/whist/mandelboxes/development/client/run-whist-client.sh"
+    command = f"sed -i 's/sleep 240/sleep {testing_time}/g' ~/whist/mandelboxes/development/client/run-whist-client.sh"
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     command = f"cd ~/whist/mandelboxes && ./build.sh development/client --{cmake_build_type} | tee ~/client_mandelbox_build.log"
     success_msg = "All images built successfully!"
+    docker_tar_io_eof_error = "io: read/write on closed pipe"
 
     for retry in range(MANDELBOX_BUILD_MAX_RETRIES):
         print(
@@ -196,6 +197,13 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmak
             break
         else:
             printyellow("Could not build the development/client mandelbox on the client instance!")
+            if expression_in_pexpect_output(docker_tar_io_eof_error, build_client_output):
+                print(
+                    "Detected tar io: read/write on closed pipe error. Attempting to fix by restarting docker!"
+                )
+                pexpect_process.sendline("sudo service docker restart")
+                wait_until_cmd_done(pexpect_process, pexpect_prompt)
+
         if retry == MANDELBOX_BUILD_MAX_RETRIES - 1:
             # If building the development/client mandelbox fails too many times, trigger a fatal error.
             exit_with_error(

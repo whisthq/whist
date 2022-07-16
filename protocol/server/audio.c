@@ -132,7 +132,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                         break;
                     }
 
-                    log_double_statistic(AUDIO_ENCODE_TIME, get_timer(&t) * 1000);
+                    log_double_statistic(AUDIO_ENCODE_TIME, get_timer(&t) * MS_IN_SECOND);
                     if (audio_encoder->encoded_frame_size > (int)MAX_AUDIOFRAME_DATA_SIZE) {
                         LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
                     } else {

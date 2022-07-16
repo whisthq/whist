@@ -12,7 +12,7 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 N_NETWORK_CONDITION_PARAMETERS = 5
 
 from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
-    compute_deltas,
+    generate_comparison_entries,
 )
 
 
@@ -198,12 +198,13 @@ def generate_results_table(
 
                 writer = MarkdownTableWriter(
                     # table_name="Interesting metrics",
-                    headers=["Metric", "Entries", "Average"],
+                    headers=["Metric", "Entries", "Average", "Plots"],
                     value_matrix=[
                         [
                             k,
                             metrics[k]["entries"],
                             f"{metrics[k]['avg']:.3f}",
+                            metrics[k]["plots"],
                         ]
                         for k in metrics
                     ],
@@ -252,7 +253,7 @@ def generate_comparison_table(
         None
     """
 
-    client_table_entries, server_table_entries, test_result = compute_deltas(
+    client_table_entries, server_table_entries, test_result = generate_comparison_entries(
         client_metrics,
         server_metrics,
         compared_client_metrics,
@@ -305,6 +306,7 @@ def generate_comparison_table(
                         "Average (this branch)",
                         "Delta",
                         "",
+                        "Plots",
                     ],
                     value_matrix=[i for i in entries],
                     margin=1,  # add a whitespace for both sides of each cell
