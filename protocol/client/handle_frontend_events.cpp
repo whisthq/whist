@@ -34,7 +34,10 @@ extern "C" {
 
 // Main state variables
 extern std::atomic<bool> client_exiting;
+
+extern "C" {
 extern MouseMotionAccumulation mouse_state;
+}
 
 // This variable represents whether there is an active pinch gesture
 std::atomic<bool> active_pinch = false;
