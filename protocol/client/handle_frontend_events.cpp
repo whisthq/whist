@@ -118,10 +118,10 @@ Private Function Implementations
 static void handle_keypress_event(FrontendKeypressEvent* event) {
     WhistClientMessage msg = {
         .type = MESSAGE_KEYBOARD,
-        .keyboard.code = event->code,
-        .keyboard.pressed = event->pressed,
-        .keyboard.mod = event->mod,
     };
+    msg.keyboard.code = event->code;
+    msg.keyboard.pressed = event->pressed;
+    msg.keyboard.mod = event->mod;
     send_wcmsg(&msg);
 }
 
@@ -137,10 +137,9 @@ static void handle_mouse_motion_event(FrontendMouseMotionEvent* event) {
 static void handle_mouse_button_event(FrontendMouseButtonEvent* event) {
     WhistClientMessage msg = {
         .type = MESSAGE_MOUSE_BUTTON,
-        .mouseButton.button = event->button,
-        .mouseButton.pressed = event->pressed,
     };
-    send_wcmsg(&msg);
+    msg.mouseButton.button = event->button;
+    msg.mouseButton.pressed = event->pressed, send_wcmsg(&msg);
 }
 
 static void handle_mouse_wheel_event(FrontendMouseWheelEvent* event) {
