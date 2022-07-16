@@ -80,10 +80,10 @@ extern bool active_pinch;
 extern WhistMutex window_resize_mutex;  // protects pending_resize_message
 extern WhistTimer window_resize_timer;
 
-extern volatile bool client_exiting;
+extern std::atomic<bool> client_exiting;
 
 // Used to check if we need to call filepicker from main thread
-extern bool upload_initiated;
+extern std::atomic<bool> upload_initiated;
 }
 
 // Mouse motion state

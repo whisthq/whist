@@ -19,7 +19,6 @@ TODO: Combine this with sdl_utils.h in some way
 Includes
 ============================
 */
-#include <whist/core/whist.h>
 #include "frontend/frontend.h"
 
 /*

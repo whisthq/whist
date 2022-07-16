@@ -42,9 +42,6 @@ volatile char client_hex_aes_private_key[33];
 extern int override_bitrate;
 extern SocketContext packet_udp_context;
 
-// From main.c
-volatile bool update_bitrate = false;
-
 bool using_stun = false;
 
 MouseMotionAccumulation mouse_state = {0};

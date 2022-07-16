@@ -16,6 +16,10 @@ Includes
 ============================
 */
 
+#include <atomic>
+#include <whist/core/whist.h>
+
+extern "C" {
 #include "handle_frontend_events.h"
 
 #include <whist/logging/logging.h>
@@ -26,9 +30,10 @@ Includes
 #include "network.h"
 #include <whist/utils/atomic.h>
 #include <whist/debug/debug_console.h>
+}
 
 // Main state variables
-extern bool client_exiting;
+extern std::atomic<bool> client_exiting;
 extern MouseMotionAccumulation mouse_state;
 
 // This variable represents whether there is an active pinch gesture
@@ -111,7 +116,7 @@ Private Function Implementations
 */
 
 static void handle_keypress_event(FrontendKeypressEvent* event) {
-    WhistClientMessage msg = {0};
+    WhistClientMessage msg = {};
     msg.type = MESSAGE_KEYBOARD;
     msg.keyboard.code = event->code;
     msg.keyboard.pressed = event->pressed;
@@ -129,7 +134,7 @@ static void handle_mouse_motion_event(FrontendMouseMotionEvent* event) {
 }
 
 static void handle_mouse_button_event(FrontendMouseButtonEvent* event) {
-    WhistClientMessage msg = {0};
+    WhistClientMessage msg = {};
     msg.type = MESSAGE_MOUSE_BUTTON;
     msg.mouseButton.button = event->button;
     msg.mouseButton.pressed = event->pressed;
@@ -205,14 +210,14 @@ static void handle_mouse_wheel_event(FrontendMouseWheelEvent* event) {
 }
 
 static void handle_gesture_event(FrontendGestureEvent* event) {
-    WhistClientMessage msg = {0};
+    WhistClientMessage msg = {};
     msg.type = MESSAGE_MULTIGESTURE;
     msg.multigesture = (WhistMultigestureMessage){
         .d_theta = event->delta.theta,
         .d_dist = event->delta.dist,
         .x = event->center.x,
         .y = event->center.y,
-        .num_fingers = event->num_fingers,
+        .num_fingers = (uint16_t) event->num_fingers,
         .active_gesture = active_pinch,
         .gesture_type = event->type,
     };
@@ -251,7 +256,7 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
     if (event->filename) {
         data_len = strlen((const char*)event->filename) + 1;
     }
-    WhistClientMessage* msg = safe_malloc(sizeof(WhistClientMessage) + data_len);
+    WhistClientMessage* msg = (WhistClientMessage*) safe_malloc(sizeof(WhistClientMessage) + data_len);
     memset(msg, 0, sizeof(WhistClientMessage) + data_len);
     msg->type = CMESSAGE_FILE_DRAG;
 
@@ -291,7 +296,7 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
 static void handle_open_url_event(WhistFrontend* frontend, FrontendOpenURLEvent* event) {
     // Send any new URL to the server
     const size_t data_len = strlen(event->url) + 1;
-    WhistClientMessage* msg = safe_malloc(sizeof(WhistClientMessage) + data_len);
+    WhistClientMessage* msg = (WhistClientMessage*) safe_malloc(sizeof(WhistClientMessage) + data_len);
     memset(msg, 0, sizeof(WhistClientMessage) + data_len);
     msg->type = MESSAGE_OPEN_URL;
     memcpy(&msg->urls_to_open, event->url, data_len);
@@ -330,12 +335,12 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
         case FRONTEND_EVENT_VISIBILITY: {
             if (event->visibility.visible) {
                 LOG_INFO("Window now visible -- start streaming");
-                WhistClientMessage wcmsg = {0};
+                WhistClientMessage wcmsg = {};
                 wcmsg.type = MESSAGE_START_STREAMING;
                 send_wcmsg(&wcmsg);
             } else {
                 LOG_INFO("Window now hidden -- stop streaming");
-                WhistClientMessage wcmsg = {0};
+                WhistClientMessage wcmsg = {};
                 wcmsg.type = MESSAGE_STOP_STREAMING;
                 send_wcmsg(&wcmsg);
             }
