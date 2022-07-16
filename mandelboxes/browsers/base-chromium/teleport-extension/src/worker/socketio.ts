@@ -51,8 +51,7 @@ const initCloseTabListener = (socket: Socket) => {
 }
 
 const initUpdateTabIDListener = (socket: Socket) => {
-  socket.on("update-tab-id", (clientTabId: number, serverTabId: number) => {
-    console.log("Updating tab ID", clientTabId, serverTabId)
+  socket.on("update-tab-id", ([clientTabId, serverTabId]: [number, number]) => {
     openTabs = openTabs.map((t) => {
       if (t.tab.id !== serverTabId) return t
       return {
