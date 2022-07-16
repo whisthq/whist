@@ -116,11 +116,12 @@ Private Function Implementations
 */
 
 static void handle_keypress_event(FrontendKeypressEvent* event) {
-    WhistClientMessage msg = {};
-    msg.type = MESSAGE_KEYBOARD;
-    msg.keyboard.code = event->code;
-    msg.keyboard.pressed = event->pressed;
-    msg.keyboard.mod = event->mod;
+    WhistClientMessage msg = {
+        .type = MESSAGE_KEYBOARD,
+        .keyboard.code = event->code,
+        .keyboard.pressed = event->pressed,
+        .keyboard.mod = event->mod,
+    };
     send_wcmsg(&msg);
 }
 
@@ -134,10 +135,11 @@ static void handle_mouse_motion_event(FrontendMouseMotionEvent* event) {
 }
 
 static void handle_mouse_button_event(FrontendMouseButtonEvent* event) {
-    WhistClientMessage msg = {};
-    msg.type = MESSAGE_MOUSE_BUTTON;
-    msg.mouseButton.button = event->button;
-    msg.mouseButton.pressed = event->pressed;
+    WhistClientMessage msg = {
+        .type = MESSAGE_MOUSE_BUTTON,
+        .mouseButton.button = event->button,
+        .mouseButton.pressed = event->pressed,
+    };
     send_wcmsg(&msg);
 }
 
@@ -210,16 +212,18 @@ static void handle_mouse_wheel_event(FrontendMouseWheelEvent* event) {
 }
 
 static void handle_gesture_event(FrontendGestureEvent* event) {
-    WhistClientMessage msg = {};
-    msg.type = MESSAGE_MULTIGESTURE;
-    msg.multigesture = (WhistMultigestureMessage){
-        .d_theta = event->delta.theta,
-        .d_dist = event->delta.dist,
-        .x = event->center.x,
-        .y = event->center.y,
-        .num_fingers = (uint16_t) event->num_fingers,
-        .active_gesture = active_pinch,
-        .gesture_type = event->type,
+    WhistClientMessage msg = {
+        .type = MESSAGE_MULTIGESTURE,
+        .multigesture =
+            WhistMultigestureMessage{
+                .d_theta = event->delta.theta,
+                .d_dist = event->delta.dist,
+                .x = event->center.x,
+                .y = event->center.y,
+                .num_fingers = (uint16_t)event->num_fingers,
+                .active_gesture = active_pinch,
+                .gesture_type = event->type,
+            },
     };
 
     if (event->type == MULTIGESTURE_PINCH_OPEN || event->type == MULTIGESTURE_PINCH_CLOSE) {
@@ -256,7 +260,8 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
     if (event->filename) {
         data_len = strlen((const char*)event->filename) + 1;
     }
-    WhistClientMessage* msg = (WhistClientMessage*) safe_malloc(sizeof(WhistClientMessage) + data_len);
+    WhistClientMessage* msg =
+        (WhistClientMessage*)safe_malloc(sizeof(WhistClientMessage) + data_len);
     memset(msg, 0, sizeof(WhistClientMessage) + data_len);
     msg->type = CMESSAGE_FILE_DRAG;
 
@@ -296,7 +301,8 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
 static void handle_open_url_event(WhistFrontend* frontend, FrontendOpenURLEvent* event) {
     // Send any new URL to the server
     const size_t data_len = strlen(event->url) + 1;
-    WhistClientMessage* msg = (WhistClientMessage*) safe_malloc(sizeof(WhistClientMessage) + data_len);
+    WhistClientMessage* msg =
+        (WhistClientMessage*)safe_malloc(sizeof(WhistClientMessage) + data_len);
     memset(msg, 0, sizeof(WhistClientMessage) + data_len);
     msg->type = MESSAGE_OPEN_URL;
     memcpy(&msg->urls_to_open, event->url, data_len);
@@ -335,13 +341,15 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
         case FRONTEND_EVENT_VISIBILITY: {
             if (event->visibility.visible) {
                 LOG_INFO("Window now visible -- start streaming");
-                WhistClientMessage wcmsg = {};
-                wcmsg.type = MESSAGE_START_STREAMING;
+                WhistClientMessage wcmsg = {
+                    .type = MESSAGE_START_STREAMING,
+                };
                 send_wcmsg(&wcmsg);
             } else {
                 LOG_INFO("Window now hidden -- stop streaming");
-                WhistClientMessage wcmsg = {};
-                wcmsg.type = MESSAGE_STOP_STREAMING;
+                WhistClientMessage wcmsg = {
+                    .type = MESSAGE_STOP_STREAMING,
+                };
                 send_wcmsg(&wcmsg);
             }
             break;
