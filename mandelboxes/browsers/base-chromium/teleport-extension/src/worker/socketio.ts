@@ -78,13 +78,19 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
 }
 
 const initCloudTabCreatedListener = (socket: Socket) => {
-  chrome.tabs.onCreated.addListener((tab: chrome.tabs.Tab) => {
-    if (tab.openerTabId !== undefined) {
-      socket.emit("tab-created", tab)
+  chrome.tabs.onUpdated.addListener(    (
+    tabId: number,
+    _changeInfo: { url?: string; title?: string },
+    tab: chrome.tabs.Tab
+  ) => {
+    const foundTab = find(openTabs, (t) => t.tab.id === tabId)
+
+    if (tab.openerTabId !== undefined && foundTab !== undefined && tab.url !== undefined) {
       openTabs.push(<WhistTab>{
         tab: tab,
         clientTabId: undefined,
       })
+      socket.emit("tab-created", tab)
     }
   })
 }
