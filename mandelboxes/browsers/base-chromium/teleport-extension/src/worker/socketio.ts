@@ -52,6 +52,7 @@ const initCloseTabListener = (socket: Socket) => {
 
 const initUpdateTabIDListener = (socket: Socket) => {
   socket.on("update-tab-id", (clientTabId: number, serverTabId: number) => {
+    console.log("Updating tab ID", clientTabId, serverTabId)
     openTabs = openTabs.map((t) => {
       if (t.tab.id !== serverTabId) return t
       return {
@@ -85,7 +86,7 @@ const initCloudTabCreatedListener = (socket: Socket) => {
   ) => {
     const foundTab = find(openTabs, (t) => t.tab.id === tabId)
 
-    if (tab.openerTabId !== undefined && foundTab !== undefined && tab.url !== undefined) {
+    if (tab.openerTabId !== undefined && foundTab === undefined && tab.url !== undefined) {
       openTabs.push(<WhistTab>{
         tab: tab,
         clientTabId: undefined,
