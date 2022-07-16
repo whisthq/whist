@@ -10,13 +10,13 @@
 
 /**
  * @brief                          entry for automatic tests for wirehair, mainly aim for
- * correctness
+ *                                 correctness
  * @returns                        0 on success
  */
 int wirehair_auto_test(void);
 
-/* @brief                          entry for manual tests for wirehair, which printsout info for
- * human inspection.
+/* @brief                          entry for manual tests for wirehair, which prints out info for
+ *                                 human inspection.
  * @returns                        0 on success
  */
 int wirehair_manual_test(void);

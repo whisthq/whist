@@ -42,7 +42,7 @@ Private Function Declarations
 ============================
 */
 
-// get the timestamp that, only counts cpu time. so that performance profile will not be affected by
+// get the timestamp that only counts cpu time. so that performance profile will not be affected by
 // schedule.
 // currently not implemented on windows, on windows it will fallback to the normal timestamp
 static double get_cputime_ms(void);
@@ -51,7 +51,7 @@ static double get_cputime_ms(void);
 // but 3 times faster.
 static int fast_rand(void);
 
-// slow random generator, but generates better random numbes.
+// slow random generator, but generates better random numbers than rand() and fast_rand().
 static int better_rand(void);
 
 /*
@@ -84,7 +84,7 @@ static void split_copy(const string &block, char *output[], int segment_size);
 
 static std::tuple<int, double, double> one_test(int segment_size, int num_real, int num_fec);
 
-// print out a human readble table of the overhead of varies parameters
+// print out a human readable table of the overhead of varies parameters
 static void overhead_test(void);
 // print out a human readble table of the encode/decode performance of varies parameters
 static void performance_test(void);
@@ -103,6 +103,7 @@ int wirehair_auto_test(void) {
     int segment_size = 1280;
     int round = 1000;
 
+    // test the correctness of encode and decode with random parameters
     for (int i = 0; i < round; i++) {
         int num_real = better_rand() % 1024 + 2;
         int num_fec = better_rand() % 1024;
@@ -124,7 +125,9 @@ int wirehair_auto_test(void) {
 }
 
 int wirehair_manual_test(void) {
+    // to let the test less affected by other programs
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+
     wirehair_init();
 
     performance_test();
