@@ -92,9 +92,9 @@ else()
         ../client/client_utils.c
         ../client/whist_client.cpp
         ../client/network.cpp
-        ../client/handle_frontend_events.c
+        ../client/handle_frontend_events.cpp
         ../client/sdl_utils.c
-        ../client/handle_server_message.c
+        ../client/handle_server_message.cpp
         ../client/video.cpp
         ../client/sync_packets.cpp
         ../client/renderer.c
