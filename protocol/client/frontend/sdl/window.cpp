@@ -1,5 +1,5 @@
-#include <SDL2/SDL_video.h>
 #include <whist/core/whist.h>
+#include <SDL2/SDL_video.h>
 extern "C" {
 #include "common.h"
 #include "native.h"
