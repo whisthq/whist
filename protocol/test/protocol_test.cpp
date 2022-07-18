@@ -61,7 +61,7 @@ extern "C" {
 #include <whist/fec/rs_wrapper.h>
 #include <whist/fec/fec_controller.h>
 #include "whist/utils/string_buffer.h"
-
+#include <whist/fec/wirehair_test.h>
 #include "whist/core/error_codes.h"
 #include <whist/core/features.h>
 
@@ -1798,6 +1798,16 @@ TEST_F(ProtocolTest, FECTest2) {
     // restore the saved value
     rs_wrapper_set_max_group_size(saved_max_group_size);
     rs_wrapper_set_max_group_overhead(saved_max_group_overhead);
+}
+
+TEST_F(ProtocolTest, WirehairTest) {
+    const int enable_manual_test = 0;
+
+    if (enable_manual_test) {
+        wirehair_manual_test();
+    }
+
+    EXPECT_EQ(wirehair_auto_test(), 0);
 }
 
 typedef struct {
