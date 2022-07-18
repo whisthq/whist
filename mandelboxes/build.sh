@@ -38,7 +38,7 @@ for arg in "$@"; do
       ;;
     --beta|-b)
       beta="true"
-      ;;  
+      ;;
     *)
       python_args+=("$arg")
       ;;
