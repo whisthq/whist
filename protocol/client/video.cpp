@@ -48,6 +48,7 @@ extern "C" {
 
 #define USE_HARDWARE_DECODE_DEFAULT true
 #define NO_NACKS_DURING_IFRAME false
+#define TEST_MULTIWINDOW false
 
 static bool use_hardware_decode = USE_HARDWARE_DECODE_DEFAULT;
 COMMAND_LINE_BOOL_OPTION(use_hardware_decode, 0, "hardware-decode",
@@ -356,10 +357,6 @@ int render_video(VideoContext* video_context) {
         sdl_render_window_titlebar_color(0, window_color);
 
         // Render the decoded frame
-        /*for(int i = 0; i < MAX_WINDOWS; i++) {
-            LOG_INFO("Window %d: %dx%d (%d,%d)", (int)window_data[i].id, window_data[i].width,
-        window_data[i].height, window_data[i].x, window_data[i].y);
-        }*/
         int num_windows = 0;
         while (num_windows < MAX_WINDOWS && (int)window_data[num_windows].id != -1) {
             /*LOG_INFO("Window %d: %dx%d (%d,%d)", (int)window_data[num_windows].id,
@@ -367,7 +364,7 @@ int render_video(VideoContext* video_context) {
                      window_data[num_windows].x, window_data[num_windows].y);*/
             num_windows++;
         }
-        /*
+#if TEST_MULTIWINDOW
         num_windows = 1;
         window_data[0].id = 0;
         window_data[0].x = 20;
@@ -405,7 +402,7 @@ int render_video(VideoContext* video_context) {
             window_data[1].height = 958;
             num_windows = 2;
         }
-        */
+#endif
         sdl_update_framebuffer(av_frame, window_data, num_windows);
 
         // Mark the framebuffer out to render
