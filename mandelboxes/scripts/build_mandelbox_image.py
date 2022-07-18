@@ -36,11 +36,19 @@ parser.add_argument(
     ),
     required=True,
 )
+parser.add_argument(
+    "--beta",
+    type=str,
+    choices=["true", "false"],
+    default="false",
+    help="Whether to install the beta version of the browser when building a browser mandelbox",
+)
 parser.add_argument("image_paths", nargs="*", help="List of image paths to build")
 args = parser.parse_args()
 
 # Input Variables
 show_output = not args.quiet
+beta = args.beta
 # Remove trailing slashes
 image_paths = [path.strip("/") for path in args.image_paths]
 build_all = args.all
@@ -125,6 +133,8 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
         "--build-arg",
         f"BuildAssetPackage={build_asset_package}",
     ]
+    if "browsers/" in img_path:
+        command.append(f"InstallBeta={beta}")
 
     status = 0
 
