@@ -5,7 +5,7 @@ import os, sys, subprocess
 from github import Github
 
 from helpers.common.pexpect_tools import wait_until_cmd_done
-from helpers.common.timestamps_and_exit_tools import printred, exit_with_error
+from helpers.common.timestamps_and_exit_tools import printformat, exit_with_error
 from helpers.common.constants import GITHUB_SHA_LEN, running_in_ci
 
 # Add the current directory to the path no matter where this is called from
@@ -103,7 +103,9 @@ def get_remote_whist_github_sha(pexpect_process, pexpect_prompt):
     )  # if running outside of CI, additional formatting characters will be added
     if len(stdout) != stdout_expected_len or len(stdout[1]) != GITHUB_SHA_LEN:
         print(stdout)
-        printred("Could not get the Github SHA of the commit checked out on the remote instance")
+        printformat(
+            "Could not get the Github SHA of the commit checked out on the remote instance", "red"
+        )
         return ""
     return stdout[1]
 

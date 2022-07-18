@@ -4,7 +4,7 @@ import os, sys, boto3
 
 from helpers.aws.boto3_tools import terminate_or_stop_aws_instance
 from helpers.common.constants import instances_name_tag, running_in_ci, github_run_id
-from helpers.common.timestamps_and_exit_tools import printgreen, exit_with_error
+from helpers.common.timestamps_and_exit_tools import printformat, exit_with_error
 from helpers.common.git_tools import (
     get_whist_branch_name,
     get_workflow_handle,
@@ -46,8 +46,9 @@ def stop_ci_reusable_instances():
     if not github_run_id or not workflow:
         exit_with_error("Either the workflow handle or the github run id is invalid")
     if count_runs_to_prioritize(workflow, github_run_id) > 0:
-        printgreen(
-            "We do not stop the reusable instances because other workflows are using them before us."
+        printformat(
+            "We do not stop the reusable instances because other workflows are using them before us.",
+            "green",
         )
         return
 
