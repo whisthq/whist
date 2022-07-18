@@ -22,9 +22,10 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /var/lib/apt/lists/*
 
 # Download Brave Browser installer
-RUN if [[ "$InstallBeta" == "true" ]] ; then sudo curl -fsSLo /usr/share/keyrings/brave-browser-beta-archive-keyring.gpg https://brave-browser-apt-beta.s3.brave.com/brave-browser-beta-archive-keyring.gpg; \
- else curl -s https://brave-browser-apt-release.s3.brave.com/brave-core.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-release.gpg add - ; fi \
-RUN if [[ "$InstallBeta" == "true" ]] ; then echo "deb [signed-by=/usr/share/keyrings/brave-browser-beta-archive-keyring.gpg arch=amd64] https://brave-browser-apt-beta.s3.brave.com/ stable main"|sudo tee /etc/apt/sources.list.d/brave-browser-beta.list \
+RUN if [[ "$InstallBeta" == "true" ]] ; then curl -fsSLo /usr/share/keyrings/brave-browser-beta-archive-keyring.gpg https://brave-browser-apt-beta.s3.brave.com/brave-browser-beta-archive-keyring.gpg ; \
+ else curl -s https://brave-browser-apt-release.s3.brave.com/brave-core.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-release.gpg add - ; fi
+
+RUN if [[ "$InstallBeta" == "true" ]] ; then echo "deb [signed-by=/usr/share/keyrings/brave-browser-beta-archive-keyring.gpg arch=amd64] https://brave-browser-apt-beta.s3.brave.com/ stable main"| tee /etc/apt/sources.list.d/brave-browser-beta.list \
  else echo "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" | tee /etc/apt/sources.list.d/brave-browser-release.list; fi
 
 # Install Brave Browser
