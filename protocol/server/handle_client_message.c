@@ -261,7 +261,7 @@ static int handle_file_chunk_message(WhistClientMessage *wcmsg) {
             (int): Returns -1 on failure, 0 on success
     */
 
-    file_synchronizer_write_file_chunk(&wcmsg->file);
+    file_synchronizer_write_file_chunk(&wcmsg->file, NULL, NULL);
 
     return 0;
 }

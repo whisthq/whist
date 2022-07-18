@@ -29,6 +29,11 @@
               int timeout_ms)                                                                      \
     GENERATOR(void, interrupt, WhistFrontend* frontend)                                            \
     GENERATOR(const char*, get_chosen_file, WhistFrontend* frontend)                               \
+    GENERATOR(void*, file_download_start, WhistFrontend* frontend, const char* file_path,          \
+              int64_t file_size)                                                                   \
+    GENERATOR(void, file_download_update, WhistFrontend* frontend, void* opaque,                   \
+              int64_t bytes_so_far, int64_t bytes_per_sec)                                         \
+    GENERATOR(void, file_download_complete, WhistFrontend* frontend, void* opaque)                 \
     GENERATOR(void, set_cursor, WhistFrontend* frontend, WhistCursorInfo* cursor)                  \
     GENERATOR(void, get_keyboard_state, WhistFrontend* frontend, const uint8_t** key_state,        \
               int* key_count, int* mod_state)                                                      \

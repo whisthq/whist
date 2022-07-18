@@ -11,6 +11,9 @@ extern QueueContext* events_queue;
 extern void* callback_context;
 extern OnFileUploadCallback on_file_upload;
 extern OnCursorChangeCallback on_cursor_change;
+extern OnFileDownloadStart on_file_download_start;
+extern OnFileDownloadUpdate on_file_download_update;
+extern OnFileDownloadComplete on_file_download_complete;
 
 static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* event) {
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
@@ -213,6 +216,28 @@ const char* virtual_get_chosen_file(WhistFrontend* frontend) {
         return on_file_upload(callback_context);
     } else {
         return NULL;
+    }
+}
+
+void* virtual_file_download_start(WhistFrontend* frontend, const char* file_path,
+                                  int64_t file_size) {
+    if (on_file_download_start != NULL) {
+        return on_file_download_start(file_path, file_size);
+    } else {
+        return NULL;
+    }
+}
+
+void virtual_file_download_update(WhistFrontend* frontend, void* opaque, int64_t bytes_so_far,
+                                  int64_t bytes_per_sec) {
+    if (on_file_download_update != NULL) {
+        on_file_download_update(opaque, bytes_so_far, bytes_per_sec);
+    }
+}
+
+void virtual_file_download_complete(WhistFrontend* frontend, void* opaque) {
+    if (on_file_download_complete != NULL) {
+        on_file_download_complete(opaque);
     }
 }
 

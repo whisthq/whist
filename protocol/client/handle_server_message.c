@@ -22,6 +22,7 @@ Includes
 #include <stddef.h>
 
 #include <whist/core/whist.h>
+#include <whist/file/file_synchronizer.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
@@ -49,8 +50,10 @@ static int handle_clipboard_message(WhistServerMessage *wsmsg, size_t wsmsg_size
 static int handle_window_title_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
-static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
-static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size,
+                                        WhistFrontend *frontend);
+static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size,
+                                     WhistFrontend *frontend);
 static int handle_file_group_end_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
@@ -64,7 +67,7 @@ Private Function Implementations
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size, WhistFrontend *frontend) {
     /*
         Handle message packets from the server
 
@@ -88,9 +91,9 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
         case SMESSAGE_FULLSCREEN:
             return handle_fullscreen_message(wsmsg, wsmsg_size);
         case SMESSAGE_FILE_DATA:
-            return handle_file_chunk_message(wsmsg, wsmsg_size);
+            return handle_file_chunk_message(wsmsg, wsmsg_size, frontend);
         case SMESSAGE_FILE_METADATA:
-            return handle_file_metadata_message(wsmsg, wsmsg_size);
+            return handle_file_metadata_message(wsmsg, wsmsg_size, frontend);
         case SMESSAGE_FILE_GROUP_END:
             return handle_file_group_end_message(wsmsg, wsmsg_size);
         case SMESSAGE_NOTIFICATION:
@@ -227,7 +230,8 @@ static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
     return 0;
 }
 
-static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size,
+                                        WhistFrontend *frontend) {
     /*
         Handle a file metadata message.
 
@@ -237,12 +241,15 @@ static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_
             (int): Returns -1 on failure, 0 on success
     */
 
-    file_synchronizer_open_file_for_writing(&wsmsg->file_metadata);
+    TransferringFile *active_file = file_synchronizer_open_file_for_writing(&wsmsg->file_metadata);
+    active_file->opaque = whist_frontend_file_download_start(frontend, active_file->file_path,
+                                                             wsmsg->file_metadata.file_size);
 
     return 0;
 }
 
-static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size,
+                                     WhistFrontend *frontend) {
     /*
         Handle a file chunk message.
 
@@ -251,8 +258,12 @@ static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
-
-    file_synchronizer_write_file_chunk(&wsmsg->file);
+    TransferringFile *active_file = file_synchronizer_write_file_chunk(
+        &wsmsg->file, whist_frontend_file_download_complete, frontend);
+    if (active_file) {
+        whist_frontend_file_download_update(frontend, active_file->opaque,
+                                            active_file->bytes_written, active_file->bytes_per_sec);
+    }
 
     return 0;
 }

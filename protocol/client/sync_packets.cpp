@@ -111,7 +111,7 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         WhistPacket* message_packet = (WhistPacket*)get_packet(udp_context, PACKET_MESSAGE);
         if (message_packet) {
             handle_server_message((WhistServerMessage*)message_packet->data,
-                                  message_packet->payload_size);
+                                  message_packet->payload_size, NULL);
             free_packet(udp_context, message_packet);
         }
 
@@ -249,6 +249,7 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         Return:
             (int): 0 on success
     */
+    WhistFrontend* frontend = (WhistFrontend*)opaque;
     SocketContext* tcp_context = &packet_tcp_context;
 
     WhistTimer last_loop_start;
@@ -273,7 +274,7 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
 
         if (packet) {
             TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,
-                                           (size_t)packet->payload_size),
+                                           (size_t)packet->payload_size, frontend),
                      SERVER_HANDLE_MESSAGE_TCP, statistics_timer);
             free_packet(tcp_context, packet);
         }
@@ -339,7 +340,7 @@ Public Function Implementations
 ============================
 */
 
-void init_packet_synchronizers(WhistRenderer* whist_renderer) {
+void init_packet_synchronizers(WhistFrontend* frontend, WhistRenderer* whist_renderer) {
     /*
         Initialize the packet synchronizer threads for UDP and TCP.
     */
@@ -349,8 +350,8 @@ void init_packet_synchronizers(WhistRenderer* whist_renderer) {
     run_sync_packets_threads = true;
     sync_udp_packets_thread = whist_create_thread(multithreaded_sync_udp_packets,
                                                   "multithreaded_sync_udp_packets", whist_renderer);
-    sync_tcp_packets_thread =
-        whist_create_thread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", NULL);
+    sync_tcp_packets_thread = whist_create_thread(multithreaded_sync_tcp_packets,
+                                                  "multithreaded_sync_tcp_packets", frontend);
 }
 
 void destroy_packet_synchronizers(void) {

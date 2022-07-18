@@ -151,3 +151,14 @@ void sdl_display_notification(WhistFrontend* frontend, const WhistNotification* 
 }
 
 const char* sdl_get_chosen_file(WhistFrontend* frontend) { return sdl_native_get_chosen_file(); }
+
+void* sdl_file_download_start(WhistFrontend* frontend, const char* file_path, int64_t file_size) {
+    return (void*)file_path;
+}
+
+void sdl_file_download_update(WhistFrontend* frontend, void* opaque, int64_t bytes_so_far,
+                              int64_t bytes_per_sec) {}
+
+void sdl_file_download_complete(WhistFrontend* frontend, void* opaque) {
+    sdl_native_file_download_notify_finished((const char*)opaque);
+}
