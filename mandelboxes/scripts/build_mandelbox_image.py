@@ -134,6 +134,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
         f"BuildAssetPackage={build_asset_package}",
     ]
     if "browsers/" in img_path:
+        command.append("--build-arg")
         command.append(f"InstallBeta={beta}")
 
     status = 0
