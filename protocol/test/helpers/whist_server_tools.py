@@ -149,6 +149,7 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type):
     command = f"cd ~/whist/mandelboxes && ./build.sh browsers/chrome --{cmake_build_type} | tee ~/server_mandelbox_build.log"
     success_msg = "All images built successfully!"
     docker_tar_io_eof_error = "io: read/write on closed pipe"
+    docker_connect_error = "error during connect: Post"
 
     for retry in range(MANDELBOX_BUILD_MAX_RETRIES):
         print(
@@ -172,10 +173,10 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type):
             printformat(
                 "Could not build the browsers/chrome mandelbox on the server instance!", "yellow"
             )
-            if expression_in_pexpect_output(docker_tar_io_eof_error, build_server_output):
-                print(
-                    "Detected tar io: read/write on closed pipe error. Attempting to fix by restarting docker!"
-                )
+            if expression_in_pexpect_output(
+                docker_tar_io_eof_error, build_client_output
+            ) or expression_in_pexpect_output(docker_connect_error, build_client_output):
+                print("Detected docker build issue. Attempting to fix by restarting docker!")
                 pexpect_process.sendline("sudo service docker restart")
                 wait_until_cmd_done(pexpect_process, pexpect_prompt)
         if retry == MANDELBOX_BUILD_MAX_RETRIES - 1:
