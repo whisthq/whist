@@ -42,7 +42,7 @@ func NewS3ControlClient(region string) (*s3control.Client, error) {
 	}), nil
 }
 
-// NewS3ControlClient returns a new AWS STS client.
+// NewSTSClient returns a new AWS STS client.
 func NewSTSClient(region string) (*sts.Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
