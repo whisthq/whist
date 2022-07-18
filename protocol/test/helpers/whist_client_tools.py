@@ -30,7 +30,7 @@ from helpers.common.git_tools import (
     get_whist_github_sha,
 )
 from helpers.common.timestamps_and_exit_tools import (
-    printyellow,
+    printformat,
     exit_with_error,
 )
 
@@ -196,7 +196,9 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmak
             print("Finished building the dev client mandelbox on the EC2 instance")
             break
         else:
-            printyellow("Could not build the development/client mandelbox on the client instance!")
+            printformat(
+                "Could not build the development/client mandelbox on the client instance!", "yellow"
+            )
             if expression_in_pexpect_output(docker_tar_io_eof_error, build_client_output):
                 print(
                     "Detected tar io: read/write on closed pipe error. Attempting to fix by restarting docker!"

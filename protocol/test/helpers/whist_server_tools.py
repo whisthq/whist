@@ -26,7 +26,7 @@ from helpers.common.git_tools import (
     get_whist_github_sha,
 )
 from helpers.common.timestamps_and_exit_tools import (
-    printyellow,
+    printformat,
     exit_with_error,
 )
 
@@ -169,7 +169,9 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type):
             print("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
             break
         else:
-            printyellow("Could not build the browsers/chrome mandelbox on the server instance!")
+            printformat(
+                "Could not build the browsers/chrome mandelbox on the server instance!", "yellow"
+            )
             if expression_in_pexpect_output(docker_tar_io_eof_error, build_server_output):
                 print(
                     "Detected tar io: read/write on closed pipe error. Attempting to fix by restarting docker!"
