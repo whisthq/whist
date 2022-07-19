@@ -3,14 +3,17 @@ package dbclient
 import (
 	"context"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/subscriptions"
-	"github.com/whisthq/whist/backend/services/utils"
 )
 
-var testConfigs []subscriptions.WhistConfigs
+var (
+	testConfigs          subscriptions.WhistConfigs
+	testFrontendVersions []subscriptions.WhistFrontendVersion
+)
 
 type mockGraphQLClient struct{}
 
@@ -19,30 +22,30 @@ func (mc *mockGraphQLClient) Initialize(bool) error {
 }
 
 func (mc *mockGraphQLClient) Query(ctx context.Context, query subscriptions.GraphQLQuery, res map[string]interface{}) error {
-	if query != nil {
-		query = testConfigs
-	} else {
-		query = &testConfigs
+	switch query := query.(type) {
+	case *struct {
+		subscriptions.WhistConfigs `graphql:"dev"`
+	}:
+		query.WhistConfigs = testConfigs
+	case *struct {
+		subscriptions.WhistConfigs `graphql:"staging"`
+	}:
+		query.WhistConfigs = testConfigs
+	case *struct {
+		subscriptions.WhistConfigs `graphql:"prod"`
+	}:
+		query.WhistConfigs = testConfigs
+	case *struct {
+		WhistFrontendVersions []subscriptions.WhistFrontendVersion `graphql:"desktop_app_version(where: {id: {_eq: $id}})"`
+	}:
+		query.WhistFrontendVersions = testFrontendVersions
+	default:
 	}
 
 	return nil
 }
 
 func (mc *mockGraphQLClient) Mutate(ctx context.Context, query subscriptions.GraphQLQuery, res map[string]interface{}) error {
-	var updateParams []subscriptions.WhistConfigs
-	for k, v := range res {
-		updateParams = append(updateParams, subscriptions.WhistConfigs{
-			struct {
-				Key   graphql.String `graphql:"key"`
-				Value graphql.String `graphql:"value"`
-			}{
-				Key:   graphql.String(k),
-				Value: graphql.String(v.(string)),
-			},
-		})
-	}
-
-	testConfigs = updateParams
 	return nil
 }
 
@@ -51,18 +54,32 @@ func TestGetDevConfigs(t *testing.T) {
 
 	var tests = []struct {
 		name     string
-		err      error
-		expected []subscriptions.WhistConfigs
+		err      string
+		expected map[string]string
 	}{
-		{"Existing configs", nil, testConfigs},
-		{"Empty configs", utils.MakeError(""), []subscriptions.WhistConfigs{}},
+		{"Existing configs", "", map[string]string{
+			"test-user-config-key-1": "test-user-config-value-1",
+			"test-user-config-key-2": "test-user-config-value-2",
+		}},
+		{"Empty configs", "could not find dev configs on database", nil},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testConfigs = subscriptions.WhistConfigs{}
+			for k, v := range tt.expected {
+				testConfigs = append(testConfigs, struct {
+					Key   graphql.String `graphql:"key"`
+					Value graphql.String `graphql:"value"`
+				}{
+					Key:   graphql.String(k),
+					Value: graphql.String(v),
+				})
+			}
+
 			configs, err := GetDevConfigs(context.Background(), mockClient)
-			if err != nil {
-				t.Fatalf("failed to get dev configs: %s", err)
+			if err != nil && !strings.Contains(err.Error(), tt.err) {
+				t.Errorf("expected error: %s, got: %s", tt.err, err)
 			}
 
 			ok := reflect.DeepEqual(configs, tt.expected)
@@ -78,18 +95,31 @@ func TestGetStagingConfigs(t *testing.T) {
 
 	var tests = []struct {
 		name     string
-		err      error
-		expected []subscriptions.WhistConfigs
+		err      string
+		expected map[string]string
 	}{
-		{"Existing configs", nil, testConfigs},
-		{"Empty configs", utils.MakeError(""), []subscriptions.WhistConfigs{}},
+		{"Existing configs", "", map[string]string{
+			"test-user-config-key-1": "test-user-config-value-1",
+			"test-user-config-key-2": "test-user-config-value-2",
+		}},
+		{"Empty configs", "could not find staging configs on database", nil},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testConfigs = subscriptions.WhistConfigs{}
+			for k, v := range tt.expected {
+				testConfigs = append(testConfigs, struct {
+					Key   graphql.String `graphql:"key"`
+					Value graphql.String `graphql:"value"`
+				}{
+					Key:   graphql.String(k),
+					Value: graphql.String(v),
+				})
+			}
 			configs, err := GetStagingConfigs(context.Background(), mockClient)
-			if err != nil {
-				t.Fatalf("failed to get staging configs: %s", err)
+			if err != nil && !strings.Contains(err.Error(), tt.err) {
+				t.Errorf("expected error: %s, got: %s", tt.err, err)
 			}
 
 			ok := reflect.DeepEqual(configs, tt.expected)
@@ -105,18 +135,31 @@ func TestGetProdConfigs(t *testing.T) {
 
 	var tests = []struct {
 		name     string
-		err      error
-		expected []subscriptions.WhistConfigs
+		err      string
+		expected map[string]string
 	}{
-		{"Existing configs", nil, testConfigs},
-		{"Empty configs", utils.MakeError(""), []subscriptions.WhistConfigs{}},
+		{"Existing configs", "", map[string]string{
+			"test-user-config-key-1": "test-user-config-value-1",
+			"test-user-config-key-2": "test-user-config-value-2",
+		}},
+		{"Empty configs", "could not find prod configs on database", nil},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testConfigs = subscriptions.WhistConfigs{}
+			for k, v := range tt.expected {
+				testConfigs = append(testConfigs, struct {
+					Key   graphql.String `graphql:"key"`
+					Value graphql.String `graphql:"value"`
+				}{
+					Key:   graphql.String(k),
+					Value: graphql.String(v),
+				})
+			}
 			configs, err := GetProdConfigs(context.Background(), mockClient)
-			if err != nil {
-				t.Fatalf("failed to get prod configs: %s", err)
+			if err != nil && !strings.Contains(err.Error(), tt.err) {
+				t.Errorf("expected error: %s, got: %s", tt.err, err)
 			}
 
 			ok := reflect.DeepEqual(configs, tt.expected)
@@ -128,5 +171,29 @@ func TestGetProdConfigs(t *testing.T) {
 }
 
 func TestGetFrontendVersion(t *testing.T) {
+	mockClient := &mockGraphQLClient{}
 
+	var tests = []struct {
+		name     string
+		err      string
+		expected subscriptions.FrontendVersion
+	}{
+		{"Existing versions", "", subscriptions.FrontendVersion{}},
+		{"Empty versions", "could not find frontend version on config database", subscriptions.FrontendVersion{}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testFrontendVersions = []subscriptions.WhistFrontendVersion{}
+			configs, err := GetFrontendVersion(context.Background(), mockClient)
+			if err != nil && !strings.Contains(err.Error(), tt.err) {
+				t.Errorf("expected error: %s, got: %s", tt.err, err)
+			}
+
+			ok := reflect.DeepEqual(configs, tt.expected)
+			if !ok {
+				t.Fatalf("GetFrontendVersion returned bad result: expected %v, got %v", tt.expected, configs)
+			}
+		})
+	}
 }
