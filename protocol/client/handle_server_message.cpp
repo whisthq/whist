@@ -206,7 +206,7 @@ static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size)
 
     const char *uri = (const char *)&wsmsg->requested_uri;
     const int cmd_len = (int)strlen(uri) + OPEN_URI_CMD_MAXLEN + 1;
-    char *cmd = (char*) safe_malloc(cmd_len);
+    char *cmd = (char *)safe_malloc(cmd_len);
     memset(cmd, 0, cmd_len);
     snprintf(cmd, cmd_len, OPEN_URI_CMD " \"%s\"", uri);
     runcmd(cmd, NULL);
