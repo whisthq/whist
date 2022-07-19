@@ -1,7 +1,7 @@
 #include <string.h>
 
 #include <whist/core/whist.h>
-#include "cm256/gf256_cpuinfo.h"
+#include "gf256/gf256_cpuinfo.h"
 #include "cm256/cm256.h"
 #include "rs_common.h"
 #include "lugi_rs_extra.h"

@@ -22,7 +22,7 @@ require (
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/hasura/go-graphql-client v0.7.2
+	github.com/hasura/go-graphql-client v0.7.1
 	github.com/jackc/pgconn v1.12.1
 	github.com/jackc/pgtype v1.11.0
 	github.com/jackc/pgx/v4 v4.16.1
@@ -50,8 +50,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3control v1.21.9
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.16.9
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/bgentry/testnet v0.0.0-20131107221340-05450cdcf16c // indirect
 	github.com/containerd/containerd v1.6.6 // indirect

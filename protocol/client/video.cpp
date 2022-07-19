@@ -35,6 +35,7 @@ extern "C" {
 
 #include <stdio.h>
 
+#include "network.h"
 #include <whist/utils/color.h>
 #include <whist/utils/png.h>
 #include <whist/logging/log_statistic.h>
@@ -42,7 +43,6 @@ extern "C" {
 #include "whist/core/features.h"
 #include "whist/core/whist.h"
 #include "whist/utils/command_line.h"
-#include "network.h"
 #include "client_utils.h"
 #include <whist/debug/protocol_analyzer.h>
 };
@@ -367,7 +367,7 @@ int render_video(VideoContext* video_context) {
             // Calculate E2E latency
             // Get the difference in time from the moment client pressed user-input to now.
             timestamp_us pipeline_latency = current_time_us() - client_input_timestamp;
-            log_double_statistic(VIDEO_PIPELINE_LATENCY, (double)(pipeline_latency / 1000));
+            log_double_statistic(VIDEO_PIPELINE_LATENCY, (double)(pipeline_latency / US_IN_MS));
 
             // But client_input_timestamp used above does not include time it took between
             // user-input to frame capture in server-side. Please refer to server\video.c to
@@ -378,10 +378,10 @@ int render_video(VideoContext* video_context) {
             timestamp_us capture_latency = 0;
             if (last_rendered_time != 0) {
                 capture_latency = (server_timestamp - last_rendered_time);
-                log_double_statistic(VIDEO_CAPTURE_LATENCY, (double)(capture_latency / 1000));
+                log_double_statistic(VIDEO_CAPTURE_LATENCY, (double)(capture_latency / US_IN_MS));
             }
             log_double_statistic(VIDEO_E2E_LATENCY,
-                                 (double)((pipeline_latency + capture_latency) / 1000));
+                                 (double)((pipeline_latency + capture_latency) / US_IN_MS));
         }
         last_rendered_time = server_timestamp;
 

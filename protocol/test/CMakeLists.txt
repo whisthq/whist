@@ -30,13 +30,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         # Files needed for Client unit tests
         ../client/audio.cpp
         ../client/client_utils.c
-        ../client/whist_client.c
-        ../client/network.c
+        ../client/whist_client.cpp
+        ../client/network.cpp
         ../client/handle_frontend_events.c
         ../client/sdl_utils.c
         ../client/handle_server_message.c
         ../client/video.cpp
-        ../client/sync_packets.c
+        ../client/sync_packets.cpp
         ../client/renderer.c
         ../client/frontend/frontend.c
         ../client/frontend/sdl/audio.cpp
@@ -90,13 +90,13 @@ else()
         # Files needed for Client unit tests
         ../client/audio.cpp
         ../client/client_utils.c
-        ../client/whist_client.c
-        ../client/network.c
+        ../client/whist_client.cpp
+        ../client/network.cpp
         ../client/handle_frontend_events.c
         ../client/sdl_utils.c
         ../client/handle_server_message.c
         ../client/video.cpp
-        ../client/sync_packets.c
+        ../client/sync_packets.cpp
         ../client/renderer.c
         ../client/frontend/frontend.c
         ../client/frontend/sdl/audio.cpp

@@ -9,14 +9,18 @@ import { initChromeWelcomeRedirect } from "./navigation"
 import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"
 import { initCursorLockHandler } from "./cursor"
 import { refreshExtension } from "./update"
-import {
-  initTabDetachSuppressor,
-  initCreateNewTabHandler,
-  initActivateTabHandler,
-} from "./tabs"
+import { initTabDetachSuppressor } from "./tabs"
 import { initLocationHandler } from "./geolocation"
-import { initSocketioConnection } from "./socketio"
+import {
+  initSocketioConnection,
+  initActivateTabListener,
+  initCloseTabListener,
+  initCloudTabUpdatedListener,
+  initCloudTabCreatedListener,
+  initUpdateTabIDListener,
+} from "./socketio"
 
+const socket = initSocketioConnection()
 const nativeHostPort = initNativeHostIpc()
 
 // Disconnects the host native port on command
@@ -37,14 +41,12 @@ initTabDetachSuppressor()
 // Redirects the chrome://welcome page to our own Whist-branded page
 initChromeWelcomeRedirect()
 
-// Creates a new tab if the client asks for one
-initCreateNewTabHandler(nativeHostPort)
-
-// Switches focus to a current tab if the client asks for it
-initActivateTabHandler(nativeHostPort)
-
 // Receive geolocation from extension host
 initLocationHandler(nativeHostPort)
 
-// Connect to socket.io server to communicate with client extension
-initSocketioConnection()
+// Listen to the client for tab actions
+initActivateTabListener(socket)
+initCloseTabListener(socket)
+initUpdateTabIDListener(socket)
+initCloudTabUpdatedListener(socket)
+initCloudTabCreatedListener(socket)

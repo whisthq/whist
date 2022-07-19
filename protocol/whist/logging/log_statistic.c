@@ -47,7 +47,6 @@ static StatisticInfo statistic_info[NUM_METRICS] = {
     [CLIENT_HANDLE_USERINPUT_TIME] = {"HANDLE_USERINPUT_TIME", true, false, AVERAGE},
     [NETWORK_THROTTLED_PACKET_DELAY] = {"THROTTLED_PACKET_DELAY", true, false, AVERAGE},
     [NETWORK_THROTTLED_PACKET_DELAY_RATE] = {"THROTTLED_PACKET_DELAY_RATE", true, false, AVERAGE},
-    [NETWORK_THROTTLED_PACKET_DELAY_LOOPS] = {"THROTTLED_PACKET_DELAY_LOOPS", true, false, AVERAGE},
     [VIDEO_CAPTURE_CREATE_TIME] = {"VIDEO_CAPTURE_CREATE_TIME", true, false, AVERAGE},
     [VIDEO_CAPTURE_UPDATE_TIME] = {"VIDEO_CAPTURE_UPDATE_TIME", true, false, AVERAGE},
     [VIDEO_CAPTURE_SCREEN_TIME] = {"VIDEO_CAPTURE_SCREEN_TIME", true, false, AVERAGE},
@@ -68,12 +67,10 @@ static StatisticInfo statistic_info[NUM_METRICS] = {
 
     // Client side metrics
     [AUDIO_RECEIVE_TIME] = {"AUDIO_RECEIVE_TIME", true, false, AVERAGE},
-    [AUDIO_UPDATE_TIME] = {"AUDIO_UPDATE_TIME", true, false, AVERAGE},
     [AUDIO_FRAMES_SKIPPED] = {"AUDIO_FRAMES_SKIPPED", false, false, SUM},
     [NETWORK_READ_PACKET_TCP] = {"READ_PACKET_TIME_TCP", true, false, AVERAGE},
     [NETWORK_READ_PACKET_UDP] = {"READ_PACKET_TIME_UDP", true, false, AVERAGE},
     [SERVER_HANDLE_MESSAGE_TCP] = {"HANDLE_SERVER_MESSAGE_TIME_TCP", true, false, AVERAGE},
-    [SERVER_HANDLE_MESSAGE_UDP] = {"HANDLE_SERVER_MESSAGE_TIME_UDP", true, false, AVERAGE},
     [VIDEO_AVCODEC_RECEIVE_TIME] = {"AVCODEC_RECEIVE_TIME", true, false, AVERAGE},
     [VIDEO_AV_HWFRAME_TRANSFER_TIME] = {"AV_HWFRAME_TRANSFER_TIME", true, false, AVERAGE},
     [VIDEO_CURSOR_UPDATE_TIME] = {"CURSOR_UPDATE_TIME", true, false, AVERAGE},
@@ -86,7 +83,6 @@ static StatisticInfo statistic_info[NUM_METRICS] = {
     [VIDEO_RECEIVE_TIME] = {"VIDEO_RECEIVE_TIME", true, false, AVERAGE},
     [VIDEO_RENDER_TIME] = {"VIDEO_RENDER_TIME", true, false, AVERAGE},
     [VIDEO_TIME_BETWEEN_FRAMES] = {"VIDEO_TIME_BETWEEN_FRAMES", true, false, AVERAGE},
-    [VIDEO_UPDATE_TIME] = {"VIDEO_UPDATE_TIME", true, false, AVERAGE},
     [NOTIFICATIONS_RECEIVED] = {"NOTIFICATIONS_RECEIVED", false, false, SUM},
     [CLIENT_CPU_USAGE] = {"CLIENT_CPU_USAGE", false, false, AVERAGE},
 
@@ -100,6 +96,7 @@ Custom Types
 
 typedef struct StatisticData {
     double sum;
+    double cumulative_sum;
     unsigned count;
     double min;
     double max;
@@ -178,9 +175,14 @@ void whist_init_statistic_logger(int interval) {
     start_timer(&print_statistic_clock);
     for (uint32_t i = 0; i < NUM_METRICS; i++) {
         statistic_context.all_statistics[i].sum = 0;
+        statistic_context.all_statistics[i].cumulative_sum = 0;
         statistic_context.all_statistics[i].count = 0;
         statistic_context.all_statistics[i].max = 0;
         statistic_context.all_statistics[i].min = 0;
+    }
+    if (LOG_DATA_FOR_PLOTTER) {
+        whist_plotter_init();
+        whist_plotter_start_sampling();
     }
 }
 
@@ -194,6 +196,18 @@ void log_double_statistic(uint32_t index, double val) {
         LOG_ERROR("index is out of bounds. index = %d, num_metrics = %d", index, NUM_METRICS);
         return;
     }
+
+    if (LOG_DATA_FOR_PLOTTER) {
+        double time_since_start = get_timestamp_sec();
+        double value_to_plot = val;
+        if (statistic_info[index].aggregation_type == SUM) {
+            value_to_plot = val + all_statistics[index].cumulative_sum;
+        } else if (statistic_info[index].aggregation_type == AVERAGE_OVER_TIME) {
+            value_to_plot = (val + all_statistics[index].cumulative_sum) / time_since_start;
+        }
+        whist_plotter_insert_sample(statistic_info[index].key, time_since_start, value_to_plot);
+    }
+
     whist_lock_mutex(log_statistic_mutex);
     if (all_statistics[index].count == 0) {
         all_statistics[index].min = val;
@@ -209,6 +223,9 @@ void log_double_statistic(uint32_t index, double val) {
     }
 
     all_statistics[index].sum += val;
+    if (LOG_DATA_FOR_PLOTTER) {
+        all_statistics[index].cumulative_sum += val;
+    }
 
     if (get_timer(&print_statistic_clock) > statistic_context.interval) {
         unsafe_print_statistics();
@@ -220,4 +237,22 @@ void destroy_statistic_logger(void) {
     free(statistic_context.all_statistics);
     memset((void *)&statistic_context, 0, sizeof(statistic_context));
     whist_destroy_mutex(log_statistic_mutex);
+    if (LOG_DATA_FOR_PLOTTER) {
+        whist_plotter_stop_sampling();
+
+        LOG_INFO("Saving data for plotter to file...");
+        char *json_buffer = (char *)calloc(PLOT_DATA_SIZE, sizeof(char));
+        whist_plotter_export_c(json_buffer, PLOT_DATA_SIZE);
+
+        const char *plt_filename = PLOT_DATA_FILENAME;
+        FILE *plt_file = fopen(plt_filename, "w");
+        if (plt_file != NULL) {
+            fprintf(plt_file, "%s", json_buffer);
+            fclose(plt_file);
+        } else {
+            LOG_ERROR("Could not open %s file to export plotting data!", plt_filename);
+        }
+        free(json_buffer);
+        free((char *)plt_filename);
+    }
 }

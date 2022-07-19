@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 import os
+import subprocess
 import sys
 import argparse
 import glob
 from datetime import datetime, timedelta
+from github import InputFileContent
 
 sys.path.append(".github/workflows/helpers")
 from notifications.slack_bot import slack_post
@@ -24,11 +26,15 @@ from protocol.e2e_streaming_test_display_helpers.logs_tools import (
 
 from protocol.e2e_streaming_test_display_helpers.metrics_tools import (
     extract_metrics,
+    generate_plots,
+    add_plot_links,
 )
 
 from protocol.e2e_streaming_test_display_helpers.git_tools import (
-    create_github_gist_post,
+    create_gist,
+    update_gist,
     associate_branch_to_open_pr,
+    get_gist_user_info,
 )
 
 
@@ -147,6 +153,16 @@ if __name__ == "__main__":
     github_token = os.environ["GITHUB_TOKEN"]
     github_run_id = os.environ.get("GITHUB_RUN_ID")
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
+    gist_username, gist_author_name, gist_author_email = get_gist_user_info(github_gist_token)
+    # Set the Git identity
+    git_config_command = f'git config --global user.email "{gist_author_email}" && git config --global user.name "{gist_author_name}"'
+
+    if not verbose:
+        subprocess.run(
+            git_config_command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+        )
+    else:
+        subprocess.run(git_config_command, shell=True, capture_output=True)
 
     current_branch_name = ""
     # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable
@@ -192,6 +208,15 @@ if __name__ == "__main__":
             print("Error: protocol logs not found!")
             sys.exit(-1)
 
+    # Initialize the plots folder
+    plots_folder = "plots"
+    os.makedirs(plots_folder, exist_ok=True)
+
+    # Initialize the Gist post
+    plots_gist = create_gist(github_gist_token, "E2E plots")
+
+    ################################################# 1. Extract data from logs ###################################################
+
     print("Found E2E logs for the following experiments: ")
     experiments = []
     for i, log_dir in enumerate(logs_root_dirs):
@@ -226,7 +251,7 @@ if __name__ == "__main__":
             "network_conditions": "unknown",
             "human_readable_network_conditions": "unknown",
             "outcome": e2e_script_outcomes[i],
-            "dirname": short_dirname,
+            "dirname": log_dir,
         }
 
         if client_metrics is not None and server_metrics is not None:
@@ -255,6 +280,8 @@ if __name__ == "__main__":
         experiments.append(experiment_entry)
         print("\t+ Failed/skipped experiment with no logs")
 
+    ################################################# 2. Generate result tables and plots ###############################################
+
     for i, compared_branch_name in enumerate(compared_branch_names):
         if compared_branch_name == current_branch_name:
             print(
@@ -263,7 +290,7 @@ if __name__ == "__main__":
         else:
             print(f"\nComparing results to latest values from {compared_branch_name}")
         # Create output Markdown file with comparisons to this branch
-        results_file = open(f"streaming_e2e_test_results_{i+1}.md", "w")
+        results_file = open(f"e2e_report_{i+1}.md", "w")
         results_file.write(f"## Results compared to branch: `{compared_branch_name}`\n")
 
         results_file.write("<details>\n")
@@ -280,6 +307,7 @@ if __name__ == "__main__":
                 )
             if experiment["client_metrics"] is None or experiment["server_metrics"] is None:
                 continue
+            plots_name_prefix = f"plot:experiment{j+1}:{compared_branch_name.replace('/', '-')}"
             # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
             if compared_branch_name != "":
                 testing_url = testing_time = simulate_scrolling = using_two_instances = None
@@ -337,6 +365,31 @@ if __name__ == "__main__":
                         compared_client_log_path, compared_server_log_path
                     )
 
+                # Generate plots
+                for role in ("client", "server"):
+                    plot_data_filename = os.path.join(log_dir, role, "plot_data.json")
+                    compared_plot_data_filename = os.path.join(
+                        ".", compared_branch_name, role, "plot_data.json"
+                    )
+                    generate_plots(
+                        plot_data_filename,
+                        current_branch_name,
+                        plots_folder,
+                        f"{plots_name_prefix}:{role}",
+                        compared_plot_data_filename,
+                        compared_branch_name,
+                        verbose,
+                    )
+
+                client_metrics, server_metrics = add_plot_links(
+                    experiment["client_metrics"],
+                    experiment["server_metrics"],
+                    plots_folder,
+                    plots_name_prefix,
+                    gist_username,
+                    plots_gist.id,
+                )
+
                 test_result = generate_comparison_table(
                     results_file,
                     experiment["experiment_metadata"],
@@ -344,8 +397,8 @@ if __name__ == "__main__":
                     current_branch_name,
                     compared_branch_name,
                     most_interesting_metrics,
-                    experiment["client_metrics"],
-                    experiment["server_metrics"],
+                    client_metrics,
+                    server_metrics,
                     compared_client_metrics,
                     compared_server_metrics,
                 )
@@ -353,19 +406,40 @@ if __name__ == "__main__":
                     e2e_script_outcomes[j] = test_result
 
             else:
+
+                # Generate plots
+                for role in ("client", "server"):
+                    plot_data_filename = os.path.join(log_dir, role, "plot_data.json")
+                    generate_plots(
+                        plot_data_filename,
+                        current_branch_name,
+                        plots_folder,
+                        f"{plots_name_prefix}:{role}",
+                        verbose=verbose,
+                    )
+
+                client_metrics, server_metrics = add_plot_links(
+                    experiment["client_metrics"],
+                    experiment["server_metrics"],
+                    plots_folder,
+                    plots_name_prefix,
+                    gist_username,
+                    plots_gist.id,
+                )
+
                 generate_results_table(
                     results_file,
                     experiment["experiment_metadata"],
                     most_interesting_metrics,
-                    experiment["client_metrics"],
-                    experiment["server_metrics"],
+                    client_metrics,
+                    server_metrics,
                 )
 
         results_file.write("\n\n</details>\n\n")
 
         results_file.close()
 
-    with open(f"streaming_e2e_test_results_0.md", "w") as summary_file:
+    with open(f"e2e_report_0.md", "w") as summary_file:
         summary_file.write("### Experiments Summary\n\n")
 
         summary_file.write("<details>\n")
@@ -375,7 +449,7 @@ if __name__ == "__main__":
             outcome_emoji = ":white_check_mark:" if e2e_script_outcomes[i] == "success" else ":x:"
             if experiment["dirname"] is not None:
                 summary_file.write(
-                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{experiment['dirname']}/ {experiment['dirname']}/ --recursive\n```\n"
+                    f"{outcome_emoji} **Experiment {i+1}** - {experiment['human_readable_network_conditions']}. Download logs: \n```bash\naws s3 cp s3://whist-e2e-protocol-test-logs/{current_branch_name}/{os.path.basename(experiment['dirname'])}/ {os.path.basename(experiment['dirname'])}/ --recursive\n```\n"
                 )
             else:
                 summary_file.write(
@@ -383,32 +457,48 @@ if __name__ == "__main__":
                 )
 
         summary_file.write("\n\n</details>\n\n")
-    #######################################################################################
 
-    if (
-        "experiment_metadata" in experiments[0]
-        and "start_time" in experiments[0]["experiment_metadata"]
-    ):
-        test_start_time = experiments[0]["experiment_metadata"]["start_time"]
+    ################################################# 3. Upload the plots to the Gist ###################################################
 
-    title = f"Protocol End-to-End Streaming Test Results - {test_start_time}"
-    github_repo = "whisthq/whist"
-    # Adding timestamp to prevent overwrite of message
-    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
+    # Keep track of plot files that were created
+    plot_files = [
+        os.path.join(plots_folder, p)
+        for p in os.listdir(plots_folder)
+        if os.path.isfile(os.path.join(plots_folder, p))
+    ]
+    if verbose:
+        print("Created the following plots:")
+        for filename in plot_files:
+            print(filename)
 
-    # Create one file for each branch
+    # Because PyGithub (together with other tools that support creating gist, such as the defunkt/gist package) does not allow you to
+    # upload binary files to a gist, we have to first create the gist, then upload the plots using repository-style commands such as
+    # git clone / git add / git commit / git push. In addition, initializing the plots_gist before creating the tables is advantageous
+    # because it allows us to immediately insert the plots' urls into the tables upon creation, without neededing to update the entries.
+    update_gist(github_gist_token, plots_gist.id, plot_files, verbose)
 
-    md_files = glob.glob("streaming_e2e_test_results_*.md")
-    files_list = []
-    merged_files = ""
+    ################################################# 3. Post results to Slack/GitHub ###################################################
+
+    # Create summary Gist with all the results
+    title = "Protocol End-to-End Streaming Test Results"
+    md_files = glob.glob("e2e_report_*.md")
+    # Upload link to plots and results summaries to gist
+    print("\nCreating Gist with performance results and links to plots...")
+    files_dict = {}
     for filename in sorted(md_files):
         with open(filename, "r") as f:
             contents = f.read()
-            files_list.append((filename, contents))
-            merged_files += contents
+            files_dict[filename] = InputFileContent(contents)
+    gist = create_gist(github_gist_token, title, files_dict)
+    print(f"\nPosted performance results to secret gist: {gist.html_url}")
 
-    gist_url = create_github_gist_post(github_gist_token, title, files_list)
+    # Create Github Post
+    summary_contents = ""
+    with open(f"e2e_report_0.md", "r") as summary_file:
+        summary_contents = summary_file.read()
+    summary_contents += f"\n\nFull Results: [link here]({gist.html_url})\n\n"
 
+    # Check for and report errors
     success_outcome = ":white_check_mark: All experiments succeeded!"
     test_outcome = success_outcome
     error_index = 0
@@ -426,9 +516,9 @@ if __name__ == "__main__":
     if slack_webhook and post_results_on_slack and github_run_id:
         link_to_runner_logs = f"https://github.com/whisthq/whist/actions/runs/{github_run_id}"
         if test_outcome == success_outcome:
-            body = f"Whist daily E2E test for branch `{current_branch_name}` completed successfully. See results: {gist_url} (<{link_to_runner_logs} | see logs>)"
+            body = f"Whist daily E2E test for branch `{current_branch_name}` completed successfully. See results: {gist.html_url} (<{link_to_runner_logs} | see logs>)"
         else:
-            body = f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {gist_url}"
+            body = f"@releases :rotating_light: Whist daily E2E test {test_outcome} <{link_to_runner_logs}|(see logs)>! - investigate immediately: {gist.html_url}"
 
         slack_post(
             slack_webhook,
@@ -440,6 +530,8 @@ if __name__ == "__main__":
     # Otherwise post on GitHub if the branch is tied to a open PR
     else:
         pr_number = associate_branch_to_open_pr(current_branch_name)
+        github_repo = "whisthq/whist"
+        identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
         if pr_number != -1:
             print(
                 f"Posting contents of Gist with performance results as a comment to PR #{pr_number} associated with {current_branch_name}"
@@ -449,7 +541,7 @@ if __name__ == "__main__":
                 github_repo,
                 pr_number,
                 identifier,
-                merged_files,
+                summary_contents,
                 title=title,
                 update_date=True,
             )

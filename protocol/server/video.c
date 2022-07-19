@@ -893,7 +893,7 @@ int32_t multithreaded_send_video(void* opaque) {
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
                         log_double_statistic(VIDEO_FRAME_SIZE, encoder->encoded_frame_size);
                         log_double_statistic(VIDEO_FRAME_PROCESSING_TIME,
-                                             get_timer(&server_frame_timer) * 1000);
+                                             get_timer(&server_frame_timer) * MS_IN_SECOND);
                         if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(encoder->frame_type))
                             log_double_statistic(VIDEO_NUM_RECOVERY_FRAMES, 1.0);
                     }

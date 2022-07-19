@@ -20,7 +20,7 @@ from helpers.common.ssh_tools import (
 
 from helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
-    printyellow,
+    printformat,
 )
 
 from helpers.common.constants import (
@@ -153,8 +153,9 @@ def install_and_configure_aws(
             error_msg = "E: Package 'unzip' has no installation candidate"
 
             if expression_in_pexpect_output(error_msg, stdout):
-                printyellow(
-                    "Installing 'unzip' using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
+                printformat(
+                    "Installing 'unzip' using apt-get failed. This usually happens when the Ubuntu package lists are being updated.",
+                    "yellow",
                 )
                 exit_with_error("Installing AWS-CLI from source failed")
 
@@ -228,7 +229,7 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt):
                     f"Branch {branch_name} not found in the whisthq/whist repository. Maybe it has been merged while the E2E was running?"
                 )
             else:
-                printyellow(f"Git clone failed!")
+                printformat(f"Git clone failed!", "yellow")
         else:
             break
 
@@ -281,18 +282,20 @@ def run_host_setup(
             print("Finished running the host setup script on the EC2 instance")
             break
         elif expression_in_pexpect_output(lock_error_msg, host_setup_output):
-            printyellow("Host setup failed to grab the necessary apt/dpkg locks.")
+            printformat("Host setup failed to grab the necessary apt/dpkg locks.", "yellow")
         elif expression_in_pexpect_output(dpkg_config_error, host_setup_output):
-            printyellow("Host setup failed due to dpkg interruption error. Reconfiguring dpkg....")
+            printformat(
+                "Host setup failed due to dpkg interruption error. Reconfiguring dpkg....", "yellow"
+            )
             pexpect_process.sendline("sudo dpkg --force-confdef --configure -a ")
             wait_until_cmd_done(pexpect_process, pexpect_prompt)
         elif (
             host_setup_exit_code == TIMEOUT_EXIT_CODE
             or host_setup_exit_code == TIMEOUT_KILL_EXIT_CODE
         ):
-            printyellow(f"Host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s!")
+            printformat(f"Host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s!", "yellow")
         else:
-            printyellow("Host setup failed for unspecified reason (check the logs)!")
+            printformat("Host setup failed for unspecified reason (check the logs)!", "yellow")
 
         if retry == SETUP_MAX_RETRIES - 1:
             exit_with_error(f"Host setup failed {SETUP_MAX_RETRIES} times. Giving up now!")

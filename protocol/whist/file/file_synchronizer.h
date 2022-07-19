@@ -28,6 +28,8 @@ if (our_chunk_to_send) {
 destroy_file_synchronizer();
 */
 
+#include <whist/utils/clock.h>
+
 /*
 ============================
 Custom types
@@ -119,20 +121,27 @@ typedef enum FileTransferDirection {
  */
 typedef struct TransferringFile {
     LINKED_LIST_HEADER;
-    int global_file_id;  // Unique identifier for client-server synchrony
-    int id;              // Unique identifier (unique across ALL written files,
-                         //     not just active ones, but can be -1 for read files)
-    bool group_end;      // Used to indicate if this is the end of an associated group of
-                         //    `transfer_type` files. For example, multiple files can be
-                         //    dropped in one motion, and each file will be assumed to be
-                         //    a part of the same group until it encounters a `group_end`.
-    char* filename;      // The filename without the path (can be NULL for read-end files)
-    char* file_path;     // The local file path
-    FILE* file_handle;   // The local file handle
+    int global_file_id;     // Unique identifier for client-server synchrony
+    int id;                 // Unique identifier (unique across ALL written files,
+                            //     not just active ones, but can be -1 for read files)
+    bool group_end;         // Used to indicate if this is the end of an associated group of
+                            //    `transfer_type` files. For example, multiple files can be
+                            //    dropped in one motion, and each file will be assumed to be
+                            //    a part of the same group until it encounters a `group_end`.
+    char* filename;         // The filename without the path (can be NULL for read-end files)
+    char* file_path;        // The local file path
+    FILE* file_handle;      // The local file handle
+    void* opaque;           // Opaque pointer used for File Download UI callbacks
+    int64_t bytes_written;  // Number of bytes written so far
+    int64_t bytes_per_sec;  // Transfer speed in bytes per sec
     FileTransferType transfer_type;   // Type of file transfer
     FileEventInfo event_info;         // Extra information for the file transfer
     FileTransferDirection direction;  // FILE_READ_END if read end, FILE_WRITE_END if write end
+    WhistTimer last_chunk_received;   // Time at which the last chunk was received
 } TransferringFile;
+
+typedef struct WhistFrontend WhistFrontend;
+typedef void (*file_download_complete_callback)(WhistFrontend* frontend, void* opaque);
 
 /*
 ============================
@@ -160,7 +169,7 @@ LinkedList* file_synchronizer_get_transferring_files(void);
  * @param file_metadata            Pointer to file metadata
  *
  */
-void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata);
+TransferringFile* file_synchronizer_open_file_for_writing(FileMetadata* file_metadata);
 
 /**
  * @brief                          Write a file chunk to a transferring file
@@ -168,9 +177,15 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata);
  * @param file_chunk               The file data chunk to update the
  *                                 relevant transferring file with
  *
+ * @param cb                       Callback function to be invoked when download is completed
+ *
+ * @param frontend                 Pointer to the Whist Frontend interface
+ *
  * @returns                        true on success, false on failure
  */
-bool file_synchronizer_write_file_chunk(FileData* file_chunk);
+TransferringFile* file_synchronizer_write_file_chunk(FileData* file_chunk,
+                                                     file_download_complete_callback cb,
+                                                     WhistFrontend* frontend);
 
 /**
  * @brief                          Set the basic file information in the file
@@ -217,6 +232,8 @@ void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
  */
 void file_synchronizer_read_next_file_chunk(TransferringFile* active_file,
                                             FileData** file_chunk_ptr);
+
+void reset_transferring_file(TransferringFile* current_file);
 
 /**
  * @brief                          Reset all transferring files

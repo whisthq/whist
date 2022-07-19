@@ -39,6 +39,7 @@ else() # GCC and Clang base flags
       add_link_options("-fsanitize=${TYPE}")
     endforeach()
     if(CHECK_CI)
+      add_compile_options("-fno-sanitize=alignment")
       add_compile_options("-fno-sanitize-recover=all")
       add_link_options("-fno-sanitize-recover=all")
     endif()
@@ -47,4 +48,5 @@ endif()
 
 # For now, log everything.
 add_compile_definitions(LOG_LEVEL=5
+                        $<$<CONFIG:Metrics>:LOG_DATA_FOR_PLOTTER=true>
                         __ROOT_FILE__="${PROJECT_SOURCE_DIR}")

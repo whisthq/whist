@@ -9,43 +9,23 @@ import os
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 # Acknowledged to https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal-in-python
-class PrintFormats:
-    blue = "\033[94m"
-    cyan = "\033[96m"
-    green = "\033[92m"
-    yellow = "\033[93m"
-    red = "\033[91m"
-    bold = "\033[1m"
-    underline = "\033[4m"
-    end_formatting = "\033[0m"
+print_formats = {
+    "blue": "\033[94m",
+    "cyan": "\033[96m",
+    "green": "\033[92m",
+    "yellow": "\033[93m",
+    "red": "\033[91m",
+    "bold": "\033[1m",
+    "underline": "\033[4m",
+    "end_formatting": "\033[0m",
+}
 
 
-def printblue(text):
-    print(f"{PrintFormats.blue}{text}{PrintFormats.end_formatting}")
-
-
-def printcyan(text):
-    print(f"{PrintFormats.cyan}{text}{PrintFormats.end_formatting}")
-
-
-def printgreen(text):
-    print(f"{PrintFormats.green}{text}{PrintFormats.end_formatting}")
-
-
-def printyellow(text):
-    print(f"{PrintFormats.yellow}{text}{PrintFormats.end_formatting}")
-
-
-def printred(text):
-    print(f"{PrintFormats.red}{text}{PrintFormats.end_formatting}")
-
-
-def printbold(text):
-    print(f"{PrintFormats.bold}{text}{PrintFormats.end_formatting}")
-
-
-def printunderline(text):
-    print(f"{PrintFormats.underline}{text}{PrintFormats.end_formatting}")
+def printformat(text, format):
+    if format not in print_formats:
+        print(text)
+    else:
+        print(f"{print_formats[format]}{text}{print_formats['end_formatting']}")
 
 
 class TimeStamps:
@@ -119,7 +99,7 @@ class TimeStamps:
             padding_len = self.max_event_name_len - len(event_name)
             padding = " " * padding_len if padding_len > 0 else ""
             if time_elapsed == self.most_time_consuming_event:
-                printbold(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}")
+                printformat(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}", "bold")
             else:
                 print(f"{i+1}. {event_name}{padding}:\t{str(time_elapsed)}")
         print("############################")
@@ -141,12 +121,12 @@ def exit_with_error(error_message, timestamps=None):
         None and exit with exitcode -1
     """
     if error_message is not None:
-        printred(error_message)
+        printformat(error_message, "red")
     if timestamps is not None:
         timestamps.print_timestamps()
 
     # In case of errors, the instances used in the test were likely not shut down properly, so we need to do so manually.
     print("If running locally, don't forget to remove leftover instances with the command below:")
-    printblue("python3 -m helpers.aws.remove_leftover_instances")
+    printformat("python3 -m helpers.aws.remove_leftover_instances", "blue")
 
-    sys.exit(-1)
+    sys.exit(1)

@@ -100,4 +100,12 @@ void sdl_native_init_notifications(WhistFrontend* frontend);
  */
 const char* sdl_native_get_chosen_file(void);
 
+/**
+ * @brief                          Indicate to the user that a file has finished
+ *                                 downloading.
+ *
+ * @param file_path                The path to the file that has finished downloading.
+ */
+void sdl_native_file_download_notify_finished(const char* file_path);
+
 #endif  // WHIST_CLIENT_FRONTEND_SDL_NATIVE_H

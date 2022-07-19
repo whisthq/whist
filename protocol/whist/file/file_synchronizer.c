@@ -46,7 +46,6 @@ Includes
 
 #include "file_synchronizer.h"
 #include "file_drop.h"
-#include "file_download.h"
 
 /*
 ============================
@@ -66,7 +65,7 @@ Private Functions
 ============================
 */
 
-static void reset_transferring_file(TransferringFile* current_file) {
+void reset_transferring_file(TransferringFile* current_file) {
     /*
         Reset the transferring file info of the passed in file
         This frees transferring files + their associated resources.
@@ -191,7 +190,7 @@ void init_file_synchronizer(FileTransferType requested_actions) {
 #else
 #define HOME_ENV_VAR "HOME"
 #endif  // Windows
-void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
+TransferringFile* file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     /*
         Open a file for writing based on `file_metadata`
 
@@ -232,6 +231,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
         case FILE_TRANSFER_CLIENT_DOWNLOAD: {
             const char* home_dir = getenv(HOME_ENV_VAR);
             const char* downloads = "Downloads";
+            // TODO : Where is this freed?
             char* download_file_dir = (char*)malloc(strlen(home_dir) + 1 + strlen(downloads) + 1);
             snprintf(download_file_dir, strlen(home_dir) + 1 + strlen(downloads) + 1, "%s%c%s",
                      home_dir, PATH_SEPARATOR, downloads);
@@ -259,6 +259,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
 
     active_file->file_handle = fopen(active_file->file_path, "wb");
     active_file->direction = FILE_WRITE_END;
+    start_timer(&active_file->last_chunk_received);
 
     // Start the XDND drop process on the server as soon as the file exists
     if ((active_file->transfer_type & enabled_actions) == FILE_TRANSFER_SERVER_DROP) {
@@ -266,9 +267,12 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     }
 
     whist_unlock_mutex(file_synchrony_update_mutex);
+    return active_file;
 }
 
-bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
+TransferringFile* file_synchronizer_write_file_chunk(FileData* file_chunk,
+                                                     file_download_complete_callback cb,
+                                                     WhistFrontend* frontend) {
     /*
         Depending on the chunk type, either open the file with the given
         filename, write to the open file handle, or close the file and
@@ -284,7 +288,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
         LOG_ERROR(
             "Tried to file_synchronizer_write_file_chunk, but the file synchronizer is not "
             "initialized");
-        return false;
+        return NULL;
     }
 
     whist_lock_mutex(file_synchrony_update_mutex);
@@ -293,13 +297,13 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
 
     if (!active_file) {
         LOG_WARNING("Write file with global file id %d not found!", file_chunk->global_file_id);
-        return false;
+        return NULL;
     }
 
     // If the file handle isn't being written locally or not ready for writing, then return false.
     if (active_file->direction != FILE_WRITE_END || active_file->file_handle == NULL) {
         whist_unlock_mutex(file_synchrony_update_mutex);
-        return false;
+        return NULL;
     }
 
     switch (file_chunk->chunk_type) {
@@ -309,6 +313,10 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
 
             // For body chunks, write the data to the file
             fwrite(file_chunk->data, 1, file_chunk->size, active_file->file_handle);
+            active_file->bytes_written += file_chunk->size;
+            active_file->bytes_per_sec =
+                file_chunk->size / get_timer(&active_file->last_chunk_received);
+            start_timer(&active_file->last_chunk_received);
             break;
         }
         case FILE_CLOSE: {
@@ -321,7 +329,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
                     break;
                 }
                 case FILE_TRANSFER_CLIENT_DOWNLOAD: {
-                    whist_file_download_notify_finished(active_file->file_path);
+                    if (cb) cb(frontend, active_file->opaque);
                     break;
                 }
                 case FILE_TRANSFER_SERVER_UPLOAD: {
@@ -332,18 +340,17 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
                     break;
                 }
             }
-
             // For end chunks, close the file handle and reset the slot in the array
             reset_transferring_file(active_file);
+            active_file = NULL;
             break;
         }
         default: {
             break;
         }
     }
-
     whist_unlock_mutex(file_synchrony_update_mutex);
-    return true;
+    return active_file;
 }
 
 void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,

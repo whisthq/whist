@@ -1,25 +1,3 @@
-# ------------------------------ Buckets for user app configs ------------------------------ #
-
-# Buckets for storing user configurations, per environment
-resource "aws_s3_bucket" "whist-user-app-configs" {
-  bucket = "whist-user-app-configs-${var.env}"
-
-  # Ignore the internal lifecycle rules because we have
-  # a separate lifecycle resource.
-  # See: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration#usage-notes
-  lifecycle {
-    ignore_changes = [
-      lifecycle_rule
-    ]
-  }
-
-  tags = {
-    Name      = "whist-user-app-configs-${var.env}"
-    Env       = var.env
-    Terraform = true
-  }
-}
-
 # ------------------------------ Buckets for Whist assets ------------------------------ #
 
 # Bucket for storing general Whist brand assets
