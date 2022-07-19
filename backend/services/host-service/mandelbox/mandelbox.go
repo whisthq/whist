@@ -29,6 +29,7 @@ import (
 	"sync"
 	"time"
 
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -195,8 +196,9 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 		<-ctx.Done()
 
+		var mandelboxCloseErr *multierror.Error
 		if err := dbdriver.WriteMandelboxStatus(mandelbox.GetID(), dbdriver.MandelboxStatusDying); err != nil {
-			logger.Error(err)
+			mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
 		}
 
 		untrackMandelbox(mandelbox)
@@ -223,7 +225,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		// CI does not have GPUs
 		if !metadata.IsRunningInCI() {
 			if err := gpus.Free(mandelbox.gpuIndex, mandelbox.GetID()); err != nil {
-				logger.Errorf("error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.GetID(), err)
+				mandelboxCloseErr = multierror.Append(mandelboxCloseErr, utils.MakeError("error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.GetID(), err))
 			} else {
 				logger.Infof("Successfully freed GPU %v for mandelbox %s", mandelbox.gpuIndex, mandelbox.GetID())
 			}
@@ -241,7 +243,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 			// Backup and clean user config directory.
 			err := mandelbox.BackupUserConfigs()
 			if err != nil {
-				logger.Errorf("error backing up user configs for MandelboxID %s: %s", mandelbox.GetID(), err)
+				mandelboxCloseErr = multierror.Append(mandelboxCloseErr, utils.MakeError("error backing up user configs for MandelboxID %s: %s", mandelbox.GetID(), err))
 			} else {
 				logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.GetID())
 			}
@@ -251,10 +253,14 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		}
 
 		if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
-			logger.Error(err)
+			mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
 		}
 
 		logger.Infof("Cleaned up after Mandelbox %s", mandelbox.GetID())
+
+		if mandelboxCloseErr != nil {
+			logger.Errorf("cleaned up after mandelbox, %s", mandelboxCloseErr)
+		}
 
 		// Only after every step of the cleanup function has completed successfully,
 		// notify that the cleanup for this mandelbox is done.

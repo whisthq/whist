@@ -143,7 +143,7 @@ func TestHttpServerIntegration(t *testing.T) {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
-	initializeFilesystem(globalCancel)
+	initializeFilesystem()
 	defer uninitializeFilesystem()
 
 	httpServerEvents, err := StartHTTPServer(globalCtx, globalCancel, &goroutineTracker)

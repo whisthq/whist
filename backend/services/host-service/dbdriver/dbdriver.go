@@ -24,7 +24,7 @@ var dbpool *pgxpool.Pool
 
 // Initialize creates and tests a connection to the database. It also starts
 // the goroutine that cleans up stale mandelboxes.
-func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) error {
+func Initialize(globalCtx context.Context, goroutineTracker *sync.WaitGroup) error {
 	if !enabled {
 		logger.Infof("Running in app environment %s so not enabling database code.", metadata.GetAppEnvironment())
 		return nil

@@ -34,7 +34,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 
 	// We always want to start with a clean slate
 	uninitializeFilesystem()
-	initializeFilesystem(cancel)
+	initializeFilesystem()
 
 	dockerClient := mockClient{
 		browserImage: "browsers/chrome",

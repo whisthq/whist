@@ -42,6 +42,7 @@ import (
 	// functionality in this imported package as well.
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-multierror"
 	"github.com/whisthq/whist/backend/services/httputils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 	"go.uber.org/zap"
@@ -255,11 +256,11 @@ var appArmorProfile string
 // Create and register the AppArmor profile for Docker to use with
 // mandelboxes. These do not persist, so must be done at service
 // startup.
-func initializeAppArmor(globalCancel context.CancelFunc) {
+func initializeAppArmor() error {
 	cmd := exec.Command("apparmor_parser", "-Kr")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		logger.Panicf(globalCancel, "unable to attach to process 'stdin' pipe: %s", err)
+		return utils.MakeError("unable to attach to process 'stdin' pipe: %s", err)
 	}
 
 	go func() {
@@ -269,13 +270,15 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 
 	err = cmd.Run()
 	if err != nil {
-		logger.Panicf(globalCancel, "unable to register AppArmor profile: %s", err)
+		return utils.MakeError("unable to register AppArmor profile: %s", err)
 	}
+
+	return nil
 }
 
 // Create the directory used to store the mandelbox resource allocations
 // (e.g. TTYs) on disk
-func initializeFilesystem(globalCancel context.CancelFunc) {
+func initializeFilesystem() error {
 	// Check if the instance has ephemeral storage. If it does, set the WhistDir path to the
 	// ephemeral volume, which should already be mounted by the userdata script. We use the
 	// command below to check if the instance has an ephemeral device present.
@@ -304,9 +307,9 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// from this panic will clean up the directory and the next run will work properly.
 	if _, err := os.Lstat(utils.WhistDir); !os.IsNotExist(err) {
 		if err == nil {
-			logger.Panicf(globalCancel, "directory %s already exists!", utils.WhistDir)
+			return utils.MakeError("directory %s already exists!", utils.WhistDir)
 		} else {
-			logger.Panicf(globalCancel, "could not make directory %s: %s", utils.WhistDir, err)
+			return utils.MakeError("could not make directory %s: %s", utils.WhistDir, err)
 		}
 	}
 
@@ -315,7 +318,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// configs).
 	err = os.MkdirAll(utils.WhistDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "failed to create directory %s: %s\n", utils.WhistDir, err)
+		return utils.MakeError("failed to create directory %s: %s\n", utils.WhistDir, err)
 	}
 	cmd := exec.Command("chown", "-R", "ubuntu", utils.WhistDir)
 	cmd.Run()
@@ -323,15 +326,17 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// Create whist-private directory
 	err = os.MkdirAll(utils.WhistPrivateDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "failed to create directory %s: %s\n", utils.WhistPrivateDir, err)
+		return utils.MakeError("failed to create directory %s: %s\n", utils.WhistPrivateDir, err)
 	}
 
 	// Create whist temp directory (only let root read and write this, since it
 	// contains logs and uinput sockets).
 	err = os.MkdirAll(utils.TempDir, 0600)
 	if err != nil {
-		logger.Panicf(globalCancel, "could not mkdir path %s: %s", utils.TempDir, err)
+		return utils.MakeError("could not mkdir path %s: %s", utils.TempDir, err)
 	}
+
+	return nil
 }
 
 // Delete the directory used to store the mandelbox resource allocations (e.g.
@@ -465,22 +470,31 @@ func main() {
 	// Log the Git commit of the running executable
 	logger.Infof("Host Service Version: %s", metadata.GetGitCommit())
 
+	var hostStartupErr *multierror.Error
 	// Initialize the database driver, if necessary (the `dbdriver` package
 	// takes care of the "if necessary" part).
-	if err := dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
-		logger.Panic(globalCancel, err)
+	if err := dbdriver.Initialize(globalCtx, &goroutineTracker); err != nil {
+		hostStartupErr = multierror.Append(hostStartupErr, err)
+		globalCancel()
 	}
 
 	// Log the instance name we're running on
 	instanceName, err := aws.GetInstanceName()
 	if err != nil {
-		logger.Panic(globalCancel, err)
+		hostStartupErr = multierror.Append(hostStartupErr, err)
+		globalCancel()
 	}
 	logger.Infof("Running on instance name: %s", instanceName)
 
-	initializeAppArmor(globalCancel)
+	if err = initializeAppArmor(); err != nil {
+		hostStartupErr = multierror.Append(hostStartupErr, err)
+		globalCancel()
+	}
 
-	initializeFilesystem(globalCancel)
+	if err = initializeFilesystem(); err != nil {
+		hostStartupErr = multierror.Append(hostStartupErr, err)
+		globalCancel()
+	}
 
 	if err := dbdriver.RegisterInstance(); err != nil {
 		// If the instance starts up and sees its status as unresponsive or
@@ -492,7 +506,8 @@ func main() {
 			shutdownInstanceOnExit = true
 			globalCancel()
 		} else {
-			logger.Panic(globalCancel, err)
+			hostStartupErr = multierror.Append(hostStartupErr, err)
+			globalCancel()
 		}
 	}
 
@@ -520,7 +535,12 @@ func main() {
 	// Start the HTTP server and listen for events
 	httpServerEvents, err := StartHTTPServer(globalCtx, globalCancel, &goroutineTracker)
 	if err != nil {
-		logger.Panic(globalCancel, err)
+		hostStartupErr = multierror.Append(hostStartupErr, err)
+		globalCancel()
+	}
+
+	if hostStartupErr != nil {
+		logger.Panicf(globalCancel, utils.Sprintf("host service startup, %s", hostStartupErr))
 	}
 
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
