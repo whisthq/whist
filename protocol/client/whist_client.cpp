@@ -73,15 +73,15 @@ static char* server_ip;
 extern "C" {
 extern bool using_stun;
 
-// Whether a pinch is currently active - set in handle_frontend_events.c
-extern std::atomic<bool> active_pinch;
-
 // Window resizing state
 extern WhistMutex window_resize_mutex;  // protects pending_resize_message
 extern WhistTimer window_resize_timer;
+}
+
+// Whether a pinch is currently active - set in handle_frontend_events.c
+extern std::atomic<bool> active_pinch;
 
 extern std::atomic<bool> client_exiting;
-}
 
 // Used to check if we need to call filepicker from main thread
 extern std::atomic<bool> upload_initiated;
