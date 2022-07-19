@@ -16,6 +16,7 @@ OnFileUploadCallback on_file_upload = NULL;
 OnFileDownloadStart on_file_download_start = NULL;
 OnFileDownloadUpdate on_file_download_update = NULL;
 OnFileDownloadComplete on_file_download_complete = NULL;
+static VideoFrameCallback video_frame_callback_ptr = NULL;
 
 static WhistMutex lock;
 static AVFrame* pending = NULL;
@@ -35,6 +36,9 @@ static void virtual_interface_set_on_cursor_change_callback(OnCursorChangeCallba
 
 static void* virtual_interface_get_frame_ref(void) {
     whist_lock_mutex(lock);
+    // Ensure that the interface isn't in callback mode
+    FATAL_ASSERT(video_frame_callback_ptr == NULL);
+    // Consume the pending AVFrame, and return it
     void* out = pending;
     pending = NULL;
     whist_unlock_mutex(lock);
@@ -78,8 +82,25 @@ void virtual_interface_send_frame(AVFrame* frame) {
     if (!connected) return;
 
     whist_lock_mutex(lock);
-    av_frame_free(&pending);
-    pending = av_frame_clone(frame);
+    if (video_frame_callback_ptr != NULL) {
+        // If we have a callback, pass into the callback
+        AVFrame* new_frame = av_frame_clone(frame);
+        video_frame_callback_ptr((void*)new_frame);
+    } else {
+        // Otherwise, keep the frame as pending
+        av_frame_free(&pending);
+        pending = av_frame_clone(frame);
+    }
+    whist_unlock_mutex(lock);
+}
+
+static void virtual_interface_set_video_frame_callback(VideoFrameCallback callback_ptr) {
+    whist_lock_mutex(lock);
+    // If we're newly setting this callback, free any pending frames
+    if (video_frame_callback_ptr == NULL) {
+        av_frame_free(&pending);
+    }
+    video_frame_callback_ptr = callback_ptr;
     whist_unlock_mutex(lock);
 }
 
@@ -132,6 +153,7 @@ static const VirtualInterface vi = {
             .get_frame_ref_yuv_data = virtual_interface_get_frame_ref_yuv_data,
             .free_frame_ref = virtual_interface_free_frame_ref,
             .set_on_cursor_change_callback = virtual_interface_set_on_cursor_change_callback,
+            .set_video_frame_callback = virtual_interface_set_video_frame_callback,
         },
     .events =
         {
