@@ -35,12 +35,12 @@ extern "C" {
 // Main state variables
 extern std::atomic<bool> client_exiting;
 
+// This variable represents whether there is an active pinch gesture
+std::atomic<bool> active_pinch = false;
+
 extern "C" {
 extern MouseMotionAccumulation mouse_state;
 }
-
-// This variable represents whether there is an active pinch gesture
-std::atomic<bool> active_pinch = false;
 
 // This variable represents whether or not we are actively sending momentum scrolls
 //     On MOMENTUM_BEGIN, we set this to true, and start sending momentum scrolls

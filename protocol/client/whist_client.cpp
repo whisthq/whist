@@ -81,10 +81,10 @@ extern WhistMutex window_resize_mutex;  // protects pending_resize_message
 extern WhistTimer window_resize_timer;
 
 extern std::atomic<bool> client_exiting;
+}
 
 // Used to check if we need to call filepicker from main thread
 extern std::atomic<bool> upload_initiated;
-}
 
 // Mouse motion state
 extern MouseMotionAccumulation mouse_state;
