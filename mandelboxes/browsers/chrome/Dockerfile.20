@@ -87,10 +87,8 @@ RUN mkdir -p /home/whist/.config/google-chrome \
     && touch /home/whist/.config/google-chrome/'First Run' \
     && chown whist:whist /home/whist/.config/google-chrome{,/'First Run'}
 
-# Install Whist wrapper script to run Google Chrome into /usr/bin
+
 ENV WHIST_DEST_BROWSER="chrome"
-COPY ../start-browser.sh /usr/bin/start-chrome
-RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whist-application
 
 # Install handle to browser program to be able to open a new tab from the protocol
 RUN ln -sf /usr/bin/google-chrome /usr/bin/whist-open-new-tab

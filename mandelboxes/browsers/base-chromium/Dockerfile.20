@@ -80,3 +80,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends kdialog \
 
 # Copy lowercase-chromium-file descript
 COPY --chmod=555 lowercase-chromium-files /usr/bin/lowercase-chromium-files
+
+# Install Whist wrapper script to run browser into /usr/bin
+ENV WHIST_DEST_BROWSER="chrome"
+COPY start-browser.sh /usr/bin/start-browser
+RUN chmod +x /usr/bin/start-browser && ln -sf /usr/bin/start-browser /usr/bin/whist-application
