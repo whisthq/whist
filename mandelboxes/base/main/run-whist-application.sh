@@ -44,4 +44,4 @@ export CLIENT_OS=$CLIENT_OS
 export FONTCONFIG_PATH=/etc/fonts
 
 # Start the application that this mandelbox runs
-exec whist-application
+exec whist-application $WHIST_DEST_BROWSER
