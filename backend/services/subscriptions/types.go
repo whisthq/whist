@@ -261,3 +261,19 @@ func ToImages(dbImages []WhistImage) []Image {
 
 	return images
 }
+
+// ToFrontendVersion converts a result obtained from GraphQL of type `WhistFrontendVersion`
+// to a type `FrontendVersion` for convenience.
+func ToFrontendVersion(dbVersion WhistFrontendVersion) FrontendVersion {
+	return FrontendVersion{
+		ID:                int(dbVersion.ID),
+		Major:             int(dbVersion.Major),
+		Minor:             int(dbVersion.Minor),
+		Micro:             int(dbVersion.Micro),
+		DevRC:             int(dbVersion.DevRC),
+		StagingRC:         int(dbVersion.StagingRC),
+		DevCommitHash:     string(dbVersion.DevCommitHash),
+		StagingCommitHash: string(dbVersion.StagingCommitHash),
+		ProdCommitHash:    string(dbVersion.ProdCommitHash),
+	}
+}

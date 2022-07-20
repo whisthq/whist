@@ -15,13 +15,13 @@ var (
 	testFrontendVersions []subscriptions.WhistFrontendVersion
 )
 
-type mockGraphQLClient struct{}
+type mockConfigGraphQLClient struct{}
 
-func (mc *mockGraphQLClient) Initialize(bool) error {
+func (mc *mockConfigGraphQLClient) Initialize(bool) error {
 	return nil
 }
 
-func (mc *mockGraphQLClient) Query(ctx context.Context, query subscriptions.GraphQLQuery, res map[string]interface{}) error {
+func (mc *mockConfigGraphQLClient) Query(ctx context.Context, query subscriptions.GraphQLQuery, res map[string]interface{}) error {
 	switch query := query.(type) {
 	case *struct {
 		subscriptions.WhistConfigs `graphql:"dev"`
@@ -45,12 +45,12 @@ func (mc *mockGraphQLClient) Query(ctx context.Context, query subscriptions.Grap
 	return nil
 }
 
-func (mc *mockGraphQLClient) Mutate(ctx context.Context, query subscriptions.GraphQLQuery, res map[string]interface{}) error {
+func (mc *mockConfigGraphQLClient) Mutate(ctx context.Context, query subscriptions.GraphQLQuery, res map[string]interface{}) error {
 	return nil
 }
 
 func TestGetDevConfigs(t *testing.T) {
-	mockClient := &mockGraphQLClient{}
+	mockClient := &mockConfigGraphQLClient{}
 
 	var tests = []struct {
 		name     string
@@ -91,7 +91,7 @@ func TestGetDevConfigs(t *testing.T) {
 }
 
 func TestGetStagingConfigs(t *testing.T) {
-	mockClient := &mockGraphQLClient{}
+	mockClient := &mockConfigGraphQLClient{}
 
 	var tests = []struct {
 		name     string
@@ -131,7 +131,7 @@ func TestGetStagingConfigs(t *testing.T) {
 }
 
 func TestGetProdConfigs(t *testing.T) {
-	mockClient := &mockGraphQLClient{}
+	mockClient := &mockConfigGraphQLClient{}
 
 	var tests = []struct {
 		name     string
@@ -171,26 +171,37 @@ func TestGetProdConfigs(t *testing.T) {
 }
 
 func TestGetFrontendVersion(t *testing.T) {
-	mockClient := &mockGraphQLClient{}
+	mockClient := &mockConfigGraphQLClient{}
 
 	var tests = []struct {
 		name     string
 		err      string
-		expected subscriptions.FrontendVersion
+		expected subscriptions.WhistFrontendVersion
 	}{
-		{"Existing versions", "", subscriptions.FrontendVersion{}},
-		{"Empty versions", "could not find frontend version on config database", subscriptions.FrontendVersion{}},
+		{"Existing versions", "", subscriptions.WhistFrontendVersion{
+			ID:                graphql.Int(1),
+			Major:             graphql.Int(1),
+			Minor:             graphql.Int(1),
+			Micro:             graphql.Int(1),
+			DevRC:             graphql.Int(1),
+			StagingRC:         graphql.Int(1),
+			DevCommitHash:     graphql.String("test_dev_sha"),
+			StagingCommitHash: graphql.String("test_staging_sha"),
+			ProdCommitHash:    graphql.String("test_prod_sha"),
+		}},
+		{"Empty versions", "could not find frontend version on config database", subscriptions.WhistFrontendVersion{}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testFrontendVersions = []subscriptions.WhistFrontendVersion{}
+			testFrontendVersions = []subscriptions.WhistFrontendVersion{tt.expected}
+
 			configs, err := GetFrontendVersion(context.Background(), mockClient)
 			if err != nil && !strings.Contains(err.Error(), tt.err) {
 				t.Errorf("expected error: %s, got: %s", tt.err, err)
 			}
 
-			ok := reflect.DeepEqual(configs, tt.expected)
+			ok := reflect.DeepEqual(configs, subscriptions.ToFrontendVersion(tt.expected))
 			if !ok {
 				t.Fatalf("GetFrontendVersion returned bad result: expected %v, got %v", tt.expected, configs)
 			}
