@@ -24,6 +24,7 @@ Includes
 #include <map>
 #include <string>
 #include <algorithm>
+#include <atomic>
 using std::max;
 using std::min;
 using std::vector;

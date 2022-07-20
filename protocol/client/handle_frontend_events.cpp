@@ -16,7 +16,6 @@ Includes
 ============================
 */
 
-#include <atomic>
 #include <whist/core/whist.h>
 
 extern "C" {

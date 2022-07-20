@@ -22,7 +22,6 @@ Includes
                                  // WhistClientMessage
 #endif
 
-#include <atomic>
 #include "video.h"
 
 extern "C" {

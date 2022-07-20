@@ -20,7 +20,6 @@ Includes
 
 #include <whist/core/whist.h>
 #include <deque>
-#include <atomic>
 #include <algorithm>
 #include "whist/utils/clock.h"
 extern "C" {

@@ -18,7 +18,6 @@ Includes
 */
 
 #include <whist/core/whist.h>
-#include <atomic>
 
 extern "C" {
 #include "handle_server_message.h"

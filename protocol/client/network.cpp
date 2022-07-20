@@ -25,7 +25,6 @@ Includes
 #endif
 
 #include <whist/core/whist.h>
-#include <atomic>
 
 extern "C" {
 #include "network.h"

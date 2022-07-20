@@ -21,7 +21,6 @@ Includes
 #pragma warning(disable : 4815)  // Disable MSVC warning about 0-size array in wcmsg
 #endif
 
-#include <atomic>
 #include <whist/core/whist.h>
 
 extern "C" {
