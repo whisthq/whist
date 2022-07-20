@@ -18,17 +18,22 @@ set -Eeuo pipefail
 # Start socketio server in the background
 /opt/teleport/socketio-server &
 
-USER_DATA_DIR="${1:-$HOME/.config/google-chrome}"
+BROWSER_APPLICATION="${1:-chrome}"
+if [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
+  USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
+else
+  USER_DATA_DIR="${2:-$HOME/.config/BraveSoftware/Brave-Browser}"
+fi
 
 # Under certain (bad) circumstances, SingletonLock might be saved into the user's config. This is an issue,
 # as this prevents Chrome from running forevermore! Hence, we should remove this file before we launch the
 # browser for the first time each session.
-GOOGLE_CHROME_SINGLETON_LOCK=$USER_DATA_DIR/SingletonLock
+BROWSER_SINGLETON_LOCK=$USER_DATA_DIR/SingletonLock
 WHIST_CLEARED_SINGLETON_LOCK=/home/whist/.config/WhistClearedSingletonLock
 
 if [[ ! -f $WHIST_CLEARED_SINGLETON_LOCK ]]; then
   touch $WHIST_CLEARED_SINGLETON_LOCK
-  rm -f "$GOOGLE_CHROME_SINGLETON_LOCK"
+  rm -f "$BROWSER_SINGLETON_LOCK"
 fi
 
 DEFAULT_PROFILE=$USER_DATA_DIR/Default
@@ -56,7 +61,7 @@ function commit_preferences_jq() {
   mv "$PREFERENCES.new" "$PREFERENCES"
 }
 
-# Set the Chrome language
+# Set the browser language
 add_preferences_jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'", "selected_languages": "'"${BROWSER_LANGUAGES}"'"}'
 
 # Notes on Chromium flags:
@@ -126,15 +131,15 @@ if [[ -n "$USER_AGENT" ]]; then
   flags+=("--user-agent=$USER_AGENT")
 fi
 
-# Start Chrome in Kiosk mode (full-screen). This flag is used when the client is a
+# Start the browser in Kiosk mode (full-screen). This flag is used when the client is a
 # local Chromium browser integrating Whist to avoid duplicating the URL bar in the cloud tabs, and should
 # not be set when the client is a fully-streamed browser rendered via SDL.
 if [[ "$KIOSK_MODE" == true ]]; then
   flags+=("--kiosk")
 fi
 
-# Passing the initial url from JSON transport as a parameter to the google-chrome command. If the url is not
-# empty, Chrome will open the url as an additional tab at start time. The other tabs will be restored depending
+# Passing the initial url from JSON transport as a parameter to the browser launch command. If the url is not
+# empty, the borwser will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.
 flags+=("$INITIAL_URL")
 
@@ -142,7 +147,7 @@ flags+=("$INITIAL_URL")
 # If no CLIENT_OS is passed (i.e. we're testing locally), assume macOS
 # and disable smooth scrolling.
 if [[ "$CLIENT_OS" == "darwin" || "$CLIENT_OS" == "" ]]; then
-  # Edit the Chrome Preferences Config file to use the default Mac fonts
+  # Edit the browser Preferences Config file to use the default Mac fonts
   add_preferences_jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}'
   # Disable smooth scrolling, which we handle via uinput instead
   flags+=("--disable-smooth-scrolling")
@@ -150,26 +155,31 @@ elif [[ "$CLIENT_OS" == "linux" ]]; then
   # Disable smooth scrolling, which we handle via uinput instead
   flags+=("--disable-smooth-scrolling")
 else
-  # Edit the Chrome Preferences Config file to use the default Windows/Ubuntu fonts
+  # Edit the browser Preferences Config file to use the default Windows/Ubuntu fonts
   add_preferences_jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}'
 fi
 
 commit_preferences_jq
 
-# Load D-Bus configurations; necessary for Chrome
+# Load D-Bus configurations; necessary for launching the browser
 # The -10 comes from the display ID
 dbus_env_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
 # shellcheck source=/dev/null
 . "$dbus_env_file"
 export DBUS_SESSION_BUS_ADDRESS
-echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS"
+echo "loaded d-bus address in start-browser.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Start lowercase-files script
 # This allows chromium themes to work more consistently
-# TODO: Re-enable this once we've found a way for this to enable Chrome themes
+# TODO: Re-enable this once we've found a way for this to enable browser themes
 # without breaking extension importing
 # /usr/bin/lowercase-chromium-files "google-chrome" &
 
-# Start Chrome with the KDE desktop environment
+# Start the borwser with the KDE desktop environment
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
+if [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
+  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
+else
+  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 brave-browser "${flags[@]}"
+fi
+

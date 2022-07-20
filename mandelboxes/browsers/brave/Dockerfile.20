@@ -76,7 +76,7 @@ RUN mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser \
 
 # Install Whist wrapper script to run Brave Browser into /usr/bin
 ENV WHIST_DEST_BROWSER="brave"
-COPY start-brave.sh /usr/bin/start-brave
+COPY ../start-browser.sh /usr/bin/start-brave
 RUN chmod +x /usr/bin/start-brave && ln -sf /usr/bin/start-brave /usr/bin/whist-application
 
 # Install handle to browser program to be able to open a new tab from the protocol
