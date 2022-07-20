@@ -17,11 +17,13 @@ Includes
 ============================
 */
 
+#include <whist/core/whist.h>
+
+extern "C" {
 #include "handle_server_message.h"
 
 #include <stddef.h>
 
-#include <whist/core/whist.h>
 #include <whist/file/file_synchronizer.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
@@ -34,10 +36,10 @@ Includes
 #include "sdl_utils.h"
 
 #include <stddef.h>
+}
 
-bool client_exiting = false;
-bool upload_initiated = false;
-extern int audio_frequency;
+std::atomic<bool> client_exiting = false;
+std::atomic<bool> upload_initiated = false;
 
 /*
 ============================
@@ -203,7 +205,7 @@ static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size)
 
     const char *uri = (const char *)&wsmsg->requested_uri;
     const int cmd_len = (int)strlen(uri) + OPEN_URI_CMD_MAXLEN + 1;
-    char *cmd = safe_malloc(cmd_len);
+    char *cmd = (char *)safe_malloc(cmd_len);
     memset(cmd, 0, cmd_len);
     snprintf(cmd, cmd_len, OPEN_URI_CMD " \"%s\"", uri);
     runcmd(cmd, NULL);

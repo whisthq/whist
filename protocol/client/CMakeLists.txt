@@ -7,9 +7,9 @@ set(WHIST_CLIENT_DEPENDS
         audio.cpp
         client_utils.c
         network.cpp
-        handle_frontend_events.c
+        handle_frontend_events.cpp
         sdl_utils.c
-        handle_server_message.c
+        handle_server_message.cpp
         video.cpp
         sync_packets.cpp
         renderer.c

@@ -21,7 +21,6 @@ Includes
 #pragma warning(disable : 4815)  // Disable MSVC warning about 0-size array in wcmsg
 #endif
 
-#include <atomic>
 #include <whist/core/whist.h>
 
 extern "C" {
@@ -73,18 +72,18 @@ static char* server_ip;
 extern "C" {
 extern bool using_stun;
 
-// Whether a pinch is currently active - set in handle_frontend_events.c
-extern bool active_pinch;
-
 // Window resizing state
 extern WhistMutex window_resize_mutex;  // protects pending_resize_message
 extern WhistTimer window_resize_timer;
+}
 
-extern volatile bool client_exiting;
+// Whether a pinch is currently active - set in handle_frontend_events.c
+extern std::atomic<bool> active_pinch;
+
+extern std::atomic<bool> client_exiting;
 
 // Used to check if we need to call filepicker from main thread
-extern bool upload_initiated;
-}
+extern std::atomic<bool> upload_initiated;
 
 // Mouse motion state
 extern MouseMotionAccumulation mouse_state;

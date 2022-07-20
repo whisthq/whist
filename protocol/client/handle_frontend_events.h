@@ -2,7 +2,7 @@
 #define WHIST_CLIENT_HANDLE_FRONTEND_EVENTS_H
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file handle_frontend_events.c
+ * @file handle_frontend_events.h
  * @brief This file exposes the functions to handle frontend events in the main loop.
 ============================
 Usage
@@ -19,7 +19,6 @@ TODO: Combine this with sdl_utils.h in some way
 Includes
 ============================
 */
-#include <whist/core/whist.h>
 #include "frontend/frontend.h"
 
 /*

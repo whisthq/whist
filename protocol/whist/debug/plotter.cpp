@@ -17,7 +17,6 @@ extern "C" {
 #include <unordered_map>
 #include <deque>
 #include <sstream>
-#include <atomic>
 
 // the data struct for sampling
 typedef std::unordered_map<std::string, std::deque<std::pair<double, double>>> PlotData;
