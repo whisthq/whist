@@ -85,7 +85,7 @@ data "aws_iam_policy_document" "WhistEC2DeploymentRolePolicy" {
   statement {
     actions = [
       "sts:GetCallerIdentity",
-      "s3: GetMultiRegionAccessPoint"
+      "s3:GetMultiRegionAccessPoint"
     ]
     effect = "Allow"
     resources = [
