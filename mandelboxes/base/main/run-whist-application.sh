@@ -43,5 +43,13 @@ export CLIENT_OS=$CLIENT_OS
 # application can find the fonts. Per: https://askubuntu.com/questions/492033/fontconfig-error-cannot-load-default-config-file
 export FONTCONFIG_PATH=/etc/fonts
 
+WHIST_PRIVATE_DIR=/usr/share/whist/private
+USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
+if [[ -f "$USER_DEST_BROWSER_FILENAME" ]]; then
+  WHIST_DEST_BROWSER=$(cat $USER_DEST_BROWSER_FILENAME)
+else
+  WHIST_DEST_BROWSER="chrome"
+fi
+
 # Start the application that this mandelbox runs
 exec whist-application $WHIST_DEST_BROWSER

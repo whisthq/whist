@@ -167,7 +167,7 @@ if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ];
   # Remove temporary files
   rm -f "$(cat $BROWSER_DATA_FILE_FILENAME)"
   rm $BROWSER_DATA_FILE_FILENAME
-  rm $USER_DEST_BROWSER_FILENAME
+  #rm $USER_DEST_BROWSER_FILENAME
 fi
 
 # Wait for user data to be populated before starting application
