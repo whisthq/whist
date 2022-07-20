@@ -81,6 +81,18 @@ data "aws_iam_policy_document" "WhistEC2DeploymentRolePolicy" {
     ]
   }
 
+  # This statement adds permissions for interacting with Multi-Region Access Points
+  statement {
+    actions = [
+      "sts:GetCallerIdentity",
+      "s3: GetMultiRegionAccessPoint"
+    ]
+    effect = "Allow"
+    resources = [
+      "*",
+    ]
+  }
+
   # This statement will only evaluate if the environment is not `prod`.
   # It enables SSM to access instances (for debugging), but does not allow
   # it in `prod` (for user privacy/security).
