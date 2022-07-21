@@ -174,8 +174,8 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type):
                 "Could not build the browsers/chrome mandelbox on the server instance!", "yellow"
             )
             if expression_in_pexpect_output(
-                docker_tar_io_eof_error, build_client_output
-            ) or expression_in_pexpect_output(docker_connect_error, build_client_output):
+                docker_tar_io_eof_error, build_server_output
+            ) or expression_in_pexpect_output(docker_connect_error, build_server_output):
                 print("Detected docker build issue. Attempting to fix by restarting docker!")
                 pexpect_process.sendline("sudo service docker restart")
                 wait_until_cmd_done(pexpect_process, pexpect_prompt)

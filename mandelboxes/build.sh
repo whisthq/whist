@@ -15,6 +15,7 @@ cd "$DIR"
 # and prod mode is good for CI and working on the mandelbox itself.
 mode=dev
 cmake_build_type_opt=""
+beta="false"
 for arg in "$@"; do
   case $arg in
     --dev|-d)
@@ -34,6 +35,9 @@ for arg in "$@"; do
       ;;
     --debug-protocol)
       cmake_build_type_opt=Debug
+      ;;
+    --beta|-b)
+      beta="true"
       ;;
     *)
       python_args+=("$arg")
@@ -97,4 +101,4 @@ docker build -t whist/build-assets:protocol -f base/build-assets/Dockerfile.20 -
 # and whist/build-assets:protocol when they determine that
 # they want to copy the protocol based on the mode.
 
-python3 ./scripts/build_mandelbox_image.py "${python_args[@]}" --mode="$mode"
+python3 ./scripts/build_mandelbox_image.py "${python_args[@]}" --mode="$mode" --beta="$beta"
