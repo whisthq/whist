@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file fec_controller.cpp
  * @brief contains implementation of the fec controller
