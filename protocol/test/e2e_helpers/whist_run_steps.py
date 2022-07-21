@@ -3,18 +3,18 @@
 import os, sys
 import base64, json, zlib
 
-from helpers.common.pexpect_tools import (
+from e2e_helpers.common.pexpect_tools import (
     expression_in_pexpect_output,
     wait_until_cmd_done,
     get_command_exit_code,
 )
 
-from helpers.common.ssh_tools import (
+from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,
     reboot_instance,
 )
 
-from helpers.setup.instance_setup_tools import (
+from e2e_helpers.setup.instance_setup_tools import (
     install_and_configure_aws,
     clone_whist_repository,
     run_host_setup,
@@ -22,20 +22,20 @@ from helpers.setup.instance_setup_tools import (
     prepare_instance_for_host_setup,
 )
 
-from helpers.setup.network_tools import (
+from e2e_helpers.setup.network_tools import (
     restore_network_conditions,
 )
 
-from helpers.common.git_tools import (
+from e2e_helpers.common.git_tools import (
     get_remote_whist_github_sha,
     get_whist_github_sha,
 )
-from helpers.common.timestamps_and_exit_tools import (
+from e2e_helpers.common.timestamps_and_exit_tools import (
     printformat,
     exit_with_error,
 )
 
-from helpers.common.constants import (
+from e2e_helpers.common.constants import (
     MANDELBOX_BUILD_MAX_RETRIES,
     username,
 )

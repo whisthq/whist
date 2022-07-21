@@ -3,36 +3,36 @@
 import os, sys, json
 import pexpect
 
-from helpers.whist_run_steps import (
+from e2e_helpers.whist_run_steps import (
     shutdown_and_wait_server_exit,
 )
 
-from helpers.common.pexpect_tools import (
+from e2e_helpers.common.pexpect_tools import (
     wait_until_cmd_done,
     get_command_exit_code,
 )
 
-from helpers.common.ssh_tools import (
+from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,
 )
 
-from helpers.common.timestamps_and_exit_tools import (
+from e2e_helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
     printformat,
 )
 
-from helpers.common.constants import (
+from e2e_helpers.common.constants import (
     SESSION_ID_LEN,
     username,
     aws_timeout_seconds,
     running_in_ci,
 )
 
-from helpers.aws.boto3_tools import (
+from e2e_helpers.aws.boto3_tools import (
     terminate_or_stop_aws_instance,
 )
 
-from helpers.setup.network_tools import (
+from e2e_helpers.setup.network_tools import (
     restore_network_conditions,
 )
 

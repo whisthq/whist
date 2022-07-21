@@ -3,13 +3,13 @@
 import os, sys, time
 from github import Github
 
-from helpers.common.git_tools import (
+from e2e_helpers.common.git_tools import (
     get_workflow_handle,
     count_runs_to_prioritize,
 )
 
-from helpers.common.constants import running_in_ci, github_run_id
-from helpers.common.timestamps_and_exit_tools import exit_with_error
+from e2e_helpers.common.constants import running_in_ci, github_run_id
+from e2e_helpers.common.timestamps_and_exit_tools import exit_with_error
 
 # This CI script waits until all instances of the current workflow which were created beforehand have completed.
 # In case other workflow runs with the exact same creation date were found, the one with the github runner ID with

@@ -3,44 +3,44 @@
 import os, sys, json, time, argparse, multiprocessing
 import boto3
 
-from helpers.aws.boto3_tools import (
+from e2e_helpers.aws.boto3_tools import (
     get_client_and_instances,
     get_instance_ip,
 )
 
-from helpers.common.git_tools import (
+from e2e_helpers.common.git_tools import (
     get_whist_branch_name,
     get_whist_github_sha,
 )
 
-from helpers.common.ssh_tools import (
+from e2e_helpers.common.ssh_tools import (
     attempt_ssh_connection,
 )
 
-from helpers.common.timestamps_and_exit_tools import (
+from e2e_helpers.common.timestamps_and_exit_tools import (
     TimeStamps,
     exit_with_error,
     printformat,
 )
 
-from helpers.common.constants import (
+from e2e_helpers.common.constants import (
     username,
     running_in_ci,
 )
 
-from helpers.setup.instance_setup_tools import (
+from e2e_helpers.setup.instance_setup_tools import (
     start_host_service,
 )
 
-from helpers.setup.network_tools import (
+from e2e_helpers.setup.network_tools import (
     setup_artificial_network_conditions,
 )
 
-from helpers.setup.teardown_tools import (
+from e2e_helpers.setup.teardown_tools import (
     complete_experiment_and_save_results,
 )
 
-from helpers.whist_run_steps import setup_process, run_mandelbox_on_instance
+from e2e_helpers.whist_run_steps import setup_process, run_mandelbox_on_instance
 
 
 # Add the current directory to the path no matter where this is called from

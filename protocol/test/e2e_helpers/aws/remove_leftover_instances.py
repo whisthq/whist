@@ -2,10 +2,10 @@
 
 import os, sys, boto3
 
-from helpers.aws.boto3_tools import terminate_or_stop_aws_instance
-from helpers.common.constants import instances_name_tag, running_in_ci, github_run_id
-from helpers.common.timestamps_and_exit_tools import printformat, exit_with_error
-from helpers.common.git_tools import (
+from e2e_helpers.aws.boto3_tools import terminate_or_stop_aws_instance
+from e2e_helpers.common.constants import instances_name_tag, running_in_ci, github_run_id
+from e2e_helpers.common.timestamps_and_exit_tools import printformat, exit_with_error
+from e2e_helpers.common.git_tools import (
     get_whist_branch_name,
     get_workflow_handle,
     count_runs_to_prioritize,
