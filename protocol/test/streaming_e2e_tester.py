@@ -40,15 +40,7 @@ from helpers.setup.teardown_tools import (
     complete_experiment_and_save_results,
 )
 
-from helpers.whist_client_tools import (
-    client_setup_process,
-    run_client_on_instance,
-)
-
-from helpers.whist_server_tools import (
-    server_setup_process,
-    run_server_on_instance,
-)
+from helpers.whist_run_steps import setup_process, run_mandelbox_on_instance
 
 
 # Add the current directory to the path no matter where this is called from
@@ -399,8 +391,8 @@ if __name__ == "__main__":
     )
 
     # If using two instances, parallelize the host-setup and building of the Docker containers to save time
-    p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
-    p2 = multiprocessing.Process(target=client_setup_process, args=[args_dict])
+    p1 = multiprocessing.Process(target=setup_process, args=["server", args_dict])
+    p2 = multiprocessing.Process(target=setup_process, args=["client", args_dict])
     if use_two_instances:
         p1.start()
         p2.start()
@@ -481,7 +473,9 @@ if __name__ == "__main__":
     )
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
     # we need to pass the client for it to connect
-    server_docker_id, server_configs_data = run_server_on_instance(server_pexpect_process)
+    server_docker_id, server_configs_data = run_mandelbox_on_instance(
+        server_pexpect_process, "server"
+    )
 
     # Augment the configs with the initial URL we want to visit
     server_configs_data["initial_urls"] = testing_urls
@@ -504,8 +498,8 @@ if __name__ == "__main__":
     )
 
     # Run the dev client on the client instance, using the server configs obtained above
-    client_docker_id = run_client_on_instance(
-        client_pexpect_process, server_configs_data, simulate_scrolling
+    client_docker_id = run_mandelbox_on_instance(
+        client_pexpect_process, "client", server_configs_data, simulate_scrolling
     )
 
     timestamps.add_event("Starting the mandelboxes and setting up the network conditions")
