@@ -18,7 +18,7 @@ var (
 	testImages      []subscriptions.Image
 	testMandelboxes []subscriptions.Mandelbox
 	testAlgorithm   *DefaultScalingAlgorithm
-	testLock        sync.Mutex
+	testLock        *sync.Mutex
 )
 
 // mockDBClient is used to test all database interactions
@@ -219,6 +219,7 @@ func setup() {
 	testAlgorithm.CreateEventChans()
 	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
 	testAlgorithm.CreateDBClient(testDBClient)
+	testLock = &sync.Mutex{}
 
 	// Set the desired mandelboxes map to a default value for testing
 	desiredFreeMandelboxesPerRegion = map[string]int{

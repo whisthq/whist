@@ -12,69 +12,7 @@ import (
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
-var testImages []subscriptions.WhistImage
-
-type mockImagesGraphQLClient struct{}
-
-func (mc *mockImagesGraphQLClient) Initialize(bool) error {
-	return nil
-}
-
-func (mc *mockImagesGraphQLClient) Query(ctx context.Context, query subscriptions.GraphQLQuery, res map[string]interface{}) error {
-	switch query := query.(type) {
-	case *struct {
-		WhistImages []subscriptions.WhistImage `graphql:"whist_images(where: {provider: {_eq: $provider}, _and: {region: {_eq: $region}}}, order_by: {updated_at: desc})"`
-	}:
-		query.WhistImages = testImages
-	default:
-	}
-
-	return nil
-}
-
-func (mc *mockImagesGraphQLClient) Mutate(ctx context.Context, mutation subscriptions.GraphQLQuery, vars map[string]interface{}) error {
-	switch mutation := mutation.(type) {
-	case *struct {
-		MutationResponse struct {
-			AffectedRows graphql.Int `graphql:"affected_rows"`
-		} `graphql:"insert_whist_images(objects: $objects)"`
-	}:
-		for _, image := range vars["objects"].([]whist_images_insert_input) {
-			testImages = append(testImages, subscriptions.WhistImage{
-				Provider:  image.Provider,
-				Region:    image.Region,
-				ImageID:   image.ImageID,
-				ClientSHA: image.ClientSHA,
-				UpdatedAt: image.UpdatedAt,
-			})
-		}
-		mutation.MutationResponse.AffectedRows = graphql.Int(len(testImages))
-
-	case *struct {
-		MutationResponse struct {
-			AffectedRows graphql.Int `graphql:"affected_rows"`
-		} `graphql:"update_whist_images(where: {region: {_eq: $region}, _and: {provider: {_eq: $provider}}}, _set: {client_sha: $client_sha, image_id: $image_id, provider: $provider, region: $region, updated_at: $updated_at})"`
-	}:
-		for i := 0; i < len(testImages); i++ {
-			if testImages[i].ImageID == vars["image_id"] {
-				testImages[i].ImageID = vars["image_id"].(graphql.String)
-				testImages[i].Region = vars["region"].(graphql.String)
-				testImages[i].Provider = vars["provider"].(graphql.String)
-				testImages[i].ClientSHA = vars["client_sha"].(graphql.String)
-				testImages[i].UpdatedAt = vars["updated_at"].(timestamptz).Time
-			}
-		}
-		mutation.MutationResponse.AffectedRows = graphql.Int(len(testImages))
-
-	default:
-	}
-	return nil
-}
-
 func TestQueryImage(t *testing.T) {
-	mockClient := &mockImagesGraphQLClient{}
-	testDBClient := &DBClient{}
-
 	var tests = []struct {
 		name     string
 		expected subscriptions.WhistImage
@@ -87,7 +25,7 @@ func TestQueryImage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testImages = []subscriptions.WhistImage{tt.expected}
 
-			res, err := testDBClient.QueryImage(context.Background(), mockClient, string(tt.expected.Provider), string(tt.expected.Region))
+			res, err := testDBClient.QueryImage(context.Background(), mockImagesClient, string(tt.expected.Provider), string(tt.expected.Region))
 			if err != nil {
 				t.Fatalf("did not expect an error, got %s", err)
 			}
@@ -104,9 +42,6 @@ func TestQueryImage(t *testing.T) {
 }
 
 func TestInsertImages(t *testing.T) {
-	mockClient := &mockImagesGraphQLClient{}
-	testDBClient := &DBClient{}
-
 	var tests = []struct {
 		name     string
 		expected []subscriptions.WhistImage
@@ -125,7 +60,7 @@ func TestInsertImages(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testImages = []subscriptions.WhistImage{}
 
-			rows, err := testDBClient.InsertImages(context.Background(), mockClient, subscriptions.ToImages(tt.expected))
+			rows, err := testDBClient.InsertImages(context.Background(), mockImagesClient, subscriptions.ToImages(tt.expected))
 			if err != nil {
 				t.Fatalf("did not expect an error, got %s", err)
 			}
@@ -142,9 +77,6 @@ func TestInsertImages(t *testing.T) {
 }
 
 func TestUpdateImage(t *testing.T) {
-	mockClient := &mockImagesGraphQLClient{}
-	testDBClient := &DBClient{}
-
 	var tests = []struct {
 		name     string
 		expected []subscriptions.WhistImage
@@ -162,7 +94,7 @@ func TestUpdateImage(t *testing.T) {
 			testImages = []subscriptions.WhistImage{{Provider: "GCloud", Region: "us-east-2", ImageID: graphql.String(utils.PlaceholderTestUUID().String()), ClientSHA: "old_test_sha", UpdatedAt: time.Now()}}
 			expected := subscriptions.ToImages(tt.expected)
 
-			rows, err := testDBClient.UpdateImage(context.Background(), mockClient, expected[0])
+			rows, err := testDBClient.UpdateImage(context.Background(), mockImagesClient, expected[0])
 			if err != nil {
 				t.Fatalf("did not expect an error, got %s", err)
 			}
