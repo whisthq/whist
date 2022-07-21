@@ -3,7 +3,7 @@
 import os, sys, json
 import pexpect
 
-from helpers.whist_server_tools import (
+from helpers.whist_run_steps import (
     shutdown_and_wait_server_exit,
 )
 
