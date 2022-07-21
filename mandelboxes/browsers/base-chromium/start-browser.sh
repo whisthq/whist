@@ -139,7 +139,7 @@ if [[ "$KIOSK_MODE" == true ]]; then
 fi
 
 # Passing the initial url from JSON transport as a parameter to the browser launch command. If the url is not
-# empty, the borwser will open the url as an additional tab at start time. The other tabs will be restored depending
+# empty, the browser will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.
 flags+=("$INITIAL_URL")
 
