@@ -68,7 +68,7 @@ struct SlidingWindowStat {
         last_sampled_time = current_time;
 
         if (LOG_FEC_CONTROLLER && name == "packet_loss") {
-            LOG_INFO("⬛ [FEC_CONTROLLER]sampled value=%.2f for %s\n", value * 100.0, name.c_str());
+            LOG_INFO("[FEC_CONTROLLER]sampled value=%.2f for %s\n", value * 100.0, name.c_str());
         }
 
         //  maintain the data structure
@@ -251,9 +251,8 @@ struct BaseRatioController {
             static double last_print_time = 0;
             if (current_time - last_print_time > 1.0) {
                 last_print_time = current_time;
-                LOG_INFO("🟨 [FEC_CONTROLLER] avg=%.3f max=%.3f size=%d sum=%lld\n",
-                         avg_packet_loss, max_packet_loss, packet_loss_stat.size(),
-                         packet_loss_stat.sum);
+                LOG_INFO("[FEC_CONTROLLER] avg=%.3f max=%.3f size=%d sum=%lld\n", avg_packet_loss,
+                         max_packet_loss, packet_loss_stat.size(), packet_loss_stat.sum);
             }
         }
 
@@ -328,7 +327,7 @@ struct ExtraRatioController {
             // record current time
             last_used_extra_fec_time = current_time;
             if (LOG_FEC_CONTROLLER) {
-                LOG_INFO("🟪 [FEC_CONTROLLER] enable extra fec!!! %.3f\n", extra_fec_ratio);
+                LOG_INFO("[FEC_CONTROLLER] enable extra fec!!! %.3f\n", extra_fec_ratio);
             }
         } else if (extra_fec_in_use) {
             // if we get a WCC_DECREASE_BWD during the protection of extra fec,
@@ -338,8 +337,7 @@ struct ExtraRatioController {
                 extend_cnt_left--;
                 last_used_extra_fec_time = current_time;
                 if (LOG_FEC_CONTROLLER) {
-                    LOG_INFO("🟪 [FEC_CONTROLLER] refreshed extra fec!!! %.3f\n",
-                             extra_fec_ratio);
+                    LOG_INFO("[FEC_CONTROLLER] refreshed extra fec!!! %.3f\n", extra_fec_ratio);
                 }
             }
 
@@ -349,7 +347,7 @@ struct ExtraRatioController {
             if (current_time - last_used_extra_fec_time > EXTRA_FEC_LAST_TIME) {
                 extra_fec_in_use = 0;
                 if (LOG_FEC_CONTROLLER) {
-                    LOG_INFO("🟪 [FEC_CONTROLLER] disable extra fec!!!\n");
+                    LOG_INFO("[FEC_CONTROLLER] disable extra fec!!!\n");
                 }
             }
         }
@@ -428,12 +426,12 @@ void fec_controller_feed_info(void *controller, double current_time, WccOp op, d
     if (LOG_FEC_CONTROLLER) {
         if (op == WCC_INCREASE_BWD) {
             LOG_INFO(
-                "🟩 [FEC_CONTROLLER]WCC Bitrate Increase! old_bitrate=%d new_bitrate=%d "
+                "[FEC_CONTROLLER]WCC Bitrate Increase! old_bitrate=%d new_bitrate=%d "
                 "saturate_bandwidth=%d\n",
                 old_bitrate, current_bitrate, saturate_bandwidth);
         } else if (op == WCC_DECREASE_BWD) {
             LOG_INFO(
-                "🟥 [FEC_CONTROLLER]Bitrate Decrease! old_bitrate=%d new_bitrate=%d\n "
+                "[FEC_CONTROLLER]Bitrate Decrease! old_bitrate=%d new_bitrate=%d\n "
                 "saturate_bandwidth=%d",
                 old_bitrate, current_bitrate, saturate_bandwidth);
         }
@@ -516,7 +514,7 @@ double fec_controller_get_total_fec_ratio(void *controller, double current_time,
                                   total_fec_ratio, old_value);
         } else {
             LOG_INFO(
-                "🔵 [FEC_CONTROLLER] base_fec_ratio=%.3f "
+                "[FEC_CONTROLLER] base_fec_ratio=%.3f "
                 "extra_fec_ratio=%.3f total_fec_ratio_original=%.3f total_fec_ratio=%.3f "
                 "old_value=%.3f\n",
                 base_fec_ratio, extra_fec_ratio, total_fec_ratio_original, total_fec_ratio,
