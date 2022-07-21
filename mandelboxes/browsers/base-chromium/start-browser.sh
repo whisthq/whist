@@ -19,10 +19,10 @@ set -Eeuo pipefail
 /opt/teleport/socketio-server &
 
 BROWSER_APPLICATION="${1:-chrome}"
-if [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
-  USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
-else
+if [[ "$BROWSER_APPLICATION" != "chrome" ]]; then
   USER_DATA_DIR="${2:-$HOME/.config/BraveSoftware/Brave-Browser}"
+else
+  USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
 fi
 
 # Under certain (bad) circumstances, SingletonLock might be saved into the user's config. This is an issue,
@@ -175,11 +175,11 @@ echo "loaded d-bus address in start-browser.sh: $DBUS_SESSION_BUS_ADDRESS"
 # without breaking extension importing
 # /usr/bin/lowercase-chromium-files "google-chrome" &
 
-# Start the borwser with the KDE desktop environment
+# Start the browser with the KDE desktop environment
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-if [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
-  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
-else
+if [[ "$BROWSER_APPLICATION" != "chrome" ]]; then
   exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 brave-browser "${flags[@]}"
+else
+  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
 fi
 
