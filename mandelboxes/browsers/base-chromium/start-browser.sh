@@ -177,9 +177,12 @@ echo "loaded d-bus address in start-browser.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Start the browser with the KDE desktop environment
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-if [[ "$BROWSER_APPLICATION" != "chrome" ]]; then
+if [[ "$BROWSER_APPLICATION" == "brave" ]]; then
   exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 brave-browser "${flags[@]}"
-else
+else 
+  if [[ "$BROWSER_APPLICATION" != "chrome" ]]; then
+    echo "Browser name not set. Using Chrome"
+  fi
   exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
 fi
 
