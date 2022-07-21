@@ -474,7 +474,7 @@ if __name__ == "__main__":
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
     # we need to pass the client for it to connect
     server_docker_id, server_configs_data = run_mandelbox_on_instance(
-        server_pexpect_process, "server"
+        server_pexpect_process, role="server"
     )
 
     # Augment the configs with the initial URL we want to visit
@@ -499,7 +499,10 @@ if __name__ == "__main__":
 
     # Run the dev client on the client instance, using the server configs obtained above
     client_docker_id = run_mandelbox_on_instance(
-        client_pexpect_process, "client", server_configs_data, simulate_scrolling
+        client_pexpect_process,
+        role="client",
+        json_data=server_configs_data,
+        simulate_scrolling=simulate_scrolling,
     )
 
     timestamps.add_event("Starting the mandelboxes and setting up the network conditions")
