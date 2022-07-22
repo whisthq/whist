@@ -29,4 +29,10 @@ const initTabDetachSuppressor = () => {
   chrome.tabs.onDetached.addListener(tryRestoreTabLocation)
 }
 
-export { initTabDetachSuppressor }
+const initTabState = () => {
+  chrome.runtime.onStartup.addListener(() => {
+    chrome.storage.local.set({ openTabs: []})
+  })
+}
+
+export { initTabDetachSuppressor, initTabState }

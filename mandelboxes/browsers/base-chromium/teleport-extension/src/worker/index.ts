@@ -9,7 +9,7 @@ import { initChromeWelcomeRedirect } from "./navigation"
 import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"
 import { initCursorLockHandler } from "./cursor"
 import { refreshExtension } from "./update"
-import { initTabDetachSuppressor } from "./tabs"
+import { initTabDetachSuppressor, initTabState } from "./tabs"
 import { initLocationHandler } from "./geolocation"
 import {
   initSocketioConnection,
@@ -45,6 +45,7 @@ initChromeWelcomeRedirect()
 initLocationHandler(nativeHostPort)
 
 // Listen to the client for tab actions
+initTabState()
 initActivateTabListener(socket)
 initCloseTabListener(socket)
 initUpdateTabIDListener(socket)
