@@ -2,16 +2,16 @@
 
 import os, sys
 
-from helpers.common.pexpect_tools import (
+from e2e_helpers.common.pexpect_tools import (
     expression_in_pexpect_output,
     wait_until_cmd_done,
 )
 
-from helpers.common.ssh_tools import (
+from e2e_helpers.common.ssh_tools import (
     wait_for_apt_locks,
 )
 
-from helpers.common.constants import (
+from e2e_helpers.common.constants import (
     N_NETWORK_CONDITION_PARAMETERS,
 )
 

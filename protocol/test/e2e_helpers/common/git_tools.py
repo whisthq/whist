@@ -4,9 +4,9 @@ import os, sys, subprocess
 
 from github import Github
 
-from helpers.common.pexpect_tools import wait_until_cmd_done
-from helpers.common.timestamps_and_exit_tools import printformat, exit_with_error
-from helpers.common.constants import GITHUB_SHA_LEN, running_in_ci
+from e2e_helpers.common.pexpect_tools import wait_until_cmd_done
+from e2e_helpers.common.timestamps_and_exit_tools import printformat, exit_with_error
+from e2e_helpers.common.constants import GITHUB_SHA_LEN, running_in_ci
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))

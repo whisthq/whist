@@ -4,26 +4,26 @@ import pexpect
 import os
 import sys
 
-from helpers.common.git_tools import (
+from e2e_helpers.common.git_tools import (
     get_whist_branch_name,
 )
 
-from helpers.common.pexpect_tools import (
+from e2e_helpers.common.pexpect_tools import (
     expression_in_pexpect_output,
     wait_until_cmd_done,
     get_command_exit_code,
 )
 
-from helpers.common.ssh_tools import (
+from e2e_helpers.common.ssh_tools import (
     wait_for_apt_locks,
 )
 
-from helpers.common.timestamps_and_exit_tools import (
+from e2e_helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
     printformat,
 )
 
-from helpers.common.constants import (
+from e2e_helpers.common.constants import (
     SETUP_MAX_RETRIES,
     HOST_SETUP_TIMEOUT_SECONDS,
     TIMEOUT_EXIT_CODE,

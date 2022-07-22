@@ -5,11 +5,11 @@ import boto3
 import botocore
 from operator import itemgetter
 
-from helpers.common.git_tools import get_whist_branch_name
-from helpers.common.timestamps_and_exit_tools import (
+from e2e_helpers.common.git_tools import get_whist_branch_name
+from e2e_helpers.common.timestamps_and_exit_tools import (
     printformat,
 )
-from helpers.common.constants import (
+from e2e_helpers.common.constants import (
     instances_name_tag,
     github_run_id,
 )

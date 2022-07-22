@@ -3,11 +3,11 @@
 import os, sys, time
 import pexpect
 
-from helpers.common.timestamps_and_exit_tools import (
+from e2e_helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
 )
-from helpers.common.pexpect_tools import wait_until_cmd_done
-from helpers.common.constants import (
+from e2e_helpers.common.pexpect_tools import wait_until_cmd_done
+from e2e_helpers.common.constants import (
     ssh_connection_retries,
     aws_timeout_seconds,
     running_in_ci,

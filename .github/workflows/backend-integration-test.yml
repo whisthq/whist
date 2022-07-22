@@ -102,6 +102,6 @@ jobs:
       - name: Stop or terminate leftover AWS instances
         if: always()
         working-directory: protocol/test
-        run: python3 -m helpers.aws.remove_leftover_instances
+        run: python3 -m e2e_helpers.aws.remove_leftover_instances
 
   #######################################################################################
