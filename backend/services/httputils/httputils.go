@@ -65,7 +65,7 @@ func (r RequestResult) Send(w http.ResponseWriter) {
 // GetAccessToken is a helper function that extracts the access token
 // from the request "Authorization" header.
 func GetAccessToken(r *http.Request) (string, error) {
-	if metadata.IsLocalEnv() {
+	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		return "", nil
 	}
 
