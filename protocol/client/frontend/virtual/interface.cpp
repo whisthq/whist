@@ -12,6 +12,7 @@ extern "C" {
 // Just chosen a very large number for events queue size. If required we can optimize/reduce it.
 #define MAX_EVENTS_QUEUED 10000
 
+extern "C" {
 QueueContext* events_queue = NULL;
 
 void* callback_context = NULL;
@@ -20,6 +21,7 @@ OnFileUploadCallback on_file_upload = NULL;
 OnFileDownloadStart on_file_download_start = NULL;
 OnFileDownloadUpdate on_file_download_update = NULL;
 OnFileDownloadComplete on_file_download_complete = NULL;
+}
 
 static WhistMutex lock;
 static AVFrame* pending = NULL;
