@@ -378,7 +378,6 @@ set(MAC_SPECIFIC_CLIENT_LIBS
 
 # MSVC C/C++ Standard Library linking, based on Debug/Release
 set(WINDOWS_CORE_LIBS
-    $<IF:$<CONFIG:Debug>,ucrtd,ucrt>
     $<IF:$<CONFIG:Debug>,libcmtd,libcmt>
     $<IF:$<CONFIG:Debug>,libcpmtd,libcpmt>
     $<IF:$<CONFIG:Debug>,vcruntimed,vcruntime>
