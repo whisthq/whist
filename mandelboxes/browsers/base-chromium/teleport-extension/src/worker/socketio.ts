@@ -20,25 +20,25 @@ const initActivateTabListener = (socket: Socket) => {
   console.log("OUTSIDE THE LOOP")
   socket.on("activate-tab", (tabs: chrome.tabs.Tab[]) => {
     console.log("INSIDE THE LOOP")
-    const tab = tabs[0]
-    const foundTab = find(whistState.openTabs, (t) => t.clientTabId === tab.id)
+    // const tab = tabs[0]
+    // const foundTab = find(whistState.openTabs, (t) => t.clientTabId === tab.id)
 
-    if (foundTab?.tab?.id === undefined) {
-      createTab(
-        {
-          url: tab.url,
-          active: tab.active,
-        },
-        (createdTab) => {
-          addTabToState(<WhistTab>{
-            tab: createdTab,
-            clientTabId: tab.id,
-          })
-        }
-      )
-    } else {
-      activateTab(foundTab.tab.id)
-    }
+    // if (foundTab?.tab?.id === undefined) {
+    //   createTab(
+    //     {
+    //       url: tab.url,
+    //       active: tab.active,
+    //     },
+    //     (createdTab) => {
+    //       addTabToState(<WhistTab>{
+    //         tab: createdTab,
+    //         clientTabId: tab.id,
+    //       })
+    //     }
+    //   )
+    // } else {
+    //   activateTab(foundTab.tab.id)
+    // }
   })
 }
 
