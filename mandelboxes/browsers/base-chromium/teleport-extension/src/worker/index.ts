@@ -30,6 +30,8 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
   }
 });
 
+initTabState()
+
 const socket = initSocketioConnection()
 const nativeHostPort = initNativeHostIpc()
 
@@ -55,7 +57,6 @@ initChromeWelcomeRedirect()
 initLocationHandler(nativeHostPort)
 
 // Listen to the client for tab actions
-initTabState()
 initActivateTabListener(socket)
 initCloseTabListener(socket)
 initUpdateTabIDListener(socket)

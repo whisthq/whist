@@ -18,6 +18,7 @@ const initSocketioConnection = () => {
 const initActivateTabListener = (socket: Socket) => {
   socket.on("activate-tab", (tabs: chrome.tabs.Tab[]) => {
     chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
+      console.log("the open tabs are", openTabs)
       const tab = tabs[0]
       const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
 
