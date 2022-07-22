@@ -25,28 +25,28 @@ console.log("Top of index.ts")
 initTabState()
 
 const socket = initSocketioConnection()
-// const nativeHostPort = initNativeHostIpc()
+const nativeHostPort = initNativeHostIpc()
 
-// // Disconnects the host native port on command
-// initNativeHostDisconnectHandler(nativeHostPort)
+// Disconnects the host native port on command
+initNativeHostDisconnectHandler(nativeHostPort)
 
-// // If this is a new mandelbox, refresh the extension to get the latest version.
+// If this is a new mandelbox, refresh the extension to get the latest version.
 // refreshExtension(nativeHostPort)
 
-// // Initialize the file upload/download handler
-// initFileSyncHandler(nativeHostPort)
+// Initialize the file upload/download handler
+initFileSyncHandler(nativeHostPort)
 
-// // Enables relative mouse mode
-// initCursorLockHandler(nativeHostPort)
+// Enables relative mouse mode
+initCursorLockHandler(nativeHostPort)
 
-// // Prevents tabs from being dragged out to new windows
-// initTabDetachSuppressor()
+// Prevents tabs from being dragged out to new windows
+initTabDetachSuppressor()
 
-// // Redirects the chrome://welcome page to our own Whist-branded page
-// initChromeWelcomeRedirect()
+// Redirects the chrome://welcome page to our own Whist-branded page
+initChromeWelcomeRedirect()
 
-// // Receive geolocation from extension host
-// initLocationHandler(nativeHostPort)
+// Receive geolocation from extension host
+initLocationHandler(nativeHostPort)
 
 // Listen to the client for tab actions
 initActivateTabListener(socket)
