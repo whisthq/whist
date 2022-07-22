@@ -256,7 +256,7 @@ func throttleMiddleware(limiter *rate.Limiter, f func(http.ResponseWriter, *http
 
 // verifyPaymentMiddleware will verify if the user has an active subscription in Stripe. This
 // middleware should be used to restrict endpoint for paying users only.
-func verifyPaymentMiddleware(f func(http.ResponseWriter, *http.Request)) http.Handler {
+func VerifyPaymentMiddleware(f func(http.ResponseWriter, *http.Request)) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		// Get and parse Authorization header from access token
 		accessToken, err := httputils.GetAccessToken(r)
@@ -324,14 +324,14 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 	limiter := rate.NewLimiter(rate.Every(interval), burst)
 
 	// Create the final handlers, with the necessary middleware
-	assignHandler := verifyPaymentMiddleware(throttleMiddleware(limiter, httputils.EnableCORS(createHandler(mandelboxAssignHandler))))
+	assignHandler := throttleMiddleware(limiter, httputils.EnableCORS(createHandler(mandelboxAssignHandler)))
 	jsonTransportHandler := httputils.EnableCORS(processJSONTransportRequest)
 	paymentsHandler := httputils.EnableCORS(paymentSessionHandler)
 
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
-	mux.Handle("/mandelbox/assign", assignHandler)
+	mux.Handle("/mandelbox/assign", http.HandlerFunc(assignHandler))
 	mux.Handle("/json_transport", http.HandlerFunc(jsonTransportHandler))
 	mux.Handle("/payment_portal_url", http.HandlerFunc(paymentsHandler))
 
