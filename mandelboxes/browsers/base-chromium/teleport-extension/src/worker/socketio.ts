@@ -21,26 +21,24 @@ const initActivateTabListener = (socket: Socket) => {
       console.log("the open tabs are", openTabs)
       const tab = tabs[0]
       const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
-      setTimeout(() => {
-        if (foundTab?.tab?.id === undefined) {
-          chrome.tabs.create(
-            { url: tab.url?.replace("cloud:", ""), active: tab.active },
-            (_tab: chrome.tabs.Tab) => {
-              chrome.storage.local.set({
-                openTabs: [
-                  ...openTabs,
-                  {
-                    tab: _tab,
-                    clientTabId: tab.id,
-                  },
-                ],
-              })
-            }
-          )
-        } else {
-          activateTab(foundTab.tab.id)
-        }
-      }, 5000)
+      if (foundTab?.tab?.id === undefined) {
+        chrome.tabs.create(
+          { url: tab.url?.replace("cloud:", ""), active: tab.active },
+          (_tab: chrome.tabs.Tab) => {
+            chrome.storage.local.set({
+              openTabs: [
+                ...openTabs,
+                {
+                  tab: _tab,
+                  clientTabId: tab.id,
+                },
+              ],
+            })
+          }
+        )
+      } else {
+        activateTab(foundTab.tab.id)
+      }
     })
   })
 }

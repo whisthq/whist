@@ -21,44 +21,41 @@ import {
 } from "./socketio"
 
 console.log("Top of index.ts")
-chrome.storage.onChanged.addListener(function (changes, namespace) {
-  for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-    console.log(
-      `Storage key "${key}" in namespace "${namespace}" changed.`,
-      `Old value was "${oldValue}", new value is "${newValue}".`
-    );
-  }
-});
 
-initTabState()
+setTimeout(() => {
+  console.log("inside the timeout")
+  initTabState()
 
-const socket = initSocketioConnection()
-const nativeHostPort = initNativeHostIpc()
+  const socket = initSocketioConnection()
+  const nativeHostPort = initNativeHostIpc()
+  
+  // Disconnects the host native port on command
+  initNativeHostDisconnectHandler(nativeHostPort)
+  
+  // If this is a new mandelbox, refresh the extension to get the latest version.
+  refreshExtension(nativeHostPort)
+  
+  // Initialize the file upload/download handler
+  initFileSyncHandler(nativeHostPort)
+  
+  // Enables relative mouse mode
+  initCursorLockHandler(nativeHostPort)
+  
+  // Prevents tabs from being dragged out to new windows
+  initTabDetachSuppressor()
+  
+  // Redirects the chrome://welcome page to our own Whist-branded page
+  initChromeWelcomeRedirect()
+  
+  // Receive geolocation from extension host
+  initLocationHandler(nativeHostPort)
+  
+  // Listen to the client for tab actions
+  initActivateTabListener(socket)
+  initCloseTabListener(socket)
+  initUpdateTabIDListener(socket)
+  initCloudTabUpdatedListener(socket)
+  initCloudTabCreatedListener(socket)
+}, 4000)
 
-// Disconnects the host native port on command
-initNativeHostDisconnectHandler(nativeHostPort)
-
-// If this is a new mandelbox, refresh the extension to get the latest version.
-refreshExtension(nativeHostPort)
-
-// Initialize the file upload/download handler
-initFileSyncHandler(nativeHostPort)
-
-// Enables relative mouse mode
-initCursorLockHandler(nativeHostPort)
-
-// Prevents tabs from being dragged out to new windows
-initTabDetachSuppressor()
-
-// Redirects the chrome://welcome page to our own Whist-branded page
-initChromeWelcomeRedirect()
-
-// Receive geolocation from extension host
-initLocationHandler(nativeHostPort)
-
-// Listen to the client for tab actions
-initActivateTabListener(socket)
-initCloseTabListener(socket)
-initUpdateTabIDListener(socket)
-initCloudTabUpdatedListener(socket)
-initCloudTabCreatedListener(socket)
+console.log("end of file")
