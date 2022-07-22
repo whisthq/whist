@@ -363,7 +363,7 @@ func TestUpdateInstance(t *testing.T) {
 			}
 
 			if rows != len(tt.update) {
-				t.Fatalf("incorrect number of rows updated, expected %d rows, inserted %d", len(tt.update), rows)
+				t.Fatalf("incorrect number of rows updated, expected %d rows, updated %d", len(tt.update), rows)
 			}
 
 			if ok := reflect.DeepEqual(testInstances, tt.expected); !ok {
@@ -374,5 +374,90 @@ func TestUpdateInstance(t *testing.T) {
 }
 
 func TestDeleteInstance(t *testing.T) {
+	var tests = []struct {
+		name     string
+		delete   string
+		expected []subscriptions.WhistInstance
+	}{
+		{"Delete existing", utils.PlaceholderTestUUID().String(), []subscriptions.WhistInstance{
+			{
+				ID:                graphql.String(utils.PlaceholderTestUUID().String()),
+				Provider:          graphql.String("AWS"),
+				Region:            graphql.String("us-east-1"),
+				ImageID:           graphql.String("test_image_id"),
+				ClientSHA:         graphql.String("test_sha"),
+				IPAddress:         "0.0.0.0",
+				Type:              graphql.String("g4dn.xlarge"),
+				RemainingCapacity: graphql.Int(2),
+				Status:            graphql.String("DRAINING"),
+			},
+		}},
+		{"Delete non existing", uuid.NewString(), []subscriptions.WhistInstance{
+			{
+				ID:                graphql.String(utils.PlaceholderTestUUID().String()),
+				Provider:          graphql.String("AWS"),
+				Region:            graphql.String("us-east-1"),
+				ImageID:           graphql.String("test_image_id"),
+				ClientSHA:         graphql.String("test_sha"),
+				IPAddress:         "0.0.0.0",
+				Type:              graphql.String("g4dn.xlarge"),
+				RemainingCapacity: graphql.Int(2),
+				Status:            graphql.String("DRAINING"),
+			},
+			{
+				ID:                graphql.String(utils.PlaceholderTestUUID().String()),
+				Provider:          graphql.String("GC"),
+				Region:            graphql.String("us-west1"),
+				ImageID:           graphql.String("test_image_id"),
+				ClientSHA:         graphql.String("test_sha"),
+				IPAddress:         "0.0.0.0",
+				Type:              graphql.String("g4dn.xlarge"),
+				RemainingCapacity: graphql.Int(2),
+				Status:            graphql.String("ACTIVE"),
+			},
+		}},
+	}
 
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			testInstances = []subscriptions.WhistInstance{
+				{
+					ID:                graphql.String(utils.PlaceholderTestUUID().String()),
+					Provider:          graphql.String("AWS"),
+					Region:            graphql.String("us-east-1"),
+					ImageID:           graphql.String("test_image_id"),
+					ClientSHA:         graphql.String("test_sha"),
+					IPAddress:         "0.0.0.0",
+					Type:              graphql.String("g4dn.xlarge"),
+					RemainingCapacity: graphql.Int(2),
+					Status:            graphql.String("DRAINING"),
+				},
+				{
+					ID:                graphql.String(utils.PlaceholderWarmupUUID().String()),
+					Provider:          graphql.String("GC"),
+					Region:            graphql.String("us-west1"),
+					ImageID:           graphql.String("test_image_id"),
+					ClientSHA:         graphql.String("test_sha"),
+					IPAddress:         "0.0.0.0",
+					Type:              graphql.String("g4dn.xlarge"),
+					RemainingCapacity: graphql.Int(2),
+					Status:            graphql.String("ACTIVE"),
+				},
+			}
+
+			rows, err := testDBClient.DeleteInstance(context.Background(), mockInstancesClient, tt.delete)
+			if err != nil {
+				t.Fatalf("did not expect an error, got %s", err)
+			}
+
+			if rows != len(tt.expected) {
+				t.Fatalf("incorrect number of rows deleted, expected %d rows, deleted %d", len(tt.expected), rows)
+			}
+
+			if ok := reflect.DeepEqual(testInstances, tt.expected); !ok {
+				t.Fatalf("incorrect instances updated, expected %v, got %v", tt.expected, testInstances)
+			}
+		})
+	}
 }
