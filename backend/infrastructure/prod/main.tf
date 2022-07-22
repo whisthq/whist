@@ -63,8 +63,8 @@ module "user-configs-us-east-1" {
   # List of regions in order of proximity.
   replication_regions = [
     "us-west-1",
-    "sa-east-1",
     "eu-central-1",
+    "ap-south-1",
     "ap-southeast-2",
   ]
   replication_role_arn = module.iam.replication_role_arn
