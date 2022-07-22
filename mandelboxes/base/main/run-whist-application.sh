@@ -44,7 +44,7 @@ export CLIENT_OS=$CLIENT_OS
 export FONTCONFIG_PATH=/etc/fonts
 
 if [[ -z ${WHIST_DEST_BROWSER+1} ]]; then
-  echo "WHIST_DEST_BROWSER is not set!"
+  echo "WHIST_DEST_BROWSER is not set! Defaulting to Chrome"
   WHIST_DEST_BROWSER="chrome"
 fi
 

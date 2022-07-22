@@ -19,9 +19,12 @@ set -Eeuo pipefail
 /opt/teleport/socketio-server &
 
 BROWSER_APPLICATION="${1:-chrome}"
-if [[ "$BROWSER_APPLICATION" != "chrome" ]]; then
+if [[ "$BROWSER_APPLICATION" == "brave" ]]; then
   USER_DATA_DIR="${2:-$HOME/.config/BraveSoftware/Brave-Browser}"
 else
+  if [[ "$BROWSER_APPLICATION" != "chrome" ]]; then
+    echo "Browser name not set. Using Chrome"
+  fi
   USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
 fi
 
