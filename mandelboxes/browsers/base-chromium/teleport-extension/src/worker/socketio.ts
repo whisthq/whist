@@ -23,23 +23,32 @@ const initActivateTabListener = (socket: Socket) => {
       const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
 
       if (foundTab?.tab?.id === undefined) {
-        createTab(
-          {
-            url: tab.url,
-            active: tab.active,
-          },
-          (createdTab) => {
-            chrome.storage.local.set({
-              openTabs: [
-                ...openTabs,
-                {
-                  tab: createdTab,
-                  clientTabId: tab.id,
-                },
-              ],
-            })
-          }
-        )
+        // createTab(
+        //   {
+        //     url: tab.url,
+        //     active: tab.active,
+        //   },
+        //   (createdTab) => {
+        //     chrome.storage.local.set({
+        //       openTabs: [
+        //         ...openTabs,
+        //         {
+        //           tab: createdTab,
+        //           clientTabId: tab.id,
+        //         },
+        //       ],
+        //     })
+        //   }
+        // )
+        chrome.storage.local.set({
+          openTabs: [
+            ...openTabs,
+            {
+              tab: "fake tab",
+              clientTabId: tab.id,
+            },
+          ],
+        })
       } else {
         activateTab(foundTab.tab.id)
       }
