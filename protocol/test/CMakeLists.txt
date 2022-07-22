@@ -45,7 +45,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/frontend/sdl/sdl.c
         ../client/frontend/virtual/virtual.c
         ../client/frontend/virtual/impl.c
-        ../client/frontend/virtual/interface.c
+        ../client/frontend/virtual/interface.cpp
         ../client/frontend/sdl/video.cpp
         ../client/frontend/sdl/window.cpp
         ../client/frontend/sdl/stdin_parser.c
@@ -105,7 +105,7 @@ else()
         ../client/frontend/sdl/sdl.c
         ../client/frontend/virtual/virtual.c
         ../client/frontend/virtual/impl.c
-        ../client/frontend/virtual/interface.c
+        ../client/frontend/virtual/interface.cpp
         ../client/frontend/sdl/video.cpp
         ../client/frontend/sdl/window.cpp
         ../client/frontend/sdl/stdin_parser.c
