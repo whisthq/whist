@@ -12,17 +12,21 @@ import (
 )
 
 var (
-	testImages          []subscriptions.WhistImage
-	testInstances       []subscriptions.WhistInstance
-	testDBClient        *DBClient
-	mockImagesClient    *mockImagesGraphQLClient
-	mockInstancesClient *mockInstancesGraphQLClient
+	testImages            []subscriptions.WhistImage
+	testInstances         []subscriptions.WhistInstance
+	testMandelboxes       []subscriptions.WhistMandelbox
+	testDBClient          *DBClient
+	mockImagesClient      *mockImagesGraphQLClient
+	mockInstancesClient   *mockInstancesGraphQLClient
+	mockMandelboxesClient *mockMandelboxesGraphQLClient
 )
 
 func setup() {
 	testDBClient = &DBClient{}
 	mockImagesClient = &mockImagesGraphQLClient{}
 	mockInstancesClient = &mockInstancesGraphQLClient{}
+	mockMandelboxesClient = &mockMandelboxesGraphQLClient{}
+
 	testInstances = []subscriptions.WhistInstance{
 		{
 			ID:                graphql.String(utils.PlaceholderTestUUID().String()),
@@ -275,6 +279,58 @@ func (mc *mockInstancesGraphQLClient) Mutate(ctx context.Context, mutation subsc
 			}
 		}
 		mutation.InstancesMutationResponse.AffectedRows = graphql.Int(deleted)
+
+	default:
+	}
+	return nil
+}
+
+// Mock type for image queries
+
+type mockMandelboxesGraphQLClient struct{}
+
+func (mc *mockMandelboxesGraphQLClient) Initialize(bool) error {
+	return nil
+}
+
+func (mc *mockMandelboxesGraphQLClient) Query(ctx context.Context, query subscriptions.GraphQLQuery, vars map[string]interface{}) error {
+	switch query := query.(type) {
+	case *struct {
+		WhistMandelboxes []subscriptions.WhistMandelbox `graphql:"whist_mandelboxes(where: {instance_id: {_eq: $instance_id}, _and: {status: {_eq: $status}}})"`
+	}:
+		for _, mandelbox := range testMandelboxes {
+			if mandelbox.InstanceID == vars["instance_id"] &&
+				mandelbox.Status == vars["status"] {
+				query.WhistMandelboxes = append(query.WhistMandelboxes, mandelbox)
+			}
+		}
+
+	default:
+	}
+
+	return nil
+}
+
+func (mc *mockMandelboxesGraphQLClient) Mutate(ctx context.Context, mutation subscriptions.GraphQLQuery, vars map[string]interface{}) error {
+	switch mutation := mutation.(type) {
+	case *struct {
+		MutationResponse struct {
+			AffectedRows graphql.Int `graphql:"affected_rows"`
+		} `graphql:"update_whist_mandelboxes(where: {id: {_eq: $id}}, _set: $changes)"`
+	}:
+		var updated int
+		for i := 0; i < len(testMandelboxes); i++ {
+			if testMandelboxes[i].ID == vars["id"] {
+				testMandelboxes[i].ID = vars["changes"].(whist_mandelboxes_set_input).ID
+				testMandelboxes[i].App = vars["changes"].(whist_mandelboxes_set_input).App
+				testMandelboxes[i].InstanceID = vars["changes"].(whist_mandelboxes_set_input).InstanceID
+				testMandelboxes[i].SessionID = vars["changes"].(whist_mandelboxes_set_input).SessionID
+				testMandelboxes[i].Status = vars["changes"].(whist_mandelboxes_set_input).Status
+				testMandelboxes[i].UserID = vars["changes"].(whist_mandelboxes_set_input).UserID
+				updated++
+			}
+		}
+		mutation.MutationResponse.AffectedRows = graphql.Int(updated)
 
 	default:
 	}

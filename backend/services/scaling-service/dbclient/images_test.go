@@ -100,7 +100,7 @@ func TestUpdateImage(t *testing.T) {
 			}
 
 			if rows != len(expected) {
-				t.Fatalf("incorrect number of rows updated, expected %d rows, inserted %d", len(expected), rows)
+				t.Fatalf("incorrect number of rows updated, expected %d rows, updated %d", len(expected), rows)
 			}
 
 			if ok := reflect.DeepEqual(testImages, tt.expected); !ok {
