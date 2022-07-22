@@ -5,6 +5,7 @@ import struct
 import json
 import os
 import time
+import threading 
 
 FILE_DOWNLOAD_TRIGGER_PATH = "/home/whist/.teleport/downloaded-file"
 POINTER_LOCK_TRIGGER_PATH = "/home/whist/.teleport/pointer-lock-update"
@@ -110,5 +111,13 @@ def main():
             # protocol race condition between reading and deleting the trigger file.
             write_trigger(POINTER_LOCK_TRIGGER_PATH, "1" if message["value"] else "0")
 
+def keep_alive():
+    while True:
+        send_message({"type": "KEEP_ALIVE"})
+        time.sleep(10)
 
-main()
+main = threading.Thread(target=main, args=(*args, **kwargs))
+keep_alive = threading.Thread(target=keep_alive, args=(*args, **kwargs))
+
+main.start()
+keep_alive.start()

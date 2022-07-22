@@ -18,12 +18,14 @@ const initSocketioConnection = () => {
 const initActivateTabListener = (socket: Socket) => {
   socket.on("activate-tab", (tabs: chrome.tabs.Tab[]) => {
     chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
-      console.log("the open tabs are", openTabs)
       const tab = tabs[0]
       const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
       if (foundTab?.tab?.id === undefined) {
-        chrome.tabs.create(
-          { url: tab.url?.replace("cloud:", ""), active: tab.active },
+        createTab(
+          {
+            url: tab.url,
+            active: tab.active,
+          },
           (_tab: chrome.tabs.Tab) => {
             chrome.storage.local.set({
               openTabs: [
@@ -89,7 +91,6 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
         return
 
       chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
-        console.log("open tabs are", openTabs, "looking for ID", tabId)
         const foundTab = find(openTabs, (t) => t.tab.id === tabId)
         socket.emit("tab-updated", foundTab?.clientTabId, tab)
       })

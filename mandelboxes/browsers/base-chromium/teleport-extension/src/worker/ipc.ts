@@ -14,4 +14,9 @@ const initNativeHostDisconnectHandler = (nativeHostPort: chrome.runtime.Port) =>
       nativeHostPort.disconnect()
   })
 
-export { initNativeHostIpc, initNativeHostDisconnectHandler }
+const initNativeHostKeepAlive = (nativeHostPort: chrome.runtime.Port) =>
+nativeHostPort.onMessage.addListener((msg: NativeHostMessage) => {
+  if (msg.type === NativeHostMessageType.KEEP_ALIVE) return
+})
+
+export { initNativeHostIpc, initNativeHostDisconnectHandler, initNativeHostKeepAlive }
