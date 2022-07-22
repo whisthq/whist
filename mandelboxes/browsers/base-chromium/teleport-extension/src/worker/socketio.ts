@@ -17,20 +17,23 @@ const initSocketioConnection = () => {
 }
 
 const initActivateTabListener = (socket: Socket) => {
-  socket.on("activate-tab", async (tabs: chrome.tabs.Tab[]) => {
+  socket.on("activate-tab", (tabs: chrome.tabs.Tab[]) => {
     const tab = tabs[0]
     const foundTab = find(whistState.openTabs, (t) => t.clientTabId === tab.id)
 
     if (foundTab?.tab?.id === undefined) {
-      const createdTab = await createTab({
-        url: tab.url,
-        active: tab.active,
-      })
-
-      addTabToState(<WhistTab>{
-        tab: createdTab,
-        clientTabId: tab.id,
-      })
+      createTab(
+        {
+          url: tab.url,
+          active: tab.active,
+        },
+        (createdTab) => {
+          addTabToState(<WhistTab>{
+            tab: createdTab,
+            clientTabId: tab.id,
+          })
+        }
+      )
     } else {
       activateTab(foundTab.tab.id)
     }
