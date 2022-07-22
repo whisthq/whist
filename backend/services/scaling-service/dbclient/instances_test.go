@@ -375,11 +375,12 @@ func TestUpdateInstance(t *testing.T) {
 
 func TestDeleteInstance(t *testing.T) {
 	var tests = []struct {
-		name     string
-		delete   string
-		expected []subscriptions.WhistInstance
+		name        string
+		delete      string
+		deletedRows int
+		expected    []subscriptions.WhistInstance
 	}{
-		{"Delete existing", utils.PlaceholderTestUUID().String(), []subscriptions.WhistInstance{
+		{"Delete existing", utils.PlaceholderWarmupUUID().String(), 1, []subscriptions.WhistInstance{
 			{
 				ID:                graphql.String(utils.PlaceholderTestUUID().String()),
 				Provider:          graphql.String("AWS"),
@@ -392,7 +393,7 @@ func TestDeleteInstance(t *testing.T) {
 				Status:            graphql.String("DRAINING"),
 			},
 		}},
-		{"Delete non existing", uuid.NewString(), []subscriptions.WhistInstance{
+		{"Delete non existing", uuid.NewString(), 0, []subscriptions.WhistInstance{
 			{
 				ID:                graphql.String(utils.PlaceholderTestUUID().String()),
 				Provider:          graphql.String("AWS"),
@@ -405,7 +406,7 @@ func TestDeleteInstance(t *testing.T) {
 				Status:            graphql.String("DRAINING"),
 			},
 			{
-				ID:                graphql.String(utils.PlaceholderTestUUID().String()),
+				ID:                graphql.String(utils.PlaceholderWarmupUUID().String()),
 				Provider:          graphql.String("GC"),
 				Region:            graphql.String("us-west1"),
 				ImageID:           graphql.String("test_image_id"),
@@ -451,8 +452,8 @@ func TestDeleteInstance(t *testing.T) {
 				t.Fatalf("did not expect an error, got %s", err)
 			}
 
-			if rows != len(tt.expected) {
-				t.Fatalf("incorrect number of rows deleted, expected %d rows, deleted %d", len(tt.expected), rows)
+			if rows != tt.deletedRows {
+				t.Fatalf("incorrect number of rows deleted, expected %d rows, got %d", tt.deletedRows, rows)
 			}
 
 			if ok := reflect.DeepEqual(testInstances, tt.expected); !ok {

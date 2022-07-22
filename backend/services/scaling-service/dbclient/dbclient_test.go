@@ -263,12 +263,18 @@ func (mc *mockInstancesGraphQLClient) Mutate(ctx context.Context, mutation subsc
 		MandelboxesMutationResponse struct {
 			AffectedRows graphql.Int `graphql:"affected_rows"`
 		} `graphql:"delete_whist_mandelboxes(where: {instance_id: {_eq: $id}})"`
+		InstancesMutationResponse struct {
+			AffectedRows graphql.Int `graphql:"affected_rows"`
+		} `graphql:"delete_whist_instances(where: {id: {_eq: $id}})"`
 	}:
-		// for i := 0; i < len(testInstances); i++ {
-		// 	if testInstances[i].ID == vars["id"] {
-		// 		testInstances[i] = nil
-		// 	}
-		// }
+		var deleted int
+		for i := 0; i < len(testInstances); i++ {
+			if testInstances[i].ID == vars["id"] {
+				testInstances = append(testInstances[:i], testInstances[i+1:]...)
+				deleted++
+			}
+		}
+		mutation.InstancesMutationResponse.AffectedRows = graphql.Int(deleted)
 
 	default:
 	}
