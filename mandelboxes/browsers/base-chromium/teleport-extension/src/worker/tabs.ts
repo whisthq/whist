@@ -30,10 +30,8 @@ const initTabDetachSuppressor = () => {
 }
 
 const initTabState = () => {
-  console.log("Init tab state")
   chrome.storage.local.set({ openTabs: []})
   chrome.runtime.onStartup.addListener(() => {
-    console.log("Setting open tabs to []")
     chrome.storage.local.set({ openTabs: []})
   })
 }
