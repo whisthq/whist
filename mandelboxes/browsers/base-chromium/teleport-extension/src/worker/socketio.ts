@@ -2,11 +2,10 @@ import find from "lodash.find"
 import { io, Socket } from "socket.io-client"
 
 import { createTab, activateTab, removeTab } from "@app/utils/tabs"
+import { whistState, addTabToState, removeTabFromState } from "@app/utils/state"
 
 import { SOCKETIO_SERVER_URL } from "@app/constants/urls"
 import { WhistTab } from "@app/constants/tabs"
-
-let openTabs: WhistTab[] = []
 
 const initSocketioConnection = () => {
   const socket = io(SOCKETIO_SERVER_URL, {
@@ -20,7 +19,7 @@ const initSocketioConnection = () => {
 const initActivateTabListener = (socket: Socket) => {
   socket.on("activate-tab", async (tabs: chrome.tabs.Tab[]) => {
     const tab = tabs[0]
-    const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
+    const foundTab = find(whistState.openTabs, (t) => t.clientTabId === tab.id)
 
     if (foundTab?.tab?.id === undefined) {
       const createdTab = await createTab({
@@ -28,7 +27,7 @@ const initActivateTabListener = (socket: Socket) => {
         active: tab.active,
       })
 
-      openTabs.push(<WhistTab>{
+      addTabToState(<WhistTab>{
         tab: createdTab,
         clientTabId: tab.id,
       })
@@ -41,18 +40,19 @@ const initActivateTabListener = (socket: Socket) => {
 const initCloseTabListener = (socket: Socket) => {
   socket.on("close-tab", (tabs: chrome.tabs.Tab[]) => {
     const tab = tabs[0]
-    const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
+    const foundTab = find(whistState.openTabs, (t) => t.clientTabId === tab.id)
     if (foundTab?.tab?.id === undefined) {
       console.warn(`Could not remove tab ${tab.id}`)
     } else {
       removeTab(foundTab?.tab?.id)
+      removeTabFromState(foundTab)
     }
   })
 }
 
 const initUpdateTabIDListener = (socket: Socket) => {
   socket.on("update-tab-id", ([clientTabId, serverTabId]: [number, number]) => {
-    openTabs = openTabs.map((t) => {
+    whistState.openTabs = whistState.openTabs.map((t) => {
       if (t.tab.id !== serverTabId) return t
       return {
         clientTabId,
@@ -76,7 +76,7 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
       )
         return
 
-      const foundTab = find(openTabs, (t) => t.tab.id === tabId)
+      const foundTab = find(whistState.openTabs, (t) => t.tab.id === tabId)
       socket.emit("tab-updated", foundTab?.clientTabId, tab)
     }
   )
@@ -89,14 +89,14 @@ const initCloudTabCreatedListener = (socket: Socket) => {
       _changeInfo: { url?: string; title?: string },
       tab: chrome.tabs.Tab
     ) => {
-      const foundTab = find(openTabs, (t) => t.tab.id === tabId)
+      const foundTab = find(whistState.openTabs, (t) => t.tab.id === tabId)
 
       if (
         tab.openerTabId !== undefined &&
         foundTab === undefined &&
         tab.url !== undefined
       ) {
-        openTabs.push(<WhistTab>{
+        whistState.openTabs.push(<WhistTab>{
           tab: tab,
           clientTabId: undefined,
         })
