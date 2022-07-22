@@ -17,7 +17,9 @@ const initSocketioConnection = () => {
 }
 
 const initActivateTabListener = (socket: Socket) => {
+  console.log("OUTSIDE THE LOOP")
   socket.on("activate-tab", (tabs: chrome.tabs.Tab[]) => {
+    console.log("INSIDE THE LOOP")
     const tab = tabs[0]
     const foundTab = find(whistState.openTabs, (t) => t.clientTabId === tab.id)
 
