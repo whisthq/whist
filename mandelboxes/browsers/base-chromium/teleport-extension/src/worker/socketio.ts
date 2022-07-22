@@ -40,14 +40,16 @@ const initActivateTabListener = (socket: Socket) => {
         //     })
         //   }
         // )
-        chrome.storage.local.set({
-          openTabs: [
-            ...openTabs,
-            {
-              tab: "fake tab",
-              clientTabId: tab.id,
-            },
-          ],
+        chrome.tabs.create({url: tab.url, active: tab.active}, (_tab: chrome.tabs.Tab) => {
+          chrome.storage.local.set({
+            openTabs: [
+              ...openTabs,
+              {
+                tab: _tab,
+                clientTabId: tab.id,
+              },
+            ],
+          })
         })
       } else {
         activateTab(foundTab.tab.id)
