@@ -345,7 +345,6 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     }
 #endif  // Windows
 
-    /*
     // We don't need to do this if we don't initialize the window until we get frames from the
     // server window starts solid color
     frontend->call->paint_solid(frontend, id, &window_context->color);
@@ -353,7 +352,6 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     WhistRGBColor* titlebar_color = (WhistRGBColor*)safe_malloc(sizeof(window_context->color));
     *titlebar_color = window_context->color;
     frontend->call->set_titlebar_color(frontend, id, titlebar_color);
-    */
 
     // Safe to set these post-initialization.
     sdl_native_init_window_options(window_context->window);
