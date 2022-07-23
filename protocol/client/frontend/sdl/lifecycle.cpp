@@ -304,7 +304,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
                              window_context->width, window_context->height, window_flags);
     } else {
         // Otherwise, do dpi scaling and y shift for the titlebar
-        int dpi_scale = window_context->window_id == 0 ? 1 : sdl_get_dpi_scale(frontend);
+        int dpi_scale = sdl_get_dpi_scale(frontend);
         int y_adjust = window_context->has_titlebar ? Y_SHIFT : 0;
         window_context->window = SDL_CreateWindow(
             window_context->title.c_str(), window_context->x / dpi_scale,
