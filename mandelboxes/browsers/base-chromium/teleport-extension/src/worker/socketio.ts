@@ -113,10 +113,6 @@ const initCloudTabCreatedListener = (socket: Socket) => {
           foundTab === undefined &&
           tab.url !== undefined
         ) {
-          openTabs.push(<WhistTab>{
-            tab: tab,
-            clientTabId: undefined,
-          })
           socket.emit("tab-created", tab)
         }
       })
