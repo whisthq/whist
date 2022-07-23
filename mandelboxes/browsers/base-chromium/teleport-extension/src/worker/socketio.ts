@@ -88,7 +88,7 @@ const initCloudTabCreatedListener = (socket: Socket) => {
   chrome.tabs.onUpdated.addListener(
     (
       tabId: number,
-      _changeInfo: { url?: string; title?: string },
+      changeInfo: { url?: string; title?: string },
       tab: chrome.tabs.Tab
     ) => {
       chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
@@ -97,9 +97,11 @@ const initCloudTabCreatedListener = (socket: Socket) => {
         if (
           tab.openerTabId !== undefined &&
           foundTab === undefined &&
-          tab.url !== undefined
+          tab.url !== undefined &&
+          changeInfo.url !== undefined
         ) {
           socket.emit("tab-created", tab)
+          removeTab(tabId)
         }
       })
     }
