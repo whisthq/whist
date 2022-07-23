@@ -6,7 +6,7 @@
 
 import { initFileSyncHandler } from "./downloads"
 import { initChromeWelcomeRedirect } from "./navigation"
-import { initNativeHostIpc, initNativeHostDisconnectHandler, initNativeHostKeepAlive } from "./ipc"
+import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"
 import { initCursorLockHandler } from "./cursor"
 import { initTabDetachSuppressor, initTabState } from "./tabs"
 import { initLocationHandler } from "./geolocation"
@@ -26,7 +26,6 @@ const nativeHostPort = initNativeHostIpc()
 
 // Disconnects the host native port on command
 initNativeHostDisconnectHandler(nativeHostPort)
-initNativeHostKeepAlive(nativeHostPort)
 
 // Initialize the file upload/download handler
 initFileSyncHandler(nativeHostPort)
