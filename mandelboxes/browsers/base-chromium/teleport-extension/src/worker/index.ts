@@ -16,7 +16,6 @@ import {
   initCloseTabListener,
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
-  initUpdateTabIDListener,
 } from "./socketio"
 
 initTabState()
@@ -45,6 +44,5 @@ initLocationHandler(nativeHostPort)
 // Listen to the client for tab actions
 initActivateTabListener(socket)
 initCloseTabListener(socket)
-initUpdateTabIDListener(socket)
 initCloudTabUpdatedListener(socket)
 initCloudTabCreatedListener(socket)

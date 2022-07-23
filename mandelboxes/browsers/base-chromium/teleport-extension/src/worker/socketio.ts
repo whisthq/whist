@@ -62,20 +62,6 @@ const initCloseTabListener = (socket: Socket) => {
   })
 }
 
-const initUpdateTabIDListener = (socket: Socket) => {
-  socket.on("update-tab-id", ([clientTabId, serverTabId]: [number, number]) => {
-    chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
-      openTabs = openTabs.map((t: WhistTab) => {
-        if (t.tab.id !== serverTabId) return t
-        return {
-          clientTabId,
-          tab: t.tab,
-        }
-      })
-    })
-  })
-}
-
 const initCloudTabUpdatedListener = (socket: Socket) => {
   chrome.tabs.onUpdated.addListener(
     (
@@ -126,5 +112,4 @@ export {
   initCloseTabListener,
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
-  initUpdateTabIDListener,
 }
