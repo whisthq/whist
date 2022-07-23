@@ -101,6 +101,7 @@ const initCloudTabCreatedListener = (socket: Socket) => {
           changeInfo.url !== undefined &&
           tab.status === "complete"
         ) {
+          console.log("tab status is", tab.status)
           socket.emit("tab-created", tab)
           removeTab(tabId)
         }
