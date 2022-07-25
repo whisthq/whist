@@ -103,8 +103,6 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
       )
         return
 
-      if (tab.status !== "complete") return
-
       chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
         const foundTab = find(openTabs, (t) => t.tab.id === tabId)
         socket.emit("tab-updated", foundTab?.clientTabId, tab)
