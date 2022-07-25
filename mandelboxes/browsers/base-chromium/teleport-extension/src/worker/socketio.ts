@@ -70,7 +70,7 @@ const initHistoryNavigateListener = (socket: Socket) => {
       const foundTab = find(openTabs, (t) => t.clientTabId === message.id)
       if (foundTab?.tab?.id !== undefined) {
         chrome.scripting.executeScript({
-          target: {tabId: message.id},
+          target: {tabId: foundTab.tab.id},
           args: [message.diff],
           func: (diff) => {
             window.history.go(diff)
