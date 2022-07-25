@@ -5,13 +5,6 @@ filebeat.inputs:
     paths:
       - /whist/temp/logs/*/*/*.log
       - /ephemeral/whist/temp/logs/*/*/*.log
-      - /whist/*/resourceMappings/config.json
-    parsers:
-      - ndjson:
-          keys_under_root: true
-          overwrite_keys: true
-          add_error_key: true
-          expand_keys: false
 
     fields:
       # For JSON logs, set to `json`. For plain log lines, set to `plain`
@@ -110,26 +103,26 @@ processors:
       # timeout: 3s
       providers:
         - aws
-  - decode_json_fields:
-      fields:
-        [
-          "dark_mode",
-          "restore_last_session",
-          "desired_timezone",
-          "user_locale",
-          "system_languages",
-          "browser_languages",
-          "initial_key_repeat",
-          "key_repeat",
-          "user_agent",
-          "kiosk_mode",
-          "client_os",
-        ]
-      process_array: false
-      max_depth: 1
-      target: "user_configs"
-      overwrite_keys: true
-      add_error_key: true
+  - script:
+      lang: javascript
+      tag: add_json_transport_metadata
+      params:
+        container_id: ${container_id}
+      source: >
+        var params = {container_id: ""};
+        function register(scriptParams) {
+          params = scriptParams;
+        }
+        var userConfigs = {};
+        const util = require('util');
+        const fs = require('fs');
+
+        const readFile = util.promisify(fs.readFile)
+        readFile("/whist/" + params.container_id + "/mandelboxResourceMappings/config.json").then(file => userConfigs=JSON.parse(file)))
+
+        function process(event) {
+          event.Put("user_configs", userConfigs)
+        }
 
 ############################# Output #############################
 output:
