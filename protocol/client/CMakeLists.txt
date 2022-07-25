@@ -23,7 +23,7 @@ set(WHIST_CLIENT_DEPENDS
         frontend/sdl/stdin_parser.c
         frontend/virtual/virtual.c
         frontend/virtual/impl.c
-        frontend/virtual/interface.c
+        frontend/virtual/interface.cpp
 )
 
 embed_file(images/error_message_500x50.png insufficient_bandwidth_500x50)
