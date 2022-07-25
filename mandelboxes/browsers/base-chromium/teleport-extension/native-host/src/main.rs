@@ -30,6 +30,13 @@ enum NativeHostMessageType {
     NativeHostKeepalive,
 }
 
+#[derive(Serialize, Deserialize)]
+struct NativeHostMessage {
+    #[serde(rename = "type")]
+    msg_type: NativeHostMessageType,
+    value: Value,
+}
+
 enum Trigger {
     FileDownload,
     PointerLock,
@@ -77,13 +84,6 @@ fn write_trigger_sequential(trigger: &Trigger, data: &str) -> Result<(), String>
 
     // At this point we have a guarantee that the trigger file doesn't exist.
     write_trigger(trigger, data)
-}
-
-#[derive(Serialize, Deserialize)]
-struct NativeHostMessage {
-    #[serde(rename = "type")]
-    msg_type: NativeHostMessageType,
-    value: Value,
 }
 
 fn send_message<W: Write>(mut output: W, msg: &NativeHostMessage) -> Result<(), String> {
