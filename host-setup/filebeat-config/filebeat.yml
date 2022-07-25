@@ -7,11 +7,11 @@ filebeat.inputs:
       - /ephemeral/whist/temp/logs/*/*/*.log
       - /whist/*/resourceMappings/config.json
     parsers:
-    - ndjson:
-        keys_under_root: true
-        overwrite_keys: true
-        add_error_key: true
-        expand_keys: false
+      - ndjson:
+          keys_under_root: true
+          overwrite_keys: true
+          add_error_key: true
+          expand_keys: false
 
     fields:
       # For JSON logs, set to `json`. For plain log lines, set to `plain`
@@ -111,7 +111,20 @@ processors:
       providers:
         - aws
   - decode_json_fields:
-      fields: ["dark_mode", "restore_last_session", "desired_timezone", "user_locale", "system_languages", "browser_languages", "initial_key_repeat", "key_repeat", "user_agent", "kiosk_mode", "client_os"]
+      fields:
+        [
+          "dark_mode",
+          "restore_last_session",
+          "desired_timezone",
+          "user_locale",
+          "system_languages",
+          "browser_languages",
+          "initial_key_repeat",
+          "key_repeat",
+          "user_agent",
+          "kiosk_mode",
+          "client_os",
+        ]
       process_array: false
       max_depth: 1
       target: "user_configs"
