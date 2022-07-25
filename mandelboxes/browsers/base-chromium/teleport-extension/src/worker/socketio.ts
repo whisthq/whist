@@ -74,9 +74,8 @@ const initHistoryNavigateListener = (socket: Socket) => {
           args: [message.diff],
           func: (diff) => {
             window.history.go(diff)
-            return window.history.length
           },
-        }, console.log)
+        })
       }
     })
   })
@@ -93,7 +92,15 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
 
       chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
         const foundTab = find(openTabs, (t) => t.tab.id === tabId)
-        socket.emit("tab-updated", foundTab?.clientTabId, tab)
+        chrome.scripting.executeScript({
+          target: { tabId: foundTab.tab.id },
+          func: () => {
+            return window.history.length
+          },
+        }, (result: any) => {
+          console.log(foundTab, result, tab)
+          socket.emit("tab-updated", foundTab?.clientTabId, result[0].result, tab)
+        })
       })
     }
   )
