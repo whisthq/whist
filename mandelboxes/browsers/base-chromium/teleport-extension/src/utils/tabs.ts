@@ -1,16 +1,15 @@
-const createTab = (createProperties: { url?: string; active: boolean }) => {
-  const promise = new Promise((resolve) => {
-    if (createProperties.url === undefined) return
+const createTab = (
+  createProperties: { url?: string; active: boolean },
+  callback?: (tab: chrome.tabs.Tab) => void
+) => {
+  if (createProperties.url === undefined) return
 
-    if (createProperties.url.startsWith("cloud:")) {
-      createProperties.url = createProperties.url.replace("cloud:", "")
-    }
-    chrome.tabs.create(createProperties, (tab: chrome.tabs.Tab) => {
-      resolve(tab)
-    })
+  if (createProperties.url.startsWith("cloud:")) {
+    createProperties.url = createProperties.url.replace("cloud:", "")
+  }
+  chrome.tabs.create(createProperties, (tab: chrome.tabs.Tab) => {
+    if (callback !== undefined) callback(tab)
   })
-
-  return promise
 }
 
 const activateTab = (tabId: number) => {

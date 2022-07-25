@@ -6,8 +6,6 @@ import { createTab, activateTab, removeTab } from "@app/utils/tabs"
 import { SOCKETIO_SERVER_URL } from "@app/constants/urls"
 import { WhistTab } from "@app/constants/tabs"
 
-let openTabs: WhistTab[] = []
-
 const initSocketioConnection = () => {
   const socket = io(SOCKETIO_SERVER_URL, {
     reconnectionDelayMax: 500,
@@ -18,45 +16,47 @@ const initSocketioConnection = () => {
 }
 
 const initActivateTabListener = (socket: Socket) => {
-  socket.on("activate-tab", async (tabs: chrome.tabs.Tab[]) => {
-    const tab = tabs[0]
-    const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
-
-    if (foundTab?.tab?.id === undefined) {
-      const createdTab = await createTab({
-        url: tab.url,
-        active: tab.active,
-      })
-
-      openTabs.push(<WhistTab>{
-        tab: createdTab,
-        clientTabId: tab.id,
-      })
-    } else {
-      activateTab(foundTab.tab.id)
-    }
+  socket.on("activate-tab", (tabs: chrome.tabs.Tab[]) => {
+    chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
+      const tab = tabs[0]
+      const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
+      if (foundTab?.tab?.id === undefined) {
+        createTab(
+          {
+            url: tab.url,
+            active: tab.active,
+          },
+          (_tab: chrome.tabs.Tab) => {
+            chrome.storage.local.set({
+              openTabs: [
+                ...openTabs,
+                {
+                  tab: _tab,
+                  clientTabId: tab.id,
+                },
+              ],
+            })
+          }
+        )
+      } else {
+        activateTab(foundTab.tab.id)
+      }
+    })
   })
 }
 
 const initCloseTabListener = (socket: Socket) => {
   socket.on("close-tab", (tabs: chrome.tabs.Tab[]) => {
-    const tab = tabs[0]
-    const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
-    if (foundTab?.tab?.id === undefined) {
-      console.warn(`Could not remove tab ${tab.id}`)
-    } else {
-      removeTab(foundTab?.tab?.id)
-    }
-  })
-}
-
-const initUpdateTabIDListener = (socket: Socket) => {
-  socket.on("update-tab-id", ([clientTabId, serverTabId]: [number, number]) => {
-    openTabs = openTabs.map((t) => {
-      if (t.tab.id !== serverTabId) return t
-      return {
-        clientTabId,
-        tab: t.tab,
+    chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
+      const tab = tabs[0]
+      const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
+      if (foundTab?.tab?.id === undefined) {
+        console.warn(`Could not remove tab ${tab.id}`)
+      } else {
+        removeTab(foundTab?.tab?.id)
+        chrome.storage.local.set({
+          openTabs: openTabs.filter((t: WhistTab) => t.clientTabId !== tab.id),
+        })
       }
     })
   })
@@ -76,8 +76,10 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
       )
         return
 
-      const foundTab = find(openTabs, (t) => t.tab.id === tabId)
-      socket.emit("tab-updated", foundTab?.clientTabId, tab)
+      chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
+        const foundTab = find(openTabs, (t) => t.tab.id === tabId)
+        socket.emit("tab-updated", foundTab?.clientTabId, tab)
+      })
     }
   )
 }
@@ -89,19 +91,22 @@ const initCloudTabCreatedListener = (socket: Socket) => {
       _changeInfo: { url?: string; title?: string },
       tab: chrome.tabs.Tab
     ) => {
-      const foundTab = find(openTabs, (t) => t.tab.id === tabId)
+      chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
+        const foundTab = find(openTabs, (t) => t.tab.id === tabId)
 
-      if (
-        tab.openerTabId !== undefined &&
-        foundTab === undefined &&
-        tab.url !== undefined
-      ) {
-        openTabs.push(<WhistTab>{
-          tab: tab,
-          clientTabId: undefined,
-        })
-        socket.emit("tab-created", tab)
-      }
+        if (
+          tab.openerTabId !== undefined &&
+          foundTab === undefined &&
+          tab.url !== undefined
+        ) {
+          if(tab.status === "complete") {
+            socket.emit("tab-created", tab)
+            removeTab(tabId)
+          } else {
+            activateTab(tabId)
+          }
+        }
+      })
     }
   )
 }
@@ -112,5 +117,4 @@ export {
   initCloseTabListener,
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
-  initUpdateTabIDListener,
 }

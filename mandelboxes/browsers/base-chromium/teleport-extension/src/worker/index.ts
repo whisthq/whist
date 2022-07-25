@@ -8,8 +8,7 @@ import { initFileSyncHandler } from "./downloads"
 import { initChromeWelcomeRedirect } from "./navigation"
 import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"
 import { initCursorLockHandler } from "./cursor"
-import { refreshExtension } from "./update"
-import { initTabDetachSuppressor } from "./tabs"
+import { initTabDetachSuppressor, initTabState } from "./tabs"
 import { initLocationHandler } from "./geolocation"
 import {
   initSocketioConnection,
@@ -17,17 +16,15 @@ import {
   initCloseTabListener,
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
-  initUpdateTabIDListener,
 } from "./socketio"
+
+initTabState()
 
 const socket = initSocketioConnection()
 const nativeHostPort = initNativeHostIpc()
 
 // Disconnects the host native port on command
 initNativeHostDisconnectHandler(nativeHostPort)
-
-// If this is a new mandelbox, refresh the extension to get the latest version.
-refreshExtension(nativeHostPort)
 
 // Initialize the file upload/download handler
 initFileSyncHandler(nativeHostPort)
@@ -47,6 +44,5 @@ initLocationHandler(nativeHostPort)
 // Listen to the client for tab actions
 initActivateTabListener(socket)
 initCloseTabListener(socket)
-initUpdateTabIDListener(socket)
 initCloudTabUpdatedListener(socket)
 initCloudTabCreatedListener(socket)
