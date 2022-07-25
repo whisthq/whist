@@ -217,8 +217,11 @@ Defines
 // unbearable. To avoid that we set a lower bound on video quality and drop frames if they are going
 // to exceed the bitrate chosen by congestion control algorithm. Higher the QP, Lower the bitrate
 // and Lower the visual quality. Allowed QP range is 0-51 (for all kind of frames).
-#define MAX_QP 40                  // Max QP value of video frames
-#define MAX_INTRA_QP (MAX_QP + 6)  // Higher QP value for intra frames if supported by the encoder
+#define MAX_QP 40  // Max QP value of video frames
+// If supported, we can set Max Intra QP is set to a higher value, to avoid really large single
+// frame sizes. But since LTR is enabled, I-frames are generated rarely with no/minimal effect on
+// streaming performance. Hence we would like keep this on par with Inter QP to avoid pixelation.
+#define MAX_INTRA_QP (MAX_QP)
 
 #define DEFAULT_BINARY_PRIVATE_KEY \
     ((const void*)"\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF")
