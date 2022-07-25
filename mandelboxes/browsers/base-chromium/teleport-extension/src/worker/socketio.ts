@@ -68,6 +68,7 @@ const initHistoryNavigateListener = (socket: Socket) => {
     console.log("got navigate tab message", message)
 
     chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
+      console.log("getting open tabs", openTabs)
       const foundTab = find(openTabs, (t) => t.clientTabId === message.id)
       if (foundTab?.tab?.id !== undefined) {
         console.log(
@@ -101,6 +102,8 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
         changeInfo.favIconUrl === undefined
       )
         return
+
+      if (tab.status !== "complete") return
 
       chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
         const foundTab = find(openTabs, (t) => t.tab.id === tabId)
