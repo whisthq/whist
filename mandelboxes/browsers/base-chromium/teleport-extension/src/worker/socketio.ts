@@ -65,6 +65,7 @@ const initCloseTabListener = (socket: Socket) => {
 const initHistoryNavigateListener = (socket: Socket) => {
   socket.on("navigate-tab", (body: any[]) => {
     const message = body[0]
+    console.log("got navigate tab message", message)
 
     chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
       const foundTab = find(openTabs, (t) => t.clientTabId === message.id)
