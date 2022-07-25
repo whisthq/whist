@@ -1643,9 +1643,22 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
     // Wait to receive a packet over UDP, until timing out
     UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
+
+    static double last_time_after_recv = 0;
+
+    if (PLOT_UDP_RECV_GAP) {
+        double current_time = get_timestamp_sec();
+        double gap = current_time - last_time_after_recv;
+        whist_plotter_insert_sample("udp_recv_gap", current_time, gap * MS_IN_SECOND);
+    }
+
     int recv_len =
         recvfrom_no_intr(context->socket, &udp_network_packet, sizeof(udp_network_packet), 0,
                          (struct sockaddr*)(&context->last_addr), &slen);
+
+    if (PLOT_UDP_RECV_GAP) {
+        last_time_after_recv = get_timestamp_sec();
+    }
 
     if (context->connected) {
         // TODO: Compare last_addr, with connection_addr, more accurately than memcmp
