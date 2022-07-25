@@ -45,7 +45,7 @@ func TestParseRequest(t *testing.T) {
 		jsonBody string
 		expected ServerRequest
 	}{
-		{"Assign request", &MandelboxAssignRequest{}, `{
+		{"Valid assign request", &MandelboxAssignRequest{}, `{
 			"regions": [
 				"us-east-1"
 			],
@@ -62,7 +62,8 @@ func TestParseRequest(t *testing.T) {
 			Version:    "1.0.0",
 			SessionID:  1234567890,
 		}},
-		{"JSON transport request", &JSONTransportRequest{}, `{
+		{"Empty assign request", &MandelboxAssignRequest{}, `{}`, &MandelboxAssignRequest{}},
+		{"Valid JSON transport request", &JSONTransportRequest{}, `{
 			"ip": "0.0.0.0",
 			"app_name": "chrome",
 			"config_encryption_token": "test_config_encryption",
@@ -80,6 +81,7 @@ func TestParseRequest(t *testing.T) {
 			JSONData:              types.JSONData(`"location":"Americas/NewYork"`),
 			BrowserData:           types.BrowserData(`"cookies": "test_cookies"`),
 		}},
+		{"Empty JSON transport request", &JSONTransportRequest{}, `{}`, &JSONTransportRequest{}},
 	}
 
 	for _, tt := range tests {
@@ -101,7 +103,37 @@ func TestParseRequest(t *testing.T) {
 }
 
 func TestVerifyRequestType(t *testing.T) {
+	var tests = []struct {
+		name, method string
+	}{
+		{"GET Request", http.MethodGet},
+		{"POST Request", http.MethodPost},
+		{"PUT Request", http.MethodPut},
+	}
 
+	methodsToTest := []string{
+		http.MethodHead,
+		http.MethodOptions,
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodDelete,
+		http.MethodPatch,
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, method := range methodsToTest {
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest(method, "https://localhost", nil)
+
+				err := VerifyRequestType(w, r, tt.method)
+				if err != nil && tt.method == method {
+					t.Errorf("Did not expect error, got %s", err)
+				}
+			}
+		})
+	}
 }
 
 func TestEnableCORS(t *testing.T) {
