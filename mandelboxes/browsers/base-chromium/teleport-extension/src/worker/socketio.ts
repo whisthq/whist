@@ -93,15 +93,10 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
   chrome.tabs.onUpdated.addListener(
     (
       tabId: number,
-      changeInfo: { url?: string; title?: string; favIconUrl?: string },
+      _changeInfo: { url?: string; title?: string; favIconUrl?: string },
       tab: chrome.tabs.Tab
     ) => {
-      if (
-        changeInfo.url === undefined &&
-        changeInfo.title === undefined &&
-        changeInfo.favIconUrl === undefined
-      )
-        return
+      if (tab.status !== "complete") return
 
       chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
         const foundTab = find(openTabs, (t) => t.tab.id === tabId)
