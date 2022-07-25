@@ -62,22 +62,21 @@ const initCloseTabListener = (socket: Socket) => {
   })
 }
 
-const initHistoryBackListener = (socket: Socket) => {
-  socket.on("go-back", (tabIds: number[]) => {
-    chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
-      console.log("go back", tabIds, openTabs)
-      const foundTab = find(openTabs, (t) => t.clientTabId === tabIds[0])
-      if (foundTab?.tab?.id !== undefined) chrome.tabs.goBack(foundTab.tab.id)
-    })
-  })
-}
+const initHistoryNavigateListener = (socket: Socket) => {
+  socket.on("navigate-tab", (body: any[]) => {
+    const message = body[0]
 
-const initHistoryForwardListener = (socket: Socket) => {
-  socket.on("go-forward", (tabIds: number[]) => {
     chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
-      const foundTab = find(openTabs, (t) => t.clientTabId === tabIds[0])
-      if (foundTab?.tab?.id !== undefined)
-        chrome.tabs.goForward(foundTab.tab.id)
+      const foundTab = find(openTabs, (t) => t.clientTabId === message.id)
+      if (foundTab?.tab?.id !== undefined) {
+        chrome.scripting.executeScript({
+          target: {tabId: message.id},
+          args: [message.diff],
+          func: (diff) => {
+            window.history.go(diff)
+          }
+        })
+      }
     })
   })
 }
@@ -137,6 +136,5 @@ export {
   initCloseTabListener,
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
-  initHistoryBackListener,
-  initHistoryForwardListener,
+  initHistoryNavigateListener
 }
