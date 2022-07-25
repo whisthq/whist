@@ -69,12 +69,18 @@ const initHistoryNavigateListener = (socket: Socket) => {
     chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
       const foundTab = find(openTabs, (t) => t.clientTabId === message.id)
       if (foundTab?.tab?.id !== undefined) {
+        console.log(
+          "Executing script in tab ID",
+          foundTab.tab.id,
+          "diff is",
+          message.diff
+        )
         chrome.scripting.executeScript({
-          target: {tabId: foundTab.tab.id},
+          target: { tabId: foundTab.tab.id },
           args: [message.diff],
           func: (diff) => {
             window.history.go(diff)
-          }
+          },
         })
       }
     })
@@ -136,5 +142,5 @@ export {
   initCloseTabListener,
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
-  initHistoryNavigateListener
+  initHistoryNavigateListener,
 }
