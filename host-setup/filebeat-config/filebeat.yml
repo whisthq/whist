@@ -6,6 +6,12 @@ filebeat.inputs:
       - /whist/temp/logs/*/*/*.log
       - /ephemeral/whist/temp/logs/*/*/*.log
       - /whist/*/resourceMappings/config.json
+    parsers:
+    - ndjson:
+        keys_under_root: true
+        overwrite_keys: true
+        add_error_key: true
+        expand_keys: false
 
     fields:
       # For JSON logs, set to `json`. For plain log lines, set to `plain`
@@ -110,7 +116,7 @@ processors:
       max_depth: 1
       target: "user_configs"
       overwrite_keys: true
-      add_error_key: false
+      add_error_key: true
 
 ############################# Output #############################
 output:
