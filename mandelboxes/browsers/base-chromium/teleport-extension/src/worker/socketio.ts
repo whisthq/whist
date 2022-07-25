@@ -65,25 +65,18 @@ const initCloseTabListener = (socket: Socket) => {
 const initHistoryNavigateListener = (socket: Socket) => {
   socket.on("navigate-tab", (body: any[]) => {
     const message = body[0]
-    console.log("got navigate tab message", message)
 
     chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
-      console.log("getting open tabs", openTabs)
       const foundTab = find(openTabs, (t) => t.clientTabId === message.id)
       if (foundTab?.tab?.id !== undefined) {
-        console.log(
-          "Executing script in tab ID",
-          foundTab.tab.id,
-          "diff is",
-          message.diff
-        )
         chrome.scripting.executeScript({
           target: { tabId: foundTab.tab.id },
           args: [message.diff],
           func: (diff) => {
             window.history.go(diff)
+            return window.history.length
           },
-        })
+        }, console.log)
       }
     })
   })
