@@ -65,6 +65,7 @@ const initCloseTabListener = (socket: Socket) => {
 const initHistoryBackListener = (socket: Socket) => {
   socket.on("go-back", (tabIds: number[]) => {
     chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
+      console.log("go back", tabIds, openTabs)
       const foundTab = find(openTabs, (t) => t.clientTabId === tabIds[0])
       if (foundTab?.tab?.id === undefined) chrome.tabs.goBack(foundTab.tab.id)
     })
