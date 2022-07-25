@@ -67,7 +67,7 @@ const initHistoryBackListener = (socket: Socket) => {
     chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
       console.log("go back", tabIds, openTabs)
       const foundTab = find(openTabs, (t) => t.clientTabId === tabIds[0])
-      if (foundTab?.tab?.id === undefined) chrome.tabs.goBack(foundTab.tab.id)
+      if (foundTab?.tab?.id !== undefined) chrome.tabs.goBack(foundTab.tab.id)
     })
   })
 }
@@ -76,7 +76,7 @@ const initHistoryForwardListener = (socket: Socket) => {
   socket.on("go-forward", (tabIds: number[]) => {
     chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
       const foundTab = find(openTabs, (t) => t.clientTabId === tabIds[0])
-      if (foundTab?.tab?.id === undefined)
+      if (foundTab?.tab?.id !== undefined)
         chrome.tabs.goForward(foundTab.tab.id)
     })
   })
