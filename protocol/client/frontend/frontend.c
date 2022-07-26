@@ -25,6 +25,7 @@ WhistFrontend* whist_frontend_create(const char* type) {
     }
 
     WhistFrontend* frontend = safe_malloc(sizeof(WhistFrontend));
+    mlock(frontend, sizeof(WhistFrontend));
     frontend->context = NULL;
     frontend->id = atomic_fetch_add(&next_frontend_id, 1);
     frontend->type = type;
@@ -52,6 +53,7 @@ WhistStatus whist_frontend_init(WhistFrontend* frontend, int width, int height, 
 void whist_frontend_destroy(WhistFrontend* frontend) {
     FRONTEND_ENTRY();
     frontend->call->destroy(frontend);
+    munlock(frontend, sizeof(WhistFrontend));
     free(frontend);
 }
 

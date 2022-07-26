@@ -66,6 +66,7 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <sys/mman.h>
 #endif
 
 #include <libavcodec/avcodec.h>

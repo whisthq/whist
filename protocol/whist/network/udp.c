@@ -1019,8 +1019,15 @@ static void udp_destroy_socket_context(void* raw_context) {
         if (context->nack_buffers[type_id] != NULL) {
             for (int i = 0; i < context->nack_num_buffers[type_id]; i++) {
                 deallocate_region(context->nack_buffers[type_id][i]);
+#if OS_IS(OS_MACOS)
+                munlock(context->nack_buffer_valid[type_id][i], 1);
+#endif
                 free(context->nack_buffer_valid[type_id][i]);
             }
+#if OS_IS(OS_MACOS)
+            munlock(context->nack_buffers[type_id], 1);
+            munlock(context->nack_buffer_valid[type_id], 1);
+#endif
             free(context->nack_buffers[type_id]);
             free(context->nack_buffer_valid[type_id]);
             whist_destroy_mutex(context->nack_mutex[type_id]);
@@ -1051,6 +1058,9 @@ static void udp_destroy_socket_context(void* raw_context) {
         fifo_queue_destroy(context->nack_queue);
     }
     whist_destroy_mutex(context->mutex);
+#if OS_IS(OS_MACOS)
+    munlock((void*)context, sizeof(UDPContext));
+#endif
     free(context);
 }
 
@@ -1174,6 +1184,10 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     // so unused memory never gets allocated by the kernel
     context->nack_buffers[type_index] = malloc(sizeof(UDPPacket*) * num_buffers);
     context->nack_buffer_valid[type_index] = malloc(sizeof(bool*) * num_buffers);
+#if OS_IS(OS_MACOS)
+    mlock(context->nack_buffers[type_index], sizeof(UDPPacket*) * num_buffers);
+    mlock(context->nack_buffer_valid[type_index], sizeof(bool*) * num_buffers);
+#endif
     context->nack_mutex[type_index] = whist_create_mutex();
     context->nack_num_buffers[type_index] = num_buffers;
     // This is just used to sanitize the pre-FEC buffer that's passed into send_packet
@@ -1187,6 +1201,9 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
         // Allocate nack buffer validity
         // We hold this separately, since writing anything to the region causes it to allocate
         context->nack_buffer_valid[type_index][i] = malloc(sizeof(bool) * max_num_ids);
+#if OS_IS(OS_MACOS)
+        mlock(context->nack_buffer_valid[type_index][i], sizeof(bool*) * max_num_ids);
+#endif
         for (int j = 0; j < max_num_ids; j++) {
             context->nack_buffer_valid[type_index][i][j] = false;
         }

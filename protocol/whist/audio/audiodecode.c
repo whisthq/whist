@@ -229,6 +229,7 @@ void destroy_audio_decoder(AudioDecoder *decoder) {
     // free swr
     swr_free(&decoder->swr_context);
 
+    munlock(decoder, sizeof(AudioDecoder));
     // free the buffer and decoder
     free(decoder);
 }

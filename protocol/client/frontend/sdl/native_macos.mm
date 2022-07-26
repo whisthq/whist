@@ -374,6 +374,7 @@ void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
     }
 
     context->file_drag_data = NULL;
+    munlock(state, sizeof(FileDragState));
     free(state);
 }
 

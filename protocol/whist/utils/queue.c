@@ -36,12 +36,14 @@ QueueContext *fifo_queue_create(size_t item_size, int max_items) {
     if (context == NULL) {
         return NULL;
     }
+    mlock((void*) context, sizeof(QueueContext));
 
     context->data = malloc(item_size * max_items);
     if (context->data == NULL) {
         fifo_queue_destroy(context);
         return NULL;
     }
+    mlock((void*) context->data, item_size * max_items);
 
     context->mutex = whist_create_mutex();
     if (context->mutex == NULL) {
@@ -119,6 +121,7 @@ void fifo_queue_destroy(QueueContext *context) {
         return;
     }
     if (context->data != NULL) {
+        munlock((void*) context->data, 1);
         free(context->data);
     }
     if (context->mutex != NULL) {
@@ -127,5 +130,6 @@ void fifo_queue_destroy(QueueContext *context) {
     if (context->cond != NULL) {
         whist_destroy_cond(context->cond);
     }
+    munlock((void*) context, sizeof(QueueContext));
     free(context);
 }

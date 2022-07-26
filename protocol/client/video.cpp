@@ -118,6 +118,7 @@ VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial
     // since the struct contains an atomic type which is not POD type,
     // this struct should be newed instead of malloced
     VideoContext* video_context = new VideoContext;
+    mlock((void*) video_context, sizeof(VideoContext));
 
     video_context->has_video_rendered_yet = false;
     video_context->render_context = NULL;
@@ -165,6 +166,7 @@ void destroy_video(VideoContext* video_context) {
     whist_cursor_cache_destroy(video_context->cursor_cache);
 
     // Free the video context
+    munlock((void*) video_context, sizeof(VideoContext));
     delete video_context;
 }
 
@@ -202,6 +204,12 @@ int render_video(VideoContext* video_context) {
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
     static timestamp_us last_rendered_time = 0;
+    static bool first_run = true;
+    if (first_run) {
+        // this should mlock all the statics (EXPERIMENTAL)
+        mlock((void*)&window_color, 128);
+        first_run = false;
+    }
 
     // Receive and process a render context that's being pushed
     if (video_context->pending_render_context) {

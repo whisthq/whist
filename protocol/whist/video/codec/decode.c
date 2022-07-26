@@ -384,6 +384,7 @@ Public Function Implementations
 
 VideoDecoder* video_decoder_create(const VideoDecoderParams* params) {
     VideoDecoder* decoder = (VideoDecoder*)safe_malloc(sizeof(VideoDecoder));
+    mlock((void*) decoder, sizeof(VideoDecoder));
     memset(decoder, 0, sizeof(VideoDecoder));
 
     decoder->params = *params;
@@ -446,6 +447,7 @@ void destroy_video_decoder(VideoDecoder* decoder) {
     }
 
     // free the buffer and decoder
+    munlock((void*) decoder, sizeof(VideoDecoder));
     free(decoder);
 
     return;

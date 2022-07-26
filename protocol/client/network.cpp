@@ -67,6 +67,7 @@ int connect_to_server(const char *server_ip, bool with_stun) {
         LOG_WARNING("Failed to establish UDP connection from server");
         return -1;
     }
+    mlock((void*)&packet_udp_context, sizeof(SocketContext));
 
     LOG_INFO("create_udp_socket_context() done");
 
@@ -78,6 +79,7 @@ int connect_to_server(const char *server_ip, bool with_stun) {
         destroy_socket_context(&packet_udp_context);
         return -1;
     }
+    mlock((void*)&packet_tcp_context, sizeof(SocketContext));
 
     LOG_INFO("create_tcp_socket_context() done");
 

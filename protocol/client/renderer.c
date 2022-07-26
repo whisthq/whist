@@ -81,6 +81,7 @@ Public Function Implementations
 
 WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int initial_height) {
     WhistRenderer* whist_renderer = (WhistRenderer*)safe_malloc(sizeof(WhistRenderer));
+    mlock(whist_renderer, sizeof(WhistRenderer));
     memset(whist_renderer, 0, sizeof(WhistRenderer));
 
     // Initialize audio and video systems
@@ -157,6 +158,7 @@ void destroy_renderer(WhistRenderer* whist_renderer) {
     destroy_audio(whist_renderer->audio_context);
     destroy_video(whist_renderer->video_context);
 
+    munlock((void*)whist_renderer, sizeof(WhistRenderer));
     free(whist_renderer);
 }
 

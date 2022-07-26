@@ -381,6 +381,7 @@ Public Function Implementations
 
 void *create_fec_controller(double current_time) {
     FECController *fec_controller = (FECController *)malloc(sizeof(FECController));
+    mlock((void*) fec_controller, sizeof(FECController));
 
     // size of sliding window for latency
     const double latency_stat_window = 30.0;
@@ -391,6 +392,9 @@ void *create_fec_controller(double current_time) {
     fec_controller->base_ratio_controller = new BaseRatioController;
     fec_controller->extra_ratio_controller = new ExtraRatioController;
     fec_controller->latency_stat = new SlidingWindowStat;
+    mlock((void*)fec_controller->base_ratio_controller, sizeof(BaseRatioController));
+    mlock((void*)fec_controller->extra_ratio_controller, sizeof(ExtraRatioController));
+    mlock((void*)fec_controller->latency_stat, sizeof(SlidingWindowStat));
 
     // init the controllers and latency sliding window
     fec_controller->base_ratio_controller->init(current_time);
@@ -402,6 +406,11 @@ void *create_fec_controller(double current_time) {
 
 void destroy_fec_controller(void *controller) {
     FECController *fec_controller = (FECController *)controller;
+    munlock((void*)fec_controller->base_ratio_controller, sizeof(BaseRatioController));
+    munlock((void*)fec_controller->extra_ratio_controller, sizeof(ExtraRatioController));
+    munlock((void*)fec_controller->latency_stat, sizeof(SlidingWindowStat));
+    munlock((void*) fec_controller, sizeof(FECController));
+
     delete fec_controller->base_ratio_controller;
     delete fec_controller->extra_ratio_controller;
     delete fec_controller->latency_stat;

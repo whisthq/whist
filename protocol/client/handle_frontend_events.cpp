@@ -261,9 +261,10 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
     if (event->filename) {
         data_len = strlen((const char*)event->filename) + 1;
     }
+    size_t malloc_len = sizeof(WhistClientMessage) + data_len;
     WhistClientMessage* msg =
-        (WhistClientMessage*)safe_malloc(sizeof(WhistClientMessage) + data_len);
-    memset(msg, 0, sizeof(WhistClientMessage) + data_len);
+        (WhistClientMessage*)safe_malloc(malloc_len);
+    memset(msg, 0, malloc_len);
     msg->type = CMESSAGE_FILE_DRAG;
 
     // The event->position.{x,y} values are in screen coordinates, so we
@@ -296,18 +297,21 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
     }
 
     send_wcmsg(msg);
+    munlock(msg, malloc_len);
     free(msg);
 }
 
 static void handle_open_url_event(WhistFrontend* frontend, FrontendOpenURLEvent* event) {
     // Send any new URL to the server
     const size_t data_len = strlen(event->url) + 1;
+    size_t malloc_len = sizeof(WhistClientMessage) + data_len;
     WhistClientMessage* msg =
-        (WhistClientMessage*)safe_malloc(sizeof(WhistClientMessage) + data_len);
-    memset(msg, 0, sizeof(WhistClientMessage) + data_len);
+        (WhistClientMessage*)safe_malloc(malloc_len);
+    memset(msg, 0, malloc_len);
     msg->type = MESSAGE_OPEN_URL;
     memcpy(&msg->urls_to_open, event->url, data_len);
     send_wcmsg(msg);
+    munlock(msg, malloc_len);
     free(msg);
 
     free(event->url);

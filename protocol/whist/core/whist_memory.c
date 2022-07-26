@@ -18,6 +18,7 @@ Includes
 */
 
 #include <whist/core/whist.h>
+#include <sys/mman.h>
 
 /*
 ============================
@@ -38,7 +39,9 @@ void* safe_malloc(size_t size) {
     if (ret == NULL) {
         LOG_FATAL("Malloc of size %zu failed!", size);
     }
-
+#if OS_IS(OS_MACOS)
+    mlock(ret, size);
+#endif
     return ret;
 }
 
@@ -402,6 +405,9 @@ void* allocate_region(size_t region_size) {
     if (p == NULL) {
         LOG_FATAL("mmap failed!");
     }
+#if OS_IS(OS_MACOS)
+    // mlock(p, region_size);
+#endif
     ((RegionHeader*)p)->size = region_size;
 #endif
     return TO_REGION_DATA(p);
@@ -515,6 +521,9 @@ void deallocate_region(void* region) {
         LOG_FATAL("VirtualFree failed! Error %x", GetLastError());
     }
 #else
+#if OS_IS(OS_MACOS)
+    // munlock(p, p->size);
+#endif
     if (munmap(p, p->size) != 0) {
         LOG_FATAL("munmap failed!");
     }
