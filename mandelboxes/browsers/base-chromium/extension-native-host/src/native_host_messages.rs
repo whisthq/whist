@@ -86,6 +86,7 @@ pub fn read_message<R: Read>(mut input: R) -> Result<NativeHostMessage, String> 
 
 #[cfg(test)]
 mod tests {
+    // We use this type of macro to parametrize unit tests with different arguments.
     macro_rules! send_message_tests {
         ($($name:ident: $params:expr,)*) => {
         $(
