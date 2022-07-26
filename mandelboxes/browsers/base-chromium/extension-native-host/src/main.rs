@@ -4,13 +4,14 @@ use serde_json::{json, Value};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::fmt::Debug;
 use std::sync::Arc;
 use std::thread;
 
 // TODO: Make this automatically in-sync with the typescript src/constants/ipc.ts.
 // Until then, we must manually keep these in sync. Also, we could eventually force
 // a schema for "value" based on "type".
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 enum NativeHostMessageType {
     #[serde(rename = "DOWNLOAD_COMPLETE")]
     DownloadComplete,
@@ -30,39 +31,35 @@ enum NativeHostMessageType {
     NativeHostKeepalive,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct NativeHostMessage {
     #[serde(rename = "type")]
     msg_type: NativeHostMessageType,
     value: Value,
 }
 
+#[derive(Debug)]
 enum Trigger {
     FileDownload,
     PointerLock,
     DidUpdateExtension,
 }
 
-const TRIGGER_FOLDER: &str = "/home/whist/.teleport";
 fn trigger_path(trigger: &Trigger) -> PathBuf {
-    match trigger {
-        Trigger::FileDownload => PathBuf::from(TRIGGER_FOLDER).join("downloaded-file"),
-        Trigger::PointerLock => PathBuf::from(TRIGGER_FOLDER).join("pointer-lock-update"),
-        Trigger::DidUpdateExtension => PathBuf::from(TRIGGER_FOLDER).join("did-update-extension"),
-    }
+    PathBuf::from("/home/whist/.teleport").join(match trigger {
+        Trigger::FileDownload => "downloaded-file",
+        Trigger::PointerLock => "pointer-lock-update",
+        Trigger::DidUpdateExtension => "did-update-extension",
+    })
 }
 
 // Directly write a trigger to the filesystem.
 fn write_trigger(trigger: &Trigger, data: &str) -> Result<(), String> {
     let path = trigger_path(trigger);
-    let mut file = std::fs::File::create(&path).map_err(|e| format!("{}", e))?;
+    let mut file = std::fs::File::create(&path).map_err(|e| format!("trigger file create failed: {}", e))?;
     file.write_all(data.as_bytes())
-        .map_err(|e| format!("{}", e))?;
+        .map_err(|e| format!("trigger write failed: {}", e))?;
     Ok(())
-}
-
-fn trigger_file_exists(trigger: &Trigger) -> bool {
-    trigger_path(trigger).exists()
 }
 
 // Wait for the protocol to handle and delete the trigger file
@@ -71,15 +68,19 @@ fn write_trigger_sequential(trigger: &Trigger, data: &str) -> Result<(), String>
     let path = trigger_path(trigger);
 
     let mut inotify = Inotify::init().map_err(|e| format!("{}", e))?;
-    inotify
-        .add_watch(path, WatchMask::DELETE)
-        .map_err(|e| format!("{}", e))?;
+    match inotify.add_watch(path, WatchMask::DELETE) {
+        Ok(_) => {},
+        Err(e) => match e.kind() {
+            std::io::ErrorKind::NotFound => {},
+            _ => return Err(format!("inotify watch add failed: {}", e)),
+        },
+    };
 
-    if trigger_file_exists(trigger) {
+    if trigger_path(trigger).exists() {
         let mut inotify_buffer = [0; 1024];
         inotify
             .read_events_blocking(&mut inotify_buffer)
-            .map_err(|e| format!("{}", e))?;
+            .map_err(|e| format!("inotify read failed: {}", e))?;
     }
 
     // At this point we have a guarantee that the trigger file doesn't exist.
@@ -93,6 +94,7 @@ fn send_message<W: Write>(mut output: W, msg: &NativeHostMessage) -> Result<(), 
     if msg_len > 1024 * 1024 {
         return Err(format!("Message is too large: {} bytes", msg_len));
     }
+    let msg_len = msg_len as u32;
 
     // [msg_len in native endian (4 bytes), msg_str in UTF-8 (msg_len bytes)]
     let mut msg_buf: Vec<u8> = Vec::new();
@@ -123,8 +125,8 @@ fn read_message<R: Read>(mut input: R) -> Result<NativeHostMessage, String> {
             }
             let mut msg_buf = vec![0; msg_len as usize];
             input.read_exact(&mut msg_buf).map_err(|e| e.to_string())?;
-            let value = serde_json::from_slice(&msg_buf).map_err(|e| e.to_string())?;
-            Ok(value)
+            let msg : NativeHostMessage = serde_json::from_slice(&msg_buf).map_err(|e| e.to_string())?;
+            Ok(msg)
         }
         Err(e) => match e.kind() {
             std::io::ErrorKind::UnexpectedEof => Ok(NativeHostMessage {
@@ -140,7 +142,7 @@ fn read_message<R: Read>(mut input: R) -> Result<NativeHostMessage, String> {
 // extension to update and use the trigger to keep track of this
 // fact. Else, just tell the extension that we're ready to go.
 fn check_for_updates() -> Result<(), String> {
-    let needs_update = !trigger_file_exists(&Trigger::DidUpdateExtension);
+    let needs_update = !trigger_path(&Trigger::DidUpdateExtension).exists();
     if needs_update {
         write_trigger(&Trigger::DidUpdateExtension, "")?;
     }

@@ -1,5 +1,5 @@
 [package]
-name = "whist-teleport-native-host"
+name = "whist-server-extension-native-host"
 version = "0.1.0"
 edition = "2021"
 
