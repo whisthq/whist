@@ -558,5 +558,6 @@ func generateTestJSONTransportRequest(requestBody httputils.JSONTransportRequest
 		return nil, utils.MakeError("error creating put request: %v", err)
 	}
 
+	httpRequest.Header.Add("Authorization", "Bearer test_token")
 	return httpRequest, nil
 }
