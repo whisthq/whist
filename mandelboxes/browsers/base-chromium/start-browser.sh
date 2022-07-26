@@ -21,7 +21,7 @@ set -Eeuo pipefail
 BROWSER_APPLICATION="${1:-chrome}"
 if [[ "$BROWSER_APPLICATION" == "brave" ]]; then
   USER_DATA_DIR="${2:-$HOME/.config/BraveSoftware/Brave-Browser}"
-elif [[ "$BROWSER_APPLICATION" == "brave" ]]; then
+elif [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
   USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
 else
   echo "Browser name not set or invalid. Using the default option, Chrome."
@@ -182,7 +182,7 @@ echo "loaded d-bus address in start-browser.sh: $DBUS_SESSION_BUS_ADDRESS"
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
 if [[ "$BROWSER_APPLICATION" == "brave" ]]; then
   exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 brave-browser "${flags[@]}"
-elif [[ "$BROWSER_APPLICATION" != "chrome" ]]; then
+elif [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
   exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
 else
   echo "Browser name not set or invalid. Using the default option, Chrome."
