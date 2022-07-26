@@ -2,6 +2,7 @@ import { Socket } from "socket.io-client"
 
 const initAddCookieListener = (socket: Socket) => {
   socket.on("add-cookie", (cookies: any[]) => {
+    console.log("adding cookie", cookies)
     chrome.cookies.set(cookies[0])
   })
 }
