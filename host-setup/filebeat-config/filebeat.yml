@@ -113,15 +113,19 @@ processors:
         function register(scriptParams) {
           params = scriptParams;
         }
+        var jsonString = ""
+        function JSONtoString(rawJsonFile) {
+          jsonString=rawJsonFile;
+        }
         var userConfigs = {};
         const util = require('util');
         const fs = require('fs');
 
         const readFile = util.promisify(fs.readFile)
-        readFile("/whist/" + params.container_id + "/mandelboxResourceMappings/config.json").then(file => userConfigs=JSON.parse(file)))
+        readFile("/whist/" + params.container_id + "/mandelboxResourceMappings/config.json").then(file => JSONtoString(JSON.parse(file)))
 
         function process(event) {
-          event.Put("user_configs", userConfigs)
+          event.Put("user_configs", jsonString)
         }
 
 ############################# Output #############################
