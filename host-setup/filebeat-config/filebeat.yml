@@ -106,26 +106,22 @@ processors:
   - script:
       lang: javascript
       tag: add_json_transport_metadata
-      params:
-        container_id: ${container_id}
       source: >
-        var params = {container_id: ""};
-        function register(scriptParams) {
-          params = scriptParams;
-        }
-        var jsonString = ""
-        function JSONtoString(rawJsonFile) {
-          jsonString=rawJsonFile;
-        }
-        var userConfigs = {};
-        const util = require('util');
-        const fs = require('fs');
+        //var jsonString = ""
+        //function JSONtoString(rawJsonFile) {
+        //  jsonString=rawJsonFile;
+        //}
+        //var userConfigs = {};
+        //const util = require('util');
+        //const fs = require('fs');
 
-        const readFile = util.promisify(fs.readFile)
-        readFile("/whist/" + params.container_id + "/mandelboxResourceMappings/config.json").then(file => JSONtoString(JSON.parse(file)))
+        //const readFile = util.promisify(fs.readFile)
+        //readFile("/whist/" + params.container_id + "/mandelboxResourceMappings/config.json").then(file => JSONtoString(JSON.parse(file)))
 
         function process(event) {
-          event.Put("user_configs", jsonString)
+          var container_id = event.Get("container_id")
+          var filename = "/whist/" + container_id + "/mandelboxResourceMappings/config.json"
+          event.Put("json_configs_filename", filename)
         }
 
 ############################# Output #############################
