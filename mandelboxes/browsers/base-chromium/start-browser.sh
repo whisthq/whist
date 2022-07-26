@@ -42,6 +42,8 @@ fi
 DEFAULT_PROFILE=$USER_DATA_DIR/Default
 PREFERENCES=$DEFAULT_PROFILE/Preferences
 PREFERENCES_UPDATE=$DEFAULT_PROFILE/Preferences.update
+SERVICE_WORKER=$DEFAULT_PROFILE/Service\ Worker/*
+
 # Initialize empty preferences file if one doesn't exist
 if [[ ! -f $PREFERENCES ]]; then
   mkdir -p "$DEFAULT_PROFILE"
@@ -50,6 +52,8 @@ fi
 if [[ ! -s $PREFERENCES ]]; then
   echo {} > "$PREFERENCES"
 fi
+
+rm -f "$SERVICE_WORKER"
 
 echo {} > "$PREFERENCES_UPDATE"
 
