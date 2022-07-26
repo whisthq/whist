@@ -3,9 +3,18 @@ import omit from "lodash.omit"
 
 const initAddCookieListener = (socket: Socket) => {
   socket.on("add-cookie", (cookies: any[]) => {
-    console.log("adding cookie", cookies)
-    let cookie = omit(cookies[0], ["hostOnly", "session"]) as chrome.cookies.SetDetails
-    chrome.cookies.set(cookie)
+    let cookie = cookies[0]
+    const url = cookie.domain.startsWith(".")
+      ? `https://${cookie.domain.slice(1)}${cookie.path}`
+      : `https://${cookie.domain}${cookie.path}`
+
+    console.log(url)
+
+    const details = {
+        ...omit(cookie, ["hostOnly", "session"]),
+        url
+    } as chrome.cookies.SetDetails
+    chrome.cookies.set(details)
   })
 }
 
