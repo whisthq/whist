@@ -42,6 +42,11 @@ fi
 DEFAULT_PROFILE=$USER_DATA_DIR/Default
 PREFERENCES=$DEFAULT_PROFILE/Preferences
 PREFERENCES_UPDATE=$DEFAULT_PROFILE/Preferences.update
+
+# Clear any cached service workers, which may break extension
+# updating by propagating the old version.
+rm -rf "$DEFAULT_PROFILE/Service Worker"
+
 # Initialize empty preferences file if one doesn't exist
 if [[ ! -f $PREFERENCES ]]; then
   mkdir -p "$DEFAULT_PROFILE"
