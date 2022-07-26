@@ -3,6 +3,7 @@ package httputils
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -28,7 +29,7 @@ func TestGetAccessToken(t *testing.T) {
 			r.Header.Add("Authorization", tt.header)
 			token, err := GetAccessToken(r)
 			if err != nil && !tt.err {
-				t.Errorf("did not expect error, got %s", err)
+				t.Errorf("did not expect error, got: %s", err)
 			}
 
 			if token != tt.expected {
@@ -92,7 +93,7 @@ func TestParseRequest(t *testing.T) {
 
 			_, err := ParseRequest(w, r, tt.request)
 			if err != nil {
-				t.Errorf("Did not expect error, got %s", err)
+				t.Errorf("Did not expect error, got: %s", err)
 			}
 
 			if ok := reflect.DeepEqual(reflect.TypeOf(tt.request).Elem(), reflect.TypeOf(tt.expected).Elem()); !ok {
@@ -129,7 +130,7 @@ func TestVerifyRequestType(t *testing.T) {
 
 				err := VerifyRequestType(w, r, tt.method)
 				if err != nil && tt.method == method {
-					t.Errorf("Did not expect error, got %s", err)
+					t.Errorf("Did not expect error, got: %s", err)
 				}
 			}
 		})
@@ -137,9 +138,61 @@ func TestVerifyRequestType(t *testing.T) {
 }
 
 func TestEnableCORS(t *testing.T) {
+	corsHandler := EnableCORS(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(""))
+	})
 
+	srv := httptest.NewServer(http.HandlerFunc(corsHandler))
+
+	resp, err := http.Get(srv.URL)
+	if err != nil {
+		t.Errorf("did not expect error, got: %s", err)
+	}
+
+	wantHeaders := map[string]string{
+		"Access-Control-Allow-Origin":  "*",
+		"Access-Control-Allow-Headers": "Origin Accept Content-Type X-Requested-With",
+		"Access-Control-Allow-Methods": "POST PUT OPTIONS",
+	}
+
+	// Check that all CORS headers were added to the response
+	for k, v := range wantHeaders {
+		header := resp.Header.Get(k)
+		if header != v {
+			t.Errorf("header %v was not added to request", k)
+		}
+	}
 }
 
 func TestInitializeTLS(t *testing.T) {
+	var tests = []struct {
+		name              string
+		keyPath, certPath string
+		err               bool
+	}{
+		{"Valid key and cert path", "./key.pem", "./cert.pem", false},
+		{"Invalid key and cert path", ".", ".", true},
+		{"Empty key and cert path", "", "", true},
+	}
 
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := InitializeTLS(tt.keyPath, tt.certPath)
+			if err != nil && !tt.err {
+				t.Errorf("Did not expect error, got: %s", err)
+			} else if tt.err {
+				return
+			}
+
+			_, err = os.Stat(tt.keyPath)
+			if err != nil {
+				t.Errorf("Failed to create keypath: %s", err)
+			}
+			_, err = os.Stat(tt.certPath)
+			if err != nil {
+				t.Errorf("Failed to create certPath: %s", err)
+			}
+		})
+	}
 }
