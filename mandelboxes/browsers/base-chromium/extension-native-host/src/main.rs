@@ -1,10 +1,10 @@
 use inotify::{Inotify, WatchMask};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use std::fmt::Debug;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::fmt::Debug;
 use std::sync::Arc;
 use std::thread;
 
@@ -56,7 +56,8 @@ fn trigger_path(trigger: &Trigger) -> PathBuf {
 // Directly write a trigger to the filesystem.
 fn write_trigger(trigger: &Trigger, data: &str) -> Result<(), String> {
     let path = trigger_path(trigger);
-    let mut file = std::fs::File::create(&path).map_err(|e| format!("trigger file create failed: {}", e))?;
+    let mut file =
+        std::fs::File::create(&path).map_err(|e| format!("trigger file create failed: {}", e))?;
     file.write_all(data.as_bytes())
         .map_err(|e| format!("trigger write failed: {}", e))?;
     Ok(())
@@ -69,9 +70,9 @@ fn write_trigger_sequential(trigger: &Trigger, data: &str) -> Result<(), String>
 
     let mut inotify = Inotify::init().map_err(|e| format!("{}", e))?;
     match inotify.add_watch(path, WatchMask::DELETE) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => match e.kind() {
-            std::io::ErrorKind::NotFound => {},
+            std::io::ErrorKind::NotFound => {}
             _ => return Err(format!("inotify watch add failed: {}", e)),
         },
     };
@@ -125,7 +126,8 @@ fn read_message<R: Read>(mut input: R) -> Result<NativeHostMessage, String> {
             }
             let mut msg_buf = vec![0; msg_len as usize];
             input.read_exact(&mut msg_buf).map_err(|e| e.to_string())?;
-            let msg : NativeHostMessage = serde_json::from_slice(&msg_buf).map_err(|e| e.to_string())?;
+            let msg: NativeHostMessage =
+                serde_json::from_slice(&msg_buf).map_err(|e| e.to_string())?;
             Ok(msg)
         }
         Err(e) => match e.kind() {
