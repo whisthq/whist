@@ -62,23 +62,42 @@ const initCloseTabListener = (socket: Socket) => {
   })
 }
 
+const initHistoryNavigateListener = (socket: Socket) => {
+  socket.on("navigate-tab", (body: any[]) => {
+    const message = body[0]
+
+    chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
+      const foundTab = find(openTabs, (t) => t.clientTabId === message.id)
+      if (foundTab?.tab?.id !== undefined) {
+        chrome.scripting.executeScript({
+          target: { tabId: foundTab.tab.id },
+          args: [message.diff],
+          func: (diff) => {
+            window.history.go(diff)
+          },
+        })
+      }
+    })
+  })
+}
+
 const initCloudTabUpdatedListener = (socket: Socket) => {
   chrome.tabs.onUpdated.addListener(
     (
       tabId: number,
-      changeInfo: { url?: string; title?: string; favIconUrl?: string },
+      _changeInfo: { url?: string; title?: string; favIconUrl?: string },
       tab: chrome.tabs.Tab
     ) => {
-      if (
-        changeInfo.url === undefined &&
-        changeInfo.title === undefined &&
-        changeInfo.favIconUrl === undefined
-      )
-        return
-
       chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
         const foundTab = find(openTabs, (t) => t.tab.id === tabId)
-        socket.emit("tab-updated", foundTab?.clientTabId, tab)
+        chrome.scripting.executeScript({
+          target: { tabId: foundTab.tab.id },
+          func: () => {
+            return window.history.length
+          },
+        }, (result: any) => {
+          socket.emit("tab-updated", foundTab?.clientTabId, result[0].result, tab)
+        })
       })
     }
   )
@@ -99,7 +118,7 @@ const initCloudTabCreatedListener = (socket: Socket) => {
           foundTab === undefined &&
           tab.url !== undefined
         ) {
-          if(tab.status === "complete") {
+          if (tab.status === "complete") {
             socket.emit("tab-created", tab)
             removeTab(tabId)
           } else {
@@ -117,4 +136,5 @@ export {
   initCloseTabListener,
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
+  initHistoryNavigateListener,
 }

@@ -16,6 +16,7 @@ import {
   initCloseTabListener,
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
+  initHistoryNavigateListener
 } from "./socketio"
 
 initTabState()
@@ -46,3 +47,4 @@ initActivateTabListener(socket)
 initCloseTabListener(socket)
 initCloudTabUpdatedListener(socket)
 initCloudTabCreatedListener(socket)
+initHistoryNavigateListener(socket)
