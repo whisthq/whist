@@ -12,17 +12,6 @@ extern "C" {
 // Just chosen a very large number for events queue size. If required we can optimize/reduce it.
 #define MAX_EVENTS_QUEUED 10000
 
-extern "C" {
-QueueContext* events_queue = NULL;
-
-void* callback_context = NULL;
-OnCursorChangeCallback on_cursor_change = NULL;
-OnFileUploadCallback on_file_upload = NULL;
-OnFileDownloadStart on_file_download_start = NULL;
-OnFileDownloadUpdate on_file_download_update = NULL;
-OnFileDownloadComplete on_file_download_complete = NULL;
-}
-
 static WhistMutex lock;
 static AVFrame* pending = NULL;
 static bool connected = false;
@@ -31,10 +20,37 @@ static int requested_height;
 
 // Whist window management
 struct WhistWindowInformation {
+    void* ctx;
+    OnCursorChangeCallback on_cursor_change_callback_ptr;
     VideoFrameCallback video_frame_callback_ptr;
+    OnFileUploadCallback on_file_upload_callback_ptr;
 };
 static std::mutex whist_window_mutex;
 static std::map<int, WhistWindowInformation> whist_windows;
+
+static void on_cursor_change_handler(void* ptr, const char* cursor_type, bool relative_mouse_mode) {
+    std::lock_guard<std::mutex> guard(whist_window_mutex);
+    // For each window,
+    for (auto const& [window_id, window_info] : whist_windows) {
+        // If it has a cursor change callback,
+        if (window_info.on_cursor_change_callback_ptr) {
+            // Feed it the cursor change
+            window_info.on_cursor_change_callback_ptr(window_info.ctx, cursor_type,
+                                                      relative_mouse_mode);
+        }
+    }
+}
+
+extern "C" {
+QueueContext* events_queue = NULL;
+
+void* callback_context = NULL;
+OnCursorChangeCallback on_cursor_change = on_cursor_change_handler;
+OnFileUploadCallback on_file_upload = NULL;
+OnFileDownloadStart on_file_download_start = NULL;
+OnFileDownloadUpdate on_file_download_update = NULL;
+OnFileDownloadComplete on_file_download_complete = NULL;
+}
 
 static void virtual_interface_connect(void) {
     lock = whist_create_mutex();
@@ -42,8 +58,10 @@ static void virtual_interface_connect(void) {
     connected = true;
 }
 
-static void virtual_interface_set_on_cursor_change_callback(OnCursorChangeCallback cb) {
-    on_cursor_change = cb;
+static void virtual_interface_set_on_cursor_change_callback(int window_id,
+                                                            OnCursorChangeCallback cb) {
+    std::lock_guard<std::mutex> guard(whist_window_mutex);
+    whist_windows[window_id].on_cursor_change_callback_ptr = cb;
 }
 
 static void* virtual_interface_get_frame_ref(void) {
@@ -134,7 +152,12 @@ static void virtual_interface_send_event(const WhistFrontendEvent* frontend_even
     }
 }
 
-static void virtual_interface_set_on_file_upload_callback(OnFileUploadCallback cb) {
+static void virtual_interface_set_on_file_upload_callback(int window_id, OnFileUploadCallback cb) {
+    std::lock_guard<std::mutex> guard(whist_window_mutex);
+    // Update that whist window's file upload callback
+    whist_windows[window_id].on_file_upload_callback_ptr = cb;
+    // Set globals
+    callback_context = whist_windows[window_id].ctx;
     on_file_upload = cb;
 }
 
@@ -150,22 +173,28 @@ static void virtual_interface_set_on_file_download_complete_callback(OnFileDownl
     on_file_download_complete = cb;
 }
 
-static int virtual_interface_create_window(void) {
+static int virtual_interface_create_window(void* ctx) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     // Use serial window IDs, so that each window gets a unique ID
     static int serial_window_ids = 1;
     int next_window_id = serial_window_ids++;
     // Store window info, and return the new window ID
     whist_windows[next_window_id] = {};
+    whist_windows[next_window_id].ctx = ctx;
     return next_window_id;
 }
 
 static void virtual_interface_destroy_window(int window_id) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     whist_windows.erase(window_id);
+    if (whist_windows.size() == 0) {
+        callback_context = NULL;
+        on_file_upload = NULL;
+    } else {
+        callback_context = whist_windows.begin()->second.ctx;
+        on_file_upload = whist_windows.begin()->second.on_file_upload_callback_ptr;
+    }
 }
-
-static void virtual_interface_set_callback_context(void* context) { callback_context = context; }
 
 static const VirtualInterface vi = {
     .lifecycle =
@@ -173,7 +202,6 @@ static const VirtualInterface vi = {
             .connect = virtual_interface_connect,
             .create_window = virtual_interface_create_window,
             .destroy_window = virtual_interface_destroy_window,
-            .set_callback_context = virtual_interface_set_callback_context,
             .start = whist_client_main,
             .disconnect = virtual_interface_disconnect,
         },

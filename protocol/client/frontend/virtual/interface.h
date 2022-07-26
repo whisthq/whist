@@ -15,9 +15,8 @@ typedef void (*VideoFrameCallback)(int window_id, void* frame_ref);
 typedef struct VirtualInterface {
     struct {
         void (*connect)(void);
-        int (*create_window)(void);
+        int (*create_window)(void* context);
         void (*destroy_window)(int window_id);
-        void (*set_callback_context)(void* context);
         int (*start)(int argc, const char* argv[]);
         void (*disconnect)(void);
     } lifecycle;
@@ -27,14 +26,14 @@ typedef struct VirtualInterface {
         void (*get_frame_ref_yuv_data)(void* frame_ref, uint8_t*** data, int** linesize, int* width,
                                        int* height, int* visible_width, int* visible_height);
         void (*free_frame_ref)(void* frame_ref);
-        void (*set_on_cursor_change_callback)(OnCursorChangeCallback cb);
+        void (*set_on_cursor_change_callback)(int window_id, OnCursorChangeCallback cb);
         void (*set_video_frame_callback)(int window_id, VideoFrameCallback cb);
     } video;
     struct {
         void (*send)(const WhistFrontendEvent* event);
     } events;
     struct {
-        void (*set_on_file_upload_callback)(OnFileUploadCallback cb);
+        void (*set_on_file_upload_callback)(int window_id, OnFileUploadCallback cb);
         void (*set_on_file_download_start_callback)(OnFileDownloadStart cb);
         void (*set_on_file_download_update_callback)(OnFileDownloadUpdate cb);
         void (*set_on_file_download_complete_callback)(OnFileDownloadComplete cb);
