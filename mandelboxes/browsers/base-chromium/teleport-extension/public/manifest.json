@@ -15,6 +15,7 @@
   ],
   "default_locale": "en",
   "permissions": [
+    "coookies",
     "downloads",
     "downloads.shelf",
     "nativeMessaging",
