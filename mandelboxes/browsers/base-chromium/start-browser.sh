@@ -42,7 +42,10 @@ fi
 DEFAULT_PROFILE=$USER_DATA_DIR/Default
 PREFERENCES=$DEFAULT_PROFILE/Preferences
 PREFERENCES_UPDATE=$DEFAULT_PROFILE/Preferences.update
-SERVICE_WORKER=$DEFAULT_PROFILE/Service\ Worker/*
+
+# Clear any cached service workers, which may break extension
+# updating by propagating the old version.
+rm -rf "$DEFAULT_PROFILE/Service Worker"
 
 # Initialize empty preferences file if one doesn't exist
 if [[ ! -f $PREFERENCES ]]; then
@@ -52,8 +55,6 @@ fi
 if [[ ! -s $PREFERENCES ]]; then
   echo {} > "$PREFERENCES"
 fi
-
-rm -f "$SERVICE_WORKER"
 
 echo {} > "$PREFERENCES_UPDATE"
 
