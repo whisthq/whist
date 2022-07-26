@@ -89,10 +89,10 @@ func Free(index Index, mandelboxID types.MandelboxID) error {
 	}
 
 	if gpu.usage <= 0 {
-		return utils.MakeError("Free called on a GPU Index that has no mandelboxes allocated!")
+		return utils.MakeError("free called on a GPU Index that has no mandelboxes allocated!")
 	}
 	if !utils.SliceContains(assigned, mandelboxID) {
-		return utils.MakeError("Mandelbox is not allocated on GPU Index!")
+		return utils.MakeError("mandelbox is not allocated on GPU Index!")
 	}
 
 	gpu.usage--

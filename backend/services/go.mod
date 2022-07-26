@@ -22,6 +22,7 @@ require (
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hasura/go-graphql-client v0.7.1
 	github.com/jackc/pgconn v1.12.1
 	github.com/jackc/pgtype v1.11.0
@@ -62,6 +63,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-version v1.6.0
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect

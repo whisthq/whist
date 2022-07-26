@@ -24,7 +24,7 @@ import (
 func NewS3Client(region string) (*s3.Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
-		return nil, utils.MakeError("failed to load aws config: %v", err)
+		return nil, utils.MakeError("failed to load aws config: %s", err)
 	}
 	return s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.Region = region
@@ -175,7 +175,7 @@ func UpdateMostRecentToken(client *s3.Client, user types.UserID, token string) e
 	recentTokenPath := path.Join("last-used-tokens", string(user))
 	_, err := UploadFileToBucket(client, GetAccessPoint(), recentTokenPath, []byte(token))
 	if err != nil {
-		return utils.MakeError("failed to update most recent token: %v", err)
+		return utils.MakeError("failed to update most recent token: %s", err)
 	}
 	return nil
 }
@@ -186,7 +186,7 @@ func GetMostRecentToken(client *s3.Client, user types.UserID) (string, error) {
 	dataBuffer := manager.NewWriteAtBuffer([]byte{})
 	_, err := DownloadObjectToBuffer(client, GetAccessPoint(), recentTokenPath, dataBuffer)
 	if err != nil {
-		return "", utils.MakeError("failed to get most recent token: %v", err)
+		return "", utils.MakeError("failed to get most recent token: %s", err)
 	}
 	return string(dataBuffer.Bytes()), nil
 }

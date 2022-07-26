@@ -84,7 +84,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	}
 
 	if len(configToken) == 0 {
-		return utils.MakeError("Cannot save user configs for user %s for mandelbox %s since ConfigEncryptionToken is empty", userID, mandelboxID)
+		return utils.MakeError("cannot save user configs since ConfigEncryptionToken is empty")
 	}
 
 	configDir := mandelbox.GetUserConfigDir()
@@ -93,30 +93,30 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	// Compress the user configs into a tar.lz4 file
 	compressedConfig, err := configutils.CompressTarLz4(unpackedConfigPath)
 	if err != nil {
-		return utils.MakeError("Failed to compress configs for user %s for mandelbox %s: %v", userID, mandelboxID, err)
+		return utils.MakeError("failed to compress configs for: %s", err)
 	}
 
 	// Encrypt the compressed config
 	logger.Infof("Using (hashed) encryption token %s for user %s for mandelbox %s", hash(configToken), userID, mandelboxID)
 	encryptedConfig, err := configutils.EncryptAES256GCM(string(configToken), compressedConfig)
 	if err != nil {
-		return utils.MakeError("Failed to encrypt configs for user %s for mandelbox %s with hashed token %s: %s", userID, mandelboxID, hash(configToken), err)
+		return utils.MakeError("failed to encrypt configs with hashed token %s: %s", hash(configToken), err)
 	}
 
 	// Upload encrypted config to S3
 	s3Client, err := configutils.NewS3Client("us-east-1")
 	if err != nil {
-		return utils.MakeError("Error backing up user configs for user %s for mandelbox %s: error creating s3 client: %s", userID, mandelboxID, err)
+		return utils.MakeError("error backing up user configs: error creating s3 client: %s", err)
 	}
 
 	uploadResult, err := configutils.UploadFileToBucket(s3Client, configutils.GetAccessPoint(), mandelbox.getS3ConfigKey(hash(configToken)), encryptedConfig)
 	if err != nil {
-		return utils.MakeError("Error uploading encrypted config for user %s for mandelbox %s to s3: %s", userID, mandelboxID, err)
+		return utils.MakeError("error uploading encrypted config to s3: %s", err)
 	}
 
 	// Update user's most recently config version with the current token
 	if err := configutils.UpdateMostRecentToken(s3Client, userID, hash(configToken)); err != nil {
-		return utils.MakeError("Error updating most recently used token for user %s for mandelbox %s: %s", userID, mandelboxID, err)
+		return utils.MakeError("error updating most recently used token: %s", err)
 	}
 
 	logger.Infof("Successfully saved config version %s for user %s for mandelbox %s", *uploadResult.VersionID, userID, mandelboxID)
@@ -151,7 +151,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 		if loadFailed {
 			err := mandelbox.setupUserConfigDirs()
 			if err != nil {
-				errorChan <- utils.MakeError("Failed to last-resort setup user config dirs for mandelbox %s: %s", mandelbox.GetID(), err)
+				errorChan <- utils.MakeError("failed to last-resort setup user config dirs: %s", err)
 				return
 			} else {
 				logger.Infof("Set up last-resort user config dirs for mandelbox %s because normal loading failed.", mandelbox.GetID())
@@ -188,7 +188,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 
 	s3Client, err := configutils.NewS3Client("us-east-1")
 	if err != nil {
-		errorChan <- utils.MakeError("Could not make new S3 client: %s", err)
+		errorChan <- utils.MakeError("could not make new S3 client: %s", err)
 		return
 	}
 
@@ -197,7 +197,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// download a config that we think is the most likely to be the one we need.
 	predictedConfigKey, err := mandelbox.predictConfigToDownload(s3Client)
 	if err != nil {
-		errorChan <- utils.MakeError("Error retrieving existing configs for user %s from S3 for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
+		errorChan <- utils.MakeError("error retrieving existing configs from S3: %s", err)
 		return
 	}
 	if predictedConfigKey == "" {
@@ -214,12 +214,12 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// (https://github.com/whisthq/whist/issues/5287)
 	predictedConfigHeadObj, err := configutils.GetHeadObject(s3Client, configutils.GetAccessPoint(), predictedConfigKey)
 	if err != nil {
-		errorChan <- utils.MakeError("Could not get head object for predicted key %s for user %s for mandelbox %s: %s", predictedConfigKey, mandelbox.GetUserID(), mandelbox.GetID(), err)
+		errorChan <- utils.MakeError("could not get head object for predicted key %s: %s", predictedConfigKey, err)
 		return
 	}
 	predictedConfigBuf, err := mandelbox.downloadUserConfig(s3Client, predictedConfigKey, predictedConfigHeadObj)
 	if err != nil {
-		errorChan <- utils.MakeError("Error downloading predicted config %s for user %s and mandelbox %s: %s", predictedConfigKey, mandelbox.GetUserID(), mandelbox.GetID(), err)
+		errorChan <- utils.MakeError("error downloading predicted config %s: %s", predictedConfigKey, err)
 		return
 	}
 
@@ -234,7 +234,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// know we need based on the token that came back from the Whist frontend.
 	correctConfigKey, correctHeadObject, err := mandelbox.determineCorrectConfigKey(s3Client, predictedConfigKey, predictedConfigHeadObj, encryptionInfo)
 	if err != nil {
-		errorChan <- utils.MakeError("Could not determine correct config key for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
+		errorChan <- utils.MakeError("could not determine correct config key: %s", err)
 		return
 	}
 
@@ -248,7 +248,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// Do some basic sanity checks
 	if correctConfigKey != mandelbox.getS3ConfigKey(hash(encryptionInfo.Token)) && correctConfigKey != path.Join(mandelbox.getS3ConfigKeyPrefix(hash(encryptionInfo.Token)), EncryptedArchiveFilename) {
 		// If not one of those file paths, then we're about to try to decrypt the wrong file.
-		errorChan <- utils.MakeError("Corrected config key %s for user %s for mandelbox %s does not match any expected format (prefix/filename or prefix/token/filename)!", correctConfigKey, mandelbox.GetUserID(), mandelbox.GetID())
+		errorChan <- utils.MakeError("corrected config key %s does not match any expected format (prefix/filename or prefix/token/filename)!", correctConfigKey)
 		return
 	}
 
@@ -257,7 +257,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	if correctConfigKey != predictedConfigKey {
 		correctConfigBuf, err = mandelbox.downloadUserConfig(s3Client, correctConfigKey, correctHeadObject)
 		if err != nil {
-			errorChan <- utils.MakeError("Error downloading corrected config %s for user %s and mandelbox %s: %s", predictedConfigKey, mandelbox.GetUserID(), mandelbox.GetID(), err)
+			errorChan <- utils.MakeError("error downloading corrected config %s: %s", predictedConfigKey, err)
 			return
 		}
 	} else {
@@ -328,14 +328,14 @@ func (mandelbox *mandelboxData) downloadUserConfig(s3Client *s3.Client, key stri
 		buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
 		numBytes, err := configutils.DownloadObjectToBuffer(s3Client, configutils.GetAccessPoint(), key, buf)
 		if err != nil {
-			return nil, utils.MakeError("Could not download object for key %s (version %s) for mandelbox %s: %s", key, *headObject.VersionId, mandelbox.GetID(), err)
+			return nil, utils.MakeError("could not download object for key %s (version %s): %s", key, *headObject.VersionId, err)
 		}
 
 		// Check if the file was downloaded correctly
 		downloadedFile = buf.Bytes()
 		downloadHash := configutils.GetMD5Hash(downloadedFile)
 		if validateIntegrity && downloadHash != expectedMD5 {
-			logger.Warningf("MD5 hash mismatch for user config key %s (version %s) for mandelbox %s. Expected %s, got %s", key, *headObject.VersionId, mandelbox.GetID(), expectedMD5, downloadHash)
+			logger.Warningf("MD5 hash mismatch for user config key %s (version %s). Expected %s, got %s", key, *headObject.VersionId, expectedMD5, downloadHash)
 			continue
 		}
 
@@ -345,7 +345,7 @@ func (mandelbox *mandelboxData) downloadUserConfig(s3Client *s3.Client, key stri
 	}
 
 	if !downloadSuccessful {
-		return nil, utils.MakeError("Could not download object (due to MD5 mismatch) for key %s (version %s) for mandelbox %s after 3 attempts", key, *headObject.VersionId, mandelbox.GetID())
+		return nil, utils.MakeError("could not download object (due to MD5 mismatch) for key %s (version %s) for mandelbox %s after 3 attempts", key, *headObject.VersionId, mandelbox.GetID())
 	}
 
 	logger.Infof("Downloaded %v bytes for user config key %s (version %s) for mandelbox %s", numBytesSuccessfullyDownloaded, key, *headObject.VersionId, mandelbox.GetID())
@@ -361,15 +361,15 @@ func (mandelbox *mandelboxData) downloadUserConfig(s3Client *s3.Client, key stri
 func (mandelbox *mandelboxData) receiveAndSanityCheckEncryptionToken(uncheckedTokenChan <-chan ConfigEncryptionInfo) (*ConfigEncryptionInfo, error) {
 	encryptionInfo, gotEncryptionInfo := <-uncheckedTokenChan
 	if !gotEncryptionInfo {
-		return nil, utils.MakeError("Got no config encryption token for user %s for mandelbox %s, likely because the JSON Transport request never completed.", mandelbox.GetUserID(), mandelbox.GetID())
+		return nil, utils.MakeError("got no config encryption token for user %s for mandelbox %s, likely because the JSON Transport request never completed.", mandelbox.GetUserID(), mandelbox.GetID())
 	}
 
 	if encryptionInfo.Token == "" {
-		return &encryptionInfo, utils.MakeError("Encryption token for user %s for mandelbox %s is empty!", mandelbox.GetUserID(), mandelbox.GetID())
+		return &encryptionInfo, utils.MakeError("encryption token for user %s for mandelbox %s is empty!", mandelbox.GetUserID(), mandelbox.GetID())
 	}
 
 	if len(encryptionInfo.Token) < 15 {
-		return &encryptionInfo, utils.MakeError("Encryption token for user %s for mandelbox %s is way too short (length %v)", mandelbox.GetUserID(), mandelbox.GetID(), len(encryptionInfo.Token))
+		return &encryptionInfo, utils.MakeError("encryption token for user %s for mandelbox %s is way too short (length %v)", mandelbox.GetUserID(), mandelbox.GetID(), len(encryptionInfo.Token))
 	}
 
 	// The encryption token _looks_ reasonable. We set it for the mandelbox and log some info.
@@ -404,7 +404,7 @@ func (mandelbox *mandelboxData) determineCorrectConfigKey(s3client *s3.Client, p
 		if !(errors.As(err, &apiErr) && apiErr.ErrorCode() == "NotFound") {
 			// The desired file exists in S3, but we ran into some error getting the
 			// HeadObject. Something went poorly.
-			return predictedKey, predictedHeadObject, utils.MakeError("Couldn't get HeadObject for corrected config key %s (from predicted key %s) for user %s for mandelbox %s: %s", desiredKey, predictedKey, mandelbox.GetUserID(), mandelbox.GetID(), err)
+			return predictedKey, predictedHeadObject, utils.MakeError("couldn't get HeadObject for corrected config key %s (from predicted key %s) for user %s for mandelbox %s: %s", desiredKey, predictedKey, mandelbox.GetUserID(), mandelbox.GetID(), err)
 		}
 	}
 
@@ -419,18 +419,18 @@ func (mandelbox *mandelboxData) determineCorrectConfigKey(s3client *s3.Client, p
 // `receiveAndVerifyEncryptionInfo` has already been called.
 func (mandelbox *mandelboxData) decryptConfig(configKey string, encryptedBuf []byte, encryptionInfo ConfigEncryptionInfo) ([]byte, error) {
 	if len(encryptionInfo.Token) == 0 {
-		return nil, utils.MakeError("Cannot get user configs for user %s for Mandelbox %s since config encryption token is empty", mandelbox.GetUserID(), mandelbox.GetID())
+		return nil, utils.MakeError("cannot get user configs for user %s for Mandelbox %s since config encryption token is empty", mandelbox.GetUserID(), mandelbox.GetID())
 	}
 
 	if len(encryptedBuf) == 0 {
-		return nil, utils.MakeError("Cannot decrypt length-0 buffer for user configs for user %s for Mandelbox %s since config buffer has length 0!", mandelbox.GetUserID(), mandelbox.GetID())
+		return nil, utils.MakeError("cannot decrypt length-0 buffer for user configs for user %s for Mandelbox %s since config buffer has length 0!", mandelbox.GetUserID(), mandelbox.GetID())
 	}
 
 	logger.Infof("Decrypting config %s for user %s for mandelbox %s with hashed token %s", configKey, mandelbox.GetUserID(), mandelbox.GetID(), hash(encryptionInfo.Token))
 
 	decryptedBuf, err := configutils.DecryptAES256GCM(string(encryptionInfo.Token), encryptedBuf)
 	if err != nil {
-		return nil, utils.MakeError("Failed to decrypt config %s for user %s for mandelbox %s with hashed token %s: %s", configKey, mandelbox.GetUserID(), mandelbox.GetID(), hash(encryptionInfo.Token), err)
+		return nil, utils.MakeError("failed to decrypt config %s with hashed token %s: %s", configKey, hash(encryptionInfo.Token), err)
 	}
 
 	logger.Infof("Successfully decrypted %s for user %s for mandelbox %s with hashed token %s", configKey, mandelbox.GetUserID(), mandelbox.GetID(), hash(encryptionInfo.Token))
@@ -447,7 +447,7 @@ func (mandelbox *mandelboxData) extractConfig(configKey string, decryptedConfig 
 	unpackedConfigDir := path.Join(configDir, UnpackedConfigsDirectoryName)
 	err := mandelbox.setupUserConfigDirs()
 	if err != nil {
-		return utils.MakeError("Failed to setup user config directories for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
+		return utils.MakeError("failed to setup user config directories: %s", err)
 	}
 
 	// Once we've extracted everything, we open up permissions for the user
@@ -463,7 +463,7 @@ func (mandelbox *mandelboxData) extractConfig(configKey string, decryptedConfig 
 
 	totalFileSize, err := configutils.ExtractTarLz4(decryptedConfig, unpackedConfigDir)
 	if err != nil {
-		logger.Errorf("Error extracting tar lz4 file for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
+		logger.Errorf("error extracting tar lz4 file for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
 	}
 
 	logger.Infof("Untarred config to: %s, total size was %d bytes", unpackedConfigDir, totalFileSize)
@@ -477,12 +477,12 @@ func (mandelbox *mandelboxData) setupUserConfigDirs() error {
 
 	configDir := mandelbox.GetUserConfigDir()
 	if err := os.MkdirAll(configDir, 0777); err != nil {
-		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
+		return utils.MakeError("could not make dir %s: %s", configDir, err)
 	}
 
 	unpackedConfigDir := path.Join(configDir, UnpackedConfigsDirectoryName)
 	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
-		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
+		return utils.MakeError("could not make dir %s: %s", unpackedConfigDir, err)
 	}
 
 	return nil
@@ -492,7 +492,7 @@ func (mandelbox *mandelboxData) setupUserConfigDirs() error {
 func (mandelbox *mandelboxData) cleanUserConfigDir() {
 	err := os.RemoveAll(mandelbox.GetUserConfigDir())
 	if err != nil {
-		logger.Errorf("Failed to remove dir %s. Error: %s", mandelbox.GetUserConfigDir(), err)
+		logger.Errorf("failed to remove dir %s: %s", mandelbox.GetUserConfigDir(), err)
 	}
 }
 
@@ -514,14 +514,14 @@ func hash(token types.ConfigEncryptionToken) string {
 func (mandelbox *mandelboxData) GetMostRecentMatchingKey(client *s3.Client) (string, error) {
 	recentToken, err := configutils.GetMostRecentToken(client, mandelbox.userID)
 	if err != nil {
-		return "", utils.MakeError("failed to get most recent matching config token: %v", err)
+		return "", utils.MakeError("failed to get most recent matching config token: %s", err)
 	}
 
 	// Use the HeadObject to tell if the object exists
 	recentConfigPath := mandelbox.getS3ConfigKey(recentToken)
 	_, err = configutils.GetHeadObject(client, configutils.GetAccessPoint(), recentConfigPath)
 	if err != nil {
-		return "", utils.MakeError("failed to get most recent matching config head object: %v", err)
+		return "", utils.MakeError("failed to get most recent matching config head object: %s", err)
 	}
 	return recentConfigPath, nil
 }

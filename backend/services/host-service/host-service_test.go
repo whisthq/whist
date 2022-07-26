@@ -168,7 +168,7 @@ func TestInitializeFilesystem(t *testing.T) {
 		t.Fatalf("Failed to delete directory %s for tests: error: %v\n", utils.WhistPrivateDir, err)
 	}
 
-	initializeFilesystem(cancel)
+	initializeFilesystem()
 
 	if _, err := os.Stat(utils.WhistDir); os.IsNotExist(err) {
 		t.Errorf("Whist directory was not created by initializeFilesystem")

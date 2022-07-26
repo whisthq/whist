@@ -24,7 +24,7 @@ func heartbeatGoroutine() {
 
 	// Send initial heartbeat right away
 	if err := writeHeartbeat(); err != nil {
-		logger.Errorf("Error writing initial heartbeat: %s", err)
+		logger.Errorf("error writing initial heartbeat: %s", err)
 	}
 
 	// Instead of running exactly every minute, we choose a random time in the
@@ -46,7 +46,7 @@ func heartbeatGoroutine() {
 		case <-timerChan:
 			// There's just no time to die
 			if err := writeHeartbeat(); err != nil {
-				logger.Errorf("Error writing heartbeat: %s", err)
+				logger.Errorf("error writing heartbeat: %s", err)
 			}
 		}
 	}
@@ -69,7 +69,7 @@ func writeHeartbeat() error {
 
 	instanceID, err := aws.GetInstanceID()
 	if err != nil {
-		return utils.MakeError("Couldn't write heartbeat: couldn't get instance name: %s", err)
+		return utils.MakeError("couldn't write heartbeat: couldn't get instance name: %s", err)
 	}
 
 	result, err := q.WriteHeartbeat(context.Background(), pgtype.Timestamptz{
@@ -77,9 +77,9 @@ func writeHeartbeat() error {
 		Status: pgtype.Present,
 	}, string(instanceID))
 	if err != nil {
-		return utils.MakeError("Couldn't write heartbeat: error updating existing row in table `whist.instances`: %s", err)
+		return utils.MakeError("couldn't write heartbeat: error updating existing row in table `whist.instances`: %s", err)
 	} else if result.RowsAffected() == 0 {
-		return utils.MakeError("Writing heartbeat updated zero rows in database! Instance row seems to be missing.")
+		return utils.MakeError("writing heartbeat updated zero rows in database! Instance row seems to be missing")
 	}
 
 	return nil

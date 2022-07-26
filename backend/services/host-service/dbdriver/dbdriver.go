@@ -24,7 +24,7 @@ var dbpool *pgxpool.Pool
 
 // Initialize creates and tests a connection to the database. It also starts
 // the goroutine that cleans up stale mandelboxes.
-func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) error {
+func Initialize(globalCtx context.Context, goroutineTracker *sync.WaitGroup) error {
 	if !enabled {
 		logger.Infof("Running in app environment %s so not enabling database code.", metadata.GetAppEnvironment())
 		return nil
@@ -42,7 +42,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 
 	pgxConfig, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
-		return utils.MakeError("Unable to parse database connection string! Error: %s", err)
+		return utils.MakeError("unable to parse database connection string: %s", err)
 	}
 
 	// TODO: investigate and optimize the pgxConfig settings
@@ -55,7 +55,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 
 	dbpool, err = pgxpool.ConnectConfig(globalCtx, pgxConfig)
 	if err != nil {
-		return utils.MakeError("Unable to connect to the database: %s", err)
+		return utils.MakeError("unable to connect to the database: %s", err)
 	}
 	logger.Infof("Successfully connected to the database.")
 
@@ -88,7 +88,7 @@ func Close() {
 
 	// Delete the instance row
 	if err := unregisterInstance(); err != nil {
-		logger.Errorf("Error unregistering instance: %s", err)
+		logger.Errorf("error unregistering instance: %s", err)
 	}
 
 	logger.Infof("Closing the connection pool to the database...")

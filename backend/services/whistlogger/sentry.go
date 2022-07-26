@@ -127,8 +127,19 @@ func (sc *sentryCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	})
 	event.Timestamp = ent.Time
 
-	// Send to Sentry
-	sc.sender.CaptureEvent(event, &sentry.EventHint{OriginalException: err}, sentry.CurrentHub().Scope())
+	// Add fields to a derived Sentry scope. This will not
+	// modify the original scope.
+	sentry.WithScope(func(scope *sentry.Scope) {
+		for _, field := range fields {
+			if field.String != "" {
+				scope.SetTag(field.Key, field.String)
+			}
+		}
+
+		// Send to Sentry
+		sc.sender.CaptureEvent(event, &sentry.EventHint{OriginalException: err}, scope)
+	})
+
 	return nil
 }
 

@@ -34,7 +34,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 
 	// We always want to start with a clean slate
 	uninitializeFilesystem()
-	initializeFilesystem(cancel)
+	initializeFilesystem()
 
 	dockerClient := mockClient{
 		browserImage: "browsers/chrome",
@@ -42,7 +42,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
 	mandelboxDieChan := make(chan bool, 10)
 	var appName mandelboxtypes.AppName = "chrome"
-	testMandelbox := StartMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxID, appName, mandelboxDieChan)
+	testMandelbox, _ := StartMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxID, appName, mandelboxDieChan)
 
 	// Check that container would have been started
 	if !dockerClient.started {
@@ -169,7 +169,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	} else {
 		instanceID, err = aws.GetInstanceID()
 		if err != nil {
-			logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
+			logger.Errorf("can't get AWS Instance name for localdev user config userID")
 		}
 		userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceID))
 	}

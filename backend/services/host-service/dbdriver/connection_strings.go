@@ -17,11 +17,11 @@ func getWhistDBConnString() (string, error) {
 
 	config, err := heroku.GetConfig()
 	if err != nil {
-		return "", utils.MakeError("Couldn't get DB connection string: %s", err)
+		return "", utils.MakeError("couldn't get DB connection string: %s", err)
 	}
 	result, ok := config["DATABASE_URL"]
 	if !ok {
-		return "", utils.MakeError("Couldn't get DB connection string: couldn't find DATABASE_URL in Heroku environment.")
+		return "", utils.MakeError("couldn't get DB connection string: couldn't find DATABASE_URL in Heroku environment")
 	}
 
 	return result, nil

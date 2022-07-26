@@ -29,6 +29,7 @@ import (
 	"sync"
 	"time"
 
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -171,7 +172,10 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		mandelboxDieChan:     mandelboxDieChan,
 	}
 
-	mandelbox.createResourceMappingDir()
+	err := mandelbox.createResourceMappingDir()
+	if err != nil {
+		logger.Errorf("couldn't create mandelbox resource mapping directory: %s", err)
+	}
 
 	trackMandelbox(mandelbox)
 
@@ -192,8 +196,9 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 		<-ctx.Done()
 
+		var mandelboxCloseErr *multierror.Error
 		if err := dbdriver.WriteMandelboxStatus(mandelbox.GetID(), dbdriver.MandelboxStatusDying); err != nil {
-			logger.Error(err)
+			mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
 		}
 
 		untrackMandelbox(mandelbox)
@@ -220,7 +225,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		// CI does not have GPUs
 		if !metadata.IsRunningInCI() {
 			if err := gpus.Free(mandelbox.gpuIndex, mandelbox.GetID()); err != nil {
-				logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.GetID(), err)
+				mandelboxCloseErr = multierror.Append(mandelboxCloseErr, utils.MakeError("error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.GetID(), err))
 			} else {
 				logger.Infof("Successfully freed GPU %v for mandelbox %s", mandelbox.gpuIndex, mandelbox.GetID())
 			}
@@ -238,7 +243,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 			// Backup and clean user config directory.
 			err := mandelbox.BackupUserConfigs()
 			if err != nil {
-				logger.Errorf("Error backing up user configs for MandelboxID %s. Error: %s", mandelbox.GetID(), err)
+				mandelboxCloseErr = multierror.Append(mandelboxCloseErr, utils.MakeError("error backing up user configs for MandelboxID %s: %s", mandelbox.GetID(), err))
 			} else {
 				logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.GetID())
 			}
@@ -248,10 +253,14 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		}
 
 		if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
-			logger.Error(err)
+			mandelboxCloseErr = multierror.Append(mandelboxCloseErr, err)
 		}
 
 		logger.Infof("Cleaned up after Mandelbox %s", mandelbox.GetID())
+
+		if mandelboxCloseErr != nil {
+			logger.Errorf("cleaned up after mandelbox, %s", mandelboxCloseErr)
+		}
 
 		// Only after every step of the cleanup function has completed successfully,
 		// notify that the cleanup for this mandelbox is done.
@@ -407,7 +416,7 @@ func (mandelbox *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portb
 		}
 	}
 
-	return 0, utils.MakeError("Couldn't GetHostPort(%v, %v) for mandelbox with MandelboxID %s", mandelboxPort, protocol, mandelbox.GetID())
+	return 0, utils.MakeError("couldn't GetHostPort(%v, %v) for mandelbox with MandelboxID %s", mandelboxPort, protocol, mandelbox.GetID())
 }
 
 // GetIdentifyingHostPort returns the assigned host port for TCP 32262.
@@ -460,7 +469,7 @@ func (mandelbox *mandelboxData) GetTTY() ttys.TTY {
 // RegisterCreation registers a Docker container ID to the mandelbox.
 func (mandelbox *mandelboxData) RegisterCreation(d types.DockerID) error {
 	if len(d) == 0 {
-		return utils.MakeError("RegisterCreation: can't register mandelbox %s with empty docker ID", mandelbox.GetUserID())
+		return utils.MakeError("can't register mandelbox %s with empty docker ID", mandelbox.GetUserID())
 	}
 
 	mandelbox.rwlock.Lock()
@@ -473,7 +482,7 @@ func (mandelbox *mandelboxData) RegisterCreation(d types.DockerID) error {
 // SetAppName tries to set the app name for the mandelbox.
 func (mandelbox *mandelboxData) SetAppName(name types.AppName) error {
 	if len(name) == 0 {
-		return utils.MakeError("SetAppName: can't set mandelbox app name to empty for mandelboxID: %s", mandelbox.GetUserID())
+		return utils.MakeError("can't set mandelbox app name to empty for mandelboxID: %s", mandelbox.GetUserID())
 	}
 
 	mandelbox.rwlock.Lock()
@@ -529,7 +538,7 @@ func (mandelbox *mandelboxData) GetDeviceMappings() []dockercontainer.DeviceMapp
 func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup) error {
 	devices, mappings, err := uinputdevices.Allocate()
 	if err != nil {
-		return utils.MakeError("Couldn't allocate uinput devices: %s", err)
+		return utils.MakeError("couldn't allocate uinput devices: %s", err)
 	}
 
 	mandelbox.rwlock.Lock()
@@ -549,10 +558,10 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 				mandelbox.GetStatus() != dbdriver.MandelboxStatusRunning {
 				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
 			} else {
-				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
+				logger.Errorf("sendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
 			}
 		} else {
-			logger.Infof("SendDeviceFDsOverSocket returned successfully for MandelboxID %s", mandelbox.GetID())
+			logger.Infof("sendDeviceFDsOverSocket returned successfully for MandelboxID %s", mandelbox.GetID())
 		}
 	}()
 

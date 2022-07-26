@@ -25,21 +25,24 @@ import (
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 // StartMandelboxSpinUp will create and start a mandelbox, doing all the steps that can be done without the user's config token.
 // Once the mandelbox is started, it effectively waits an infinite time until a user gets assigned to it and the remaining
 // steps can continue.
-func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName, mandelboxDieChan chan bool) mandelboxData.Mandelbox {
-	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
-		logger.Error(err)
+func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxID mandelboxtypes.MandelboxID, appName mandelboxtypes.AppName, mandelboxDieChan chan bool) (mandelboxData.Mandelbox, error) {
+	incrementErrorRate := func() {
 		metrics.Increment("ErrorRate")
 	}
 
 	mandelbox := mandelboxData.New(context.Background(), goroutineTracker, mandelboxID, mandelboxDieChan)
 	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", mandelbox.GetID())
+
+	contextFields := []interface{}{
+		zap.String("mandelbox_id", mandelbox.GetID().String()),
+	}
 
 	// If the creation of the mandelbox fails, we want to clean up after it. We
 	// do this by setting `createFailed` to true until all steps are done, and
@@ -74,9 +77,9 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
 			{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
 		}); err != nil {
-			return utils.MakeError("Error assigning port bindings: %s", err)
+			return utils.MakeError("error assigning port bindings: %s", err)
 		}
-		logger.Infof("SpinUpMandelbox(): successfully assigned port bindings %v", mandelbox.GetPortBindings())
+		logger.Infow(utils.Sprintf("SpinUpMandelbox(): successfully assigned port bindings %v", mandelbox.GetPortBindings()), contextFields)
 		// Request port bindings for the mandelbox.
 		var err32261, err32262, err32263, err32273 error
 		hostPortForTCP32261, err32261 = mandelbox.GetHostPort(32261, portbindings.TransportProtocolTCP)
@@ -84,7 +87,8 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		hostPortForUDP32263, err32263 = mandelbox.GetHostPort(32263, portbindings.TransportProtocolUDP)
 		hostPortForTCP32273, err32273 = mandelbox.GetHostPort(32273, portbindings.TransportProtocolTCP)
 		if err32261 != nil || err32262 != nil || err32263 != nil || err32273 != nil {
-			logAndReturnError("Couldn't return host port bindings.")
+			incrementErrorRate()
+			return utils.MakeError("couldn't return host port bindings")
 		}
 		return nil
 	})
@@ -93,10 +97,10 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	var devices []dockercontainer.DeviceMapping
 	preCreateGroup.Go(func() error {
 		if err := mandelbox.InitializeUinputDevices(goroutineTracker); err != nil {
-			return utils.MakeError("Error initializing uinput devices: %s", err)
+			return utils.MakeError("error initializing uinput devices: %s", err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): successfully initialized uinput devices.")
+		logger.Infow("SpinUpMandelbox(): successfully initialized uinput devices.", contextFields)
 		devices = mandelbox.GetDeviceMappings()
 		return nil
 	})
@@ -104,24 +108,24 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	// Allocate a TTY and GPU for the mandelbox
 	preCreateGroup.Go(func() error {
 		if err := mandelbox.InitializeTTY(); err != nil {
-			return utils.MakeError("Error initializing TTY: %s", err)
+			return utils.MakeError("error initializing TTY: %s", err)
 		}
 
 		// CI does not have GPUs
 		if !metadata.IsRunningInCI() {
 			if err := mandelbox.AssignGPU(); err != nil {
-				return utils.MakeError("Error assigning GPU: %s", err)
+				return utils.MakeError("error assigning GPU: %s", err)
 			}
 		}
 
-		logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", mandelbox.GetTTY(), mandelbox.GetGPU(), mandelboxID)
+		logger.Infow(utils.Sprintf("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v", mandelbox.GetTTY(), mandelbox.GetGPU()), contextFields)
 		return nil
 	})
 
 	err := preCreateGroup.Wait()
 	if err != nil {
-		logAndReturnError(err.Error())
-		return nil
+		incrementErrorRate()
+		return nil, err
 	}
 
 	// We need to compute the Docker image to use for this mandelbox. In local
@@ -237,14 +241,14 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 
 	dockerBody, err := dockerClient.ContainerCreate(mandelbox.GetContext(), &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, mandelboxName)
 	if err != nil {
-		logAndReturnError("Error running `create` for %s:\n%s", mandelbox.GetID(), err)
-		return nil
+		incrementErrorRate()
+		return nil, utils.MakeError("error running `create` for %s: %s", mandelbox.GetID(), err)
 	}
 
-	logger.Infof("SpinUpMandelbox(): Value returned from ContainerCreate: %#v", dockerBody)
+	logger.Infow(utils.Sprintf("SpinUpMandelbox(): Value returned from ContainerCreate: %#v", dockerBody), contextFields)
 	dockerID := mandelboxtypes.DockerID(dockerBody.ID)
 
-	logger.Infof("SpinUpMandelbox(): Successfully ran `create` command and got back runtime ID %s", dockerID)
+	logger.Infow(utils.Sprintf("SpinUpMandelbox(): Successfully ran `create` command and got back runtime ID %s", dockerID), contextFields)
 
 	postCreateGroup, _ := errgroup.WithContext(mandelbox.GetContext())
 
@@ -252,17 +256,17 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	postCreateGroup.Go(func() error {
 		err := mandelbox.RegisterCreation(dockerID)
 		if err != nil {
-			return utils.MakeError("Error registering mandelbox creation with runtime ID %s: %s", dockerID, err)
+			return utils.MakeError("error registering mandelbox creation with runtime ID %s: %s", dockerID, err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with runtime ID %s and AppName %s", dockerID, appName)
+		logger.Infow(utils.Sprintf("SpinUpMandelbox(): Successfully registered mandelbox creation with runtime ID %s and AppName %s", dockerID, appName), contextFields)
 		return nil
 	})
 
 	// Write mandelbox parameters to file
 	postCreateGroup.Go(func() error {
 		if err := mandelbox.WriteMandelboxParams(); err != nil {
-			return utils.MakeError("Error writing mandelbox params: %s", err)
+			return utils.MakeError("error writing mandelbox params: %s", err)
 		}
 
 		// Let server protocol wait 30 seconds by default before client connects.
@@ -277,67 +281,82 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		}
 
 		if err := mandelbox.WriteProtocolTimeout(protocolTimeout); err != nil {
-			return utils.MakeError("Error writing protocol timeout: %s", err)
+			return utils.MakeError("error writing protocol timeout: %s", err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): Successfully wrote parameters for mandelbox %s", mandelboxID)
+		logger.Infow("SpinUpMandelbox(): Successfully wrote parameters for mandelbox", contextFields)
 		return nil
 	})
 
 	err = mandelbox.MarkParamsReady()
 	if err != nil {
-		logAndReturnError("Error marking mandelbox %s as ready to start A/V + display: %s", mandelboxID, err)
-		return nil
+		incrementErrorRate()
+		return nil, utils.MakeError("error marking mandelbox %s as ready to start A/V + display: %s", mandelboxID, err)
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s params as ready. A/V and display services can soon start.", mandelboxID)
+	logger.Infow("SpinUpMandelbox(): Successfully marked mandelbox params as ready. A/V and display services can soon start.", contextFields)
 
 	// Start Docker container
 	postCreateGroup.Go(func() error {
 		err = dockerClient.ContainerStart(mandelbox.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 		if err != nil {
-			return utils.MakeError("Error starting mandelbox with runtime ID %s and MandelboxID %s: %s", dockerID, mandelboxID, err)
+			return utils.MakeError("error starting mandelbox with runtime ID %s and MandelboxID %s: %s", dockerID, mandelboxID, err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s with ID %s", mandelboxName, mandelboxID)
+		logger.Infow(utils.Sprintf("SpinUpMandelbox(): Successfully started mandelbox %s with ID %s", mandelboxName, mandelboxID), contextFields)
 		return nil
 	})
 
 	// Mark as ready only when all startup tasks have completed
 	err = postCreateGroup.Wait()
 	if err != nil {
-		logAndReturnError(err.Error())
-		return nil
+		incrementErrorRate()
+		return nil, err
 	}
 
 	// Mark mandelbox creation as successful, preventing cleanup on function
 	// termination.
 	createFailed = false
 	mandelbox.SetStatus(dbdriver.MandelboxStatusWaiting)
-	return mandelbox
+	return mandelbox, nil
 }
 
 // FinishMandelboxSpinUp runs when a user gets assigned to a waiting mandelbox. This function does all the remaining steps in
 // the spinup process that require a config token.
-func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxSubscription subscriptions.Mandelbox, transportRequestMap map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest, transportMapLock *sync.Mutex, req *httputils.JSONTransportRequest) {
-
-	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
-		logger.Error(err)
+func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, mandelboxSubscription subscriptions.Mandelbox, transportRequestMap map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest, transportMapLock *sync.Mutex, req *httputils.JSONTransportRequest) error {
+	incrementErrorRate := func() {
 		metrics.Increment("ErrorRate")
 	}
 
-	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
+	// Create a slice of the context information that will be passed to the logger.
+	contextFields := []zap.Field{
+		zap.String("instance_id", mandelboxSubscription.InstanceID),
+		zap.String("mandelbox_id", mandelboxSubscription.ID.String()),
+		zap.String("mandelbox_app", mandelboxSubscription.App),
+		zap.String("session_id", mandelboxSubscription.SessionID),
+		zap.String("user_id", string(mandelboxSubscription.UserID)),
+		zap.Time("created_at", mandelboxSubscription.CreatedAt),
+		zap.Time("updated_at", mandelboxSubscription.UpdatedAt),
+	}
+
+	// Make an interface{} slice for errors that get logged in this function.
+	contextFieldSlice := make([]interface{}, len(contextFields))
+	for i, v := range contextFields {
+		contextFieldSlice[i] = v
+	}
+
+	logger.FastInfo("SpinUpMandelbox(): spinup started", contextFields...)
 
 	// Then, verify that we are expecting this user to request a mandelbox.
 	err := dbdriver.VerifyAllocatedMandelbox(mandelboxSubscription.UserID, mandelboxSubscription.ID)
 	if err != nil {
-		logAndReturnError("Unable to spin up mandelbox: %s", err)
-		return
+		incrementErrorRate()
+		return err
 	}
 
 	mandelbox, err := mandelboxData.LookUpByMandelboxID(mandelboxSubscription.ID)
 	if err != nil {
-		logAndReturnError("Did not find existing mandelbox with ID %v", mandelboxSubscription.ID)
+		incrementErrorRate()
+		return utils.MakeError("did not find existing mandelbox with ID %s", mandelboxSubscription.ID)
 	}
 	mandelbox.SetStatus(dbdriver.MandelboxStatusAllocated)
 
@@ -353,11 +372,15 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	}()
 
 	mandelbox.AssignToUser(mandelboxSubscription.UserID)
-	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
+	logger.FastInfo("SpinUpMandelbox(): Successfully assigned mandelbox", contextFields...)
 
 	mandelbox.SetSessionID(mandelboxtypes.SessionID(mandelboxSubscription.SessionID))
-	mandelbox.WriteSessionID()
-	logger.Infof("SpinUpMandelbox(): Successfully wrote client session id file with content %s", mandelbox.GetSessionID())
+	err = mandelbox.WriteSessionID()
+	if err != nil {
+		logger.Errorw(utils.Sprintf("Failed to write session id file: %s", err), contextFieldSlice)
+	}
+
+	logger.FastInfo(utils.Sprintf("SpinUpMandelbox(): Successfully wrote client session id file with content %s", mandelbox.GetSessionID()), contextFields...)
 
 	// Request port bindings for the mandelbox.
 	var (
@@ -369,14 +392,15 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	hostPortForUDP32263, err32263 = mandelbox.GetHostPort(32263, portbindings.TransportProtocolUDP)
 	hostPortForTCP32273, err32273 = mandelbox.GetHostPort(32273, portbindings.TransportProtocolTCP)
 	if err32261 != nil || err32262 != nil || err32263 != nil || err32273 != nil {
-		logAndReturnError("Couldn't return host port bindings.")
+		incrementErrorRate()
+		return utils.MakeError("couldn't return host port bindings")
 	}
 
 	// Begin loading user configs in parallel with the rest of the mandelbox startup procedure.
 	sendEncryptionInfoChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs(globalCtx, globalCancel, goroutineTracker)
 	defer close(sendEncryptionInfoChan)
 
-	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
+	logger.FastInfo(utils.Sprintf("SpinUpMandelbox(): Waiting for config encryption token from client..."), contextFields...)
 
 	if req == nil {
 		// Receive the JSON transport request from the client via the httpserver.
@@ -388,8 +412,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 			req = transportRequest
 		case <-time.After(1 * time.Minute):
 			// Clean up the mandelbox if the time out limit is reached
-			logAndReturnError("User %v failed to connect to mandelbox %v due to config token time out. Not performing user-specific cleanup.", mandelbox.GetUserID(), mandelbox.GetID())
-			return
+			return utils.MakeError("user failed to connect to mandelbox due to config token time out")
 		}
 	}
 	mandelbox.SetStatus(dbdriver.MandelboxStatusConnecting)
@@ -407,8 +430,8 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	// data received from JSON transport.
 	err = mandelbox.WriteJSONData(req.JSONData)
 	if err != nil {
-		logAndReturnError("Error writing config.json file for protocol in mandelbox %s for user %s: %s", mandelbox.GetID(), mandelbox.GetUserID(), err)
-		return
+		incrementErrorRate()
+		return utils.MakeError("error writing config.json file for protocol: %s", err)
 	}
 
 	// Wait for configs to be fully decrypted before we write any user initial
@@ -416,49 +439,49 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	for err := range configDownloadErrChan {
 		// We don't want these user config errors to be fatal, so we log them as
 		// errors and move on.
-		logger.Error(err)
+		logger.Errorw(utils.Sprintf("%s", err), contextFieldSlice)
 	}
 
 	// Write the user's initial browser data
-	logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
+	logger.FastInfo("SpinUpMandelbox(): Beginning storing user initial browser data", contextFields...)
 
 	err = mandelbox.WriteUserInitialBrowserData(req.BrowserData)
 
 	if err != nil {
-		logger.Errorf("Error writing initial browser data for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelboxSubscription.ID, err)
+		logger.Errorw(utils.Sprintf("error writing initial browser data: %s", err), contextFieldSlice)
 	} else {
-		logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
+		logger.FastInfo("SpinUpMandelbox(): Successfully wrote user initial browser data", contextFields...)
 	}
 
 	// Unblock whist-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkConfigReady()
 	if err != nil {
-		logAndReturnError("Error marking mandelbox %s configs as ready: %s", mandelboxSubscription.ID, err)
-		return
+		incrementErrorRate()
+		return utils.MakeError("error marking configs as ready: %s", err)
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as ready", mandelboxSubscription.ID)
+	logger.FastInfo("SpinUpMandelbox(): Successfully marked mandelbox as ready", contextFields...)
 
 	// Don't wait for whist-application to start up in local environment. We do
 	// this because in local environments, we want to provide the developer a
 	// shell into the container immediately, not conditional on everything
 	// starting up properly.
 	if !metadata.IsLocalEnv() {
-		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s whist-application to start up...", mandelboxSubscription.ID)
+		logger.FastInfo("SpinUpMandelbox(): Waiting for mandelbox whist-application to start up...", contextFields...)
 		err = utils.WaitForFileCreation(path.Join(utils.WhistDir, mandelboxSubscription.ID.String(), "mandelboxResourceMappings"), "done_sleeping_until_X_clients", time.Second*20, nil)
 		if err != nil {
-			logAndReturnError("Error waiting for mandelbox %s whist-application to start: %s", mandelboxSubscription.ID, err)
-			return
+			incrementErrorRate()
+			return utils.MakeError("error waiting for mandelbox whist-application to start: %s", err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s whist application to start up", mandelboxSubscription.ID)
+		logger.FastInfo("SpinUpMandelbox(): Finished waiting for mandelbox whist application to start up", contextFields...)
 	}
 
 	err = dbdriver.WriteMandelboxStatus(mandelboxSubscription.ID, dbdriver.MandelboxStatusRunning)
 	if err != nil {
-		logAndReturnError("Error marking mandelbox running: %s", err)
-		return
+		incrementErrorRate()
+		return utils.MakeError("error marking mandelbox running: %s", err)
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as running", mandelboxSubscription.ID)
+	logger.FastInfo("SpinUpMandelbox(): Successfully marked mandelbox as running", contextFields...)
 
 	// Mark mandelbox creation as successful, preventing cleanup on function
 	// termination.
@@ -473,5 +496,6 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	}
 	req.ReturnResult(result, nil)
 	mandelbox.SetStatus(dbdriver.MandelboxStatusRunning)
-	logger.Infof("SpinUpMandelbox(): Finished starting up mandelbox %s", mandelbox.GetID())
+	logger.FastInfo("SpinUpMandelbox(): Finished starting up mandelbox", contextFields...)
+	return nil
 }

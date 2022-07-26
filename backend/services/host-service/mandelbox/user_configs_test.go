@@ -203,7 +203,7 @@ func TestUserConfigChecksum(t *testing.T) {
 	// Test download with bad checksum
 	head.Metadata["md5"] = "bad_hash"
 	_, err = mandelbox.downloadUserConfig(s3Client, "user_config_test_user/checksum_test", head)
-	if err == nil || !strings.HasPrefix(err.Error(), "Could not download object (due to MD5 mismatch)") {
+	if err == nil || !strings.HasPrefix(err.Error(), "could not download object (due to MD5 mismatch)") {
 		t.Errorf("download with bad checksum did not fail")
 	}
 }

@@ -42,8 +42,10 @@ import (
 	// functionality in this imported package as well.
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-multierror"
 	"github.com/whisthq/whist/backend/services/httputils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"go.uber.org/zap"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
@@ -81,7 +83,7 @@ func init() {
 func createDockerClient() (*dockerclient.Client, error) {
 	client, err := dockerclient.NewClientWithOpts(dockerclient.WithAPIVersionNegotiation())
 	if err != nil {
-		return nil, utils.MakeError("Error creating new Docker client: %s", err)
+		return nil, utils.MakeError("error creating new Docker client: %s", err)
 	}
 	return client, nil
 }
@@ -129,21 +131,25 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 		// Replace "chrome" by "brave" (or some other container we support) to test a different app. Note that the Whist
 		// backend is designed to only ever deploy the same application everywhere, which we hardcode here.
 		var appName mandelboxtypes.AppName = "browsers/chrome"
-		zygote := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan)
+		zygote, err := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan)
 
 		// If we fail to create a zygote mandelbox, it indicates a problem with the instance, or the Docker
 		// images. Its not safe to assign users to it, so we cancel the global context and shut down the instance
-		if zygote == nil {
+		if zygote == nil || err != nil {
 			globalCancel()
+			logger.Errorw(utils.Sprintf("failed to start waiting mandelbox: %s", err), []interface{}{
+				zap.String("mandelbox_id", zygote.GetID().String()),
+				zap.Time("updated_at", zygote.GetLastUpdatedTime()),
+			})
 			return
 		}
 
 		// We have to parse the appname before writing to the database.
 		appString := strings.Split(string(zygote.GetAppName()), "/")
 		appNameForDb := strings.ToUpper(appString[1])
-		err := dbdriver.CreateMandelbox(zygote.GetID(), appNameForDb, instanceID)
+		err = dbdriver.CreateMandelbox(zygote.GetID(), appNameForDb, instanceID)
 		if err != nil {
-			logger.Errorf("Failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
+			logger.Errorf("failed to register mandelbox %v on database. Err: %v", zygote.GetID(), err)
 		}
 	}
 }
@@ -154,7 +160,7 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 	// been closed (via a call to Close() or a context cancellation).
 	mandelbox, err := mandelboxData.LookUpByDockerID(mandelboxtypes.DockerID(id))
 	if err != nil {
-		logger.Infof("mandelboxDieHandler(): %s", err)
+		logger.Warningf("mandelboxDieHandler(): %s", err)
 		return
 	}
 
@@ -174,7 +180,7 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 
 	err = dockerClient.ContainerStop(stopCtx, id, &stopTimeout)
 	if err != nil {
-		logger.Warningf("Failed to gracefully stop mandelbox docker container. Err: %v", err)
+		logger.Warningf("Failed to gracefully stop mandelbox docker container: %s", err)
 	}
 
 }
@@ -250,11 +256,11 @@ var appArmorProfile string
 // Create and register the AppArmor profile for Docker to use with
 // mandelboxes. These do not persist, so must be done at service
 // startup.
-func initializeAppArmor(globalCancel context.CancelFunc) {
+func initializeAppArmor() error {
 	cmd := exec.Command("apparmor_parser", "-Kr")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		logger.Panicf(globalCancel, "Unable to attach to process 'stdin' pipe. Error: %v", err)
+		return utils.MakeError("unable to attach to process 'stdin' pipe: %s", err)
 	}
 
 	go func() {
@@ -264,13 +270,15 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 
 	err = cmd.Run()
 	if err != nil {
-		logger.Panicf(globalCancel, "Unable to register AppArmor profile. Error: %v", err)
+		return utils.MakeError("unable to register AppArmor profile: %s", err)
 	}
+
+	return nil
 }
 
 // Create the directory used to store the mandelbox resource allocations
 // (e.g. TTYs) on disk
-func initializeFilesystem(globalCancel context.CancelFunc) {
+func initializeFilesystem() error {
 	// Check if the instance has ephemeral storage. If it does, set the WhistDir path to the
 	// ephemeral volume, which should already be mounted by the userdata script. We use the
 	// command below to check if the instance has an ephemeral device present.
@@ -278,7 +286,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	ephemeralDeviceCmd := "nvme list -o json | jq -r '.Devices | map(select(.ModelNumber == \"Amazon EC2 NVMe Instance Storage\")) | max_by(.PhysicalSize) | .DevicePath'"
 	out, err := exec.Command("bash", "-c", ephemeralDeviceCmd).CombinedOutput()
 	if err != nil {
-		logger.Errorf("Error while getting ephemeral device path, not using ephemeral storage.")
+		logger.Errorf("error while getting ephemeral device path, not using ephemeral storage.")
 	}
 
 	ephemeralDevicePath := string(out)
@@ -299,9 +307,9 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// from this panic will clean up the directory and the next run will work properly.
 	if _, err := os.Lstat(utils.WhistDir); !os.IsNotExist(err) {
 		if err == nil {
-			logger.Panicf(globalCancel, "Directory %s already exists!", utils.WhistDir)
+			return utils.MakeError("directory %s already exists!", utils.WhistDir)
 		} else {
-			logger.Panicf(globalCancel, "Could not make directory %s because of error %v", utils.WhistDir, err)
+			return utils.MakeError("could not make directory %s: %s", utils.WhistDir, err)
 		}
 	}
 
@@ -310,7 +318,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// configs).
 	err = os.MkdirAll(utils.WhistDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistDir, err)
+		return utils.MakeError("failed to create directory %s: %s\n", utils.WhistDir, err)
 	}
 	cmd := exec.Command("chown", "-R", "ubuntu", utils.WhistDir)
 	cmd.Run()
@@ -318,15 +326,17 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	// Create whist-private directory
 	err = os.MkdirAll(utils.WhistPrivateDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistPrivateDir, err)
+		return utils.MakeError("failed to create directory %s: %s\n", utils.WhistPrivateDir, err)
 	}
 
 	// Create whist temp directory (only let root read and write this, since it
 	// contains logs and uinput sockets).
 	err = os.MkdirAll(utils.TempDir, 0600)
 	if err != nil {
-		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", utils.TempDir, err)
+		return utils.MakeError("could not mkdir path %s: %s", utils.TempDir, err)
 	}
+
+	return nil
 }
 
 // Delete the directory used to store the mandelbox resource allocations (e.g.
@@ -336,26 +346,26 @@ func uninitializeFilesystem() {
 	logger.Infof("removing all files")
 	err := os.RemoveAll(utils.WhistDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.WhistDir, err)
+		logger.Errorf("failed to delete directory %s: %s", utils.WhistDir, err)
 		metrics.Increment("ErrorRate")
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", utils.WhistDir)
+		logger.Infof("Successfully deleted directory %s", utils.WhistDir)
 	}
 
 	err = os.RemoveAll(utils.WhistPrivateDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.WhistPrivateDir, err)
+		logger.Errorf("failed to delete directory %s: %s", utils.WhistPrivateDir, err)
 		metrics.Increment("ErrorRate")
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", utils.WhistPrivateDir)
+		logger.Infof("Successfully deleted directory %s", utils.WhistPrivateDir)
 	}
 
 	err = os.RemoveAll(utils.TempDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.TempDir, err)
+		logger.Errorf("failed to delete directory %s: %s", utils.TempDir, err)
 		metrics.Increment("ErrorRate")
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", utils.TempDir)
+		logger.Infof("Successfully deleted directory %s", utils.TempDir)
 	}
 }
 
@@ -363,7 +373,7 @@ func main() {
 	// Set Sentry tags
 	tags, err := aws.GetAWSMetadata()
 	if err != nil {
-		logger.Errorf("Failed to set Sentry tags: %s", err)
+		logger.Errorf("failed to set Sentry tags: %s", err)
 	}
 	logger.AddSentryTags(tags)
 
@@ -448,7 +458,7 @@ func main() {
 					// we'll just ignore it. We still `logger.Info()` it just in case.
 					logger.Infof("Shutdown command returned 'signal: terminated' error. Ignoring it.")
 				} else {
-					logger.Errorf("Couldn't shut down instance: %s", err)
+					logger.Errorf("couldn't shut down instance: %s", err)
 					metrics.Increment("ErrorRate")
 				}
 			}
@@ -460,22 +470,31 @@ func main() {
 	// Log the Git commit of the running executable
 	logger.Infof("Host Service Version: %s", metadata.GetGitCommit())
 
+	var hostStartupErr *multierror.Error
 	// Initialize the database driver, if necessary (the `dbdriver` package
 	// takes care of the "if necessary" part).
-	if err := dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
-		logger.Panic(globalCancel, err)
+	if err := dbdriver.Initialize(globalCtx, &goroutineTracker); err != nil {
+		hostStartupErr = multierror.Append(hostStartupErr, err)
+		globalCancel()
 	}
 
 	// Log the instance name we're running on
 	instanceName, err := aws.GetInstanceName()
 	if err != nil {
-		logger.Panic(globalCancel, err)
+		hostStartupErr = multierror.Append(hostStartupErr, err)
+		globalCancel()
 	}
 	logger.Infof("Running on instance name: %s", instanceName)
 
-	initializeAppArmor(globalCancel)
+	if err = initializeAppArmor(); err != nil {
+		hostStartupErr = multierror.Append(hostStartupErr, err)
+		globalCancel()
+	}
 
-	initializeFilesystem(globalCancel)
+	if err = initializeFilesystem(); err != nil {
+		hostStartupErr = multierror.Append(hostStartupErr, err)
+		globalCancel()
+	}
 
 	if err := dbdriver.RegisterInstance(); err != nil {
 		// If the instance starts up and sees its status as unresponsive or
@@ -487,20 +506,21 @@ func main() {
 			shutdownInstanceOnExit = true
 			globalCancel()
 		} else {
-			logger.Panic(globalCancel, err)
+			hostStartupErr = multierror.Append(hostStartupErr, err)
+			globalCancel()
 		}
 	}
 
 	// Start database subscription client
 	instanceID, err := aws.GetInstanceID()
 	if err != nil {
-		logger.Errorf("Can't get AWS Instance Name. Error: %s", err)
+		logger.Errorf("can't get AWS Instance Name: %s", err)
 		metrics.Increment("ErrorRate")
 	}
 
 	capacity, err := dbdriver.GetInstanceCapacity(string(instanceID))
 	if err != nil {
-		logger.Errorf("Failed to get capacity of instance %v. Err: %s", instanceID, err)
+		logger.Errorf("failed to get capacity of instance %s: %s", instanceID, err)
 	}
 
 	// Now we start all the goroutines that actually do work.
@@ -515,7 +535,12 @@ func main() {
 	// Start the HTTP server and listen for events
 	httpServerEvents, err := StartHTTPServer(globalCtx, globalCancel, &goroutineTracker)
 	if err != nil {
-		logger.Panic(globalCancel, err)
+		hostStartupErr = multierror.Append(hostStartupErr, err)
+		globalCancel()
+	}
+
+	if hostStartupErr != nil {
+		logger.Panicf(globalCancel, utils.Sprintf("host service startup, %s", hostStartupErr))
 	}
 
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
@@ -527,7 +552,7 @@ func main() {
 	subscriptions.SetupHostSubscriptions(string(instanceID), subscriptionClient)
 	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents, useConfigDB)
 	if err != nil {
-		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
+		logger.Errorf("failed to start database subscriptions: %s", err)
 	}
 
 	mandelboxDieEvents := make(chan bool, 10)
@@ -613,13 +638,13 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 				logger.Info("We got a nil error over the Docker event stream. This might indicate an error inside the docker go library. Ignoring it and proceeding normally...")
 				continue
 			case err == io.EOF:
-				logger.Panicf(globalCancel, "Docker event stream has been completely read.")
+				logger.Panicf(globalCancel, "docker event stream has been completely read.")
 			case dockerclient.IsErrConnectionFailed(err):
 				// This means "Cannot connect to the Docker daemon..."
-				logger.Panicf(globalCancel, "Got error \"%v\". Could not connect to the Docker daemon.", err)
+				logger.Panicf(globalCancel, "could not connect to the Docker daemon: %s", err)
 			default:
 				if !strings.HasSuffix(strings.ToLower(err.Error()), "context canceled") {
-					logger.Panicf(globalCancel, "Got an unknown error from the Docker event stream: %v", err)
+					logger.Panicf(globalCancel, "got an unknown error from the Docker event stream: %s", err)
 				}
 				return
 			}
@@ -651,13 +676,13 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 					userID, err := metadata.GetUserID()
 					if err != nil {
-						logger.Errorf("Error getting userID, %v", err)
+						logger.Errorf("error getting userID, %s", err)
 						metrics.Increment("ErrorRate")
 					}
 
 					instanceID, err := aws.GetInstanceID()
 					if err != nil {
-						logger.Errorf("Error getting instance name from AWS, %v", err)
+						logger.Errorf("error getting instance name from AWS, %s", err)
 						metrics.Increment("ErrorRate")
 					}
 
@@ -679,8 +704,28 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					req, appName := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
 
 					// For local development, we start and finish the mandelbox spin up back to back
-					StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName, mandelboxDieEvents)
-					go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxSubscription, transportRequestMap, transportMapLock, req)
+					zygote, err := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, jsonReq.MandelboxID, appName, mandelboxDieEvents)
+					if err != nil {
+						logger.Errorw(utils.Sprintf("failed to start waiting mandelbox: %s", err), []interface{}{
+							zap.String("mandelbox_id", zygote.GetID().String()),
+							zap.Time("updated_at", zygote.GetLastUpdatedTime()),
+						})
+					}
+
+					go func() {
+						err := FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxSubscription, transportRequestMap, transportMapLock, req)
+						if err != nil {
+							logger.Errorw(utils.Sprintf("failed to finish mandelbox startup: %s", err), []interface{}{
+								zap.String("instance_id", mandelboxSubscription.InstanceID),
+								zap.String("mandelbox_id", mandelboxSubscription.ID.String()),
+								zap.String("mandelbox_app", mandelboxSubscription.App),
+								zap.String("session_id", mandelboxSubscription.SessionID),
+								zap.String("user_id", string(mandelboxSubscription.UserID)),
+								zap.Time("created_at", mandelboxSubscription.CreatedAt),
+								zap.Time("updated_at", mandelboxSubscription.UpdatedAt),
+							})
+						}
+					}()
 				}
 			default:
 				if serverevent != nil {
@@ -692,12 +737,24 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 		case subscriptionEvent := <-subscriptionEvents:
 			switch subscriptionEvent := subscriptionEvent.(type) {
-			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxEvent:
 				mandelboxSubscription := subscriptionEvent.Mandelboxes[0]
 				req, _ := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
-				go FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient,
-					mandelboxSubscription, transportRequestMap, transportMapLock, req)
+				go func() {
+					err := FinishMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient,
+						mandelboxSubscription, transportRequestMap, transportMapLock, req)
+					if err != nil {
+						logger.Errorw(utils.Sprintf("failed to finish mandelbox startup: %s", err), []interface{}{
+							zap.String("instance_id", mandelboxSubscription.InstanceID),
+							zap.String("mandelbox_id", mandelboxSubscription.ID.String()),
+							zap.String("mandelbox_app", mandelboxSubscription.App),
+							zap.String("session_id", mandelboxSubscription.SessionID),
+							zap.String("user_id", string(mandelboxSubscription.UserID)),
+							zap.Time("created_at", mandelboxSubscription.CreatedAt),
+							zap.Time("updated_at", mandelboxSubscription.UpdatedAt),
+						})
+					}
+				}()
 
 			case *subscriptions.InstanceEvent:
 				if len(subscriptionEvent.Instances) == 0 {
@@ -714,7 +771,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 			default:
 				if subscriptionEvent != nil {
-					err := utils.MakeError("Unimplemented handling of subscription event [type: %T]: %v", subscriptionEvent, subscriptionEvent)
+					err := utils.MakeError("unimplemented handling of subscription event [type: %T]: %v", subscriptionEvent, subscriptionEvent)
 					logger.Error(err)
 				}
 			}

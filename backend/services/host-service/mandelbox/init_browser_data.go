@@ -63,7 +63,7 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData t
 	// Create destination directory if not exists
 	if _, err := os.Stat(destDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(destDir, 0777); err != nil {
-			return utils.MakeError("Could not make dir %s. Error: %s", destDir, err)
+			return utils.MakeError("could not make dir %s: %s", destDir, err)
 		}
 
 		defer func() {
@@ -77,7 +77,7 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData t
 	// Inflate gzip-compressed user browser data
 	inflatedBrowserData, err := configutils.GzipInflateString(string(initialBrowserData))
 	if err != nil {
-		return utils.MakeError("Error inflating user browser data: %s", err)
+		return utils.MakeError("error inflating user browser data: %s", err)
 	}
 
 	// Unmarshal bookmarks into proper format
@@ -86,7 +86,7 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData t
 		browserData, err = UnmarshalBrowserData(types.BrowserData(inflatedBrowserData))
 		if err != nil {
 			// BrowserData import errors are not fatal
-			logger.Errorf("Error unmarshalling user browser data for mandelbox %s: %s", mandelbox.GetID(), err)
+			logger.Errorf("error unmarshalling user browser data for mandelbox %s: %s", mandelbox.GetID(), err)
 		}
 	}
 
@@ -99,14 +99,14 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData t
 	data, err := json.Marshal(browserData)
 
 	if err != nil {
-		return utils.MakeError("Could not marshal browserData: %v", browserData)
+		return utils.MakeError("could not marshal browserData: %v", browserData)
 	}
 
 	filePath := path.Join(destDir, UserInitialBrowserFile)
 
 	// Save the browser data into a file
 	if err := utils.WriteToNewFile(filePath, string(data)); err != nil {
-		return utils.MakeError("could not create %s file. Error: %v", filePath, err)
+		return utils.MakeError("could not create %s file: %s", filePath, err)
 	}
 
 	logger.Infof("Finished storing user initial browser data.")

@@ -114,7 +114,7 @@ func GetUserID() (mandelboxtypes.UserID, error) {
 	} else {
 		instanceName, err := aws.GetInstanceName()
 		if err != nil {
-			return "", utils.MakeError("Error getting instance name from AWS, %v", err)
+			return "", err
 		}
 		UserID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
 	}
