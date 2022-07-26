@@ -104,7 +104,7 @@ fi
 # local Chromium browser integrating Whist to avoid duplicating the URL bar in the cloud tabs, and should
 # not be set when the client is a fully-streamed browser rendered via SDL.
 if [[ "$KIOSK_MODE" == true ]]; then
-  flags+=("--kiosk")
+  flags+=("--start-fullscreen")
 fi
 
 # Passing the initial url from json transport as a parameter to the brave-browser command. If the url is not

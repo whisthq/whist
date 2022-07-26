@@ -130,7 +130,7 @@ fi
 # local Chromium browser integrating Whist to avoid duplicating the URL bar in the cloud tabs, and should
 # not be set when the client is a fully-streamed browser rendered via SDL.
 if [[ "$KIOSK_MODE" == true ]]; then
-  flags+=("--kiosk")
+  flags+=("--start-fullscreen")
 fi
 
 # Passing the initial url from JSON transport as a parameter to the google-chrome command. If the url is not
