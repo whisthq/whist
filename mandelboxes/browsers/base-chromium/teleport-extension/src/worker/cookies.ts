@@ -4,7 +4,7 @@ import omit from "lodash.omit"
 const initAddCookieListener = (socket: Socket) => {
   socket.on("add-cookie", (cookies: any[]) => {
     console.log("adding cookie", cookies)
-    let cookie = omit(cookies[0], "hostOnly") as chrome.cookies.SetDetails
+    let cookie = omit(cookies[0], ["hostOnly", "session"]) as chrome.cookies.SetDetails
     chrome.cookies.set(cookie)
   })
 }
