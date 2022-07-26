@@ -25,7 +25,7 @@ pub enum NativeHostMessageType {
     NativeHostKeepalive,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct NativeHostMessage {
     #[serde(rename = "type")]
     pub msg_type: NativeHostMessageType,
@@ -86,7 +86,6 @@ pub fn read_message<R: Read>(mut input: R) -> Result<NativeHostMessage, String> 
 
 #[cfg(test)]
 mod tests {
-
     macro_rules! send_message_tests {
         ($($name:ident: $params:expr,)*) => {
         $(
@@ -116,7 +115,7 @@ mod tests {
 
     send_message_tests! {
         send_message_download_null: (NativeHostMessageType::DownloadComplete, json!(null)),
-        send_message_geolocaiton_null: (NativeHostMessageType::Geolocation, json!(null)),
+        send_message_geolocaiton_number: (NativeHostMessageType::Geolocation, json!(42)),
         send_message_update_string: (NativeHostMessageType::NativeHostUpdate, json!("foo")),
         send_message_keepalive_object: (NativeHostMessageType::NativeHostKeepalive, json!({
             "foo": "bar",
@@ -128,6 +127,24 @@ mod tests {
                 "number": 42,
             },
         })),
+    }
+
+    #[test]
+    fn send_message_too_large_error() {
+        use super::*;
+        use std::io::Cursor;
+        let mut output = Cursor::new(Vec::new());
+        let msg = NativeHostMessage {
+            msg_type: NativeHostMessageType::DownloadComplete,
+            value: json!(vec![0; 1024 * 1024 + 1]),
+        };
+        assert_eq!(
+            send_message(&mut output, &msg),
+            Err(format!(
+                "Message is too large: {} bytes",
+                serde_json::to_string(&msg).unwrap().len()
+            ))
+        );
     }
 
     macro_rules! send_then_read_message_tests {
@@ -156,7 +173,7 @@ mod tests {
 
     send_then_read_message_tests! {
         send_then_read_message_download_null: (NativeHostMessageType::DownloadComplete, json!(null)),
-        send_then_read_message_geolocaiton_null: (NativeHostMessageType::Geolocation, json!(null)),
+        send_then_read_message_geolocaiton_number: (NativeHostMessageType::Geolocation, json!(42)),
         send_then_read_message_update_string: (NativeHostMessageType::NativeHostUpdate, json!("foo")),
         send_then_read_message_keepalive_object: (NativeHostMessageType::NativeHostKeepalive, json!({
             "foo": "bar",
@@ -168,5 +185,46 @@ mod tests {
                 "number": 42,
             },
         })),
+    }
+
+    #[test]
+    fn read_message_unexpected_eof() {
+        use super::*;
+        use std::io::Cursor;
+        let mut input = Cursor::new(vec![]);
+        assert_eq!(
+            read_message(&mut input).unwrap(),
+            NativeHostMessage {
+                msg_type: NativeHostMessageType::NativeHostExit,
+                value: json!(null),
+            }
+        );
+    }
+
+    #[test]
+    fn read_message_too_short() {
+        use super::*;
+        use std::io::Cursor;
+        let mut input = Cursor::new(vec![10, 0, 0, 0, 0]);
+        assert_eq!(
+            read_message(&mut input).unwrap_err(),
+            "failed to fill whole buffer".to_string()
+        );
+    }
+
+    #[test]
+    fn read_message_browser_exit() {
+        // Undocumented behavior: on browser exit, the message length is -1
+        use super::*;
+        use std::io::Cursor;
+        let len: i32 = -1;
+        let mut input = Cursor::new(len.to_ne_bytes());
+        assert_eq!(
+            read_message(&mut input).unwrap(),
+            NativeHostMessage {
+                msg_type: NativeHostMessageType::NativeHostExit,
+                value: json!(null),
+            }
+        );
     }
 }
