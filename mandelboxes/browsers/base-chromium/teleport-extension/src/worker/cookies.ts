@@ -1,9 +1,11 @@
 import { Socket } from "socket.io-client"
+import omit from "lodash.omit"
 
 const initAddCookieListener = (socket: Socket) => {
   socket.on("add-cookie", (cookies: any[]) => {
     console.log("adding cookie", cookies)
-    chrome.cookies.set(cookies[0])
+    let cookie = omit(cookies[0], "hostOnly") as chrome.cookies.SetDetails
+    chrome.cookies.set(cookie)
   })
 }
 
