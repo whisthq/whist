@@ -1,8 +1,16 @@
 import { Socket } from "socket.io-client"
+import find from "lodash.find"
+import isEqual from "lodash.isequal"
+
+// v3 global variables don't persist, but we only need to store cookies we've already added
+// for a few seconds so we don't fall into a loop of adding a cookie and then thinking that
+// the cookie we've added was added by the user and not us
+let alreadyAddedCookies: chrome.cookies.Cookie[] = []
 
 const initAddCookieListener = (socket: Socket) => {
   socket.on("server-add-cookie", (cookies: any[]) => {
     let cookie = cookies[0]
+
     const url = cookie.domain.startsWith(".")
       ? `https://${cookie.domain.slice(1)}${cookie.path}`
       : `https://${cookie.domain}${cookie.path}`
@@ -22,6 +30,7 @@ const initAddCookieListener = (socket: Socket) => {
       url,
     } as chrome.cookies.SetDetails
 
+    alreadyAddedCookies.push(cookie)
     chrome.cookies.set(details)
   })
 }
@@ -46,6 +55,12 @@ const initCookieAddedListener = (socket: Socket) => {
       cookie: chrome.cookies.Cookie
       removed: boolean
     }) => {
+      if (
+        find(alreadyAddedCookies, (c) => isEqual(c, details.cookie)) !==
+        undefined
+      )
+        return
+
       if (!details.removed && details.cause === "explicit") {
         socket.emit("client-add-cookie", details.cookie)
       }
