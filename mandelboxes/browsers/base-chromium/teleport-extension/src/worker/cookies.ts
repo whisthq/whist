@@ -8,11 +8,14 @@ const initAddCookieListener = (socket: Socket) => {
       ? `https://${cookie.domain.slice(1)}${cookie.path}`
       : `https://${cookie.domain}${cookie.path}`
 
+    // See https://developer.chrome.com/docs/extensions/reference/cookies/#method-set
+    // for why we construct the cookie details this way
+    console.log("host only", cookie.name, cookie.hostOnly)
     const details = {
+        ...!cookie.hostOnly && {domain: cookie.domain},
+        ...!cookie.session && {expirationDate: cookie.expirationDate},
         ...omit(cookie, ["hostOnly", "session"]),
         url,
-        ...cookie.hostOnly ? {} : {domain: cookie.domain},
-        ...!cookie.session && {expirationDate: cookie.expirationDate}
     } as chrome.cookies.SetDetails
 
     console.log("Setting", details)
