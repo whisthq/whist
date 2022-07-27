@@ -345,10 +345,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     }
 #endif  // Windows
 
-    // We don't need to do this if we don't initialize the window until we get frames from the
-    // server window starts solid color
-    frontend->call->paint_solid(frontend, id, &window_context->color);
-    // will be freed by the next SDL event poll
+    // set_titlebar_color is responsible for free'ing titlebar_color later
     WhistRGBColor* titlebar_color = (WhistRGBColor*)safe_malloc(sizeof(window_context->color));
     *titlebar_color = window_context->color;
     frontend->call->set_titlebar_color(frontend, id, titlebar_color);
