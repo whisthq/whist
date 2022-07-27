@@ -1,3 +1,6 @@
+import pickBy from "lodash.pickby"
+import { WhistTab } from "@app/constants/tabs"
+
 const createTab = (
   createProperties: { url?: string; active: boolean },
   callback?: (tab: chrome.tabs.Tab) => void
@@ -20,4 +23,22 @@ const removeTab = (tabId: number) => {
   chrome.tabs.remove([tabId])
 }
 
-export { createTab, activateTab, removeTab }
+const getOpenTabs = async (): Promise<Array<WhistTab>> => {
+  const promise = new Promise<any | undefined>((resolve) => {
+    chrome.storage.local.get(null, (result) => resolve(result))
+  })
+  let result = await promise
+  if (result !== undefined) {
+    result = pickBy(result, (_value, key) => {
+      return !isNaN(Number(key))
+    })
+    if (result !== undefined)
+      result = Object.keys(result).map((key) => ({
+        clientTabId: Number(key),
+        tab: result[key],
+      }))
+  }
+  return result ?? []
+}
+
+export { createTab, activateTab, removeTab, getOpenTabs }
