@@ -31,6 +31,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -40,6 +41,7 @@ import (
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
+	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -111,11 +113,14 @@ func main() {
 	algorithmByRegionMap := &sync.Map{}
 
 	// Load default scaling algorithm for all enabled regions.
-	for _, region := range algos.GetEnabledRegions() {
-		name := utils.Sprintf("default-sa-%s", region)
-		algorithmByRegionMap.Store(name, &algos.DefaultScalingAlgorithm{
-			Region: region,
-		})
+	for provider, regions := range algos.GetEnabledRegions() {
+		for _, region := range regions {
+			name := utils.Sprintf("default-sa-%s-%s", strings.ToLower(provider), region)
+			algorithmByRegionMap.Store(name, &algos.DefaultScalingAlgorithm{
+				Region: region,
+				Host:   helpers.GetHostFromProvider(provider),
+			})
+		}
 	}
 
 	// Instantiate scaling algorithms on allowed regions
@@ -186,15 +191,21 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
 	t := time.Now().Add(start)
 	s.Every(interval).Minutes().StartAt(t).Do(func() {
-		// Send into scheduling channel
-		scheduledEvents <- algos.ScalingEvent{
-			// Create a UUID so we can identify and search this event on our logs
-			ID: uuid.NewString(),
-			// We set the event type to SCHEDULED_SCALE_DOWN_EVENT
-			// here so that we have more information about the event.
-			// SCHEDULED means the source of the event is the scheduler
-			// and SCALE_DOWN means it will perform a scale down action.
-			Type: "SCHEDULED_SCALE_DOWN_EVENT",
+		for provider, regions := range algos.GetEnabledRegions() {
+			for _, region := range regions {
+				// Send into scheduling channel
+				scheduledEvents <- algos.ScalingEvent{
+					// Create a UUID so we can identify and search this event on our logs
+					ID: uuid.NewString(),
+					// We set the event type to SCHEDULED_SCALE_DOWN_EVENT
+					// here so that we have more information about the event.
+					// SCHEDULED means the source of the event is the scheduler
+					// and SCALE_DOWN means it will perform a scale down action.
+					Type:     "SCHEDULED_SCALE_DOWN_EVENT",
+					Provider: provider,
+					Region:   region,
+				}
+			}
 		}
 	})
 
@@ -215,23 +226,29 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 		return
 	}
 
-	// Send image upgrade event to scheduled chan.
-	scheduledEvents <- algos.ScalingEvent{
-		// Create a UUID so we can identify and search this event on our logs
-		ID: uuid.NewString(),
-		// We set the event type to SCHEDULED_IMAGE_UPGRADE_EVENT
-		// here so that we have more information about the event.
-		// SCHEDULED means the source of the event is the scheduler
-		// and IMAGE_UPGRADE means it will perform an image upgrade action.
-		Type: "SCHEDULED_IMAGE_UPGRADE_EVENT",
-		Data: regionImageMap,
+	for provider, regionsAndImages := range regionImageMap {
+		for region, image := range regionsAndImages {
+			// Send image upgrade event to scheduled chan.
+			scheduledEvents <- algos.ScalingEvent{
+				// Create a UUID so we can identify and search this event on our logs
+				ID: uuid.NewString(),
+				// We set the event type to SCHEDULED_IMAGE_UPGRADE_EVENT
+				// here so that we have more information about the event.
+				// SCHEDULED means the source of the event is the scheduler
+				// and IMAGE_UPGRADE means it will perform an image upgrade action.
+				Type:     "SCHEDULED_IMAGE_UPGRADE_EVENT",
+				Provider: provider,
+				Region:   region,
+				Data:     image,
+			}
+		}
 	}
 }
 
 // getRegionImageMap tries to read and parse the contents of the `images.json` file
 // which is written by the Github deploy workflow.
-func getRegionImageMap() (map[string]interface{}, error) {
-	var regionImageMap map[string]interface{}
+func getRegionImageMap() (map[string]map[string]string, error) {
+	var regionImageMap map[string]map[string]string
 
 	// Get current working directory to read images file.
 	currentWorkingDirectory, err := os.Getwd()
@@ -261,19 +278,17 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 	// Try to get the scaling algorithm on the region the scaling event was requested.
 	// If no region is specified, use the default region.
 	// TODO: figure out how to get non-default scaling algorihtms.
-	var (
-		name   string
-		region string
-	)
+	var name, region, provider string
 	const defaultRegion = "us-east-1"
 
 	region = scalingEvent.Region
+	provider = strings.ToLower(scalingEvent.Provider)
 
 	if region == "" {
 		logger.Infof("No region found in scaling event, using default region %s", defaultRegion)
-		name = utils.Sprintf("default-sa-%s", defaultRegion)
+		name = utils.Sprintf("default-sa-%s-%s", provider, defaultRegion)
 	} else {
-		name = utils.Sprintf("default-sa-%s", scalingEvent.Region)
+		name = utils.Sprintf("default-sa-%s-%s", provider, scalingEvent.Region)
 	}
 
 	algorithm, ok := algorithmByRegion.Load(name)
@@ -313,6 +328,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 					scalingEvent.ID = uuid.NewString()
 					scalingEvent.Data = instance
 					scalingEvent.Region = instance.Region
+					scalingEvent.Provider = instance.Provider
 				}
 
 				// Start scaling algorithm based on region
@@ -349,16 +365,19 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 					break
 				}
 
-				for region := range regionImageMap {
-					scalingEvent.Region = region
-					scalingEvent.Data = version
+				for provider, regionsAndImages := range regionImageMap {
+					for _, region := range regionsAndImages {
+						scalingEvent.Provider = provider
+						scalingEvent.Region = region
+						scalingEvent.Data = version
 
-					// Start scaling algorithm based on region
-					algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
+						// Start scaling algorithm based on region
+						algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
-					switch algorithm := algorithm.(type) {
-					case *algos.DefaultScalingAlgorithm:
-						algorithm.FrontendVersionChan <- scalingEvent
+						switch algorithm := algorithm.(type) {
+						case *algos.DefaultScalingAlgorithm:
+							algorithm.FrontendVersionChan <- scalingEvent
+						}
 					}
 				}
 
@@ -374,14 +393,12 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serve
 
 		case scheduledEvent := <-scheduledEvents:
 			// Start scaling algorithm based on region
-			for _, region := range algos.GetEnabledRegions() {
-				scheduledEvent.Region = region
-				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
-				switch algorithm := algorithm.(type) {
-				case *algos.DefaultScalingAlgorithm:
-					algorithm.ScheduledEventChan <- scheduledEvent
-				}
+			algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
+			switch algorithm := algorithm.(type) {
+			case *algos.DefaultScalingAlgorithm:
+				algorithm.ScheduledEventChan <- scheduledEvent
 			}
+
 		case serverEvent := <-serverEvents:
 			algorithm := getScalingAlgorithm(algorithmByRegion, serverEvent)
 			switch algorithm := algorithm.(type) {

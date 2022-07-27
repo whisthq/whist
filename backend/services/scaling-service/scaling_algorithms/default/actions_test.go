@@ -163,6 +163,14 @@ func (mh *mockHostHandler) Initialize(region string) error {
 	return nil
 }
 
+func (mh *mockHostHandler) GetProvider() string {
+	return "MOCK"
+}
+
+func (mh *mockHostHandler) GetInstanceType() string {
+	return "g4dn.xlarge"
+}
+
 func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTime time.Duration, image subscriptions.Image) (createdInstances []subscriptions.Instance, err error) {
 	var newInstances []subscriptions.Instance
 	for i := 0; i < int(numInstances); i++ {

@@ -30,7 +30,6 @@ import (
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
-	aws "github.com/whisthq/whist/backend/services/scaling-service/hosts/aws"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -60,6 +59,8 @@ type ScalingEvent struct {
 	Data interface{}
 	// Availability region where the scaling will be performed.
 	Region string
+	// The Cloud provider this event corresponds to.
+	Provider string
 }
 
 // DefaultScalingAlgorithm abstracts the shared functionalities to be used
@@ -172,30 +173,30 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 
 	// Look for each region's entry in the config database values
 	// to populate the `desiredFreeMandelboxesPerRegion` map.
-	for _, region := range GetEnabledRegions() {
-		// Parse the region string to the format used by
-		// the config database so we can get the value.
-		key := strings.ReplaceAll(region, "-", "_")
-		key = strings.ToUpper(key)
+	for provider, regions := range GetEnabledRegions() {
+		for _, region := range regions {
+			// Parse the region string to the format used by
+			// the config database so we can get the value.
+			key := strings.ReplaceAll(region, "-", "_")
+			configMandelboxes, ok := configs[utils.Sprintf("DESIRED_FREE_MANDELBOXES_%s_%s", strings.ToUpper(provider), key)]
+			if !ok {
+				logger.Errorf("desired mandelboxes for region %s not found on %s config database. Using default value.", region, metadata.GetAppEnvironmentLowercase())
+				// Use default value of 2 if the entry for the specific
+				// region was not found
+				mandelboxRegionMap[region] = 2
+				continue
+			}
 
-		configMandelboxes, ok := configs[utils.Sprintf("DESIRED_FREE_MANDELBOXES_%s", key)]
-		if !ok {
-			logger.Errorf("desired mandelboxes for region %s not found on %s config database. Using default value.", region, metadata.GetAppEnvironmentLowercase())
-			// Use default value of 2 if the entry for the specific
-			// region was not found
-			mandelboxRegionMap[region] = 2
-			continue
+			mandelboxInt, err := strconv.Atoi(configMandelboxes)
+			if err != nil {
+				logger.Errorf("error parsing desired mandelboxes value: %s", err)
+				// Use default value of 2 if we failed to convert to int
+				mandelboxRegionMap[region] = 2
+				continue
+			}
+
+			mandelboxRegionMap[region] = mandelboxInt
 		}
-
-		mandelboxInt, err := strconv.Atoi(configMandelboxes)
-		if err != nil {
-			logger.Errorf("error parsing desired mandelboxes value: %s", err)
-			// Use default value of 2 if we failed to convert to int
-			mandelboxRegionMap[region] = 2
-			continue
-		}
-
-		mandelboxRegionMap[region] = mandelboxInt
 	}
 
 	desiredFreeMandelboxesPerRegion = mandelboxRegionMap
@@ -207,16 +208,10 @@ func (s *DefaultScalingAlgorithm) GetConfig(client subscriptions.WhistGraphQLCli
 // scaling algorithm to be able to implement different strategies on each region.
 func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, goroutineTracker *sync.WaitGroup) {
 	if s.Host == nil {
-		// TODO when multi-cloud support is introduced, figure out a way to
-		// decide which host to use. For now default to AWS.
-		handler := &aws.AWSHost{}
-		err := handler.Initialize(s.Region)
-
+		err := s.Host.Initialize(s.Region)
 		if err != nil {
 			logger.Errorf("error starting host in %s: %s", s.Region, err)
 		}
-
-		s.Host = handler
 	}
 
 	// Start algorithm main event loop
@@ -249,6 +244,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						if err != nil {
 							contextFields := []interface{}{
 								zap.String("id", instanceEvent.ID),
+								zap.String("provider", instanceEvent.Provider),
 								zap.Any("type", instanceEvent.Type),
 								zap.Any("data", instanceEvent.Data),
 								zap.String("region", instanceEvent.Region),
@@ -277,6 +273,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 					if err != nil {
 						contextFields := []interface{}{
 							zap.String("id", versionEvent.ID),
+							zap.String("provider", versionEvent.Provider),
 							zap.Any("type", versionEvent.Type),
 							zap.Any("data", versionEvent.Data),
 							zap.String("region", versionEvent.Region),
@@ -297,6 +294,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						if err != nil {
 							contextFields := []interface{}{
 								zap.String("id", scheduledEvent.ID),
+								zap.String("provider", scheduledEvent.Provider),
 								zap.Any("type", scheduledEvent.Type),
 								zap.Any("data", scheduledEvent.Data),
 								zap.String("region", scheduledEvent.Region),
@@ -319,14 +317,11 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						}
 
 						scalingCtx, scalingCancel := context.WithCancel(context.Background())
-
-						// Get arguments from scheduled event
-						regionImageMap := scheduledEvent.Data.(map[string]interface{})
-
-						err := s.UpgradeImage(scalingCtx, scheduledEvent, regionImageMap[scheduledEvent.Region])
+						err := s.UpgradeImage(scalingCtx, scheduledEvent, scheduledEvent.Data)
 						if err != nil {
 							contextFields := []interface{}{
 								zap.String("id", scheduledEvent.ID),
+								zap.String("provider", scheduledEvent.Provider),
 								zap.Any("type", scheduledEvent.Type),
 								zap.Any("data", scheduledEvent.Data),
 								zap.String("region", scheduledEvent.Region),
@@ -352,6 +347,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 						if err != nil {
 							contextFields := []interface{}{
 								zap.String("id", serverEvent.ID),
+								zap.String("provider", serverEvent.Provider),
 								zap.Any("type", serverEvent.Type),
 								zap.Any("data", serverEvent.Data),
 								zap.String("region", serverEvent.Region),

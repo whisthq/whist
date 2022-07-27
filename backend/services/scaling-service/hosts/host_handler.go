@@ -19,6 +19,8 @@ import (
 // implementation for each cloud service provider, which will interact directly with the provider's API.
 type HostHandler interface {
 	Initialize(region string) error
+	GetProvider() string
+	GetInstanceType() string
 	SpinUpInstances(scalingCtx context.Context, numInstances int32, maxWaitTimeReady time.Duration, image subscriptions.Image) (createdInstances []subscriptions.Instance, err error)
 	SpinDownInstances(scalingCtx context.Context, instanceIDs []string) error
 	WaitForInstanceTermination(context.Context, time.Duration, []string) error

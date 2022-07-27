@@ -81,6 +81,14 @@ func (host *AWSHost) Initialize(region string) error {
 	return nil
 }
 
+func (host *AWSHost) GetProvider() string {
+	return "AWS"
+}
+
+func (host *AWSHost) GetInstanceType() string {
+	return string(INSTANCE_TYPE)
+}
+
 // MakeInstances is a simple method that calls the RunInstances function from the ec2 client.
 func (host *AWSHost) MakeInstances(c context.Context, input *ec2.RunInstancesInput) (*ec2.RunInstancesOutput, error) {
 	return host.EC2.RunInstances(c, input)

@@ -67,7 +67,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	defer logger.Infow("Finished verify capacity action.", contextFields)
 
 	// Query for the latest image id
-	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
+	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, s.Host.GetProvider(), event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for current image: %s", err)
 	}

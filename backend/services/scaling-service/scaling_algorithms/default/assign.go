@@ -62,15 +62,18 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 
 	var (
 		requestedRegions   = mandelboxRequest.Regions // This is a list of the regions requested by the frontend, in order of proximity.
+		enabledRegions     []string                   // The list of enabled regions for this cloud provider
 		availableRegions   []string                   // List of regions that are enabled and match the regions in the request.
 		unavailableRegions []string                   // List of regions that are not enabled but are present in the request.
 		assignedInstance   subscriptions.Instance     // The instance that is assigned to the user.
 	)
 
+	enabledRegions = GetEnabledRegions()[s.Host.GetProvider()]
+
 	// Populate availableRegions
 	for _, requestedRegion := range requestedRegions {
 		var regionFound bool
-		for _, enabledRegion := range GetEnabledRegions() {
+		for _, enabledRegion := range enabledRegions {
 			if enabledRegion == requestedRegion {
 				availableRegions = append(availableRegions, requestedRegion)
 				regionFound = true
@@ -112,7 +115,7 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// commit_hashes on their local machines.
 	if metadata.IsLocalEnv() || mandelboxRequest.CommitHash == CLIENT_COMMIT_HASH_DEV_OVERRIDE {
 		// Query for the latest image id
-		imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
+		imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, s.Host.GetProvider(), event.Region)
 		if err != nil {
 			return utils.MakeError("failed to query database for current image: %s", err)
 		}
