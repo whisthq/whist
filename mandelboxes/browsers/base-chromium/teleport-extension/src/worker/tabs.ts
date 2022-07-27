@@ -30,7 +30,7 @@ const initTabDetachSuppressor = () => {
 }
 
 const initTabState = () => {
-  chrome.storage.local.set({ openTabs: [] })
+  chrome.storage.local.clear()
 }
 
 export { initTabDetachSuppressor, initTabState }
