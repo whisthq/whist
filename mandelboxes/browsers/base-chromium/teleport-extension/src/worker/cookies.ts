@@ -64,7 +64,7 @@ const initCookieRemovedListener = (socket: Socket) => {
         details.removed &&
         ["expired", "expired_overwrite", "evicted"].includes(details.cause)
       ) {
-        socket.emit("client-update-cookie", details.cookie)
+        socket.emit("client-remove-cookie", details.cookie)
       }
     }
   )
