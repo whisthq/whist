@@ -1,5 +1,4 @@
 import { Socket } from "socket.io-client"
-import omit from "lodash.omit"
 
 const initAddCookieListener = (socket: Socket) => {
   socket.on("add-cookie", (cookies: any[]) => {
@@ -10,7 +9,6 @@ const initAddCookieListener = (socket: Socket) => {
 
     // See https://developer.chrome.com/docs/extensions/reference/cookies/#method-set
     // for why we construct the cookie details this way
-    console.log("host only", cookie.name, cookie.hostOnly)
     const details = {
         ...!cookie.hostOnly && {domain: cookie.domain},
         ...!cookie.session && {expirationDate: cookie.expirationDate},
@@ -23,8 +21,6 @@ const initAddCookieListener = (socket: Socket) => {
         value: cookie.value,
         url,
     } as chrome.cookies.SetDetails
-
-    console.log("Setting", details)
 
     chrome.cookies.set(details)
   })
