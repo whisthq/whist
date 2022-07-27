@@ -4,7 +4,6 @@ import { io, Socket } from "socket.io-client"
 import { createTab, activateTab, removeTab, getOpenTabs } from "@app/utils/tabs"
 
 import { SOCKETIO_SERVER_URL } from "@app/constants/urls"
-import { WhistTab } from "@app/constants/tabs"
 
 const initSocketioConnection = () => {
   const socket = io(SOCKETIO_SERVER_URL, {
@@ -18,11 +17,9 @@ const initSocketioConnection = () => {
 const initActivateTabListener = (socket: Socket) => {
   socket.on("activate-tab", async (tabs: chrome.tabs.Tab[]) => {
     const openTabs = await getOpenTabs()
-
-    console.log("Activating tab, open tabs are", openTabs)
-
     const tabToActivate = tabs[0]
     const foundTab = find(openTabs, (t) => t.clientTabId === tabToActivate.id)
+
     if (foundTab?.tab?.id === undefined) {
       createTab(
         {
@@ -52,7 +49,6 @@ const initCloseTabListener = (socket: Socket) => {
     if (foundTab?.tab?.id === undefined) {
       console.warn(`Could not remove tab ${tab.id}`)
     } else {
-      console.log("Removing", foundTab)
       removeTab(foundTab?.tab?.id)
       if (foundTab.clientTabId !== undefined)
         chrome.storage.local.remove(foundTab?.clientTabId?.toString())
