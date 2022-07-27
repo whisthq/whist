@@ -49,6 +49,28 @@ jobs:
           hadolint ./mandelboxes/*/Dockerfile.20
           hadolint ./mandelboxes/*/*/Dockerfile.20
 
+  # Formatting and testing Rust code in mandelboxes
+  mandelboxes-rust-checks:
+    name: Format and Test Rust Code
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Rust Environment
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Check Formatting for Extension Native Host
+        working-directory: mandelboxes/browsers/base-chromium/extension-native-host
+        run: cargo fmt --check
+
+      - name: Run Unit Tests for Extension Native Host
+        working-directory: mandelboxes/browsers/base-chromium/extension-native-host
+        run: cargo test
+
   # Linting/formatting Python code in mandelboxes
   mandelboxes-python-scripts-linting:
     name: Lint mandelboxes Python Scripts
