@@ -14,7 +14,13 @@ const initAddCookieListener = (socket: Socket) => {
     const details = {
         ...!cookie.hostOnly && {domain: cookie.domain},
         ...!cookie.session && {expirationDate: cookie.expirationDate},
-        ...omit(cookie, ["hostOnly", "session"]),
+        httpOnly: cookie.httpOnly,
+        name: cookie.name,
+        path: cookie.path,
+        sameSite: cookie.sameSite,
+        secure: cookie.secure,
+        storeId: cookie.storeId,
+        value: cookie.value,
         url,
     } as chrome.cookies.SetDetails
 
