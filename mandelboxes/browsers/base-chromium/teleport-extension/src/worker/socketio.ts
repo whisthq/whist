@@ -90,14 +90,22 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
     ) => {
       chrome.storage.local.get(["openTabs"], ({ openTabs }) => {
         const foundTab = find(openTabs, (t) => t.tab.id === tabId)
-        chrome.scripting.executeScript({
-          target: { tabId: foundTab.tab.id },
-          func: () => {
-            return window.history.length
+        chrome.scripting.executeScript(
+          {
+            target: { tabId: foundTab.tab.id },
+            func: () => {
+              return window.history.length
+            },
           },
-        }, (result: any) => {
-          socket.emit("tab-updated", foundTab?.clientTabId, result[0].result, tab)
-        })
+          (result: any) => {
+            socket.emit(
+              "tab-updated",
+              foundTab?.clientTabId,
+              result[0].result,
+              tab
+            )
+          }
+        )
       })
     }
   )
