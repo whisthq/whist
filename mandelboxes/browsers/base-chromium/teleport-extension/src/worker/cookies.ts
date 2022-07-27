@@ -1,19 +1,12 @@
 import { Socket } from "socket.io-client"
 import omit from "lodash.omit"
 
-const constructURL = (domain: string, path: string) => {
-    if(domain.startsWith(".")) domain = domain.slice(1)
-    if(domain.startsWith(""))
-}
-
 const initAddCookieListener = (socket: Socket) => {
   socket.on("add-cookie", (cookies: any[]) => {
     let cookie = cookies[0]
     const url = cookie.domain.startsWith(".")
       ? `https://${cookie.domain.slice(1)}${cookie.path}`
       : `https://${cookie.domain}${cookie.path}`
-
-    console.log(url)
 
     const details = {
         ...omit(cookie, ["hostOnly", "session"]),
