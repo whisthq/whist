@@ -111,6 +111,9 @@ def setup_process(role, args_dict):
             clone_whist_repository(github_token, hs_process, pexpect_prompt)
         else:
             print(f"Skipping git clone whisthq/whist repository on {role} instance.")
+            # Delete any changes to the repo from previous runs (e.g. testing time settings)
+            hs_process.sendline("cd ~/whist ; git reset --hard ; cd")
+            wait_until_cmd_done(hs_process, pexpect_prompt)
 
         # Ensure that the commit hash on the remote instance matches the one on the runner
         instance_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt)
