@@ -129,20 +129,20 @@ common_steps () {
 
   # Blacklist some Linux kernel modules that would block NVIDIA drivers
   idempotent_backup "/etc/modprobe.d/blacklist.conf" "sudo"
-  cat << EOF | sudo tee --append /etc/modprobe.d/blacklist.conf > /dev/null
-blacklist vga16fb
-blacklist nouveau
-blacklist rivafb
-blacklist nvidiafb
-blacklist rivatv
-EOF
+#   cat << EOF | sudo tee --append /etc/modprobe.d/blacklist.conf > /dev/null
+# blacklist vga16fb
+# blacklist nouveau
+# blacklist rivafb
+# blacklist nvidiafb
+# blacklist rivatv
+# EOF
 
   # Configure Grub
-  idempotent_backup "/etc/default/grub" "sudo"
-  sudo sed -i 's/GRUB_CMDLINE_LINUX=""/# GRUB_CMDLINE_LINUX=""/g' /etc/default/grub
-  cat << EOF | sudo tee --append /etc/default/grub > /dev/null
-GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
-EOF
+#   idempotent_backup "/etc/default/grub" "sudo"
+#   sudo sed -i 's/GRUB_CMDLINE_LINUX=""/# GRUB_CMDLINE_LINUX=""/g' /etc/default/grub
+#   cat << EOF | sudo tee --append /etc/default/grub > /dev/null
+# GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
+# EOF
 
   # Install NVIDIA GRID (virtualized GPU) drivers
 #  ./get-nvidia-driver-installer.sh

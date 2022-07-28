@@ -366,7 +366,6 @@ COPY input/Xmodmap $HYDRAULIC_ROOT/root/.Xmodmap
 #########################
 
 # Copy configuration for X11 display
-COPY display/whist-display.conf $HYDRAULIC_ROOT/usr/share/X11/xorg.conf.d/01-whist-display.conf
 COPY display/whist-dummy-display.conf $HYDRAULIC_ROOT/usr/share/X11/xorg.conf.d/02-whist-dummy-display.conf
 
 # Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
