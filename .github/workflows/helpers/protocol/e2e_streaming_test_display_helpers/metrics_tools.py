@@ -266,18 +266,18 @@ def generate_plots(
     if not os.path.isfile(plot_data_filename):
         print(f"Could not plot metrics because file {plot_data_filename} does not exist")
         return
-    plot_data_file = open(plot_data_filename, "r")
-    plot_data = json.loads(plot_data_file.read())
-    plot_data_file.close()
+
+    with open(plot_data_filename, "r") as plot_data_file:
+        plot_data = json.loads(plot_data_file.read())
+
     compared_plot_data = {}
     if (
         len(compared_plot_data_filename) > 0
         and os.path.isfile(compared_plot_data_filename)
         and len(compared_branch_name) > 0
     ):
-        compared_plot_data_file = open(compared_plot_data_filename, "r")
-        compared_plot_data = json.loads(compared_plot_data_file.read())
-        compared_plot_data_file.close()
+        with open(compared_plot_data_filename, "r") as compared_plot_data_file:
+            compared_plot_data = json.loads(compared_plot_data_file.read())
 
     for k in plot_data.keys():
         for trimmed_plot in (True, False):
