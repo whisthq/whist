@@ -38,7 +38,7 @@ const initActivateTabListener = (socket: Socket) => {
       const tab = await getTab(foundTab.tab.id)
       updateTab(foundTab.tab.id, {
         active: tabToActivate.active,
-        ...tab.url !== tabToActivate.url && { url: tabToActivate.url }
+        ...tab.url !== tabToActivate.url && { url: tabToActivate.url?.replace("cloud:", "") }
       })
     }
   })
