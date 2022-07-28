@@ -231,9 +231,9 @@ common_steps () {
 
   # Set runtime based on GPU presence
   if [[ -n "$NOGPU" ]]; then
-    sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
-  else
     sudo cp docker-daemon-config/nvidia-daemon.json /etc/docker/daemon.json
+  else
+    sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
   fi
 
   sudo systemctl restart docker
