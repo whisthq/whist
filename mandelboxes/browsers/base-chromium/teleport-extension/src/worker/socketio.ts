@@ -84,15 +84,35 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
   chrome.tabs.onUpdated.addListener(
     async (
       tabId: number,
-      changeInfo: { status?: string },
+      changeInfo: { url?: string; favIconUrl?: string; title?: string },
       tab: chrome.tabs.Tab
     ) => {
-      if (changeInfo.status !== "complete") return
+      if (
+        changeInfo.url === undefined &&
+        changeInfo.favIconUrl === undefined &&
+        changeInfo.title === undefined
+      )
+        return
 
       const openTabs = await getOpenTabs()
       const foundTab = find(openTabs, (t) => t.tab.id === tabId)
       if (foundTab?.tab?.id !== undefined) {
-        socket.emit("tab-updated", foundTab?.clientTabId, tab)
+        chrome.scripting.executeScript(
+          {
+            target: { tabId: foundTab.tab.id },
+            func: () => {
+              return window.history.length
+            },
+          },
+          (result: any) => {
+            socket.emit(
+              "tab-updated",
+              foundTab?.clientTabId,
+              result[0].result,
+              tab
+            )
+          }
+        )
       }
     }
   )
