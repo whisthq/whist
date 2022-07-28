@@ -269,9 +269,7 @@ void virtual_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
 
     if (cursor->type != last_cursor_type || cursor->mode != last_mode) {
         const char* css_name = css_cursor_from_whist_cursor_type(cursor->type);
-        if (on_cursor_change != NULL) {
-            on_cursor_change(callback_context, css_name, cursor->mode == MOUSE_MODE_RELATIVE);
-        }
+        on_cursor_change(NULL, css_name, cursor->mode == MOUSE_MODE_RELATIVE);
         last_cursor_type = cursor->type;
     }
 }
