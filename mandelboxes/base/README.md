@@ -36,7 +36,7 @@ You can run `systemctl status` to see all the running services in the mandelbox.
 
 `journalctl` shows all the systemd logs. If you run `journalctl` in a Bash shell inside a mandelbox, you'll be able to see the logs of a running server protocol, which is useful for debugging.
 
-`/usr/share/whist/protocol.log` contains the Whist protocol logs. They can also be found in the systemd logs with `journalctl | grep WhistServer`.
+`/usr/share/whist/protocol-server.log` contains the Whist protocol logs. They can also be found in the systemd logs with `journalctl | grep WhistServer`.
 
 `/scripts/testing` contains some little test scripts that can help debug problems on the host machine.
 

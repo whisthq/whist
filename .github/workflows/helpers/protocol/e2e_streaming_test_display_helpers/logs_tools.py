@@ -48,8 +48,8 @@ def logs_contain_errors(logs_root_dir, verbose=False):
         False if the logs appear not to contain errors, True otherwise
     """
     # Check if the log files with metrics are present
-    client_log_file = os.path.join(logs_root_dir, "client", "protocol.log")
-    server_log_file = os.path.join(logs_root_dir, "server", "protocol.log")
+    client_log_file = os.path.join(logs_root_dir, "client", "protocol-client.log")
+    server_log_file = os.path.join(logs_root_dir, "server", "protocol-server.log")
 
     if not os.path.isfile(client_log_file) or not os.path.isfile(server_log_file):
         if verbose:
@@ -119,8 +119,8 @@ def download_latest_logs(
 
     os.makedirs(os.path.join(".", branch_name, "client"))
     os.makedirs(os.path.join(".", branch_name, "server"))
-    compared_client_log_path = os.path.join(".", branch_name, "client", "protocol.log")
-    compared_server_log_path = os.path.join(".", branch_name, "server", "protocol.log")
+    compared_client_log_path = os.path.join(".", branch_name, "client", "protocol-client.log")
+    compared_server_log_path = os.path.join(".", branch_name, "server", "protocol-server.log")
     exp_meta_path = os.path.join(".", branch_name, "experiment_metadata.json")
     compared_client_plot_data_path = os.path.join(".", branch_name, "client", "plot_data.json")
     compared_server_plot_data_path = os.path.join(".", branch_name, "server", "plot_data.json")
@@ -160,9 +160,9 @@ def download_latest_logs(
             continue
 
         for obj in bucket.objects.filter(Prefix=f"{branch_name}/{subfolder_name}"):
-            if "client/protocol.log" in obj.key:
+            if "protocol-client.log" in obj.key:
                 bucket.download_file(obj.key, compared_client_log_path)
-            elif "server/protocol.log" in obj.key:
+            elif "protocol-server.log" in obj.key:
                 bucket.download_file(obj.key, compared_server_log_path)
             elif "experiment_metadata.json" in obj.key:
                 bucket.download_file(obj.key, exp_meta_path)

@@ -69,7 +69,7 @@ USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
-PROTOCOL_LOG_FILENAME=/usr/share/whist/protocol.log
+PROTOCOL_LOG_FILENAME=/usr/share/whist/protocol-server.log
 TELEPORT_LOG_FILENAME=/usr/share/whist/teleport-drag-drop.log
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 

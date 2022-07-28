@@ -134,7 +134,7 @@ def extract_logs_from_mandelbox(
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     logfiles = [
-        f"/usr/share/whist/protocol.log",
+        f"/usr/share/whist/protocol-{role}.log",
         "/usr/share/whist/teleport.log",
         "/usr/share/whist/display.log",
         "/usr/share/whist/plot_data.json",

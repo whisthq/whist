@@ -6,7 +6,7 @@
 set -Eeuo pipefail
 
 #WHIST_MAPPINGS_DIR=/whist/resourceMappings
-PROTOCOL_LOG_FILENAME=/usr/share/whist/protocol.log
+PROTOCOL_LOG_FILENAME=/usr/share/whist/protocol-client.log
 SERVER_IP_ADDRESS=127.0.0.1
 SERVER_PORT_MAPPINGS=""
 SERVER_AES_KEY=""
