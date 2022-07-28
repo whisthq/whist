@@ -212,7 +212,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	// them on the cloud provider for us.
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infow("Running on localdev so scaling up fake instances.", contextFields)
-		instancesForDb = helpers.SpinUpFakeInstances(instancesToScale, image.ImageID, event.Region)
+		instancesForDb = helpers.SpinUpFakeInstances(instancesToScale, s.Host.GetProvider(), image.ImageID, event.Region)
 	} else {
 		// Call the host handler to handle the instance spinup in the cloud provider
 		instancesForDb, err = s.Host.SpinUpInstances(scalingCtx, instanceNum, maxWaitTimeReady, image)

@@ -64,7 +64,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// them on the cloud provider for us.
 	if metadata.IsLocalEnv() && !metadata.IsRunningInCI() {
 		logger.Infow("Running on localdev so scaling up fake instances.", contextFields)
-		instancesForDb = helpers.SpinUpFakeInstances(defaultInstanceBuffer, newImage.ImageID, event.Region)
+		instancesForDb = helpers.SpinUpFakeInstances(defaultInstanceBuffer, s.Host.GetProvider(), newImage.ImageID, event.Region)
 	} else {
 		instancesForDb, err = s.Host.SpinUpInstances(scalingCtx, int32(defaultInstanceBuffer), maxWaitTimeReady, newImage)
 		if err != nil {

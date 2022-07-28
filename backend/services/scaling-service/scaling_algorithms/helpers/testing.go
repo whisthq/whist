@@ -12,7 +12,7 @@ import (
 
 // SpinUpFakeInstances will create the desired number of instances with random data. Its a helper function
 // for local testing, to avoid having to spinup instances on a cloud provider.
-func SpinUpFakeInstances(instanceNum int, imageID string, region string) []subscriptions.Instance {
+func SpinUpFakeInstances(instanceNum int, provider string, imageID string, region string) []subscriptions.Instance {
 	var fakeInstances []subscriptions.Instance
 	for i := 0; i < instanceNum; i++ {
 		src := rand.NewSource(time.Now().UnixNano())
@@ -22,7 +22,7 @@ func SpinUpFakeInstances(instanceNum int, imageID string, region string) []subsc
 
 		fakeInstances = append(fakeInstances, subscriptions.Instance{
 			ID:                uuid.NewString(),
-			Provider:          "AWS",
+			Provider:          provider,
 			Region:            region,
 			ImageID:           imageID,
 			ClientSHA:         metadata.GetGitCommit(),
