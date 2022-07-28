@@ -19,9 +19,9 @@ def extract_metrics(client_log_file, server_log_file):
     entries for that metric and the mean (or max/min).
 
     Args:
-        client_log_file (str): The path to the file (usually client.log) containing
+        client_log_file (str): The path to the file (usually client/protocol.log) containing
                         the client-side logs with the metrics
-        server_log_file (str): The path to the file (usually server.log) containing
+        server_log_file (str): The path to the file (usually server/protocol.log) containing
                         the server-side logs with the metrics
     Returns:
         experiment_metrics (list): A list containing two dictionaries with the client

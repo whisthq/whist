@@ -6,7 +6,7 @@
 set -Eeuo pipefail
 
 #WHIST_MAPPINGS_DIR=/whist/resourceMappings
-PROTOCOL_LOG_FILENAME=/usr/share/whist/client.log
+PROTOCOL_LOG_FILENAME=/usr/share/whist/protocol.log
 SERVER_IP_ADDRESS=127.0.0.1
 SERVER_PORT_MAPPINGS=""
 SERVER_AES_KEY=""
@@ -46,8 +46,8 @@ server-ip?$SERVER_IP_ADDRESS
 finished
 open-url?$INITIAL_URLS
 EOF
-); sleep 240; echo "quit" ) | /usr/share/whist/WhistClient --dynamic-arguments &> >(tee $PROTOCOL_LOG_FILENAME) &
-# The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
+); sleep 240; echo "quit" ) | /usr/share/whist/WhistClient --dynamic-arguments &> $PROTOCOL_LOG_FILENAME &
+
 # `sleep <N second>; echo "quit"` will turn off the client once we are done gathering metrics data. The value here (240) will be replaced by the protocol/test/helpers/whist_client_tools.py script
 whist_client_pid=$!
 

@@ -134,30 +134,28 @@ def extract_logs_from_mandelbox(
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     logfiles = [
-        f"/usr/share/whist/{role}.log",
+        f"/usr/share/whist/protocol.log",
         "/usr/share/whist/teleport.log",
         "/usr/share/whist/display.log",
+        "/usr/share/whist/plot_data.json",
         # Var Logs!
-        os.path.join("/var/log/whist", session_id, "audio-err.log"),
-        os.path.join("/var/log/whist", session_id, "audio-out.log"),
-        os.path.join("/var/log/whist", session_id, "display-err.log"),
-        os.path.join("/var/log/whist", session_id, "display-out.log"),
         "/var/log/whist/startup-err.log",
         "/var/log/whist/startup-out.log",
         "/var/log/whist/update_xorg_conf-err.log",
         "/var/log/whist/update_xorg_conf-out.log",
+        # We need to use os.path.join for the logfiles below to safely handle the case where session_id is not set
+        os.path.join("/var/log/whist", session_id, "audio-err.log"),
+        os.path.join("/var/log/whist", session_id, "audio-out.log"),
+        os.path.join("/var/log/whist", session_id, "display-err.log"),
+        os.path.join("/var/log/whist", session_id, "display-out.log"),
         os.path.join("/var/log/whist", session_id, "main-err.log"),
         os.path.join("/var/log/whist", session_id, "main-out.log"),
         # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
         "/var/log/whist/simulated_scrolling.log",
-        # JSON file with data for plotting
-        "/usr/share/whist/plot_data.json",
     ]
     if role == "server":
         # Download Chrome preferences if they exist (only first file should exist)
         logfiles.append("/home/whist/.config/google-chrome/Default/Preferences")
-        logfiles.append("/home/whist/.config/google-chrome/Default/Preferences.update"),
-        logfiles.append("/home/whist/.config/google-chrome/Default/Preferences.new"),
         logfiles.append("/home/whist/.config/google-chrome/Default/History")
 
     for file_path in logfiles:
