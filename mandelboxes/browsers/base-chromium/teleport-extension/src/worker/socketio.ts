@@ -1,7 +1,13 @@
 import find from "lodash.find"
 import { io, Socket } from "socket.io-client"
 
-import { createTab, updateTab, removeTab, getOpenTabs, getTab } from "@app/utils/tabs"
+import {
+  createTab,
+  updateTab,
+  removeTab,
+  getOpenTabs,
+  getTab,
+} from "@app/utils/tabs"
 
 import { SOCKETIO_SERVER_URL } from "@app/constants/urls"
 
@@ -38,7 +44,9 @@ const initActivateTabListener = (socket: Socket) => {
       const tab = await getTab(foundTab.tab.id)
       updateTab(foundTab.tab.id, {
         active: tabToActivate.active,
-        ...tab.url !== tabToActivate.url && { url: tabToActivate.url?.replace("cloud:", "") }
+        ...(tab.url !== tabToActivate.url && {
+          url: tabToActivate.url?.replace("cloud:", ""),
+        }),
       })
     }
   })
@@ -60,24 +68,6 @@ const initCloseTabListener = (socket: Socket) => {
   })
 }
 
-const initHistoryNavigateListener = (socket: Socket) => {
-  socket.on("navigate-tab", async (body: any[]) => {
-    const message = body[0]
-
-    const openTabs = await getOpenTabs()
-    const foundTab = find(openTabs, (t) => t.clientTabId === message.id)
-    if (foundTab?.tab?.id !== undefined) {
-      chrome.scripting.executeScript({
-        target: { tabId: foundTab.tab.id },
-        args: [message.diff],
-        func: (diff) => {
-          window.history.go(diff)
-        },
-      })
-    }
-  })
-}
-
 const initTabRefreshListener = (socket: Socket) => {
   socket.on("refresh-tab", async (tabs: chrome.tabs.Tab[]) => {
     const openTabs = await getOpenTabs()
@@ -94,55 +84,32 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
   chrome.tabs.onUpdated.addListener(
     async (
       tabId: number,
-      _changeInfo: { url?: string; title?: string; favIconUrl?: string },
+      changeInfo: { status?: string },
       tab: chrome.tabs.Tab
     ) => {
+      if (changeInfo.status !== "complete") return
+
       const openTabs = await getOpenTabs()
       const foundTab = find(openTabs, (t) => t.tab.id === tabId)
       if (foundTab?.tab?.id !== undefined) {
-        chrome.scripting.executeScript(
-          {
-            target: { tabId: foundTab.tab.id },
-            func: () => {
-              return window.history.length
-            },
-          },
-          (result: any) => {
-            socket.emit(
-              "tab-updated",
-              foundTab?.clientTabId,
-              result[0].result,
-              tab
-            )
-          }
-        )
+        socket.emit("tab-updated", foundTab?.clientTabId, tab)
       }
     }
   )
 }
 
 const initCloudTabCreatedListener = (socket: Socket) => {
-  let loadingRemovedTabs: number[] = []
-
   chrome.tabs.onUpdated.addListener(
     async (
       tabId: number,
-      _changeInfo: { url?: string; title?: string },
+      changeInfo: { url?: string; title?: string; status?: string },
       tab: chrome.tabs.Tab
     ) => {
       const openTabs = await getOpenTabs()
       const foundTab = find(openTabs, (t) => t.tab.id === tabId)
 
-      if (
-        tab.openerTabId !== undefined &&
-        foundTab === undefined &&
-        tab.url !== undefined
-      ) {
-        if (tab.status === "loading") {
-          loadingRemovedTabs.push(tabId)
-        }
-        if (tab.status === "complete" && loadingRemovedTabs.includes(tabId)) {
-          loadingRemovedTabs = loadingRemovedTabs.filter((el) => el !== tabId)
+      if (tab.openerTabId !== undefined && foundTab === undefined) {
+        if (changeInfo.status === "complete" && tab.url !== undefined) {
           socket.emit("tab-created", tab)
           removeTab(tabId)
         } else {
@@ -159,6 +126,5 @@ export {
   initCloseTabListener,
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
-  initHistoryNavigateListener,
   initTabRefreshListener,
 }
