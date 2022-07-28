@@ -57,8 +57,8 @@ mkdir "/var/log/whist/$SESSION_ID/"
 
 cat > /etc/systemd/system/whist-main.service.d/output.conf << EOF
 [Service]
-StandardOutput=file:/var/log/whist/$SESSION_ID/protocol-out.log
-StandardError=file:/var/log/whist/$SESSION_ID/protocol-err.log
+StandardOutput=file:/var/log/whist/$SESSION_ID/main-out.log
+StandardError=file:/var/log/whist/$SESSION_ID/main-err.log
 EOF
 
 echo "Set whist main service unit file to $SESSION_ID"

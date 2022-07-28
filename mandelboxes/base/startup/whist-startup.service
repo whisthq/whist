@@ -5,8 +5,8 @@ Description=Whist Entrypoint
 [Service]
 Type=oneshot
 ExecStart=/usr/share/whist/whist-startup.sh
-StandardOutput=file:/var/log/whist/entry-out.log
-StandardError=file:/var/log/whist/entry-err.log
+StandardOutput=file:/var/log/whist/startup-out.log
+StandardError=file:/var/log/whist/startup-err.log
 
 [Install]
 WantedBy=multi-user.target

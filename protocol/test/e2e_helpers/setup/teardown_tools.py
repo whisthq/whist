@@ -142,12 +142,12 @@ def extract_logs_from_mandelbox(
         os.path.join("/var/log/whist", session_id, "audio-out.log"),
         os.path.join("/var/log/whist", session_id, "display-err.log"),
         os.path.join("/var/log/whist", session_id, "display-out.log"),
-        "/var/log/whist/entry-err.log",
-        "/var/log/whist/entry-out.log",
+        "/var/log/whist/startup-err.log",
+        "/var/log/whist/startup-out.log",
         "/var/log/whist/update_xorg_conf-err.log",
         "/var/log/whist/update_xorg_conf-out.log",
-        os.path.join("/var/log/whist", session_id, "protocol-err.log"),
-        os.path.join("/var/log/whist", session_id, "protocol-out.log"),
+        os.path.join("/var/log/whist", session_id, "main-err.log"),
+        os.path.join("/var/log/whist", session_id, "main-out.log"),
         # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
         "/var/log/whist/simulated_scrolling.log",
         # JSON file with data for plotting

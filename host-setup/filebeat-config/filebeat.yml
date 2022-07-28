@@ -77,7 +77,7 @@ processors:
       ignore_failure: true
   - dissect:
       # A filepath for services that start after assigning a user on EBS storage looks like below:
-      # /whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/1652250744/protocol-out.log
+      # /whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/1652250744/main-out.log
       tokenizer: "/whist/temp/logs/%{container_id}/%{server_session_id}/%{client_session_id}/%{sub_component}-%{log_level}.log"
       field: "log.file.path"
       target_prefix: ""
@@ -88,7 +88,7 @@ processors:
       overwrite_keys: true
   - dissect:
       # A filepath for services that start after assigning a user on ephemeral storage looks like below:
-      # /ephemeral/whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/1652250744/protocol-out.log
+      # /ephemeral/whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/1652250744/main-out.log
       tokenizer: "/ephemeral/whist/temp/logs/%{container_id}/%{server_session_id}/%{client_session_id}/%{sub_component}-%{log_level}.log"
       field: "log.file.path"
       target_prefix: ""
