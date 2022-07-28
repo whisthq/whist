@@ -17,6 +17,7 @@ import {
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
   initHistoryNavigateListener,
+  initTabRefreshListener
 } from "./socketio"
 import {
   initAddCookieListener,
@@ -58,3 +59,4 @@ initAddCookieListener(socket)
 initRemoveCookieListener(socket)
 initCookieAddedListener(socket)
 initCookieRemovedListener(socket)
+initTabRefreshListener(socket)

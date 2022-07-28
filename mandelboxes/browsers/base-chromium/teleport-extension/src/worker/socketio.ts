@@ -74,6 +74,18 @@ const initHistoryNavigateListener = (socket: Socket) => {
   })
 }
 
+const initTabRefreshListener = (socket: Socket) => {
+  socket.on("refresh-tab", async (tabs: chrome.tabs.Tab[]) => {
+    const openTabs = await getOpenTabs()
+    const tab = tabs[0]
+    const foundTab = find(openTabs, (t) => t.clientTabId === tab.id)
+
+    if (foundTab?.tab?.id !== undefined) {
+      chrome.tabs.reload(foundTab?.tab?.id)
+    }
+  })
+}
+
 const initCloudTabUpdatedListener = (socket: Socket) => {
   chrome.tabs.onUpdated.addListener(
     async (
@@ -138,4 +150,5 @@ export {
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
   initHistoryNavigateListener,
+  initTabRefreshListener,
 }
