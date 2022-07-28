@@ -15,12 +15,21 @@ const createTab = (
   })
 }
 
-const activateTab = (tabId: number) => {
-  chrome.tabs.update(tabId, { active: true })
+const updateTab = (tabId: number, updateProperties: object) => {
+  chrome.tabs.update(tabId, updateProperties)
 }
 
 const removeTab = (tabId: number) => {
   chrome.tabs.remove([tabId])
+}
+
+const getTab = async (tabId?: number): Promise<chrome.tabs.Tab> => {
+  if (tabId === undefined)
+    throw new Error(`Could not get tab with undefined ID`)
+
+  return await new Promise((resolve) => {
+    chrome.tabs.get(tabId, (tab) => resolve(tab))
+  })
 }
 
 const getOpenTabs = async (): Promise<Array<WhistTab>> => {
@@ -41,4 +50,4 @@ const getOpenTabs = async (): Promise<Array<WhistTab>> => {
   return result ?? []
 }
 
-export { createTab, activateTab, removeTab, getOpenTabs }
+export { createTab, updateTab, removeTab, getOpenTabs, getTab }

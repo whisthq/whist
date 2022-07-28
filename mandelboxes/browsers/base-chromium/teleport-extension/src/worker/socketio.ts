@@ -1,7 +1,7 @@
 import find from "lodash.find"
 import { io, Socket } from "socket.io-client"
 
-import { createTab, activateTab, removeTab, getOpenTabs } from "@app/utils/tabs"
+import { createTab, updateTab, removeTab, getOpenTabs, getTab } from "@app/utils/tabs"
 
 import { SOCKETIO_SERVER_URL } from "@app/constants/urls"
 
@@ -35,7 +35,11 @@ const initActivateTabListener = (socket: Socket) => {
         }
       )
     } else {
-      activateTab(foundTab.tab.id)
+      const tab = await getTab(foundTab.tab.id)
+      updateTab(foundTab.tab.id, {
+        active: tabToActivate.active,
+        ...tab.url !== tabToActivate.url && { url: tabToActivate.url }
+      })
     }
   })
 }
@@ -118,6 +122,8 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
 }
 
 const initCloudTabCreatedListener = (socket: Socket) => {
+  let loadingRemovedTabs: number[] = []
+
   chrome.tabs.onUpdated.addListener(
     async (
       tabId: number,
@@ -132,11 +138,15 @@ const initCloudTabCreatedListener = (socket: Socket) => {
         foundTab === undefined &&
         tab.url !== undefined
       ) {
-        if (tab.status === "complete") {
+        if (tab.status === "loading") {
+          loadingRemovedTabs.push(tabId)
+        }
+        if (tab.status === "complete" && loadingRemovedTabs.includes(tabId)) {
+          loadingRemovedTabs = loadingRemovedTabs.filter((el) => el !== tabId)
           socket.emit("tab-created", tab)
           removeTab(tabId)
         } else {
-          activateTab(tabId)
+          updateTab(tab.openerTabId, { active: true })
         }
       }
     }
