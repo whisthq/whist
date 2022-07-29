@@ -65,7 +65,7 @@ There are some other options available to control properties of the resulting ma
 
 ### Connecting to Images
 
-If you want to save your configs between sessions, then pass in a user ID and config encryption token. In case you don't want the server protocol to auto-shutdown after 60 seconds, you can set the timeout with another argument. As mentioned above, pass in `--help` to one of the mandelbox image-running scripts to see all the available options.
+If you want to save your configs between sessions, then pass in a user ID and config encryption token. As mentioned above, pass in `--help` to one of the mandelbox image-running scripts to see all the available options.
 
 ## Publishing
 

@@ -68,6 +68,15 @@ parser.add_argument(
         "by the Whist frontend, but by default we use a fake token instead."
     ),
 )
+parser.add_argument(
+    "--new-user-config-token",
+    action="store_true",
+    help=(
+        "Treat a passed-in config encryption token as if it is new. This will "
+        "cause a fresh config store to be created in the S3 bucket, and will "
+        "wipe any existing config under this token."
+    ),
+)
 args = parser.parse_args()
 
 
@@ -143,7 +152,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
         "config_encryption_token": args.user_config_encryption_token,
         # We hardcode this to false because the host service should report an
         # error if decryption doesn't work.
-        "is_new_config_encryption_token": False,
+        "is_new_config_encryption_token": args.new_user_config_token,
         "jwt_access_token": "bogus_jwt",
         "json_data": json_data,
         "mandelbox_id": str(mandelbox_id),
