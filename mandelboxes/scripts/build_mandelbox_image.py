@@ -134,6 +134,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
         "--build-arg",
         f"BuildAssetPackage={build_asset_package}",
     ]
+
     if "browsers/" in img_path:
         command.append("--build-arg")
         command.append(f"InstallBeta={beta}")
@@ -141,6 +142,9 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
     if os.getenv("NOGPU") in ["1", "yes", "true", "on", "yep"]:
         command.append("--build-arg")
         command.append("DisplayDriver=dummy")
+    else:
+        command.append("--build-arg")
+        command.append("DisplayDriver=nvidia")
 
     status = 0
 
