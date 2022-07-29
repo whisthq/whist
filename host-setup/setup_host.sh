@@ -233,6 +233,7 @@ common_steps () {
   if [[ -n "$NOGPU" ]]; then
     sudo cp docker-daemon-config/nvidia-daemon.json /etc/docker/daemon.json
   else
+    echo "export NOGPU=true" >> "$HOME"/.bashrc
     sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
   fi
 

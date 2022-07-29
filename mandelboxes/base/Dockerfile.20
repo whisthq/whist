@@ -10,6 +10,7 @@
 # to copy the protocol as early as possible to share
 # layers between images.
 ARG BuildAssetPackage "protocol"
+ARG DisplayDriver "nvidia"
 FROM whist/build-assets:$BuildAssetPackage as build-assets
 
 ################ STAGE 1: libinput-build ################
@@ -167,69 +168,69 @@ RUN dpkg-deb --build xf86-input-libinput-whist
 # - Install its contents into an output directory
 # EXPOSES the grid driver
 #############################################################
-# FROM ubuntu:20.04 as nvidia-grid-driver
+FROM ubuntu:20.04 as nvidia-grid-driver
 
 # Force failure on non-zero exit code for commands with a pipe in them
-# SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
-# ENV container docker
-# ENV LC_ALL C
-# ENV DEBIAN_FRONTEND noninteractive
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
 
 # Update apt source list
-# RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
-#     && apt-get update \
-#     && apt-get autoremove -y \
-#     && apt-get clean \
-#     && rm -rf /tmp/* /var/tmp/*
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install installer dependencies
-# RUN apt-get update && apt-get install --no-install-recommends -y \
-#     kmod \
-#     libglvnd0 \
-#     libglvnd-dev \
-#     xorg-dev \
-#     xorg-server-source \
-#     pkg-config \
-#     libgtk-3-dev \
-#     && apt-get autoremove -y \
-#     && apt-get clean \
-#     && rm -rf /tmp/* /var/tmp/*
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    kmod \
+    libglvnd0 \
+    libglvnd-dev \
+    xorg-dev \
+    xorg-server-source \
+    pkg-config \
+    libgtk-3-dev \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Retrieve nvidia driver installer
-# COPY --from=build-assets --chmod=550 nvidia-driver/nvidia-driver-installer.run /nvidia-driver-installer.run
+COPY --from=build-assets --chmod=550 nvidia-driver/nvidia-driver-installer.run /nvidia-driver-installer.run
 
 # Unpack the installer & create necessary symbolic link(s)
-# RUN sh nvidia-driver-installer.run -x \
-#     && ln -sf /dist/usr/lib/libGL.so.1 /usr/lib/libGL.so.1
+RUN sh nvidia-driver-installer.run -x \
+    && ln -sf /dist/usr/lib/libGL.so.1 /usr/lib/libGL.so.1
 
 # Install the driver to a folder
 # Note: We don't install `--install-compat32-libs` because it's not needed/supported
 # on our Dockerfiles, which run 64-bit kernels.
-# RUN mkdir /dist /ignore && \
-#     cd NVIDIA* && \
-#     ./nvidia-installer --silent \
-#     --x-prefix=/dist/usr \
-#     --x-module-path=/dist/usr/lib/xorg/modules \
-#     --opengl-prefix=/dist/usr \
-#     --utility-prefix=/dist/usr \
-#     --utility-libdir=lib \
-#     --documentation-prefix=/ignore \
-#     --no-nvidia-modprobe \
-#     --no-rpms \
-#     --no-backup \
-#     --no-kernel-module \
-#     --no-nouveau-check \
-#     --no-libglx-indirect \
-#     --no-distro-scripts \
-#     --no-drm \
-#     --no-check-for-alternate-installs \
-#     --no-install-libglvnd \
-#     --skip-depmod
+RUN mkdir /dist /ignore && \
+    cd NVIDIA* && \
+    ./nvidia-installer --silent \
+    --x-prefix=/dist/usr \
+    --x-module-path=/dist/usr/lib/xorg/modules \
+    --opengl-prefix=/dist/usr \
+    --utility-prefix=/dist/usr \
+    --utility-libdir=lib \
+    --documentation-prefix=/ignore \
+    --no-nvidia-modprobe \
+    --no-rpms \
+    --no-backup \
+    --no-kernel-module \
+    --no-nouveau-check \
+    --no-libglx-indirect \
+    --no-distro-scripts \
+    --no-drm \
+    --no-check-for-alternate-installs \
+    --no-install-libglvnd \
+    --skip-depmod
 
 # Copy configuration files needed for Vulkan to work
-# RUN mkdir /dist/etc && \
-#     cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
+RUN mkdir /dist/etc && \
+    cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
 
 ################ STAGE 4: whist-teleport-drag-drop ################
 # - Copy and build the FUSE service to handle teleport drag-drop
@@ -365,8 +366,10 @@ COPY input/Xmodmap $HYDRAULIC_ROOT/root/.Xmodmap
 # Display
 #########################
 
+ARG DisplayDriver "nvidia"
+
 # Copy configuration for X11 display
-COPY display/whist-dummy-display.conf $HYDRAULIC_ROOT/usr/share/X11/xorg.conf.d/02-whist-dummy-display.conf
+COPY display/whist-${DisplayDriver}-display.conf $HYDRAULIC_ROOT/usr/share/X11/xorg.conf.d/01-whist-display.conf
 
 # Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
 COPY --chown=root:root --chmod=600 display/whist-update-xorg-conf.service $HYDRAULIC_ROOT/etc/systemd/system/
@@ -473,7 +476,7 @@ RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-main.service.d/
 #   our base mandelbox image
 # EXPOSES all of whist-base as the final image
 #############################################################
-FROM ubuntu:20.04 as whist-base
+FROM ubuntu:20.04 as whist-base-pre-graphics
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -673,21 +676,28 @@ RUN \
 # Hardware Acceleration
 #########################
 
+FROM whist-base-pre-graphics as whist-base-nvidia
+
 # Install the Nvidia GRID Driver and libraries for (limited) hardware acceleration
-# RUN apt-get update && apt-get install --no-install-recommends -y \
-#     libglvnd0 \
-#     vainfo \
-#     vdpauinfo \
-#     mesa-vdpau-drivers \
-#     libvdpau-va-gl1 \
-#     && apt-get autoremove -y \
-#     && apt-get clean \
-#     && rm -rf /tmp/* /var/tmp/*
-# COPY --from=nvidia-grid-driver /dist /
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    libglvnd0 \
+    vainfo \
+    vdpauinfo \
+    mesa-vdpau-drivers \
+    libvdpau-va-gl1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+COPY --from=nvidia-grid-driver /dist /
+
+FROM whist-base-pre-graphics as whist-base-dummy
+ENV NOGPU true
 
 #########################
 # Display
 #########################
+
+FROM whist-base-${DisplayDriver} as whist-base
 
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \

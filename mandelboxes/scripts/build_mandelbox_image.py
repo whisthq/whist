@@ -6,6 +6,7 @@
 # If --all is passed in, all image paths in the repo will be built
 
 import argparse
+import os
 import re
 import threading
 import subprocess
@@ -136,6 +137,10 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
     if "browsers/" in img_path:
         command.append("--build-arg")
         command.append(f"InstallBeta={beta}")
+
+    if os.getenv("NOGPU"):
+        command.append("--build-arg")
+        command.append("DisplayDriver=dummy")
 
     status = 0
 
