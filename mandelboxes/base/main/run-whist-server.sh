@@ -123,7 +123,7 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
 fi
 
 # Send in client session id, if set
-if [ -n ${SESSION_ID+1} ]; then
+if [[ -n "${SESSION_ID+1}" ]]; then
   OPTIONS="$OPTIONS --session-id=$SESSION_ID"
 fi
 
