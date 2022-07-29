@@ -134,9 +134,6 @@ def extract_logs_from_mandelbox(
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     logfiles = [
-        f"/usr/share/whist/protocol-{role}.log",
-        "/usr/share/whist/teleport.log",
-        "/usr/share/whist/display.log",
         "/usr/share/whist/plot_data.json",
         # Var Logs!
         "/var/log/whist/startup-err.log",
@@ -150,6 +147,12 @@ def extract_logs_from_mandelbox(
         os.path.join("/var/log/whist", session_id, "display-out.log"),
         os.path.join("/var/log/whist", session_id, "main-err.log"),
         os.path.join("/var/log/whist", session_id, "main-out.log"),
+        os.path.join("/var/log/whist", session_id, f"protocol_{role}-out.log"),
+        os.path.join("/var/log/whist", session_id, f"protocol_{role}-err.log"),
+        os.path.join("/var/log/whist", session_id, "teleport_drag_drop-out.log"),
+        os.path.join("/var/log/whist", session_id, "teleport_drag_drop-err.log"),
+        os.path.join("/var/log/whist", session_id, "whist_application-out.log"),
+        os.path.join("/var/log/whist", session_id, "whist_application-err.log"),
         # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
         "/var/log/whist/simulated_scrolling.log",
     ]

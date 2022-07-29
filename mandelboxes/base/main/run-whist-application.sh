@@ -48,5 +48,18 @@ if [[ -z ${WHIST_DEST_BROWSER+1} ]]; then
   WHIST_DEST_BROWSER="chrome"
 fi
 
+WHIST_MAPPINGS_DIR=/whist/resourceMappings
+SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
+WHIST_LOGS_FOLDER=/var/log/whist
+APPLICATION_OUT_FILENAME=$WHIST_LOGS_FOLDER/whist_application-out.log
+APPLICATION_ERR_FILENAME=$WHIST_LOGS_FOLDER/whist_application-err.log
+
+# Read the session id, if the file exists
+if [ -f "$SESSION_ID_FILENAME" ]; then
+  SESSION_ID=$(cat $SESSION_ID_FILENAME)
+  APPLICATION_OUT_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/whist_application-out.log
+  APPLICATION_ERR_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/whist_application-err.log
+fi
+
 # Start the application that this mandelbox runs
-exec whist-application $WHIST_DEST_BROWSER
+exec whist-application $WHIST_DEST_BROWSER > $APPLICATION_OUT_FILENAME 2>$APPLICATION_ERR_FILENAME

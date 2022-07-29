@@ -5,12 +5,25 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-#WHIST_MAPPINGS_DIR=/whist/resourceMappings
-PROTOCOL_LOG_FILENAME=/usr/share/whist/protocol-client.log
+
 SERVER_IP_ADDRESS=127.0.0.1
 SERVER_PORT_MAPPINGS=""
 SERVER_AES_KEY=""
 INITIAL_URLS=""
+
+WHIST_MAPPINGS_DIR=/whist/resourceMappings
+SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
+WHIST_LOGS_FOLDER=/var/log/whist
+PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/protocol_client-out.log
+PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/protocol_client-err.log
+
+# Read the session id, if the file exists
+if [ -f "$SESSION_ID_FILENAME" ]; then
+  SESSION_ID=$(cat $SESSION_ID_FILENAME)
+  PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/protocol_server-out.log
+  PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/protocol_server-err.log
+fi
+
 
 # Sample JSON: {"dev_client_server_ip": "35.170.79.124", "dev_client_server_port_mappings": "32262:19020.32263:17242.32273:29843", "dev_client_server_aes_key": "70512c062ff1101f253be70e4cac81bc"}
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
@@ -46,7 +59,7 @@ server-ip?$SERVER_IP_ADDRESS
 finished
 open-url?$INITIAL_URLS
 EOF
-); sleep 240; echo "quit" ) | /usr/share/whist/WhistClient --dynamic-arguments &> $PROTOCOL_LOG_FILENAME &
+); sleep 240; echo "quit" ) | /usr/share/whist/WhistClient --dynamic-arguments > $PROTOCOL_OUT_FILENAME 2>$PROTOCOL_ERR_FILENAME &
 
 # `sleep <N second>; echo "quit"` will turn off the client once we are done gathering metrics data. The value here (240) will be replaced by the protocol/test/helpers/whist_client_tools.py script
 whist_client_pid=$!

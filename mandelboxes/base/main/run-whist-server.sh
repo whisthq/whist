@@ -62,6 +62,7 @@ find $USER_CONFIGS_DIR -xtype l -delete
 
 # Set/Retrieve Mandelbox parameters
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
+WHIST_LOGS_FOLDER=/var/log/whist
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
 BROWSER_DATA_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_browser_data_file
@@ -69,9 +70,21 @@ USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
-PROTOCOL_LOG_FILENAME=/usr/share/whist/protocol-server.log
-TELEPORT_LOG_FILENAME=/usr/share/whist/teleport-drag-drop.log
+PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-out.log
+PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-err.log
+TELEPORT_OUT_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-out.log
+TELEPORT_ERR_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-err.log
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
+
+# Read and export the session id, if the file exists
+if [ -f "$SESSION_ID_FILENAME" ]; then
+  SESSION_ID=$(cat $SESSION_ID_FILENAME)
+  export SESSION_ID
+  PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/protocol_server-out.log
+  PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/protocol_server-err.log
+  TELEPORT_OUT_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/teleport_drag_drop-out.log
+  TELEPORT_ERR_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/teleport_drag_drop-err.log
+fi
 
 # Parse options from JSON transport file
 LOCAL_CLIENT=false # true if the frontend is being tested manually by a Whist engineer
@@ -110,15 +123,13 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
 fi
 
 # Send in client session id, if set
-if [ -f "$SESSION_ID_FILENAME" ]; then
-  SESSION_ID=$(cat $SESSION_ID_FILENAME)
-  export SESSION_ID
+if [ -n ${SESSION_ID+1} ]; then
   OPTIONS="$OPTIONS --session-id=$SESSION_ID"
 fi
 
 # We use named pipe redirection for consistency with our WhistServer launch setup
 # &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
-/usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-teleport-drag-drop.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
+/usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-teleport-drag-drop.sh" > $TELEPORT_OUT_FILENAME 2>$TELEPORT_ERR_FILENAME &
 
 # This function is called whenever the script exits, whether that is because we
 # reach the end of this file (because either WhistServer or the Whist
@@ -199,7 +210,7 @@ sync # Necessary so that even if the container exits very soon the host service 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
-/usr/share/whist/WhistServer $OPTIONS &> $PROTOCOL_LOG_FILENAME &
+/usr/share/whist/WhistServer $OPTIONS > $PROTOCOL_OUT_FILENAME 2>$PROTOCOL_ERR_FILENAME &
 whist_server_pid=$!
 
 # Wait for either whist-application or WhistServer to exit (both backgrounded processes).
