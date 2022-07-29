@@ -33,7 +33,7 @@ mandelboxes.
 To set up the host for local development, pass in the --localdevelopment flag.
 To set it up for deployments, pass in the --deployment flag, followed by the
 arguments described in the comment for \`deployment_setup_steps\`.
-To set up the host for non-GPU usage, add the --nogpu flag to any existing 
+To set up the host for non-GPU usage, add the --nogpu flag to any existing
 arguments.
 EOF
   # We set a nonzero exit code so that CI doesn't accidentally only run `usage` and think it succeeded.
@@ -453,7 +453,7 @@ common_steps_post () {
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but it looks like getopt
 # chokes without them.
-TEMP=$(getopt -o hld --long help,usage,localdevelopment,deployment,nogpu -n 'setup_host.sh' -- "$@")
+TEMP=$(getopt -o hld --long help,usage,localdevelopment,deployment,nogpu,ng -n 'setup_host.sh' -- "$@")
 eval set -- "$TEMP"
 
 LOCAL_DEVELOPMENT=
@@ -464,7 +464,7 @@ while true; do
     -h | --help | --usage) usage ;;
     -l | --localdevelopment ) LOCAL_DEVELOPMENT=true; shift ;;
     -d | --deployment ) DEPLOYMENT=true; shift ;;
-    --nogpu ) NOGPU=true; shift ;;
+    --ng | --nogpu ) NOGPU=true; shift ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac

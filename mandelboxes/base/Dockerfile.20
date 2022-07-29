@@ -697,7 +697,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 COPY --from=nvidia-grid-driver /dist /
 ENV NOGPU false
 
-# Alternatively, this stage runs if no GPU exists on the host
+#########################
+# Non-GPU environment setup
+# (Runs only if running on non-GPU host)
+#########################
+
 FROM whist-base-pre-graphics as whist-base-dummy
 ENV NOGPU true
 
