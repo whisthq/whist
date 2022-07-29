@@ -4,6 +4,14 @@
 #include "../frontend_structs.h"
 #include "../../whist_client.h"
 
+typedef enum ModifierKeyFlags {
+    SHIFT = 1 << 0,
+    CTRL = 1 << 1,
+    ALT = 1 << 2,
+    GUI = 1 << 3,
+    CAPS = 1 << 4
+} ModifierKeyFlags;
+
 typedef const char* (*OnFileUploadCallback)(void* data);
 typedef void (*OnCursorChangeCallback)(void* data, const char* cursor_type,
                                        bool relative_mouse_mode);
@@ -11,6 +19,7 @@ typedef void* (*OnFileDownloadStart)(const char* file_path, int64_t file_size);
 typedef void (*OnFileDownloadUpdate)(void* opaque, int64_t bytes_so_far, int64_t bytes_per_sec);
 typedef void (*OnFileDownloadComplete)(void* opaque);
 typedef void (*VideoFrameCallback)(int window_id, void* frame_ref);
+typedef int (*GetModifierKeyState)(void);
 
 typedef struct VirtualInterface {
     struct {
@@ -31,6 +40,7 @@ typedef struct VirtualInterface {
     } video;
     struct {
         void (*send)(const WhistFrontendEvent* event);
+        void (*set_get_modifier_key_state)(GetModifierKeyState cb);
     } events;
     struct {
         void (*set_on_file_upload_callback)(int window_id, OnFileUploadCallback cb);
