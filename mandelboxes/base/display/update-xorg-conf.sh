@@ -36,19 +36,17 @@ fi
 # Update Bus ID
 ####################
 
-if [[ "$NOGPU" -ne "true" ]]; then
-  # Retrieve the current NVIDIA BusID and the new NVIDIA BusID
-  OLDBUSID=$(awk '/BusID/{gsub(/"/, "", $2); print $2}' ${XCONFIG})
-  # Note that we need to add 1 to GPU_INDEX since `tail` and `head` are 1-indexed.
-  NEWBUSID=$(nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}' | tail +$((GPU_INDEX+1)) | head -n1)
+# Retrieve the current NVIDIA BusID and the new NVIDIA BusID
+OLDBUSID=$(awk '/BusID/{gsub(/"/, "", $2); print $2}' ${XCONFIG})
+# Note that we need to add 1 to GPU_INDEX since `tail` and `head` are 1-indexed.
+NEWBUSID=$(nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}' | tail +$((GPU_INDEX+1)) | head -n1)
 
-  # Update the current NVIDIA BusID to the new NVIDIA BusID
-  if [[ "${OLDBUSID}" == "${NEWBUSID}" ]] ; then
-    echo "Nvidia BusID not changed - nothing to do"
-  else
-    echo "Nvidia BusID changed from \"${OLDBUSID}\" to \"${NEWBUSID}\": Updating ${XCONFIG}"
-    sed -i -e 's|BusID.*|BusID          '\""${NEWBUSID}"\"'|' ${XCONFIG}
-  fi
+# Update the current NVIDIA BusID to the new NVIDIA BusID
+if [[ "${OLDBUSID}" == "${NEWBUSID}" ]] ; then
+  echo "Nvidia BusID not changed - nothing to do"
+else
+  echo "Nvidia BusID changed from \"${OLDBUSID}\" to \"${NEWBUSID}\": Updating ${XCONFIG}"
+  sed -i -e 's|BusID.*|BusID          '\""${NEWBUSID}"\"'|' ${XCONFIG}
 fi
 
 ############################
@@ -56,7 +54,7 @@ fi
 ############################
 
 # Loop through files /dev/input/eventN to determine which correspond to which device
-# for filename in /dev/input/event*; do
+for filename in /dev/input/event*; do
   name=$(udevadm info -a "$filename" | grep 'ATTRS{name}' | sed 's/^\s*ATTRS{name}=="\(.*\)"/\1/')
   if [[ $name == 'Whist Virtual Absolute Input' ]]; then
     echo "Found device file $filename=$name"
