@@ -474,7 +474,7 @@ if [[ -n "$LOCAL_DEVELOPMENT" && -n "$DEPLOYMENT" ]]; then
 fi
 
 if [[ -n "$NOGPU" ]]; then
-  printf "Setting up for non-GPU host...\n\n"
+  printf "Setting up for non-GPU host...\n"
 fi
 
 if [[ -n "$LOCAL_DEVELOPMENT" ]]; then

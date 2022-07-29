@@ -689,6 +689,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 COPY --from=nvidia-grid-driver /dist /
+ENV NOGPU false
 
 FROM whist-base-pre-graphics as whist-base-dummy
 ENV NOGPU true
