@@ -138,7 +138,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
         command.append("--build-arg")
         command.append(f"InstallBeta={beta}")
 
-    if os.getenv("NOGPU"):
+    if os.getenv("NOGPU") in ["1", "yes", "true", "on", "yep"]:
         command.append("--build-arg")
         command.append("DisplayDriver=dummy")
 

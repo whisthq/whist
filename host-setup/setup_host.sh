@@ -199,7 +199,7 @@ common_steps () {
   # on an AWS EC2 instance, which have awscli automatically configured
   sudo apt-get install -y awscli
 
-  if [[ -z "${NOGPU}" ]]; then
+  if [[ -z "$NOGPU" ]]; then
     install_nvidia_drivers
     install_nvidia_docker
   fi
@@ -230,7 +230,7 @@ common_steps () {
   sudo cp docker-daemon-config/seccomp.json /etc/docker/seccomp.json
 
   # Set runtime based on GPU presence
-  if [[ -z "${NOGPU}" ]]; then
+  if [[ -z "$NOGPU" ]]; then
     sudo cp docker-daemon-config/nvidia-daemon.json /etc/docker/daemon.json
   else
     echo "export NOGPU=true" >> "$HOME"/.bashrc
@@ -295,7 +295,7 @@ common_steps () {
   sudo sh -c "echo 'fs.inotify.max_user_instances=2048' >> /etc/sysctl.conf" # default=128
   sudo sysctl -p
 
-  if [[ -z "${NOGPU}" ]]; then
+  if [[ -z "$NOGPU" ]]; then
     install_nvidia_persistence_daemon
   fi
 }
@@ -452,11 +452,13 @@ eval set -- "$TEMP"
 
 LOCAL_DEVELOPMENT=
 DEPLOYMENT=
+NOGPU=
 while true; do
   case "$1" in
     -h | --help | --usage) usage ;;
     -l | --localdevelopment ) LOCAL_DEVELOPMENT=true; shift ;;
     -d | --deployment ) DEPLOYMENT=true; shift ;;
+    --nogpu ) NOGPU=true; shift ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
@@ -469,6 +471,10 @@ fi
 if [[ -n "$LOCAL_DEVELOPMENT" && -n "$DEPLOYMENT" ]]; then
   echo "Both '--localdevelopment' and '--deployment' were passed in. Make up your mind!"
   exit 1
+fi
+
+if [[ -n "$NOGPU" ]]; then
+  printf "Setting up for non-GPU host...\n\n"
 fi
 
 if [[ -n "$LOCAL_DEVELOPMENT" ]]; then
