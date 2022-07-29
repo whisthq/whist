@@ -50,6 +50,7 @@ OnFileUploadCallback on_file_upload = NULL;
 OnFileDownloadStart on_file_download_start = NULL;
 OnFileDownloadUpdate on_file_download_update = NULL;
 OnFileDownloadComplete on_file_download_complete = NULL;
+GetModifierKeyState get_modifier_key_state = NULL;
 }
 
 static void virtual_interface_connect(void) {
@@ -173,6 +174,10 @@ static void virtual_interface_set_on_file_download_complete_callback(OnFileDownl
     on_file_download_complete = cb;
 }
 
+static void virtual_interface_set_get_modifier_key_state(GetModifierKeyState cb) {
+    get_modifier_key_state = cb;
+}
+
 static int virtual_interface_create_window(void* ctx) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     // Use serial window IDs, so that each window gets a unique ID
@@ -217,6 +222,7 @@ static const VirtualInterface vi = {
     .events =
         {
             .send = virtual_interface_send_event,
+            .set_get_modifier_key_state = virtual_interface_set_get_modifier_key_state,
         },
     .file =
         {

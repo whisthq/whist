@@ -14,6 +14,7 @@ extern OnCursorChangeCallback on_cursor_change;
 extern OnFileDownloadStart on_file_download_start;
 extern OnFileDownloadUpdate on_file_download_update;
 extern OnFileDownloadComplete on_file_download_complete;
+extern GetModifierKeyState get_modifier_key_state;
 
 static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* event) {
     VirtualFrontendContext* context = (VirtualFrontendContext*)frontend->context;
@@ -280,6 +281,39 @@ void virtual_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_sta
     *key_state = context->key_state;
     *key_count = KEYCODE_UPPERBOUND;
     int actual_mod_state = 0;
+    int modifiers = get_modifier_key_state();
+
+    // Handle the cases where modifier key is pressed, but our state says otherwise.
+    // We don't know if Left or Right key is in pressed state. For now, choose Left key.
+    if ((modifiers & SHIFT) && !context->key_state[FK_LSHIFT] && !context->key_state[FK_RSHIFT]) {
+        context->key_state[FK_LSHIFT] = 1;
+    }
+    if ((modifiers & CTRL) && !context->key_state[FK_LCTRL] && !context->key_state[FK_RCTRL]) {
+        context->key_state[FK_LCTRL] = 1;
+    }
+    if ((modifiers & ALT) && !context->key_state[FK_LALT] && !context->key_state[FK_RALT]) {
+        context->key_state[FK_LALT] = 1;
+    }
+    if ((modifiers & GUI) && !context->key_state[FK_LGUI] && !context->key_state[FK_RGUI]) {
+        context->key_state[FK_LGUI] = 1;
+    }
+
+    // Handle the cases where modifier key is NOT pressed
+    if (!(modifiers & SHIFT)) {
+        context->key_state[FK_LSHIFT] = context->key_state[FK_RSHIFT] = 0;
+    }
+    if (!(modifiers & CTRL)) {
+        context->key_state[FK_LCTRL] = context->key_state[FK_RCTRL] = 0;
+    }
+    if (!(modifiers & ALT)) {
+        context->key_state[FK_LALT] = context->key_state[FK_RALT] = 0;
+    }
+    if (!(modifiers & GUI)) {
+        context->key_state[FK_LGUI] = context->key_state[FK_RGUI] = 0;
+    }
+
+    context->key_state[FK_CAPSLOCK] = (modifiers & CAPS) ? 1 : 0;
+
     // Setting the mod_state for GUI keys, CAPS LOCK and NUM LOCK alone as the caller is interested
     // in only those flags
     if (context->key_state[FK_LGUI]) {
