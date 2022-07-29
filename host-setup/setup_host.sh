@@ -33,6 +33,8 @@ mandelboxes.
 To set up the host for local development, pass in the --localdevelopment flag.
 To set it up for deployments, pass in the --deployment flag, followed by the
 arguments described in the comment for \`deployment_setup_steps\`.
+To set up the host for non-GPU usage, add the --nogpu flag to any existing 
+arguments.
 EOF
   # We set a nonzero exit code so that CI doesn't accidentally only run `usage` and think it succeeded.
   exit 2
@@ -61,6 +63,10 @@ idempotent_backup () {
   # Create a backup of the original file
   "$use_sudo" cp "$original" "$backup"
 }
+
+####################################################
+# Nvidia GPU related setup
+####################################################
 
 install_nvidia_drivers () {
   echo "================================================"
