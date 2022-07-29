@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"crypto/sha1"
+	"os"
 	"path"
 	"regexp"
+	"strconv"
 	"sync"
 	"time"
 
@@ -269,15 +271,26 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			return utils.MakeError("error writing mandelbox params: %s", err)
 		}
 
-		// Let server protocol wait 30 seconds by default before client connects.
-		// However, in a local environment, we set the default to an effectively
-		// infinite value. This timeout will be passed to the protocol server, which
-		// starts until the user configs are fully loaded. This means that zygote
-		// mandelboxes will wait forever until a user connects, and once it does, the
-		// server timeout takes care of exiting correctly if a client disconnects.
+		// Server protocol waits 30 seconds for a client connection. However, in
+		// localdev we default to an infinite timeout to enable easier testing.
+		// In localdev environments, we can override this using an environment
+		// variable.
+		//
+		// Since the server protocol only starts after the user configs are loaded,
+		// zygote mandelboxes will wait forever until JSON transport. Once that occurs,
+		// the server timeout will exit correctly if a client disconnects or fails to
+		// connect.
 		protocolTimeout := 30
 		if metadata.IsLocalEnv() {
-			protocolTimeout = -1
+			localDevTimeout := os.Getenv("LOCALDEV_PROTOCOL_TIMEOUT")
+			if localDevTimeout != "" {
+				protocolTimeout, err = strconv.Atoi(localDevTimeout)
+				if err != nil {
+					logger.Warningf("SpinUpMandelbox(): Error parsing LOCALDEV_TIMEOUT envvar: %s", err)
+				}
+			} else {
+				protocolTimeout = -1
+			}
 		}
 
 		if err := mandelbox.WriteProtocolTimeout(protocolTimeout); err != nil {

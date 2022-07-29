@@ -130,14 +130,11 @@ function cleanup {
   sudo shutdown now
 }
 
-# Set Sentry environment, if provided
-if [ -f "$SENTRY_ENV_FILENAME" ]; then
-  ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
-  export ENV_NAME
-  if [ "$ENV_NAME" != "localdev" ]; then
-    # Make sure `cleanup` gets called on script exit in all environments except localdev.
-    trap cleanup EXIT ERR
-  fi
+if [ "$TIMEOUT" != "-1" ]; then
+  # Make sure `cleanup` gets called on script exit except when TIMEOUT is -1, which
+  # only occurs during local development. This timeout-setting logic is controlled
+  # by spinup.go in the host-service.
+  trap cleanup EXIT ERR
 fi
 
 # WhistServer and cookie authentication require that the D-Bus environment variables be set
