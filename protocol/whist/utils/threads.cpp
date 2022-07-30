@@ -8,6 +8,19 @@ extern "C" {
 #include <string>
 #include <memory>
 
+// Include for thread priority
+#if OS_IS(OS_WIN32)
+// Manual Winthread control
+#include <processthreadsapi.h>
+#else
+// Manual pthread control
+#include <pthread.h>
+// setpriority(3) on Linux
+#if OS_IS(OS_LINUX)
+#include <sys/resource.h>
+#endif
+#endif
+
 struct WhistThreadStruct {
     std::string thread_name;
     std::shared_ptr<int> ret_ptr;
@@ -25,16 +38,6 @@ struct WhistThreadStruct {
     }
 };
 
-#if OS_IS(OS_LINUX)
-// Manual pthread control
-#include <pthread.h>
-#endif
-
-void whist_init_multithreading(void) {
-    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
-    SDL_SetHint(SDL_HINT_THREAD_FORCE_REALTIME_TIME_CRITICAL, "1");
-}
-
 WhistThreadID whist_get_thread_id(WhistThread thread) {
     // `thread` == NULL returns the current thread ID
     if (thread == NULL) {
@@ -51,9 +54,6 @@ WhistThread whist_create_thread(WhistThreadFunction thread_function, const char 
     }
     LOG_INFO("Creating thread \"%s\" from thread %lx", thread_name, whist_get_thread_id(NULL));
     WhistThread ret = new WhistThreadStruct(thread_name, thread_function, data);
-    if (ret == NULL) {
-        LOG_FATAL("Failure creating thread: %s", SDL_GetError());
-    }
     LOG_INFO("Created from thread %lx", whist_get_thread_id(NULL));
     return ret;
 }
@@ -82,46 +82,147 @@ void whist_wait_thread(WhistThread thread, int *ret) {
     LOG_INFO("Waited from thread %lx", whist_get_thread_id(NULL));
 }
 
-void whist_set_thread_priority(WhistThreadPriority priority) {
-    // Add in special case handling when trying to set specifically REALTIME on Linux,
-    // As this leads to increased performance
+bool whist_try_set_thread_priority(WhistThreadPriority priority) {
+#if OS_IS(OS_WIN32)
+    int priority_value;
+    if (priority == WHIST_THREAD_PRIORITY_LOW) {
+        priority_value = THREAD_PRIORITY_LOWEST;
+    } else if (priority == WHIST_THREAD_PRIORITY_HIGH) {
+        priority_value = THREAD_PRIORITY_HIGHEST;
+    } else if (priority == WHIST_THREAD_PRIORITY_REALTIME) {
+        priority_value = THREAD_PRIORITY_TIME_CRITICAL;
+    } else {
+        priority_value = THREAD_PRIORITY_NORMAL;
+    }
+    return SetThreadPriority(GetCurrentThread(), priority_value);
+#else
+
+    // Mac/Linux code for setting priority
+
+    struct sched_param sched;
+    int policy;
+    pthread_t thread = pthread_self();
+
+    if (pthread_getschedparam(thread, &policy, &sched) != 0) {
+        LOG_ERROR("pthread_getschedparam(3) failed");
+        return false;
+    }
+
+    /* SDL Comment: Higher priority levels may require changing the pthread scheduler policy
+     * for the thread. */
+    switch (priority) {
+        case WHIST_THREAD_PRIORITY_LOW:
+        case WHIST_THREAD_PRIORITY_NORMAL:
+            policy = SCHED_OTHER;
+            break;
+        case WHIST_THREAD_PRIORITY_HIGH:
+#if OS_IS(OS_MACOS)
+            /* SDL Comment: Apple requires SCHED_RR for high priority threads */
+            policy = SCHED_RR;
+#else
+            policy = SCHED_OTHER;
+#endif
+            break;
+        case WHIST_THREAD_PRIORITY_REALTIME:
+            // WHIST COMMENT:
+            // SDL uses SCHED_OTHER on Linux,
+            // But we use SCHED_RR since it's better
+            policy = SCHED_RR;
+            break;
+        default:
+            LOG_FATAL("Invalid enum value");
+    }
+
 #if OS_IS(OS_LINUX)
-    // Use the highest possible priority for _REALTIME
-    // (SCHED_RR being higher than any possible nice value, which is SCHED_OTHER)
-    if (priority == WHIST_THREAD_PRIORITY_REALTIME) {
-        char err[1024];
-        // Get the identifier for the thread that called this function
-        pthread_t this_thread = pthread_self();
-        struct sched_param params;
-        errno = 0;
-        // Get the maximum possible priority that exists
-        params.sched_priority = sched_get_priority_max(SCHED_RR);
-        // Check for error
-        if (params.sched_priority == -1 && errno != 0) {
-            // Try _HIGH instead of _REALTIME on logged error
-            strerror_r(errno, err, sizeof(err));
-            LOG_ERROR("Failure calling sched_get_priority_max(): %s", err);
-            whist_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
-            return;
+    // SCHED_OTHER requires setpriority(3) on Linux,
+    // pthread_setschedparam(3) won't work.
+    if (policy == SCHED_OTHER) {
+        // Set priority for non-realtime Linux priorities
+        int os_priority;
+        if (priority == WHIST_THREAD_PRIORITY_LOW) {
+            os_priority = 19;
+        } else if (priority == WHIST_THREAD_PRIORITY_HIGH) {
+            os_priority = -10;
+        } else if (priority == WHIST_THREAD_PRIORITY_REALTIME) {
+            os_priority = -20;
+        } else {
+            os_priority = 0;
         }
-        // Set the priority to the maximum possible priority
-        if (pthread_setschedparam(this_thread, SCHED_RR, &params) != 0) {
-            // Try _HIGH instead of _REALTIME on logged error
-            LOG_ERROR("Failure calling pthread_setschedparam()");
-            whist_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
-            return;
+
+        pid_t linux_tid = syscall(SYS_gettid);
+        if (setpriority(PRIO_PROCESS, (id_t)linux_tid, os_priority) == 0) {
+            return true;
+        } else {
+            LOG_ERROR("setpriority(3) failed");
+            return false;
         }
-        return;
     }
 #endif
+
+    // Set priority using pthread_setschedparam(3)
+
+    // Get min/max priority
+    errno = 0;
+    int min_priority = sched_get_priority_min(policy);
+    if (min_priority == -1 && errno != 0) {
+        LOG_ERROR("Failed to get min sched priority");
+        return false;
+    }
+    errno = 0;
+    int max_priority = sched_get_priority_max(policy);
+    // Check for error
+    if (max_priority == -1 && errno != 0) {
+        LOG_ERROR("Failed to get min sched priority");
+        return false;
+    }
+
+    // Update the sched priority struct
+    if (priority == WHIST_THREAD_PRIORITY_LOW) {
+        sched.sched_priority = min_priority;
+    } else if (priority == WHIST_THREAD_PRIORITY_REALTIME) {
+        sched.sched_priority = max_priority;
+    } else {
+        // Apple-specific code
+        if (OS_IS(OS_MACOS) && min_priority == 15 && max_priority == 47) {
+            /* Apple has a specific set of thread priorities */
+            if (priority == WHIST_THREAD_PRIORITY_HIGH) {
+                sched.sched_priority = 45;
+            } else {
+                sched.sched_priority = 37;
+            }
+        } else {
+            // Use WHIST_THREAD_PRIORITY_NORMAL = 50% priority
+            // And WHIST_THREAD_PRIORITY_HIGH = 75% priority
+            sched.sched_priority = (min_priority + (max_priority - min_priority) / 2);
+            if (priority == WHIST_THREAD_PRIORITY_HIGH) {
+                sched.sched_priority += ((max_priority - min_priority) / 4);
+            }
+        }
+    }
+
+    // Update the priority, and return success code
+    if (pthread_setschedparam(thread, policy, &sched) == 0) {
+        return true;
+    } else {
+        LOG_ERROR("pthread_setschedparam(3) failed");
+        return false;
+    }
+#endif /* Not windows */
+}
+
+void whist_set_thread_priority(WhistThreadPriority priority) {
     // This is the general cross-platform way, so that
     // we can set any thread priority on any operating system
-    if (SDL_SetThreadPriority((SDL_ThreadPriority)priority) < 0) {
-        LOG_ERROR("Failure setting thread priority: %s", SDL_GetError());
+    if (!whist_try_set_thread_priority(priority)) {
+        LOG_ERROR("Failure setting thread priority to: %d", (int)priority);
         if (priority == WHIST_THREAD_PRIORITY_REALTIME) {
             // REALTIME requires sudo/admin on unix/windows.
             // So, if we fail to set the REALTIME priority, we should at least try _HIGH
-            whist_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
+            if (!whist_try_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH)) {
+                LOG_ERROR("Setting thread priority to REALTIME failed, and HIGH failed as well!");
+            } else {
+                LOG_INFO("REALTIME priority has fallen back to HIGH priority");
+            }
         }
     }
 }

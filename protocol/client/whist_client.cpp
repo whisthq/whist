@@ -137,10 +137,10 @@ static void sync_keyboard_state(WhistFrontend* frontend) {
     }
 
     // Handle keys and state not tracked by key_state.
-    wcmsg.keyboard_state.state[FK_LGUI] = !!(mod_state & KMOD_LGUI);
-    wcmsg.keyboard_state.state[FK_RGUI] = !!(mod_state & KMOD_RGUI);
-    wcmsg.keyboard_state.caps_lock = !!(mod_state & KMOD_CAPS);
-    wcmsg.keyboard_state.num_lock = !!(mod_state & KMOD_NUM);
+    wcmsg.keyboard_state.state[FK_LGUI] = !!(mod_state & MOD_LGUI);
+    wcmsg.keyboard_state.state[FK_RGUI] = !!(mod_state & MOD_RGUI);
+    wcmsg.keyboard_state.caps_lock = !!(mod_state & MOD_CAPS);
+    wcmsg.keyboard_state.num_lock = !!(mod_state & MOD_NUM);
     wcmsg.keyboard_state.active_pinch = active_pinch;
 
     // Grabs the keyboard layout as well

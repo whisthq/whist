@@ -8,6 +8,7 @@
 
 #include <whist/core/platform.h>
 
+/*
 // So that SDL sees symbols such as memcpy
 #if OS_IS(OS_WIN32)
 #include <windows.h>
@@ -18,6 +19,9 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_thread.h>
+*/
+
+#include <stdint.h>
 #include <stdbool.h>
 
 /**
@@ -75,20 +79,20 @@ typedef enum WhistThreadPriority {
      * Threads with this priority will generally run after other
      * threads, but should still get some time to run.
      */
-    WHIST_THREAD_PRIORITY_LOW = SDL_THREAD_PRIORITY_LOW,
+    WHIST_THREAD_PRIORITY_LOW,
     /**
      * Normal priority.
      *
      * This is the default for newly-created threads.
      */
-    WHIST_THREAD_PRIORITY_NORMAL = SDL_THREAD_PRIORITY_NORMAL,
+    WHIST_THREAD_PRIORITY_NORMAL,
     /**
      * High priority.
      *
      * Threads with this priority will generally run before other
      * threads, but all will still get some chance to run.
      */
-    WHIST_THREAD_PRIORITY_HIGH = SDL_THREAD_PRIORITY_HIGH,
+    WHIST_THREAD_PRIORITY_HIGH,
     /**
      * Real-time priority.
      *
@@ -97,7 +101,7 @@ typedef enum WhistThreadPriority {
      * proportion of time sleeping, as it can prevent other threads (and
      * processes) from running indefinitely.
      */
-    WHIST_THREAD_PRIORITY_REALTIME = SDL_THREAD_PRIORITY_TIME_CRITICAL
+    WHIST_THREAD_PRIORITY_REALTIME,
 } WhistThreadPriority;
 
 /**
@@ -114,13 +118,6 @@ typedef unsigned int WhistThreadLocalStorageKey;
  * Thread-local storage cleanup functions must match this signature.
  */
 typedef void (*WhistThreadLocalStorageDestructor)(void*);
-
-/**
- * Initialize threading.
- *
- * This must be called before any threads are created.
- */
-void whist_init_multithreading(void);
 
 /**
  * Create a new thread.
