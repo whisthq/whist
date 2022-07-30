@@ -14,7 +14,6 @@ on:
     branches:
       - prod
       - staging
-      - phil/chromium-deploy # TODO: FOR TESTING, DELETE ONCE DONE
     paths-ignore:
       - "README.md"
       - "**/README.md"
@@ -99,22 +98,20 @@ jobs:
       - name: Detect Whether to Publish the Job(s) or Not
         id: detect-publish
         run: |
-          # TODO JUST FOR TESTING
-          branch="dev"
-          # trap 'echo "::error::Command '\''$BASH_COMMAND'\'' exited with code $?"' ERR
+          trap 'echo "::error::Command '\''$BASH_COMMAND'\'' exited with code $?"' ERR
 
-          # ref="${{ github.ref }}"
-          # target="${{ steps.set-deploy-environment.outputs.environment }}"
+          ref="${{ github.ref }}"
+          target="${{ steps.set-deploy-environment.outputs.environment }}"
 
-          # case "$ref" in
-          #   *prod|*staging|*dev)
-          #     # Get the short branch name for dev, staging, and
-          #     # prod by stripping away any leading characters. For
-          #     # example, "/refs/heads/dev" becomes "dev".
-          #     branch="${ref##*/}" ;;
-          #   *)
-          #       branch="$ref" ;;
-          # esac
+          case "$ref" in
+            *prod|*staging|*dev)
+              # Get the short branch name for dev, staging, and
+              # prod by stripping away any leading characters. For
+              # example, "/refs/heads/dev" becomes "dev".
+              branch="${ref##*/}" ;;
+            *)
+                branch="$ref" ;;
+          esac
 
           # We are only allowed to deploy a branch to its corresponding
           # target deployment environment. In other words, we can only
@@ -173,9 +170,6 @@ jobs:
     runs-on: ubuntu-20.04
     concurrency: auth0-deploy-rules-${{ github.ref }}
     needs: [whist-publish-build-config]
-
-    # TODO JUST FOR TESTING
-    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -250,9 +244,6 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
 
-    # TODO JUST FOR TESTING
-    if: false
-
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
@@ -324,10 +315,6 @@ jobs:
     needs: [whist-publish-build-config]
     concurrency: mandelboxes-publish-ghcr-${{ github.ref }}
     uses: ./.github/workflows/mandelboxes-publish-ghcr.yml
-
-    # TODO JUST FOR TESTING
-    if: false
-
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
@@ -356,9 +343,6 @@ jobs:
     needs: [whist-publish-build-config, terraform-deploy]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
-
-    # TODO JUST FOR TESTING
-    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -615,14 +599,12 @@ jobs:
       new_dev_rc_version: ${{ steps.generate-release-version.outputs.new_dev_rc_version }}
 
     # Only run whist-browser deployment if none of the previous steps failed
-    # if: |
-    #   always() &&
-    #   (needs.scaling-service-deploy.result == 'success') &&
-    #   (needs.auth0-deploy-rules.result == 'success') &&
-    #   (needs.mandelboxes-publish-ghcr.result == 'success') &&
-    #   (needs.amis-publish-aws.result == 'success')
-    # TODO JUST FOR TESTING
-    if: always()
+    if: |
+      always() &&
+      (needs.scaling-service-deploy.result == 'success') &&
+      (needs.auth0-deploy-rules.result == 'success') &&
+      (needs.mandelboxes-publish-ghcr.result == 'success') &&
+      (needs.amis-publish-aws.result == 'success')
 
     steps:
       - name: Checkout Git Repository
@@ -739,9 +721,7 @@ jobs:
       ]
 
     # Only run whist-browser deployment if none of the previous steps failed
-    # if: always() && (needs.whist-browser-retrieve-version-number.result == 'success')
-    # TODO JUST FOR TESTING
-    if: always()
+    if: always() && (needs.whist-browser-retrieve-version-number.result == 'success')
 
     strategy:
       matrix:
