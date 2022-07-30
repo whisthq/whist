@@ -1,3 +1,21 @@
+# ------------------------------ Policies for macOS Whist Chromium Browser ------------------------------ #
+
+resource "aws_s3_bucket_public_access_block" "whist-browser-macos-arm64" {
+  bucket                  = aws_s3_bucket.whist-browser-macos-arm64.id
+  block_public_acls       = false
+  block_public_policy     = false
+  restrict_public_buckets = false
+  ignore_public_acls      = false
+}
+
+resource "aws_s3_bucket_public_access_block" "whist-browser-macos-x64" {
+  bucket                  = aws_s3_bucket.whist-browser-macos-x64.id
+  block_public_acls       = false
+  block_public_policy     = false
+  restrict_public_buckets = false
+  ignore_public_acls      = false
+}
+
 # ------------------------------ Policies for assets ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-brand-assets" {
@@ -70,6 +88,28 @@ resource "aws_s3_bucket_public_access_block" "whist-terraform-state" {
 }
 
 # ------------------------------ Configure server side encryption ------------------------------ #
+
+# macOS Chromium Browser buckets encryption
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-browser-macos-arm64-encryption" {
+  bucket = aws_s3_bucket.whist-browser-macos-arm64.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-browser-macos-x64-encryption" {
+  bucket = aws_s3_bucket.whist-browser-macos-x64.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
 
 # Assets buckets encryption
 

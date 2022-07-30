@@ -1,3 +1,27 @@
+# ------------------------------ Buckets for macOS Whist Chromium Browser ------------------------------ #
+
+# Bucket for storing Chromium builds for macOS (arm64)
+resource "aws_s3_bucket" "whist-browser-macos-arm64" {
+  bucket = "whist-browser-macos-arm64-${var.env}"
+
+  tags = {
+    Name      = "whist-browser-macos-arm64-${var.env}"
+    Env       = var.env
+    Terraform = true
+  }
+}
+
+# Bucket for storing Chromium builds for macOS (x64)
+resource "aws_s3_bucket" "whist-browser-macos-x64" {
+  bucket = "whist-browser-macos-x64-${var.env}"
+
+  tags = {
+    Name      = "whist-browser-macos-x64-${var.env}"
+    Env       = var.env
+    Terraform = true
+  }
+}
+
 # ------------------------------ Buckets for Whist assets ------------------------------ #
 
 # Bucket for storing general Whist brand assets
