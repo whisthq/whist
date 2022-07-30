@@ -868,7 +868,7 @@ static bool files_are_equal(const char* file_name, const char* file_name_other) 
 // Does a single file transfer to test the following - whether file synchronizer can initialize
 // properly, whether file metadata is set correctly, if linked list is maintained properly, and if
 // file read and write happens successfully.
-TEST_F(ProtocolTest, FileSynchronizerTestSingleTransfer) {
+static void file_synchronizer_test_single_file_transfer() {
     // Init file synchronizer with noop so we write the file locally to the working directory
     init_file_synchronizer(FILE_TRANSFER_DEFAULT);
 
@@ -936,7 +936,7 @@ TEST_F(ProtocolTest, FileSynchronizerTestSingleTransfer) {
 // Allow the file synchronizer to run multiple files through. Replicate the action seen on
 // both client and server ends and ensure that the transferring files list is correct at all
 // times and that the files are transferred correctly by checking their equality.
-TEST_F(ProtocolTest, FileSynchronizerMultipleFileTransfer) {
+static void file_synchronizer_test_multiple_file_transfer() {
     // Since FILE_TRANSFER_DEFAULT is on, writes are saved to '.'
     const int num_files = 3;
     const char* read_files[] = {
@@ -1006,6 +1006,12 @@ TEST_F(ProtocolTest, FileSynchronizerMultipleFileTransfer) {
     }
 
     destroy_file_synchronizer();
+}
+
+// Test sinle file transfer, then multiple file transfer.
+TEST_F(ProtocolTest, FileSynchronizerFileTransfer) {
+    file_synchronizer_test_single_file_transfer();
+    file_synchronizer_test_multiple_file_transfer();
 }
 
 // Tests the reset all method - should completely clear transferring files even in the middle of
