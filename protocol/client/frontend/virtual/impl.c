@@ -332,16 +332,16 @@ void virtual_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_sta
     // Setting the mod_state for GUI keys, CAPS LOCK and NUM LOCK alone as the caller is interested
     // in only those flags
     if (context->key_state[FK_LGUI]) {
-        actual_mod_state |= KMOD_LGUI;
+        actual_mod_state |= MOD_LGUI;
     }
     if (context->key_state[FK_RGUI]) {
-        actual_mod_state |= KMOD_RGUI;
+        actual_mod_state |= MOD_RGUI;
     }
     if (context->key_state[FK_CAPSLOCK]) {
-        actual_mod_state |= KMOD_CAPS;
+        actual_mod_state |= MOD_CAPS;
     }
     if (context->key_state[FK_NUMLOCK]) {
-        actual_mod_state |= KMOD_NUM;
+        actual_mod_state |= MOD_NUM;
     }
     *mod_state = actual_mod_state;
 }
