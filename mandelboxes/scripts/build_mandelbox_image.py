@@ -6,7 +6,6 @@
 # If --all is passed in, all image paths in the repo will be built
 
 import argparse
-import os
 import re
 import subprocess
 import sys
