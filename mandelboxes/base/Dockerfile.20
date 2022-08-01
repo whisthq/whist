@@ -12,9 +12,8 @@
 ARG BuildAssetPackage "protocol"
 
 # This build-arg is added by the build script and is
-# either "dummy" or "nvidia" based on the presence of
-# a NOGPU flag on the host.
-ARG DisplayDriver "nvidia"
+# either "dummy" or "nvidia".
+ARG DisplayDriver "dummy"
 
 FROM whist/build-assets:$BuildAssetPackage as build-assets
 
@@ -371,7 +370,7 @@ COPY input/Xmodmap $HYDRAULIC_ROOT/root/.Xmodmap
 # Display
 #########################
 
-ARG DisplayDriver "nvidia"
+ARG DisplayDriver "dummy"
 
 # Copy correct configuration for X11 display based on existence of GPU
 COPY display/whist-${DisplayDriver}-display.conf $HYDRAULIC_ROOT/usr/share/X11/xorg.conf.d/01-whist-display.conf
@@ -695,7 +694,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 COPY --from=nvidia-grid-driver /dist /
-ENV NOGPU false
+ENV GPU true
 
 #########################
 # Non-GPU environment setup
@@ -703,7 +702,7 @@ ENV NOGPU false
 #########################
 
 FROM whist-base-pre-graphics as whist-base-dummy
-ENV NOGPU true
+ENV GPU false
 
 #########################
 # Display

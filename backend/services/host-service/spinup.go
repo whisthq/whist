@@ -114,7 +114,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		}
 
 		// CI does not have GPUs
-		if !metadata.IsRunningInCI() && !metadata.IsNonGPU() {
+		if !metadata.IsRunningInCI() && metadata.IsGPU() {
 			if err := mandelbox.AssignGPU(); err != nil {
 				return utils.MakeError("error assigning GPU: %s", err)
 			}
@@ -167,7 +167,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	}
 
 	// Add additional env variables if host is using GPU
-	if !metadata.IsNonGPU() {
+	if metadata.IsGPU() {
 		envs = append(envs, utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"))
 		envs = append(envs, "NVIDIA_DRIVER_CAPABILITIES=all")
 	}

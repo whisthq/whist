@@ -104,10 +104,10 @@ func IsRunningInCI() bool {
 	}
 }
 
-// IsNonGPU returns true if the host-service is running on a host without
+// IsGPU returns true if the host-service is running on a host with
 // a GPU and false otherwise.
-func IsNonGPU() bool {
-	strNonGPU := strings.ToLower(os.Getenv("NOGPU"))
+func IsGPU() bool {
+	strNonGPU := strings.ToLower(os.Getenv("GPU"))
 	switch strNonGPU {
 	case "1", "yes", "true", "on", "yep":
 		return true

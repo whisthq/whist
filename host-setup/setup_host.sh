@@ -33,7 +33,7 @@ mandelboxes.
 To set up the host for local development, pass in the --localdevelopment flag.
 To set it up for deployments, pass in the --deployment flag, followed by the
 arguments described in the comment for \`deployment_setup_steps\`.
-To set up the host for non-GPU usage, add the --nogpu flag to any existing
+To set up the host for GPU usage, add the --gpu flag to any existing
 arguments.
 EOF
   # We set a nonzero exit code so that CI doesn't accidentally only run `usage` and think it succeeded.
@@ -205,7 +205,7 @@ common_steps () {
   # on an AWS EC2 instance, which have awscli automatically configured
   sudo apt-get install -y awscli
 
-  if [[ -z "$NOGPU" ]]; then
+  if [[ "$GPU" == "true" ]]; then
     install_nvidia_drivers
     install_nvidia_docker
   fi
@@ -236,10 +236,10 @@ common_steps () {
   sudo cp docker-daemon-config/seccomp.json /etc/docker/seccomp.json
 
   # Set runtime based on GPU presence
-  if [[ -z "$NOGPU" ]]; then
+  if [[ "$GPU" == "true" ]]; then
     sudo cp docker-daemon-config/nvidia-daemon.json /etc/docker/daemon.json
+    echo "export GPU=true" >> "$HOME"/.bashrc
   else
-    echo "export NOGPU=true" >> "$HOME"/.bashrc
     sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
   fi
 
@@ -301,7 +301,7 @@ common_steps () {
   sudo sh -c "echo 'fs.inotify.max_user_instances=2048' >> /etc/sysctl.conf" # default=128
   sudo sysctl -p
 
-  if [[ -z "$NOGPU" ]]; then
+  if [[ "$GPU" == "true" ]]; then
     install_nvidia_persistence_daemon
   fi
 }
@@ -453,18 +453,18 @@ common_steps_post () {
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but it looks like getopt
 # chokes without them.
-TEMP=$(getopt -o hld --long help,usage,localdevelopment,deployment,nogpu,ng -n 'setup_host.sh' -- "$@")
+TEMP=$(getopt -o hldg --long help,usage,localdevelopment,deployment,gpu -n 'setup_host.sh' -- "$@")
 eval set -- "$TEMP"
 
 LOCAL_DEVELOPMENT=
 DEPLOYMENT=
-NOGPU=
+GPU=
 while true; do
   case "$1" in
     -h | --help | --usage) usage ;;
     -l | --localdevelopment ) LOCAL_DEVELOPMENT=true; shift ;;
     -d | --deployment ) DEPLOYMENT=true; shift ;;
-    --ng | --nogpu ) NOGPU=true; shift ;;
+    -g | --gpu ) GPU=true; shift ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
@@ -479,8 +479,8 @@ if [[ -n "$LOCAL_DEVELOPMENT" && -n "$DEPLOYMENT" ]]; then
   exit 1
 fi
 
-if [[ -n "$NOGPU" ]]; then
-  printf "Setting up for non-GPU host...\n"
+if [[ "$GPU" == "true" ]]; then
+  printf "Setting up for GPU host...\n"
 fi
 
 if [[ -n "$LOCAL_DEVELOPMENT" ]]; then
