@@ -73,6 +73,14 @@ type ExtensionSettings string
 // ExtensionState is a json file containing user extension state.
 type ExtensionState string
 
+type (
+	InstanceID      string
+	InstanceName    string
+	ImageID         string
+	InstanceType    string
+	PlacementRegion string
+)
+
 // Custom type methods
 
 // String is a utility function to return the string representation of a MandelboxID.

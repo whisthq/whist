@@ -17,11 +17,10 @@ import (
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/metadata"
-	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/types"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
-	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 var testMandelboxChrome mandelbox.Mandelbox
@@ -158,7 +157,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	goroutineTracker := sync.WaitGroup{}
 
 	var (
-		instanceID    aws.InstanceID
+		instanceID    types.InstanceID
 		testMandelbox mandelbox.Mandelbox
 		userID        mandelboxtypes.UserID
 		err           error
@@ -167,10 +166,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	if metadata.IsRunningInCI() {
 		userID = "localdev_host_service_CI"
 	} else {
-		instanceID, err = aws.GetInstanceID()
-		if err != nil {
-			logger.Errorf("can't get AWS Instance name for localdev user config userID")
-		}
+		instanceID = metadata.CloudMetadata.GetInstanceID()
 		userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceID))
 	}
 

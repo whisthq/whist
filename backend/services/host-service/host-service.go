@@ -51,7 +51,6 @@ import (
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/metadata"
-	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -199,10 +198,7 @@ func monitorWaitingMandelboxes(globalCtx context.Context, globalCancel context.C
 		return nil
 	}
 
-	instanceID, err := aws.GetInstanceID()
-	if err != nil {
-		return utils.MakeError("couldn't get instance name: %s", err)
-	}
+	instanceID := metadata.CloudMetadata.GetInstanceID()
 
 	capacity, err := dbdriver.GetInstanceCapacity(string(instanceID))
 	if err != nil {
@@ -371,10 +367,7 @@ func uninitializeFilesystem() {
 
 func main() {
 	// Set Sentry tags
-	tags, err := aws.GetAWSMetadata()
-	if err != nil {
-		logger.Errorf("failed to set Sentry tags: %s", err)
-	}
+	tags, err := metadata.CloudMetadata.GetMetadata()
 	logger.AddSentryTags(tags)
 
 	// Add some additional fields for Logz.io
@@ -479,11 +472,7 @@ func main() {
 	}
 
 	// Log the instance name we're running on
-	instanceName, err := aws.GetInstanceName()
-	if err != nil {
-		hostStartupErr = multierror.Append(hostStartupErr, err)
-		globalCancel()
-	}
+	instanceName := metadata.CloudMetadata.GetInstanceName()
 	logger.Infof("Running on instance name: %s", instanceName)
 
 	if err = initializeAppArmor(); err != nil {
@@ -512,11 +501,7 @@ func main() {
 	}
 
 	// Start database subscription client
-	instanceID, err := aws.GetInstanceID()
-	if err != nil {
-		logger.Errorf("can't get AWS Instance Name: %s", err)
-		metrics.Increment("ErrorRate")
-	}
+	instanceID := metadata.CloudMetadata.GetInstanceID()
 
 	capacity, err := dbdriver.GetInstanceCapacity(string(instanceID))
 	if err != nil {
@@ -674,17 +659,8 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					// postgres database on the development instance.
 					jsonReq := serverevent
 
-					userID, err := metadata.GetUserID()
-					if err != nil {
-						logger.Errorf("error getting userID, %s", err)
-						metrics.Increment("ErrorRate")
-					}
-
-					instanceID, err := aws.GetInstanceID()
-					if err != nil {
-						logger.Errorf("error getting instance name from AWS, %s", err)
-						metrics.Increment("ErrorRate")
-					}
+					userID := metadata.CloudMetadata.GetUserID()
+					instanceID := metadata.CloudMetadata.GetInstanceID()
 
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{

@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v4"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver/queries"
-	"github.com/whisthq/whist/backend/services/metadata/aws"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -105,10 +105,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 	// Safe to do even if committed -- see tx.Rollback() docs.
 	defer tx.Rollback(context.Background())
 
-	instanceID, err := aws.GetInstanceID()
-	if err != nil {
-		return utils.MakeError("couldn't verify mandelbox %s for user %s: couldn't get instance name: %s", mandelboxID, userID, err)
-	}
+	instanceID := metadata.CloudMetadata.GetInstanceID()
 
 	q := queries.NewQuerier(tx)
 	rows, err := q.FindMandelboxByID(context.Background(), mandelboxID.String())
