@@ -29,31 +29,49 @@ func GenerateCloudMetadataRetriever() error {
 		Timeout: 1 * time.Second,
 	}
 
-	// First, try to ping the AWS metadata endpoint
+	var (
+		awsChan = make(chan error)
+		gcpChan = make(chan error)
+	)
+
+	// Try to ping the AWS metadata endpoint
 	url := aws.EndpointBase + "/instance-id"
 	resp, err := httpClient.Get(url)
-	defer resp.Body.Close()
-	if err == nil {
-		CloudMetadata = &aws.Metadata{}
-		return nil
-	}
-	// logger.Warningf("error retrieving data from URL %s: %s", url, err)
+	awsChan <- err
+	resp.Body.Close()
 
-	// If the ping to AWS fails, try the GCP metadata endpoint
+	// Try to ping the GCP metadata endpoint
 	url = gcp.EndpointBase + "/instance-id"
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		CloudMetadata = &gcp.Metadata{}
 		return utils.MakeError("failed to create request for GCP endpoint: %s", err)
 	}
-	req.Header.Add("Metadata-Flavor", "Google")
 
+	// Add necessary headers and send the request
+	req.Header.Add("Metadata-Flavor", "Google")
 	resp, err = httpClient.Do(req)
-	defer resp.Body.Close()
-	if err == nil {
-		return nil
+	gcpChan <- err
+	resp.Body.Close()
+
+	// This select will block until any request to the cloud providers
+	// metadata endpoint (or an error) completes. This way we the host
+	// service can "know" on which cloud provider its running and start
+	// querying for the relevant metadata.
+	select {
+	case err := <-awsChan:
+		if err != nil {
+			CloudMetadata = &aws.Metadata{}
+			return nil
+		}
+	case err := <-gcpChan:
+		if err != nil {
+			CloudMetadata = &gcp.Metadata{}
+			return nil
+		}
+	default:
+		return utils.MakeError("no supported metadata endpoint")
 	}
-	// logger.Warningf("error retrieving data from URL %s: %s", url, err)
 
 	return nil
 }

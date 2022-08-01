@@ -50,10 +50,10 @@ func (gc *Metadata) GetUserID() types.UserID {
 }
 
 func (gc *Metadata) GetMetadata() (map[string]string, error) {
-	return map[string]string{}, nil
+	return nil, nil
 }
 
-func generateGCPMetadataRetriever(path string) func() (string, error) {
+func metadataRetriever(path string) func() (string, error) {
 	httpClient := http.Client{
 		Timeout: 1 * time.Second,
 	}
