@@ -154,10 +154,10 @@ typedef enum WhistKeymod {
     MOD_RCTRL = 0x0080,   ///< `RIGHT CONTROL` is currently active.
     MOD_LALT = 0x0100,    ///< `LEFT ALT` is currently active.
     MOD_RALT = 0x0200,    ///< `RIGHT ALT` is currently active.
+    MOD_LGUI = 0x0400,    ///< `LEFT GUI` is currently active.
+    MOD_RGUI = 0x0800,    ///< `RIGHT GUI` is currently active.
     MOD_NUM = 0x1000,     ///< `NUMLOCK` is currently active.
     MOD_CAPS = 0x2000,    ///< `CAPSLOCK` is currently active.
-    MOD_LGUI = 0x4000,    ///< `LEFT GUI` is currently active.
-    MOD_RGUI = 0x8000,    ///< `RIGHT GUI` is currently active.
 } WhistKeymod;
 
 /**
