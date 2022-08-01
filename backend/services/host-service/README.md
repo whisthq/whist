@@ -16,14 +16,14 @@ Note that you can test the host-service with different environment configuration
 
 ### Running Chrome with a development instance
 
-There are two ways of running development mandelboxes on the host-service. The first is to start the mandelboxes directly on your development instance and connect via the Whist protocol directly, and the second is to connect a local Whist application on your machine to the host-service on your development instance. The instructions below assume you have already gone through the [host-setup README](https://github.com/whisthq/whist/blob/dev/host-setup/README.md#setting-up-a-development-instance) and built the `browsers/chrome` image on your dev instance.
+There are two ways of running development mandelboxes on the host-service. The first is to start the mandelboxes directly on your development instance and connect via the Whist protocol directly, and the second is to connect a local Whist application on your machine to the host-service on your development instance. The instructions below assume you have already gone through the [host-setup README](https://github.com/whisthq/whist/blob/dev/host-setup/README.md#setting-up-a-development-instance) and built the `browsers/whist` image on your dev instance.
 
 #### Connecting with the protocol client
 
 1. Start your instance, ssh into it and go to `~/whist/backend/services`, then run `make run_host_service`.
-2. Once you see the host enter the event loop, open another terminal window, ssh into your instance, go to `~/whist/mandelboxes` and run `./build.sh browsers/chrome && ./run.sh browsers/chrome`. This should build and start a Chrome mandelbox, and you should see the output give a command to run the protocol client on your machine.
+2. Once you see the host enter the event loop, open another terminal window, ssh into your instance, go to `~/whist/mandelboxes` and run `./build.sh browsers/whist && ./run.sh browsers/whist`. This should build and start a Whist mandelbox, and you should see the output give a command to run the protocol client on your machine.
 3. Run the protocol client on your local machine (follow the [protocol README](../protocol/README.md#building-the-protocol)).
-4. You should see a Chrome window open on your machine!
+4. You should see a Whist window open on your machine!
 
 ### Working with the JSON transport endpoint
 

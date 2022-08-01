@@ -448,7 +448,6 @@ jobs:
     needs: [whist-publish-build-config, terraform-deploy]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
-
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3

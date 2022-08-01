@@ -1,0 +1,82 @@
+# See stage 0 of the base Dockerfile for an explanation of this build stage.
+ARG BuildAssetPackage "protocol"
+FROM whist/build-assets:$BuildAssetPackage as build-assets
+
+#########################################################
+# Whist Build Stage
+#########################################################
+
+FROM whisthq/browsers/base-chromium:current-build as whist-browsers-whist
+
+ARG InstallBeta="false"
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+# Install Whist Browser dependencies explicitly
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    apt-transport-https \
+    curl \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download Whist Browser installer
+RUN if [[ "$InstallBeta" == "true" ]] ; then curl -s https://s3.amazonaws.com/whist-browser-linux-x64-staging/whist-browser-linux-x64-staging.tar.gz | tar -xz ; \
+    else curl -s https://s3.amazonaws.com/whist-browser-linux-x64-prod/whist-browser-linux-x64-prod.tar.gz | tar -xz ; fi
+
+# Move it to the right location
+RUN if [[ "$InstallBeta" == "true" ]] ; then echo "Installing Whist (beta)" && chmod +x whist-browser-beta && mv whist-browser-beta /etc/opt/whist-browser-beta ; \
+    else echo "Installing Whist (stable)" && chmod +x whist-browser && mv whist-browser /etc/opt/whist-browser ; fi
+
+# Set default browser
+RUN su - whist -c \
+    "xdg-mime default whist-browser.desktop text/html \
+    && xdg-mime default whist-browser.desktop x-scheme-handler/http \
+    && xdg-mime default whist-browser.desktop x-scheme-handler/https \
+    && xdg-mime default whist-browser.desktop x-scheme-handler/about"
+
+# Configure Whist Policies
+# For details regarding the options, see:
+# https://gist.github.com/meets2tarun/2161e544f4c458c2f07641cafbdd186d
+RUN mkdir -p /etc/opt/whist/policies/managed \
+    && echo {} \
+    # Whitelist streamed URI protocols (zoommtg,slack,spotify,discord)
+    | jq '.URLWhitelist=["zoommtg://*","slack://*","spotify://*","discord://*"]' \
+    # Disable search suggestions (not necessary since URL bar is local in cloud-hybrid model)
+    | jq '.SearchSuggestEnabled=false' \
+    # Disable background apps (to prevent apps like Superhuman from
+    # indefinitely blocking mandelbox shutdown).
+    | jq '.BackgroundModeEnabled=false' \
+    > /etc/opt/whist/policies/managed/WhistPolicies.json
+
+# Configure teleport extension and native messaging
+RUN mkdir -p /etc/opt/whist/native-messaging-hosts \
+    && echo {} \
+    | jq '.name="whist_teleport_extension_host"' \
+    | jq '.description="Whist Teleport Chromium Extension Host"' \
+    | jq '.path="/opt/teleport/chrome-extension-host"' \
+    | jq '.type="stdio"' \
+    # This ID is a hash of the path to the Teleport Chrome extension.
+    # It will need to be updated if the path ever changes.
+    | jq '.allowed_origins[0]="chrome-extension://gilacbinnkddlokepdofmojhijgileoj/"' \
+    > /etc/opt/whist/native-messaging-hosts/whist_teleport_extension_host.json
+
+# Create default config paths
+# Don't show first run popup
+RUN mkdir -p /home/whist/.config/Whist/Whist-Browser \
+    && touch /home/whist/.config/Whist/Whist-Browser/'First Run' \
+    && chown whist:whist /home/whist/.config/Whist/Whist-Browser{,/'First Run'}
+
+ENV WHIST_DEST_BROWSER="whist"
+
+# Install handle to browser program to be able to open a new tab from the protocol
+RUN ln -sf /usr/bin/whist-browser /usr/bin/whist-open-new-tab
+
+# Create the Whist preferences config file if it doesn't exist
+RUN mkdir -p /home/whist/.config/Whist/Whist-Browser/Default \
+    && touch /home/whist/.config/Whist/Whist-Browser/Default/Preferences \
+    && chown whist:whist /home/whist/.config/Whist/Whist-Browser/Default/Preferences
+
+# If needed, install WhistServer and helpers. Must be last step.
+COPY --from=build-assets protocol/* /usr/share/whist/

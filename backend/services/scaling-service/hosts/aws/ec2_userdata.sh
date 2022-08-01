@@ -56,13 +56,13 @@ pull_docker_images() {
   # Login with docker
   echo "$GH_PAT" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
 
-  # Pull Docker images for Chrome directly to the ephemeral volume
-  # Replace `chrome` to pull the image of a different browser.
-  pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/whistium"
-  pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
+  # Pull Docker images for Whist directly to the ephemeral volume
+  # Replace `whistium` to pull the image of a different browser (i.e. `chrome`).
+  pull_image_base_browser="ghcr.io/whisthq/$GIT_BRANCH/browsers/whistium"
+  pull_image_browser="$pull_image_base_browser:$GIT_HASH"
 
-  docker pull "$pull_image_chrome"
-  docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
+  docker pull "$pull_image_browser"
+  docker tag "$pull_image_browser" "$pull_image_base_browser:current-build"
 }
 
 cd /home/ubuntu

@@ -147,7 +147,7 @@ def setup_process(role, args_dict):
 
 def get_mandelbox_name(role):
     """
-    Get the default mandelbox name for the server (browsers/chrome) and the client (development/client)
+    Get the default mandelbox name for the server (browsers/whist) and the client (development/client)
 
     Args:
         role (str): Specifies whether we need the server or client mandelbox
@@ -155,14 +155,14 @@ def get_mandelbox_name(role):
     Returns:
         mandelbox_name (str): The name of the default mandelbox
     """
-    return "browsers/chrome" if role == "server" else "development/client"
+    return "browsers/whist" if role == "server" else "development/client"
 
 
 def build_mandelboxes_on_instance(
     pexpect_process, pexpect_prompt, cmake_build_type, role, testing_time
 ):
     """
-    Build the Whist mandelboxes (browsers/chrome for the server, development/client for the client) on a
+    Build the Whist mandelboxes (browsers/whist for the server, development/client for the client) on a
     remote machine accessible via a SSH connection within a pexpect process.
 
     The function assumes that the pexpect_process process has already successfully established a
@@ -237,7 +237,7 @@ def run_mandelbox_on_instance(pexpect_process, role, json_data=None, simulate_sc
 
     The function assumes that the pexpect_process process has already successfully established
     a SSH connection to the host, that the Whist repository has already been cloned, and that
-    the browsers/chrome mandelbox has already been built. Further, the host service must be
+    the browsers/whist mandelbox has already been built. Further, the host service must be
     already running on the remote machine.
 
     Args:

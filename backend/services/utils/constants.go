@@ -7,6 +7,13 @@ import "github.com/google/uuid"
 // common denominator --- this package.
 
 var (
+	// This is the application which gets in the mandelboxes. We define it here as a constant since our
+	// backend assumes that it is uniform across the entire system. To change the application, either for
+	// testing or for production, simply change this constant to another Whist mandelbox, like `browsers/chrome`.
+	MandelboxApp string = "browsers/whistium"
+)
+
+var (
 	// Path to the "/whist" directory. Set as a variable instead of a constant
 	// because its value might change if we are using ephemeral storage.
 	WhistDir string = "/whist/"

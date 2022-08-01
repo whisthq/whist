@@ -297,14 +297,14 @@ if __name__ == "__main__":
 
     timestamps.add_event("Starting the host service on the mandelboxes ")
 
-    # 9 - Run the browser/chrome server mandelbox on the server instance
-    # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
+    # 9 - Run the browsers/whist server mandelbox on the server instance
+    # Start SSH connection(s) to the EC2 instance(s) to run the browsers/whist server mandelbox
     server_pexpect_process = attempt_ssh_connection(
         server_cmd,
         server_log,
         pexpect_prompt_server,
     )
-    # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
+    # Launch the browsers/whist server mandelbox, and retrieve the connection configs that
     # we need to pass the client for it to connect
     server_docker_id, server_configs_data = run_mandelbox_on_instance(
         server_pexpect_process, role="server"

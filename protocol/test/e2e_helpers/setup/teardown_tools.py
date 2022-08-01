@@ -105,7 +105,7 @@ def extract_logs_from_mandelbox(
     role,
 ):
     """
-    Extract the logs related to the run of the Whist server/client mandelbox (i.e. browsers/chrome)
+    Extract the logs related to the run of the Whist server/client mandelbox (i.e. browsers/whist)
     on a remote machine. This should be called after the client->server connection has terminated,
     but before the server/client container is stopped/destroyed.
 
@@ -115,7 +115,7 @@ def extract_logs_from_mandelbox(
         pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
                                 ready to execute a command
         docker_id (str):    The Docker ID of the container running the Whist server/client
-                            (browsers/chrome or development/client mandelbox) on the remote machine
+                            (browsers/whist or development/client mandelbox) on the remote machine
         ssh_key_path (str): The path (on the machine where this script is run) to the file storing
                             the public RSA key used for SSH connections
         hostname (str): The host name of the remote machine where the server/client was running on
@@ -229,7 +229,7 @@ def complete_experiment_and_save_results(
     involves:
     - shutting down the WhistClient and WhistServer
     - checking  that the WhistServer exits without hanging
-    - shutting down the client (development/client) and server (browsers/chrome) mandelboxes
+    - shutting down the client (development/client) and server (browsers/whist) mandelboxes
     - restoring the default network conditions on the client instance,
     - extracting the experiment logs from the instance(s)
     - stopping or terminating the EC2 instance(s)
@@ -239,7 +239,7 @@ def complete_experiment_and_save_results(
     Args:
         server_hostname (str):  The host name of the remote machine where the server was running on
         server_instance_id (str):   The ID of the AWS EC2 instance running the server
-        server_docker_id (str): The ID of the Docker container running the server (browsers/chrome) mandelbox
+        server_docker_id (str): The ID of the Docker container running the server (browsers/whist) mandelbox
         server_ssh_cmd (str):   The string containing the command to be used to open a SSH connection to the server EC2 instance
         server_log (file):  The file to be used to dump the server-side monitoring logs
         server_metrics_file (file): The filepath to the file (that we expect to see) containing the server metrics.
