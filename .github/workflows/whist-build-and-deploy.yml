@@ -724,14 +724,17 @@ jobs:
     strategy:
       matrix:
         config:
+          # This builds the client-side macOS Whist Browser
           - target_arch: "x64"
             display_os: "macOS"
             target_os: "macos"
             runner: [self-hosted, macOS, ARM64]
+          # This builds the client-side macOS Whist Browser
           - target_arch: "arm64"
             display_os: "macOS"
             target_os: "macos"
             runner: [self-hosted, macOS, ARM64]
+          # This builds the server-side Linux Whist Browser (running in our mandelboxes)
           - target_arch: "x64"
             display_os: "Linux Ubuntu"
             target_os: "linux"
