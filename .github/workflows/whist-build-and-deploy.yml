@@ -845,8 +845,8 @@ jobs:
       #    sudo apt-get install build-essential python-setuptools python3-distutils pkg-config gperf git gh libxdamage1 libgbm1 libatk1.0-0 awscli libdbus-1-dev
       #    sudo apt-get install libasound2-dev libcurl4-openssl-dev libatk-bridge2.0-0 libxkbcommon-x11-0 libpango-1.0-0 nvidia-cuda-toolkit awscli
       #    sudo snap install cmake --classic
-      # 
-      # Also, the AWS CLI needs to be configured with `aws configure` 
+      #
+      # Also, the AWS CLI needs to be configured with `aws configure`
 
       # See: https://github.com/brave/brave-browser/wiki/Linux-Development-Environment
       - name: Install Linux Ubuntu Brave Browser Dependencies
