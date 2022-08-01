@@ -18,8 +18,8 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-macos-x64" {
 
 # ------------------------- Policy for Linux Server-side Whist Chromium Browser ------------------------- #
 
-resource "aws_s3_bucket_public_access_block" "whist-serverside-browser-linux-x64" {
-  bucket                  = aws_s3_bucket.whist-serverside-browser-linux-x64.id
+resource "aws_s3_bucket_public_access_block" "whist-server-browser-linux-x64" {
+  bucket                  = aws_s3_bucket.whist-server-browser-linux-x64.id
   block_public_acls       = false
   block_public_policy     = false
   restrict_public_buckets = false
@@ -123,8 +123,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-browser-mac
 
 # Linux Server-side Chromium Browser bucket encryption
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-serverside-browser-linux-x64-encryption" {
-  bucket = aws_s3_bucket.whist-serverside-browser-linux-x64.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-server-browser-linux-x64-encryption" {
+  bucket = aws_s3_bucket.whist-server-browser-linux-x64.id
 
   rule {
     apply_server_side_encryption_by_default {

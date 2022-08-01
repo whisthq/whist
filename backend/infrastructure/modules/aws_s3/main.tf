@@ -25,11 +25,11 @@ resource "aws_s3_bucket" "whist-browser-macos-x64" {
 # ------------------------- Bucket for Linux Server-side Whist Chromium Browser ------------------------ #
 
 # Bucket for storing Server-side Chromium builds for Linux Ubuntu (x64)
-resource "aws_s3_bucket" "whist-serverside-browser-linux-x64" {
-  bucket = "whist-serverside-browser-linux-x64-${var.env}"
+resource "aws_s3_bucket" "whist-server-browser-linux-x64" {
+  bucket = "whist-server-browser-linux-x64-${var.env}"
 
   tags = {
-    Name      = "whist-serverside-browser-linux-x64-${var.env}"
+    Name      = "whist-server-browser-linux-x64-${var.env}"
     Env       = var.env
     Terraform = true
   }
