@@ -16,6 +16,16 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-macos-x64" {
   ignore_public_acls      = false
 }
 
+# ------------------------- Policy for Linux Server-side Whist Chromium Browser ------------------------- #
+
+resource "aws_s3_bucket_public_access_block" "whist-server-browser-linux-x64" {
+  bucket                  = aws_s3_bucket.whist-server-browser-linux-x64.id
+  block_public_acls       = false
+  block_public_policy     = false
+  restrict_public_buckets = false
+  ignore_public_acls      = false
+}
+
 # ------------------------------ Policies for assets ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-brand-assets" {
@@ -103,6 +113,18 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-browser-mac
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "whist-browser-macos-x64-encryption" {
   bucket = aws_s3_bucket.whist-browser-macos-x64.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Linux Server-side Chromium Browser bucket encryption
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-server-browser-linux-x64-encryption" {
+  bucket = aws_s3_bucket.whist-server-browser-linux-x64.id
 
   rule {
     apply_server_side_encryption_by_default {
