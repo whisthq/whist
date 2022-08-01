@@ -70,21 +70,19 @@ USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
-PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-out.log
-PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-err.log
-TELEPORT_OUT_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-out.log
-TELEPORT_ERR_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-err.log
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 
 # Read and export the session id, if the file exists
 if [ -f "$SESSION_ID_FILENAME" ]; then
   SESSION_ID=$(cat $SESSION_ID_FILENAME)
   export SESSION_ID
-  PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/protocol_server-out.log
-  PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/protocol_server-err.log
-  TELEPORT_OUT_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/teleport_drag_drop-out.log
-  TELEPORT_ERR_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/teleport_drag_drop-err.log
+  WHIST_LOGS_FOLDER=$WHIST_LOGS_FOLDER/$SESSION_ID
 fi
+
+PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-out.log
+PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-err.log
+TELEPORT_OUT_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-out.log
+TELEPORT_ERR_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-err.log
 
 # Parse options from JSON transport file
 LOCAL_CLIENT=false # true if the frontend is being tested manually by a Whist engineer
@@ -180,6 +178,12 @@ fi
 # Wait for user data to be populated before starting application
 block-until-file-exists.sh $USER_CONFIGS_DIR/.importComplete
 rm $USER_CONFIGS_DIR/.importComplete
+
+WHIST_USER_LOGS_FOLDER=/usr/share/whist
+APPLICATION_OUT_FILENAME=whist_application-out.log
+APPLICATION_ERR_FILENAME=whist_application-err.log
+ln -s $WHIST_USER_LOGS_FOLDER/$APPLICATION_OUT_FILENAME $WHIST_LOGS_FOLDER/$APPLICATION_OUT_FILENAME
+ln -s $WHIST_USER_LOGS_FOLDER/$APPLICATION_ERR_FILENAME $WHIST_LOGS_FOLDER/$APPLICATION_ERR_FILENAME
 
 # Start the application that this mandelbox runs.
 /usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &
