@@ -506,6 +506,8 @@ func TestVerifyRequestTypeNilRequest(t *testing.T) {
 func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "https://localhost", iotest.ErrReader(errors.New("test error")))
+	req.Header.Add("Authorization", "Bearer test_token")
+
 	testJSONTransportRequest := httputils.JSONTransportRequest{
 		ResultChan: make(chan httputils.RequestResult),
 	}
@@ -526,6 +528,8 @@ func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
 func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "https://localhost", bytes.NewReader([]byte{}))
+	req.Header.Add("Authorization", "Bearer test_token")
+
 	testJSONTransportRequest := httputils.JSONTransportRequest{
 		ResultChan: make(chan httputils.RequestResult),
 	}
@@ -558,5 +562,6 @@ func generateTestJSONTransportRequest(requestBody httputils.JSONTransportRequest
 		return nil, utils.MakeError("error creating put request: %v", err)
 	}
 
+	httpRequest.Header.Add("Authorization", "Bearer test_token")
 	return httpRequest, nil
 }

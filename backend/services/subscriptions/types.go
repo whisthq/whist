@@ -17,7 +17,7 @@ type GraphQLQuery interface{}
 // WhistInstance is the mapping of the `whist.hosts` table. This type interacts directly
 // with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
 // operations. For operations that do not interact with the client, use the `Instance` type instead.
-type whistInstance struct {
+type WhistInstance struct {
 	ID                graphql.String   `graphql:"id"`
 	Provider          graphql.String   `graphql:"provider"`
 	Region            graphql.String   `graphql:"region"`
@@ -29,13 +29,13 @@ type whistInstance struct {
 	Status            graphql.String   `graphql:"status"`
 	CreatedAt         time.Time        `graphql:"created_at"`
 	UpdatedAt         time.Time        `graphql:"updated_at"`
-	Mandelboxes       []whistMandelbox `graphql:"mandelboxes"`
+	Mandelboxes       []WhistMandelbox `graphql:"mandelboxes"`
 }
 
 // WhistMandelbox is the mapping of the `whist.mandelboxes` table. This type interacts directly
 // with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
 // operations. For operations that do not interact with the client, use the `Mandelbox` type instead.
-type whistMandelbox struct {
+type WhistMandelbox struct {
 	ID         graphql.String `graphql:"id"`
 	App        graphql.String `graphql:"app"`
 	InstanceID graphql.String `graphql:"instance_id"`
@@ -49,7 +49,7 @@ type whistMandelbox struct {
 // WhistImage is the mapping of the `whist.images` table. This type interacts directly
 // with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
 // operations. For operations that do not interact with the client, use the `Image` type instead.
-type whistImage struct {
+type WhistImage struct {
 	Provider  graphql.String `graphql:"provider"`
 	Region    graphql.String `graphql:"region"`
 	ImageID   graphql.String `graphql:"image_id"`
@@ -57,11 +57,11 @@ type whistImage struct {
 	UpdatedAt time.Time      `graphql:"updated_at"`
 }
 
-// whistFrontendVersion is the mapping of the `desktop_app_version` table on the config database.
+// WhistFrontendVersion is the mapping of the `desktop_app_version` table on the config database.
 // This type interacts directly with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal.
 // Only use for GraphQL operations. For operations that do not interact with the client, use the
 // `ClientAppVersion` type instead.
-type whistFrontendVersion struct {
+type WhistFrontendVersion struct {
 	ID                graphql.Int    `graphql:"id"`
 	Major             graphql.Int    `graphql:"major"`
 	Minor             graphql.Int    `graphql:"minor"`
@@ -204,7 +204,7 @@ type FrontendVersionEvent struct {
 
 // ToInstances converts a result obtained from GraphQL of type `WhistInstance`
 // to a slice of type `Instance` for convenience.
-func ToInstances(dbInstances []whistInstance) []Instance {
+func ToInstances(dbInstances []WhistInstance) []Instance {
 	var instances []Instance
 	for _, instance := range dbInstances {
 		instances = append(instances, Instance{
@@ -227,7 +227,7 @@ func ToInstances(dbInstances []whistInstance) []Instance {
 
 // ToInstances converts a result obtained from GraphQL of type `WhistMandelbox`
 // to a slice of type `Mandelbox` for convenience.
-func ToMandelboxes(dbMandelboxes []whistMandelbox) []Mandelbox {
+func ToMandelboxes(dbMandelboxes []WhistMandelbox) []Mandelbox {
 	var mandelboxes []Mandelbox
 	for _, mandelbox := range dbMandelboxes {
 		mandelboxes = append(mandelboxes, Mandelbox{
@@ -247,7 +247,7 @@ func ToMandelboxes(dbMandelboxes []whistMandelbox) []Mandelbox {
 
 // ToImages converts a result obtained from GraphQL of type `WhistImage`
 // to a slice of type `Image` for convenience.
-func ToImages(dbImages []whistImage) []Image {
+func ToImages(dbImages []WhistImage) []Image {
 	var images []Image
 	for _, image := range dbImages {
 		images = append(images, Image{
@@ -260,4 +260,20 @@ func ToImages(dbImages []whistImage) []Image {
 	}
 
 	return images
+}
+
+// ToFrontendVersion converts a result obtained from GraphQL of type `WhistFrontendVersion`
+// to a type `FrontendVersion` for convenience.
+func ToFrontendVersion(dbVersion WhistFrontendVersion) FrontendVersion {
+	return FrontendVersion{
+		ID:                int(dbVersion.ID),
+		Major:             int(dbVersion.Major),
+		Minor:             int(dbVersion.Minor),
+		Micro:             int(dbVersion.Micro),
+		DevRC:             int(dbVersion.DevRC),
+		StagingRC:         int(dbVersion.StagingRC),
+		DevCommitHash:     string(dbVersion.DevCommitHash),
+		StagingCommitHash: string(dbVersion.StagingCommitHash),
+		ProdCommitHash:    string(dbVersion.ProdCommitHash),
+	}
 }
