@@ -9,6 +9,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
+	"path"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -18,8 +20,12 @@ import (
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
-const EndpointBase = "http://169.254.169.254/latest/meta-data/"
+// EndpointBase is the URL of the metadata endpoint. It is declared as
+// a var for testing convenience.
+var EndpointBase = "http://169.254.169.254/latest/meta-data/"
 
+// Metadata holds all relevant values that can be extracted from the
+// instance's metadata endpoint.
 type Metadata struct {
 	instanceID   types.InstanceID
 	instanceName types.InstanceName
@@ -29,34 +35,44 @@ type Metadata struct {
 	ip           net.IP
 }
 
+// GetImageID returns the ID of the image used to launch the instance.
 func (am *Metadata) GetImageID() types.ImageID {
 	return am.imageID
 }
 
+// GetInstanceID returns the ID of the instance.
 func (am *Metadata) GetInstanceID() types.InstanceID {
 	return am.instanceID
 }
 
+// GetInstanceType returns the type of instance.
 func (am *Metadata) GetInstanceType() types.InstanceType {
 	return am.instanceType
 }
 
+// GetInstanceName returns the name of the instance.
 func (am *Metadata) GetInstanceName() types.InstanceName {
 	return am.instanceName
 }
 
+// GetPlacementRegion returns the name of the region where the instance is located.
 func (am *Metadata) GetPlacementRegion() types.PlacementRegion {
 	return am.region
 }
 
+// GetPublicIpv4 returns the public ip address assigned to the instance.
 func (am *Metadata) GetPublicIpv4() net.IP {
 	return am.ip
 }
 
+// GetUserID returns the user ID.
 func (gc *Metadata) GetUserID() types.UserID {
 	return types.UserID("")
 }
 
+// GetMetadata should be called before trying to get any of the metadata values.
+// This function makes the initial calls to the endpoint and populates the `Metadata`
+// struct.
 func (am *Metadata) GetMetadata() (map[string]string, error) {
 	imageID, err := metadataRetriever("ami-id")
 	if err != nil {
@@ -106,7 +122,8 @@ func (am *Metadata) GetMetadata() (map[string]string, error) {
 	return metadata, nil
 }
 
-func getInstanceName(instanceID string, region string) (string, error) {
+// This function is declared as a variable so it can be mocked on tests.
+var getInstanceName = func(instanceID string, region string) (string, error) {
 	// Initialize general AWS config and EC2 client
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(string(region)))
 	if err != nil {
@@ -151,24 +168,28 @@ func getInstanceName(instanceID string, region string) (string, error) {
 	return "", utils.MakeError(`did not find a "Name" tag for this instance! Found these tags instead: %v`, printableTags)
 }
 
-func metadataRetriever(path string) (string, error) {
+func metadataRetriever(resource string) (string, error) {
 	httpClient := http.Client{
 		Timeout: 1 * time.Second,
 	}
 
-	url := EndpointBase + path
-	resp, err := httpClient.Get(url)
+	u, err := url.Parse(EndpointBase)
 	if err != nil {
-		return "", utils.MakeError("error retrieving data from URL %s: %v. Is the service running on a GCP VM instance?", url, err)
+		return "", utils.MakeError("failed to parse metadata endpoint URL: %s", err)
+	}
+	u.Path = path.Join(resource)
+	resp, err := httpClient.Get(u.String())
+	if err != nil {
+		return "", utils.MakeError("error retrieving data from URL %s: %v. Is the service running on an AWS EC2 instance?", u.String(), err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return string(body), utils.MakeError("error reading response body from URL %s: %v", url, err)
+		return string(body), utils.MakeError("error reading response body from URL %s: %v", u.String(), err)
 	}
 	if resp.StatusCode != 200 {
-		return string(body), utils.MakeError("got non-200 response from URL %s: %s", url, resp.Status)
+		return string(body), utils.MakeError("got non-200 response from URL %s: %s", u.String(), resp.Status)
 	}
 	return string(body), nil
 }
