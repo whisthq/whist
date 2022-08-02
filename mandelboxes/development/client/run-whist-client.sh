@@ -14,15 +14,15 @@ INITIAL_URLS=""
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 SESSION_ID_FILENAME=$WHIST_MAPPINGS_DIR/session_id
 WHIST_LOGS_FOLDER=/var/log/whist
-PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/protocol_client-out.log
-PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/protocol_client-err.log
 
 # Read the session id, if the file exists
 if [ -f "$SESSION_ID_FILENAME" ]; then
   SESSION_ID=$(cat $SESSION_ID_FILENAME)
-  PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/protocol_server-out.log
-  PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/$SESSION_ID/protocol_server-err.log
+  WHIST_LOGS_FOLDER=$WHIST_LOGS_FOLDER/$SESSION_ID
 fi
+
+PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/protocol_client-out.log
+PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/protocol_client-err.log
 
 
 # Sample JSON: {"dev_client_server_ip": "35.170.79.124", "dev_client_server_port_mappings": "32262:19020.32263:17242.32273:29843", "dev_client_server_aes_key": "70512c062ff1101f253be70e4cac81bc"}
