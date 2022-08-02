@@ -912,7 +912,7 @@ jobs:
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             # Production build, set official build as true and build Chromium as Release
             export npm_config_is_official_build=true
-              echo "release_channel=" >> $GITHUB_ENV
+            echo "release_channel=''" >> $GITHUB_ENV
 
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=Whist Browser.app" >> $GITHUB_ENV
