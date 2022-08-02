@@ -179,7 +179,7 @@ fi
 block-until-file-exists.sh $USER_CONFIGS_DIR/.importComplete
 rm $USER_CONFIGS_DIR/.importComplete
 
-WHIST_USER_LOGS_FOLDER=/usr/share/whist
+WHIST_USER_LOGS_FOLDER=/home/whist
 APPLICATION_OUT_FILENAME=whist_application-out.log
 APPLICATION_ERR_FILENAME=whist_application-err.log
 ln -s $WHIST_USER_LOGS_FOLDER/$APPLICATION_OUT_FILENAME $WHIST_LOGS_FOLDER/$APPLICATION_OUT_FILENAME

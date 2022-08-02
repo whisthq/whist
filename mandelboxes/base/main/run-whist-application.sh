@@ -48,7 +48,7 @@ if [[ -z ${WHIST_DEST_BROWSER+1} ]]; then
   WHIST_DEST_BROWSER="chrome"
 fi
 
-WHIST_LOGS_FOLDER=/usr/share/whist
+WHIST_LOGS_FOLDER=/home/whist
 APPLICATION_OUT_FILENAME=$WHIST_LOGS_FOLDER/whist_application-out.log
 APPLICATION_ERR_FILENAME=$WHIST_LOGS_FOLDER/whist_application-err.log
 
