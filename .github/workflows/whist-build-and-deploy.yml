@@ -1065,7 +1065,7 @@ jobs:
       # Note: Sentry makes use of sudo. To make it work on a self-hosted macOS runner, follow:
       # https://apple.stackexchange.com/questions/257813/enable-sudo-without-a-password-on-macos
       - name: Copy Client debug symbols to Sentry, on macOS
-        if: runner.os == 'macOS' || runner.os == 'Linux'
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
         working-directory: brave-browser/src/brave/whist
         env:
           SENTRY_ORG: whist
@@ -1087,6 +1087,7 @@ jobs:
           fi
 
       - name: Tar & Upload Whist Browser to AWS S3
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
         working-directory: brave-browser/src/out
         run: |
           # On Arm builds, the arch gets appended to the output folder name
