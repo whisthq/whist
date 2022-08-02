@@ -912,7 +912,7 @@ jobs:
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             # Production build, set official build as true and build Chromium as Release
             export npm_config_is_official_build=true
-            export npm_config_brave_channel=""
+              echo "release_channel=" >> $GITHUB_ENV
 
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=Whist Browser.app" >> $GITHUB_ENV
@@ -926,7 +926,7 @@ jobs:
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             # Staging build, set official build as false and build Chromium as Release
             export npm_config_is_official_build=false
-            export npm_config_brave_channel="beta"
+            echo "release_channel=beta" >> $GITHUB_ENV
 
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=Whist Browser.app" >> $GITHUB_ENV
@@ -940,7 +940,7 @@ jobs:
           else
             # Dev build, set official build as false and build Chromium as Debug
             export npm_config_is_official_build=false
-            export npm_config_brave_channel="nightly"
+            echo "release_channel=nightly" >> $GITHUB_ENV
 
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=Whist Browser Development.app" >> $GITHUB_ENV
@@ -1064,7 +1064,7 @@ jobs:
           cd ../../..
 
           # Build the browser
-          npm run build ${{ env.build_type }}
+          npm run build ${{ env.build_type }} -- --channel=${{ env.release_channel }}
 
       # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
       # IDs to match the debug symbols with the build that crashed to build the backtrace
