@@ -908,7 +908,7 @@ jobs:
           # See brave-core/build/config.gni for more info
           # - dev: "nightly"
           # - staging: "beta"
-          # - prod: "" (defaults to "release")
+          # - prod: "" (defaults to "stable")
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             # Production build, set official build as true and build Chromium as Release
             export npm_config_is_official_build=true
