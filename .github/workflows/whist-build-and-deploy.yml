@@ -744,7 +744,7 @@ jobs:
       binary-tar-name: whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}.tar.gz
       s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}
       s3-bucket-region: us-east-1
-      build_type: "Release"
+      build_type: "Release" # Change this to Debug or Component if you're looking to generate a release with more symbols
 
     steps:
       ############################## Common Configuration Steps START #############################
@@ -913,44 +913,27 @@ jobs:
             # Production build, set official build as true and build Chromium as Release
             export npm_config_is_official_build=true
             echo "release_channel=''" >> $GITHUB_ENV
-
-            if [[ "${{ runner.os }}" == "macOS" ]]; then
-              echo "executable_name=Whist Browser.app" >> $GITHUB_ENV
-            elif [[ "${{ runner.os }}" == "Linux" ]]; then
-              # TODO: We need to rename this to something like `whist-browser`
-              echo "executable_name=brave" >> $GITHUB_ENV
-            else
-              echo "Unsupported OS for setting Whist Browser executable name!"
-              exit 1
-            fi
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             # Staging build, set official build as false and build Chromium as Release
             export npm_config_is_official_build=false
             echo "release_channel=beta" >> $GITHUB_ENV
-
-            if [[ "${{ runner.os }}" == "macOS" ]]; then
-              echo "executable_name=Whist Browser.app" >> $GITHUB_ENV
-            elif [[ "${{ runner.os }}" == "Linux" ]]; then
-              # TODO: We need to rename this to something like `whist-browser`
-              echo "executable_name=brave" >> $GITHUB_ENV
-            else
-              echo "Unsupported OS for setting Whist Browser executable name!"
-              exit 1
-            fi
           else
             # Dev build, set official build as false and build Chromium as Debug
             export npm_config_is_official_build=false
             echo "release_channel=nightly" >> $GITHUB_ENV
+          fi
 
-            if [[ "${{ runner.os }}" == "macOS" ]]; then
-              echo "executable_name=Whist Browser Development.app" >> $GITHUB_ENV
-            elif [[ "${{ runner.os }}" == "Linux" ]]; then
-              # TODO: We need to rename this to something like `whist-browser`
-              echo "executable_name=brave" >> $GITHUB_ENV
-            else
-              echo "Unsupported OS for setting Whist Browser executable name!"
-              exit 1
-            fi
+          # Set the proper package name for the build
+          #
+          # TODO: Sign the macOS package and update the file path accordingly
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            echo "executable_name=unsigned/Whist Browser.dmg" >> $GITHUB_ENV
+          elif [[ "${{ runner.os }}" == "Linux" ]]; then
+            # TODO: We need to rename this to something like `whist-browser`
+            echo "executable_name=brave" >> $GITHUB_ENV
+          else
+            echo "Unsupported OS for setting Whist Browser executable name!"
+            exit 1
           fi
 
       # We need to configure build parameters, to build for the proper architecture and with
@@ -1043,21 +1026,26 @@ jobs:
 
           # Set the environment variables for the Whist Extension
           # Note that these values are public, so it's fine to hardcode them here (rather than using GitHub Secrets)
+          #
+          # TODO: Create a per-environment Amplitude project, and have a different key for each environment
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             export WHIST_AUTH0_CLIENT_ID=Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD
             export WHIST_AUTH0_DOMAIN_URL=auth.whist.com
             export WHIST_AUTH0_REDIRECT_URL=https://auth.whist.com/callback
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
+            export WHIST_AMPLITUDE_KEY=${{ secrets.WHIST_AMPLITUDE_KEY }}
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             export WHIST_AUTH0_CLIENT_ID=WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz
             export WHIST_AUTH0_DOMAIN_URL=fractal-staging.us.auth0.com
             export WHIST_AUTH0_REDIRECT_URL=https://fractal-staging.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
+            export WHIST_AMPLITUDE_KEY=${{ secrets.WHIST_AMPLITUDE_KEY }}
           else
             export WHIST_AUTH0_CLIENT_ID=DIy0YQZrMeMO97Thjr13EpkGCy792XWx
             export WHIST_AUTH0_DOMAIN_URL=fractal-dev.us.auth0.com
             export WHIST_AUTH0_REDIRECT_URL=https://fractal-dev.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
+            export WHIST_AMPLITUDE_KEY=${{ secrets.WHIST_AMPLITUDE_KEY }}
           fi
           cd src/brave/whist
           export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
@@ -1065,6 +1053,17 @@ jobs:
 
           # Build the browser
           npm run build ${{ env.build_type }} -- --channel=${{ env.release_channel }}
+
+      - name: Package Whist Browser
+        working-directory: brave-browser
+        run: |
+          # nvm doesn't scope well across GitHub Actions steps on Linux, so we forcefully make sure that it is using
+          # the proper versions of NodeJS & NPM
+          source ~/.nvm/nvm.sh
+          nvm use 16 && echo -n "NPM version: " && npm --version
+
+          # Package the browser into an installer
+          npm run create_dist -- --channel=${{ env.release_channel }}
 
       # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
       # IDs to match the debug symbols with the build that crashed to build the backtrace
