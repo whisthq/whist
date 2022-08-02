@@ -1,19 +1,24 @@
 rules:
-  - name: add-customer-id-claim
-    script: ./rules/add-customer-id-claim.js
+  - name: add-waitlist-status
+    script: ./rules/add-waitlist-status.js
     stage: login_success
     enabled: true
-    order: 2
-  - name: add-subscription-status-claim
-    script: ./rules/add-subscription-status-claim.js
-    stage: login_success
-    enabled: true
-    order: 3
+    order: 1
   - name: create-customer
     script: ./rules/create-customer.js
     stage: login_success
     enabled: true
-    order: 1
+    order: 2
+  - name: add-customer-id-claim
+    script: ./rules/add-customer-id-claim.js
+    stage: login_success
+    enabled: true
+    order: 3
+  - name: add-subscription-status-claim
+    script: ./rules/add-subscription-status-claim.js
+    stage: login_success
+    enabled: true
+    order: 4
 rulesConfigs: []
 hooks: []
 pages:
