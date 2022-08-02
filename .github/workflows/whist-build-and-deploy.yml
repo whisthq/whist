@@ -744,6 +744,7 @@ jobs:
       binary-tar-name: whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}.tar.gz
       s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}
       s3-bucket-region: us-east-1
+      build_type: "Release"
 
     steps:
       ############################## Common Configuration Steps START #############################
@@ -903,11 +904,15 @@ jobs:
           export npm_config_projects_brave_core_branch=${{ needs.whist-publish-build-config.outputs.branch }}
           export npm_config_projects_whist_branch=${{ needs.whist-publish-build-config.outputs.branch }}
 
+          # We build a Release build for every Whist environment, but target the analoguous Brave release channel
+          # See brave-core/build/config.gni for more info
+          # - dev: "nightly"
+          # - staging: "beta"
+          # - prod: "" (defaults to "release")
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             # Production build, set official build as true and build Chromium as Release
             export npm_config_is_official_build=true
-            echo "build_type=Release" >> $GITHUB_ENV
-            echo "release_channel=stable" >> $GITHUB_ENV
+            export npm_config_brave_channel=""
 
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=Whist Browser.app" >> $GITHUB_ENV
@@ -921,8 +926,7 @@ jobs:
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             # Staging build, set official build as false and build Chromium as Release
             export npm_config_is_official_build=false
-            echo "build_type=Release" >> $GITHUB_ENV
-            echo "release_channel=beta" >> $GITHUB_ENV
+            export npm_config_brave_channel="beta"
 
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=Whist Browser.app" >> $GITHUB_ENV
@@ -936,8 +940,7 @@ jobs:
           else
             # Dev build, set official build as false and build Chromium as Debug
             export npm_config_is_official_build=false
-            echo "build_type=Release" >> $GITHUB_ENV
-            echo "release_channel=nightly" >> $GITHUB_ENV
+            export npm_config_brave_channel="nightly"
 
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=Whist Browser Development.app" >> $GITHUB_ENV
@@ -1061,7 +1064,7 @@ jobs:
           cd ../../..
 
           # Build the browser
-          npm run build ${{ env.build_type }} - --channel=${{ env.release_channel }}
+          npm run build ${{ env.build_type }}
 
       # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
       # IDs to match the debug symbols with the build that crashed to build the backtrace
