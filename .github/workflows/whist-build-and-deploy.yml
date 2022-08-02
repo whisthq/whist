@@ -70,7 +70,7 @@ jobs:
 
       - name: Set deploy environment
         id: set-deploy-environment
-        if: ${{ github.event_name == 'push' || contains(fromJSON('["", "dev", "staging", "prod"]'), github.event.inputs.target) }}
+        if: ${{ github.event_name == 'push' || github.event_name == 'schedule' || contains(fromJSON('["", "dev", "staging", "prod"]'), github.event.inputs.target) }}
         uses: ./.github/actions/set-environment
         with:
           # Deploy the git ref corresponding to the event that
@@ -117,8 +117,8 @@ jobs:
           # Feature branches are not deployable.
           deployable="$([ "$branch" != "$target" ] || echo "1")"
 
-          if [ "${{ github.event_name }}" = "push" ]; then
-            # If the workflow was triggered by a push event, the
+          if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "schedule" ]]; then
+            # If the workflow was triggered by a push or schedule event, the
             # dry-run input is not available. We can assert that the
             # push event was triggered on either dev, staging, or
             # prod, and then set the dry run flag to false.
@@ -1065,7 +1065,7 @@ jobs:
       # Note: Sentry makes use of sudo. To make it work on a self-hosted macOS runner, follow:
       # https://apple.stackexchange.com/questions/257813/enable-sudo-without-a-password-on-macos
       - name: Copy Client debug symbols to Sentry, on macOS
-        if: runner.os == 'macOS' || runner.os == 'Linux'
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
         working-directory: brave-browser/src/brave/whist
         env:
           SENTRY_ORG: whist
@@ -1087,6 +1087,7 @@ jobs:
           fi
 
       - name: Tar & Upload Whist Browser to AWS S3
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
         working-directory: brave-browser/src/out
         run: |
           # On Arm builds, the arch gets appended to the output folder name
@@ -1101,7 +1102,7 @@ jobs:
       ###################################################################################
 
       - name: Manually Git Clone `whist` (for Slack notifications)
-        if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && failure() }}
         run: |
           # Since this is a self-hosted runner, we manually check if the `whist` repo exists locally,
           # and if so we pull the latest changes. If it doesn't exist, we clone it.
@@ -1119,12 +1120,12 @@ jobs:
           fi
 
       - name: Setup Python-based Notifications
-        if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && failure() }}
         working-directory: whist/.github/workflows/helpers
         run: ./notifications/setup_notifications.sh false
 
       - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
-        if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && failure() }}
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
