@@ -368,6 +368,10 @@ func uninitializeFilesystem() {
 func main() {
 	// Set Sentry tags
 	tags, err := metadata.CloudMetadata.GetMetadata()
+	if err != nil {
+		logger.Errorf("failed to set Sentry tags: %s", err)
+	}
+
 	logger.AddSentryTags(tags)
 
 	// Add some additional fields for Logz.io

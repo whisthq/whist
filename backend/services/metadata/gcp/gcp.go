@@ -64,6 +64,7 @@ func (gc *Metadata) GetUserID() types.UserID {
 // This function makes the initial calls to the endpoint and populates the `Metadata`
 // struct.
 func (gc *Metadata) GetMetadata() (map[string]string, error) {
+	metadataRetriever("")
 	return nil, nil
 }
 

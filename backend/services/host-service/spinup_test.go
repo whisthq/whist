@@ -19,7 +19,6 @@ import (
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/types"
-	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -38,9 +37,9 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	dockerClient := mockClient{
 		browserImage: "browsers/whistium",
 	}
-	mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
+	mandelboxID := types.MandelboxID(uuid.New())
 	mandelboxDieChan := make(chan bool, 10)
-	var appName mandelboxtypes.AppName = "chrome"
+	var appName types.AppName = "chrome"
 	testMandelbox, _ := StartMandelboxSpinUp(ctx, cancel, &goroutineTracker, &dockerClient, mandelboxID, appName, mandelboxDieChan)
 
 	// Check that container would have been started
@@ -159,7 +158,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	var (
 		instanceID    types.InstanceID
 		testMandelbox mandelbox.Mandelbox
-		userID        mandelboxtypes.UserID
+		userID        types.UserID
 		err           error
 	)
 
@@ -167,7 +166,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 		userID = "localdev_host_service_CI"
 	} else {
 		instanceID = metadata.CloudMetadata.GetInstanceID()
-		userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceID))
+		userID = types.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceID))
 	}
 
 	// Get the test mandelbox
@@ -191,16 +190,16 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 		t.Fatalf("could not deflate JSON data: %v", err)
 	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		AppName:               mandelboxtypes.AppName("browsers/whistium"),
+		AppName:               types.AppName("browsers/whistium"),
 		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           testMandelbox.GetID(),
-		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
+		JSONData:              types.JSONData(deflatedJSONData),
 		ResultChan:            make(chan httputils.RequestResult),
 	}
 
 	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *httputils.JSONTransportRequest)
+	testTransportRequestMap := make(map[types.MandelboxID]chan *httputils.JSONTransportRequest)
 
 	dockerClient := mockClient{
 		browserImage: "browsers/whistium",
