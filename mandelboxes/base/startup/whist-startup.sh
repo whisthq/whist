@@ -35,7 +35,7 @@ sudo mkdir /dev/dri
 sudo mknod -m 660 /dev/dri/card0 c 226 0
 
 # Set `/var/log/whist` to be root-readable only (but writable by anyone)
-sudo chmod 0622 -R /var/log/whist/
+sudo chmod 0600 -R /var/log/whist/
 
 # This installs whist service
 echo "Start Pam Systemd Process for User whist"
