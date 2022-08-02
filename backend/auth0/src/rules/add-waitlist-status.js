@@ -9,4 +9,5 @@ async function addWaitlistStatus(user, context, callback) {
     context.accessToken["waitlisted"] = true;
     return callback(null, user, context);
 }
+
   
