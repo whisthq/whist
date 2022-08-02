@@ -297,7 +297,7 @@ def run_mandelbox_on_instance(pexpect_process, role, json_data=None, simulate_sc
         if simulate_scrolling > 0:
             # Launch the script to simulate the scrolling in the background
             print(f"Starting the scrolling simulation (with {simulate_scrolling} rounds)!")
-            command = f"(nohup /usr/share/whist/simulate_mouse_scrolling.sh {simulate_scrolling} > /var/log/whist/simulated_scrolling.log 2>&1 & )"
+            command = f"(nohup /usr/share/whist/simulate_mouse_scrolling.sh {simulate_scrolling} > /usr/share/whist/simulated_scrolling.log 2>&1 & )"
             pexpect_process.sendline(command)
             wait_until_cmd_done(pexpect_process, ":/#", prompt_printed_twice=False)
 
