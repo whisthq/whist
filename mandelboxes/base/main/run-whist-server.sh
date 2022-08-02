@@ -78,7 +78,7 @@ if [ -f "$SESSION_ID_FILENAME" ]; then
   export SESSION_ID
   WHIST_LOGS_FOLDER=$WHIST_LOGS_FOLDER/$SESSION_ID
 fi
-
+# To avoid interfering with Filebeat, the logs files should not contain hyphens in the name before the {-out, -err}.log suffix
 PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-out.log
 PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/protocol_server-err.log
 TELEPORT_OUT_FILENAME=$WHIST_LOGS_FOLDER/teleport_drag_drop-out.log
@@ -180,6 +180,7 @@ block-until-file-exists.sh $USER_CONFIGS_DIR/.importComplete
 rm $USER_CONFIGS_DIR/.importComplete
 
 WHIST_USER_LOGS_FOLDER=/home/whist
+# To avoid interfering with Filebeat, the logs files should not contain hyphens in the name before the {-out, -err}.log suffix
 APPLICATION_OUT_FILENAME=whist_application-out.log
 APPLICATION_ERR_FILENAME=whist_application-err.log
 ln -s $WHIST_USER_LOGS_FOLDER/$APPLICATION_OUT_FILENAME $WHIST_LOGS_FOLDER/$APPLICATION_OUT_FILENAME

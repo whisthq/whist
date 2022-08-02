@@ -49,6 +49,7 @@ if [[ -z ${WHIST_DEST_BROWSER+1} ]]; then
 fi
 
 WHIST_LOGS_FOLDER=/home/whist
+# To avoid interfering with Filebeat, the logs files should not contain hyphens in the name before the {-out, -err}.log suffix
 APPLICATION_OUT_FILENAME=$WHIST_LOGS_FOLDER/whist_application-out.log
 APPLICATION_ERR_FILENAME=$WHIST_LOGS_FOLDER/whist_application-err.log
 

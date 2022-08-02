@@ -21,6 +21,7 @@ if [ -f "$SESSION_ID_FILENAME" ]; then
   WHIST_LOGS_FOLDER=$WHIST_LOGS_FOLDER/$SESSION_ID
 fi
 
+# To avoid interfering with Filebeat, the logs files should not contain hyphens in the name before the {-out, -err}.log suffix
 PROTOCOL_OUT_FILENAME=$WHIST_LOGS_FOLDER/protocol_client-out.log
 PROTOCOL_ERR_FILENAME=$WHIST_LOGS_FOLDER/protocol_client-err.log
 
