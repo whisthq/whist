@@ -39,7 +39,8 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     */
 
     // initialize the audio decoder
-    AudioDecoder *decoder = (AudioDecoder *)safe_malloc(sizeof(AudioDecoder));
+    MLOCK(AudioDecoder *decoder = (AudioDecoder *)safe_malloc(sizeof(AudioDecoder)), decoder,
+          sizeof(AudioDecoder));
     memset(decoder, 0, sizeof(*decoder));
 
     // setup the AVCodec and AVFormatContext
@@ -229,9 +230,8 @@ void destroy_audio_decoder(AudioDecoder *decoder) {
     // free swr
     swr_free(&decoder->swr_context);
 
-    munlock(decoder, sizeof(AudioDecoder));
     // free the buffer and decoder
-    free(decoder);
+    MUNLOCK(free(decoder), decoder, sizeof(AudioDecoder));
 }
 
 int audio_decoder_send_packets(AudioDecoder *decoder, void *buffer, int buffer_size) {

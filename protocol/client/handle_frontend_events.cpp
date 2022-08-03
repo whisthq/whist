@@ -262,8 +262,7 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
         data_len = strlen((const char*)event->filename) + 1;
     }
     size_t malloc_len = sizeof(WhistClientMessage) + data_len;
-    WhistClientMessage* msg =
-        (WhistClientMessage*)safe_malloc(malloc_len);
+    WhistClientMessage* msg = (WhistClientMessage*)safe_malloc(malloc_len);
     memset(msg, 0, malloc_len);
     msg->type = CMESSAGE_FILE_DRAG;
 
@@ -297,7 +296,6 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
     }
 
     send_wcmsg(msg);
-    munlock(msg, malloc_len);
     free(msg);
 }
 
@@ -305,13 +303,11 @@ static void handle_open_url_event(WhistFrontend* frontend, FrontendOpenURLEvent*
     // Send any new URL to the server
     const size_t data_len = strlen(event->url) + 1;
     size_t malloc_len = sizeof(WhistClientMessage) + data_len;
-    WhistClientMessage* msg =
-        (WhistClientMessage*)safe_malloc(malloc_len);
+    WhistClientMessage* msg = (WhistClientMessage*)safe_malloc(malloc_len);
     memset(msg, 0, malloc_len);
     msg->type = MESSAGE_OPEN_URL;
     memcpy(&msg->urls_to_open, event->url, data_len);
     send_wcmsg(msg);
-    munlock(msg, malloc_len);
     free(msg);
 
     free(event->url);

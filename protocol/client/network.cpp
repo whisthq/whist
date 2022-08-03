@@ -59,27 +59,29 @@ Public Function Implementations
 
 int connect_to_server(const char *server_ip, bool with_stun) {
     LOG_INFO("using stun is %d", with_stun);
+    bool result;
 
-    // Connect over UDP first,
-    if (!create_udp_socket_context(&packet_udp_context, (char *)server_ip, BASE_UDP_PORT,
-                                   UDP_CONNECTION_TIMEOUT, UDP_CONNECTION_WAIT, with_stun,
-                                   (char *)client_binary_aes_private_key)) {
+    MLOCK(result = create_udp_socket_context(&packet_udp_context, (char *)server_ip, BASE_UDP_PORT,
+                                             UDP_CONNECTION_TIMEOUT, UDP_CONNECTION_WAIT, with_stun,
+                                             (char *)client_binary_aes_private_key),
+          &packet_udp_context, sizeof(SocketContext));
+    if (!result) {
         LOG_WARNING("Failed to establish UDP connection from server");
         return -1;
     }
-    mlock((void*)&packet_udp_context, sizeof(SocketContext));
 
     LOG_INFO("create_udp_socket_context() done");
 
     // Then connect over TCP
-    if (!create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, BASE_TCP_PORT,
-                                   TCP_CONNECTION_TIMEOUT, TCP_CONNECTION_WAIT, with_stun,
-                                   (char *)client_binary_aes_private_key)) {
+    MLOCK(create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, BASE_TCP_PORT,
+                                    TCP_CONNECTION_TIMEOUT, TCP_CONNECTION_WAIT, with_stun,
+                                    (char *)client_binary_aes_private_key),
+          &packet_tcp_context, sizeof(SocketContext));
+    if (!result) {
         LOG_WARNING("Failed to establish TCP connection with server.");
         destroy_socket_context(&packet_udp_context);
         return -1;
     }
-    mlock((void*)&packet_tcp_context, sizeof(SocketContext));
 
     LOG_INFO("create_tcp_socket_context() done");
 

@@ -497,8 +497,8 @@ AudioContext* init_audio(WhistFrontend* frontend) {
     LOG_INFO("Initializing audio system targeting frontend %u", whist_frontend_get_id(frontend));
 
     // Allocate the audio context
-    AudioContext* audio_context = (AudioContext*)safe_malloc(sizeof(*audio_context));
-    mlock((void*) audio_context, sizeof(AudioContext));
+    MLOCK(AudioContext* audio_context = (AudioContext*)safe_malloc(sizeof(*audio_context)),
+          audio_context, sizeof(AudioContext));
     memset(audio_context, 0, sizeof(*audio_context));
 
     // Initialize everything
@@ -511,17 +511,21 @@ AudioContext* init_audio(WhistFrontend* frontend) {
     audio_context->audio_buffering_buffer_size = 0;
     init_audio_player(audio_context);
 
-    audio_context->adaptive_parameter_controller = new AdaptiveParameterController;
-    audio_context->queue_len_controller = new QueueLenController;
-
+    MLOCK(audio_context->adaptive_parameter_controller = new AdaptiveParameterController,
+          audio_context->adaptive_parameter_controller, sizeof(AdaptiveParameterController));
     audio_context->adaptive_parameter_controller->init(get_timestamp_sec());
-    mlock(audio_context->adaptive_parameter_controller, sizeof(AdaptiveParameterController));
-    audio_context->queue_len_controller->init();
-    mlock(audio_context->queue_len_controller, sizeof(QueueLenController));
 
-    size_t abb_size = DECODED_BYTES_PER_FRAME * (audio_context->adaptive_parameter_controller->get_max_possible_device_queue_target_size() + 1);
-    audio_context->audio_buffering_buffer = (uint8_t*)safe_malloc(abb_size);
-    mlock(audio_context->audio_buffering_buffer, abb_size);
+    MLOCK(audio_context->queue_len_controller = new QueueLenController,
+          audio_context->queue_len_controller, sizeof(QueueLenController));
+
+    audio_context->queue_len_controller->init();
+
+    size_t abb_size =
+        DECODED_BYTES_PER_FRAME *
+        (audio_context->adaptive_parameter_controller->get_max_possible_device_queue_target_size() +
+         1);
+    MLOCK(audio_context->audio_buffering_buffer = (uint8_t*)safe_malloc(abb_size),
+          audio_context->audio_buffering_buffer, abb_size);
     // Return the audio context
     return audio_context;
 }
@@ -530,22 +534,22 @@ void destroy_audio(AudioContext* audio_context) {
     LOG_INFO("Destroying audio system targeting frontend %u",
              whist_frontend_get_id(audio_context->target_frontend));
 
-    size_t abb_size = DECODED_BYTES_PER_FRAME *
-        (audio_context->adaptive_parameter_controller->get_max_possible_device_queue_target_size() +
-         1);
-    munlock(audio_context->adaptive_parameter_controller, sizeof(AdaptiveParameterController));
-    munlock(audio_context->queue_len_controller, sizeof(QueueLenController));
-    delete audio_context->adaptive_parameter_controller;
-    delete audio_context->queue_len_controller;
+    MUNLOCK(delete audio_context->adaptive_parameter_controller,
+            audio_context->adaptive_parameter_controller, sizeof(AdaptiveParameterController));
+    MUNLOCK(delete audio_context->queue_len_controller, audio_context->queue_len_controller,
+            sizeof(QueueLenController));
 
     // Destroy the audio device
     destroy_audio_player(audio_context);
-    munlock(audio_context->audio_buffering_buffer, abb_size);
     // Destory the buffer for buffering state
-    free(audio_context->audio_buffering_buffer);
-    munlock(audio_context, sizeof(AudioContext));
+    size_t abb_size =
+        DECODED_BYTES_PER_FRAME *
+        (audio_context->adaptive_parameter_controller->get_max_possible_device_queue_target_size() +
+         1);
+    MUNLOCK(free(audio_context->audio_buffering_buffer), audio_context->audio_buffering_buffer,
+            abb_size);
     // Free the audio struct
-    free(audio_context);
+    MUNLOCK(free(audio_context), audio_context, sizeof(AudioContext));
 }
 
 void refresh_audio_device(AudioContext* audio_context) {
@@ -624,7 +628,6 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
         !audio_context->pending_render_context &&
         audio_device_len_in_bytes <=
             (current_device_queue_target_size - num_frames_to_render) * DECODED_BYTES_PER_FRAME;
-    munlock((void*)&audio_device_len_in_bytes, 128);
     return wants_new_frame || queue_len_controller.get_adjust_command() == DROP_FRAME;
 }
 

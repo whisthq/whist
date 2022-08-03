@@ -380,8 +380,8 @@ Public Function Implementations
 */
 
 void *create_fec_controller(double current_time) {
-    FECController *fec_controller = (FECController *)malloc(sizeof(FECController));
-    mlock((void*) fec_controller, sizeof(FECController));
+    MLOCK(FECController *fec_controller = (FECController *)malloc(sizeof(FECController)),
+          fec_controller, sizeof(FECController));
 
     // size of sliding window for latency
     const double latency_stat_window = 30.0;
@@ -389,12 +389,12 @@ void *create_fec_controller(double current_time) {
     const double latency_sample_period = 0.3;
 
     // allocation the objects if not done previously
-    fec_controller->base_ratio_controller = new BaseRatioController;
-    fec_controller->extra_ratio_controller = new ExtraRatioController;
-    fec_controller->latency_stat = new SlidingWindowStat;
-    mlock((void*)fec_controller->base_ratio_controller, sizeof(BaseRatioController));
-    mlock((void*)fec_controller->extra_ratio_controller, sizeof(ExtraRatioController));
-    mlock((void*)fec_controller->latency_stat, sizeof(SlidingWindowStat));
+    MLOCK(fec_controller->base_ratio_controller = new BaseRatioController,
+          fec_controller->base_ratio_controller, sizeof(BaseRatioController));
+    MLOCK(fec_controller->extra_ratio_controller = new ExtraRatioController,
+          fec_controller->extra_ratio_controller, sizeof(ExtraRatioController));
+    MLOCK(fec_controller->latency_stat = new SlidingWindowStat, fec_controller->latency_stat,
+          sizeof(SlidingWindowStat));
 
     // init the controllers and latency sliding window
     fec_controller->base_ratio_controller->init(current_time);
@@ -406,15 +406,14 @@ void *create_fec_controller(double current_time) {
 
 void destroy_fec_controller(void *controller) {
     FECController *fec_controller = (FECController *)controller;
-    munlock((void*)fec_controller->base_ratio_controller, sizeof(BaseRatioController));
-    munlock((void*)fec_controller->extra_ratio_controller, sizeof(ExtraRatioController));
-    munlock((void*)fec_controller->latency_stat, sizeof(SlidingWindowStat));
-    munlock((void*) fec_controller, sizeof(FECController));
 
-    delete fec_controller->base_ratio_controller;
-    delete fec_controller->extra_ratio_controller;
-    delete fec_controller->latency_stat;
-    free(fec_controller);
+    MUNLOCK(delete fec_controller->base_ratio_controller, fec_controller->base_ratio_controller,
+            sizeof(BaseRatioController));
+    MUNLOCK(delete fec_controller->extra_ratio_controller, fec_controller->extra_ratio_controller,
+            sizeof(ExtraRatioController));
+    MUNLOCK(delete fec_controller->latency_stat, fec_controller->latency_stat,
+            sizeof(SlidingWindowStat));
+    MUNLOCK(free(fec_controller), fec_controller, sizeof(FECController));
 }
 
 void fec_controller_feed_latency(void *controller, double current_time, double latency) {

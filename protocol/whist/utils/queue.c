@@ -32,18 +32,16 @@ static void dequeue_item(QueueContext *context, void *item) {
 }
 
 QueueContext *fifo_queue_create(size_t item_size, int max_items) {
-    QueueContext *context = calloc(1, sizeof(QueueContext));
+    MLOCK(QueueContext *context = calloc(1, sizeof(QueueContext)), context, sizeof(QueueContext));
     if (context == NULL) {
         return NULL;
     }
-    mlock((void*) context, sizeof(QueueContext));
 
-    context->data = malloc(item_size * max_items);
+    MLOCK(context->data = malloc(item_size * max_items), context->data, item_size * max_items);
     if (context->data == NULL) {
         fifo_queue_destroy(context);
         return NULL;
     }
-    mlock((void*) context->data, item_size * max_items);
 
     context->mutex = whist_create_mutex();
     if (context->mutex == NULL) {
@@ -121,8 +119,9 @@ void fifo_queue_destroy(QueueContext *context) {
         return;
     }
     if (context->data != NULL) {
-        munlock((void*) context->data, 1);
-        free(context->data);
+        // TODO: get a correct length for this (even if we are automatically rounding up to page
+        // size
+        MUNLOCK(free(context->data), context->data, 1);
     }
     if (context->mutex != NULL) {
         whist_destroy_mutex(context->mutex);
@@ -130,6 +129,5 @@ void fifo_queue_destroy(QueueContext *context) {
     if (context->cond != NULL) {
         whist_destroy_cond(context->cond);
     }
-    munlock((void*) context, sizeof(QueueContext));
-    free(context);
+    MUNLOCK(free(context), context, sizeof(QueueContext));
 }

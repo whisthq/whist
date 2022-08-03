@@ -68,8 +68,7 @@ const char* whist_cursor_type_to_string(WhistCursorType type) {
 }
 
 WhistCursorCache* whist_cursor_cache_create(int max_entries, bool store_data) {
-    WhistCursorCache* cache = new WhistCursorCache();
-    mlock((void*)cache, sizeof(WhistCursorCache));
+    MLOCK(WhistCursorCache* cache = new WhistCursorCache(), cache, sizeof(WhistCursorCache));
     cache->max_entries = max_entries;
     cache->store_data = store_data;
     return cache;
@@ -87,8 +86,7 @@ void whist_cursor_cache_clear(WhistCursorCache* cache) {
 void whist_cursor_cache_destroy(WhistCursorCache* cache) {
     // Clear the cache then delete the main struct
     whist_cursor_cache_clear(cache);
-    munlock((void*)cache, sizeof(WhistCursorCache));
-    delete cache;
+    MUNLOCK(delete cache, cache, sizeof(WhistCursorCache));
 }
 
 void whist_cursor_cache_add(WhistCursorCache* cache, WhistCursorInfo* cursor_info) {

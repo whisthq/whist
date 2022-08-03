@@ -165,6 +165,19 @@ Defines
 #define safe_close(fd) close(fd)
 #endif
 
+#if OS_IS(OS_MACOS)
+// Round up to nearest page size
+#define MLOCK(stmt, addr, len) \
+    stmt;                      \
+    mlock((void*)addr, len + getpagesize() - (len % getpagesize()))
+#define MUNLOCK(stmt, addr, len)                                       \
+    munlock((void*)addr, len + getpagesize() - (len % getpagesize())); \
+    stmt
+#else
+#define MLOCK(stmt, addr, len) stmt
+#define MUNLOCK(stmt, addr, len) stmt
+#endif
+
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof(array[0]))
 
 #define VSYNC_ON false

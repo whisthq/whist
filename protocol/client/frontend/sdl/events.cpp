@@ -1,5 +1,4 @@
 #include <whist/core/whist.h>
-#include <sys/mman.h>
 extern "C" {
 #include "common.h"
 #include "native.h"
@@ -28,7 +27,6 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
             case SDL_FRONTEND_EVENT_FILE_DRAG: {
                 event->type = FRONTEND_EVENT_FILE_DRAG;
                 event->file_drag = *(FrontendFileDragEvent*)user_event->data1;
-                munlock(user_event->data1, sizeof(FrontendFileDragEvent));
                 free(user_event->data1);
                 return true;
             }
@@ -49,7 +47,6 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                 // Get the title pointer, and convert from void* to id
                 const char* title = (const char*)user_event->data1;
                 int id = (intptr_t)user_event->data2;
-                size_t title_len = strlen(title);
                 if (context->windows.contains(id)) {
                     SDL_Window* window = context->windows[id]->window;
                     SDL_SetWindowTitle(window, title);
@@ -58,7 +55,6 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                         "Window title change event ignored because there is no window of id %d",
                         id);
                 }
-                munlock(user_event->data1, title_len);
                 free(user_event->data1);
                 break;
             }
@@ -75,7 +71,6 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
                         "id %d",
                         id);
                 }
-                munlock(user_event->data1, sizeof(WhistRGBColor));
                 free(user_event->data1);
                 break;
             }

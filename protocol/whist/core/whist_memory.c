@@ -39,9 +39,6 @@ void* safe_malloc(size_t size) {
     if (ret == NULL) {
         LOG_FATAL("Malloc of size %zu failed!", size);
     }
-#if OS_IS(OS_MACOS)
-    mlock(ret, size);
-#endif
     return ret;
 }
 
@@ -406,7 +403,7 @@ void* allocate_region(size_t region_size) {
         LOG_FATAL("mmap failed!");
     }
 #if OS_IS(OS_MACOS)
-    // mlock(p, region_size);
+    mlock(p, region_size);
 #endif
     ((RegionHeader*)p)->size = region_size;
 #endif
@@ -522,7 +519,7 @@ void deallocate_region(void* region) {
     }
 #else
 #if OS_IS(OS_MACOS)
-    // munlock(p, p->size);
+    munlock(p, p->size);
 #endif
     if (munmap(p, p->size) != 0) {
         LOG_FATAL("munmap failed!");

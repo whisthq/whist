@@ -36,7 +36,7 @@ Public Constants
 #define PLOT_DATA_SIZE 100000000
 // Save the plotting data in the same folder (on the mandelbox) as the {client,server}.log files to
 // facilitate retrieval. This value should be changed when testing on a local machine.
-#define PLOT_DATA_FILENAME "/Users/serinahu/Documents/whist/plot_data_mlock_contexts.json"
+#define PLOT_DATA_FILENAME "/Users/serinahu/Documents/whist/plot_data_mlock_contexts_updated.json"
 
 /*
 ============================

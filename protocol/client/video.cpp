@@ -117,8 +117,7 @@ Public Function Implementations
 VideoContext* init_video(WhistFrontend* frontend, int initial_width, int initial_height) {
     // since the struct contains an atomic type which is not POD type,
     // this struct should be newed instead of malloced
-    VideoContext* video_context = new VideoContext;
-    mlock((void*) video_context, sizeof(VideoContext));
+    MLOCK(VideoContext* video_context = new VideoContext, video_context, sizeof(VideoContext));
 
     video_context->has_video_rendered_yet = false;
     video_context->render_context = NULL;
@@ -166,8 +165,7 @@ void destroy_video(VideoContext* video_context) {
     whist_cursor_cache_destroy(video_context->cursor_cache);
 
     // Free the video context
-    munlock((void*) video_context, sizeof(VideoContext));
-    delete video_context;
+    MUNLOCK(delete video_context, video_context, sizeof(VideoContext));
 }
 
 // NOTE that this function is in the hotpath.
@@ -207,8 +205,7 @@ int render_video(VideoContext* video_context) {
     static bool first_run = true;
     if (first_run) {
         // this should mlock all the statics (EXPERIMENTAL)
-        mlock((void*)&window_color, 128);
-        first_run = false;
+        MLOCK(first_run = false, &window_color, 128);
     }
 
     // Receive and process a render context that's being pushed
