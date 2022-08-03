@@ -47,8 +47,8 @@ const initAddCookieListener = (socket: Socket) => {
         ? `https://${cookie.domain.slice(1)}`
         : `https://${cookie.domain}`
 
-      if (!cookie.removed) {
-        console.log("adding", cookie.cookie)
+      if (!_info.removed) {
+        console.log("adding", cookie)
         const details = {
           ...(!cookie.hostOnly && { domain: cookie.domain }),
           ...(!cookie.session && { expirationDate: cookie.expirationDate }),
