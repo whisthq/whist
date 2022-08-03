@@ -39,7 +39,7 @@ const initAddCookieListener = (socket: Socket) => {
     console.log("Got waiting cookies", info)
     while(info.length > 0) {
       const _info = info.shift()
-      if ( _info === undefined ||  _info.cookie.name.startsWith("fractal")) 
+      if ( _info.cookie === undefined ||  _info.cookie.name.startsWith("fractal")) 
 	      return
 
       const cookie =  _info.cookie
