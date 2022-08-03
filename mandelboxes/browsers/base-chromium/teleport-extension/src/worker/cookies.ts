@@ -35,11 +35,11 @@ const initAddCookieListener = (socket: Socket) => {
     chrome.cookies.set(details)
   })
 
-  socket.on("waiting-cookies", (args: any) => {
-    console.log("Got waiting cookies", args)
-    const info = args[0]
+  socket.on("waiting-cookies", (info: any) => {
+    console.log("got cookies", info)
     while(info.length > 0) {
       const _info = info.shift()
+      console.log("plucking", _info)
       if ( _info.cookie === undefined ||  _info.cookie.name.startsWith("fractal")) 
 	      return
 
@@ -67,7 +67,7 @@ const initAddCookieListener = (socket: Socket) => {
         console.log("Setting", cookie)
         chrome.cookies.set(details)
       } else {
-        console.log("adding", cookie.cookie)
+        console.log("adding", cookie)
         chrome.cookies.remove({
           name: cookie.name,
           url,
