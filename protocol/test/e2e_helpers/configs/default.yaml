@@ -1,0 +1,15 @@
+ssh_key_name: 
+ssh_key_path:
+github_token:
+region_name: ""
+use_two_instances: false
+existing_server_instance_id: ""
+existing_client_instance_id: ""
+skip_host_setup: false
+skip_git_clone: false
+leave_instances_on: false
+simulate_scrolling: 0
+testing_urls: https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4
+testing_time: 126 # Length of the video in link above is 2mins, 6seconds
+cmake_build_type: metrics
+network_conditions: normal

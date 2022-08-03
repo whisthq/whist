@@ -40,11 +40,15 @@ from e2e_helpers.setup.teardown_tools import (
     complete_experiment_and_save_results,
 )
 
+from e2e_helpers.configs.parse_configs import load_yaml_configs, update_yaml, is_value_set
+
 from e2e_helpers.whist_run_steps import setup_process, run_mandelbox_on_instance
 
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
+
+configs = load_yaml_configs(os.path.join(".", "e2e_helpers", "configs", "default.yaml"))
 
 DESCRIPTION = """
 This script will spin one or two g4dn.xlarge EC2 instances (depending on the parameters you pass in), \
@@ -60,18 +64,18 @@ parser.add_argument(
     help="The name of the AWS RSA SSH key you wish to use to access the E2 instance(s). If you are running the \
     script locally, the key name is likely of the form <yourname-key>. Make sure to pass the key-name for the \
     region of interest. Required.",
-    required=True,
+    required=not is_value_set(configs, "ssh_key_name"),
 )
 parser.add_argument(
     "--ssh-key-path",
     help="The path to the .pem certificate on this machine to use in connection to the RSA SSH key passed to \
     the --ssh-key-name arg. Required.",
-    required=True,
+    required=not is_value_set(configs, "ssh_key_path"),
 )
 parser.add_argument(
     "--github-token",
     help="The GitHub Personal Access Token with permission to fetch the whisthq/whist repository. Required.",
-    required=True,
+    required=not is_value_set(configs, "github_token"),
 )
 
 parser.add_argument(
@@ -105,7 +109,6 @@ parser.add_argument(
         "eu-north-1",
         "sa-east-1",
     ],
-    default="",
 )
 
 parser.add_argument(
@@ -116,7 +119,6 @@ parser.add_argument(
     If left empty (and --use-two-instances=true), a clean new instance will be generated instead, and it will \
     be terminated (instead of being stopped) upon completion of the test.",
     type=str,
-    default="",
 )
 
 parser.add_argument(
@@ -126,7 +128,6 @@ parser.add_argument(
     run on this instance. The instance will be stopped upon completion. If left empty, a clean new instance will \
     be generated instead, and it will be terminated (instead of being stopped) upon completion of the test.",
     type=str,
-    default="",
 )
 
 parser.add_argument(
@@ -134,7 +135,6 @@ parser.add_argument(
     help="Whether to run the client on a separate AWS instance, instead of the same as the server.",
     type=str,
     choices=["false", "true"],
-    default="false",
 )
 
 parser.add_argument(
@@ -143,7 +143,6 @@ parser.add_argument(
     of the test, instead of stopping (if reusing existing ones) or terminating (if creating new ones) them.",
     type=str,
     choices=["false", "true"],
-    default="false",
 )
 
 parser.add_argument(
@@ -152,7 +151,6 @@ parser.add_argument(
     This will save you a good amount of time.",
     type=str,
     choices=["false", "true"],
-    default="false",
 )
 
 parser.add_argument(
@@ -163,16 +161,13 @@ parser.add_argument(
     using code from the same commit.",
     type=str,
     choices=["false", "true"],
-    default="false",
 )
-
 
 parser.add_argument(
     "--simulate-scrolling",
     help="Number of rounds of scrolling that should be simulated on the client side. One round of scrolling = \
     Slow scroll down + Slow scroll up + Fast scroll down + Fast scroll up",
     type=int,
-    default=0,
 )
 
 parser.add_argument(
@@ -180,7 +175,6 @@ parser.add_argument(
     help="The URL to visit during the test. The default is a 4K video stored on our AWS S3.",
     nargs="+",
     type=str,
-    default="https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4",
 )
 
 parser.add_argument(
@@ -189,7 +183,6 @@ parser.add_argument(
     client/server and grabbing the logs and metrics. The default value is the duration of the default 4K video \
     from AWS S3.",
     type=int,
-    default=126,  # Length of the video in link above is 2mins, 6seconds
 )
 
 parser.add_argument(
@@ -197,7 +190,6 @@ parser.add_argument(
     help="The Cmake build type to use when building the protocol.",
     type=str,
     choices=["dev", "prod", "metrics"],
-    default="metrics",
 )
 
 parser.add_argument(
@@ -210,9 +202,11 @@ parser.add_argument(
     in no limitations being imposed to the corresponding network condition. For more details about the usage of the five \
     network condition parameters, check out the apply_network_conditions.sh script in protocol/test/helpers/setup.",
     type=str,
-    default="normal",
 )
+
 args = parser.parse_args()
+updated_configs = {k: v for k, v in vars(args).items() if v is not None}
+configs.update(updated_configs)
 
 
 if __name__ == "__main__":
@@ -220,26 +214,26 @@ if __name__ == "__main__":
     timestamps = TimeStamps()
 
     # 1 - Parse args from the command line
-    ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
-    ssh_key_path = args.ssh_key_path
-    github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
+    ssh_key_name = configs.get("ssh_key_name")
+    ssh_key_path = configs.get("ssh_key_path")
+    github_token = configs.get("github_token")  # The PAT allowing us to fetch code from GitHub
     testing_urls = (
-        args.testing_urls[0]
-        if len(args.testing_urls) == 1
-        else " ".join([f'\\"{url}\\"' for url in args.testing_urls])
+        configs.get("testing_urls")[0]
+        if len(configs.get("testing_urls")) == 1
+        else " ".join([f'\\"{url}\\"' for url in configs.get("testing_urls")])
     )
-    desired_region_name = args.region_name
-    existing_client_instance_id = args.existing_client_instance_id
-    existing_server_instance_id = args.existing_server_instance_id
-    skip_git_clone = args.skip_git_clone
-    skip_host_setup = args.skip_host_setup
-    network_conditions = args.network_conditions
-    leave_instances_on = args.leave_instances_on
+    desired_region_name = configs.get("region_name")
+    existing_client_instance_id = configs.get("existing_client_instance_id")
+    existing_server_instance_id = configs.get("existing_server_instance_id")
+    skip_git_clone = configs.get("skip_git_clone")
+    skip_host_setup = configs.get("skip_host_setup")
+    network_conditions = configs.get("network_conditions")
+    leave_instances_on = configs.get("leave_instances_on")
     # Convert boolean 'true'/'false' strings to Python booleans
-    use_two_instances = args.use_two_instances == "true"
-    simulate_scrolling = args.simulate_scrolling
+    use_two_instances = configs.get("use_two_instances") == "true"
+    simulate_scrolling = configs.get("simulate_scrolling")
     # Each call to the mouse scrolling simulator script takes a total of 25s to complete, including 5s in-between runs
-    testing_time = max(args.testing_time, simulate_scrolling * 25)
+    testing_time = max(configs.get("testing_time"), simulate_scrolling * 25)
 
     # 2 - Perform a sanity check on the arguments and load the SSH key from file
     if (
@@ -276,7 +270,7 @@ if __name__ == "__main__":
         "start_time": experiment_start_time + " local time"
         if not running_in_ci
         else experiment_start_time + " UTC",
-        "testing_urls": args.testing_urls,
+        "testing_urls": configs.get("testing_urls"),
         "testing_time": testing_time,
         "simulate_scrolling": simulate_scrolling,
         "network_conditions": network_conditions,
@@ -384,7 +378,7 @@ if __name__ == "__main__":
             "github_token": github_token,
             "use_two_instances": use_two_instances,
             "testing_time": testing_time,
-            "cmake_build_type": args.cmake_build_type,
+            "cmake_build_type": configs.get("cmake_build_type"),
             "skip_git_clone": skip_git_clone,
             "skip_host_setup": skip_host_setup,
         }
