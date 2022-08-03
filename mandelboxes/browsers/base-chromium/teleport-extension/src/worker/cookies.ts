@@ -11,7 +11,7 @@ function pause() {
   return new Promise<void>((resolve) =>
     setTimeout(() => {
       resolve()
-    }, 20)
+    }, 5)
   )
 }
 
