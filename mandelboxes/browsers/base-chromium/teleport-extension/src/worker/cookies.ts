@@ -40,8 +40,11 @@ const initAddCookieListener = (socket: Socket) => {
     while(info.length > 0) {
       const cookie = info.shift()
       if (cookie === undefined || cookie.cookie.name.startsWith("fractal")) 
-	 return
-
+	      return
+      const url = cookie.domain.startsWith(".")
+        ? `https://${cookie.domain.slice(1)}`
+        : `https://${cookie.domain}`
+        
       if (cookie.removed) {
         console.log("removing", cookie.cookie)
         const details = {
@@ -62,9 +65,6 @@ const initAddCookieListener = (socket: Socket) => {
         chrome.cookies.set(details)
       } else {
         console.log("adding", cookie.cookie)
-	const url = cookie.domain.startsWith(".")
-          ? `https://${cookie.domain.slice(1)}`
-          : `https://${cookie.domain}`
         chrome.cookies.remove({
           name: cookie.name,
           url,
