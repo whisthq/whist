@@ -7,6 +7,14 @@ import isEqual from "lodash.isequal"
 // the cookie we've added was added by the user and not us
 let alreadyAddedCookies: chrome.cookies.Cookie[] = []
 
+function pause() {
+  return new Promise<void>((resolve) =>
+    setTimeout(() => {
+      resolve()
+    }, 20)
+  )
+}
+
 const initAddCookieListener = (socket: Socket) => {
   socket.on("server-add-cookie", (cookies: any[]) => {
     let cookie = cookies[0]
@@ -35,7 +43,7 @@ const initAddCookieListener = (socket: Socket) => {
     chrome.cookies.set(details)
   })
 
-  socket.on("waiting-cookies", (info: any) => {
+  socket.on("waiting-cookies", async (info: any) => {
     console.log("got cookies", info)
     while(info.length > 0) {
       const _info = info.shift()
@@ -71,6 +79,7 @@ const initAddCookieListener = (socket: Socket) => {
           url,
         })
       }
+      await pause()
     }
   })
 }
