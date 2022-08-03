@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	graphql "github.com/hasura/go-graphql-client" // We use Hasura's own GraphQL client for Go
+	dbTypes "github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	"github.com/whisthq/whist/backend/services/metadata"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -121,7 +122,16 @@ func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClie
 			Query: QueryMandelboxesByInstanceId,
 			Variables: map[string]interface{}{
 				"instance_id": graphql.String(instanceID),
-				"status":      graphql.String("ALLOCATED"),
+				"status":      graphql.String(dbTypes.MandelboxStatusAllocated),
+			},
+			Result:  MandelboxEvent{[]Mandelbox{}},
+			Handler: MandelboxAllocatedHandler,
+		},
+		{
+			Query: QueryMandelboxesByInstanceId,
+			Variables: map[string]interface{}{
+				"instance_id": graphql.String(instanceID),
+				"status":      graphql.String(dbTypes.MandelboxStatusAllocatedForDevelopment),
 			},
 			Result:  MandelboxEvent{[]Mandelbox{}},
 			Handler: MandelboxAllocatedHandler,
@@ -137,7 +147,7 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 		{
 			Query: QueryInstancesByStatus,
 			Variables: map[string]interface{}{
-				"status": graphql.String("DRAINING"),
+				"status": graphql.String(dbTypes.InstanceStatusDraining),
 			},
 			Result:  InstanceEvent{[]Instance{}},
 			Handler: InstancesStatusHandler,

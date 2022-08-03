@@ -353,7 +353,6 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, gorou
 							contextFields := []interface{}{
 								zap.String("id", serverEvent.ID),
 								zap.Any("type", serverEvent.Type),
-								zap.Any("data", serverEvent.Data),
 								zap.String("region", serverEvent.Region),
 							}
 							logger.Errorw(utils.Sprintf("error running mandelbox assign action: %s", err), contextFields)

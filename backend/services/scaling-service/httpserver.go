@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -59,9 +60,28 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 		return
 	}
 
-	// Add user id to the request. This way we don't expose the
-	// access token to other processes that don't need access to it.
-	reqdata.UserID = types.UserID(claims.Subject)
+	// The presence of this header indicates that the request was sent
+	// by a deploy environment (dev, staging, prod), rather than from
+	// a local development environment, and its value should be `True`
+	// in order to be considered as a deployment request. This value is
+	// then used by the scaling and host services when deciding whether
+	// to log certain errors as warnings instead.
+	whistTransportHeader := r.Header.Get("Whist-Transport-Request")
+	if whistTransportHeader != "" {
+		isDeployRequest, err := strconv.ParseBool(whistTransportHeader)
+		if err != nil {
+			logger.Error(err)
+			http.Error(w, "Malformed Whist Transport header", http.StatusBadRequest)
+			return
+		}
+		reqdata.IsDeployRequest = isDeployRequest
+	}
+
+	if !metadata.IsLocalEnv() {
+		// Add user id to the request. This way we don't expose the
+		// access token to other processes that don't need access to it.
+		reqdata.UserID = types.UserID(claims.Subject)
+	}
 
 	// Once we have authenticated and validated the request send it to the scaling
 	// algorithm for processing. Mandelbox assign is region-agnostic so we don't need
@@ -165,10 +185,10 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(buf)
 }
 
-// processJSONTransportRequest processes an HTTP request to receive data
-// directly from the frontend.
-func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
-	// Verify that it is an PUT request
+// jsonTransportHandler validates a JSON transport request and redirects
+// it to the host service running in the request's assigned instance.
+func jsonTransportHandler(w http.ResponseWriter, r *http.Request) {
+	// Verify that it is a PUT request
 	if httputils.VerifyRequestType(w, r, http.MethodPut) != nil {
 		http.Error(w, "", http.StatusMethodNotAllowed)
 		return
@@ -208,7 +228,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Add necessary headers to host request
-	hostReq.Header.Add("content-type", "application/json")
+	hostReq.Header.Add("Content-Type", "application/json")
 	hostReq.Header.Add("Authorization", utils.Sprintf("Bearer %s", accessToken))
 	hostReq.Close = true
 
@@ -325,7 +345,7 @@ func StartHTTPServer(events chan algos.ScalingEvent) {
 
 	// Create the final handlers, with the necessary middleware
 	assignHandler := throttleMiddleware(limiter, httputils.EnableCORS(createHandler(mandelboxAssignHandler)))
-	jsonTransportHandler := httputils.EnableCORS(processJSONTransportRequest)
+	jsonTransportHandler := throttleMiddleware(limiter, httputils.EnableCORS(jsonTransportHandler))
 	paymentsHandler := httputils.EnableCORS(paymentSessionHandler)
 
 	// Create a custom HTTP Request Multiplexer

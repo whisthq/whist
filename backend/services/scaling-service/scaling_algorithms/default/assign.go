@@ -246,13 +246,23 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 		return utils.MakeError("failed to parse mandelbox id for instance %s: %s", assignedInstance.ID, err)
 	}
 
+	// Set the mandelbox status depending on the environment
+	// the request was sent. The host service will use this
+	// value to decide whether to log some errors as warnings.
+	var mandelboxStatus string
+	if mandelboxRequest.IsDeployRequest {
+		mandelboxStatus = "ALLOCATED"
+	} else {
+		mandelboxStatus = "ALLOCATED_FOR_DEVELOPMENT"
+	}
+
 	mandelboxForDb := subscriptions.Mandelbox{
 		ID:         waitingMandelbox.ID,
 		App:        string(waitingMandelbox.App),
 		InstanceID: assignedInstance.ID,
 		UserID:     mandelboxRequest.UserID,
 		SessionID:  utils.Sprintf("%v", mandelboxRequest.SessionID),
-		Status:     "ALLOCATED",
+		Status:     mandelboxStatus,
 		CreatedAt:  waitingMandelbox.CreatedAt,
 		UpdatedAt:  time.Now(),
 	}

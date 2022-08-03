@@ -371,7 +371,7 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		incrementErrorRate()
 		return utils.MakeError("did not find existing mandelbox with ID %s", mandelboxSubscription.ID)
 	}
-	mandelbox.SetStatus(dbdriver.MandelboxStatusAllocated)
+	mandelbox.SetStatus(dbdriver.MandelboxStatus(mandelboxSubscription.Status))
 
 	// If the creation of the mandelbox fails, we want to clean up after it. We
 	// do this by setting `createFailed` to true until all steps are done, and
@@ -424,6 +424,10 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		case transportRequest := <-jsonChan:
 			req = transportRequest
 		case <-time.After(1 * time.Minute):
+			if mandelbox.GetStatus() == dbdriver.MandelboxStatusAllocatedForDevelopment {
+				logger.Warningf("timed out waiting for config token, but request is from a local development environment")
+				return nil
+			}
 			// Clean up the mandelbox if the time out limit is reached
 			return utils.MakeError("user failed to connect to mandelbox due to config token time out")
 		}

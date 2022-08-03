@@ -1,6 +1,7 @@
 package mandelbox // import "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -114,7 +115,7 @@ func RemoveStaleMandelboxes(allocatedAgeLimit, connectingAgeLimit time.Duration)
 		// If a mandelbox has the `ALLOCATED` or `CONNECTING` status, and the
 		// last time since it was updated is greater than the allocated and
 		// connecting limits, then it is considered stale and will be cleaned up.
-		if mandelbox.GetStatus() == dbdriver.MandelboxStatusAllocated &&
+		if strings.Contains(string(mandelbox.GetStatus()), string(dbdriver.MandelboxStatusAllocated)) &&
 			timeSinceLastUpdate > allocatedAgeLimit ||
 			mandelbox.GetStatus() == dbdriver.MandelboxStatusConnecting &&
 				timeSinceLastUpdate > connectingAgeLimit {

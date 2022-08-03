@@ -2,6 +2,7 @@ package dbdriver // import "github.com/whisthq/whist/backend/services/host-servi
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgtype"
@@ -25,11 +26,12 @@ type MandelboxStatus string
 
 // These represent the currently-defined statuses for mandelboxes.
 const (
-	MandelboxStatusWaiting    MandelboxStatus = "WAITING"
-	MandelboxStatusAllocated  MandelboxStatus = "ALLOCATED"
-	MandelboxStatusConnecting MandelboxStatus = "CONNECTING"
-	MandelboxStatusRunning    MandelboxStatus = "RUNNING"
-	MandelboxStatusDying      MandelboxStatus = "DYING"
+	MandelboxStatusWaiting                 MandelboxStatus = "WAITING"
+	MandelboxStatusAllocated               MandelboxStatus = "ALLOCATED"
+	MandelboxStatusAllocatedForDevelopment MandelboxStatus = "ALLOCATED_FOR_DEVELOPMENT"
+	MandelboxStatusConnecting              MandelboxStatus = "CONNECTING"
+	MandelboxStatusRunning                 MandelboxStatus = "RUNNING"
+	MandelboxStatusDying                   MandelboxStatus = "DYING"
 )
 
 // CreateMandelbox inserts a new row to the database with the necessary fields. It sets the
@@ -121,8 +123,8 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 	// error.
 	if len(rows) == 0 {
 		return utils.MakeError("couldn't verify mandelbox %s for user %s: didn't find matching row in the database.", mandelboxID, userID)
-	} else if rows[0].Status.String != string(MandelboxStatusAllocated) {
-		return utils.MakeError(`couldn't verify mandelbox %s for user %s: found a mandelbox row in the database for this instance, but it's in the wrong state: expected "%s", got "%s".`, mandelboxID, userID, MandelboxStatusAllocated, rows[0].Status.String)
+	} else if !strings.Contains(rows[0].Status.String, string(MandelboxStatusAllocated)) {
+		return utils.MakeError(`couldn't verify mandelbox %s for user %s: found a mandelbox row in the database for this instance, but it's in the wrong state: expected "%s" or "%s", got "%s".`, mandelboxID, userID, MandelboxStatusAllocated, MandelboxStatusAllocatedForDevelopment, rows[0].Status.String)
 	} else if rows[0].InstanceID.String != string(instanceID) {
 		return utils.MakeError(`couldn't verify mandelbox %s for user %s: found an allocated mandelbox row in the database, but it has the wrong instanceName: expected "%s", got "%s".`, mandelboxID, userID, rows[0].InstanceID.String, instanceID)
 	}
