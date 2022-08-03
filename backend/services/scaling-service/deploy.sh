@@ -84,6 +84,11 @@ echo "DB_MIGRATION_PERFORMED=false" >> "${GITHUB_ENV}"
 DB_URL=$(heroku config:get DATABASE_URL --app "${HEROKU_APP_NAME}")
 echo "APP: $HEROKU_APP_NAME, DB URL: $DB_URL"
 
+# Configure git author (necessary if this deploy is triggered via scheduled job, in which case
+# there is no commit/author associated with it)
+git config --global user.email "developers@whist.com"
+git config --global user.name "Whist Developers"
+
 if [ "$MIGRA_EXIT_CODE" == "2" ] || [ "$MIGRA_EXIT_CODE" == "3" ]; then
   # a diff exists, now apply it atomically by first pausing the scaling service
   echo "Migra SQL diff:"
