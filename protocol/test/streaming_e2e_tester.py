@@ -261,16 +261,16 @@ if __name__ == "__main__":
     # 3 - Create a local folder to store the experiment metadata and all the logs
     # (monitoring logs and metrics logs)
     experiment_start_time = time.strftime("%Y_%m_%d@%H-%M-%S")
-    perf_logs_folder_name = os.path.join("perf_logs", experiment_start_time)
-    os.makedirs(os.path.join(perf_logs_folder_name, "server"))
-    os.makedirs(os.path.join(perf_logs_folder_name, "client"))
+    e2e_logs_folder_name = os.path.join("e2e_logs", experiment_start_time)
+    os.makedirs(os.path.join(e2e_logs_folder_name, "server"))
+    os.makedirs(os.path.join(e2e_logs_folder_name, "client"))
 
-    metadata_filename = os.path.join(perf_logs_folder_name, "experiment_metadata.json")
-    server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring.log")
-    client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring.log")
+    metadata_filename = os.path.join(e2e_logs_folder_name, "experiment_metadata.json")
+    server_log_filepath = os.path.join(e2e_logs_folder_name, "server_monitoring.log")
+    client_log_filepath = os.path.join(e2e_logs_folder_name, "client_monitoring.log")
 
-    client_metrics_file = os.path.join(perf_logs_folder_name, "client", "protocol_client-out.log")
-    server_metrics_file = os.path.join(perf_logs_folder_name, "server", "protocol_server-out.log")
+    client_metrics_file = os.path.join(e2e_logs_folder_name, "client", "protocol_client-out.log")
+    server_metrics_file = os.path.join(e2e_logs_folder_name, "server", "protocol_server-out.log")
 
     experiment_metadata = {
         "start_time": experiment_start_time + " local time"
@@ -435,8 +435,8 @@ if __name__ == "__main__":
     timestamps.add_event("Setting up the instance(s) and building the mandelboxes")
 
     # 7 - Open the server/client monitoring logs
-    server_log = open(os.path.join(perf_logs_folder_name, "server_monitoring.log"), "a")
-    client_log = open(os.path.join(perf_logs_folder_name, "client_monitoring.log"), "a")
+    server_log = open(os.path.join(e2e_logs_folder_name, "server_monitoring.log"), "a")
+    client_log = open(os.path.join(e2e_logs_folder_name, "client_monitoring.log"), "a")
 
     # 8 - Run the host-service on the client and the server. We don't parallelize here for simplicity, given
     # that all operations below do not take too much time.
@@ -540,7 +540,7 @@ if __name__ == "__main__":
         use_two_instances,
         leave_instances_on,
         network_conditions,
-        perf_logs_folder_name,
+        e2e_logs_folder_name,
         experiment_metadata,
         metadata_filename,
         timestamps,

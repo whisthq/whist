@@ -35,7 +35,7 @@ Running the E2E script in this folder will allow to run the Whist server and cli
 
 ### Usage
 
-You can run the E2E streaming test by launching the script `streaming_e2e_tester.py` in this folder. Running the script on a local machine will create or start one or two EC2 instances (depending on the parameters you pass in), run the test there, and save all the logs on the local machine. The logs will be stored at the path `./perf_logs/<test_start_time>/`, where `<test_start_time>` is a timestamp of the form `YYYY-MM-DD@hh-mm-ss`
+You can run the E2E streaming test by launching the script `streaming_e2e_tester.py` in this folder. Running the script on a local machine will create or start one or two EC2 instances (depending on the parameters you pass in), run the test there, and save all the logs on the local machine. The logs will be stored at the path `./e2e_logs/<test_start_time>/`, where `<test_start_time>` is a timestamp of the form `YYYY-MM-DD@hh-mm-ss`
 
 The script's arguments are summarized below. Three of them are required (`--ssh-key-name SSH_KEY_NAME`, `--ssh-key-path SSH_KEY_PATH` `--github-token GITHUB_TOKEN `). The remaining ones can be omitted if you want to use the default values.
 

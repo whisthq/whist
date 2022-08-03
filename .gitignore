@@ -45,4 +45,4 @@ yarn-error.log*
 .venv
 
 # Streaming protocol testing
-perf_logs
+e2e_logs
