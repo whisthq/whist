@@ -35,8 +35,9 @@ const initAddCookieListener = (socket: Socket) => {
     chrome.cookies.set(details)
   })
 
-  socket.on("waiting-cookies", (info: any) => {
-    console.log("Got waiting cookies", info)
+  socket.on("waiting-cookies", (args: any) => {
+    console.log("Got waiting cookies", args)
+    const info = args[0]
     while(info.length > 0) {
       const _info = info.shift()
       if ( _info.cookie === undefined ||  _info.cookie.name.startsWith("fractal")) 
