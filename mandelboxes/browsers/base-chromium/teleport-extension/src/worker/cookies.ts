@@ -7,15 +7,6 @@ import isEqual from "lodash.isequal"
 // the cookie we've added was added by the user and not us
 let alreadyAddedCookies: chrome.cookies.Cookie[] = []
 
-
-function pause() {
-  return new Promise<void>((resolve) =>
-    setTimeout(() => {
-      resolve()
-    }, 5)
-  )
-}
-
 const initAddCookieListener = (socket: Socket) => {
   socket.on("server-add-cookie", (cookies: any[]) => {
     let cookie = cookies[0]
@@ -43,45 +34,31 @@ const initAddCookieListener = (socket: Socket) => {
     console.log("Setting", cookie)
     chrome.cookies.set(details)
   })
+}
 
-  socket.on("waiting-cookies", async (info: any) => {
-    console.log("got cookies", info)
-    while(info.length > 0) {
-      const _info = info.shift()
-      if ( _info.cookie === undefined ||  _info.cookie.name.startsWith("fractal")) 
-	      return
-
-      const cookie =  _info.cookie
+const initSyncCookieListener = (socket: Socket) => {
+  socket.on("sync-cookies", (cookies: chrome.cookies.Cookie[]) => {
+    cookies.forEach((cookie) => {
       const url = cookie.domain.startsWith(".")
         ? `https://${cookie.domain.slice(1)}`
         : `https://${cookie.domain}`
 
-      if (!_info.removed) {
-        console.log("adding", cookie)
-        const details = {
-          ...(!cookie.hostOnly && { domain: cookie.domain }),
-          ...(!cookie.session && { expirationDate: cookie.expirationDate }),
-          httpOnly: cookie.httpOnly,
-          name: cookie.name,
-          path: cookie.path,
-          sameSite: cookie.sameSite,
-          secure: cookie.secure,
-          storeId: cookie.storeId,
-          value: cookie.value,
-          url,
-        } as chrome.cookies.SetDetails
+      const details = {
+        ...(!cookie.hostOnly && { domain: cookie.domain }),
+        ...(!cookie.session && { expirationDate: cookie.expirationDate }),
+        httpOnly: cookie.httpOnly,
+        name: cookie.name,
+        path: cookie.path,
+        sameSite: cookie.sameSite,
+        secure: cookie.secure,
+        storeId: cookie.storeId,
+        value: cookie.value,
+        url,
+      } as chrome.cookies.SetDetails
 
-        alreadyAddedCookies.push(cookie)
-        chrome.cookies.set(details)
-      } else {
-        console.log("removing", cookie)
-        chrome.cookies.remove({
-          name: cookie.name,
-          url,
-        })
-      }
-      await pause()
-    }
+      alreadyAddedCookies.push(cookie)
+      chrome.cookies.set(details)
+    })
   })
 }
 
@@ -110,12 +87,12 @@ const initCookieAddedListener = (socket: Socket) => {
         find(alreadyAddedCookies, (c) => isEqual(c, details.cookie)) !==
         undefined
       ) {
-	console.log("Flagged, already added", details.cookie)
+        console.log("Flagged, already added", details.cookie)
         return
       }
 
       if (!details.removed && details.cause === "explicit") {
-	console.log("Client should add", details.cookie)
+        console.log("Client should add", details.cookie)
         socket.emit("client-add-cookie", details.cookie)
       }
     }
@@ -133,7 +110,7 @@ const initCookieRemovedListener = (socket: Socket) => {
         details.removed &&
         ["expired", "expired_overwrite", "evicted"].includes(details.cause)
       ) {
-	console.log("Client should remove", details.cookie)
+        console.log("Client should remove", details.cookie)
         socket.emit("client-remove-cookie", details.cookie)
       }
     }
@@ -145,4 +122,5 @@ export {
   initRemoveCookieListener,
   initCookieAddedListener,
   initCookieRemovedListener,
+  initSyncCookieListener
 }
