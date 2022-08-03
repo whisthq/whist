@@ -23,7 +23,6 @@ import {
   initAddCookieListener,
   initCookieAddedListener,
   initRemoveCookieListener,
-  initCookieRemovedListener,
 } from "./cookies"
 
 initTabState()
@@ -58,5 +57,4 @@ initSyncCookieListener(socket)
 initAddCookieListener(socket)
 initRemoveCookieListener(socket)
 initCookieAddedListener(socket)
-initCookieRemovedListener(socket)
 initTabRefreshListener(socket)

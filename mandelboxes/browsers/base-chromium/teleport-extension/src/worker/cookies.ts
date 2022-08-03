@@ -99,28 +99,9 @@ const initCookieAddedListener = (socket: Socket) => {
   )
 }
 
-const initCookieRemovedListener = (socket: Socket) => {
-  chrome.cookies.onChanged.addListener(
-    (details: {
-      cause: string
-      cookie: chrome.cookies.Cookie
-      removed: boolean
-    }) => {
-      if (
-        details.removed &&
-        ["expired", "expired_overwrite", "evicted"].includes(details.cause)
-      ) {
-        console.log("Client should remove", details.cookie)
-        socket.emit("client-remove-cookie", details.cookie)
-      }
-    }
-  )
-}
-
 export {
   initAddCookieListener,
   initRemoveCookieListener,
   initCookieAddedListener,
-  initCookieRemovedListener,
   initSyncCookieListener
 }
