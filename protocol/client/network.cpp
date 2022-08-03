@@ -73,7 +73,7 @@ int connect_to_server(const char *server_ip, bool with_stun) {
     LOG_INFO("create_udp_socket_context() done");
 
     // Then connect over TCP
-    MLOCK(create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, BASE_TCP_PORT,
+    MLOCK(result = create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, BASE_TCP_PORT,
                                     TCP_CONNECTION_TIMEOUT, TCP_CONNECTION_WAIT, with_stun,
                                     (char *)client_binary_aes_private_key),
           &packet_tcp_context, sizeof(SocketContext));
