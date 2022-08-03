@@ -31,7 +31,6 @@ const initAddCookieListener = (socket: Socket) => {
     } as chrome.cookies.SetDetails
 
     alreadyAddedCookies.push(cookie)
-    console.log("Setting", cookie)
     chrome.cookies.set(details)
   })
 }
@@ -68,7 +67,6 @@ const initRemoveCookieListener = (socket: Socket) => {
     const url = cookie.domain.startsWith(".")
       ? `https://${cookie.domain.slice(1)}`
       : `https://${cookie.domain}`
-    console.log("Removing", cookie)
     chrome.cookies.remove({
       name: cookie.name,
       url,
@@ -86,13 +84,10 @@ const initCookieAddedListener = (socket: Socket) => {
       if (
         find(alreadyAddedCookies, (c) => isEqual(c, details.cookie)) !==
         undefined
-      ) {
-        console.log("Flagged, already added", details.cookie)
+      )
         return
-      }
 
       if (!details.removed && details.cause === "explicit") {
-        console.log("Client should add", details.cookie)
         socket.emit("client-add-cookie", details.cookie)
       }
     }
@@ -103,5 +98,5 @@ export {
   initAddCookieListener,
   initRemoveCookieListener,
   initCookieAddedListener,
-  initSyncCookieListener
+  initSyncCookieListener,
 }
