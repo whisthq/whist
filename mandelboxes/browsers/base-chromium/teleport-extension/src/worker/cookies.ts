@@ -90,44 +90,44 @@ const initRemoveCookieListener = (socket: Socket) => {
 }
 
 const initCookieAddedListener = (socket: Socket) => {
-  chrome.cookies.onChanged.addListener(
-    (details: {
-      cause: string
-      cookie: chrome.cookies.Cookie
-      removed: boolean
-    }) => {
-      if (
-        find(alreadyAddedCookies, (c) => isEqual(c, details.cookie)) !==
-        undefined
-      ) {
-	console.log("Flagged, already added", details.cookie)
-        return
-      }
+  // chrome.cookies.onChanged.addListener(
+  //   (details: {
+  //     cause: string
+  //     cookie: chrome.cookies.Cookie
+  //     removed: boolean
+  //   }) => {
+  //     if (
+  //       find(alreadyAddedCookies, (c) => isEqual(c, details.cookie)) !==
+  //       undefined
+  //     ) {
+	// console.log("Flagged, already added", details.cookie)
+  //       return
+  //     }
 
-      if (!details.removed && details.cause === "explicit") {
-	console.log("Client should add", details.cookie)
-        socket.emit("client-add-cookie", details.cookie)
-      }
-    }
-  )
+  //     if (!details.removed && details.cause === "explicit") {
+	// console.log("Client should add", details.cookie)
+  //       socket.emit("client-add-cookie", details.cookie)
+  //     }
+  //   }
+  // )
 }
 
 const initCookieRemovedListener = (socket: Socket) => {
-  chrome.cookies.onChanged.addListener(
-    (details: {
-      cause: string
-      cookie: chrome.cookies.Cookie
-      removed: boolean
-    }) => {
-      if (
-        details.removed &&
-        ["expired", "expired_overwrite", "evicted"].includes(details.cause)
-      ) {
-	console.log("Client should remove", details.cookie)
-        socket.emit("client-remove-cookie", details.cookie)
-      }
-    }
-  )
+  // chrome.cookies.onChanged.addListener(
+  //   (details: {
+  //     cause: string
+  //     cookie: chrome.cookies.Cookie
+  //     removed: boolean
+  //   }) => {
+  //     if (
+  //       details.removed &&
+  //       ["expired", "expired_overwrite", "evicted"].includes(details.cause)
+  //     ) {
+	// console.log("Client should remove", details.cookie)
+  //       socket.emit("client-remove-cookie", details.cookie)
+  //     }
+  //   }
+  // )
 }
 
 export {
