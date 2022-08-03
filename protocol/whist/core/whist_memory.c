@@ -18,7 +18,6 @@ Includes
 */
 
 #include <whist/core/whist.h>
-#include <sys/mman.h>
 
 /*
 ============================
@@ -319,7 +318,6 @@ Includes
 #include <memoryapi.h>
 #else
 #include <unistd.h>
-#include <sys/mman.h>
 #endif
 
 /*
