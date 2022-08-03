@@ -166,6 +166,12 @@ Defines
 #endif
 
 #if OS_IS(OS_MACOS)
+#define USING_MLOCK true
+#else
+#define USING_MLOCK false
+#endif
+
+#if USING_MLOCK
 // Round up to nearest page size
 #define MLOCK(stmt, addr, len) \
     stmt;                      \
