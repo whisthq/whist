@@ -134,7 +134,7 @@ def extract_logs_from_mandelbox(
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     logfiles = [
-        # Log file with data for plotting only exists when running in metris mode
+        # Log file with data for plotting only exists when running in metrics mode
         "/usr/share/whist/plot_data.json",
         # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
         "/usr/share/whist/simulated_scrolling.log",

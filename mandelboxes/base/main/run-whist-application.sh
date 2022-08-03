@@ -48,11 +48,9 @@ if [[ -z ${WHIST_DEST_BROWSER+1} ]]; then
   WHIST_DEST_BROWSER="chrome"
 fi
 
-WHIST_LOGS_FOLDER=/home/whist
 # To avoid interfering with Filebeat, the logs files should not contain hyphens in the name before the {-out, -err}.log suffix
-APPLICATION_OUT_FILENAME=$WHIST_LOGS_FOLDER/whist_application-out.log
-APPLICATION_ERR_FILENAME=$WHIST_LOGS_FOLDER/whist_application-err.log
-
+APPLICATION_OUT_FILENAME=/home/whist/whist_application-out.log
+APPLICATION_ERR_FILENAME=/home/whist/whist_application-err.log
 
 # Start the application that this mandelbox runs
 exec whist-application $WHIST_DEST_BROWSER > $APPLICATION_OUT_FILENAME 2>$APPLICATION_ERR_FILENAME
