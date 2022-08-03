@@ -38,13 +38,15 @@ const initAddCookieListener = (socket: Socket) => {
   socket.on("waiting-cookies", (info: any) => {
     console.log("Got waiting cookies", info)
     while(info.length > 0) {
-      const cookie = info.shift()
-      if (cookie === undefined || cookie.cookie.name.startsWith("fractal")) 
+      const _info = info.shift()
+      if ( _info === undefined ||  _info.cookie.name.startsWith("fractal")) 
 	      return
+
+      const cookie =  _info.cookie
       const url = cookie.domain.startsWith(".")
         ? `https://${cookie.domain.slice(1)}`
         : `https://${cookie.domain}`
-        
+
       if (cookie.removed) {
         console.log("removing", cookie.cookie)
         const details = {
