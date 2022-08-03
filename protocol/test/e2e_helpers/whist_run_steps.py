@@ -111,6 +111,9 @@ def setup_process(role, args_dict):
             clone_whist_repository(github_token, hs_process, pexpect_prompt)
         else:
             print(f"Skipping git clone whisthq/whist repository on {role} instance.")
+            # Delete any changes to the repo from previous runs (e.g. testing time settings)
+            hs_process.sendline("cd ~/whist ; git reset --hard ; cd")
+            wait_until_cmd_done(hs_process, pexpect_prompt)
 
         # Ensure that the commit hash on the remote instance matches the one on the runner
         instance_sha = get_remote_whist_github_sha(hs_process, pexpect_prompt)
@@ -266,7 +269,7 @@ def run_mandelbox_on_instance(pexpect_process, role, json_data=None, simulate_sc
         ).decode("utf-8")
         json_data_from_server = f"--json-data='{compressed_json_data}'"
 
-    command = f"cd ~/whist/mandelboxes && ./run.sh {mandelbox_name} {json_data_from_server} | tee ~/server_mandelbox_run.log"
+    command = f"cd ~/whist/mandelboxes && ./run.sh {mandelbox_name} --new-user-config-token {json_data_from_server} | tee ~/server_mandelbox_run.log"
     pexpect_process.sendline(command)
 
     # Need to wait for special mandelbox prompt ":/#". prompt_printed_twice must always be set to False in this case.
@@ -294,7 +297,7 @@ def run_mandelbox_on_instance(pexpect_process, role, json_data=None, simulate_sc
         if simulate_scrolling > 0:
             # Launch the script to simulate the scrolling in the background
             print(f"Starting the scrolling simulation (with {simulate_scrolling} rounds)!")
-            command = f"(nohup /usr/share/whist/simulate_mouse_scrolling.sh {simulate_scrolling} > /var/log/whist/simulated_scrolling.log 2>&1 & )"
+            command = f"(nohup /usr/share/whist/simulate_mouse_scrolling.sh {simulate_scrolling} > /usr/share/whist/simulated_scrolling.log 2>&1 & )"
             pexpect_process.sendline(command)
             wait_until_cmd_done(pexpect_process, ":/#", prompt_printed_twice=False)
 
@@ -326,7 +329,7 @@ def shutdown_and_wait_server_exit(pexpect_process, session_id, exit_confirm_exp)
     wait_until_cmd_done(pexpect_process, ":/#", prompt_printed_twice=False)
 
     # Check the log to see if WhistServer shut down gracefully or if there was a server hang
-    server_log_filepath = os.path.join("/var/log/whist", session_id, "protocol-out.log")
+    server_log_filepath = os.path.join("/var/log/whist", session_id, "main-out.log")
     pexpect_process.sendline(f"tail {server_log_filepath}")
     server_mandelbox_output = wait_until_cmd_done(
         pexpect_process, ":/#", prompt_printed_twice=False, return_output=True

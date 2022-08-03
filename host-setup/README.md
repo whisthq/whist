@@ -87,7 +87,7 @@ cd ~/whist/mandelboxes
 
 ### Accessing Logs
 
-- Once the Docker container opens, if you would like to view Whist's server logs, run `tail -f /var/log/whist/protocol-out.log` (for stdout) and `tail -f /var/log/whist/protocol-err.log` (for stderr).
+- Once the Docker container opens, if you would like to view Whist's server logs, run `tail -f /var/log/whist/main-server-out.log` (for stdout) and `tail -f /var/log/whist/main-server-err.log` (for stderr).
 
 ## Setting Up an AMI
 

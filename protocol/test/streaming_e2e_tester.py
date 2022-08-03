@@ -269,8 +269,8 @@ if __name__ == "__main__":
     server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring.log")
     client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring.log")
 
-    client_metrics_file = os.path.join(perf_logs_folder_name, "client", "client.log")
-    server_metrics_file = os.path.join(perf_logs_folder_name, "server", "server.log")
+    client_metrics_file = os.path.join(perf_logs_folder_name, "client", "protocol_client-out.log")
+    server_metrics_file = os.path.join(perf_logs_folder_name, "server", "protocol_server-out.log")
 
     experiment_metadata = {
         "start_time": experiment_start_time + " local time"

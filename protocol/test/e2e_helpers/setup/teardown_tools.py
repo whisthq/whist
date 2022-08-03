@@ -134,30 +134,33 @@ def extract_logs_from_mandelbox(
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     logfiles = [
-        f"/usr/share/whist/{role}.log",
-        "/usr/share/whist/teleport.log",
-        "/usr/share/whist/display.log",
-        # Var Logs!
-        os.path.join("/var/log/whist", session_id, "audio-err.log"),
-        os.path.join("/var/log/whist", session_id, "audio-out.log"),
-        os.path.join("/var/log/whist", session_id, "display-err.log"),
-        os.path.join("/var/log/whist", session_id, "display-out.log"),
-        "/var/log/whist/entry-err.log",
-        "/var/log/whist/entry-out.log",
-        "/var/log/whist/update_xorg_conf-err.log",
-        "/var/log/whist/update_xorg_conf-out.log",
-        os.path.join("/var/log/whist", session_id, "protocol-err.log"),
-        os.path.join("/var/log/whist", session_id, "protocol-out.log"),
-        # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
-        "/var/log/whist/simulated_scrolling.log",
-        # JSON file with data for plotting
+        # Log file with data for plotting only exists when running in metrics mode
         "/usr/share/whist/plot_data.json",
+        # Log file below will only exist on the client container when a >0 simulated_scrolling argument is used
+        "/usr/share/whist/simulated_scrolling.log",
+        # Var Logs without session_id
+        *[
+            os.path.join("/var/log/whist", session_id, f"{component}-{log_type}.log")
+            for component in ["startup", "update_xorg_conf"]
+            for log_type in ["err", "out"]
+        ],
+        # Var logs with session_id (which might not be set)
+        *[
+            os.path.join("/var/log/whist", session_id, f"{component}-{log_type}.log")
+            for component in [
+                "audio",
+                "display",
+                "main",
+                f"protocol_{role}",
+                "teleport_drag_drop",
+                "whist_application",
+            ]
+            for log_type in ["err", "out"]
+        ],
     ]
     if role == "server":
         # Download Chrome preferences if they exist (only first file should exist)
         logfiles.append("/home/whist/.config/google-chrome/Default/Preferences")
-        logfiles.append("/home/whist/.config/google-chrome/Default/Preferences.update"),
-        logfiles.append("/home/whist/.config/google-chrome/Default/Preferences.new"),
         logfiles.append("/home/whist/.config/google-chrome/Default/History")
 
     for file_path in logfiles:

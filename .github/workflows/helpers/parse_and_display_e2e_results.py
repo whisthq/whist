@@ -221,8 +221,8 @@ if __name__ == "__main__":
     experiments = []
     for i, log_dir in enumerate(logs_root_dirs):
 
-        client_log_file = os.path.join(log_dir, "client", "client.log")
-        server_log_file = os.path.join(log_dir, "server", "server.log")
+        client_log_file = os.path.join(log_dir, "client", "protocol_client-out.log")
+        server_log_file = os.path.join(log_dir, "server", "protocol_server-out.log")
         short_dirname = os.path.basename(log_dir)
 
         experiment_metadata = parse_metadata(log_dir)
@@ -331,10 +331,10 @@ if __name__ == "__main__":
                     verbose,
                 )
                 compared_client_log_path = os.path.join(
-                    ".", compared_branch_name, "client", "client.log"
+                    ".", compared_branch_name, "client", "protocol_client-out.log"
                 )
                 compared_server_log_path = os.path.join(
-                    ".", compared_branch_name, "server", "server.log"
+                    ".", compared_branch_name, "server", "protocol_server-out.log"
                 )
                 compared_client_metrics = {}
                 compared_server_metrics = {}
@@ -367,7 +367,7 @@ if __name__ == "__main__":
 
                 # Generate plots
                 for role in ("client", "server"):
-                    plot_data_filename = os.path.join(log_dir, role, "plot_data.json")
+                    plot_data_filename = os.path.join(experiment["dirname"], role, "plot_data.json")
                     compared_plot_data_filename = os.path.join(
                         ".", compared_branch_name, role, "plot_data.json"
                     )
