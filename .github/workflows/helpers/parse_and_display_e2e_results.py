@@ -45,7 +45,7 @@ Optionally, it will also include a comparison with the latest results from anoth
 
 parser = argparse.ArgumentParser(description=DESCRIPTION)
 parser.add_argument(
-    "--perf-logs-path",
+    "--e2e-logs-path",
     help="The path to the folder containing the E2E streaming logs",
     type=str,
     default=os.path.join(".", "e2e_logs"),
