@@ -69,7 +69,7 @@ func TestGetMetadata(t *testing.T) {
 			}
 
 			retriever := Metadata{}
-			metadataMap, err := retriever.GetMetadata()
+			metadataMap, err := retriever.PopulateMetadata()
 			if err != nil && !tt.error {
 				t.Errorf("did not expect error, got: %s", err)
 			} else if tt.error {

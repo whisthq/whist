@@ -367,7 +367,7 @@ func uninitializeFilesystem() {
 
 func main() {
 	// Set Sentry tags
-	tags, err := metadata.CloudMetadata.GetMetadata()
+	tags, err := metadata.CloudMetadata.PopulateMetadata()
 	if err != nil {
 		logger.Errorf("failed to set Sentry tags: %s", err)
 	}

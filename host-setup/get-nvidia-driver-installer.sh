@@ -12,15 +12,13 @@ VERSION="13.1"
 BUILD="NVIDIA-Linux-x86_64-470.82.01-grid"
 case "$CLOUD_PROVIDER" in
   "AWS")
-
-    aws s3 cp --only-show-errors s3://ec2-linux-nvidia-drivers/grid-"$VERSION"/"$BUILD"-aws.run
+    curl -o nvidia-driver-installer.run https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-"$VERSION"/"$BUILD"-aws.run
     ;;
   "GCP")
-    sudo apt install -y build-essential
     curl -o nvidia-driver-installer.run https://storage.googleapis.com/nvidia-drivers-us-public/GRID/GRID"$VERSION"/"$BUILD".run
     ;;
   *)
-    aws s3 cp --only-show-errors s3://ec2-linux-nvidia-drivers/grid-"$VERSION"/"$BUILD"-aws.run
+    curl -o nvidia-driver-installer.run https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-"$VERSION"/"$BUILD"-aws.run
     ;;
 esac
 

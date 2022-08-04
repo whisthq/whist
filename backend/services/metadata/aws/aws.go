@@ -70,10 +70,10 @@ func (gc *Metadata) GetUserID() types.UserID {
 	return types.UserID("")
 }
 
-// GetMetadata should be called before trying to get any of the metadata values.
+// PopulateMetadata should be called before trying to get any of the metadata values.
 // This function makes the initial calls to the endpoint and populates the `Metadata`
 // struct.
-func (am *Metadata) GetMetadata() (map[string]string, error) {
+func (am *Metadata) PopulateMetadata() (map[string]string, error) {
 	imageID, err := metadataRetriever("ami-id")
 	if err != nil {
 		return nil, utils.MakeError("failed to get aws metadata field ami-id: %s", err)

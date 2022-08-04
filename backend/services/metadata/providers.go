@@ -26,7 +26,7 @@ type CloudMetadataRetriever interface {
 	GetInstanceName() types.InstanceName
 	GetPlacementRegion() types.PlacementRegion
 	GetPublicIpv4() net.IP
-	GetMetadata() (map[string]string, error)
+	PopulateMetadata() (map[string]string, error)
 	GetUserID() types.UserID
 }
 
