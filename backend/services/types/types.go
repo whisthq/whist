@@ -56,20 +56,14 @@ type PrivateKey string
 type JSONData string
 
 // BrowserData is the collection of data imported from a local Chrome to the Chrome instance running inside the
-// mandelbox. This can be a combination of cookies, extensions, bookmarks, preferences and local storage.
+// mandelbox. This can be a combination of cookies, extensions and local storage.
 type BrowserData string
 
 // Cookies is a json file containing user cookies.
 type Cookies string
 
-// Bookmarks is a json file containing user bookmarks.
-type Bookmarks string
-
 // Extensions is a comma-separated string containing user extensions.
 type Extensions string
-
-// Preferences is a json file containing user preferences.
-type Preferences string
 
 // LocalStorage is a json file containing user local storage.
 type LocalStorage string
