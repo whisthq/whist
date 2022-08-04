@@ -167,7 +167,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 		t.Errorf("Got nil subscriptions")
 	}
 
-	if len(whistClient.Subscriptions) != 2 {
+	if len(whistClient.Subscriptions) != 3 {
 		t.Errorf("Expected subscriptions lenght to be 2, got: %v", len(whistClient.Subscriptions))
 	}
 
