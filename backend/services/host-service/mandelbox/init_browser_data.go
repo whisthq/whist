@@ -80,6 +80,8 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData t
 		return utils.MakeError("error inflating user browser data: %s", err)
 	}
 
+	logger.Infof("Inflated data", inflatedBrowserData)
+
 	// Unmarshal bookmarks into proper format
 	var browserData BrowserData
 	if len(inflatedBrowserData) > 0 {
