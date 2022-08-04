@@ -38,27 +38,29 @@ const initAddCookieListener = (socket: Socket) => {
 const initSyncCookieListener = (socket: Socket) => {
   socket.on("sync-cookies", (cookies: chrome.cookies.Cookie[]) => {
     console.log("Sync cookies received", cookies)
-    cookies.forEach((cookie) => {
-      console.log("Syncing", cookie)
-      const url = cookie.domain?.startsWith(".")
-        ? `https://${cookie.domain?.slice(1)}`
-        : `https://${cookie.domain}`
-
-      const details = {
-        ...(!cookie.hostOnly && { domain: cookie.domain }),
-        ...(!cookie.session && { expirationDate: cookie.expirationDate }),
-        httpOnly: cookie.httpOnly,
-        name: cookie.name,
-        path: cookie.path,
-        sameSite: cookie.sameSite,
-        secure: cookie.secure,
-        storeId: cookie.storeId,
-        value: cookie.value,
-        url,
-      } as chrome.cookies.SetDetails
-
-      alreadyAddedCookies.push(cookie)
-      chrome.cookies.set(details)
+    cookies.forEach((cookie, index) => {
+      setTimeout(() => {
+        console.log("Syncing", cookie)
+        const url = cookie.domain?.startsWith(".")
+          ? `https://${cookie.domain?.slice(1)}`
+          : `https://${cookie.domain}`
+  
+        const details = {
+          ...(!cookie.hostOnly && { domain: cookie.domain }),
+          ...(!cookie.session && { expirationDate: cookie.expirationDate }),
+          httpOnly: cookie.httpOnly,
+          name: cookie.name,
+          path: cookie.path,
+          sameSite: cookie.sameSite,
+          secure: cookie.secure,
+          storeId: cookie.storeId,
+          value: cookie.value,
+          url,
+        } as chrome.cookies.SetDetails
+  
+        alreadyAddedCookies.push(cookie)
+        chrome.cookies.set(details)
+      }, index * 20)
     })
   })
 }
