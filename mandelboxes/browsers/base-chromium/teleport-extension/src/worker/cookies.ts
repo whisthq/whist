@@ -40,7 +40,7 @@ const initSyncCookieListener = (socket: Socket) => {
     return new Promise<void>((resolve) =>
       setTimeout(() => {
         resolve()
-      }, 1)
+      }, 10)
     )
   }
 
