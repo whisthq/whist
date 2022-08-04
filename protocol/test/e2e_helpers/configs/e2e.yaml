@@ -1,6 +1,6 @@
 ssh_key_name: GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR
 ssh_key_path: /home/runner/.ssh/id_rsa
-github_token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+github_token: ${GITHUB_TOKEN}
 region_name: ${REGION_NAME}
 use_two_instances: "true"
 existing_server_instance_id: ${SERVER_INSTANCE_ID}

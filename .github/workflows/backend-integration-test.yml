@@ -37,6 +37,8 @@ jobs:
   backend-integration-test:
     name: "Backend Integration Test"
     runs-on: ubuntu-20.04
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout Git Repository

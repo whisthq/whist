@@ -39,6 +39,7 @@ jobs:
       REUSABLE_INSTANCES_REGION_NAME: "us-east-1"
       REUSABLE_SERVER_INSTANCE_ID: "i-061a353731c542eeb"
       REUSABLE_CLIENT_INSTANCE_ID: "i-00ddb3dce5e4bd581"
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout Git Repository
@@ -82,8 +83,6 @@ jobs:
 
       - name: Wait for pre-existing E2E workflows to complete
         working-directory: protocol/test
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "SERVER_INSTANCE_ID=$REUSABLE_SERVER_INSTANCE_ID" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$REUSABLE_CLIENT_INSTANCE_ID" >> $GITHUB_ENV
@@ -157,8 +156,6 @@ jobs:
       - name: Stop or terminate leftover AWS instances
         if: always()
         working-directory: protocol/test
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 -m e2e_helpers.aws.remove_leftover_instances
 
       # We parse the log files from the E2E performance tests above and display the results of the test.
@@ -168,7 +165,6 @@ jobs:
         working-directory: protocol/test
         env:
           GITHUB_GIST_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
