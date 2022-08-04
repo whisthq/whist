@@ -1,15 +1,15 @@
 ssh_key_name: GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR
 ssh_key_path: /home/runner/.ssh/id_rsa
-github_token: ${GITHUB_TOKEN}
+github_token: ${GITHUB_PERSONAL_TOKEN}
 region_name: ""
 use_two_instances: "false"
 existing_server_instance_id: ""
 existing_client_instance_id: ""
 skip_host_setup: "false"
 skip_git_clone: "false"
-leave_instances_on: "false"
-simulate_scrolling: 0
-testing_urls: https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4
-testing_time: 60 # Length of the video in link above is 2mins, 6seconds
 cmake_build_type: dev
 network_conditions: normal
+testing_urls: https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4
+testing_time: 60 # Length of the video in link above is 2mins, 6seconds
+simulate_scrolling: 0
+leave_instances_on: "false"

@@ -40,6 +40,8 @@ jobs:
       REUSABLE_SERVER_INSTANCE_ID: "i-061a353731c542eeb"
       REUSABLE_CLIENT_INSTANCE_ID: "i-00ddb3dce5e4bd581"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Currently, only the token below works for cloning the Whist repo
+      GITHUB_PERSONAL_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
     steps:
       - name: Checkout Git Repository
