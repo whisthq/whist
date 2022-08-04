@@ -70,7 +70,7 @@ func TestTestUserInitialBrowserWrite(t *testing.T) {
 
 			// Check contents match
 			if string(tt.expected) != matchingFileBuf.String() {
-				t.Fatalf("file contents don't match for file %s: '%s' vs '%s'", browserDataFile, tt.browserData, matchingFileBuf.Bytes())
+				t.Fatalf("file contents don't match for file %s: got: %s, expected: %s", browserDataFile, matchingFileBuf.Bytes(), tt.expected)
 			}
 		})
 	}
