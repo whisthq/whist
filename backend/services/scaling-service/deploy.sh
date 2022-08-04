@@ -45,6 +45,11 @@ deploy_scaling_service() {
   # Write Procfile
   echo -e "web: ./scaling-service" > "$PROCFILE"
 
+  # Configure git author (necessary if this deploy is triggered via scheduled job, in which case
+  # there is no commit/author associated with it)
+  git config --global user.email "developers@whist.com"
+  git config --global user.name "Whist Developers"
+
   # Populate the deploy/ directory
   mv "$DEPLOY_DIR" ..
   git switch --orphan deploy-branch
@@ -83,11 +88,6 @@ echo "DB_MIGRATION_PERFORMED=false" >> "${GITHUB_ENV}"
 # Get the DB associated with the app. If this fails, the entire deploy will fail.
 DB_URL=$(heroku config:get DATABASE_URL --app "${HEROKU_APP_NAME}")
 echo "APP: $HEROKU_APP_NAME, DB URL: $DB_URL"
-
-# Configure git author (necessary if this deploy is triggered via scheduled job, in which case
-# there is no commit/author associated with it)
-git config --global user.email "developers@whist.com"
-git config --global user.name "Whist Developers"
 
 if [ "$MIGRA_EXIT_CODE" == "2" ] || [ "$MIGRA_EXIT_CODE" == "3" ]; then
   # a diff exists, now apply it atomically by first pausing the scaling service
