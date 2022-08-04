@@ -40,16 +40,14 @@ const initSyncCookieListener = (socket: Socket) => {
     return new Promise<void>((resolve) =>
       setTimeout(() => {
         resolve()
-      }, 5)
+      }, 1)
     )
   }
 
   socket.on("sync-cookies", async (cookies: chrome.cookies.Cookie[]) => {
-    console.log("Sync cookies received", cookies)
     while (cookies.length > 0) {
       const cookie = cookies.shift()
       if (cookie === undefined) return
-      console.log("Syncing", cookie)
 
       const url = cookie.domain?.startsWith(".")
         ? `https://${cookie.domain?.slice(1)}`
