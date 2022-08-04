@@ -753,6 +753,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 							zap.Time("created_at", mandelboxSubscription.CreatedAt),
 							zap.Time("updated_at", mandelboxSubscription.UpdatedAt),
 						})
+						req.ReturnResult("", err)
 					}
 				}()
 

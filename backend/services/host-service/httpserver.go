@@ -52,6 +52,10 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	queue <- &reqdata
 	res := <-reqdata.ResultChan
 
+	if res.Err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
 	res.Send(w)
 
 	// Measure elapsed milliseconds and send to metrics.

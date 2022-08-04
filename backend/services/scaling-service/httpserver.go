@@ -122,7 +122,7 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 	err := verifyRequestType(w, r, http.MethodGet)
 	if err != nil {
 		// err is already logged
-		http.Error(w, "", http.StatusMethodNotAllowed)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -160,14 +160,14 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 	err = paymentsClient.Initialize(claims.CustomerID, claims.SubscriptionStatus, configGraphqlClient, stripeClient)
 	if err != nil {
 		logger.Errorf("failed to Initialize Stripe Client: %s", err)
-		http.Error(w, "", http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	sessionUrl, err := paymentsClient.CreateSession()
 	if err != nil {
 		logger.Errorf("failed to create Stripe Session: %s", err)
-		http.Error(w, "", http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
@@ -177,7 +177,7 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		logger.Errorf("error marshalling HTTP Response body: %s", err)
-		http.Error(w, "", http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
@@ -190,7 +190,7 @@ func paymentSessionHandler(w http.ResponseWriter, r *http.Request) {
 func jsonTransportHandler(w http.ResponseWriter, r *http.Request) {
 	// Verify that it is a PUT request
 	if httputils.VerifyRequestType(w, r, http.MethodPut) != nil {
-		http.Error(w, "", http.StatusMethodNotAllowed)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -223,7 +223,7 @@ func jsonTransportHandler(w http.ResponseWriter, r *http.Request) {
 	hostReq, err := http.NewRequest("PUT", url, bodyReader)
 	if err != nil {
 		logger.Errorf("failed to create JSON transport request for host service: %s", err)
-		http.Error(w, "", http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
@@ -246,14 +246,14 @@ func jsonTransportHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Errorf("failed to send JSON transport request to instance: %s", err)
-		http.Error(w, "", http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	hostBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		logger.Errorf("could not read host response body: %s", err)
-		http.Error(w, "", http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
