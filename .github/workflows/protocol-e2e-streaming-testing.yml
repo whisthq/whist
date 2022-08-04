@@ -80,6 +80,11 @@ jobs:
       - name: Install End-to-End Streaming Test Dependencies
         run: pip install boto3 paramiko numpy pytablewriter matplotlib
 
+      - name: Setup configuration file
+        run: |
+          python3 -c 'import e2e_helpers.configs.parse_configs;config_updates={ssh_key_name:"GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR", ssh_key_path:"/home/runner/.ssh/id_rsa", github_token:"${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}", region_name:"$REGION_NAME"}'
+          cat e2e_helpers.configs.parse_configs
+
       - name: Wait for pre-existing E2E workflows to complete
         working-directory: protocol/test
         env:
