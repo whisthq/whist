@@ -173,6 +173,7 @@ jobs:
     env:
       SENTRY_ORG: whist
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+    if: false
 
     strategy:
       matrix:
@@ -276,6 +277,7 @@ jobs:
     runs-on: ubuntu-20.04
     concurrency: auth0-deploy-rules-${{ github.ref }}
     needs: [whist-publish-build-config]
+    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -349,6 +351,7 @@ jobs:
       # Set AWS credentials for Terraform
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -433,6 +436,7 @@ jobs:
       SLACK_HOOKS_ENDPOINT_DEV: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
       SLACK_HOOKS_ENDPOINT_STAGING: ${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}
       SLACK_HOOKS_ENDPOINT_PROD: ${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}
+    if: false
 
   #######################################################################################
   #######################################################################################
@@ -449,6 +453,7 @@ jobs:
     needs: [whist-publish-build-config, terraform-deploy]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
+    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -694,9 +699,9 @@ jobs:
     needs:
       [
         whist-publish-build-config,
-        scaling-service-deploy,
-        auth0-deploy-rules,
-        terraform-deploy,
+        # scaling-service-deploy,
+        # auth0-deploy-rules,
+        # terraform-deploy,
       ]
     outputs:
       release_version: ${{ steps.generate-release-version.outputs.release_version }}
@@ -705,12 +710,7 @@ jobs:
       new_dev_rc_version: ${{ steps.generate-release-version.outputs.new_dev_rc_version }}
 
     # Only run whist-browser deployment if none of the previous steps failed
-    if: |
-      always() &&
-      (needs.scaling-service-deploy.result == 'success') &&
-      (needs.auth0-deploy-rules.result == 'success') &&
-      (needs.mandelboxes-publish-ghcr.result == 'success') &&
-      (needs.amis-publish-aws.result == 'success')
+    if: always()
 
     steps:
       - name: Checkout Git Repository
@@ -823,7 +823,7 @@ jobs:
       [
         whist-publish-build-config,
         whist-browser-retrieve-version-number,
-        terraform-deploy,
+        # terraform-deploy,
       ]
 
     # Only run whist-browser deployment if none of the previous steps failed
@@ -833,21 +833,15 @@ jobs:
       matrix:
         config:
           # This builds the client-side macOS Whist Browser
-          - target_arch: "x64"
-            display_os: "macOS"
-            target_os: "macos"
-            runner: [self-hosted, macOS, ARM64]
+          # - target_arch: "x64"
+          #  display_os: "macOS"
+          #   target_os: "macos"
+          #   runner: [self-hosted, macOS, ARM64]
           # This builds the client-side macOS Whist Browser
           - target_arch: "arm64"
             display_os: "macOS"
             target_os: "macos"
             runner: [self-hosted, macOS, ARM64]
-          # This builds the server-side Linux Whist Browser (running in our mandelboxes)
-          - target_arch: "x64"
-            display_os: "Linux Ubuntu"
-            target_os: "linux"
-            runner: [self-hosted, Linux, x64]
-
     env:
       binary-tar-name: whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}.tar.gz
       s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}
@@ -1217,7 +1211,7 @@ jobs:
       # Note: Sentry makes use of sudo. To make it work on a self-hosted macOS runner, follow:
       # https://apple.stackexchange.com/questions/257813/enable-sudo-without-a-password-on-macos
       - name: Copy Client debug symbols to Sentry, on macOS
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        if: needs.whist-publish-build-config.outputs.publish == 'true' && false
         working-directory: brave-browser/src/brave/whist
         env:
           SENTRY_ORG: whist
@@ -1239,7 +1233,7 @@ jobs:
           fi
 
       - name: Tar & Upload Whist Browser to AWS S3
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        if: needs.whist-publish-build-config.outputs.publish == 'true' || true
         working-directory: brave-browser/src/out
         run: |
           # On Arm builds, the arch gets appended to the output folder name
@@ -1302,10 +1296,7 @@ jobs:
       ]
 
     # Only run whist-browser deployment if none of the previous steps failed
-    if: |
-      always() &&
-      (needs.whist-browser-retrieve-version-number.result == 'success') &&
-      (needs.whist-browser-publish-build-s3.result == 'success')
+    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -1380,6 +1371,7 @@ jobs:
         auth0-deploy-rules,
         terraform-deploy,
       ]
+    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -1546,7 +1538,7 @@ jobs:
         whist-browser-publish-build-s3,
         whist-browser-update-version-number,
       ]
-    if: needs.whist-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.whist-publish-build-config.outputs.branch)
+    if: false
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
