@@ -96,6 +96,8 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData t
 	}
 
 	// Convert struct into JSON string
+	logger.Infof("Got browser data", browserData)
+
 	data, err := json.Marshal(browserData)
 
 	if err != nil {
