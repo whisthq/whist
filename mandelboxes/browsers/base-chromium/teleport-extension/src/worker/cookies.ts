@@ -37,9 +37,11 @@ const initAddCookieListener = (socket: Socket) => {
 
 const initSyncCookieListener = (socket: Socket) => {
   socket.on("sync-cookies", (cookies: chrome.cookies.Cookie[]) => {
+    console.log("Sync cookies received", cookies)
     cookies.forEach((cookie) => {
-      const url = cookie.domain.startsWith(".")
-        ? `https://${cookie.domain.slice(1)}`
+      console.log("Syncing", cookie)
+      const url = cookie.domain?.startsWith(".")
+        ? `https://${cookie.domain?.slice(1)}`
         : `https://${cookie.domain}`
 
       const details = {
