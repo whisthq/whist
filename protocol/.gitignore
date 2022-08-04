@@ -25,3 +25,5 @@ sentry-native/
 # Cmake
 build/
 build-*/
+
+test/e2e_helpers/configs/default.yaml
