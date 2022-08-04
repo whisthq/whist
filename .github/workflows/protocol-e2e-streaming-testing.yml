@@ -92,12 +92,6 @@ jobs:
           # the script below will reset the variables to "" to run the test on new (disposable) instances.
           python3 -m e2e_helpers.wait_in_queue
 
-      - name: Setup configuration file
-        working-directory: protocol/test
-        run: |
-          python3 -c 'import os;from e2e_helpers.configs.parse_configs import update_yaml; config_updates={"ssh_key_name": "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR", "ssh_key_path": "/home/runner/.ssh/id_rsa", "github_token": "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}", "region_name": os.getenv("REGION_NAME") or "", "use_two_instances": "true", "leave_instances_on": "true", "skip_host_setup": "true", "skip_git_clone": "true" }; update_yaml("e2e_helpers/configs/default.yaml", config_updates)'
-          cat e2e_helpers/configs/default.yaml
-
       # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under
       # Key Pairs, where the SSH key is defined. Other possible flags:
       # --testing_url, defaults to Big Buck Bunny video stored on our AWS S3
@@ -115,11 +109,7 @@ jobs:
         id: e2e_streaming_test0
         working-directory: protocol/test
         run: |
-          python3 streaming_e2e_tester.py \
-            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
-            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
-            --skip-host-setup=false \
-            --skip-git-clone=false \
+          python3 streaming_e2e_tester.py --skip-host-setup=false --skip-git-clone=false
           # Update REGION_NAME, SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
@@ -129,11 +119,7 @@ jobs:
         id: e2e_streaming_test1
         working-directory: protocol/test
         run: |
-          python3 streaming_e2e_tester.py \
-            --region-name "$REGION_NAME" \
-            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
-            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
-            --network-conditions 15Mbit-30Mbit,10,None,None,1000-2000
+          python3 streaming_e2e_tester.py --network-conditions 15Mbit-30Mbit,10,None,None,1000-2000
           # Update REGION_NAME, SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
@@ -143,11 +129,7 @@ jobs:
         id: e2e_streaming_test2
         working-directory: protocol/test
         run: |
-          python3 streaming_e2e_tester.py \
-            --region-name "$REGION_NAME" \
-            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
-            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
-            --network-conditions 10Mbit-20Mbit,10,None,None,500-2000
+          python3 streaming_e2e_tester.py --network-conditions 10Mbit-20Mbit,10,None,None,500-2000
           # Update REGION_NAME, SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
@@ -157,10 +139,7 @@ jobs:
         id: e2e_streaming_test3
         working-directory: protocol/test
         run: |
-          python3 streaming_e2e_tester.py \
-            --region-name "$REGION_NAME" \
-            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
-            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
+          python3 streaming_e2e_tester.py 
             --leave-instances-on=false \
             --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" \
             --simulate-scrolling 10 \

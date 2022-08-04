@@ -81,15 +81,7 @@ jobs:
       ### Action below will run the integration Test for each new commit to a branch of a PR. ###
       - name: Run Integration Test
         working-directory: protocol/test
-        run: |
-          python3 streaming_e2e_tester.py \
-            --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
-            --ssh-key-path "/home/runner/.ssh/id_rsa" \
-            --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
-            --cmake-build-type dev \
-            --testing-time 60 \
-            --use-two-instances=false \
-            --leave-instances-on=false
+        run: python3 streaming_e2e_tester.py
 
       - name: Upload logs to S3 for debugging purposes
         if: always()

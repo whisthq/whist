@@ -46,4 +46,3 @@ yarn-error.log*
 
 # Streaming protocol testing
 e2e_logs
-protocol/test/e2e_helpers/configs/*.yaml
