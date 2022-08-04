@@ -45,9 +45,10 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData t
 	}
 
 	// Verify that the string is a valid JSON
-	_, err = json.Marshal(inflatedBrowserData)
-	if err != nil {
-		return utils.MakeError("invalid JSON string received as browser data: %s", err)
+	ok := json.Valid([]byte(inflatedBrowserData))
+	if !ok {
+		logger.Warningf("invalid JSON string received as browser data: %s", err)
+		inflatedBrowserData = ""
 	}
 
 	filePath := path.Join(destDir, UserInitialBrowserFile)
