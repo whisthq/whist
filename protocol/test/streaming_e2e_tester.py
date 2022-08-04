@@ -86,6 +86,7 @@ parser.add_argument(
     the key-pair that you pass must be valid on all AWS regions.",
     type=str,
     choices=[
+        None,
         "",
         "us-east-1",
         "us-east-2",
@@ -134,7 +135,7 @@ parser.add_argument(
     "--use-two-instances",
     help="Whether to run the client on a separate AWS instance, instead of the same as the server.",
     type=str,
-    choices=["false", "true"],
+    choices=[None, "false", "true"],
 )
 
 parser.add_argument(
@@ -142,7 +143,7 @@ parser.add_argument(
     help="This option allows you to override the default behavior and leave the instances running upon completion \
     of the test, instead of stopping (if reusing existing ones) or terminating (if creating new ones) them.",
     type=str,
-    choices=["false", "true"],
+    choices=[None, "false", "true"],
 )
 
 parser.add_argument(
@@ -150,7 +151,7 @@ parser.add_argument(
     help="This option allows you to skip the host-setup on the instances to be used for the test. \
     This will save you a good amount of time.",
     type=str,
-    choices=["false", "true"],
+    choices=[None, "false", "true"],
 )
 
 parser.add_argument(
@@ -160,7 +161,7 @@ parser.add_argument(
     on the existing instance(s) as is. This option is useful if you need to run several tests in succession \
     using code from the same commit.",
     type=str,
-    choices=["false", "true"],
+    choices=[None, "false", "true"],
 )
 
 parser.add_argument(
@@ -189,7 +190,7 @@ parser.add_argument(
     "--cmake-build-type",
     help="The Cmake build type to use when building the protocol.",
     type=str,
-    choices=["dev", "prod", "metrics"],
+    choices=[None, "dev", "prod", "metrics"],
 )
 
 parser.add_argument(
