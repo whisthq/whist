@@ -150,15 +150,13 @@ The above files are fairly static. If you add or remove a file, or change what a
 
 ## Development
 
-We use Cmake >= 3.15 to compile, format and run tests on all systems, and also use Ninja on Windows for faster compilation. Installation instructions are found below.
+We use Cmake >= 3.20 to compile, format and run tests on all systems, and also use Ninja on Windows for faster compilation. Installation instructions are found below.
 
 ### Installation of Dependencies
 
-First, if on windows, install git with gitbash via `https://git-scm.com/download/win`, and potentially [choco](https://chocolatey.org/install) if you haven't already.
+First, if you're on Windows, install `git` with `gitbash` via `https://git-scm.com/download/win`, and [Chocolatey](https://chocolatey.org/install) if you haven't already. If you're on macOS, simply install [Homebrew](https://brew.sh/) if you haven't already.
 
-If on Mac, please install [brew](https://brew.sh/) if you haven't already.
-
-On all three platforms, you will need to install and log into the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html), which can be installed via `apt/brew/choco install awscli``. On command line, you should run `aws configure`, and pass in your AWS Access Key ID, AWS Secret Access Key, Region of us-east-1, and default output format. This will have to be done on gitbash, if you are on Windows.
+On all three platforms, you will need to install and log into the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html), which can be installed via `apt/brew/choco install awscli`. Run `aws configure` in your terminal, and pass in your AWS Access Key ID, AWS Secret Access Key, Region of us-east-1, and default output format to configure it. This will have to be done on `gitbash`, if you are on Windows.
 
 #### Linux
 
@@ -180,12 +178,11 @@ You also need to have installed Xcode and installed the Xcode CLI tools, which y
 
 ##### Windows
 
-First, if using Choco, you will want to install Cmake with `choco install cmake.install --installargs '"ADD_CMAKE_TO_PATH=System"'
-`, and cppcheck with `choco install cppcheck --force`. (Note that `winget` has gotten pretty mature, so you might just do `winget install cmake` and `winget install cppcheck`).
+First, if using Chocolatey as your package maanger, you will want to install `cmake` with `choco install cmake.install --installargs '"ADD_CMAKE_TO_PATH=System"'`, and `cppcheck` with `choco install cppcheck --force`. Note that `winget` has gotten pretty mature, so you might just do `winget install cmake` and `winget install cppcheck`, if you prefer.
 
-Install the latest version of Ninja as well if you are compiling on Windows (This may come with your Visual Studio, depending on how you configured it. Otherwise, `choco install ninja` will work).
+Install the latest version of Ninja as well if you are compiling on Windows (this may come with your Visual Studio, depending on how you configured it. Otherwise, `choco install ninja` should do the trick.
 
-In order to compile it, you need to first install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. **In order to compile the protocol, you need to make sure to be using x86_64 Visual Studio Developer Command Prompt.** In order to open the x86_64 Visual Studio Developer Command Prompt, you must First hit the "Windows Key", then you must type in "x86_64", and then the first result should indeed be the x86_64 Visual Studio Developer Command Prompt. **All future steps must be done using this terminal, otherwise compilation will not work**. In later versions of Visual Studio, it is named "x64 Visual Studio Developer Command Prompt", as opposed to with "x86_64".
+In order to compile it, you need to first install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select the `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. **In order to compile the protocol, you need to make sure to be using the x86_64 Visual Studio Developer Command Prompt.** In order to open the x86_64 Visual Studio Developer Command Prompt, you must First hit the "Windows Key", then you must type in "x86_64", and then the first result should indeed be the x86_64 Visual Studio Developer Command Prompt. **All future steps must be done using this terminal, otherwise compilation will not work**. Note that in later versions of Visual Studio, it may be named **x64 Visual Studio Developer Command Prompt**, as opposed to **x86_64**.
 
 Note that if you're returning to Windows development after some time, you might have an old version of the Windows 10 SDK installed. In order to build the protocol, open the Visual Studio Installer, click "Modify" on your installation, navigate to "Individual Components", search for "Windows 10 SDK", and ensura that your installed version is at least `10.0.22000.0`. Otherwise, protocol builds will fail due to compiler warnings.
 
