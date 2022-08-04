@@ -80,12 +80,6 @@ jobs:
       - name: Install End-to-End Streaming Test Dependencies
         run: pip install boto3 paramiko numpy pytablewriter matplotlib
 
-      - name: Setup configuration file
-        working-directory: protocol/test
-        run: |
-          python3 -c 'import os;from e2e_helpers.configs.parse_configs import update_yaml; config_updates={"ssh_key_name": "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR", "ssh_key_path": "/home/runner/.ssh/id_rsa", "github_token": "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}", "region_name": os.getenv("REGION_NAME") or "", "use_two_instances": True, "leave_instances_on": True, "skip_host_setup": True, "skip_git_clone": True }; update_yaml("e2e_helpers/configs/default.yaml", config_updates)'
-          cat e2e_helpers/configs/default.yaml
-
       - name: Wait for pre-existing E2E workflows to complete
         working-directory: protocol/test
         env:
@@ -97,6 +91,12 @@ jobs:
           # We set the instance ids and region name to use in the next steps. In case there are too many workflows running ahead of the current one,
           # the script below will reset the variables to "" to run the test on new (disposable) instances.
           python3 -m e2e_helpers.wait_in_queue
+
+      - name: Setup configuration file
+        working-directory: protocol/test
+        run: |
+          python3 -c 'import os;from e2e_helpers.configs.parse_configs import update_yaml; config_updates={"ssh_key_name": "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR", "ssh_key_path": "/home/runner/.ssh/id_rsa", "github_token": "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}", "region_name": os.getenv("REGION_NAME") or "", "use_two_instances": True, "leave_instances_on": True, "skip_host_setup": True, "skip_git_clone": True }; update_yaml("e2e_helpers/configs/default.yaml", config_updates)'
+          cat e2e_helpers/configs/default.yaml
 
       # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under
       # Key Pairs, where the SSH key is defined. Other possible flags:
