@@ -36,32 +36,42 @@ const initAddCookieListener = (socket: Socket) => {
 }
 
 const initSyncCookieListener = (socket: Socket) => {
-  socket.on("sync-cookies", (cookies: chrome.cookies.Cookie[]) => {
-    console.log("Sync cookies received", cookies)
-    cookies.forEach((cookie, index) => {
+  const pause = () => {
+    return new Promise<void>((resolve) =>
       setTimeout(() => {
-        console.log("Syncing", cookie)
-        const url = cookie.domain?.startsWith(".")
-          ? `https://${cookie.domain?.slice(1)}`
-          : `https://${cookie.domain}`
-  
-        const details = {
-          ...(!cookie.hostOnly && { domain: cookie.domain }),
-          ...(!cookie.session && { expirationDate: cookie.expirationDate }),
-          httpOnly: cookie.httpOnly,
-          name: cookie.name,
-          path: cookie.path,
-          sameSite: cookie.sameSite,
-          secure: cookie.secure,
-          storeId: cookie.storeId,
-          value: cookie.value,
-          url,
-        } as chrome.cookies.SetDetails
-  
-        alreadyAddedCookies.push(cookie)
-        chrome.cookies.set(details)
-      }, index * 20)
-    })
+        resolve()
+      }, 5)
+    )
+  }
+
+  socket.on("sync-cookies", async (cookies: chrome.cookies.Cookie[]) => {
+    console.log("Sync cookies received", cookies)
+    while (cookies.length > 0) {
+      const cookie = cookies.shift()
+      if (cookie === undefined) return
+      console.log("Syncing", cookie)
+
+      const url = cookie.domain?.startsWith(".")
+        ? `https://${cookie.domain?.slice(1)}`
+        : `https://${cookie.domain}`
+
+      const details = {
+        ...(!cookie.hostOnly && { domain: cookie.domain }),
+        ...(!cookie.session && { expirationDate: cookie.expirationDate }),
+        httpOnly: cookie.httpOnly,
+        name: cookie.name,
+        path: cookie.path,
+        sameSite: cookie.sameSite,
+        secure: cookie.secure,
+        storeId: cookie.storeId,
+        value: cookie.value,
+        url,
+      } as chrome.cookies.SetDetails
+
+      alreadyAddedCookies.push(cookie)
+      chrome.cookies.set(details)
+      await pause()
+    }
   })
 }
 
