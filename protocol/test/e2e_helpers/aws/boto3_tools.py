@@ -249,7 +249,6 @@ def start_instance(boto3client: botocore.client, instance_id: str, max_retries: 
     for retry in range(max_retries):
         try:
             response = boto3client.start_instances(InstanceIds=[instance_id], DryRun=False)
-            print(response)
         except botocore.exceptions.ClientError as e:
             print(
                 f"Could not start instance (retry {retry + 1}/{max_retries}). Caught exception: {e}"
@@ -328,24 +327,22 @@ def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
         instance_id (str): The ID of the instance of interest
 
     Returns:
-        retval (list): A list of dictionaries with the public and private IPs of every instance
-                       with instance id equal to the parameter.
+        ip_addresses (dict):    A dictionary with the public and private IPs of the instance. The
+                                function throws an error and exits if the IP addreses are not found.
     """
-    retval = []
 
     # retrieve instance
     resp = boto3client.describe_instances(InstanceIds=[instance_id])
-    instance = resp["Reservations"][0]
-
-    # iterate over tags
-    if instance:
-        for i in instance["Instances"]:
-            net = i["NetworkInterfaces"][0]
-            retval.append(
-                {"public": net["Association"]["PublicDnsName"], "private": net["PrivateIpAddress"]}
-            )
-    print(f"Instance IP is: {retval}")
-    return retval
+    reservations = resp.get("Reservations", [{}])[0]
+    instance_dict = reservations.get("Instances", [{}])[0]
+    net_interfaces = instance_dict.get("NetworkInterfaces", [{}])[0]
+    public_ip = net_interfaces.get("Association", {}).get("PublicDnsName", None)
+    private_ip = net_interfaces.get("PrivateIpAddress", None)
+    if public_ip and private_ip:
+        print(f"Instance {instance_id} has public IP: {public_ip} and private IP: {private_ip}")
+        return {"public": public_ip, "private": private_ip}
+    else:
+        exit_with_error(f"Error, unable to get IP addresses for instance {instance_id}!")
 
 
 def create_or_start_aws_instance(boto3client, region_name, existing_instance_id, ssh_key_name):

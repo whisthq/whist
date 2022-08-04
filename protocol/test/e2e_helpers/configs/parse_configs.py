@@ -21,7 +21,7 @@ yaml.add_constructor("!pathex", env_constructor)
 
 def load_yaml_configs(filepath):
     with open(filepath, "r+") as file:
-        return yaml.load(file)
+        return yaml.load(file, Loader=yaml.FullLoader)
 
 
 def save_configs_to_yaml(filepath, configs):

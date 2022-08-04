@@ -58,15 +58,15 @@ github_token:
 #                       (if creating new ones) them.
 #####################################################################################################################
 
-region_name: "" # empty string will let the script pick the first region (in alphabetic order) with available capacity
+region_name: "us-east-1" # empty string will let the script pick the first region (in alphabetic order) with available capacity
 use_two_instances: "false"
 existing_server_instance_id: ""
 existing_client_instance_id: ""
-skip_host_setup: "true"
+skip_host_setup: "false"
 skip_git_clone: "false"
-cmake_build_type: metrics
+cmake_build_type: dev
 network_conditions: normal
 testing_urls: https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4
 testing_time: 126 # Length of the video in link above is 2mins, 6seconds
 simulate_scrolling: 0
-leave_instances_on: "false"
+leave_instances_on: "true"

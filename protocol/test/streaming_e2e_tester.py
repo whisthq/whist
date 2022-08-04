@@ -49,13 +49,12 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 if __name__ == "__main__":
-    print(configs)
 
     timestamps = TimeStamps()
 
     # 1 - Parse args from the command line
     ssh_key_name = configs.get("ssh_key_name")
-    ssh_key_path = configs.get("ssh_key_path")
+    ssh_key_path = os.path.expanduser(configs.get("ssh_key_path") or "")
     github_token = configs.get("github_token")  # The PAT allowing us to fetch code from GitHub
     testing_urls = (
         configs.get("testing_urls")[0]
@@ -171,16 +170,16 @@ if __name__ == "__main__":
 
     # 5 - Get the IP address of the instance(s) that are now running
     server_instance_ip = get_instance_ip(boto3client, server_instance_id)
-    server_hostname = server_instance_ip[0]["public"]
-    server_private_ip = server_instance_ip[0]["private"].replace(".", "-")
+    server_hostname = server_instance_ip["public"]
+    server_private_ip = server_instance_ip["private"].replace(".", "-")
 
     client_instance_ip = (
         get_instance_ip(boto3client, client_instance_id)
         if use_two_instances
         else server_instance_ip
     )
-    client_hostname = client_instance_ip[0]["public"]
-    client_private_ip = client_instance_ip[0]["private"].replace(".", "-")
+    client_hostname = client_instance_ip["public"]
+    client_private_ip = client_instance_ip["private"].replace(".", "-")
 
     # Notify the user that we are connecting to the EC2 instance(s)
     if not use_two_instances:

@@ -140,7 +140,7 @@ jobs:
         id: e2e_streaming_test3
         working-directory: protocol/test
         run: |
-          python3 streaming_e2e_tester.py 
+          python3 streaming_e2e_tester.py \
             --leave-instances-on=false \
             --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" \
             --simulate-scrolling 10 \
