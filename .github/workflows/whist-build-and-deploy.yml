@@ -791,7 +791,7 @@ jobs:
 
             # increment version by dev-rc.1
             NEW_DEV_RC=$(echo "print( ${DEV_RC} + 1)" | python)
-            
+
             # set temporary variable for upcoming micro version which is 1 ahead of current, since
             # staging/dev are release candiates (rc) for the next version
             # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
@@ -843,8 +843,9 @@ jobs:
             target_os: "macos"
             runner: [self-hosted, macOS, ARM64]
     env:
-      binary-tar-name: whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}.tar.gz
-      s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}
+      # binary-tar-name: whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}.tar.gz
+      dmg-object-name: Whist-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg
+      s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-prod
       s3-bucket-region: us-east-1
       build_type: "Release" # Change this to Debug or Component if you're looking to generate a less-optimized build, but with more symbols
 
@@ -882,9 +883,10 @@ jobs:
               cd src/brave
 
               # Log the branch, should always be `dev`, `staging`, or `prod`, but we checkout just to be sure
+              git fetch -p
               git branch
               git checkout ${{ needs.whist-publish-build-config.outputs.branch }}
-              git pull
+              git reset --hard origin/${{ needs.whist-publish-build-config.outputs.branch }}
               git branch
 
               # We then do the same for the `whist` repo within the `brave-core` repo.
@@ -933,8 +935,20 @@ jobs:
       #   if: runner.os == 'macOS'
       #   uses: apple-actions/import-codesign-certs@v1
       #   with:
+      #     keychain: Whist Codesigning
+      #     keychain-password: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
       #     p12-file-base64: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
       #     p12-password: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
+
+      # - name: Install macOS developer ID installer signing identity
+      #   if: runner.os == 'macOS'
+      #   uses: apple-actions/import-codesign-certs@v1
+      #   with:
+      #     keychain: Whist Codesigning
+      #     create-keychain: false
+      #     keychain-password: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
+      #     p12-file-base64: ${{ secrets.MACOS_DEVELOPER_ID_INSTALLER_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
+      #     p12-password: ${{ secrets.MACOS_DEVELOPER_ID_INSTALLER_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
 
       # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
       - name: Install macOS Notarization API Key
@@ -1013,14 +1027,14 @@ jobs:
           # - prod: "" (defaults to "stable")
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             # Production build, set official build as true and build Chromium as Release
-            export npm_config_is_official_build=true
+            # export npm_config_is_official_build=true
             echo "release_channel=''" >> $GITHUB_ENV
 
             # Set the proper package name for the build
             #
             # TODO: Sign the macOS package and update the file path accordingly
             if [[ "${{ runner.os }}" == "macOS" ]]; then
-              echo "executable_name=unsigned/Whist Browser.dmg" >> $GITHUB_ENV
+              echo "executable_name=signed/Whist Browser.dmg" >> $GITHUB_ENV
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1030,14 +1044,14 @@ jobs:
             fi
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             # Staging build, set official build as false and build Chromium as Release
-            export npm_config_is_official_build=false
+            # export npm_config_is_official_build=false
             echo "release_channel=beta" >> $GITHUB_ENV
 
             # Set the proper package name for the build
             #
             # TODO: Sign the macOS package and update the file path accordingly
             if [[ "${{ runner.os }}" == "macOS" ]]; then
-              echo "executable_name=unsigned/Whist Browser Beta.dmg" >> $GITHUB_ENV
+              echo "executable_name=signed/Whist Browser Beta.dmg" >> $GITHUB_ENV
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1047,14 +1061,14 @@ jobs:
             fi
           else
             # Dev build, set official build as false and build Chromium as Debug
-            export npm_config_is_official_build=false
+            # export npm_config_is_official_build=false
             echo "release_channel=nightly" >> $GITHUB_ENV
 
             # Set the proper package name for the build
             #
             # TODO: Sign the macOS package and update the file path accordingly
             if [[ "${{ runner.os }}" == "macOS" ]]; then
-              echo "executable_name=unsigned/Whist Browser Nightly.dmg" >> $GITHUB_ENV
+              echo "executable_name=signed/Whist Browser Nightly.dmg" >> $GITHUB_ENV
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1063,88 +1077,6 @@ jobs:
               exit 1
             fi
           fi
-
-      # We need to configure build parameters, to build for the proper architecture and with
-      # the relevant flags for the selected build type. Note that we cannot/don't want to use
-      # a lot of Brave-specific services, which are either omitted or filled-in with a placeholder.
-      #
-      # List of potential flags can be found here:
-      # https://github.com/whisthq/brave-core/blob/main/build/commands/lib/config.js#L77
-      # https://github.com/brave/brave-core/blob/master/build/commands/scripts/commands.js#L71
-      #
-      # Note that we must use environment variables starting with npm_config_ intead of directly setting
-      # global `npm config set ...`, so to not interfere with developers working on the self-hosted runner
-      - name: Configure Build Parameters
-        working-directory: brave-browser
-        run: |
-          # Set architecture and version
-          export npm_config_target_arch=${{ matrix.config.target_arch }}
-          export npm_config_target_os=${{ matrix.config.target_os }}
-          export npm_config_version=${{ env.release_version }}
-
-          # Configure Whist integration with Google APIs
-          # This key is from the `Whist Chromium Browser` GCP project, under the `whist.com` GCP organization
-          export npm_config_brave_google_api_key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }}
-          export npm_config_safebrowsing_api_endpoint=https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }}
-
-          # Configure Google OAuth integration with Whist
-          export npm_config_google_default_client_id=${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-          export npm_config_google_default_client_secret=${{ secrets.GOOGLE_OAUTH_SECRET }}
-
-          # The component update servers are used by Chromium to update Chrome Extensions independently from the
-          # core Chromium browser. Brave uses their own component update servers to update their extensions following
-          # the same process (Brave Rewards, Brave Shields, etc.), redirecting all other extensions to Chrome's component
-          # update servers associated with the Chrome Web Store. They need to do this since the Brave extensions are not
-          # offered via the Chrome Web Store, but natively bundled into Brave.
-          #
-          # Although Whist also uses two natively-bundled Chrome Extensions (Shields and Cloud Tabs), we choose not to update
-          # those independently from the browser, for simplicity and to ensure that the streaming client is always in-sync 
-          # with the streaming server, which is very important for our streaming technology to function properly.
-          # 
-          # As a result, we do not run our own component update servers (and we do not use Brave's, since we've removed Brave 
-          # Rewards and dissociated Brave Shields into our own version, Shields). Instead, we simply specify Chrome's component
-          # update servers, which are necessary for Chrome Extensions to work properly.
-          #
-          # For more context, see: https://www.chromium.org/administrators/policy-list-3/extension-settings-full/
-          export npm_config_updater_dev_endpoint=http://clients2.google.com/service/update2/crx
-          export npm_config_updater_prod_endpoint=http://clients2.google.com/service/update2/crx
-
-          # TODO: Configure a variations server for Whist to enable A/B testing
-          # export npm_config_brave_variations_server_url=https://
-
-          # TODO: Configure a web compatibility endpoint to enable legacy web compatibility
-          # export npm_config_webcompat_report_api_endpoint=https://webcompat.brave.com/1/webcompat
-
-          # TODO: Configure Apple Notarization
-          # Potential secrets to use: 
-          #    APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          #    APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
-          # export npm_config_notary_user=
-          # export npm_config_notary_password=
-          # export npm_config_mac_signing_keychain=login
-          # export npm_config_mac_signing_identifier=
-          # export npm_config_mac_installer_signing_identifier=
-
-          # This is related to generic Brave services, which we don't use in the product,
-          # so we provide dummy values
-          export npm_config_brave_services_key=fake
-          export npm_config_brave_stats_updater_url=https://
-
-          # This is related to Brave Sync, which we don't use in the product,
-          # so we provide a dummy value
-          export npm_config_brave_sync_endpoint=https://
-
-          # These are all related to Brave Rewards/Wallet, which we don't use in the product,
-          # so we provide dummy values
-          export npm_config_uphold_client_id=fake
-          export npm_config_uphold_client_secret=fake
-          export npm_config_gemini_wallet_client_id=fake
-          export npm_config_gemini_wallet_client_secret=fake
-          export npm_config_gemini_api_url=https://
-          export npm_config_gemini_oauth_url=https://
-          export npm_config_rewards_grant_dev_endpoint=https://
-          export npm_config_rewards_grant_staging_endpoint=https://
-          export npm_config_rewards_grant_prod_endpoint=https://
 
       - name: Fetch Chromium Source & Dependencies
         working-directory: brave-browser
@@ -1170,30 +1102,53 @@ jobs:
           #
           # TODO: Create a per-environment Amplitude project, and have a different key for each environment
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
-            export WHIST_AUTH0_CLIENT_ID=Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD
-            export WHIST_AUTH0_DOMAIN_URL=auth.whist.com
-            export WHIST_AUTH0_REDIRECT_URL=https://auth.whist.com/callback
+            export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
+            export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
-            export WHIST_AMPLITUDE_KEY=${{ secrets.WHIST_AMPLITUDE_KEY }}
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             export WHIST_AUTH0_CLIENT_ID=WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz
             export WHIST_AUTH0_DOMAIN_URL=fractal-staging.us.auth0.com
-            export WHIST_AUTH0_REDIRECT_URL=https://fractal-staging.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
-            export WHIST_AMPLITUDE_KEY=${{ secrets.WHIST_AMPLITUDE_KEY }}
           else
             export WHIST_AUTH0_CLIENT_ID=DIy0YQZrMeMO97Thjr13EpkGCy792XWx
             export WHIST_AUTH0_DOMAIN_URL=fractal-dev.us.auth0.com
-            export WHIST_AUTH0_REDIRECT_URL=https://fractal-dev.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
-            export WHIST_AMPLITUDE_KEY=${{ secrets.WHIST_AMPLITUDE_KEY }}
           fi
+
+          export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
+          export WHIST_AUTH0_REDIRECT_URL=https://fractal-dev.us.auth0.com/callback
+
           cd src/brave/whist
           export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
           cd ../../..
 
           # Build the browser
-          npm run build ${{ env.build_type }} -- --channel=${{ env.release_channel }}
+          npm run build ${{ env.build_type }} -- \
+              --channel=${{ env.release_channel }} \
+              --target_arch=${{ matrix.config.target_arch }} \
+              --brave_google_api_key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
+              --uphold_client_id=x \
+              --uphold_client_secret=x \
+              --uphold_staging_client_id=x \
+              --uphold_staging_client_secret=x \
+              --gn=brave_services_key:x \
+              --gn=brave_stats_api_key:x  \
+              --gn=brave_stats_updater_url:x \
+              --gn=brave_sync_endpoint:x \
+              --gn=brave_variations_server_url:x \
+              --gn=gemini_api_url:x \
+              --gn=gemini_oauth_url:x \
+              --gn=gemini_wallet_client_id:x \
+              --gn=gemini_wallet_client_secret:x \
+              --gn=google_default_client_id:${{ secrets.GOOGLE_OAUTH_CLIENT_ID }} \
+              --gn=google_default_client_secret:${{ secrets.GOOGLE_OAUTH_SECRET }} \
+              --gn=rewards_grant_dev_endpoint:x \
+              --gn=rewards_grant_prod_endpoint:x \
+              --gn=rewards_grant_staging_endpoint:x \
+              --gn=safebrowsing_api_endpoint:https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
+              --gn=sparkle_eddsa_public_key:wYagjtw56tFzS39Yc9iCZCFyk3bVa09dWlWXxnN7l8M= \
+              --gn=updater_dev_endpoint:http://clients2.google.com/service/update2/crx \
+              --gn=updater_prod_endpoint:http://clients2.google.com/service/update2/crx
 
       - name: Package Whist Browser
         working-directory: brave-browser
@@ -1203,8 +1158,59 @@ jobs:
           source ~/.nvm/nvm.sh
           nvm use 16 && echo -n "NPM version: " && npm --version
 
+          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
+            export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
+            export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
+            export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
+          elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
+            export WHIST_AUTH0_CLIENT_ID=WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz
+            export WHIST_AUTH0_DOMAIN_URL=fractal-staging.us.auth0.com
+            export WHIST_SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
+          else
+            export WHIST_AUTH0_CLIENT_ID=DIy0YQZrMeMO97Thjr13EpkGCy792XWx
+            export WHIST_AUTH0_DOMAIN_URL=fractal-dev.us.auth0.com
+            export WHIST_SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
+          fi
+
+          export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
+          export WHIST_AUTH0_REDIRECT_URL=https://fractal-dev.us.auth0.com/callback
+
+          cd src/brave/whist
+          export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
+          cd ../../..
+
           # Package the browser into an installer
-          npm run create_dist -- --channel=${{ env.release_channel }}
+          npm run create_dist ${{ env.build_type }} -- \
+              --channel=${{ env.release_channel }} \
+              --target_arch=${{ matrix.config.target_arch }} \
+              --mac_signing_keychain="Whist Codesigning" \
+              --mac_signing_identifier=E9669ADD20174D885A31C49C11604971E8C96019 \
+              --brave_google_api_key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
+              --uphold_client_id=x \
+              --uphold_client_secret=x \
+              --uphold_staging_client_id=x \
+              --uphold_staging_client_secret=x \
+              --gn=brave_services_key:x \
+              --gn=brave_stats_api_key:x  \
+              --gn=brave_stats_updater_url:x \
+              --gn=brave_sync_endpoint:x \
+              --gn=brave_variations_server_url:x \
+              --gn=gemini_api_url:x \
+              --gn=gemini_oauth_url:x \
+              --gn=gemini_wallet_client_id:x \
+              --gn=gemini_wallet_client_secret:x \
+              --gn=google_default_client_id:${{ secrets.GOOGLE_OAUTH_CLIENT_ID }} \
+              --gn=google_default_client_secret:${{ secrets.GOOGLE_OAUTH_SECRET }} \
+              --gn=rewards_grant_dev_endpoint:x \
+              --gn=rewards_grant_prod_endpoint:x \
+              --gn=rewards_grant_staging_endpoint:x \
+              --gn=safebrowsing_api_endpoint:https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
+              --gn=sparkle_eddsa_private_key:${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }} \
+              --gn=updater_dev_endpoint:http://clients2.google.com/service/update2/crx \
+              --gn=updater_prod_endpoint:http://clients2.google.com/service/update2/crx \
+              --gn=notary_user:owen@whist.com \
+              --gn=notary_password:${{ secrets.MACOS_SIGNING_NOTARYTOOL_PASSWORD }} \
+              --notarize
 
       # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
       # IDs to match the debug symbols with the build that crashed to build the backtrace
@@ -1232,7 +1238,7 @@ jobs:
             exit 1
           fi
 
-      - name: Tar & Upload Whist Browser to AWS S3
+      - name: Upload DMG to S3
         if: needs.whist-publish-build-config.outputs.publish == 'true' || true
         working-directory: brave-browser/src/out
         run: |
@@ -1242,8 +1248,9 @@ jobs:
           else
             BUILD_OUTPUT_FOLDER="${{ env.build_type }}_${{ matrix.config.target_arch }}"
           fi
-          tar -zcvf "${{ env.binary-tar-name }}" "$BUILD_OUTPUT_FOLDER/${{ env.executable_name }}"
-          aws s3 cp "${{ env.binary-tar-name }}" "${{ env.s3-bucket-uri }}/${{ env.binary-tar-name }}"
+          # tar -zcvf "${{ env.binary-tar-name }}" "$BUILD_OUTPUT_FOLDER/${{ env.executable_name }}"
+          # aws s3 cp "${{ env.binary-tar-name }}" "${{ env.s3-bucket-uri }}/${{ env.binary-tar-name }}"
+          aws s3 cp "$BUILD_OUTPUT_FOLDER/$executable_name" "${{ env.s3-bucket-uri }}/${{ env.dmg-object-name }}"
 
       ###################################################################################
 
