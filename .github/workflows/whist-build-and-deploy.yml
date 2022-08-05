@@ -159,6 +159,114 @@ jobs:
   #######################################################################################
   #######################################################################################
 
+  # Sentry Release: Create & Deploy a Sentry release for each of our projects to Sentry
+  # Create and deploy a Sentry release for each of the Whist project with an associated
+  # Sentry project to the Sentry console. This helps tag commits for debugging.
+  # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
+  sentry-deploy-sentry-releases:
+    name: "Deploy Sentry Release for: ${{ matrix.project.name }}"
+    runs-on: ubuntu-20.04
+    concurrency: sentry-deploy-sentry-releases-${{ github.ref }}
+    needs: [whist-publish-build-config]
+    outputs:
+      sentry-deploy-environment: ${{ steps.set-deploy-environment.outputs.environment }}
+    env:
+      SENTRY_ORG: whist
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+    strategy:
+      matrix:
+        project:
+          - name: Host Service
+            sentry-project: host-service
+          - name: Mandelboxes
+            sentry-project: mandelboxes
+          - name: Protocol (macOS, Windows, Linux)
+            sentry-project: protocol
+          - name: Scaling Service
+            sentry-project: scaling-service
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Set Deploy Environment
+        id: set-deploy-environment
+        uses: ./.github/actions/set-environment
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh false
+
+      - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
+        run: git remote set-url origin https://github.com/whisthq/whist
+
+      - name: Create New Sentry Release
+        env:
+          SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.set-deploy-environment.outputs.environment }}
+        run: |
+          # Install Sentry CLI
+          curl -sL https://sentry.io/get-cli/ | bash
+
+          # Create new Sentry release
+          export SENTRY_RELEASE=$(sentry-cli releases propose-version)
+          sentry-cli releases new $SENTRY_RELEASE --project ${{ matrix.project.sentry-project }}
+          sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
+          sentry-cli releases finalize $SENTRY_RELEASE
+
+          # Create new deploy for this Sentry release
+          sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
+
+      - name: Notify Slack on Failure
+        if: failure()
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ steps.set-deploy-environment.outputs.environment }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ steps.set-deploy-environment.outputs.environment }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          BODY = f"@releases :rotating_light: Failed to deploy `${{ matrix.project.sentry-project }}` Sentry release on branch: `${{ steps.set-deploy-environment.outputs.environment }}`, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
+
+  sentry-deploy-sentry-releases-notify-slack:
+    name: Notify Slack
+    runs-on: ubuntu-20.04
+    needs: [whist-publish-build-config, sentry-deploy-sentry-releases]
+    if: success()
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh false
+
+      - name: Notify Slack on Success
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.sentry-deploy-sentry-releases.outputs.sentry-deploy-environment }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.sentry-deploy-sentry-releases.outputs.sentry-deploy-environment }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          TITLE = ":sentry: Sentry Releases Deployed :sentry:"
+          BODY = f"Sentry Releases for Whist Sentry Projects `host-service`, `mandelboxes`, `protocol`, and `scaling-service` deployed to Sentry on branch: `${{ needs.sentry-deploy-sentry-releases.outputs.sentry-deploy-environment }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
+
+  #######################################################################################
+  #######################################################################################
+
   # Auth0 Rules: Build & Deploy Auth0 Rules to Auth0 Tenant
   # Build and deploy the Auth0 rules to the Whist Auth0 Tenant platform, with
   # which our frontend interfaces with for authenticating users through Auth0
@@ -744,7 +852,7 @@ jobs:
       binary-tar-name: whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}.tar.gz
       s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}
       s3-bucket-region: us-east-1
-      build_type: "Release" # Change this to Debug or Component if you're looking to generate a release with more symbols
+      build_type: "Release" # Change this to Debug or Component if you're looking to generate a less-optimized build, but with more symbols
 
     steps:
       ############################## Common Configuration Steps START #############################
@@ -913,27 +1021,53 @@ jobs:
             # Production build, set official build as true and build Chromium as Release
             export npm_config_is_official_build=true
             echo "release_channel=''" >> $GITHUB_ENV
+
+            # Set the proper package name for the build
+            #
+            # TODO: Sign the macOS package and update the file path accordingly
+            if [[ "${{ runner.os }}" == "macOS" ]]; then
+              echo "executable_name=unsigned/Whist Browser.dmg" >> $GITHUB_ENV
+            elif [[ "${{ runner.os }}" == "Linux" ]]; then
+              # TODO: We need to rename this to something like `whist-browser`, and add the release channel
+              echo "executable_name=brave" >> $GITHUB_ENV
+            else
+              echo "Unsupported OS for setting Whist Browser executable name!"
+              exit 1
+            fi
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             # Staging build, set official build as false and build Chromium as Release
             export npm_config_is_official_build=false
             echo "release_channel=beta" >> $GITHUB_ENV
+
+            # Set the proper package name for the build
+            #
+            # TODO: Sign the macOS package and update the file path accordingly
+            if [[ "${{ runner.os }}" == "macOS" ]]; then
+              echo "executable_name=unsigned/Whist Browser Beta.dmg" >> $GITHUB_ENV
+            elif [[ "${{ runner.os }}" == "Linux" ]]; then
+              # TODO: We need to rename this to something like `whist-browser`, and add the release channel
+              echo "executable_name=brave" >> $GITHUB_ENV
+            else
+              echo "Unsupported OS for setting Whist Browser executable name!"
+              exit 1
+            fi
           else
             # Dev build, set official build as false and build Chromium as Debug
             export npm_config_is_official_build=false
             echo "release_channel=nightly" >> $GITHUB_ENV
-          fi
 
-          # Set the proper package name for the build
-          #
-          # TODO: Sign the macOS package and update the file path accordingly
-          if [[ "${{ runner.os }}" == "macOS" ]]; then
-            echo "executable_name=unsigned/Whist Browser.dmg" >> $GITHUB_ENV
-          elif [[ "${{ runner.os }}" == "Linux" ]]; then
-            # TODO: We need to rename this to something like `whist-browser`
-            echo "executable_name=brave" >> $GITHUB_ENV
-          else
-            echo "Unsupported OS for setting Whist Browser executable name!"
-            exit 1
+            # Set the proper package name for the build
+            #
+            # TODO: Sign the macOS package and update the file path accordingly
+            if [[ "${{ runner.os }}" == "macOS" ]]; then
+              echo "executable_name=unsigned/Whist Browser Nightly.dmg" >> $GITHUB_ENV
+            elif [[ "${{ runner.os }}" == "Linux" ]]; then
+              # TODO: We need to rename this to something like `whist-browser`, and add the release channel
+              echo "executable_name=brave" >> $GITHUB_ENV
+            else
+              echo "Unsupported OS for setting Whist Browser executable name!"
+              exit 1
+            fi
           fi
 
       # We need to configure build parameters, to build for the proper architecture and with
@@ -1390,6 +1524,7 @@ jobs:
       [
         whist-publish-build-config,
         auth0-deploy-rules,
+        sentry-deploy-sentry-releases,
         terraform-deploy,
         mandelboxes-publish-ghcr,
         amis-publish-aws,
