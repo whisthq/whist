@@ -27,6 +27,7 @@ extern OnCursorChangeCallback on_cursor_change;
 extern OnFileDownloadStart on_file_download_start;
 extern OnFileDownloadUpdate on_file_download_update;
 extern OnFileDownloadComplete on_file_download_complete;
+extern OnNotificationCallback on_notification_callback_ptr;
 extern GetModifierKeyState get_modifier_key_state;
 
 static void update_internal_state(WhistFrontend* frontend, WhistFrontendEvent* event) {
@@ -370,7 +371,11 @@ void virtual_render(WhistFrontend* frontend) {}
 
 void virtual_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor* color) {}
 
-void virtual_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {}
+void virtual_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {
+    if (on_notification_callback_ptr != NULL) {
+        on_notification_callback_ptr(notif);
+    }
+}
 
 void virtual_declare_user_activity(WhistFrontend* frontend) {}
 
