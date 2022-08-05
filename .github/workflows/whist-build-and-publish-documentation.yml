@@ -117,10 +117,10 @@ jobs:
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true) }}
         working-directory: docs
         run: |
-          # Set the author of the commit in whisthq/docs to be the user
-          # who just pushed to the dev branch of the monorepo.
-          git config user.name "${{ github.event.pusher.name }}"
-          git config user.email "${{ github.event.pusher.email }}"
+          # Set the author of the commit in whisthq/docs to be Phil, since the GHA
+          # Personal Access Token is under his account, for simplicity.
+          git config user.name "philippemnoel"
+          git config user.email "phil@whist.com"
 
           # Authenticate Git as Phil with GitHub
           git config credential.helper store

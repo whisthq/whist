@@ -45,11 +45,6 @@ deploy_scaling_service() {
   # Write Procfile
   echo -e "web: ./scaling-service" > "$PROCFILE"
 
-  # Configure git author (necessary if this deploy is triggered via scheduled job, in which case
-  # there is no commit/author associated with it)
-  git config --global user.email "developers@whist.com"
-  git config --global user.name "Whist Developers"
-
   # Populate the deploy/ directory
   mv "$DEPLOY_DIR" ..
   git switch --orphan deploy-branch
