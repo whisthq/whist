@@ -42,7 +42,6 @@
     {
       "resources": [
         "js/userAgent.js",
-        "js/notification.js",
         "js/geolocation.js"
       ],
       "matches": ["<all_urls>"]
