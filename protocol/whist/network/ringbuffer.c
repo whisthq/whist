@@ -146,7 +146,8 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     */
     FATAL_ASSERT(ring_buffer_size <= MAX_RING_BUFFER_SIZE);
 
-    RingBuffer* ring_buffer = safe_malloc(sizeof(RingBuffer));
+    MLOCK(RingBuffer* ring_buffer = safe_malloc(sizeof(RingBuffer)),
+            ring_buffer, sizeof(RingBuffer));
 
     ring_buffer->type = type;
     ring_buffer->ring_buffer_size = ring_buffer_size;
@@ -799,7 +800,8 @@ void destroy_ring_buffer(RingBuffer* ring_buffer) {
     // destroy the block allocator
     destroy_block_allocator(ring_buffer->packet_buffer_allocator);
     // free the ring_buffer
-    free(ring_buffer);
+    MUNLOCK(free(ring_buffer),
+        ring_buffer, sizeof(RingBuffer));
 }
 
 /*
