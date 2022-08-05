@@ -168,7 +168,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 				"id": graphql.String(instanceID),
 			},
 			Result:  InstanceEvent{[]Instance{}},
-			Handler: InstanceStatusHandler,
+			Handler: nil,
 		},
 		{
 			Query: QueryMandelboxesByInstanceId,
@@ -177,7 +177,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 				"status":      graphql.String(dbTypes.MandelboxStatusAllocated),
 			},
 			Result:  MandelboxEvent{[]Mandelbox{}},
-			Handler: MandelboxAllocatedHandler,
+			Handler: nil,
 		},
 		{
 			Query: QueryMandelboxesByInstanceId,
@@ -186,11 +186,18 @@ func TestSetupHostSubscriptions(t *testing.T) {
 				"status":      graphql.String(dbTypes.MandelboxStatusAllocatedForDevelopment),
 			},
 			Result:  MandelboxEvent{[]Mandelbox{}},
-			Handler: MandelboxAllocatedHandler,
+			Handler: nil,
 		},
 	}
 	// Create the host service specific subscriptions
 	SetupHostSubscriptions(instanceID, whistClient)
+
+	// Due to limitations with the reflect package, set all handler
+	// function to nil. This way we can check the rest of the values
+	// are what we expect.
+	for i := 0; i < len(whistClient.Subscriptions); i++ {
+		whistClient.Subscriptions[i].Handler = nil
+	}
 
 	if ok := reflect.DeepEqual(whistClient.Subscriptions, wantsubscriptions); !ok {
 		t.Fatalf("expected host subscriptions to be set to %v, got %v", wantsubscriptions, whistClient.Subscriptions)
@@ -207,14 +214,50 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 				"status": graphql.String(dbTypes.InstanceStatusDraining),
 			},
 			Result:  InstanceEvent{[]Instance{}},
-			Handler: InstancesStatusHandler,
+			Handler: nil,
 		},
 	}
 	// Create the host service specific subscriptions
 	SetupScalingSubscriptions(whistClient)
 
+	// Due to limitations with the reflect package, set all handler
+	// function to nil. This way we can check the rest of the values
+	// are what we expect.
+	for i := 0; i < len(whistClient.Subscriptions); i++ {
+		whistClient.Subscriptions[i].Handler = nil
+	}
+
 	if ok := reflect.DeepEqual(whistClient.Subscriptions, wantsubscriptions); !ok {
-		t.Fatalf("expected host subscriptions to be set to %v, got %v", wantsubscriptions, whistClient.Subscriptions)
+		t.Fatalf("expected scaling service subscriptions to be set to %v, got %v", wantsubscriptions, whistClient.Subscriptions)
+	}
+}
+
+func TestSetupConfigSubscriptions(t *testing.T) {
+	whistClient := &mockWhistClient{}
+	versionID := 1
+
+	wantsubscriptions := []HasuraSubscription{
+		{
+			Query: QueryFrontendVersion,
+			Variables: map[string]interface{}{
+				"id": graphql.Int(versionID),
+			},
+			Result:  FrontendVersionEvent{FrontendVersions: []FrontendVersion{}},
+			Handler: nil,
+		},
+	}
+	// Create the host service specific subscriptions
+	SetupConfigSubscriptions(whistClient)
+
+	// Due to limitations with the reflect package, set all handler
+	// function to nil. This way we can check the rest of the values
+	// are what we expect.
+	for i := 0; i < len(whistClient.Subscriptions); i++ {
+		whistClient.Subscriptions[i].Handler = nil
+	}
+
+	if ok := reflect.DeepEqual(whistClient.Subscriptions, wantsubscriptions); !ok {
+		t.Fatalf("expected config subscriptions to be set to %v, got %v", wantsubscriptions, whistClient.Subscriptions)
 	}
 }
 
