@@ -1100,11 +1100,12 @@ jobs:
           # The component update servers are used by Chromium to update Chrome Extensions independently from the
           # core Chromium browser. Brave uses their own component update servers to update their extensions following
           # the same process (Brave Rewards, Brave Shields, etc.), redirecting all other extensions to Chrome's component
-          # update servers associated with the Chrome Web Store.
+          # update servers associated with the Chrome Web Store. They need to do this since the Brave extensions are not
+          # offered via the Chrome Web Store, but natively bundled into Brave.
           #
-          # Although Whist also uses two natively-bunlded Chrome Extensions (Shields and Cloud Tabs), we choose not to update
-          # those independently from the browser, for simplicity and to ensure that the client is always in-sync with the server,
-          # which is very important for our streaming technology. 
+          # Although Whist also uses two natively-bundled Chrome Extensions (Shields and Cloud Tabs), we choose not to update
+          # those independently from the browser, for simplicity and to ensure that the streaming client is always in-sync 
+          # with the streaming server, which is very important for our streaming technology to function properly.
           # 
           # As a result, we do not run our own component update servers (and we do not use Brave's, since we've removed Brave 
           # Rewards and dissociated Brave Shields into our own version, Shields). Instead, we simply specify Chrome's component
