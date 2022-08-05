@@ -1097,6 +1097,24 @@ jobs:
           export npm_config_google_default_client_id=${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
           export npm_config_google_default_client_secret=${{ secrets.GOOGLE_OAUTH_SECRET }}
 
+          # The component update servers are used by Chromium to update Chrome Extensions independently from the
+          # core Chromium browser. Brave uses their own component update servers to update their extensions following
+          # the same process (Brave Rewards, Brave Shields, etc.), redirecting all other extensions to Chrome's component
+          # update servers associated with the Chrome Web Store. They need to do this since the Brave extensions are not
+          # offered via the Chrome Web Store, but natively bundled into Brave.
+          #
+          # Although Whist also uses two natively-bundled Chrome Extensions (Shields and Cloud Tabs), we choose not to update
+          # those independently from the browser, for simplicity and to ensure that the streaming client is always in-sync 
+          # with the streaming server, which is very important for our streaming technology to function properly.
+          # 
+          # As a result, we do not run our own component update servers (and we do not use Brave's, since we've removed Brave 
+          # Rewards and dissociated Brave Shields into our own version, Shields). Instead, we simply specify Chrome's component
+          # update servers, which are necessary for Chrome Extensions to work properly.
+          #
+          # For more context, see: https://www.chromium.org/administrators/policy-list-3/extension-settings-full/
+          export npm_config_updater_dev_endpoint=http://clients2.google.com/service/update2/crx
+          export npm_config_updater_prod_endpoint=http://clients2.google.com/service/update2/crx
+
           # TODO: Configure a variations server for Whist to enable A/B testing
           # export npm_config_brave_variations_server_url=https://
 
@@ -1112,11 +1130,6 @@ jobs:
           # export npm_config_mac_signing_keychain=login
           # export npm_config_mac_signing_identifier=
           # export npm_config_mac_installer_signing_identifier=
-
-          # We don't update Whist extensions separately from the Chromium browser, so we don't need to
-          # configure any update servers.
-          export npm_config_updater_dev_endpoint=https://
-          export npm_config_updater_prod_endpoint=https://
 
           # This is related to generic Brave services, which we don't use in the product,
           # so we provide dummy values
