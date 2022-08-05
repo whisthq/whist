@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	graphql "github.com/hasura/go-graphql-client"
+	dbTypes "github.com/whisthq/whist/backend/services/host-service/dbdriver"
 )
 
 // mockWhistClient is a struct that mocks a real Hasura client for testing.
@@ -160,61 +161,60 @@ func TestSetupHostSubscriptions(t *testing.T) {
 	instanceID := "test-instance-id"
 	whistClient := &mockWhistClient{}
 
+	wantsubscriptions := []HasuraSubscription{
+		{
+			Query: QueryInstanceById,
+			Variables: map[string]interface{}{
+				"id": graphql.String(instanceID),
+			},
+			Result:  InstanceEvent{[]Instance{}},
+			Handler: InstanceStatusHandler,
+		},
+		{
+			Query: QueryMandelboxesByInstanceId,
+			Variables: map[string]interface{}{
+				"instance_id": graphql.String(instanceID),
+				"status":      graphql.String(dbTypes.MandelboxStatusAllocated),
+			},
+			Result:  MandelboxEvent{[]Mandelbox{}},
+			Handler: MandelboxAllocatedHandler,
+		},
+		{
+			Query: QueryMandelboxesByInstanceId,
+			Variables: map[string]interface{}{
+				"instance_id": graphql.String(instanceID),
+				"status":      graphql.String(dbTypes.MandelboxStatusAllocatedForDevelopment),
+			},
+			Result:  MandelboxEvent{[]Mandelbox{}},
+			Handler: MandelboxAllocatedHandler,
+		},
+	}
 	// Create the host service specific subscriptions
 	SetupHostSubscriptions(instanceID, whistClient)
 
-	if whistClient.Subscriptions == nil {
-		t.Errorf("Got nil subscriptions")
-	}
-
-	if len(whistClient.Subscriptions) != 3 {
-		t.Errorf("Expected subscriptions lenght to be 2, got: %v", len(whistClient.Subscriptions))
-	}
-
-	// Create a fake variables map that matches the host subscriptions variable map
-	var variables = map[string]interface{}{
-		"id": graphql.String(instanceID),
-	}
-
-	// Verify that the "variables" maps are deep equal for the first subscription
-	if !reflect.DeepEqual(whistClient.Subscriptions[0].Variables, variables) {
-		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
-	}
-
-	variables = map[string]interface{}{
-		"instance_id": graphql.String(instanceID),
-		"status":      graphql.String("ALLOCATED"),
-	}
-
-	// Verify that the "variables" maps are deep equal for the second subscription
-	if !reflect.DeepEqual(whistClient.Subscriptions[1].Variables, variables) {
-		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[1].Variables, variables)
+	if ok := reflect.DeepEqual(whistClient.Subscriptions, wantsubscriptions); !ok {
+		t.Fatalf("expected host subscriptions to be set to %v, got %v", wantsubscriptions, whistClient.Subscriptions)
 	}
 }
 
 func TestSetupScalingSubscriptions(t *testing.T) {
 	whistClient := &mockWhistClient{}
 
-	// Create the scaling service specific subscriptions
+	wantsubscriptions := []HasuraSubscription{
+		{
+			Query: QueryInstancesByStatus,
+			Variables: map[string]interface{}{
+				"status": graphql.String(dbTypes.InstanceStatusDraining),
+			},
+			Result:  InstanceEvent{[]Instance{}},
+			Handler: InstancesStatusHandler,
+		},
+	}
+	// Create the host service specific subscriptions
 	SetupScalingSubscriptions(whistClient)
 
-	if whistClient.Subscriptions == nil {
-		t.Errorf("Got nil subscriptions")
-	}
-
-	if len(whistClient.Subscriptions) != 1 {
-		t.Errorf("Expected subscriptions lenght to be 1, got: %v", len(whistClient.Subscriptions))
-	}
-
-	// Create a fake variables map that matches the host subscriptions variable map
-	var variables = map[string]interface{}{
-		"status": graphql.String("DRAINING"),
-	}
-
-	// Verify that the "variables" maps are deep equal for the first subscription
-
-	if !reflect.DeepEqual(variables, whistClient.Subscriptions[0].Variables) {
-		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
+	if ok := reflect.DeepEqual(whistClient.Subscriptions, wantsubscriptions); !ok {
+		t.Fatalf("expected host subscriptions to be set to %v, got %v", wantsubscriptions, whistClient.Subscriptions)
 	}
 }
 
