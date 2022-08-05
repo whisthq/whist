@@ -15,7 +15,6 @@ import (
 	"testing/iotest"
 	"time"
 
-	mandelbox "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/httputils"
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -30,18 +29,10 @@ type JSONTransportResult struct {
 // TestSpinUpHandler calls processSpinUpMandelboxRequest and checks to see if
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
-
-	validBookmarks := `{"roots": {"bookmark_bar": {"children": [{"date_added": "13280861983875934","name": "whist.com","url": "http://whist.com"}],"date_added": "13280861983875934","name": "Bookmark Bar","type": "folder"}}}`
-	bookmarks, err := configutils.UnmarshalBookmarks(mandelboxtypes.Bookmarks(validBookmarks))
-	if err != nil {
-		t.Fatalf("UnmarshalBookmarks returned an unexpected error: %v", err)
-	}
-
-	browserData := mandelbox.BrowserData{
-		CookiesJSON: `[{"creation_utc": 13280861983875934, "host_key": "whist.com"}]`,
-		Bookmarks:   &bookmarks,
-		Extensions:  "not_real_extension_id,not_real_second_extension_id",
-	}
+	browserData := `{
+		"cookies": [{"creation_utc": 13280861983875934, "host_key": "whist.com"}],
+		"extensions": "not_real_extension_id,not_real_second_extension_id"
+	}`
 
 	marshalledBrowserData, err := json.Marshal(browserData)
 	if err != nil {
@@ -154,17 +145,10 @@ func TestHttpServerIntegration(t *testing.T) {
 	// Wait for server startup
 	time.Sleep(5 * time.Second)
 
-	validBookmarks := `{"roots": {"bookmark_bar": {"children": [{"date_added": "13280861983875934","name": "whist.com","url": "http://whist.com"}],"date_added": "13280861983875934","name": "Bookmark Bar","type": "folder"}}}`
-	bookmarks, err := configutils.UnmarshalBookmarks(mandelboxtypes.Bookmarks(validBookmarks))
-	if err != nil {
-		t.Fatalf("UnmarshalBookmarks returned an unexpected error: %v", err)
-	}
-
-	browserData := mandelbox.BrowserData{
-		CookiesJSON: `[{"creation_utc": 13280861983875934, "host_key": "whist.com"}]`,
-		Bookmarks:   &bookmarks,
-		Extensions:  "",
-	}
+	browserData := `{
+		"cookies": [{"creation_utc": 13280861983875934, "host_key": "whist.com"}],
+		"extensions": "not_real_extension_id,not_real_second_extension_id"
+	}`
 
 	marshalledBrowserData, err := json.Marshal(browserData)
 	if err != nil {
