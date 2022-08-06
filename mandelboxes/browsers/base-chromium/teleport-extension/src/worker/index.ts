@@ -5,7 +5,6 @@
 */
 
 import { initFileSyncHandler } from "./downloads"
-import { initChromeWelcomeRedirect } from "./navigation"
 import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"
 import { initCursorLockHandler } from "./cursor"
 import { initTabDetachSuppressor, initTabState } from "./tabs"
@@ -41,9 +40,6 @@ initCursorLockHandler(nativeHostPort)
 
 // Prevents tabs from being dragged out to new windows
 initTabDetachSuppressor()
-
-// Redirects the chrome://welcome page to our own Whist-branded page
-initChromeWelcomeRedirect()
 
 // Receive geolocation from extension host
 initLocationHandler(nativeHostPort)

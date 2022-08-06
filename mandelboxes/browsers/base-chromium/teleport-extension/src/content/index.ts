@@ -6,7 +6,6 @@
 
 import { initCursorLockDetection } from "./cursor"
 import { initUserAgentSpoofer } from "./userAgent"
-import { initFeatureWarnings } from "./notification"
 import { initPinchToZoom } from "./zoom"
 import { initLocationSpoofer } from "./geolocation"
 
@@ -15,10 +14,6 @@ initCursorLockDetection()
 
 // Enable Linux user agent spoofing on certain predetermined websites
 initUserAgentSpoofer()
-
-// If the user tries to go to a website that uses your camera/mic, show them a warning
-// that this feature is missing
-initFeatureWarnings()
 
 // Enable smooth pinch to zoom
 initPinchToZoom()

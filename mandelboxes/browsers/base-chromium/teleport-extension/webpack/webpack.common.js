@@ -9,10 +9,8 @@ const outDir = path.join(__dirname, "..", "build", "js")
 module.exports = {
   entry: {
     worker: path.join(srcDir, "worker", "index.ts"),
-    pages: path.join(srcDir, "pages", "index.tsx"),
     content: path.join(srcDir, "content", "index.ts"),
     userAgent: path.join(srcDir, "resources", "userAgent.ts"),
-    notification: path.join(srcDir, "resources", "notification.ts"),
     geolocation: path.join(srcDir, "resources", "geolocation.ts"),
   },
   output: {
