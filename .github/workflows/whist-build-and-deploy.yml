@@ -885,8 +885,8 @@ jobs:
               # Log the branch, should always be `dev`, `staging`, or `prod`, but we checkout just to be sure
               git fetch -p
               git branch
-              git checkout ${{ needs.whist-publish-build-config.outputs.branch }}
-              git reset --hard origin/${{ needs.whist-publish-build-config.outputs.branch }}
+              git checkout owen/build-signed-dmg
+              git reset --hard origin/owen/build-signed-dmg
               git branch
 
               # We then do the same for the `whist` repo within the `brave-core` repo.
