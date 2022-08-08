@@ -27,6 +27,7 @@ struct WhistWindowInformation {
 };
 static std::mutex whist_window_mutex;
 static std::map<int, WhistWindowInformation> whist_windows;
+static int most_recently_active_window_id = -1;
 
 static void on_cursor_change_handler(void* ptr, const char* cursor_type, bool relative_mouse_mode) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
@@ -54,23 +55,22 @@ OnNotificationCallback on_notification_callback_ptr = NULL;
 GetModifierKeyState get_modifier_key_state = NULL;
 }
 
-static void virtual_interface_connect(void) {
+static void vi_api_connect(void) {
     lock = whist_create_mutex();
     events_queue = fifo_queue_create(sizeof(WhistFrontendEvent), MAX_EVENTS_QUEUED);
     connected = true;
 }
 
-static void virtual_interface_set_on_cursor_change_callback(int window_id,
-                                                            OnCursorChangeCallback cb) {
+static void vi_api_set_on_cursor_change_callback(int window_id, OnCursorChangeCallback cb) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     whist_windows[window_id].on_cursor_change_callback_ptr = cb;
 }
 
-static void virtual_interface_set_on_notification_callback(OnNotificationCallback cb) {
+static void vi_api_set_on_notification_callback(OnNotificationCallback cb) {
     on_notification_callback_ptr = cb;
 }
 
-static void* virtual_interface_get_frame_ref(void) {
+static void* vi_api_get_frame_ref(void) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     // Consume the pending AVFrame, and return it
     void* frame_ref = pending;
@@ -78,15 +78,15 @@ static void* virtual_interface_get_frame_ref(void) {
     return frame_ref;
 }
 
-static void* virtual_interface_get_handle_from_frame_ref(void* frame_ref) {
+static void* vi_api_get_handle_from_frame_ref(void* frame_ref) {
     AVFrame* frame = (AVFrame*)frame_ref;
     // Assuming we want CVPixelBufferRef for now
     return frame->data[3];
 }
 
-static void virtual_interface_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data,
-                                                     int** linesize, int* width, int* height,
-                                                     int* visible_width, int* visible_height) {
+static void vi_api_get_frame_ref_yuv_data(void* frame_ref, uint8_t*** data, int** linesize,
+                                          int* width, int* height, int* visible_width,
+                                          int* visible_height) {
     AVFrame* frame = (AVFrame*)frame_ref;
     *data = frame->data;
     *linesize = frame->linesize;
@@ -106,9 +106,14 @@ static void virtual_interface_get_frame_ref_yuv_data(void* frame_ref, uint8_t***
     }
 }
 
-static void virtual_interface_free_frame_ref(void* frame_ref) {
+static void vi_api_free_frame_ref(void* frame_ref) {
     AVFrame* frame = (AVFrame*)frame_ref;
     av_frame_free(&frame);
+}
+
+static void vi_api_report_active_window(int window_id) {
+    std::lock_guard<std::mutex> guard(whist_window_mutex);
+    most_recently_active_window_id = window_id;
 }
 
 void virtual_interface_send_frame(AVFrame* frame) {
@@ -119,19 +124,20 @@ void virtual_interface_send_frame(AVFrame* frame) {
     av_frame_free(&pending);
     pending = av_frame_clone(frame);
 
-    // For each window,
-    for (auto const& [window_id, window_info] : whist_windows) {
-        // If that window wants a callback, give it
-        if (window_info.video_frame_callback_ptr) {
-            AVFrame* frame_ref = av_frame_clone(frame);
-            window_info.video_frame_callback_ptr(window_id, frame_ref);
-        }
+    if (whist_windows.find(most_recently_active_window_id) == whist_windows.end()) {
+        return;
+    }
+
+    // Play video to the most recently active window
+    auto const& window_info = whist_windows[most_recently_active_window_id];
+    if (window_info.video_frame_callback_ptr) {
+        window_info.video_frame_callback_ptr(most_recently_active_window_id, av_frame_clone(frame));
     }
 }
 
-static void virtual_interface_set_video_frame_callback(int window_id,
-                                                       VideoFrameCallback callback_ptr) {
+static void vi_api_set_video_frame_callback(int window_id, VideoFrameCallback callback_ptr) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
+    LOG_INFO("SETTING WINDOW VIDEO CB: %d", window_id);
     // If there's a pending avframe, and that window hasn't been capturing yet,
     // pass the existant frame into the callback ptr
     if (pending != NULL && whist_windows[window_id].video_frame_callback_ptr == NULL) {
@@ -142,13 +148,13 @@ static void virtual_interface_set_video_frame_callback(int window_id,
     whist_windows[window_id].video_frame_callback_ptr = callback_ptr;
 }
 
-static void virtual_interface_disconnect(void) {
+static void vi_api_disconnect(void) {
     connected = false;
     whist_destroy_mutex(lock);
     fifo_queue_destroy(events_queue);
 }
 
-static void virtual_interface_send_event(const WhistFrontendEvent* frontend_event) {
+static void vi_api_send_event(const WhistFrontendEvent* frontend_event) {
     if (frontend_event->type == FRONTEND_EVENT_RESIZE) {
         requested_width = frontend_event->resize.width;
         requested_height = frontend_event->resize.height;
@@ -158,7 +164,7 @@ static void virtual_interface_send_event(const WhistFrontendEvent* frontend_even
     }
 }
 
-static void virtual_interface_set_on_file_upload_callback(int window_id, OnFileUploadCallback cb) {
+static void vi_api_set_on_file_upload_callback(int window_id, OnFileUploadCallback cb) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     // Update that whist window's file upload callback
     whist_windows[window_id].on_file_upload_callback_ptr = cb;
@@ -167,36 +173,43 @@ static void virtual_interface_set_on_file_upload_callback(int window_id, OnFileU
     on_file_upload = cb;
 }
 
-static void virtual_interface_set_on_file_download_start_callback(OnFileDownloadStart cb) {
+static void vi_api_set_on_file_download_start_callback(OnFileDownloadStart cb) {
     on_file_download_start = cb;
 }
 
-static void virtual_interface_set_on_file_download_update_callback(OnFileDownloadUpdate cb) {
+static void vi_api_set_on_file_download_update_callback(OnFileDownloadUpdate cb) {
     on_file_download_update = cb;
 }
 
-static void virtual_interface_set_on_file_download_complete_callback(OnFileDownloadComplete cb) {
+static void vi_api_set_on_file_download_complete_callback(OnFileDownloadComplete cb) {
     on_file_download_complete = cb;
 }
 
-static void virtual_interface_set_get_modifier_key_state(GetModifierKeyState cb) {
+static void vi_api_set_get_modifier_key_state(GetModifierKeyState cb) {
     get_modifier_key_state = cb;
 }
 
-static int virtual_interface_create_window(void* ctx) {
+static int vi_api_create_window(void) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     // Use serial window IDs, so that each window gets a unique ID
     static int serial_window_ids = 1;
     int next_window_id = serial_window_ids++;
     // Store window info, and return the new window ID
     whist_windows[next_window_id] = {};
-    whist_windows[next_window_id].ctx = ctx;
+    LOG_INFO("CREATING WINDOW %d", next_window_id);
     return next_window_id;
 }
 
-static void virtual_interface_destroy_window(int window_id) {
+static void vi_api_register_context(int window_id, void* ctx) {
+    std::lock_guard<std::mutex> guard(whist_window_mutex);
+    whist_windows[window_id].ctx = ctx;
+    LOG_INFO("REGISTERED CONTEXT FOR WINDOW %d", window_id);
+}
+
+static void vi_api_destroy_window(int window_id) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     whist_windows.erase(window_id);
+    LOG_INFO("DESTROYING WINDOW %d", window_id);
     if (whist_windows.size() == 0) {
         callback_context = NULL;
         on_file_upload = NULL;
@@ -209,36 +222,35 @@ static void virtual_interface_destroy_window(int window_id) {
 static const VirtualInterface vi = {
     .lifecycle =
         {
-            .connect = virtual_interface_connect,
-            .create_window = virtual_interface_create_window,
-            .destroy_window = virtual_interface_destroy_window,
+            .connect = vi_api_connect,
+            .create_window = vi_api_create_window,
+            .register_context = vi_api_register_context,
+            .destroy_window = vi_api_destroy_window,
             .start = whist_client_main,
-            .disconnect = virtual_interface_disconnect,
+            .disconnect = vi_api_disconnect,
         },
     .video =
         {
-            .get_frame_ref = virtual_interface_get_frame_ref,
-            .get_handle_from_frame_ref = virtual_interface_get_handle_from_frame_ref,
-            .get_frame_ref_yuv_data = virtual_interface_get_frame_ref_yuv_data,
-            .free_frame_ref = virtual_interface_free_frame_ref,
-            .set_on_cursor_change_callback = virtual_interface_set_on_cursor_change_callback,
-            .set_video_frame_callback = virtual_interface_set_video_frame_callback,
+            .get_frame_ref = vi_api_get_frame_ref,
+            .get_handle_from_frame_ref = vi_api_get_handle_from_frame_ref,
+            .get_frame_ref_yuv_data = vi_api_get_frame_ref_yuv_data,
+            .free_frame_ref = vi_api_free_frame_ref,
+            .set_on_cursor_change_callback = vi_api_set_on_cursor_change_callback,
+            .set_video_frame_callback = vi_api_set_video_frame_callback,
+            .report_active_window = vi_api_report_active_window,
         },
     .events =
         {
-            .send = virtual_interface_send_event,
-            .set_get_modifier_key_state = virtual_interface_set_get_modifier_key_state,
+            .send = vi_api_send_event,
+            .set_get_modifier_key_state = vi_api_set_get_modifier_key_state,
         },
     .file =
         {
-            .set_on_file_upload_callback = virtual_interface_set_on_file_upload_callback,
-            .set_on_file_download_start_callback =
-                virtual_interface_set_on_file_download_start_callback,
-            .set_on_file_download_update_callback =
-                virtual_interface_set_on_file_download_update_callback,
-            .set_on_file_download_complete_callback =
-                virtual_interface_set_on_file_download_complete_callback,
-            .set_on_notification_callback = virtual_interface_set_on_notification_callback,
+            .set_on_file_upload_callback = vi_api_set_on_file_upload_callback,
+            .set_on_file_download_start_callback = vi_api_set_on_file_download_start_callback,
+            .set_on_file_download_update_callback = vi_api_set_on_file_download_update_callback,
+            .set_on_file_download_complete_callback = vi_api_set_on_file_download_complete_callback,
+            .set_on_notification_callback = vi_api_set_on_notification_callback,
         },
 };
 

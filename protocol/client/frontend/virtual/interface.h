@@ -25,7 +25,8 @@ typedef int (*GetModifierKeyState)(void);
 typedef struct VirtualInterface {
     struct {
         void (*connect)(void);
-        int (*create_window)(void* context);
+        int (*create_window)(void);
+        void (*register_context)(int window_id, void* context);
         void (*destroy_window)(int window_id);
         int (*start)(int argc, const char* argv[]);
         void (*disconnect)(void);
@@ -38,6 +39,7 @@ typedef struct VirtualInterface {
         void (*free_frame_ref)(void* frame_ref);
         void (*set_on_cursor_change_callback)(int window_id, OnCursorChangeCallback cb);
         void (*set_video_frame_callback)(int window_id, VideoFrameCallback cb);
+        void (*report_active_window)(int window_id);
     } video;
     struct {
         void (*send)(const WhistFrontendEvent* event);
@@ -48,6 +50,7 @@ typedef struct VirtualInterface {
         void (*set_on_file_download_start_callback)(OnFileDownloadStart cb);
         void (*set_on_file_download_update_callback)(OnFileDownloadUpdate cb);
         void (*set_on_file_download_complete_callback)(OnFileDownloadComplete cb);
+        // TODO: Move this function out of the `file` module.
         void (*set_on_notification_callback)(OnNotificationCallback cb);
     } file;
 } VirtualInterface;
