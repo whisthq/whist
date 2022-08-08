@@ -1149,6 +1149,11 @@ jobs:
               --gn=updater_dev_endpoint:http://clients2.google.com/service/update2/crx \
               --gn=updater_prod_endpoint:http://clients2.google.com/service/update2/crx
 
+      - name: Unlock codesigning keychain
+        if: runner.os == 'macOS'
+        run: |
+          security unlock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
+
       - name: Package Whist Browser
         working-directory: brave-browser
         run: |
