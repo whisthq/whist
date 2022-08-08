@@ -55,7 +55,7 @@ static int multithreaded_print_system_info(void *opaque) {
 
     while (true) {
         print_vmmap_info();
-        whist_sleep(2000);
+        whist_sleep(5000);
     }
 
     return 0;
