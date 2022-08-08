@@ -426,6 +426,8 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 		case <-time.After(1 * time.Minute):
 			if mandelbox.GetStatus() == dbdriver.MandelboxStatusAllocatedForDevelopment {
 				logger.Warningf("timed out waiting for config token, but request is from a local development environment")
+				// Return an empty response so the request is closed successfully
+				req.ReturnResult(httputils.JSONTransportRequestResult{}, nil)
 				return nil
 			}
 			// Clean up the mandelbox if the time out limit is reached

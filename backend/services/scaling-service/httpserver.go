@@ -22,7 +22,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,6 +34,7 @@ import (
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/time/rate"
 )
 
@@ -60,21 +60,21 @@ func mandelboxAssignHandler(w http.ResponseWriter, r *http.Request, events chan<
 		return
 	}
 
-	// The presence of this header indicates that the request was sent
-	// by a deploy environment (dev, staging, prod), rather than from
-	// a local development environment, and its value should be `True`
-	// in order to be considered as a deployment request. This value is
-	// then used by the scaling and host services when deciding whether
-	// to log certain errors as warnings instead.
+	// The presence of this header indicates that the request was sent by a
+	// local development environment, rather than from a deploy environment
+	// (dev, staging, prod), and its value should be a token derived from a
+	// secret in order to be considered as a localdev request. This value is
+	// then used by the scaling and host services when deciding whether to
+	// log certain errors as warnings instead.
 	whistTransportHeader := r.Header.Get("Whist-Transport-Request")
 	if whistTransportHeader != "" {
-		isDeployRequest, err := strconv.ParseBool(whistTransportHeader)
+		err = bcrypt.CompareHashAndPassword([]byte(whistTransportHeader), []byte("Whist_Localdev_JSON_Transport_Request_Secret"))
 		if err != nil {
 			logger.Error(err)
 			http.Error(w, "Malformed Whist Transport header", http.StatusBadRequest)
 			return
 		}
-		reqdata.IsDeployRequest = isDeployRequest
+		reqdata.IsLocalDevRequest = true
 	}
 
 	if !metadata.IsLocalEnv() {

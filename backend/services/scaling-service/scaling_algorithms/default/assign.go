@@ -16,6 +16,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	mandelboxAllocatedStatus               = "ALLOCATED"
+	mandelboxAllocatedForDevelopmentStatus = "ALLOCATED_FOR_DEVELOPMENT"
+)
+
 // MandelboxAssign is the action responsible for assigning an instance to a user,
 // and scaling as necessary to satisfy demand.
 func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, event ScalingEvent) error {
@@ -250,10 +255,10 @@ func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, ev
 	// the request was sent. The host service will use this
 	// value to decide whether to log some errors as warnings.
 	var mandelboxStatus string
-	if mandelboxRequest.IsDeployRequest {
-		mandelboxStatus = "ALLOCATED"
+	if mandelboxRequest.IsLocalDevRequest {
+		mandelboxStatus = mandelboxAllocatedForDevelopmentStatus
 	} else {
-		mandelboxStatus = "ALLOCATED_FOR_DEVELOPMENT"
+		mandelboxStatus = mandelboxAllocatedStatus
 	}
 
 	mandelboxForDb := subscriptions.Mandelbox{

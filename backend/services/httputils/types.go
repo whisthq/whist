@@ -49,14 +49,14 @@ func (s *JSONTransportRequest) CreateResultChan() {
 
 // Mandelbox assign request
 type MandelboxAssignRequest struct {
-	Regions         []string              `json:"regions"`
-	CommitHash      string                `json:"client_commit_hash"`
-	UserEmail       string                `json:"user_email"`
-	Version         string                `json:"version"`
-	SessionID       int64                 `json:"session_id"`
-	IsDeployRequest bool                  // Indicates if the request was sent from a deploy environment (dev, staging, prod), rather than from a local testing environment
-	UserID          mandelboxtypes.UserID // The userID is obtained from the access token
-	ResultChan      chan RequestResult    // Channel to pass the request result between goroutines
+	Regions           []string              `json:"regions"`
+	CommitHash        string                `json:"client_commit_hash"`
+	UserEmail         string                `json:"user_email"`
+	Version           string                `json:"version"`
+	SessionID         int64                 `json:"session_id"`
+	IsLocalDevRequest bool                  // Indicates if the request was sent from a local testing environment
+	UserID            mandelboxtypes.UserID // The userID is obtained from the access token
+	ResultChan        chan RequestResult    // Channel to pass the request result between goroutines
 }
 
 type MandelboxAssignRequestResult struct {
