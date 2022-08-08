@@ -3,6 +3,7 @@
 
 #include "../frontend_structs.h"
 #include "../../whist_client.h"
+#include "../../../whist/utils/os_utils.h"
 
 typedef enum ModifierKeyFlags {
     SHIFT = 1 << 0,
