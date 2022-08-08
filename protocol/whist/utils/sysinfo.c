@@ -2,21 +2,21 @@
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file sysinfo.c
  * @brief This file contains all code that logs client hardware specifications.
-============================
-Usage
-============================
+ ============================
+ Usage
+ ============================
 
-Call the respective functions to log a device's OS, model, CPU, RAM, etc.
-*/
+ Call the respective functions to log a device's OS, model, CPU, RAM, etc.
+ */
 
 #include "sysinfo.h"
 #include <whist/core/platform.h>
 
 /*
-============================
-Includes
-============================
-*/
+   ============================
+   Includes
+   ============================
+   */
 
 #if OS_IS(OS_WIN32)
 #pragma warning(disable : 4201)
@@ -33,6 +33,12 @@ Includes
 #if OS_IS(OS_MACOS)
 #include <sys/sysctl.h>
 #include <sys/types.h>
+// SERINA
+#include <mach/mach_vm.h>
+#include <mach/mach.h>
+#include <mach/task.h>
+#include <mach/vm_map.h>
+#include <sys/mman.h>
 #else
 #include <sys/sysinfo.h>
 #endif
@@ -43,6 +49,109 @@ Includes
 #include <stdio.h>
 
 #include <whist/logging/logging.h>
+
+// munlock previous allocations
+// mlock(addr, size) everything
+//
+typedef struct {
+    mach_vm_address_t addr;
+    mach_vm_size_t size;
+} VMRegion;
+
+#define MAX_REGIONS 1000
+
+void print_vmmap_info(void) {
+    static VMRegion regions[MAX_REGIONS];
+    static int num_regions = 0;
+    // LOG_INFO("%d regions", num_regions);
+    // munlock previous allocations
+    for (int i = 0; i < num_regions; i++) {
+        if (regions[i].addr && regions[i].size) {
+            munlock((void*)regions[i].addr, regions[i].size);
+        }
+    }
+    num_regions = 0;
+    // SERINA - MACH
+    task_t t = mach_task_self();
+
+    // attempt to call mach_vm_region_etc
+    mach_vm_address_t addr = 1;  //(mach_vm_address_t) &t;
+    kern_return_t rc;
+    vm_region_basic_info_data_t info;
+    mach_vm_address_t prev_addr;
+    mach_vm_size_t size, prev_size;
+
+    mach_port_t obj_name;
+    mach_msg_type_number_t count;
+
+    int done = 0;
+
+    count = VM_REGION_BASIC_INFO_COUNT_64;
+
+    rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info, &count,
+                        &obj_name);
+    if (rc) {
+        LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
+    } else {
+        // LOG_INFO("addr %p, size %llu", (void*)addr, size);
+        mlock((void*)addr, size);
+        regions[num_regions].addr = addr;
+        regions[num_regions].size = size;
+        num_regions++;
+        prev_addr = addr;
+        prev_size = size;
+        while (!done) {
+            // repeatedly call mach_vm_region
+            addr = prev_addr + prev_size;
+            // means address space has wrapped around
+            if (prev_size == 0 || addr != prev_addr + prev_size) {
+                if (prev_size == 0) {
+                    LOG_INFO("mach_vm_region returned size 0");
+                } else {
+                    LOG_INFO("address space wrapped around, we are done");
+                }
+                done = 1;
+            }
+            if (!done) {
+                count = VM_REGION_BASIC_INFO_COUNT_64;
+                rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info,
+                                    &count, &obj_name);
+                if (rc) {
+                    LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
+                    done = 1;
+                } else {
+                    mlock((void*)addr, size);
+                    regions[num_regions].addr = addr;
+                    regions[num_regions].size = size;
+                    num_regions++;
+                }
+            }
+            // print data of old mach_vm_region call
+            /*
+            unsigned long long print_size;
+            char* print_size_unit = "B";
+            print_size = prev_size;
+            if (print_size > 1024) {
+                print_size /= 1024;
+                print_size_unit = "K";
+            }
+            if (print_size > 1024) {
+                print_size /= 1024;
+                print_size_unit = "M";
+            }
+            if (print_size > 1024) {
+                print_size /= 1024;
+                print_size_unit = "G";
+            }
+            // LOG_INFO("addr %p, size %llu%s", (void*)prev_addr, print_size, print_size_unit);
+            */
+            // update prev_addr and addr
+            prev_addr = addr;
+            prev_size = size;
+        }
+    }
+    LOG_INFO("mlock'ed %d regions", num_regions);
+}
 
 void print_os_info(void) {
 #if OS_IS(OS_WIN32)
@@ -297,8 +406,9 @@ void print_ram_info(void) {
     token[strlen(token) - 1] = '\0';  // remove newline
     total_ram = atoll(token);
     runcmd("top -l 1 | grep -E '^Phys'", &total_ram_usage);
-    total_ram_usage[strlen(total_ram_usage) - 1] = '\0';  // remove newline
-    // LINUX: Display the contents of the SYSTEM_INFO structure.
+    total_ram_usage[strlen(total_ram_usage) - 1] =
+        '\0';  // remove newline
+               // LINUX: Display the contents of the SYSTEM_INFO structure.
 #else
     size_t total_ram;
     size_t total_ram_usage;
@@ -428,7 +538,7 @@ void print_cpu_info(void) {
     LOG_INFO("Physical Cores: %d", cores);
     LOG_INFO("HyperThreaded: %s", (hyper_threads ? "true" : "false"));
 
-// add CPU usage at beginning of Whist
+    // add CPU usage at beginning of Whist
 #if OS_IS(OS_MACOS)
     char* cpu_usage = NULL;
     runcmd("top -l 1 | grep -E '^CPU'", &cpu_usage);
