@@ -50,6 +50,7 @@ OnFileUploadCallback on_file_upload = NULL;
 OnFileDownloadStart on_file_download_start = NULL;
 OnFileDownloadUpdate on_file_download_update = NULL;
 OnFileDownloadComplete on_file_download_complete = NULL;
+OnNotificationCallback on_notification_callback_ptr = NULL;
 GetModifierKeyState get_modifier_key_state = NULL;
 }
 
@@ -63,6 +64,10 @@ static void virtual_interface_set_on_cursor_change_callback(int window_id,
                                                             OnCursorChangeCallback cb) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     whist_windows[window_id].on_cursor_change_callback_ptr = cb;
+}
+
+static void virtual_interface_set_on_notification_callback(OnNotificationCallback cb) {
+    on_notification_callback_ptr = cb;
 }
 
 static void* virtual_interface_get_frame_ref(void) {
@@ -233,6 +238,7 @@ static const VirtualInterface vi = {
                 virtual_interface_set_on_file_download_update_callback,
             .set_on_file_download_complete_callback =
                 virtual_interface_set_on_file_download_complete_callback,
+            .set_on_notification_callback = virtual_interface_set_on_notification_callback,
         },
 };
 
