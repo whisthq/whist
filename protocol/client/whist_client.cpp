@@ -214,11 +214,10 @@ static WhistStatus initialize_connection(void) {
 static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* renderer) {
     LOG_INFO("Entering main event loop...");
 
-    WhistTimer keyboard_sync_timer, monitor_change_timer, cpu_usage_statistics_timer, vmmap_timer;
+    WhistTimer keyboard_sync_timer, monitor_change_timer, cpu_usage_statistics_timer;
     start_timer(&keyboard_sync_timer);
     start_timer(&monitor_change_timer);
     start_timer(&cpu_usage_statistics_timer);
-    start_timer(&vmmap_timer);
 
     while (connected && !client_exiting) {
         // Update any pending SDL tasks
@@ -268,10 +267,6 @@ static WhistExitCode run_main_loop(WhistFrontend* frontend, WhistRenderer* rende
             }
 
             start_timer(&monitor_change_timer);
-        }
-        if (get_timer(&vmmap_timer) > 2) {
-            print_vmmap_info();
-            start_timer(&vmmap_timer);
         }
 
         // Check if file upload has been initiated and initiated selection dialog if so
