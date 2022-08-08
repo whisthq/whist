@@ -105,10 +105,12 @@ func IsRunningInCI() bool {
 }
 
 // IsGPU returns true if the host-service is running on a host with
-// a GPU and false otherwise.
+// a GPU and false otherwise. False is the default behaviour and
+// the host service will only run on GPU instances when the
+// GPU flag is set.
 func IsGPU() bool {
-	strNonGPU := strings.ToLower(os.Getenv("GPU"))
-	switch strNonGPU {
+	strGPU := strings.ToLower(os.Getenv("GPU"))
+	switch strGPU {
 	case "1", "yes", "true", "on", "yep":
 		return true
 	default:
