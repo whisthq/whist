@@ -1188,6 +1188,7 @@ jobs:
               --target_arch=${{ matrix.config.target_arch }} \
               --mac_signing_keychain="Whist Codesigning" \
               --mac_signing_identifier=E9669ADD20174D885A31C49C11604971E8C96019 \
+              --mac_installer_signing_identifier=3AFB7D99DBECA7FEF628634E7EE4DA349AAE75AC \
               --brave_google_api_key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
               --uphold_client_id=x \
               --uphold_client_secret=x \
