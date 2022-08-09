@@ -62,7 +62,15 @@ typedef struct VirtualInterface {
     } file;
 } VirtualInterface;
 
-const VirtualInterface* get_virtual_interface(void);
+#ifndef EXPORT_API
+#ifdef _WIN32
+#define EXPORT_API __declspec(dllexport)
+#else
+#define EXPORT_API __attribute__((visibility("default")))
+#endif
+#endif
+
+EXPORT_API const VirtualInterface* get_virtual_interface(void);
 
 // This is a crutch. Once video is callback-ized we won't need it anymore.
 #if FROM_WHIST_PROTOCOL
