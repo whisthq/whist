@@ -39,6 +39,7 @@ aws_timeout_seconds = 2400 if job_name != "backend-integration-test" else 3600
 # It is created/updated when running `aws configure`"
 aws_credentials_filepath = os.path.join(os.path.expanduser("~"), ".aws", "credentials")
 
+pexpect_max_retries = 5
 
 # Max number of times to retry setup commands that can fail due to API outages
 SETUP_MAX_RETRIES = 5
