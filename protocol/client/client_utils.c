@@ -153,22 +153,31 @@ int client_handle_dynamic_args(WhistFrontend *frontend) {
                 // key/value are NULL
                 return -1;
             }
-            // Try setting as an option
-            WhistStatus opt_ret = whist_set_single_option(key, value);
-            if (opt_ret == WHIST_SUCCESS) {
-                LOG_INFO("Successfully set option %s", key);
-            } else if (opt_ret != WHIST_ERROR_NOT_FOUND) {
-                LOG_WARNING("Failed to set option %s: %s", key, whist_error_string(opt_ret));
+
+            if (!strcmp(key, "finished")) {
+                free(key);
+                free(value);
+                return 0;
             } else if (!strcmp(key, "kill")) {
                 free(key);
                 free(value);
                 return 1;
-            } else if (!strcmp(key, "finished")) {
-                free(key);
-                free(value);
-                return 0;
-            } else {
-                LOG_WARNING("Dynamic argument %s not available", key);
+            }
+
+            WhistStatus opt_ret = whist_set_single_option(key, value);
+            switch (opt_ret) {
+                case WHIST_SUCCESS: {
+                    LOG_INFO("Successfully set option '%s'", key);
+                    break;
+                }
+                case WHIST_ERROR_NOT_FOUND: {
+                    LOG_WARNING("Dynamic argument '%s' not available", key);
+                    break;
+                }
+                default: {
+                    LOG_WARNING("Failed to set option '%s': %s", key, whist_error_string(opt_ret));
+                    break;
+                }
             }
             free(key);
             free(value);
