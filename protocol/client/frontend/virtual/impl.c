@@ -365,9 +365,8 @@ void virtual_paint_video(WhistFrontend* frontend) {}
 void virtual_get_video_device(WhistFrontend* frontend, AVBufferRef** device,
                               enum AVPixelFormat* format) {
     *device = NULL;
-    // AV_PIX_FMT_YUV420P is found to be working on macOS. We should eventually figure out D3D11
-    // support and use that format here on Windows.
-    *format = OS_IS(OS_MACOS) ? AV_PIX_FMT_YUV420P : AV_PIX_FMT_NONE;
+    // AV_PIX_FMT_YUV420P is the format that Chromium currently accepts
+    *format = AV_PIX_FMT_YUV420P;
 }
 
 void virtual_render(WhistFrontend* frontend) {}

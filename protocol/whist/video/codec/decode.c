@@ -390,12 +390,14 @@ VideoDecoder* video_decoder_create(const VideoDecoderParams* params) {
 
     decoder->decode_type = 0;
     decoder->received_a_frame = false;
-    // TODO : Add Chromium rendering support in Windows/Linux and remove OS_IS(OS_MACOS) condition
-    if (OS_IS(OS_MACOS) && params->renderer_output_format != AV_PIX_FMT_NONE) {
+    if (params->renderer_output_format != AV_PIX_FMT_NONE) {
+        // If the renderer wants a particular output format,
+        // Try to hw decode directly into that output format
         // In MacOS, Chromium rendering uses AV_PIX_FMT_YUV420P format and SDL rendering uses
         // AV_PIX_FMT_VIDEOTOOLBOX format. And VideoToolBox Hardware decoder is capable of providing
         // output in both formats. Hence setting the required pixel format.
         hardware_decode_types[0].pix_fmt = params->renderer_output_format;
+        hardware_decode_types[0].get_format = NULL;
     }
 
     // Try all decoders until we find one that works
@@ -572,6 +574,8 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
         // Otherwise, copy the hw data into a new software frame.
         start_timer(&latency_clock);
         decoder->decoded_frame = safe_av_frame_alloc();
+        // av_hwframe_transfer_data will convert to decoder->decoded_frame->format
+        decoder->decoded_frame->format = decoder->params.renderer_output_format;
         res = av_hwframe_transfer_data(decoder->decoded_frame, frame, 0);
         av_frame_free(&frame);
         if (res < 0) {
