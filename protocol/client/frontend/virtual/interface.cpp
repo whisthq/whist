@@ -24,10 +24,10 @@ struct WhistWindowInformation {
     OnCursorChangeCallback on_cursor_change_callback_ptr;
     VideoFrameCallback video_frame_callback_ptr;
     OnFileUploadCallback on_file_upload_callback_ptr;
+    bool playing;
 };
 static std::mutex whist_window_mutex;
 static std::map<int, WhistWindowInformation> whist_windows;
-static int most_recently_active_window_id = -1;
 
 static void on_cursor_change_handler(void* ptr, const char* cursor_type, bool relative_mouse_mode) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
@@ -111,9 +111,9 @@ static void vi_api_free_frame_ref(void* frame_ref) {
     av_frame_free(&frame);
 }
 
-static void vi_api_report_active_window(int window_id) {
+static void vi_api_set_video_playing(int window_id, bool playing) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
-    most_recently_active_window_id = window_id;
+    whist_windows[window_id].playing = playing;
 }
 
 void virtual_interface_send_frame(AVFrame* frame) {
@@ -124,20 +124,15 @@ void virtual_interface_send_frame(AVFrame* frame) {
     av_frame_free(&pending);
     pending = av_frame_clone(frame);
 
-    if (whist_windows.find(most_recently_active_window_id) == whist_windows.end()) {
-        return;
-    }
-
-    // Play video to the most recently active window
-    auto const& window_info = whist_windows[most_recently_active_window_id];
-    if (window_info.video_frame_callback_ptr) {
-        window_info.video_frame_callback_ptr(most_recently_active_window_id, av_frame_clone(frame));
+    for (auto const& [window_id, window_info] : whist_windows) {
+        if (window_info.playing && window_info.video_frame_callback_ptr) {
+            window_info.video_frame_callback_ptr(window_id, av_frame_clone(frame));
+        }
     }
 }
 
 static void vi_api_set_video_frame_callback(int window_id, VideoFrameCallback callback_ptr) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
-    LOG_INFO("SETTING WINDOW VIDEO CB: %d", window_id);
     // If there's a pending avframe, and that window hasn't been capturing yet,
     // pass the existant frame into the callback ptr
     if (pending != NULL && whist_windows[window_id].video_frame_callback_ptr == NULL) {
@@ -196,20 +191,17 @@ static int vi_api_create_window(void) {
     int next_window_id = serial_window_ids++;
     // Store window info, and return the new window ID
     whist_windows[next_window_id] = {};
-    LOG_INFO("CREATING WINDOW %d", next_window_id);
     return next_window_id;
 }
 
 static void vi_api_register_context(int window_id, void* ctx) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     whist_windows[window_id].ctx = ctx;
-    LOG_INFO("REGISTERED CONTEXT FOR WINDOW %d", window_id);
 }
 
 static void vi_api_destroy_window(int window_id) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     whist_windows.erase(window_id);
-    LOG_INFO("DESTROYING WINDOW %d", window_id);
     if (whist_windows.size() == 0) {
         callback_context = NULL;
         on_file_upload = NULL;
@@ -237,7 +229,7 @@ static const VirtualInterface vi = {
             .free_frame_ref = vi_api_free_frame_ref,
             .set_on_cursor_change_callback = vi_api_set_on_cursor_change_callback,
             .set_video_frame_callback = vi_api_set_video_frame_callback,
-            .report_active_window = vi_api_report_active_window,
+            .set_video_playing = vi_api_set_video_playing,
         },
     .events =
         {
