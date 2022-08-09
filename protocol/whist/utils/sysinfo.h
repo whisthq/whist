@@ -70,5 +70,5 @@ void print_memory_info(void);
  */
 double get_cpu_usage(double time_elapsed);
 
-void print_vmmap_info(void);
+void mlock_memory(void);
 #endif  // SYS_INFO

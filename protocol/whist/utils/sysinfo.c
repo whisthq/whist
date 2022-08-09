@@ -50,9 +50,10 @@
 
 #include <whist/logging/logging.h>
 
+#if OS_IS(OS_MACOS)
 // munlock previous allocations
 // mlock(addr, size) everything
-//
+
 typedef struct {
     mach_vm_address_t addr;
     mach_vm_size_t size;
@@ -60,12 +61,11 @@ typedef struct {
 
 #define MAX_REGIONS 1000
 
-void print_vmmap_info(void) {
+void mlock_memory(void) {
     static VMRegion regions[MAX_REGIONS];
     static int num_regions = 0;
     // this is probably bad practice, sorry -- using the fact that this is unsigned
     static mach_vm_address_t max_addr = (mach_vm_address_t) -1;
-    // LOG_INFO("%d regions", num_regions);
     // munlock previous allocations
     for (int i = 0; i < num_regions; i++) {
         if (regions[i].addr && regions[i].size) {
@@ -73,11 +73,9 @@ void print_vmmap_info(void) {
         }
     }
     num_regions = 0;
-    // SERINA - MACH
     task_t t = mach_task_self();
 
-    // attempt to call mach_vm_region_etc
-    mach_vm_address_t addr = 1;  //(mach_vm_address_t) &t;
+    mach_vm_address_t addr = 1;
     kern_return_t rc;
     vm_region_basic_info_data_t info;
     mach_vm_address_t prev_addr;
@@ -95,7 +93,7 @@ void print_vmmap_info(void) {
     if (rc) {
         LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
     } else {
-        // LOG_INFO("addr %p, size %llu", (void*)addr, size);
+        // update regions array data
         mlock((void*)addr, size);
         regions[num_regions].addr = addr;
         regions[num_regions].size = size;
@@ -106,12 +104,8 @@ void print_vmmap_info(void) {
             // repeatedly call mach_vm_region
             addr = prev_addr + prev_size;
             // means address space has wrapped around
-            if (prev_size == 0 || addr != prev_addr + prev_size || addr > max_addr) {
-                if (prev_size == 0) {
-                    LOG_INFO("mach_vm_region returned size 0");
-                } else {
-                    LOG_INFO("address space wrapped around, we are done");
-                }
+            if (prev_size == 0 || addr != prev_addr + prev_size || addr >= max_addr) {
+                // finished because we've wrapped around
                 done = 1;
             }
             if (!done) {
@@ -119,6 +113,7 @@ void print_vmmap_info(void) {
                 rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info,
                                     &count, &obj_name);
                 if (rc) {
+                    // indicates that we've given an invalid address.
                     LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
                     max_addr = addr;
                     done = 1;
@@ -129,25 +124,6 @@ void print_vmmap_info(void) {
                     num_regions++;
                 }
             }
-            // print data of old mach_vm_region call
-            /*
-            unsigned long long print_size;
-            char* print_size_unit = "B";
-            print_size = prev_size;
-            if (print_size > 1024) {
-                print_size /= 1024;
-                print_size_unit = "K";
-            }
-            if (print_size > 1024) {
-                print_size /= 1024;
-                print_size_unit = "M";
-            }
-            if (print_size > 1024) {
-                print_size /= 1024;
-                print_size_unit = "G";
-            }
-            // LOG_INFO("addr %p, size %llu%s", (void*)prev_addr, print_size, print_size_unit);
-            */
             // update prev_addr and addr
             prev_addr = addr;
             prev_size = size;
@@ -155,6 +131,12 @@ void print_vmmap_info(void) {
     }
     LOG_INFO("mlock'ed %d regions", num_regions);
 }
+#else
+void mlock_memory(void) {
+    // do nothing
+    return;
+}
+#endif
 
 void print_os_info(void) {
 #if OS_IS(OS_WIN32)

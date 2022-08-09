@@ -54,7 +54,7 @@ static int multithreaded_print_system_info(void *opaque) {
     print_hard_drive_info();
 
     while (true) {
-        print_vmmap_info();
+        mlock_memory();
         whist_sleep(5000);
     }
 
