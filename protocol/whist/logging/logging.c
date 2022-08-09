@@ -581,26 +581,26 @@ void print_stacktrace(void) {
     }
 
 #if OS_IS(OS_WIN32)
-    unsigned int i;
-    void* stack[100];
-    unsigned short frames;
-    char buf[sizeof(SYMBOL_INFO) + 256 * sizeof(char)];
-    SYMBOL_INFO* symbol = (SYMBOL_INFO*)buf;
-    HANDLE process;
-
-    process = GetCurrentProcess();
-
+    HANDLE process = GetCurrentProcess();
     SymInitialize(process, NULL, TRUE);
 
-    frames = CaptureStackBackTrace(0, 100, stack, NULL);
-    memset(symbol, 0, sizeof(buf));
-    symbol->MaxNameLen = 255;
-    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+    void* stack[100];
+    int frames = (int)CaptureStackBackTrace(0, 100, stack, NULL);
 
-    for (i = 0; i < frames; i++) {
-        SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
+    char buf[sizeof(SYMBOL_INFO) + 256 * sizeof(char)];
+    SYMBOL_INFO* symbol = (SYMBOL_INFO*)buf;
+    for (int i = 0; i < frames; i++) {
+        memset(symbol, 0, sizeof(buf));
+        symbol->MaxNameLen = 255;
+        symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-        fprintf(stdout, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name, symbol->Address);
+        if (!SymFromAddr(process, (DWORD64)stack[i], 0, symbol)) {
+            fprintf(stdout, "%i: (SymFromAddr failed: %d) - 0x%0llx\n", frames - i - 1,
+                    (int)GetLastError(), (DWORD64)stack[i]);
+        } else {
+            fprintf(stdout, "%i: %.*s - 0x%0llx\n", frames - i - 1, (int)symbol->NameLen,
+                    symbol->Name, symbol->Address);
+        }
     }
 #else
 #define HANDLER_ARRAY_SIZE 100
