@@ -63,6 +63,8 @@ typedef struct {
 void print_vmmap_info(void) {
     static VMRegion regions[MAX_REGIONS];
     static int num_regions = 0;
+    // this is probably bad practice, sorry -- using the fact that this is unsigned
+    static mach_vm_address_t max_addr = (mach_vm_address_t) -1;
     // LOG_INFO("%d regions", num_regions);
     // munlock previous allocations
     for (int i = 0; i < num_regions; i++) {
@@ -104,7 +106,7 @@ void print_vmmap_info(void) {
             // repeatedly call mach_vm_region
             addr = prev_addr + prev_size;
             // means address space has wrapped around
-            if (prev_size == 0 || addr != prev_addr + prev_size) {
+            if (prev_size == 0 || addr != prev_addr + prev_size || addr > max_addr) {
                 if (prev_size == 0) {
                     LOG_INFO("mach_vm_region returned size 0");
                 } else {
@@ -118,6 +120,7 @@ void print_vmmap_info(void) {
                                     &count, &obj_name);
                 if (rc) {
                     LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
+                    max_addr = addr;
                     done = 1;
                 } else {
                     mlock((void*)addr, size);
