@@ -43,7 +43,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     /whistium.deb \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm /whistium.deb
 
 # Set default browser
 RUN su - whist -c \
@@ -55,7 +56,7 @@ RUN su - whist -c \
 # Configure Whistium Policies
 # For details regarding the options, see:
 # https://gist.github.com/meets2tarun/2161e544f4c458c2f07641cafbdd186d
-RUN mkdir -p /etc/opt/chromium/policies/managed \
+RUN mkdir -p /etc/chromium/policies/managed \
     && echo {} \
     # Whitelist streamed URI protocols (zoommtg,slack,spotify,discord)
     | jq '.URLWhitelist=["zoommtg://*","slack://*","spotify://*","discord://*"]' \
@@ -66,10 +67,10 @@ RUN mkdir -p /etc/opt/chromium/policies/managed \
     | jq '.BackgroundModeEnabled=false' \
     # Allow the file selection dialog to enable file uploads
     | jq '.AllowFileSelectionDialogs=true' \
-    > /etc/opt/chromium/policies/managed/WhistPolicies.json
+    > /etc/chromium/policies/managed/WhistPolicies.json
 
 # Configure teleport extension and native messaging
-RUN mkdir -p /etc/opt/chromium/native-messaging-hosts \
+RUN mkdir -p /etc/chromium/native-messaging-hosts \
     && echo {} \
     | jq '.name="whist_teleport_extension_host"' \
     | jq '.description="Whist Teleport Chromium Extension Host"' \
@@ -78,7 +79,7 @@ RUN mkdir -p /etc/opt/chromium/native-messaging-hosts \
     # This ID is a hash of the path to the Teleport Chrome extension.
     # It will need to be updated if the path ever changes.
     | jq '.allowed_origins[0]="chrome-extension://gilacbinnkddlokepdofmojhijgileoj/"' \
-    > /etc/opt/chromium/native-messaging-hosts/whist_teleport_extension_host.json
+    > /etc/chromium/native-messaging-hosts/whist_teleport_extension_host.json
 
 # Create default config paths
 # Don't show first run popup
