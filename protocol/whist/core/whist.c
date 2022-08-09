@@ -55,7 +55,7 @@ static int multithreaded_print_system_info(void *opaque) {
 
     while (true) {
         mlock_memory();
-        whist_sleep(5000);
+        whist_sleep(2000);
     }
 
     return 0;
