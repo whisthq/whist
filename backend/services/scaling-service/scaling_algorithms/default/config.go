@@ -121,6 +121,7 @@ func GetEnabledRegions() []string {
 	case string(metadata.EnvProd):
 		enabledRegions = []string{
 			"us-east-1",
+			"us-west-1",
 		}
 	default:
 		enabledRegions = []string{
