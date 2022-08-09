@@ -4,6 +4,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
+	"path"
 	"time"
 
 	"github.com/whisthq/whist/backend/services/types"
@@ -68,25 +70,29 @@ func (gc *Metadata) PopulateMetadata() (map[string]string, error) {
 	return nil, nil
 }
 
-func metadataRetriever(path string) func() (string, error) {
+func metadataRetriever(resource string) func() (string, error) {
 	httpClient := http.Client{
 		Timeout: 1 * time.Second,
 	}
 
-	url := EndpointBase + path
 	return func() (string, error) {
-		resp, err := httpClient.Get(url)
+		u, err := url.Parse(EndpointBase)
 		if err != nil {
-			return "", utils.MakeError("error retrieving data from URL %s: %v. Is the service running on a GCP VM instance?", url, err)
+			return "", utils.MakeError("failed to parse metadata endpoint URL: %s", err)
+		}
+		u.Path = path.Join("latest", "metadata", resource)
+		resp, err := httpClient.Get(u.String())
+		if err != nil {
+			return "", utils.MakeError("error retrieving data from URL %s: %v. Is the service running on a GCP VM instance?", u.String(), err)
 		}
 		defer resp.Body.Close()
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return string(body), utils.MakeError("error reading response body from URL %s: %v", url, err)
+			return string(body), utils.MakeError("error reading response body from URL %s: %v", u.String(), err)
 		}
 		if resp.StatusCode != 200 {
-			return string(body), utils.MakeError("got non-200 response from URL %s: %s", url, resp.Status)
+			return string(body), utils.MakeError("got non-200 response from URL %s: %s", u.String(), resp.Status)
 		}
 		return string(body), nil
 	}

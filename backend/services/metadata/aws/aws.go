@@ -22,7 +22,7 @@ import (
 
 // EndpointBase is the URL of the metadata endpoint. It is declared as
 // a var for testing convenience.
-var EndpointBase = "http://169.254.169.254/latest/meta-data/"
+var EndpointBase = "http://169.254.169.254"
 
 // Metadata holds all relevant values that can be extracted from the
 // instance's metadata endpoint.
@@ -177,7 +177,7 @@ func metadataRetriever(resource string) (string, error) {
 	if err != nil {
 		return "", utils.MakeError("failed to parse metadata endpoint URL: %s", err)
 	}
-	u.Path = path.Join(resource)
+	u.Path = path.Join("latest", "meta-data", resource)
 	resp, err := httpClient.Get(u.String())
 	if err != nil {
 		return "", utils.MakeError("error retrieving data from URL %s: %v. Is the service running on an AWS EC2 instance?", u.String(), err)

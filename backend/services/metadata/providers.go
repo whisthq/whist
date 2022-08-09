@@ -3,6 +3,8 @@ package metadata
 import (
 	"net"
 	"net/http"
+	"net/url"
+	"path"
 	"time"
 
 	"github.com/whisthq/whist/backend/services/metadata/aws"
@@ -49,22 +51,29 @@ func GenerateCloudMetadataRetriever() error {
 	var (
 		awsChan = make(chan error)
 		gcpChan = make(chan error)
-		// A path to ping the metadata servers. It should work for
-		// all prooviders.
-		path = "/instance-id"
 	)
 
 	// Try to ping the AWS metadata endpoint
 	go func() {
-		url := aws.EndpointBase + path
-		_, err := httpClient.Get(url)
+		resourceToPing := "instance-id"
+		url, err := url.Parse(aws.EndpointBase)
+		if err != nil {
+			awsChan <- utils.MakeError("failed to parse metadata endpoint URL: %s", err)
+		}
+		url.Path = path.Join("latest", "metadata", resourceToPing)
+		_, err = httpClient.Get(url.String())
 		awsChan <- err
 	}()
 
 	// Try to ping the GCP metadata endpoint
 	go func() {
-		url := gcp.EndpointBase + path
-		req, err := http.NewRequest(http.MethodGet, url, nil)
+		resourceToPing := "instance-id"
+		url, err := url.Parse(gcp.EndpointBase)
+		if err != nil {
+			gcpChan <- utils.MakeError("failed to parse metadata endpoint URL: %s", err)
+		}
+		url.Path = path.Join(resourceToPing)
+		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 		if err != nil {
 			gcpChan <- utils.MakeError("failed to create request for GCP endpoint: %s", err)
 			return

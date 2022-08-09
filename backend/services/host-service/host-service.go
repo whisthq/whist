@@ -366,19 +366,6 @@ func uninitializeFilesystem() {
 }
 
 func main() {
-	// Set Sentry tags
-	tags, err := metadata.CloudMetadata.PopulateMetadata()
-	if err != nil {
-		logger.Errorf("failed to set Sentry tags: %s", err)
-	}
-
-	logger.AddSentryTags(tags)
-
-	// Add some additional fields for Logz.io
-	tags["component"] = "backend"
-	tags["sub-component"] = "host-service"
-	logger.AddLogzioFields(tags)
-
 	// We create a global context (i.e. for the entire host service) that can be
 	// cancelled if the entire program needs to terminate. We also create a
 	// WaitGroup for all goroutines to tell us when they've stopped (if the
@@ -392,6 +379,24 @@ func main() {
 	// statements in main().
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
+
+	err := metadata.GenerateCloudMetadataRetriever()
+	if err != nil {
+		logger.Panicf(globalCancel, "failed to generate cloud metadata retriever: %s", err)
+	}
+
+	// Set Sentry tags
+	tags, err := metadata.CloudMetadata.PopulateMetadata()
+	if err != nil {
+		logger.Errorf("failed to set Sentry tags: %s", err)
+	}
+
+	logger.AddSentryTags(tags)
+
+	// Add some additional fields for Logz.io
+	tags["component"] = "backend"
+	tags["sub-component"] = "host-service"
+	logger.AddLogzioFields(tags)
 
 	// Start Docker
 	dockerClient, err := createDockerClient()
