@@ -65,7 +65,7 @@ void mlock_memory(void) {
     static VMRegion regions[MAX_REGIONS];
     static int num_regions = 0;
     // this is probably bad practice, sorry -- using the fact that this is unsigned
-    static mach_vm_address_t max_addr = (mach_vm_address_t) -1;
+    static mach_vm_address_t max_addr = (mach_vm_address_t)-1;
     // munlock previous allocations
     for (int i = 0; i < num_regions; i++) {
         if (regions[i].addr && regions[i].size) {
