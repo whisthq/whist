@@ -1,0 +1,101 @@
+# See stage 0 of the base Dockerfile for an explanation of this build stage.
+ARG BuildAssetPackage "protocol"
+FROM whist/build-assets:$BuildAssetPackage as build-assets
+
+#########################################################
+# Whistium Build Stage
+#########################################################
+
+FROM whisthq/browsers/base-chromium:current-build as whist-browsers-whistium
+
+ARG InstallBeta="false"
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+# Install Google Chrome dependencies explicitly
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    libappindicator3-1 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libcups2 \
+    libgdk-pixbuf2.0-0 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxi6 \
+    fonts-liberation \
+    xdg-utils \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download Whist Chromium installer
+COPY s3/*.deb /whistium.deb
+
+# Install Whist Chromium
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    /whistium.deb \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set default browser
+RUN su - whist -c \
+    "xdg-mime default chromium-browser.desktop text/html \
+    && xdg-mime default chromium-browser.desktop x-scheme-handler/http \
+    && xdg-mime default chromium-browser.desktop x-scheme-handler/https \
+    && xdg-mime default chromium-browser.desktop x-scheme-handler/about"
+
+# Configure Whistium Policies
+# For details regarding the options, see:
+# https://gist.github.com/meets2tarun/2161e544f4c458c2f07641cafbdd186d
+RUN mkdir -p /etc/opt/chromium/policies/managed \
+    && echo {} \
+    # Whitelist streamed URI protocols (zoommtg,slack,spotify,discord)
+    | jq '.URLWhitelist=["zoommtg://*","slack://*","spotify://*","discord://*"]' \
+    # Disable search suggestions (not necessary since URL bar is local in cloud-hybrid model)
+    | jq '.SearchSuggestEnabled=false' \
+    # Disable background apps (to prevent apps like Superhuman from
+    # indefinitely blocking mandelbox shutdown).
+    | jq '.BackgroundModeEnabled=false' \
+    # Allow the file selection dialog to enable file uploads
+    | jq '.AllowFileSelectionDialogs=true' \
+    > /etc/opt/chromium/policies/managed/WhistPolicies.json
+
+# Configure teleport extension and native messaging
+RUN mkdir -p /etc/opt/chromium/native-messaging-hosts \
+    && echo {} \
+    | jq '.name="whist_teleport_extension_host"' \
+    | jq '.description="Whist Teleport Chromium Extension Host"' \
+    | jq '.path="/opt/teleport/chrome-extension-host"' \
+    | jq '.type="stdio"' \
+    # This ID is a hash of the path to the Teleport Chrome extension.
+    # It will need to be updated if the path ever changes.
+    | jq '.allowed_origins[0]="chrome-extension://gilacbinnkddlokepdofmojhijgileoj/"' \
+    > /etc/opt/chromium/native-messaging-hosts/whist_teleport_extension_host.json
+
+# Create default config paths
+# Don't show first run popup
+RUN mkdir -p /home/whist/.config/chromium \
+    && touch /home/whist/.config/chromium/'First Run' \
+    && chown whist:whist /home/whist/.config/chromium{,/'First Run'}
+
+
+ENV WHIST_DEST_BROWSER="chromium"
+
+# Install handle to browser program to be able to open a new tab from the protocol
+RUN ln -sf /usr/bin/chromium-browser-stable /usr/bin/whist-open-new-tab
+
+# Create the Chrome preferences config file if it doesn't exist
+RUN mkdir -p /home/whist/.config/chromium/Default \
+    && touch /home/whist/.config/chromium/Default/Preferences \
+    && chown whist:whist /home/whist/.config/chromium/Default/Preferences
+
+# If needed, install WhistServer and helpers. Must be last step.
+COPY --from=build-assets protocol/* /usr/share/whist/

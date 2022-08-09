@@ -128,9 +128,9 @@ func SpinUpMandelboxes(globalCtx context.Context, globalCancel context.CancelFun
 	// with the "WAITING" status. The instance capacity is determined by the scaling service for each instance type.
 	for i := int32(0); i < instanceCapacity; i++ {
 		mandelboxID := mandelboxtypes.MandelboxID(uuid.New())
-		// Replace "chrome" by "brave" (or some other container we support) to test a different app. Note that the Whist
+		// Replace "chrome" with "brave" (or some other container we support) to test a different app. Note that the Whist
 		// backend is designed to only ever deploy the same application everywhere, which we hardcode here.
-		var appName mandelboxtypes.AppName = "browsers/chrome"
+		var appName mandelboxtypes.AppName = "browsers/whistium"
 		zygote, err := StartMandelboxSpinUp(globalCtx, globalCancel, goroutineTracker, dockerClient, mandelboxID, appName, mandelboxDieChan)
 
 		// If we fail to create a zygote mandelbox, it indicates a problem with the instance, or the Docker
