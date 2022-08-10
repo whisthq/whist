@@ -286,7 +286,9 @@ void virtual_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
 
     if (cursor->type != last_cursor_type || cursor->mode != last_mode) {
         const char* css_name = css_cursor_from_whist_cursor_type(cursor->type);
-        on_cursor_change(NULL, css_name, cursor->mode == MOUSE_MODE_RELATIVE);
+        if (on_cursor_change != NULL) {
+            on_cursor_change(NULL, css_name, cursor->mode == MOUSE_MODE_RELATIVE);
+        }
         last_cursor_type = cursor->type;
     }
 }
@@ -297,6 +299,7 @@ void virtual_get_keyboard_state(WhistFrontend* frontend, const uint8_t** key_sta
     *key_state = context->key_state;
     *key_count = KEYCODE_UPPERBOUND;
     int actual_mod_state = 0;
+    FATAL_ASSERT(get_modifier_key_state != NULL);
     int modifiers = get_modifier_key_state();
 
     // Handle the cases where modifier key is pressed, but our state says otherwise.
