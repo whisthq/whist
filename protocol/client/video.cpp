@@ -204,7 +204,7 @@ int render_video(VideoContext* video_context) {
     static timestamp_us last_rendered_time = 0;
     static bool first_run = true;
     if (first_run) {
-        // this should mlock all the statics (EXPERIMENTAL)
+        // mlock all statics
         MLOCK(first_run = false, &window_color, 128);
     }
 

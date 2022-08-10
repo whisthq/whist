@@ -26,7 +26,7 @@ Public Constants
 #define STATISTICS_FREQUENCY_IN_SEC 10
 
 #ifndef LOG_DATA_FOR_PLOTTER
-#define LOG_DATA_FOR_PLOTTER true
+#define LOG_DATA_FOR_PLOTTER false
 #endif
 
 // The size of the plot data can get big relatively quickly. A usual 2mins-long E2E test produces
@@ -36,7 +36,7 @@ Public Constants
 #define PLOT_DATA_SIZE 100000000
 // Save the plotting data in the same folder (on the mandelbox) as the {client,server}.log files to
 // facilitate retrieval. This value should be changed when testing on a local machine.
-#define PLOT_DATA_FILENAME "/Users/serinahu/Documents/whist/plot_data_mlock_contexts_updated.json"
+#define PLOT_DATA_FILENAME "/usr/share/whist/plot_data.json"
 
 /*
 ============================
