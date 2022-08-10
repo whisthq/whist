@@ -39,28 +39,10 @@ You can download the Nightly build for [macOS (x64)]() and [macOS (arm64)]() her
 
 ### Backend
 
-
-
-
-
-
-- [ ] Going to Google Maps correctly shows the user's approximate location
+- [ ] Users successfully get assigned to a mandelbox in the closest datacenter to them
+- [ ] The first cloud tab launches in <10 seconds
 - [ ] User's local settings for language, dark mode, DPI, keyboard repeat, etc. are properly set
-
-
-- [ ] Startup time for Whist is <10 seconds
-- [ ] Typing "where am I" in Google shows that I'm connected to the closest datacenter
-- [ ] User sessions are successfully stored across Whist sessions
-
-
-
-
-
-
-
-
-
-
+- [ ] User configs for cloud tabs are successfully stored across Whist sessions
 
 ### Chromium Integration
 
