@@ -7,15 +7,6 @@ from e2e_helpers.whist_run_steps import (
     shutdown_and_wait_server_exit,
 )
 
-from e2e_helpers.common.pexpect_tools import (
-    wait_until_cmd_done,
-    get_command_exit_code,
-)
-
-from e2e_helpers.common.ssh_tools import (
-    attempt_ssh_connection,
-)
-
 from e2e_helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
     printformat,
@@ -40,7 +31,7 @@ from e2e_helpers.setup.network_tools import (
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def get_session_id(pexpect_process, role, session_id_filename="/whist/resourceMappings/session_id"):
+def get_session_id(remote_executor, role, session_id_filename="/whist/resourceMappings/session_id"):
     """
     Get the protocol session id (if it is set)
 

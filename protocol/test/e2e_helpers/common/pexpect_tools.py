@@ -17,6 +17,7 @@ from e2e_helpers.common.timestamps_and_exit_tools import (
     printformat,
     exit_with_error,
 )
+from protocol.test.e2e_helpers.common.constants import TIMEOUT_EXIT_CODE
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -195,7 +196,6 @@ class RemoteExecutor:
         max_retries=1,
         success_message=None,
         errors_to_handle=[],
-        errors_are_fatal=False,
     ):
         """
         This function is a wrapper around remote_exec, running commands remotely, handling application-specific errors and
@@ -242,16 +242,23 @@ class RemoteExecutor:
                 error_stdout_message, message_for_user, corrective_action = error
                 if self.expression_in_pexpect_output(error_stdout_message, self.pexpect_output):
                     errors_found = True
-                    if message_for_user:
-                        printformat(f"Warning, {message_for_user}", "yellow")
-
                     if corrective_action:
                         corrective_actions.append(corrective_action)
+                        printformat(f"Warning: {message_for_user}", "yellow")
+                    else:
+                        exit_with_error(f"Error: {message_for_user}")
+
             for cmd in set(corrective_actions):
                 self.remote_exec(cmd)
 
+            if exit_code != 0:
+                if exit_code == TIMEOUT_EXIT_CODE or exit_code == TIMEOUT_EXIT_CODE:
+                    printformat(f"Warning: {cmd_description} timed out", "yellow")
+                else:
+                    printformat(f"Warning: {cmd_description} got exit code: {exit_code}", "yellow")
+
             if success_message is not None:
-                if exit_code == 0 and self.expression_in_pexpect_output(
+                if exit_code == 0 or self.expression_in_pexpect_output(
                     success_message, self.pexpect_output
                 ):
                     return

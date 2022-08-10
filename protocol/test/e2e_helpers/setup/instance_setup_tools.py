@@ -136,34 +136,32 @@ def install_and_configure_aws(remote_executor):
     error_msg = "Command 'aws' not found, but can be installed with:"
     # Attempt installation using apt-get
     if remote_executor.expression_in_pexpect_output(error_msg):
-        description = "Installing AWS-CLI using apt-get"
-
         # Wait for apt locks
         wait_for_apt_locks(remote_executor)
 
-        remote_executor.run_command("sudo apt-get install -y awscli", description)
-
         # Check if the apt-get installation failed (it happens from time to time)
         error_msg = "E: Package 'awscli' has no installation candidate"
-        if expression_in_pexpect_output(error_msg, stdout):
-            exit_with_error(
-                "Installing AWS-CLI using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
-            )
+        error_usr_msg = "Installing AWS-CLI using apt-get failed. This usually happens when the Ubuntu package lists are being updated."
+        description = "Installing AWS-CLI using apt-get"
+        remote_executor.run_command(
+            "sudo apt-get install -y awscli",
+            description,
+            errors_to_handle=[(error_msg, error_usr_msg, None)],
+        )
+
     else:
         print("AWS CLI is already installed")
 
     # Step 3: Set the AWS credentials
     access_key_cmd = f"aws configure set aws_access_key_id {aws_access_key_id}"
-    pexpect_process.sendline(access_key_cmd)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    remote_executor.run_command(access_key_cmd)
     secret_access_key_cmd = f"aws configure set aws_secret_access_key {aws_secret_access_key}"
-    pexpect_process.sendline(secret_access_key_cmd)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    remote_executor.run_command(secret_access_key_cmd)
 
     print("AWS configuration is now complete!")
 
 
-def clone_whist_repository(github_token, pexpect_process, pexpect_prompt):
+def clone_whist_repository(github_token, remote_executor):
     """
     Clone the Whist repository on a remote machine, and check out the same branch used locally
     on the machine where this script is run.
@@ -179,45 +177,39 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt):
         None
     """
     branch_name = get_whist_branch_name()
-    git_clone_exit_code = 1
 
-    for retry in range(SETUP_MAX_RETRIES):
-        print(
-            f"Cloning branch {branch_name} of the whisthq/whist repository on the AWS instance (retry {retry+1}/{SETUP_MAX_RETRIES})..."
-        )
-        # Retrieve whisthq/whist monorepo on the instance
-        command = (
-            "rm -rf whist; git clone -b "
-            + branch_name
-            + " https://"
-            + github_token
-            + "@github.com/whisthq/whist.git | tee ~/github_log.log"
-        )
-        pexpect_process.sendline(command)
-        git_clone_stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
-        git_clone_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt)
-        branch_not_found_error = f"fatal: Remote branch {branch_name} not found in upstream origin"
-        if git_clone_exit_code != 0 or expression_in_pexpect_output("fatal: ", git_clone_stdout):
-            if expression_in_pexpect_output(branch_not_found_error, git_clone_stdout):
-                # If branch does not exist, trigger fatal error.
-                exit_with_error(
-                    f"Branch {branch_name} not found in the whisthq/whist repository. Maybe it has been merged while the E2E was running?"
-                )
-            else:
-                printformat(f"Git clone failed!", "yellow")
-        else:
-            break
+    # Retrieve whisthq/whist monorepo on the instance
+    command = (
+        "rm -rf whist; git clone -b "
+        + branch_name
+        + " https://"
+        + github_token
+        + "@github.com/whisthq/whist.git | tee ~/github_log.log"
+    )
+    description = (
+        f"Cloning branch {branch_name} of the whisthq/whist repository on the AWS instance"
+    )
 
-    if git_clone_exit_code != 0:
-        exit_with_error(f"git clone failed {SETUP_MAX_RETRIES}! Giving up now.")
+    branch_not_found_error = f"fatal: Remote branch {branch_name} not found in upstream origin"
+    branch_not_found_usr_msg = f"Branch {branch_name} not found in the whisthq/whist repository. Maybe it has been merged while the E2E was running?"
+    general_clone_error = "fatal: "
+    general_clone_usr_msg = f"Git clone failed!"
+
+    errors_to_handle = [
+        (branch_not_found_error, branch_not_found_usr_msg, None),
+        (general_clone_error, general_clone_usr_msg, None),
+    ]
+    remote_executor.run_command(
+        command,
+        description=description,
+        max_retries=SETUP_MAX_RETRIES,
+        errors_to_handle=errors_to_handle,
+    )
 
     print("Finished downloading whisthq/whist on EC2 instance")
 
 
-def run_host_setup(
-    pexpect_process,
-    pexpect_prompt,
-):
+def run_host_setup(remote_executor):
     """
     Run Whist's host setup on a remote machine accessible via a SSH connection within a pexpect process.
 
@@ -233,50 +225,38 @@ def run_host_setup(
     Returns:
         None
     """
+    # 1- Ensure that the apt/dpkg locks are not taken by other processes
+    wait_for_apt_locks(remote_executor)
 
     success_msg = "Install complete. If you set this machine up for local development, please 'sudo reboot' before continuing."
     lock_error_msg = "E: Could not get lock"
+    lock_error_msg_usr = "Host setup failed to grab the necessary apt/dpkg locks."
     dpkg_config_error = "E: dpkg was interrupted, you must manually run 'sudo dpkg --configure -a' to correct the problem."
+    dpkg_config_error_usr = (
+        "Host setup failed due to dpkg interruption error. Reconfiguring dpkg...."
+    )
     command = f"cd ~/whist/host-setup && timeout {HOST_SETUP_TIMEOUT_SECONDS} ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
+    description = f"Running the host setup on the instance"
 
-    for retry in range(SETUP_MAX_RETRIES):
-        print(f"Running the host setup on the instance (retry {retry+1}/{SETUP_MAX_RETRIES})...")
-        # 1- Ensure that the apt/dpkg locks are not taken by other processes
-        wait_for_apt_locks(pexpect_process, pexpect_prompt)
-
-        # 2 - Run the host setup command and grab the output
-        pexpect_process.sendline(command)
-        host_setup_output = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
-        host_setup_exit_code = get_command_exit_code(pexpect_process, pexpect_prompt)
-
-        # 3 - Check if the setup succeeded or report reason for failure
-        if (
-            expression_in_pexpect_output(success_msg, host_setup_output)
-            or host_setup_exit_code == 0
-        ):
-            print("Finished running the host setup script on the EC2 instance")
-            break
-        elif expression_in_pexpect_output(lock_error_msg, host_setup_output):
-            printformat("Host setup failed to grab the necessary apt/dpkg locks.", "yellow")
-        elif expression_in_pexpect_output(dpkg_config_error, host_setup_output):
-            printformat(
-                "Host setup failed due to dpkg interruption error. Reconfiguring dpkg....", "yellow"
-            )
-            pexpect_process.sendline("sudo dpkg --force-confdef --configure -a ")
-            wait_until_cmd_done(pexpect_process, pexpect_prompt)
-        elif (
-            host_setup_exit_code == TIMEOUT_EXIT_CODE
-            or host_setup_exit_code == TIMEOUT_KILL_EXIT_CODE
-        ):
-            printformat(f"Host setup timed out after {HOST_SETUP_TIMEOUT_SECONDS}s!", "yellow")
-        else:
-            printformat("Host setup failed for unspecified reason (check the logs)!", "yellow")
-
-        if retry == SETUP_MAX_RETRIES - 1:
-            exit_with_error(f"Host setup failed {SETUP_MAX_RETRIES} times. Giving up now!")
+    errors_to_handle = [
+        (
+            lock_error_msg,
+            lock_error_msg_usr,
+            "while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do echo 'Waiting for apt locks...'; sleep 1; done",
+        ),
+        (dpkg_config_error, dpkg_config_error_usr, "sudo dpkg --force-confdef --configure -a "),
+    ]
+    remote_executor.run_command(
+        command,
+        description=description,
+        success_msg=success_msg,
+        max_retries=SETUP_MAX_RETRIES,
+        errors_to_handle=errors_to_handle,
+    )
+    print("Finished running the host setup script on the EC2 instance")
 
 
-def start_host_service(pexpect_process, pexpect_prompt):
+def start_host_service(remote_executor):
     """
     Run Whist's host service on a remote machine accessible via a SSH connection within a pexpect process.
 
@@ -292,12 +272,11 @@ def start_host_service(pexpect_process, pexpect_prompt):
     """
     print("Starting the host service on the EC2 instance...")
     command = "sudo rm -rf /whist && cd ~/whist/backend/services && make run_host_service | tee ~/host_service.log"
-    pexpect_process.sendline(command)
+    success_msg = "Entering event loop..."
+    remote_executor.pexpect_process.sendline(command)
 
-    desired_output = "Entering event loop..."
-
-    result = pexpect_process.expect(
-        [desired_output, pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF]
+    result = remote_executor.pexpect_process.expect(
+        [success_msg, remote_executor.pexpect_prompt, pexpect.exceptions.TIMEOUT, pexpect.EOF]
     )
 
     # If the desired output does not get printed, handle potential host service startup issues.
@@ -307,7 +286,7 @@ def start_host_service(pexpect_process, pexpect_prompt):
     print("Host service is ready!")
 
 
-def prune_containers_if_needed(pexpect_process, pexpect_prompt):
+def prune_containers_if_needed(remote_executor):
     """
     Check whether the remote instance is running out of space (more specifically,
     check if >= 75 % of disk space is used). If the disk is getting full, free some space
@@ -323,18 +302,20 @@ def prune_containers_if_needed(pexpect_process, pexpect_prompt):
         None
     """
     # Check if we are running out of space
-    pexpect_process.sendline("df -h | grep --color=never /dev/root")
-    space_used_output = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
-    for line in reversed(space_used_output):
+    command = "df -h | grep --color=never /dev/root"
+    remote_executor.run_command(command)
+    for line in reversed(remote_executor.pexpect_output):
         if "/dev/root" in line:
-            space_used_output = line.split()
+            remote_executor.pexpect_output = line.split()
             break
-    space_used_pctg = int(space_used_output[-2][:-1])
+    space_used_pctg = int(remote_executor.pexpect_output[-2][:-1])
 
     # Clean up space on the instance by pruning all Docker containers if the disk is 75% (or more) full
     if space_used_pctg >= 75:
-        print(f"Disk is {space_used_pctg}% full, pruning the docker containers...")
-        pexpect_process.sendline("docker system prune -af")
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+        command, description = (
+            "docker system prune -af",
+            f"Disk is {space_used_pctg}% full, pruning the docker containers",
+        )
+        remote_executor.run_command(command, description)
     else:
         print(f"Disk is {space_used_pctg}% full, no need to prune containers.")

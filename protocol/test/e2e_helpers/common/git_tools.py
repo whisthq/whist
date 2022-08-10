@@ -4,7 +4,6 @@ import os, sys, subprocess
 
 from github import Github
 
-from e2e_helpers.common.pexpect_tools import wait_until_cmd_done
 from e2e_helpers.common.timestamps_and_exit_tools import printformat, exit_with_error
 from e2e_helpers.common.constants import GITHUB_SHA_LEN, running_in_ci
 
@@ -79,7 +78,7 @@ def get_whist_github_sha():
     return github_sha
 
 
-def get_remote_whist_github_sha(pexpect_process, pexpect_prompt):
+def get_remote_whist_github_sha(remote_executor):
     """
     Retrieve the commit hash of the latest commit in the repository cloned on a remote isntance.
 
@@ -95,19 +94,20 @@ def get_remote_whist_github_sha(pexpect_process, pexpect_prompt):
         On failure:
             empty string (str)
     """
-
-    pexpect_process.sendline("cd ~/whist && git rev-parse HEAD")
-    stdout = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
+    remote_executor.run_command("cd ~/whist && git rev-parse HEAD")
     stdout_expected_len = (
         2 if running_in_ci else 3
     )  # if running outside of CI, additional formatting characters will be added
-    if len(stdout) != stdout_expected_len or len(stdout[1]) != GITHUB_SHA_LEN:
-        print(stdout)
+    if (
+        len(remote_executor.pexpect_output) != stdout_expected_len
+        or len(remote_executor.pexpect_output[1]) != GITHUB_SHA_LEN
+    ):
+        print(remote_executor.pexpect_output)
         printformat(
             "Could not get the Github SHA of the commit checked out on the remote instance", "red"
         )
         return ""
-    return stdout[1]
+    return remote_executor.pexpect_output[1]
 
 
 def get_workflow_handle():
