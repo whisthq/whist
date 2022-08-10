@@ -28,6 +28,30 @@ You can download the Nightly build for [macOS (x64)]() and [macOS (arm64)]() her
 
 ### Protocol
 
+- [ ] Cloud tabs successfully connect and play video & audio
+- [ ] All text & image clipboard work in both directions on cloud tabs
+- [ ] File upload & download work in both directions on cloud tabs
+
+
+
+
+
+- [ ] Drag-and-drop an image from local to Whist
+
+
+- [ ] Do 30 seconds of TypeRacer without no repeated characters, lag, etc.
+- [ ] Watch a 1 minute YouTube video with no video or audio stutters
+- [ ] Whist successfully receives smooth scrolling and pinch-to-zoom input (i.e. on Figma)
+- [ ] CPU usage is low (below 30%)
+- [ ] RAM usage is low (below 150 MB)
+- [ ] Redirecting Zoom/Spotify/Discord from Whist to local is seamless
+
+- [ ] Rapid resizing of a cloud tab works seamlessly
+- [ ] Minimizing and maximizing a cloud works without interruptions
+
+
+- [ ] All browser functionalities (scroll, pinch, zoom, file drag/upload/download, etc.) work as expected
+
 
 
 
@@ -35,11 +59,17 @@ You can download the Nightly build for [macOS (x64)]() and [macOS (arm64)]() her
 ### Backend
 
 
-- [ ] Whist browser successfully launches & autoupdates
-- [ ] All local browser functionalities work as expected, without cloud tabs
-- [ ] The `<whist>` HTML tag is successfully injected and cloud tabs render properly
-- [ ] Enabling multiple cloud tabs concurrently work as expected
-- [ ] All browser functionalities (scroll, pinch, zoom, file drag/upload/download, etc.) work as expected
+- [ ] Going to Google Maps correctly shows the user's approximate location
+- [ ] User's local settings for language, dark mode, DPI, keyboard repeat, etc. are properly set
+
+
+- [ ] Startup time for Whist is <10 seconds
+- [ ] Typing "where am I" in Google shows that I'm connected to the closest datacenter
+- [ ] User sessions are successfully stored across Whist sessions
+
+
+
+
 
 
 
