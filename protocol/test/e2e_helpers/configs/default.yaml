@@ -62,7 +62,7 @@ region_name: "us-east-1" # empty string will let the script pick the first regio
 use_two_instances: "false"
 existing_server_instance_id: ""
 existing_client_instance_id: ""
-skip_host_setup: "true"
+skip_host_setup: "false"
 skip_git_clone: "false"
 cmake_build_type: dev
 network_conditions: normal

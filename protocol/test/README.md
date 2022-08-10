@@ -35,82 +35,20 @@ Running the E2E script in this folder will allow to run the Whist server and cli
 
 ### Usage
 
-You can run the E2E streaming test by launching the script `streaming_e2e_tester.py` in this folder. Running the script on a local machine will create or start one or two EC2 instances (depending on the parameters you pass in), run the test there, and save all the logs on the local machine. The logs will be stored at the path `./e2e_logs/<test_start_time>/`, where `<test_start_time>` is a timestamp of the form `YYYY-MM-DD@hh-mm-ss`
+You can run the E2E streaming test by setting the proper configurations in the `e2e_helpers/configs/default.yaml` file and then launching the script `streaming_e2e_tester.py` in this folder.
 
-The script's arguments are summarized below. Three of them are required (`--ssh-key-name SSH_KEY_NAME`, `--ssh-key-path SSH_KEY_PATH` `--github-token GITHUB_TOKEN `). The remaining ones can be omitted if you want to use the default values.
+#### 1. Setting the configurations
 
-```bash
-usage: streaming_e2e_tester.py [-h] --ssh-key-name SSH_KEY_NAME --ssh-key-path SSH_KEY_PATH --github-token GITHUB_TOKEN
-                               [--region-name {,us-east-1,us-east-2,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,ap-northeast-2,ap-southeast-1,ap-southeast-2,ap-southeast-3,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}]
-                               [--existing-server-instance-id EXISTING_SERVER_INSTANCE_ID] [--existing-client-instance-id EXISTING_CLIENT_INSTANCE_ID]
-                               [--use-two-instances {false,true}] [--leave-instances-on {false,true}] [--skip-host-setup {false,true}] [--skip-git-clone {false,true}]
-                               [--simulate-scrolling SIMULATE_SCROLLING] [--testing-url TESTING_URL] [--testing-time TESTING_TIME]
-                               [--cmake-build-type {dev,prod,metrics}] [--network-conditions NETWORK_CONDITIONS]
+To reduce the number of arguments that need to be passed to the `streaming_e2e_tester.py` script at every run, we load all the configurations from a yaml file (`default.yaml` when running the script manually, `e2e.yaml` and `backend_integration.yaml` when the script is run in CI). The first step to run the E2E manually is to edit the `default.yaml` file and insert the desired values for at least the required parameters (`ssh_key_name`, `ssh_key_path`, `github_token`). All parameters are described thoroughly in the comments sections. Make sure to review the values passed to the optional parameters to ensure that they are correct for your setup. For instance, if you want to use your dev instance for the E2E server/client, you will have to fill in your instance-id in the `existing_server_instance_id` field, and set the `region_name` to the region where the instance is located. If you want to run the E2E server and client on two separate instances, you should set `use_two_instances: "true"` and either leave the `existing_server_instance_id` and `existing_client_instance_id` blank if you want the E2E to create two fresh instances, or pass instance-ids if you want to run the test using existing instances. Leaving the region_name blank will let the E2E pick which region to use depending on availability. However, if your ssh key only works in a single region, or if you are reusing one/two existing instances, you cannot leave the region_name blank. Instead, you will have to specify the region where your key / the existing instance(s) are.
 
-required arguments:
-  --ssh-key-name SSH_KEY_NAME
-                        The name of the AWS RSA SSH key you wish to use to access the E2 instance(s). If you are running the script locally, the key name is likely of the form <yourname-key>. Make sure to
-                        pass the key-name for the region of interest. Required.
+N.B.: The `default.yaml` file has been configured so that Git does not, by default, track any local changes. This prevents you from accidentally uploading to GitHub your configurations (including your credentials) when you commit all modified files. If you do want to commit changes to the `default.yaml` file, you will have to run `git update-index --no-assume-unchanged e2e_helpers/configs/default.yaml` to ask Git to track the changes, commit, and then run `git update-index --assume-unchanged e2e_helpers/configs/default.yaml` to once again turn off the tracking of new changes to the file.
 
-  --ssh-key-path SSH_KEY_PATH
-                        The path to the .pem certificate on this machine to use in connection to the RSA SSH key passed to the --ssh-key-name arg. Required.
+#### 2. Running the script
 
-  --github-token GITHUB_TOKEN
-                        The GitHub Personal Access Token with permission to fetch the whisthq/whist repository. Required.
+To run the script, simply call `python3 streaming_e2e_tester.py` from the `protocol/test` folder. No other argument is required, unless you want to override the configs from the `default.yaml` config file. All optional parameters (to override the configs) are listed in `e2e_helpers/configs/parse_configs.py`. Using command-line arguments is especially helpful if you want to rerun the same experiment under different conditions. For instance, if you want to visit the same website with the same test duration, but using different network conditions, you will pass a value to the `--network-conditions` command-line parameter, and the script will get all the other configs from the `default.yaml` file.
 
-optional arguments:
-  -h, --help            show this help message and exit
+Running the script on a local machine will create or start one or two EC2 instances (depending on the parameters you pass in), run the test there, and save all the logs on the local machine. The logs will be stored at the path `./e2e_logs/<test_start_time>/`, where `<test_start_time>` is a timestamp of the form `YYYY-MM-DD@hh-mm-ss`
 
-  --region-name {,us-east-1,us-east-2,us-west-1,us-west-2,af-south-1,ap-east-1,ap-south-1,ap-northeast-3,ap-northeast-2,ap-southeast-1,ap-southeast-2,ap-southeast-3,ap-northeast-1,ca-central-1,eu-central-1,eu-west-1,eu-west-2,eu-south-1,eu-west-3,eu-north-1,sa-east-1}
-                        The AWS region to use for testing. Passing an empty string will let the script run the test on any region with space available for the new
-                        instance(s). If you are looking to re-use an instance for the client and/or server, the instance(s) must live on the region passed to this
-                        parameter. If you pass an empty string, the key-pair that you pass must be valid on all AWS regions.
-
-  --existing-server-instance-id EXISTING_SERVER_INSTANCE_ID
-                        The instance ID of an existing instance to use for the Whist server during the E2E test. You can only pass a value to this parameter if you passed `true` to --use-two-instances.
-                        Otherwise, the server will be installed and run on the same instance as the client. The instance will be stopped upon completion. If left empty (and --use-two-instances=true), a clean
-                        new instance will be generated instead, and it will be terminated (instead of being stopped) upon completion of the test.
-
-  --existing-client-instance-id EXISTING_CLIENT_INSTANCE_ID
-                        The instance ID of an existing instance to use for the Whist dev client during the E2E test. If the flag --use-two-instances=false is used (or if the flag --use-two-instances is not
-                        used), the Whist server will also run on this instance. The instance will be stopped upon completion. If left empty, a clean new instance will be generated instead, and it will be
-                        terminated (instead of being stopped) upon completion of the test.
-
-  --use-two-instances {false,true}
-                        Whether to run the client on a separate AWS instance, instead of the same as the server.
-
-  --leave-instances-on {false,true}
-                        This option allows you to override the default behavior and leave the instances running upon completion of the test, instead of stopping (if reusing existing ones) or terminating (if
-                        creating new ones) them.
-
-  --skip-host-setup {false,true}
-                        This option allows you to skip the host-setup on the instances to be used for the test. This will save you a good amount of time.
-
-  --skip-git-clone {false,true}
-                        This option allows you to skip cloning the Whist repository on the instance(s) to be used for the test. The test will also not checkout the current branch or pull from Github, using
-                        the code from the whist folder on the existing instance(s) as is. This option is useful if you need to run several tests in succession using code from the same commit.
-
-  --simulate-scrolling NUM_SCROLLING_ROUNDS
-                        Number of rounds of scrolling that should be simulated on the client side. One round of scrolling = Slow scroll down + Slow scroll up + Fast scroll down + Fast scroll up
-
-  --testing-url TESTING_URL
-                        The URL to visit during the test. The default is a 4K video stored on our AWS S3.
-
-  --testing-time TESTING_TIME
-                        The time (in seconds) to wait at the URL from the `--testing-url` flag before shutting down the client/server and grabbing the logs and metrics. The default value is the duration of
-                        the 4K video from our AWS S3.
-
-  --cmake-build-type {dev,prod,metrics}
-                        The Cmake build type to use when building the protocol.
-
-  --network-conditions NETWORK_CONDITIONS
-                        The network conditions for the experiment. The input is in the form of up to five comma-separated values indicating the max bandwidth, delay (in
-                        ms), percentage of packet drops (in the range [0.0,1.0]), queue capacity, and the interval of change of the network conditions. Each condition
-                        can be expressed using a single float (for conditions that do not change over time) or as a range expressed using a min and max value separated
-                        by a hyphen. `normal` will allow the network to run with no degradation. Passing `None` to one of the five parameters will result in no
-                        limitations being imposed to the corresponding network condition. For more details about the usage of the five network condition parameters,
-                        check out the apply_network_conditions.sh script in protocol/test/helpers/setup.
-```
 
 #### Sample Usage
 
