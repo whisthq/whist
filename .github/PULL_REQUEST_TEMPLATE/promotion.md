@@ -11,8 +11,6 @@ This is the Whist monorepo side of the promotion for the Whist Browser. The asso
 - [macOS (x64)](https://s3.amazonaws.com/whist-browser-macos-x64-dev/whist-browser-macos-x64-dev.tar.gz)
 - [macOS (arm64)](https://s3.amazonaws.com/whist-browser-macos-arm64-dev/whist-browser-macos-arm64-dev.tar.gz)
 
-You can download the Nightly build for [macOS (x64)]() and [macOS (arm64)]() here.
-
 ### Beta (staging)
 
 - [macOS (x64)](https://s3.amazonaws.com/whist-browser-macos-x64-staging/whist-browser-macos-x64-staging.tar.gz)
