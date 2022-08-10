@@ -49,7 +49,6 @@ To run the script, simply call `python3 streaming_e2e_tester.py` from the `proto
 
 Running the script on a local machine will create or start one or two EC2 instances (depending on the parameters you pass in), run the test there, and save all the logs on the local machine. The logs will be stored at the path `./e2e_logs/<test_start_time>/`, where `<test_start_time>` is a timestamp of the form `YYYY-MM-DD@hh-mm-ss`
 
-
 #### Sample Usage
 
 Here are a few examples of how to use the test framework.
