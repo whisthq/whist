@@ -74,8 +74,8 @@ int connect_to_server(const char *server_ip, bool with_stun) {
 
     // Then connect over TCP
     MLOCK(result = create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, BASE_TCP_PORT,
-                                    TCP_CONNECTION_TIMEOUT, TCP_CONNECTION_WAIT, with_stun,
-                                    (char *)client_binary_aes_private_key),
+                                             TCP_CONNECTION_TIMEOUT, TCP_CONNECTION_WAIT, with_stun,
+                                             (char *)client_binary_aes_private_key),
           &packet_tcp_context, sizeof(SocketContext));
     if (!result) {
         LOG_WARNING("Failed to establish TCP connection with server.");
