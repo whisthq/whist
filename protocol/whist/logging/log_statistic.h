@@ -26,7 +26,7 @@ Public Constants
 #define STATISTICS_FREQUENCY_IN_SEC 10
 
 #ifndef LOG_DATA_FOR_PLOTTER
-#define LOG_DATA_FOR_PLOTTER false
+#define LOG_DATA_FOR_PLOTTER true
 #endif
 
 // The size of the plot data can get big relatively quickly. A usual 2mins-long E2E test produces
