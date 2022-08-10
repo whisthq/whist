@@ -51,24 +51,72 @@ Running the script on a local machine will create or start one or two EC2 instan
 
 #### Sample Usage
 
-Here are a few examples of how to use the test framework.
+Here are a few examples of how to configure the test framework. Shows below, for each use case, are the key-value pairs that you have to edit in `default.yaml`
 
 **Run E2E on 1 fresh new instance on `us-east-1`, terminated upon completion**
 
-```bash
-python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here>
+Here, besides the three required arguments, we have to fill-in the region_name, set `use_two_instances` to `false` to ensure that only one instance is used, leave `existing_server_instance_id` and `existing_client_instance_id` blank to create a new instance (as opposed to reusing an existing one), and set `leave_instances_on` to `false` since we want the new instance to be terminated upon completion.
+
+```yaml
+ssh_key_name: <yourname-key>
+ssh_key_path: </path/to/yourname-key.pem>
+github_token: <your-github-token-here>
+region_name: us-east-1
+use_two_instances: "false"
+existing_server_instance_id:
+existing_client_instance_id:
+skip_host_setup: "false"
+skip_git_clone: "false"
+cmake_build_type: <dev, metrics or prod>
+network_conditions: normal
+testing_urls: https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4
+testing_time: 126 # Length of the video in link above is 2mins, 6seconds
+simulate_scrolling: 0
+leave_instances_on: "false"
 ```
 
 **Run E2E on 2 new instances on one among ANY REGION available, simulate scrolling during test, and leave instances on upon completion**
 
-```bash
-python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here --region-name="" --simulate-scrolling=10 --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" --leave-instances-on=true>
+Compared to previous example, here we leave `region_name` blank to allow the E2E to create instances on any region available. We also set `use_two_instances: "true"` since we want to use 2 instances, and pass a non-zero number to `simulate_scrolling` to enable the scrolling test. In the example below, we also use a different website (`https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/`), which is better suited for scrolling than the video from the previous example, but any url can be used.
+
+```yaml
+ssh_key_name: <yourname-key>
+ssh_key_path: </path/to/yourname-key.pem>
+github_token: <your-github-token-here>
+region_name:
+use_two_instances: "true"
+existing_server_instance_id:
+existing_client_instance_id:
+skip_host_setup: "false"
+skip_git_clone: "false"
+cmake_build_type: <dev, metrics or prod>
+network_conditions: normal
+testing_urls: https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/
+testing_time: 126 # Length of the video in link above is 2mins, 6seconds
+simulate_scrolling: 10
+leave_instances_on: "true"
 ```
 
 **Run on your development instance on `us-west-1` with degraded network** (Bandwidth: variable between 15Mbit and 30Mbit, Delay: 10 ms, Packet Drops: None, Queue Limit: None, Conditions change over time? Yes, frequency is variable between 1000 ms and 2000 ms)**, and leave instance on upon completion**
 
-```bash
-python3 streaming_e2e_tester.py --ssh-key-name <yourname-key> --ssh-key-path </path/to/yourname-key.pem> --github-token <your-github-token-here --region-name us-west-1 --existing-server-instance-id <your-dev-instance-id> --leave-instances-on=true --skip-host-setup=true --network-conditions 15Mbit-30Mbit,10,None,None,1000-2000
+Here, the main changes compared to the previous exampels is that we are reusing an existing instance, so we need to pass the region name where the instance is located (`us-west-1`), and pass the instance ID to the `existing_server_instance_id`. We can leave the `existing_client_instance_id` blank since we are using the same instance for the server and the client (in fact, we set `use_two_instances: "false"`). To save time, because we are reusing an existing instance, we ask the E2E to skip the host-setup, since we have (hopefully) already run that on the dev instance before. We do that by setting `skip_host_setup: "true"`. If any changes were made to the host-setup script recently, we should instead set `skip_host_setup: "false"`. Finally, we pass the desired network conditions, and we ask that the instance is left on (instead of being stopped) upon completion with `leave_instances_on: "true"`
+
+```yaml
+ssh_key_name: <yourname-key>
+ssh_key_path: </path/to/yourname-key.pem>
+github_token: <your-github-token-here>
+region_name: us-west-1
+use_two_instances: "false"
+existing_server_instance_id: <your-dev-instance-id>
+existing_client_instance_id:
+skip_host_setup: "true"
+skip_git_clone: "false"
+cmake_build_type: <dev, metrics or prod>
+network_conditions: 15Mbit-30Mbit,10,None,None,1000-2000
+testing_urls: https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4
+testing_time: 126 # Length of the video in link above is 2mins, 6seconds
+simulate_scrolling: 0
+leave_instances_on: "true"
 ```
 
 #### Creating New Experiments & Network Conditions
