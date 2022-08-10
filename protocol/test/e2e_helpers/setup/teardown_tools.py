@@ -67,7 +67,6 @@ def get_session_id(remote_executor, role, session_id_filename="/whist/resourceMa
         printformat(f"Could not parse the {role} session id!", "yellow")
         return ""
 
-    print(f"{role} session ID: {remote_executor.pexpect_output[1]}")
     return remote_executor.pexpect_output[1]
 
 
@@ -109,9 +108,6 @@ def extract_logs_from_mandelbox(
     command = f"rm -rf ~/e2e_logs/{role}; mkdir -p ~/e2e_logs/{role}"
     remote_executor.run_command(command)
 
-    ignore_exit_codes = remote_executor.ignore_exit_codes
-    remote_executor.ignore_exit_codes = True
-
     logfiles = [
         # Log file with data for plotting only exists when running in metrics mode
         "/usr/share/whist/plot_data.json",
@@ -144,19 +140,17 @@ def extract_logs_from_mandelbox(
 
     for file_path in logfiles:
         command = f"docker cp {docker_id}:{file_path} ~/e2e_logs/{role}/"
-        remote_executor.run_command(command)
+        remote_executor.run_command(command, ignore_exit_codes=True)
 
     # Move the network conditions log to the e2e_logs folder, so that it is downloaded
     # to the machine running this script along with the other logs
     if role == "client":
         command = "mv ~/network_conditions.log ~/e2e_logs/client/network_conditions.log"
-        remote_executor.run_command(command)
+        remote_executor.run_command(command, ignore_exit_codes=True)
     # Extract URLs from history, to ensure that the desired websites were opened
     else:
         command = "strings ~/e2e_logs/server/History | grep http > ~/e2e_logs/server/history.log && rm ~/e2e_logs/server/History"
-        remote_executor.run_command(command)
-
-    remote_executor.ignore_exit_codes = ignore_exit_codes
+        remote_executor.run_command(command, ignore_exit_codes=True)
 
     # Download all the mandelbox logs from the AWS machine
     command = (
@@ -337,16 +331,16 @@ def complete_experiment_and_save_results(
 
     # 5- Clean up the instance(s) by stopping all docker containers and quitting the host-service.
     # Exit the server/client mandelboxes
-    server_executor.run_command("exit")
-    client_executor.run_command("exit")
     server_executor.set_mandelbox_mode(False)
     client_executor.set_mandelbox_mode(False)
+    server_executor.run_command("exit", ignore_exit_codes=True)
+    client_executor.run_command("exit", ignore_exit_codes=True)
 
     # Stop and delete any leftover Docker containers
     command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
-    server_executor.run_command(command)
+    server_executor.run_command(command, ignore_exit_codes=True)
     if use_two_instances:
-        client_executor.run_command(command)
+        client_executor.run_command(command, ignore_exit_codes=True)
 
     # Terminate the host-service
     server_hs_executor.pexpect_process.sendcontrol("c")

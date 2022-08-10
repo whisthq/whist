@@ -294,5 +294,6 @@ def shutdown_and_wait_server_exit(remote_executor, session_id, exit_confirm_exp)
     server_has_exited = remote_executor.expression_in_pexpect_output(exit_confirm_exp)
 
     # Kill tail process
-    remote_executor.destroy()
+    remote_executor.pexpect_process.sendcontrol("c")
+
     return server_has_exited

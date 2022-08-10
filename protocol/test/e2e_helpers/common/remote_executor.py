@@ -234,6 +234,7 @@ class RemoteExecutor:
         description="command",
         max_retries=1,
         success_message=None,
+        ignore_exit_codes=None,
         errors_to_handle=[],
     ):
         """
@@ -248,7 +249,9 @@ class RemoteExecutor:
         for i in range(max_retries):
             exit_code = self.__remote_exec(command, description)
 
-            if not self.ignore_exit_codes and exit_code == 0:
+            if ignore_exit_codes is None:
+                ignore_exit_codes = self.ignore_exit_codes
+            if exit_code == 0 and not ignore_exit_codes:
                 exit_code = self.get_exit_code()
 
             errors_found = False

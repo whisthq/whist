@@ -128,9 +128,7 @@ def install_and_configure_aws(remote_executor):
     # Step 2: Install the AWS CLI if it's not already there
     remote_executor.run_command("sudo apt-get -y update")
     # Check if the AWS CLI is installed, and install it if not.
-    remote_executor.ignore_exit_codes = True
-    remote_executor.run_command("aws -v")
-    remote_executor.ignore_exit_codes = False
+    remote_executor.run_command("aws -v", ignore_exit_codes=True)
 
     # Check if the message below, indicating that aws is not installed, is present in the output.
     error_msg = "Command 'aws' not found, but can be installed with:"

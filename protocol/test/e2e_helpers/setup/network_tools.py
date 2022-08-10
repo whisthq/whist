@@ -115,10 +115,7 @@ def setup_artificial_network_conditions(remote_executor, network_conditions, tes
         ]
         # add 2 more seconds to testing_time to account for time spent in this script before test actually starts
         command = f"( nohup ~/whist/protocol/test/helpers/setup/apply_network_conditions.sh -d {','.join(network_devices)} -t {testing_time+2} {degradations_command} > ~/network_conditions.log 2>&1 & )"
-        ignore_exit_codes = remote_executor.ignore_exit_codes
-        remote_executor.ignore_exit_codes = True
-        remote_executor.run_command(command)
-        remote_executor.ignore_exit_codes = ignore_exit_codes
+        remote_executor.run_command(command, ignore_exit_codes=True)
 
 
 def restore_network_conditions(remote_executor):
@@ -162,7 +159,9 @@ def restore_network_conditions(remote_executor):
     # Stop the process applying the artificial network conditions, in case it's still running
     command = "killall -9 -v apply_network_conditions.sh"
     remote_executor.run_command(
-        command, description="Stopping the process applying the artificial network conditions"
+        command,
+        description="Stopping the process applying the artificial network conditions",
+        ignore_exit_codes=True,
     )
 
     # Get names of network devices
@@ -188,6 +187,6 @@ def restore_network_conditions(remote_executor):
         description = f"Restoring normal network conditions on device {device}"
         # Inbound/outbound degradations
         command = f"sudo tc qdisc del dev {device} handle ffff: ingress ; sudo tc qdisc del dev {device} root netem"
-        remote_executor.run_command(command, description)
+        remote_executor.run_command(command, description, ignore_exit_codes=True)
 
     remote_executor.run_command("sudo modprobe -r ifb", description)
