@@ -60,6 +60,10 @@ typedef struct VirtualInterface {
         // TODO: Move this function out of the `file` module.
         void (*set_on_notification_callback)(OnNotificationCallback cb);
     } file;
+    struct {
+        void* (*malloc)(size_t size);
+        void (*free)(void* ptr);
+    } utils;
 } VirtualInterface;
 
 #ifndef EXPORT_API
