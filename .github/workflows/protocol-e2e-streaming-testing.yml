@@ -40,7 +40,8 @@ jobs:
       REUSABLE_SERVER_INSTANCE_ID: "i-061a353731c542eeb"
       REUSABLE_CLIENT_INSTANCE_ID: "i-00ddb3dce5e4bd581"
       GITHUB_PERSONAL_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-      GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+      # GITHUB_TOKEN var is not automatically defined
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout Git Repository
