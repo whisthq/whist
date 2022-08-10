@@ -28,35 +28,20 @@ You can download the Nightly build for [macOS (x64)]() and [macOS (arm64)]() her
 
 ### Protocol
 
-- [ ] Cloud tabs successfully connect and play video & audio
+- [ ] Cloud tabs successfully connect and play video & audio smoothly
 - [ ] All text & image clipboard work in both directions on cloud tabs
 - [ ] File upload & download work in both directions on cloud tabs
-
-
-
-
-
-- [ ] Drag-and-drop an image from local to Whist
-
-
-- [ ] Do 30 seconds of TypeRacer without no repeated characters, lag, etc.
-- [ ] Watch a 1 minute YouTube video with no video or audio stutters
-- [ ] Whist successfully receives smooth scrolling and pinch-to-zoom input (i.e. on Figma)
-- [ ] CPU usage is low (below 30%)
-- [ ] RAM usage is low (below 150 MB)
-- [ ] Redirecting Zoom/Spotify/Discord from Whist to local is seamless
-
-- [ ] Rapid resizing of a cloud tab works seamlessly
-- [ ] Minimizing and maximizing a cloud works without interruptions
-
-
-- [ ] All browser functionalities (scroll, pinch, zoom, file drag/upload/download, etc.) work as expected
-
-
-
-
+- [ ] Dragging-and-dropping an image into a cloud tab works correctly
+- [ ] All input gestures like scrolling, pinch-to-zoom and keyboard inputs are processed properly on cloud tabs
+- [ ] Resizing, minimizing and maximizing a cloud tab works correctly
+- [ ] Cloud tabs use minimal CPU and RAM on the system, no matter how many are open concurrently
+- [ ] Redirecting Zoom/Spotify/Discord from cloud tabs to desktop/local works correctly
 
 ### Backend
+
+
+
+
 
 
 - [ ] Going to Google Maps correctly shows the user's approximate location
