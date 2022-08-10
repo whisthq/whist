@@ -189,6 +189,31 @@ class RemoteExecutor:
                 exit_with_error(f"Warning: {cmd_description} got an EOF before completing")
         return result
 
+    def get_exit_code(self):
+        previous_cmd_output = self.pexpect_output
+        exit_code = 0
+        result = self.__remote_exec("echo $?", cmd_description="getting exit code", max_retries=1)
+        if result == 0:
+            filtered_output = [
+                x
+                for x in self.pexpect_output
+                if "~" not in x
+                and "\\" not in x
+                and "?" not in x
+                and ";" not in x
+                and self.pexpect_prompt not in x
+            ]
+            if len(filtered_output) == 0 or not filtered_output[-1].isnumeric():
+                exit_code = -1
+            else:
+                exit_code = int(filtered_output[-1])
+        else:
+            # If we get a pexpect error, there is no way to retrieve the exit code of the previous command, so give it the benefit of the
+            # doubt and assume it succeeded.
+            pass
+        self.pexpect_output = previous_cmd_output
+        return exit_code
+
     def run_command(
         self,
         command,
@@ -211,30 +236,7 @@ class RemoteExecutor:
 
             exit_code = 0
             if not self.ignore_exit_codes:
-                previous_cmd_output = self.pexpect_output
-                result = self.__remote_exec(
-                    "echo $?", cmd_description="getting exit code", max_retries=1
-                )
-                if result == 0:
-                    filtered_output = [
-                        x
-                        for x in self.pexpect_output
-                        if "~" not in x
-                        and "\\" not in x
-                        and "?" not in x
-                        and ";" not in x
-                        and self.pexpect_prompt not in x
-                    ]
-                    if len(filtered_output) == 0 or not filtered_output[-1].isnumeric():
-                        exit_code = -1
-                    else:
-                        exit_code = int(filtered_output[-1])
-                else:
-                    # If we get a pexpect error, there is no way to retrieve the exit code of the previous command, so give it the benefit of the
-                    # doubt and assume it succeeded.
-                    pass
-
-                self.pexpect_output = previous_cmd_output
+                exit_code = self.get_exit_code()
 
             errors_found = False
             corrective_actions = []

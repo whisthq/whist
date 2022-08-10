@@ -26,6 +26,7 @@ from e2e_helpers.aws.boto3_tools import (
 from e2e_helpers.setup.network_tools import (
     restore_network_conditions,
 )
+from protocol.test.e2e_helpers.common.pexpect_tools import RemoteExecutor
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -48,45 +49,30 @@ def get_session_id(remote_executor, role, session_id_filename="/whist/resourceMa
             empty string
     """
 
-    pexpect_prompt = ":/#"  # Special shell prompt in Docker
-    # We set prompt_printed_twice=False because the Docker bash does not print in color, so the
-    # prompt will not be printed twice to the pexpect stdout
-    # (check wait_until_cmd_done docstring for more details about handling color bash stdout)
-    prompt_printed_twice = False
-
     # Check if the session_id file exists
-    pexpect_process.sendline(f"test -f {session_id_filename}")
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, prompt_printed_twice=prompt_printed_twice)
-    session_id_is_set = (
-        get_command_exit_code(
-            pexpect_process, pexpect_prompt, prompt_printed_twice=prompt_printed_twice
-        )
-        == 0
-    )
+    remote_executor.run_command(f"test -f {session_id_filename}")
+    session_id_is_set = remote_executor.get_exit_code() == 0
 
     if not session_id_is_set:
         print(f"{role} session id is not set")
         return ""
 
-    pexpect_process.sendline(f'echo "$(cat {session_id_filename})"')
-    session_id_output = wait_until_cmd_done(
-        pexpect_process,
-        pexpect_prompt,
-        prompt_printed_twice=prompt_printed_twice,
-        return_output=True,
-    )
-    if len(session_id_output) != 3 or len(session_id_output[1]) != SESSION_ID_LEN:
-        print(session_id_output)
+    remote_executor.run_command(f'echo "$(cat {session_id_filename})"')
+
+    if (
+        len(remote_executor.pexpect_output) != 3
+        or len(remote_executor.pexpect_output[1]) != SESSION_ID_LEN
+    ):
+        print(remote_executor.pexpect_output)
         printformat(f"Could not parse the {role} session id!", "yellow")
         return ""
 
-    print(f"{role} session ID: {session_id_output[1]}")
-    return session_id_output[1]
+    print(f"{role} session ID: {remote_executor.pexpect_output[1]}")
+    return remote_executor.pexpect_output[1]
 
 
 def extract_logs_from_mandelbox(
-    pexpect_process,
-    pexpect_prompt,
+    remote_executor,
     docker_id,
     ssh_key_path,
     hostname,
@@ -121,8 +107,7 @@ def extract_logs_from_mandelbox(
         None
     """
     command = f"rm -rf ~/e2e_logs/{role}; mkdir -p ~/e2e_logs/{role}"
-    pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    remote_executor.run_command(command)
 
     logfiles = [
         # Log file with data for plotting only exists when running in metrics mode
@@ -156,20 +141,17 @@ def extract_logs_from_mandelbox(
 
     for file_path in logfiles:
         command = f"docker cp {docker_id}:{file_path} ~/e2e_logs/{role}/"
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+        remote_executor.run_command(command)
 
     # Move the network conditions log to the e2e_logs folder, so that it is downloaded
     # to the machine running this script along with the other logs
     if role == "client":
         command = "mv ~/network_conditions.log ~/e2e_logs/client/network_conditions.log"
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+        remote_executor.run_command(command)
     # Extract URLs from history, to ensure that the desired websites were opened
     else:
         command = "strings ~/e2e_logs/server/History | grep http > ~/e2e_logs/server/history.log && rm ~/e2e_logs/server/History"
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+        remote_executor.run_command(command)
 
     # Download all the mandelbox logs from the AWS machine
     command = (
@@ -188,22 +170,22 @@ def complete_experiment_and_save_results(
     server_instance_id,
     server_docker_id,
     server_ssh_cmd,
-    server_log,
+    server_log_filename,
     server_metrics_file,
     region_name,
-    use_existing_server_instance,
-    server_mandelbox_pexpect_process,
-    server_hs_process,
+    existing_server_instance_id,
+    server_executor,
+    server_hs_executor,
     pexpect_prompt_server,
     client_hostname,
     client_instance_id,
     client_docker_id,
     client_ssh_cmd,
-    client_log,
+    client_log_filename,
     client_metrics_file,
-    use_existing_client_instance,
-    client_mandelbox_pexpect_process,
-    client_hs_process,
+    existing_client_instance_id,
+    client_executor,
+    client_hs_executor,
     pexpect_prompt_client,
     ssh_key_path,
     boto3client,
@@ -236,7 +218,7 @@ def complete_experiment_and_save_results(
         server_metrics_file (file): The filepath to the file (that we expect to see) containing the server metrics.
                                     We will use this filepath to check that the file exists.
         region_name (str): The AWS region hosting the EC2 instance(s)
-        use_existing_server_instance (str): the ID of the pre-existing AWS EC2 instance that was used to run the test.
+        existing_server_instance_id (str): the ID of the pre-existing AWS EC2 instance that was used to run the test.
                                             This parameter is an empty string if we are not reusing existing instances
         server_mandelbox_pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
                                                                     be used to interact with the server mandelbox on the server instance.
@@ -251,7 +233,7 @@ def complete_experiment_and_save_results(
         client_log (file):  The file to be used to dump the client-side monitoring logs
         client_metrics_file (file): The filepath to the file (that we expect to see) containing the client metrics.
                                     We will use this filepath to check that the file exists.
-        use_existing_client_instance (str): the ID of the pre-existing AWS EC2 instance that was used to run the test.
+        existing_client_instance_id (str): the ID of the pre-existing AWS EC2 instance that was used to run the test.
                                             This parameter is an empty string if we are not reusing existing instances
         client_mandelbox_pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
                                                                     be used to interact with the client mandelbox on the client instance.
@@ -283,26 +265,26 @@ def complete_experiment_and_save_results(
     if network_conditions != "normal":
         # Get new SSH connection because current ones are connected to the mandelboxes' bash,
         # and we cannot exit them until we have copied over the logs
-        client_restore_net_process = attempt_ssh_connection(
+        client_restore_net_executor = RemoteExecutor(
             client_ssh_cmd,
-            client_log,
             pexpect_prompt_client,
+            client_log_filename,
         )
-        restore_network_conditions(client_restore_net_process, pexpect_prompt_client)
-        client_restore_net_process.kill(0)
+        restore_network_conditions(client_restore_net_executor)
+        client_restore_net_executor.destroy()
 
     timestamps.add_event("Restoring un-degraded network conditions")
 
     # 2 - Extracting the session IDs, if they are set
-    server_session_id = get_session_id(server_mandelbox_pexpect_process, "server")
-    client_session_id = get_session_id(client_mandelbox_pexpect_process, "client")
+    server_session_id = get_session_id(server_executor, "server")
+    client_session_id = get_session_id(client_executor, "client")
     timestamps.add_event("Extracting protocol session IDs")
 
     # 3- Quit the server and check whether it shuts down gracefully or whether it hangs
     server_hang_detected = False
     server_shutdown_desired_message = "Both whist-application and WhistServer have exited."
     if shutdown_and_wait_server_exit(
-        server_mandelbox_pexpect_process, server_session_id, server_shutdown_desired_message
+        server_executor, server_session_id, server_shutdown_desired_message
     ):
         print("Server has exited gracefully.")
     else:
@@ -314,37 +296,35 @@ def complete_experiment_and_save_results(
     # 4- Extract the client/server protocol logs from the two Docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
 
-    log_grabber_server_process = attempt_ssh_connection(
+    log_grabber_server_executor = RemoteExecutor(
         server_ssh_cmd,
-        server_log,
         pexpect_prompt_server,
+        server_log_filename,
     )
 
-    log_grabber_client_process = attempt_ssh_connection(
+    log_grabber_client_executor = RemoteExecutor(
         client_ssh_cmd,
-        client_log,
         pexpect_prompt_client,
+        client_log_filename,
     )
 
     extract_logs_from_mandelbox(
-        log_grabber_server_process,
-        pexpect_prompt_server,
+        log_grabber_server_executor,
         server_docker_id,
         ssh_key_path,
         server_hostname,
         e2e_logs_folder_name,
-        server_log,
+        server_log_filename,
         server_session_id,
         role="server",
     )
     extract_logs_from_mandelbox(
-        log_grabber_client_process,
-        pexpect_prompt_client,
+        log_grabber_client_executor,
         client_docker_id,
         ssh_key_path,
         client_hostname,
         e2e_logs_folder_name,
-        client_log,
+        client_log_filename,
         client_session_id,
         role="client",
     )
@@ -353,35 +333,29 @@ def complete_experiment_and_save_results(
 
     # 5- Clean up the instance(s) by stopping all docker containers and quitting the host-service.
     # Exit the server/client mandelboxes
-    server_mandelbox_pexpect_process.sendline("exit")
-    wait_until_cmd_done(server_mandelbox_pexpect_process, pexpect_prompt_server)
-    client_mandelbox_pexpect_process.sendline("exit")
-    wait_until_cmd_done(client_mandelbox_pexpect_process, pexpect_prompt_client)
+    server_executor.run_command("exit")
+    client_executor.run_command("exit")
+    server_executor.set_mandelbox_mode(False)
+    client_executor.set_mandelbox_mode(False)
 
     # Stop and delete any leftover Docker containers
     command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
-    server_mandelbox_pexpect_process.sendline(command)
-    wait_until_cmd_done(server_mandelbox_pexpect_process, pexpect_prompt_server)
+    server_executor.run_command(command)
     if use_two_instances:
-        client_mandelbox_pexpect_process.sendline(command)
-        wait_until_cmd_done(client_mandelbox_pexpect_process, pexpect_prompt_client)
+        client_executor.run_command(command)
 
     # Terminate the host-service
-    server_hs_process.sendcontrol("c")
-    server_hs_process.kill(0)
+    server_hs_executor.pexpect_process.sendcontrol("c")
+    server_hs_executor.destroy()
     if use_two_instances:
-        client_hs_process.sendcontrol("c")
-        client_hs_process.kill(0)
+        client_hs_executor.pexpect_process.sendcontrol("c")
+        client_hs_executor.destroy()
 
     # Terminate all pexpect processes
-    server_mandelbox_pexpect_process.kill(0)
-    client_mandelbox_pexpect_process.kill(0)
-    log_grabber_server_process.kill(0)
-    log_grabber_client_process.kill(0)
-
-    # 6- Close all the log files
-    server_log.close()
-    client_log.close()
+    server_executor.destroy()
+    client_executor.destroy()
+    log_grabber_server_executor.destroy()
+    log_grabber_client_executor.destroy()
 
     timestamps.add_event("Stopping all containers and closing connections to the instance(s)")
 
@@ -389,13 +363,13 @@ def complete_experiment_and_save_results(
     if leave_instances_on == "false":
         # Terminate or stop AWS instance(s)
         terminate_or_stop_aws_instance(
-            boto3client, server_instance_id, server_instance_id != use_existing_server_instance
+            boto3client, server_instance_id, server_instance_id != existing_server_instance_id
         )
         if use_two_instances:
             terminate_or_stop_aws_instance(
                 boto3client,
                 client_instance_id,
-                client_instance_id != use_existing_client_instance,
+                client_instance_id != existing_client_instance_id,
             )
     elif running_in_ci:
         # Save instance IDs to file for reuse by later runs
