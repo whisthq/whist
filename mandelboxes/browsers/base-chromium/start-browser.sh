@@ -186,16 +186,21 @@ echo "loaded d-bus address in start-browser.sh: $DBUS_SESSION_BUS_ADDRESS"
 # without breaking extension importing
 # /usr/bin/lowercase-chromium-files "google-chrome" &
 
-# Start the browser with the KDE desktop environment
-# TODO: Stop duplicating code here lol
-if [[ "$BROWSER_APPLICATION" == "brave" ]]; then
-  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 brave-browser "${flags[@]}"
-elif [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
-  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
-elif [[ "$BROWSER_APPLICATION" == "chromium" ]]; then
-  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 chromium-browser-stable "${flags[@]}"
-else
-  echo "Browser name not set or invalid. Using the default option, Chrome."
-  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
-fi
+case "$BROWSER_APPLICATION" in
+  brave)
+    BROWSER_APPLICATION="brave-browser"
+    ;;
+  chrome)
+    BROWSER_APPLICATION="google-chrome"
+    ;;
+  chromium)
+    BROWSER_APPLICATION="chromium-browser-stable"
+    ;;
+  *)
+    echo "Browser name not set or invalid. Using the default option, Chrome."
+    BROWSER_APPLICATION="google-chrome"
+    ;;
+esac
 
+# Start the browser with the KDE desktop environment
+exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 "$APPLICATION_NAME" "${flags[@]}"
