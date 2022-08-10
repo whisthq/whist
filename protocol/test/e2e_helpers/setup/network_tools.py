@@ -115,7 +115,10 @@ def setup_artificial_network_conditions(remote_executor, network_conditions, tes
         ]
         # add 2 more seconds to testing_time to account for time spent in this script before test actually starts
         command = f"( nohup ~/whist/protocol/test/helpers/setup/apply_network_conditions.sh -d {','.join(network_devices)} -t {testing_time+2} {degradations_command} > ~/network_conditions.log 2>&1 & )"
+        ignore_exit_codes = remote_executor.ignore_exit_codes
+        remote_executor.ignore_exit_codes = True
         remote_executor.run_command(command)
+        remote_executor.ignore_exit_codes = ignore_exit_codes
 
 
 def restore_network_conditions(remote_executor):

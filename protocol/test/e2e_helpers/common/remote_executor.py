@@ -11,13 +11,14 @@ from e2e_helpers.common.constants import (
     pexpect_max_retries,
     ssh_connection_retries,
     aws_timeout_seconds,
+    TIMEOUT_EXIT_CODE,
+    TIMEOUT_KILL_EXIT_CODE,
 )
 
 from e2e_helpers.common.timestamps_and_exit_tools import (
     printformat,
     exit_with_error,
 )
-from protocol.test.e2e_helpers.common.constants import TIMEOUT_EXIT_CODE
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -30,7 +31,13 @@ class RemoteExecutor:
         self.logfile = open(log_filename, "a")
         self.prompt_printed_twice = not running_in_ci
         self.ignore_exit_codes = False
-        self.connect_to_instance()
+        self.__reset_old_mode_fields()
+        self.__connect_to_instance()
+
+    def __reset_old_mode_fields(self):
+        self.old_prompt_printed_twice = None
+        self.old_pexpect_prompt = None
+        self.old_ignore_exit_codes = None
 
     def __connect_to_instance(self):
         """
@@ -79,7 +86,7 @@ class RemoteExecutor:
                     self.pexpect_process.sendline("yes")
                     self.pexpect_process.expect(self.pexpect_prompt)
                 # Wait for one more print of the prompt if required (ssh shell prompts are printed twice to stdout outside of CI)
-                if not self.prompt_printed_twice:
+                if self.prompt_printed_twice:
                     self.pexpect_process.expect(self.pexpect_prompt)
                 # Success!
                 return
@@ -134,8 +141,8 @@ class RemoteExecutor:
         """
         return any(expression in item for item in self.pexpect_output if isinstance(item, str))
 
-    def set_mandelbox_mode(self, unset=False):
-        if not unset:
+    def set_mandelbox_mode(self, set=False):
+        if set == True:
             self.old_prompt_printed_twice = self.prompt_printed_twice
             self.old_pexpect_prompt = self.pexpect_prompt
             self.old_ignore_exit_codes = self.ignore_exit_codes
@@ -147,20 +154,27 @@ class RemoteExecutor:
             self.prompt_printed_twice = self.old_prompt_printed_twice
             self.pexpect_prompt = self.old_pexpect_prompt
             self.ignore_exit_codes = self.old_ignore_exit_codes
+            self.__reset_old_mode_fields()
 
-    def __remote_exec(self, command, cmd_description="command", max_retries=pexpect_max_retries):
+    def __remote_exec(self, command, description="command", max_retries=pexpect_max_retries):
         result = 0
         for i in range(max_retries):
             ssh_connection_broken_msg = "client_loop: send disconnect: Broken pipe"
 
             self.pexpect_process.sendline(command)
             result = self.pexpect_process.expect(
-                [
-                    self.pexpect_prompt,
-                    ssh_connection_broken_msg,
-                    pexpect.exceptions.TIMEOUT,
-                    pexpect.EOF,
-                ]
+                list(
+                    filter(
+                        None,
+                        [
+                            self.pexpect_prompt,
+                            ssh_connection_broken_msg,
+                            pexpect.exceptions.TIMEOUT,
+                            pexpect.EOF,
+                            self.old_pexpect_prompt,
+                        ],
+                    )
+                )
             )
             if result == 0:
                 ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]")
@@ -184,15 +198,15 @@ class RemoteExecutor:
                 printformat("Warning: Remote instance dropped the SSH connection", "yellow")
                 self.__connect_to_instance()
             elif result == 2:
-                printformat(f"Warning: {cmd_description} timed out!", "yellow")
+                printformat(f"Warning: {description} timed out!", "yellow")
             elif result == 3:
-                exit_with_error(f"Warning: {cmd_description} got an EOF before completing")
+                exit_with_error(f"Warning: {description} got an EOF before completing")
         return result
 
     def get_exit_code(self):
         previous_cmd_output = self.pexpect_output
         exit_code = 0
-        result = self.__remote_exec("echo $?", cmd_description="getting exit code", max_retries=1)
+        result = self.__remote_exec("echo $?", description="getting exit code", max_retries=1)
         if result == 0:
             filtered_output = [
                 x
@@ -217,7 +231,7 @@ class RemoteExecutor:
     def run_command(
         self,
         command,
-        cmd_description="command",
+        description="command",
         max_retries=1,
         success_message=None,
         errors_to_handle=[],
@@ -228,21 +242,20 @@ class RemoteExecutor:
         actions are executed with remote_exec.
         """
 
-        if cmd_description != "command":
-            print(cmd_description)
+        if description != "command":
+            print(description)
 
         for i in range(max_retries):
-            self.__remote_exec(command, cmd_description)
+            exit_code = self.__remote_exec(command, description)
 
-            exit_code = 0
-            if not self.ignore_exit_codes:
+            if not self.ignore_exit_codes and exit_code == 0:
                 exit_code = self.get_exit_code()
 
             errors_found = False
             corrective_actions = []
             for error in errors_to_handle:
                 error_stdout_message, message_for_user, corrective_action = error
-                if self.expression_in_pexpect_output(error_stdout_message, self.pexpect_output):
+                if self.expression_in_pexpect_output(error_stdout_message):
                     errors_found = True
                     if corrective_action:
                         corrective_actions.append(corrective_action)
@@ -254,10 +267,10 @@ class RemoteExecutor:
                 self.remote_exec(cmd)
 
             if exit_code != 0:
-                if exit_code == TIMEOUT_EXIT_CODE or exit_code == TIMEOUT_EXIT_CODE:
-                    printformat(f"Warning: {cmd_description} timed out", "yellow")
+                if exit_code == TIMEOUT_EXIT_CODE or exit_code == TIMEOUT_KILL_EXIT_CODE:
+                    printformat(f"Warning: {description} timed out", "yellow")
                 else:
-                    printformat(f"Warning: {cmd_description} got exit code: {exit_code}", "yellow")
+                    printformat(f"Warning: {description} got exit code: {exit_code}", "yellow")
 
             if success_message is not None:
                 if exit_code == 0 or self.expression_in_pexpect_output(
@@ -269,7 +282,7 @@ class RemoteExecutor:
                     return
         if max_retries > 1:
             exit_with_error(
-                f"Error: {cmd_description} failed ({max_retries} times)! Giving up now and exiting the script"
+                f"Error: {description} failed ({max_retries} times)! Giving up now and exiting the script"
             )
         else:
             exit_with_error(None, None)

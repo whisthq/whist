@@ -3,7 +3,7 @@
 import os, sys
 import base64, json, zlib
 
-from e2e_helpers.common.pexpect_tools import (
+from e2e_helpers.common.remote_executor import (
     RemoteExecutor,
 )
 
@@ -283,12 +283,10 @@ def shutdown_and_wait_server_exit(remote_executor, session_id, exit_confirm_exp)
         server_has_exited (bool): A boolean set to True if server has exited gracefully, false otherwise
     """
     # Shut down Chrome
-    remote_executor.run_command("pkill chrome", cmd_description="Shut down Chrome")
+    remote_executor.run_command("pkill chrome", description="Shut down Chrome")
 
     # Give WhistServer 20s to shutdown properly
-    remote_executor.run_command(
-        "sleep 20", cmd_description="Give WhistServer 20s to shutdown properly"
-    )
+    remote_executor.run_command("sleep 20", description="Give WhistServer 20s to shutdown properly")
 
     # Check the log to see if WhistServer shut down gracefully or if there was a server hang
     server_log_filepath = os.path.join("/var/log/whist", session_id, "main-out.log")

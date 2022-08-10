@@ -249,7 +249,7 @@ def run_host_setup(remote_executor):
     remote_executor.run_command(
         command,
         description=description,
-        success_msg=success_msg,
+        success_message=success_msg,
         max_retries=SETUP_MAX_RETRIES,
         errors_to_handle=errors_to_handle,
     )

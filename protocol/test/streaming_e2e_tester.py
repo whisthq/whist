@@ -39,7 +39,7 @@ from e2e_helpers.setup.teardown_tools import (
 from e2e_helpers.configs.parse_configs import configs
 
 from e2e_helpers.whist_run_steps import setup_process, run_mandelbox_on_instance
-from e2e_helpers.common.pexpect_tools import RemoteExecutor
+from e2e_helpers.common.remote_executor import RemoteExecutor
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -338,6 +338,7 @@ if __name__ == "__main__":
         server_metrics_file,
         region_name,
         existing_server_instance_id,
+        server_executor,
         server_hs_executor,
         pexpect_prompt_server,
         client_hostname,

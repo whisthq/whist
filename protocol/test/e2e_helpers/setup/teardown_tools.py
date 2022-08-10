@@ -26,7 +26,7 @@ from e2e_helpers.aws.boto3_tools import (
 from e2e_helpers.setup.network_tools import (
     restore_network_conditions,
 )
-from protocol.test.e2e_helpers.common.pexpect_tools import RemoteExecutor
+from e2e_helpers.common.remote_executor import RemoteExecutor
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -77,7 +77,7 @@ def extract_logs_from_mandelbox(
     ssh_key_path,
     hostname,
     e2e_logs_folder_name,
-    log_grabber_log,
+    log_filename,
     session_id,
     role,
 ):
@@ -108,6 +108,9 @@ def extract_logs_from_mandelbox(
     """
     command = f"rm -rf ~/e2e_logs/{role}; mkdir -p ~/e2e_logs/{role}"
     remote_executor.run_command(command)
+
+    ignore_exit_codes = remote_executor.ignore_exit_codes
+    remote_executor.ignore_exit_codes = True
 
     logfiles = [
         # Log file with data for plotting only exists when running in metrics mode
@@ -153,14 +156,15 @@ def extract_logs_from_mandelbox(
         command = "strings ~/e2e_logs/server/History | grep http > ~/e2e_logs/server/history.log && rm ~/e2e_logs/server/History"
         remote_executor.run_command(command)
 
+    remote_executor.ignore_exit_codes = ignore_exit_codes
+
     # Download all the mandelbox logs from the AWS machine
     command = (
         f"scp -r -i {ssh_key_path} {username}@{hostname}:~/e2e_logs/{role} {e2e_logs_folder_name}"
     )
 
-    local_process = pexpect.spawn(
-        command, timeout=aws_timeout_seconds, logfile=log_grabber_log.buffer
-    )
+    logfile = open(log_filename, "a+")
+    local_process = pexpect.spawn(command, timeout=aws_timeout_seconds, logfile=logfile.buffer)
     local_process.expect(["\$", pexpect.EOF])
     local_process.kill(0)
 
@@ -169,7 +173,7 @@ def complete_experiment_and_save_results(
     server_hostname,
     server_instance_id,
     server_docker_id,
-    server_ssh_cmd,
+    server_cmd,
     server_log_filename,
     server_metrics_file,
     region_name,
@@ -180,7 +184,7 @@ def complete_experiment_and_save_results(
     client_hostname,
     client_instance_id,
     client_docker_id,
-    client_ssh_cmd,
+    client_cmd,
     client_log_filename,
     client_metrics_file,
     existing_client_instance_id,
@@ -213,7 +217,7 @@ def complete_experiment_and_save_results(
         server_hostname (str):  The host name of the remote machine where the server was running on
         server_instance_id (str):   The ID of the AWS EC2 instance running the server
         server_docker_id (str): The ID of the Docker container running the server (browsers/chrome) mandelbox
-        server_ssh_cmd (str):   The string containing the command to be used to open a SSH connection to the server EC2 instance
+        server_cmd (str):   The string containing the command to be used to open a SSH connection to the server EC2 instance
         server_log (file):  The file to be used to dump the server-side monitoring logs
         server_metrics_file (file): The filepath to the file (that we expect to see) containing the server metrics.
                                     We will use this filepath to check that the file exists.
@@ -229,7 +233,7 @@ def complete_experiment_and_save_results(
         client_hostname (str):  The host name of the remote machine where the client was running on
         client_instance_id (str):   The ID of the AWS EC2 instance running the client
         client_docker_id (str): The ID of the Docker container running the client (development/client) mandelbox
-        client_ssh_cmd (str):   The string containing the command to be used to open a SSH connection to the client EC2 instance
+        client_cmd (str):   The string containing the command to be used to open a SSH connection to the client EC2 instance
         client_log (file):  The file to be used to dump the client-side monitoring logs
         client_metrics_file (file): The filepath to the file (that we expect to see) containing the client metrics.
                                     We will use this filepath to check that the file exists.
@@ -266,7 +270,7 @@ def complete_experiment_and_save_results(
         # Get new SSH connection because current ones are connected to the mandelboxes' bash,
         # and we cannot exit them until we have copied over the logs
         client_restore_net_executor = RemoteExecutor(
-            client_ssh_cmd,
+            client_cmd,
             pexpect_prompt_client,
             client_log_filename,
         )
@@ -297,13 +301,13 @@ def complete_experiment_and_save_results(
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
 
     log_grabber_server_executor = RemoteExecutor(
-        server_ssh_cmd,
+        server_cmd,
         pexpect_prompt_server,
         server_log_filename,
     )
 
     log_grabber_client_executor = RemoteExecutor(
-        client_ssh_cmd,
+        client_cmd,
         pexpect_prompt_client,
         client_log_filename,
     )
