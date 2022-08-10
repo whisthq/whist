@@ -13,10 +13,6 @@ from e2e_helpers.common.git_tools import (
     get_whist_github_sha,
 )
 
-from e2e_helpers.common.ssh_tools import (
-    attempt_ssh_connection,
-)
-
 from e2e_helpers.common.timestamps_and_exit_tools import (
     TimeStamps,
     exit_with_error,
@@ -43,6 +39,7 @@ from e2e_helpers.setup.teardown_tools import (
 from e2e_helpers.configs.parse_configs import configs
 
 from e2e_helpers.whist_run_steps import setup_process, run_mandelbox_on_instance
+from e2e_helpers.common.pexpect_tools import RemoteExecutor
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -268,46 +265,36 @@ if __name__ == "__main__":
     timestamps.add_event("Setting up the instance(s) and building the mandelboxes")
 
     # 7 - Open the server/client monitoring logs
-    server_log = open(os.path.join(e2e_logs_folder_name, "server_monitoring.log"), "a")
-    client_log = open(os.path.join(e2e_logs_folder_name, "client_monitoring.log"), "a")
+    server_log_filename = os.path.join(e2e_logs_folder_name, "server_monitoring.log")
+    client_log_filename = os.path.join(e2e_logs_folder_name, "client_monitoring.log")
 
     # 8 - Run the host-service on the client and the server. We don't parallelize here for simplicity, given
     # that all operations below do not take too much time.
 
     # Start SSH connection(s) to the EC2 instance(s) to run the host-service commands
-    server_hs_process = attempt_ssh_connection(
-        server_cmd,
-        server_log,
-        pexpect_prompt_server,
-    )
-    client_hs_process = (
-        attempt_ssh_connection(
-            client_cmd,
-            client_log,
-            pexpect_prompt_client,
-        )
+    server_hs_executor = RemoteExecutor(server_cmd, pexpect_prompt_server, server_log_filename)
+    client_hs_executor = (
+        RemoteExecutor(client_cmd, pexpect_prompt_client, client_log_filename)
         if use_two_instances
-        else server_hs_process
+        else server_hs_executor
     )
 
     # Launch the host-service on the client and server instance(s)
-    start_host_service(server_hs_process, pexpect_prompt_server)
+    start_host_service(server_hs_executor)
     if use_two_instances:
-        start_host_service(client_hs_process, pexpect_prompt_client)
+        start_host_service(client_hs_executor)
 
     timestamps.add_event("Starting the host service on the mandelboxes ")
 
     # 9 - Run the browser/chrome server mandelbox on the server instance
     # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
-    server_pexpect_process = attempt_ssh_connection(
-        server_cmd,
-        server_log,
-        pexpect_prompt_server,
-    )
+    server_executor = RemoteExecutor(server_cmd, pexpect_prompt_server, server_log_filename)
+
+    server_executor.set_mandelbox_mode(True)
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
     # we need to pass the client for it to connect
     server_docker_id, server_configs_data = run_mandelbox_on_instance(
-        server_pexpect_process, role="server"
+        server_executor, role="server"
     )
 
     # Augment the configs with the initial URL we want to visit
@@ -316,23 +303,19 @@ if __name__ == "__main__":
     # 10 - Run the development/client client mandelbox on the client instance
     # Start SSH connection(s) to the EC2 instance(s) to run the development/client
     # client mandelbox on the client instance
-    client_pexpect_process = attempt_ssh_connection(
-        client_cmd,
-        client_log,
-        pexpect_prompt_client,
-    )
+    client_executor = RemoteExecutor(client_cmd, pexpect_prompt_client, client_log_filename)
 
     # Set up the artifical network degradation conditions on the client, if needed
     setup_artificial_network_conditions(
-        client_pexpect_process,
-        pexpect_prompt_client,
+        client_executor,
         network_conditions,
         testing_time,
     )
 
+    client_executor.set_mandelbox_mode(True)
     # Run the dev client on the client instance, using the server configs obtained above
     client_docker_id = run_mandelbox_on_instance(
-        client_pexpect_process,
+        client_executor,
         role="client",
         json_data=server_configs_data,
         simulate_scrolling=simulate_scrolling,
@@ -351,23 +334,20 @@ if __name__ == "__main__":
         server_instance_id,
         server_docker_id,
         server_cmd,
-        server_log,
+        server_log_filename,
         server_metrics_file,
         region_name,
         existing_server_instance_id,
-        server_pexpect_process,
-        server_hs_process,
-        pexpect_prompt_server,
+        server_hs_executor,
         client_hostname,
         client_instance_id,
         client_docker_id,
         client_cmd,
-        client_log,
+        client_log_filename,
         client_metrics_file,
         existing_client_instance_id,
-        client_pexpect_process,
-        client_hs_process,
-        pexpect_prompt_client,
+        client_executor,
+        client_hs_executor,
         ssh_key_path,
         boto3client,
         use_two_instances,

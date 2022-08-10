@@ -8,16 +8,6 @@ from e2e_helpers.common.git_tools import (
     get_whist_branch_name,
 )
 
-from e2e_helpers.common.pexpect_tools import (
-    expression_in_pexpect_output,
-    wait_until_cmd_done,
-    get_command_exit_code,
-)
-
-from e2e_helpers.common.ssh_tools import (
-    wait_for_apt_locks,
-)
-
 from e2e_helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
     printformat,
@@ -36,20 +26,42 @@ from e2e_helpers.common.constants import (
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def prepare_instance_for_host_setup(pexpect_process, pexpect_prompt):
+def wait_for_apt_locks(remote_executor):
+    """
+    This function is used to prevent lock contention issues between E2E commands that use `apt` or `dpkg`
+    and other Linux processes. These issues are especially common on a EC2 instance's first boot.
+
+    We simply wait until no process holds the following locks (more could be added in the future):
+    - /var/lib/dpkg/lock
+    - /var/lib/apt/lists/lock
+    - /var/cache/apt/archives/lock
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process
+                        on the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
+                        execute a new command
+
+    Returns:
+        None
+    """
+    remote_executor.run_command(
+        "while sudo fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do echo 'Waiting for apt locks...'; sleep 1; done"
+    )
+
+
+def prepare_instance_for_host_setup(remote_executor):
     # Set dkpg frontend as non-interactive to avoid irrelevant warnings
-    pexpect_process.sendline(
+    remote_executor.run_command(
         "echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections"
     )
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     # Wait for dpkg / apt locks
-    wait_for_apt_locks(pexpect_process, pexpect_prompt)
+    wait_for_apt_locks(remote_executor)
     # Clean, upgrade and update all the apt lists
-    pexpect_process.sendline(
+    remote_executor.run_command(
         "sudo apt-get clean -y && sudo apt-get upgrade -y && sudo apt-get update -y"
     )
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
 
 def get_aws_credentials():
@@ -93,10 +105,7 @@ def get_aws_credentials():
     return aws_access_key_id, aws_secret_access_key
 
 
-def install_and_configure_aws(
-    pexpect_process,
-    pexpect_prompt,
-):
+def install_and_configure_aws(remote_executor):
     """
     Install the AWS CLI and configure the AWS credentials on a remote machine by copying them
     from the ones configured on the machine where this script is being run.
@@ -114,33 +123,25 @@ def install_and_configure_aws(
     aws_access_key_id, aws_secret_access_key = get_aws_credentials()
 
     # Wait for apt locks
-    wait_for_apt_locks(pexpect_process, pexpect_prompt)
+    wait_for_apt_locks(remote_executor)
 
     # Step 2: Install the AWS CLI if it's not already there
-    pexpect_process.sendline("sudo apt-get -y update")
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    remote_executor.run_command("sudo apt-get -y update")
     # Check if the AWS CLI is installed, and install it if not.
-    pexpect_process.sendline("aws -v")
-    stdout = wait_until_cmd_done(
-        pexpect_process,
-        pexpect_prompt,
-        return_output=True,
-    )
+    remote_executor.ignore_exit_codes = True
+    remote_executor.run_command("aws -v")
+    remote_executor.ignore_exit_codes = False
+
     # Check if the message below, indicating that aws is not installed, is present in the output.
     error_msg = "Command 'aws' not found, but can be installed with:"
     # Attempt installation using apt-get
-    if expression_in_pexpect_output(error_msg, stdout):
-        print("Installing AWS-CLI using apt-get")
+    if remote_executor.expression_in_pexpect_output(error_msg):
+        description = "Installing AWS-CLI using apt-get"
 
         # Wait for apt locks
-        wait_for_apt_locks(pexpect_process, pexpect_prompt)
+        wait_for_apt_locks(remote_executor)
 
-        pexpect_process.sendline("sudo apt-get install -y awscli")
-        stdout = wait_until_cmd_done(
-            pexpect_process,
-            pexpect_prompt,
-            return_output=True,
-        )
+        remote_executor.run_command("sudo apt-get install -y awscli", description)
 
         # Check if the apt-get installation failed (it happens from time to time)
         error_msg = "E: Package 'awscli' has no installation candidate"

@@ -2,12 +2,7 @@
 
 import os, sys
 
-from e2e_helpers.common.pexpect_tools import (
-    expression_in_pexpect_output,
-    wait_until_cmd_done,
-)
-
-from e2e_helpers.common.ssh_tools import (
+from e2e_helpers.setup.instance_setup_tools import (
     wait_for_apt_locks,
 )
 
@@ -19,9 +14,7 @@ from e2e_helpers.common.constants import (
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-def setup_artificial_network_conditions(
-    pexpect_process, pexpect_prompt, network_conditions, testing_time
-):
+def setup_artificial_network_conditions(remote_executor, network_conditions, testing_time):
     """
     Set up the network degradation conditions on the client instance. We apply the network settings
     on the client side to simulate the condition where the user is using Whist on a machine that
@@ -95,21 +88,16 @@ def setup_artificial_network_conditions(
         )
 
         # Wait for apt lock
-        wait_for_apt_locks(pexpect_process, pexpect_prompt)
+        wait_for_apt_locks(remote_executor)
 
         # Install ifconfig
-        command = "sudo apt-get install -y net-tools"
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+        remote_executor.run_command("sudo apt-get install -y net-tools")
 
         # Get network interface names (excluding loopback)
-        command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
-        pexpect_process.sendline(command)
-
-        ifconfig_output = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
+        remote_executor.run_command("sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'")
 
         blacklisted_expressions = [
-            pexpect_prompt,
+            remote_executor.pexpect_prompt,
             "docker",
             "veth",
             "ifb",
@@ -120,18 +108,17 @@ def setup_artificial_network_conditions(
         ]
         network_devices = [
             x.replace(":", "")
-            for x in ifconfig_output
+            for x in remote_executor.pexpect_output
             if not any(
                 blacklisted_expression in x for blacklisted_expression in blacklisted_expressions
             )
         ]
         # add 2 more seconds to testing_time to account for time spent in this script before test actually starts
         command = f"( nohup ~/whist/protocol/test/helpers/setup/apply_network_conditions.sh -d {','.join(network_devices)} -t {testing_time+2} {degradations_command} > ~/network_conditions.log 2>&1 & )"
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+        remote_executor.run_command(command)
 
 
-def restore_network_conditions(pexpect_process, pexpect_prompt):
+def restore_network_conditions(remote_executor):
     """
     Restore network conditions to factory ones. This function is idempotent and is safe to run even
     if no network degradation was initially applied.
@@ -152,15 +139,18 @@ def restore_network_conditions(pexpect_process, pexpect_prompt):
     # Get network interface names (excluding loopback)
     command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
     # Cannot use wait_until_cmd_done because we need to handle clase where ifconfig is not installed
-    pexpect_process.sendline(command)
-
-    ifconfig_output = wait_until_cmd_done(pexpect_process, pexpect_prompt, return_output=True)
+    remote_executor.run_command(
+        command, description="Obtaining list of network devices on client instance"
+    )
 
     # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know
     # that no network degradations have been applied to the machine.
-    error_msg = "sudo: ifconfig: command not found"
+    ifconfig_output = remote_executor.pexpect_output
+    ifconfig_not_installed = remote_executor.expression_in_pexpect_output(
+        "sudo: ifconfig: command not found"
+    )
 
-    if expression_in_pexpect_output(error_msg, ifconfig_output):
+    if ifconfig_not_installed:
         print(
             "ifconfig is not installed on the client instance, so we don't need to restore normal network conditions."
         )
@@ -168,11 +158,21 @@ def restore_network_conditions(pexpect_process, pexpect_prompt):
 
     # Stop the process applying the artificial network conditions, in case it's still running
     command = "killall -9 -v apply_network_conditions.sh"
-    pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    remote_executor.run_command(
+        command, description="Stopping the process applying the artificial network conditions"
+    )
 
     # Get names of network devices
-    blacklisted_expressions = [pexpect_prompt, "docker", "veth", "ifb", "ifconfig", "\\", "~", ";"]
+    blacklisted_expressions = [
+        remote_executor.pexpect_prompt,
+        "docker",
+        "veth",
+        "ifb",
+        "ifconfig",
+        "\\",
+        "~",
+        ";",
+    ]
     network_devices = [
         x.replace(":", "")
         for x in ifconfig_output
@@ -181,17 +181,10 @@ def restore_network_conditions(pexpect_process, pexpect_prompt):
         )
     ]
 
-    commands = []
     for device in network_devices:
-        print(f"Restoring normal network conditions on device {device}")
-        # Inbound degradations
-        commands.append(f"sudo tc qdisc del dev {device} handle ffff: ingress")
-        # Outbound degradations
-        commands.append(f"sudo tc qdisc del dev {device} root netem")
+        description = f"Restoring normal network conditions on device {device}"
+        # Inbound/outbound degradations
+        command = f"sudo tc qdisc del dev {device} handle ffff: ingress ; sudo tc qdisc del dev {device} root netem"
+        remote_executor.run_command(command, description)
 
-    commands.append("sudo modprobe -r ifb")
-
-    # Execute all commands:
-    for command in commands:
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    remote_executor.run_command("sudo modprobe -r ifb", description)
