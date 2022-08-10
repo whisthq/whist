@@ -1101,7 +1101,7 @@ jobs:
           # Note that these values are public, so it's fine to hardcode them here (rather than using GitHub Secrets)
           #
           # TODO: Create a per-environment Amplitude project, and have a different key for each environment
-          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
+          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" || true ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
             export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
@@ -1157,7 +1157,7 @@ jobs:
           source ~/.nvm/nvm.sh
           nvm use 16 && echo -n "NPM version: " && npm --version
 
-          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
+          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" || true ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
             export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
