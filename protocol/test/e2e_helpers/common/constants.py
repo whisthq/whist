@@ -4,6 +4,14 @@ import os
 
 # The Github job name (or None if running locally)
 job_name = os.getenv("GITHUB_JOB")
+# Name of configs file to use
+configs_filename = (
+    "e2e.yaml"
+    if job_name == "protocol-streaming-e2e-check-pr"
+    else "backend_integration.yaml"
+    if job_name == "backend-integration-test"
+    else "default.yaml"
+)
 # The name to use to tag any new AWS EC2 instance that is created. A suffix with the branch name will be added.
 instances_name_tag = (
     "protocol-e2e-benchmarking"

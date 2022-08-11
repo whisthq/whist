@@ -39,6 +39,9 @@ jobs:
       REUSABLE_INSTANCES_REGION_NAME: "us-east-1"
       REUSABLE_SERVER_INSTANCE_ID: "i-061a353731c542eeb"
       REUSABLE_CLIENT_INSTANCE_ID: "i-00ddb3dce5e4bd581"
+      GITHUB_PERSONAL_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+      # GITHUB_TOKEN var is not automatically defined
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout Git Repository
@@ -82,8 +85,6 @@ jobs:
 
       - name: Wait for pre-existing E2E workflows to complete
         working-directory: protocol/test
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "SERVER_INSTANCE_ID=$REUSABLE_SERVER_INSTANCE_ID" >> $GITHUB_ENV
           echo "CLIENT_INSTANCE_ID=$REUSABLE_CLIENT_INSTANCE_ID" >> $GITHUB_ENV
@@ -109,15 +110,7 @@ jobs:
         id: e2e_streaming_test0
         working-directory: protocol/test
         run: |
-          python3 streaming_e2e_tester.py \
-            --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
-            --ssh-key-path "/home/runner/.ssh/id_rsa" \
-            --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
-            --region-name "$REGION_NAME" \
-            --use-two-instances=true \
-            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
-            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
-            --leave-instances-on=true
+          python3 streaming_e2e_tester.py --skip-host-setup=false --skip-git-clone=false
           # Update REGION_NAME, SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
@@ -127,18 +120,7 @@ jobs:
         id: e2e_streaming_test1
         working-directory: protocol/test
         run: |
-          python3 streaming_e2e_tester.py \
-            --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
-            --ssh-key-path "/home/runner/.ssh/id_rsa" \
-            --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
-            --region-name "$REGION_NAME" \
-            --use-two-instances=true \
-            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
-            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
-            --leave-instances-on=true \
-            --skip-host-setup=true \
-            --skip-git-clone=true \
-            --network-conditions 15Mbit-30Mbit,10,None,None,1000-2000
+          python3 streaming_e2e_tester.py --network-conditions 15Mbit-30Mbit,10,None,None,1000-2000
           # Update REGION_NAME, SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
@@ -148,18 +130,7 @@ jobs:
         id: e2e_streaming_test2
         working-directory: protocol/test
         run: |
-          python3 streaming_e2e_tester.py \
-            --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
-            --ssh-key-path "/home/runner/.ssh/id_rsa" \
-            --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
-            --region-name "$REGION_NAME" \
-            --use-two-instances=true \
-            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
-            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
-            --leave-instances-on=true \
-            --skip-host-setup=true \
-            --skip-git-clone=true \
-            --network-conditions 10Mbit-20Mbit,10,None,None,500-2000
+          python3 streaming_e2e_tester.py --network-conditions 10Mbit-20Mbit,10,None,None,500-2000
           # Update REGION_NAME, SERVER_INSTANCE_ID and CLIENT_INSTANCE_ID variables in case we had to create new instances. We will reuse them in the next step.
           echo "REGION_NAME=$(head -n 1 instances_left_on.txt)" >> $GITHUB_ENV
           echo "SERVER_INSTANCE_ID=$(head -n 2 instances_left_on.txt | tail -1)" >> $GITHUB_ENV
@@ -170,16 +141,7 @@ jobs:
         working-directory: protocol/test
         run: |
           python3 streaming_e2e_tester.py \
-            --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" \
-            --ssh-key-path "/home/runner/.ssh/id_rsa" \
-            --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" \
-            --region-name "$REGION_NAME" \
-            --use-two-instances=true \
-            --existing-client-instance-id "$CLIENT_INSTANCE_ID" \
-            --existing-server-instance-id "$SERVER_INSTANCE_ID" \
             --leave-instances-on=false \
-            --skip-host-setup=true \
-            --skip-git-clone=true \
             --testing-url="https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/" \
             --simulate-scrolling 10 \
             --network-conditions 10Mbit,10,None,100,None
@@ -189,15 +151,13 @@ jobs:
         if: always()
         working-directory: protocol/test
         run: |
-          aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"${{ env.BRANCH_NAME }}" --recursive
+          aws s3 cp e2e_logs s3://whist-e2e-protocol-test-logs/"${{ env.BRANCH_NAME }}" --recursive
           echo ""; echo "Download S3 logs with the following commands:"
-          cd perf_logs; for dir in */; do echo "aws s3 cp s3://whist-e2e-protocol-test-logs/${{ env.BRANCH_NAME }}/$dir $dir --recursive"; done
+          cd e2e_logs; for dir in */; do echo "aws s3 cp s3://whist-e2e-protocol-test-logs/${{ env.BRANCH_NAME }}/$dir $dir --recursive"; done
 
       - name: Stop or terminate leftover AWS instances
         if: always()
         working-directory: protocol/test
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 -m e2e_helpers.aws.remove_leftover_instances
 
       # We parse the log files from the E2E performance tests above and display the results of the test.
@@ -207,7 +167,6 @@ jobs:
         working-directory: protocol/test
         env:
           GITHUB_GIST_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}

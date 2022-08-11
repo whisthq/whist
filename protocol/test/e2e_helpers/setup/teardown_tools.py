@@ -99,7 +99,7 @@ def extract_logs_from_mandelbox(
     docker_id,
     ssh_key_path,
     hostname,
-    perf_logs_folder_name,
+    e2e_logs_folder_name,
     log_grabber_log,
     session_id,
     role,
@@ -119,7 +119,7 @@ def extract_logs_from_mandelbox(
         ssh_key_path (str): The path (on the machine where this script is run) to the file storing
                             the public RSA key used for SSH connections
         hostname (str): The host name of the remote machine where the server/client was running on
-        perf_logs_folder_name (str):    The path to the folder (on the machine where this script is run)
+        e2e_logs_folder_name (str):    The path to the folder (on the machine where this script is run)
                                         where to store the logs
         log_grabber_log (file): The file (already opened) to use for logging the terminal output from
                                 the shell process used to download the logs
@@ -129,7 +129,7 @@ def extract_logs_from_mandelbox(
     Returns:
         None
     """
-    command = f"rm -rf ~/perf_logs/{role}; mkdir -p ~/perf_logs/{role}"
+    command = f"rm -rf ~/e2e_logs/{role}; mkdir -p ~/e2e_logs/{role}"
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
@@ -164,25 +164,25 @@ def extract_logs_from_mandelbox(
         logfiles.append("/home/whist/.config/google-chrome/Default/History")
 
     for file_path in logfiles:
-        command = f"docker cp {docker_id}:{file_path} ~/perf_logs/{role}/"
+        command = f"docker cp {docker_id}:{file_path} ~/e2e_logs/{role}/"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
-    # Move the network conditions log to the perf_logs folder, so that it is downloaded
+    # Move the network conditions log to the e2e_logs folder, so that it is downloaded
     # to the machine running this script along with the other logs
     if role == "client":
-        command = "mv ~/network_conditions.log ~/perf_logs/client/network_conditions.log"
+        command = "mv ~/network_conditions.log ~/e2e_logs/client/network_conditions.log"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
     # Extract URLs from history, to ensure that the desired websites were opened
     else:
-        command = "strings ~/perf_logs/server/History | grep http > ~/perf_logs/server/history.log && rm ~/perf_logs/server/History"
+        command = "strings ~/e2e_logs/server/History | grep http > ~/e2e_logs/server/history.log && rm ~/e2e_logs/server/History"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     # Download all the mandelbox logs from the AWS machine
     command = (
-        f"scp -r -i {ssh_key_path} {username}@{hostname}:~/perf_logs/{role} {perf_logs_folder_name}"
+        f"scp -r -i {ssh_key_path} {username}@{hostname}:~/e2e_logs/{role} {e2e_logs_folder_name}"
     )
 
     local_process = pexpect.spawn(
@@ -219,7 +219,7 @@ def complete_experiment_and_save_results(
     use_two_instances,
     leave_instances_on,
     network_conditions,
-    perf_logs_folder_name,
+    e2e_logs_folder_name,
     experiment_metadata,
     metadata_filename,
     timestamps,
@@ -277,7 +277,7 @@ def complete_experiment_and_save_results(
         network_conditions (str):   The network conditions used on the client instanceduring the experiment.
                                     This string is set to 'none' if no artificial degradations were applied
                                     to the network on the client instance.
-        perf_logs_folder_name (str):    The path to the folder (on the machine where this script is run)
+        e2e_logs_folder_name (str):    The path to the folder (on the machine where this script is run)
                                         where to store the logs
         experiment_metadata (dict): The dictionary containing the experiment metadata
         metadata_filename (str): The name of the file to save the updated experiment metadata in json format
@@ -341,7 +341,7 @@ def complete_experiment_and_save_results(
         server_docker_id,
         ssh_key_path,
         server_hostname,
-        perf_logs_folder_name,
+        e2e_logs_folder_name,
         server_log,
         server_session_id,
         role="server",
@@ -352,7 +352,7 @@ def complete_experiment_and_save_results(
         client_docker_id,
         ssh_key_path,
         client_hostname,
-        perf_logs_folder_name,
+        e2e_logs_folder_name,
         client_log,
         client_session_id,
         role="client",

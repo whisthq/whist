@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys, json, time, argparse, multiprocessing
+import os, sys, json, time, multiprocessing
 import boto3
 
 from e2e_helpers.aws.boto3_tools import (
@@ -40,179 +40,12 @@ from e2e_helpers.setup.teardown_tools import (
     complete_experiment_and_save_results,
 )
 
-from e2e_helpers.whist_run_steps import setup_process, run_mandelbox_on_instance
+from e2e_helpers.configs.parse_configs import configs
 
+from e2e_helpers.whist_run_steps import setup_process, run_mandelbox_on_instance
 
 # Add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
-DESCRIPTION = """
-This script will spin one or two g4dn.xlarge EC2 instances (depending on the parameters you pass in), \
-start two Docker containers (one for the Whist client, one for the Whist server), and run a protocol \
-streaming performance test between the two of them. In case one EC2 instance is used, the two Docker \
-containers are started on the same instance.
-"""
-
-parser = argparse.ArgumentParser(description=DESCRIPTION)
-
-parser.add_argument(
-    "--ssh-key-name",
-    help="The name of the AWS RSA SSH key you wish to use to access the E2 instance(s). If you are running the \
-    script locally, the key name is likely of the form <yourname-key>. Make sure to pass the key-name for the \
-    region of interest. Required.",
-    required=True,
-)
-parser.add_argument(
-    "--ssh-key-path",
-    help="The path to the .pem certificate on this machine to use in connection to the RSA SSH key passed to \
-    the --ssh-key-name arg. Required.",
-    required=True,
-)
-parser.add_argument(
-    "--github-token",
-    help="The GitHub Personal Access Token with permission to fetch the whisthq/whist repository. Required.",
-    required=True,
-)
-
-parser.add_argument(
-    "--region-name",
-    help="The AWS region to use for testing. Passing an empty string will let the script run the test on any \
-    region with space available for the new instance(s). If you are looking to re-use an instance for the client \
-    and/or server, the instance(s) must live on the region passed to this parameter. If you pass an empty string, \
-    the key-pair that you pass must be valid on all AWS regions.",
-    type=str,
-    choices=[
-        "",
-        "us-east-1",
-        "us-east-2",
-        "us-west-1",
-        "us-west-2",
-        "af-south-1",
-        "ap-east-1",
-        "ap-south-1",
-        "ap-northeast-3",
-        "ap-northeast-2",
-        "ap-southeast-1",
-        "ap-southeast-2",
-        "ap-southeast-3",
-        "ap-northeast-1",
-        "ca-central-1",
-        "eu-central-1",
-        "eu-west-1",
-        "eu-west-2",
-        "eu-south-1",
-        "eu-west-3",
-        "eu-north-1",
-        "sa-east-1",
-    ],
-    default="",
-)
-
-parser.add_argument(
-    "--existing-server-instance-id",
-    help="The instance ID of an existing instance to use for the Whist server during the E2E test. You can only \
-    pass a value to this parameter if you passed `true` to --use-two-instances. Otherwise, the server will be \
-    installed and run on the same instance as the client. The instance will be stopped upon completion. \
-    If left empty (and --use-two-instances=true), a clean new instance will be generated instead, and it will \
-    be terminated (instead of being stopped) upon completion of the test.",
-    type=str,
-    default="",
-)
-
-parser.add_argument(
-    "--existing-client-instance-id",
-    help="The instance ID of an existing instance to use for the Whist dev client during the E2E test. If the flag \
-    --use-two-instances=false is used (or if the flag --use-two-instances is not used), the Whist server will also \
-    run on this instance. The instance will be stopped upon completion. If left empty, a clean new instance will \
-    be generated instead, and it will be terminated (instead of being stopped) upon completion of the test.",
-    type=str,
-    default="",
-)
-
-parser.add_argument(
-    "--use-two-instances",
-    help="Whether to run the client on a separate AWS instance, instead of the same as the server.",
-    type=str,
-    choices=["false", "true"],
-    default="false",
-)
-
-parser.add_argument(
-    "--leave-instances-on",
-    help="This option allows you to override the default behavior and leave the instances running upon completion \
-    of the test, instead of stopping (if reusing existing ones) or terminating (if creating new ones) them.",
-    type=str,
-    choices=["false", "true"],
-    default="false",
-)
-
-parser.add_argument(
-    "--skip-host-setup",
-    help="This option allows you to skip the host-setup on the instances to be used for the test. \
-    This will save you a good amount of time.",
-    type=str,
-    choices=["false", "true"],
-    default="false",
-)
-
-parser.add_argument(
-    "--skip-git-clone",
-    help="This option allows you to skip cloning the Whist repository on the instance(s) to be used for the test. \
-    The test will also not checkout the current branch or pull from Github, using the code from the /whist folder \
-    on the existing instance(s) as is. This option is useful if you need to run several tests in succession \
-    using code from the same commit.",
-    type=str,
-    choices=["false", "true"],
-    default="false",
-)
-
-
-parser.add_argument(
-    "--simulate-scrolling",
-    help="Number of rounds of scrolling that should be simulated on the client side. One round of scrolling = \
-    Slow scroll down + Slow scroll up + Fast scroll down + Fast scroll up",
-    type=int,
-    default=0,
-)
-
-parser.add_argument(
-    "--testing-urls",
-    help="The URL to visit during the test. The default is a 4K video stored on our AWS S3.",
-    nargs="+",
-    type=str,
-    default="https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4",
-)
-
-parser.add_argument(
-    "--testing-time",
-    help="The time (in seconds) to wait at the URL from the `--testing-url` flag before shutting down the \
-    client/server and grabbing the logs and metrics. The default value is the duration of the default 4K video \
-    from AWS S3.",
-    type=int,
-    default=126,  # Length of the video in link above is 2mins, 6seconds
-)
-
-parser.add_argument(
-    "--cmake-build-type",
-    help="The Cmake build type to use when building the protocol.",
-    type=str,
-    choices=["dev", "prod", "metrics"],
-    default="metrics",
-)
-
-parser.add_argument(
-    "--network-conditions",
-    help="The network conditions for the experiment. The input is in the form of up to five comma-separated values \
-    indicating the max bandwidth, delay (in ms), percentage of packet drops (in the range [0.0,1.0]), queue capacity, \
-    and the interval of change of the network conditions. Each condition can be expressed using a single float (for \
-    conditions that do not change over time) or as a range expressed using a min and max value separated by a hyphen. \
-    `normal` will allow the network to run with no degradation. Passing `None` to one of the five parameters will result \
-    in no limitations being imposed to the corresponding network condition. For more details about the usage of the five \
-    network condition parameters, check out the apply_network_conditions.sh script in protocol/test/helpers/setup.",
-    type=str,
-    default="normal",
-)
-args = parser.parse_args()
 
 
 if __name__ == "__main__":
@@ -220,26 +53,26 @@ if __name__ == "__main__":
     timestamps = TimeStamps()
 
     # 1 - Parse args from the command line
-    ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
-    ssh_key_path = args.ssh_key_path
-    github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
+    ssh_key_name = configs.get("ssh_key_name")
+    ssh_key_path = os.path.expanduser(configs.get("ssh_key_path") or "")
+    github_token = configs.get("github_token")  # The PAT allowing us to fetch code from GitHub
     testing_urls = (
-        args.testing_urls[0]
-        if len(args.testing_urls) == 1
-        else " ".join([f'\\"{url}\\"' for url in args.testing_urls])
+        configs.get("testing_urls")[0]
+        if len(configs.get("testing_urls")) == 1
+        else " ".join([f'\\"{url}\\"' for url in configs.get("testing_urls")])
     )
-    desired_region_name = args.region_name
-    existing_client_instance_id = args.existing_client_instance_id
-    existing_server_instance_id = args.existing_server_instance_id
-    skip_git_clone = args.skip_git_clone
-    skip_host_setup = args.skip_host_setup
-    network_conditions = args.network_conditions
-    leave_instances_on = args.leave_instances_on
+    desired_region_name = configs.get("region_name")
+    existing_client_instance_id = configs.get("existing_client_instance_id")
+    existing_server_instance_id = configs.get("existing_server_instance_id")
+    skip_git_clone = configs.get("skip_git_clone")
+    skip_host_setup = configs.get("skip_host_setup")
+    network_conditions = configs.get("network_conditions")
+    leave_instances_on = configs.get("leave_instances_on")
     # Convert boolean 'true'/'false' strings to Python booleans
-    use_two_instances = args.use_two_instances == "true"
-    simulate_scrolling = args.simulate_scrolling
+    use_two_instances = configs.get("use_two_instances") == "true"
+    simulate_scrolling = configs.get("simulate_scrolling")
     # Each call to the mouse scrolling simulator script takes a total of 25s to complete, including 5s in-between runs
-    testing_time = max(args.testing_time, simulate_scrolling * 25)
+    testing_time = max(configs.get("testing_time"), simulate_scrolling * 25)
 
     # 2 - Perform a sanity check on the arguments and load the SSH key from file
     if (
@@ -261,22 +94,22 @@ if __name__ == "__main__":
     # 3 - Create a local folder to store the experiment metadata and all the logs
     # (monitoring logs and metrics logs)
     experiment_start_time = time.strftime("%Y_%m_%d@%H-%M-%S")
-    perf_logs_folder_name = os.path.join("perf_logs", experiment_start_time)
-    os.makedirs(os.path.join(perf_logs_folder_name, "server"))
-    os.makedirs(os.path.join(perf_logs_folder_name, "client"))
+    e2e_logs_folder_name = os.path.join("e2e_logs", experiment_start_time)
+    os.makedirs(os.path.join(e2e_logs_folder_name, "server"))
+    os.makedirs(os.path.join(e2e_logs_folder_name, "client"))
 
-    metadata_filename = os.path.join(perf_logs_folder_name, "experiment_metadata.json")
-    server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring.log")
-    client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring.log")
+    metadata_filename = os.path.join(e2e_logs_folder_name, "experiment_metadata.json")
+    server_log_filepath = os.path.join(e2e_logs_folder_name, "server_monitoring.log")
+    client_log_filepath = os.path.join(e2e_logs_folder_name, "client_monitoring.log")
 
-    client_metrics_file = os.path.join(perf_logs_folder_name, "client", "protocol_client-out.log")
-    server_metrics_file = os.path.join(perf_logs_folder_name, "server", "protocol_server-out.log")
+    client_metrics_file = os.path.join(e2e_logs_folder_name, "client", "protocol_client-out.log")
+    server_metrics_file = os.path.join(e2e_logs_folder_name, "server", "protocol_server-out.log")
 
     experiment_metadata = {
         "start_time": experiment_start_time + " local time"
         if not running_in_ci
         else experiment_start_time + " UTC",
-        "testing_urls": args.testing_urls,
+        "testing_urls": configs.get("testing_urls"),
         "testing_time": testing_time,
         "simulate_scrolling": simulate_scrolling,
         "network_conditions": network_conditions,
@@ -337,16 +170,16 @@ if __name__ == "__main__":
 
     # 5 - Get the IP address of the instance(s) that are now running
     server_instance_ip = get_instance_ip(boto3client, server_instance_id)
-    server_hostname = server_instance_ip[0]["public"]
-    server_private_ip = server_instance_ip[0]["private"].replace(".", "-")
+    server_hostname = server_instance_ip["public"]
+    server_private_ip = server_instance_ip["private"].replace(".", "-")
 
     client_instance_ip = (
         get_instance_ip(boto3client, client_instance_id)
         if use_two_instances
         else server_instance_ip
     )
-    client_hostname = client_instance_ip[0]["public"]
-    client_private_ip = client_instance_ip[0]["private"].replace(".", "-")
+    client_hostname = client_instance_ip["public"]
+    client_private_ip = client_instance_ip["private"].replace(".", "-")
 
     # Notify the user that we are connecting to the EC2 instance(s)
     if not use_two_instances:
@@ -384,7 +217,7 @@ if __name__ == "__main__":
             "github_token": github_token,
             "use_two_instances": use_two_instances,
             "testing_time": testing_time,
-            "cmake_build_type": args.cmake_build_type,
+            "cmake_build_type": configs.get("cmake_build_type"),
             "skip_git_clone": skip_git_clone,
             "skip_host_setup": skip_host_setup,
         }
@@ -435,8 +268,8 @@ if __name__ == "__main__":
     timestamps.add_event("Setting up the instance(s) and building the mandelboxes")
 
     # 7 - Open the server/client monitoring logs
-    server_log = open(os.path.join(perf_logs_folder_name, "server_monitoring.log"), "a")
-    client_log = open(os.path.join(perf_logs_folder_name, "client_monitoring.log"), "a")
+    server_log = open(os.path.join(e2e_logs_folder_name, "server_monitoring.log"), "a")
+    client_log = open(os.path.join(e2e_logs_folder_name, "client_monitoring.log"), "a")
 
     # 8 - Run the host-service on the client and the server. We don't parallelize here for simplicity, given
     # that all operations below do not take too much time.
@@ -540,7 +373,7 @@ if __name__ == "__main__":
         use_two_instances,
         leave_instances_on,
         network_conditions,
-        perf_logs_folder_name,
+        e2e_logs_folder_name,
         experiment_metadata,
         metadata_filename,
         timestamps,

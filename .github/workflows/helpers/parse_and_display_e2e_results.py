@@ -45,10 +45,10 @@ Optionally, it will also include a comparison with the latest results from anoth
 
 parser = argparse.ArgumentParser(description=DESCRIPTION)
 parser.add_argument(
-    "--perf-logs-path",
+    "--e2e-logs-path",
     help="The path to the folder containing the E2E streaming logs",
     type=str,
-    default=os.path.join(".", "perf_logs"),
+    default=os.path.join(".", "e2e_logs"),
 )
 
 parser.add_argument(
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     e2e_script_outcomes = args.e2e_script_outcomes
     network_conditions_matching_way = args.network_conditions_matching_way
     logs_expiration_days = args.logs_expiration_days
-    logs_root_dir = args.perf_logs_path
+    logs_root_dir = args.e2e_logs_path
     compared_branch_names = list(
         dict.fromkeys(args.compared_branch_names)
     )  # Remove duplicates but maintain order

@@ -137,7 +137,9 @@ def setup_process(role, args_dict):
 
     print(f"Initiating the BUILD ssh connection with the {role} AWS instance...")
     build_process = attempt_ssh_connection(ssh_cmd, logfile, pexpect_prompt)
-    build_mandelboxes_on_instance(hs_process, pexpect_prompt, cmake_build_type, role, testing_time)
+    build_mandelboxes_on_instance(
+        build_process, pexpect_prompt, cmake_build_type, role, testing_time
+    )
     build_process.kill(0)
 
     logfile.close()
@@ -188,7 +190,6 @@ def build_mandelboxes_on_instance(
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     mandelbox_name = get_mandelbox_name(role)
-    print(f"Building the {mandelbox_name} mandelbox on the {role} instance...")
 
     command = f"cd ~/whist/mandelboxes && ./build.sh {mandelbox_name} --{cmake_build_type} | tee ~/{role}_mandelbox_build.log"
     success_msg = "All images built successfully!"
