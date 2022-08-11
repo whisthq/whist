@@ -1,8 +1,15 @@
 # ------------------------------ Policy documents for public access ------------------------------ #
 
+# The following policies allow access for all principals (public access), to all
+# objects in the buckets. Only read access is given via the `GetObject` action.
+# This policy will only work if the public access block settings of the bucket
+# are set to `false`.
+
 data "aws_iam_policy_document" "whist-browser-macos-arm64-public-access-policy" {
   statement {
     principals {
+      # This block will be rendered as
+      # "Principal": "*"
       identifiers = ["*"]
       type = "*"
     }
@@ -21,6 +28,8 @@ data "aws_iam_policy_document" "whist-browser-macos-arm64-public-access-policy" 
 data "aws_iam_policy_document" "whist-browser-macos-x64-public-access-policy" {
   statement {
     principals {
+      # This block will be rendered as
+      # "Principal": "*"
       identifiers = ["*"]
       type = "*"
     }
