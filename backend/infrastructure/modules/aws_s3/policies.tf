@@ -1,3 +1,50 @@
+# ------------------------------ Policy documents for public access ------------------------------ #
+
+# The following policies allow access for all principals (public access), to all
+# objects in the buckets. Only read access is given via the `GetObject` action.
+# This policy will only work if the public access block settings of the bucket
+# are set to `false`.
+
+data "aws_iam_policy_document" "whist-browser-macos-arm64-public-access-policy" {
+  statement {
+    principals {
+      # This block will be rendered as
+      # "Principal": "*"
+      identifiers = ["*"]
+      type = "*"
+    }
+
+    actions = [
+      "s3:GetObject",
+    ]
+
+    effect = "Allow"
+    resources = [
+      "${aws_s3_bucket.whist-browser-macos-arm64.arn}/*",
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "whist-browser-macos-x64-public-access-policy" {
+  statement {
+    principals {
+      # This block will be rendered as
+      # "Principal": "*"
+      identifiers = ["*"]
+      type = "*"
+    }
+
+    actions = [
+      "s3:GetObject",
+    ]
+
+    effect = "Allow"
+    resources = [
+      "${aws_s3_bucket.whist-browser-macos-x64.arn}/*",
+    ]
+  }
+}
+
 # ------------------------------ Policies for macOS Whist Chromium Browser ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-browser-macos-arm64" {
@@ -14,6 +61,23 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-macos-x64" {
   block_public_policy     = false
   restrict_public_buckets = false
   ignore_public_acls      = false
+}
+
+# Only make the buckets publicly accessible in `staging` and `prod. The buckets in
+# `dev` stay private since the code might not be fully tested and could have bugs.
+
+resource "aws_s3_bucket_policy" "whist-browser-macos-arm64-public-access-policy-attachment" {
+  # Don't create this resource in case the environment is `dev`
+  count  = var.env == "dev" ? 0 : 1
+  bucket = aws_s3_bucket.whist-browser-macos-arm64.id
+  policy = data.aws_iam_policy_document.whist-browser-macos-arm64-public-access-policy.json
+}
+
+resource "aws_s3_bucket_policy" "whist-browser-macos-x64-public-access-policy-attachment" {
+  # Don't create this resource in case the environment is `dev`
+  count  = var.env == "dev" ? 0 : 1
+  bucket = aws_s3_bucket.whist-browser-macos-x64.id
+  policy = data.aws_iam_policy_document.whist-browser-macos-x64-public-access-policy.json
 }
 
 # ------------------------- Policy for Linux Server-side Whist Chromium Browser ------------------------- #
