@@ -23,6 +23,8 @@ if [[ "$BROWSER_APPLICATION" == "brave" ]]; then
   USER_DATA_DIR="${2:-$HOME/.config/BraveSoftware/Brave-Browser}"
 elif [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
   USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
+elif [[ "$BROWSER_APPLICATION" == "chromium" ]]; then
+  USER_DATA_DIR="${2:-$HOME/.config/chromium}"
 else
   echo "Browser name not set or invalid. Using the default option, Chrome."
   USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
@@ -105,6 +107,7 @@ add_preferences_jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'"
 features="VaapiVideoDecoder,VaapiVideoEncoder,Vulkan,CanvasOopRasterization,OverlayScrollbar,ParallelDownloading"
 flags=(
   "--use-gl=desktop"
+  # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
   "--flag-switches-begin"
   "--enable-show-autofill-signatures"
   "--enable-vp9-kSVC-decode-acceleration"
@@ -183,14 +186,21 @@ echo "loaded d-bus address in start-browser.sh: $DBUS_SESSION_BUS_ADDRESS"
 # without breaking extension importing
 # /usr/bin/lowercase-chromium-files "google-chrome" &
 
-# Start the browser with the KDE desktop environment
-# flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-if [[ "$BROWSER_APPLICATION" == "brave" ]]; then
-  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 brave-browser "${flags[@]}"
-elif [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
-  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
-else
-  echo "Browser name not set or invalid. Using the default option, Chrome."
-  exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 google-chrome "${flags[@]}"
-fi
+case "$BROWSER_APPLICATION" in
+  brave)
+    BROWSER_APPLICATION="brave-browser"
+    ;;
+  chrome)
+    BROWSER_APPLICATION="google-chrome"
+    ;;
+  chromium)
+    BROWSER_APPLICATION="chromium-browser-stable"
+    ;;
+  *)
+    echo "Browser name not set or invalid. Using the default option, Chrome."
+    BROWSER_APPLICATION="google-chrome"
+    ;;
+esac
 
+# Start the browser with the KDE desktop environment
+exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 "$APPLICATION_NAME" "${flags[@]}"

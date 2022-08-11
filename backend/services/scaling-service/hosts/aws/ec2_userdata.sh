@@ -58,7 +58,7 @@ pull_docker_images() {
 
   # Pull Docker images for Chrome directly to the ephemeral volume
   # Replace `chrome` to pull the image of a different browser.
-  pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/chrome"
+  pull_image_base_chrome="ghcr.io/whisthq/$GIT_BRANCH/browsers/whistium"
   pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
 
   docker pull "$pull_image_chrome"

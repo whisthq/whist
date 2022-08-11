@@ -118,8 +118,8 @@ func getAppName(mandelboxSubscription subscriptions.Mandelbox, transportRequestM
 			req = transportRequest
 
 			if req.AppName == "" {
-				// If no app name is set, we default to using the `browsers/chrome` image.
-				AppName = mandelboxtypes.AppName("browsers/chrome")
+				// If no app name is set, we default to using the `browsers/whistium` image.
+				AppName = mandelboxtypes.AppName("browsers/whistium")
 			} else {
 				AppName = req.AppName
 			}
