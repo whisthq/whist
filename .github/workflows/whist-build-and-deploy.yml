@@ -1252,9 +1252,16 @@ jobs:
           else
             BUILD_OUTPUT_FOLDER="${{ env.build_type }}_${{ matrix.config.target_arch }}"
           fi
+
           # tar -zcvf "${{ env.binary-tar-name }}" "$BUILD_OUTPUT_FOLDER/${{ env.executable_name }}"
           # aws s3 cp "${{ env.binary-tar-name }}" "${{ env.s3-bucket-uri }}/${{ env.binary-tar-name }}"
           aws s3 cp "$BUILD_OUTPUT_FOLDER/$executable_name" "${{ env.s3-bucket-uri }}/${{ env.dmg-object-name }}"
+
+          # Until we write code to automatically edit appcast.xml when we are
+          # ready to ship an update, just print out the update's Sparkle
+          # signature so someone can come look through the logs and add it to
+          # appcast.xml manually.
+          cat "${BUILD_OUTPUT_FOLDER}/${executable_name##*/}.eddsa"
 
       ###################################################################################
 
