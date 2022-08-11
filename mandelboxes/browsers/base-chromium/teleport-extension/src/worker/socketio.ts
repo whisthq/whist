@@ -141,6 +141,17 @@ const initCloudTabCreatedListener = (socket: Socket) => {
   )
 }
 
+const initCloudTabActivatedListener = (socket: Socket) => {
+  chrome.tabs.onActivated.addListener(async (activeInfo: { tabId: number }) => {      
+    const openTabs = await getOpenTabs()
+    const foundTab = find(openTabs, (t) => t.tab.id === activeInfo.tabId)
+
+    if (foundTab?.clientTabId !== undefined) {
+      socket.emit("tab-activated", foundTab.clientTabId)
+    }
+  })
+}
+
 export {
   initSocketioConnection,
   initActivateTabListener,
@@ -148,4 +159,5 @@ export {
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
   initTabRefreshListener,
+  initCloudTabActivatedListener
 }
