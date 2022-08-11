@@ -54,15 +54,19 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-macos-x64" {
   ignore_public_acls      = false
 }
 
-# Only make the buckets publicly accessible in prod
+# Only make the buckets publicly accessible in `staging` and `prod. The buckets in
+# `dev` stay private since the code might not be fully tested and could have bugs.
+
 resource "aws_s3_bucket_policy" "whist-browser-macos-arm64-public-access-policy-attachment" {
-  count  = var.env == "prod" ? 1 : 0
+  # Don't create this resource in case the environment is `dev`
+  count  = var.env == "dev" ? 0 : 1
   bucket = aws_s3_bucket.whist-browser-macos-arm64.id
   policy = data.aws_iam_policy_document.whist-browser-macos-arm64-public-access-policy.json
 }
 
 resource "aws_s3_bucket_policy" "whist-browser-macos-x64-public-access-policy-attachment" {
-  count  = var.env == "prod" ? 1 : 0
+  # Don't create this resource in case the environment is `dev`
+  count  = var.env == "dev" ? 0 : 1
   bucket = aws_s3_bucket.whist-browser-macos-x64.id
   policy = data.aws_iam_policy_document.whist-browser-macos-x64-public-access-policy.json
 }
