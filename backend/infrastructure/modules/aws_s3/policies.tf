@@ -1,3 +1,41 @@
+# ------------------------------ Policy documents for public access ------------------------------ #
+
+data "aws_iam_policy_document" "whist-browser-macos-arm64-public-access-policy" {
+  statement {
+    principals {
+      identifiers = ["*"]
+      type = "*"
+    }
+
+    actions = [
+      "s3:GetObject",
+    ]
+
+    effect = "Allow"
+    resources = [
+      "${aws_s3_bucket.whist-browser-macos-arm64.arn}/*",
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "whist-browser-macos-x64-public-access-policy" {
+  statement {
+    principals {
+      identifiers = ["*"]
+      type = "*"
+    }
+
+    actions = [
+      "s3:GetObject",
+    ]
+
+    effect = "Allow"
+    resources = [
+      "${aws_s3_bucket.whist-browser-macos-x64.arn}/*",
+    ]
+  }
+}
+
 # ------------------------------ Policies for macOS Whist Chromium Browser ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-browser-macos-arm64" {
@@ -14,6 +52,19 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-macos-x64" {
   block_public_policy     = false
   restrict_public_buckets = false
   ignore_public_acls      = false
+}
+
+# Only make the buckets publicly accessible in prod
+resource "aws_s3_bucket_policy" "whist-browser-macos-arm64-public-access-policy-attachment" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-browser-macos-arm64.id
+  policy = data.aws_iam_policy_document.whist-browser-macos-arm64-public-access-policy.json
+}
+
+resource "aws_s3_bucket_policy" "whist-browser-macos-x64-public-access-policy-attachment" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-browser-macos-x64.id
+  policy = data.aws_iam_policy_document.whist-browser-macos-x64-public-access-policy.json
 }
 
 # ------------------------- Policy for Linux Server-side Whist Chromium Browser ------------------------- #
