@@ -542,12 +542,10 @@ void destroy_audio(AudioContext* audio_context) {
     // Destroy the audio device
     destroy_audio_player(audio_context);
     // Destory the buffer for buffering state
-    size_t abb_size =
-        DECODED_BYTES_PER_FRAME *
-        (audio_context->adaptive_parameter_controller->get_max_possible_device_queue_target_size() +
-         1);
     MUNLOCK(free(audio_context->audio_buffering_buffer), audio_context->audio_buffering_buffer,
-            abb_size);
+            DECODED_BYTES_PER_FRAME * (audio_context->adaptive_parameter_controller
+                                           ->get_max_possible_device_queue_target_size() +
+                                       1));
     // Free the audio struct
     MUNLOCK(free(audio_context), audio_context, sizeof(AudioContext));
 }
