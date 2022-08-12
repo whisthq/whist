@@ -53,8 +53,10 @@ static int multithreaded_print_system_info(void *opaque) {
     print_monitors();
     print_hard_drive_info();
 
-    whist_sleep(10000);
-    mlock_memory();
+    while (true) {
+        whist_sleep(5000);
+        mlock_memory();
+    }
 
     return 0;
 }
