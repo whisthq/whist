@@ -203,4 +203,4 @@ case "$BROWSER_APPLICATION" in
 esac
 
 # Start the browser with the KDE desktop environment
-exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 "$APPLICATION_NAME" "${flags[@]}"
+exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 "$BROWSER_APPLICATION" "${flags[@]}"
