@@ -63,8 +63,10 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-macos-x64" {
   ignore_public_acls      = false
 }
 
-# The buckets have to be publicly accessible in all environments so that
-# auto-update works correctly.
+# The buckets containing the Whist Browser applications that users download have to be 
+# publicly accessible in all environments so that auto-update works correctly. We keep
+# the buckets for server-side Whist Browser, which runs in our mandelboxes, private since
+# those get autoupdated at deploys.
 
 resource "aws_s3_bucket_policy" "whist-browser-macos-arm64-public-access-policy-attachment" {
   bucket = aws_s3_bucket.whist-browser-macos-arm64.id
