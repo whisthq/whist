@@ -114,7 +114,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 		}
 
 		// CI does not have GPUs
-		if !metadata.IsRunningInCI() && metadata.IsGPU() {
+		if !metadata.IsRunningInCI() {
 			if err := mandelbox.AssignGPU(); err != nil {
 				return utils.MakeError("error assigning GPU: %s", err)
 			}
@@ -158,20 +158,13 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 
 	aesKey := utils.RandHex(16)
 	mandelbox.SetPrivateKey(mandelboxtypes.PrivateKey(aesKey))
-
-	// Common env variables
 	envs := []string{
 		utils.Sprintf("WHIST_AES_KEY=%s", aesKey),
+		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
+		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
 		utils.Sprintf("WHIST_INITIAL_USER_DATA_FILE=%v/%v", mandelboxData.UserInitialBrowserDirInMbox, mandelboxData.UserInitialBrowserFile),
 	}
-
-	// Add additional env variables if host is using GPU
-	if metadata.IsGPU() {
-		envs = append(envs, utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"))
-		envs = append(envs, "NVIDIA_DRIVER_CAPABILITIES=all")
-	}
-
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
 		Env:          envs,
