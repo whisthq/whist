@@ -140,7 +140,7 @@ def restore_network_conditions(remote_executor):
     command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
     # Cannot use wait_until_cmd_done because we need to handle clase where ifconfig is not installed
     remote_executor.run_command(
-        command, description="Obtaining list of network devices on client instance"
+        command, description="Obtaining list of network devices on client instance", quiet=True
     )
 
     # Since we use ifconfig to apply network degradations, if ifconfig is not installed, we know
@@ -162,6 +162,7 @@ def restore_network_conditions(remote_executor):
         command,
         description="Stopping the process applying the artificial network conditions",
         ignore_exit_codes=True,
+        quiet=True,
     )
 
     # Get names of network devices
@@ -187,6 +188,6 @@ def restore_network_conditions(remote_executor):
         description = f"Restoring normal network conditions on device {device}"
         # Inbound/outbound degradations
         command = f"sudo tc qdisc del dev {device} handle ffff: ingress ; sudo tc qdisc del dev {device} root netem"
-        remote_executor.run_command(command, description, ignore_exit_codes=True)
+        remote_executor.run_command(command, description, ignore_exit_codes=True, quiet=True)
 
-    remote_executor.run_command("sudo modprobe -r ifb", description)
+    remote_executor.run_command("sudo modprobe -r ifb")

@@ -281,7 +281,9 @@ def shutdown_and_wait_server_exit(remote_executor, session_id, exit_confirm_exp)
     remote_executor.run_command("pkill chrome", description="Shut down Chrome")
 
     # Give WhistServer 20s to shutdown properly
-    remote_executor.run_command("sleep 20", description="Give WhistServer 20s to shutdown properly")
+    remote_executor.run_command(
+        "sleep 20", description="Give WhistServer 20s to shutdown properly", quiet=True
+    )
 
     # Check the log to see if WhistServer shut down gracefully or if there was a server hang
     server_log_filepath = os.path.join("/var/log/whist", session_id, "main-out.log")
