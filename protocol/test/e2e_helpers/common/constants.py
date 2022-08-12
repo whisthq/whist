@@ -30,9 +30,8 @@ username = "ubuntu"
 # The number of times to retry if a SSH connection is refused or if the connection attempt times out
 ssh_connection_retries = 5
 # The timeout after which we give up on commands that have not finished on a remote AWS EC2 instance.
-# This value should not be set to less than 40mins (2400s). For the backend test, we set it to a larger
-# number as sometimes building the mandelboxes takes longer if the network is slow
-aws_timeout_seconds = 2400 if job_name != "backend-integration-test" else 3600
+# This value should not be set to less than 40mins (2400s).
+aws_timeout_seconds = 2400
 
 # The path (on the machine running this script) to the file containing the AWS credentials to use
 # to access the Whist AWS console. The file should contain the access key ID and the secret access key.
