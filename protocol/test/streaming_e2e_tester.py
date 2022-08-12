@@ -186,15 +186,6 @@ if __name__ == "__main__":
             f"Connecting to server AWS instance with hostname: {server_hostname} and client AWS instance with hostname: {client_hostname}..."
         )
 
-    # Create variables containing the commands to launch SSH connections to the client/server instance(s) and
-    # generate strings containing the shell prompt(s) that we expect on the EC2 instance(s) when running commands.
-    server_cmd = f"ssh {username}@{server_hostname} -i {ssh_key_path} -o TCPKeepAlive=yes -o ServerAliveInterval=15"
-    client_cmd = f"ssh {username}@{client_hostname} -i {ssh_key_path} -o TCPKeepAlive=yes -o ServerAliveInterval=15"
-    pexpect_prompt_server = f"{username}@ip-{server_private_ip}"
-    pexpect_prompt_client = (
-        f"{username}@ip-{client_private_ip}" if use_two_instances else pexpect_prompt_server
-    )
-
     timestamps.add_event("Connecting to the instance(s)")
 
     # 6 - Setup the client and the server. Use multiprocesssing to parallelize the work in case
@@ -206,11 +197,11 @@ if __name__ == "__main__":
         {
             "server_hostname": server_hostname,
             "client_hostname": client_hostname,
+            "server_private_ip": server_private_ip,
+            "client_private_ip": client_private_ip,
             "ssh_key_path": ssh_key_path,
             "server_log_filepath": server_log_filepath,
             "client_log_filepath": client_log_filepath,
-            "pexpect_prompt_server": pexpect_prompt_server,
-            "pexpect_prompt_client": pexpect_prompt_client,
             "github_token": github_token,
             "use_two_instances": use_two_instances,
             "testing_time": testing_time,
@@ -272,9 +263,9 @@ if __name__ == "__main__":
     # that all operations below do not take too much time.
 
     # Start SSH connection(s) to the EC2 instance(s) to run the host-service commands
-    server_hs_executor = RemoteExecutor(server_cmd, pexpect_prompt_server, server_log_filename)
+    server_hs_executor = RemoteExecutor(server_instance_ip, server_private_ip, ssh_key_path, server_log_filename)
     client_hs_executor = (
-        RemoteExecutor(client_cmd, pexpect_prompt_client, client_log_filename)
+        RemoteExecutor(client_instance_ip, client_private_ip, ssh_key_path, client_log_filename)
         if use_two_instances
         else server_hs_executor
     )
@@ -288,7 +279,7 @@ if __name__ == "__main__":
 
     # 9 - Run the browser/chrome server mandelbox on the server instance
     # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
-    server_executor = RemoteExecutor(server_cmd, pexpect_prompt_server, server_log_filename)
+    server_executor = RemoteExecutor(server_instance_ip, server_private_ip, ssh_key_path, server_log_filename)
 
     server_executor.set_mandelbox_mode(True)
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
@@ -303,7 +294,7 @@ if __name__ == "__main__":
     # 10 - Run the development/client client mandelbox on the client instance
     # Start SSH connection(s) to the EC2 instance(s) to run the development/client
     # client mandelbox on the client instance
-    client_executor = RemoteExecutor(client_cmd, pexpect_prompt_client, client_log_filename)
+    client_executor = RemoteExecutor(client_instance_ip, client_private_ip, ssh_key_path, client_log_filename)
 
     # Set up the artifical network degradation conditions on the client, if needed
     setup_artificial_network_conditions(
@@ -331,26 +322,24 @@ if __name__ == "__main__":
     # 12 - Grab the logs, check for errors, restore default network conditions, cleanup, shut down the instances, and save the results
     complete_experiment_and_save_results(
         server_hostname,
+        server_private_ip,
         server_instance_id,
         server_docker_id,
-        server_cmd,
         server_log_filename,
         server_metrics_file,
         region_name,
         existing_server_instance_id,
         server_executor,
         server_hs_executor,
-        pexpect_prompt_server,
         client_hostname,
+        client_private_ip,
         client_instance_id,
         client_docker_id,
-        client_cmd,
         client_log_filename,
         client_metrics_file,
         existing_client_instance_id,
         client_executor,
         client_hs_executor,
-        pexpect_prompt_client,
         ssh_key_path,
         boto3client,
         use_two_instances,

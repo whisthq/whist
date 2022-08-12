@@ -7,12 +7,11 @@ from e2e_helpers.common.timestamps_and_exit_tools import (
     exit_with_error,
 )
 from e2e_helpers.common.constants import (
+    username,
     running_in_ci,
     pexpect_max_retries,
     ssh_connection_retries,
     aws_timeout_seconds,
-    TIMEOUT_EXIT_CODE,
-    TIMEOUT_KILL_EXIT_CODE,
 )
 
 from e2e_helpers.common.timestamps_and_exit_tools import (
@@ -25,21 +24,17 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 class RemoteExecutor:
-    def __init__(self, ssh_command, pexpect_prompt, log_filename):
-        self.ssh_command = ssh_command
-        self.pexpect_prompt = pexpect_prompt
+    def __init__(self, public_ip, private_ip, ssh_key_path, log_filename):
+        self.ssh_command = f"ssh {username}@{public_ip} -i {ssh_key_path} -o TCPKeepAlive=yes -o ServerAliveInterval=15"
+        self.pexpect_prompt = f"{username}@ip-{private_ip}"
+        self.mandelbox_prompt = ":/#"
+        self.mandelbox_mode = False
         self.logfile = open(log_filename, "a")
         self.prompt_printed_twice = not running_in_ci
-        self.ignore_exit_codes = False
-        self.__reset_old_mode_fields()
         self.__connect_to_instance()
 
-    def __reset_old_mode_fields(self):
-        self.old_prompt_printed_twice = None
-        self.old_pexpect_prompt = None
-        self.old_ignore_exit_codes = None
 
-    def __connect_to_instance(self):
+    def __connect_to_instance(self, verbose = False):
         """
         Attempt to establish a SSH connection to a remote machine. It is normal for the function to
         need several attempts before successfully opening a SSH connection to the remote machine.
@@ -74,13 +69,15 @@ class RemoteExecutor:
             if result_index == 0:
                 # If the connection was refused, sleep for 30s and then retry
                 # (unless we exceeded the max number of retries)
-                print(
-                    f"\tSSH connection refused by host (retry {retries + 1}/{ssh_connection_retries})"
-                )
-                self.pexpect_process.kill(0)
+                if verbose:
+                    print(
+                        f"\tSSH connection refused by host (retry {retries + 1}/{ssh_connection_retries})"
+                    )
+                    self.pexpect_process.kill(0)
                 time.sleep(30)
             elif result_index == 1 or result_index == 2:
-                print(f"SSH connection established with EC2 instance!")
+                if verbose:
+                    print(f"SSH connection established with EC2 instance!")
                 # Confirm that we want to connect, if asked
                 if result_index == 1:
                     self.pexpect_process.sendline("yes")
@@ -93,7 +90,8 @@ class RemoteExecutor:
             elif result_index >= 3:
                 # If the connection timed out, sleep for 30s and then retry
                 # (unless we exceeded the max number of retries)
-                print(f"\tSSH connection timed out (retry {retries + 1}/{ssh_connection_retries})")
+                if verbose:
+                    print(f"\tSSH connection timed out (retry {retries + 1}/{ssh_connection_retries})")
                 self.pexpect_process.kill(0)
                 time.sleep(30)
         # Give up if the SSH connection was refused too many times.
@@ -141,42 +139,30 @@ class RemoteExecutor:
         """
         return any(expression in item for item in self.pexpect_output if isinstance(item, str))
 
-    def set_mandelbox_mode(self, set=False):
-        if set == True:
-            self.old_prompt_printed_twice = self.prompt_printed_twice
-            self.old_pexpect_prompt = self.pexpect_prompt
-            self.old_ignore_exit_codes = self.ignore_exit_codes
-
-            self.prompt_printed_twice = False
-            self.pexpect_prompt = ":/#"
-            self.ignore_exit_codes = True
-        else:
-            self.prompt_printed_twice = self.old_prompt_printed_twice
-            self.pexpect_prompt = self.old_pexpect_prompt
-            self.ignore_exit_codes = self.old_ignore_exit_codes
-            self.__reset_old_mode_fields()
+    def set_mandelbox_mode(self, value=True):
+        self.mandelbox_mode = value
 
     def __remote_exec(self, command, description="command", max_retries=pexpect_max_retries):
         result = 0
         for i in range(max_retries):
-            ssh_connection_broken_msg = "client_loop: send disconnect: Broken pipe"
+            ssh_connection_broken_msg1 = "client_loop: send disconnect: Broken pipe"
+            ssh_connection_broken_msg2 = f"Connection to {self.public_ip} closed by remote host."
+            ssh_connection_broken_msg3 = f"Connection to {self.public_ip} closed."
 
             self.pexpect_process.sendline(command)
             result = self.pexpect_process.expect(
-                list(
-                    filter(
-                        None,
-                        [
-                            self.pexpect_prompt,
-                            ssh_connection_broken_msg,
-                            pexpect.exceptions.TIMEOUT,
-                            pexpect.EOF,
-                            self.old_pexpect_prompt,
-                        ],
-                    )
-                )
+                [
+                    self.pexpect_prompt,
+                    self.mandelbox_prompt,
+                    ssh_connection_broken_msg1,
+                    ssh_connection_broken_msg2,
+                    ssh_connection_broken_msg3,
+                    pexpect.exceptions.TIMEOUT,
+                    pexpect.EOF,
+                    
+                ]
             )
-            if result == 0:
+            if result == 0 or result == 1:
                 ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]")
                 # Clean the stdout output and save it in a list, one line per element. We need to do this before calling
                 # expect again (if we are in a situation that requires it), otherwise the output will be overwritten.
@@ -184,30 +170,39 @@ class RemoteExecutor:
                     ansi_escape.sub("", line.replace("\r", "").replace("\n", ""))
                     for line in self.pexpect_process.before.decode("utf-8").strip().split("\n")
                 ]
-
-                if self.prompt_printed_twice:
-                    # Colored/formatted stdout (such as the bash prompt) is sometimes duplicated when piped to a pexpect process.
-                    # This is likely a platform-dependent behavior and does not occur when running this script in CI, or when running
-                    # a command on nested bash shells on remote instances (e.g. the bash script used to run commands on a docker
-                    # container). If we are in a situation where the prompt is printed twice, we need to wait for the duplicated
-                    # prompt to be printed before moving forward, otherwise the duplicated prompt will interfere with the next
-                    # command that we send.
-                    self.pexpect_process.expect(self.pexpect_prompt)
-                break
-            elif result == 1:
-                printformat("Warning: Remote instance dropped the SSH connection", "yellow")
-                self.__connect_to_instance()
-            elif result == 2:
+                if result == 0:
+                    if self.prompt_printed_twice:
+                        # Colored/formatted stdout (such as the bash prompt) is sometimes duplicated when piped to a pexpect process.
+                        # This is likely a platform-dependent behavior and does not occur when running this script in CI, or when running
+                        # a command on nested bash shells on remote instances (e.g. the bash script used to run commands on a docker
+                        # container). If we are in a situation where the prompt is printed twice, we need to wait for the duplicated
+                        # prompt to be printed before moving forward, otherwise the duplicated prompt will interfere with the next
+                        # command that we send.
+                        self.pexpect_process.expect(self.pexpect_prompt)
+                    if self.mandelbox_mode:
+                        printformat(f"Warning: `{description}` did not start mandelbox properly or the shell attached to it crashed", "yellow")
+                    else:
+                        break
+                else:
+                    if not self.mandelbox_mode:
+                        printformat(f"Warning: `{description}` did not exit the shell attached to a mandelbox", "yellow")
+            elif (result == 2 or result == 3 or result == 4):
+                if not self.mandelbox_mode:
+                    printformat("Warning: Remote instance dropped the SSH connection", "yellow")
+                    self.__connect_to_instance()
+                else:
+                    exit_with_error(f"Error: Remote instance dropped the SSH connection while shell was attached to a mandelbox.")
+            elif result == 5:
                 printformat(f"Warning: {description} timed out!", "yellow")
-            elif result == 3:
-                exit_with_error(f"Warning: {description} got an EOF before completing")
-        return result
+            elif result == 6:
+                exit_with_error(f"Warning: {description} got an EOF before completing.")
+        return result == self.mandelbox_mode
 
     def get_exit_code(self):
         previous_cmd_output = self.pexpect_output
         exit_code = 0
-        result = self.__remote_exec("echo $?", description="getting exit code", max_retries=1)
-        if result == 0:
+        success = self.__remote_exec("echo $?", description="getting exit code", max_retries=1)
+        if success:
             filtered_output = [
                 x
                 for x in self.pexpect_output
@@ -232,9 +227,10 @@ class RemoteExecutor:
         self,
         command,
         description="command",
+        quiet=False,
         max_retries=1,
         success_message=None,
-        ignore_exit_codes=None,
+        ignore_exit_codes=False,
         errors_to_handle=[],
     ):
         """
@@ -243,52 +239,41 @@ class RemoteExecutor:
         actions are executed with remote_exec.
         """
 
-        if description != "command":
+        if description != "command" and not quiet:
             print(description)
 
         for i in range(max_retries):
-            exit_code = self.__remote_exec(command, description)
-
-            if ignore_exit_codes is None:
-                ignore_exit_codes = self.ignore_exit_codes
-            if exit_code == 0 and not ignore_exit_codes:
-                exit_code = self.get_exit_code()
-
-            errors_found = False
+            success = self.__remote_exec(command, description)
+            if not ignore_exit_codes:
+                exit_code = self.get_exit_code
+                if exit_code:
+                    printformat(f"Warning: {description} got exit code: {exit_code}", "yellow")
+                success *= exit_code == 0
+            
+            # Check against additional errors (if specified), and apply relevant corrective actions
             corrective_actions = []
             for error in errors_to_handle:
                 error_stdout_message, message_for_user, corrective_action = error
                 if self.expression_in_pexpect_output(error_stdout_message):
-                    errors_found = True
+                    success = False
                     if corrective_action:
                         corrective_actions.append(corrective_action)
                         printformat(f"Warning: {message_for_user}", "yellow")
                     else:
                         exit_with_error(f"Error: {message_for_user}")
-
             for cmd in set(corrective_actions):
-                self.remote_exec(cmd)
+                self.__remote_exec(cmd)
 
-            if exit_code != 0:
-                if exit_code == TIMEOUT_EXIT_CODE or exit_code == TIMEOUT_KILL_EXIT_CODE:
-                    printformat(f"Warning: {description} timed out", "yellow")
-                else:
-                    printformat(f"Warning: {description} got exit code: {exit_code}", "yellow")
-
+            # If the command succeded, return without raising errors
             if success_message is not None:
-                if exit_code == 0 or self.expression_in_pexpect_output(
-                    success_message, self.pexpect_output
-                ):
+                # Finding the success message (if specified) in the output means the command succeeded
+                if self.expression_in_pexpect_output(success_message):
                     return
-            else:
-                if exit_code == 0 and not errors_found:
-                    return
-        if max_retries > 1:
-            exit_with_error(
-                f"Error: {description} failed ({max_retries} times)! Giving up now and exiting the script"
-            )
-        else:
-            exit_with_error(None, None)
+            elif success:
+                return
+        
+        exit_with_error(f"Error: {description} failed ({max_retries} time(s))!")
+        
 
     def destroy(self):
         self.pexpect_process.kill(0)

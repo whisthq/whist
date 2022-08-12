@@ -25,3 +25,6 @@ sentry-native/
 # Cmake
 build/
 build-*/
+
+# E2E configs file for manual runs
+test/e2e_helpers/configs/default.yaml

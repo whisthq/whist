@@ -1,0 +1,72 @@
+################################################# REQUIRED fields: #################################################
+# ssh_key_name: the name of the AWS RSA SSH key you wish to use to access the E2 instance(s). If you are running the
+#               script locally, the key name is likely of the form <yourname-key>. Make sure to pass the key-name for
+#               the region of interest
+# ssh_key_path: The path to the .pem certificate on this machine to use in connection to the RSA SSH key passed to the
+#               ssh-key-name value.
+# ssh_key_path: The path to the .pem certificate on this machine to use in connection to the RSA SSH key passed to the
+#               ssh-key-name value.
+# github_token: The GitHub Personal Access Token with permission to fetch the whisthq/whist repository.
+#####################################################################################################################
+
+ssh_key_name:
+ssh_key_path:
+github_token:
+
+################################################# OPTIONAL fields: #################################################
+# region_name:  The AWS region to use for testing. Passing an empty string will let the script run the test on any
+#               region with space available for the new instance(s). If you are looking to re-use an instance for the
+#               client and/or server, the instance(s) must live on the region passed to this parameter. If you pass
+#               an empty string, the key-pair that you pass must be valid on all AWS regions.
+# use_two_instances:  Whether to run the client on a separate AWS instance, instead of the same as the server.
+# existing_server_instance_id:  The instance ID of an existing instance to use for the Whist server during the E2E
+#                               test. You can only pass a value to this parameter if you passed `true` to
+#                               --use-two-instances. Otherwise, the server will be installed and run on the same
+#                               instance as the client. The instance will be stopped upon completion.
+#                               If left empty (and --use-two-instances=true), a clean new instance will be generated
+#                               instead, and it will be terminated (instead of being stopped) upon completion of the
+#                               test.
+# existing_client_instance_id:  The instance ID of an existing instance to use for the Whist dev client during the E2E
+#                               test. If the flag --use-two-instances=false is used (or if the flag --use-two-instances
+#                               is not used), the Whist server will also run on this instance. The instance will be
+#                               stopped upon completion.
+#                               If left empty, a clean new instance will be generated instead, and it will be terminated
+#                               (instead of being stopped) upon completion of the test.
+# skip_host_setup:  This option allows you to skip the host-setup on the instances to be used for the test, saving time.
+# skip_git_clone:   This option allows you to skip cloning the Whist repository on the instance(s) to be used for the
+#                   test. The test will also not checkout the current branch or pull from Github, using the code from
+#                   the /whist folder on the existing instance(s) as is. This option is useful if you need to run several
+#                   tests in succession using code from the same commit.
+# cmake_build_type: The Cmake build type to use when building the protocol.
+# network_conditions: The network conditions for the experiment. The input is in the form of up to five comma-separated
+#                     values indicating the max bandwidth, delay (in ms), percentage of packet drops (in the range
+#                     [0.0,1.0]), queue capacity, and the interval of change of the network conditions. Each condition
+#                     can be expressed using a single float (for conditions that do not change over time) or as a range
+#                     expressed using a min and max value separated by a hyphen. `normal` will allow the network to run
+#                     with no degradation. Passing `None` to one of the five parameters will result in no limitations
+#                     being imposed to the corresponding network condition. For more details about the usage of the five
+#                     network condition parameters, check out the apply_network_conditions.sh script in
+#                     protocol/test/helpers/setup.
+# testing_urls: The URL to visit during the test. The default is a 4K video stored on our AWS S3.
+# testing_time: The time (in seconds) to wait at the URL from the `--testing-url` flag before shutting down the
+#               client/server and grabbing the logs and metrics. The default value is the duration of the default 4K
+#               video from AWS S3.
+# simulate_scrolling: Number of rounds of scrolling that should be simulated on the client side. One round of
+#                     scrolling = Slow scroll down + Slow scroll up + Fast scroll down + Fast scroll up
+# leave_instances_on:   This option allows you to override the default behavior and leave the instances running upon
+#                       completion of the test, instead of stopping (if reusing existing ones) or terminating
+#                       (if creating new ones) them.
+#####################################################################################################################
+
+region_name: "us-east-1" # empty string will let the script pick the first region (in alphabetic order) with available capacity
+use_two_instances: "false"
+existing_server_instance_id: ""
+existing_client_instance_id: ""
+skip_host_setup: "false"
+skip_git_clone: "false"
+cmake_build_type: dev
+network_conditions: normal
+testing_urls: https://whist-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4
+testing_time: 126 # Length of the video in link above is 2mins, 6seconds
+simulate_scrolling: 0
+leave_instances_on: "true"

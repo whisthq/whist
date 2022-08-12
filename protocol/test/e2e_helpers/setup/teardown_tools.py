@@ -165,26 +165,24 @@ def extract_logs_from_mandelbox(
 
 def complete_experiment_and_save_results(
     server_hostname,
+    server_private_ip,
     server_instance_id,
     server_docker_id,
-    server_cmd,
     server_log_filename,
     server_metrics_file,
     region_name,
     existing_server_instance_id,
     server_executor,
     server_hs_executor,
-    pexpect_prompt_server,
     client_hostname,
+    client_private_ip,
     client_instance_id,
     client_docker_id,
-    client_cmd,
     client_log_filename,
     client_metrics_file,
     existing_client_instance_id,
     client_executor,
     client_hs_executor,
-    pexpect_prompt_client,
     ssh_key_path,
     boto3client,
     use_two_instances,
@@ -264,8 +262,9 @@ def complete_experiment_and_save_results(
         # Get new SSH connection because current ones are connected to the mandelboxes' bash,
         # and we cannot exit them until we have copied over the logs
         client_restore_net_executor = RemoteExecutor(
-            client_cmd,
-            pexpect_prompt_client,
+            client_hostname
+            client_private_ip,
+            ssh_key_path,
             client_log_filename,
         )
         restore_network_conditions(client_restore_net_executor)
@@ -295,14 +294,16 @@ def complete_experiment_and_save_results(
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
 
     log_grabber_server_executor = RemoteExecutor(
-        server_cmd,
-        pexpect_prompt_server,
+        server_hostname,
+        server_private_ip,
+        ssh_key_path,
         server_log_filename,
     )
 
     log_grabber_client_executor = RemoteExecutor(
-        client_cmd,
-        pexpect_prompt_client,
+        client_hostname,
+        client_private_ip,
+        ssh_key_path,
         client_log_filename,
     )
 
