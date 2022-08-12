@@ -91,6 +91,9 @@ echo "Fetching the Whist fonts..."
 mkdir -p base/build-assets/build-temp/fonts
 aws s3 sync s3://whist-fonts base/build-assets/build-temp/fonts
 
+echo "Fetching Whistium..."
+aws s3 sync s3://whist-server-browser-linux-x64-dev browsers/whistium/s3
+
 # Bundle these build assets into a cached Docker image
 echo "Bundling build assets..."
 docker build -t whist/build-assets:default -f base/build-assets/Dockerfile.20 --target default base/build-assets -q > /dev/null

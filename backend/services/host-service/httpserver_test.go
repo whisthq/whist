@@ -387,11 +387,11 @@ func TestGetAppNameEmpty(t *testing.T) {
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
-	// Should default name to browsers/chrome
+	// Should default name to browsers/whistium
 	_, appName := getAppName(testMandelboxSubscription, testTransportRequestMap, testmux)
 
-	if appName != mandelboxtypes.AppName("browsers/chrome") {
-		t.Fatalf("error getting app name. Expected %v, got %v", mandelboxtypes.AppName("browsers/chrome"), appName)
+	if appName != mandelboxtypes.AppName("browsers/whistium") {
+		t.Fatalf("error getting app name. Expected %v, got %v", mandelboxtypes.AppName("browsers/whistium"), appName)
 	}
 }
 
@@ -422,7 +422,7 @@ func TestGetAppNameNoRequest(t *testing.T) {
 
 // TestGetAppName will set appName to JSON request app name
 func TestGetAppName(t *testing.T) {
-	var appNames = []string{"browsers/chrome", "browsers/brave", "browsers/test"}
+	var appNames = []string{"browsers/chrome", "browsers/whistium", "browsers/brave", "browsers/test"}
 
 	for _, appName := range appNames {
 		testJSONTransportRequest := httputils.JSONTransportRequest{

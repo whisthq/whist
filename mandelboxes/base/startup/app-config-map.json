@@ -8,5 +8,10 @@
     "source": "BraveSoftware",
     "destination": "/home/whist/.config/BraveSoftware",
     "type": "folder"
+  },
+  {
+    "source": "whistium",
+    "destination": "/home/whist/.config/chromium",
+    "type": "folder"
   }
 ]

@@ -293,7 +293,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 			if localDevTimeout != "" {
 				protocolTimeout, err = strconv.Atoi(localDevTimeout)
 				if err != nil {
-					logger.Warningf("SpinUpMandelbox(): Error parsing LOCALDEV_TIMEOUT envvar: %s", err)
+					logger.Warningf("SpinUpMandelbox(): Error parsing LOCALDEV_PROTOCOL_TIMEOUT envvar: %s", err)
 				}
 			} else {
 				protocolTimeout = -1
