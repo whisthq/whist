@@ -287,7 +287,7 @@ def shutdown_and_wait_server_exit(remote_executor, session_id, exit_confirm_exp)
 
     # Check the log to see if WhistServer shut down gracefully or if there was a server hang
     server_log_filepath = os.path.join("/var/log/whist", session_id, "main-out.log")
-    remote_executor.run_command(f"tail{server_log_filepath}")
+    remote_executor.run_command(f"tail {server_log_filepath}")
     server_has_exited = remote_executor.expression_in_pexpect_output(exit_confirm_exp)
 
     return server_has_exited
