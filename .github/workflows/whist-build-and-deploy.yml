@@ -1112,8 +1112,8 @@ jobs:
           # update servers, which are necessary for Chrome Extensions to work properly.
           #
           # For more context, see: https://www.chromium.org/administrators/policy-list-3/extension-settings-full/
-          export npm_config_updater_dev_endpoint=http://clients2.google.com/service/update2/crx
-          export npm_config_updater_prod_endpoint=http://clients2.google.com/service/update2/crx
+          export npm_config_updater_dev_endpoint=https://clients2.google.com/service/update2/crx
+          export npm_config_updater_prod_endpoint=https://clients2.google.com/service/update2/crx
 
           # TODO: Configure a variations server for Whist to enable A/B testing
           # export npm_config_brave_variations_server_url=https://
