@@ -60,12 +60,9 @@ typedef struct {
     mach_vm_size_t size;
 } VMRegion;
 
-#define MAX_REGIONS 1000
-
 void mlock_memory(void) {
     // this is probably bad practice, sorry -- using the fact that this is unsigned
     static mach_vm_address_t max_addr = (mach_vm_address_t)-1;
-    static VMRegion regions[MAX_REGIONS];
     static int num_mlocked_regions = 0;
     static int num_munlocked_regions = 0;
     static LinkedList region_list;
