@@ -47,7 +47,7 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData t
 	// Verify that the string is a valid JSON
 	ok := json.Valid([]byte(inflatedBrowserData))
 	if !ok {
-		logger.Warningf("invalid JSON string received as browser data: %s", err)
+		logger.Warningf("invalid JSON string received as browser data")
 		inflatedBrowserData = ""
 	}
 

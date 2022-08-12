@@ -127,7 +127,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	err := preCreateGroup.Wait()
 	if err != nil {
 		incrementErrorRate()
-		return nil, err
+		return mandelbox, err
 	}
 
 	// We need to compute the Docker image to use for this mandelbox. In local
@@ -244,7 +244,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	dockerBody, err := dockerClient.ContainerCreate(mandelbox.GetContext(), &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, mandelboxName)
 	if err != nil {
 		incrementErrorRate()
-		return nil, utils.MakeError("error running `create` for %s: %s", mandelbox.GetID(), err)
+		return mandelbox, utils.MakeError("error running `create`: %s", err)
 	}
 
 	logger.Infow(utils.Sprintf("SpinUpMandelbox(): Value returned from ContainerCreate: %#v", dockerBody), contextFields)
@@ -304,7 +304,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	err = mandelbox.MarkParamsReady()
 	if err != nil {
 		incrementErrorRate()
-		return nil, utils.MakeError("error marking mandelbox %s as ready to start A/V + display: %s", mandelboxID, err)
+		return mandelbox, utils.MakeError("error marking mandelbox as ready to start A/V + display: %s", err)
 	}
 	logger.Infow("SpinUpMandelbox(): Successfully marked mandelbox params as ready. A/V and display services can soon start.", contextFields)
 
@@ -323,7 +323,7 @@ func StartMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cancel
 	err = postCreateGroup.Wait()
 	if err != nil {
 		incrementErrorRate()
-		return nil, err
+		return mandelbox, err
 	}
 
 	// Mark mandelbox creation as successful, preventing cleanup on function
