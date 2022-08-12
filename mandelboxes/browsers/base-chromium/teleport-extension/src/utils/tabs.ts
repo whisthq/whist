@@ -15,7 +15,7 @@ const createTab = (
   })
 }
 
-const updateTab = (tabId: number, updateProperties: object, callback?: (tab: chrome.tabs.Tab) => void) => {
+const updateTab = (tabId: number, updateProperties: object, callback?: (tab?: chrome.tabs.Tab) => void) => {
   callback === undefined ? chrome.tabs.update(tabId, updateProperties) : chrome.tabs.update(tabId, updateProperties, callback)
 }
 
