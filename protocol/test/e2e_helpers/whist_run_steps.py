@@ -148,10 +148,7 @@ def build_mandelboxes_on_instance(build_executor, cmake_build_type, role, testin
     SSH connection to the host, and that the Whist repository has already been cloned.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used to
-                                                    interact with the remote machine
-        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when
-                                it is ready to execute a command
+        build_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
         cmake_build_type (str): A string identifying whether to build the protocol in release,
                                 debug, metrics, or any other Cmake build mode that will be introduced later.
         role (str): Specifies whether we need to build the server or client mandelbox
@@ -201,8 +198,7 @@ def run_mandelbox_on_instance(remote_executor, role, json_data=None, simulate_sc
     already running on the remote machine.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used to
-                                                    interact with the remote machine
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
         role (str): Specifies whether we need to run the server or client mandelbox
         json_data (str):    A dictionary containing the IP, AES KEY, and port mappings that are needed by the client to
                             successfully connect to the Whist server. This argument will be None and is ignored when
@@ -234,16 +230,15 @@ def run_mandelbox_on_instance(remote_executor, role, json_data=None, simulate_sc
         else f"Running the {role} mandelbox, and connecting to the server!"
     )
     remote_executor.run_command(command, description)
-    mandelbox_output = remote_executor.pexpect_output
 
     # Need to wait for special mandelbox prompt ":/#". prompt_printed_twice must always be set to False in this case.
-    docker_id = mandelbox_output[-2].replace(" ", "")
+    docker_id = remote_executor.pexpect_output[-2].replace(" ", "")
     print(f"Whist {role} started on EC2 instance, on Docker container {docker_id}!")
 
     if role == "server":
         # Retrieve connection configs from server
         json_data = {}
-        for line in mandelbox_output:
+        for line in remote_executor.pexpect_output:
             if "linux/macos" in line:
                 config_vals = line.strip().split()
                 server_addr = config_vals[2]
@@ -269,8 +264,7 @@ def shutdown_and_wait_server_exit(remote_executor, session_id, exit_confirm_exp)
     Initiate shutdown and wait for server exit to see if the server hangs or exits gracefully
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  Server pexpect process - MUST BE AFTER DOCKER COMMAND WAS RUN - otherwise
-                                                    behavior is undefined
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
         session_id (str): The protocol session id (if set), or an empty string (otherwise)
         exit_confirm_exp (str): Target expression to expect on a graceful server exit
 

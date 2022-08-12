@@ -40,16 +40,11 @@ class RemoteExecutor:
         need several attempts before successfully opening a SSH connection to the remote machine.
 
         Args:
-            ssh_command (str): The shell command to use to establish a SSH connection to the remote machine.
-            log_file_handle (file): The file (already opened) to use for logging the terminal output from the
-                            remote machine
-            pexpect_prompt (file): The bash prompt printed by the shell on the remote machine when it is ready
-                            to execute a command
+            verbose (str): Whether to print information about each SSH connection attempt
 
         Returns:
             On success:
-                pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process to be used from now on to interact
-                            with the remote machine.
+                None
             On failure:
                 None and exit with exitcode -1
         """
@@ -107,18 +102,10 @@ class RemoteExecutor:
         Reboot a remote machine and establish a new SSH connection after the machine comes back up.
 
         Args:
-            pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
-                                                        be used to interact with the remote machine
-            ssh_cmd (str):  The shell command to use to establish a new SSH connection to the remote machine after
-                            the current connection is broken by the reboot.
-            log_file_handle (file): The file (already opened) to use for logging the terminal output from the remote
-                                    machine
-            pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
-                                    execute a command
+            None
 
         Returns:
-            pexpect_process (pexpect.pty_spawn.spawn):  The new Pexpect process created with pexpect.spawn(...) and to
-                                                        be used to interact with the remote machine after the reboot
+            None
         """
         # Trigger the reboot
         self.pexpect_process.sendline("sudo reboot")
@@ -133,8 +120,6 @@ class RemoteExecutor:
 
         Args:
             expression (string): This is the expression we are searching for
-            pexpect_output (list):  the stdout output of the pexpect command, with one entry for each line of the
-                                    original output.
 
         Returns:
             A boolean indicating whether the expression was found.
@@ -145,6 +130,29 @@ class RemoteExecutor:
         self.mandelbox_mode = value
 
     def __remote_exec(self, command, description="command", max_retries=pexpect_max_retries):
+        """
+        Execute a single command on a remote instance via SSH, checking for pexpect/SSH errors such as timeouts,
+        broken connections, or EOF and retrying if an error occurs. For instance, if you reboot a remote instance
+        while __remote_exec is running a command on it, the function will reconnect and rerun.
+
+        In addition to executing a command in a manner that is robust to SSH/pexpect issues, this function will
+        detect whether we are sending commands to the proper shell (shell attached to the remote instance or
+        shell attached to a mandelbox Docker container). For instance, when we call `run.sh browsers/chrome`, we
+        expect to enter the mandelbox shell and see the corresponding prompt (`:/#`). Conversely, when we call exit
+        we should revert to the instance shell and the corresponding prompt
+
+        Finally, the function will save the cleaned command stdout text to the member variable `self.pexpect_output`
+
+        Args:
+            command (str): The command to execute on the remote instance
+            description (str):  A human-readable description for the command being run. The description will be used to
+                                print a easy-understandable error message if there is an error
+            max_retries (int): The maximum number of times to retry running the command if an error is encountered.
+
+        Returns:
+            success (bool): Whether the execution was successful (no error were encountered in the last retry and the
+                            correct shell was used)
+        """
         result = 0
         for i in range(max_retries):
             ssh_connection_broken_msg1 = "client_loop: send disconnect: Broken pipe"
@@ -210,6 +218,20 @@ class RemoteExecutor:
         return result == self.mandelbox_mode
 
     def get_exit_code(self):
+        """
+        This function gets the exit code of the last command that was executed by this RemoteExecutor on the remote instance.
+        In case there is an error in the process of getting the exit code itself, we assume the command succeeded and return 0,
+        since it's tricky to retry getting the exit code.
+
+        This function preserves the stdout output of the last command by saving the contents of the `self.pexpect_output` variable
+        and restoring them before returning
+
+        Args:
+            None
+
+        Returns:
+            exit_code (int): The exit code of the last command that was executed on the remote instance.
+        """
         previous_cmd_output = self.pexpect_output
         exit_code = 0
         success = self.__remote_exec("echo $?", description="getting exit code", max_retries=1)
@@ -245,9 +267,31 @@ class RemoteExecutor:
         errors_to_handle=[],
     ):
         """
-        This function is a wrapper around remote_exec, running commands remotely, handling application-specific errors and
-        returning the output and exit codes if needed. The original command, together with any retries or relevant corrective
-        actions are executed with remote_exec.
+        This function is a wrapper around remote_exec, running a command remotely, checking if the command succeeded by looking at
+        the command's exit code, handling any application-specific errors specified by the user, and applying relevant corrective
+        actions if errors are encountered for which the user has specified a command that should be run to fix them.
+        If a non-fatal error is encountered, we retry running the command, otherwise, we exit the whole E2E script.
+
+        Args:
+            command (str): The command to execute on the remote instance
+            description (str):  A human-readable description for the command being run. The description is printed to stdout, unless
+                                quiet=True, and is also used to print a easy-understandable error message if there is an error
+            quiet (bool): Controls whether to print the command description to stdout
+            max_retries (int):  The maximum number of times to retry running the command if an application-specific error (i.e. not a
+                                SSH/pexpect/connection error) is encountered
+            success_message (str):  An expression that, if found in the stdout from the command's remote execution, tells us that the
+                                    execution was successful, so we can ignore any other error message / exit code that might indicate
+                                    otherwise. If no such message can be identified for the command being executed, simply pass None to
+                                    this parameter
+            ignore_exit_codes (bool):   Whether to avoid getting the exit code after the command was run and factoring that into the
+                                        determination of whether the execution was successful or not.
+            errors_to_handle (list):    A list of string tuples of the form: (error_stdout_message, message_for_user, corrective_action)
+                                        with command-specific errors to check for, and corresponding messages to print to stdout (if an
+                                        error is found) to inform the user, as well as a (optional) corrective action to take before
+                                        retrying to run the command if the error is fixable. If corrective_action is set to None for a
+                                        given error, and the error occurs, we treat it as a fatal error.
+        Returns:
+            None
         """
 
         if description != "command" and not quiet:
@@ -255,6 +299,8 @@ class RemoteExecutor:
 
         for i in range(max_retries):
             success = self.__remote_exec(command, description)
+            if not success:
+                break
             if not (self.mandelbox_mode or ignore_exit_codes):
                 exit_code = self.get_exit_code()
                 if exit_code:
@@ -286,5 +332,10 @@ class RemoteExecutor:
         exit_with_error(f"Error: {description} failed ({max_retries} time(s))!")
 
     def destroy(self):
+        """
+        This function shuts down the remote executor's SSH connection (if still open) to the remote instance,
+        kills the pexpect process and closes the log file used to pipe all the commands' stdout.
+        """
+
         self.pexpect_process.kill(0)
         self.logfile.close()

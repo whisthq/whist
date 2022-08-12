@@ -24,10 +24,7 @@ def setup_artificial_network_conditions(remote_executor, network_conditions, tes
     SSH connection to the host.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
-                                                    be used to interact with the remote machine
-        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
-                                ready to execute a command
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
         network_conditions (str):   The network conditions expressed as either 'normal' for no network
                                     degradation or max_bandwidth, delay, packet drop percentage, with the
                                     three values separated by commas and no space.
@@ -127,10 +124,7 @@ def restore_network_conditions(remote_executor):
     SSH connection to the host
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used to
-                                                    interact with the remote machine
-        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
-                                ready to execute a command
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
 
     Returns:
         None

@@ -37,8 +37,7 @@ def get_session_id(remote_executor, role, session_id_filename="/whist/resourceMa
     Get the protocol session id (if it is set)
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  Server/client pexpect process - MUST BE AFTER DOCKER COMMAND WAS RUN - otherwise
-                                                    behavior is undefined
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
         role (str): Controls whether to extract the `server` logs or the `client` logs
         session_id_filename (str): The path to the file on the Docker container with the protocol session id
 
@@ -86,10 +85,7 @@ def extract_logs_from_mandelbox(
     but before the server/client container is stopped/destroyed.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
-                                                    be used to interact with the remote machine
-        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
-                                ready to execute a command
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
         docker_id (str):    The Docker ID of the container running the Whist server/client
                             (browsers/chrome or development/client mandelbox) on the remote machine
         ssh_key_path (str): The path (on the machine where this script is run) to the file storing
@@ -97,8 +93,8 @@ def extract_logs_from_mandelbox(
         public_ip (str): The host name of the remote machine where the server/client was running on
         e2e_logs_folder_name (str):    The path to the folder (on the machine where this script is run)
                                         where to store the logs
-        log_grabber_log (file): The file (already opened) to use for logging the terminal output from
-                                the shell process used to download the logs
+        log_filename (file):    The path to the file to use for logging the terminal output from the shell
+                                process used to download the logs
         session_id (str): The protocol session id (if set), or an empty string (otherwise)
         role (str): Controls whether to extract the `server` logs or the `client` logs
 
@@ -207,36 +203,32 @@ def complete_experiment_and_save_results(
 
     Args:
         server_public_ip (str):  The host name of the remote machine where the server was running on
+        server_public_ip (str):  The private IP of the remote machine where the server was running on
         server_instance_id (str):   The ID of the AWS EC2 instance running the server
         server_docker_id (str): The ID of the Docker container running the server (browsers/chrome) mandelbox
-        server_cmd (str):   The string containing the command to be used to open a SSH connection to the server EC2 instance
-        server_log (file):  The file to be used to dump the server-side monitoring logs
+        server_log_filename (file):  The path to the file to be used to dump the server-side monitoring logs
         server_metrics_file (file): The filepath to the file (that we expect to see) containing the server metrics.
                                     We will use this filepath to check that the file exists.
         region_name (str): The AWS region hosting the EC2 instance(s)
         existing_server_instance_id (str): the ID of the pre-existing AWS EC2 instance that was used to run the test.
                                             This parameter is an empty string if we are not reusing existing instances
-        server_mandelbox_pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
-                                                                    be used to interact with the server mandelbox on the server instance.
-        server_hs_process (pexpect.pty_spawn.spawn):    The Pexpect process created with pexpect.spawn(...) and to be used to
-                                                        interact with the host-service on the server instance.
-        pexpect_prompt_server (str):    The bash prompt printed by the shell on the remote server machine when it is ready
-                                        to execute a command
+        server_executor (RemoteExecutor):   The executor object to be used to run commands on the server mandelbox
+                                            on the server instance.
+        server_hs_executor (RemoteExecutor):    The executor object to be used to interact with the host-service
+                                                on the server instance.
         client_public_ip (str):  The host name of the remote machine where the client was running on
+        client_private_ip (str):  The private IP of the remote machine where the client was running on
         client_instance_id (str):   The ID of the AWS EC2 instance running the client
         client_docker_id (str): The ID of the Docker container running the client (development/client) mandelbox
-        client_cmd (str):   The string containing the command to be used to open a SSH connection to the client EC2 instance
-        client_log (file):  The file to be used to dump the client-side monitoring logs
+        client_log_filename (file):  The path to the file to be used to dump the client-side monitoring logs
         client_metrics_file (file): The filepath to the file (that we expect to see) containing the client metrics.
                                     We will use this filepath to check that the file exists.
         existing_client_instance_id (str): the ID of the pre-existing AWS EC2 instance that was used to run the test.
                                             This parameter is an empty string if we are not reusing existing instances
-        client_mandelbox_pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to
-                                                                    be used to interact with the client mandelbox on the client instance.
-        client_hs_process (pexpect.pty_spawn.spawn):    The Pexpect process created with pexpect.spawn(...) and to be used to
-                                                        interact with the host-service on the client instance.
-        pexpect_prompt_client (str):    The bash prompt printed by the shell on the remote client machine when it is ready
-                                        to execute a command
+        client_executor (RemoteExecutor):   The executor object to be used to run commands on the client mandelbox
+                                            on the server instance.
+        client_hs_executor (RemoteExecutor):    The executor object to be used to interact with the host-service
+                                                on the client instance.
         ssh_key_path (str): The path (on the machine where this script is run) to the file storing
                             the public RSA key used for SSH connections
         boto3client (botocore.client): The Boto3 client to use to talk to the AWS console

@@ -83,10 +83,7 @@ def get_remote_whist_github_sha(remote_executor):
     Retrieve the commit hash of the latest commit in the repository cloned on a remote isntance.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
-                                                    be used to interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
-                        is ready to execute a command
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
 
     Returns:
         On success:

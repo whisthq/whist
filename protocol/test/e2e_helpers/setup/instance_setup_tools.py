@@ -37,10 +37,7 @@ def wait_for_apt_locks(remote_executor):
     - /var/cache/apt/archives/lock
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process
-                        on the remote machine
-        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to
-                        execute a new command
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
 
     Returns:
         None
@@ -111,10 +108,7 @@ def install_and_configure_aws(remote_executor):
     from the ones configured on the machine where this script is being run.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used
-                                                    to interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it
-                        is ready to execute a command
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
 
     Returns:
         True if the AWS installation and configuration succeeded, False otherwise.
@@ -166,10 +160,7 @@ def clone_whist_repository(github_token, remote_executor):
 
     Args:
         github_token:   The secret token to use to access the Whist private repository on GitHub
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used to
-                                                    interact with the remote machine
-        pexpect_prompt: The bash prompt printed by the shell on the remote machine when it is
-                        ready to execute a command
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
 
     Returns:
         None
@@ -215,10 +206,7 @@ def run_host_setup(remote_executor):
     connection to the host, and that the Whist repository has already been cloned.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to
-                                                    be used to interact with the remote machine
-        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is ready to
-                                execute a command
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
 
     Returns:
         None
@@ -262,8 +250,7 @@ def start_host_service(remote_executor):
     to the host, and that the Whist repository has already been cloned.
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used to
-                                                    interact with the remote machine
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
 
     Returns:
         None
@@ -291,10 +278,7 @@ def prune_containers_if_needed(remote_executor):
     by pruning old Docker containers by running the command `docker system prune -af`
 
     Args:
-        pexpect_process (pexpect.pty_spawn.spawn):  The Pexpect process created with pexpect.spawn(...) and to be used
-                                                    to interact with the remote machine
-        pexpect_prompt (str):   The bash prompt printed by the shell on the remote machine when it is
-                                ready to execute a command
+        remote_executor (RemoteExecutor):  The executor object to be used to run commands on the remote instance
 
     Returns:
         None
