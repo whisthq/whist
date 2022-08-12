@@ -25,6 +25,7 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 class RemoteExecutor:
     def __init__(self, public_ip, private_ip, ssh_key_path, log_filename):
+        self.public_ip = public_ip
         self.ssh_command = f"ssh {username}@{public_ip} -i {ssh_key_path} -o TCPKeepAlive=yes -o ServerAliveInterval=15"
         self.pexpect_prompt = f"{username}@ip-{private_ip}"
         self.mandelbox_prompt = ":/#"
@@ -33,8 +34,7 @@ class RemoteExecutor:
         self.prompt_printed_twice = not running_in_ci
         self.__connect_to_instance()
 
-
-    def __connect_to_instance(self, verbose = False):
+    def __connect_to_instance(self, verbose=False):
         """
         Attempt to establish a SSH connection to a remote machine. It is normal for the function to
         need several attempts before successfully opening a SSH connection to the remote machine.
@@ -91,7 +91,9 @@ class RemoteExecutor:
                 # If the connection timed out, sleep for 30s and then retry
                 # (unless we exceeded the max number of retries)
                 if verbose:
-                    print(f"\tSSH connection timed out (retry {retries + 1}/{ssh_connection_retries})")
+                    print(
+                        f"\tSSH connection timed out (retry {retries + 1}/{ssh_connection_retries})"
+                    )
                 self.pexpect_process.kill(0)
                 time.sleep(30)
         # Give up if the SSH connection was refused too many times.
@@ -159,7 +161,6 @@ class RemoteExecutor:
                     ssh_connection_broken_msg3,
                     pexpect.exceptions.TIMEOUT,
                     pexpect.EOF,
-                    
                 ]
             )
             if result == 0 or result == 1:
@@ -180,18 +181,28 @@ class RemoteExecutor:
                         # command that we send.
                         self.pexpect_process.expect(self.pexpect_prompt)
                     if self.mandelbox_mode:
-                        printformat(f"Warning: `{description}` did not start mandelbox properly or the shell attached to it crashed", "yellow")
+                        printformat(
+                            f"Warning: `{description}` did not start mandelbox properly or the shell attached to it crashed",
+                            "yellow",
+                        )
                     else:
                         break
                 else:
                     if not self.mandelbox_mode:
-                        printformat(f"Warning: `{description}` did not exit the shell attached to a mandelbox", "yellow")
-            elif (result == 2 or result == 3 or result == 4):
+                        printformat(
+                            f"Warning: `{description}` did not exit the shell attached to a mandelbox",
+                            "yellow",
+                        )
+                    else:
+                        break
+            elif result == 2 or result == 3 or result == 4:
                 if not self.mandelbox_mode:
                     printformat("Warning: Remote instance dropped the SSH connection", "yellow")
                     self.__connect_to_instance()
                 else:
-                    exit_with_error(f"Error: Remote instance dropped the SSH connection while shell was attached to a mandelbox.")
+                    exit_with_error(
+                        f"Error: Remote instance dropped the SSH connection while shell was attached to a mandelbox."
+                    )
             elif result == 5:
                 printformat(f"Warning: {description} timed out!", "yellow")
             elif result == 6:
@@ -244,12 +255,12 @@ class RemoteExecutor:
 
         for i in range(max_retries):
             success = self.__remote_exec(command, description)
-            if not ignore_exit_codes:
-                exit_code = self.get_exit_code
+            if not (self.mandelbox_mode or ignore_exit_codes):
+                exit_code = self.get_exit_code()
                 if exit_code:
                     printformat(f"Warning: {description} got exit code: {exit_code}", "yellow")
                 success *= exit_code == 0
-            
+
             # Check against additional errors (if specified), and apply relevant corrective actions
             corrective_actions = []
             for error in errors_to_handle:
@@ -269,11 +280,10 @@ class RemoteExecutor:
                 # Finding the success message (if specified) in the output means the command succeeded
                 if self.expression_in_pexpect_output(success_message):
                     return
-            elif success:
+            if success:
                 return
-        
+
         exit_with_error(f"Error: {description} failed ({max_retries} time(s))!")
-        
 
     def destroy(self):
         self.pexpect_process.kill(0)

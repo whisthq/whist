@@ -60,13 +60,15 @@ def setup_process(role, args_dict):
     Returns:
         None
     """
-    hostname = args_dict["server_hostname"] if role == "server" else args_dict["client_hostname"]
-    private_ip = args_dict["server_private_ip"] if role == "server" else args_dict["client_private_ip"]
+    public_ip = args_dict["server_public_ip"] if role == "server" else args_dict["client_public_ip"]
+    private_ip = (
+        args_dict["server_private_ip"] if role == "server" else args_dict["client_private_ip"]
+    )
     ssh_key_path = args_dict["ssh_key_path"]
     log_filepath = (
         args_dict["server_log_filepath"] if role == "server" else args_dict["client_log_filepath"]
     )
-    
+
     use_two_instances = args_dict["use_two_instances"]
     testing_time = args_dict["testing_time"]
     github_token = args_dict["github_token"]
@@ -76,7 +78,7 @@ def setup_process(role, args_dict):
 
     # Initiate the SSH connections with the instance
     print(f"Initiating the SETUP ssh connection with the {role} AWS instance...")
-    hs_executor = RemoteExecutor(hostname, private_ip, ssh_key_path, log_filepath)
+    hs_executor = RemoteExecutor(public_ip, private_ip, ssh_key_path, log_filepath)
 
     if role == "client":
         # Restore network conditions in case a previous run failed / was canceled before restoring the normal conditions.
@@ -119,7 +121,7 @@ def setup_process(role, args_dict):
     print(f"Done with the setup on the {role} instance.")
 
     print(f"Initiating the BUILD ssh connection with the {role} AWS instance...")
-    build_executor = RemoteExecutor(hostname, private_ip, ssh_key_path, log_filepath)
+    build_executor = RemoteExecutor(public_ip, private_ip, ssh_key_path, log_filepath)
     build_mandelboxes_on_instance(build_executor, cmake_build_type, role, testing_time)
     build_executor.destroy()
 

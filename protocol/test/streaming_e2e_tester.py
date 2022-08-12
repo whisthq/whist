@@ -166,24 +166,24 @@ if __name__ == "__main__":
     timestamps.add_event("Creating/starting instance(s)")
 
     # 5 - Get the IP address of the instance(s) that are now running
-    server_instance_ip = get_instance_ip(boto3client, server_instance_id)
-    server_hostname = server_instance_ip["public"]
-    server_private_ip = server_instance_ip["private"].replace(".", "-")
+    server_instance_ips = get_instance_ip(boto3client, server_instance_id)
+    server_public_ip = server_instance_ips["public"]
+    server_private_ip = server_instance_ips["private"].replace(".", "-")
 
-    client_instance_ip = (
+    client_instance_ips = (
         get_instance_ip(boto3client, client_instance_id)
         if use_two_instances
-        else server_instance_ip
+        else server_instance_ips
     )
-    client_hostname = client_instance_ip["public"]
-    client_private_ip = client_instance_ip["private"].replace(".", "-")
+    client_public_ip = client_instance_ips["public"]
+    client_private_ip = client_instance_ips["private"].replace(".", "-")
 
     # Notify the user that we are connecting to the EC2 instance(s)
     if not use_two_instances:
-        print(f"Connecting to server/client AWS instance with hostname: {server_hostname}...")
+        print(f"Connecting to server/client AWS instance with hostname: {server_public_ip}...")
     else:
         print(
-            f"Connecting to server AWS instance with hostname: {server_hostname} and client AWS instance with hostname: {client_hostname}..."
+            f"Connecting to server AWS instance with hostname: {server_public_ip} and client AWS instance with hostname: {client_public_ip}..."
         )
 
     timestamps.add_event("Connecting to the instance(s)")
@@ -195,8 +195,8 @@ if __name__ == "__main__":
     # We pass all parameters and other data to the setup processes via a dictionary
     args_dict = manager.dict(
         {
-            "server_hostname": server_hostname,
-            "client_hostname": client_hostname,
+            "server_public_ip": server_public_ip,
+            "client_public_ip": client_public_ip,
             "server_private_ip": server_private_ip,
             "client_private_ip": client_private_ip,
             "ssh_key_path": ssh_key_path,
@@ -263,9 +263,11 @@ if __name__ == "__main__":
     # that all operations below do not take too much time.
 
     # Start SSH connection(s) to the EC2 instance(s) to run the host-service commands
-    server_hs_executor = RemoteExecutor(server_instance_ip, server_private_ip, ssh_key_path, server_log_filename)
+    server_hs_executor = RemoteExecutor(
+        server_public_ip, server_private_ip, ssh_key_path, server_log_filename
+    )
     client_hs_executor = (
-        RemoteExecutor(client_instance_ip, client_private_ip, ssh_key_path, client_log_filename)
+        RemoteExecutor(client_public_ip, client_private_ip, ssh_key_path, client_log_filename)
         if use_two_instances
         else server_hs_executor
     )
@@ -279,7 +281,9 @@ if __name__ == "__main__":
 
     # 9 - Run the browser/chrome server mandelbox on the server instance
     # Start SSH connection(s) to the EC2 instance(s) to run the browser/chrome server mandelbox
-    server_executor = RemoteExecutor(server_instance_ip, server_private_ip, ssh_key_path, server_log_filename)
+    server_executor = RemoteExecutor(
+        server_public_ip, server_private_ip, ssh_key_path, server_log_filename
+    )
 
     server_executor.set_mandelbox_mode(True)
     # Launch the browser/chrome server mandelbox, and retrieve the connection configs that
@@ -294,7 +298,9 @@ if __name__ == "__main__":
     # 10 - Run the development/client client mandelbox on the client instance
     # Start SSH connection(s) to the EC2 instance(s) to run the development/client
     # client mandelbox on the client instance
-    client_executor = RemoteExecutor(client_instance_ip, client_private_ip, ssh_key_path, client_log_filename)
+    client_executor = RemoteExecutor(
+        client_public_ip, client_private_ip, ssh_key_path, client_log_filename
+    )
 
     # Set up the artifical network degradation conditions on the client, if needed
     setup_artificial_network_conditions(
@@ -321,7 +327,7 @@ if __name__ == "__main__":
 
     # 12 - Grab the logs, check for errors, restore default network conditions, cleanup, shut down the instances, and save the results
     complete_experiment_and_save_results(
-        server_hostname,
+        server_public_ip,
         server_private_ip,
         server_instance_id,
         server_docker_id,
@@ -331,7 +337,7 @@ if __name__ == "__main__":
         existing_server_instance_id,
         server_executor,
         server_hs_executor,
-        client_hostname,
+        client_public_ip,
         client_private_ip,
         client_instance_id,
         client_docker_id,

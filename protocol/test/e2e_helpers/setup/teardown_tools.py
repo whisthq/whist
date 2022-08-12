@@ -74,7 +74,7 @@ def extract_logs_from_mandelbox(
     remote_executor,
     docker_id,
     ssh_key_path,
-    hostname,
+    public_ip,
     e2e_logs_folder_name,
     log_filename,
     session_id,
@@ -94,7 +94,7 @@ def extract_logs_from_mandelbox(
                             (browsers/chrome or development/client mandelbox) on the remote machine
         ssh_key_path (str): The path (on the machine where this script is run) to the file storing
                             the public RSA key used for SSH connections
-        hostname (str): The host name of the remote machine where the server/client was running on
+        public_ip (str): The host name of the remote machine where the server/client was running on
         e2e_logs_folder_name (str):    The path to the folder (on the machine where this script is run)
                                         where to store the logs
         log_grabber_log (file): The file (already opened) to use for logging the terminal output from
@@ -154,7 +154,7 @@ def extract_logs_from_mandelbox(
 
     # Download all the mandelbox logs from the AWS machine
     command = (
-        f"scp -r -i {ssh_key_path} {username}@{hostname}:~/e2e_logs/{role} {e2e_logs_folder_name}"
+        f"scp -r -i {ssh_key_path} {username}@{public_ip}:~/e2e_logs/{role} {e2e_logs_folder_name}"
     )
 
     logfile = open(log_filename, "a+")
@@ -164,7 +164,7 @@ def extract_logs_from_mandelbox(
 
 
 def complete_experiment_and_save_results(
-    server_hostname,
+    server_public_ip,
     server_private_ip,
     server_instance_id,
     server_docker_id,
@@ -174,7 +174,7 @@ def complete_experiment_and_save_results(
     existing_server_instance_id,
     server_executor,
     server_hs_executor,
-    client_hostname,
+    client_public_ip,
     client_private_ip,
     client_instance_id,
     client_docker_id,
@@ -206,7 +206,7 @@ def complete_experiment_and_save_results(
     - determining whether the E2E test succeeded or failed
 
     Args:
-        server_hostname (str):  The host name of the remote machine where the server was running on
+        server_public_ip (str):  The host name of the remote machine where the server was running on
         server_instance_id (str):   The ID of the AWS EC2 instance running the server
         server_docker_id (str): The ID of the Docker container running the server (browsers/chrome) mandelbox
         server_cmd (str):   The string containing the command to be used to open a SSH connection to the server EC2 instance
@@ -222,7 +222,7 @@ def complete_experiment_and_save_results(
                                                         interact with the host-service on the server instance.
         pexpect_prompt_server (str):    The bash prompt printed by the shell on the remote server machine when it is ready
                                         to execute a command
-        client_hostname (str):  The host name of the remote machine where the client was running on
+        client_public_ip (str):  The host name of the remote machine where the client was running on
         client_instance_id (str):   The ID of the AWS EC2 instance running the client
         client_docker_id (str): The ID of the Docker container running the client (development/client) mandelbox
         client_cmd (str):   The string containing the command to be used to open a SSH connection to the client EC2 instance
@@ -262,7 +262,7 @@ def complete_experiment_and_save_results(
         # Get new SSH connection because current ones are connected to the mandelboxes' bash,
         # and we cannot exit them until we have copied over the logs
         client_restore_net_executor = RemoteExecutor(
-            client_hostname
+            client_public_ip,
             client_private_ip,
             ssh_key_path,
             client_log_filename,
@@ -294,14 +294,14 @@ def complete_experiment_and_save_results(
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
 
     log_grabber_server_executor = RemoteExecutor(
-        server_hostname,
+        server_public_ip,
         server_private_ip,
         ssh_key_path,
         server_log_filename,
     )
 
     log_grabber_client_executor = RemoteExecutor(
-        client_hostname,
+        client_public_ip,
         client_private_ip,
         ssh_key_path,
         client_log_filename,
@@ -311,7 +311,7 @@ def complete_experiment_and_save_results(
         log_grabber_server_executor,
         server_docker_id,
         ssh_key_path,
-        server_hostname,
+        server_public_ip,
         e2e_logs_folder_name,
         server_log_filename,
         server_session_id,
@@ -321,7 +321,7 @@ def complete_experiment_and_save_results(
         log_grabber_client_executor,
         client_docker_id,
         ssh_key_path,
-        client_hostname,
+        client_public_ip,
         e2e_logs_folder_name,
         client_log_filename,
         client_session_id,
