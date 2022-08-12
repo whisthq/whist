@@ -122,6 +122,8 @@ func GetEnabledRegions() []string {
 		enabledRegions = []string{
 			"us-east-1",
 			"us-west-1",
+			"ca-central-1",
+			"ap-south-1",
 		}
 	default:
 		enabledRegions = []string{

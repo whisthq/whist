@@ -80,7 +80,12 @@ func TestEnabledRegionsMap(t *testing.T) {
 	}{
 		{"dev", []string{"us-east-1"}},
 		{"staging", []string{"us-east-1"}},
-		{"prod", []string{"us-east-1", "us-west-1"}},
+		{"prod", []string{
+			"us-east-1",
+			"us-west-1",
+			"ca-central-1",
+			"ap-south-1",
+		}},
 		{"localdev", []string{"us-east-1"}},
 		{"unknown", []string{"us-east-1"}},
 	}
