@@ -168,68 +168,6 @@ func TestIsRunningInCI(t *testing.T) {
 	}
 }
 
-func TestIsGPU(t *testing.T) {
-	var CITests = []struct {
-		environmentVar string
-		want           bool
-	}{
-		{"1", true},
-		{"yes", true},
-		{"YES", true},
-		{"Yes", true},
-		{"true", true},
-		{"True", true},
-		{"TRUE", true},
-		{"on", true},
-		{"On", true},
-		{"ON", true},
-		{"yep", true},
-		{"Yep", true},
-		{"YEP", true},
-		{"0", false},
-		{"no", false},
-		{"No", false},
-		{"NO", false},
-		{"false", false},
-		{"False", false},
-		{"FALSE", false},
-		{"off", false},
-		{"Off", false},
-		{"OFF", false},
-		{"nope", false},
-		{"Nope", false},
-		{"NOPE", false},
-		{"unknown", false},
-		{"Unknown", false},
-		{"UNKNOWN", false},
-		{"", false},
-	}
-
-	for _, tt := range CITests {
-		testname := utils.Sprintf("%s,%v", tt.environmentVar, tt.want)
-		t.Run(testname, func(t *testing.T) {
-
-			// Set the CI environment variable to the test environment
-			os.Setenv("GPU", tt.environmentVar)
-			got := IsGPU()
-
-			if got != tt.want {
-				t.Errorf("got %v, want %v", got, tt.want)
-			}
-		})
-	}
-
-	// Test that unset GPU flag defaults to no GPU
-	err := os.Unsetenv("GPU")
-	if err != nil {
-		t.Fatalf("error unsetting GPU flag: %v", err)
-	}
-
-	if IsGPU() {
-		t.Errorf("unset flag did not correspond to no GPU")
-	}
-}
-
 func TestMain(m *testing.M) {
 	// Set the GetAppEnvironment function before starting any tests.
 	mockGetAppEnvironment()

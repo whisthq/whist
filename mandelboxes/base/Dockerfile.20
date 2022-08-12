@@ -10,11 +10,6 @@
 # to copy the protocol as early as possible to share
 # layers between images.
 ARG BuildAssetPackage "protocol"
-
-# This build-arg is added by the build script and is
-# either "dummy" or "nvidia".
-ARG DisplayDriver "dummy"
-
 FROM whist/build-assets:$BuildAssetPackage as build-assets
 
 ################ STAGE 1: libinput-build ################
@@ -356,9 +351,9 @@ RUN \
     && chown root:root $HYDRAULIC_ROOT/root \
     && chmod 600 -R $HYDRAULIC_ROOT/root
 
-# Set up script to run a program as user `whist` (make sure to do
-# this after setting /usr/share/whist to 600)
-COPY --chmod=550 utils/run-as-whist-user.sh $HYDRAULIC_ROOT/usr/share/whist/run-as-whist-user.sh
+    # Set up script to run a program as user `whist` (make sure to do
+    # this after setting /usr/share/whist to 600)
+    COPY --chmod=550 utils/run-as-whist-user.sh $HYDRAULIC_ROOT/usr/share/whist/run-as-whist-user.sh
 
 #########################
 # Input
@@ -370,10 +365,8 @@ COPY input/Xmodmap $HYDRAULIC_ROOT/root/.Xmodmap
 # Display
 #########################
 
-ARG DisplayDriver "dummy"
-
-# Copy correct configuration for X11 display based on existence of GPU
-COPY display/whist-${DisplayDriver}-display.conf $HYDRAULIC_ROOT/usr/share/X11/xorg.conf.d/01-whist-display.conf
+# Copy configuration for X11 display
+COPY display/whist-display.conf $HYDRAULIC_ROOT/usr/share/X11/xorg.conf.d/01-whist-display.conf
 
 # Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
 COPY --chown=root:root --chmod=600 display/whist-update-xorg-conf.service $HYDRAULIC_ROOT/etc/systemd/system/
@@ -471,7 +464,7 @@ RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-main.service.d/
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
 # - Copy grid driver installation from
-#   nvidia-grid-driver if GPU is present
+#   nvidia-grid-driver
 # - Copy and install teleport FUSE service from
 #   whist-teleport-fuse
 # - Copy all base mandelbox files and scripts from
@@ -480,7 +473,7 @@ RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-main.service.d/
 #   our base mandelbox image
 # EXPOSES all of whist-base as the final image
 #############################################################
-FROM ubuntu:20.04 as whist-base-pre-graphics
+FROM ubuntu:20.04 as whist-base
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -553,9 +546,9 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
 # Note: sshd does not exist by default, so we don't need to explicirlt disable it
 # hadolint ignore=DL3059
 RUN systemctl mask plymouth \
-    systemd-hostnamed \
-    acpid \
-    NetworkManager-wait-online
+                   systemd-hostnamed \
+                   acpid \
+                   NetworkManager-wait-online
 
 # Remove ProtectHostname=yes lines from logind and timedate systemd services
 # hadolint ignore=DL3059
@@ -678,10 +671,7 @@ RUN \
 
 #########################
 # Hardware Acceleration
-# (This stage runs only if a GPU is present)
 #########################
-
-FROM whist-base-pre-graphics as whist-base-nvidia
 
 # Install the Nvidia GRID Driver and libraries for (limited) hardware acceleration
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -694,24 +684,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 COPY --from=nvidia-grid-driver /dist /
-ENV GPU true
-
-#########################
-# Non-GPU environment setup
-# (Runs only if running on non-GPU host)
-#########################
-
-FROM whist-base-pre-graphics as whist-base-dummy
-ENV GPU false
 
 #########################
 # Display
 #########################
-
-# Pull from either the stage with installed Nvidia drivers (whist-base-nvidia)
-# or the stage with only dummy drivers (whist-base-dummy) based on whether
-# the host has a GPU or not.
-FROM whist-base-${DisplayDriver} as whist-base
 
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -719,7 +695,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     xclip \
     x11-xserver-utils \
     xserver-xorg-video-dummy \
-    xserver-xorg-core \
     awesome \
     xsettingsd \
     linux-generic-hwe-20.04 \
