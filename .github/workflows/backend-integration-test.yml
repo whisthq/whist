@@ -15,9 +15,6 @@ on:
       # Changes to the mandelboxes
       - "mandelboxes/**"
       - "!mandelboxes/README.md"
-      - "!mandelboxes/browsers/brave/**"
-      - "!mandelboxes/development/utils/**"
-      - "!mandelboxes/development/xterm/**"
       # Changes to the host-setup
       - "host-setup/**"
       - "!host-setup/README.md"
