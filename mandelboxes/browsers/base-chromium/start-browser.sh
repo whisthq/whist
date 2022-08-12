@@ -105,6 +105,7 @@ add_preferences_jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'"
 # "--enable-lazy-image-loading" --> had no impact
 #
 features="VaapiVideoDecoder,VaapiVideoEncoder,Vulkan,CanvasOopRasterization,OverlayScrollbar,ParallelDownloading"
+antifeatures="ChromeWhatsNewUI"
 flags=(
   "--use-gl=desktop"
   # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
@@ -135,6 +136,7 @@ if [[ "$RESTORE_LAST_SESSION" == true ]]; then
 fi
 
 flags+=("--enable-features=$features")
+flags+=("--disable-features=$antifeatures")
 flags+=("--flag-switches-end")
 
 # Pass user agent corresponding to user's OS from JSON-transport
@@ -188,19 +190,19 @@ echo "loaded d-bus address in start-browser.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 case "$BROWSER_APPLICATION" in
   brave)
-    BROWSER_APPLICATION="brave-browser"
+    BROWSER_EXE="brave-browser"
     ;;
   chrome)
-    BROWSER_APPLICATION="google-chrome"
+    BROWSER_EXE="google-chrome"
     ;;
   chromium)
-    BROWSER_APPLICATION="chromium-browser-stable"
+    BROWSER_EXE="chromium-browser"
     ;;
   *)
     echo "Browser name not set or invalid. Using the default option, Chrome."
-    BROWSER_APPLICATION="google-chrome"
+    BROWSER_EXE="google-chrome"
     ;;
 esac
 
 # Start the browser with the KDE desktop environment
-exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 "$BROWSER_APPLICATION" "${flags[@]}"
+exec env XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=x11 "$BROWSER_EXE" "${flags[@]}"
