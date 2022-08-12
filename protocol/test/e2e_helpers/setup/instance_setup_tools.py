@@ -48,13 +48,17 @@ def wait_for_apt_locks(remote_executor):
 
 
 def prepare_instance_for_host_setup(remote_executor):
+    # Wait for dpkg / apt locks
+    wait_for_apt_locks(remote_executor)
+
     # Set dkpg frontend as non-interactive to avoid irrelevant warnings
     remote_executor.run_command(
         "echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections"
     )
 
-    # Wait for dpkg / apt locks
+    # Wait again for dpkg / apt locks
     wait_for_apt_locks(remote_executor)
+
     # Clean, upgrade and update all the apt lists
     remote_executor.run_command(
         "sudo apt-get clean -y && sudo apt-get upgrade -y && sudo apt-get update -y"
