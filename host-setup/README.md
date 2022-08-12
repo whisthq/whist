@@ -57,20 +57,18 @@ cd ~/whist/host-setup
 # before moving to the next step, make sure to reboot as prompted
 sudo reboot
 
-# to run a Whist mandelbox, you need to build it first
-# to build the Whist base container image, or the Whist Chrome container image, respectively
+# to run a Whist Chromium mandelbox, you need to build it first
 cd ~/whist/mandelboxes
-./build.sh base
-./build.sh browsers/chrome
+./build.sh browsers/whistium
 
 # build and run the Whist Host Service
 cd ~/whist/backend/services
 make run_host_service # keep this open in a separate terminal
 
-# run the Whist Chrome container image (swap base to browsers/brave to run the Whist Brave container)
+# run the Whist Chromium container image (swap base to browsers/chrome to run the Whist Brave container, for instance)
 # Note: this will give you a root shell inside the container; when the shell exits, the container will close as well
 cd ~/whist/mandelboxes
-./run.sh browsers/chrome
+./run.sh browsers/whistium
 ```
 
 ### Common Errors & Tips

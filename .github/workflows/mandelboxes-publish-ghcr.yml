@@ -79,7 +79,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
         working-directory: mandelboxes
-        run: ./build.sh browsers/chrome browsers/brave --prod
+        run: ./build.sh browsers/chrome browsers/brave browsers/whistium --prod
 
       - name: Print logs of failed mandelbox(es)  on failure
         if: failure()
@@ -96,6 +96,7 @@ jobs:
         run: |
           ./push.sh browsers/chrome ${{ inputs.branch }}
           ./push.sh browsers/brave ${{ inputs.branch }}
+          ./push.sh browsers/whistium ${{ inputs.branch }}
 
       # Notify Slack after building and deploying the Whist AMI to all supported AWS regions.
       - name: Notify Slack on Job Successs
