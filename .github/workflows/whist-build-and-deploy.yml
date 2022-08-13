@@ -14,6 +14,7 @@ on:
     branches:
       - prod
       - staging
+      - phil/set-version
     paths-ignore:
       - "README.md"
       - "**/README.md"
@@ -173,6 +174,7 @@ jobs:
     env:
       SENTRY_ORG: whist
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+    if: false
 
     strategy:
       matrix:
@@ -276,6 +278,7 @@ jobs:
     runs-on: ubuntu-20.04
     concurrency: auth0-deploy-rules-${{ github.ref }}
     needs: [whist-publish-build-config]
+    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -349,6 +352,7 @@ jobs:
       # Set AWS credentials for Terraform
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -433,6 +437,7 @@ jobs:
       SLACK_HOOKS_ENDPOINT_DEV: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
       SLACK_HOOKS_ENDPOINT_STAGING: ${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}
       SLACK_HOOKS_ENDPOINT_PROD: ${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}
+    if: false
 
   #######################################################################################
   #######################################################################################
@@ -449,6 +454,7 @@ jobs:
     needs: [whist-publish-build-config, terraform-deploy]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
+    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -691,12 +697,11 @@ jobs:
     name: "Whist Browser: Retrieve Current Version Number from Config Database"
     runs-on: ubuntu-20.04
     concurrency: whist-browser-retrieve-version-number-${{ github.ref }}
-    needs:
-      [
+    needs: [
         whist-publish-build-config,
-        scaling-service-deploy,
-        auth0-deploy-rules,
-        terraform-deploy,
+        # scaling-service-deploy,
+        # auth0-deploy-rules,
+        # terraform-deploy,
       ]
     outputs:
       release_version: ${{ steps.generate-release-version.outputs.release_version }}
@@ -705,12 +710,7 @@ jobs:
       new_dev_rc_version: ${{ steps.generate-release-version.outputs.new_dev_rc_version }}
 
     # Only run whist-browser deployment if none of the previous steps failed
-    if: |
-      always() &&
-      (needs.scaling-service-deploy.result == 'success') &&
-      (needs.auth0-deploy-rules.result == 'success') &&
-      (needs.mandelboxes-publish-ghcr.result == 'success') &&
-      (needs.amis-publish-aws.result == 'success')
+    if: always()
 
     steps:
       - name: Checkout Git Repository
@@ -819,11 +819,10 @@ jobs:
     name: "Whist Browser: Build & Deploy Whist Browser (${{ matrix.config.display_os }} - ${{ matrix.config.target_arch }})"
     runs-on: ${{ matrix.config.runner }}
     concurrency: whist-browser-publish-build-s3-${{ matrix.config.target_arch }}-${{ matrix.config.target_os }}-${{ github.ref }}
-    needs:
-      [
+    needs: [
         whist-publish-build-config,
         whist-browser-retrieve-version-number,
-        terraform-deploy,
+        # terraform-deploy,
       ]
 
     # Only run whist-browser deployment if none of the previous steps failed
@@ -833,10 +832,10 @@ jobs:
       matrix:
         config:
           # This builds the client-side macOS Whist Browser
-          - target_arch: "x64"
-            display_os: "macOS"
-            target_os: "macos"
-            runner: [self-hosted, macOS, ARM64]
+          # - target_arch: "x64"
+          #  display_os: "macOS"
+          #   target_os: "macos"
+          #   runner: [self-hosted, macOS, ARM64]
           # This builds the client-side macOS Whist Browser
           - target_arch: "arm64"
             display_os: "macOS"
@@ -892,8 +891,8 @@ jobs:
               # Log the branch, should always be `dev`, `staging`, or `prod`, but we checkout just to be sure
               git fetch -p
               git branch
-              git checkout ${{ needs.whist-publish-build-config.outputs.branch }}
-              git pull
+              git checkout owen/build-signed-dmg
+              git reset --hard origin/owen/build-signed-dmg
               git branch
 
               # We then do the same for the `whist` repo within the `brave-core` repo.
@@ -1094,6 +1093,22 @@ jobs:
           # Download and prepare Chromium/Brave for building
           npm run init
 
+      - name: Set Brave version to Whist version
+        working-directory: brave-browser
+        run: |
+          # This value is the same for the package.json in `brave-browser` and in `brave-core`, so we just retrieve
+          # it once. We save this value for later, since we'll be overwriting the version in-place to set the
+          # browser to the Whist version, and we want to set it back to Brave's at the end given that we're
+          # running on a self-hosted runner, to avoid unnecessary merge conflicts when pulling changes
+          echo "brave_package_json_version=$(jq -r '.version' package.json)" >> $GITHUB_ENV
+
+          # Set the Brave version to the Whist version in both `brave-browser` and `brave-core`
+          jq --arg variable "${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}" '.version = $variable' package.json > package.json.tmp && mv package.json.tmp package.json
+          jq --arg variable "${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}" '.version = $variable' src/brave/package.json > src/brave/package.json.tmp && mv src/brave/package.json.tmp src/brave/package.json
+
+          cat package.json
+          cat src/brave/package.json
+
       - name: Build Whist Browser
         working-directory: brave-browser
         run: |
@@ -1106,7 +1121,7 @@ jobs:
           # Note that these values are public, so it's fine to hardcode them here (rather than using GitHub Secrets)
           #
           # TODO: Create a per-environment Amplitude project, and have a different key for each environment
-          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
+          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" || true ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
             export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
@@ -1129,7 +1144,6 @@ jobs:
 
           # Build the browser
           npm run build ${{ env.build_type }} -- \
-              --channel=${{ env.release_channel }} \
               --target_arch=${{ matrix.config.target_arch }} \
               --brave_google_api_key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
               --uphold_client_id=x \
@@ -1160,6 +1174,10 @@ jobs:
         if: runner.os == 'macOS'
         run: security unlock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
 
+      - name: Unlock codesigning keychain
+        if: runner.os == 'macOS'
+        run: security unlock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
+
       - name: Package Whist Browser
         working-directory: brave-browser
         run: |
@@ -1168,7 +1186,7 @@ jobs:
           source ~/.nvm/nvm.sh
           nvm use 16 && echo -n "NPM version: " && npm --version
 
-          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
+          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" || true ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
             export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
@@ -1191,7 +1209,6 @@ jobs:
 
           # Package the browser into an installer
           npm run create_dist ${{ env.build_type }} -- \
-              --channel=${{ env.release_channel }} \
               --target_arch=${{ matrix.config.target_arch }} \
               --mac_signing_keychain="Whist Codesigning" \
               --mac_signing_identifier=E9669ADD20174D885A31C49C11604971E8C96019 \
@@ -1223,12 +1240,20 @@ jobs:
               --gn=notary_password:${{ secrets.MACOS_SIGNING_NOTARYTOOL_PASSWORD }} \
               --notarize
 
+      - name: Set the Brave version back in the `package.json` files
+        working-directory: brave-browser
+        run: |
+          # Set the Brave version back to what it was, to avoid unnecessary merge conflicts when pulling change, given that 
+          # this is a self-hosted, stateful runner
+          jq --arg variable "${{ env.brave_package_json_version }}" '.version = $variable' package.json > package.json.tmp && mv package.json.tmp package.json
+          jq --arg variable "${{ env.brave_package_json_version }}" '.version = $variable' src/brave/package.json > src/brave/package.json.tmp && mv src/brave/package.json.tmp src/brave/package.json
+
       # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
       # IDs to match the debug symbols with the build that crashed to build the backtrace
       # Note: Sentry makes use of sudo. To make it work on a self-hosted macOS runner, follow:
       # https://apple.stackexchange.com/questions/257813/enable-sudo-without-a-password-on-macos
       - name: Copy Client debug symbols to Sentry, on macOS
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        if: needs.whist-publish-build-config.outputs.publish == 'true' && false
         working-directory: brave-browser/src/brave/whist
         env:
           SENTRY_ORG: whist
@@ -1322,10 +1347,7 @@ jobs:
       ]
 
     # Only run whist-browser deployment if none of the previous steps failed
-    if: |
-      always() &&
-      (needs.whist-browser-retrieve-version-number.result == 'success') &&
-      (needs.whist-browser-publish-build-s3.result == 'success')
+    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -1400,6 +1422,7 @@ jobs:
         auth0-deploy-rules,
         terraform-deploy,
       ]
+    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -1566,7 +1589,7 @@ jobs:
         whist-browser-publish-build-s3,
         whist-browser-update-version-number,
       ]
-    if: needs.whist-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.whist-publish-build-config.outputs.branch)
+    if: false
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
