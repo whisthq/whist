@@ -936,7 +936,7 @@ jobs:
       #############################################################################################
       ############################### macOS Configuration Steps START #############################
 
-      # Since we're using a self-hosted runner, we need to comment these two steps out after they 
+      # Since we're using a self-hosted runner, we need to comment these two steps out after they
       # have run once because the keychain will then exist and trying to reinstall it will fail.
       # If you are running this workflow on a new runner, simply uncomment these steps for the first run.
       # - name: Install macOS Codesigning Certificates on macOS GHA Machine
