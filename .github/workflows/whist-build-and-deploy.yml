@@ -173,7 +173,6 @@ jobs:
     env:
       SENTRY_ORG: whist
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-    if: false
 
     strategy:
       matrix:
@@ -277,7 +276,6 @@ jobs:
     runs-on: ubuntu-20.04
     concurrency: auth0-deploy-rules-${{ github.ref }}
     needs: [whist-publish-build-config]
-    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -351,7 +349,6 @@ jobs:
       # Set AWS credentials for Terraform
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -436,7 +433,6 @@ jobs:
       SLACK_HOOKS_ENDPOINT_DEV: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
       SLACK_HOOKS_ENDPOINT_STAGING: ${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}
       SLACK_HOOKS_ENDPOINT_PROD: ${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}
-    if: false
 
   #######################################################################################
   #######################################################################################
@@ -453,7 +449,6 @@ jobs:
     needs: [whist-publish-build-config, terraform-deploy]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
-    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -699,9 +694,9 @@ jobs:
     needs:
       [
         whist-publish-build-config,
-        # scaling-service-deploy,
-        # auth0-deploy-rules,
-        # terraform-deploy,
+        scaling-service-deploy,
+        auth0-deploy-rules,
+        terraform-deploy,
       ]
     outputs:
       release_version: ${{ steps.generate-release-version.outputs.release_version }}
@@ -710,7 +705,12 @@ jobs:
       new_dev_rc_version: ${{ steps.generate-release-version.outputs.new_dev_rc_version }}
 
     # Only run whist-browser deployment if none of the previous steps failed
-    if: always()
+    if: |
+      always() &&
+      (needs.scaling-service-deploy.result == 'success') &&
+      (needs.auth0-deploy-rules.result == 'success') &&
+      (needs.mandelboxes-publish-ghcr.result == 'success') &&
+      (needs.amis-publish-aws.result == 'success')
 
     steps:
       - name: Checkout Git Repository
@@ -823,7 +823,7 @@ jobs:
       [
         whist-publish-build-config,
         whist-browser-retrieve-version-number,
-        # terraform-deploy,
+        terraform-deploy,
       ]
 
     # Only run whist-browser deployment if none of the previous steps failed
@@ -833,17 +833,25 @@ jobs:
       matrix:
         config:
           # This builds the client-side macOS Whist Browser
-          # - target_arch: "x64"
-          #  display_os: "macOS"
-          #   target_os: "macos"
-          #   runner: [self-hosted, macOS, ARM64]
+          - target_arch: "x64"
+            display_os: "macOS"
+            target_os: "macos"
+            runner: [self-hosted, macOS, ARM64]
           # This builds the client-side macOS Whist Browser
           - target_arch: "arm64"
             display_os: "macOS"
             target_os: "macos"
             runner: [self-hosted, macOS, ARM64]
+          # This builds the server-side Linux Whist Browser (running in our mandelboxes)
+          # TODO: Re-enable once we are ready to build on Linux in CI, rather than manually
+          # - target_arch: "x64"
+          #   display_os: "Linux Ubuntu"
+          #   target_os: "linux"
+          #   runner: [self-hosted, Linux, x64]
     env:
-      # binary-tar-name: whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}.tar.gz
+
+
+
       dmg-object-name: Whist-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg
       s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-prod
       s3-bucket-region: us-east-1
@@ -872,6 +880,7 @@ jobs:
             cd brave-browser
 
             # Log the branch, should always be `main`, but we checkout just to be sure
+            git fetch -p
             git branch
             git checkout main
             git pull
@@ -885,8 +894,8 @@ jobs:
               # Log the branch, should always be `dev`, `staging`, or `prod`, but we checkout just to be sure
               git fetch -p
               git branch
-              git checkout owen/build-signed-dmg
-              git reset --hard origin/owen/build-signed-dmg
+              git checkout ${{ needs.whist-publish-build-config.outputs.branch }}
+              git pull
               git branch
 
               # We then do the same for the `whist` repo within the `brave-core` repo.
@@ -895,6 +904,7 @@ jobs:
                 cd whist
 
                 # Log the branch, should always be `dev`, `staging`, or `prod`, but we checkout just to be sure
+                git fetch -p
                 git branch
                 git checkout ${{ needs.whist-publish-build-config.outputs.branch }}
                 git pull
@@ -1027,7 +1037,6 @@ jobs:
           # - prod: "" (defaults to "stable")
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" || true ]]; then
             # Production build, set official build as true and build Chromium as Release
-            # export npm_config_is_official_build=true
             echo "release_channel=''" >> $GITHUB_ENV
 
             # Set the proper package name for the build
@@ -1044,7 +1053,6 @@ jobs:
             fi
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             # Staging build, set official build as false and build Chromium as Release
-            # export npm_config_is_official_build=false
             echo "release_channel=beta" >> $GITHUB_ENV
 
             # Set the proper package name for the build
@@ -1061,7 +1069,6 @@ jobs:
             fi
           else
             # Dev build, set official build as false and build Chromium as Debug
-            # export npm_config_is_official_build=false
             echo "release_channel=nightly" >> $GITHUB_ENV
 
             # Set the proper package name for the build
@@ -1253,9 +1260,7 @@ jobs:
             BUILD_OUTPUT_FOLDER="${{ env.build_type }}_${{ matrix.config.target_arch }}"
           fi
 
-          # tar -zcvf "${{ env.binary-tar-name }}" "$BUILD_OUTPUT_FOLDER/${{ env.executable_name }}"
-          # aws s3 cp "${{ env.binary-tar-name }}" "${{ env.s3-bucket-uri }}/${{ env.binary-tar-name }}"
-          aws s3 cp "$BUILD_OUTPUT_FOLDER/$executable_name" "${{ env.s3-bucket-uri }}/${{ env.dmg-object-name }}"
+          aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/${{ env.dmg-object-name }}"
 
           # Until we write code to automatically edit appcast.xml when we are
           # ready to ship an update, just print out the update's Sparkle
@@ -1314,7 +1319,10 @@ jobs:
       ]
 
     # Only run whist-browser deployment if none of the previous steps failed
-    if: false
+    if: |
+      always() &&
+      (needs.whist-browser-retrieve-version-number.result == 'success') &&
+      (needs.whist-browser-publish-build-s3.result == 'success')
 
     steps:
       - name: Checkout Git Repository
@@ -1389,7 +1397,6 @@ jobs:
         auth0-deploy-rules,
         terraform-deploy,
       ]
-    if: false
 
     steps:
       - name: Checkout Git Repository
@@ -1556,7 +1563,7 @@ jobs:
         whist-browser-publish-build-s3,
         whist-browser-update-version-number,
       ]
-    if: false
+    if: needs.whist-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.whist-publish-build-config.outputs.branch)
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3
