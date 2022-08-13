@@ -848,12 +848,10 @@ jobs:
           #   display_os: "Linux Ubuntu"
           #   target_os: "linux"
           #   runner: [self-hosted, Linux, x64]
+
     env:
-
-
-
       dmg-object-name: Whist-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg
-      s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-prod
+      s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}
       s3-bucket-region: us-east-1
       build_type: "Release" # Change this to Debug or Component if you're looking to generate a less-optimized build, but with more symbols
 
@@ -938,9 +936,9 @@ jobs:
       #############################################################################################
       ############################### macOS Configuration Steps START #############################
 
-      # Since we're using a self-hosted runner, we need to comment this out once it has run once
-      # because the keychain will then exist and trying to reinstall it will fail. If you are
-      # running this workflow on a new runner, simply uncomment this step for the first run.
+      # Since we're using a self-hosted runner, we need to comment these two steps out after they 
+      # have run once because the keychain will then exist and trying to reinstall it will fail.
+      # If you are running this workflow on a new runner, simply uncomment these steps for the first run.
       # - name: Install macOS Codesigning Certificates on macOS GHA Machine
       #   if: runner.os == 'macOS'
       #   uses: apple-actions/import-codesign-certs@v1
@@ -1035,7 +1033,7 @@ jobs:
           # - dev: "nightly"
           # - staging: "beta"
           # - prod: "" (defaults to "stable")
-          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" || true ]]; then
+          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             # Production build, set official build as true and build Chromium as Release
             echo "release_channel=''" >> $GITHUB_ENV
 
@@ -1108,7 +1106,7 @@ jobs:
           # Note that these values are public, so it's fine to hardcode them here (rather than using GitHub Secrets)
           #
           # TODO: Create a per-environment Amplitude project, and have a different key for each environment
-          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" || true ]]; then
+          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
             export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
@@ -1156,10 +1154,10 @@ jobs:
               --gn=updater_dev_endpoint:https://clients2.google.com/service/update2/crx \
               --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx
 
+      # TODO: Do we need to lock this again?
       - name: Unlock codesigning keychain
         if: runner.os == 'macOS'
-        run: |
-          security unlock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
+        run: security unlock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
 
       - name: Package Whist Browser
         working-directory: brave-browser
@@ -1169,7 +1167,7 @@ jobs:
           source ~/.nvm/nvm.sh
           nvm use 16 && echo -n "NPM version: " && npm --version
 
-          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" || true ]]; then
+          if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
             export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
@@ -1228,7 +1226,7 @@ jobs:
       # Note: Sentry makes use of sudo. To make it work on a self-hosted macOS runner, follow:
       # https://apple.stackexchange.com/questions/257813/enable-sudo-without-a-password-on-macos
       - name: Copy Client debug symbols to Sentry, on macOS
-        if: needs.whist-publish-build-config.outputs.publish == 'true' && false
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
         working-directory: brave-browser/src/brave/whist
         env:
           SENTRY_ORG: whist
@@ -1249,8 +1247,8 @@ jobs:
             exit 1
           fi
 
-      - name: Upload DMG to S3
-        if: needs.whist-publish-build-config.outputs.publish == 'true' || true
+      - name: Upload Whist Browser Installer to AWS S3
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
         working-directory: brave-browser/src/out
         run: |
           # On Arm builds, the arch gets appended to the output folder name
@@ -1259,9 +1257,12 @@ jobs:
           else
             BUILD_OUTPUT_FOLDER="${{ env.build_type }}_${{ matrix.config.target_arch }}"
           fi
-
           aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/${{ env.dmg-object-name }}"
 
+          # TODO: Automatically handle writing to appcast.xml
+          # 1- Pull it from S3
+          # 2- Update it with `xq`
+          # 3- Push it to S3
           # Until we write code to automatically edit appcast.xml when we are
           # ready to ship an update, just print out the update's Sparkle
           # signature so someone can come look through the logs and add it to
