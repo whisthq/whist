@@ -1103,11 +1103,11 @@ jobs:
           # running on a self-hosted runner, to avoid unnecessary merge conflicts when pulling changes
           echo "brave_browser_package_json_version=$(jq -r '.version' package.json)" >> $GITHUB_ENV
           echo "brave_core_package_json_version=$(jq -r '.version' src/brave/package.json)" >> $GITHUB_ENV
-          echo "Brave-browser initial package.json version before setting to Whist version: $brave_browser_package_json_version"
-          echo "Brave-core initial package.json version before setting to Whist version: $brave_core_package_json_version"
+          echo "Brave-browser initial package.json version before setting to Whist version: ${{ env.brave_browser_package_json_version }}"
+          echo "Brave-core initial package.json version before setting to Whist version: ${{ env.brave_core_package_json_version }}"
 
           # Set the Brave version to the Whist version in both `brave-browser` and `brave-core`
-          echo "Setting package.json to Whist version: ${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}"
+          echo "\n\nSetting package.json to Whist version: ${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}...\n\n"
           jq --arg variable "${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}" '.version = $variable' package.json > package.json.tmp && mv package.json.tmp package.json
           jq --arg variable "${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}" '.version = $variable' src/brave/package.json > src/brave/package.json.tmp && mv src/brave/package.json.tmp src/brave/package.json
 
