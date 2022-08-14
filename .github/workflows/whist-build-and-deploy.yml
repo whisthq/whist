@@ -849,7 +849,6 @@ jobs:
           #   runner: [self-hosted, Linux, x64]
 
     env:
-      dmg-object-name: Whist-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg
       s3-bucket-uri: s3://whist-browser-${{ matrix.config.target_os }}-${{ matrix.config.target_arch }}-${{ needs.whist-publish-build-config.outputs.branch }}
       s3-bucket-region: us-east-1
       build_type: "Release" # Change this to Debug or Component if you're looking to generate a less-optimized build, but with more symbols
@@ -880,7 +879,7 @@ jobs:
             git fetch -p
             git branch
             git checkout main
-            git pull
+            git reset --hard main
             git branch
 
             # We then do the same for the `brave-core` repo within the `brave-browser` repo.
@@ -903,8 +902,8 @@ jobs:
                 # Log the branch, should always be `dev`, `staging`, or `prod`, but we checkout just to be sure
                 git fetch -p
                 git branch
-                git checkout ${{ needs.whist-publish-build-config.outputs.branch }}
-                git pull
+                git checkout "${{ needs.whist-publish-build-config.outputs.branch }}"
+                git reset --hard "${{ needs.whist-publish-build-config.outputs.branch }}"
                 git branch
               fi
             fi
@@ -960,9 +959,7 @@ jobs:
       # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
       - name: Install macOS Notarization API Key
         if: runner.os == 'macOS'
-        run: |
-          mkdir -p ~/private_keys
-          aws s3 cp s3://whist-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
+        run: mkdir -p ~/private_keys && aws s3 cp s3://whist-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
 
       #############################################################################################
       ############################### Linux Configuration Steps START #############################
@@ -1041,6 +1038,7 @@ jobs:
             # TODO: Sign the macOS package and update the file path accordingly
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=signed/Whist Browser.dmg" >> $GITHUB_ENV
+              echo "installer_name=Whist-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg"
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1057,6 +1055,7 @@ jobs:
             # TODO: Sign the macOS package and update the file path accordingly
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=signed/Whist Browser Beta.dmg" >> $GITHUB_ENV
+              echo "installer_name=Whist-Beta-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg"
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1073,6 +1072,7 @@ jobs:
             # TODO: Sign the macOS package and update the file path accordingly
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=signed/Whist Browser Nightly.dmg" >> $GITHUB_ENV
+              echo "installer_name=Whist-Nightly-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg"
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1093,6 +1093,7 @@ jobs:
           # Download and prepare Chromium/Brave for building
           npm run init
 
+      # Note that we don't need to set the version back, because we `git reset --hard` before every run of this workflow
       - name: Set Brave version to Whist version
         working-directory: brave-browser
         run: |
@@ -1100,14 +1101,19 @@ jobs:
           # it once. We save this value for later, since we'll be overwriting the version in-place to set the
           # browser to the Whist version, and we want to set it back to Brave's at the end given that we're
           # running on a self-hosted runner, to avoid unnecessary merge conflicts when pulling changes
-          echo "brave_package_json_version=$(jq -r '.version' package.json)" >> $GITHUB_ENV
+          echo "brave_browser_package_json_version=$(jq -r '.version' package.json)" >> $GITHUB_ENV
+          echo "brave_core_package_json_version=$(jq -r '.version' src/brave/package.json)" >> $GITHUB_ENV
+          echo "Brave-browser initial package.json version before setting to Whist version: $brave_browser_package_json_version"
+          echo "Brave-core initial package.json version before setting to Whist version: $brave_core_package_json_version"
 
           # Set the Brave version to the Whist version in both `brave-browser` and `brave-core`
+          echo "Setting package.json to Whist version: ${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}"
           jq --arg variable "${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}" '.version = $variable' package.json > package.json.tmp && mv package.json.tmp package.json
           jq --arg variable "${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}" '.version = $variable' src/brave/package.json > src/brave/package.json.tmp && mv src/brave/package.json.tmp src/brave/package.json
 
-          cat package.json
-          cat src/brave/package.json
+          # Log for helpful debugging/checking
+          echo "Brave-browser package.json version after setting to Whist version: $(jq -r '.version' package.json)"
+          echo "Brave-core package.json version after setting to Whist version: $(jq -r '.version' src/brave/package.json)"
 
       - name: Build Whist Browser
         working-directory: brave-browser
@@ -1238,14 +1244,6 @@ jobs:
               --gn=notary_password:${{ secrets.MACOS_SIGNING_NOTARYTOOL_PASSWORD }} \
               --notarize
 
-      - name: Set the Brave version back in the `package.json` files
-        working-directory: brave-browser
-        run: |
-          # Set the Brave version back to what it was, to avoid unnecessary merge conflicts when pulling change, given that 
-          # this is a self-hosted, stateful runner
-          jq --arg variable "${{ env.brave_package_json_version }}" '.version = $variable' package.json > package.json.tmp && mv package.json.tmp package.json
-          jq --arg variable "${{ env.brave_package_json_version }}" '.version = $variable' src/brave/package.json > src/brave/package.json.tmp && mv src/brave/package.json.tmp src/brave/package.json
-
       # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
       # IDs to match the debug symbols with the build that crashed to build the backtrace
       # Note: Sentry makes use of sudo. To make it work on a self-hosted macOS runner, follow:
@@ -1273,7 +1271,7 @@ jobs:
           fi
 
       - name: Upload Whist Browser Installer to AWS S3
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        if: needs.whist-publish-build-config.outputs.publish == 'true' || true
         working-directory: brave-browser/src/out
         run: |
           # On Arm builds, the arch gets appended to the output folder name
@@ -1282,7 +1280,7 @@ jobs:
           else
             BUILD_OUTPUT_FOLDER="${{ env.build_type }}_${{ matrix.config.target_arch }}"
           fi
-          aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/${{ env.dmg-object-name }}"
+          aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/Whist-${{ env.release_channel }}-${{ env.installer_name }}"
 
           # TODO: Automatically handle writing to appcast.xml
           # 1- Pull it from S3
