@@ -1280,7 +1280,7 @@ jobs:
           else
             BUILD_OUTPUT_FOLDER="${{ env.build_type }}_${{ matrix.config.target_arch }}"
           fi
-          aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/Whist-${{ env.release_channel }}-${{ env.installer_name }}"
+          aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/${{ env.installer_name }}"
 
           # TODO: Automatically handle writing to appcast.xml
           # 1- Pull it from S3
