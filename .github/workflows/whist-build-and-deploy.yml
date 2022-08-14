@@ -1146,7 +1146,9 @@ jobs:
           export WHIST_AUTH0_REDIRECT_URL=https://fractal-dev.us.auth0.com/callback
 
           cd src/brave/whist
-          export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
+          # TODO: Fix this, somehow we're not setting it correctly
+          # export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
+          export WHIST_COMMIT_SHA="local_dev"
           cd ../../..
 
           # Build the browser
@@ -1208,7 +1210,9 @@ jobs:
           export WHIST_AUTH0_REDIRECT_URL=https://fractal-dev.us.auth0.com/callback
 
           cd src/brave/whist
-          export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
+          # TODO: Fix this, somehow we're not setting it correctly
+          # export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
+          export WHIST_COMMIT_SHA="local_dev"
           cd ../../..
 
           # Package the browser into an installer
