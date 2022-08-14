@@ -691,7 +691,8 @@ jobs:
     name: "Whist Browser: Retrieve Current Version Number from Config Database"
     runs-on: ubuntu-20.04
     concurrency: whist-browser-retrieve-version-number-${{ github.ref }}
-    needs: [
+    needs:
+      [
         whist-publish-build-config,
         scaling-service-deploy,
         auth0-deploy-rules,
@@ -818,7 +819,8 @@ jobs:
     name: "Whist Browser: Build & Deploy Whist Browser (${{ matrix.config.display_os }} - ${{ matrix.config.target_arch }})"
     runs-on: ${{ matrix.config.runner }}
     concurrency: whist-browser-publish-build-s3-${{ matrix.config.target_arch }}-${{ matrix.config.target_os }}-${{ github.ref }}
-    needs: [
+    needs:
+      [
         whist-publish-build-config,
         whist-browser-retrieve-version-number,
         terraform-deploy,
