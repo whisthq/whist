@@ -12,13 +12,13 @@ import (
 	"go.uber.org/zap"
 )
 
-// deployTimeoutInHours indicates the time the scaling service
+// deployTimeoutInMinutes indicates the time the scaling service
 // should expect the deploy action to take. While this might seem
 // like a high value, we need to set it to a sufficiently high value
 // to give enough time to the deploy action to complete. This value
 // is then used to take specific actions when a deploy has failed
 // (rollback to the previous version) or succeeded (update the database).
-const deployTimeoutInHours = 3 * time.Hour
+const deployTimeoutInMinutes = 270 * time.Minute
 
 // UpgradeImage is a scaling action which runs when a new version is deployed. Its responsible of
 // starting a buffer of instances with the new image and scaling down instances with the previous
@@ -148,7 +148,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 	select {
 	case <-s.SyncChan:
 		logger.Infow("Got signal that image upgrade action finished correctly.", contextFields)
-	case <-time.After(deployTimeoutInHours):
+	case <-time.After(deployTimeoutInMinutes):
 		// Clear protected map since the image upgrade didn't complete successfully.
 		s.protectedMapLock.Lock()
 		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
