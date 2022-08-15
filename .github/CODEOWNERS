@@ -10,8 +10,8 @@
 
 /.github/                           @philippemnoel @rpadaki @mauaraujo
 /backend/auth0/                     @philippemnoel @rpadaki @owenniles
-/backend/infrastructure/            @philippemnoel @mauaraujo @gabrieleoliaro
-/backend/services/                  @mauaraujo @rpadaki @gabrieleoliaro
+/backend/infrastructure/            @mauaraujo @rpadaki @philippemnoel
+/backend/services/                  @mauaraujo @rpadaki @philippemnoel
 /host-setup/                        @rpadaki @mauaraujo @philippemnoel
 /mandelboxes/                       @rpadaki @mauaraujo @philippemnoel
 /protocol/                          @jkarthic @npip99 @rpadaki @sardination
