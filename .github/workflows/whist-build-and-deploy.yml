@@ -568,17 +568,19 @@ jobs:
           ]
 
           # Set Logz.io shipping token and regions to which to deploy the new AMI based on the environment.
+          # For internal environments (dev, staging), we only clone our new AMI to us-east-1 and us-west-1, to save on
+          # costs since we don't have/need test users in other regions.
           if data["git_branch"] == "prod":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}"
+            data["destination_regions"] = supported_aws_regions
           elif data["git_branch"] == "staging":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_STAGING }}"
+            data["destination_regions"] = ["us-east-1", "us-west-1"]
           elif data["git_branch"] == "dev":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
+            data["destination_regions"] = ["us-east-1", "us-west-1"]
           else:
             raise Exception(f"Invalid environment/git branch: {data['git_branch']}")
-
-          # Copy the AMI to all regions across environments so that new regions can be easily enabled.
-          data["destination_regions"] = supported_aws_regions
 
           # Packer isn't able to loop over AWS Regions by itself. To work around this, we need to loop over all AWS regions
           # regions ourselves, until one of them has capacity (only returning an error if there is no capacity in any of the
