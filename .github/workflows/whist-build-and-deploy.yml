@@ -879,7 +879,7 @@ jobs:
             git fetch -p
             git branch
             git checkout main
-            git reset --hard main
+            git reset --hard origin/main
             git branch
 
             # We then do the same for the `brave-core` repo within the `brave-browser` repo.
@@ -891,7 +891,7 @@ jobs:
               git fetch -p
               git branch
               git checkout "${{ needs.whist-publish-build-config.outputs.branch }}"
-              git reset --hard "${{ needs.whist-publish-build-config.outputs.branch }}"
+              git reset --hard "origin/${{ needs.whist-publish-build-config.outputs.branch }}"
               git branch
 
               # We then do the same for the `whist` repo within the `brave-core` repo.
@@ -903,7 +903,7 @@ jobs:
                 git fetch -p
                 git branch
                 git checkout "${{ needs.whist-publish-build-config.outputs.branch }}"
-                git reset --hard "${{ needs.whist-publish-build-config.outputs.branch }}"
+                git reset --hard "origin/${{ needs.whist-publish-build-config.outputs.branch }}"
                 git branch
               fi
             fi
