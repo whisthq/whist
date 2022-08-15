@@ -92,6 +92,11 @@ typedef enum {
     NOTIFICATIONS_RECEIVED,
     CLIENT_CPU_USAGE,
 
+    // mlock
+    MACH_VM_REGION_TIME,
+    MLOCK_TIME,
+    MUNLOCK_TIME,
+
     NUM_METRICS,
 } Metrics;
 

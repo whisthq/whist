@@ -39,6 +39,7 @@
 #include <mach/task.h>
 #include <mach/vm_map.h>
 #include <sys/mman.h>
+#include <whist/logging/log_statistic.h>
 #else
 #include <sys/sysinfo.h>
 #endif
@@ -84,11 +85,13 @@ void mlock_memory(void) {
     mach_msg_type_number_t count;
 
     int done = 0;
+    WhistTimer statistics_timer;
 
     count = VM_REGION_BASIC_INFO_COUNT_64;
 
-    rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info, &count,
-                        &obj_name);
+    TIME_RUN(rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info,
+                                 &count, &obj_name),
+             MACH_VM_REGION_TIME, statistics_timer);
     if (rc) {
         LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
     } else {
@@ -100,7 +103,7 @@ void mlock_memory(void) {
             linked_list_add_tail(&region_list, vm_region);
             LOG_INFO("region_iter null, added %p size %llx", (void*)vm_region->addr,
                      vm_region->size);
-            mlock((void*)addr, size);
+            TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, statistics_timer);
             num_mlocked_regions++;
             region_iter = linked_list_next(vm_region);
         } else {
@@ -108,7 +111,8 @@ void mlock_memory(void) {
                 while (addr > region_iter->addr) {
                     // the region in region_iter is no longer a valid region, so munlock it.
                     LOG_INFO("Skipping %p size %llx", (void*)region_iter->addr, region_iter->size);
-                    munlock((void*)region_iter->addr, region_iter->size);
+                    TIME_RUN(munlock((void*)region_iter->addr, region_iter->size), MUNLOCK_TIME,
+                             statistics_timer);
                     num_munlocked_regions++;
                     VMRegion* old_region = region_iter;
                     // advance region_iter
@@ -125,15 +129,17 @@ void mlock_memory(void) {
                 vm_region->size = size;
                 LOG_INFO("Inserting %p size %llx", (void*)vm_region->addr, vm_region->size);
                 linked_list_add_before(&region_list, region_iter, vm_region);
-                mlock((void*)addr, size);
+                TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, statistics_timer);
                 num_mlocked_regions++;
             } else if (addr == region_iter->addr) {
                 if (size != region_iter->size) {
-                    munlock((void*)region_iter->addr, region_iter->size);
+                    TIME_RUN(munlock((void*)region_iter->addr, region_iter->size), MUNLOCK_TIME,
+                             statistics_timer);
                     region_iter->size = size;
                     LOG_INFO("Changing size of %p to %llx", (void*)region_iter->addr,
                              region_iter->size);
-                    mlock((void*)region_iter->addr, region_iter->size);
+                    TIME_RUN(mlock((void*)region_iter->addr, region_iter->size), MLOCK_TIME,
+                             statistics_timer);
                 }
                 region_iter = linked_list_next(region_iter);
             }
@@ -152,8 +158,9 @@ void mlock_memory(void) {
                 // LOG_INFO("addr %p, size %llx, protection %d", (void*) prev_addr, prev_size,
                 // info.protection);
                 count = VM_REGION_BASIC_INFO_COUNT_64;
-                rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info,
-                                    &count, &obj_name);
+                TIME_RUN(rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO,
+                                             (vm_region_info_t)&info, &count, &obj_name),
+                         MACH_VM_REGION_TIME, statistics_timer);
                 if (rc) {
                     // indicates that we've given an invalid address.
                     LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
@@ -170,7 +177,7 @@ void mlock_memory(void) {
                             linked_list_add_tail(&region_list, vm_region);
                             LOG_INFO("region_iter null, added %p size %llx", (void*)vm_region->addr,
                                      vm_region->size);
-                            mlock((void*)addr, size);
+                            TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, statistics_timer);
                             num_mlocked_regions++;
                             region_iter = linked_list_next(vm_region);
                         } else {
@@ -180,7 +187,8 @@ void mlock_memory(void) {
                                     // munlock it.
                                     LOG_INFO("Skipping %p size %llx", (void*)region_iter->addr,
                                              region_iter->size);
-                                    munlock((void*)region_iter->addr, region_iter->size);
+                                    TIME_RUN(munlock((void*)region_iter->addr, region_iter->size),
+                                             MUNLOCK_TIME, statistics_timer);
                                     num_munlocked_regions++;
                                     VMRegion* old_region = region_iter;
                                     // advance region_iter
@@ -199,15 +207,17 @@ void mlock_memory(void) {
                                 LOG_INFO("Inserting %p size %llx", (void*)vm_region->addr,
                                          vm_region->size);
                                 linked_list_add_before(&region_list, region_iter, vm_region);
-                                mlock((void*)addr, size);
+                                TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, statistics_timer);
                                 num_mlocked_regions++;
                             } else if (addr == region_iter->addr) {
                                 if (size != region_iter->size) {
-                                    munlock((void*)region_iter->addr, region_iter->size);
+                                    TIME_RUN(munlock((void*)region_iter->addr, region_iter->size),
+                                             MUNLOCK_TIME, statistics_timer);
                                     region_iter->size = size;
                                     LOG_INFO("Changing size of %p to %llx",
                                              (void*)region_iter->addr, region_iter->size);
-                                    mlock((void*)region_iter->addr, region_iter->size);
+                                    TIME_RUN(mlock((void*)region_iter->addr, region_iter->size),
+                                             MLOCK_TIME, statistics_timer);
                                 }
                                 region_iter = linked_list_next(region_iter);
                             }
