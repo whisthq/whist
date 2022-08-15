@@ -18,7 +18,7 @@ import (
 // to give enough time to the deploy action to complete. This value
 // is then used to take specific actions when a deploy has failed
 // (rollback to the previous version) or succeeded (update the database).
-const deployTimeoutInMinutes = 270 * time.Minute
+const deployTimeoutInMinutes = 150 * time.Minute
 
 // UpgradeImage is a scaling action which runs when a new version is deployed. Its responsible of
 // starting a buffer of instances with the new image and scaling down instances with the previous
