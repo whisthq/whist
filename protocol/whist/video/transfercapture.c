@@ -2,11 +2,13 @@
 #include "capture/capture.h"
 
 int transfer_capture(CaptureDevice* device, VideoEncoder* encoder, bool* force_iframe) {
-    if (device->width != encoder->in_width || device->height != encoder->in_height) {
+    CaptureDeviceInfos* infos = &device->infos;
+
+    if (infos->width != encoder->in_width || infos->height != encoder->in_height) {
         LOG_ERROR(
             "Tried to pass in a captured frame of dimension %dx%d, "
             "into an encoder that accepts %dx%d as input",
-            device->width, device->height, encoder->in_width, encoder->in_height);
+            infos->width, infos->height, encoder->in_width, encoder->in_height);
         return -1;
     }
     if (transfer_screen(device)) {
@@ -21,23 +23,30 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder, bool* force_i
         if (USING_NVIDIA_CAPTURE) {
             // We need to account for switching contexts
             NvidiaEncoder* old_encoder = encoder->nvidia_encoders[encoder->active_encoder_idx];
-            if (old_encoder->cuda_context != *get_video_thread_cuda_context_ptr()) {
+            CUcontext cuda_context;
+            int ret = device->impl->cuda_context(device->impl, &cuda_context);
+            if (ret < 0) {
+                LOG_ERROR("Unable to retrieve device CUDA context");
+                return -1;
+            }
+
+            if (old_encoder->cuda_context != cuda_context) {
                 LOG_INFO("Switching to other Nvidia encoder!");
-                encoder->active_encoder_idx = encoder->active_encoder_idx == 1 ? 0 : 1;
+                encoder->active_encoder_idx = (encoder->active_encoder_idx + 1) % 2;
+
                 if (encoder->nvidia_encoders[encoder->active_encoder_idx] == NULL) {
                     encoder->nvidia_encoders[encoder->active_encoder_idx] = create_nvidia_encoder(
                         old_encoder->bitrate, old_encoder->codec_type, old_encoder->width,
-                        old_encoder->height, old_encoder->vbv_size,
-                        *get_video_thread_cuda_context_ptr());
+                        old_encoder->height, old_encoder->vbv_size, cuda_context);
                 }
                 *force_iframe = true;
             }
         }
         RegisteredResource resource_to_register = {0};
-        resource_to_register.width = device->width;
-        resource_to_register.height = device->height;
-        resource_to_register.pitch = device->pitch;
-        resource_to_register.device_type = device->last_capture_device;
+        resource_to_register.width = infos->width;
+        resource_to_register.height = infos->height;
+        resource_to_register.pitch = infos->pitch;
+        resource_to_register.device_type = device->infos.last_capture_device;
         resource_to_register.texture_pointer = device->frame_data;
         return nvidia_encoder_frame_intake(encoder->nvidia_encoders[encoder->active_encoder_idx],
                                            resource_to_register);
@@ -57,12 +66,14 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder, bool* force_i
     WhistTimer cpu_transfer_timer;
     start_timer(&cpu_transfer_timer);
 
-#if OS_IS(OS_WIN32)
-    if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->frame_data, device->pitch)) {
-#elif OS_IS(OS_LINUX)
-    if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->x11_capture_device->frame_data,
-                                    device->x11_capture_device->pitch)) {
-#endif
+    void* frame_data = NULL;
+    uint32_t frame_stride = 0;
+
+    if (capture_get_data(device, &frame_data, &frame_stride) < 0) {
+        LOG_ERROR("Unable to retrieve capture device data");
+    }
+
+    if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, frame_data, frame_stride)) {
         LOG_ERROR("Unable to load data to AVFrame");
         return -1;
     }

@@ -42,7 +42,6 @@ static CUCTXDESTROYV2PROC cu_ctx_destroy_v2_ptr = NULL;
 static bool cuda_initialized = false;
 
 CUcontext video_thread_cuda_context = NULL;
-CUcontext nvidia_thread_cuda_context = NULL;
 CUCTXSETCURRENTPROC cu_ctx_set_current_ptr = NULL;
 CUCTXGETCURRENTPROC cu_ctx_get_current_ptr = NULL;
 CUCTXPUSHCURRENTPROC cu_ctx_push_current_ptr = NULL;
@@ -172,7 +171,7 @@ NVFBC_BOOL cuda_destroy(CUcontext cuda_context) {
  * \return
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
+NVFBC_BOOL cuda_init(CUcontext* cuda_context, bool make_current) {
     void* lib_cuda = NULL;
     if (*cuda_context) {
         LOG_DEBUG("Cuda context already exists! Doing nothing.");
@@ -206,6 +205,13 @@ NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
         return NVFBC_FALSE;
     }
 
+    if (!make_current) {
+        cu_res = cu_ctx_pop_current_ptr(cuda_context);
+        if (cu_res != CUDA_SUCCESS) {
+            LOG_ERROR("Error popping back the created context (result: %d)\n", cu_res);
+        }
+    }
+
     return NVFBC_TRUE;
 }
 
@@ -218,14 +224,4 @@ CUcontext* get_video_thread_cuda_context_ptr(void) {
     */
 
     return &video_thread_cuda_context;
-}
-
-CUcontext* get_nvidia_thread_cuda_context_ptr(void) {
-    /*
-        Return a pointer to the CUDA context that will be used next by the nvidia thread.
-
-        Returns:
-            (CUcontext*): pointer to the nvidia thread CUDA context
-    */
-    return &nvidia_thread_cuda_context;
 }

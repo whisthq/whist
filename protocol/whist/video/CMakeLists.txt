@@ -2,6 +2,9 @@ add_library(whistVideo STATIC
         codec/decode.c
         video.c
         ltr.c
+        capture/capture.h
+        capture/capture.c
+        capture/filecapture.c
         )
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -12,9 +15,9 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     )
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         target_sources(whistVideo PRIVATE
-            capture/linuxcapture.c
             capture/x11capture.c
             capture/nvidiacapture.c
+            capture/nvx11capture.c
             codec/nvidia_encode.c
             nvidia-linux/NvFBCUtils.c
             cudacontext.c

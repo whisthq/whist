@@ -234,15 +234,14 @@ TEST_F(CodecTest, EncodeDecodeTest) {
 
 // Capture a stream from an MP4 file.
 TEST_F(CodecTest, CaptureMP4Test) {
-    file_capture_set_input_filename("assets/100-frames-h264.mp4");
-
     CaptureDevice cap;
     int ret;
 
     int width = 1280;
     int height = 720;
 
-    ret = create_capture_device(&cap, width, height, 96);
+    ret = create_capture_device(&cap, FILE_DEVICE, (void *)"assets/100-frames-h264.mp4", width,
+                                height, 96);
     EXPECT_EQ(ret, 0);
 
     for (int frame = 0; frame < 20; frame++) {
@@ -261,7 +260,7 @@ TEST_F(CodecTest, CaptureMP4Test) {
         EXPECT_EQ(ret, 0);
 
         int value =
-            test_read_image((const uint8_t *)cap.frame_data, width, height, cap.pitch, false);
+            test_read_image((const uint8_t *)cap.frame_data, width, height, cap.infos.pitch, false);
         EXPECT_EQ(value, frame);
     }
 
@@ -270,15 +269,13 @@ TEST_F(CodecTest, CaptureMP4Test) {
 
 // Capture using a single JPEG file repeatedly.
 TEST_F(CodecTest, CaptureJPEGTest) {
-    file_capture_set_input_filename("assets/1729.jpeg");
-
     CaptureDevice cap;
     int ret;
 
     int width = 640;
     int height = 480;
 
-    ret = create_capture_device(&cap, width, height, 96);
+    ret = create_capture_device(&cap, FILE_DEVICE, (void *)"assets/1729.jpeg", width, height, 96);
     EXPECT_EQ(ret, 0);
 
     for (int frame = 0; frame < 4; frame++) {
@@ -289,7 +286,7 @@ TEST_F(CodecTest, CaptureJPEGTest) {
         EXPECT_EQ(ret, 0);
 
         int value =
-            test_read_image((const uint8_t *)cap.frame_data, width, height, cap.pitch, false);
+            test_read_image((const uint8_t *)cap.frame_data, width, height, cap.infos.pitch, false);
         EXPECT_EQ(value, 1729);
     }
 

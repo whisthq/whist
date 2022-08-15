@@ -53,7 +53,7 @@ typedef struct VideoEncoder {
     AVPacket* packets[MAX_ENCODER_PACKETS];
 
     // frame metadata + data
-    int in_width, in_height;
+    uint32_t in_width, in_height;
     int out_width, out_height;
     VideoFrameType frame_type;
     size_t encoded_frame_size;  /// <size of encoded frame in bytes
