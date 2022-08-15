@@ -32,7 +32,12 @@ const initActivateTabListener = (socket: Socket) => {
         active: tabToActivate.active,
       })?.then((_tab) => {
         if (tabToActivate.id !== undefined) {
-          if (_tab.active) socket.emit("tab-activated", tabToActivate.id)
+          if (tabToActivate.active) {
+            console.log("emitting active tab created", tabToActivate.id, tabToActivate.url)
+            socket.emit("tab-activated", tabToActivate.id)
+          } else {
+            console.log(tabToActivate.url, "not active")
+          }
           chrome.storage.local.set({
             [tabToActivate.id]: _tab,
           })
