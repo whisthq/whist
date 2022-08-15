@@ -48,6 +48,8 @@ const initActivateTabListener = (socket: Socket) => {
         ...(tab.url !== urlToActivate && {
           url: urlToActivate,
         }),
+      }).then(() => {
+        socket.emit("tab-activated", tabToActivate.id)
       })
     }
   })

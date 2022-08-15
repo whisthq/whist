@@ -15,9 +15,8 @@ const createTab = (
   })
 }
 
-const updateTab = (tabId: number, updateProperties: object) => {
+const updateTab = (tabId: number, updateProperties: object) =>
   chrome.tabs.update(tabId, updateProperties)
-}
 
 const removeTab = (tabId: number) => {
   chrome.tabs.remove([tabId])
