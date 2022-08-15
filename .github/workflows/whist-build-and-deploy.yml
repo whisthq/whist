@@ -166,7 +166,6 @@ jobs:
   sentry-deploy-sentry-releases:
     name: "Deploy Sentry Release for: ${{ matrix.project.name }}"
     runs-on: ubuntu-20.04
-    concurrency: sentry-deploy-sentry-releases-${{ github.ref }}
     needs: [whist-publish-build-config]
     outputs:
       sentry-deploy-environment: ${{ steps.set-deploy-environment.outputs.environment }}
