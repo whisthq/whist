@@ -1129,8 +1129,8 @@ jobs:
           # TODO: Create a per-environment Amplitude project, and have a different key for each environment
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
-            export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
-            export WHIST_AUTH0_REDIRECT_URL=https://fractal-prod.us.auth0.com/callback
+            export WHIST_AUTH0_DOMAIN_URL=auth.whist.com
+            export WHIST_AUTH0_REDIRECT_URL=https://auth.whist.com/callback
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             export WHIST_AUTH0_CLIENT_ID=WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz
@@ -1194,8 +1194,8 @@ jobs:
 
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
-            export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
-            export WHIST_AUTH0_REDIRECT_URL=https://fractal-prod.us.auth0.com/callback
+            export WHIST_AUTH0_DOMAIN_URL=auth.whist.com
+            export WHIST_AUTH0_REDIRECT_URL=https://auth.whist.com/callback
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             export WHIST_AUTH0_CLIENT_ID=WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz
