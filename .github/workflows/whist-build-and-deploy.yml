@@ -1133,7 +1133,7 @@ jobs:
             export WHIST_AUTH0_REDIRECT_URL=https://auth.whist.com/callback
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
-            export WHIST_AUTH0_CLIENT_ID=WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz
+            export WHIST_AUTH0_CLIENT_ID=h049JqhybFNXnTARnVF0e3ptUDYJ4pmT
             export WHIST_AUTH0_DOMAIN_URL=fractal-staging.us.auth0.com
             export WHIST_AUTH0_REDIRECT_URL=https://fractal-staging.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
@@ -1198,7 +1198,7 @@ jobs:
             export WHIST_AUTH0_REDIRECT_URL=https://auth.whist.com/callback
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
-            export WHIST_AUTH0_CLIENT_ID=WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz
+            export WHIST_AUTH0_CLIENT_ID=h049JqhybFNXnTARnVF0e3ptUDYJ4pmT
             export WHIST_AUTH0_DOMAIN_URL=fractal-staging.us.auth0.com
             export WHIST_AUTH0_REDIRECT_URL=https://fractal-staging.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
