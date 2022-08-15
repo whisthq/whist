@@ -1104,8 +1104,8 @@ jobs:
           # running on a self-hosted runner, to avoid unnecessary merge conflicts when pulling changes
           echo "brave_browser_package_json_version=$(jq -r '.version' package.json)" >> $GITHUB_ENV
           echo "brave_core_package_json_version=$(jq -r '.version' src/brave/package.json)" >> $GITHUB_ENV
-          echo "Brave-browser initial package.json version before setting to Whist version: ${{ env.brave_browser_package_json_version }}"
-          echo "Brave-core initial package.json version before setting to Whist version: ${{ env.brave_core_package_json_version }}"
+          echo "Brave-browser initial package.json version before setting to Whist version: $(jq -r '.version' package.json)"
+          echo "Brave-core initial package.json version before setting to Whist version: $(jq -r '.version' src/brave/package.json)"
 
           # Set the Brave version to the Whist version in both `brave-browser` and `brave-core`
           echo "\n\nSetting package.json to Whist version: ${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}...\n\n"
@@ -1131,24 +1131,25 @@ jobs:
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
             export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
+            export WHIST_AUTH0_REDIRECT_URL=https://fractal-prod.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             export WHIST_AUTH0_CLIENT_ID=WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz
             export WHIST_AUTH0_DOMAIN_URL=fractal-staging.us.auth0.com
+            export WHIST_AUTH0_REDIRECT_URL=https://fractal-staging.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
           else
             export WHIST_AUTH0_CLIENT_ID=DIy0YQZrMeMO97Thjr13EpkGCy792XWx
             export WHIST_AUTH0_DOMAIN_URL=fractal-dev.us.auth0.com
+            export WHIST_AUTH0_REDIRECT_URL=https://fractal-dev.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
           fi
 
           export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
-          export WHIST_AUTH0_REDIRECT_URL=https://fractal-dev.us.auth0.com/callback
 
           cd src/brave/whist
-          # TODO: Fix this, somehow we're not setting it correctly
+          # TODO: Fix this, somehow we're not setting it correctly, omitting it so that it defaults to `local_dev`
           # export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
-          export WHIST_COMMIT_SHA="local_dev"
           cd ../../..
 
           # Build the browser
@@ -1195,24 +1196,25 @@ jobs:
           if [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "prod" ]]; then
             export WHIST_AUTH0_CLIENT_ID=6yCVwz6R1O7bFteqlan1HOpeHN64lwIw
             export WHIST_AUTH0_DOMAIN_URL=fractal-prod.us.auth0.com
+            export WHIST_AUTH0_REDIRECT_URL=https://fractal-prod.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
           elif [[ "${{ needs.whist-publish-build-config.outputs.branch }}" == "staging" ]]; then
             export WHIST_AUTH0_CLIENT_ID=WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz
             export WHIST_AUTH0_DOMAIN_URL=fractal-staging.us.auth0.com
+            export WHIST_AUTH0_REDIRECT_URL=https://fractal-staging.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
           else
             export WHIST_AUTH0_CLIENT_ID=DIy0YQZrMeMO97Thjr13EpkGCy792XWx
             export WHIST_AUTH0_DOMAIN_URL=fractal-dev.us.auth0.com
+            export WHIST_AUTH0_REDIRECT_URL=https://fractal-dev.us.auth0.com/callback
             export WHIST_SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
           fi
 
           export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
-          export WHIST_AUTH0_REDIRECT_URL=https://fractal-dev.us.auth0.com/callback
 
           cd src/brave/whist
-          # TODO: Fix this, somehow we're not setting it correctly
+          # TODO: Fix this, somehow we're not setting it correctly, omitting it so that it defaults to `local_dev`
           # export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
-          export WHIST_COMMIT_SHA="local_dev"
           cd ../../..
 
           # Package the browser into an installer
