@@ -832,10 +832,10 @@ jobs:
       matrix:
         config:
           # This builds the client-side macOS Whist Browser
-          # - target_arch: "x64"
-          #   display_os: "macOS"
-          #   target_os: "macos"
-          #   runner: [self-hosted, macOS, ARM64]
+          - target_arch: "x64"
+            display_os: "macOS"
+            target_os: "macos"
+            runner: [self-hosted, macOS, ARM64]
           # This builds the client-side macOS Whist Browser
           - target_arch: "arm64"
             display_os: "macOS"
