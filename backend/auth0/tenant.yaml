@@ -42,7 +42,7 @@ clients:
       - chrome-extension://ahjecglibcdgcpmdpehkgkpkmcapnnle
     app_type: spa
     callbacks:
-      - https://fractal-dev.us.auth0.com/callback
+      - https://com.whist.auth0/callback
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
