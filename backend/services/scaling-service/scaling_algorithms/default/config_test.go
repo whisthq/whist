@@ -78,7 +78,10 @@ func TestEnabledRegionsMap(t *testing.T) {
 		env  string
 		want []string
 	}{
-		{"dev", []string{"us-east-1"}},
+		{"dev", []string{
+			"us-east-1",
+			"us-west-1",
+		}},
 		{"staging", []string{"us-east-1"}},
 		{"prod", []string{
 			"us-east-1",
