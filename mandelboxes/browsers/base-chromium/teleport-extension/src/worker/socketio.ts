@@ -21,41 +21,41 @@ const initSocketioConnection = () => {
 }
 
 const initActivateTabListener = (socket: Socket) => {
-  // socket.on("activate-tab", async (tabs: chrome.tabs.Tab[]) => {
-  //   const openTabs = await getOpenTabs()
-  //   const tabToActivate = tabs[0]
-  //   const foundTab = find(openTabs, (t) => t.clientTabId === tabToActivate.id)
+  socket.on("activate-tab", async (tabs: chrome.tabs.Tab[]) => {
+    const openTabs = await getOpenTabs()
+    const tabToActivate = tabs[0]
+    const foundTab = find(openTabs, (t) => t.clientTabId === tabToActivate.id)
 
-  //   if (foundTab?.tab?.id === undefined) {
-  //     createTab({
-  //       url: tabToActivate.url,
-  //       active: tabToActivate.active,
-  //     })?.then((_tab) => {
-  //       if (tabToActivate.id !== undefined) {
-  //         if (tabToActivate.active) {
-  //           console.log("emitting active tab created", tabToActivate.id, tabToActivate.url)
-  //           socket.emit("tab-activated", tabToActivate.id)
-  //         } else {
-  //           console.log(tabToActivate.url, "not active")
-  //         }
-  //         chrome.storage.local.set({
-  //           [tabToActivate.id]: _tab,
-  //         })
-  //       }
-  //     })
-  //   } else {
-  //     const tab = await getTab(foundTab.tab.id)
-  //     const urlToActivate = tabToActivate.url?.replace("cloud:", "")
-  //     updateTab(foundTab.tab.id, {
-  //       active: tabToActivate.active,
-  //       ...(tab.url !== urlToActivate && {
-  //         url: urlToActivate,
-  //       }),
-  //     }).then(() => {
-  //       socket.emit("tab-activated", tabToActivate.id)
-  //     })
-  //   }
-  // })
+    if (foundTab?.tab?.id === undefined) {
+      createTab({
+        url: tabToActivate.url,
+        active: tabToActivate.active,
+      })?.then((_tab) => {
+        if (tabToActivate.id !== undefined) {
+          if (tabToActivate.active) {
+            console.log("emitting active tab created", tabToActivate.id, tabToActivate.url)
+            socket.emit("tab-activated", tabToActivate.id)
+          } else {
+            console.log(tabToActivate.url, "not active")
+          }
+          chrome.storage.local.set({
+            [tabToActivate.id]: _tab,
+          })
+        }
+      })
+    } else {
+      const tab = await getTab(foundTab.tab.id)
+      const urlToActivate = tabToActivate.url?.replace("cloud:", "")
+      updateTab(foundTab.tab.id, {
+        active: tabToActivate.active,
+        ...(tab.url !== urlToActivate && {
+          url: urlToActivate,
+        }),
+      }).then(() => {
+        socket.emit("tab-activated", tabToActivate.id)
+      })
+    }
+  })
 }
 
 const initCloseTabListener = (socket: Socket) => {
