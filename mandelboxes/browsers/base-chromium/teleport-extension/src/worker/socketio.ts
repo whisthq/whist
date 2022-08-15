@@ -32,6 +32,7 @@ const initActivateTabListener = (socket: Socket) => {
         active: tabToActivate.active,
       })?.then((_tab) => {
         if (tabToActivate.id !== undefined) {
+          console.log("requested creation of", tabToActivate)
           if (tabToActivate.active) {
             console.log("emitting active tab created", tabToActivate.id, tabToActivate.url)
             socket.emit("tab-activated", tabToActivate.id)
