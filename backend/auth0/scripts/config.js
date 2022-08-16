@@ -9,8 +9,8 @@
 // These don't need to be secrets, they're public values.
 const clientIDs = {
   dev: "zfNXAien2yNOJBKaxcVu7ngWfwr6l2eP",
-  staging: "2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5",
-  prod: "dnhVmqdHkF1O6aWwakv7jDVMd5Ii6VfX",
+  staging: "anDOA3nAkJEPnE2YwwUY0MYnJRaXxvcV",
+  prod: "K60rqZ4sqUJaXUol4SOjysPUh7OjayQE",
 }
 
 const getConfig = (env) => {
