@@ -301,12 +301,6 @@ jobs:
                   -D SENTRY_BACKEND=crashpad \
                   -D CMAKE_OSX_DEPLOYMENT_TARGET="10.13" \
                   -D CMAKE_OSX_SYSROOT="${{ env.CMAKE_OSX_SYSROOT }}"
-
-            cd build && make -j
-
-            # move files to location for publish steps to tar
-            mv crashpad_build/handler/crashpad_handler ..
-            mv libsentry.dylib ..
           elif [[ "${{ matrix.config.arch }}" == "arm64" ]]; then
             # configure Cmake and build Sentry Native for cross-compilation to arm64 from x64 systems
             cmake -S . \
@@ -319,21 +313,21 @@ jobs:
                   -D CMAKE_OSX_DEPLOYMENT_TARGET="11.0" \
                   -D CMAKE_OSX_ARCHITECTURES="arm64" \
                   -D CMAKE_OSX_SYSROOT="${{ env.CMAKE_OSX_SYSROOT }}"
-
-            cd build && make -j
-
-            # Important: Since the protocol can be built as a shared library, we need this library
-            # to be accessible to the loader, not the executable. This matches our configuration for
-            # https://github.com/whisthq/FFmpeg dependencies.
-            install_name_tool -id @loader_path/libsentry.dylib libsentry.dylib
-
-            # move files to location for publish steps to tar
-            mv crashpad_build/handler/crashpad_handler ..
-            mv libsentry.dylib ..
           else
             echo "Unsupported compilation attempt on macOS"
             exit
           fi
+
+          cd build && make -j
+
+          # Important: Since the protocol can be built as a shared library, we need this library
+          # to be accessible to the loader, not the executable. This matches our configuration for
+          # https://github.com/whisthq/FFmpeg dependencies.
+          install_name_tool -id @loader_path/libsentry.dylib libsentry.dylib
+
+          # move files to location for publish steps to tar
+          mv crashpad_build/handler/crashpad_handler ..
+          mv libsentry.dylib ..
 
       ###################################################################################
       ################################# LINUX STEPS START ###############################
