@@ -95,7 +95,7 @@ WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* i
 int sdl_get_window_dpi(WhistFrontend* frontend) {
     // TODO: Doesn't support different monitors with different DPI's
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (!context->windows.empty() || context->windows.begin()->second->window == NULL) {
+    if (!context->windows.empty() && context->windows.begin()->second->window != NULL) {
         return sdl_native_get_dpi(context->windows.begin()->second->window);
     } else {
         LOG_ERROR("Could not get DPI! No windows available");
@@ -107,7 +107,7 @@ int sdl_get_window_dpi(WhistFrontend* frontend) {
 int sdl_get_dpi_scale(WhistFrontend* frontend) {
     // TODO: Doesn't support different monitors with different DPI's
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (!context->windows.empty() || context->windows.begin()->second->window == NULL) {
+    if (!context->windows.empty() && context->windows.begin()->second->window != NULL) {
         int pixel_width, virtual_width;
         SDL_GetWindowSize(context->windows.begin()->second->window, &virtual_width, NULL);
         SDL_GL_GetDrawableSize(context->windows.begin()->second->window, &pixel_width, NULL);

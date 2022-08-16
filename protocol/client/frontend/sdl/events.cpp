@@ -194,15 +194,15 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
             int x_adjust = 0;
             int y_adjust = 0;
 #if USING_MULTIWINDOW
-            for (const auto& [window_id, window_context] : context->windows) {
-                if (window_context->window_id == sdl_event->window.windowID) {
-                    x_adjust = window_context->x;
-                    y_adjust = window_context->y;
-                    // If the window has a titlebar,
-                    // Then the titlebar height needs to be subtracted.
-                    if (window_context->has_titlebar) {
-                        y_adjust -= Y_SHIFT;
-                    }
+            if (context->windows.contains(sdl_event->window.windowID)) {
+                window_context = context->windows[sdl_event->window.windowID];
+
+                x_adjust = window_context->x;
+                y_adjust = window_context->y;
+                // If the window has a titlebar,
+                // Then the titlebar height needs to be subtracted.
+                if (window_context->has_titlebar) {
+                    y_adjust -= Y_SHIFT;
                 }
             }
 #endif

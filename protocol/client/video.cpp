@@ -373,13 +373,6 @@ int render_video(VideoContext* video_context) {
         window_data[0].height = 1494;
         window_data[0].is_fullscreen = false;
         window_data[0].has_titlebar = false;
-        window_data[0].id = 0;
-        window_data[0].x = 0;
-        window_data[0].y = 0;
-        window_data[0].width = 2880;
-        window_data[0].height = 1540;
-        window_data[0].is_fullscreen = false;
-        window_data[0].has_titlebar = false;
         window_data[1].id = 5;
         window_data[1].x = 167;
         window_data[1].y = 236;
