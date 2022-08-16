@@ -322,6 +322,11 @@ jobs:
 
             cd build && make -j
 
+            # Important: Since the protocol can be built as a shared library, we need this library
+            # to be accessible to the loader, not the executable. This matches our configuration for
+            # https://github.com/whisthq/FFmpeg dependencies.
+            install_name_tool -id @loader_path/libsentry.dylib libsentry.dylib
+
             # move files to location for publish steps to tar
             mv crashpad_build/handler/crashpad_handler ..
             mv libsentry.dylib ..
