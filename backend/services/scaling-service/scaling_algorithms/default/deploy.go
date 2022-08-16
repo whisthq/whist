@@ -88,15 +88,13 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	logger.Infow(utils.Sprintf("Inserted %d rows to database.", affectedRows), contextFields)
 
-	// Acquire lock on protected from scale down map
-	s.protectedMapLock.Lock()
-	defer s.protectedMapLock.Unlock()
-
 	// Protect the new instance buffer from scale down. This is done to avoid any downtimes
 	// during deploy, as the active image will be switched until the frontend has updated
 	// its version on the config database.
+	s.protectedMapLock.Lock()
 	s.protectedFromScaleDown = make(map[string]subscriptions.Image)
 	s.protectedFromScaleDown[newImage.ImageID] = newImage
+	s.protectedMapLock.Unlock()
 
 	// If the region does not have an existing image, insert the new one to the database.
 	if len(imageResult) == 0 {
@@ -123,9 +121,11 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	select {
 	case s.SyncChan <- true:
 		logger.Infow(utils.Sprintf("Finished upgrading image %s in region %s", newImage.ImageID, event.Region), contextFields)
-	case <-time.After(1 * time.Hour):
+	case <-time.After(deployTimeoutInMinutes):
 		// Clear protected map since the frontend deploy didn't complete successfully.
+		s.protectedMapLock.Lock()
 		s.protectedFromScaleDown = make(map[string]subscriptions.Image)
+		s.protectedMapLock.Unlock()
 
 		return utils.MakeError("timed out waiting for config database to swap versions")
 	}
