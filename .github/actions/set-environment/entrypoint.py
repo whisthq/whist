@@ -37,11 +37,11 @@ def set_environment(ref: str) -> None:
     if ref.endswith("prod"):
         environment = "prod"
         domain = "auth.whist.com"
-        client_id = "dnhVmqdHkF1O6aWwakv7jDVMd5Ii6VfX"
+        client_id = "K60rqZ4sqUJaXUol4SOjysPUh7OjayQE"
     elif ref.endswith("staging"):
         environment = "staging"
         domain = "fractal-staging.us.auth0.com"
-        client_id = "2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5"
+        client_id = "anDOA3nAkJEPnE2YwwUY0MYnJRaXxvcV"
     else:
         environment = "dev"
         domain = "fractal-dev.us.auth0.com"
