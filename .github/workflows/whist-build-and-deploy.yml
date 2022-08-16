@@ -1038,7 +1038,7 @@ jobs:
             # TODO: Sign the macOS package and update the file path accordingly
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=signed/Whist Browser.dmg" >> $GITHUB_ENV
-              echo "installer_name=Whist-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
+              echo "installer_name=Whist-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1055,7 +1055,7 @@ jobs:
             # TODO: Sign the macOS package and update the file path accordingly
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=signed/Whist Browser Beta.dmg" >> $GITHUB_ENV
-              echo "installer_name=Whist-Beta-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
+              echo "installer_name=Whist-Beta-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1072,7 +1072,7 @@ jobs:
             # TODO: Sign the macOS package and update the file path accordingly
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=signed/Whist Browser Nightly.dmg" >> $GITHUB_ENV
-              echo "installer_name=Whist-Nightly-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
+              echo "installer_name=Whist-Nightly-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
