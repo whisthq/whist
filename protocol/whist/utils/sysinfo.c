@@ -38,6 +38,7 @@
 #include <mach/mach.h>
 #include <mach/task.h>
 #include <mach/vm_map.h>
+#include <mach/vm_statistics.h>
 #include <sys/mman.h>
 #include <whist/logging/log_statistic.h>
 #else
@@ -61,6 +62,25 @@ typedef struct {
     mach_vm_size_t size;
 } VMRegion;
 
+static bool should_mlock_region(vm_region_extended_info_data_t extended_info) {
+    switch (extended_info.user_tag) {
+        case VM_MEMORY_MALLOC:
+        case VM_MEMORY_MALLOC_NANO:
+        case VM_MEMORY_MALLOC_SMALL:
+        case VM_MEMORY_MALLOC_MEDIUM:
+        case VM_MEMORY_MALLOC_LARGE:
+        case VM_MEMORY_REALLOC:
+        case VM_MEMORY_MALLOC_TINY:
+        case VM_MEMORY_MALLOC_LARGE_REUSABLE:
+        case VM_MEMORY_MALLOC_LARGE_REUSED:
+        case VM_MEMORY_STACK: {
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
 void mlock_memory(void) {
     // this is probably bad practice, sorry -- using the fact that this is unsigned
     static mach_vm_address_t max_addr = (mach_vm_address_t)-1;
@@ -77,8 +97,8 @@ void mlock_memory(void) {
 
     mach_vm_address_t addr = 1;
     kern_return_t rc;
-    vm_region_basic_info_data_t info;
-    // vm_region_extended_info_t extended_info;
+    // vm_region_basic_info_data_t info;
+    vm_region_extended_info_data_t extended_info;
     mach_vm_address_t prev_addr = 0;
     mach_vm_size_t size, prev_size;
 
@@ -92,17 +112,18 @@ void mlock_memory(void) {
         count = VM_REGION_BASIC_INFO_COUNT_64;
         // count = VM_REGION_EXTENDED_INFO_COUNT;
 
-        rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info, &count,
-                            &obj_name);
-        // rc = mach_vm_region(t, &addr, &size, VM_REGION_EXTENDED_INFO, (vm_region_info_t)&info,
+        // rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info,
         // &count, &obj_name);
+        rc = mach_vm_region(t, &addr, &size, VM_REGION_EXTENDED_INFO,
+                            (vm_region_info_t)&extended_info, &count, &obj_name);
         if (rc) {
             // indicates that we've given an invalid address.
             LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
             max_addr = addr;
             done = 1;
         } else {
-            if (prev_addr == 0 || addr >= prev_addr + prev_size) {
+            if ((prev_addr == 0 || addr >= prev_addr + prev_size) &&
+                should_mlock_region(extended_info)) {
                 // update region list data and mlock
                 if (region_iter == NULL) {
                     VMRegion* vm_region = safe_malloc(sizeof(VMRegion));
@@ -160,10 +181,13 @@ void mlock_memory(void) {
                     }
                 }
             } else {
-                LOG_INFO(
-                    "mach_vm_region said next region was at %p, but expected address at "
-                    "least %p + %llx = %p",
-                    (void*)addr, (void*)prev_addr, size, (void*)prev_addr + size);
+                if (addr < prev_addr + prev_size) {
+                    LOG_INFO(
+                        "mach_vm_region said next region was at %p, but expected address at "
+                        "least %p + %llx = %p",
+                        (void*)addr, (void*)prev_addr, size, (void*)prev_addr + size);
+                    done = 1;
+                }
             }
             prev_addr = addr;
             prev_size = size;
