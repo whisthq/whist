@@ -1175,7 +1175,8 @@ jobs:
               --gn=safebrowsing_api_endpoint:https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
               --gn=sparkle_eddsa_public_key:wYagjtw56tFzS39Yc9iCZCFyk3bVa09dWlWXxnN7l8M= \
               --gn=updater_dev_endpoint:https://clients2.google.com/service/update2/crx \
-              --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx
+              --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx \
+              --sccache=ccache
 
       # TODO: Do we need to lock this again?
       - name: Unlock codesigning keychain
@@ -1244,7 +1245,8 @@ jobs:
               --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx \
               --gn=notary_user:owen@whist.com \
               --gn=notary_password:${{ secrets.MACOS_SIGNING_NOTARYTOOL_PASSWORD }} \
-              --notarize
+              --notarize \
+              --sccache=ccache
 
       # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
       # IDs to match the debug symbols with the build that crashed to build the backtrace
