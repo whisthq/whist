@@ -27,19 +27,23 @@ const initActivateTabListener = (socket: Socket) => {
     const foundTab = find(openTabs, (t) => t.clientTabId === tabToActivate.id)
 
     if (foundTab?.tab?.id === undefined) {
-      createTab(
-        {
-          url: tabToActivate.url,
-          active: tabToActivate.active,
-        },
-        (_tab: chrome.tabs.Tab) => {
-          if (tabToActivate.id !== undefined) {
-            chrome.storage.local.set({
-              [tabToActivate.id]: _tab,
-            })
+      createTab({
+        url: tabToActivate.url,
+        active: tabToActivate.active,
+      })?.then((_tab) => {
+        if (tabToActivate.id !== undefined) {
+          console.log("requested creation of", tabToActivate)
+          if (tabToActivate.active) {
+            console.log("emitting active tab created", tabToActivate.id, tabToActivate.url)
+            socket.emit("tab-activated", tabToActivate.id)
+          } else {
+            console.log(tabToActivate.url, "not active")
           }
+          chrome.storage.local.set({
+            [tabToActivate.id]: _tab,
+          })
         }
-      )
+      })
     } else {
       const tab = await getTab(foundTab.tab.id)
       const urlToActivate = tabToActivate.url?.replace("cloud:", "")

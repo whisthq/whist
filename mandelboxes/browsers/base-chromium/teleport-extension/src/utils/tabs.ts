@@ -2,17 +2,14 @@ import pickBy from "lodash.pickby"
 import { WhistTab } from "@app/constants/tabs"
 
 const createTab = (
-  createProperties: { url?: string; active: boolean },
-  callback?: (tab: chrome.tabs.Tab) => void
+  createProperties: { url?: string; active: boolean }
 ) => {
   if (createProperties.url === undefined) return
 
   if (createProperties.url.startsWith("cloud:")) {
     createProperties.url = createProperties.url.replace("cloud:", "")
   }
-  chrome.tabs.create(createProperties, (tab: chrome.tabs.Tab) => {
-    if (callback !== undefined) callback(tab)
-  })
+  return chrome.tabs.create(createProperties)
 }
 
 const updateTab = (tabId: number, updateProperties: object) =>
