@@ -23,6 +23,7 @@ import {
   initRemoveCookieListener,
   initCookieRemovedListener,
 } from "./cookies"
+import { initZoomListener } from "./zoom"
 
 initTabState()
 
@@ -54,3 +55,4 @@ initRemoveCookieListener(socket)
 initCookieAddedListener(socket)
 initCookieRemovedListener(socket)
 initTabRefreshListener(socket)
+initZoomListener(socket)
