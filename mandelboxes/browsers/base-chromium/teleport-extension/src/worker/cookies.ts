@@ -55,8 +55,8 @@ const initCookieSyncHandler = (socket: Socket) => {
       if (cookie === undefined) return
 
       const url = cookie.domain.startsWith(".")
-        ? `https://${first.domain.slice(1)}${first.path}`
-        : `https://${first.domain}${first.path}`
+        ? `https://${cookie.domain.slice(1)}${cookie.path}`
+        : `https://${cookie.domain}${cookie.path}`
 
       const details = {
         ...(!cookie.hostOnly && { domain: cookie.domain }),
