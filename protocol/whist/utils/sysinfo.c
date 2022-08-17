@@ -53,8 +53,8 @@
 #include <whist/logging/logging.h>
 
 #if OS_IS(OS_MACOS)
-// munlock previous allocations
-// mlock(addr, size) everything
+
+// documentation notes: the source code for mach/etc are in https://github.com/apple/darwin-xnu/.
 
 typedef struct {
     LINKED_LIST_HEADER;
@@ -63,6 +63,7 @@ typedef struct {
 } VMRegion;
 
 static bool should_mlock_region(vm_region_extended_info_data_t extended_info) {
+    // these constants are in vm_statistics.h
     switch (extended_info.user_tag) {
         case VM_MEMORY_MALLOC:
         case VM_MEMORY_MALLOC_NANO:
@@ -98,6 +99,7 @@ void mlock_memory(void) {
     mach_vm_address_t addr = 1;
     kern_return_t rc;
     // vm_region_basic_info_data_t info;
+    // We use extended_info so it can give us user_tag, which indicates the type of memory the region is
     vm_region_extended_info_data_t extended_info;
     mach_vm_address_t prev_addr = 0;
     mach_vm_size_t size, prev_size;
@@ -109,8 +111,8 @@ void mlock_memory(void) {
     WhistTimer mlock_timer;
     static unsigned long long total_mlocked_size = 0;
     while (!done) {
-        count = VM_REGION_BASIC_INFO_COUNT_64;
-        // count = VM_REGION_EXTENDED_INFO_COUNT;
+        // count = VM_REGION_BASIC_INFO_COUNT_64;
+        count = VM_REGION_EXTENDED_INFO_COUNT;
 
         // rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info,
         // &count, &obj_name);
