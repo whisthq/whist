@@ -75,6 +75,8 @@ const initCookieSyncHandler = (socket: Socket) => {
 
       chrome.cookies.set(details).then(() => setCookies(remaining))
     }
+
+    setCookies(cookies)
   })
 }
 
