@@ -74,48 +74,12 @@ clients:
     sso_disabled: false
     token_endpoint_auth_method: none
     web_origins: []
-  - name: Whist
-    allowed_clients: []
-    app_type: native
-    callbacks:
-      - http://localhost/callback
-    client_aliases: []
-    cross_origin_auth: false
-    custom_login_page_on: true
-    description: The Whist desktop application(s)
-    grant_types:
-      - authorization_code
-      - refresh_token
-    is_first_party: true
-    is_token_endpoint_ip_header_trusted: false
-    jwt_configuration:
-      alg: RS256
-      lifetime_in_seconds: 36000
-      secret_encoded: false
-    logo_uri: https://whist-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
-    native_social_login:
-      apple:
-        enabled: false
-      facebook:
-        enabled: false
-    oidc_conformant: true
-    refresh_token:
-      expiration_type: non-expiring
-      leeway: 0
-      infinite_token_lifetime: true
-      infinite_idle_token_lifetime: true
-      token_lifetime: 2592000
-      idle_token_lifetime: 1296000
-      rotation_type: non-rotating
-    sso_disabled: false
-    token_endpoint_auth_method: none
 databases: []
 connections:
   - name: google-oauth2
     strategy: google-oauth2
     enabled_clients:
       - Chromium Auth
-      - Whist
     is_domain_connection: false
     options:
       email: true
