@@ -10,7 +10,7 @@ import { cookieToDetails } from "@app/utils/cookies"
 let alreadyAddedCookies: chrome.cookies.Cookie[] = []
 
 const initAddCookieListener = (socket: Socket) => {
-  socket.on("server-add-cookie", ([cookie]: [chrome.cookies.Cookie]) => {
+  socket.on("server-add-cookie", async ([cookie]: [chrome.cookies.Cookie]) => {
     alreadyAddedCookies.push(cookie)
     chrome.cookies.set(cookieToDetails(cookie))
   })
@@ -32,11 +32,13 @@ const initCookieSyncHandler = (socket: Socket) => {
   socket.on("sync-cookies", async (cookies: chrome.cookies.Cookie[]) => {
     while (cookies.length > 0) {
       const cookie = cookies.shift()
-      if (cookie === undefined) return
-
-      alreadyAddedCookies.push(cookie)
-      await chrome.cookies.set(cookieToDetails(cookie))
+      if (cookie !== undefined) {
+        alreadyAddedCookies.push(cookie)
+        await chrome.cookies.set(cookieToDetails(cookie))
+      }
     }
+
+    chrome.storage.sync.set({ cookiesSynced: true })
   })
 }
 
@@ -53,9 +55,10 @@ const initCookieAddedListener = (socket: Socket) => {
       )
         return
 
-      if (!details.removed && details.cause === "explicit") {
-        socket.emit("client-add-cookie", details.cookie)
-      }
+      chrome.storage.sync.get(["cookiesSynced"], (synced) => {
+        if (synced && !details.removed && details.cause === "explicit")
+          socket.emit("client-add-cookie", details.cookie)
+      })
     }
   )
 }
@@ -67,12 +70,15 @@ const initCookieRemovedListener = (socket: Socket) => {
       cookie: chrome.cookies.Cookie
       removed: boolean
     }) => {
-      if (
-        details.removed &&
-        ["expired", "expired_overwrite", "evicted"].includes(details.cause)
-      ) {
-        socket.emit("client-remove-cookie", details.cookie)
-      }
+      chrome.storage.sync.get(["cookiesSynced"], (synced) => {
+        if (
+          synced &&
+          details.removed &&
+          ["expired", "expired_overwrite", "evicted"].includes(details.cause)
+        ) {
+          socket.emit("client-remove-cookie", details.cookie)
+        }
+      })
     }
   )
 }
