@@ -34,13 +34,11 @@ const initCookieSyncHandler = (socket: Socket) => {
       const cookie = cookies.shift()
       if (cookie !== undefined) {
         alreadyAddedCookies.push(cookie)
-        console.log("Syncing", cookie.domain, cookie.name, cookie.value)
         await chrome.cookies.set(cookieToDetails(cookie))
       }
     }
 
-    console.log("Done syncing!")
-
+    socket.emit("cookie-sync-complete")
     chrome.storage.sync.set({ cookiesSynced: true })
   })
 }
