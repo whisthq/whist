@@ -78,7 +78,8 @@ void mlock_memory(void) {
     mach_vm_address_t addr = 1;
     kern_return_t rc;
     vm_region_basic_info_data_t info;
-    mach_vm_address_t prev_addr;
+    // vm_region_extended_info_t extended_info;
+    mach_vm_address_t prev_addr = 0;
     mach_vm_size_t size, prev_size;
 
     mach_port_t obj_name;
@@ -87,73 +88,85 @@ void mlock_memory(void) {
     int done = 0;
     WhistTimer mlock_timer;
     static unsigned long long total_mlocked_size = 0;
+    while (!done) {
+        count = VM_REGION_BASIC_INFO_COUNT_64;
+        // count = VM_REGION_EXTENDED_INFO_COUNT;
 
-    count = VM_REGION_BASIC_INFO_COUNT_64;
-
-    start_timer(&mlock_timer);
-    rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info, &count,
-                        &obj_name);
-    LOG_INFO("mlock timer %f", get_timer(&mlock_timer) * MS_IN_SECOND);
-    if (rc) {
-        LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
-    } else {
-        // update region list data
-        if (region_iter == NULL) {
-            VMRegion* vm_region = safe_malloc(sizeof(VMRegion));
-            vm_region->addr = addr;
-            vm_region->size = size;
-            linked_list_add_tail(&region_list, vm_region);
-            LOG_INFO("region_iter null, added %p size %llx", (void*)vm_region->addr,
-                     vm_region->size);
-            TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, mlock_timer);
-            num_mlocked_regions++;
-            total_mlocked_size += size;
-            region_iter = linked_list_next(vm_region);
+        rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info, &count,
+                            &obj_name);
+        // rc = mach_vm_region(t, &addr, &size, VM_REGION_EXTENDED_INFO, (vm_region_info_t)&info,
+        // &count, &obj_name);
+        if (rc) {
+            // indicates that we've given an invalid address.
+            LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
+            max_addr = addr;
+            done = 1;
         } else {
-            if (addr > region_iter->addr) {
-                while (addr > region_iter->addr) {
-                    // the region in region_iter is no longer a valid region, so munlock it.
-                    LOG_INFO("Skipping %p size %llx", (void*)region_iter->addr, region_iter->size);
-                    TIME_RUN(munlock((void*)region_iter->addr, region_iter->size), MUNLOCK_TIME,
-                             mlock_timer);
-                    num_munlocked_regions++;
-                    total_mlocked_size -= region_iter->size;
-                    VMRegion* old_region = region_iter;
-                    // advance region_iter
-                    region_iter = linked_list_next(region_iter);
-                    // remove it from the linked list
-                    linked_list_remove(&region_list, old_region);
-                    free(old_region);
+            if (prev_addr == 0 || addr >= prev_addr + prev_size) {
+                // update region list data and mlock
+                if (region_iter == NULL) {
+                    VMRegion* vm_region = safe_malloc(sizeof(VMRegion));
+                    vm_region->addr = addr;
+                    vm_region->size = size;
+                    linked_list_add_tail(&region_list, vm_region);
+                    LOG_INFO("region_iter null, added %p size %llx", (void*)vm_region->addr,
+                             vm_region->size);
+                    TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, mlock_timer);
+                    num_mlocked_regions++;
+                    total_mlocked_size += size;
+                    region_iter = linked_list_next(vm_region);
+                } else {
+                    if (addr > region_iter->addr) {
+                        while (addr > region_iter->addr) {
+                            // the region in region_iter is no longer a valid region, so munlock it.
+                            LOG_INFO("Skipping %p size %llx", (void*)region_iter->addr,
+                                     region_iter->size);
+                            TIME_RUN(munlock((void*)region_iter->addr, region_iter->size),
+                                     MUNLOCK_TIME, mlock_timer);
+                            num_munlocked_regions++;
+                            total_mlocked_size -= region_iter->size;
+                            VMRegion* old_region = region_iter;
+                            // advance region_iter
+                            region_iter = linked_list_next(region_iter);
+                            // remove it from the linked list
+                            linked_list_remove(&region_list, old_region);
+                            free(old_region);
+                        }
+                    }
+                    if (addr < region_iter->addr) {
+                        // if addr < region_iter.addr, insert before and mlock. don't change
+                        // region_iter
+                        VMRegion* vm_region = safe_malloc(sizeof(VMRegion));
+                        vm_region->addr = addr;
+                        vm_region->size = size;
+                        LOG_INFO("Inserting %p size %llx", (void*)vm_region->addr, vm_region->size);
+                        linked_list_add_before(&region_list, region_iter, vm_region);
+                        TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, mlock_timer);
+                        num_mlocked_regions++;
+                        total_mlocked_size += size;
+                    } else if (addr == region_iter->addr) {
+                        if (size != region_iter->size) {
+                            TIME_RUN(munlock((void*)region_iter->addr, region_iter->size),
+                                     MUNLOCK_TIME, mlock_timer);
+                            total_mlocked_size -= region_iter->size;
+                            region_iter->size = size;
+                            LOG_INFO("Changing size of %p to %llx", (void*)region_iter->addr,
+                                     region_iter->size);
+                            TIME_RUN(mlock((void*)region_iter->addr, region_iter->size), MLOCK_TIME,
+                                     mlock_timer);
+                            total_mlocked_size += region_iter->size;
+                        }
+                        region_iter = linked_list_next(region_iter);
+                    }
                 }
+            } else {
+                LOG_INFO(
+                    "mach_vm_region said next region was at %p, but expected address at "
+                    "least %p + %llx = %p",
+                    (void*)addr, (void*)prev_addr, size, (void*)prev_addr + size);
             }
-            if (addr < region_iter->addr) {
-                // if addr < region_iter.addr, insert before and mlock. don't change region_iter
-                VMRegion* vm_region = safe_malloc(sizeof(VMRegion));
-                vm_region->addr = addr;
-                vm_region->size = size;
-                LOG_INFO("Inserting %p size %llx", (void*)vm_region->addr, vm_region->size);
-                linked_list_add_before(&region_list, region_iter, vm_region);
-                TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, mlock_timer);
-                num_mlocked_regions++;
-                total_mlocked_size += size;
-            } else if (addr == region_iter->addr) {
-                if (size != region_iter->size) {
-                    TIME_RUN(munlock((void*)region_iter->addr, region_iter->size), MUNLOCK_TIME,
-                             mlock_timer);
-                    total_mlocked_size -= region_iter->size;
-                    region_iter->size = size;
-                    LOG_INFO("Changing size of %p to %llx", (void*)region_iter->addr,
-                             region_iter->size);
-                    TIME_RUN(mlock((void*)region_iter->addr, region_iter->size), MLOCK_TIME,
-                             mlock_timer);
-                    total_mlocked_size += region_iter->size;
-                }
-                region_iter = linked_list_next(region_iter);
-            }
-        }
-        prev_addr = addr;
-        prev_size = size;
-        while (!done) {
+            prev_addr = addr;
+            prev_size = size;
             // repeatedly call mach_vm_region
             addr = prev_addr + prev_size;
             // means address space has wrapped around
@@ -161,91 +174,6 @@ void mlock_memory(void) {
                 // finished because we've wrapped around
                 done = 1;
             }
-            if (!done) {
-                // LOG_INFO("addr %p, size %llx, protection %d", (void*) prev_addr, prev_size,
-                // info.protection);
-                count = VM_REGION_BASIC_INFO_COUNT_64;
-                start_timer(&mlock_timer);
-                rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info,
-                                    &count, &obj_name);
-                LOG_INFO("mlock timer %f", get_timer(&mlock_timer) * MS_IN_SECOND);
-                if (rc) {
-                    // indicates that we've given an invalid address.
-                    LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
-                    max_addr = addr;
-                    done = 1;
-                } else {
-                    // check that addr is beyond prev_addr + prev_size
-                    if (addr >= prev_addr + prev_size) {
-                        // update region list data
-                        if (region_iter == NULL) {
-                            VMRegion* vm_region = safe_malloc(sizeof(VMRegion));
-                            vm_region->addr = addr;
-                            vm_region->size = size;
-                            linked_list_add_tail(&region_list, vm_region);
-                            LOG_INFO("region_iter null, added %p size %llx", (void*)vm_region->addr,
-                                     vm_region->size);
-                            TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, mlock_timer);
-                            num_mlocked_regions++;
-                            total_mlocked_size += size;
-                            region_iter = linked_list_next(vm_region);
-                        } else {
-                            if (addr > region_iter->addr) {
-                                while (addr > region_iter->addr) {
-                                    // the region in region_iter is no longer a valid region, so
-                                    // munlock it.
-                                    LOG_INFO("Skipping %p size %llx", (void*)region_iter->addr,
-                                             region_iter->size);
-                                    TIME_RUN(munlock((void*)region_iter->addr, region_iter->size),
-                                             MUNLOCK_TIME, mlock_timer);
-                                    num_munlocked_regions++;
-                                    total_mlocked_size -= region_iter->size;
-                                    VMRegion* old_region = region_iter;
-                                    // advance region_iter
-                                    region_iter = linked_list_next(region_iter);
-                                    // remove it from the linked list
-                                    linked_list_remove(&region_list, old_region);
-                                    free(old_region);
-                                }
-                            }
-                            if (addr < region_iter->addr) {
-                                // if addr < region_iter.addr, insert before and mlock. don't change
-                                // region_iter
-                                VMRegion* vm_region = safe_malloc(sizeof(VMRegion));
-                                vm_region->addr = addr;
-                                vm_region->size = size;
-                                LOG_INFO("Inserting %p size %llx", (void*)vm_region->addr,
-                                         vm_region->size);
-                                linked_list_add_before(&region_list, region_iter, vm_region);
-                                TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, mlock_timer);
-                                num_mlocked_regions++;
-                                total_mlocked_size += size;
-                            } else if (addr == region_iter->addr) {
-                                if (size != region_iter->size) {
-                                    TIME_RUN(munlock((void*)region_iter->addr, region_iter->size),
-                                             MUNLOCK_TIME, mlock_timer);
-                                    total_mlocked_size -= region_iter->size;
-                                    region_iter->size = size;
-                                    LOG_INFO("Changing size of %p to %llx",
-                                             (void*)region_iter->addr, region_iter->size);
-                                    TIME_RUN(mlock((void*)region_iter->addr, region_iter->size),
-                                             MLOCK_TIME, mlock_timer);
-                                    total_mlocked_size += region_iter->size;
-                                }
-                                region_iter = linked_list_next(region_iter);
-                            }
-                        }
-                    } else {
-                        LOG_INFO(
-                            "mach_vm_region said next region was at %p, but expected address at "
-                            "least %p + %llx = %p",
-                            (void*)addr, (void*)prev_addr, size, (void*)prev_addr + size);
-                    }
-                }
-            }
-            // update prev_addr and addr
-            prev_addr = addr;
-            prev_size = size;
         }
     }
     LOG_INFO("mlock'ed %d regions, munlock'ed %d regions, total size %llx (%llu M)",
