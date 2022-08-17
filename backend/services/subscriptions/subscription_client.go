@@ -118,7 +118,7 @@ func (wc *SubscriptionClient) SetParams(params HasuraParams) {
 func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
 	conditionFn Handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 
-	id, err := wc.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
+	id, err := wc.Hasura.Subscribe(query, variables, func(data []byte, err error) error {
 		if err != nil {
 			return utils.MakeError("error receiving subscription event from Hasura: %s", err)
 		}
@@ -127,7 +127,7 @@ func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string
 		// event type. Otherwise it will be unmarshalled as a map[string]interface{}
 		switch result := result.(type) {
 		case InstanceEvent:
-			err = json.Unmarshal(*data, &result)
+			err = json.Unmarshal(data, &result)
 			if err != nil {
 				return utils.MakeError("failed to unmarshal subscription event: %s", err)
 			}
@@ -136,7 +136,7 @@ func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string
 				subscriptionEvents <- &result
 			}
 		case MandelboxEvent:
-			err = json.Unmarshal(*data, &result)
+			err = json.Unmarshal(data, &result)
 			if err != nil {
 				return utils.MakeError("failed to unmarshal subscription event: %s", err)
 			}
@@ -145,7 +145,7 @@ func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string
 				subscriptionEvents <- &result
 			}
 		case FrontendVersionEvent:
-			err = json.Unmarshal(*data, &result)
+			err = json.Unmarshal(data, &result)
 			if err != nil {
 				return utils.MakeError("failed to unmarshal subscription event: %s", err)
 			}
