@@ -1,4 +1,5 @@
 #include <whist/core/whist.h>
+#include <SDL2/SDL_video.h>
 extern "C" {
 #include "common.h"
 #include "native.h"
@@ -10,6 +11,20 @@ WhistStatus sdl_get_window_pixel_size(WhistFrontend* frontend, int id, int* widt
     /*
      * Get the actual size (DPI-adjusted) of the window with given id.
      */
+#if USING_MULTIWINDOW
+    SDL_DisplayMode dm;
+
+    if (SDL_GetDesktopDisplayMode(0, &dm) != 0) {
+        LOG_ERROR("SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
+        *width = 1920;
+        *height = 1080;
+    } else {
+        int dpi_scale = sdl_get_dpi_scale(frontend);
+        *width = dm.w * dpi_scale;
+        *height = dm.h * dpi_scale;
+    }
+    return WHIST_SUCCESS;
+#else
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
     if (context->windows.contains(id)) {
         SDL_GL_GetDrawableSize(context->windows[id]->window, width, height);
@@ -23,6 +38,7 @@ WhistStatus sdl_get_window_pixel_size(WhistFrontend* frontend, int id, int* widt
         *height = WHIST_ERROR_NOT_FOUND;
     }
     return WHIST_ERROR_NOT_FOUND;
+#endif
 }
 
 WhistStatus sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* width, int* height) {
@@ -31,6 +47,14 @@ WhistStatus sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* wi
      * fraction of the actual size in high DPI monitors.
      */
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+
+#if USING_MULTIWINDOW
+    // When using multiwindow, the entire screen is used
+    int dpi_scale = sdl_get_dpi_scale(frontend);
+    *width = context->latest_pixel_width / dpi_scale;
+    *height = context->latest_pixel_height / dpi_scale;
+    return WHIST_SUCCESS;
+#else
     if (context->windows.contains(id)) {
         SDL_GetWindowSize(context->windows[id]->window, width, height);
         return WHIST_SUCCESS;
@@ -43,12 +67,13 @@ WhistStatus sdl_get_window_virtual_size(WhistFrontend* frontend, int id, int* wi
         *height = WHIST_ERROR_NOT_FOUND;
     }
     return WHIST_ERROR_NOT_FOUND;
+#endif
 }
 
 WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* index) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (context->windows.contains(id)) {
-        int ret = SDL_GetWindowDisplayIndex(context->windows[id]->window);
+    if (context->windows.size() > 0) {
+        int ret = SDL_GetWindowDisplayIndex(context->windows.begin()->second->window);
         if (ret < 0) {
             // LOG_ERROR("Could not get window display index - %s", SDL_GetError());
             return WHIST_ERROR_UNKNOWN;
@@ -57,22 +82,40 @@ WhistStatus sdl_get_window_display_index(WhistFrontend* frontend, int id, int* i
             *index = ret;
         }
         return WHIST_SUCCESS;
+    } else {
+        LOG_ERROR("Tried to get window display index for window %d, but no such window exists!",
+                  id);
+        if (index != NULL) {
+            *index = WHIST_ERROR_NOT_FOUND;
+        }
+        return WHIST_ERROR_NOT_FOUND;
     }
-    LOG_ERROR("Tried to get window display index for window %d, but no such window exists!", id);
-    if (index != NULL) {
-        *index = WHIST_ERROR_NOT_FOUND;
-    }
-    return WHIST_ERROR_NOT_FOUND;
 }
 
 int sdl_get_window_dpi(WhistFrontend* frontend) {
-    // TODO: changed to only check one window. But in tehory there could be multiple windows on
-    // different DPI monitors, I guess.
+    // TODO: Doesn't support different monitors with different DPI's
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
-    if (!context->windows.empty()) {
+    if (!context->windows.empty() && context->windows.begin()->second->window != NULL) {
         return sdl_native_get_dpi(context->windows.begin()->second->window);
+    } else {
+        LOG_ERROR("Could not get DPI! No windows available");
+        return 96;
     }
-    return -1;
+}
+
+// Declared in sdl_struct.hpp
+int sdl_get_dpi_scale(WhistFrontend* frontend) {
+    // TODO: Doesn't support different monitors with different DPI's
+    SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+    if (!context->windows.empty() && context->windows.begin()->second->window != NULL) {
+        int pixel_width, virtual_width;
+        SDL_GetWindowSize(context->windows.begin()->second->window, &virtual_width, NULL);
+        SDL_GL_GetDrawableSize(context->windows.begin()->second->window, &pixel_width, NULL);
+        return pixel_width / virtual_width;
+    } else {
+        LOG_ERROR("Could not get DPI scale! No windows available");
+        return 1;
+    }
 }
 
 // Checks if at least one window is visible. Returns false if all windows are minimized or occluded.
@@ -89,6 +132,7 @@ bool sdl_is_any_window_visible(WhistFrontend* frontend) {
 
 WhistStatus sdl_set_title(WhistFrontend* frontend, int id, const char* title) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+#if !USING_MULTIWINDOW
     SDL_Event event = {
         .user =
             {
@@ -103,6 +147,7 @@ WhistStatus sdl_set_title(WhistFrontend* frontend, int id, const char* title) {
     };
     // NOTE: "title" will be freed when the event is consumed
     SDL_PushEvent(&event);
+#endif
     return WHIST_SUCCESS;
 }
 
@@ -130,6 +175,7 @@ void sdl_resize_window(WhistFrontend* frontend, int id, int width, int height) {
 
 void sdl_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor* color) {
     SDLFrontendContext* context = (SDLFrontendContext*)frontend->context;
+#if !USING_MULTIWINDOW
     SDL_Event event = {
         .user =
             {
@@ -144,6 +190,7 @@ void sdl_set_titlebar_color(WhistFrontend* frontend, int id, const WhistRGBColor
     };
     // NOTE: "color" will be freed when the event is consumed
     SDL_PushEvent(&event);
+#endif
 }
 
 void sdl_display_notification(WhistFrontend* frontend, const WhistNotification* notif) {

@@ -89,6 +89,7 @@ typedef struct SDLWindowContext {
     std::string title;
     WhistRGBColor color;
     bool is_fullscreen;
+    bool has_titlebar;
     bool is_resizable;
 } SDLWindowContext;
 
@@ -200,5 +201,11 @@ void sdl_d3d11_destroy_window_data(SDLFrontendContext* context, int id);
  * @param context  Frontend context containing the devices.
  */
 void sdl_d3d11_destroy(SDLFrontendContext* context);
+
+WhistStatus sdl_create_window(WhistFrontend* frontend, int id);
+
+void sdl_destroy_window(WhistFrontend* frontend, int id);
+
+int sdl_get_dpi_scale(WhistFrontend* frontend);
 
 #endif  // WHIST_CLIENT_FRONTEND_SDL_STRUCT_H

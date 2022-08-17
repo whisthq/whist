@@ -40,6 +40,8 @@ static volatile bool pending_render = false;
 
 // Video frame update.
 static AVFrame* pending_video_frame;
+static WhistWindow pending_window_data[MAX_WINDOWS];
+static int pending_num_windows;
 
 // for cursor update. The value is writen by the video render thread, and taken away by the main
 // thread.
@@ -135,6 +137,10 @@ WhistTimer window_resize_timer;
 // event due to throttling, so the main loop should process it
 volatile bool pending_resize_message = false;
 void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) {
+#if USING_MULTIWINDOW
+    return;
+#endif
+
     // Try to make pixel width and height conform to certain desirable dimensions
     int current_width, current_height;
     whist_frontend_get_window_pixel_size(frontend, 0, &current_width, &current_height);
@@ -194,7 +200,7 @@ void sdl_renderer_resize_window(WhistFrontend* frontend, int width, int height) 
              current_height);
 }
 
-void sdl_update_framebuffer(AVFrame* frame) {
+void sdl_update_framebuffer(AVFrame* frame, WhistWindow* window_data, int num_windows) {
     whist_lock_mutex(frontend_render_mutex);
 
     // Check dimensions as a fail-safe
@@ -207,6 +213,8 @@ void sdl_update_framebuffer(AVFrame* frame) {
             av_frame_free(&pending_video_frame);
         }
         pending_video_frame = frame;
+        memcpy(pending_window_data, window_data, sizeof(pending_window_data));
+        pending_num_windows = num_windows;
     }
 
     whist_unlock_mutex(frontend_render_mutex);
@@ -380,7 +388,7 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
     }
 
     // Wipes the renderer to background color before we present
-    whist_frontend_paint_solid(frontend, 0, &background_color);
+    whist_frontend_paint_solid(frontend, &background_color);
 
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
@@ -388,7 +396,8 @@ static void sdl_present_pending_framebuffer(WhistFrontend* frontend) {
     // If there is a new video frame then update the frontend texture
     // with it.
     if (pending_video_frame) {
-        whist_frontend_update_video(frontend, pending_video_frame);
+        whist_frontend_update_video(frontend, pending_video_frame, pending_window_data,
+                                    pending_num_windows);
 
         // If the frontend needs to take a reference to the frame data
         // then it has done so, so we can free this frame immediately.

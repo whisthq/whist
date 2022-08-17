@@ -55,16 +55,6 @@ void whist_frontend_destroy(WhistFrontend* frontend) {
     free(frontend);
 }
 
-WhistStatus whist_frontend_create_window(WhistFrontend* frontend, int id) {
-    FRONTEND_ENTRY();
-    return frontend->call->create_window(frontend, id);
-}
-
-void whist_frontend_destroy_window(WhistFrontend* frontend, int id) {
-    FRONTEND_ENTRY();
-    frontend->call->destroy_window(frontend, id);
-}
-
 void whist_frontend_open_audio(WhistFrontend* frontend, unsigned int frequency,
                                unsigned int channels) {
     FRONTEND_ENTRY();
@@ -187,9 +177,10 @@ void whist_frontend_get_video_device(WhistFrontend* frontend, AVBufferRef** devi
     frontend->call->get_video_device(frontend, device, format);
 }
 
-WhistStatus whist_frontend_update_video(WhistFrontend* frontend, AVFrame* frame) {
+WhistStatus whist_frontend_update_video(WhistFrontend* frontend, AVFrame* frame,
+                                        WhistWindow* window_data, int num_windows) {
     FRONTEND_ENTRY();
-    return frontend->call->update_video(frontend, frame);
+    return frontend->call->update_video(frontend, frame, window_data, num_windows);
 }
 
 void whist_frontend_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_size, int x,
@@ -198,9 +189,9 @@ void whist_frontend_paint_png(WhistFrontend* frontend, const uint8_t* data, size
     frontend->call->paint_png(frontend, data, data_size, x, y);
 }
 
-void whist_frontend_paint_solid(WhistFrontend* frontend, int id, const WhistRGBColor* color) {
+void whist_frontend_paint_solid(WhistFrontend* frontend, const WhistRGBColor* color) {
     FRONTEND_ENTRY();
-    frontend->call->paint_solid(frontend, id, color);
+    frontend->call->paint_solid(frontend, color);
 }
 
 void whist_frontend_paint_video(WhistFrontend* frontend) {

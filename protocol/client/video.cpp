@@ -48,6 +48,7 @@ extern "C" {
 
 #define USE_HARDWARE_DECODE_DEFAULT true
 #define NO_NACKS_DURING_IFRAME false
+#define TEST_MULTIWINDOW false
 
 static bool use_hardware_decode = USE_HARDWARE_DECODE_DEFAULT;
 COMMAND_LINE_BOOL_OPTION(use_hardware_decode, 0, "hardware-decode",
@@ -198,6 +199,7 @@ int render_video(VideoContext* video_context) {
     // We make this static so that even if `sdl_render_pending` happens,
     // a later call to render_video can still access the data
     // from the most recently consumed render context.
+    static WhistWindow window_data[MAX_WINDOWS];
     static WhistRGBColor window_color = {};
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
@@ -255,6 +257,7 @@ int render_video(VideoContext* video_context) {
             }
 
             window_color = frame->corner_color;
+            memcpy(window_data, frame->window_data, sizeof(window_data));
 
             if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type)) {
                 whist_cursor_cache_clear(video_context->cursor_cache);
@@ -339,12 +342,12 @@ int render_video(VideoContext* video_context) {
             video_decoder_get_last_decoded_frame(video_context->decoder);
 
         // Make a new frame to give to the renderer.
-        AVFrame* frame = av_frame_alloc();
-        FATAL_ASSERT(frame);
+        AVFrame* av_frame = av_frame_alloc();
+        FATAL_ASSERT(av_frame != NULL);
 
         // Fill the frame for the renderer with references to the
         // decoded frame data.
-        av_frame_ref(frame, decoded_frame_data.decoded_frame);
+        av_frame_ref(av_frame, decoded_frame_data.decoded_frame);
 
         // Free the decoded frame.  We have another reference to the
         // data inside it.
@@ -354,7 +357,46 @@ int render_video(VideoContext* video_context) {
         sdl_render_window_titlebar_color(0, window_color);
 
         // Render the decoded frame
-        sdl_update_framebuffer(frame);
+        int num_windows = 0;
+        while (num_windows < MAX_WINDOWS && (int)window_data[num_windows].id != -1) {
+            /*LOG_INFO("Window %d: %dx%d (%d,%d)", (int)window_data[num_windows].id,
+                     window_data[num_windows].width, window_data[num_windows].height,
+                     window_data[num_windows].x, window_data[num_windows].y);*/
+            num_windows++;
+        }
+#if TEST_MULTIWINDOW
+        num_windows = 1;
+        window_data[0].id = 0;
+        window_data[0].x = 20;
+        window_data[0].y = 20;
+        window_data[0].width = 2780;
+        window_data[0].height = 1494;
+        window_data[0].is_fullscreen = false;
+        window_data[0].has_titlebar = false;
+        window_data[1].id = 5;
+        window_data[1].x = 167;
+        window_data[1].y = 236;
+        window_data[1].width = 1278;
+        window_data[1].height = 630;
+        window_data[1].is_fullscreen = false;
+        window_data[1].has_titlebar = false;
+        static int tmp = 0;
+        tmp++;
+        if (tmp > 100) {
+            num_windows = 2;
+        }
+        if (tmp > 200) {
+            num_windows = 1;
+        }
+        if (tmp > 300) {
+            window_data[1].x = 1577;
+            window_data[1].y = 476;
+            window_data[1].width = 1176;
+            window_data[1].height = 958;
+            num_windows = 2;
+        }
+#endif
+        sdl_update_framebuffer(av_frame, window_data, num_windows);
 
         // Mark the framebuffer out to render
         sdl_render_framebuffer();

@@ -153,6 +153,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     // Initialize the default window
     SDLWindowContext* window_context = new SDLWindowContext();
     window_context->to_be_created = true;
+    window_context->window_id = 0;
     window_context->x = SDL_WINDOWPOS_CENTERED;
     window_context->y = SDL_WINDOWPOS_CENTERED;
     window_context->width = width;
@@ -160,6 +161,7 @@ WhistStatus sdl_init(WhistFrontend* frontend, int width, int height, const char*
     window_context->title = std::string(title == NULL ? "Whist" : title);
     window_context->color = {17, 24, 39};
     window_context->is_fullscreen = false;
+    window_context->has_titlebar = false;
     window_context->is_resizable = true;
     context->windows[0] = window_context;
     sdl_create_window(frontend, 0);
@@ -262,7 +264,7 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     uint32_t window_flags = 0;
     window_flags |= SDL_WINDOW_ALLOW_HIGHDPI;
     window_flags |= SDL_WINDOW_OPENGL;
-    window_flags |= SDL_WINDOW_RESIZABLE;
+    window_flags |= context->windows[id]->is_resizable ? SDL_WINDOW_RESIZABLE : 0;
     // Avoid glitchy-looking titlebar-content combinations while the
     // window is loading, and glitches caused by early user interaction.
     window_flags |= SDL_WINDOW_HIDDEN;
@@ -293,9 +295,22 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     }
 
     // Create the window and renderer
-    window_context->window =
-        SDL_CreateWindow(window_context->title.c_str(), window_context->x, window_context->y,
-                         window_context->width, window_context->height, window_flags);
+    // On the first window, we don't dpi scale
+    // When USING_MULTIWINDOW is true, following windows will dpi scale
+    if (window_context->window_id == 0) {
+        // In single-window mode, just use x/y/w/h directly
+        window_context->window =
+            SDL_CreateWindow(window_context->title.c_str(), window_context->x, window_context->y,
+                             window_context->width, window_context->height, window_flags);
+    } else {
+        // Otherwise, do dpi scaling and y shift for the titlebar
+        int dpi_scale = sdl_get_dpi_scale(frontend);
+        int y_adjust = window_context->has_titlebar ? Y_SHIFT : 0;
+        window_context->window = SDL_CreateWindow(
+            window_context->title.c_str(), window_context->x / dpi_scale,
+            window_context->y / dpi_scale + y_adjust, window_context->width / dpi_scale,
+            window_context->height / dpi_scale, window_flags);
+    }
     if (window_context->window == NULL) {
         LOG_ERROR("Could not create window: %s", SDL_GetError());
         return WHIST_ERROR_UNKNOWN;
@@ -330,10 +345,10 @@ WhistStatus sdl_create_window(WhistFrontend* frontend, int id) {
     }
 #endif  // Windows
 
-    // We don't need to do this if we don't initialize the window until we get frames from the
-    // server window starts solid color
-    frontend->call->paint_solid(frontend, id, &window_context->color);
-    frontend->call->set_titlebar_color(frontend, id, &window_context->color);
+    // set_titlebar_color is responsible for free'ing titlebar_color later
+    WhistRGBColor* titlebar_color = (WhistRGBColor*)safe_malloc(sizeof(window_context->color));
+    *titlebar_color = window_context->color;
+    frontend->call->set_titlebar_color(frontend, id, titlebar_color);
 
     // Safe to set these post-initialization.
     sdl_native_init_window_options(window_context->window);

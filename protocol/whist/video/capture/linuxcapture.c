@@ -323,7 +323,7 @@ int capture_screen(CaptureDevice* device) {
     get_valid_windows(device, &window_list);
     // clear window data from previous pass
     for (int i = 0; i < MAX_WINDOWS; i++) {
-        device->window_data[i].id = 0;
+        device->window_data[i].id = -1;
     }
     // just copy over the first MAX_WINDOW items
     int i = 0;

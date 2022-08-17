@@ -191,11 +191,30 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
         }
         case SDL_MOUSEMOTION: {
             event->type = FRONTEND_EVENT_MOUSE_MOTION;
-            event->mouse_motion.absolute.x = sdl_event->motion.x;
-            event->mouse_motion.absolute.y = sdl_event->motion.y;
+            int x_adjust = 0;
+            int y_adjust = 0;
+#if USING_MULTIWINDOW
+            if (context->windows.contains(sdl_event->window.windowID)) {
+                window_context = context->windows[sdl_event->window.windowID];
+
+                x_adjust = window_context->x;
+                y_adjust = window_context->y;
+                // If the window has a titlebar,
+                // Then the titlebar height needs to be subtracted.
+                if (window_context->has_titlebar) {
+                    y_adjust -= Y_SHIFT;
+                }
+            }
+#endif
+            // TODO: adjust SDL coords to actual coords
+            event->mouse_motion.absolute.x = sdl_event->motion.x + x_adjust;
+            event->mouse_motion.absolute.y = sdl_event->motion.y + y_adjust;
             event->mouse_motion.relative.x = sdl_event->motion.xrel;
             event->mouse_motion.relative.y = sdl_event->motion.yrel;
             event->mouse_motion.relative_mode = SDL_GetRelativeMouseMode();
+            LOG_DEBUG("Absolute %d,%d, relative %d,%d", event->mouse_motion.absolute.x,
+                      event->mouse_motion.absolute.y, event->mouse_motion.relative.x,
+                      event->mouse_motion.relative.y);
             break;
         }
         case SDL_MOUSEBUTTONUP:
@@ -276,7 +295,7 @@ static bool sdl_handle_event(WhistFrontend* frontend, WhistFrontendEvent* event,
 }
 
 bool sdl_poll_event(WhistFrontend* frontend, WhistFrontendEvent* event) {
-    if (!event) {
+    if (event == NULL) {
         return SDL_PollEvent(NULL) != 0;
     }
 
