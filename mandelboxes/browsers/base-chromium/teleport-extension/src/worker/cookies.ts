@@ -8,7 +8,7 @@ import isEqual from "lodash.isequal"
 let alreadyAddedCookies: chrome.cookies.Cookie[] = []
 
 const initAddCookieListener = (socket: Socket) => {
-  socket.on("server-add-cookie", (cookies: any[]) => {
+  socket.on("server-add-cookie", (cookies: chrome.cookies.Cookie[]) => {
     let cookie = cookies[0]
 
     const url = cookie.domain.startsWith(".")
@@ -36,7 +36,7 @@ const initAddCookieListener = (socket: Socket) => {
 }
 
 const initRemoveCookieListener = (socket: Socket) => {
-  socket.on("server-remove-cookie", (cookies: any[]) => {
+  socket.on("server-remove-cookie", (cookies: chrome.cookies.Cookie[]) => {
     const cookie = cookies[0]
     const url = cookie.domain.startsWith(".")
       ? `https://${cookie.domain.slice(1)}`
@@ -47,6 +47,37 @@ const initRemoveCookieListener = (socket: Socket) => {
     })
   })
 }
+
+const initCookieSyncHandler = (socket: Socket) => {
+  socket.on("sync-cookies", (cookies: chrome.cookies.Cookie[]) => {
+    const setCookies = (c: chrome.cookies.Cookie[]) => {
+      if(c.length === 0) return 
+      const [first, ...remaining] = c 
+
+      const url = first.domain.startsWith(".")
+      ? `https://${first.domain.slice(1)}${first.path}`
+      : `https://${first.domain}${first.path}`
+      
+      const details = {
+        ...(!first.hostOnly && { domain: first.domain }),
+        ...(!first.session && { expirationDate: first.expirationDate }),
+        httpOnly: first.httpOnly,
+        name: first.name,
+        path: first.path,
+        sameSite: first.sameSite,
+        secure: first.secure,
+        storeId: first.storeId,
+        value: first.value,
+        url,
+      } as chrome.cookies.SetDetails
+
+      alreadyAddedCookies.push(first)
+
+      chrome.cookies.set(details).then(() => setCookies(remaining))
+    }
+  })
+}
+
 
 const initCookieAddedListener = (socket: Socket) => {
   chrome.cookies.onChanged.addListener(
@@ -90,4 +121,5 @@ export {
   initRemoveCookieListener,
   initCookieAddedListener,
   initCookieRemovedListener,
+  initCookieSyncHandler
 }
