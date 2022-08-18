@@ -1151,6 +1151,8 @@ jobs:
 
           # Build the browser
           npm run build ${{ env.build_type }} \
+              # arguments after the lone -- are options for the specific npm command
+              # but arguments before the -- set NPM config variables directly
               --sccache=ccache \
               -- \
               --channel=${{ env.release_channel }} \
