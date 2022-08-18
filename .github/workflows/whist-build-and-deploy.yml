@@ -1152,7 +1152,11 @@ jobs:
 
           # Build the browser
           npm run build ${{ env.build_type }} \
-              --sccache=ccache \
+              `# All positional arguments are forwarded to the build script.` \
+              `# Option arguments that appear before the naked '--' are` \
+              `# passed to npm, NOT the build script. Option arguments to the` \
+              `# build script must come after the naked '--'.` \
+              `# https://docs.npmjs.com/cli/v8/commands/npm-run-script` \
               -- \
               --channel=${{ env.release_channel }} \
               --target_arch=${{ matrix.config.target_arch }} \
@@ -1161,6 +1165,7 @@ jobs:
               --uphold_client_secret=x \
               --uphold_staging_client_id=x \
               --uphold_staging_client_secret=x \
+              --gn=sccache:ccache \
               --gn=brave_services_key:x \
               --gn=brave_stats_api_key:x  \
               --gn=brave_stats_updater_url:x \
@@ -1218,7 +1223,12 @@ jobs:
 
           # Package the browser into an installer
           npm run create_dist ${{ env.build_type }} \
-              --sccache=ccache \
+              `# All positional arguments are forwarded to the create_dist` \
+              `# script. Option arguments that appear before the naked '--'` \
+              `# are passed to npm, NOT the create_dist script. Option` \
+              `# arguments to the create_dist script must come after the` \
+              `# naked '--'.` \
+              `# https://docs.npmjs.com/cli/v8/commands/npm-run-script` \
               -- \
               --channel=${{ env.release_channel }} \
               --target_arch=${{ matrix.config.target_arch }} \
@@ -1231,6 +1241,7 @@ jobs:
               --uphold_staging_client_id=x \
               --uphold_staging_client_secret=x \
               --gn=brave_services_key:x \
+              --gn=sccache:ccache \
               --gn=brave_stats_api_key:x  \
               --gn=brave_stats_updater_url:x \
               --gn=brave_sync_endpoint:x \
