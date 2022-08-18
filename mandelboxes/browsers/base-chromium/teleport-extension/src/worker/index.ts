@@ -7,16 +7,16 @@
 import { initFileSyncHandler } from "./downloads"
 import { initNativeHostIpc, initNativeHostDisconnectHandler } from "./ipc"
 import { initCursorLockHandler } from "./cursor"
-import { initTabDetachSuppressor, initTabState } from "./tabs"
 import { initLocationHandler } from "./geolocation"
 import {
+  initTabState,
   initSocketioConnection,
   initActivateTabListener,
   initCloseTabListener,
   initCloudTabUpdatedListener,
   initCloudTabCreatedListener,
   initTabRefreshListener,
-} from "./socketio"
+} from "./tabs"
 import {
   initAddCookieListener,
   initCookieAddedListener,
@@ -25,6 +25,7 @@ import {
   initCookieSyncHandler
 } from "./cookies"
 import { initZoomListener } from "./zoom"
+import { initWindowCreatedListener } from "./windows"
 
 initTabState()
 
@@ -39,9 +40,6 @@ initFileSyncHandler(nativeHostPort)
 
 // Enables relative mouse mode
 initCursorLockHandler(nativeHostPort)
-
-// Prevents tabs from being dragged out to new windows
-initTabDetachSuppressor()
 
 // Receive geolocation from extension host
 initLocationHandler(nativeHostPort)
@@ -58,3 +56,6 @@ initCookieAddedListener(socket)
 initCookieRemovedListener(socket)
 initTabRefreshListener(socket)
 initZoomListener(socket)
+
+// Listen for newly created windows
+initWindowCreatedListener(socket)
