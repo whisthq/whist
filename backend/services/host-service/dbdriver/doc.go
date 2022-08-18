@@ -57,11 +57,10 @@
 // file as the single source of truth is a hard requirement. This leaves pretty
 // much two options: `pggen` and `sqlc`. While `sqlc` has many more stars on
 // Github, `pggen` provides the following advantages:
-// - It actually works. `sqlc` was spitting out errors based on our existing
-//   `schema.sql`, but since `pggen` uses Postgres to parse the schema it handled
-//   it seamlessly. We can also use whatever Postgres extensions we please.
-// - `pggen` has significantly better documentation, though it's less fancy.
-// - `pgx` support is very immature in `sqlc` at the time of this writing
-//   (merged into master 4 days ago, has not officially been released).
-//
+//   - It actually works. `sqlc` was spitting out errors based on our existing
+//     `schema.sql`, but since `pggen` uses Postgres to parse the schema it handled
+//     it seamlessly. We can also use whatever Postgres extensions we please.
+//   - `pggen` has significantly better documentation, though it's less fancy.
+//   - `pgx` support is very immature in `sqlc` at the time of this writing
+//     (merged into master 4 days ago, has not officially been released).
 package dbdriver // import "github.com/whisthq/whist/backend/services/host-service/dbdriver"
