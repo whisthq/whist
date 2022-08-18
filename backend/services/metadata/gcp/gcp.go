@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"time"
 
 	"github.com/whisthq/whist/backend/services/types"
@@ -68,41 +67,41 @@ func (gc *Metadata) GetUserID() types.UserID {
 func (gc *Metadata) PopulateMetadata() (map[string]string, error) {
 	imageID, err := metadataRetriever("image")
 	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field ami-id: %s", err)
+		return nil, utils.MakeError("failed to get gcp metadata field image: %s", err)
 	}
 
 	instanceID, err := metadataRetriever("id")
 	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field instance-id: %s", err)
+		return nil, utils.MakeError("failed to get gcp metadata field id: %s", err)
 	}
 
 	instanceType, err := metadataRetriever("machine-type")
 	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field instance-type: %s", err)
+		return nil, utils.MakeError("failed to get gcp metadata field machine-type: %s", err)
 	}
 
 	region, err := metadataRetriever("zone")
 	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field placement-region: %s", err)
+		return nil, utils.MakeError("failed to get gcp metadata field zone: %s", err)
 	}
 
 	ip, err := metadataRetriever("network-interfaces/0/ip")
 	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field public-ipv4: %s", err)
+		return nil, utils.MakeError("failed to get gcp metadata field ip: %s", err)
 	}
 
 	instanceName, err := metadataRetriever("name")
 	if err != nil {
-		return nil, utils.MakeError("failed to get aws metadata field public-ipv4: %s", err)
+		return nil, utils.MakeError("failed to get gcp metadata field name: %s", err)
 	}
 
 	metadata := make(map[string]string)
-	metadata["aws.image_id"] = imageID
-	metadata["aws.instance_id"] = instanceID
-	metadata["aws.instance_name"] = instanceName
-	metadata["aws.instance_type"] = instanceType
-	metadata["aws.region"] = region
-	metadata["aws.ip"] = ip
+	metadata["gcp.image_id"] = imageID
+	metadata["gcp.instance_id"] = instanceID
+	metadata["gcp.instance_name"] = instanceName
+	metadata["gcp.instance_type"] = instanceType
+	metadata["gcp.region"] = region
+	metadata["gcp.ip"] = ip
 
 	gc.imageID = types.ImageID(imageID)
 	gc.instanceID = types.InstanceID(instanceID)
@@ -123,7 +122,6 @@ func metadataRetriever(resource string) (string, error) {
 		return "", utils.MakeError("failed to parse metadata endpoint URL: %s", err)
 	}
 
-	u.Path = path.Join("latest", "metadata", resource)
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		return "", utils.MakeError("failed to create request for GCP endpoint: %s", err)
