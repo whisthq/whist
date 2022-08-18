@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/whisthq/whist/backend/services/types"
@@ -122,6 +123,7 @@ func metadataRetriever(resource string) (string, error) {
 		return "", utils.MakeError("failed to parse metadata endpoint URL: %s", err)
 	}
 
+	u.Path = path.Join(u.Path, resource)
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		return "", utils.MakeError("failed to create request for GCP endpoint: %s", err)
