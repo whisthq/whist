@@ -4,17 +4,20 @@ _Associated [whisthq/brave-core](https://github.com/whisthq/brave-core) promotio
 
 This is the Whist monorepo side of the promotion for the Whist Browser. The associated Brave/Chromium promotion should be open before this PR is merged and linked above. The deployment gets triggered automatically from merging this promotion PR, and so the Brave/Chromium PR needs to be tested and merged first.
 
+## Promotion Description
+
+
 ## Promotion Testing
 
 ### Nightly (dev)
 
-- [macOS (x64)](https://s3.amazonaws.com/whist-browser-macos-x64-dev/whist-browser-macos-x64-dev.tar.gz)
-- [macOS (arm64)](https://s3.amazonaws.com/whist-browser-macos-arm64-dev/whist-browser-macos-arm64-dev.tar.gz)
+- [macOS (x64)](https://s3.amazonaws.com/whist-browser-macos-x64-dev/Whist-Nightly-latest-x64.dmg)
+- [macOS (arm64)](https://s3.amazonaws.com/whist-browser-macos-arm64-dev/Whist-Nightly-latest-arm64.dmg)
 
 ### Beta (staging)
 
-- [macOS (x64)](https://s3.amazonaws.com/whist-browser-macos-x64-staging/whist-browser-macos-x64-staging.tar.gz)
-- [macOS (arm64)](https://s3.amazonaws.com/whist-browser-macos-arm64-staging/whist-browser-macos-arm64-staging.tar.gz)
+- [macOS (x64)](https://s3.amazonaws.com/whist-browser-macos-x64-staging/Whist-Beta-latest-x64.dmg)
+- [macOS (arm64)](https://s3.amazonaws.com/whist-browser-macos-arm64-staging/Whist-Beta-latest-arm64.dmg)
 
 ## Promotion Checklist
 
