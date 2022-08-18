@@ -15,6 +15,7 @@
   ],
   "default_locale": "en",
   "permissions": [
+    "contextMenus",
     "cookies",
     "downloads",
     "downloads.shelf",

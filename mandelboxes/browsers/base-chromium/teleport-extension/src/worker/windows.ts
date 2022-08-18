@@ -3,7 +3,7 @@ import { Socket } from "socket.io-client"
 const initWindowCreatedListener = (socket: Socket) => {
   chrome.windows.onCreated.addListener(
     (window) => {
-      const listener = async (
+      const listener = (
         _tabId: number,
         changeInfo: { url?: string; title?: string; status?: string },
         tab: chrome.tabs.Tab
@@ -16,6 +16,7 @@ const initWindowCreatedListener = (socket: Socket) => {
           }
         }
       }
+
       chrome.tabs.onUpdated.addListener(listener)
     },
     {
@@ -23,5 +24,7 @@ const initWindowCreatedListener = (socket: Socket) => {
     }
   )
 }
+
+chrome.contextMenus.onClicked.addListener(console.log)
 
 export { initWindowCreatedListener }
