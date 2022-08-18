@@ -1154,6 +1154,11 @@ jobs:
           popd
 
           # Build the browser
+          # All positional arguments are forwarded to the build script.
+          # Option arguments that appear before the naked '--' are
+          # passed to npm, NOT the build script. Option arguments to the
+          # build script must come after the naked '--'.
+          # https://docs.npmjs.com/cli/v8/commands/npm-run-script
           npm run build ${{ env.build_type }} \
               --sccache=ccache \
               -- \
@@ -1220,6 +1225,12 @@ jobs:
           popd
 
           # Package the browser into an installer
+          # All positional arguments are forwarded to the create_dist
+          # script. Option arguments that appear before the naked '--'
+          # are passed to npm, NOT the create_dist script. Option
+          # arguments to the create_dist script must come after the
+          # naked '--'.
+          # https://docs.npmjs.com/cli/v8/commands/npm-run-script
           npm run create_dist ${{ env.build_type }} \
               --sccache=ccache \
               -- \
