@@ -1,4 +1,3 @@
-//go:build linux
 // +build linux
 
 // NOTE: This file has been copied from github.com/moby/moby's profiles/apparmor/template.go.
@@ -10,6 +9,7 @@ package apparmor
 import (
 	"bufio"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -77,7 +77,7 @@ func InstallDefault(name string) error {
 	}
 
 	// Figure out the daemon profile.
-	currentProfile, err := os.ReadFile("/proc/self/attr/current")
+	currentProfile, err := ioutil.ReadFile("/proc/self/attr/current")
 	if err != nil {
 		// If we couldn't get the daemon profile, assume we are running
 		// unconfined which is generally the default.
@@ -96,7 +96,7 @@ func InstallDefault(name string) error {
 	p.DaemonProfile = daemonProfile
 
 	// Install to a temporary directory.
-	f, err := os.CreateTemp("", name)
+	f, err := ioutil.TempFile("", name)
 	if err != nil {
 		return err
 	}

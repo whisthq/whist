@@ -2,14 +2,12 @@ package subscriptions // import "github.com/whisthq/whist/backend/services/subsc
 
 import (
 	"context"
-	"io"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 	graphql "github.com/hasura/go-graphql-client"
-	"github.com/whisthq/whist/backend/services/utils"
 )
 
 // WhistWebsocketHandler implements `graphql.WebsocketHandler` and uses
@@ -34,15 +32,8 @@ func (wh *WhistWebsocketHandler) ReadJSON(v interface{}) error {
 	// the websocket concurrently. As it is not a harmful error we supress it here to
 	// avoid clogging Sentry with it.
 	// See: https://github.com/gorilla/websocket/issues/439
-	if err != nil && strings.Contains(err.Error(), "use of closed network connection") {
+	if (err != nil) && (strings.Contains(err.Error(), "use of closed network connection")) {
 		return nil
-	}
-
-	// Since version 0.7.1, The hasura graphql triggers a segfault when receiving an
-	// EOF error. This condition changes the error string wording (because it checks
-	// for == "EOF"). TODO: remove once the segfault is resolved.
-	if err == io.ErrUnexpectedEOF || err == io.EOF {
-		return utils.MakeError("unexpected end of input")
 	}
 
 	return err

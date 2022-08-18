@@ -2,6 +2,7 @@
 // package. We define this package separately so that we can safely pass these
 // types around to other packages that `mandelbox` itself might depend
 // on.
+//
 package types // import "github.com/whisthq/whist/backend/services/types"
 
 import (

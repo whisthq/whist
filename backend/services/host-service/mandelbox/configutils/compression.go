@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -264,7 +265,7 @@ func ValidateDirectoryContents(oldDir, newDir string) error {
 				return utils.MakeError("expected %s to be a directory", newFilePath)
 			}
 		} else {
-			testFileContents, err := os.ReadFile(filePath)
+			testFileContents, err := ioutil.ReadFile(filePath)
 			if err != nil {
 				return utils.MakeError("error reading test file %s: %s", filePath, err)
 			}
@@ -293,7 +294,7 @@ func inflateGzip(w io.Writer, data []byte) error {
 	}
 	defer gr.Close()
 
-	data, err = io.ReadAll(gr)
+	data, err = ioutil.ReadAll(gr)
 	if err != nil {
 		return utils.MakeError("couldn't extract inflated string from gzip reader: %s", err)
 	}

@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"os"
+	"io/ioutil"
 	"path"
 	"strconv"
 	"sync"
@@ -120,7 +120,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	resourceMappingDir := path.Join(utils.WhistDir, testMandelbox.GetID().String(), "mandelboxResourceMappings")
 
 	hostPortFile := path.Join(resourceMappingDir, "hostPort_for_my_32262_tcp")
-	hostPortFileContents, err := os.ReadFile(hostPortFile)
+	hostPortFileContents, err := ioutil.ReadFile(hostPortFile)
 	if err != nil {
 		t.Fatalf("Failed to read resource file %s: %v", hostPortFile, err)
 	}
@@ -129,7 +129,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	}
 
 	ttyFile := path.Join(resourceMappingDir, "tty")
-	ttyFileContents, err := os.ReadFile(ttyFile)
+	ttyFileContents, err := ioutil.ReadFile(ttyFile)
 	if err != nil {
 		t.Fatalf("Failed to read resource file %s: %v", ttyFile, err)
 	}
@@ -138,7 +138,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	}
 
 	gpuFile := path.Join(resourceMappingDir, "gpu_index")
-	gpuFileContents, err := os.ReadFile(gpuFile)
+	gpuFileContents, err := ioutil.ReadFile(gpuFile)
 	if err != nil {
 		t.Fatalf("Failed to read resource file %s: %v", gpuFile, err)
 	}
@@ -230,7 +230,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	resourceMappingDir := path.Join(utils.WhistDir, testMandelbox.GetID().String(), "mandelboxResourceMappings")
 
 	paramsReadyFile := path.Join(resourceMappingDir, ".paramsReady")
-	paramsReadyFileContents, err := os.ReadFile(paramsReadyFile)
+	paramsReadyFileContents, err := ioutil.ReadFile(paramsReadyFile)
 	if err != nil {
 		t.Fatalf("Failed to read resource file %s: %v", paramsReadyFile, err)
 	}
@@ -239,7 +239,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	}
 
 	configReadyFile := path.Join(resourceMappingDir, ".configReady")
-	configReadyFileContents, err := os.ReadFile(configReadyFile)
+	configReadyFileContents, err := ioutil.ReadFile(configReadyFile)
 	if err != nil {
 		t.Fatalf("Failed to read resource file %s: %v", configReadyFile, err)
 	}
@@ -249,7 +249,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 
 	var jsonData map[string]interface{}
 	jsonFile := path.Join(resourceMappingDir, "config.json")
-	jsonFileContents, err := os.ReadFile(jsonFile)
+	jsonFileContents, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
 		t.Fatalf("Failed to read resource file %s: %v", jsonFile, err)
 	}
