@@ -1319,7 +1319,7 @@ jobs:
       - name: Setup Python-based Notifications
         if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && failure() }}
         working-directory: whist/.github/workflows/helpers
-        run: ./notifications/setup_notifications.sh false
+        run: ./notifications/setup_notifications.sh true
 
       - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
         if: ${{ runner.os == 'macOS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && failure() }}
