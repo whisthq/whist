@@ -1,0 +1,46 @@
+# Copyright 2017 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Copyright 2022 Whist Technologies, Inc. All rights reserved.
+
+# This file is based off of third_party/webrtc_overrides/BUILD.gn. WhistClient should follow
+# the same scope as WebRTC in terms of security and visibility within the Chromium codebase,
+# so we copy the build configs and apply them to the Whist <--> Chromium interface.
+
+whist_configs = [ "//third_party/webrtc:common_config" ]
+
+whist_public_configs = [ "//third_party/webrtc:common_inherited_config" ]
+
+whist_public_deps = [ ":whist_protocol_client" ]
+
+component("whist_component") {
+  configs += whist_configs
+  public_configs = whist_public_configs
+  public_deps = whist_public_deps
+}
+
+source_set("whist_protocol_client") {
+  visibility = [ ":*" ]
+
+  sources = [
+    "whist_protocol_client.cc",
+    "whist_protocol_client.h",
+  ]
+
+  configs += [
+    "//third_party/webrtc:common_config",
+    "//third_party/webrtc:library_impl_config",
+  ]
+  public_configs = [
+    "//third_party/webrtc:common_inherited_config",
+
+    # TODO(mbonadei): Abseil config propagation is needed because
+    # WebRTC's BUILD.gn files don't use `public_deps`, there are
+    # good reasons for this, but they may disappear in the future.
+    # In that case it is ok to remove these two lines.
+    "//third_party/abseil-cpp:absl_include_config",
+    "//third_party/abseil-cpp:absl_define_config",
+  ]
+  deps = [ "//base" ]
+}

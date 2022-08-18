@@ -1,0 +1,11 @@
+// Copyright (C) 2022 Whist Technologies, Inc. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module blink.mojom;
+
+interface CloudDownloaderHost {
+  DownloadStart(string filepath, int64 file_size) => (int64 opaque);
+  DownloadUpdate(int64 opaque, int64 bytes_so_far, int64 bytes_per_sec);
+  DownloadComplete(int64 opaque);
+};

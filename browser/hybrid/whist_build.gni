@@ -1,0 +1,7 @@
+# This file mirrors brave-core's brave_build.gni. Add imports here for things
+# located here which need to be available in chromium (or brave) code. This
+# file is included in most gn files either directly or the patch to
+# chrome_build.gni, using import("//build/config/chrome_build.gni") in
+# compiler.gni
+import("//whist/browser/hybrid/third_party/blink/public/includes.gni")
+import("//whist/browser/hybrid/third_party/blink/renderer/includes.gni")
