@@ -12,7 +12,7 @@ const initWindowCreatedListener = (socket: Socket) => {
           if (changeInfo.status === "loading" && tab.url !== undefined) {
             socket.emit("server-window-created", { ...window, url: tab.url })
             chrome.windows.remove(window.id)
-            chrome.windows.onCreated.removeListener(listener)
+            chrome.tabs.onUpdated.removeListener(listener)
           }
         }
       }
