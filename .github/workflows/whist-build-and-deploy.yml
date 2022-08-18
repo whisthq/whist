@@ -1144,15 +1144,14 @@ jobs:
           export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
           export WHIST_AUTH0_REDIRECT_URL=https://com.whist.auth0/callback
 
-          cd src/brave/whist
+          pushd src/brave/whist
           # TODO: Fix this, somehow we're not setting it correctly, omitting it so that it defaults to `local_dev`
-          # export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
-          cd ../../..
+          TEST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
+          echo "WHIST_COMMIT_SHA would be $TEST_COMMIT_SHA"
+          popd
 
           # Build the browser
           npm run build ${{ env.build_type }} \
-              # arguments after the lone -- are options for the specific npm command
-              # but arguments before the -- set NPM config variables directly
               --sccache=ccache \
               -- \
               --channel=${{ env.release_channel }} \
@@ -1211,10 +1210,11 @@ jobs:
           export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
           export WHIST_AUTH0_REDIRECT_URL=https://com.whist.auth0/callback
 
-          cd src/brave/whist
+          pushd src/brave/whist
           # TODO: Fix this, somehow we're not setting it correctly, omitting it so that it defaults to `local_dev`
-          # export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
-          cd ../../..
+          TEST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
+          echo "WHIST_COMMIT_SHA would be $TEST_COMMIT_SHA"
+          popd
 
           # Package the browser into an installer
           npm run create_dist ${{ env.build_type }} \
