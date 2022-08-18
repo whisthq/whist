@@ -30,6 +30,8 @@ const initRemoveCookieListener = (socket: Socket) => {
 
 const initCookieSyncHandler = (socket: Socket) => {
   socket.on("sync-cookies", async (cookies: chrome.cookies.Cookie[]) => {
+    const now = Date.now()
+    const num = cookies.length
     while (cookies.length > 0) {
       const cookie = cookies.shift()
       if (cookie !== undefined) {
@@ -37,6 +39,8 @@ const initCookieSyncHandler = (socket: Socket) => {
         await chrome.cookies.set(cookieToDetails(cookie))
       }
     }
+
+    console.log("It took", Date.now() - now, " ms to set ", num, " cookies")
 
     socket.emit("cookie-sync-complete")
     chrome.storage.sync.set({ cookiesSynced: true })
