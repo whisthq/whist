@@ -66,34 +66,82 @@ func (gc *Metadata) GetUserID() types.UserID {
 // This function makes the initial calls to the endpoint and populates the `Metadata`
 // struct.
 func (gc *Metadata) PopulateMetadata() (map[string]string, error) {
-	metadataRetriever("")
-	return nil, nil
+	imageID, err := metadataRetriever("image")
+	if err != nil {
+		return nil, utils.MakeError("failed to get aws metadata field ami-id: %s", err)
+	}
+
+	instanceID, err := metadataRetriever("id")
+	if err != nil {
+		return nil, utils.MakeError("failed to get aws metadata field instance-id: %s", err)
+	}
+
+	instanceType, err := metadataRetriever("machine-type")
+	if err != nil {
+		return nil, utils.MakeError("failed to get aws metadata field instance-type: %s", err)
+	}
+
+	region, err := metadataRetriever("zone")
+	if err != nil {
+		return nil, utils.MakeError("failed to get aws metadata field placement-region: %s", err)
+	}
+
+	ip, err := metadataRetriever("network-interfaces/0/ip")
+	if err != nil {
+		return nil, utils.MakeError("failed to get aws metadata field public-ipv4: %s", err)
+	}
+
+	instanceName, err := metadataRetriever("name")
+	if err != nil {
+		return nil, utils.MakeError("failed to get aws metadata field public-ipv4: %s", err)
+	}
+
+	metadata := make(map[string]string)
+	metadata["aws.image_id"] = imageID
+	metadata["aws.instance_id"] = instanceID
+	metadata["aws.instance_name"] = instanceName
+	metadata["aws.instance_type"] = instanceType
+	metadata["aws.region"] = region
+	metadata["aws.ip"] = ip
+
+	gc.imageID = types.ImageID(imageID)
+	gc.instanceID = types.InstanceID(instanceID)
+	gc.instanceName = types.InstanceName(instanceName)
+	gc.instanceType = types.InstanceType(instanceType)
+	gc.region = types.PlacementRegion(region)
+	gc.ip = net.ParseIP(ip).To4()
+
+	return metadata, nil
 }
 
-func metadataRetriever(resource string) func() (string, error) {
+func metadataRetriever(resource string) (string, error) {
 	httpClient := http.Client{
 		Timeout: 1 * time.Second,
 	}
-
-	return func() (string, error) {
-		u, err := url.Parse(EndpointBase)
-		if err != nil {
-			return "", utils.MakeError("failed to parse metadata endpoint URL: %s", err)
-		}
-		u.Path = path.Join("latest", "metadata", resource)
-		resp, err := httpClient.Get(u.String())
-		if err != nil {
-			return "", utils.MakeError("error retrieving data from URL %s: %v. Is the service running on a GCP VM instance?", u.String(), err)
-		}
-		defer resp.Body.Close()
-
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return string(body), utils.MakeError("error reading response body from URL %s: %v", u.String(), err)
-		}
-		if resp.StatusCode != 200 {
-			return string(body), utils.MakeError("got non-200 response from URL %s: %s", u.String(), resp.Status)
-		}
-		return string(body), nil
+	u, err := url.Parse(EndpointBase)
+	if err != nil {
+		return "", utils.MakeError("failed to parse metadata endpoint URL: %s", err)
 	}
+
+	u.Path = path.Join("latest", "metadata", resource)
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return "", utils.MakeError("failed to create request for GCP endpoint: %s", err)
+	}
+
+	req.Header.Add("Metadata-Flavor", "Google")
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", utils.MakeError("error retrieving data from URL %s: %v. Is the service running on a GCP VM instance?", u.String(), err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return string(body), utils.MakeError("error reading response body from URL %s: %v", u.String(), err)
+	}
+	if resp.StatusCode != 200 {
+		return string(body), utils.MakeError("got non-200 response from URL %s: %s", u.String(), resp.Status)
+	}
+	return string(body), nil
 }

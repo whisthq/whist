@@ -61,18 +61,23 @@ func GenerateCloudMetadataRetriever() error {
 			awsChan <- utils.MakeError("failed to parse metadata endpoint URL: %s", err)
 		}
 		url.Path = path.Join("latest", "metadata", resourceToPing)
-		_, err = httpClient.Get(url.String())
+		resp, err := httpClient.Get(url.String())
+
+		if resp.StatusCode != http.StatusOK {
+			err = utils.MakeError("did not get a 200 status code")
+		}
+
 		awsChan <- err
 	}()
 
 	// Try to ping the GCP metadata endpoint
 	go func() {
-		resourceToPing := "instance-id"
+		resourceToPing := "id"
 		url, err := url.Parse(gcp.EndpointBase)
 		if err != nil {
 			gcpChan <- utils.MakeError("failed to parse metadata endpoint URL: %s", err)
 		}
-		url.Path = path.Join(resourceToPing)
+		url.Path = path.Join(url.Path, resourceToPing)
 		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 		if err != nil {
 			gcpChan <- utils.MakeError("failed to create request for GCP endpoint: %s", err)
@@ -81,7 +86,12 @@ func GenerateCloudMetadataRetriever() error {
 
 		// Add necessary headers for GCP and send the request
 		req.Header.Add("Metadata-Flavor", "Google")
-		_, err = httpClient.Do(req)
+		resp, err := httpClient.Do(req)
+
+		if resp.StatusCode != http.StatusOK {
+			err = utils.MakeError("did not get a 200 status code")
+		}
+
 		gcpChan <- err
 	}()
 
@@ -100,12 +110,10 @@ func GenerateCloudMetadataRetriever() error {
 		case err := <-awsChan:
 			if err == nil {
 				CloudMetadata = &aws.Metadata{}
-				return nil
 			}
 		case err := <-gcpChan:
 			if err == nil {
 				CloudMetadata = &gcp.Metadata{}
-				return nil
 			}
 		}
 	}
