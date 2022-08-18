@@ -30,14 +30,15 @@ const initRemoveCookieListener = (socket: Socket) => {
 
 const initCookieSyncHandler = (socket: Socket) => {
   socket.on("sync-cookies", async (cookies: chrome.cookies.Cookie[]) => {
-    while (cookies.length > 0) {
-      const cookie = cookies.shift()
-      if (cookie !== undefined) {
-        alreadyAddedCookies.push(cookie)
-        await chrome.cookies.set(cookieToDetails(cookie))
-      }
-    }
+    // while (cookies.length > 0) {
+    //   const cookie = cookies.shift()
+    //   if (cookie !== undefined) {
+    //     alreadyAddedCookies.push(cookie)
+    //     await chrome.cookies.set(cookieToDetails(cookie))
+    //   }
+    // }
 
+    await Promise.all(cookies.map((cookie) => chrome.cookies.set(cookieToDetails(cookie))))
     socket.emit("cookie-sync-complete")
     chrome.storage.sync.set({ cookiesSynced: true })
   })
@@ -57,14 +58,9 @@ const initCookieAddedListener = (socket: Socket) => {
         return
 
       chrome.storage.sync.get(["cookiesSynced"], ({ cookiesSynced }) => {
-        if (cookiesSynced && !details.removed && details.cause === "explicit")
-          console.log(
-            "Telling client to add cookie",
-            details.cookie.domain,
-            details.cookie.name,
-            details.cookie.value
-          )
-        socket.emit("client-add-cookie", details.cookie)
+        if (cookiesSynced && !details.removed && details.cause === "explicit") {
+          socket.emit("client-add-cookie", details.cookie)
+        }
       })
     }
   )
@@ -83,12 +79,6 @@ const initCookieRemovedListener = (socket: Socket) => {
           details.removed &&
           ["expired", "expired_overwrite", "evicted"].includes(details.cause)
         ) {
-          console.log(
-            "Telling client to remove cookie",
-            details.cookie.domain,
-            details.cookie.name,
-            details.cookie.value
-          )
           socket.emit("client-remove-cookie", details.cookie)
         }
       })
