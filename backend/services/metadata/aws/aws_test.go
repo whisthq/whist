@@ -3,6 +3,7 @@ package aws
 import (
 	"net/http"
 	"net/http/httptest"
+	"path"
 	"reflect"
 	"testing"
 )
@@ -44,20 +45,21 @@ func TestGetMetadata(t *testing.T) {
 					}
 				}
 
+				basePath := "/latest/meta-data/"
+				var result string
 				switch r.URL.Path {
-				case "/ami-id":
-					w.Write([]byte(validMetadata["aws.image_id"]))
-				case "/instance-id":
-					w.Write([]byte(validMetadata["aws.instance_id"]))
-				case "/instance-type":
-					w.Write([]byte(validMetadata["aws.instance_type"]))
-				case "/placement/region":
-					w.Write([]byte(validMetadata["aws.region"]))
-				case "/public-ipv4":
-					w.Write([]byte(validMetadata["aws.ip"]))
-				default:
-					http.Error(w, "Not Found", http.StatusNotFound)
+				case path.Join(basePath, "ami-id"):
+					result = validMetadata["aws.image_id"]
+				case path.Join(basePath, "instance-id"):
+					result = validMetadata["aws.instance_id"]
+				case path.Join(basePath, "instance-type"):
+					result = validMetadata["aws.instance_type"]
+				case path.Join(basePath, "placement/region"):
+					result = validMetadata["aws.region"]
+				case path.Join(basePath, "public-ipv4"):
+					result = validMetadata["aws.ip"]
 				}
+				w.Write([]byte(result))
 			}))
 			defer srv.Close()
 
@@ -84,5 +86,49 @@ func TestGetMetadata(t *testing.T) {
 }
 
 func TestMetadataRetriever(t *testing.T) {
+	var tests = []struct {
+		name, resource       string
+		overrideEndpoint     string
+		useEndpointBase, err bool
+		expected             string
+	}{
+		{"Valid resource", "ami-id", "", true, false, "test_ami"},
+		{"Empty resource", "", "", true, true, ""},
+		{"Invalid endpoint base", "", ":", false, true, ""},
+	}
 
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodGet {
+					http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+				}
+
+				if r.URL.Path != "/latest/meta-data/ami-id" {
+					t.Logf("Returning not found")
+					http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+				}
+
+				w.Write([]byte("test_ami"))
+			}))
+
+			defer srv.Close()
+
+			if tt.useEndpointBase {
+				EndpointBase = srv.URL
+			} else if tt.overrideEndpoint != "" {
+				EndpointBase = tt.overrideEndpoint
+			}
+
+			metadata, err := metadataRetriever(tt.resource)
+			t.Log(err)
+			if err != nil && !tt.err {
+				t.Errorf("did not expect error, got: %s", err)
+			}
+
+			if ok := reflect.DeepEqual(metadata, tt.expected); !ok {
+				t.Errorf("failed to get metadata, expected %v, got %v", tt.expected, metadata)
+			}
+		})
+	}
 }
