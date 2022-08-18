@@ -475,7 +475,7 @@ jobs:
       - name: Set up Go Environment
         uses: actions/setup-go@v3.2.1
         with:
-          go-version: "1.18"
+          go-version: "1.19"
 
       - name: Authenticate Go commands with GitHub
         env:
@@ -1450,7 +1450,7 @@ jobs:
       - name: Set up Go Environment
         uses: actions/setup-go@v3.2.1
         with:
-          go-version: "1.18"
+          go-version: "1.19"
 
       - name: Authenticate Go commands with GitHub
         env:
