@@ -57,14 +57,9 @@ const initCookieAddedListener = (socket: Socket) => {
         return
 
       chrome.storage.sync.get(["cookiesSynced"], ({ cookiesSynced }) => {
-        if (cookiesSynced && !details.removed && details.cause === "explicit")
-          console.log(
-            "Telling client to add cookie",
-            details.cookie.domain,
-            details.cookie.name,
-            details.cookie.value
-          )
-        socket.emit("client-add-cookie", details.cookie)
+        if (cookiesSynced && !details.removed && details.cause === "explicit") {
+          socket.emit("client-add-cookie", details.cookie)
+        }
       })
     }
   )
@@ -83,12 +78,6 @@ const initCookieRemovedListener = (socket: Socket) => {
           details.removed &&
           ["expired", "expired_overwrite", "evicted"].includes(details.cause)
         ) {
-          console.log(
-            "Telling client to remove cookie",
-            details.cookie.domain,
-            details.cookie.name,
-            details.cookie.value
-          )
           socket.emit("client-remove-cookie", details.cookie)
         }
       })
