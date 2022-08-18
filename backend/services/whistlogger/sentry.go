@@ -25,7 +25,7 @@ type sentryCore struct {
 	sender *sentry.Client
 }
 
-//  NewSentryCore will initialize sentry and necessary fields.
+// NewSentryCore will initialize sentry and necessary fields.
 func newSentryCore(encoder zapcore.Encoder, levelEnab zapcore.LevelEnabler) zapcore.Core {
 	sentryDsn := os.Getenv("SENTRY_DSN")
 	if sentryDsn == "" {
