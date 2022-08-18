@@ -19,7 +19,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -230,7 +230,7 @@ func processJSONTransportRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hostBody, err := io.ReadAll(res.Body)
+	hostBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		logger.Errorf("could not read host response body: %s", err)
 		http.Error(w, "", http.StatusInternalServerError)

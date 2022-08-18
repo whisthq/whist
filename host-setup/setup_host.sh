@@ -308,7 +308,7 @@ local_development_steps () {
     echo "Installing Go..."
     echo "================================================"
 
-    sudo snap install go --channel=1.19/stable --classic
+    sudo snap install go --classic
   fi
 
   if [[ ":$PATH:" == *":$HOME/go/bin:"* ]]; then
