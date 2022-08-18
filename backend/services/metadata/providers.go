@@ -62,7 +62,10 @@ func GenerateCloudMetadataRetriever() error {
 		}
 		url.Path = path.Join("latest", "metadata", resourceToPing)
 		resp, err := httpClient.Get(url.String())
-
+		if err != nil {
+			awsChan <- err
+			return
+		}
 		if resp.StatusCode != http.StatusOK {
 			err = utils.MakeError("did not get a 200 status code")
 		}
@@ -87,6 +90,10 @@ func GenerateCloudMetadataRetriever() error {
 		// Add necessary headers for GCP and send the request
 		req.Header.Add("Metadata-Flavor", "Google")
 		resp, err := httpClient.Do(req)
+		if err != nil {
+			gcpChan <- err
+			return
+		}
 
 		if resp.StatusCode != http.StatusOK {
 			err = utils.MakeError("did not get a 200 status code")
