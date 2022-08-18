@@ -22,6 +22,7 @@ import {
   initCookieAddedListener,
   initRemoveCookieListener,
   initCookieRemovedListener,
+  initCookieSyncHandler
 } from "./cookies"
 import { initZoomListener } from "./zoom"
 
@@ -47,6 +48,7 @@ initLocationHandler(nativeHostPort)
 
 // Listen to the client for tab actions
 initActivateTabListener(socket)
+initCookieSyncHandler(socket)
 initCloseTabListener(socket)
 initCloudTabUpdatedListener(socket)
 initCloudTabCreatedListener(socket)

@@ -2,42 +2,22 @@ import { Socket } from "socket.io-client"
 import find from "lodash.find"
 import isEqual from "lodash.isequal"
 
+import { cookieToDetails } from "@app/utils/cookies"
+
 // v3 global variables don't persist, but we only need to store cookies we've already added
 // for a few seconds so we don't fall into a loop of adding a cookie and then thinking that
 // the cookie we've added was added by the user and not us
 let alreadyAddedCookies: chrome.cookies.Cookie[] = []
 
 const initAddCookieListener = (socket: Socket) => {
-  socket.on("server-add-cookie", (cookies: any[]) => {
-    let cookie = cookies[0]
-
-    const url = cookie.domain.startsWith(".")
-      ? `https://${cookie.domain.slice(1)}${cookie.path}`
-      : `https://${cookie.domain}${cookie.path}`
-
-    // See https://developer.chrome.com/docs/extensions/reference/cookies/#method-set
-    // for why we construct the cookie details this way
-    const details = {
-      ...(!cookie.hostOnly && { domain: cookie.domain }),
-      ...(!cookie.session && { expirationDate: cookie.expirationDate }),
-      httpOnly: cookie.httpOnly,
-      name: cookie.name,
-      path: cookie.path,
-      sameSite: cookie.sameSite,
-      secure: cookie.secure,
-      storeId: cookie.storeId,
-      value: cookie.value,
-      url,
-    } as chrome.cookies.SetDetails
-
+  socket.on("server-add-cookie", async ([cookie]: [chrome.cookies.Cookie]) => {
     alreadyAddedCookies.push(cookie)
-    chrome.cookies.set(details)
+    chrome.cookies.set(cookieToDetails(cookie))
   })
 }
 
 const initRemoveCookieListener = (socket: Socket) => {
-  socket.on("server-remove-cookie", (cookies: any[]) => {
-    const cookie = cookies[0]
+  socket.on("server-remove-cookie", ([cookie]: [chrome.cookies.Cookie]) => {
     const url = cookie.domain.startsWith(".")
       ? `https://${cookie.domain.slice(1)}`
       : `https://${cookie.domain}`
@@ -45,6 +25,21 @@ const initRemoveCookieListener = (socket: Socket) => {
       name: cookie.name,
       url,
     })
+  })
+}
+
+const initCookieSyncHandler = (socket: Socket) => {
+  socket.on("sync-cookies", async (cookies: chrome.cookies.Cookie[]) => {
+    while (cookies.length > 0) {
+      const cookie = cookies.shift()
+      if (cookie !== undefined) {
+        alreadyAddedCookies.push(cookie)
+        await chrome.cookies.set(cookieToDetails(cookie))
+      }
+    }
+
+    socket.emit("cookie-sync-complete")
+    chrome.storage.sync.set({ cookiesSynced: true })
   })
 }
 
@@ -61,9 +56,16 @@ const initCookieAddedListener = (socket: Socket) => {
       )
         return
 
-      if (!details.removed && details.cause === "explicit") {
+      chrome.storage.sync.get(["cookiesSynced"], ({ cookiesSynced }) => {
+        if (cookiesSynced && !details.removed && details.cause === "explicit")
+          console.log(
+            "Telling client to add cookie",
+            details.cookie.domain,
+            details.cookie.name,
+            details.cookie.value
+          )
         socket.emit("client-add-cookie", details.cookie)
-      }
+      })
     }
   )
 }
@@ -75,12 +77,21 @@ const initCookieRemovedListener = (socket: Socket) => {
       cookie: chrome.cookies.Cookie
       removed: boolean
     }) => {
-      if (
-        details.removed &&
-        ["expired", "expired_overwrite", "evicted"].includes(details.cause)
-      ) {
-        socket.emit("client-remove-cookie", details.cookie)
-      }
+      chrome.storage.sync.get(["cookiesSynced"], ({ cookiesSynced }) => {
+        if (
+          cookiesSynced &&
+          details.removed &&
+          ["expired", "expired_overwrite", "evicted"].includes(details.cause)
+        ) {
+          console.log(
+            "Telling client to remove cookie",
+            details.cookie.domain,
+            details.cookie.name,
+            details.cookie.value
+          )
+          socket.emit("client-remove-cookie", details.cookie)
+        }
+      })
     }
   )
 }
@@ -90,4 +101,5 @@ export {
   initRemoveCookieListener,
   initCookieAddedListener,
   initCookieRemovedListener,
+  initCookieSyncHandler,
 }

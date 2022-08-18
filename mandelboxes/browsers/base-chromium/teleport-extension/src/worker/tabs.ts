@@ -31,6 +31,7 @@ const initTabDetachSuppressor = () => {
 
 const initTabState = () => {
   chrome.storage.local.clear()
+  chrome.storage.sync.set({ cookiesSynced: false })
 }
 
 export { initTabDetachSuppressor, initTabState }
