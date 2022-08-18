@@ -6,7 +6,6 @@ This is the Whist monorepo side of the promotion for the Whist Browser. The asso
 
 ## Promotion Description
 
-
 ## Promotion Testing
 
 ### Nightly (dev)
