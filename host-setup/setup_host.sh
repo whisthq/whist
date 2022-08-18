@@ -437,7 +437,7 @@ while true; do
     -h | --help | --usage) usage ;;
     -l | --localdevelopment ) LOCAL_DEVELOPMENT=true; shift ;;
     -d | --deployment ) DEPLOYMENT=true; shift ;;
-    -p | --provider ) CLOUD_PROVIDER=$2; shift 2;;
+    -p | --provider ) CLOUD_PROVIDER=$2; shift 2 ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
