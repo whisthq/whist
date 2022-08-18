@@ -1150,7 +1150,11 @@ jobs:
           cd ../../..
 
           # Build the browser
-          npm run build ${{ env.build_type }} -- \
+          npm run build ${{ env.build_type }} \
+              # arguments after the lone -- are options for the specific npm command
+              # but arguments before the -- set NPM config variables directly
+              --sccache=ccache \
+              -- \
               --channel=${{ env.release_channel }} \
               --target_arch=${{ matrix.config.target_arch }} \
               --brave_google_api_key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
@@ -1175,8 +1179,7 @@ jobs:
               --gn=safebrowsing_api_endpoint:https://safebrowsing.googleapis.com/v4/...?key=${{ secrets.WHIST_CHROMIUM_BROWSER_GCP_PROJECT_GOOGLE_API_KEY }} \
               --gn=sparkle_eddsa_public_key:wYagjtw56tFzS39Yc9iCZCFyk3bVa09dWlWXxnN7l8M= \
               --gn=updater_dev_endpoint:https://clients2.google.com/service/update2/crx \
-              --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx \
-              --sccache=ccache
+              --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx
 
       # TODO: Do we need to lock this again?
       - name: Unlock codesigning keychain
@@ -1214,7 +1217,9 @@ jobs:
           cd ../../..
 
           # Package the browser into an installer
-          npm run create_dist ${{ env.build_type }} -- \
+          npm run create_dist ${{ env.build_type }} \
+              --sccache=ccache \
+              -- \
               --channel=${{ env.release_channel }} \
               --target_arch=${{ matrix.config.target_arch }} \
               --mac_signing_keychain="Whist Codesigning" \
@@ -1245,8 +1250,7 @@ jobs:
               --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx \
               --gn=notary_user:owen@whist.com \
               --gn=notary_password:${{ secrets.MACOS_SIGNING_NOTARYTOOL_PASSWORD }} \
-              --notarize \
-              --sccache=ccache
+              --notarize
 
       # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
       # IDs to match the debug symbols with the build that crashed to build the backtrace
