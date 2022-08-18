@@ -1,7 +1,6 @@
 package configutils
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -27,7 +26,7 @@ func TestExtraction(t *testing.T) {
 	}
 
 	// Read the tar file into memory
-	tarFile, err := ioutil.ReadFile(tarOutputFile)
+	tarFile, err := os.ReadFile(tarOutputFile)
 	if err != nil {
 		t.Fatalf("error reading tar file: %v", err)
 	}
