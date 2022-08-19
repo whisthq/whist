@@ -30,8 +30,7 @@ whist_blink_renderer_core_html = [
 ]
 
 # content/browser/BUILD.gn
-whist_content_browser_deps = [
+whist_content_browser_sources = [
   "//whist/browser/hybrid/content/browser/download/cloud_downloader_host.cc",
   "//whist/browser/hybrid/content/browser/download/cloud_downloader_host.h",
-  "//whist/browser/hybrid/third_party/whist:whist_component",
 ]
