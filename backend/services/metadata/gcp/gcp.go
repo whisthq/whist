@@ -138,10 +138,10 @@ func metadataRetriever(resource string) (string, error) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return string(body), utils.MakeError("error reading response body from URL %s: %v", u.String(), err)
+		return "", utils.MakeError("error reading response body from URL %s: %v", u.String(), err)
 	}
 	if resp.StatusCode != 200 {
-		return string(body), utils.MakeError("got non-200 response from URL %s: %s", u.String(), resp.Status)
+		return "", utils.MakeError("got non-200 response from URL %s: %s", u.String(), resp.Status)
 	}
 	return string(body), nil
 }

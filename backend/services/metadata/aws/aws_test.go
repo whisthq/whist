@@ -87,14 +87,14 @@ func TestGetMetadata(t *testing.T) {
 
 func TestMetadataRetriever(t *testing.T) {
 	var tests = []struct {
-		name, resource       string
-		overrideEndpoint     string
-		useEndpointBase, err bool
-		expected             string
+		name, resource   string
+		overrideEndpoint string
+		err              bool
+		expected         string
 	}{
-		{"Valid resource", "ami-id", "", true, false, "test_ami"},
-		{"Empty resource", "", "", true, true, ""},
-		{"Invalid endpoint base", "", ":", false, true, ""},
+		{"Valid resource", "ami-id", "", false, "test_ami"},
+		{"Empty resource", "", "", true, ""},
+		{"Invalid endpoint base", "ami-id", ":", true, ""},
 	}
 
 	for _, tt := range tests {
@@ -114,10 +114,10 @@ func TestMetadataRetriever(t *testing.T) {
 
 			defer srv.Close()
 
-			if tt.useEndpointBase {
-				EndpointBase = srv.URL
-			} else if tt.overrideEndpoint != "" {
+			if tt.overrideEndpoint != "" {
 				EndpointBase = tt.overrideEndpoint
+			} else {
+				EndpointBase = srv.URL
 			}
 
 			metadata, err := metadataRetriever(tt.resource)

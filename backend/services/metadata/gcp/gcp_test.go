@@ -81,5 +81,49 @@ func TestGetMetadata(t *testing.T) {
 }
 
 func TestMetadataRetriever(t *testing.T) {
+	var tests = []struct {
+		name, resource   string
+		overrideEndpoint string
+		err              bool
+		expected         string
+	}{
+		{"Valid resource", "image", "", false, "test_image"},
+		{"Empty resource", "", "", true, ""},
+		{"Invalid endpoint base", "image", ":", true, ""},
+	}
 
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodGet {
+					http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+				}
+
+				if r.URL.Path != "/image" {
+					t.Logf("Returning not found")
+					http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+				}
+
+				w.Write([]byte("test_image"))
+			}))
+
+			defer srv.Close()
+
+			if tt.overrideEndpoint != "" {
+				EndpointBase = tt.overrideEndpoint
+			} else {
+				EndpointBase = srv.URL
+			}
+
+			metadata, err := metadataRetriever(tt.resource)
+			t.Log(err)
+			if err != nil && !tt.err {
+				t.Errorf("did not expect error, got: %s", err)
+			}
+
+			if ok := reflect.DeepEqual(metadata, tt.expected); !ok {
+				t.Errorf("failed to get metadata, expected %v, got %v", tt.expected, metadata)
+			}
+		})
+	}
 }
