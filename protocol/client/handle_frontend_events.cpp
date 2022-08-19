@@ -241,6 +241,7 @@ static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEven
         // If end_drop is set, this indicates the end of a series of file drop events
         //     corresponding to a single drop.
         file_synchronizer_end_type_group(FILE_TRANSFER_SERVER_DROP);
+        FATAL_ASSERT(event->filename == NULL);
         return;
     }
 
