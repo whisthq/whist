@@ -936,15 +936,6 @@ jobs:
       # Since we're using a self-hosted runner, we need to comment these two steps out after they
       # have run once because the keychain will then exist and trying to reinstall it will fail.
       # If you are running this workflow on a new runner, simply uncomment these steps for the first run.
-      # - name: Install macOS Codesigning Certificates on macOS GHA Machine
-      #   if: runner.os == 'macOS'
-      #   uses: apple-actions/import-codesign-certs@v1
-      #   with:
-      #     keychain: Whist Codesigning
-      #     keychain-password: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
-      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
-      #     p12-password: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
-
       # - name: Install macOS developer ID installer signing identity
       #   if: runner.os == 'macOS'
       #   uses: apple-actions/import-codesign-certs@v1
@@ -1187,7 +1178,7 @@ jobs:
               --gn=updater_dev_endpoint:https://clients2.google.com/service/update2/crx \
               --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx
 
-      # TODO: Do we need to lock this again?
+      # This gets locked automatically after X minutes
       - name: Unlock codesigning keychain
         if: runner.os == 'macOS'
         run: security unlock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
