@@ -78,6 +78,43 @@ resource "aws_s3_bucket_policy" "whist-browser-macos-x64-public-access-policy-at
   policy = data.aws_iam_policy_document.whist-browser-macos-x64-public-access-policy.json
 }
 
+# When deploying the Whist Browser, we upload a version as Whist-latest-<arch>, which is what the
+# website links to (this version gets overwritten at every deploy), and we upload a copy with the
+# version as Whist-<version>-<arch>, so that we can diff executables across version to deliver binary
+# diff updates. To avoid these old versions piling up forever, we set a lifecycle policy to only keep
+# the last 30 days of executables.
+# 
+# Note: This is not a bulletproof solution, if we do not deploy for more than 30 days, the 
+# actual executable from the website would get deleted.
+
+resource "aws_s3_bucket_lifecycle_configuration" "whist-browser-macos-arm64-lifecycle" {
+  bucket = aws_s3_bucket.whist-browser-macos-arm64.id
+
+  # Remove executables older than 30 days, to avoid them piling up forever
+  rule {
+    id     = "removeObsoleteWhistVersions"
+    status = "Enabled"
+
+    expiration {
+      days = 30
+    }
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "whist-browser-macos-x64-lifecycle" {
+  bucket = aws_s3_bucket.whist-browser-macos-x64.id
+
+  # Remove executables older than 30 days, to avoid them piling up forever
+  rule {
+    id     = "removeObsoleteWhistVersions"
+    status = "Enabled"
+
+    expiration {
+      days = 30
+    }
+  }
+}
+
 # ------------------------- Policy for Linux Server-side Whist Chromium Browser ------------------------- #
 
 resource "aws_s3_bucket_public_access_block" "whist-server-browser-linux-x64" {
@@ -280,6 +317,7 @@ resource "aws_s3_bucket_versioning" "whist-terraform-state-versioning" {
 }
 
 # ------------------------------ Lifecycle policies for protocol E2E logs bucket  --------------------- #
+
 resource "aws_s3_bucket_lifecycle_configuration" "whist-e2e-protocol-test-logs-lifecycle" {
   count  = var.env == "dev" ? 1 : 0
   bucket = aws_s3_bucket.whist-e2e-protocol-test-logs[0].id
