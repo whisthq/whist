@@ -15,11 +15,26 @@ coverage:
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - backend-services
+      extension-native-host:
+        target: auto # /mandelboxes/browsers/base-chromium/extension-native-host code coverage
+        threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
+        flags:
+          - extension-native-host
       protocol:
         target: auto # /protocol code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - protocol
+      socketio-server:
+        target: auto # /mandelboxes/browsers/base-chromium/socketio-server code coverage
+        threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
+        flags:
+          - socketio-server
+      teleport-extension:
+        target: auto # /mandelboxes/browsers/base-chromium/teleport-extension code coverage
+        threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
+        flags:
+          - teleport-extension
   precision: 2 # Number of decimal places on code coverage, between 0 and 5
   round: down # Up, down, or nearest
   range: "50...90" # First number represents red, and second represents green (default is 70..100)
@@ -47,7 +62,19 @@ flags:
     paths:
       - backend/services/
     carryforward: true
+  extension-native-host:
+    paths:
+      - mandelboxes/browsers/base-chromium/extension-native-host/
+    carryforward: true
   protocol:
     paths:
       - protocol/
+    carryforward: true
+  socketio-server:
+    paths:
+      - mandelboxes/browsers/base-chromium/socketio-server/
+    carryforward: true
+  teleport-extension:
+    paths:
+      - mandelboxes/browsers/base-chromium/teleport-extension/
     carryforward: true
