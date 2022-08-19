@@ -41,7 +41,7 @@ func (wh *WhistWebsocketHandler) ReadJSON(v interface{}) error {
 	// Since version 0.7.1, The hasura graphql triggers a segfault when receiving an
 	// EOF error. This condition changes the error string wording (because it checks
 	// for == "EOF"). TODO: remove once the segfault is resolved.
-	if err == io.ErrUnexpectedEOF || err == io.EOF {
+	if err == io.ErrUnexpectedEOF || err == io.EOF || strings.Contains(err.Error(), "EOF") {
 		return utils.MakeError("unexpected end of input")
 	}
 
