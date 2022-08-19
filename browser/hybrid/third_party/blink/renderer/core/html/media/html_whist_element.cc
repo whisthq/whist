@@ -26,7 +26,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "html_whist_element.h"
+#include "whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.h"
 
 #include "third_party/blink/renderer/core/resize_observer/resize_observer_entry.h"
 #include "third_party/blink/renderer/core/geometry/dom_rect.h"
@@ -45,7 +45,7 @@
 #include "third_party/blink/renderer/core/input/keyboard_event_manager.h"
 #include "third_party/blink/public/mojom/input/focus_type.mojom-blink.h"
 #include "third_party/blink/renderer/core/dom/focus_params.h"
-#include "brave/third_party/whist/whist_protocol_client.h"
+#include "whist/browser/hybrid/third_party/whist/whist_protocol_client.h"
 #include "third_party/blink/renderer/platform/json/json_parser.h"
 #include "third_party/blink/renderer/core/page/pointer_lock_controller.h"
 #include "third_party/blink/renderer/core/page/chrome_client.h"

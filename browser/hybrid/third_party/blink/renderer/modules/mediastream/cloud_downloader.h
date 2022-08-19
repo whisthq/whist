@@ -8,7 +8,7 @@
 #define THIRD_PARTY_BLINK_RENDERER_MODULES_MEDIASTREAM_CLOUD_DOWNLOADER_H_
 
 #include "base/synchronization/waitable_event.h"
-#include "third_party/blink/public/mojom/cloud_tab/download.mojom.h"
+#include "whist/browser/hybrid/third_party/blink/public/mojom/cloud_tab/download.mojom.h"
 #include "third_party/blink/public/common/browser_interface_broker_proxy.h"
 
 namespace blink {

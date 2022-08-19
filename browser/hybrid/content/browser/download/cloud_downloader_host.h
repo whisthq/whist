@@ -10,7 +10,7 @@
 #include "base/callback.h"
 #include "base/sequence_checker.h"
 #include "base/thread_annotations.h"
-#include "third_party/blink/public/mojom/cloud_tab/download.mojom.h"
+#include "whist/browser/hybrid/third_party/blink/public/mojom/cloud_tab/download.mojom.h"
 #include "content/common/content_export.h"
 #include "content/public/browser/global_routing_id.h"
 #include "mojo/public/cpp/bindings/receiver_set.h"

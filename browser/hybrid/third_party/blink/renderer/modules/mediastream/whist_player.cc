@@ -4,7 +4,7 @@
 //
 // Copyright 2022 Whist Technologies, Inc. All rights reserved.
 
-#include "third_party/blink/public/web/modules/mediastream/whist_player.h"
+#include "whist/browser/hybrid/third_party/blink/public/web/modules/mediastream/whist_player.h"
 
 #include <stddef.h>
 
@@ -52,9 +52,9 @@
 #include "third_party/blink/renderer/platform/timer.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
 #include "third_party/blink/renderer/platform/scheduler/public/thread.h"
-#include "brave/third_party/blink/renderer/modules/mediastream/cloud_downloader.h"
-#include "brave/third_party/blink/renderer/modules/mediastream/whist_compositor.h"
-#include "brave/third_party/whist/whist_protocol_client.h"
+#include "whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/cloud_downloader.h"
+#include "whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_compositor.h"
+#include "whist/browser/hybrid/third_party/whist/whist_protocol_client.h"
 
 
 #include <iostream>

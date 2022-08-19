@@ -4,7 +4,7 @@
 //
 // Copyright 2022 Whist Technologies, Inc. All rights reserved.
 
-#include "third_party/blink/renderer/modules/mediastream/whist_compositor.h"
+#include "whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_compositor.h"
 
 #include <stdint.h>
 #include <string>
@@ -36,7 +36,7 @@
 #include "third_party/libyuv/include/libyuv/video_common.h"
 #include "third_party/skia/include/core/SkSurface.h"
 
-#include "third_party/blink/public/web/modules/mediastream/whist_player.h"
+#include "whist/browser/hybrid/third_party/blink/public/web/modules/mediastream/whist_player.h"
 
 namespace WTF {
 
