@@ -39,11 +39,7 @@ const initActivateTabListener = (socket: Socket) => {
         if (tabToActivate.id !== undefined) {
           console.log("requested creation of", tabToActivate)
           if (tabToActivate.active) {
-            console.log(
-              "emitting active tab created",
-              tabToActivate.id,
-              tabToActivate.url
-            )
+            console.log("emitting active tab created", tabToActivate.id, tabToActivate.url)
             socket.emit("tab-activated", tabToActivate.id)
           } else {
             console.log(tabToActivate.url, "not active")
@@ -104,16 +100,31 @@ const initCloudTabUpdatedListener = (socket: Socket) => {
       tab: chrome.tabs.Tab
     ) => {
       if (
-        [changeInfo.url, changeInfo.favIconUrl, changeInfo.title].every(
-          (el) => el === undefined
-        )
+        changeInfo.url === undefined &&
+        changeInfo.favIconUrl === undefined &&
+        changeInfo.title === undefined
       )
         return
 
       const openTabs = await getOpenTabs()
       const foundTab = find(openTabs, (t) => t.tab.id === tabId)
       if (foundTab?.tab?.id !== undefined) {
-        socket.emit("tab-updated", foundTab?.clientTabId, tab)
+        chrome.scripting.executeScript(
+          {
+            target: { tabId: foundTab.tab.id },
+            func: () => {
+              return window.history.length
+            },
+          },
+          (result: any) => {
+            socket.emit(
+              "tab-updated",
+              foundTab?.clientTabId,
+              result[0].result,
+              tab
+            )
+          }
+        )
       }
     }
   )
