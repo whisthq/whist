@@ -23,7 +23,7 @@ done
 
 pulseaudio_watchdog() {
   # Periodically check that the pulseaudio daemon exists
-  while pidof pulseaudio; do
+  while pidof pulseaudio > /dev/null; do
     sleep 10
   done
 
