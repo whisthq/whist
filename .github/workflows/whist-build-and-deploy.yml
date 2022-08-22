@@ -875,37 +875,36 @@ jobs:
             echo "Entering brave-browser..."
             cd brave-browser
 
-            # Log the branch, should always be `main`, but we checkout just to be sure
-            git fetch -p
-            git branch
             git checkout main
+            git fetch -p
             git reset --hard origin/main
             git branch
 
-            # We then do the same for the `brave-core` repo within the `brave-browser` repo.
+            # Do the same for the `brave-core` repo within the `brave-browser` repo.
             if [ -d "src/brave" ]; then
               echo "Entering src/brave (brave-core)..."
-              cd src/brave
+              pushd src/brave
 
-              # Log the branch, should always be `dev`, `staging`, or `prod`, but we checkout just to be sure
-              git fetch -p
-              git branch
               git checkout "${{ needs.whist-publish-build-config.outputs.branch }}"
+              git fetch -p
               git reset --hard "origin/${{ needs.whist-publish-build-config.outputs.branch }}"
-              git branch
+              echo "Checked out brave-core branch: $(git branch)"
 
-              # We then do the same for the `whist` repo within the `brave-core` repo.
-              if [ -d "whist" ]; then
-                echo "Entering whist..."
-                cd whist
+              echo "Exiting src/brave (brave-core)..."
+              popd
+            fi
+            # Do the same for the `whist` repo within the `brave-browser` repo.
+            if [ -d "src/whist" ]; then
+              echo "Entering src/whist (whist)..."
+              pushd src/whist
 
-                # Log the branch, should always be `dev`, `staging`, or `prod`, but we checkout just to be sure
-                git fetch -p
-                git branch
-                git checkout "${{ needs.whist-publish-build-config.outputs.branch }}"
-                git reset --hard "origin/${{ needs.whist-publish-build-config.outputs.branch }}"
-                git branch
-              fi
+              git checkout "${{ needs.whist-publish-build-config.outputs.branch }}"
+              git fetch -p
+              git reset --hard "origin/${{ needs.whist-publish-build-config.outputs.branch }}"
+              echo "Checked out whist branch: $(git branch)"
+
+              echo "Exiting src/whist (whist)..."
+              popd
             fi
           else
             git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/whisthq/brave-browser.git" brave-browser
@@ -1039,7 +1038,7 @@ jobs:
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=signed/Whist Browser.dmg" >> $GITHUB_ENV
               echo "installer_name=Whist-latest-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
-              echo "current_app_version_executable=Whist-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV     
+              echo "current_app_version_executable=Whist-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1057,7 +1056,7 @@ jobs:
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=signed/Whist Browser Beta.dmg" >> $GITHUB_ENV
               echo "installer_name=Whist-Beta-latest-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
-              echo "current_app_version_executable=Whist-Beta-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV     
+              echo "current_app_version_executable=Whist-Beta-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1075,7 +1074,7 @@ jobs:
             if [[ "${{ runner.os }}" == "macOS" ]]; then
               echo "executable_name=signed/Whist Browser Nightly.dmg" >> $GITHUB_ENV
               echo "installer_name=Whist-Nightly-latest-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
-              echo "current_app_version_executable=Whist-Nightly-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV              
+              echo "current_app_version_executable=Whist-Nightly-${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}-${{ matrix.config.target_arch }}.dmg" >> $GITHUB_ENV
             elif [[ "${{ runner.os }}" == "Linux" ]]; then
               # TODO: We need to rename this to something like `whist-browser`, and add the release channel
               echo "executable_name=brave" >> $GITHUB_ENV
@@ -1147,7 +1146,7 @@ jobs:
           export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
           export WHIST_AUTH0_REDIRECT_URL=https://com.whist.auth0/callback
 
-          pushd src/brave/whist
+          pushd src/whist
           # TODO: Fix this, somehow we're not setting it correctly, omitting it so that it defaults to `local_dev`
           TEST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
           echo "WHIST_COMMIT_SHA would be $TEST_COMMIT_SHA"
@@ -1218,7 +1217,7 @@ jobs:
           export WHIST_AMPLITUDE_KEY=f4009f8b53b3060953437879d9769e8b
           export WHIST_AUTH0_REDIRECT_URL=https://com.whist.auth0/callback
 
-          pushd src/brave/whist
+          pushd src/whist
           # TODO: Fix this, somehow we're not setting it correctly, omitting it so that it defaults to `local_dev`
           TEST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
           echo "WHIST_COMMIT_SHA would be $TEST_COMMIT_SHA"
@@ -1272,21 +1271,29 @@ jobs:
       # https://apple.stackexchange.com/questions/257813/enable-sudo-without-a-password-on-macos
       - name: Copy Client debug symbols to Sentry, on macOS
         if: needs.whist-publish-build-config.outputs.publish == 'true'
-        working-directory: brave-browser/src/brave/whist
+        working-directory: brave-browser/src/out
         env:
           SENTRY_ORG: whist
           SENTRY_PROJECT: protocol
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
+          # On Arm builds, the arch gets appended to the output folder name
+          if [[ "${{ matrix.config.target_arch }}" == "x64" ]]; then
+            BUILD_OUTPUT_FOLDER="${{ env.build_type }}"
+          else
+            BUILD_OUTPUT_FOLDER="${{ env.build_type }}_${{ matrix.config.target_arch }}"
+          fi
+          PROTOCOL_CLIENT_LIB_DIR="$BUILD_OUTPUT_FOLDER/build-whist-client/client/build64"
+
           # Uncomment this line to install sentry-cli. Since we're running on a self-hosted runner, we
           # comment it out after having run it once
           # curl -sL https://sentry.io/get-cli/ | bash
           if [[ "${{ runner.os }}" == "macOS" ]]; then
-            sentry-cli upload-dif protocol/build-lib/client/build64/libWhistClient.dylib
-            sentry-cli upload-dif protocol/build-lib/client/build64/WhistClient.debug
+            sentry-cli upload-dif $PROTOOCL_CLIENT_LIB_DIR/libWhistClient.dylib
+            sentry-cli upload-dif $PROTOOCL_CLIENT_LIB_DIR/WhistClient.debug
           elif [[ "${{ runner.os }}" == "Linux" ]]; then
-            sentry-cli upload-dif protocol/build-lib/client/build64/libWhistClient.so
-            sentry-cli upload-dif protocol/build-lib/client/build64/WhistClient.debug
+            sentry-cli upload-dif $PROTOOCL_CLIENT_LIB_DIR/libWhistClient.so
+            sentry-cli upload-dif $PROTOOCL_CLIENT_LIB_DIR/WhistClient.debug
           else
             echo "Unsupported OS for uploading Sentry debug symbols!"
             exit 1
