@@ -37,8 +37,14 @@ type CloudMetadataRetriever interface {
 // smart about this by pinging the endpoints in order of provider adoption so that
 // the most used provider is first. Unless there is need for creating a retriever
 // for a specific provider, this function should be used to generate a new metadata
-// retriever.
+// retriever instead of directly instanciating a new metadata retriever.
 func GenerateCloudMetadataRetriever() error {
+	if metadata.IsRunningInCI() {
+		// When running in CI default to AWS retriever.
+		CloudMetadata = &aws.Metadata{}
+		return nil
+	}
+
 	httpClient := http.Client{
 		Timeout: 1 * time.Second,
 	}
