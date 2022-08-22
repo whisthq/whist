@@ -70,8 +70,8 @@ void destroy_client(Client* client) {
     destroy_rw_lock(&client->private_data->activation_rwlock);
     whist_destroy_cond(client->private_data->cond);
     whist_destroy_mutex(client->private_data->cond_mutex);
-    free(client->private_data);
-    free(client);
+    whist_free(client->private_data);
+    whist_free(client);
 }
 
 void activate_client(Client* client) {

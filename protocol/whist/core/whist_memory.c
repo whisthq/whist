@@ -18,6 +18,7 @@ Includes
 */
 
 #include <whist/core/whist.h>
+#include <whist/core/whist_mlock.h>
 
 /*
 ============================
@@ -38,7 +39,7 @@ void* safe_malloc(size_t size) {
     if (ret == NULL) {
         LOG_FATAL("Malloc of size %zu failed!", size);
     }
-
+    whist_mlock(ret, size);
     return ret;
 }
 
@@ -55,7 +56,7 @@ void* safe_zalloc(size_t size) {
     if (ret == NULL) {
         LOG_FATAL("Malloc of size %zu failed!", size);
     }
-
+    whist_mlock(ret, size);
     return ret;
 }
 
@@ -76,8 +77,17 @@ void* safe_realloc(void* buffer, size_t new_size) {
     if (ret == NULL) {
         LOG_FATAL("Realloc of size %zu failed!", new_size);
     } else {
+        if (ret != buffer) {
+            whist_mlock(ret, new_size);
+            whist_munlock(buffer);
+        }
         return ret;
     }
+}
+
+void whist_free(void* ptr) {
+    whist_munlock(ptr);
+    free(ptr);
 }
 // ------------------------------------
 // Implementation of a dynamically sized buffer
@@ -404,6 +414,7 @@ void* allocate_region(size_t region_size) {
     }
     ((RegionHeader*)p)->size = region_size;
 #endif
+    mlock(p, region_size);
     return TO_REGION_DATA(p);
 }
 
@@ -515,6 +526,7 @@ void deallocate_region(void* region) {
         LOG_FATAL("VirtualFree failed! Error %x", GetLastError());
     }
 #else
+    munlock(p, p->size);
     if (munmap(p, p->size) != 0) {
         LOG_FATAL("munmap failed!");
     }

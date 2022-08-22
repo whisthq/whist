@@ -157,7 +157,7 @@ void destroy_renderer(WhistRenderer* whist_renderer) {
     destroy_audio(whist_renderer->audio_context);
     destroy_video(whist_renderer->video_context);
 
-    free(whist_renderer);
+    whist_free(whist_renderer);
 }
 
 /*

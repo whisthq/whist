@@ -209,7 +209,7 @@ static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size)
     memset(cmd, 0, cmd_len);
     snprintf(cmd, cmd_len, OPEN_URI_CMD " \"%s\"", uri);
     runcmd(cmd, NULL);
-    free(cmd);
+    whist_free(cmd);
     return 0;
 }
 

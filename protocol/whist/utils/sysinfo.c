@@ -56,6 +56,7 @@
 
 // documentation notes: the source code for mach/etc are in https://github.com/apple/darwin-xnu/.
 
+/*
 typedef struct {
     LINKED_LIST_HEADER;
     mach_vm_address_t addr;
@@ -82,25 +83,19 @@ static bool should_mlock_region(vm_region_extended_info_data_t extended_info) {
     }
 }
 
+*/
 void mlock_memory(void) {
     // this is probably bad practice, sorry -- using the fact that this is unsigned
-    static mach_vm_address_t max_addr = (mach_vm_address_t)-1;
-    static int num_mlocked_regions = 0;
-    static int num_munlocked_regions = 0;
-    static LinkedList region_list;
-    static bool first_run = true;
-    if (first_run) {
-        linked_list_init(&region_list);
-        first_run = false;
-    }
-    VMRegion* region_iter = linked_list_head(&region_list);
+    static int num_mlocked_regions;
+    static mach_vm_address_t max_addr = (mach_vm_address_t)&num_mlocked_regions;
+    // VMRegion* region_iter = linked_list_head(&region_list);
     task_t t = mach_task_self();
 
     mach_vm_address_t addr = 1;
     kern_return_t rc;
-    // vm_region_basic_info_data_t info;
-    // We use extended_info so it can give us user_tag, which indicates the type of memory the region is
-    vm_region_extended_info_data_t extended_info;
+    vm_region_basic_info_data_t info;
+    // We use extended_info so it can give us user_tag, which indicates the type of memory the
+    // region is vm_region_extended_info_data_t extended_info;
     mach_vm_address_t prev_addr = 0;
     mach_vm_size_t size, prev_size;
 
@@ -111,22 +106,25 @@ void mlock_memory(void) {
     WhistTimer mlock_timer;
     static unsigned long long total_mlocked_size = 0;
     while (!done) {
-        // count = VM_REGION_BASIC_INFO_COUNT_64;
-        count = VM_REGION_EXTENDED_INFO_COUNT;
+        count = VM_REGION_BASIC_INFO_COUNT_64;
+        // count = VM_REGION_EXTENDED_INFO_COUNT;
 
-        // rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info,
-        // &count, &obj_name);
-        rc = mach_vm_region(t, &addr, &size, VM_REGION_EXTENDED_INFO,
-                            (vm_region_info_t)&extended_info, &count, &obj_name);
+        rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info, &count,
+                            &obj_name);
+        // rc = mach_vm_region(t, &addr, &size, VM_REGION_EXTENDED_INFO,
+        //                     (vm_region_info_t)&extended_info, &count, &obj_name);
         if (rc) {
             // indicates that we've given an invalid address.
             LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
             max_addr = addr;
             done = 1;
         } else {
-            if ((prev_addr == 0 || addr >= prev_addr + prev_size) &&
-                should_mlock_region(extended_info)) {
+            if (prev_addr == 0 || addr >= prev_addr + prev_size) {
+                // && should_mlock_region(extended_info)) {
+
                 // update region list data and mlock
+                mlock((void*)addr, size);
+                /*
                 if (region_iter == NULL) {
                     VMRegion* vm_region = safe_malloc(sizeof(VMRegion));
                     vm_region->addr = addr;
@@ -191,21 +189,25 @@ void mlock_memory(void) {
                     done = 1;
                 }
             }
-            prev_addr = addr;
-            prev_size = size;
-            // repeatedly call mach_vm_region
-            addr = prev_addr + prev_size;
-            // means address space has wrapped around
-            if (prev_size == 0 || addr != prev_addr + prev_size || addr >= max_addr) {
-                // finished because we've wrapped around
-                done = 1;
+            */
+                prev_addr = addr;
+                prev_size = size;
+                // repeatedly call mach_vm_region
+                addr = prev_addr + prev_size;
+                // means address space has wrapped around
+                if (prev_size == 0 || addr != prev_addr + prev_size || addr >= max_addr) {
+                    // finished because we've wrapped around
+                    done = 1;
+                }
             }
         }
-    }
+        /*
     LOG_INFO("mlock'ed %d regions, munlock'ed %d regions, total size %llx (%llu M)",
              num_mlocked_regions, num_munlocked_regions, total_mlocked_size,
              total_mlocked_size / (1024 * 1024));
     num_mlocked_regions = num_munlocked_regions = 0;
+    */
+    }
 }
 #else
 void mlock_memory(void) {

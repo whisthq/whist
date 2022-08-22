@@ -155,12 +155,12 @@ int client_handle_dynamic_args(WhistFrontend *frontend) {
             }
 
             if (!strcmp(key, "finished")) {
-                free(key);
-                free(value);
+                whist_free(key);
+                whist_free(value);
                 return 0;
             } else if (!strcmp(key, "kill")) {
-                free(key);
-                free(value);
+                whist_free(key);
+                whist_free(value);
                 return 1;
             }
 
@@ -179,8 +179,8 @@ int client_handle_dynamic_args(WhistFrontend *frontend) {
                     break;
                 }
             }
-            free(key);
-            free(value);
+            whist_free(key);
+            whist_free(value);
         }
     }
 }

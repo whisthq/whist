@@ -52,7 +52,7 @@ WhistStatus whist_frontend_init(WhistFrontend* frontend, int width, int height, 
 void whist_frontend_destroy(WhistFrontend* frontend) {
     FRONTEND_ENTRY();
     frontend->call->destroy(frontend);
-    free(frontend);
+    whist_free(frontend);
 }
 
 void whist_frontend_open_audio(WhistFrontend* frontend, unsigned int frequency,

@@ -253,7 +253,7 @@ static void handle_file_drop_event(WhistFrontend* frontend, FrontendFileDropEven
     // TODO: Clear any state from a stale file drag event
     file_synchronizer_set_file_reading_basic_metadata(event->filename, FILE_TRANSFER_SERVER_DROP,
                                                       &drop_info);
-    free(event->filename);
+    whist_free(event->filename);
 }
 
 static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEvent* event) {
@@ -292,11 +292,11 @@ static void handle_file_drag_event(WhistFrontend* frontend, FrontendFileDragEven
     msg->file_drag_data.y = event->position.y * dpi / 96;
 
     if (event->filename) {
-        free(event->filename);
+        whist_free(event->filename);
     }
 
     send_wcmsg(msg);
-    free(msg);
+    whist_free(msg);
 }
 
 static void handle_open_url_event(WhistFrontend* frontend, FrontendOpenURLEvent* event) {
@@ -308,9 +308,9 @@ static void handle_open_url_event(WhistFrontend* frontend, FrontendOpenURLEvent*
     msg->type = MESSAGE_OPEN_URL;
     memcpy(&msg->urls_to_open, event->url, data_len);
     send_wcmsg(msg);
-    free(msg);
+    whist_free(msg);
 
-    free(event->url);
+    whist_free(event->url);
 
     // Unmimimize the window if needed
     if (!whist_frontend_is_any_window_visible(frontend)) {
@@ -398,8 +398,8 @@ static int handle_frontend_event(WhistFrontend* frontend, WhistFrontendEvent* ev
         case FRONTEND_EVENT_STARTUP_PARAMETER: {
             // We manually handle these during startup, but
             // must free caller-managed data from the event.
-            free(event->startup_parameter.key);
-            free(event->startup_parameter.value);
+            whist_free(event->startup_parameter.key);
+            whist_free(event->startup_parameter.value);
             break;
         }
         case FRONTEND_EVENT_QUIT: {

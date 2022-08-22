@@ -247,7 +247,7 @@ void sdl_set_cursor_info_as_pending(const WhistCursorInfo* cursor_info) {
         // simply free the old one and overwrite the pending_cursor_info.
         // The duty of free a not-yet-rendered cursor is at producer side, since the ownership
         // hasn't been taken away.
-        free(pending_cursor_info);
+        whist_free(pending_cursor_info);
     }
 
     // assign the local pointer to the pending_cursor_info
@@ -274,7 +274,7 @@ void sdl_present_pending_cursor(WhistFrontend* frontend) {
         // Cursors need not be double-rendered, so we just unset the cursor image here.
         // The duty of freeing a rendered cursor is at consumer side (here), since the ownership is
         // taken.
-        free(temp_cursor_info);
+        whist_free(temp_cursor_info);
     }
 }
 

@@ -96,7 +96,7 @@ void virtual_destroy(WhistFrontend* frontend) {
         return;
     }
 
-    free(context);
+    whist_free(context);
 }
 
 // We use SDL for the audio system for now. Eventually, we will implement

@@ -380,7 +380,7 @@ Public Function Implementations
 */
 
 void *create_fec_controller(double current_time) {
-    FECController *fec_controller = (FECController *)malloc(sizeof(FECController));
+    FECController *fec_controller = (FECController *)safe_malloc(sizeof(FECController));
 
     // size of sliding window for latency
     const double latency_stat_window = 30.0;
@@ -405,7 +405,7 @@ void destroy_fec_controller(void *controller) {
     delete fec_controller->base_ratio_controller;
     delete fec_controller->extra_ratio_controller;
     delete fec_controller->latency_stat;
-    free(fec_controller);
+    whist_free(fec_controller);
 }
 
 void fec_controller_feed_latency(void *controller, double current_time, double latency) {

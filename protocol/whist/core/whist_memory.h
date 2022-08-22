@@ -48,6 +48,8 @@ void* safe_zalloc(size_t size);
  */
 void* safe_realloc(void* buffer, size_t new_size);
 
+void whist_free(void* ptr);
+
 /**
  * @brief   Dynamic buffer.
  * @details Memory buffer used to store any allocated data.

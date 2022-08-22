@@ -34,7 +34,7 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
         image, w, h, sizeof(uint32_t) * 8, sizeof(uint32_t) * w, RGBA_R, RGBA_G, RGBA_B, RGBA_A);
     if (surface == NULL) {
         LOG_ERROR("Failed to create surface from PNG: %s", SDL_GetError());
-        free(image);
+        whist_free(image);
         return;
     }
     for (const auto& [window_id, window_context] : context->windows) {
@@ -62,7 +62,7 @@ void sdl_paint_png(WhistFrontend* frontend, const uint8_t* data, size_t data_siz
         }
     }
     SDL_FreeSurface(surface);
-    free(image);
+    whist_free(image);
 }
 
 void sdl_set_window_fullscreen(WhistFrontend* frontend, int id, bool fullscreen) {
@@ -500,7 +500,7 @@ void sdl_set_cursor(WhistFrontend* frontend, WhistCursorInfo* cursor) {
 
         SDL_BlitScaled(surface, NULL, scaled, NULL);
         SDL_FreeSurface(surface);
-        free(rgba);
+        whist_free(rgba);
 
         // TODO: Consider SDL_SetSurfaceBlendMode here since X11 cursor image
         // is pre-alpha-multiplied.

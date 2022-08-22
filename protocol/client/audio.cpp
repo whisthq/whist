@@ -534,9 +534,9 @@ void destroy_audio(AudioContext* audio_context) {
     // Destroy the audio device
     destroy_audio_player(audio_context);
     // Destory the buffer for buffering state
-    free(audio_context->audio_buffering_buffer);
+    whist_free(audio_context->audio_buffering_buffer);
     // Free the audio struct
-    free(audio_context);
+    whist_free(audio_context);
 }
 
 void refresh_audio_device(AudioContext* audio_context) {

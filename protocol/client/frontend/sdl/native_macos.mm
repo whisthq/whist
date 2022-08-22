@@ -374,7 +374,7 @@ void sdl_native_destroy_external_drag_handler(WhistFrontend *frontend) {
     }
 
     context->file_drag_data = NULL;
-    free(state);
+    whist_free(state);
 }
 
 void sdl_native_display_notification(const WhistNotification* notif) {

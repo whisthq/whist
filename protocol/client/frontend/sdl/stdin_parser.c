@@ -76,6 +76,6 @@ int get_next_piped_argument(char **key, char **value) {
         *value = NULL;
     }
 
-    free(incoming);
+    whist_free(incoming);
     return 0;
 }

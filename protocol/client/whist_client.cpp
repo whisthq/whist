@@ -22,6 +22,7 @@ Includes
 #endif
 
 #include <whist/core/whist.h>
+#include <whist/core/whist_mlock.h>
 
 extern "C" {
 #include <errno.h>
@@ -353,6 +354,9 @@ int whist_client_main(int argc, const char* argv[]) {
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
     srand(rand() * (unsigned int)time(NULL) + rand());
+
+    // SERINA
+    init_whist_mlock();
 
     LOG_INFO("Client protocol started...");
 

@@ -18,6 +18,11 @@ add_library(whistCore STATIC
         error_codes.c
         whist_string.c
         )
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    target_sources(whistCore PRIVATE
+        whist_mlock.cpp
+    )
+endif()
 
 # Ensure that whist.v is updated prior to compiling whistCore
 add_dependencies(whistCore git_revision)
