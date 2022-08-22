@@ -44,6 +44,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/whisthq/whist/backend/services/httputils"
+	"github.com/whisthq/whist/backend/services/metadata/aws"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 	"go.uber.org/zap"
 
@@ -380,9 +381,17 @@ func main() {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
-	err := metadata.GenerateCloudMetadataRetriever()
-	if err != nil {
-		logger.Panicf(globalCancel, "failed to generate cloud metadata retriever: %s", err)
+	// Due to CI not having a metadata endpoint, we directly create
+	// a retriever, defaulting to AWS. Note: This is the only case
+	// where the retriever should be instanciated directly, normally
+	// the `GenerateCloudMetadataRetriever` function should be used.
+	if metadata.IsRunningInCI() {
+		metadata.CloudMetadata = &aws.Metadata{}
+	} else {
+		err := metadata.GenerateCloudMetadataRetriever()
+		if err != nil {
+			logger.Panicf(globalCancel, "failed to generate cloud metadata retriever: %s", err)
+		}
 	}
 
 	// Set Sentry tags
