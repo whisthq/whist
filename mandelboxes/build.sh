@@ -92,7 +92,11 @@ mkdir -p base/build-assets/build-temp/fonts
 aws s3 sync s3://whist-fonts base/build-assets/build-temp/fonts
 
 echo "Fetching Whistium..."
-aws s3 sync s3://whist-server-browser-linux-x64-dev browsers/whistium/s3
+# Change this back to "whist-server-browser-linux-x64-dev" after
+#  1. This PR is tested and merged
+#  2. The new .deb binary in "whist-server-browser-linux-x64-temp" is copied over to "whist-server-browser-linux-x64-dev"
+# Will open a new PR once the above two steps are completed
+aws s3 sync s3://whist-server-browser-linux-x64-temp browsers/whistium/s3
 
 # Bundle these build assets into a cached Docker image
 echo "Bundling build assets..."

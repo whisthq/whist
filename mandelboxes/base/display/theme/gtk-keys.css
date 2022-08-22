@@ -1,0 +1,17 @@
+@binding-set gtk-emacs-text-entry
+{
+  bind "<super>x" { "cut-clipboard" () };
+  bind "<super>c" { "copy-clipboard" () };
+  bind "<super>v" { "paste-clipboard" () };
+  unbind "<ctrl>x";
+  unbind "<ctrl>c";
+  unbind "<ctrl>v";
+}
+
+entry {
+  -gtk-key-bindings: gtk-emacs-text-entry;
+}
+
+textview {
+  -gtk-key-bindings: gtk-emacs-text-entry;
+}

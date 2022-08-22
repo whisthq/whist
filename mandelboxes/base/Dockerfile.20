@@ -788,6 +788,9 @@ RUN mkdir -p /home/whist/.themes \
     && cp -r WhiteSur-light WhiteSur-dark /home/whist/.themes \
     && cd ../.. && rm -rf WhiteSur-gtk-theme-2022-02-21 2022-02-21.tar.gz
 
+COPY display/theme/gtk-keys.css /usr/share/themes/WhiteSur-light/gtk-3.0/
+COPY display/theme/gtk-keys.css /home/whist/.themes/WhiteSur-light/gtk-3.0/
+
 # Install WhiteSur cursor and icons, for macOS-like theming. These get installed to the root path,
 # which is /usr/share/icons
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme \
