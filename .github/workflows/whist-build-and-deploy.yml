@@ -1023,6 +1023,20 @@ jobs:
           export npm_config_projects_brave_core_branch=${{ needs.whist-publish-build-config.outputs.branch }}
           export npm_config_projects_whist_branch=${{ needs.whist-publish-build-config.outputs.branch }}
 
+          BUILD_OUTPUT_FOLDER="${{ env.build_type }}"
+
+          # When building for ARM, the build output directory contains the
+          # target architecture (e.g. Release_arm64)
+          case "${{ matrix.config.target_arch }}" in
+            arm64)
+              # Use ${var} syntax exceptionally here because otherwise the shell
+              # tries to expand $BUILD_OUTPUT_FOLDER_arm64
+              BUILD_OUTPUT_FOLDER="${BUILD_OUTPUT_FOLDER}_${{ matrix.config.target_arch }}"
+              ;;
+          esac
+
+          echo "BUILD_OUTPUT_FOLDER=$BUILD_OUTPUT_FOLDER" >> "$GITHUB_ENV"
+
           # We build a Release build for every Whist environment, but target the analoguous Brave release channel
           # See brave-core/build/config.gni for more info
           # - dev: "nightly"
@@ -1277,12 +1291,6 @@ jobs:
           SENTRY_PROJECT: protocol
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
-          # On Arm builds, the arch gets appended to the output folder name
-          if [[ "${{ matrix.config.target_arch }}" == "x64" ]]; then
-            BUILD_OUTPUT_FOLDER="${{ env.build_type }}"
-          else
-            BUILD_OUTPUT_FOLDER="${{ env.build_type }}_${{ matrix.config.target_arch }}"
-          fi
           PROTOCOL_CLIENT_LIB_DIR="$BUILD_OUTPUT_FOLDER/build-whist-client/client/build64"
 
           # Uncomment this line to install sentry-cli. Since we're running on a self-hosted runner, we
@@ -1303,24 +1311,37 @@ jobs:
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         working-directory: brave-browser/src/out
         run: |
-          # On Arm builds, the arch gets appended to the output folder name
-          if [[ "${{ matrix.config.target_arch }}" == "x64" ]]; then
-            BUILD_OUTPUT_FOLDER="${{ env.build_type }}"
-          else
-            BUILD_OUTPUT_FOLDER="${{ env.build_type }}_${{ matrix.config.target_arch }}"
-          fi
           aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/${{ env.installer_name }}"
           aws s3 cp "$BUILD_OUTPUT_FOLDER/${{ env.executable_name}}" "${{ env.s3-bucket-uri }}/${{ env.current_app_version_executable }}"
 
-          # TODO: Automatically handle writing to appcast.xml
-          # 1- Pull it from S3
-          # 2- Update it with `xq`
-          # 3- Push it to S3
-          # Until we write code to automatically edit appcast.xml when we are
-          # ready to ship an update, just print out the update's Sparkle
-          # signature so someone can come look through the logs and add it to
-          # appcast.xml manually.
-          cat "${BUILD_OUTPUT_FOLDER}/${executable_name##*/}.eddsa"
+        # Expose values that we want to pass to the whisthq/update-appcast
+        # action as outputs of this step. We can't pass environment variables
+        # set by previous steps as inputs to an action in a subsequent step.
+        # For example, this does not work:
+        #
+        # - name: Update appcast
+        #   uses: whisthq/update-appcast@v0.1
+        #     with:
+        #       object-key: ${{ env.current_app_version_executable }}
+        #       ...
+        #
+      - name: Prepare to publish update
+        id: prepare-update
+        run: |
+          S3_BUCKET_URI="${{ env.s3-bucket-uri }}"
+
+          echo "::set-output name=bucket-name::${S3_BUCKET_URI##*/}"
+          echo "::set-output name=object-key::$current_app_version_executable"
+          echo "::set-output name=sparkle-sig-file::$(pwd)/brave-browser/src/out/$BUILD_OUTPUT_FOLDER/${executable_name##*/}.eddsa"
+
+      - name: Update appcast
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        uses: whisthq/update-appcast@v0.1
+        with:
+          version: ${{ needs.whist-browser-retrieve-version-number.outputs.release_version }}
+          bucket: ${{ steps.prepare-update.outputs.bucket-name }}
+          object-key: ${{ steps.prepare-update.outputs.object-key }}
+          sparkle-sig-file: ${{ steps.prepare-update.outputs.sparkle-sig-file }}
 
       ###################################################################################
 
