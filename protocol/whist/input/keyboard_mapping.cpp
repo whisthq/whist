@@ -52,12 +52,9 @@ struct VectorHasher {
 
 // The modmap that occurs before the full keyboard mapping
 static hmap<WhistKeycode, WhistKeycode> modmap = {
-    // Swap gui and ctrl
-    {FK_LGUI, FK_LCTRL},
-    {FK_LCTRL, FK_LGUI},
     // Map right-modifier to left-modifier, to make things easier
-    {FK_RGUI, FK_LCTRL},  // (still swapped)
-    {FK_RCTRL, FK_LGUI},
+    {FK_RGUI, FK_LGUI},
+    {FK_RCTRL, FK_LCTRL},
     {FK_RALT, FK_LALT},
     {FK_RSHIFT, FK_LSHIFT}};
 
