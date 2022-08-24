@@ -68,7 +68,7 @@ cmake_command += ["-B", protocol_build_dir]
 cmake_command += ["-D", "CLIENT_SHARED_LIB=ON"]
 cmake_command += platform_specific_args.get(platform.system(), [])
 cmake_command += (
-    ["-D", "USE_CCACHE=ON"] if os.path.basename(os.getenv("CC_WRAPPER")) == "ccache"
+    ["-D", "USE_CCACHE=ON"] if os.path.basename(os.getenv("CC_WRAPPER", "")) == "ccache" else []
 )
 
 print_and_run(cmake_command)
