@@ -26,6 +26,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "whist/browser/hybrid/third_party/blink/renderer/core/html/media/html_whist_element.h"
 
 #include "third_party/blink/renderer/core/resize_observer/resize_observer_entry.h"
@@ -191,9 +195,26 @@ HTMLWhistElement::HTMLWhistElement(Document& document)
   });
 
   WHIST_VIRTUAL_INTERFACE_CALL(events.set_get_modifier_key_state, []() -> int {
+    int modifier_flags = 0;
+#ifdef _WIN32
+    // Use WinAPI functions to obtain keystate
+#define HIGHBITMASKSHORT 0x8000
+    if (GetKeyState(VK_SHIFT) & HIGHBITMASKSHORT) {
+      modifier_flags |= WhistClient::SHIFT;
+    }
+    if (GetKeyState(VK_CONTROL) & HIGHBITMASKSHORT) {
+      modifier_flags |= WhistClient::CTRL;
+    }
+    if (GetKeyState(VK_MENU) & HIGHBITMASKSHORT) {
+      modifier_flags |= WhistClient::ALT;
+    }
+    if ((GetKeyState(VK_LWIN) & HIGHBITMASKSHORT) || (GetKeyState(VK_RWIN) & HIGHBITMASKSHORT)) {
+      modifier_flags |= WhistClient::GUI;
+    }
+#else
+    // Use chromium implementation, which only works on MacOSX
     WebInputEvent::Modifiers modifiers =
         KeyboardEventManager::GetCurrentModifierState();
-    int modifier_flags = 0;
     if (modifiers & WebInputEvent::kShiftKey) {
       modifier_flags |= WhistClient::SHIFT;
     }
@@ -209,6 +230,7 @@ HTMLWhistElement::HTMLWhistElement(Document& document)
     if (KeyboardEventManager::CurrentCapsLockState()) {
       modifier_flags |= WhistClient::CAPS;
     }
+#endif
     return modifier_flags;
   });
 
@@ -307,38 +329,36 @@ void HTMLWhistElement::DefaultEventHandler(Event& event) {
     DataTransferItemList* item_list = drag_event->getDataTransfer()->items();
     group_id++;
     for (uint32_t i = 0; i < item_list->length(); i++) {
-      SendFileDragEvent(strdup(item_list->item(i)
+      SendFileDragEvent(item_list->item(i)
                                    ->GetDataObjectItem()
                                    ->GetAsFile()
                                    ->GetPath()
-                                   .Utf8()
-                                   .c_str()),
+                                   .Utf8(),
                         false, group_id, drag_event);
     }
     drag_event->SetDefaultHandled();
   } else if (event_type == event_type_names::kDragover) {
     auto* drag_event = DynamicTo<DragEvent>(&event);
-    SendFileDragEvent(NULL, false, group_id, drag_event);
+    SendFileDragEvent({}, false, group_id, drag_event);
     drag_event->SetDefaultHandled();
   } else if (event_type == event_type_names::kDragleave) {
     auto* drag_event = DynamicTo<DragEvent>(&event);
-    SendFileDragEvent(NULL, true, group_id, drag_event);
-    SendFileDragEvent(NULL, true, group_id, drag_event);
+    SendFileDragEvent({}, true, group_id, drag_event);
+    SendFileDragEvent({}, true, group_id, drag_event);
     drag_event->SetDefaultHandled();
   } else if (event_type == event_type_names::kDrop) {
     auto* drag_event = DynamicTo<DragEvent>(&event);
-    SendFileDragEvent(NULL, true, group_id, drag_event);
+    SendFileDragEvent({}, true, group_id, drag_event);
     DataTransferItemList* item_list = drag_event->getDataTransfer()->items();
     for (uint32_t i = 0; i < item_list->length(); i++) {
-      SendFileDropEvent(strdup(item_list->item(i)
+      SendFileDropEvent(item_list->item(i)
                                    ->GetDataObjectItem()
                                    ->GetAsFile()
                                    ->GetPath()
-                                   .Utf8()
-                                   .c_str()),
+                                   .Utf8(),
                         false, drag_event);
     }
-    SendFileDropEvent(NULL, true, drag_event);
+    SendFileDropEvent({}, true, drag_event);
     drag_event->SetDefaultHandled();
   } else if (event_type == event_type_names::kFocus || event_type == event_type_names::kBlur) {
     // Stub for now -- we might instead just use whistPause() and whistPlay from the WebUI
@@ -409,18 +429,24 @@ void HTMLWhistElement::whistConnect(const String& whist_parameters) {
       String wtf_key = entry.first;
       String wtf_value;
       entry.second->AsString(&wtf_value);
-      char* key = strdup(wtf_key.Utf8().c_str());
-      char* value = strdup(wtf_value.Utf8().c_str());
 
-      event.startup_parameter.key = key;
-      event.startup_parameter.value = value;
+      // Get key/value as std::string
+      std::string str_key = wtf_key.Utf8();
+      std::string str_value = wtf_value.Utf8();
+
+      // Allocate and populate the whist-owned strings
+      event.startup_parameter.key = (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, str_key.size() + 1);
+      event.startup_parameter.value = (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, str_value.size() + 1);
+      strcpy(event.startup_parameter.key, str_key.c_str());
+      strcpy(event.startup_parameter.value, str_value.c_str());
 
       // key and value are freed by the WhistClient event handler
       WHIST_VIRTUAL_INTERFACE_CALL(events.send, &event);
     }
 
     // Mark as finished, so that whist may connect
-    event.startup_parameter.key = strdup("finished");
+    event.startup_parameter.key = (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, strlen("finished") + 1);
+    strcpy(event.startup_parameter.key, "finished");
     event.startup_parameter.value = NULL;
     WHIST_VIRTUAL_INTERFACE_CALL(events.send, &event);
   }
@@ -562,13 +588,18 @@ void HTMLWhistElement::WillOpenPopup() {
   }
 }
 
-void HTMLWhistElement::SendFileDragEvent(char* file_name,
+void HTMLWhistElement::SendFileDragEvent(std::optional<std::string> file_name,
                                          bool end_drag,
                                          int group_id,
                                          DragEvent* drag_event) {
-  WhistClient::WhistFrontendEvent frontend_event;
+  WhistClient::WhistFrontendEvent frontend_event = {};
   frontend_event.type = WhistClient::FRONTEND_EVENT_FILE_DRAG;
-  frontend_event.file_drag.filename = file_name;
+  if (file_name.has_value()) {
+    frontend_event.file_drag.filename = (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, file_name->size() + 1);
+    strcpy(frontend_event.file_drag.filename, file_name->c_str());
+  } else {
+    frontend_event.file_drag.filename = NULL;
+  }
   frontend_event.file_drag.end_drag = end_drag;
   frontend_event.file_drag.group_id = group_id;
   frontend_event.file_drag.position.x = (int)drag_event->clientX();
@@ -576,16 +607,20 @@ void HTMLWhistElement::SendFileDragEvent(char* file_name,
   WHIST_VIRTUAL_INTERFACE_CALL(events.send, &frontend_event);
 }
 
-void HTMLWhistElement::SendFileDropEvent(char* file_name,
+void HTMLWhistElement::SendFileDropEvent(std::optional<std::string> file_name,
                                          bool end_drop,
                                          DragEvent* drag_event) {
-  float dpr = GetDocument().DevicePixelRatio();
-  WhistClient::WhistFrontendEvent frontend_event;
+  WhistClient::WhistFrontendEvent frontend_event = {};
   frontend_event.type = WhistClient::FRONTEND_EVENT_FILE_DROP;
-  frontend_event.file_drop.filename = file_name;
+  if (file_name.has_value()) {
+    frontend_event.file_drop.filename = (char*)WHIST_VIRTUAL_INTERFACE_CALL(utils.malloc, file_name->size() + 1);
+    strcpy(frontend_event.file_drop.filename, file_name->c_str());
+  } else {
+    frontend_event.file_drop.filename = NULL;
+  }
   frontend_event.file_drop.end_drop = end_drop;
-  frontend_event.file_drop.position.x = (int)drag_event->clientX() * dpr;
-  frontend_event.file_drop.position.y = (int)drag_event->clientY() * dpr;
+  frontend_event.file_drop.position.x = (int)drag_event->clientX();
+  frontend_event.file_drop.position.y = (int)drag_event->clientY();
   WHIST_VIRTUAL_INTERFACE_CALL(events.send, &frontend_event);
 }
 

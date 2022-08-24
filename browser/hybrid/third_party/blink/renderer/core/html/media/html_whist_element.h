@@ -84,11 +84,11 @@ class CORE_EXPORT HTMLWhistElement final
   private:
     class HTMLWhistElementResizeObserverDelegate;
     class WheelEventListener;
-    void SendFileDragEvent(char* file_name,
+    void SendFileDragEvent(std::optional<std::string> file_name,
                            bool end_drag,
                            int group_id,
                            DragEvent* drag_event);
-    void SendFileDropEvent(char* file_name,
+    void SendFileDropEvent(std::optional<std::string> file_name,
                            bool end_drop,
                            DragEvent* drag_event);
     // FileChooserClient implementation.
