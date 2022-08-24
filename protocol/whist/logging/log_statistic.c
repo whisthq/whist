@@ -86,9 +86,8 @@ static StatisticInfo statistic_info[NUM_METRICS] = {
     [NOTIFICATIONS_RECEIVED] = {"NOTIFICATIONS_RECEIVED", false, false, SUM},
     [CLIENT_CPU_USAGE] = {"CLIENT_CPU_USAGE", false, false, AVERAGE},
     [MACH_VM_REGION_TIME] = {"MACH_VM_REGION_TIME", true, true, AVERAGE},
-    [MLOCK_TIME] = {"MLOCK_TIME", true, false, AVERAGE},
-    [MUNLOCK_TIME] = {"MUNLOCK_TIME", true, false, AVERAGE},
-
+    [MLOCK_TIME] = {"MLOCK_TIME", true, true, AVERAGE},
+    [MUNLOCK_TIME] = {"MUNLOCK_TIME", true, true, AVERAGE},
 };
 
 /*
