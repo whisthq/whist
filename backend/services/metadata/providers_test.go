@@ -16,7 +16,7 @@ func TestGenerateCloudMetadataRetriever(t *testing.T) {
 		metadataEndpoint     *string
 		expected             CloudMetadataRetriever
 	}{
-		{"AWS successful ping", "aws", "/latest/metadata/instance-id", &aws.EndpointBase, &aws.Metadata{}},
+		{"AWS successful ping", "aws", "/latest/meta-data/instance-id", &aws.EndpointBase, &aws.Metadata{}},
 		{"AWS no response", "aws", "/instance-id", nil, nil},
 		{"GCP succesful ping", "gcp", "/id", &gcp.EndpointBase, &gcp.Metadata{}},
 		{"GCP no response", "gcp", "/id", nil, nil},

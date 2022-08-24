@@ -60,7 +60,7 @@ func GenerateCloudMetadataRetriever() error {
 		if err != nil {
 			awsChan <- utils.MakeError("failed to parse metadata endpoint URL: %s", err)
 		}
-		url.Path = path.Join("latest", "metadata", resourceToPing)
+		url.Path = path.Join("latest", "meta-data", resourceToPing)
 		resp, err := httpClient.Get(url.String())
 		if err != nil {
 			awsChan <- err
