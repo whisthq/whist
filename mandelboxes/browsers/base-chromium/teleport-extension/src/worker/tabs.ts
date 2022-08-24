@@ -7,6 +7,7 @@ import {
   removeTab,
   getOpenTabs,
   getTab,
+  getActiveTab,
 } from "@app/utils/tabs"
 
 import { SOCKETIO_SERVER_URL } from "@app/constants/urls"
@@ -27,7 +28,10 @@ const initSocketioConnection = () => {
 
 const initActivateTabListener = (socket: Socket) => {
   socket.on("activate-tab", async (tabs: chrome.tabs.Tab[]) => {
-    const openTabs = await getOpenTabs()
+    const [openTabs, activeTab] = await Promise.all([
+      getOpenTabs(),
+      getActiveTab(),
+    ])
     const tabToActivate = tabs[0]
     const foundTab = find(openTabs, (t) => t.clientTabId === tabToActivate.id)
 
@@ -37,19 +41,16 @@ const initActivateTabListener = (socket: Socket) => {
         active: tabToActivate.active,
       })?.then((_tab) => {
         if (tabToActivate.id !== undefined) {
-          console.log("requested creation of", tabToActivate)
           if (tabToActivate.active) {
-            console.log("emitting active tab created", tabToActivate.id, tabToActivate.url)
             socket.emit("tab-activated", tabToActivate.id)
-          } else {
-            console.log(tabToActivate.url, "not active")
           }
+
           chrome.storage.local.set({
             [tabToActivate.id]: _tab,
           })
         }
       })
-    } else {
+    } else if (activeTab.id !== foundTab.tab.id) {
       const tab = await getTab(foundTab.tab.id)
       const urlToActivate = tabToActivate.url?.replace("cloud:", "")
       updateTab(foundTab.tab.id, {

@@ -1,9 +1,7 @@
 import pickBy from "lodash.pickby"
 import { WhistTab } from "@app/constants/tabs"
 
-const createTab = (
-  createProperties: { url?: string; active: boolean }
-) => {
+const createTab = (createProperties: { url?: string; active: boolean }) => {
   if (createProperties.url === undefined) return
 
   if (createProperties.url.startsWith("cloud:")) {
@@ -46,4 +44,12 @@ const getOpenTabs = async (): Promise<Array<WhistTab>> => {
   return result ?? []
 }
 
-export { createTab, updateTab, removeTab, getOpenTabs, getTab }
+const getActiveTab = async () => {
+  return await new Promise<chrome.tabs.Tab>((resolve) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) =>
+      resolve(tabs[0])
+    )
+  })
+}
+
+export { createTab, updateTab, removeTab, getOpenTabs, getTab, getActiveTab }
