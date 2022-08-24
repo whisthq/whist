@@ -153,6 +153,13 @@ Defines
 #define USING_CLIENT_HW_COPY true
 #endif
 
+// mlock
+#if OS_IS(OS_MACOS)
+#define USING_MLOCK true
+#else
+#define USING_MLOCK false
+#endif
+
 // Create platform-independent POSIX-style functions
 #if OS_IS(OS_WIN32)
 #define STDOUT_FILENO _fileno(stdout)

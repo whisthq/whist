@@ -7,14 +7,16 @@ extern "C" {
 #include <mach/mach.h>
 #include <mach/mach_vm.h>
 #include <whist/logging/log_statistic.h>
+#include <stdlib.h>
+#include <unistd.h>
 }
 
-#if OS_IS(OS_MACOS)
-struct VMRegion {
-    mach_vm_address_t addr;
-    mach_vm_size_t size;
+#if USING_MLOCK
+struct MLockRegion {
+    void* addr;
+    size_t size;
 
-    bool operator<(const VMRegion& region) const {
+    bool operator<(const MLockRegion& region) const {
         if (this->addr < region.addr) {
             return true;
         }
@@ -24,54 +26,43 @@ struct VMRegion {
         return this->size < region.size;
     }
 
-    bool operator==(const VMRegion& region) const {
+    bool operator==(const MLockRegion& region) const {
         return this->addr == region.addr && this->size == region.size;
     }
 };
 
-// map addr -> VMRegion*
-// map VMRegion (or VMRegion*) -> number of mallocs
+// map addr -> MLockRegion*
+// map MLockRegion (or MLockRegion*) -> number of mallocs
 struct MlockContext {
     WhistMutex lock;
-    std::map<void*, VMRegion> malloc_to_region;
-    std::map<VMRegion, int> region_to_count;
+    std::map<void*, MLockRegion> malloc_to_region;
+    std::map<MLockRegion, int> region_to_count;
 };
 
 static MlockContext mlock_context;
+static size_t page_size;
 
 void init_whist_mlock() {
     mlock_context.lock = whist_create_mutex();
+    page_size = sysconf(_SC_PAGESIZE);
 }
 
 void whist_mlock(void* addr, size_t size) {
     static WhistTimer mach_timer;
-    // call mach_vm_region on addr
-    task_t t = mach_task_self();
-    mach_vm_address_t mach_addr = (mach_vm_address_t) addr;
-    kern_return_t rc;
-    vm_region_basic_info_data_t info;
-    mach_vm_size_t mach_size;
-    mach_port_t obj_name;
-    mach_msg_type_number_t count = VM_REGION_BASIC_INFO_COUNT_64;
-    TIME_RUN(rc = mach_vm_region(t, &mach_addr, &mach_size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info, &count, &obj_name), MACH_VM_REGION_TIME, mach_timer);
-    if (rc) {
-        LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
+    start_timer(&mach_timer);
+    whist_lock_mutex(mlock_context.lock);
+    MLockRegion region = {.addr = (void*)((uintptr_t)addr - ((uintptr_t)addr % page_size)),
+                          .size = size + page_size - (size % page_size)};
+    mlock_context.malloc_to_region[addr] = region;
+    if (mlock_context.region_to_count.contains(region)) {
+        mlock_context.region_to_count[region]++;
     } else {
-        // LOG_INFO("mach_vm_region addr %p size %llx", (void*)mach_addr, mach_size);
-        start_timer(&mach_timer);
-        whist_lock_mutex(mlock_context.lock);
-        VMRegion region = { .addr = mach_addr, .size = mach_size };
-        mlock_context.malloc_to_region[(void*) addr] = region;
-        if (mlock_context.region_to_count.contains(region)) {
-            mlock_context.region_to_count[region]++;
-        } else {
-            mlock_context.region_to_count[region] = 1;
-            mlock((void*) region.addr, (size_t) region.size);
-            LOG_INFO("Mlocking region %p size %llx", (void*) region.addr, region.size);
-        }
-        whist_unlock_mutex(mlock_context.lock);
-        log_double_statistic(MLOCK_TIME, get_timer(&mach_timer) * MS_IN_SECOND);
+        mlock_context.region_to_count[region] = 1;
+        mlock(region.addr, region.size);
+        LOG_INFO("Mlocking region %p size %zx", region.addr, region.size);
     }
+    whist_unlock_mutex(mlock_context.lock);
+    log_double_statistic(MLOCK_TIME, get_timer(&mach_timer) * MS_IN_SECOND);
 }
 
 void whist_munlock(void* addr) {
@@ -79,15 +70,16 @@ void whist_munlock(void* addr) {
     start_timer(&timer);
     whist_lock_mutex(mlock_context.lock);
     if (mlock_context.malloc_to_region.contains(addr)) {
-        VMRegion region = mlock_context.malloc_to_region[addr];
+        MLockRegion region = mlock_context.malloc_to_region[addr];
         if (mlock_context.region_to_count.contains(region)) {
             mlock_context.region_to_count[region]--;
             if (mlock_context.region_to_count[region] == 0) {
-                munlock((void*) region.addr, (size_t) region.size);
-                LOG_INFO("Munlock'ed region %p size %llx", (void*) region.addr, region.size);
+                munlock(region.addr, region.size);
+                LOG_INFO("Munlock'ed region %p size %zx", region.addr, region.size);
             }
         } else {
-            LOG_ERROR("Couldn't find region with addr %p size %llx in map", (void*) region.addr, region.size);
+            LOG_ERROR("Couldn't find region with addr %p size %zx in map", region.addr,
+                      region.size);
         }
     } else {
         LOG_ERROR("Tried to munlock an address %p that wasn't recorded", addr);
@@ -95,14 +87,22 @@ void whist_munlock(void* addr) {
     whist_unlock_mutex(mlock_context.lock);
     log_double_statistic(MUNLOCK_TIME, get_timer(&timer) * MS_IN_SECOND);
 }
+
+/*
+void * operator new(std::size_t n) noexcept(false)
+{
+    // printf("Using custom new");
+    return safe_malloc(n);
+}
+void operator delete(void * p) throw()
+{
+    // printf("Using custom delete");
+     whist_free(p);
+}
+*/
+
 #else
-void init_whist_mlock() {
-    return;
-}
-void whist_mlock(void* addr, size_t size) {
-    return;
-}
-void whist_munlock(void* addr) {
-    return;
-}
+void init_whist_mlock() { return; }
+void whist_mlock(void* addr, size_t size) { return; }
+void whist_munlock(void* addr) { return; }
 #endif

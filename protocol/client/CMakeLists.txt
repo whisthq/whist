@@ -49,7 +49,7 @@ else()
   )
 endif()
 
-# set the build directory
+#set the build directory
 set_target_properties(WhistClient PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch}
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch})
@@ -72,31 +72,31 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             ${CMAKE_BINARY_DIR})
 endif()
 
-# move necessary files into the build directory
+#move necessary files into the build directory
 add_custom_command(TARGET WhistClient PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/client/images
         $<TARGET_FILE_DIR:WhistClient>/images)
 
-# Print out compile flags in verbose mode of CMake
+#Print out compile flags in verbose mode of CMake
 message(VERBOSE "client C base flags: ${CMAKE_C_FLAGS}")
 message(VERBOSE "client C release flags: ${CMAKE_C_FLAGS_RELEASE}")
 message(VERBOSE "client C debug flags: ${CMAKE_C_FLAGS_DEBUG}")
 message(VERBOSE "client C CI flags: ${CMAKE_C_FLAGS_CI}")
 
-# FFmpeg, Threading and Dynamic linking libs
+#FFmpeg, Threading and Dynamic linking libs
 foreach(LIB ${FFMPEG_LIBS_PATHS})
     message(VERBOSE "linking lib for WhistClient: ${LIB}")
     target_link_libraries(WhistClient ${LIB})
 endforeach()
 
-# Threading and Dynamic link for linux/macosx only
-# if we add other target platforms we may need to come back to this
+#Threading and Dynamic link for linux / macosx only
+#if we add other target platforms we may need to come back to this
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-#    set(THREADS_PREFER_PTHREAD_FLAG ON)
-#    find_package(Threads REQUIRED)
+#set(THREADS_PREFER_PTHREAD_FLAG ON)
+#find_package(Threads REQUIRED)
     target_link_libraries(WhistClient
-#            Threads::Threads
+#Threads::Threads
             ${CMAKE_DL_LIBS}
             )
 endif()
@@ -146,7 +146,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     )
 endif()
 
-
 #[[
 ################## MACOS ##################
 ]]
@@ -162,8 +161,8 @@ endif()
 ################## WINDOWS ##################
 ]]
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
-    # this comes up when we used precompiled libraries which we do not have .pdb files for
+#Linked flags : LNK4099 is when the linker cannot find the.pdb for debugging symbols
+#this comes up when we used precompiled libraries which we do not have.pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099 ")
 
     target_sources(WhistClient PRIVATE
@@ -179,6 +178,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         set_property(TARGET WhistClient PROPERTY CUDA_ARCHITECTURES OFF)
     endif()
 
-    # Link to system libs
+#Link to system libs
     target_link_libraries(WhistClient ${WINDOWS_SPECIFIC_CLIENT_LIBS})
 endif()

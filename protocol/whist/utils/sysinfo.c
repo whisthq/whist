@@ -56,46 +56,17 @@
 
 // documentation notes: the source code for mach/etc are in https://github.com/apple/darwin-xnu/.
 
-/*
-typedef struct {
-    LINKED_LIST_HEADER;
-    mach_vm_address_t addr;
-    mach_vm_size_t size;
-} VMRegion;
-
-static bool should_mlock_region(vm_region_extended_info_data_t extended_info) {
-    // these constants are in vm_statistics.h
-    switch (extended_info.user_tag) {
-        case VM_MEMORY_MALLOC:
-        case VM_MEMORY_MALLOC_NANO:
-        case VM_MEMORY_MALLOC_SMALL:
-        case VM_MEMORY_MALLOC_MEDIUM:
-        case VM_MEMORY_MALLOC_LARGE:
-        case VM_MEMORY_REALLOC:
-        case VM_MEMORY_MALLOC_TINY:
-        case VM_MEMORY_MALLOC_LARGE_REUSABLE:
-        case VM_MEMORY_MALLOC_LARGE_REUSED:
-        case VM_MEMORY_STACK: {
-            return true;
-        }
-        default:
-            return false;
-    }
-}
-
-*/
+// mlocks statics
 void mlock_memory(void) {
-    // this is probably bad practice, sorry -- using the fact that this is unsigned
     static int num_mlocked_regions;
-    static mach_vm_address_t max_addr = (mach_vm_address_t)&num_mlocked_regions;
+    // TODO: better way of mlock'ing static segments
+    static mach_vm_address_t max_addr = (mach_vm_address_t)0x200000000000;
     // VMRegion* region_iter = linked_list_head(&region_list);
     task_t t = mach_task_self();
 
     mach_vm_address_t addr = 1;
     kern_return_t rc;
     vm_region_basic_info_data_t info;
-    // We use extended_info so it can give us user_tag, which indicates the type of memory the
-    // region is vm_region_extended_info_data_t extended_info;
     mach_vm_address_t prev_addr = 0;
     mach_vm_size_t size, prev_size;
 
@@ -107,89 +78,19 @@ void mlock_memory(void) {
     static unsigned long long total_mlocked_size = 0;
     while (!done) {
         count = VM_REGION_BASIC_INFO_COUNT_64;
-        // count = VM_REGION_EXTENDED_INFO_COUNT;
 
         rc = mach_vm_region(t, &addr, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&info, &count,
                             &obj_name);
-        // rc = mach_vm_region(t, &addr, &size, VM_REGION_EXTENDED_INFO,
-        //                     (vm_region_info_t)&extended_info, &count, &obj_name);
         if (rc) {
             // indicates that we've given an invalid address.
             LOG_INFO("mach_vm_region_failed, %s", mach_error_string(rc));
             max_addr = addr;
             done = 1;
         } else {
-            if (prev_addr == 0 || addr >= prev_addr + prev_size) {
-                // && should_mlock_region(extended_info)) {
-
+            if ((prev_addr == 0 || addr >= prev_addr + prev_size) && addr <= max_addr) {
+                LOG_INFO("mlock'ed %p size %llx", (void*)addr, size);
                 // update region list data and mlock
                 mlock((void*)addr, size);
-                /*
-                if (region_iter == NULL) {
-                    VMRegion* vm_region = safe_malloc(sizeof(VMRegion));
-                    vm_region->addr = addr;
-                    vm_region->size = size;
-                    linked_list_add_tail(&region_list, vm_region);
-                    LOG_INFO("region_iter null, added %p size %llx", (void*)vm_region->addr,
-                             vm_region->size);
-                    TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, mlock_timer);
-                    num_mlocked_regions++;
-                    total_mlocked_size += size;
-                    region_iter = linked_list_next(vm_region);
-                } else {
-                    if (addr > region_iter->addr) {
-                        while (addr > region_iter->addr) {
-                            // the region in region_iter is no longer a valid region, so munlock it.
-                            LOG_INFO("Skipping %p size %llx", (void*)region_iter->addr,
-                                     region_iter->size);
-                            TIME_RUN(munlock((void*)region_iter->addr, region_iter->size),
-                                     MUNLOCK_TIME, mlock_timer);
-                            num_munlocked_regions++;
-                            total_mlocked_size -= region_iter->size;
-                            VMRegion* old_region = region_iter;
-                            // advance region_iter
-                            region_iter = linked_list_next(region_iter);
-                            // remove it from the linked list
-                            linked_list_remove(&region_list, old_region);
-                            free(old_region);
-                        }
-                    }
-                    if (addr < region_iter->addr) {
-                        // if addr < region_iter.addr, insert before and mlock. don't change
-                        // region_iter
-                        VMRegion* vm_region = safe_malloc(sizeof(VMRegion));
-                        vm_region->addr = addr;
-                        vm_region->size = size;
-                        LOG_INFO("Inserting %p size %llx", (void*)vm_region->addr, vm_region->size);
-                        linked_list_add_before(&region_list, region_iter, vm_region);
-                        TIME_RUN(mlock((void*)addr, size), MLOCK_TIME, mlock_timer);
-                        num_mlocked_regions++;
-                        total_mlocked_size += size;
-                    } else if (addr == region_iter->addr) {
-                        if (size != region_iter->size) {
-                            TIME_RUN(munlock((void*)region_iter->addr, region_iter->size),
-                                     MUNLOCK_TIME, mlock_timer);
-                            total_mlocked_size -= region_iter->size;
-                            region_iter->size = size;
-                            LOG_INFO("Changing size of %p to %llx", (void*)region_iter->addr,
-                                     region_iter->size);
-                            TIME_RUN(mlock((void*)region_iter->addr, region_iter->size), MLOCK_TIME,
-                                     mlock_timer);
-                            total_mlocked_size += region_iter->size;
-                        }
-                        region_iter = linked_list_next(region_iter);
-                    }
-                }
-            } else {
-                if (addr < prev_addr + prev_size) {
-                    LOG_INFO(
-                        "mach_vm_region said next region was at %p, but expected address at "
-                        "least %p + %llx = %p",
-                        (void*)addr, (void*)prev_addr, size, (void*)prev_addr + size);
-                    done = 1;
-                }
-            }
-            */
                 prev_addr = addr;
                 prev_size = size;
                 // repeatedly call mach_vm_region
@@ -201,12 +102,6 @@ void mlock_memory(void) {
                 }
             }
         }
-        /*
-    LOG_INFO("mlock'ed %d regions, munlock'ed %d regions, total size %llx (%llu M)",
-             num_mlocked_regions, num_munlocked_regions, total_mlocked_size,
-             total_mlocked_size / (1024 * 1024));
-    num_mlocked_regions = num_munlocked_regions = 0;
-    */
     }
 }
 #else
