@@ -7,7 +7,7 @@
 #include "cloud_downloader.h"
 
 #include "base/memory/weak_ptr.h"
-#include "whist/browser/hybrid/third_party/whist/whist_protocol_client.h"
+#include "whist/browser/hybrid/third_party/whist/protocol_client_interface.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "third_party/blink/public/common/thread_safe_browser_interface_broker_proxy.h"
 #include "third_party/blink/public/platform/platform.h"

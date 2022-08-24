@@ -7,8 +7,8 @@
 // This file is inspired from init_webrtc.h, and we export WhistClient-related
 // functions following the same permissions/scope as WebRTC, given the similarities.
 
-#ifndef THIRD_PARTY_WHIST_WHIST_PROTOCOL_CLIENT_H_
-#define THIRD_PARTY_WHIST_WHIST_PROTOCOL_CLIENT_H_
+#ifndef THIRD_PARTY_WHIST_PROTOCOL_CLIENT_INTERFACE_H_
+#define THIRD_PARTY_WHIST_PROTOCOL_CLIENT_INTERFACE_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -37,4 +37,4 @@ T MaybeCallFunction(T (*call)(U...), V...args) {
 #define WHIST_VIRTUAL_INTERFACE_CALL(name, ...) \
   MaybeCallFunction(whist_virtual_interface ? whist_virtual_interface->name : NULL, ##__VA_ARGS__)
 
-#endif // THIRD_PARTY_WHIST_WHIST_PROTOCOL_CLIENT_H_
+#endif // THIRD_PARTY_WHIST_PROTOCOL_CLIENT_INTERFACE_H_

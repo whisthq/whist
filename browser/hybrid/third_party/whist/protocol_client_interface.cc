@@ -4,7 +4,7 @@
 //
 // Copyright 2022 Whist Technologies, Inc. All rights reserved.
 
-#include "whist_protocol_client.h"
+#include "protocol_client_interface.h"
 
 #include <string.h>
 #include <thread>

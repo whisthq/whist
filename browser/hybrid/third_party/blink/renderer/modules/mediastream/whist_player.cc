@@ -54,7 +54,7 @@
 #include "third_party/blink/renderer/platform/scheduler/public/thread.h"
 #include "whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/cloud_downloader.h"
 #include "whist/browser/hybrid/third_party/blink/renderer/modules/mediastream/whist_compositor.h"
-#include "whist/browser/hybrid/third_party/whist/whist_protocol_client.h"
+#include "whist/browser/hybrid/third_party/whist/protocol_client_interface.h"
 
 
 #include <iostream>

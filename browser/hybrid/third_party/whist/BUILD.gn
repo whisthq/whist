@@ -12,7 +12,7 @@ whist_configs = [ "//third_party/webrtc:common_config" ]
 
 whist_public_configs = [ "//third_party/webrtc:common_inherited_config" ]
 
-whist_public_deps = [ ":whist_protocol_client" ]
+whist_public_deps = [ ":protocol_client_interface" ]
 
 component("whist_component") {
   configs += whist_configs
@@ -20,12 +20,12 @@ component("whist_component") {
   public_deps = whist_public_deps
 }
 
-source_set("whist_protocol_client") {
+source_set("protocol_client_interface") {
   visibility = [ ":*" ]
 
   sources = [
-    "whist_protocol_client.cc",
-    "whist_protocol_client.h",
+    "protocol_client_interface.cc",
+    "protocol_client_interface.h",
   ]
 
   configs += [
