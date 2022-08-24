@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	graphql "github.com/hasura/go-graphql-client"
-	"github.com/whisthq/whist/backend/services/utils"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // WhistWebsocketHandler implements `graphql.WebsocketHandler` and uses
@@ -38,11 +38,13 @@ func (wh *WhistWebsocketHandler) ReadJSON(v interface{}) error {
 		return nil
 	}
 
-	// Since version 0.7.1, The hasura graphql triggers a segfault when receiving an
-	// EOF error. This condition changes the error string wording (because it checks
-	// for == "EOF"). TODO: remove once the segfault is resolved.
+	// Since version 0.7.2, The hasura graphql triggers a segfault when receiving an
+	// EOF error. Additionally, an EOF error will silently terminate the subscription.
+	// This condition logs the error as a warning instead (because it checks for == "EOF").
+	// and returns a nil error. TODO: remove once the segfault is resolved.
 	if err != nil && (err == io.ErrUnexpectedEOF || err == io.EOF || strings.Contains(err.Error(), "EOF")) {
-		return utils.MakeError("unexpected end of input")
+		logger.Warningf("unexpected end of input")
+		return nil
 	}
 
 	return err
