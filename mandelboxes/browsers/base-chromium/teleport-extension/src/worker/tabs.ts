@@ -61,7 +61,7 @@ const initActivateTabListener = (socket: Socket) => {
       }).then(() => {
         socket.emit("tab-activated", tabToActivate.id)
       })
-    } else {
+    } else if (activeTab.id === foundTab.tab.id) {
       socket.emit("tab-activated", tabToActivate.id)
     }
   })
