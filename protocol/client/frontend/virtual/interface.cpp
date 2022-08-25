@@ -135,6 +135,10 @@ static void vi_api_set_video_frame_callback(int window_id, VideoFrameCallback ca
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     // If there's a pending avframe, and that window hasn't been capturing yet,
     // pass the existant frame into the callback ptr
+    //
+    // When sending the initial frame, only do so if thawed. This line of code can be changed
+    // to send, e.g. a black frame or something if desired. Or later, potentially the most 
+    // recent frame of that tab, for example.
     if (pending != NULL && whist_windows[window_id].video_frame_callback_ptr == NULL &&
         whist_windows[window_id].playing) {
         AVFrame* frame_ref = av_frame_clone(pending);
