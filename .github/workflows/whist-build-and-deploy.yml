@@ -934,9 +934,19 @@ jobs:
       ############################### macOS Configuration Steps START #############################
 
       # Since we're using a self-hosted runner, we need to comment these two steps out after they
-      # have run once because the keychain will then exist and trying to reinstall it will fail.
+      # have run once because the keychain entries will then exist and trying to reinstall them will fail.
       # If you are running this workflow on a new runner, simply uncomment these steps for the first run.
-      # - name: Install macOS developer ID installer signing identity
+
+      # - name: Install macOS Codesigning Certificates
+      #   if: runner.os == 'macOS'
+      #   uses: apple-actions/import-codesign-certs@v1
+      #   with:
+      #     keychain: Whist Codesigning
+      #     keychain-password: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
+      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
+      #     p12-password: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
+
+      # - name: Install macOS Developer ID Installer Signing Identity
       #   if: runner.os == 'macOS'
       #   uses: apple-actions/import-codesign-certs@v1
       #   with:
@@ -1178,7 +1188,6 @@ jobs:
               --gn=updater_dev_endpoint:https://clients2.google.com/service/update2/crx \
               --gn=updater_prod_endpoint:https://clients2.google.com/service/update2/crx
 
-      # This gets locked automatically after X minutes
       - name: Unlock codesigning keychain
         if: runner.os == 'macOS'
         run: security unlock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
@@ -1255,6 +1264,12 @@ jobs:
               --gn=notary_user:owen@whist.com \
               --gn=notary_password:${{ secrets.MACOS_SIGNING_NOTARYTOOL_PASSWORD }} \
               --notarize
+
+      # Once we are done, we lock the keychain back
+      - name: Lock codesigning keychain
+        if: runner.os == 'macOS'
+        run: security lock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
+
 
       # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
       # IDs to match the debug symbols with the build that crashed to build the backtrace
