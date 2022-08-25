@@ -45,7 +45,7 @@
 #include "third_party/blink/renderer/core/input/keyboard_event_manager.h"
 #include "third_party/blink/public/mojom/input/focus_type.mojom-blink.h"
 #include "third_party/blink/renderer/core/dom/focus_params.h"
-#include "whist/browser/hybrid/third_party/whist/whist_protocol_client.h"
+#include "whist/browser/hybrid/third_party/whist/protocol_client_interface.h"
 #include "third_party/blink/renderer/platform/json/json_parser.h"
 #include "third_party/blink/renderer/core/page/pointer_lock_controller.h"
 #include "third_party/blink/renderer/core/page/chrome_client.h"

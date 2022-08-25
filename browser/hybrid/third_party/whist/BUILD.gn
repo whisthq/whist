@@ -12,7 +12,7 @@ whist_configs = [ "//third_party/webrtc:common_config" ]
 
 whist_public_configs = [ "//third_party/webrtc:common_inherited_config" ]
 
-whist_public_deps = [ ":whist_protocol_client" ]
+whist_public_deps = [ ":protocol_client_interface" ]
 
 component("whist_component") {
   configs += whist_configs
@@ -20,12 +20,12 @@ component("whist_component") {
   public_deps = whist_public_deps
 }
 
-source_set("whist_protocol_client") {
+source_set("protocol_client_interface") {
   visibility = [ ":*" ]
 
   sources = [
-    "whist_protocol_client.cc",
-    "whist_protocol_client.h",
+    "protocol_client_interface.cc",
+    "protocol_client_interface.h",
   ]
 
   configs += [
@@ -43,4 +43,66 @@ source_set("whist_protocol_client") {
     "//third_party/abseil-cpp:absl_define_config",
   ]
   deps = [ "//base" ]
+}
+
+# Build and Copy Whist Client Library
+
+# Added by Whist
+action("build_whist_client") {
+  script = "build_whist_client.py"
+
+  # Note that this will cause unexpected behavior if a protocol file is deleted.
+  # Therefore, we make the assumption that deleted files don't matter if their
+  # deletion isn't reflected in the files they interact with. For example, if
+  # we delete file.c, then we will have to modify a CMakeLists.txt and any files
+  # using functionality from file.c.
+  #
+  # Due to the need to make assumptions like the above, as well as maintainability
+  # issues, Chromium heavily discourages the use of `exec_script`. As such, we needed
+  # to explicitly whitelist this file in a patch to src/.gn, the root GN file.
+  #
+  # TODO: Three more correct options to explore are, in order of best to worst:
+  # 1. Use a depfile instead of sources. We would need to ask CMake or the compiler
+  #    to generate this makefile-like format automatically, else do so in the
+  #    build_whist_client.py script.
+  # 2. Implement a GN build system for the protocol. This might lead to a lot of
+  #    pain on the server side or else inconsistencies between CMake and GN, so
+  #    we would need to be wary.
+  # 3. Explicitly list protocol files here, and use CI to ensure that the list
+  #    is up to date.
+  sources = exec_script("get_whist_protocol_sources.py", [], "list lines")
+
+  args = []
+
+  if (is_mac) {
+    outputs = [
+      "$root_out_dir/libavcodec.59.dylib",
+      "$root_out_dir/libavdevice.59.dylib",
+      "$root_out_dir/libavfilter.8.dylib",
+      "$root_out_dir/libavformat.59.dylib",
+      "$root_out_dir/libavutil.57.dylib",
+      "$root_out_dir/libopus.0.dylib",
+      "$root_out_dir/libsentry.dylib",
+      "$root_out_dir/libswresample.4.dylib",
+      "$root_out_dir/libswscale.6.dylib",
+      "$root_out_dir/libWhistClient.dylib",
+    ]
+
+    if (target_cpu == "x64") {
+      outputs += [
+        "$root_out_dir/libX11.6.dylib",
+        "$root_out_dir/libXau.6.dylib",
+        "$root_out_dir/libxcb-shape.0.0.0.dylib",
+        "$root_out_dir/libxcb-shm.0.0.0.dylib",
+        "$root_out_dir/libxcb-xfixes.0.0.0.dylib",
+        "$root_out_dir/libxcb.1.1.0.dylib",
+        "$root_out_dir/libXdmcp.6.dylib",
+      ]
+    }
+
+    args += [
+      "--arch",
+      target_cpu,
+    ]
+  }
 }
