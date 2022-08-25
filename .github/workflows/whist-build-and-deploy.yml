@@ -1268,8 +1268,7 @@ jobs:
       # Once we are done, we lock the keychain back
       - name: Lock codesigning keychain
         if: runner.os == 'macOS'
-        run: security lock-keychain -p '${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}' Whist\ Codesigning.keychain
-
+        run: security lock-keychain Whist\ Codesigning.keychain
 
       # Each final build of WhistClient has an internal build ID and debug ID. Sentry will use these
       # IDs to match the debug symbols with the build that crashed to build the backtrace
