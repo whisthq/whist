@@ -92,7 +92,7 @@ mkdir -p base/build-assets/build-temp/fonts
 aws s3 sync s3://whist-fonts base/build-assets/build-temp/fonts
 
 echo "Fetching Whistium..."
-aws s3 sync s3://whist-server-browser-linux-x64-dev browsers/whistium/s3
+aws s3 sync s3://whist-server-browser-linux-x64-dev browsers/whistium/s3 --delete
 
 # Bundle these build assets into a cached Docker image
 echo "Bundling build assets..."
