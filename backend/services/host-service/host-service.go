@@ -44,6 +44,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/whisthq/whist/backend/services/httputils"
+	"github.com/whisthq/whist/backend/services/metadata/aws"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 	"go.uber.org/zap"
 
@@ -51,7 +52,6 @@ import (
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/metadata"
-	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -199,10 +199,7 @@ func monitorWaitingMandelboxes(globalCtx context.Context, globalCancel context.C
 		return nil
 	}
 
-	instanceID, err := aws.GetInstanceID()
-	if err != nil {
-		return utils.MakeError("couldn't get instance name: %s", err)
-	}
+	instanceID := metadata.CloudMetadata.GetInstanceID()
 
 	capacity, err := dbdriver.GetInstanceCapacity(string(instanceID))
 	if err != nil {
@@ -370,18 +367,6 @@ func uninitializeFilesystem() {
 }
 
 func main() {
-	// Set Sentry tags
-	tags, err := aws.GetAWSMetadata()
-	if err != nil {
-		logger.Errorf("failed to set Sentry tags: %s", err)
-	}
-	logger.AddSentryTags(tags)
-
-	// Add some additional fields for Logz.io
-	tags["component"] = "backend"
-	tags["sub-component"] = "host-service"
-	logger.AddLogzioFields(tags)
-
 	// We create a global context (i.e. for the entire host service) that can be
 	// cancelled if the entire program needs to terminate. We also create a
 	// WaitGroup for all goroutines to tell us when they've stopped (if the
@@ -395,6 +380,32 @@ func main() {
 	// statements in main().
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
+
+	// Due to CI not having a metadata endpoint, we directly create
+	// a retriever, defaulting to AWS. Note: This is the only case
+	// where the retriever should be instanciated directly, normally
+	// the `GenerateCloudMetadataRetriever` function should be used.
+	if metadata.IsRunningInCI() {
+		metadata.CloudMetadata = &aws.Metadata{}
+	} else {
+		err := metadata.GenerateCloudMetadataRetriever()
+		if err != nil {
+			logger.Panicf(globalCancel, "failed to generate cloud metadata retriever: %s", err)
+		}
+	}
+
+	// Set Sentry tags
+	tags, err := metadata.CloudMetadata.PopulateMetadata()
+	if err != nil {
+		logger.Errorf("failed to set Sentry tags: %s", err)
+	}
+
+	logger.AddSentryTags(tags)
+
+	// Add some additional fields for Logz.io
+	tags["component"] = "backend"
+	tags["sub-component"] = "host-service"
+	logger.AddLogzioFields(tags)
 
 	// Start Docker
 	dockerClient, err := createDockerClient()
@@ -479,11 +490,7 @@ func main() {
 	}
 
 	// Log the instance name we're running on
-	instanceName, err := aws.GetInstanceName()
-	if err != nil {
-		hostStartupErr = multierror.Append(hostStartupErr, err)
-		globalCancel()
-	}
+	instanceName := metadata.CloudMetadata.GetInstanceName()
 	logger.Infof("Running on instance name: %s", instanceName)
 
 	if err = initializeAppArmor(); err != nil {
@@ -512,11 +519,7 @@ func main() {
 	}
 
 	// Start database subscription client
-	instanceID, err := aws.GetInstanceID()
-	if err != nil {
-		logger.Errorf("can't get AWS Instance Name: %s", err)
-		metrics.Increment("ErrorRate")
-	}
+	instanceID := metadata.CloudMetadata.GetInstanceID()
 
 	capacity, err := dbdriver.GetInstanceCapacity(string(instanceID))
 	if err != nil {
@@ -674,17 +677,8 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					// postgres database on the development instance.
 					jsonReq := serverevent
 
-					userID, err := metadata.GetUserID()
-					if err != nil {
-						logger.Errorf("error getting userID, %s", err)
-						metrics.Increment("ErrorRate")
-					}
-
-					instanceID, err := aws.GetInstanceID()
-					if err != nil {
-						logger.Errorf("error getting instance name from AWS, %s", err)
-						metrics.Increment("ErrorRate")
-					}
+					userID := metadata.CloudMetadata.GetUserID()
+					instanceID := metadata.CloudMetadata.GetInstanceID()
 
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{

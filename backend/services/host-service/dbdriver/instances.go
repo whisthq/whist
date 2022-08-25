@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v4"
 
 	"github.com/whisthq/whist/backend/services/metadata"
-	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
@@ -42,26 +41,12 @@ func RegisterInstance() error {
 		return utils.MakeError("registerInstance() called but dbdriver is not initialized!")
 	}
 
-	publicIP4, err := aws.GetPublicIpv4()
-	if err != nil {
-		return utils.MakeError("couldn't register instance: couldn't get public IPv4: %s", err)
-	}
-	imageID, err := aws.GetAmiID()
-	if err != nil {
-		return utils.MakeError("couldn't register instance: couldn't get AMI ID: %s", err)
-	}
-	region, err := aws.GetPlacementRegion()
-	if err != nil {
-		return utils.MakeError("couldn't register instance: couldn't get AWS Placement Region: %s", err)
-	}
-	instanceType, err := aws.GetInstanceType()
-	if err != nil {
-		return utils.MakeError("couldn't register instance: couldn't get AWS Instance type: %s", err)
-	}
-	instanceID, err := aws.GetInstanceID()
-	if err != nil {
-		return utils.MakeError("couldn't register instance: couldn't get AWS Instance id: %s", err)
-	}
+	publicIP4 := metadata.CloudMetadata.GetPublicIpv4()
+	imageID := metadata.CloudMetadata.GetImageID()
+	region := metadata.CloudMetadata.GetPlacementRegion()
+	instanceType := metadata.CloudMetadata.GetInstanceType()
+	instanceID := metadata.CloudMetadata.GetInstanceID()
+
 	// Create a transaction to register the instance, since we are querying and
 	// writing separately.
 	tx, err := dbpool.BeginTx(context.Background(), pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
@@ -199,10 +184,7 @@ func markDraining() error {
 
 	q := queries.NewQuerier(dbpool)
 
-	instanceID, err := aws.GetInstanceID()
-	if err != nil {
-		return utils.MakeError("couldn't mark instance as draining: couldn't get instance name: %s", err)
-	}
+	instanceID := metadata.CloudMetadata.GetInstanceID()
 
 	result, err := q.WriteInstanceStatus(context.Background(), pgtype.Varchar{
 		String: string(InstanceStatusDraining),
@@ -230,10 +212,7 @@ func unregisterInstance() error {
 		return utils.MakeError("unregisterInstance() called but dbdriver is not initialized!")
 	}
 
-	instanceID, err := aws.GetInstanceID()
-	if err != nil {
-		return utils.MakeError("couldn't unregister instance: couldn't get instance name: %s", err)
-	}
+	instanceID := metadata.CloudMetadata.GetInstanceID()
 
 	q := queries.NewQuerier(dbpool)
 	result, err := q.DeleteInstance(context.Background(), string(instanceID))
