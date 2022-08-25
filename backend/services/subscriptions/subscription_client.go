@@ -43,7 +43,7 @@ type SubscriptionClient struct {
 	SubscriptionIDs []string
 }
 
-// Initialize creates the client. This function is respinsible from fetching the server
+// Initialize creates the client. This function is responsible from fetching the server
 // information from Heroku.
 func (wc *SubscriptionClient) Initialize(useConfigDB bool) error {
 	logger.Infof("Setting up Subscription client...")
