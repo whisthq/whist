@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
@@ -103,15 +104,34 @@ func TestJSON(t *testing.T) {
 }
 
 func TestEOF(t *testing.T) {
-	// srv := httptest.NewServer(http.HandlerFunc(eofHandler))
-	// defer srv.Close()
+	stop := make(chan bool)
+	server := subscription_setupServer()
 
-	// testClient := &SubscriptionClient{}
-	// testClient.SetParams(HasuraParams{
-	// 	URL:       srv.URL,
-	// 	AccessKey: "hasura",
-	// })
-	// testClient.Initialize(false)
+	testClient := &SubscriptionClient{}
+	testClient.Initialize(false)
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Println(err)
+		}
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer server.Shutdown(ctx)
+	defer cancel()
+
+	var sub struct {
+		HelloSaid struct {
+			ID      String
+			Message String `graphql:"msg" json:"msg"`
+		} `graphql:"helloSaid" json:"helloSaid"`
+	}
+
+	testClient.Subscribe()
+	go func() {
+		testClient.Run(&sync.WaitGroup{})
+		stop <- true
+	}()
+
 }
 
 func TestClose(t *testing.T) {
@@ -135,28 +155,20 @@ func TestClose(t *testing.T) {
 }
 
 func TestWhistWebsocketConn(t *testing.T) {
-	// srv := httptest.NewServer(http.HandlerFunc(socketHandler))
-	// defer srv.Close()
+	_, subscriptionClient := subscription_setupClients()
 
-	// mockSubscriptionClient := &mockWhistClient{}
-	// mockSubscriptionClient.SetParams(HasuraParams{
-	// 	URL:       srv.URL,
-	// 	AccessKey: "hasura",
-	// })
+	ws, err := WhistWebsocketConn(subscriptionClient)
+	if err != nil {
+		t.Fatalf("failed to create websocket connection: %s", err)
+	}
 
-	// expectSocket, err := newTestConn(srv.URL)
-	// if err != nil {
-	// 	t.Fatalf("failed to start test connection: %s", err)
-	// }
+	expectSocket, err := newTestConn("http://localhost:8080")
+	if err != nil {
+		t.Fatalf("failed to start test connection: %s", err)
+	}
 
-	// gotSocket, err := WhistWebsocketConn(mockSubscriptionClient)
-	// if err != nil {
-	// 	t.Errorf("got error while creating a socket handler: %s", err)
-	// }
-
-	// ok := reflect.DeepEqual(expectSocket, gotSocket)
-	// if !ok {
-	// 	t.Errorf("expected connection to be %v, got %v", expectSocket, gotSocket)
-	// }
-
+	ok := reflect.DeepEqual(expectSocket, ws)
+	if !ok {
+		t.Errorf("expected socket connection %v, got %v", expectSocket, ws)
+	}
 }

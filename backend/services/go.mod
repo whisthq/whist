@@ -21,6 +21,8 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
+	github.com/graph-gophers/graphql-go v1.2.0
+	github.com/graph-gophers/graphql-transport-ws v0.0.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hasura/go-graphql-client v0.7.1
 	github.com/jackc/pgconn v1.13.0
@@ -36,6 +38,8 @@ require (
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
 )
+
+require github.com/opentracing/opentracing-go v1.1.0 // indirect
 
 require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
