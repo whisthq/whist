@@ -142,23 +142,6 @@ index 6b7a35b5b83db..256a20c1d5251 100644
  #endif
  #if BUILDFLAG(IS_WIN)
      {VKEY_BACK, kAltKey, "Undo"},
-diff --git a/third_party/blink/renderer/core/events/ui_event_with_key_state.h b/third_party/blink/renderer/core/events/ui_event_with_key_state.h
-index 7d5e5359e6a33..5cee1fecbdb6d 100644
---- a/third_party/blink/renderer/core/events/ui_event_with_key_state.h
-+++ b/third_party/blink/renderer/core/events/ui_event_with_key_state.h
-@@ -34,10 +34,10 @@ class EventModifierInit;
- 
- class CORE_EXPORT UIEventWithKeyState : public UIEvent {
-  public:
--  bool ctrlKey() const { return modifiers_ & WebInputEvent::kControlKey; }
-+  bool ctrlKey() const { return modifiers_ & WebInputEvent::kMetaKey; }
-   bool shiftKey() const { return modifiers_ & WebInputEvent::kShiftKey; }
-   bool altKey() const { return modifiers_ & WebInputEvent::kAltKey; }
--  bool metaKey() const { return modifiers_ & WebInputEvent::kMetaKey; }
-+  bool metaKey() const { return modifiers_ & WebInputEvent::kControlKey; }
- 
-   // We ignore the new tab modifiers (ctrl or meta, depending on OS) set by
-   // JavaScript when processing events.  However, scripts running in isolated
 diff --git a/third_party/blink/renderer/core/exported/web_plugin_container_impl.cc b/third_party/blink/renderer/core/exported/web_plugin_container_impl.cc
 index af1e17b1a0e54..b2801a7a51e22 100644
 --- a/third_party/blink/renderer/core/exported/web_plugin_container_impl.cc
