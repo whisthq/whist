@@ -44,6 +44,16 @@ endif()
 
 option(SANITIZE "Enable sanitizer during build (address, thread, undefined)." OFF)
 option(CLIENT_SHARED_LIB "Build the client as a shared library" OFF)
+option(USE_CCACHE "Use ccache to speed up builds" OFF)
+
+if(USE_CCACHE)
+    set(CMAKE_C_COMPILER_LAUNCHER "ccache")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+    set(CMAKE_CUDA_COMPILER_LAUNCHER "ccache")
+    # Unclear whether we need these two, as I think we just treat these as C/CXX
+    set(CMAKE_OBJC_COMPILER_LAUNCHER "ccache")
+    set(CMAKE_OBJCXX_COMPILER_LAUNCHER "ccache")
+endif()
 
 # Add our compiler flags
 include(cmake/compiler-options.cmake)

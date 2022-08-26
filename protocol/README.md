@@ -223,6 +223,12 @@ The `cninja.bat` script lives in the `/protocol/` directory, but can be called f
 
 If you're having trouble compiling, make sure that you installed all the necessary dependencies. If you still have issues, try deleting the CmakeCache or start from a fresh repository.
 
+#### Ccache
+
+Ccache is a tool which can help speed up subsequent builds by storing caches of previous builds. You can insteall it with your package manager (i.e. `brew install ccache`). Once CCache is installed, you'll want to configure it. The minimal configuration you will want to perform is `ccache -M [size]`. This changes your cache from the default size of 5 GB to whatever size you want. My disk is mostly empty, so I picked 100 GB. Pick a size that won't fill up your entire disk.
+
+You can then us `ccache -sv` to get statistics about your cache and its location, and `ccache -c` to clear the cache. To use Ccache, simply add `-D USE_CCACHE=ON` to your Cmake command (i.e. `cmake -S . -B build -D USE_CCACHE=ON`).
+
 ### Running the Protocol
 
 From the build directory (usually `/build`), you can simply run:
