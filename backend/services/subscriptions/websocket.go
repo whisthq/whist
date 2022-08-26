@@ -2,14 +2,11 @@ package subscriptions // import "github.com/whisthq/whist/backend/services/subsc
 
 import (
 	"context"
-	"io"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 	graphql "github.com/hasura/go-graphql-client"
-	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // WhistWebsocketHandler implements `graphql.WebsocketHandler` and uses
