@@ -3,9 +3,11 @@
   bind "<super>x" { "cut-clipboard" () };
   bind "<super>c" { "copy-clipboard" () };
   bind "<super>v" { "paste-clipboard" () };
+  bind "<super>a" { "select-all" () };
   unbind "<ctrl>x";
   unbind "<ctrl>c";
   unbind "<ctrl>v";
+  unbind "<ctrl>a";
 }
 
 entry {
