@@ -2,14 +2,11 @@ package subscriptions // import "github.com/whisthq/whist/backend/services/subsc
 
 import (
 	"context"
-	"io"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 	graphql "github.com/hasura/go-graphql-client"
-	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // WhistWebsocketHandler implements `graphql.WebsocketHandler` and uses
@@ -28,26 +25,7 @@ func (wh *WhistWebsocketHandler) WriteJSON(v interface{}) error {
 // ReadJSON reads the next JSON-encoded message from the connection and stores
 // it in the value pointed to by v.
 func (wh *WhistWebsocketHandler) ReadJSON(v interface{}) error {
-	err := wh.Conn.ReadJSON(v)
-
-	// This error always fires when shutting down the Hasura client because we close
-	// the websocket concurrently. As it is not a harmful error we supress it here to
-	// avoid clogging Sentry with it.
-	// See: https://github.com/gorilla/websocket/issues/439
-	if err != nil && strings.Contains(err.Error(), "use of closed network connection") {
-		return nil
-	}
-
-	// Since version 0.7.2, The hasura graphql triggers a segfault when receiving an
-	// EOF error. Additionally, an EOF error will silently terminate the subscription.
-	// This condition logs the error as a warning instead (because it checks for == "EOF").
-	// and returns a nil error. TODO: remove once the segfault is resolved.
-	if err != nil && (err == io.ErrUnexpectedEOF || err == io.EOF || strings.Contains(err.Error(), "EOF")) {
-		logger.Warningf("unexpected end of input")
-		return nil
-	}
-
-	return err
+	return wh.Conn.ReadJSON(v)
 }
 
 // Close closes the underlying network connection without sending or waiting
