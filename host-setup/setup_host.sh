@@ -33,6 +33,8 @@ mandelboxes.
 To set up the host for local development, pass in the --localdevelopment flag.
 To set it up for deployments, pass in the --deployment flag, followed by the
 arguments described in the comment for \`deployment_setup_steps\`.
+To set up the host for GPU usage, add the --gpu flag to any existing
+arguments.
 EOF
   # We set a nonzero exit code so that CI doesn't accidentally only run `usage` and think it succeeded.
   exit 2
@@ -60,6 +62,92 @@ idempotent_backup () {
   "$use_sudo" [ -f "$backup" ] && "$use_sudo" mv "$backup" "$original"
   # Create a backup of the original file
   "$use_sudo" cp "$original" "$backup"
+}
+
+####################################################
+# Nvidia GPU related setup
+####################################################
+
+install_nvidia_drivers () {
+  echo "================================================"
+  echo "Installing NVIDIA drivers..."
+  echo "================================================"
+
+  # Stop any running nvidia-persistenced service
+  sudo systemctl stop nvidia-persistenced.service ||:
+
+  # Install Linux headers
+  sudo apt-get install -y gcc make "linux-headers-$(uname -r)"
+
+  # Blacklist some Linux kernel modules that would block NVIDIA drivers
+  idempotent_backup "/etc/modprobe.d/blacklist.conf" "sudo"
+  cat << EOF | sudo tee --append /etc/modprobe.d/blacklist.conf > /dev/null
+blacklist vga16fb
+blacklist nouveau
+blacklist rivafb
+blacklist nvidiafb
+blacklist rivatv
+EOF
+
+  # Configure Grub
+  idempotent_backup "/etc/default/grub" "sudo"
+  sudo sed -i 's/GRUB_CMDLINE_LINUX=""/# GRUB_CMDLINE_LINUX=""/g' /etc/default/grub
+  cat << EOF | sudo tee --append /etc/default/grub > /dev/null
+GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
+EOF
+
+  # Install NVIDIA GRID (virtualized GPU) drivers
+  ./get-nvidia-driver-installer.sh
+  sudo chmod +x nvidia-driver-installer.run
+  sudo ./nvidia-driver-installer.run --silent
+  sudo rm nvidia-driver-installer.run
+}
+
+install_nvidia_docker () {
+  echo "================================================"
+  echo "Installing nvidia-docker..."
+  echo "================================================"
+
+  # Source nvidia-docker apt-get package
+  # Note that we hardcode `distribution` to 20.04, so that we can upgrade to a higher Ubuntu eventually by
+  # pinning 20.04 as the nvidia-docker distribution, since it works with unofficially-supported versions
+  # of Ubuntu, like 20.04, which don't have an official nvidia-docker package
+  distribution="ubuntu20.04"
+  curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key add -
+  curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+  # Install nvidia-docker via apt
+  sudo apt-get update -y
+  sudo apt-get install -y nvidia-docker2
+}
+
+install_nvidia_persistence_daemon () {
+  echo "================================================"
+  echo "Installing NVIDIA Persistence Daemon Unit..."
+  echo "================================================"
+
+  # Some research online indicates that this might be beneficial towards ensuring that our mandelboxes
+  # start up more quickly. This is likely not a complete solution, but it might provide some nice benefits.
+  # For more information, see the following link:
+  # https://download.nvidia.com/XFree86/Linux-x86_64/396.51/README/nvidia-persistenced.html
+
+  cat << EOF | sudo tee /etc/systemd/system/nvidia-persistenced.service > /dev/null
+[Unit]
+Description=NVIDIA Persistence Daemon
+Wants=syslog.target
+[Service]
+Restart=yes
+User=root
+Type=forking
+ExecStart=/usr/bin/nvidia-persistenced -V
+ExecStopPost=/bin/rm -rf /var/run/nvidia-persistenced
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  sudo /bin/systemctl daemon-reload
+  sudo systemctl enable --now nvidia-persistenced.service
+  echo "Enabled NVIDIA Persistence Daemon"
 }
 
 ####################################################
@@ -117,54 +205,10 @@ common_steps () {
   # on an AWS EC2 instance, which have awscli automatically configured
   sudo apt-get install -y awscli
 
-  echo "================================================"
-  echo "Installing NVIDIA drivers..."
-  echo "================================================"
-
-  # Stop any running nvidia-persistenced service
-  sudo systemctl stop nvidia-persistenced.service ||:
-
-  # Install Linux headers
-  sudo apt-get install -y gcc make "linux-headers-$(uname -r)"
-
-  # Blacklist some Linux kernel modules that would block NVIDIA drivers
-  idempotent_backup "/etc/modprobe.d/blacklist.conf" "sudo"
-  cat << EOF | sudo tee --append /etc/modprobe.d/blacklist.conf > /dev/null
-blacklist vga16fb
-blacklist nouveau
-blacklist rivafb
-blacklist nvidiafb
-blacklist rivatv
-EOF
-
-  # Configure Grub
-  idempotent_backup "/etc/default/grub" "sudo"
-  sudo sed -i 's/GRUB_CMDLINE_LINUX=""/# GRUB_CMDLINE_LINUX=""/g' /etc/default/grub
-  cat << EOF | sudo tee --append /etc/default/grub > /dev/null
-GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
-EOF
-
-  # Install NVIDIA GRID (virtualized GPU) drivers
-  CLOUD_PROVIDER="$CLOUD_PROVIDER" ./get-nvidia-driver-installer.sh
-  sudo chmod +x nvidia-driver-installer.run
-  sudo ./nvidia-driver-installer.run --silent
-  sudo rm nvidia-driver-installer.run
-
-  echo "================================================"
-  echo "Installing nvidia-docker..."
-  echo "================================================"
-
-  # Source nvidia-docker apt-get package
-  # Note that we hardcode `distribution` to 20.04, so that we can upgrade to a higher Ubuntu eventually by
-  # pinning 20.04 as the nvidia-docker distribution, since it works with unofficially-supported versions
-  # of Ubuntu, like 20.04, which don't have an official nvidia-docker package
-  distribution="ubuntu20.04"
-  curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 sudo apt-key add -
-  curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-
-  # Install nvidia-docker via apt
-  sudo apt-get update -y
-  sudo apt-get install -y nvidia-docker2
+  if [[ "$GPU" == "true" ]]; then
+    install_nvidia_drivers
+    install_nvidia_docker
+  fi
 
   echo "================================================"
   echo "Installing General Utilities..."
@@ -189,9 +233,15 @@ EOF
   # Set custom seccomp filter
   sudo systemctl enable --now docker
   ./docker-daemon-config/generate-seccomp.sh
-
-  sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
   sudo cp docker-daemon-config/seccomp.json /etc/docker/seccomp.json
+
+  # Set runtime based on GPU presence
+  if [[ "$GPU" == "true" ]]; then
+    sudo cp docker-daemon-config/nvidia-daemon.json /etc/docker/daemon.json
+    echo "export GPU=true" >> "$HOME"/.bashrc
+  else
+    sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
+  fi
 
   sudo systemctl restart docker
 
@@ -251,32 +301,9 @@ EOF
   sudo sh -c "echo 'fs.inotify.max_user_instances=2048' >> /etc/sysctl.conf" # default=128
   sudo sysctl -p
 
-  echo "================================================"
-  echo "Installing NVIDIA Persistence Daemon Unit..."
-  echo "================================================"
-
-  # Some research online indicates that this might be beneficial towards ensuring that our mandelboxes
-  # start up more quickly. This is likely not a complete solution, but it might provide some nice benefits.
-  # For more information, see the following link:
-  # https://download.nvidia.com/XFree86/Linux-x86_64/396.51/README/nvidia-persistenced.html
-
-  cat << EOF | sudo tee /etc/systemd/system/nvidia-persistenced.service > /dev/null
-[Unit]
-Description=NVIDIA Persistence Daemon
-Wants=syslog.target
-[Service]
-Restart=yes
-User=root
-Type=forking
-ExecStart=/usr/bin/nvidia-persistenced -V
-ExecStopPost=/bin/rm -rf /var/run/nvidia-persistenced
-[Install]
-WantedBy=multi-user.target
-EOF
-
-  sudo /bin/systemctl daemon-reload
-  sudo systemctl enable --now nvidia-persistenced.service
-  echo "Enabled NVIDIA Persistence Daemon"
+  if [[ "$GPU" == "true" ]]; then
+    install_nvidia_persistence_daemon
+  fi
 }
 
 ####################################################
@@ -426,18 +453,20 @@ common_steps_post () {
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but it looks like getopt
 # chokes without them.
-TEMP=$(getopt -o hldp --long help,usage,localdevelopment,deployment,provider: -n 'setup_host.sh' -- "$@")
+TEMP=$(getopt -o hldgp --long help,usage,localdevelopment,deployment,gpu,provider: -n 'setup_host.sh' -- "$@")
 eval set -- "$TEMP"
 
 LOCAL_DEVELOPMENT=
 DEPLOYMENT=
 CLOUD_PROVIDER="AWS"
+GPU=
 while true; do
   case "$1" in
     -h | --help | --usage) usage ;;
     -l | --localdevelopment ) LOCAL_DEVELOPMENT=true; shift ;;
     -d | --deployment ) DEPLOYMENT=true; shift ;;
     -p | --provider ) CLOUD_PROVIDER=$2; shift 2 ;;
+    -g | --gpu ) GPU=true; shift ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
@@ -450,6 +479,10 @@ fi
 if [[ -n "$LOCAL_DEVELOPMENT" && -n "$DEPLOYMENT" ]]; then
   echo "Both '--localdevelopment' and '--deployment' were passed in. Make up your mind!"
   exit 1
+fi
+
+if [[ "$GPU" == "true" ]]; then
+  printf "Setting up for GPU host...\n"
 fi
 
 if [[ -n "$LOCAL_DEVELOPMENT" ]]; then

@@ -7,9 +7,9 @@
 
 import argparse
 import re
-import threading
 import subprocess
 import sys
+import threading
 
 # Argument parser
 parser = argparse.ArgumentParser(description="Build Whist mandelbox image(s).")
@@ -37,6 +37,11 @@ parser.add_argument(
     required=True,
 )
 parser.add_argument(
+    "--gpu",
+    action="store_true",
+    help="This flag will build a mandelbox with GPU support",
+)
+parser.add_argument(
     "--beta",
     type=str,
     choices=["true", "false"],
@@ -49,6 +54,7 @@ args = parser.parse_args()
 # Input Variables
 show_output = not args.quiet
 beta = args.beta
+gpu = args.gpu
 # Remove trailing slashes
 image_paths = [path.strip("/") for path in args.image_paths]
 build_all = args.all
@@ -133,9 +139,17 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
         "--build-arg",
         f"BuildAssetPackage={build_asset_package}",
     ]
+
     if "browsers/" in img_path:
         command.append("--build-arg")
         command.append(f"InstallBeta={beta}")
+
+    if gpu:
+        command.append("--build-arg")
+        command.append("DisplayDriver=nvidia")
+    else:
+        command.append("--build-arg")
+        command.append("DisplayDriver=dummy")
 
     status = 0
 

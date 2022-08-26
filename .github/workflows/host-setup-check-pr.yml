@@ -91,6 +91,7 @@ jobs:
           data["secret_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}"
           data["ami_name"] = f"whist-test-ami-${{ github.sha }}-{date_str}"
           data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
+          data["gpu"] = True
 
           # For testing, we only clone our new AMI  to one region, us-east-1, to save time in CI. In deployments,
           # data["destination_regions"] should be a list of all AWS regions we support

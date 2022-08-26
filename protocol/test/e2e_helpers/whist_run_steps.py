@@ -191,7 +191,7 @@ def build_mandelboxes_on_instance(
 
     mandelbox_name = get_mandelbox_name(role)
 
-    command = f"cd ~/whist/mandelboxes && ./build.sh {mandelbox_name} --{cmake_build_type} | tee ~/{role}_mandelbox_build.log"
+    command = f"cd ~/whist/mandelboxes && ./build.sh {mandelbox_name} --{cmake_build_type} --gpu | tee ~/{role}_mandelbox_build.log"
     success_msg = "All images built successfully!"
     docker_tar_io_eof_error = "io: read/write on closed pipe"
     docker_connect_error = "error during connect: Post"

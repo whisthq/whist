@@ -10,6 +10,11 @@
 # to copy the protocol as early as possible to share
 # layers between images.
 ARG BuildAssetPackage "protocol"
+
+# This build-arg is added by the build script and is
+# either "dummy" or "nvidia".
+ARG DisplayDriver "dummy"
+
 FROM whist/build-assets:$BuildAssetPackage as build-assets
 
 ################ STAGE 1: libinput-build ################
@@ -351,9 +356,9 @@ RUN \
     && chown root:root $HYDRAULIC_ROOT/root \
     && chmod 600 -R $HYDRAULIC_ROOT/root
 
-    # Set up script to run a program as user `whist` (make sure to do
-    # this after setting /usr/share/whist to 600)
-    COPY --chmod=550 utils/run-as-whist-user.sh $HYDRAULIC_ROOT/usr/share/whist/run-as-whist-user.sh
+# Set up script to run a program as user `whist` (make sure to do
+# this after setting /usr/share/whist to 600)
+COPY --chmod=550 utils/run-as-whist-user.sh $HYDRAULIC_ROOT/usr/share/whist/run-as-whist-user.sh
 
 #########################
 # Input
@@ -365,8 +370,10 @@ COPY input/Xmodmap $HYDRAULIC_ROOT/root/.Xmodmap
 # Display
 #########################
 
-# Copy configuration for X11 display
-COPY display/whist-display.conf $HYDRAULIC_ROOT/usr/share/X11/xorg.conf.d/01-whist-display.conf
+ARG DisplayDriver "dummy"
+
+# Copy correct configuration for X11 display based on existence of GPU
+COPY display/whist-${DisplayDriver}-display.conf $HYDRAULIC_ROOT/usr/share/X11/xorg.conf.d/01-whist-display.conf
 
 # Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
 COPY --chown=root:root --chmod=600 display/whist-update-xorg-conf.service $HYDRAULIC_ROOT/etc/systemd/system/
@@ -463,7 +470,7 @@ RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-main.service.d/
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
 # - Copy grid driver installation from
-#   nvidia-grid-driver
+#   nvidia-grid-driver if GPU is present
 # - Copy and install teleport FUSE service from
 #   whist-teleport-fuse
 # - Copy all base mandelbox files and scripts from
@@ -472,7 +479,7 @@ RUN mkdir -p $HYDRAULIC_ROOT/etc/systemd/system/whist-main.service.d/
 #   our base mandelbox image
 # EXPOSES all of whist-base as the final image
 #############################################################
-FROM ubuntu:20.04 as whist-base
+FROM ubuntu:20.04 as whist-base-pre-graphics
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -557,17 +564,77 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
     vim \
     nano \
     tzdata \
-    ### Hardware Acceleration (dependencies for GRID driver)
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+#########################
+# Permissions
+#########################
+
+# Mount cgroup from host (Is this needed?)
+VOLUME [ "/sys/fs/cgroup" ]
+
+RUN \
+    # Create whist user with dynamic, random password and do NOT add to sudo group
+    useradd --create-home whist \
+    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
+    && echo whist:"${password}" | chpasswd \
+    # Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
+    && echo "Set disable_coredump false" >> /etc/sudo.conf \
+    # Set appropriate user permissions and create /whist/ Directory and Subdirectories in /usr/share
+    && chown -vR whist:whist /home/whist \
+    && chown root:root /run/user \
+    && mkdir -p /usr/share/whist/private \
+    # Set /usr/share/whist to root-only
+    && chgrp root -R /usr/share/whist \
+    && chown root:root /usr/share/whist \
+    && chmod 600 -R /usr/share/whist
+
+#########################
+# Hardware Acceleration
+# (This stage runs only if a GPU is present)
+#########################
+
+FROM whist-base-pre-graphics as whist-base-nvidia
+
+# Install the Nvidia GRID Driver and libraries for (limited) hardware acceleration
+RUN apt-get update && apt-get install --no-install-recommends -y \
     libglvnd0 \
     vainfo \
     vdpauinfo \
     mesa-vdpau-drivers \
     libvdpau-va-gl1 \
-    ### Display
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+COPY --from=nvidia-grid-driver /dist /
+ENV GPU true
+
+#########################
+# Non-GPU environment setup
+# (Runs only if running on non-GPU host)
+#########################
+
+FROM whist-base-pre-graphics as whist-base-dummy
+ENV GPU false
+
+#########################
+# Display
+#########################
+
+# Pull from either the stage with installed Nvidia drivers (whist-base-nvidia)
+# or the stage with only dummy drivers (whist-base-dummy) based on whether
+# the host has a GPU or not.
+FROM whist-base-${DisplayDriver} as whist-base
+
+# Install dependencies
+RUN apt-get update && apt-get install --no-install-recommends -y \
     libxdamage-dev \
     xclip \
     x11-xserver-utils \
     xserver-xorg-video-dummy \
+    xserver-xorg-core \
     awesome \
     xsettingsd \
     linux-generic-hwe-20.04 \

@@ -242,7 +242,7 @@ def run_host_setup(
     success_msg = "Install complete. If you set this machine up for local development, please 'sudo reboot' before continuing."
     lock_error_msg = "E: Could not get lock"
     dpkg_config_error = "E: dpkg was interrupted, you must manually run 'sudo dpkg --configure -a' to correct the problem."
-    command = f"cd ~/whist/host-setup && timeout {HOST_SETUP_TIMEOUT_SECONDS} ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
+    command = f"cd ~/whist/host-setup && timeout {HOST_SETUP_TIMEOUT_SECONDS} ./setup_host.sh --localdevelopment --gpu | tee ~/host_setup.log"
 
     for retry in range(SETUP_MAX_RETRIES):
         print(f"Running the host setup on the instance (retry {retry+1}/{SETUP_MAX_RETRIES})...")

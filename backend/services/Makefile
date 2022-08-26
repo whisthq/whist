@@ -144,17 +144,17 @@ run_host_service: build
 # the host service can use the `ubuntu` account's aws credentials to run,
 # even though it runs as root.
 	sudo [ -e $(ROOT_HOMEDIR)/.aws ] || sudo ln -s -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
-	sudo --preserve-env=PATH --preserve-env=LOCALDEV_PROTOCOL_TIMEOUT APP_ENV=localdev $(BUILD_FOLDER)/host-service
+	sudo --preserve-env=PATH --preserve-env=LOCALDEV_PROTOCOL_TIMEOUT --preserve-env=LOCALDEV_PROTOCOL_TIMEOUT APP_ENV=localdev GPU=$(GPU) $(BUILD_FOLDER)/host-service
 
 run_host_service_localdevwithdb: build
 	$(info running $(BUILD_FOLDER)/host-service with localdevwithdb configuration...)
 	sudo [ -e $(ROOT_HOMEDIR)/.aws ] || sudo ln -s -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
-	sudo --preserve-env=PATH APP_ENV=localdevwithdb $(BUILD_FOLDER)/host-service
+	sudo --preserve-env=PATH APP_ENV=localdevwithdb GPU=$(GPU) $(BUILD_FOLDER)/host-service
 
 run_host_service_dev: build
 	$(info running $(BUILD_FOLDER)/host-service with dev configuration...)
 	sudo [ -e $(ROOT_HOMEDIR)/.aws ] || sudo ln -s -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
-	sudo --preserve-env=PATH APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/host-service
+	sudo --preserve-env=PATH APP_ENV=dev GPU=$(GPU) USE_PROD_LOGGING=0 $(BUILD_FOLDER)/host-service
 
 #
 ## Scaling service-specific targets

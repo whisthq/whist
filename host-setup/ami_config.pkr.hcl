@@ -61,6 +61,11 @@ variable "mandelbox_logz_shipping_token" {
   default = ""
 }
 
+variable "gpu" {
+  type    = bool
+  default = true
+}
+
 
 /* 
  * Packer Builder configuration, using the variables from the `variable` configurations defined above.
@@ -210,7 +215,7 @@ build {
   }
 
   provisioner "shell" {
-    inline       = ["cd /home/ubuntu/host-setup", "./setup_host.sh --deployment ${var.git_branch} ${var.mandelbox_logz_shipping_token}", "cd ..", "rm -rf host-setup"]
+    inline       = ["cd /home/ubuntu/host-setup", "./setup_host.sh --deployment ${var.gpu ? "--gpu" : ""} ${var.git_branch} ${var.mandelbox_logz_shipping_token}", "cd ..", "rm -rf host-setup"]
     pause_before = "10s"
   }
 

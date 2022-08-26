@@ -36,6 +36,15 @@ on:
         # Avoid accidental mistakes by doing dry run deployments by
         # default
         default: true
+      gpu:
+        description: |
+          A boolean indicating whether or not to build and deploy the
+          GPU version of the Whist backend (mandelboxes and hosts). The
+          default is true, and each deploy can only support building either
+          the GPU or non-GPU backend at this time.
+        type: boolean
+        required: false
+        default: true
 
 # This guarantees that if you push many commits to the same PR, only the latest
 # commit will get run (others get cancelled)
@@ -69,7 +78,7 @@ jobs:
 
       - name: Set deploy environment
         id: set-deploy-environment
-        if: ${{ github.event_name == 'push' || github.event_name == 'schedule' || contains(fromJSON('["", "dev", "staging", "prod"]'), github.event.inputs.target) }}
+        if: ${{ github.event_name == 'push' || github.event_name == 'schedule' || contains(fromJSON('["", "dev", "staging", "prod"]'), inputs.target) }}
         uses: ./.github/actions/set-environment
         with:
           # Deploy the git ref corresponding to the event that
@@ -77,7 +86,7 @@ jobs:
           # workflow was a manual workflow_dispatch event. In such a
           # case, the branch specified by the target input should be
           # deployed.
-          ref: ${{ github.event.inputs.target || github.ref }}
+          ref: ${{ inputs.target || github.ref }}
 
       - name: Set backend services URL based on Git Branch (prod, staging, dev)
         id: set-backend-services-urls
@@ -124,7 +133,7 @@ jobs:
             [[ "$branch" =~ dev|staging|prod ]]
             dry_run="false"
           else
-            dry_run="${{ github.event.inputs.dry-run }}"
+            dry_run="${{ inputs.dry-run }}"
 
             # If we're trying to perform a real deployment, but the
             # current configuration is not deployable, abort.
@@ -422,6 +431,7 @@ jobs:
     with:
       branch: ${{ needs.whist-publish-build-config.outputs.branch }}
       publish: ${{ needs.whist-publish-build-config.outputs.publish == 'true' }}
+      gpu: ${{ inputs.gpu }}
     secrets:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       GHA_USERNAME: ${{ secrets.GHA_USERNAME }}
@@ -539,6 +549,7 @@ jobs:
           data["access_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}"
           data["secret_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}"
           data["ami_name"] = f"whist-ami-${{ needs.whist-publish-build-config.outputs.branch }}-${{ github.sha }}-{date_str}"
+          data["gpu"] = ${{ inputs.gpu }}
 
           # List all AWS regions we support
           supported_aws_regions = [

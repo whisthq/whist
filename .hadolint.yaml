@@ -4,3 +4,9 @@ ignored:
   - DL3003 # Use WORKDIR to switch to a directory.
   - DL4001 # Either use Wget or Curl but not both.
   - SC1091 # Only source scripts from absolute paths.
+
+  # TODO: Clean up these ignored warnings, they were introduced on the
+  # non-GPU PR but supressed because they seemed spurious and time-constrains.
+  # https://github.com/whisthq/whist/pull/6987#discussion_r940598323
+  - DL3006 # Always tag the version of an image explicitly.
+  - SC2039 #In POSIX sh, brace expansion is undefined.

@@ -117,6 +117,6 @@ jobs:
       # Build all Docker images, as if we were in production
       - name: Build Mandelboxes
         working-directory: mandelboxes
-        run: ./build.sh --all --prod
+        run: ./build.sh --all --prod --gpu
         env:
           DOCKER_BUILDKIT: 1
