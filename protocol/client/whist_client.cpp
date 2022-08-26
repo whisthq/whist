@@ -336,6 +336,8 @@ static void post_connection_cleanup(WhistRenderer* renderer) {
 }
 
 int whist_client_main(int argc, const char* argv[]) {
+    // SERINA
+    init_whist_mlock();
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
         // invalid usage
@@ -354,9 +356,6 @@ int whist_client_main(int argc, const char* argv[]) {
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
     srand(rand() * (unsigned int)time(NULL) + rand());
-
-    // SERINA
-    init_whist_mlock();
 
     LOG_INFO("Client protocol started...");
 
