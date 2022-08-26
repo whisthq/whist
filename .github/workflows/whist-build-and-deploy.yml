@@ -875,6 +875,7 @@ jobs:
             echo "Entering brave-browser..."
             cd brave-browser
 
+            git stash
             git checkout main
             git fetch -p
             git reset --hard origin/main
@@ -885,6 +886,7 @@ jobs:
               echo "Entering src/brave (brave-core)..."
               pushd src/brave
 
+              git stash
               git checkout "${{ needs.whist-publish-build-config.outputs.branch }}"
               git fetch -p
               git reset --hard "origin/${{ needs.whist-publish-build-config.outputs.branch }}"
@@ -898,6 +900,7 @@ jobs:
               echo "Entering src/whist (whist)..."
               pushd src/whist
 
+              git stash
               git checkout "${{ needs.whist-publish-build-config.outputs.branch }}"
               git fetch -p
               git reset --hard "origin/${{ needs.whist-publish-build-config.outputs.branch }}"
@@ -1361,6 +1364,7 @@ jobs:
 
             # Log the branch, should always be `dev`, but we checkout just to be sure
             git branch
+            git stash
             git checkout dev
             git pull
             git branch
