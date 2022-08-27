@@ -35,4 +35,6 @@
     [ImplementedAs=whistPlay] void thaw();
     // TODO: Expose a whistInit(any data) function which takes a
     // JSON object of parameters to pass to the protocol.
+    [ImplementedAs=isWhistConnected] boolean isWhistConnected();
+    [ImplementedAs=whistConnect] void whistConnect(DOMString whist_parameters);
 };

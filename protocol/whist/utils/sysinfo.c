@@ -292,12 +292,20 @@ void print_ram_info(void) {
     char* total_ram_usage = NULL;
     char* memsize = NULL;
     runcmd("sysctl hw.memsize", &memsize);
-    char* token = strtok(memsize, ": ");
-    token = strtok(NULL, ": ");       // get the second token, the RAM number
-    token[strlen(token) - 1] = '\0';  // remove newline
-    total_ram = atoll(token);
+    if (memsize == NULL) {
+        total_ram = -1;
+    } else {
+        char* token = strtok(memsize, ": ");
+        token = strtok(NULL, ": ");       // get the second token, the RAM number
+        token[strlen(token) - 1] = '\0';  // remove newline
+        total_ram = atoll(token);
+        free(memsize);
+    }
     runcmd("top -l 1 | grep -E '^Phys'", &total_ram_usage);
-    total_ram_usage[strlen(total_ram_usage) - 1] = '\0';  // remove newline
+    if (total_ram_usage != NULL) {
+        total_ram_usage[strlen(total_ram_usage) - 1] = '\0';  // remove newline
+        // Keep as NULL, if it's NULL
+    }
     // LINUX: Display the contents of the SYSTEM_INFO structure.
 #else
     size_t total_ram;
@@ -308,10 +316,13 @@ void print_ram_info(void) {
     total_ram = info.totalram;
     total_ram_usage = info.totalram - (info.freeram + info.bufferram);
 #endif
-#if !OS_IS(OS_MACOS)
-    LOG_INFO("Total RAM Usage: %.2f GB", total_ram_usage / BYTES_IN_GB);
-#else
+
+    // Print RAM usage and total RAM
+#if OS_IS(OS_MACOS)
     LOG_INFO("Total RAM Usage: %s", total_ram_usage);
+    free(total_ram_usage);
+#else
+    LOG_INFO("Total RAM Usage: %.2f GB", total_ram_usage / BYTES_IN_GB);
 #endif
     LOG_INFO("Total Physical RAM: %.2f GB", (size_t)total_ram / BYTES_IN_GB);
 }

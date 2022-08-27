@@ -211,6 +211,9 @@ int client_connect_socket(WhistServerState *state, Client *client,
         return -1;
     }
 
+    // Since a new connection has occurred, the stream needs a reset
+    state->stream_needs_restart = true;
+
     WhistTimer connection_timer;
     start_timer(&connection_timer);
     bool successful_handshake = false;

@@ -14,7 +14,7 @@ extern "C" {
 
 static WhistMutex lock;
 static AVFrame* pending = NULL;
-static bool connected = false;
+static std::atomic<bool> protocol_alive = false;
 static int requested_width;
 static int requested_height;
 
@@ -55,11 +55,45 @@ OnNotificationCallback on_notification_callback_ptr = NULL;
 GetModifierKeyState get_modifier_key_state = NULL;
 }
 
-static void vi_api_connect(void) {
-    lock = whist_create_mutex();
-    events_queue = fifo_queue_create(sizeof(WhistFrontendEvent), MAX_EVENTS_QUEUED);
-    connected = true;
+WhistSemaphore connection_semaphore = whist_create_semaphore(0);
+
+static int vi_api_initialize(int argc, const char* argv[]) {
+    // Create variables, if not already existant
+    if (lock == NULL) {
+        lock = whist_create_mutex();
+    }
+    if (events_queue == NULL) {
+        events_queue = fifo_queue_create(sizeof(WhistFrontendEvent), MAX_EVENTS_QUEUED);
+    }
+    // Main whist loop
+    while (true) {
+        whist_wait_semaphore(connection_semaphore);
+        // Start the protocol
+        int ret = whist_client_main(argc, argv);
+        // Mark the protocol as dead when main exits
+        protocol_alive = false;
+    }
+    return 0;
 }
+
+static bool vi_api_connect() {
+    // Mark the protocol as alive
+    bool protocol_was_alive = protocol_alive.exchange(true);
+    // But if the protocol wasn't just alive, hit the semaphore to start it
+    if (protocol_was_alive == false) {
+        // Drain the event queue
+        WhistFrontendEvent event;
+        while (fifo_queue_dequeue_item(events_queue, &event) == 0)
+            ;
+        // Hit the semaphore to start the protocol again
+        whist_post_semaphore(connection_semaphore);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+static bool vi_api_is_connected(void) { return protocol_alive; }
 
 static void vi_api_set_on_cursor_change_callback(int window_id, OnCursorChangeCallback cb) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
@@ -117,7 +151,7 @@ static void vi_api_set_video_playing(int window_id, bool playing) {
 }
 
 void virtual_interface_send_frame(AVFrame* frame) {
-    if (!connected) return;
+    if (!protocol_alive) return;
     std::lock_guard<std::mutex> guard(whist_window_mutex);
 
     // Update the pending frame
@@ -148,11 +182,7 @@ static void vi_api_set_video_frame_callback(int window_id, VideoFrameCallback ca
     whist_windows[window_id].video_frame_callback_ptr = callback_ptr;
 }
 
-static void vi_api_disconnect(void) {
-    connected = false;
-    whist_destroy_mutex(lock);
-    fifo_queue_destroy(events_queue);
-}
+static void vi_api_disconnect(void) { LOG_ERROR("Forceful disconnect!"); }
 
 static void vi_api_send_event(const WhistFrontendEvent* frontend_event) {
     if (frontend_event->type == FRONTEND_EVENT_RESIZE) {
@@ -219,12 +249,14 @@ static void vi_api_destroy_window(int window_id) {
 static const VirtualInterface vi = {
     .lifecycle =
         {
+            .initialize = vi_api_initialize,
             .connect = vi_api_connect,
+            .is_connected = vi_api_is_connected,
+            .disconnect = vi_api_disconnect,
+
             .create_window = vi_api_create_window,
             .register_context = vi_api_register_context,
             .destroy_window = vi_api_destroy_window,
-            .start = whist_client_main,
-            .disconnect = vi_api_disconnect,
         },
     .video =
         {

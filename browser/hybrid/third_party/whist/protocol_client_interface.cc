@@ -92,12 +92,9 @@ void InitializeWhistClient() {
     whist_virtual_interface = get_virtual_interface();
   }
 
-  WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.connect);
-  // TODO: lifecycle.disconnect at some point? How to do this safely?
-
-  std::thread client_main([]() {
-    int ret = WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.start, protocol_argc, protocol_argv);
-    DLOG(INFO) << "whist_client_main exited with: " << ret;
+  std::thread whist_thread([]() {
+    int ret = WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
+    DLOG(INFO) << "Whist exited with error code: " << ret;
   });
-  client_main.detach();
+  whist_thread.detach();
 }
