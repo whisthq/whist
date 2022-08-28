@@ -104,7 +104,7 @@ def ensure_root_privileges():
 
 def get_public_ipv4_addr():
     if local_host_service:
-        respobj = requests.get(url="https://checkip.amazonaws.com")
+        respobj = requests.get(url="https://checkip.amazonaws.com", timeout=10)
         respobj.raise_for_status()
         return respobj.text.strip()
     else:
@@ -158,7 +158,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
         "mandelbox_id": str(mandelbox_id),
     }
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
-    respobj = requests.put(url=url, json=payload, verify=tls_verification)
+    respobj = requests.put(url=url, json=payload, verify=tls_verification, timeout=10)
     response = respobj.json()
     print(f"Response from host service: {response}")
     respobj.raise_for_status()

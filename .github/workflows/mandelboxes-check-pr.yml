@@ -8,13 +8,17 @@ name: "Mandelboxes: Check PR"
 on:
   pull_request:
     paths:
-      - "mandelboxes/**"
-      - "!mandelboxes/README.md"
-      - ".github/workflows/mandelboxes-check-pr.yml"
-      - "!mandelboxes/scripts/run_mandelbox_image.sh"
-      - "!mandelboxes/run.sh"
       - "pyproject.toml"
       - "pylintrc"
+      - ".github/workflows/mandelboxes-check-pr.yml"
+      - ".github/workflows/helpers/pylint-wrapper"
+      - "mandelboxes/**"
+      - "mandelboxes/base/utils/browser-data/requirements.txt"
+      - "mandelboxes/scripts/requirements.txt"
+      - "mandelboxes/scripts/testing/requirements.txt"
+      - "!mandelboxes/README.md"
+      - "!mandelboxes/scripts/run_mandelbox_image.sh"
+      - "!mandelboxes/run.sh"
   workflow_dispatch:
 
 # This guarantees that if you push many commits to the same PR, only the latest
@@ -36,8 +40,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Register Hadolint Output Problem Matcher
-        run: |
-          echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/hadolint_matcher.json"
+        run: echo "::add-matcher::${{ github.workspace }}/.github/workflows/helpers/hadolint_matcher.json"
 
       # Start from top-level folder to use .hadolint.yaml config
       - name: Check if Development Dockerfiles Follow Hadolint Standards

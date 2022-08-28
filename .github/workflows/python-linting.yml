@@ -9,8 +9,9 @@ on:
   pull_request:
     paths:
       - "**.py"
-      - .github/workflows/python-linting.yml
-      - pyproject.toml
+      - "pyproject.toml"
+      - ".github/workflows/python-linting.yml"
+      - ".github/workflows/helpers/requirements.txt"
   workflow_dispatch:
 
 # This guarantees that if you push many commits to the same PR, only the latest
