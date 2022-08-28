@@ -9,7 +9,7 @@ on:
   pull_request:
     paths:
       - "pyproject.toml"
-      - "pylintrc"      
+      - "pylintrc"
       - ".github/workflows/mandelboxes-check-pr.yml"
       - ".github/workflows/helpers/pylint-wrapper"
       - "mandelboxes/**"
