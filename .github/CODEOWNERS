@@ -8,13 +8,19 @@
 # Order is important. The last matching pattern has the most precedence.
 # The folders are ordered as follows:
 
-/.github/                           @philippemnoel @rpadaki @mauaraujo
-/backend/auth0/                     @philippemnoel @rpadaki @owenniles
-/backend/infrastructure/            @mauaraujo @rpadaki @philippemnoel
-/backend/services/                  @mauaraujo @rpadaki @philippemnoel
-/host-setup/                        @rpadaki @mauaraujo @philippemnoel
-/mandelboxes/                       @rpadaki @mauaraujo @philippemnoel
-/protocol/                          @jkarthic @npip99 @rpadaki @sardination
+/.github/                                                      @philippemnoel @rpadaki @owenniles @mauaraujo
+/backend/auth0/                                                @philippemnoel @rpadaki @owenniles @mauaraujo
+/backend/database/                                             @philippemnoel @rpadaki @owenniles @mauaraujo
+/backend/infrastructure/                                       @mauaraujo @rpadaki @philippemnoel
+/backend/services/                                             @mauaraujo @rpadaki @philippemnoel
+/browser/hybrid/                                               @rpadaki @sardination @jkarthic @mingy98
+/host-setup/                                                   @rpadaki @mauaraujo @philippemnoel
+/mandelboxes/                                                  @rpadaki @mauaraujo @philippemnoel
+/mandelboxes/browsers/base-chromium/extension-native-host/     @mingy98 @rpadaki @sardination
+/mandelboxes/browsers/base-chromium/socketio-server/           @mingy98 @rpadaki @sardination
+/mandelboxes/browsers/base-chromium/teleport-extension/        @mingy98 @rpadaki @sardination
+/mandelboxes/browsers/whistium                                 @jkarthic @rpadaki @sardination @philippemnoel
+/protocol/                                                     @jkarthic @rpadaki @sardination @npip99
 
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
