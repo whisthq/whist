@@ -1,8 +1,30 @@
 diff --git a/chrome/browser/renderer_context_menu/render_view_context_menu.cc b/chrome/browser/renderer_context_menu/render_view_context_menu.cc
-index 2516bb55d3836..88fb2ce22b77e 100644
+index 2516bb55d3836..79212d9fd7fc2 100644
 --- a/chrome/browser/renderer_context_menu/render_view_context_menu.cc
 +++ b/chrome/browser/renderer_context_menu/render_view_context_menu.cc
-@@ -1814,6 +1814,10 @@ void RenderViewContextMenu::AppendExitFullscreenItem() {
+@@ -1392,7 +1392,6 @@ void RenderViewContextMenu::AppendLinkItems() {
+         browser && (browser->is_type_app() || browser->is_type_app_popup());
+ 
+     bool show_open_in_new_window = true;
+-    bool show_open_link_off_the_record = true;
+ 
+ #if BUILDFLAG(IS_CHROMEOS_ASH)
+     Profile* profile = GetProfile();
+@@ -1435,13 +1434,6 @@ void RenderViewContextMenu::AppendLinkItems() {
+       AppendProtocolHandlerSubMenu();
+     }
+ 
+-    if (show_open_link_off_the_record) {
+-      menu_model_.AddItemWithStringId(
+-          IDC_CONTENT_CONTEXT_OPENLINKOFFTHERECORD,
+-          in_app ? IDS_CONTENT_CONTEXT_OPENLINKOFFTHERECORD_INAPP
+-                 : IDS_CONTENT_CONTEXT_OPENLINKOFFTHERECORD);
+-    }
+-
+     AppendOpenInWebAppLinkItems();
+     AppendOpenWithLinkItems();
+ 
+@@ -1814,6 +1806,10 @@ void RenderViewContextMenu::AppendExitFullscreenItem() {
    if (!browser)
      return;
  
@@ -27,6 +49,28 @@ index 6046671d59481..851c330312409 100644
    if (!PreRunCallback().is_null())
      std::move(PreRunCallback()).Run();
  
+diff --git a/chrome/browser/ui/views/page_action/zoom_view.cc b/chrome/browser/ui/views/page_action/zoom_view.cc
+index fba0a8ce686d1..a256348e4ce9f 100644
+--- a/chrome/browser/ui/views/page_action/zoom_view.cc
++++ b/chrome/browser/ui/views/page_action/zoom_view.cc
+@@ -34,6 +34,9 @@ void ZoomView::UpdateImpl() {
+ }
+ 
+ bool ZoomView::ShouldBeVisible(bool can_show_bubble) const {
++  // We don't want the server to ever show the zoom bubble view
++  return false;
++  /*
+   if (delegate()->ShouldHidePageActionIcons())
+     return false;
+ 
+@@ -47,6 +50,7 @@ bool ZoomView::ShouldBeVisible(bool can_show_bubble) const {
+   zoom::ZoomController* zoom_controller =
+       zoom::ZoomController::FromWebContents(GetWebContents());
+   return zoom_controller && !zoom_controller->IsAtDefaultZoom();
++  */
+ }
+ 
+ bool ZoomView::HasAssociatedBubble() const {
 diff --git a/chrome/browser/ui/views/renderer_context_menu/render_view_context_menu_views.cc b/chrome/browser/ui/views/renderer_context_menu/render_view_context_menu_views.cc
 index 13b73503a6a73..f521aaa36c80e 100644
 --- a/chrome/browser/ui/views/renderer_context_menu/render_view_context_menu_views.cc
@@ -142,6 +186,23 @@ index 6b7a35b5b83db..256a20c1d5251 100644
  #endif
  #if BUILDFLAG(IS_WIN)
      {VKEY_BACK, kAltKey, "Undo"},
+diff --git a/third_party/blink/renderer/core/events/ui_event_with_key_state.h b/third_party/blink/renderer/core/events/ui_event_with_key_state.h
+index 7d5e5359e6a33..5cee1fecbdb6d 100644
+--- a/third_party/blink/renderer/core/events/ui_event_with_key_state.h
++++ b/third_party/blink/renderer/core/events/ui_event_with_key_state.h
+@@ -34,10 +34,10 @@ class EventModifierInit;
+ 
+ class CORE_EXPORT UIEventWithKeyState : public UIEvent {
+  public:
+-  bool ctrlKey() const { return modifiers_ & WebInputEvent::kControlKey; }
++  bool ctrlKey() const { return modifiers_ & WebInputEvent::kMetaKey; }
+   bool shiftKey() const { return modifiers_ & WebInputEvent::kShiftKey; }
+   bool altKey() const { return modifiers_ & WebInputEvent::kAltKey; }
+-  bool metaKey() const { return modifiers_ & WebInputEvent::kMetaKey; }
++  bool metaKey() const { return modifiers_ & WebInputEvent::kControlKey; }
+ 
+   // We ignore the new tab modifiers (ctrl or meta, depending on OS) set by
+   // JavaScript when processing events.  However, scripts running in isolated
 diff --git a/third_party/blink/renderer/core/exported/web_plugin_container_impl.cc b/third_party/blink/renderer/core/exported/web_plugin_container_impl.cc
 index af1e17b1a0e54..b2801a7a51e22 100644
 --- a/third_party/blink/renderer/core/exported/web_plugin_container_impl.cc
