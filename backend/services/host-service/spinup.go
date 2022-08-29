@@ -475,7 +475,9 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	logger.FastInfo("SpinUpMandelbox(): Successfully marked mandelbox as ready", contextFields...)
 
 	// Wait for the mandelbox to be ready in all environments so the protocol client doesn't
-	// time out.
+	// time out. If we don't wait for it to be ready, the frontend will try to connect
+	// immediately after receiving the ports and private key, such as with the Whist
+	// Chromium Extension.
 	logger.FastInfo("SpinUpMandelbox(): Waiting for mandelbox whist-application to start up...", contextFields...)
 	err = utils.WaitForFileCreation(path.Join(utils.WhistDir, mandelboxSubscription.ID.String(), "mandelboxResourceMappings"), "done_sleeping_until_X_clients", time.Second*20, nil)
 	if err != nil {
