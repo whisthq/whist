@@ -92,9 +92,7 @@ void InitializeWhistClient() {
     whist_virtual_interface = get_virtual_interface();
   }
 
-  std::thread whist_thread([]() {
-    int ret = WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
-    DLOG(INFO) << "Whist exited with error code: " << ret;
-  });
-  whist_thread.detach();
+  // Initialize whist, so that connections can be made from javascript later
+  WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
+  // TODO: lifecycle.destroy sometime? If necessary?
 }
