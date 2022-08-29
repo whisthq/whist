@@ -474,20 +474,16 @@ func FinishMandelboxSpinUp(globalCtx context.Context, globalCancel context.Cance
 	}
 	logger.FastInfo("SpinUpMandelbox(): Successfully marked mandelbox as ready", contextFields...)
 
-	// Don't wait for whist-application to start up in local environment. We do
-	// this because in local environments, we want to provide the developer a
-	// shell into the container immediately, not conditional on everything
-	// starting up properly.
-	if !metadata.IsLocalEnv() {
-		logger.FastInfo("SpinUpMandelbox(): Waiting for mandelbox whist-application to start up...", contextFields...)
-		err = utils.WaitForFileCreation(path.Join(utils.WhistDir, mandelboxSubscription.ID.String(), "mandelboxResourceMappings"), "done_sleeping_until_X_clients", time.Second*20, nil)
-		if err != nil {
-			incrementErrorRate()
-			return utils.MakeError("error waiting for mandelbox whist-application to start: %s", err)
-		}
-
-		logger.FastInfo("SpinUpMandelbox(): Finished waiting for mandelbox whist application to start up", contextFields...)
+	// Wait for the mandelbox to be ready in all environments so the protocol client doesn't
+	// time out.
+	logger.FastInfo("SpinUpMandelbox(): Waiting for mandelbox whist-application to start up...", contextFields...)
+	err = utils.WaitForFileCreation(path.Join(utils.WhistDir, mandelboxSubscription.ID.String(), "mandelboxResourceMappings"), "done_sleeping_until_X_clients", time.Second*20, nil)
+	if err != nil {
+		incrementErrorRate()
+		return utils.MakeError("error waiting for mandelbox whist-application to start: %s", err)
 	}
+
+	logger.FastInfo("SpinUpMandelbox(): Finished waiting for mandelbox whist application to start up", contextFields...)
 
 	err = dbdriver.WriteMandelboxStatus(mandelboxSubscription.ID, dbdriver.MandelboxStatusRunning)
 	if err != nil {
