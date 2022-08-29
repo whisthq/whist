@@ -1,5 +1,6 @@
 #include <whist/core/whist.h>
 #include <mutex>
+#include <thread>
 extern "C" {
 #include "common.h"
 // This is a crutch. Once video is callback-ized we won't need it anymore.
@@ -55,7 +56,8 @@ OnNotificationCallback on_notification_callback_ptr = NULL;
 GetModifierKeyState get_modifier_key_state = NULL;
 }
 
-WhistSemaphore connection_semaphore = whist_create_semaphore(0);
+static WhistSemaphore connection_semaphore = whist_create_semaphore(0);
+static std::thread whist_main_thread;
 
 static int vi_api_initialize(int argc, const char* argv[]) {
     // Create variables, if not already existant
@@ -66,14 +68,30 @@ static int vi_api_initialize(int argc, const char* argv[]) {
         events_queue = fifo_queue_create(sizeof(WhistFrontendEvent), MAX_EVENTS_QUEUED);
     }
     // Main whist loop
-    while (true) {
-        whist_wait_semaphore(connection_semaphore);
-        // Start the protocol
-        int ret = whist_client_main(argc, argv);
-        // Mark the protocol as dead when main exits
-        protocol_alive = false;
-    }
+    whist_main_thread = std::thread([=]() -> void {
+        while (true) {
+            whist_wait_semaphore(connection_semaphore);
+            // If the semaphore was hit with protocol marked as dead, exit
+            if (protocol_alive == false) {
+                break;
+            }
+            // Start the protocol if valid arguments were given
+            if (argc > 0 && argv != NULL) {
+                int ret = whist_client_main(argc, argv);
+            }
+            // Mark the protocol as dead when main exits
+            protocol_alive = false;
+        }
+    });
     return 0;
+}
+
+static void vi_api_destroy() {
+    // Verify that the protocol isn't alive
+    FATAL_ASSERT(protocol_alive == false);
+    // Kill the whist main thread by hitting the semaphore while protocl is marked-as-dead
+    whist_post_semaphore(connection_semaphore);
+    whist_main_thread.join();
 }
 
 static bool vi_api_connect() {
@@ -89,11 +107,18 @@ static bool vi_api_connect() {
         whist_post_semaphore(connection_semaphore);
         return true;
     } else {
+        // Do nothing, the protocol is already alive
         return false;
     }
 }
 
-static bool vi_api_is_connected(void) { return protocol_alive; }
+static bool vi_api_is_connected() { return protocol_alive; }
+
+static void vi_api_disconnect() {
+    // TODO: Actually force a disconnect when this happens
+    LOG_ERROR("Forceful disconnect!");
+    protocol_alive = false;
+}
 
 static void vi_api_set_on_cursor_change_callback(int window_id, OnCursorChangeCallback cb) {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
@@ -104,7 +129,7 @@ static void vi_api_set_on_notification_callback(OnNotificationCallback cb) {
     on_notification_callback_ptr = cb;
 }
 
-static void* vi_api_get_frame_ref(void) {
+static void* vi_api_get_frame_ref() {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     // Consume the pending AVFrame, and return it
     void* frame_ref = pending;
@@ -182,8 +207,6 @@ static void vi_api_set_video_frame_callback(int window_id, VideoFrameCallback ca
     whist_windows[window_id].video_frame_callback_ptr = callback_ptr;
 }
 
-static void vi_api_disconnect(void) { LOG_ERROR("Forceful disconnect!"); }
-
 static void vi_api_send_event(const WhistFrontendEvent* frontend_event) {
     if (frontend_event->type == FRONTEND_EVENT_RESIZE) {
         requested_width = frontend_event->resize.width;
@@ -219,7 +242,7 @@ static void vi_api_set_get_modifier_key_state(GetModifierKeyState cb) {
     get_modifier_key_state = cb;
 }
 
-static int vi_api_create_window(void) {
+static int vi_api_create_window() {
     std::lock_guard<std::mutex> guard(whist_window_mutex);
     // Use serial window IDs, so that each window gets a unique ID
     static int serial_window_ids = 1;
@@ -250,6 +273,8 @@ static const VirtualInterface vi = {
     .lifecycle =
         {
             .initialize = vi_api_initialize,
+            .destroy = vi_api_destroy,
+
             .connect = vi_api_connect,
             .is_connected = vi_api_is_connected,
             .disconnect = vi_api_disconnect,
@@ -283,4 +308,4 @@ static const VirtualInterface vi = {
         },
 };
 
-const VirtualInterface* get_virtual_interface(void) { return &vi; }
+const VirtualInterface* get_virtual_interface() { return &vi; }

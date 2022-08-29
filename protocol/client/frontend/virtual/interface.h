@@ -25,6 +25,8 @@ typedef int (*GetModifierKeyState)(void);
 typedef struct VirtualInterface {
     struct {
         int (*initialize)(int argc, const char* argv[]);
+        void (*destroy)(void);
+
         bool (*connect)(void);
         bool (*is_connected)(void);
         void (*disconnect)(void);
