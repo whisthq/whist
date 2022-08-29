@@ -86,7 +86,7 @@ index 13b73503a6a73..f521aaa36c80e 100644
    // necessarily be in a widget.
    views::Widget* top_level_widget = GetTopLevelWidget();
 diff --git a/third_party/blink/renderer/core/editing/editing_behavior.cc b/third_party/blink/renderer/core/editing/editing_behavior.cc
-index 6b7a35b5b83db..256a20c1d5251 100644
+index 6b7a35b5b83db..2537f0737c936 100644
 --- a/third_party/blink/renderer/core/editing/editing_behavior.cc
 +++ b/third_party/blink/renderer/core/editing/editing_behavior.cc
 @@ -44,7 +44,7 @@ const unsigned kCtrlKey = WebInputEvent::kControlKey;
@@ -163,7 +163,7 @@ index 6b7a35b5b83db..256a20c1d5251 100644
      {'B', kCommandKey, "ToggleBold"},
      {'I', kCommandKey, "ToggleItalic"},
  #else
-@@ -167,14 +167,14 @@ const KeyboardCodeKeyDownEntry kKeyboardCodeKeyDownEntries[] = {
+@@ -167,20 +167,40 @@ const KeyboardCodeKeyDownEntry kKeyboardCodeKeyDownEntries[] = {
  #if !BUILDFLAG(IS_MAC)
      // On OS X, we pipe these back to the browser, so that it can do menu item
      // blinking.
@@ -186,23 +186,32 @@ index 6b7a35b5b83db..256a20c1d5251 100644
  #endif
  #if BUILDFLAG(IS_WIN)
      {VKEY_BACK, kAltKey, "Undo"},
-diff --git a/third_party/blink/renderer/core/events/ui_event_with_key_state.h b/third_party/blink/renderer/core/events/ui_event_with_key_state.h
-index 7d5e5359e6a33..5cee1fecbdb6d 100644
---- a/third_party/blink/renderer/core/events/ui_event_with_key_state.h
-+++ b/third_party/blink/renderer/core/events/ui_event_with_key_state.h
-@@ -34,10 +34,10 @@ class EventModifierInit;
+     {VKEY_BACK, kAltKey | kShiftKey, "Redo"},
+ #endif
+     {VKEY_INSERT, 0, "OverWrite"},
++    // The following shortcuts are applicable for only for Mac client. In actual mac
++    // platform, these shortcuts will be handled automatically by Apple's AppKit
++    {VKEY_LEFT, kMetaKey, "MoveToBeginningOfLine"},
++    {VKEY_LEFT, kMetaKey | kShiftKey, "MoveToBeginningOfLineAndModifySelection"},
++    {VKEY_RIGHT, kMetaKey, "MoveToEndOfLine"},
++    {VKEY_RIGHT, kMetaKey | kShiftKey, "MoveToEndOfDocumentAndModifySelection"},
++    {VKEY_UP, kOptionKey, "MoveParagraphBackward"},
++    {VKEY_UP, kOptionKey | kShiftKey, "MoveParagraphBackwardAndModifySelection"},
++    {VKEY_DOWN, kOptionKey, "MoveParagraphForward"},
++    {VKEY_DOWN, kOptionKey | kShiftKey, "MoveParagraphForwardAndModifySelection"},
++    {VKEY_UP, kMetaKey, "MoveToBeginningOfDocument"},
++    {VKEY_UP, kMetaKey | kShiftKey, "MoveToBeginningOfDocumentAndModifySelection"},
++    {VKEY_DOWN, kMetaKey, "MoveToEndOfDocument"},
++    {VKEY_DOWN, kMetaKey | kShiftKey, "MoveToEndOfDocumentAndModifySelection"},
++    {'H', kCtrlKey, "DeleteBackward"},
++    {'D', kCtrlKey, "DeleteForward"},
++    {'B', kCtrlKey, "MoveLeft"},
++    {'F', kCtrlKey, "MoveRight"},
++    {'P', kCtrlKey, "MoveUp"},
++    {'N', kCtrlKey, "MoveDown"},
+ };
  
- class CORE_EXPORT UIEventWithKeyState : public UIEvent {
-  public:
--  bool ctrlKey() const { return modifiers_ & WebInputEvent::kControlKey; }
-+  bool ctrlKey() const { return modifiers_ & WebInputEvent::kMetaKey; }
-   bool shiftKey() const { return modifiers_ & WebInputEvent::kShiftKey; }
-   bool altKey() const { return modifiers_ & WebInputEvent::kAltKey; }
--  bool metaKey() const { return modifiers_ & WebInputEvent::kMetaKey; }
-+  bool metaKey() const { return modifiers_ & WebInputEvent::kControlKey; }
- 
-   // We ignore the new tab modifiers (ctrl or meta, depending on OS) set by
-   // JavaScript when processing events.  However, scripts running in isolated
+ const KeyboardCodeKeyPressEntry kKeyboardCodeKeyPressEntries[] = {
 diff --git a/third_party/blink/renderer/core/exported/web_plugin_container_impl.cc b/third_party/blink/renderer/core/exported/web_plugin_container_impl.cc
 index af1e17b1a0e54..b2801a7a51e22 100644
 --- a/third_party/blink/renderer/core/exported/web_plugin_container_impl.cc
