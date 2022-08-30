@@ -3,13 +3,13 @@
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 # This is called via `./run-as-whist-user.sh`, which passes sentry environment in.
 case "$SENTRY_ENVIRONMENT" in
-    dev|staging|prod)
-        export SENTRY_ENVIRONMENT=${SENTRY_ENV}
-        eval "$(sentry-cli bash-hook)"
-        ;;
-    *)
-        echo "Sentry environment not set, skipping Sentry error handler"
-        ;;
+  dev|staging|prod)
+    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    eval "$(sentry-cli bash-hook)"
+    ;;
+  *)
+    echo "Sentry environment not set, skipping Sentry error handler"
+    ;;
 esac
 
 # Exit on subcommand errors
@@ -20,14 +20,14 @@ set -Eeuo pipefail
 
 BROWSER_APPLICATION="${1:-chrome}"
 if [[ "$BROWSER_APPLICATION" == "brave" ]]; then
-    USER_DATA_DIR="${2:-$HOME/.config/BraveSoftware/Brave-Browser}"
+  USER_DATA_DIR="${2:-$HOME/.config/BraveSoftware/Brave-Browser}"
 elif [[ "$BROWSER_APPLICATION" == "chrome" ]]; then
-    USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
+  USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
 elif [[ "$BROWSER_APPLICATION" == "chromium" ]]; then
-    USER_DATA_DIR="${2:-$HOME/.config/chromium}"
+  USER_DATA_DIR="${2:-$HOME/.config/chromium}"
 else
-    echo "Browser name not set or invalid. Using the default option, Chrome."
-    USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
+  echo "Browser name not set or invalid. Using the default option, Chrome."
+  USER_DATA_DIR="${2:-$HOME/.config/google-chrome}"
 fi
 
 # Under certain (bad) circumstances, SingletonLock might be saved into the user's config. This is an issue,
@@ -37,8 +37,8 @@ BROWSER_SINGLETON_LOCK=$USER_DATA_DIR/SingletonLock
 WHIST_CLEARED_SINGLETON_LOCK=/home/whist/.config/WhistClearedSingletonLock
 
 if [[ ! -f $WHIST_CLEARED_SINGLETON_LOCK ]]; then
-    touch $WHIST_CLEARED_SINGLETON_LOCK
-    rm -f "$BROWSER_SINGLETON_LOCK"
+  touch $WHIST_CLEARED_SINGLETON_LOCK
+  rm -f "$BROWSER_SINGLETON_LOCK"
 fi
 
 DEFAULT_PROFILE=$USER_DATA_DIR/Default
@@ -51,24 +51,24 @@ rm -rf "$DEFAULT_PROFILE/Service Worker"
 
 # Initialize empty preferences file if one doesn't exist
 if [[ ! -f $PREFERENCES ]]; then
-    mkdir -p "$DEFAULT_PROFILE"
+  mkdir -p "$DEFAULT_PROFILE"
 fi
 
 if [[ ! -s $PREFERENCES ]]; then
-    echo {} > "$PREFERENCES"
+  echo {} > "$PREFERENCES"
 fi
 
 echo {} > "$PREFERENCES_UPDATE"
 
 function add_preferences_jq() {
-    jq -c "$1" < "$PREFERENCES_UPDATE" > "$PREFERENCES_UPDATE.new"
-    mv "$PREFERENCES_UPDATE.new" "$PREFERENCES_UPDATE"
+  jq -c "$1" < "$PREFERENCES_UPDATE" > "$PREFERENCES_UPDATE.new"
+  mv "$PREFERENCES_UPDATE.new" "$PREFERENCES_UPDATE"
 }
 
 function commit_preferences_jq() {
-    jq -cs '.[0] * .[1]' "$PREFERENCES" "$PREFERENCES_UPDATE" > "$PREFERENCES.new"
-    rm "$PREFERENCES_UPDATE"
-    mv "$PREFERENCES.new" "$PREFERENCES"
+  jq -cs '.[0] * .[1]' "$PREFERENCES" "$PREFERENCES_UPDATE" > "$PREFERENCES.new"
+  rm "$PREFERENCES_UPDATE"
+  mv "$PREFERENCES.new" "$PREFERENCES"
 }
 
 # Set the browser language
@@ -107,31 +107,31 @@ add_preferences_jq '.intl |= . + {"accept_languages": "'"${BROWSER_LANGUAGES}"'"
 features="VaapiVideoDecoder,VaapiVideoEncoder,Vulkan,CanvasOopRasterization,OverlayScrollbar,ParallelDownloading"
 antifeatures="ChromeWhatsNewUI"
 flags=(
-    "--use-gl=desktop"
-    # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-    "--flag-switches-begin"
-    "--enable-show-autofill-signatures"
-    "--enable-vp9-kSVC-decode-acceleration"
-    "--enable-accelerated-video-decode"
-    "--enable-accelerated-mjpeg-decode"
-    "--enable-accelerated-2d-canvas"
-    "--enable-gpu-rasterization"
-    "--enable-gpu-compositing"
-    "--double-buffer-compositing"
-    "--disable-font-subpixel-positioning"
-    "--disable-gpu-process-crash-limit"
-    "--no-default-browser-check"
-    "--ozone-platform-hint=x11"
-    "--password-store=basic" # This disables the kwalletd backend, which we don't support
+  "--use-gl=desktop"
+  # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
+  "--flag-switches-begin"
+  "--enable-show-autofill-signatures"
+  "--enable-vp9-kSVC-decode-acceleration"
+  "--enable-accelerated-video-decode"
+  "--enable-accelerated-mjpeg-decode"
+  "--enable-accelerated-2d-canvas"
+  "--enable-gpu-rasterization"
+  "--enable-gpu-compositing"
+  "--double-buffer-compositing"
+  "--disable-font-subpixel-positioning"
+  "--disable-gpu-process-crash-limit"
+  "--no-default-browser-check"
+  "--ozone-platform-hint=x11"
+  "--password-store=basic" # This disables the kwalletd backend, which we don't support
 )
 
 if [[ "$DARK_MODE" == true ]]; then
-    features="$features,WebUIDarkMode"
-    flags+=("--force-dark-mode")
+  features="$features,WebUIDarkMode"
+  flags+=("--force-dark-mode")
 fi
 
 if [[ "$RESTORE_LAST_SESSION" == true ]]; then
-    flags+=("--restore-last-session")
+  flags+=("--restore-last-session")
 fi
 
 flags+=("--enable-features=$features")
@@ -140,19 +140,19 @@ flags+=("--flag-switches-end")
 
 # Pass user agent corresponding to user's OS from JSON-transport
 if [[ -n "$USER_AGENT" ]]; then
-    flags+=("--user-agent=$USER_AGENT")
+  flags+=("--user-agent=$USER_AGENT")
 fi
 
 # Start the server-side extension if the client requests it
 if [[ "$LOAD_EXTENSION" == true ]]; then
-    flags+=(  "--load-extension=/opt/teleport/chrome-extension")
+  flags+=(  "--load-extension=/opt/teleport/chrome-extension")
 fi
 
 # Start the browser in Kiosk mode (full-screen). This flag is used when the client is a
 # local Chromium browser integrating Whist to avoid duplicating the URL bar in the cloud tabs, and should
 # not be set when the client is a fully-streamed browser rendered via SDL.
 if [[ "$KIOSK_MODE" == true ]]; then
-    flags+=("--kiosk")
+  flags+=("--kiosk")
 fi
 
 # Passing the initial url from JSON transport as a parameter to the browser launch command. If the url is not
@@ -164,16 +164,16 @@ flags+=("$INITIAL_URL")
 # If no CLIENT_OS is passed (i.e. we're testing locally), assume macOS
 # and disable smooth scrolling.
 if [[ "$CLIENT_OS" == "darwin" || "$CLIENT_OS" == "" ]]; then
-    # Edit the browser Preferences Config file to use the default Mac fonts
-    add_preferences_jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}'
-    # Disable smooth scrolling, which we handle via uinput instead
-    flags+=("--disable-smooth-scrolling")
+  # Edit the browser Preferences Config file to use the default Mac fonts
+  add_preferences_jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Courier"}, "sansserif": {"Zyyy": "Helvetica"}, "serif": {"Zyyy": "Times"}, "standard": {"Zyyy": "Times"}}'
+  # Disable smooth scrolling, which we handle via uinput instead
+  flags+=("--disable-smooth-scrolling")
 elif [[ "$CLIENT_OS" == "linux" ]]; then
-    # Disable smooth scrolling, which we handle via uinput instead
-    flags+=("--disable-smooth-scrolling")
+  # Disable smooth scrolling, which we handle via uinput instead
+  flags+=("--disable-smooth-scrolling")
 else
-    # Edit the browser Preferences Config file to use the default Windows/Ubuntu fonts
-    add_preferences_jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}'
+  # Edit the browser Preferences Config file to use the default Windows/Ubuntu fonts
+  add_preferences_jq '.webkit.webprefs.fonts |= . + {"fixed": {"Zyyy": "Consolas"}, "sansserif": {"Zyyy": "Arial"}, "serif": {"Zyyy": "Times New Roman"}, "standard": {"Zyyy": "Times New Roman"}}'
 fi
 
 commit_preferences_jq
@@ -193,19 +193,19 @@ echo "loaded d-bus address in start-browser.sh: $DBUS_SESSION_BUS_ADDRESS"
 # /usr/bin/lowercase-chromium-files "google-chrome" &
 
 case "$BROWSER_APPLICATION" in
-    brave)
-        BROWSER_EXE="brave-browser"
-        ;;
-    chrome)
-        BROWSER_EXE="google-chrome"
-        ;;
-    chromium)
-        BROWSER_EXE="chromium-browser"
-        ;;
-    *)
-        echo "Browser name not set or invalid. Using the default option, Chrome."
-        BROWSER_EXE="google-chrome"
-        ;;
+  brave)
+    BROWSER_EXE="brave-browser"
+    ;;
+  chrome)
+    BROWSER_EXE="google-chrome"
+    ;;
+  chromium)
+    BROWSER_EXE="chromium-browser"
+    ;;
+  *)
+    echo "Browser name not set or invalid. Using the default option, Chrome."
+    BROWSER_EXE="google-chrome"
+    ;;
 esac
 
 # Start the browser with the KDE desktop environment
