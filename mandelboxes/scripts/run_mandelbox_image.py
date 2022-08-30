@@ -158,7 +158,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
         "mandelbox_id": str(mandelbox_id),
     }
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
-    respobj = requests.put(url=url, json=payload, verify=tls_verification, timeout=10)
+    respobj = requests.put(url=url, json=payload, verify=tls_verification, timeout=20)
     response = respobj.json()
     print(f"Response from host service: {response}")
     respobj.raise_for_status()
