@@ -2045,3 +2045,8 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 }
 
 size_t udp_packet_max_size(void) { return (sizeof(UDPNetworkPacket)); }
+
+int udp_get_socket_queue_len(void* raw_context) {
+    UDPContext* context = (UDPContext*)raw_context;
+    return socket_get_queue_len(context->socket);
+}

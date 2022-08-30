@@ -13,3 +13,5 @@
     true  // how long it takes between video frame is seen and send to decoder
 
 #define PLOT_UDP_RECV_GAP true  // plot the gaps between recvs() are called on hotpath
+
+#define PLOT_UDP_RECV_QUEUE true

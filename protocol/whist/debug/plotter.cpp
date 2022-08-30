@@ -119,7 +119,7 @@ struct AAA
 		std::string s=whist_plotter_export();
 		std::ofstream myfile;
 		fprintf(stderr,"!!!!!!!!!!!!!!!!!\n");
-		myfile.open("/Users/yancey/1.json");
+		myfile.open("/home/yancey/1.json");
 		myfile << s;
 		myfile.close();
 	}

@@ -12,7 +12,7 @@ you use an earlier version, the verbose messages will be printed regardless
 of whether verbose output is set to ON or OFF.
 ]]
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0091 NEW)
 include(CheckLanguage)
 include(FetchContent)

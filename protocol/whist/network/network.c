@@ -638,3 +638,20 @@ static bool confirm_private_key(PrivateKeyData* our_priv_key_data,
         return false;
     }
 }
+
+int socket_get_queue_len(SOCKET socket) {
+#if OS_IS(OS_WIN32)
+    unsigned long len;
+    if (ioctlsocket(socket, FIONREAD, &len) != 0) {
+        return 0;
+    }
+    return (int)len;
+#else
+    int len;
+    if (ioctl(socket, FIONREAD, &len) != 0) {
+        return 0;
+    }
+    FATAL_ASSERT(len >= 0);
+    return len;
+#endif
+}
