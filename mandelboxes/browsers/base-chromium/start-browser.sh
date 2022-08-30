@@ -146,7 +146,7 @@ fi
 # Start the server-side extension if the client requests it 
 echo "load extension is: $LOAD_EXTENSION"
 
-if [[ -n "$LOAD_EXTENSION" == true ]]; then
+if [[ "$LOAD_EXTENSION" == true ]]; then
   flags+=(  "--load-extension=/opt/teleport/chrome-extension")
 fi
 
