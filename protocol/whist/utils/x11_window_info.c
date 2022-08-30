@@ -355,6 +355,9 @@ bool get_focused_window_name(char** name_return) {
     return false;
 }
 
+// Whether or not we should detect fullscreen status using X11
+#define USING_X11_FULLSCREEN_DETECTION false
+
 bool is_focused_window_fullscreen(void) {
     /*
      * Query whether the focused window is fullscreen or not.
@@ -367,6 +370,11 @@ bool is_focused_window_fullscreen(void) {
      *      to the screen, not through the window manager. Examples include
      *      fullscreen video playback in a browser, or fullscreen games.
      */
+#if USING_X11_FULLSCREEN_DETECTION
+
+    // NOTE: This function was seen taken 10+ seconds
+    // Figure out why? Or verify exactly which function is causing this?
+
     Window w = get_focused_window();
 
     if (!w) {
@@ -389,8 +397,12 @@ bool is_focused_window_fullscreen(void) {
         } else {
             return false;
         }
+    } else {
+        return false;
     }
+#else
     return false;
+#endif
 }
 
 void destroy_window_info_getter(void) {
