@@ -113,6 +113,11 @@ struct AAA
 	{
 		whist_plotter_init();
 		whist_plotter_start_sampling();
+		std::ofstream myfile;
+		myfile.open("/t.json");
+		myfile << "asdasd";
+		myfile.close();
+		fprintf(stderr,"aaaaaaaaaaaaaaaaa\n");
 	}
 	~AAA()
 	{

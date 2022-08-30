@@ -21,6 +21,8 @@ Includes
 #include "parse_args.h"
 #include "handle_client_message.h"
 #include "dbus.h"
+#include "whist/debug/plotter.h"
+#include "whist/utils/clock.h"
 
 /*
 ============================
@@ -126,7 +128,15 @@ static void get_whist_udp_client_messages(WhistServerState* state) {
 
     // If received a UDP message
     if (try_get_next_message_udp(state->client, &wcmsg, &wcmsg_size) == 0 && wcmsg_size != 0) {
+	double t1=get_timestamp_sec();
         handle_client_message(state, &wcmsg);
+	double t2=get_timestamp_sec();
+	char buf[100];
+	sprintf(buf,"wcmsg_%d",(int)wcmsg.type);
+	if(t2-t1>0.0)
+	{
+		whist_plotter_insert_sample(buf, get_timestamp_sec(), t2-t1);
+	}
     }
 }
 
@@ -370,7 +380,30 @@ static void whist_server_state_init(WhistServerState* state, whist_server_config
     server_state.client = init_client();
 }
 
+void term(int signum);
+void term(int signum)
+{
+	fprintf(stdout,"catch sigterm!!!\n");
+	exit(-1);
+}
+int broadcast_tcp_packet_wrapper(Client *client, WhistPacketType type, void *data, int len);
+
+int broadcast_tcp_packet_wrapper(Client *client, WhistPacketType type, void *data, int len) {
+    double t1=get_timestamp_sec();
+    int ret= broadcast_tcp_packet(client, type, data, len);
+    double t2=get_timestamp_sec();
+    whist_plotter_insert_sample("broadcast_tcp_packet", get_timestamp_sec(), t2-t1);
+    return ret;
+}
+
 int main(int argc, char* argv[]) {
+    
+	struct sigaction action;
+	memset(&action, 0, sizeof(action));
+	action.sa_handler = term;
+	sigaction(SIGTERM, &action, NULL);
+
+    fprintf(stdout,"main!!!!!!!!\n");
     whist_server_config config = {0};
 
     int ret = server_parse_args(&config, argc, argv);
@@ -393,6 +426,7 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Whist server revision %s", whist_git_revision());
     LOG_INFO("Server protocol started.");
+    LOG_INFO("Server protocol started!!!!!!!!!!!!!!!!!!");
 
 #if OS_IS(OS_WIN32)
     // set Windows DPI
@@ -466,12 +500,15 @@ int main(int argc, char* argv[]) {
     WhistTimer connection_attempt_timer;
     start_timer(&connection_attempt_timer);
 
+    whist_plotter_insert_sample("before_enter_udp_recv_loop",get_timestamp_sec(),-1);
+
     // Whether or not the client connected at least once
     bool client_connected_once = false;
 
     while (!server_state.exiting) {
         // Client management code
 
+        double t1=get_timestamp_sec();
         // If the client isn't active, activate the client
         if (!server_state.client->is_active) {
             // If begin_time_to_exit seconds pass, and no connection has succeeded,
@@ -491,6 +528,8 @@ int main(int argc, char* argv[]) {
             }
             continue;
         }
+
+        double t2=get_timestamp_sec();
 
         // If the client is deactivating for any reason,
         if (server_state.client->is_deactivating) {
@@ -513,10 +552,17 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
+        double t3=get_timestamp_sec();
+
+
+        whist_plotter_insert_sample("t3 -t1", get_timestamp_sec(), t3-t1);
+
+
         // UDP client messages, and various periodic updates
 
         // Get UDP messages
         get_whist_udp_client_messages(&server_state);
+        double t4= get_timestamp_sec();
 
         // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set because
         // getting cpu usage statistics is expensive.
@@ -532,12 +578,24 @@ int main(int argc, char* argv[]) {
             start_timer(&cpu_usage_statistics_timer);
         }
 
+         double t5= get_timestamp_sec();
+
+
+         whist_plotter_insert_sample("t5 -t4", get_timestamp_sec(), t5-t4);
+
         if (get_timer(&window_fullscreen_timer) > 50.0 / MS_IN_SECOND) {
             // This is the cached fullscreen state. We only send state change events
             // to the client if the fullscreen value has changed.
             // TODO: Move static variable into client variable, so that it can clear on reactivation
             static bool cur_fullscreen = false;
+            double t_a= get_timestamp_sec();
             bool fullscreen = is_focused_window_fullscreen();
+            double t_b= get_timestamp_sec();
+
+
+
+            whist_plotter_insert_sample("is_focused_window_fullscreen", get_timestamp_sec(), t_b -t_a);
+            
             if (fullscreen != cur_fullscreen) {
                 if (fullscreen) {
                     LOG_INFO("Window is now fullscreen. Broadcasting fullscreen message.");
@@ -547,20 +605,30 @@ int main(int argc, char* argv[]) {
                 WhistServerMessage wsmsg = {0};
                 wsmsg.type = SMESSAGE_FULLSCREEN;
                 wsmsg.fullscreen = (int)fullscreen;
-                if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, &wsmsg,
+                double t_before_tcp_send= get_timestamp_sec();
+                if (broadcast_tcp_packet_wrapper(server_state.client, PACKET_MESSAGE, &wsmsg,
                                          sizeof(WhistServerMessage)) == 0) {
                     LOG_INFO("Sent fullscreen message!");
                     cur_fullscreen = fullscreen;
                 } else {
                     LOG_ERROR("Failed to broadcast fullscreen message.");
                 }
+
             }
             start_timer(&window_fullscreen_timer);
         }
 
+         double t6= get_timestamp_sec();
+
+         whist_plotter_insert_sample("t6 -t5", get_timestamp_sec(), t6-t5);
+
         if (get_timer(&window_name_timer) > 50.0 / MS_IN_SECOND) {
             char* name = NULL;
+            double t_a= get_timestamp_sec();
             bool new_window_name = get_focused_window_name(&name);
+            double t_b= get_timestamp_sec();
+            whist_plotter_insert_sample("is_focused_window_fullscreen", get_timestamp_sec(), t_b -t_a);
+
             if (name != NULL &&
                 (server_state.client_joined_after_window_name_broadcast || new_window_name)) {
                 LOG_INFO("%sBroadcasting window title message.",
@@ -569,7 +637,9 @@ int main(int argc, char* argv[]) {
                 WhistServerMessage* wsmsg = (void*)wsmsg_buf;
                 wsmsg->type = SMESSAGE_WINDOW_TITLE;
                 strncpy(wsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
-                if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
+
+                double t_before_tcp_send= get_timestamp_sec();
+                if (broadcast_tcp_packet_wrapper(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
                                          (int)(sizeof(WhistServerMessage) + strlen(name) + 1)) ==
                     0) {
                     LOG_INFO("Sent window title message!");
@@ -577,9 +647,13 @@ int main(int argc, char* argv[]) {
                 } else {
                     LOG_WARNING("Failed to broadcast window title message.");
                 }
+
             }
             start_timer(&window_name_timer);
         }
+
+         double t7= get_timestamp_sec();
+         whist_plotter_insert_sample("t7 -t6", get_timestamp_sec(), t7-t6);
 
 #if !OS_IS(OS_WIN32)
 #define URI_HANDLER_FILE "/home/whist/.teleport/handled-uri"
@@ -596,7 +670,7 @@ int main(int argc, char* argv[]) {
                     memset(wsmsg, 0, sizeof(*wsmsg));
                     wsmsg->type = SMESSAGE_OPEN_URI;
                     memcpy(&wsmsg->requested_uri, handled_uri, bytes + 1);
-                    if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
+                    if (broadcast_tcp_packet_wrapper(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
                                              (int)wsmsg_size) < 0) {
                         LOG_WARNING("Failed to broadcast open URI message.");
                     } else {
@@ -609,9 +683,11 @@ int main(int argc, char* argv[]) {
                 close(fd);
                 remove(URI_HANDLER_FILE);
             }
-
             start_timer(&uri_handler_timer);
         }
+
+         double t8= get_timestamp_sec();
+         whist_plotter_insert_sample("t8 -t7", get_timestamp_sec(), t8-t7);
 
 #define FILE_DOWNLOAD_TRIGGER_FILE "/home/whist/.teleport/downloaded-file"
 #define FILE_DOWNLOADS_PREFIX "/home/whist/Downloads"
@@ -645,13 +721,16 @@ int main(int argc, char* argv[]) {
             start_timer(&downloaded_file_timer);
         }
 
+         double t9= get_timestamp_sec();
+         whist_plotter_insert_sample("t9 -t8", get_timestamp_sec(), t9-t8);
+
 #define FILE_UPLOAD_TRIGGER_FILE "/home/whist/.teleport/uploaded-file"
         if (get_timer(&uploaded_file_timer) > 50.0 / MS_IN_SECOND) {
             if (!access(FILE_UPLOAD_TRIGGER_FILE, R_OK)) {
                 // If trigger file exists, request upload from client then delete the file
                 WhistServerMessage wsmsg = {0};
                 wsmsg.type = SMESSAGE_INITIATE_UPLOAD;
-                if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, &wsmsg,
+                if (broadcast_tcp_packet_wrapper(server_state.client, PACKET_MESSAGE, &wsmsg,
                                          sizeof(WhistServerMessage)) == 0) {
                     LOG_INFO("Sent initiate upload message!");
                 } else {
@@ -663,6 +742,9 @@ int main(int argc, char* argv[]) {
         }
 
 #endif  // Not Windows
+
+        double t10= get_timestamp_sec();
+        whist_plotter_insert_sample("t5 -t4", get_timestamp_sec(), t5-t4);
     }
 
     if (!client_connected_once) {
