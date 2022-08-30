@@ -105,4 +105,37 @@ action("build_whist_client") {
       target_cpu,
     ]
   }
+
+
+  if (is_linux) {
+    outputs = [
+      "$root_out_dir/libavcodec.59.dylib",
+      "$root_out_dir/libavdevice.59.dylib",
+      "$root_out_dir/libavfilter.8.dylib",
+      "$root_out_dir/libavformat.59.dylib",
+      "$root_out_dir/libavutil.57.dylib",
+      "$root_out_dir/libopus.0.dylib",
+      "$root_out_dir/libsentry.dylib",
+      "$root_out_dir/libswresample.4.dylib",
+      "$root_out_dir/libswscale.6.dylib",
+      "$root_out_dir/libWhistClient.dylib",
+    ]
+
+    if (target_cpu == "x64") {
+      outputs += [
+        "$root_out_dir/libX11.6.dylib",
+        "$root_out_dir/libXau.6.dylib",
+        "$root_out_dir/libxcb-shape.0.0.0.dylib",
+        "$root_out_dir/libxcb-shm.0.0.0.dylib",
+        "$root_out_dir/libxcb-xfixes.0.0.0.dylib",
+        "$root_out_dir/libxcb.1.1.0.dylib",
+        "$root_out_dir/libXdmcp.6.dylib",
+      ]
+    }
+
+    args += [
+      "--arch",
+      target_cpu,
+    ]
+  }
 }
