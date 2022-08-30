@@ -120,7 +120,7 @@ def install_and_configure_aws(
     pexpect_process.sendline("sudo apt-get -y update")
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
     # Check if the AWS CLI is installed, and install it if not.
-    pexpect_process.sendline("aws -v")
+    pexpect_process.sendline("aws --version")
     stdout = wait_until_cmd_done(
         pexpect_process,
         pexpect_prompt,
@@ -186,7 +186,7 @@ def clone_whist_repository(github_token, pexpect_process, pexpect_prompt):
         )
         # Retrieve whisthq/whist monorepo on the instance
         command = (
-            "rm -rf whist; git clone -b "
+            "rm -rf whist; git clone --quiet -b "
             + branch_name
             + " https://"
             + github_token
