@@ -1165,9 +1165,8 @@ jobs:
           export WHIST_AUTH0_REDIRECT_URL=https://com.whist.auth0/callback
 
           pushd src/whist
-          # TODO: Fix this, somehow we're not setting it correctly, omitting it so that it defaults to `local_dev`
-          TEST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
-          echo "WHIST_COMMIT_SHA would be $TEST_COMMIT_SHA"
+          export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
+          echo "WHIST_COMMIT_SHA=$WHIST_COMMIT_SHA"
           popd
 
           # Build the browser
@@ -1235,9 +1234,8 @@ jobs:
           export WHIST_AUTH0_REDIRECT_URL=https://com.whist.auth0/callback
 
           pushd src/whist
-          # TODO: Fix this, somehow we're not setting it correctly, omitting it so that it defaults to `local_dev`
-          TEST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
-          echo "WHIST_COMMIT_SHA would be $TEST_COMMIT_SHA"
+          export WHIST_COMMIT_SHA=$(git rev-parse ${{ needs.whist-publish-build-config.outputs.branch }})
+          echo "WHIST_COMMIT_SHA=$WHIST_COMMIT_SHA"
           popd
 
           # Package the browser into an installer
