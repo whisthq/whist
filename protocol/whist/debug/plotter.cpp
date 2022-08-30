@@ -17,6 +17,7 @@ extern "C" {
 #include <unordered_map>
 #include <deque>
 #include <sstream>
+#include <fstream>
 
 // the data struct for sampling
 typedef std::unordered_map<std::string, std::deque<std::pair<double, double>>> PlotData;
@@ -105,3 +106,21 @@ void whist_plotter_export_c(char *out_s, size_t max_size) {
     std::string s = whist_plotter_export();
     strncpy(out_s, s.c_str(), min(max_size, s.size()));
 }
+
+struct AAA
+{
+	AAA()
+	{
+		whist_plotter_init();
+		whist_plotter_start_sampling();
+	}
+	~AAA()
+	{
+		std::string s=whist_plotter_export();
+		std::ofstream myfile;
+		fprintf(stderr,"!!!!!!!!!!!!!!!!!\n");
+		myfile.open("/Users/yancey/1.json");
+		myfile << s;
+		myfile.close();
+	}
+}aaa;
