@@ -144,7 +144,7 @@ if [[ -n "$USER_AGENT" ]]; then
 fi
 
 # Start the server-side extension if the client requests it 
-if [[ -n "$LOAD_EXTENSION" ]]; then
+if [[ -n "$LOAD_EXTENSION" == true ]]; then
   flags+=(  "--load-extension=/opt/teleport/chrome-extension")
 fi
 
