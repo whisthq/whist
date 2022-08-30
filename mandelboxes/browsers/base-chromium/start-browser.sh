@@ -16,7 +16,7 @@ esac
 set -Eeuo pipefail
 
 # Start socketio server in the background
-# /opt/teleport/socketio-server &
+/opt/teleport/socketio-server &
 
 BROWSER_APPLICATION="${1:-chrome}"
 if [[ "$BROWSER_APPLICATION" == "brave" ]]; then
