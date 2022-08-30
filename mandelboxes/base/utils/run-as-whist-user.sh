@@ -21,6 +21,7 @@ set -Eeuo pipefail
 # default values for the JSON transport settings from the client
 DARK_MODE=false
 RESTORE_LAST_SESSION=true
+LOAD_EXTENSION=false
 DESIRED_TIMEZONE=Etc/UTC
 INITIAL_KEY_REPEAT=68 # default value on macOS, options are 120, 94, 68, 35, 25, 15
 KEY_REPEAT=6 # default value on macOS, options are 120, 90, 60, 30, 12, 6, 2
@@ -41,6 +42,9 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
   if [ "$( jq -rc 'has("restore_last_session")' < $WHIST_JSON_FILE )" == "true"  ]; then
     RESTORE_LAST_SESSION="$(jq -rc '.restore_last_session' < $WHIST_JSON_FILE)"
+  fi
+  if [ "$( jq -rc 'has("load_extension")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    LOAD_EXTENSION="$(jq -rc '.load_extension' < $WHIST_JSON_FILE)"
   fi
   if [ "$( jq -rc 'has("desired_timezone")' < $WHIST_JSON_FILE )" == "true"  ]; then
     DESIRED_TIMEZONE="$(jq -rc '.desired_timezone' < $WHIST_JSON_FILE)"
@@ -164,6 +168,7 @@ fi
 export TZ=$DESIRED_TIMEZONE
 export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
+export LOAD_EXTENSION=$LOAD_EXTENSION
 export INITIAL_URL=$INITIAL_URL
 export USER_AGENT="$USER_AGENT"
 export KIOSK_MODE=$KIOSK_MODE
@@ -176,7 +181,7 @@ export BROWSER_LANGUAGES=$BROWSER_LANGUAGES
 export CLIENT_OS=$CLIENT_OS
 export WHIST_DEST_BROWSER=$WHIST_DEST_BROWSER
 
-exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,SYSTEM_LANGUAGES,BROWSER_LANGUAGES,CLIENT_OS,WHIST_DEST_BROWSER -c \
+exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,LOAD_EXTENSION,INITIAL_URL,USER_AGENT,KIOSK_MODE,SENTRY_ENVIRONMENT,LONGITUDE,LATITUDE,USER_LOCALE,SYSTEM_LANGUAGES,BROWSER_LANGUAGES,CLIENT_OS,WHIST_DEST_BROWSER -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
