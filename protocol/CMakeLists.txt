@@ -281,12 +281,6 @@ else()
     find_package(OpenSSL REQUIRED)
 endif()
 
-# serina mimalloc
-set(MIMALLOC_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/mimalloc/${CMAKE_SYSTEM_NAME}")
-find_library(LIB_MIMALLOC NAMES mimalloc PATHS ${MIMALLOC_DIR_PATH})
-list(APPEND SHARED_LIBS_PATHS ${MIMALLOC_DIR_PATH})
-set(ENV{DYLD_INSERT_LIBRARIES} "${MIMALLOC_DIR_PATH}/libmimalloc.2.0.dylib")
-
 set(SENTRY_DIR_PATH "${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}")
 find_library(LIB_SENTRY NAMES sentry PATHS "${SENTRY_DIR_PATH}"
         NO_DEFAULT_PATH
@@ -390,7 +384,6 @@ set(MAC_SPECIFIC_CLIENT_LIBS
     objc
     iconv
     ${LIB_OPENSSL}
-    ${LIB_MIMALLOC}
 )
 
 # MSVC C/C++ Standard Library linking, based on Debug/Release

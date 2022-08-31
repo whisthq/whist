@@ -1,5 +1,5 @@
 #include "whist_mlock.h"
-#include <map>
+#include <unordered_map>
 #include <malloc/malloc.h>
 extern "C" {
 #include <sys/mman.h>
@@ -30,6 +30,23 @@ struct MLockRegion {
     bool operator==(const MLockRegion& region) const {
         return this->addr == region.addr && this->size == region.size;
     }
+};
+
+struct RegionHasher
+{
+  std::size_t operator()(const MLockRegion& k) const
+  {
+    using std::hash;
+
+    return (hash<void*>()(k.addr) ^ (hash<size_t>()(k.size) << 1));
+  }
+};
+
+struct RegionEqual {
+ bool operator()(const MLockRegion& lhs, const MLockRegion& rhs) const
+ {
+    return lhs.addr == rhs.addr && lhs.size == rhs.size;
+ }
 };
 
 struct MComparator {
@@ -84,8 +101,8 @@ bool operator!=(const Mallocator <T>&, const Mallocator <U>&) { return false; }
 // map MLockRegion (or MLockRegion*) -> number of mallocs
 struct MlockContext {
     WhistMutex lock;
-    std::map<void*, MLockRegion, std::less<void*>, Mallocator<std::pair<void* const, MLockRegion>>> malloc_to_region;
-    std::map<MLockRegion, int, MComparator, Mallocator<std::pair<const MLockRegion, int>>> region_to_count;
+    std::unordered_map<void*, MLockRegion, std::hash<void*>, std::equal_to<void*>, Mallocator<std::pair<void* const, MLockRegion>>> malloc_to_region;
+    std::unordered_map<MLockRegion, int, RegionHasher, RegionEqual, Mallocator<std::pair<const MLockRegion, int>>> region_to_count;
 };
 // static thread_local int counter;
 
