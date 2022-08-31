@@ -155,7 +155,7 @@ Defines
 
 // mlock
 #if OS_IS(OS_MACOS)
-#define USING_MLOCK true
+#define USING_MLOCK false
 #else
 #define USING_MLOCK false
 #endif
