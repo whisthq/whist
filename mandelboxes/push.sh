@@ -3,7 +3,7 @@
 # This script takes a mandelbox image that was built locally, tags it with the proper
 # naming convention and Git hash, and uploads it to GitHub Container Registry (GHCR).
 # Arguments:
-#   $1 - app name (e.g. browsers/chrome)
+#   $1 - app name (e.g. browsers/whistium)
 #   $2 - deploy environment (i.e. prod OR staging OR dev)
 
 set -Eeuo pipefail

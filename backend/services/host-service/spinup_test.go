@@ -35,7 +35,7 @@ func TestStartMandelboxSpinUp(t *testing.T) {
 	initializeFilesystem()
 
 	dockerClient := mockClient{
-		browserImage: "browsers/whistium",
+		browserImage: utils.MandelboxApp,
 	}
 	mandelboxID := types.MandelboxID(uuid.New())
 	mandelboxDieChan := make(chan bool, 10)
@@ -190,7 +190,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 		t.Fatalf("could not deflate JSON data: %v", err)
 	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		AppName:               types.AppName("browsers/whistium"),
+		AppName:               types.AppName(utils.MandelboxApp),
 		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           testMandelbox.GetID(),
@@ -202,7 +202,7 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 	testTransportRequestMap := make(map[types.MandelboxID]chan *httputils.JSONTransportRequest)
 
 	dockerClient := mockClient{
-		browserImage: "browsers/whistium",
+		browserImage: utils.MandelboxApp,
 	}
 
 	mandelboxSubscription := testMandelboxDBEvent.Mandelboxes[0]

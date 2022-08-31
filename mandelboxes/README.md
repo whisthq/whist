@@ -38,7 +38,7 @@ To build a specific application's mandelbox image, run:
 ./build.sh APP
 ```
 
-This takes a single argument, `APP`, which is the path to the target folder whose application mandelbox you wish to build. For example, the base mandelbox is built with `./build_mandelbox_image.sh base` and the Chrome mandelbox is built with `./build_mandelbox_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `whist/$APP`, with a tag of `current-build`.
+This takes a single argument, `APP`, which is the path to the target folder whose application mandelbox you wish to build. For example, the base mandelbox is built with `./build_mandelbox_image.sh base` and the Whist mandelbox is built with `./build_mandelbox_image.sh browsers/whistium`, since the relevant Dockerfile is `browsers/whistium/Dockerfile.20`. This script names the built image as `whist/$APP`, with a tag of `current-build`.
 
 You first need to build the protocol and then build the base image before you can finally build a specific application image.
 
@@ -79,7 +79,7 @@ Once an image has been built via `./build.sh APP` and therefore tagged with `cur
 GH_PAT=xxx GH_USERNAME=xxx ./push.sh APP ENVIRONMENT
 ```
 
-Replace the environment variables `GH_PAT` and `GH_USERNAME` with your GitHub personal access token and username, respectively. Here, `APP` is again the path to the relevant app folder; e.g., `base` or `browsers/chrome`. Environment is either `dev`, `staging`, `prod`, or nothing. The image is tagged with the full git commit hash of the current branch.
+Replace the environment variables `GH_PAT` and `GH_USERNAME` with your GitHub personal access token and username, respectively. Here, `APP` is again the path to the relevant app folder; e.g., `base` or `browsers/whistium`. Environment is either `dev`, `staging`, `prod`, or nothing. The image is tagged with the full git commit hash of the current branch.
 
 ### Continuous Delivery
 
@@ -87,7 +87,7 @@ For every push to `dev`, `staging`, or `prod`, all applications that have a Dock
 
 ### Useful Debugging Practices
 
-If `./build.sh` is failing, try running with `./build-mandelbox_images.sh -q` to redirect logging output to files. Then, go to the failing image and check `build.log`. For example, you might look in `browsers/chrome/build.log`.
+If `./build.sh` is failing, try running with `./build-mandelbox_images.sh -q` to redirect logging output to files. Then, go to the failing image and check `build.log`. For example, you might look in `browsers/whistium/build.log`.
 
 If the error messages seem to be related to fetching archives, try `docker system prune -af`. It's possible that Docker has cached out-of-date steps generated from an old mandelbox image, and needs to be cleaned and rebuilt.
 
