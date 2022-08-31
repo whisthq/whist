@@ -9,8 +9,6 @@ const io = new Server(httpServer, {
   },
 })
 
-console.log("Socketio server started")
-
 // Listens for client/server events
 io.on("connection", (socket: Socket) => {
   socket.broadcast.emit("connected", io.engine.clientsCount)
