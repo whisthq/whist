@@ -149,7 +149,7 @@ GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
 
   # Install NVIDIA GRID (virtualized GPU) drivers
-  CLOUD_PROVIDER="$CLOUD_PROVIDER" ./get-nvidia-driver-installer.sh
+  ./get-nvidia-driver-installer.sh
   sudo chmod +x nvidia-driver-installer.run
   sudo ./nvidia-driver-installer.run --silent
   sudo rm nvidia-driver-installer.run
@@ -430,18 +430,16 @@ common_steps_post () {
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but it looks like getopt
 # chokes without them.
-TEMP=$(getopt -o hldp --long help,usage,localdevelopment,deployment,provider: -n 'setup_host.sh' -- "$@")
+TEMP=$(getopt -o hld --long help,usage,localdevelopment,deployment -n 'setup_host.sh' -- "$@")
 eval set -- "$TEMP"
 
 LOCAL_DEVELOPMENT=
 DEPLOYMENT=
-CLOUD_PROVIDER="AWS"
 while true; do
   case "$1" in
     -h | --help | --usage) usage ;;
     -l | --localdevelopment ) LOCAL_DEVELOPMENT=true; shift ;;
     -d | --deployment ) DEPLOYMENT=true; shift ;;
-    -p | --provider ) CLOUD_PROVIDER=$2; shift 2 ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
