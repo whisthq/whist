@@ -123,7 +123,6 @@ flags=(
   "--no-default-browser-check"
   "--ozone-platform-hint=x11"
   "--password-store=basic" # This disables the kwalletd backend, which we don't support
-  "--load-extension=/opt/teleport/chrome-extension"
 )
 
 if [[ "$DARK_MODE" == true ]]; then
@@ -142,6 +141,11 @@ flags+=("--flag-switches-end")
 # Pass user agent corresponding to user's OS from JSON-transport
 if [[ -n "$USER_AGENT" ]]; then
   flags+=("--user-agent=$USER_AGENT")
+fi
+
+# Start the server-side extension if the client requests it
+if [[ "$LOAD_EXTENSION" == true ]]; then
+  flags+=(  "--load-extension=/opt/teleport/chrome-extension")
 fi
 
 # Start the browser in Kiosk mode (full-screen). This flag is used when the client is a
