@@ -195,8 +195,8 @@ func TestFinishMandelboxSpinUp(t *testing.T) {
 		t.Fatalf("could not deflate JSON data: %v", err)
 	}
 	testJSONTransportRequest := httputils.JSONTransportRequest{
-		AppName:               types.AppName(utils.MandelboxApp),
-        	ConfigEncryptionToken: "testToken1234",
+		AppName:               mandelboxtypes.AppName(utils.MandelboxApp),
+		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           testMandelbox.GetID(),
 		JSONData:              mandelboxtypes.JSONData(deflatedJSONData),
