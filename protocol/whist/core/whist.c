@@ -83,14 +83,14 @@ void whist_init_subsystems(void) {
     whist_init_networking();
 }
 
-void print_system_info(void) {
+WhistThread print_system_info(void) {
     /*
         Print the system info of the computer
     */
 
     WhistThread sysinfo_thread =
         whist_create_thread(multithreaded_print_system_info, "print_system_info", NULL);
-    whist_detach_thread(sysinfo_thread);
+    return sysinfo_thread;
 }
 
 int runcmd(const char *cmdline, char **response) {

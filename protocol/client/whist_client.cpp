@@ -359,8 +359,8 @@ int whist_client_main(int argc, const char* argv[]) {
     // Initialize logger error monitor
     whist_error_monitor_initialize(true);
 
-    print_system_info();
     LOG_INFO("Whist client revision %s", whist_git_revision());
+    WhistThread system_info_thread = print_system_info();
 
     client_exiting = false;
     WhistExitCode exit_code = WHIST_EXIT_SUCCESS;
@@ -449,6 +449,9 @@ int whist_client_main(int argc, const char* argv[]) {
         LOG_WARNING("Failed to connect after %d attempts!", MAX_INIT_CONNECTION_ATTEMPTS);
         exit_code = WHIST_EXIT_FAILURE;
     }
+
+    // Wait on system info thread before destroying logger
+    whist_wait_thread(system_info_thread, NULL);
 
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");

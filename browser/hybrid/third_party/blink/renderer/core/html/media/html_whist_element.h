@@ -78,6 +78,8 @@ class CORE_EXPORT HTMLWhistElement final
     // These functions are called from JavaScript -- see html_whist_element.idl for bindings.
     void whistPause();
     void whistPlay();
+    bool isWhistConnected();
+    void whistConnect(const String& whist_parameters);
 
   private:
     class HTMLWhistElementResizeObserverDelegate;

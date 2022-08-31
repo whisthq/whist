@@ -1962,6 +1962,8 @@ int test_virtual_intr(void* arg) {
 
 TEST_F(ProtocolTest, VirtualEventTest) {
     const VirtualInterface* vi = get_virtual_interface();
+    // argc of 0 means protocol will not be called
+    vi->lifecycle.initialize(0, NULL);
     vi->lifecycle.connect();
     WhistFrontendEvent sent_event;
     sent_event.type = FRONTEND_EVENT_RESIZE;  // Can be anything. We just want this to
@@ -1989,6 +1991,7 @@ TEST_F(ProtocolTest, VirtualEventTest) {
     whist_wait_thread(thread_context, NULL);
     virtual_destroy(&frontend);
     vi->lifecycle.disconnect();
+    vi->lifecycle.destroy();
 }
 
 TEST_F(ProtocolTest, WCCTest) {

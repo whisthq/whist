@@ -388,6 +388,44 @@ void HTMLWhistElement::whistPlay() {
   WHIST_VIRTUAL_INTERFACE_CALL(video.set_video_playing, whist_window_id_, true);
 }
 
+bool HTMLWhistElement::isWhistConnected() {
+  bool is_whist_connected = WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.is_connected);
+  return is_whist_connected;
+}
+
+void HTMLWhistElement::whistConnect(const String& whist_parameters) {
+  // Initiate a new whist connection
+  bool new_connection = WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.connect);
+
+  // Send parameters for this new whist connection
+  if (new_connection) {
+    WhistClient::WhistFrontendEvent event = {};
+    event.type = WhistClient::FRONTEND_EVENT_STARTUP_PARAMETER;
+    event.startup_parameter.error = false;
+    // TODO: Validate that this is actually a valid JSONObject so that we don't die on bad parameter values..
+    auto json_object = JSONObject::From(ParseJSON(whist_parameters));
+    for (wtf_size_t i = 0; i < json_object->size(); ++i) {
+      JSONObject::Entry entry = json_object->at(i);
+      String wtf_key = entry.first;
+      String wtf_value;
+      entry.second->AsString(&wtf_value);
+      char* key = strdup(wtf_key.Utf8().c_str());
+      char* value = strdup(wtf_value.Utf8().c_str());
+
+      event.startup_parameter.key = key;
+      event.startup_parameter.value = value;
+
+      // key and value are freed by the WhistClient event handler
+      WHIST_VIRTUAL_INTERFACE_CALL(events.send, &event);
+    }
+
+    // Mark as finished, so that whist may connect
+    event.startup_parameter.key = strdup("finished");
+    event.startup_parameter.value = NULL;
+    WHIST_VIRTUAL_INTERFACE_CALL(events.send, &event);
+  }
+}
+
 Node::InsertionNotificationRequest HTMLWhistElement::InsertedInto(
     ContainerNode& insertion_point) {
   SetSrcObject(nullptr); // placeholder for launching the functions that create the whistplayer
@@ -413,34 +451,6 @@ void HTMLWhistElement::RemovedFrom(ContainerNode& insertion_point) {
 
 void HTMLWhistElement::ParseAttribute(
     const AttributeModificationParams& params) {
-
-  const QualifiedName& name = params.name;
-  WhistClient::WhistFrontendEvent event;
-  event.type = WhistClient::FRONTEND_EVENT_STARTUP_PARAMETER;
-  event.startup_parameter.error = false;
-  if (name == html_names::kSrcAttr) {
-    // TODO: Validate that this is actually a valid JSONObject so that we don't die on bad src tags.
-    auto json_object = JSONObject::From(ParseJSON(params.new_value));
-    for (wtf_size_t i = 0; i < json_object->size(); ++i) {
-      JSONObject::Entry entry = json_object->at(i);
-      String wtf_key = entry.first;
-      String wtf_value;
-      entry.second->AsString(&wtf_value);
-      char* key = strdup(wtf_key.Utf8().c_str());
-      char* value = strdup(wtf_value.Utf8().c_str());
-
-      event.startup_parameter.key = key;
-      event.startup_parameter.value = value;
-
-      // key and value are freed by the WhistClient event handler
-      WHIST_VIRTUAL_INTERFACE_CALL(events.send, &event);
-    }
-    event.startup_parameter.key = strdup("finished");
-    event.startup_parameter.value = NULL;
-    WHIST_VIRTUAL_INTERFACE_CALL(events.send, &event);
-  } else {
-    HTMLElement::ParseAttribute(params);
-  }
 }
 
 void HTMLWhistElement::OpenFileChooser() {
