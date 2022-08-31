@@ -59,22 +59,36 @@ schema {
 	query: Query
 }
 type Query {
-	hello: String!
+	InstanceQuery: [whist_instances!]
 }
+type whist_instances {
+	id: String!
+	provider: String!
+	region: String!
+	image_id: String!
+	client_sha: String!
+	ip_addr: String!
+	instance_type: String!
+	remaining_capacity: String!
+	status: String!
+	created_at: String!
+	updated_at: String!
+}
+
 type Subscription {
-	helloSaid(): HelloSaidEvent!
+	SubscriptionFired(): InstanceEvent!
 }
 type Mutation {
-	sayHello(msg: String!): HelloSaidEvent!
+	SendSubscription(msg: String!): InstanceEvent!
 }
-type HelloSaidEvent {
+type InstanceEvent {
 	id: String!
-	msg: String!
+	whist_instances: [whist_instances!]
 }
 `
 
-func subscription_setupClients() (*hasura.Client, *hasura.SubscriptionClient) {
-	endpoint := "http://localhost:8080/graphql"
+func subscription_setupClients() (*GraphQLClient, *SubscriptionClient) {
+	endpoint := "http://localhost:4679/graphql"
 
 	client := hasura.NewClient(endpoint, &http.Client{Transport: http.DefaultTransport})
 
@@ -85,7 +99,13 @@ func subscription_setupClients() (*hasura.Client, *hasura.SubscriptionClient) {
 			},
 		})
 
-	return client, subscriptionClient
+	whistSubscriptionClient := &SubscriptionClient{}
+	whistSubscriptionClient.Hasura = subscriptionClient
+
+	whistGraphQLClient := &GraphQLClient{}
+	whistGraphQLClient.Hasura = client
+
+	return whistGraphQLClient, whistSubscriptionClient
 }
 
 func subscription_setupServer() *http.Server {
@@ -100,20 +120,20 @@ func subscription_setupServer() *http.Server {
 	mux := http.NewServeMux()
 	graphQLHandler := graphqlws.NewHandlerFunc(s, &relay.Handler{Schema: s})
 	mux.HandleFunc("/graphql", graphQLHandler)
-	server := &http.Server{Addr: ":8080", Handler: mux}
+	server := &http.Server{Addr: ":4679", Handler: mux}
 
 	return server
 }
 
 type resolver struct {
-	helloSaidEvents     chan *helloSaidEvent
-	helloSaidSubscriber chan *helloSaidSubscriber
+	instanceEvents     chan *instanceEvent
+	instanceSubscriber chan *instanceSubscriber
 }
 
 func newResolver() *resolver {
 	r := &resolver{
-		helloSaidEvents:     make(chan *helloSaidEvent),
-		helloSaidSubscriber: make(chan *helloSaidSubscriber),
+		instanceEvents:     make(chan *instanceEvent),
+		instanceSubscriber: make(chan *instanceSubscriber),
 	}
 
 	go r.broadcastHelloSaid()
@@ -121,28 +141,33 @@ func newResolver() *resolver {
 	return r
 }
 
-func (r *resolver) Hello() string {
-	return "Hello world!"
+func (r *resolver) InstanceQuery() *[]Instance {
+	return &[]Instance{
+		{},
+	}
 }
 
-func (r *resolver) SayHello(args struct{ Msg string }) *helloSaidEvent {
-	e := &helloSaidEvent{msg: args.Msg, id: randomID()}
+func (r *resolver) SendSubscription(args struct{ Msg string }) *instanceEvent {
+	e := &instanceEvent{}
+	e.instances = []Instance{
+		{ID: uuid.NewString(), ImageID: "test_image_id"},
+	}
 	go func() {
 		select {
-		case r.helloSaidEvents <- e:
+		case r.instanceEvents <- e:
 		case <-time.After(1 * time.Second):
 		}
 	}()
 	return e
 }
 
-type helloSaidSubscriber struct {
+type instanceSubscriber struct {
 	stop   <-chan struct{}
-	events chan<- *helloSaidEvent
+	events chan<- *instanceEvent
 }
 
 func (r *resolver) broadcastHelloSaid() {
-	subscribers := map[string]*helloSaidSubscriber{}
+	subscribers := map[string]*instanceSubscriber{}
 	unsubscribe := make(chan string)
 
 	// NOTE: subscribing and sending events are at odds.
@@ -150,11 +175,11 @@ func (r *resolver) broadcastHelloSaid() {
 		select {
 		case id := <-unsubscribe:
 			delete(subscribers, id)
-		case s := <-r.helloSaidSubscriber:
+		case s := <-r.instanceSubscriber:
 			subscribers[randomID()] = s
-		case e := <-r.helloSaidEvents:
+		case e := <-r.instanceEvents:
 			for id, s := range subscribers {
-				go func(id string, s *helloSaidSubscriber) {
+				go func(id string, s *instanceSubscriber) {
 					select {
 					case <-s.stop:
 						unsubscribe <- id
@@ -174,24 +199,24 @@ func (r *resolver) broadcastHelloSaid() {
 	}
 }
 
-func (r *resolver) HelloSaid(ctx context.Context) <-chan *helloSaidEvent {
-	c := make(chan *helloSaidEvent)
+func (r *resolver) SubscriptionFired(ctx context.Context) <-chan *instanceEvent {
+	c := make(chan *instanceEvent)
 	// NOTE: this could take a while
-	r.helloSaidSubscriber <- &helloSaidSubscriber{events: c, stop: ctx.Done()}
+	r.instanceSubscriber <- &instanceSubscriber{events: c, stop: ctx.Done()}
 
 	return c
 }
 
-type helloSaidEvent struct {
-	id  string
-	msg string
+type instanceEvent struct {
+	id        string
+	instances []Instance
 }
 
-func (r *helloSaidEvent) Msg() string {
-	return r.msg
+func (r *instanceEvent) Instances() []Instance {
+	return r.instances
 }
 
-func (r *helloSaidEvent) ID() string {
+func (r *instanceEvent) ID() string {
 	return r.id
 }
 

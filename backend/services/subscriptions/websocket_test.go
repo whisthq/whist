@@ -8,11 +8,11 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/gorilla/websocket"
+	graphql "github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -106,31 +106,104 @@ func TestJSON(t *testing.T) {
 func TestEOF(t *testing.T) {
 	stop := make(chan bool)
 	server := subscription_setupServer()
-
-	testClient := &SubscriptionClient{}
-	testClient.Initialize(false)
-
+	_, subscriptionClient := subscription_setupClients()
+	msg := randomID()
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
 			log.Println(err)
 		}
 	}()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer server.Shutdown(ctx)
 	defer cancel()
 
+	subscriptionClient.Hasura.
+		OnError(func(sc *graphql.SubscriptionClient, err error) error {
+			return err
+		})
+
+	/*
+		subscription {
+			helloSaid {
+				id
+				msg
+			}
+		}
+	*/
 	var sub struct {
 		HelloSaid struct {
-			ID      String
-			Message String `graphql:"msg" json:"msg"`
+			ID      graphql.String
+			Message graphql.String `graphql:"msg" json:"msg"`
 		} `graphql:"helloSaid" json:"helloSaid"`
 	}
 
-	testClient.Subscribe()
+	_, err := subscriptionClient.Hasura.Subscribe(sub, nil, func(data *json.RawMessage, e error) error {
+		if e != nil {
+			t.Fatalf("got error: %v, want: nil", e)
+			return nil
+		}
+
+		log.Println("result", string(*data))
+		e = json.Unmarshal(*data, &sub)
+		if e != nil {
+			t.Fatalf("got error: %v, want: nil", e)
+			return nil
+		}
+
+		if sub.HelloSaid.Message != graphql.String(msg) {
+			t.Fatalf("subscription message does not match. got: %s, want: %s", sub.HelloSaid.Message, msg)
+		}
+
+		t.Logf("Exiting of subscribe...")
+		stop <- true
+
+		return nil
+	})
+
+	if err != nil {
+		t.Fatalf("got error: %v, want: nil", err)
+	}
+
 	go func() {
-		testClient.Run(&sync.WaitGroup{})
+		err := subscriptionClient.Hasura.Run()
+		if err != nil {
+			log.Print(err)
+		}
 		stop <- true
 	}()
+
+	defer subscriptionClient.Close()
+
+	// wait until the subscription client connects to the server
+	time.Sleep(2 * time.Second)
+
+	// call a mutation request to send message to the subscription
+	/*
+		mutation ($msg: String!) {
+			sayHello(msg: $msg) {
+				id
+				msg
+			}
+		}
+	*/
+	// var q struct {
+	// 	SayHello struct {
+	// 		ID  graphql.String
+	// 		Msg graphql.String
+	// 	} `graphql:"sayHello(msg: $msg)"`
+	// }
+	// variables := map[string]interface{}{
+	// 	"msg": graphql.String(msg),
+	// }
+	// t.Logf("Mutating to trigger sub")
+	// err = client.Mutate(context.Background(), &q, variables, graphql.OperationName("SayHello"))
+	// if err != nil {
+	// 	t.Fatalf("got error: %v, want: nil", err)
+	// }
+
+	// t.Logf("1. Waiting on stop chan...")
+	<-stop
 
 }
 
@@ -157,7 +230,7 @@ func TestClose(t *testing.T) {
 func TestWhistWebsocketConn(t *testing.T) {
 	_, subscriptionClient := subscription_setupClients()
 
-	ws, err := WhistWebsocketConn(subscriptionClient)
+	ws, err := WhistWebsocketConn(subscriptionClient.Hasura)
 	if err != nil {
 		t.Fatalf("failed to create websocket connection: %s", err)
 	}
