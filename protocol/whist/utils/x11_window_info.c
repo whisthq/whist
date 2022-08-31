@@ -284,6 +284,12 @@ bool is_window_fullscreen(X11CaptureDevice* device, WhistWindow whist_window) {
     return false;
 }
 
+// Whether or not we should detect fullscreen status using X11
+// NOTE: This function was seen taken 10+ seconds
+// Figure out why? Or verify exactly which function is causing this?
+#define USING_X11_GET_FOCUSED_WINDOW false
+
+#if USING_X11_GET_FOCUSED_WINDOW
 // superseded by x11_get_active_window
 static Window get_focused_window(void) {
     Window w;
@@ -292,6 +298,7 @@ static Window get_focused_window(void) {
     XGetInputFocus(display, &w, &revert);
     return w;
 }
+#endif
 
 bool get_focused_window_name(char** name_return) {
     /*
@@ -305,6 +312,7 @@ bool get_focused_window_name(char** name_return) {
      *      ret (int): true on new window name, false if the same window name or failure
      */
 
+#if USING_X11_GET_FOCUSED_WINDOW
     Window w = get_focused_window();
 
     *name_return = NULL;
@@ -352,11 +360,9 @@ bool get_focused_window_name(char** name_return) {
     } else {
         LOG_ERROR("XmbTextPropertyToTextList failed to convert window name to string");
     }
+#endif
     return false;
 }
-
-// Whether or not we should detect fullscreen status using X11
-#define USING_X11_FULLSCREEN_DETECTION false
 
 bool is_focused_window_fullscreen(void) {
     /*
@@ -370,11 +376,7 @@ bool is_focused_window_fullscreen(void) {
      *      to the screen, not through the window manager. Examples include
      *      fullscreen video playback in a browser, or fullscreen games.
      */
-#if USING_X11_FULLSCREEN_DETECTION
-
-    // NOTE: This function was seen taken 10+ seconds
-    // Figure out why? Or verify exactly which function is causing this?
-
+#if USING_X11_GET_FOCUSED_WINDOW
     Window w = get_focused_window();
 
     if (!w) {
