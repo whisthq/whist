@@ -48,9 +48,7 @@ def prepare_instance_for_host_setup(pexpect_process, pexpect_prompt):
 
     # Remove the Ubuntu welcome message, to reduce noise in the logs
     # https://askubuntu.com/questions/676374/how-to-disable-welcome-message-after-ssh-login
-    pexpect_process.sendline(
-        "sudo chmod -x /etc/update-motd.d/*"
-    )
+    pexpect_process.sendline("sudo chmod -x /etc/update-motd.d/*")
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     # Clean, upgrade and update all the apt lists
