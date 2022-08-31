@@ -11,6 +11,7 @@ const io = new Server(httpServer, {
 
 // Listens for client/server events
 io.on("connection", (socket: Socket) => {
+  socket.emit("connected", io.engine.clientsCount)
   socket.broadcast.emit("connected", io.engine.clientsCount)
 
   socket.onAny((eventName, ...args) => {
