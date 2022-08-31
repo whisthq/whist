@@ -368,7 +368,7 @@ def complete_experiment_and_save_results(
     wait_until_cmd_done(client_mandelbox_pexpect_process, pexpect_prompt_client)
 
     # Stop and delete any leftover Docker containers
-    command = "(docker ps -aq | xargs docker stop) && (docker ps -aq | xargs docker rm)"    
+    command = "(docker ps -aq | xargs docker stop) && (docker ps -aq | xargs docker rm)"
     server_mandelbox_pexpect_process.sendline(command)
     wait_until_cmd_done(server_mandelbox_pexpect_process, pexpect_prompt_server)
     if use_two_instances:
