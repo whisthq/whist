@@ -13,9 +13,6 @@ console.log("Socketio server started")
 
 // Listens for client/server events
 io.on("connection", (socket: Socket) => {
-  console.log("Got a connection!", io.engine.clientsCount)
-  
-  socket.emit("connected", io.engine.clientsCount)
   socket.broadcast.emit("connected", io.engine.clientsCount)
 
   socket.onAny((eventName, ...args) => {
