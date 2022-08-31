@@ -59,6 +59,7 @@ USER=$(whoami)
 
 # Build protocol-builder Docker image
 docker build . \
+  --quiet \
   --build-arg uid=$(id -u ${USER}) \
   -f Dockerfile \
   -t whisthq/protocol-builder

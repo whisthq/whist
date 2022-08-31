@@ -164,7 +164,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
                 return ret["status"]
 
     # Notify successful build
-    print(f"Built {img_path}")
+    print(f"Building {img_path}... -- Done!")
 
     # Take all of the image_paths that depended on this img_path, and save them
     # as the next layer of image_paths to build

@@ -77,10 +77,6 @@ common_steps () {
   echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
   sudo apt-get install -y -q
 
-  # Remove the Ubuntu welcome message, to reduce noise in the logs
-  # https://askubuntu.com/questions/676374/how-to-disable-welcome-message-after-ssh-login
-  sudo chmod -x /etc/update-motd.d/*
-
   echo "================================================"
   echo "Replacing potentially outdated Docker runtime..."
   echo "================================================"
