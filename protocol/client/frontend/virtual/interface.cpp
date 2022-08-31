@@ -78,6 +78,7 @@ static int vi_api_initialize(int argc, const char* argv[]) {
             // Start the protocol if valid arguments were given
             if (argc > 0 && argv != NULL) {
                 int ret = whist_client_main(argc, argv);
+                UNUSED(ret);
             }
             // Mark the protocol as dead when main exits
             protocol_alive = false;
