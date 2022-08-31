@@ -109,27 +109,27 @@ action("build_whist_client") {
 
   if (is_linux) {
     outputs = [
-      "$root_out_dir/libavcodec.59.dylib",
-      "$root_out_dir/libavdevice.59.dylib",
-      "$root_out_dir/libavfilter.8.dylib",
-      "$root_out_dir/libavformat.59.dylib",
-      "$root_out_dir/libavutil.57.dylib",
-      "$root_out_dir/libopus.0.dylib",
-      "$root_out_dir/libsentry.dylib",
-      "$root_out_dir/libswresample.4.dylib",
-      "$root_out_dir/libswscale.6.dylib",
-      "$root_out_dir/libWhistClient.dylib",
+      "$root_out_dir/libavcodec.59.so",
+      "$root_out_dir/libavdevice.59.so",
+      "$root_out_dir/libavfilter.8.so",
+      "$root_out_dir/libavformat.59.so",
+      "$root_out_dir/libavutil.57.so",
+      "$root_out_dir/libopus.0.so",
+      "$root_out_dir/libsentry.so",
+      "$root_out_dir/libswresample.4.so",
+      "$root_out_dir/libswscale.6.so",
+      "$root_out_dir/libWhistClient.so",
     ]
 
     if (target_cpu == "x64") {
       outputs += [
-        "$root_out_dir/libX11.6.dylib",
-        "$root_out_dir/libXau.6.dylib",
-        "$root_out_dir/libxcb-shape.0.0.0.dylib",
-        "$root_out_dir/libxcb-shm.0.0.0.dylib",
-        "$root_out_dir/libxcb-xfixes.0.0.0.dylib",
-        "$root_out_dir/libxcb.1.1.0.dylib",
-        "$root_out_dir/libXdmcp.6.dylib",
+        "$root_out_dir/libX11.6.so",
+        "$root_out_dir/libXau.6.so",
+        "$root_out_dir/libxcb-shape.0.0.0.so",
+        "$root_out_dir/libxcb-shm.0.0.0.so",
+        "$root_out_dir/libxcb-xfixes.0.0.0.so",
+        "$root_out_dir/libxcb.1.1.0.so",
+        "$root_out_dir/libXdmcp.6.so",
       ]
     }
 
