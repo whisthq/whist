@@ -43,7 +43,7 @@ jobs:
 
 The `set-environment` Action is a [Docker Action][1]. As such, it is easy to run locally. After making changes to the Action's implementation, run the following command to build its executable Docker container:
 
-    $ docker build -t set-environment /path/to/monorepo/.github/actions/set-environment
+    $ docker build -q -t set-environment /path/to/monorepo/.github/actions/set-environment
 
 Specifying `-t set-environment` is optional and only serves to name the built container `set-environment` so it can be run with:
 

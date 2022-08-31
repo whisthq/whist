@@ -117,7 +117,7 @@ def install_and_configure_aws(
     wait_for_apt_locks(pexpect_process, pexpect_prompt)
 
     # Step 2: Install the AWS CLI if it's not already there
-    pexpect_process.sendline("sudo apt-get -y update")
+    pexpect_process.sendline("sudo apt-get -y -q update")
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
     # Check if the AWS CLI is installed, and install it if not.
     pexpect_process.sendline("aws --version")

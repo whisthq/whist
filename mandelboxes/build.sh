@@ -98,12 +98,12 @@ echo "Fetching Whistium... -- Done!"
 
 # Bundle these build assets into a cached Docker image
 echo "Bundling build assets..."
-docker build -q -t whist/build-assets:default -f base/build-assets/Dockerfile.20 --target default base/build-assets -q > /dev/null
-docker build -q -t whist/build-assets:protocol -f base/build-assets/Dockerfile.20 --target protocol base/build-assets -q > /dev/null
+docker build --quiet -t whist/build-assets:default -f base/build-assets/Dockerfile.20 --target default base/build-assets -q > /dev/null
+docker build --quiet -t whist/build-assets:protocol -f base/build-assets/Dockerfile.20 --target protocol base/build-assets -q > /dev/null
 
 # Now, our Dockerfiles can copy over these files using
 # COPY --from=whist/build-assets:default most of the time,
 # and whist/build-assets:protocol when they determine that
 # they want to copy the protocol based on the mode.
 
-python3 ./scripts/build_mandelbox_image.py "${python_args[@]}" --mode="$mode" --beta="$beta"
+python3 ./scripts/build_mandelbox_image.py "${python_args[@]}" --mode="$mode" --beta="$beta" --quiet

@@ -2,4 +2,4 @@
 
 set -Eeuo pipefail
 
-docker build . --tag whist/mandelboxes/development/utils/fuse:current-build
+docker build . --quiet --tag whist/mandelboxes/development/utils/fuse:current-build
