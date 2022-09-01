@@ -8,7 +8,6 @@ extern "C" {
 #include "interface.h"
 #include <whist/utils/queue.h>
 #include <whist/network/network_algorithm.h>
-#include <whist/logging/logging.h>
 }
 
 // Just chosen a very large number for events queue size. If required we can optimize/reduce it.
