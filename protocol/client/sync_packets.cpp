@@ -88,8 +88,7 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 
     while (run_sync_packets_threads) {
-
-        if (PLOT_UDP_RECV_QUEUE) {
+        if (PLOT_CLIENT_UDP_SOCKET_RECV_QUEUE) {
             double current_time = get_timestamp_sec();
             static double last_sample_time = 0;
 

@@ -1,8 +1,19 @@
 #pragma once
 
+/*
+============================
+Flags for client only
+============================
+*/
+
 // the protocol analyzer is started automatically after debug_console starts.
 // but in rare case, you might want to disable it to make performance plotting more accurate
 #define DISABLE_PROTOCOL_ANALYZER false
+
+// if enabled, plotter will start sampling on startup, and export on graceful quit
+#define CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
+// the file to export if above is enabled
+#define CLIENT_SIDE_DEFAULT_EXPORT_FILE "/home/yancey/plot.json"
 
 // flags for enable/disable plotting of groups of datasets
 #define PLOT_AUDIO_ALGO false                // audio algo
@@ -12,16 +23,24 @@
 #define PLOT_VIDEO_FIRST_SEEN_TO_DECODE \
     true  // how long it takes between video frame is seen and send to decoder
 
-#define PLOT_UDP_RECV_GAP true  // plot the gaps between recvs() are called on hotpath
-
-#define PLOT_UDP_RECV_QUEUE true
-
-
-#define CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
-#define CLIENT_SIDE_DEFAULT_EXPORT_FILE "/home/yancey/plot.json"
-
+#define PLOT_CLIENT_UDP_SOCKET_RECV_QUEUE true
+/*
+============================
+Flags for server only
+============================
+*/
+// if enabled, plotter will start sampling on startup, and export on graceful quit
 #define SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
+// the file to export if above is enabled
 #define SERVER_SIDE_DEFAULT_EXPORT_FILE "/plot.json"
 
+#define PLOT_SERVER_MESSAGE_HANDING true
 
-#define ENABLE_SERVER_PLOT_ON_STARTUP true
+#define PLOT_SERVER_RECV_PATH true
+/*
+============================
+Flags for both client and server
+============================
+*/
+
+#define PLOT_UDP_RECV_GAP true  // plot the gaps between recvs() are called on hotpath

@@ -328,10 +328,10 @@ bool get_focused_window_name(char** name_return) {
     int result = 0;
     char** list = NULL;
 
-    double t1=get_timestamp_sec();
+    double t1 = get_timestamp_sec();
     XLockDisplay(display);
-    double t2=get_timestamp_sec();
-    whist_plotter_insert_sample("xlock1", get_timestamp_sec(), t2-t1);
+    double t2 = get_timestamp_sec();
+    whist_plotter_insert_sample("xlock1", get_timestamp_sec(), t2 - t1);
 
     s = XGetWMName(display, w, &prop);
     if (s) {
@@ -540,11 +540,10 @@ char* get_window_name(X11CaptureDevice* device, Window w) {
     // fall back to XGetWMName
     XTextProperty prop;
     // unclear if needed
-        double t1=get_timestamp_sec();
-        XLockDisplay(device->display);
-    double t2=get_timestamp_sec();
-    whist_plotter_insert_sample("xlock1", get_timestamp_sec(), t2-t1);
-
+    double t1 = get_timestamp_sec();
+    XLockDisplay(device->display);
+    double t2 = get_timestamp_sec();
+    whist_plotter_insert_sample("xlock1", get_timestamp_sec(), t2 - t1);
 
     Status s = XGetWMName(device->display, w, &prop);
     if (s) {

@@ -102,12 +102,11 @@ std::string whist_plotter_export() {
     return ss.str();
 }
 
-void whist_plotter_export_to_file(const char *filename)
-{
-    std::string s=whist_plotter_export();
+void whist_plotter_export_to_file(const char *filename) {
+    std::string s = whist_plotter_export();
     std::ofstream myfile;
     myfile.open(filename);
-    if(myfile.fail()){
+    if (myfile.fail()) {
         LOG_ERROR("open file %s for plotter export failed\n", filename);
         return;
     }

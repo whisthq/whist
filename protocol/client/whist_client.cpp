@@ -349,7 +349,7 @@ int whist_client_main(int argc, const char* argv[]) {
 
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
 
-    if(CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+    if (CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
         whist_plotter_start_sampling();
     }
 
@@ -458,7 +458,7 @@ int whist_client_main(int argc, const char* argv[]) {
     // Wait on system info thread before destroying logger
     whist_wait_thread(system_info_thread, NULL);
 
-    if(CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+    if (CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
         whist_plotter_export_to_file(CLIENT_SIDE_DEFAULT_EXPORT_FILE);
     }
 
@@ -479,8 +479,6 @@ int whist_client_main(int argc, const char* argv[]) {
     // error monitor breadcrumbs and events can finish being reported
     // before we close the error monitor.
     whist_error_monitor_shutdown();
-
-
 
     return exit_code;
 }
