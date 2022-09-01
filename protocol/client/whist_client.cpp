@@ -480,6 +480,6 @@ static void whist_set_session_id (int new_session_id) {
     session_id = new_session_id;
 }
 
-static void whist_get_session_id () {
+static int whist_get_session_id () {
     return session_id;
 }
