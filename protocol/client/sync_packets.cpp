@@ -259,7 +259,6 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         start_timer(&last_loop_start);
 
         if (!socket_update(tcp_context)) {
-            LOG_WARNING("TCP Connection Lost!");
             // TODO: Remove global
             connected = false;
             whist_sleep(1);

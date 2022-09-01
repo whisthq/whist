@@ -377,7 +377,7 @@ class QueueLenController {
                 // Check for size-target discrepancy
                 if (sample_running_avg < device_queue_target_size - QUEUE_LEN_ACCEPTABLE_DELTA) {
                     if (LOG_AUDIO) {
-                        LOG_INFO("[AUDIO_ALGO]Duping a frame to catch-up, %d %.2f %f\n",
+                        LOG_INFO("[AUDIO_ALGO] Duping a frame to catch-up, %d %.2f %f\n",
                                  current_using_sample_count, sample_running_avg,
                                  device_queue_target_size);
                     }
@@ -387,7 +387,7 @@ class QueueLenController {
                 } else if (sample_running_avg >
                            device_queue_target_size + QUEUE_LEN_ACCEPTABLE_DELTA) {
                     if (LOG_AUDIO) {
-                        LOG_INFO("[AUDIO_ALGO]Droping a frame to catch-up, %d %.2f %f",
+                        LOG_INFO("[AUDIO_ALGO] Dropping a frame to catch-up, %d %.2f %f",
                                  current_using_sample_count, sample_running_avg,
                                  device_queue_target_size);
                     }
@@ -408,15 +408,19 @@ class QueueLenController {
                             double total_queue_overflow_size) {
         // Check whether or not we're overflowing the audio buffer
         if (!is_overflowing && total_queue_len > total_queue_overflow_size) {
-            LOG_WARNING("[AUDIO_ALGO]Audio Buffer overflowing (%.2f Frames)! Force-dropping Frames",
-                        total_queue_len);
+            if (LOG_AUDIO) {
+                LOG_WARNING("[AUDIO_ALGO] Audio Buffer overflowing (%.2f Frames)! Force-dropping Frames",
+                            total_queue_len);
+            }
             is_overflowing = true;
         }
 
         // If we've returned back to normal, disable overflowing state
         if (is_overflowing && total_queue_len < device_queue_target_size + 1) {
-            LOG_WARNING("[AUDIO_ALGO]Done dropping audio overflow frames (%.2f Frames)",
-                        total_queue_len);
+            if (LOG_AUDIO) {
+                LOG_WARNING("[AUDIO_ALGO] Done dropping audio overflow frames (%.2f Frames)",
+                            total_queue_len);
+            }
             is_overflowing = false;
         }
 
@@ -578,11 +582,11 @@ bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered)
 
     if (LOG_AUDIO) {
         LOG_INFO_RATE_LIMITED(0.1, 1,
-                              "[AUDIO_ALGO]queue_len: %d %.2f  state=%d  scale_factor=%.2f\n",
+                              "[AUDIO_ALGO] queue_len: %d %.2f  state=%d  scale_factor=%.2f\n",
                               num_frames_buffered, device_queue_len, audio_context->audio_state,
                               adaptive_parameter_controller.get_scale_factor());
     } else {
-        LOG_INFO_RATE_LIMITED(5, 1, "[AUDIO_ALGO]queue_len: %d %.2f  state=%d  scale_factor=%.2f\n",
+        LOG_INFO_RATE_LIMITED(5, 1, "[AUDIO_ALGO] queue_len: %d %.2f  state=%d  scale_factor=%.2f\n",
                               num_frames_buffered, device_queue_len, audio_context->audio_state,
                               adaptive_parameter_controller.get_scale_factor());
     }
@@ -722,7 +726,7 @@ void render_audio(AudioContext* audio_context) {
             if (audio_context->render_context.adjust_command == DUP_FRAME &&
                 audio_context->audio_state != BUFFERING) {
                 if (LOG_AUDIO) {
-                    LOG_INFO("[AUDIO_ALGO]Dup a frame at the decoder\n");
+                    LOG_INFO("[AUDIO_ALGO] Dup a frame at the decoder\n");
                 }
                 // Duping via the decoder sounds better,
                 // It must be smoothing it somehow with some unknown method
