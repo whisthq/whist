@@ -51,12 +51,6 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
 fi
 
-# Write the "done_sleeping_until_X_clients" file so the backend doesn't wait forever. This file is only used to signal the host service that
-# the mandelbox is ready, but doesn't have any other effect.
-echo "Done sleeping until there are X clients..."
-echo "done" > $WHIST_MAPPINGS_DIR/done_sleeping_until_X_clients
-sync # Necessary so that even if the container exits very soon the host service sees the file written.
-
 # Use pipe to pass arguments to the protocol to be able to open multiple URLs
 ( (
     cat <<EOF
