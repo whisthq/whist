@@ -126,7 +126,6 @@ static void get_whist_udp_client_messages(WhistServerState* state) {
     size_t wcmsg_size;
     // If received a UDP message
     if (try_get_next_message_udp(state->client, &wcmsg, &wcmsg_size) == 0 && wcmsg_size != 0) {
-
         double time_before_handling, time_after_handling;
         if (PLOT_SERVER_UDP_MESSAGE_HANDING) {
             time_before_handling = get_timestamp_sec();
@@ -484,6 +483,7 @@ int main(int argc, char* argv[]) {
     // Tracking how long we're willing to attempt to connect
     WhistTimer connection_attempt_timer;
     start_timer(&connection_attempt_timer);
+
     // Whether or not the client connected at least once
     bool client_connected_once = false;
 
@@ -627,6 +627,7 @@ int main(int argc, char* argv[]) {
                 close(fd);
                 remove(URI_HANDLER_FILE);
             }
+
             start_timer(&uri_handler_timer);
         }
 

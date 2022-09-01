@@ -448,10 +448,8 @@ int recvfrom_no_intr(SOCKET sockfd, void* buf, size_t len, int flags, struct soc
  */
 int socket_get_queue_len(SOCKET socket);
 
-
 // TODO: Move
 #include <whist/network/tcp.h>
 #include <whist/network/udp.h>
-
 
 #endif  // NETWORK_H
