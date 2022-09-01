@@ -556,7 +556,6 @@ int main(int argc, char* argv[]) {
             // TODO: Move static variable into client variable, so that it can clear on reactivation
             static bool cur_fullscreen = false;
             bool fullscreen = is_focused_window_fullscreen();
-
             if (fullscreen != cur_fullscreen) {
                 if (fullscreen) {
                     LOG_INFO("Window is now fullscreen. Broadcasting fullscreen message.");
@@ -580,7 +579,6 @@ int main(int argc, char* argv[]) {
         if (get_timer(&window_name_timer) > 50.0 / MS_IN_SECOND) {
             char* name = NULL;
             bool new_window_name = get_focused_window_name(&name);
-
             if (name != NULL &&
                 (server_state.client_joined_after_window_name_broadcast || new_window_name)) {
                 LOG_INFO("%sBroadcasting window title message.",
@@ -589,7 +587,6 @@ int main(int argc, char* argv[]) {
                 WhistServerMessage* wsmsg = (void*)wsmsg_buf;
                 wsmsg->type = SMESSAGE_WINDOW_TITLE;
                 strncpy(wsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
-
                 if (broadcast_tcp_packet(server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
                                          (int)(sizeof(WhistServerMessage) + strlen(name) + 1)) ==
                     0) {
