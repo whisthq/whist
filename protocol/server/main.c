@@ -399,7 +399,7 @@ int main(int argc, char* argv[]) {
 
     whist_init_subsystems();
 
-    if (CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
+    if (SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT) {
         whist_plotter_start_sampling();
     }
 
