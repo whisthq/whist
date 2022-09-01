@@ -275,7 +275,7 @@ static void vi_api_set_session_id(int session_id) {
     whist_session_id = session_id; 
 }
 
-static int vi_api_get_session_id(int session_id) {
+static int vi_api_get_session_id() {
     return whist_session_id;
 }
 
