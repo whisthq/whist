@@ -92,8 +92,6 @@ extern volatile bool pending_resize_message;
 // The state of the client, i.e. whether it's connected to a server or not
 extern std::atomic<bool> connected;
 
-extern int session_id;
-
 // Defines
 #define APP_PATH_MAXLEN 1023
 
@@ -475,11 +473,3 @@ int whist_client_main(int argc, const char* argv[]) {
 
     return exit_code;
 }
-
-// static void whist_set_session_id (int new_session_id) {
-//     session_id = new_session_id;
-// }
-
-// static int whist_get_session_id () {
-//     return session_id;
-// }

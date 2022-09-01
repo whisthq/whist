@@ -135,6 +135,14 @@ static void (*external_logger_callback)(unsigned int level, const char* line, in
 
 static int session_id;
 
+void whist_set_session_id (int new_session_id) {
+    session_id = new_session_id;
+}
+
+int whist_get_session_id () {
+    return session_id;
+}
+
 void whist_log_set_external_logger_callback(void (*cb)(unsigned int, const char*, int)) {
     external_logger_callback = cb;
 }

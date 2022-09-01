@@ -303,4 +303,8 @@ void test_set_pause_state_on_logger_thread(bool pause);
  */
 void whist_log_set_external_logger_callback(void (*cb)(unsigned int level, const char* line, int session_id));
 
+void whist_set_session_id(int session_id);
+
+int whist_get_session_id();
+
 #endif  // LOGGING_H
