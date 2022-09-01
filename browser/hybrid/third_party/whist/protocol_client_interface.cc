@@ -95,4 +95,9 @@ void InitializeWhistClient() {
   // Initialize whist, so that connections can be made from javascript later
   WHIST_VIRTUAL_INTERFACE_CALL(lifecycle.initialize, protocol_argc, protocol_argv);
   // TODO: lifecycle.destroy sometime? If necessary?
+
+  // Initialize logging
+  WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line) {
+    LOG(ERROR) << "FROM CALLBACK" << line << level;
+  });
 }
