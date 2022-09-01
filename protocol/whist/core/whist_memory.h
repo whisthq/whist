@@ -236,6 +236,10 @@ void* realloc_region(void* region, size_t new_region_size);
  */
 void deallocate_region(void* region);
 
+#if USING_MLOCK
+void init_whist_malloc_hook(void);
+#endif
+
 /** @} */
 /** @} */
 

@@ -349,6 +349,9 @@ void sig_handler(int sig_num) {
 #endif
 
 int whist_client_main(int argc, const char* argv[]) {
+#if USING_MLOCK
+    init_whist_malloc_hook();
+#endif
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
         // invalid usage

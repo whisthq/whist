@@ -18,6 +18,9 @@ Includes
 */
 
 #include <whist/core/whist.h>
+#if USING_MLOCK
+#include <sys/mman.h>
+#endif
 
 /*
 ============================
@@ -404,6 +407,9 @@ void* allocate_region(size_t region_size) {
     }
     ((RegionHeader*)p)->size = region_size;
 #endif
+#if USING_MLOCK
+    mlock(p, region_size);
+#endif
     return TO_REGION_DATA(p);
 }
 
@@ -509,6 +515,10 @@ void deallocate_region(void* region) {
     */
 
     RegionHeader* p = TO_REGION_HEADER(region);
+
+#if USING_MLOCK
+    munlock(p, p->size);
+#endif
 
 #if OS_IS(OS_WIN32)
     if (VirtualFree(p, 0, MEM_RELEASE) == 0) {

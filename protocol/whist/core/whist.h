@@ -127,6 +127,12 @@ Defines
 // Whether or not multi-window is being used
 #define USING_MULTIWINDOW false
 
+#if OS_IS(OS_MACOS)
+#define USING_MLOCK true
+#else
+#define USING_MLOCK false
+#endif
+
 #if OS_IS(OS_WIN32)
 #define INPUT_DRIVER WINAPI_INPUT_DRIVER
 #else
