@@ -13,7 +13,7 @@ Flags for client only
 // if enabled, plotter will start sampling on startup, and export on **graceful** quit
 #define CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
 // the file to export if above is enabled
-#define CLIENT_SIDE_DEFAULT_EXPORT_FILE "/home/yancey/plot.json"
+#define CLIENT_SIDE_DEFAULT_EXPORT_FILE "/tmp/plot.json"
 
 // flags for enable/disable plotting of groups of datasets
 #define PLOT_AUDIO_ALGO false                // audio algo
