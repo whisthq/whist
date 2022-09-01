@@ -414,7 +414,9 @@ void* allocate_region(size_t region_size) {
     }
     ((RegionHeader*)p)->size = region_size;
 #endif
-    // mlock(p, region_size);
+#if USING_MLOCK
+    mlock(p, region_size);
+#endif
     return TO_REGION_DATA(p);
 }
 
@@ -526,7 +528,9 @@ void deallocate_region(void* region) {
         LOG_FATAL("VirtualFree failed! Error %x", GetLastError());
     }
 #else
-    // munlock(p, p->size);
+#if USING_MLOCK
+    munlock(p, p->size);
+#endif
     if (munmap(p, p->size) != 0) {
         LOG_FATAL("munmap failed!");
     }
