@@ -34,9 +34,8 @@ Flags for server only
 // the file to export if above is enabled
 #define SERVER_SIDE_DEFAULT_EXPORT_FILE "/plot.json"
 
-#define PLOT_SERVER_MESSAGE_HANDING true
-
-#define PLOT_SERVER_RECV_PATH true
+// plot server udp message handling time
+#define PLOT_SERVER_UDP_MESSAGE_HANDING true
 /*
 ============================
 Flags for both client and server
