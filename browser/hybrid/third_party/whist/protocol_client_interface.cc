@@ -98,6 +98,7 @@ void InitializeWhistClient() {
 
   // Initialize logging
   WHIST_VIRTUAL_INTERFACE_CALL(logging.set_callback, [](unsigned int level, const char* line) {
-    LOG(ERROR) << "FROM CALLBACK" << line << level;
+    int session_id = WHIST_VIRTUAL_INTERFACE_CALL(logging.get_session_id);
+    LOG(ERROR) << "SESSION ID IS: " << session_id;
   });
 }

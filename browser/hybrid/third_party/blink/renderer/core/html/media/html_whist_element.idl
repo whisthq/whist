@@ -35,4 +35,5 @@
     [ImplementedAs=whistPlay] void thaw();
     [ImplementedAs=whistConnect] void whistConnect(DOMString whist_parameters);
     [ImplementedAs=isWhistConnected] boolean isWhistConnected();
+    [ImplementedAs=setSessionID] void setSessionID(int session_id);
 };

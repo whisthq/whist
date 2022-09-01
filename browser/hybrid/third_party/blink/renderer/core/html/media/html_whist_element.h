@@ -80,6 +80,7 @@ class CORE_EXPORT HTMLWhistElement final
     void whistPlay();
     bool isWhistConnected();
     void whistConnect(const String& whist_parameters);
+    void setSessionID(const int session_id);
 
   private:
     class HTMLWhistElementResizeObserverDelegate;
