@@ -11,7 +11,7 @@ Flags for client only
 #define DISABLE_PROTOCOL_ANALYZER false
 
 // if enabled, plotter will start sampling on startup, and export on **graceful** quit
-#define CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
+#define CLIENT_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT false
 // the file to export if above is enabled
 #define CLIENT_SIDE_DEFAULT_EXPORT_FILE "/tmp/plot.json"
 
@@ -21,25 +21,25 @@ Flags for client only
 #define PLOT_SDL_PRESENT_FRAME_BUFFER false  // time of calling sdl_present_xxxx()s
 
 #define PLOT_VIDEO_FIRST_SEEN_TO_DECODE \
-    true  // how long it takes between video frame is seen and send to decoder
+    false  // how long it takes between video frame is seen and send to decoder
 
-#define PLOT_CLIENT_UDP_SOCKET_RECV_QUEUE true
+#define PLOT_CLIENT_UDP_SOCKET_RECV_QUEUE false
 /*
 ============================
 Flags for server only
 ============================
 */
 // if enabled, plotter will start sampling on startup, and export on **graceful** quit
-#define SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT true
+#define SERVER_SIDE_PLOTTER_START_SAMPLING_BY_DEFAULT false
 // the file to export if above is enabled
 #define SERVER_SIDE_DEFAULT_EXPORT_FILE "/plot.json"
 
 // plot server udp message handling time
-#define PLOT_SERVER_UDP_MESSAGE_HANDING true
+#define PLOT_SERVER_UDP_MESSAGE_HANDING false
 /*
 ============================
 Flags for both client and server
 ============================
 */
 
-#define PLOT_UDP_RECV_GAP true  // plot the gaps between recvs() are called on hotpath
+#define PLOT_UDP_RECV_GAP false  // plot the gaps between recvs() are called on hotpath

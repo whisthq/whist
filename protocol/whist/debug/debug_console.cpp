@@ -199,10 +199,10 @@ static string handle_plot(vector<string> cmd) {
 
         string s = whist_plotter_export();
 
-        int ret=whist_plotter_export_to_file(cmd[1].c_str());
+        int ret = whist_plotter_export_to_file(cmd[1].c_str());
 
-        if(ret){
-            return wrap_with_color("open file" + cmd[1]+" failed", RED);
+        if (ret) {
+            return wrap_with_color("open file" + cmd[1] + " failed", RED);
         }
 
         return "written to " + cmd[1];
