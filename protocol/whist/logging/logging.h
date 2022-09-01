@@ -291,4 +291,16 @@ void destroy_logger(void);
  */
 void test_set_pause_state_on_logger_thread(bool pause);
 
+
+/**
+ * Set an external logger callback to run on every logged message.
+ *
+ * This is useful when running as a library and we need the caller
+ * to appropriately handle logs.
+ *
+ * @param cb  The callback, which is a void-returning function taking
+ *            a log level and the logged line, as a string.
+ */
+void whist_log_set_external_logger_callback(void (*cb)(unsigned int level, const char* line));
+
 #endif  // LOGGING_H
