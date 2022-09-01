@@ -485,7 +485,6 @@ int main(int argc, char* argv[]) {
     // Tracking how long we're willing to attempt to connect
     WhistTimer connection_attempt_timer;
     start_timer(&connection_attempt_timer);
-    
     // Whether or not the client connected at least once
     bool client_connected_once = false;
 
