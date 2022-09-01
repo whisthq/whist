@@ -132,10 +132,5 @@ action("build_whist_client") {
         "$root_out_dir/libXdmcp.6.so",
       ]
     }
-
-    args += [
-      "--arch",
-      target_cpu,
-    ]
   }
 }
